@@ -37,9 +37,15 @@ No Docker / Postgres needed for local dev.
 | `POST` | `/api/prepare-payment` | **One-call orchestration: validate + VoP + route + SSI → recommendation** |
 | `POST` | `/api/track/create` | Create a payment with UETR tracking (simulated gpi) |
 | `GET` | `/api/track/{uetr}` | Retrieve payment status timeline by UETR |
-| `POST` | `/api/import/fedwire` | Reload Fedwire directory |
-| `POST` | `/api/import/fedach` | Reload FedACH directory |
-| `POST` | `/api/import/ssi` | Upload CSV/JSON of SSI records |
+| `GET` | `/api/schemes?currency=<CCY>` | Payment schemes (Faster Payments, SEPA, CHAPS, etc.) |
+| `POST` | `/api/fees/simulate` | Simulate OUR/SHA/BEN fee deduction across intermediary hops |
+| `POST` | `/api/screen` | Sanctions screening (fictional watchlist — training only) |
+| `POST` | `/api/value-date` | Calculate settlement value date (cut-offs, holidays, T+n) |
+| `POST` | `/api/message/stp-check` | MT103 straight-through-processing checker (12 rules) |
+| `GET` | `/api/progress` | Learning progress + badges (for the Payment Lab) |
+| `POST` | `/api/import/fedwire` | Reload Fedwire directory (requires `FEDWIRE_URL` + admin key) |
+| `POST` | `/api/import/fedach` | Reload FedACH directory (requires `FEDACH_URL` + admin key) |
+| `POST` | `/api/import/ssi` | Upload CSV/JSON of SSI records (requires admin key) |
 
 ### Examples
 

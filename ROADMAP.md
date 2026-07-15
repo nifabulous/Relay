@@ -91,7 +91,7 @@ BICs/IBANs  →  format check → name match  → intermediaries→ SSI accounts
 | Payment tracking (simulated) | ✅ | UETR + timeline |
 | Combined prepare-payment | ✅ | Recommendation engine |
 | Admin UI | ✅ | 7 pages |
-| Tests | ✅ | 416 passing |
+| Tests | ✅ | 550+ passing |
 
 ---
 
