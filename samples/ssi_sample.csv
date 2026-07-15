@@ -1,0 +1,6 @@
+beneficiary_bic,beneficiary_bank_name,currency,intermediary_bic,intermediary_bank_name,intermediary_account,beneficiary_account,charge_code,value_date,notes
+GTBINGLAXXX,Guaranty Trust Bank,USD,CITIUS33XXX,Citibank N.A.,36012609,0001234567,SHA,spot,From GTBank treasury page
+GTBINGLAXXX,Guaranty Trust Bank,EUR,CITIUS33XXX,Citibank N.A.,10998877,0001234567,SHA,spot,From GTBank treasury page
+ZENINGLAXXX,Zenith Bank,USD,CITIUS33XXX,Citibank N.A.,36012710,0007654321,OUR,spot,From Zenith treasury page
+EBILAEADXXX,Emirates NBD,USD,CITIUS33XXX,Citibank N.A.,36066300,5500667788,SHA,spot,From Emirates NBD treasury page
+NCBKSAJEXXX,Saudi National Bank,USD,CITIUS33XXX,Citibank N.A.,36077400,6600778899,SHA,same-day,From SNB treasury page

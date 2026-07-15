@@ -1,0 +1,27 @@
+{
+  "records": [
+    {
+      "beneficiary_bic": "GTBINGLAXXX",
+      "beneficiary_bank_name": "Guaranty Trust Bank",
+      "currency": "USD",
+      "intermediary_bic": "CITIUS33XXX",
+      "intermediary_bank_name": "Citibank N.A.",
+      "intermediary_account": "36012609",
+      "beneficiary_account": "0001234567",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "notes": "From GTBank treasury page"
+    },
+    {
+      "beneficiary_bic": "BOTKJPJTXXX",
+      "beneficiary_bank_name": "MUFG",
+      "currency": "USD",
+      "intermediary_bic": "BOTKJPJTXXX",
+      "intermediary_bank_name": "MUFG NY branch",
+      "intermediary_account": "USJP0010",
+      "beneficiary_account": "7700889900",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    }
+  ]
+}

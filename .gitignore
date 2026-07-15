@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Testing / coverage
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# SQLite dev DB (auto-created, seeded on startup)
+swift_routing.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets / local env
+.env
+.env.*

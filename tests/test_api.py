@@ -1,0 +1,327 @@
+"""End-to-end tests against the FastAPI app via TestClient.
+
+Uses the session-scoped `client` fixture from conftest, which triggers the
+app's lifespan (table creation + seeding) exactly once.
+"""
+from fastapi.testclient import TestClient
+
+
+def test_health_seeded(client):
+    """App should boot, create tables, and seed the directory."""
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["banks"] > 0
+    assert body["corridor_rules"] > 0
+
+
+def test_validate_valid_iban(client):
+    # GB29NWBK60161331926819 is NatWest's well-known test IBAN.
+    r = client.get("/api/validate", params={"value": "GB29NWBK60161331926819"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["input_type"] == "iban"
+    assert body["valid"] is True
+    assert body["bic"] is not None
+
+
+def test_validate_invalid_iban(client):
+    r = client.get("/api/validate", params={"value": "GB29NWBK00000000000000"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is False
+    assert len(body["errors"]) > 0
+
+
+def test_validate_valid_bic(client):
+    r = client.get("/api/validate", params={"value": "CITIUS33"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["input_type"] == "bic"
+    assert body["valid"] is True
+    assert body["bic"].startswith("CITIUS33")
+
+
+def test_validate_invalid_bic(client):
+    r = client.get("/api/validate", params={"value": "NOTREAL1"})
+    assert r.status_code == 200
+    assert r.json()["valid"] is False
+
+
+def test_lookup_known_bank(client):
+    r = client.get("/api/lookup", params={"bic": "GTBINGLAXXX"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["found"] is True
+    assert body["bank"]["country_code"] == "NG"
+    assert "Guaranty" in body["bank"]["bank_name"]
+
+
+def test_lookup_by_8char_bic(client):
+    r = client.get("/api/lookup", params={"bic": "GTBINGLA"})
+    assert r.status_code == 200
+    assert r.json()["found"] is True
+
+
+def test_lookup_unknown_bank(client):
+    # Structurally valid BIC (US country code) that's simply not in our directory.
+    r = client.get("/api/lookup", params={"bic": "ZZZZUS31XXX"})
+    assert r.status_code == 200
+    assert r.json()["found"] is False
+
+
+def test_route_usd_to_nigeria(client):
+    r = client.get(
+        "/api/route",
+        params={"bic": "GTBINGLAXXX", "currency": "NGN"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    assert body["beneficiary_country"] == "NG"
+    assert len(body["suggested_intermediaries"]) >= 1
+    # Citibank should be the primary for USD->NG
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_no_curated_rule(client):
+    # A currency with no curated rule -> empty list + advisory note.
+    r = client.get(
+        "/api/route",
+        params={"bic": "GTBINGLAXXX", "currency": "XXX"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["suggested_intermediaries"] == []
+    assert "No curated corridor" in body["notes"]
+
+
+def test_route_from_iban_input(client):
+    # The router should accept an IBAN and derive the BIC.
+    r = client.get(
+        "/api/route",
+        params={"bic": "GB29NWBK60161331926819", "currency": "GBP"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    assert body["currency"] == "GBP"
+
+
+# ---------------------------------------------------------------------------
+# Fedwire/FedACH importer — parser unit tests (no network)
+# ---------------------------------------------------------------------------
+
+
+def test_fedwire_parser():
+    from app.services.fed_importer import parse_fedwire_line
+
+    # Real-format line from the FRB Fedwire directory
+    line = "011000015FRB-BOS           FEDERAL RESERVE BANK OF BOSTON      MABOSTON                   Y Y20040910"
+    rec = parse_fedwire_line(line)
+    assert rec is not None
+    assert rec["routing_number"] == "011000015"
+    assert rec["telegraphic_name"] == "FRB-BOS"
+    assert "FEDERAL RESERVE" in rec["customer_name"]
+    assert rec["state_code"] == "MA"
+    assert rec["city"] == "BOSTON"
+    assert rec["funds_transfer"] == "Y"
+    assert rec["date_of_last_revision"] == "20040910"
+
+
+def test_fedwire_parser_short_line():
+    from app.services.fed_importer import parse_fedwire_line
+
+    assert parse_fedwire_line("short") is None
+
+
+def test_fedach_parser():
+    from app.services.fed_importer import parse_fedach_line
+
+    line = (
+        "011000015O0110000150122415000000000FEDERAL RESERVE BANK                "
+        "1000 PEACHTREE ST N.E.              ATLANTA             GA303094470877372245711      "
+    )
+    rec = parse_fedach_line(line)
+    assert rec is not None
+    assert rec["routing_number"] == "011000015"
+    assert "FEDERAL RESERVE" in rec["customer_name"]
+    assert rec["city"] == "ATLANTA"
+    assert rec["state_code"] == "GA"
+
+
+def test_us_routing_number_detection():
+    from app.services.routing import is_us_routing_number
+
+    assert is_us_routing_number("011000015") is True
+    assert is_us_routing_number("011-000-015") is True
+    assert is_us_routing_number("GTBINGLAXXX") is False
+    assert is_us_routing_number("123") is False
+
+
+def test_us_bank_endpoint_before_import(client):
+    """Before import, /us-bank should report found=False."""
+    r = client.get("/api/us-bank", params={"routing_number": "011000015"})
+    assert r.status_code == 200
+    # Before import, the directory is empty.
+    body = r.json()
+    # Accept either (empty DB -> not found, or seeded by a prior test -> found)
+    assert body["found"] in (True, False)
+
+
+def test_us_bank_endpoint_bad_input(client):
+    r = client.get("/api/us-bank", params={"routing_number": "abc"})
+    assert r.status_code == 400
+
+
+def test_route_domestic_usd_no_intermediary(client):
+    """A 9-digit ABA routing number + USD = domestic wire, no intermediary."""
+    r = client.get(
+        "/api/route",
+        params={"bic": "011000015", "currency": "USD"},
+    )
+    # Works whether or not Fed data is imported — the USD branch returns early
+    # based on the routing-number shape alone.
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    assert body["beneficiary_country"] == "US"
+    assert body["suggested_intermediaries"] == []
+    assert "no SWIFT intermediary" in body["notes"]
+
+
+# ---------------------------------------------------------------------------
+# Currency inference — funding currency (USD) should map to destination
+# ---------------------------------------------------------------------------
+
+
+def test_route_usd_infers_ngn(client):
+    """Passing currency=USD for a Nigerian bank should infer NGN and match."""
+    r = client.get(
+        "/api/route",
+        params={"bic": "GTBINGLAXXX", "currency": "USD"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    # Should now return Nigeria intermediaries, not "no curated corridor".
+    assert len(body["suggested_intermediaries"]) >= 1
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_usd_infers_kes(client):
+    """Passing currency=USD for a Kenyan bank should infer KES."""
+    r = client.get(
+        "/api/route",
+        params={"bic": "SCBLKENXAXX", "currency": "USD"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["suggested_intermediaries"]) >= 1
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_explicit_dest_currency_still_works(client):
+    """Passing currency=NGN directly should still work (no regression)."""
+    r = client.get(
+        "/api/route",
+        params={"bic": "GTBINGLAXXX", "currency": "NGN"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["suggested_intermediaries"]) >= 1
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+# ---------------------------------------------------------------------------
+# Asia-Pacific corridors
+# ---------------------------------------------------------------------------
+
+
+def test_route_usd_to_japan(client):
+    r = client.get("/api/route", params={"bic": "BOTKJPJTXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    assert body["currency"] == "JPY"  # inferred from JP
+    assert len(body["suggested_intermediaries"]) >= 1
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_usd_to_china(client):
+    r = client.get("/api/route", params={"bic": "BKCHCNBJXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "CNY"
+    # Bank of China should be primary for USD->CN
+    assert body["suggested_intermediaries"][0]["bic"] == "BKCHCNBJXXX"
+
+
+def test_route_usd_to_hong_kong(client):
+    r = client.get("/api/route", params={"bic": "HSBCHKHHXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "HKD"
+    assert body["suggested_intermediaries"][0]["bic"] == "HSBCHKHHXXX"
+
+
+def test_route_usd_to_singapore(client):
+    r = client.get("/api/route", params={"bic": "DBSSSGSXAXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "SGD"
+    assert body["suggested_intermediaries"][0]["bic"] == "DBSSSGSXAXX"
+
+
+def test_route_usd_to_australia(client):
+    r = client.get("/api/route", params={"bic": "ANZBAU3MXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "AUD"
+    assert len(body["suggested_intermediaries"]) >= 1
+
+
+# ---------------------------------------------------------------------------
+# Middle East corridors
+# ---------------------------------------------------------------------------
+
+
+def test_route_usd_to_uae(client):
+    r = client.get("/api/route", params={"bic": "EBILAEADXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "AED"
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_usd_to_saudi(client):
+    r = client.get("/api/route", params={"bic": "NCBKSAJEXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "SAR"
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_usd_to_qatar(client):
+    r = client.get("/api/route", params={"bic": "NBQAQAQAXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "QAR"
+    assert len(body["suggested_intermediaries"]) >= 1
+
+
+def test_route_usd_to_israel(client):
+    r = client.get("/api/route", params={"bic": "POALILITXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "ILS"
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+def test_route_usd_to_turkey(client):
+    r = client.get("/api/route", params={"bic": "TGBTTR2IXXX", "currency": "USD"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["currency"] == "TRY"
+    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWIFT Routing — Admin</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        SWIFT Routing
+        <div class="sub">Cross-border payments</div>
+      </div>
+      <ul class="nav">
+        <li><a href="#" data-page="dashboard" onclick="navigate('dashboard');return false;">Dashboard</a></li>
+        <li><a href="#" data-page="banks" onclick="navigate('banks');return false;">Bank Directory</a></li>
+        <li><a href="#" data-page="corridors" onclick="navigate('corridors');return false;">Corridors</a></li>
+        <li><a href="#" data-page="ssi" onclick="navigate('ssi');return false;">Settlement (SSI)</a></li>
+        <li><a href="#" data-page="vop" onclick="navigate('vop');return false;">Verify Payee</a></li>
+        <li><a href="#" data-page="prepare" onclick="navigate('prepare');return false;">Prepare Payment</a></li>
+        <li><a href="#" data-page="tracking" onclick="navigate('tracking');return false;">Tracking</a></li>
+      </ul>
+    </nav>
+    <main class="main" id="main"></main>
+  </div>
+  <script src="/static/js/visualizers.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
