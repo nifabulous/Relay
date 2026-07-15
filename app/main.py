@@ -29,10 +29,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SWIFT Intermediary Routing API",
+    title="SWIFT Routing Lab — Educational Sandbox (SIMULATION, not for real payments)",
     description=(
-        "Validate IBAN/BIC, look up banks, and get heuristic intermediary "
-        "bank suggestions for cross-border payments."
+        "Educational sandbox: validate IBAN/BIC, look up banks, and get "
+        "heuristic intermediary bank suggestions for cross-border payments. "
+        "⚠ SIMULATION — do not use for real payments. All data is illustrative; "
+        "account numbers are placeholders; tracking is simulated."
     ),
     version="0.1.0",
     lifespan=lifespan,

@@ -13,6 +13,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 15px; }
 
+/* ── SIMULATION banner (unmissable safety warning) ─────── */
+.sim-banner {
+  background: var(--amber-bg, #fffbeb);
+  color: var(--amber, #b45309);
+  border-bottom: 1px solid var(--amber, #d97706);
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 /* ── Tokens (light theme — calm, trustworthy, restrained) ── */
 :root {
   /* Surfaces: steps of the same hue, no shadows */
