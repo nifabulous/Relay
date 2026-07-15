@@ -14,7 +14,13 @@ ARCHITECTURE:
   - The VoPBackend protocol defines the adapter interface so a real gateway
     can be dropped in without changing the endpoint.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass
 from typing import Optional, Protocol

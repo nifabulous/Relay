@@ -9,7 +9,13 @@ This is the integration point: any UI or downstream system calls ONE endpoint
 instead of four, and reads ONE field (recommendation) to decide whether to
 enable the Send button.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass
 from typing import Optional

@@ -14,7 +14,13 @@ import_fedwire / import_fedach raise — they do not silently fetch from a
 third-party mirror. This prevents a compromised mirror or MITM from injecting
 malicious routing data. Set the env vars to a trusted FRB-downloaded copy.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import os
 from collections.abc import Iterator

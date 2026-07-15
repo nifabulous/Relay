@@ -17,7 +17,13 @@ The function takes a plain dict (shaped like STPCheckRequest) so it can be
 exercised directly from tests/CLI without the HTTP layer. BIC validity reuses
 `validate_bic` from validator.py.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass, field
 from datetime import date, datetime

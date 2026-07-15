@@ -10,7 +10,13 @@ Charge codes:
   SHA — fees deducted from amount at each hop (most common)
   BEN — beneficiary pays all fees (same as SHA deduction)
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass, field
 from typing import List, Optional

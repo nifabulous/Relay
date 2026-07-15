@@ -1,10 +1,13 @@
 """FastAPI application entrypoint."""
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+logger = logging.getLogger(__name__)
 
 from .db import Base, SessionLocal, engine
 from .routers import (
@@ -50,14 +53,16 @@ async def lifespan(app: FastAPI):
     is_dev = DATABASE_URL.startswith("sqlite")
     if is_dev:
         Base.metadata.create_all(bind=engine)
+    app.state.seed_failed = False
     try:
         with SessionLocal() as session:
             inserted = seed_if_empty(session)
             if inserted["banks"] or inserted["corridor_rules"]:
                 app.state.seeded = inserted
+                logger.info("Seed data loaded: %s", inserted)
     except Exception as e:
-        import sys
-        print(f"WARNING: Seed data failed to load (non-fatal): {e}", file=sys.stderr)
+        app.state.seed_failed = True
+        logger.error("Seed data failed to load: %s", e, exc_info=True)
     yield
 
 

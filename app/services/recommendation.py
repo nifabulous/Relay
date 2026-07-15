@@ -16,7 +16,13 @@ Strictness levels let callers tune how CLOSE_MATCH and NOT_CHECKED are treated:
   standard — CLOSE_MATCH → REVIEW (default; human must confirm)
   strict   — CLOSE_MATCH → STOP (block), NOT_CHECKED → STOP
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass, field
 from enum import Enum

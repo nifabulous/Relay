@@ -7,7 +7,13 @@ currency, and payment scheme — accounting for weekends, holidays, and cut-off 
 Holiday data is embedded (not a DB table) for simplicity, matching the
 pattern of payment_schemes.py and LIFT_FEES.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta

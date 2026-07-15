@@ -6,7 +6,13 @@ the BIC from an IBAN where the national registry provides it. This is the
 free, deterministic layer — name/account-existence verification still needs
 a scheme service (VoP/CoP) or vendor API.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass
 from typing import Optional, Tuple

@@ -11,7 +11,13 @@ Thresholds (tunable, based on EPC guidance and real-world tuning):
                                       (return the actual name for payer review)
   - ratio < CLOSE_THRESHOLD       → NO_MATCH
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import re
 import unicodedata

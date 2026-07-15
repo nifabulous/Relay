@@ -16,7 +16,13 @@ LIMITATION — IMPORTANT:
   so swapping the simulator for a real SWIFT connection later requires only
   replacing the `generate_timeline` function with a gateway call.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import uuid
 from datetime import datetime, timedelta, timezone

@@ -15,7 +15,13 @@ compute the derived summary.
 Module IDs match the hash-route fragments in learn.js (e.g. `#lab-1` → "1",
 `#fees` → "fees", `#lab-capstone` → "capstone").
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from dataclasses import dataclass, field
 from typing import List, Optional

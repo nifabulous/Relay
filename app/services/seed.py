@@ -6,6 +6,11 @@ Bankers Almanac for authoritative BIC data and correspondent relationships.
 The corridor rules below reflect commonly known correspondent patterns for
 major corridors; treat confidence levels as advisory.
 """
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 from ..models import SSI, Account, Bank, CorridorRule
 
 # (bic, bank_name, country_code, city, country_currency)

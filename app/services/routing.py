@@ -10,6 +10,11 @@ Strategy (heuristic, since real correspondent routing is private/bilateral):
 For USD domestic wires, a 9-digit ABA routing number can also be resolved
 against the Fedwire/FedACH directory (imported via `app.cli import-fedwire`).
 """
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 from typing import List, Optional
 
 from sqlalchemy import select

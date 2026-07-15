@@ -22,7 +22,13 @@ NOT SUPPORTED:
     logos, headers/footers) and too fragile to parse reliably. Export to
     CSV first, then import.
 """
+
 from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import csv
 import json

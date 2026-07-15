@@ -1,5 +1,5 @@
 """Health check, IBAN/BIC validation, and bank directory lookup."""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -12,10 +12,15 @@ router = APIRouter(prefix="/api", tags=["swift"])
 
 
 @router.get("/health", response_model=HealthResponse)
-def health(db: Session = Depends(get_db)):
+def health(request: Request, db: Session = Depends(get_db)):
+    # If seeding failed on startup, report degraded so monitoring catches it
+    # (previously the error was swallowed to stderr and /health said "ok").
+    seed_failed = getattr(request.app.state, "seed_failed", False)
+    bank_count = db.query(Bank).count()
+    status = "degraded" if (seed_failed or bank_count == 0) else "ok"
     return HealthResponse(
-        status="ok",
-        banks=db.query(Bank).count(),
+        status=status,
+        banks=bank_count,
         corridor_rules=db.query(CorridorRule).count(),
         fedwire_banks=db.query(FedwireBank).count(),
         fedach_banks=db.query(FedACHBank).count(),
