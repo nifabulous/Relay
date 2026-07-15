@@ -1594,3 +1594,41 @@ mark.gloss-hit {
   }
   .viz-dot { animation: none !important; }
 }
+
+/* ── Mobile responsive (≤768px) — collapse nav to top bar, stack content ── */
+@media (max-width: 768px) {
+  .learn-nav {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .learn-nav ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .learn-nav ol li {
+    display: inline-block;
+  }
+  .lab-main {
+    margin-left: 0;
+    padding: 1rem;
+    max-width: 100%;
+  }
+  .sim-banner {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+  .viz-chain {
+    overflow-x: auto;
+  }
+  .detail-grid, table {
+    overflow-x: auto;
+    display: block;
+  }
+}
