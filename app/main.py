@@ -7,7 +7,36 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import Base, SessionLocal, engine
-from .routers import lookup as lookup_router
+from .routers import (
+    analytics as analytics_router,
+)
+from .routers import (
+    directory as directory_router,
+)
+from .routers import (
+    imports as imports_router,
+)
+from .routers import (
+    prepare as prepare_router,
+)
+from .routers import (
+    progress as progress_router,
+)
+from .routers import (
+    routing as routing_router,
+)
+from .routers import (
+    schemes as schemes_router,
+)
+from .routers import (
+    ssi as ssi_router,
+)
+from .routers import (
+    tracking as tracking_router,
+)
+from .routers import (
+    vop as vop_router,
+)
 from .services.seed import seed_if_empty
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -44,7 +73,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(lookup_router.router)
+app.include_router(directory_router.router)
+app.include_router(routing_router.router)
+app.include_router(imports_router.router)
+app.include_router(ssi_router.router)
+app.include_router(vop_router.router)
+app.include_router(tracking_router.router)
+app.include_router(schemes_router.router)
+app.include_router(prepare_router.router)
+app.include_router(analytics_router.router)
+app.include_router(progress_router.router)
 
 # Serve admin UI static assets (CSS/JS)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

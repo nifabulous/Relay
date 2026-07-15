@@ -9,7 +9,7 @@ from app.services.fed_importer import ImportResult
 
 
 class TestImportEndpoints:
-    @patch("app.routers.lookup.import_fedwire")
+    @patch("app.routers.imports.import_fedwire")
     def test_import_fedwire_success(self, mock_fn, client):
         """POST /api/import/fedwire returns correct response shape."""
         mock_fn.return_value = ImportResult(
@@ -23,7 +23,7 @@ class TestImportEndpoints:
         assert "message" in body
         assert "Fedwire" in body["message"]
 
-    @patch("app.routers.lookup.import_fedach")
+    @patch("app.routers.imports.import_fedach")
     def test_import_fedach_success(self, mock_fn, client):
         """POST /api/import/fedach returns correct response shape."""
         mock_fn.return_value = ImportResult(
