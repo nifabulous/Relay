@@ -14,15 +14,7 @@
   window.LearnLabs = window.LearnLabs || {};
 
   // ── Small shared utilities (module-local) ──────────────
-  function esc(s) {
-    if (s == null) return "";
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   function fmtMoney(num, ccy) {
     const n = Number(num);

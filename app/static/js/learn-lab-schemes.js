@@ -8,11 +8,7 @@
 window.LearnLabs = window.LearnLabs || {};
 
 (function () {
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   // Reusable quiz builder: creates clickable options with self-checking
   function buildQuiz(container, prefix, options, markComplete, labId) {

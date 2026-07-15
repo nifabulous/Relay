@@ -15,11 +15,7 @@
   "use strict";
 
   // HTML escape helper (prevents XSS from API/user data)
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   // Guard against redefinition / parallel agents. We always merge into the
   // shared map rather than replacing it.

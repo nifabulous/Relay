@@ -11,11 +11,7 @@ LearnLabs["capstone"] = function (main, helpers) {
   let paymentData = {};
 
   // HTML escape helper (prevents XSS from API/user data)
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   function render() {
     main.innerHTML = "";

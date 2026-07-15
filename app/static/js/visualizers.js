@@ -19,9 +19,7 @@ window.PaymentViz = (function () {
     return el;
   }
 
-  function esc(s) {
-    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
+  var esc = LearnUtils.esc;
 
   // ── 1. Animated Correspondent Chain ─────────────────
   //

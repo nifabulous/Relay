@@ -7,14 +7,7 @@
 const API = "";  // same origin
 
 // ── HTML escaping (prevents XSS from API/user data) ──────
-function esc(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+var esc = LearnUtils.esc;
 
 // ── Routing ──────────────────────────────────────────────
 const routes = {

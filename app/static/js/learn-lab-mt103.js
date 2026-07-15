@@ -16,11 +16,7 @@ window.LearnLabs = window.LearnLabs || {};
 (function () {
   "use strict";
 
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   // The canonical demo message — mirrors app/data/mt103_samples.SAMPLE_MT103,
   // a known-clean MT103 that yields verdict CLEAN. The learner can mutate the

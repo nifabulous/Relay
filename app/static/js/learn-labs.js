@@ -16,11 +16,7 @@ window.LearnLabs = window.LearnLabs || {};
  * see real banks in the directory, and practice finding banks by code.
  * ======================================================================= */
 window.LearnLabs["1"] = function (main, helpers) {
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   const { el, glossify, markComplete, getProgress } = helpers;
 

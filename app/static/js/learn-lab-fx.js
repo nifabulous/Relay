@@ -17,11 +17,7 @@ window.LearnLabs = window.LearnLabs || {};
 (function () {
   "use strict";
 
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = LearnUtils.esc;
 
   // USD-anchored, mid-2026 illustrative. Cross rate From->To = RATES[To]/RATES[From].
   var RATES = {
