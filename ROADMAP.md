@@ -23,7 +23,7 @@
 
 1. **Show, don't tell.** Every concept has a live demo you can run.
 2. **One concept per page.** Each lab teaches one thing, then links to the next.
-3. **Real data, not toy data.** 210 real banks, 301 real SSI records, 18,000+ Fedwire entries. The numbers you see are actual correspondent banking data.
+3. **Real relationships, safe placeholders.** 210 real banks, 301 SSI records reflecting real correspondent relationships, 18,000+ Fedwire entries. The bank/BIC/correspondent relationships are real public directory facts; account numbers are illustrative `ACCT-` placeholders — never wire funds using seed data.
 4. **Make mistakes safely.** Try a wrong name → see NO_MATCH. Try a bad IBAN → see the checksum fail. Learn by breaking things without consequence.
 5. **Follow the money.** The curriculum mirrors the actual lifecycle: validate → verify → route → settle → track.
 
@@ -63,7 +63,7 @@ BICs/IBANs  →  format check → name match  → intermediaries→ SSI accounts
 
 ### Lab 5: "Where exactly do I send the money?" (SSI — Settlement Instructions)
 **Teaches:** Standard Settlement Instructions, Nostro account numbers, charge codes (OUR/SHA/BEN)
-**Hands-on:** Look up real SSI for Emirates NBD → see the actual Citibank account number
+**Hands-on:** Look up SSI for Emirates NBD → see the correspondent chain (Citibank, Standard Chartered, BNY Mellon) and the placeholder Nostro account numbers
 **Status:** ✅ Engine + UI + 301 real records exist — needs *contextual explanations*
 
 ### Lab 6: "Did it arrive?" (UETR tracking)
@@ -297,4 +297,4 @@ How we'll know it's working:
 - **Not a licensed financial advice tool.** It's educational.
 - **Not a replacement for SWIFTRef/Accuity.** The data is real but curated, not comprehensive.
 
-The SSI account numbers are real (sourced from bank-published pages), but the system is for learning — not for wiring actual funds.
+The SSI account numbers are illustrative `ACCT-` placeholders. The bank and correspondent relationships are real (sourced from bank-published pages), but account numbers are masked so no synthetic number can be mistaken for real. The system is for learning — not for wiring actual funds.

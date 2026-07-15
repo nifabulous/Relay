@@ -103,41 +103,25 @@ class TestSSISeedIntegrity:
             charge = row[7]
             assert charge in valid, f"Invalid charge code: {charge} in {row}"
 
-    def test_all_account_numbers_are_marked(self):
+    def test_all_account_numbers_are_placeholders(self):
         """
-        Account numbers are either ACCT- placeholders or real sourced values.
-        Real values must come from a cited source (note contains 'Source:').
-        This prevents accidentally seeding unverified numbers without a note.
+        All account numbers must be ACCT- placeholders.
+
+        Previously this test allowed 'placeholder OR sourced-real'. That policy
+        was a liability: real account numbers go stale, invite misuse, and
+        contradict the README's safety claim. The stricter invariant lives in
+        TestAllSSIAccountsArePlaceholders; this test is kept as a fast
+        boolean check (no regex) for a quick failure signal.
         """
         from app.services.seed import SSI_RECORDS
 
         for row in SSI_RECORDS:
-            intermediary_acct = row[5]
-            beneficiary_acct = row[6]
-            notes = row[9]
-            is_placeholder = intermediary_acct.startswith("ACCT-")
-            is_sourced = "Source:" in notes or "sourced" in notes.lower()
-
-            # Intermediary account: placeholder OR sourced from a real page
-            assert is_placeholder or is_sourced, (
-                f"Intermediary account {intermediary_acct} is neither a "
-                f"placeholder (ACCT-) nor sourced from a real SSI page. "
-                f"Add 'Source: ...' to the notes."
+            assert row[5].startswith("ACCT-"), (
+                f"intermediary_account {row[5]} is not an ACCT- placeholder"
             )
-            # Beneficiary account can be either format; just must be non-empty
-            assert beneficiary_acct, f"Empty beneficiary account in row: {row}"
-
-    def test_real_accounts_cite_source(self):
-        """Every non-placeholder account must cite its source in the notes."""
-        from app.services.seed import SSI_RECORDS
-
-        for row in SSI_RECORDS:
-            intermediary_acct = row[5]
-            if not intermediary_acct.startswith("ACCT-"):
-                notes = row[9]
-                assert "Source:" in notes, (
-                    f"Real account {intermediary_acct} has no source citation in notes."
-                )
+            assert row[6].startswith("ACCT-"), (
+                f"beneficiary_account {row[6]} is not an ACCT- placeholder"
+            )
 
     def test_all_bics_valid(self):
         from schwifty import BIC
@@ -306,6 +290,73 @@ class TestSSISeedIntegrity:
         assert found, f"No SSI for {beneficiary_bic} / {currency}"
 
 
+class TestAllSSIAccountsArePlaceholders:
+    """
+    Safety invariant: NO real bank account numbers in seed data.
+
+    Every intermediary_account and beneficiary_account must start with
+    'ACCT-' so no synthetic number can be mistaken for a real one and
+    wired funds to. This replaces the permissive 'placeholder OR sourced'
+    check — sourced real numbers are a liability (they go stale, they
+    invite misuse, and they contradict the README's central safety claim).
+    """
+
+    def test_every_intermediary_account_is_placeholder(self):
+        import re
+
+        from app.services.seed import SSI_RECORDS
+
+        pattern = re.compile(r"^ACCT-\d+$")
+        offenders = [
+            (row[0], row[2], row[3], row[5])
+            for row in SSI_RECORDS
+            if not pattern.match(row[5])
+        ]
+        assert not offenders, (
+            f"{len(offenders)} SSI rows have non-placeholder intermediary_account "
+            f"(must match ^ACCT-\\d+$). First 5: {offenders[:5]}"
+        )
+
+    def test_every_beneficiary_account_is_placeholder(self):
+        import re
+
+        from app.services.seed import SSI_RECORDS
+
+        pattern = re.compile(r"^ACCT-\d+$")
+        offenders = [
+            (row[0], row[2], row[3], row[6])
+            for row in SSI_RECORDS
+            if not pattern.match(row[6])
+        ]
+        assert not offenders, (
+            f"{len(offenders)} SSI rows have non-placeholder beneficiary_account "
+            f"(must match ^ACCT-\\d+$). First 5: {offenders[:5]}"
+        )
+
+    def test_no_real_ibans_in_notes(self):
+        """
+        Real IBANs leak in the notes field too (e.g. 'IBAN: AE41...').
+        The safety goal is unmet if notes carry copy-able real account
+        numbers even after the account fields are masked.
+        """
+        import re
+
+        from app.services.seed import SSI_RECORDS
+
+        # Real IBAN format: 2 letters + 2 digits + 11-30 more chars
+        iban_pattern = re.compile(r"IBAN[:\s]+[A-Z]{2}\d")
+        offenders = []
+        for row in SSI_RECORDS:
+            notes = row[9] or ""
+            match = iban_pattern.search(notes)
+            if match:
+                offenders.append((row[0], row[2], match.group()))
+        assert not offenders, (
+            f"{len(offenders)} SSI rows contain a real IBAN in the notes field. "
+            f"Mask it as 'IBAN: <placeholder>'. First 5: {offenders[:5]}"
+        )
+
+
 # ===========================================================================
 # Health endpoint integration
 # ===========================================================================
@@ -343,8 +394,16 @@ class TestSSIModel:
         ).scalars().all()
         assert len(currencies) >= 25, f"Expected 25+ currencies for SMBC, got {len(currencies)}"
 
-    def test_real_ssi_data_present(self, db_session_clean):
-        """Verify the real sourced SSI records from Emirates NBD are loaded."""
+    def test_enbd_ssi_records_present(self, db_session_clean):
+        """
+        Verify the Emirates NBD SSI records are loaded.
+
+        The bank/correspondent *relationships* are real (sourced from the
+        published SSI page), but all account numbers are now ACCT- placeholders
+        — no real account numbers ship in the source (safety invariant, see
+        TestAllSSIAccountsArePlaceholders). The 'Source:' citation in notes
+        documents where the relationship came from.
+        """
         from sqlalchemy import select
         from app.models import SSI
 
@@ -354,15 +413,16 @@ class TestSSIModel:
                 SSI.currency == "USD",
             )
         ).scalars().all()
-        # ENBD USD has at least 4 real correspondents from the published SSI page
-        # plus possibly the original placeholder record
+        # ENBD USD has at least 4 correspondents from the published SSI page
         assert len(rows) >= 4
-        # At least 4 should be real (non-placeholder) account numbers
-        real_count = sum(1 for r in rows if not r.intermediary_account.startswith("ACCT-"))
-        assert real_count >= 4, f"Expected ≥4 real ENBD USD records, got {real_count}"
+        # ALL account numbers must be placeholders now
         for row in rows:
-            if not row.intermediary_account.startswith("ACCT-"):
-                assert "Source:" in (row.notes or ""), "Real SSI must cite source"
+            assert row.intermediary_account.startswith("ACCT-"), (
+                f"intermediary_account must be ACCT- placeholder, got {row.intermediary_account}"
+            )
+            assert row.beneficiary_account.startswith("ACCT-"), (
+                f"beneficiary_account must be ACCT- placeholder, got {row.beneficiary_account}"
+            )
 
     def test_enbd_multi_currency_coverage(self, db_session_clean):
         """Emirates NBD should have SSI across many currencies."""
