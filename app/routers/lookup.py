@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..auth import admin_required
 from ..db import get_db
 from ..models import Bank, CorridorRule, FedACHBank, FedwireBank, PaymentEvent, SSI
 from ..schemas import (
@@ -254,7 +255,7 @@ def us_bank_lookup(
     return USBankLookupResponse(routing_number=rtn, bank=None, found=False)
 
 
-@router.post("/import/fedwire", response_model=ImportResponse)
+@router.post("/import/fedwire", response_model=ImportResponse, dependencies=[Depends(admin_required)])
 def trigger_fedwire_import(db: Session = Depends(get_db)):
     """
     Reload the Fedwire directory. Pulls the public FRB E-Payments snapshot.
@@ -269,7 +270,7 @@ def trigger_fedwire_import(db: Session = Depends(get_db)):
     )
 
 
-@router.post("/import/fedach", response_model=ImportResponse)
+@router.post("/import/fedach", response_model=ImportResponse, dependencies=[Depends(admin_required)])
 def trigger_fedach_import(db: Session = Depends(get_db)):
     """Reload the FedACH directory (~25,000 rows). Admin/CLI use."""
     result = import_fedach(db)
@@ -286,7 +287,7 @@ def trigger_fedach_import(db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 
-@router.post("/import/ssi")
+@router.post("/import/ssi", dependencies=[Depends(admin_required)])
 async def trigger_ssi_import(
     file: UploadFile = File(..., description="CSV or JSON file of SSI records"),
     db: Session = Depends(get_db),
@@ -463,7 +464,7 @@ _TRACKING_DISCLAIMER = (
 )
 
 
-@router.post("/track/create", response_model=TrackPaymentResponse)
+@router.post("/track/create", response_model=TrackPaymentResponse, dependencies=[Depends(admin_required)])
 def create_tracked_payment(request: TrackPaymentRequest, db: Session = Depends(get_db)):
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
