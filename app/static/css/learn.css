@@ -700,6 +700,10 @@ body {
   left: 12px;
   animation: viz-dot-travel 3s ease-in-out infinite;
 }
+/* Pause-on-hover so learners can study a hop (UX panel #9) */
+.viz-chain:hover .viz-dot {
+  animation-play-state: paused;
+}
 @keyframes viz-dot-travel {
   0%   { left: 12px; opacity: 0; }
   10%  { opacity: 1; }

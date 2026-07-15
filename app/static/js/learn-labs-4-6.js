@@ -239,15 +239,29 @@
       into.innerHTML = "";
 
       // Build animated chain using the visualizer
-      var chainNodes = [{ label: "Your Bank", sub: "originator", tone: "you" }];
+      // Thread illustrative per-hop amounts so the learner sees money shrink
+      // (ROADMAP 2.1: "Show the fee deduction at each hop").
+      var sendAmount = 5000;
+      var perHopFee = 15; // illustrative lift fee per intermediary
+      var runningAmount = sendAmount;
+      var chainNodes = [
+        { label: "Your Bank", sub: "originator", tone: "you", amount: "$" + sendAmount.toLocaleString() }
+      ];
       inter.forEach(function (i, idx) {
+        runningAmount -= perHopFee;
         chainNodes.push({
           label: i.bank || i.bic,
-          sub: "hop " + (idx + 1),
+          sub: "hop " + (idx + 1) + " · −$" + perHopFee,
           tone: "inter",
+          amount: "$" + runningAmount.toLocaleString(),
         });
       });
-      chainNodes.push({ label: benName, sub: "beneficiary", tone: "ben" });
+      chainNodes.push({
+        label: benName,
+        sub: "beneficiary · receives",
+        tone: "ben",
+        amount: "$" + runningAmount.toLocaleString(),
+      });
 
       if (inter.length > 0 && window.PaymentViz) {
         // Animated chain
