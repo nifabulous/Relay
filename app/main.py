@@ -109,8 +109,17 @@ def learn_ui(rest: str = ""):
 
 @app.get("/")
 def root():
+    """Redirect to the learning labs — the flagship experience."""
+    from fastapi.responses import RedirectResponse
+
+    return RedirectResponse(url="/learn", status_code=302)
+
+
+@app.get("/api/manifest")
+def api_manifest():
+    """Machine-readable endpoint manifest (moved from / so root can redirect)."""
     return {
-        "service": "SWIFT Intermediary Routing API",
+        "service": "SWIFT Routing Lab — Educational Sandbox (SIMULATION)",
         "docs": "/docs",
         "ui": "/ui",
         "learn": "/learn",
