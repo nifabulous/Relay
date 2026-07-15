@@ -6,10 +6,13 @@ Data source: FRB Services (https://www.frbservices.org/resources/routing-number-
   - FedACH directory (FedACHdir.txt) — fixed-width, 155 chars/record
 
 NOTE ON TERMS: The FRB requires accepting the E-Payments Routing Directory
-Terms of Use. The data is free and public, but by default this importer loads
-a bundled snapshot. Point FEDWIRE_URL / FEDACH_URL at your own downloaded copy
-once you've accepted the terms at the URL above. The defaults below use a
-widely-mirrored open copy for development convenience.
+Terms of Use. The data is free and public. Point FEDWIRE_URL / FEDACH_URL
+at your own downloaded copy once you've accepted the terms at the URL above.
+
+SECURITY: There is NO remote default. If FEDWIRE_URL / FEDACH_URL are unset,
+import_fedwire / import_fedach raise — they do not silently fetch from a
+third-party mirror. This prevents a compromised mirror or MITM from injecting
+malicious routing data. Set the env vars to a trusted FRB-downloaded copy.
 """
 from __future__ import annotations
 
@@ -23,15 +26,10 @@ from sqlalchemy.orm import Session
 
 from ..models import FedACHBank, FedwireBank
 
-# Default sources — can be overridden via env after you accept the FRB terms.
-DEFAULT_FEDWIRE_URL = os.getenv(
-    "FEDWIRE_URL",
-    "https://raw.githubusercontent.com/moov-io/fed/master/data/fpddir.txt",
-)
-DEFAULT_FEDACH_URL = os.getenv(
-    "FEDACH_URL",
-    "https://raw.githubusercontent.com/moov-io/fed/master/data/FedACHdir.txt",
-)
+# No remote default — fail closed if unset. Set FEDWIRE_URL / FEDACH_URL to a
+# trusted FRB-downloaded copy after accepting the terms at frbservices.org.
+DEFAULT_FEDWIRE_URL = os.getenv("FEDWIRE_URL")  # None if unset
+DEFAULT_FEDACH_URL = os.getenv("FEDACH_URL")    # None if unset
 USER_AGENT = "swift-routing-importer/0.1 (educational)"
 
 
@@ -145,7 +143,14 @@ def iter_records(text: str, parser) -> Iterator[dict]:
 # ---------------------------------------------------------------------------
 
 
-def import_fedwire(session: Session, url: str = DEFAULT_FEDWIRE_URL) -> ImportResult:
+def import_fedwire(session: Session, url: Optional[str] = DEFAULT_FEDWIRE_URL) -> ImportResult:
+    if not url:
+        raise ValueError(
+            "FEDWIRE_URL is not set. Download the Fedwire directory from "
+            "https://www.frbservices.org/resources/routing-number-directory "
+            "(accept the terms), then set FEDWIRE_URL to your local copy. "
+            "No remote default for supply-chain safety."
+        )
     text = _download(url)
     # Wipe + reload — the FRB file is an authoritative full snapshot.
     session.query(FedwireBank).delete()
@@ -162,7 +167,14 @@ def import_fedwire(session: Session, url: str = DEFAULT_FEDWIRE_URL) -> ImportRe
     )
 
 
-def import_fedach(session: Session, url: str = DEFAULT_FEDACH_URL) -> ImportResult:
+def import_fedach(session: Session, url: Optional[str] = DEFAULT_FEDACH_URL) -> ImportResult:
+    if not url:
+        raise ValueError(
+            "FEDACH_URL is not set. Download the FedACH directory from "
+            "https://www.frbservices.org/resources/routing-number-directory "
+            "(accept the terms), then set FEDACH_URL to your local copy. "
+            "No remote default for supply-chain safety."
+        )
     text = _download(url)
     session.query(FedACHBank).delete()
     inserted = 0

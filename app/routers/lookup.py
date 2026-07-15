@@ -260,8 +260,12 @@ def trigger_fedwire_import(db: Session = Depends(get_db)):
     """
     Reload the Fedwire directory. Pulls the public FRB E-Payments snapshot.
     Heavy operation (~7,500 rows); intended for admin/CLI use, not per-request.
+    Requires FEDWIRE_URL env var pointing at a trusted FRB-downloaded copy.
     """
-    result = import_fedwire(db)
+    try:
+        result = import_fedwire(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return ImportResponse(
         source=result.source,
         inserted=result.inserted,
@@ -272,8 +276,12 @@ def trigger_fedwire_import(db: Session = Depends(get_db)):
 
 @router.post("/import/fedach", response_model=ImportResponse, dependencies=[Depends(admin_required)])
 def trigger_fedach_import(db: Session = Depends(get_db)):
-    """Reload the FedACH directory (~25,000 rows). Admin/CLI use."""
-    result = import_fedach(db)
+    """Reload the FedACH directory (~25,000 rows). Admin/CLI use.
+    Requires FEDACH_URL env var pointing at a trusted FRB-downloaded copy."""
+    try:
+        result = import_fedach(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return ImportResponse(
         source=result.source,
         inserted=result.inserted,

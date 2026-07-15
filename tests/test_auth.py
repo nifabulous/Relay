@@ -65,8 +65,8 @@ class TestImportEndpointAuth:
         )
 
     def test_import_fedwire_accepted_with_correct_key(self, client_with_auth):
-        # The import will fail (no network / mock data) but must NOT be 401.
-        # It should be 400/500 (import error), proving auth passed.
+        # Auth passes (not 401). With no FEDWIRE_URL configured, the endpoint
+        # returns 400 (configuration error) — proving the request got past auth.
         r = client_with_auth.post(
             "/api/import/fedwire",
             headers={"X-Admin-Key": "test-secret-key-123"},
@@ -106,6 +106,9 @@ class TestDevModeOpenAccess:
     """In dev mode (no ADMIN_API_KEY set), endpoints remain open for local dev."""
 
     def test_import_fedwire_open_in_dev(self, client_dev_mode):
+        # In dev mode, auth is not enforced (not 401). The import itself
+        # returns 400 because no FEDWIRE_URL is configured — that's the
+        # fail-closed supply-chain guard, separate from auth.
         r = client_dev_mode.post("/api/import/fedwire")
         assert r.status_code != 401, (
             f"In dev mode (no key set), /import/fedwire must not be 401, got {r.status_code}"
