@@ -37,19 +37,19 @@ html { font-size: 15px; }
   /* Ink: hierarchy through weight, not color */
   --ink:        #0a0a0a;   /* primary text */
   --ink-2:      #525252;   /* secondary text */
-  --ink-3:      #a3a3a3;   /* muted labels */
+  --ink-3:      #6b7280;   /* muted labels — darkened from #a3a3a3 for WCAG AA (was 2.4:1, now ~4.6:1) */
 
   /* Accent: reserved for actions + active nav ONLY */
-  --accent:       #3b82f6; /* links, buttons, active state */
-  --accent-hover: #2563eb;
+  --accent:       #2563eb; /* links, buttons, active state — darkened from #3b82f6 for AA */
+  --accent-hover: #1d4ed8;
   --accent-surface: #eff6ff; /* very pale accent for badges */
 
-  /* Semantic (used sparingly — status only) */
-  --green:    #16a34a;
+  /* Semantic (used sparingly — status only) — foregrounds darkened for WCAG AA */
+  --green:    #15803d;     /* was #16a34a (3.15:1 on pale bg → now ~4.5:1+) */
   --green-bg: #f0fdf4;
-  --amber:    #d97706;
+  --amber:    #b45309;     /* was #d97706 (3.07:1 → now ~4.5:1+) */
   --amber-bg: #fffbeb;
-  --red:      #dc2626;
+  --red:      #b91c1c;     /* was #dc2626 (4.41:1 → now ~5:1+) */
   --red-bg:   #fef2f2;
 
   /* Borders: 1px, low-opacity — the structural workhorse */
@@ -235,8 +235,13 @@ input[type="text"], input[type="number"], select, textarea {
   color: var(--ink);
 }
 input:focus, select:focus, textarea:focus {
-  outline: none;
   border-color: var(--accent);
+}
+/* WCAG 2.4.7: visible focus indicator for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 /* ── Buttons (accent reserved here) ────────────────────── */
@@ -373,3 +378,12 @@ input:focus, select:focus, textarea:focus {
   font-family: inherit;
 }
 .tab.active { background: var(--surface-3); font-weight: 500; color: var(--ink); }
+
+/* WCAG 2.3.3: respect reduced-motion preference (vestibular safety) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

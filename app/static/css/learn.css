@@ -27,15 +27,15 @@ html { font-size: 15px; }
   --surface-3:  #eeeeec;
   --ink:        #1c1917;
   --ink-2:      #57534e;
-  --ink-3:      #a8a29e;
+  --ink-3:      #6b7280;     /* darkened from #a8a29e for WCAG AA (was 2.4:1) */
   --accent:       #2563eb;
   --accent-hover: #1d4ed8;
   --accent-surface: #eff6ff;
-  --green:    #16a34a;
+  --green:    #15803d;       /* darkened from #16a34a for AA on pale bg */
   --green-bg: #f0fdf4;
-  --amber:    #d97706;
+  --amber:    #b45309;       /* darkened from #d97706 for AA */
   --amber-bg: #fffbeb;
-  --red:      #dc2626;
+  --red:      #b91c1c;       /* darkened from #dc2626 for AA */
   --red-bg:   #fef2f2;
   --border:       #e7e5e4;
   --border-strong:#d6d3d1;
@@ -308,7 +308,13 @@ body {
   background: var(--surface);
   color: var(--ink);
 }
-.lab-input:focus { outline: none; border-color: var(--accent); }
+.lab-input:focus { border-color: var(--accent); }
+/* WCAG 2.4.7: visible focus indicator for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
 
 .lab-btn {
   display: inline-block;
@@ -1578,3 +1584,13 @@ mark.gloss-hit {
 
 .copy-msg-ok { color: var(--green); }
 .copy-msg-err { color: var(--amber); }
+
+/* WCAG 2.3.3: respect reduced-motion preference (vestibular safety) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .viz-dot { animation: none !important; }
+}
