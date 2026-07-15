@@ -9,7 +9,6 @@ Covers:
 """
 import pytest
 
-
 # ===========================================================================
 # HTTP endpoint tests
 # ===========================================================================
@@ -125,6 +124,7 @@ class TestSSISeedIntegrity:
 
     def test_all_bics_valid(self):
         from schwifty import BIC
+
         from app.services.seed import SSI_RECORDS
 
         # Some real BICs use non-standard pseudo-country codes (e.g. EDBBEB22
@@ -385,6 +385,7 @@ class TestSSIModel:
     def test_smbc_multi_currency_coverage(self, db_session_clean):
         """SMBC London should have SSI across 25+ currencies."""
         from sqlalchemy import select
+
         from app.models import SSI
 
         currencies = db_session_clean.execute(
@@ -405,6 +406,7 @@ class TestSSIModel:
         documents where the relationship came from.
         """
         from sqlalchemy import select
+
         from app.models import SSI
 
         rows = db_session_clean.execute(
@@ -426,7 +428,8 @@ class TestSSIModel:
 
     def test_enbd_multi_currency_coverage(self, db_session_clean):
         """Emirates NBD should have SSI across many currencies."""
-        from sqlalchemy import select, func
+        from sqlalchemy import select
+
         from app.models import SSI
 
         currencies = db_session_clean.execute(
@@ -439,6 +442,7 @@ class TestSSIModel:
 
     def test_ssi_query_by_bic_and_currency(self, db_session_clean):
         from sqlalchemy import select
+
         from app.models import SSI
 
         row = db_session_clean.execute(
@@ -457,6 +461,7 @@ class TestSSIModel:
 
     def test_ssi_record_has_all_fields(self, db_session_clean):
         from sqlalchemy import select
+
         from app.models import SSI
 
         # ENBD now has many rows; just check the first one has all fields populated

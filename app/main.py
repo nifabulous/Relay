@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .db import Base, engine, SessionLocal
+from .db import Base, SessionLocal, engine
 from .routers import lookup as lookup_router
 from .services.seed import seed_if_empty
 

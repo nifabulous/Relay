@@ -12,26 +12,29 @@ enable the Send button.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import SSI
 from ..schemas import (
-    IntermediarySuggestion,
     PrepareRoutingInfo,
     PrepareSSIInfo,
     PrepareValidationInfo,
     PrepareVoPInfo,
     SSIRecord,
 )
-from .recommendation import Recommendation, RecommendationResult, decide
-from .routing import _normalize_bic_input, infer_destination_currency, lookup_bank, suggest_intermediaries
+from .recommendation import RecommendationResult, decide
+from .routing import (
+    _normalize_bic_input,
+    infer_destination_currency,
+    lookup_bank,
+    suggest_intermediaries,
+)
 from .tracking import generate_uetr
 from .validator import detect_type, validate_bic, validate_iban
 from .vop import verify_payee
-
 
 # VoP advice strings (shared with the standalone endpoint)
 _VOP_ADVICE = {
@@ -85,13 +88,11 @@ def prepare_payment(
     # We try IBAN validation; if it fails AND the input looks like it could be
     # a domestic account number (passed as "IBAN"), we don't hard-reject — we
     # proceed with the remaining checks, since the account may still exist.
-    iban_valid_for_registry = False
     if detect_type(iban) == "iban":
         result = validate_iban(iban)
         validation_valid = result.valid
         validation_errors = result.errors
         bic_11 = result.bic
-        iban_valid_for_registry = result.valid
     else:
         valid, normalized, _, errs = validate_bic(iban)
         validation_valid = valid

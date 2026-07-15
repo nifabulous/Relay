@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import Account
-from .name_matcher import MatchOutcome, NameMatchResult, match_names
+from .name_matcher import MatchOutcome, match_names
 
 
 @dataclass
@@ -37,7 +37,7 @@ class VoPResult:
     account_type: Optional[str]  # personal | business
 
     @classmethod
-    def not_checked(cls, iban: str, submitted_name: str, reason: str = "Account not found") -> "VoPResult":
+    def not_checked(cls, iban: str, submitted_name: str, reason: str = "Account not found") -> VoPResult:
         return cls(
             iban=iban,
             submitted_name=submitted_name,

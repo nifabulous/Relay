@@ -13,6 +13,7 @@ complementing the HTTP-level tests in test_api.py.
 """
 import pytest
 
+from app.schemas import BankInfo
 from app.services.routing import (
     _normalize_bic_input,
     infer_destination_currency,
@@ -21,8 +22,6 @@ from app.services.routing import (
     lookup_us_bank,
     suggest_intermediaries,
 )
-from app.schemas import BankInfo
-
 
 # ===========================================================================
 # _normalize_bic_input

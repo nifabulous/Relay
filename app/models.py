@@ -1,5 +1,5 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import Column, Integer, String, Index, UniqueConstraint
+from sqlalchemy import Column, Index, Integer, String, UniqueConstraint
 
 from .db import Base
 

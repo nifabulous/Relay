@@ -17,9 +17,9 @@ malicious routing data. Set the env vars to a trusted FRB-downloaded copy.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Iterator, Optional
+from typing import Optional
 from urllib.request import Request, urlopen
 
 from sqlalchemy.orm import Session

@@ -10,7 +10,7 @@ pattern of payment_schemes.py and LIFT_FEES.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 
 # ── Holiday calendar (2025-2026, major currencies) ──────────
@@ -129,7 +129,7 @@ def _resolve_lag(currency: str, scheme: Optional[str]) -> Tuple[int, str, bool]:
             lag = SCHEME_LAGS[key]
             is_instant = key in INSTANT_RAILS
             stype = "T+0 (instant)" if lag == 0 and is_instant else \
-                    f"T+0 (same-day)" if lag == 0 else f"T+{lag}"
+                    "T+0 (same-day)" if lag == 0 else f"T+{lag}"
             return lag, stype, is_instant
     lag = DEFAULT_LAG_BY_CURRENCY.get(currency, 2)
     return lag, f"T+{lag}" if lag else "T+0 (same-day)", False

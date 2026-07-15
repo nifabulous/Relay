@@ -127,7 +127,6 @@ def check_stp(message: dict) -> STPResult:
     ordering = message.get("ordering") or {}
     beneficiary = message.get("beneficiary") or {}
 
-    o_account = _get(ordering, "account")
     o_name = _get(ordering, "name")
     o_bic = _get(ordering, "bic")
     b_account = _get(beneficiary, "account")

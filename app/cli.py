@@ -10,7 +10,7 @@ Usage:
 import sys
 
 from .db import Base, SessionLocal, engine
-from .models import Bank, CorridorRule, FedACHBank, FedwireBank, SSI
+from .models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
 from .services.fed_importer import import_fedach, import_fedwire
 from .services.seed import seed_if_empty
 from .services.ssi_importer import import_ssi_file

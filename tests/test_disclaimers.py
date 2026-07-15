@@ -7,7 +7,6 @@ sees it before they ever read the README. Raw API responses must
 carry it so an iframed response (e.g. a fake tracking page scam)
 can't pass as real.
 """
-import pytest
 
 
 class TestOpenApiTitleHasSimulation:

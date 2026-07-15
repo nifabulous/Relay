@@ -12,8 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from .name_matcher import normalize_name, similarity_ratio
-from ..data.sanctions_watchlist import WATCHLIST, DISCLAIMER
+from ..data.sanctions_watchlist import WATCHLIST
+from .name_matcher import similarity_ratio
 
 # Screening thresholds — lower than VoP because sanctions errs cautious.
 # A "possible hit" at 0.75 must be reviewed; a "hard hit" at 0.90 is blocked.
@@ -124,7 +124,6 @@ def screen_payment(
 
     # Build hop chain: sender bank → intermediaries → beneficiary bank
     hops: List[HopScreening] = []
-    max_score = max(sender_match.score, beneficiary_match.score)
 
     # Build the full chain of (bic, name) pairs
     chain = [("SENDER", sender_name or "Sender Bank")]

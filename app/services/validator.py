@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from schwifty import IBAN, BIC
+from schwifty import BIC, IBAN
 
 
 def validate_currency_code(currency: str) -> str:

@@ -8,18 +8,15 @@ Covers:
   - NOT_CHECKED when account not found
   - The /api/verify-payee endpoint (HTTP level)
 """
-import pytest
 
 from app.services.name_matcher import (
-    MATCH_THRESHOLD,
     CLOSE_MATCH_THRESHOLD,
     MatchOutcome,
     match_names,
     normalize_name,
     similarity_ratio,
 )
-from app.services.vop import verify_payee, VoPResult, LocalAccountBackend
-
+from app.services.vop import verify_payee
 
 # ===========================================================================
 # Name normalization

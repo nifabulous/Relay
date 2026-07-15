@@ -3,7 +3,6 @@
 Uses the session-scoped `client` fixture from conftest, which triggers the
 app's lifespan (table creation + seeding) exactly once.
 """
-from fastapi.testclient import TestClient
 
 
 def test_health_seeded(client):

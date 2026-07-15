@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field, field_validator
 
 from .services.validator import validate_currency_code
 
-
 # ---------- responses ----------
 
 

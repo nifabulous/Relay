@@ -26,7 +26,6 @@ def _normalize_bic_input(value: str) -> tuple[str, bool, list[str], Optional[str
     For an IBAN, the BIC is derived from schwifty if the national registry supports it.
     """
     value = value.strip().upper().replace(" ", "")
-    errors: list[str] = []
     country: Optional[str] = None
 
     if detect_type(value) == "iban":

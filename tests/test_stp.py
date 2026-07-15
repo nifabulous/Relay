@@ -1,10 +1,9 @@
 """
 Tests for the MT103 STP checker — /api/message/stp-check endpoint + service.
 """
-import pytest
 
-from app.services.stp_checker import check_stp
 from app.data.mt103_samples import SAMPLE_MT103, SAMPLE_MT103_BAD_BIC, SAMPLE_MT103_MISSING_BEN
+from app.services.stp_checker import check_stp
 
 
 class TestSTPService:

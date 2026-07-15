@@ -5,15 +5,12 @@ Two layers:
   1. Recommendation engine (pure function — every matrix cell tested)
   2. HTTP endpoint (end-to-end with real seeded data)
 """
-import pytest
 
 from app.services.recommendation import (
     BLOCKING,
     Recommendation,
-    RecommendationResult,
     decide,
 )
-
 
 # ===========================================================================
 # Recommendation engine — pure function, every matrix cell

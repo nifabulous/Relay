@@ -10,9 +10,8 @@ Covers:
   - Invalid charge code → 400
   - Mismatched intermediary lists → 400
 """
-import pytest
 
-from app.services.fee_calculator import simulate_fees, _get_lift_fee
+from app.services.fee_calculator import _get_lift_fee, simulate_fees
 
 
 class TestFeeService:

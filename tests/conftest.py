@@ -83,8 +83,8 @@ def _client_get_db():
 @pytest.fixture(scope="session")
 def client():
     """HTTP client with its own isolated in-memory DB (separate from db_session)."""
-    from app.main import app
     from app.db import get_db
+    from app.main import app
 
     app.dependency_overrides[get_db] = _client_get_db
     with TestClient(app) as c:

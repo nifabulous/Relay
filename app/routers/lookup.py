@@ -1,50 +1,54 @@
 """API routes for validation, bank lookup, and intermediary routing."""
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import admin_required
+from ..data.payment_schemes import get_schemes_for_currency, list_currencies_with_schemes
+from ..data.sanctions_watchlist import DISCLAIMER as SCREENING_DISCLAIMER_TEXT
 from ..db import get_db
-from ..models import Bank, CorridorRule, FedACHBank, FedwireBank, PaymentEvent, SSI
+from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
 from ..schemas import (
+    BadgeInfo,
+    FeeHopInfo,
+    FeeSimulateRequest,
+    FeeSimulateResponse,
     HealthResponse,
+    HopScreenInfo,
     ImportResponse,
     LookupResponse,
+    PartyScreenInfo,
     PaymentEventInfo,
     PreparePaymentRequest,
     PreparePaymentResponse,
-    PrepareRoutingInfo,
-    PrepareSSIInfo,
-    PrepareValidationInfo,
-    PrepareVoPInfo,
+    ProgressResponse,
     RouteResponse,
+    ScreenRequest,
+    ScreenResponse,
     SSIRecord,
     SSIResponse,
+    STPCheckRequest,
+    STPCheckResponse,
+    STPFinding,
     TrackPaymentRequest,
     TrackPaymentResponse,
     USBankInfo,
     USBankLookupResponse,
     ValidateResponse,
-    VoPRequest,
-    VoPResponse,
-    FeeSimulateRequest,
-    FeeSimulateResponse,
-    FeeHopInfo,
-    ScreenRequest,
-    ScreenResponse,
-    PartyScreenInfo,
-    HopScreenInfo,
     ValueDateRequest,
     ValueDateResponse,
-    STPCheckRequest,
-    STPCheckResponse,
-    STPFinding,
-    BadgeInfo,
-    ProgressResponse,
+    VoPRequest,
+    VoPResponse,
 )
 from ..services.fed_importer import import_fedach, import_fedwire
+from ..services.fee_calculator import simulate_fees
+from ..services.prepare import prepare_payment
+from ..services.progress import (
+    ALL_BADGES,
+    get_progress_summary,
+)
 from ..services.routing import (
     _normalize_bic_input,
     infer_destination_currency,
@@ -53,21 +57,12 @@ from ..services.routing import (
     lookup_us_bank,
     suggest_intermediaries,
 )
-from ..services.tracking import generate_timeline, generate_uetr, get_payment_status
-from ..services.vop import verify_payee
-from ..services.prepare import prepare_payment
-from ..services.fee_calculator import simulate_fees
 from ..services.screening import screen_payment as do_screening
-from ..services.value_date import calculate_value_date
 from ..services.stp_checker import check_stp as do_stp_check
-from ..services.progress import (
-    ALL_BADGES,
-    ALL_MODULE_IDS,
-    get_progress_summary,
-)
-from ..data.sanctions_watchlist import DISCLAIMER as SCREENING_DISCLAIMER_TEXT
-from ..data.payment_schemes import get_schemes_for_currency, list_currencies_with_schemes
+from ..services.tracking import generate_timeline, generate_uetr, get_payment_status
 from ..services.validator import detect_type, validate_bic, validate_iban
+from ..services.value_date import calculate_value_date
+from ..services.vop import verify_payee
 
 router = APIRouter(prefix="/api", tags=["swift"])
 

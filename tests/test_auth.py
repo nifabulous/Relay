@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 def client_with_auth():
     """A client where ADMIN_API_KEY is set (prod-like auth enforced)."""
     with mock.patch.dict(os.environ, {"ADMIN_API_KEY": "test-secret-key-123"}):
-        from app.main import app
         from app.db import get_db
+        from app.main import app
 
         # Force re-evaluation of config by patching the settings the auth dep reads
         with mock.patch("app.auth._admin_api_key", "test-secret-key-123"):
@@ -36,8 +36,8 @@ def client_dev_mode():
     env_without_key = {k: v for k, v in os.environ.items() if k != "ADMIN_API_KEY"}
     with mock.patch.dict(os.environ, env_without_key, clear=True):
         with mock.patch("app.auth._admin_api_key", None):
-            from app.main import app
             from app.db import get_db
+            from app.main import app
             from tests.conftest import _client_get_db
             app.dependency_overrides[get_db] = _client_get_db
             with TestClient(app) as c:

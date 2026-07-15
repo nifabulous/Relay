@@ -1,7 +1,6 @@
 """
 Tests for sanctions screening + settlement/value-date endpoints.
 """
-import pytest
 
 
 class TestScreeningService:
@@ -106,30 +105,34 @@ class TestScreeningEndpoint:
 
 class TestValueDateService:
     def test_friday_after_cutoff(self):
-        from app.services.value_date import calculate_value_date
         from datetime import datetime
+
+        from app.services.value_date import calculate_value_date
         r = calculate_value_date(datetime(2026, 7, 10, 17, 30), "USD", "spot")
         assert r.missed_cut_off is True
         assert r.trade_date.weekday() == 0  # Monday
         assert r.value_date > r.trade_date
 
     def test_instant_same_day(self):
-        from app.services.value_date import calculate_value_date
         from datetime import datetime
+
+        from app.services.value_date import calculate_value_date
         r = calculate_value_date(datetime(2026, 7, 11, 22, 0), "GBP", "faster payments")
         assert r.value_date == r.trade_date
         assert "instant" in r.settlement_type.lower()
 
     def test_monday_t_plus_2(self):
-        from app.services.value_date import calculate_value_date
         from datetime import datetime
+
+        from app.services.value_date import calculate_value_date
         r = calculate_value_date(datetime(2026, 7, 13, 10, 0), "USD", "spot")
         # Monday + 2 business days = Wednesday
         assert r.business_days == 2
 
     def test_explanation_present(self):
-        from app.services.value_date import calculate_value_date
         from datetime import datetime
+
+        from app.services.value_date import calculate_value_date
         r = calculate_value_date(datetime(2026, 7, 13, 10, 0), "EUR", "sepa credit transfer")
         assert len(r.explanation) > 20
 

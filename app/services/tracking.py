@@ -27,7 +27,6 @@ from sqlalchemy.orm import Session
 
 from ..models import PaymentEvent
 
-
 # Status codes per SWIFT gpi conventions
 STATUS_INITIATED = "INITIATED"
 STATUS_ACCEPTED = "ACCEPTED"

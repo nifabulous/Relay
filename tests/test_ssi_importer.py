@@ -19,8 +19,6 @@ from pathlib import Path
 import pytest
 
 from app.services.ssi_importer import (
-    SSIImportResult,
-    SSIRowError,
     detect_and_parse,
     import_ssi_file,
     load_ssi_rows,
@@ -28,7 +26,6 @@ from app.services.ssi_importer import (
     parse_json,
     validate_ssi_row,
 )
-
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 
@@ -259,6 +256,7 @@ class TestLoadSSIRows:
     def test_updates_existing_record_by_composite_key(self, db_session):
         """Re-importing the same (ben_bic, ccy, int_bic) updates account numbers."""
         from sqlalchemy import select
+
         from app.models import SSI
 
         # First, insert a record with initial values (using a unique combo
@@ -383,6 +381,7 @@ class TestSSIImportCLI:
     def test_cli_import_ssi_csv(self, tmp_path, monkeypatch):
         """Run the CLI command against a temp CSV file."""
         import sys
+
         from app.cli import main
 
         csv_file = tmp_path / "test_ssi.csv"

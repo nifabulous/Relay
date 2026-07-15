@@ -9,7 +9,6 @@ frontend, or from a query param) and returns:
 - earned badges (with names + descriptions)
 - next recommended module
 """
-import pytest
 
 
 class TestProgressService:
@@ -24,7 +23,7 @@ class TestProgressService:
         assert result.earned_badges == []
 
     def test_all_modules_completed(self):
-        from app.services.progress import get_progress_summary, ALL_MODULE_IDS
+        from app.services.progress import ALL_MODULE_IDS, get_progress_summary
         result = get_progress_summary(ALL_MODULE_IDS)
         assert result.completed_count == result.total_count
         assert result.percentage == 100
@@ -92,13 +91,13 @@ class TestProgressService:
 
     def test_completionist_badge_earned(self):
         """'Wire Wizard' badge: complete ALL modules."""
-        from app.services.progress import get_progress_summary, ALL_MODULE_IDS
+        from app.services.progress import ALL_MODULE_IDS, get_progress_summary
         result = get_progress_summary(ALL_MODULE_IDS)
         badge_names = [b.name for b in result.earned_badges]
         assert "Wire Wizard" in badge_names
 
     def test_completionist_badge_not_earned_partial(self):
-        from app.services.progress import get_progress_summary, ALL_MODULE_IDS
+        from app.services.progress import ALL_MODULE_IDS, get_progress_summary
         partial = ALL_MODULE_IDS[:-1]  # all except last
         result = get_progress_summary(partial)
         badge_names = [b.name for b in result.earned_badges]
@@ -112,7 +111,7 @@ class TestProgressService:
         assert result.next_recommended not in ["1", "2"]
 
     def test_next_recommended_none_when_all_done(self):
-        from app.services.progress import get_progress_summary, ALL_MODULE_IDS
+        from app.services.progress import ALL_MODULE_IDS, get_progress_summary
         result = get_progress_summary(ALL_MODULE_IDS)
         assert result.next_recommended is None
 

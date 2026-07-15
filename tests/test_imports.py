@@ -2,7 +2,9 @@
 Tests for the Fedwire/FedACH import HTTP endpoints — mocked to avoid network calls.
 """
 from unittest.mock import patch
+
 import pytest
+
 from app.services.fed_importer import ImportResult
 
 
@@ -61,15 +63,14 @@ class TestFedImporterFailClosed:
 
     def test_default_url_is_none_not_github(self):
         """The module-level default must be None (fail-closed), not a GitHub URL."""
-        import os
-        from app.services import fed_importer
-
         # Verify the source code does NOT contain the old GitHub default.
         # We check the module attribute directly — when no env var is set
         # at import time, it must be None. Since we can't control what env
         # was set when the module first loaded, we verify by checking that
         # os.getenv returns None for these (no hardcoded fallback in the source).
         import inspect
+
+        from app.services import fed_importer
         source = inspect.getsource(fed_importer)
         assert "raw.githubusercontent.com" not in source, (
             "fed_importer source must not reference raw.githubusercontent.com — "
