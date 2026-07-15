@@ -118,6 +118,21 @@
   }
 
   // ── Navigation ─────────────────────────────────────────
+
+  // Core labs that require the previous one to be completed first.
+  // "Go deeper" modules (fees, fx, etc.) are ungated.
+  var CORE_SEQUENCE = ["1", "2", "3", "4", "5", "6", "7", "capstone"];
+  var CORE_LABELS = {
+    "1": "Lab 1: BICs & IBANs",
+    "2": "Lab 2: Checksums",
+    "3": "Lab 3: Verification of Payee",
+    "4": "Lab 4: Correspondent Routing",
+    "5": "Lab 5: Settlement Instructions",
+    "6": "Lab 6: Payment Tracking",
+    "7": "Lab 7: Payment Schemes",
+    "capstone": "Capstone: Send a Payment",
+  };
+
   function navigate(hash) {
     const main = document.getElementById("lab-main");
     const match = hash.match(/lab-(\d+|capstone)/) || hash.match(/^#(fees|fx|glossary|sanctions|settlement|mt103|cases|progress)$/);
@@ -128,6 +143,25 @@
     if (labId) {
       const navLink = document.querySelector(`.lab-list a[data-lab="${labId}"]`);
       if (navLink) navLink.classList.add("active");
+    }
+
+    // ── Prerequisite gating (Education panel #1) ──
+    // Core labs require the previous core lab to be completed.
+    if (labId && CORE_SEQUENCE.indexOf(labId) > 0) {
+      var prevId = CORE_SEQUENCE[CORE_SEQUENCE.indexOf(labId) - 1];
+      var progress = getProgress();
+      if (progress.indexOf(prevId) === -1) {
+        main.innerHTML =
+          '<div class="lab-header">' +
+          '<span class="lab-num">🔒</span>' +
+          '<h1>' + (CORE_LABELS[labId] || labId) + '</h1>' +
+          '<p class="muted">Complete <strong>' + esc(CORE_LABELS[prevId] || ("Lab " + prevId)) +
+          '</strong> first to unlock this lab.</p>' +
+          '<p><a href="#lab-' + prevId + '" class="lab-btn">Go to ' + esc(CORE_LABELS[prevId] || ("Lab " + prevId)) + ' →</a></p>' +
+          '</div>';
+        window.scrollTo(0, 0);
+        return;
+      }
     }
 
     // Render
