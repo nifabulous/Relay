@@ -15,8 +15,12 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables + seed on startup (fine for SQLite/dev; use Alembic in prod).
-    Base.metadata.create_all(bind=engine)
+    # In dev (SQLite default), auto-create tables for zero-setup.
+    # In prod (DATABASE_URL set), use Alembic migrations (`alembic upgrade head`).
+    from .config import DATABASE_URL
+    is_dev = DATABASE_URL.startswith("sqlite")
+    if is_dev:
+        Base.metadata.create_all(bind=engine)
     try:
         with SessionLocal() as session:
             inserted = seed_if_empty(session)
