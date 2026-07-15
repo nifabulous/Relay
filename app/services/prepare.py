@@ -64,6 +64,7 @@ def prepare_payment(
     beneficiary_bic: Optional[str] = None,
     amount: Optional[float] = None,
     strictness: str = "standard",
+    uetr: Optional[str] = None,
 ) -> PrepareResult:
     """
     Run all four pre-send checks and produce a single recommendation.
@@ -128,7 +129,7 @@ def prepare_payment(
         )
         return PrepareResult(
             recommendation=rec,
-            uetr=generate_uetr(),
+            uetr=uetr or generate_uetr(),
             validation=validation_info,
             vop=PrepareVoPInfo(outcome="NOT_CHECKED", advice=_VOP_ADVICE["NOT_CHECKED"]),
             routing=PrepareRoutingInfo(),
@@ -221,7 +222,7 @@ def prepare_payment(
 
     return PrepareResult(
         recommendation=rec,
-        uetr=generate_uetr(),
+        uetr=uetr or generate_uetr(),
         validation=validation_info,
         vop=vop_info,
         routing=routing_info,

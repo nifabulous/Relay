@@ -1,7 +1,7 @@
 """API routes for validation, bank lookup, and intermediary routing."""
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -468,7 +468,11 @@ _TRACKING_DISCLAIMER = (
 
 
 @router.post("/track/create", response_model=TrackPaymentResponse, dependencies=[Depends(admin_required)])
-def create_tracked_payment(request: TrackPaymentRequest, db: Session = Depends(get_db)):
+def create_tracked_payment(
+    request: TrackPaymentRequest,
+    db: Session = Depends(get_db),
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+):
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
 
@@ -490,7 +494,19 @@ def create_tracked_payment(request: TrackPaymentRequest, db: Session = Depends(g
             detail="intermediary_bics and intermediary_names must have equal length",
         )
 
-    uetr = generate_uetr()
+    from ..services.idempotency import resolve_uetr
+
+    uetr = resolve_uetr(db, idempotency_key, "track/create", generate_uetr)
+
+    # If this UETR already has a timeline (replay of same idempotency key),
+    # return the existing timeline instead of duplicating it.
+    from ..models import PaymentEvent
+    existing = db.execute(
+        select(PaymentEvent).where(PaymentEvent.uetr == uetr).limit(1)
+    ).scalar_one_or_none()
+    if existing:
+        return _build_track_response(uetr, get_payment_status(db, uetr))
+
     generate_timeline(
         session=db,
         uetr=uetr,
@@ -596,7 +612,11 @@ def get_payment_schemes(
 
 
 @router.post("/prepare-payment", response_model=PreparePaymentResponse)
-def prepare_payment_endpoint(request: PreparePaymentRequest, db: Session = Depends(get_db)):
+def prepare_payment_endpoint(
+    request: PreparePaymentRequest,
+    db: Session = Depends(get_db),
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+):
     """
     Run all pre-send checks in one call and return a single recommendation.
 
@@ -621,6 +641,11 @@ def prepare_payment_endpoint(request: PreparePaymentRequest, db: Session = Depen
             detail="strictness must be 'lenient', 'standard', or 'strict'",
         )
 
+    from ..services.idempotency import resolve_uetr
+    from ..services.tracking import generate_uetr
+
+    resolved_uetr = resolve_uetr(db, idempotency_key, "prepare-payment", generate_uetr)
+
     result = prepare_payment(
         session=db,
         beneficiary_iban=request.beneficiary_iban,
@@ -629,6 +654,7 @@ def prepare_payment_endpoint(request: PreparePaymentRequest, db: Session = Depen
         beneficiary_bic=request.beneficiary_bic,
         amount=request.amount,
         strictness=request.strictness,
+        uetr=resolved_uetr,
     )
 
     return PreparePaymentResponse(

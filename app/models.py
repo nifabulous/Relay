@@ -206,3 +206,18 @@ class PaymentEvent(Base):
     __table_args__ = (
         Index("ix_payment_uetr_hop", "uetr", "hop"),
     )
+
+
+class IdempotencyKey(Base):
+    """
+    Maps a client-supplied Idempotency-Key to a generated UETR, so a retried
+    request after a network blip returns the same UETR instead of duplicating
+    the payment.
+    """
+
+    __tablename__ = "idempotency_keys"
+
+    id = Column(Integer, primary_key=True)
+    key = Column(String(200), nullable=False, unique=True, index=True)
+    uetr = Column(String(36), nullable=False, index=True)
+    endpoint = Column(String(50), nullable=False)  # track/create | prepare-payment
