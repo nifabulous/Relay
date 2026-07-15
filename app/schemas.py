@@ -103,8 +103,8 @@ class SSIResponse(BaseModel):
 
 
 class VoPRequest(BaseModel):
-    iban: str = Field(..., description="Beneficiary account IBAN")
-    name: str = Field(..., description="Account holder name as entered by the payer")
+    iban: str = Field(..., max_length=34, description="Beneficiary account IBAN")
+    name: str = Field(..., max_length=200, description="Account holder name as entered by the payer")
 
 
 class VoPResponse(BaseModel):
@@ -118,12 +118,12 @@ class VoPResponse(BaseModel):
 
 
 class TrackPaymentRequest(BaseModel):
-    originator_bic: str = Field(..., description="The sending bank's BIC")
-    originator_name: str = Field(..., description="The sending bank's name")
-    beneficiary_bic: str = Field(..., description="The receiving bank's BIC")
-    beneficiary_name: str = Field(..., description="The receiving bank's name")
+    originator_bic: str = Field(..., max_length=11, description="The sending bank's BIC")
+    originator_name: str = Field(..., max_length=200, description="The sending bank's name")
+    beneficiary_bic: str = Field(..., max_length=11, description="The receiving bank's BIC")
+    beneficiary_name: str = Field(..., max_length=200, description="The receiving bank's name")
     currency: str = Field(..., description="3-letter currency code, e.g. USD")
-    amount: float = Field(..., description="Payment amount")
+    amount: float = Field(..., gt=0, description="Payment amount")
     charge_code: str = Field("SHA", description="OUR / SHA / BEN")
     intermediary_bics: List[str] = Field(default_factory=list, description="Intermediary BICs")
     intermediary_names: List[str] = Field(default_factory=list, description="Intermediary bank names")
@@ -167,13 +167,13 @@ class TrackPaymentResponse(BaseModel):
 
 
 class PreparePaymentRequest(BaseModel):
-    beneficiary_iban: str = Field(..., description="Beneficiary account IBAN")
-    beneficiary_name: str = Field(..., description="Account holder name as entered by payer")
+    beneficiary_iban: str = Field(..., max_length=34, description="Beneficiary account IBAN")
+    beneficiary_name: str = Field(..., max_length=200, description="Account holder name as entered by payer")
     beneficiary_bic: Optional[str] = Field(
-        None, description="Beneficiary bank BIC (auto-derived from IBAN if omitted)"
+        None, max_length=11, description="Beneficiary bank BIC (auto-derived from IBAN if omitted)"
     )
     currency: str = Field(..., description="Payment currency, e.g. USD, NGN")
-    amount: float = Field(..., description="Payment amount")
+    amount: float = Field(..., gt=0, description="Payment amount")
     strictness: str = Field(
         "standard",
         description="How to treat CLOSE_MATCH/NOT_CHECKED: lenient | standard | strict",
@@ -275,8 +275,8 @@ class FeeSimulateResponse(BaseModel):
 
 
 class ScreenRequest(BaseModel):
-    sender_name: str = Field(..., min_length=1, description="Sender name to screen")
-    beneficiary_name: str = Field(..., min_length=1, description="Beneficiary name to screen")
+    sender_name: str = Field(..., min_length=1, max_length=200, description="Sender name to screen")
+    beneficiary_name: str = Field(..., min_length=1, max_length=200, description="Beneficiary name to screen")
     intermediary_bics: List[str] = Field(default_factory=list)
     intermediary_names: List[str] = Field(default_factory=list)
 

@@ -325,3 +325,106 @@ def test_route_usd_to_turkey(client):
     body = r.json()
     assert body["currency"] == "TRY"
     assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+
+
+# ===========================================================================
+# Input validation hardening (implementation-plan item 1.3)
+# QA panel reproduced: negative amounts, oversized inputs, malformed UTF-8.
+# ===========================================================================
+
+
+class TestPreparePaymentAmountValidation:
+    """amount must be > 0 (gt=0). QA reproduced: -5000 and 0 both returned 200."""
+
+    def test_negative_amount_rejected(self, client):
+        r = client.post(
+            "/api/prepare-payment",
+            json={
+                "beneficiary_iban": "GB29NWBK60161331926819",
+                "beneficiary_name": "Test User",
+                "beneficiary_bic": "NWBKGB2LXXX",
+                "currency": "USD",
+                "amount": -5000,
+            },
+        )
+        assert r.status_code == 422, f"Negative amount must be 422, got {r.status_code}"
+
+    def test_zero_amount_rejected(self, client):
+        r = client.post(
+            "/api/prepare-payment",
+            json={
+                "beneficiary_iban": "GB29NWBK60161331926819",
+                "beneficiary_name": "Test User",
+                "beneficiary_bic": "NWBKGB2LXXX",
+                "currency": "USD",
+                "amount": 0,
+            },
+        )
+        assert r.status_code == 422, f"Zero amount must be 422, got {r.status_code}"
+
+
+class TestTrackCreateAmountValidation:
+    """/track/create amount must also be > 0."""
+
+    def test_negative_amount_rejected(self, client):
+        r = client.post(
+            "/api/track/create",
+            json={
+                "originator_bic": "CITIUS33XXX",
+                "originator_name": "Citibank",
+                "beneficiary_bic": "GTBINGLAXXX",
+                "beneficiary_name": "GTBank",
+                "currency": "USD",
+                "amount": -1000,
+            },
+        )
+        assert r.status_code == 422, f"Negative amount must be 422, got {r.status_code}"
+
+
+class TestVoPInputLengthValidation:
+    """VoP inputs must be bounded (max_length). QA: 100KB IBAN accepted."""
+
+    def test_oversized_iban_rejected(self, client):
+        r = client.post(
+            "/api/verify-payee",
+            json={"iban": "G" * 10000, "name": "Test"},
+        )
+        assert r.status_code == 422, f"10000-char IBAN must be 422, got {r.status_code}"
+
+    def test_oversized_name_rejected(self, client):
+        r = client.post(
+            "/api/verify-payee",
+            json={"iban": "GB29NWBK60161331926819", "name": "A" * 10000},
+        )
+        assert r.status_code == 422, f"10000-char name must be 422, got {r.status_code}"
+
+
+class TestScreenInputLengthValidation:
+    """Screening names must be bounded."""
+
+    def test_oversized_sender_name_rejected(self, client):
+        r = client.post(
+            "/api/screen",
+            json={
+                "sender_name": "X" * 10000,
+                "beneficiary_name": "Normal Name",
+            },
+        )
+        assert r.status_code == 422
+
+
+class TestSSIUploadMalformedUtf8:
+    """
+    Malformed (non-UTF8) SSI upload must return 400, not 500.
+    QA reproduced: content.decode('utf-8-sig') at lookup.py:313 is outside
+    the try/except, so UnicodeDecodeError -> unhandled 500.
+    """
+
+    def test_binary_upload_returns_400_not_500(self, client):
+        r = client.post(
+            "/api/import/ssi",
+            files={"file": ("bad.csv", b"\xff\xfe\x00\x01garbage", "text/csv")},
+        )
+        assert r.status_code in (400, 422), (
+            f"Malformed UTF-8 upload must be 400/422, got {r.status_code} (500 = unhandled crash)"
+        )

@@ -309,12 +309,18 @@ async def trigger_ssi_import(
     from ..services.ssi_importer import import_ssi_file
 
     content = await file.read()
-    # Decode + wrap as a file-like object for the parser.
-    text = content.decode("utf-8-sig")  # handle BOM from Excel exports
     format_hint = "json" if (file.filename or "").lower().endswith(".json") else "csv"
 
     try:
+        # Decode + wrap as a file-like object for the parser.
+        # handle BOM from Excel exports; catch decode errors as 400, not 500.
+        text = content.decode("utf-8-sig")
         result = import_ssi_file(db, text, format_hint=format_hint)
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="File is not valid UTF-8. Save as UTF-8 (Excel: 'CSV UTF-8').",
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Parse error: {e}")
 
