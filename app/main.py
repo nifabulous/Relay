@@ -35,6 +35,9 @@ from .routers import (
     ssi as ssi_router,
 )
 from .routers import (
+    telemetry as telemetry_router,
+)
+from .routers import (
     tracking as tracking_router,
 )
 from .routers import (
@@ -88,6 +91,7 @@ app.include_router(schemes_router.router)
 app.include_router(prepare_router.router)
 app.include_router(analytics_router.router)
 app.include_router(progress_router.router)
+app.include_router(telemetry_router.router)
 
 # Serve admin UI static assets (CSS/JS)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

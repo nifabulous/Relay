@@ -18,7 +18,7 @@ Three variants are provided:
 SAMPLE_MT103 = {
     "transaction_reference": "MSG-2026-001",  # field 20
     "bank_op_code": "CRED",  # field 23B
-    "value_date": "2026-07-15",  # field 32A date (ISO, normalized)
+    "value_date": "2027-12-31",  # field 32A date (ISO, normalized) — future date to avoid "stale" warning
     "currency": "USD",  # field 32A ccy
     "interbank_amount": 5000.00,  # field 32A amount
     "charge_code": "SHA",  # field 71A

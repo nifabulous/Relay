@@ -22,6 +22,10 @@
     if (!done.includes(lab)) {
       done.push(lab);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+      // Fire telemetry: lab completed
+      if (window.Telemetry) {
+        Telemetry.labCompleted(lab);
+      }
     }
     updateProgressUI();
   }
@@ -170,6 +174,13 @@
       renderLanding(main);
     } else if (window.LearnLabs && LearnLabs[labId]) {
       LearnLabs[labId](main, { el, glossify, markComplete, getProgress });
+      // Fire telemetry events: lab_viewed always, lab_started if first visit
+      if (window.Telemetry) {
+        Telemetry.labViewed(labId);
+        if (!getProgress().includes(labId)) {
+          Telemetry.labStarted(labId);
+        }
+      }
     } else {
       main.innerHTML = `<div class="lab-header"><h1>Coming soon</h1><p>This lab hasn't been built yet.</p></div>`;
     }
