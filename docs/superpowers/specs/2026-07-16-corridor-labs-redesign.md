@@ -1,6 +1,6 @@
-# Design Spec: Corridor Labs Redesign (v2)
+# Design Spec: Corridor Labs Redesign (v3)
 
-> **Date:** 2026-07-16 · **Revision:** v2 — incorporates all fixes from 8-reviewer expert panel (2 UI designers, 2 product designers, 2 PMs, 2 UX designers) · **Status:** Ready for re-review
+> **Date:** 2026-07-16 · **Revision:** v3 — incorporates all fixes from two rounds of expert review (initial 8-reviewer panel + 3-panel re-review) · **Status:** Approved by all panels
 
 ---
 
@@ -20,12 +20,12 @@ v1 was over-scoped, under-specified where it matters, and under-estimated by ~2.
 | Chain will ship blue-on-teal | UI | Chain color sweep folded into V1 Phase 1 |
 | Chain wrap + trail-draw incompatible | UI | Single-row-with-horizontal-scroll, not flex-wrap |
 | Dark-theme semantic colors undefined | UI | Dark theme deferred; semantic pairs specified when built |
-| Contrast margins thin (--ink-3, --success) | UI | Darkened: --ink-3 → #6b7280, margins >5.0:1 |
+| Contrast margins thin (--ink-3, --success) | UI | Darkened: --ink-3 → warm-stone custom #635a52 (~5.3:1), margins improved |
 | 348 inline styles bypass tokens | UI | Inline-style sweep added to V1 Phase 1 scope |
 | Capstone state lost on section-switch | UX | Capstone serialized to sessionStorage (V2 prerequisite) |
 | 8 of 16 labs have no route in new scheme | UX | Full route table for all 16 modules specified |
-| Accessibility regressions by omission | UX | ARIA contracts specified for chain, tabs, drawer |
-| Tools section is unjustified peer | PD | Tools demoted to "Reference mode" inside Learn (V2) |
+| Accessibility regressions by omission | UX | ARIA contracts specified for chain (container role=img + single aria-label, glyphs aria-hidden). Tabs/drawer deferred with V2. |
+| Tools section is unjustified peer | PD | Tools identity deferred to V2 (needs decision: reference mode? power-user surface?) |
 | Go-deeper grouping premature (lonely buckets) | PD | Flat list until content justifies grouping |
 | No success metrics | PM | Metrics defined + telemetry prerequisite |
 | Tagline over-indexes on Learn | PD | Acknowledged as deliberate Learn-first bet |
@@ -61,15 +61,24 @@ V2 (deferred) merges `/learn` + `/ui` into one shell with three sections (Learn 
 
 **V2 is out of scope for this spec revision. It gets its own spec when V1 telemetry justifies it.**
 
+> **Behavioral drift acknowledgment (PD panel):** V1 unifies the visual system across both shells but gives only Learn a course-behavior layer (Next/Prev, gating, badges). After V1, a user crossing from Learn to Tools sees two shells that *look identical* but *behave differently* — one tracks and sequences you, the other is a flat reference surface. Visual parity plus behavioral divergence can feel fragmented. This is an accepted V1 trade-off: de-risk routing, ship 80% of value, address in V2.
+
+> **Reframe scope clarification (PD panel):** The "docs chrome + course content model" reframe changes *which UX features are in scope* (gating, Next/Prev, badges) but does NOT change V1's IA. The structural consequences (merged shell, gating-aware search, course-aware sidebar) land in V2, not V1.
+
 ---
 
-## V1 scope (~5-7 days, near-zero architectural risk)
+## V1 scope (~9-12 days, near-zero architectural risk)
 
-### Phase 0: Telemetry baseline (1 day, optional but strongly recommended)
+> **Effort note (PM panel re-review):** The original v1 estimate of 5-7 days was ~1.5x light. Realistic total is 9-12 days — one focused sprint. The estimate is driven by: font subsetting pipeline (~1.5d), chain component rewrite (~2-2.5d), and completion-contract harmonization for exercise-less labs (~1-1.5d).
 
-Ship a thin anonymous event layer BEFORE the visual redesign, so there's a baseline to measure against.
+> **Opportunity cost (PM panel):** After V1 ships, prioritize Tier 3 product items (MOD-97 visualizer, ops-workflow module, French i18n) BEFORE V2. These are learning-outcome and audience-expansion investments with higher ROI than the shell merge. V2 should only proceed if V1 telemetry justifies it.
 
-- Events: `lab_started`, `lab_completed`, `exercise_attempted`, `exercise_solved`
+### Phase 0: Telemetry baseline (1-1.5 days, MANDATORY)
+
+Ship a thin anonymous event layer BEFORE the visual redesign, so there's a baseline to measure against. Phase 0 is mandatory because the north-star metric (lab completion rate) requires it — without telemetry, the redesign's success is unmeasurable.
+
+- Events: `lab_viewed`, `lab_started`, `lab_completed`, `exercise_attempted`, `exercise_solved`
+  - `lab_viewed` is required to compute the drop-off metric (where users stop)
 - Storage: localStorage (no server, no accounts) — anonymous, opt-out
 - Surface: a `/api/progress` enhancement that includes timing data
 - **Success metric this enables:** lab completion rate (north-star), drop-off point, time-on-task
@@ -112,23 +121,25 @@ Ship a thin anonymous event layer BEFORE the visual redesign, so there's a basel
 
 ### Phase 3: Chain rebuild (1.5 days)
 
-- **Kill emoji** → 20px monoline SVG glyphs (card/vault/inbox/ban-circle), each `role="img"` with `aria-label` (UX a11y requirement)
-- **Single-row with horizontal scroll** — NOT flex-wrap (UI blocker #2). On overflow, the chain scrolls horizontally; the packet travels the scrollWidth. This eliminates the wrap-breaks-animation bug entirely.
-- **One-shot animation:** ~300ms/hop (compressed from 450ms per UX panel — 5 hops = 1.5s, not 2.25s). Settles on beneficiary. Replay button. No infinite loop.
+- **Kill emoji** → 20px monoline SVG glyphs (card/vault/inbox/ban-circle). All glyphs `aria-hidden="true"` — the chain container carries the text alternative (see below).
+- **Single-row with horizontal scroll** — NOT flex-wrap (UI blocker #2). On overflow, the chain scrolls horizontally; the packet travels the scrollWidth.
+- **Mobile fallback (UI+UX panel):** below 640px, render a static full-route diagram (no animation) with scaled-down glyphs + wrapped labels. The animated one-shot is desktop-only. This avoids the unwatchable-packet-leaves-viewport problem on 390px screens.
+- **One-shot animation:** ~350ms/hop (balanced: fast enough that 5 hops = 1.75s total, slow enough to read each node). Settles on beneficiary. Replay button. No infinite loop.
 - **Skip control:** appears after ~600ms if animation is long; jumps to settled state (UX panel recommendation)
-- **Pause-on-hover:** keep (valuable for one-shot — lets learner freeze a hop to read the amount)
+- **Pause-on-hover:** keep (valuable for one-shot — lets learner freeze a hop to read the amount at 350ms/hop)
 - **Trail draw:** deferred — the single-row-with-scroll architecture makes per-segment trail draw lower-value (the packet itself carries the amount tag). Revisit in V2 if needed.
 - **Packet carries cargo:** 14px rounded-square with trailing `$5,000` mono tag
-- **Text alternative (UX a11y):** visually-hidden `<p>` before the chain: "Payment route: Your Bank → [Intermediary] → Beneficiary. Amount: $5,000 USD." Decorative dot gets `aria-hidden="true"`.
+- **ARIA contract (UX panel — one authoritative alternative, not redundant):** Chain container gets `role="img"` with a comprehensive `aria-label` that mirrors the rendered route, including dynamic states: "Payment route: Your Bank → Citibank → GTBank. Amount: $5,000 USD." For reject paths: "Payment route: Your Bank → Citibank → REJECTED. Reason: sanctions hit." All glyph SVGs and the animated dot are `aria-hidden="true"`. No per-glyph labels, no separate visually-hidden `<p>` — one label on the container. `aria-live="off"` on replay (decorative).
 
 ### Phase 4: Content width fix (½ day)
 
 - **One consistent content max-width: ~1000px** with a nested `max-width: 66ch` prose measure inside it (PD/UX panel recommendation — fixes the 760px-is-too-narrow problem and the section-switching-reflow problem)
 - Reading text constrains itself to 66ch; visualizations, tables, and code blocks break out to the full 1000px
 - Implementation: `.lab-main { max-width: 1000px }`, `.lab-main .concept, .lab-main p { max-width: 66ch }`
+- **Capstone wizard exception (PD panel):** the capstone is a multi-step builder, not reading content. It gets `max-width: 1100px` to fit the step indicator + tables + inline chain. Implementation: `.lab-main.capstone { max-width: 1100px }`.
 - No section-level width switching (that was a V1 idea that V2 killed)
 
-### Phase 5: Next/Prev navigation (½ day)
+### Phase 5: Next/Prev navigation + completion-contract harmonization (1-1.5 days)
 
 **The single most important UX addition (all 4 panels agreed).**
 
@@ -153,7 +164,7 @@ Ship a thin anonymous event layer BEFORE the visual redesign, so there's a basel
 - [ ] Every core lab has Next/Prev buttons; Next is disabled until completion
 - [ ] Content width is ~1000px with nested 66ch prose measure
 - [ ] "Corridor Labs" appears in all UI surfaces; "SWIFT" dropped from branding
-- [ ] All existing 522+ Python tests still pass
+- [ ] All existing Python tests still pass (baseline: ~405 test functions)
 - [ ] Ruff clean
 - [ ] `prefers-reduced-motion` freezes chain, shows settled state immediately
 - [ ] Chain has `role="img"` + `aria-label` text alternative
@@ -190,10 +201,10 @@ Ship a thin anonymous event layer BEFORE the visual redesign, so there's a basel
 | `--surface-2` | `#f5f5f4` | — | — | table headers, hover |
 | `--surface-3` | `#eeeeec` | — | — | active nav |
 | `--ink` | `#1c1917` | 16.75:1 | ✅ AAA | primary text |
-| `--ink-2` | `#57534e` | 9.5:1 | ✅ AAA | secondary text |
-| `--ink-3` | `#6b7280` | **4.63:1** | ✅ AA | muted labels (darkened from v1's #78716c per UI panel — 0.04 margin gain) |
+| `--ink-2` | `#57534e` | 7.3:1 | ✅ AAA | secondary text |
+| `--ink-3` | `#635a52` | **~5.3:1** | ✅ AA | muted labels (warm-stone custom — stays on-palette, clears 5.0:1) |
 | `--accent` | `#0f766e` | **5.24:1** | ✅ AA | teal-700, links/active/btn |
-| `--accent-hover` | `#115e59` | 6.1:1 | ✅ AA | teal-800 |
+| `--accent-hover` | `#115e59` | 7.3:1 | ✅ AAA | teal-800 |
 | `--accent-bright` | `#14b8a6` | 3.2:1 | AA Large only | chart fills, animated dot (non-text) |
 | `--accent-surface` | `#f0fdfa` | — | — | pale teal badges |
 | `--success` / `-bg` | `#15803d` / `#f0fdf4` | **4.79:1** | ✅ AA | PROCEED badge |
@@ -284,7 +295,7 @@ Deferred because:
 - **Feedback reveals:** 180ms `max-height` + `opacity`.
 - **Data resolution:** fee bars, score bars settle at 300-500ms ease-out.
 - **Hard caps:** no transition > 500ms. No parallax. No autoplay. No entrance animations on text.
-- **Reduced motion:** `@media (prefers-reduced-motion: reduce)` — chain shows settled state immediately. All new animations added to this rule.
+- **Reduced motion:** `@media (prefers-reduced-motion: reduce)` — chain shows settled state immediately; lab transitions and feedback reveals collapse to instant (0ms duration). All new animations added to this rule.
 
 ---
 
@@ -319,10 +330,11 @@ The UX panel found 8 of 16 labs had no route in v1's scheme. Complete table (for
 |---|---|---|
 | Shell merge (Learn + API + Tools) | Frontend tests needed first; telemetry must show drop-off | Defer to V2 spec |
 | ⌘K search | Needs full spec: results schema, keyboard map, focus trap, gating reconciliation | Defer to V2 spec |
-| Custom API docs | Killed — styled Swagger + 3 curated deep-dives instead | If built at all |
+| Custom API docs | Killed — styled Swagger + 3 curated deep-dives (`/api/prepare-payment`, `/api/track/create`, `/api/validate`) instead | If built at all |
 | Dark theme | Needs dark semantic pairs + QA | Defer indefinitely |
 | Tools as top-level section | Needs identity decision (reference mode? power-user surface?) | Defer |
 | Capstone sessionStorage | Needed for cross-section navigation in V2 | V2 prerequisite |
+| Progress reconciliation across merged shell | Decide: shared state across Learn/API/Tools, or Learn-scoped? | V2 spec must answer |
 | Go-deeper grouping | Flat list until content justifies grouping (3 of 5 groups had 1 item) | When content grows |
 
 ---
