@@ -26,43 +26,25 @@ html { font-size: 15px; }
   z-index: 100;
 }
 
-/* ── Tokens (light theme — calm, trustworthy, restrained) ── */
+/* ── Tokens are now in tokens.css (shared with learn.css) ── */
+/* App-specific layout tokens */
 :root {
-  /* Surfaces: steps of the same hue, no shadows */
-  --canvas:     #fafafa;   /* page background */
-  --surface:    #ffffff;   /* cards, inputs */
-  --surface-2:  #f5f5f5;   /* table headers, hover */
-  --surface-3:  #efefef;   /* active nav, subtle emphasis */
-
-  /* Ink: hierarchy through weight, not color */
-  --ink:        #0a0a0a;   /* primary text */
-  --ink-2:      #525252;   /* secondary text */
-  --ink-3:      #6b7280;   /* muted labels — darkened from #a3a3a3 for WCAG AA (was 2.4:1, now ~4.6:1) */
-
-  /* Accent: reserved for actions + active nav ONLY */
-  --accent:       #2563eb; /* links, buttons, active state — darkened from #3b82f6 for AA */
-  --accent-hover: #1d4ed8;
-  --accent-surface: #eff6ff; /* very pale accent for badges */
-
-  /* Semantic (used sparingly — status only) — foregrounds darkened for WCAG AA */
-  --green:    #15803d;     /* was #16a34a (3.15:1 on pale bg → now ~4.5:1+) */
-  --green-bg: #f0fdf4;
-  --amber:    #b45309;     /* was #d97706 (3.07:1 → now ~4.5:1+) */
-  --amber-bg: #fffbeb;
-  --red:      #b91c1c;     /* was #dc2626 (4.41:1 → now ~5:1+) */
-  --red-bg:   #fef2f2;
-
-  /* Borders: 1px, low-opacity — the structural workhorse */
-  --border:       #e5e5e5;
-  --border-strong:#d4d4d4;
-
-  /* Layout */
-  --radius:  8px;
   --sidebar-w: 220px;
+  --radius: var(--radius-md);
+}
+
+/* Aliases for backward compat (old green/amber/red → new success/warn/danger) */
+:root {
+  --green: var(--success);
+  --green-bg: var(--success-bg);
+  --amber: var(--warn);
+  --amber-bg: var(--warn-bg);
+  --red: var(--danger);
+  --red-bg: var(--danger-bg);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-body);
   background: var(--canvas);
   color: var(--ink);
   line-height: 1.5;

@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SWIFT Routing Lab — Educational Sandbox (SIMULATION, not for real payments)",
+    title="Corridor Labs — Educational Sandbox (SIMULATION, not for real payments)",
     description=(
         "Educational sandbox: validate IBAN/BIC, look up banks, and get "
         "heuristic intermediary bank suggestions for cross-border payments. "
