@@ -1,0 +1,362 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useSearchParams } from "react-router-dom";
+import { preparePaymentInputSchema, type PreparePaymentInput } from "./prepareSchema";
+import { apiPost } from "../../../api/client";
+import { apiKeys } from "../../../api/queryKeys";
+import { PreparePaymentResponseSchema } from "../../../api/schemas";
+import type { PreparePaymentResponse } from "../../../api/schemas";
+import type { ApiProblem } from "../../../api/problem";
+import type { CheckStatus, RecommendationState, PaymentRouteNode } from "../../../design-system/types";
+import { Button } from "../../../design-system/Button";
+import { CheckResult } from "./CheckResult";
+import { Recommendation } from "./Recommendation";
+import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
+import "./PreparePaymentPage.css";
+
+export function PreparePaymentPage() {
+  const [searchParams] = useSearchParams();
+  const draftBic = searchParams.get("bic") ?? "";
+  const queryClient = useQueryClient();
+  const [result, setResult] = useState<PreparePaymentResponse | null>(null);
+  const [isStale, setIsStale] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<PreparePaymentInput>({
+    resolver: zodResolver(preparePaymentInputSchema),
+    defaultValues: {
+      beneficiary_iban: "",
+      beneficiary_name: "",
+      beneficiary_bic: draftBic,
+      currency: "GBP",
+      amount: undefined as unknown as number,
+      strictness: "standard",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: PreparePaymentInput) => {
+      const payload = {
+        ...data,
+        beneficiary_bic: data.beneficiary_bic || undefined,
+      };
+      return apiPost<PreparePaymentResponse>(
+        "/api/prepare-payment",
+        payload,
+        PreparePaymentResponseSchema,
+      );
+    },
+    onSuccess: (data) => {
+      setResult(data);
+      setIsStale(false);
+      // Invalidate dependent queries
+      queryClient.invalidateQueries({ queryKey: apiKeys.progress });
+    },
+  });
+
+  // Watch form values to detect staleness
+  const formValues = watch();
+  function handleInputChange() {
+    if (result) setIsStale(true);
+  }
+
+  const apiError = mutation.error as ApiProblem | null;
+  const isDuplicate = mutation.isPending;
+
+  // Determine recommendation state
+  let recState: RecommendationState = "conclusive";
+  let missingEvidence: string[] = [];
+  if (result) {
+    if (result.vop.outcome === "NOT_CHECKED") {
+      recState = "incomplete";
+      missingEvidence.push("Verification of Payee — not checked");
+    }
+    if (result.routing.suggested_intermediaries.length === 0) {
+      recState = "incomplete";
+      missingEvidence.push("Routing — no intermediaries found");
+    }
+  }
+
+  // Build route nodes from routing data
+  function buildRouteNodes(data: PreparePaymentResponse): PaymentRouteNode[] {
+    const nodes: PaymentRouteNode[] = [];
+    // Originator is implicit (the user's bank)
+    nodes.push({
+      id: "origin",
+      kind: "originator",
+      bic: "—",
+      name: "Your bank",
+      status: "passed" as CheckStatus,
+    });
+    // Intermediaries
+    data.routing.suggested_intermediaries.slice(0, 3).forEach((inter, i) => {
+      nodes.push({
+        id: `inter-${i}`,
+        kind: "intermediary",
+        bic: inter.bic,
+        name: String(inter.bank ?? "Intermediary"),
+        status: "passed" as CheckStatus,
+        amount: data.routing.inferred_currency
+          ? `${data.routing.inferred_currency} ${"—"}`
+          : undefined,
+      });
+    });
+    // Beneficiary
+    if (data.validation.bic) {
+      nodes.push({
+        id: "beneficiary",
+        kind: "beneficiary",
+        bic: data.validation.bic,
+        name: "Beneficiary bank",
+        status: data.validation.valid ? ("passed" as CheckStatus) : ("failed" as CheckStatus),
+      });
+    }
+    return nodes;
+  }
+
+  return (
+    <div className="prepare-payment">
+      <div className="prepare-payment__header">
+        <h1>Prepare payment</h1>
+        <p className="measure">
+          Enter beneficiary details to validate, verify, route, and assess the payment.
+        </p>
+      </div>
+
+      {/* ── Form ───────────────────────────────────── */}
+      <form
+        className="prepare-payment__form"
+        onSubmit={handleSubmit((data) => mutation.mutate(data))}
+        onChange={handleInputChange}
+      >
+        <div className="prepare-payment__field">
+          <label htmlFor="beneficiary_iban">Beneficiary IBAN</label>
+          <input
+            id="beneficiary_iban"
+            type="text"
+            className="mono"
+            placeholder="GB29NWBK60161331926819"
+            {...register("beneficiary_iban")}
+            aria-invalid={!!errors.beneficiary_iban}
+          />
+          {errors.beneficiary_iban && (
+            <span className="prepare-payment__error">{errors.beneficiary_iban.message}</span>
+          )}
+        </div>
+
+        <div className="prepare-payment__field">
+          <label htmlFor="beneficiary_name">Beneficiary name</label>
+          <input
+            id="beneficiary_name"
+            type="text"
+            placeholder="Account holder name"
+            {...register("beneficiary_name")}
+            aria-invalid={!!errors.beneficiary_name}
+          />
+          {errors.beneficiary_name && (
+            <span className="prepare-payment__error">{errors.beneficiary_name.message}</span>
+          )}
+        </div>
+
+        <div className="prepare-payment__row">
+          <div className="prepare-payment__field">
+            <label htmlFor="currency">Currency</label>
+            <input
+              id="currency"
+              type="text"
+              className="mono"
+              placeholder="GBP"
+              {...register("currency")}
+              aria-invalid={!!errors.currency}
+            />
+            {errors.currency && (
+              <span className="prepare-payment__error">{errors.currency.message}</span>
+            )}
+          </div>
+
+          <div className="prepare-payment__field">
+            <label htmlFor="amount">Amount</label>
+            <input
+              id="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              className="mono"
+              placeholder="500.00"
+              {...register("amount")}
+              aria-invalid={!!errors.amount}
+            />
+            {errors.amount && (
+              <span className="prepare-payment__error">{errors.amount.message}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="prepare-payment__row">
+          <div className="prepare-payment__field">
+            <label htmlFor="beneficiary_bic">Beneficiary BIC (optional)</label>
+            <input
+              id="beneficiary_bic"
+              type="text"
+              className="mono"
+              placeholder="Auto-derived from IBAN"
+              {...register("beneficiary_bic")}
+            />
+          </div>
+
+          <div className="prepare-payment__field">
+            <label htmlFor="strictness">Strictness</label>
+            <select id="strictness" {...register("strictness")}>
+              <option value="lenient">Lenient — allow close matches</option>
+              <option value="standard">Standard — flag close matches</option>
+              <option value="strict">Strict — block close matches</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="prepare-payment__actions">
+          <Button type="submit" variant="primary" isLoading={isDuplicate}>
+            {isDuplicate ? "Checking…" : "Run payment checks"}
+          </Button>
+        </div>
+
+        {apiError && (
+          <div className="prepare-payment__api-error" role="alert">
+            <strong>{apiError.title}</strong>
+            {apiError.detail && <p>{apiError.detail}</p>}
+            {Object.entries(apiError.fieldErrors).map(([field, msgs]) => (
+              <p key={field}>{field}: {msgs.join(", ")}</p>
+            ))}
+            {apiError.retryable && (
+              <Button variant="secondary" onClick={() => mutation.mutate(formValues)}>
+                Retry
+              </Button>
+            )}
+          </div>
+        )}
+      </form>
+
+      {/* ── Staleness warning ──────────────────────── */}
+      {isStale && result && (
+        <div className="prepare-payment__stale" role="alert">
+          Form inputs changed — results below are stale. Re-run checks for current values.
+        </div>
+      )}
+
+      {/* ── Results ────────────────────────────────── */}
+      {result && !isStale && (
+        <div className="prepare-payment__results">
+          <h2>Check results</h2>
+
+          <Recommendation
+            state={recState}
+            recommendation={result.recommendation}
+            reason={result.reason}
+            isBlocking={result.is_blocking}
+            warnings={result.warnings}
+            blocks={result.blocks}
+            missingEvidence={missingEvidence}
+          />
+
+          <CheckResult
+            title="IBAN Validation"
+            status={result.validation.valid ? "passed" : "failed"}
+          >
+            {result.validation.bic && (
+              <p>Derived BIC: <span className="mono">{result.validation.bic}</span></p>
+            )}
+            {result.validation.errors.length > 0 && (
+              <ul>
+                {result.validation.errors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            )}
+          </CheckResult>
+
+          <CheckResult
+            title="Verification of Payee"
+            status={
+              result.vop.outcome === "MATCH" ? "passed" :
+              result.vop.outcome === "CLOSE_MATCH" ? "needs_attention" :
+              result.vop.outcome === "NO_MATCH" ? "failed" :
+              "unavailable"
+            }
+          >
+            <p>Outcome: <strong>{result.vop.outcome}</strong></p>
+            {result.vop.score !== null && result.vop.score !== undefined && (
+              <p>Match score: <span className="mono">{(result.vop.score * 100).toFixed(0)}%</span></p>
+            )}
+            <p>{result.vop.advice}</p>
+          </CheckResult>
+
+          <CheckResult
+            title="Correspondent Routing"
+            status={result.routing.suggested_intermediaries.length > 0 ? "passed" : "unavailable"}
+          >
+            {result.routing.suggested_intermediaries.length > 0 ? (
+              <>
+                <p>{result.routing.suggested_intermediaries.length} intermediary option(s):</p>
+                <ul className="prepare-payment__intermediaries">
+                  {result.routing.suggested_intermediaries.slice(0, 5).map((inter, i) => (
+                    <li key={i}>
+                      <span className="mono">{inter.bic}</span> — {String(inter.bank ?? "Unknown")}
+                      <span className="prepare-payment__confidence">{inter.confidence}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p>No intermediary routing found for this corridor.</p>
+            )}
+          </CheckResult>
+
+          <CheckResult
+            title="Settlement Instructions (SSI)"
+            status={
+              result.ssi.instructions.length > 0 ? "passed" :
+              result.ssi.has_placeholders_only ? "needs_attention" : "unavailable"
+            }
+          >
+            {result.ssi.instructions.length > 0 ? (
+              <p>{result.ssi.instructions.length} instruction(s) on file.</p>
+            ) : (
+              <p>No settlement instructions on file for this bank/currency.</p>
+            )}
+          </CheckResult>
+
+          {/* Payment route visualization */}
+          {result.routing.suggested_intermediaries.length > 0 && (
+            <div className="prepare-payment__route">
+              <h3>Payment route</h3>
+              <PaymentRoute
+                nodes={buildRouteNodes(result)}
+                currency={formValues.currency}
+                amount={formValues.amount?.toString()}
+              />
+            </div>
+          )}
+
+          {/* UETR and cross-links */}
+          <div className="prepare-payment__footer">
+            <p>
+              UETR: <span className="mono">{result.uetr}</span>
+            </p>
+            <div className="prepare-payment__links">
+              <Link to={`/app/operate/tracking?uetr=${result.uetr}`}>
+                <Button variant="secondary">Track this payment</Button>
+              </Link>
+              <Link to="/app/explore">
+                <Button variant="secondary">Explore corridor details</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

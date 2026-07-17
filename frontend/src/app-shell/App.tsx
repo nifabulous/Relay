@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppShell } from "./AppShell";
 import { OverviewPage } from "../features/overview/OverviewPage";
 import { ExplorePage, BankDirectoryPage, SchemesPage, GlossaryPage } from "../features/explore/ExplorePage";
+import { PreparePaymentPage } from "../features/operate/prepare/PreparePaymentPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +26,8 @@ export function App() {
             <Route path="explore/banks" element={<BankDirectoryPage />} />
             <Route path="explore/schemes" element={<SchemesPage />} />
             <Route path="explore/glossary" element={<GlossaryPage />} />
-            <Route path="operate" element={<div>Operate (coming soon)</div>} />
+            <Route path="operate" element={<PreparePaymentPage />} />
+            <Route path="operate/prepare" element={<PreparePaymentPage />} />
             <Route path="*" element={<Navigate to="" replace />} />
           </Route>
         </Routes>
