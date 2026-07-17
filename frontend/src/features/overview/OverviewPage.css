@@ -1,0 +1,156 @@
+/*
+ * Relay Overview — one dominant action, not a card mosaic.
+ * Anti-template: no equal-card grid, no promotional composition.
+ */
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  max-width: var(--content-max);
+}
+
+/* ── Primary action ─────────────────────────────────────── */
+.overview__primary {
+  padding: var(--space-6) 0;
+}
+
+.overview__heading {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tighter);
+  margin-bottom: var(--space-2);
+}
+
+.overview__tagline {
+  font-size: var(--text-lg);
+  color: var(--color-ink-muted);
+  margin-bottom: var(--space-5);
+  line-height: var(--leading-snug);
+}
+
+.overview__cta {
+  min-height: 48px;
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-6);
+}
+
+/* ── Section titles ─────────────────────────────────────── */
+.overview__section-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+  margin-bottom: var(--space-3);
+}
+
+/* ── Progress context ───────────────────────────────────── */
+.overview__progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.overview__progress-count {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.overview__progress-label {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.overview__progress-bar {
+  flex: 1;
+  min-width: 120px;
+  height: 6px;
+  background: var(--color-surface-3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.overview__progress-fill {
+  height: 100%;
+  background: var(--color-action);
+  border-radius: var(--radius-full);
+}
+
+/* ── Utility row ────────────────────────────────────────── */
+.overview__utility {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.overview__utility-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+.overview__utility-link:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
+  text-decoration: none;
+}
+
+.overview__utility-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.overview__utility-sub {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+/* ── Recent activity ────────────────────────────────────── */
+.overview__muted {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* ── System status ──────────────────────────────────────── */
+.overview__status {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.overview__status-text {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+.overview__status-text .mono {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .overview {
+    gap: var(--space-5);
+  }
+
+  .overview__heading {
+    font-size: var(--text-2xl);
+  }
+
+  .overview__utility {
+    flex-direction: column;
+  }
+}
