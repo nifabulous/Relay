@@ -3,6 +3,10 @@
  * Sourced from the plan's Shared Interfaces section.
  */
 
+// Re-exported so existing imports (`import { ApiProblem } from "./types"`)
+// keep working; the canonical definition lives with the transport layer.
+export type { ApiProblem } from "../api/problem";
+
 export type AsyncStatus =
   | "idle"
   | "loading"
@@ -17,14 +21,6 @@ export type CheckStatus = "passed" | "needs_attention" | "failed" | "unavailable
 export type Workspace = "overview" | "learn" | "explore" | "operate";
 
 export type RecommendationState = "conclusive" | "incomplete";
-
-export interface ApiProblem {
-  status: number;
-  title: string;
-  detail: string;
-  fieldErrors: Record<string, string[]>;
-  retryable: boolean;
-}
 
 export interface PrimaryAction {
   kind: "explore_intro" | "resume_learn" | "resume_operate" | "next_learn" | "prepare_payment";
