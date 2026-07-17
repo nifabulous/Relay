@@ -1,0 +1,96 @@
+/*
+ * Relay Design Tokens — sourced from DESIGN.md
+ *
+ * Precision Workspace: bright, structured, restrained.
+ * Blue (#3157D5) reserved for actions, selection, progress, emphasis.
+ * Thin structural borders, no decorative shadows.
+ */
+
+:root {
+  /* ── Color ────────────────────────────────────────────── */
+  --color-action: #3157d5;
+  --color-action-hover: #2848b8;
+  --color-action-pressed: #1f3aa0;
+  --color-action-surface: #eef2fc;
+  --color-action-border: #c3d0f5;
+
+  --color-ink-strong: #16233d;
+  --color-ink: #2d3a52;
+  --color-ink-muted: #68748a;
+
+  --color-canvas: #f6f8fc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f3f9;
+  --color-surface-3: #e6eaf2;
+
+  --color-border: #dce2eb;
+  --color-border-strong: #c4cdd9;
+
+  --color-success: #16825d;
+  --color-success-bg: #e8f6ef;
+  --color-success-border: #a3d9c4;
+
+  --color-warning: #c87b16;
+  --color-warning-bg: #fdf4e6;
+  --color-warning-border: #f0d4a0;
+
+  --color-danger: #c8424d;
+  --color-danger-bg: #fcecef;
+  --color-danger-border: #f0b8be;
+
+  /* ── Spacing (4px base) ──────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ── Radius ───────────────────────────────────────────── */
+  --radius-control: 8px;
+  --radius-region: 12px;
+  --radius-full: 999px;
+
+  /* ── Typography ───────────────────────────────────────── */
+  --font-ui: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight: -0.02em;
+  --tracking-tighter: -0.03em;
+  --tracking-micro: 0.04em;
+  --tracking-wide: 0.06em;
+
+  /* ── Layout ───────────────────────────────────────────── */
+  --nav-width-desktop: 240px;
+  --nav-height-mobile: 64px;
+  --topbar-height: 52px;
+  --reading-measure: 66ch;
+  --content-max: 1000px;
+
+  /* ── Motion ───────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0.01ms;
+    --duration-normal: 0.01ms;
+  }
+}

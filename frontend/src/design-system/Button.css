@@ -1,0 +1,90 @@
+.relay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  min-height: 40px;
+  /* No transition:all — only border-color and background */
+  transition: border-color var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+/* Primary — blue action */
+.relay-btn--primary {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: #fff;
+}
+
+.relay-btn--primary:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.relay-btn--primary:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+/* Secondary — surface with border */
+.relay-btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink-strong);
+}
+
+.relay-btn--secondary:hover {
+  background: var(--color-surface-2);
+}
+
+/* Danger */
+.relay-btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.relay-btn--danger:hover {
+  background: #b03b45;
+  border-color: #b03b45;
+}
+
+/* Disabled / loading */
+.relay-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.relay-btn--loading {
+  cursor: wait;
+}
+
+.relay-btn__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-full);
+  animation: relay-btn-spin 0.6s linear infinite;
+}
+
+@keyframes relay-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relay-btn__spinner {
+    animation: none;
+    border-top-color: currentColor;
+  }
+}

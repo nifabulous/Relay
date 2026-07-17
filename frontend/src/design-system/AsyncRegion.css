@@ -1,0 +1,86 @@
+.async-region {
+  width: 100%;
+}
+
+/* Loading — skeleton lines reserve space */
+.async-region--loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+
+.skeleton--line {
+  height: 16px;
+}
+
+/* Error — inline alert with icon, title, detail, retry */
+.async-region--error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-region);
+}
+
+.async-region__error-icon {
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.async-region__error-body {
+  flex: 1;
+}
+
+.async-region__error-title {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-ink-strong);
+  margin-bottom: 2px;
+}
+
+.async-region__error-detail {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* Empty — message + one action */
+.async-region--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: left;
+}
+
+.async-region__empty-message {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* Unavailable */
+.async-region--unavailable {
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.async-region__unavailable-message {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* Partial — content + note */
+.async-region__partial-note {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  font-weight: 500;
+}
