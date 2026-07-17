@@ -1,0 +1,328 @@
+/*
+ * Relay Payment Route — the product's primary visual signature.
+ *
+ * Desktop (≥768px): horizontal continuous path with institution nodes.
+ * Mobile (<768px): vertical stepper in document order.
+ * One semantic model, two responsive compositions.
+ *
+ * Anti-template: no text-filled decorative circles, no charts when the
+ * route communicates the point better.
+ */
+
+.payment-route {
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+/* ── Header/footer (amount + currency) ─────────────────── */
+.payment-route__header,
+.payment-route__footer {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payment-route__footer {
+  padding-bottom: 0;
+  padding-top: var(--space-3);
+  margin-top: var(--space-4);
+  margin-bottom: 0;
+  border-bottom: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.payment-route__amount {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-route__currency {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+}
+
+/* ── Layout visibility (CSS controls which shows) ──────── */
+.payment-route__layout {
+  display: none;
+}
+
+/* ════════════════════════════════════════════════════════
+   HORIZONTAL — Desktop (≥768px)
+   Continuous path: node → arrow → node → arrow → node
+   ════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .payment-route--horizontal {
+    display: block;
+  }
+
+  .payment-route__path {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+  }
+
+  .payment-route__path-item {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .payment-route__connector {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-2);
+    color: var(--color-border-strong);
+  }
+
+  .payment-route__connector .payment-route__arrow {
+    color: var(--color-ink-muted);
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   VERTICAL — Mobile / Tablet (<768px)
+   Document-order stepper, active hop expands
+   ════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .payment-route--vertical {
+    display: block;
+  }
+
+  .payment-route__steps {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .payment-route__step {
+    display: flex;
+    gap: var(--space-3);
+    min-height: 0;
+  }
+
+  .payment-route__step-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: var(--space-2);
+  }
+
+  .payment-route__step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+    flex-shrink: 0;
+  }
+
+  .payment-route__step-dot--passed {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  .payment-route__step-dot--failed {
+    border-color: var(--color-danger);
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+
+  .payment-route__step-dot--unavailable {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-2);
+    color: var(--color-ink-muted);
+  }
+
+  .payment-route__step-dot--needs_attention {
+    border-color: var(--color-warning);
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  .payment-route__step-line {
+    width: 2px;
+    flex: 1;
+    min-height: var(--space-4);
+    background: var(--color-border);
+    margin-top: var(--space-1);
+  }
+
+  .payment-route__step-content {
+    flex: 1;
+    min-width: 0;
+    padding-bottom: var(--space-3);
+  }
+}
+
+/* ── Node card (shared between both layouts) ───────────── */
+.payment-route__node {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  min-width: 140px;
+  max-width: 200px;
+  transition: border-color var(--duration-fast) var(--ease),
+    background var(--duration-fast) var(--ease);
+}
+
+/* Horizontal: fixed width. Vertical: full width, compact unless expanded */
+.payment-route--horizontal .payment-route__node {
+  width: 170px;
+}
+
+.payment-route--vertical .payment-route__node {
+  width: 100%;
+  max-width: none;
+}
+
+/* Vertical: compact non-active hops, expanded active hop */
+@media (max-width: 767px) {
+  .payment-route--vertical .payment-route__node:not(.payment-route__node--expanded) {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .payment-route--vertical .payment-route__node:not(.payment-route__node--expanded) .payment-route__node-details {
+    display: none;
+  }
+
+  .payment-route--vertical .payment-route__node:not(.payment-route__node--expanded) .payment-route__node-header {
+    margin-bottom: 0;
+  }
+
+  .payment-route--vertical .payment-route__node:not(.payment-route__node--expanded) .payment-route__node-name {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Node status colors */
+.payment-route__node--passed {
+  border-color: var(--color-success-border);
+}
+
+.payment-route__node--failed {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-bg);
+}
+
+.payment-route__node--unavailable {
+  border-color: var(--color-border);
+  opacity: 0.7;
+}
+
+.payment-route__node--needs_attention {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
+}
+
+.payment-route__node--active {
+  border-color: var(--color-action);
+  box-shadow: 0 0 0 3px var(--color-action-surface);
+}
+
+.payment-route__node-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
+.payment-route__node-icon {
+  color: var(--color-ink-muted);
+  display: flex;
+  align-items: center;
+}
+
+.payment-route__node-kind {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+  margin-right: auto;
+}
+
+.payment-route__node-status {
+  margin-left: auto;
+}
+
+.payment-route__node-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  line-height: var(--leading-snug);
+  /* Wrap long names — no truncation */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.payment-route__node-bic {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  margin-top: 2px;
+  font-variant-ligatures: none;
+}
+
+.payment-route__node-details {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.payment-route__node-amount {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-route__node-fee {
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  margin-top: 2px;
+}
+
+.payment-route__node-timing {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  margin-top: 2px;
+}
+
+/* ── Stop indicator ─────────────────────────────────────── */
+.payment-route__stop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-danger-bg);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+/* ── Reduced motion: no animated dot ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .payment-route__node,
+  .payment-route__step-dot {
+    transition: none;
+  }
+}
