@@ -11,6 +11,8 @@ A small FastAPI service that validates IBAN/BIC, looks up banks, and returns
 
 ## Quick start (local, zero setup)
 
+### Backend (FastAPI)
+
 ```bash
 cd swift-routing
 python3 -m venv .venv && source .venv/bin/activate
@@ -22,6 +24,29 @@ Open the interactive docs: <http://127.0.0.1:8000/docs>
 
 By default the app uses **SQLite** (`swift_routing.db`, auto-created + seeded).
 No Docker / Postgres needed for local dev.
+
+### Frontend (Relay — React + TypeScript + Vite)
+
+For development with hot reload, run **both** terminals:
+
+```bash
+# Terminal 1 — backend
+.venv/bin/uvicorn app.main:app --reload
+
+# Terminal 2 — frontend dev server (proxies /api to backend)
+cd frontend && npm install && npm run dev
+```
+
+The Vite dev server serves Relay at <http://127.0.0.1:5173/app/> with `/api`
+requests proxied to the FastAPI backend on port 8000.
+
+For a production build (served by FastAPI under `/app`):
+
+```bash
+cd frontend && npm run build
+```
+
+This outputs to `app/static/relay/` and is served at <http://127.0.0.1:8000/app>.
 
 ## Endpoints
 
