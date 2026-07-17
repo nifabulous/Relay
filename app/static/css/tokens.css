@@ -37,9 +37,11 @@
   --danger:      #b91c1c;     /* STOP (5.92:1 on danger-bg; 6.47:1 white-on-danger) */
   --danger-bg:   #fef2f2;
 
-  /* ── Borders ─────────────────────────────────────────── */
-  --border:        #e7e5e4;   /* stone-200, structural separation */
-  --border-strong: #d6d3d1;   /* stone-300, inputs + focus prep */
+  /* ── Borders (Origin principle: hairline, low-opacity) ── */
+  --border:        rgba(28, 25, 23, 0.08);   /* near-invisible structural separation */
+  --border-strong: rgba(28, 25, 23, 0.16);   /* inputs + focus prep */
+  /* Keep solid fallbacks for the grid-gap-as-border trick (needs solid bg) */
+  --border-solid:  #e7e5e4;   /* stone-200, used only in gap:1px grid layouts */
 
   /* ── Spacing scale (ban raw rems — use these) ────────── */
   --space-1:  4px;
@@ -66,4 +68,20 @@
   --text-xl:   24px;
   --text-2xl:  30px;
   --text-3xl:  38px;
+
+  /* Leading — generous body, tight display (Origin: hierarchy by weight) */
+  --leading-tight:   1.2;
+  --leading-snug:    1.35;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.7;
+
+  /* Tracking — display tightens, micro-labels open up */
+  --tracking-tight:  -0.02em;
+  --tracking-tighter: -0.03em;
+  --tracking-micro:   0.04em;
+  --tracking-wide:    0.06em;
+
+  /* Elevation — Origin: NO card shadows; background steps do the work.
+     This is ONLY for the animated chain dot, which needs a motion depth cue. */
+  --shadow-dot: 0 0 0 3px var(--accent-surface), 0 2px 8px rgba(20, 184, 166, 0.35);
 }
