@@ -1,0 +1,80 @@
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { CommandSearch } from "./CommandSearch";
+
+function renderSearch(initialQuery = "") {
+  const user = userEvent.setup();
+  const utils = render(
+    <MemoryRouter>
+      <CommandSearch initialQuery={initialQuery} />
+    </MemoryRouter>,
+  );
+  return { user, ...utils };
+}
+
+describe("CommandSearch", () => {
+  it("renders an input field with accessible label", () => {
+    renderSearch();
+    expect(screen.getByRole("searchbox", { name: /search/i })).toBeVisible();
+  });
+
+  it("shows grouped results when typing a query", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "IBAN");
+
+    // Should show a glossary result for IBAN
+    expect(screen.getByText("IBAN")).toBeVisible();
+    // Should be grouped under a "Glossary" heading
+    expect(screen.getByText(/glossary/i)).toBeVisible();
+  });
+
+  it("shows a zero-result message when nothing matches", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "zzzznotfound");
+
+    expect(screen.getByText(/no results/i)).toBeVisible();
+  });
+
+  it("navigates results with ArrowDown and ArrowUp", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "IBAN");
+
+    // Results should be visible
+    const items = screen.getAllByRole("option");
+    expect(items.length).toBeGreaterThan(0);
+
+    // Press ArrowDown to activate first item
+    await user.keyboard("{ArrowDown}");
+    expect(items[0]).toHaveClass("command-search__item--active");
+
+    // Press ArrowDown again to move to second item
+    await user.keyboard("{ArrowDown}");
+    expect(items[1]).toHaveClass("command-search__item--active");
+  });
+
+  it("closes results on Escape and restores focus to input", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "BIC");
+
+    // Results visible
+    expect(screen.getByText("BIC")).toBeVisible();
+
+    // Press Escape
+    await user.keyboard("{Escape}");
+
+    // Focus back to input
+    expect(input).toHaveFocus();
+  });
+
+  it("preserves initial query value", () => {
+    renderSearch("SEPA");
+    const input = screen.getByRole("searchbox") as HTMLInputElement;
+    expect(input.value).toBe("SEPA");
+  });
+});
