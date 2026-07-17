@@ -41,3 +41,27 @@ class TestUILinksToLearn:
             "The /ui admin page must contain a link to /learn so operators "
             "can discover the teaching mode"
         )
+
+
+class TestRelayAppServing:
+    """Relay built assets must be served under /app with SPA deep-link support."""
+
+    def test_relay_app_serves_built_shell(self, client):
+        response = client.get("/app")
+        assert response.status_code == 200
+        assert "<div id=\"root\"></div>" in response.text
+
+    def test_relay_deep_link_serves_shell(self, client):
+        response = client.get("/app/operate/prepare")
+        assert response.status_code == 200
+        assert "<div id=\"root\"></div>" in response.text
+
+    def test_relay_assets_not_blocked(self, client):
+        """JS/CSS assets under /app/assets/ must be reachable, not 404."""
+        import re
+        html = client.get("/app").text
+        asset_refs = re.findall(r'(?:src|href)="(/app/assets/[^"]+)"', html)
+        assert asset_refs, "index.html must reference at least one /app/assets/ file"
+        for ref in asset_refs:
+            r = client.get(ref)
+            assert r.status_code == 200, f"Asset {ref} returned {r.status_code}"

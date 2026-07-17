@@ -3,8 +3,8 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 logger = logging.getLogger(__name__)
@@ -96,6 +96,32 @@ app.include_router(telemetry_router.router)
 # Serve admin UI static assets (CSS/JS)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Relay (React) built assets — served from app/static/relay/
+RELAY_DIR = STATIC_DIR / "relay"
+RELAY_INDEX = RELAY_DIR / "index.html"
+_relay_mounted = False
+if RELAY_DIR.is_dir():
+    app.mount("/app/assets", StaticFiles(directory=str(RELAY_DIR / "assets")), name="relay-assets")
+    _relay_mounted = True
+
+
+@app.get("/app")
+@app.get("/app/{rest:path}")
+def relay_app(rest: str = ""):
+    """Serve the Relay SPA. Deep links return index.html (client-side routing).
+
+    When the build directory is absent, return a 503 telling developers
+    to run the frontend build.
+    """
+    if not _relay_mounted or not RELAY_INDEX.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Relay build not found. Run: cd frontend && npm run build"
+            ),
+        )
+    return FileResponse(str(RELAY_INDEX))
+
 
 @app.get("/ui")
 @app.get("/ui/{rest:path}")
@@ -114,8 +140,6 @@ def learn_ui(rest: str = ""):
 @app.get("/")
 def root():
     """Redirect to the learning labs — the flagship experience."""
-    from fastapi.responses import RedirectResponse
-
     return RedirectResponse(url="/learn", status_code=302)
 
 
