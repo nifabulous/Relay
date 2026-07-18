@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema } from "./schemas";
+import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema } from "./schemas";
 
 describe("SuggestedIntermediary schema", () => {
   it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {
@@ -66,5 +66,26 @@ describe("SuggestedIntermediary schema", () => {
     // bank should be a string (empty), never null or undefined
     expect(typeof result.bank).toBe("string");
     expect(result.bank).not.toBeNull();
+  });
+});
+
+describe("SchemesResponse schema", () => {
+  it("parses a valid schemes response", () => {
+    const data = {
+      currency: "GBP",
+      country: "United Kingdom",
+      countryCode: "GB",
+      iban: true,
+      localIdentifier: "Sort code",
+      schemes: [
+        { name: "Faster Payments", speed: "instant", limit: "£1M", cost: "Free", useCase: "Retail", operator: "Pay.UK" },
+        { name: "CHAPS", speed: "same-day", limit: "No limit", cost: "£25", useCase: "High value", operator: "BoE" },
+      ],
+    };
+    const result = SchemesResponseSchema.parse(data);
+    expect(result.currency).toBe("GBP");
+    expect(result.iban).toBe(true);
+    expect(result.schemes.length).toBe(2);
+    expect(result.schemes[0].name).toBe("Faster Payments");
   });
 });

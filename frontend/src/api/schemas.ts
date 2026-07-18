@@ -462,3 +462,33 @@ export const ProgressResponseSchema = z
   .passthrough();
 
 export type ProgressResponse = z.infer<typeof ProgressResponseSchema>;
+
+/* ------------------------------------------------------------------ *
+ * Payment Schemes
+ * ------------------------------------------------------------------ */
+
+export const SchemeInfoSchema = z
+  .object({
+    name: z.string().catch(""),
+    speed: z.string().catch(""),
+    limit: z.string().catch(""),
+    cost: z.string().catch(""),
+    useCase: z.string().catch(""),
+    operator: z.string().catch(""),
+  })
+  .passthrough();
+
+export type SchemeInfo = z.infer<typeof SchemeInfoSchema>;
+
+export const SchemesResponseSchema = z
+  .object({
+    currency: z.string().catch(""),
+    country: z.string().catch(""),
+    countryCode: z.string().catch(""),
+    iban: z.coerce.boolean().catch(false),
+    localIdentifier: z.string().catch(""),
+    schemes: z.array(SchemeInfoSchema).catch([]),
+  })
+  .passthrough();
+
+export type SchemesResponse = z.infer<typeof SchemesResponseSchema>;
