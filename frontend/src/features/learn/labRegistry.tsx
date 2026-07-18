@@ -10,6 +10,7 @@ const Lab4Content = lazy(() => import("./labs/Lab4Content").then(m => ({ default
 const Lab5Content = lazy(() => import("./labs/Lab5Content").then(m => ({ default: m.Lab5Content })));
 const Lab6Content = lazy(() => import("./labs/Lab6Content").then(m => ({ default: m.Lab6Content })));
 const Lab7Content = lazy(() => import("./labs/Lab7Content").then(m => ({ default: m.Lab7Content })));
+const Lab8Content = lazy(() => import("./labs/Lab8Content").then(m => ({ default: m.Lab8Content })));
 const CapstoneContent = lazy(() => import("./labs/CapstoneContent").then(m => ({ default: m.CapstoneContent })));
 
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
@@ -20,6 +21,7 @@ export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-5": { component: Lab5Content, requiredCheckpoints: CORE_LAB_PARITY["lab-5"].requiredCheckpoints },
   "lab-6": { component: Lab6Content, requiredCheckpoints: CORE_LAB_PARITY["lab-6"].requiredCheckpoints },
   "lab-7": { component: Lab7Content, requiredCheckpoints: CORE_LAB_PARITY["lab-7"].requiredCheckpoints },
+  "lab-8": { component: Lab8Content, requiredCheckpoints: CORE_LAB_PARITY["lab-8"].requiredCheckpoints },
   "capstone": { component: CapstoneContent, requiredCheckpoints: CORE_LAB_PARITY["capstone"].requiredCheckpoints },
 };
 
