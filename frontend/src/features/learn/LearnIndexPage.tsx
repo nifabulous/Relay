@@ -1,21 +1,13 @@
 import { Link } from "react-router-dom";
 import { CURRICULUM, isModuleUnlocked, getPrerequisiteChain } from "./curriculum";
-import { loadProgress, saveProgress } from "../../lib/persistence/storage";
+import { loadProgress } from "../../lib/persistence/storage";
 import { useState, useCallback } from "react";
 import "./LearnPage.css";
 
 export function LearnIndexPage() {
-  const [completed, setCompleted] = useState<string[]>(() => loadProgress().completedModuleIds);
+  const [completed] = useState<string[]>(() => loadProgress().completedModuleIds);
 
   const isComplete = useCallback((id: string) => completed.includes(id), [completed]);
-
-  function toggleComplete(id: string) {
-    const next = isComplete(id)
-      ? completed.filter((c) => c !== id)
-      : [...completed, id];
-    setCompleted(next);
-    saveProgress({ schemaVersion: 1, completedModuleIds: next });
-  }
 
   return (
     <div className="learn-page">
@@ -62,16 +54,6 @@ export function LearnIndexPage() {
                     </span>
                   )}
                 </div>
-                {unlocked && (
-                  <button
-                    type="button"
-                    className="learn-module__toggle"
-                    onClick={() => toggleComplete(mod.id)}
-                    aria-pressed={complete}
-                  >
-                    {complete ? "Mark as incomplete" : "Mark as complete"}
-                  </button>
-                )}
               </div>
             </li>
           );

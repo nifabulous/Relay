@@ -31,6 +31,7 @@ export type CapstoneStepStatus =
   | "deciding"
   | "tracking"
   | "complete"
+  | "blocked"
   | "error";
 
 export interface CapstoneState {
@@ -47,7 +48,8 @@ export type CapstoneAction =
   | { type: "STEP_SUCCESS"; step: number; result: unknown }
   | { type: "STEP_ERROR"; error: string }
   | { type: "RETRY" }
-  | { type: "RESTART" };
+  | { type: "RESTART" }
+  | { type: "PROCEED_ANYWAY" };
 
 const STEP_STATUS_MAP: CapstoneStepStatus[] = [
   "validating", "verifying", "routing", "settling", "deciding", "tracking",
@@ -76,6 +78,17 @@ export function capstoneReducer(state: CapstoneState, action: CapstoneAction): C
       const nextStep = action.step + 1;
       const isLastStep = action.step === 5;
 
+      // Branch on VoP NO_MATCH — pause and force the learner to acknowledge
+      if (action.step === 1 && action.result && typeof action.result === "object" && "outcome" in action.result && action.result.outcome === "NO_MATCH") {
+        return {
+          ...state,
+          results: { ...state.results, [resultKey]: action.result },
+          step: action.step, // Stay at verify step
+          status: "blocked",
+          error: undefined,
+        };
+      }
+
       return {
         ...state,
         results: { ...state.results, [resultKey]: action.result },
@@ -90,6 +103,17 @@ export function capstoneReducer(state: CapstoneState, action: CapstoneAction): C
 
     case "RETRY":
       return { ...state, status: STEP_STATUS_MAP[state.step], error: undefined };
+
+    case "PROCEED_ANYWAY": {
+      // Learner acknowledges the NO_MATCH and chooses to continue for learning
+      const nextStep = state.step + 1;
+      return {
+        ...state,
+        step: nextStep,
+        status: STEP_STATUS_MAP[nextStep] ?? "complete",
+        error: undefined,
+      };
+    }
 
     case "RESTART":
       return {

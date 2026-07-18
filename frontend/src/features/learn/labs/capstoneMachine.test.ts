@@ -100,4 +100,53 @@ describe("capstoneReducer", () => {
     expect(next.step).toBe(0);
     expect(next.results).toEqual({});
   });
+
+  it("pauses at verify step on NO_MATCH (does not auto-advance)", () => {
+    const verifying: CapstoneState = { ...initialState, step: 1, status: "verifying" };
+    const next = capstoneReducer(verifying, {
+      type: "STEP_SUCCESS",
+      step: 1,
+      result: { outcome: "NO_MATCH", score: 0.1, advice: "Name does not match." },
+    });
+    // Should store the result but NOT advance to routing
+    expect(next.results.vop).toBeDefined();
+    expect(next.results.vop?.outcome).toBe("NO_MATCH");
+    // Should pause — stay at step 1, status should be "blocked" not "routing"
+    expect(next.step).toBe(1);
+    expect(next.status).toBe("blocked");
+  });
+
+  it("can proceed past NO_MATCH when the learner acknowledges it", () => {
+    const blocked: CapstoneState = {
+      ...initialState,
+      step: 1,
+      status: "blocked",
+      results: { vop: { outcome: "NO_MATCH", score: 0.1, advice: "Name does not match." } },
+    };
+    const next = capstoneReducer(blocked, { type: "PROCEED_ANYWAY" });
+    expect(next.status).toBe("routing");
+    expect(next.step).toBe(2);
+  });
+
+  it("advances normally on MATCH", () => {
+    const verifying: CapstoneState = { ...initialState, step: 1, status: "verifying" };
+    const next = capstoneReducer(verifying, {
+      type: "STEP_SUCCESS",
+      step: 1,
+      result: { outcome: "MATCH", score: 1.0, advice: "Name matches." },
+    });
+    expect(next.status).toBe("routing");
+    expect(next.step).toBe(2);
+  });
+
+  it("advances normally on CLOSE_MATCH", () => {
+    const verifying: CapstoneState = { ...initialState, step: 1, status: "verifying" };
+    const next = capstoneReducer(verifying, {
+      type: "STEP_SUCCESS",
+      step: 1,
+      result: { outcome: "CLOSE_MATCH", score: 0.82, account_holder_name: "John Smith", advice: "Close match." },
+    });
+    expect(next.status).toBe("routing");
+    expect(next.step).toBe(2);
+  });
 });

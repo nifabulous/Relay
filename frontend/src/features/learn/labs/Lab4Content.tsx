@@ -144,7 +144,7 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
           <div className="lab-route-result">
             {route.suggested_intermediaries.length > 0 ? (
               <>
-                <p>{route.suggested_intermediaries.length} intermediary option(s) found for {route.currency} → {route.beneficiary_country}:</p>
+                <p>{route.suggested_intermediaries.length} intermediary option(s) found for {currency} → {route.beneficiary_country} (local: {route.currency}):</p>
 
                 {/* Payment route visualization */}
                 <PaymentRoute

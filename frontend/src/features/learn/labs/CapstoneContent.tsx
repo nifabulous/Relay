@@ -1,4 +1,4 @@
-import { useReducer, useRef, useCallback } from "react";
+import { useReducer, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { LabContentProps } from "../labTypes";
 import { capstoneReducer, STEP_LABELS, type CapstoneState, type CapstonePaymentInput } from "./capstoneMachine";
@@ -125,19 +125,15 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
     runStep(0, state.paymentInput);
   }, [state.paymentInput, runStep]);
 
-  // Auto-advance: when status changes to a new step, run it
-  // (except details, complete, and error states)
-  const lastRunStatus = useRef<string>("");
-  if (
-    state.status !== "details" &&
-    state.status !== "complete" &&
-    state.status !== "error" &&
-    lastRunStatus.current !== state.status
-  ) {
-    lastRunStatus.current = state.status;
-    // Schedule the next step async (don't block render)
-    setTimeout(() => runStep(state.step, state.paymentInput), 0);
-  }
+  // Auto-advance: when status changes to a new step, run it via useEffect
+  // (except details, complete, blocked, and error states).
+  // Using useEffect avoids render-time side effects and properly cleans up on unmount.
+  useEffect(() => {
+    if (state.status === "details" || state.status === "complete" || state.status === "error" || state.status === "blocked") {
+      return;
+    }
+    runStep(state.step, state.paymentInput);
+  }, [state.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const completedSteps = new Set<number>();
   for (let i = 0; i < state.step; i++) completedSteps.add(i);
@@ -240,6 +236,16 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           <div>
             <div className="lab-error" role="alert">{state.error}</div>
             <Button variant="secondary" onClick={() => dispatch({ type: "RETRY" })}>Retry</Button>
+          </div>
+        )}
+
+        {state.status === "blocked" && (
+          <div className="lab-vop-danger" role="alert">
+            <p><strong>Stop.</strong> The name does not match the account holder.</p>
+            <p>In real life you would NOT proceed. For learning, continue to see what happens next.</p>
+            <Button variant="secondary" onClick={() => dispatch({ type: "PROCEED_ANYWAY" })}>
+              Continue for learning →
+            </Button>
           </div>
         )}
       </section>

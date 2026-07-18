@@ -18,12 +18,14 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
   const [clientRemainder, setClientRemainder] = useState<number | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isBreaking, setIsBreaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const validatedRef = useRef(false);
   const brokenRef = useRef(false);
 
   const checkValid = useCallback(async () => {
     setIsValidating(true);
     setValidResult(null);
+    setError(null);
     try {
       const result = await apiRequest<ValidateResponse>(
         `/api/validate?value=${encodeURIComponent(VALID_IBAN)}`,
@@ -41,7 +43,7 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
         onCheckpoint("validate-original");
       }
     } catch {
-      setValidResult({ input: VALID_IBAN, input_type: "iban" as const, valid: false, bic: undefined, errors: ["Validation failed"] });
+      setError("Could not validate this IBAN. Please try again.");
     } finally {
       setIsValidating(false);
     }
@@ -52,6 +54,7 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
     if (!value) return;
     setIsBreaking(true);
     setBreakResult(null);
+    setError(null);
     try {
       const result = await apiRequest<ValidateResponse>(
         `/api/validate?value=${encodeURIComponent(value)}`,
@@ -71,7 +74,7 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
         onCheckpoint("break-checksum");
       }
     } catch {
-      setBreakResult({ input: value, input_type: "iban" as const, valid: false, bic: undefined, errors: ["Validation failed"] });
+      setError("Could not validate this IBAN. Please try again.");
     } finally {
       setIsBreaking(false);
     }
@@ -96,9 +99,9 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
 
       {/* Demo 1: Validate a known-good IBAN */}
       <section className="lab-section">
-        <h2>Demo: Validate a real IBAN</h2>
+        <h2>Demo: Validate a valid-format IBAN</h2>
         <p className="measure">
-          This is a real German IBAN. Click Check to verify it passes the MOD-97 test.
+          This is a valid-format German IBAN (published example). Click Check to verify it passes the MOD-97 test.
         </p>
         <p className="lab-analyzer__result">
           <span className="mono">{VALID_IBAN}</span>
@@ -106,6 +109,8 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
         <Button variant="primary" onClick={checkValid} isLoading={isValidating}>
           Check valid IBAN
         </Button>
+
+        {error && <div className="lab-error" role="alert">{error}</div>}
 
         {validResult && (
           <div className="lab-analyzer__result">
