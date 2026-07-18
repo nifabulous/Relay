@@ -1,6 +1,6 @@
 # Relay UI Rebuild Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the separate Corridor Labs `/learn` and `/ui` shells with one responsive Relay React application covering Overview, Learn, Explore, and Operate while preserving the existing FastAPI domain APIs.
 
@@ -118,7 +118,7 @@ export interface PaymentRouteNode {
 **Interfaces:**
 - Produces: `npm run dev`, `npm run build`, `npm run test`, and a React root at `/app/`.
 
-- [ ] **Step 1: Add the failing bootstrap test**
+- [x] **Step 1: Add the failing bootstrap test**
 
 ```tsx
 import { render, screen } from "@testing-library/react";
@@ -131,7 +131,7 @@ it("renders the Relay simulation identity", () => {
 });
 ```
 
-- [ ] **Step 2: Create the pinned package manifest and configs**
+- [x] **Step 2: Create the pinned package manifest and configs**
 
 ```json
 {
@@ -172,7 +172,7 @@ it("renders the Relay simulation identity", () => {
 
 Configure Vite with `base: "/app/"`, output directory `../app/static/relay`, `emptyOutDir: true`, and a development proxy from `/api` to `http://127.0.0.1:8000`. Configure Vitest for `jsdom`, `src/test/setup.ts`, and restored mocks.
 
-- [ ] **Step 3: Implement the smallest Relay root**
+- [x] **Step 3: Implement the smallest Relay root**
 
 ```tsx
 export function App() {
@@ -180,13 +180,13 @@ export function App() {
 }
 ```
 
-- [ ] **Step 4: Install and verify**
+- [x] **Step 4: Install and verify**
 
 Run: `cd frontend && npm install && npm test && npm run build`
 
 Expected: bootstrap test passes; `app/static/relay/index.html` exists; TypeScript reports no errors.
 
-- [ ] **Step 5: Document two-terminal development and commit**
+- [x] **Step 5: Document two-terminal development and commit**
 
 Document `.venv/bin/uvicorn app.main:app --reload` and `cd frontend && npm run dev`. Add `frontend/node_modules/`, `frontend/coverage/`, `frontend/test-results/`, and `frontend/playwright-report/` to `.gitignore`.
 
@@ -206,7 +206,7 @@ git commit -m "build(frontend): bootstrap Relay React application"
 - Consumes: Vite output from Task 1.
 - Produces: `GET /app` and `GET /app/{rest:path}` returning `app/static/relay/index.html` without changing `/api/*`.
 
-- [ ] **Step 1: Write failing FastAPI tests**
+- [x] **Step 1: Write failing FastAPI tests**
 
 ```py
 def test_relay_app_serves_built_shell(client):
@@ -220,17 +220,17 @@ def test_relay_deep_link_serves_shell(client):
     assert '<div id="root"></div>' in response.text
 ```
 
-- [ ] **Step 2: Run the focused tests**
+- [x] **Step 2: Run the focused tests**
 
 Run: `.venv/bin/pytest tests/test_frontdoor.py -q`
 
 Expected: both new tests fail with 404.
 
-- [ ] **Step 3: Add static serving with a missing-build development response**
+- [x] **Step 3: Add static serving with a missing-build development response**
 
 Define `RELAY_DIR = STATIC_DIR / "relay"`. Mount assets only when the directory exists. Both `/app` routes return `index.html`; when it is absent, return a 503 HTML response that tells developers to run `cd frontend && npm run build`.
 
-- [ ] **Step 4: Build, test, and commit**
+- [x] **Step 4: Build, test, and commit**
 
 Run: `cd frontend && npm run build && cd .. && .venv/bin/pytest tests/test_frontdoor.py -q`
 
@@ -256,7 +256,7 @@ git commit -m "feat(frontend): serve Relay application from FastAPI"
 **Interfaces:**
 - Produces: `Button`, `StatusChip`, and `AsyncRegion` with the state contracts in `DESIGN.md`.
 
-- [ ] **Step 1: Write failing accessibility and state tests**
+- [x] **Step 1: Write failing accessibility and state tests**
 
 ```tsx
 it("exposes a busy async region", () => {
@@ -270,15 +270,15 @@ it("does not encode status with color alone", () => {
 });
 ```
 
-- [ ] **Step 2: Implement exact tokens and typography**
+- [x] **Step 2: Implement exact tokens and typography**
 
 Use the token values from `DESIGN.md`, the 4/8/12/16/24/32/48/64px spacing scale, 8px control radius, and 10–12px region radius. Define `@font-face` for Instrument Sans and IBM Plex Mono with `font-display: swap`; disable mono ligatures and enable tabular numbers.
 
-- [ ] **Step 3: Implement primitives with explicit states**
+- [x] **Step 3: Implement primitives with explicit states**
 
 `Button` accepts `variant: "primary" | "secondary" | "danger"`, `isLoading`, and native button props. `StatusChip` accepts `CheckStatus`. `AsyncRegion` accepts all `AsyncStatus` values plus `onRetry`, `emptyAction`, and `error: ApiProblem | null`.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run: `cd frontend && npm test -- primitives.test.tsx && npm run build`
 
@@ -304,7 +304,7 @@ git commit -m "feat(design-system): add Relay foundations and primitives"
 **Interfaces:**
 - Produces: `apiRequest<T>(path, init, schema): Promise<T>`, `ApiProblem`, `apiKeys`, and `renderRelay()`.
 
-- [ ] **Step 1: Write transport tests for success, FastAPI validation, retryability, and cancellation**
+- [x] **Step 1: Write transport tests for success, FastAPI validation, retryability, and cancellation**
 
 ```ts
 it("normalizes a FastAPI validation error", async () => {
@@ -316,15 +316,15 @@ it("normalizes a FastAPI validation error", async () => {
 });
 ```
 
-- [ ] **Step 2: Define Zod response schemas matching `app/schemas.py`**
+- [x] **Step 2: Define Zod response schemas matching `app/schemas.py`**
 
 Cover health, validation, lookup, route, SSI, VoP, prepare, fees, screening, value date, STP, schemes, progress, and tracking. Export inferred TypeScript types from the schemas so request hooks and views cannot invent alternate names.
 
-- [ ] **Step 3: Implement transport and QueryClient test wrapper**
+- [x] **Step 3: Implement transport and QueryClient test wrapper**
 
 Use an `Accept: application/json` header, pass `AbortSignal`, parse JSON once, turn non-2xx responses into `ApiProblem`, and set `retryable` only for 408, 429, and 5xx. The test QueryClient uses `retry: false` and `gcTime: Infinity`.
 
-- [ ] **Step 4: Run all API harness tests and commit**
+- [x] **Step 4: Run all API harness tests and commit**
 
 Run: `cd frontend && npm test -- src/api`
 
@@ -346,7 +346,7 @@ git commit -m "feat(frontend): add typed FastAPI client and test harness"
 **Interfaces:**
 - Produces: `loadPreferences()`, `savePreferences()`, `loadProgress()`, `saveProgress()`, `loadDraft(id)`, `saveDraft(draft)`, and `migrateLegacyProgressOnce()`.
 
-- [ ] **Step 1: Write failing tests for defaults, corrupt data, schema version, and one-time import**
+- [x] **Step 1: Write failing tests for defaults, corrupt data, schema version, and one-time import**
 
 ```ts
 it("discards corrupt persisted preferences", () => {
@@ -361,11 +361,11 @@ it("imports legacy progress once", () => {
 });
 ```
 
-- [ ] **Step 2: Implement safe versioned storage**
+- [x] **Step 2: Implement safe versioned storage**
 
 Every stored object has `schemaVersion: 1`. Catch storage denial and quota errors. Never persist transient UI state, API responses, or secrets. Drafts contain user-entered simulated payment fields only.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run: `cd frontend && npm test -- persistence`
 
@@ -391,19 +391,19 @@ git commit -m "feat(frontend): add versioned Relay persistence"
 **Interfaces:**
 - Produces routes `/app`, `/app/learn/*`, `/app/explore/*`, `/app/operate/*`; `Workspace`; persistent navigation with active state.
 
-- [ ] **Step 1: Write desktop, mobile, deep-link, and keyboard tests**
+- [x] **Step 1: Write desktop, mobile, deep-link, and keyboard tests**
 
 Test that desktop exposes the left rail, mobile exposes exactly Overview/Learn/Explore/Operate, active routes use `aria-current="page"`, Escape closes the top sheet, focus returns to its trigger, and unknown routes show recovery actions.
 
-- [ ] **Step 2: Implement lazy route boundaries**
+- [x] **Step 2: Implement lazy route boundaries**
 
 Use route-level `lazy()` imports for Learn, Explore, and Operate. The shell itself is eager. Root redirects internally to Overview without a network redirect.
 
-- [ ] **Step 3: Implement intentional breakpoints**
+- [x] **Step 3: Implement intentional breakpoints**
 
 Desktop rail appears at 1024px. Mobile/tablet use the bottom bar with safe-area padding. Content reserves navigation space; verify FINDING-001 cannot recur. Primary targets are at least 44×44px.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run: `cd frontend && npm test -- AppShell && npm run build`
 
@@ -426,7 +426,7 @@ git commit -m "feat(frontend): build responsive Relay application shell"
 **Interfaces:**
 - Produces: `selectPrimaryAction(context): PrimaryAction` with kinds `explore_intro`, `resume_learn`, `resume_operate`, `next_learn`, `prepare_payment`.
 
-- [ ] **Step 1: Write the primary-action decision table as tests**
+- [x] **Step 1: Write the primary-action decision table as tests**
 
 ```ts
 it.each([
@@ -440,15 +440,15 @@ it.each([
 });
 ```
 
-- [ ] **Step 2: Implement Overview without a card mosaic**
+- [x] **Step 2: Implement Overview without a card mosaic**
 
 Render one dominant action, one current-context region, Search/Directory/Track utility row, and chronological recent activity. Empty activity explains how to create the first entry.
 
-- [ ] **Step 3: Implement contextual route guidance**
+- [x] **Step 3: Implement contextual route guidance**
 
 The first route example uses inline stepped guidance; Search and Operate stay available. Dismissal persists in `RelayPreferences` and Help can reopen it.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run: `cd frontend && npm test -- OverviewPage`
 
@@ -473,15 +473,15 @@ git commit -m "feat(frontend): add adaptive Relay overview"
 **Interfaces:**
 - Produces: grouped `SearchResult` values for bank, corridor, scheme, lesson, glossary, and UETR; stable query-string routes.
 
-- [ ] **Step 1: Write search, zero-result, keyboard, and API-state tests**
+- [x] **Step 1: Write search, zero-result, keyboard, and API-state tests**
 
 Test grouped ordering, ArrowDown/ArrowUp movement, Enter selection, Escape close/focus restore, query persistence in `?q=`, warm zero results, 47-character names, and partial result groups.
 
-- [ ] **Step 2: Implement query hooks and pages**
+- [x] **Step 2: Implement query hooks and pages**
 
 Use `apiKeys` and Zod types. Results and detail pages render through `AsyncRegion`. Cross-links connect bank/corridor details to relevant Learn and Operate routes.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run: `cd frontend && npm test -- Explore && npm run build`
 
@@ -505,15 +505,15 @@ git commit -m "feat(frontend): add Relay Explore workspace"
 - Consumes: `PaymentRouteNode[]`, `currency`, `amount`, `activeNodeId`.
 - Produces: one semantic route model with horizontal desktop and vertical mobile presentations.
 
-- [ ] **Step 1: Write semantic, responsive, overflow, and reduced-motion tests**
+- [x] **Step 1: Write semantic, responsive, overflow, and reduced-motion tests**
 
 Verify the accessible summary names origin, every intermediary, beneficiary, currency, and amount; the vertical stepper keeps all nodes visible; only the active mobile hop expands; 47-character institution names wrap; reduced motion disables travel animation.
 
-- [ ] **Step 2: Implement the route signature**
+- [x] **Step 2: Implement the route signature**
 
 At 768px and wider use the horizontal path. Below 768px use document-order vertical steps. Animate transform/opacity only. Reject and incomplete paths state where movement stopped and why.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run: `cd frontend && npm test -- PaymentRoute`
 
@@ -537,19 +537,19 @@ git commit -m "feat(design-system): add responsive payment route"
 **Interfaces:**
 - Produces: `PrepareDraft`, check statuses, stale-dependency invalidation, targeted retry, and `RecommendationState = conclusive | incomplete`.
 
-- [ ] **Step 1: Write validation and dependency tests**
+- [x] **Step 1: Write validation and dependency tests**
 
 Test required beneficiary fields, positive amount, currency normalization, focus on first invalid field, draft restoration, duplicate-submit prevention, and downstream staleness after editing an upstream field.
 
-- [ ] **Step 2: Write mixed-result tests**
+- [x] **Step 2: Write mixed-result tests**
 
 MSW returns validation passed, VoP unavailable, route passed, and SSI warning. Assert completed results remain visible, VoP alone offers Retry, and Recommendation says `Incomplete` with no conclusive proceed/stop result.
 
-- [ ] **Step 3: Implement the guided workspace**
+- [x] **Step 3: Implement the guided workspace**
 
 Use React Hook Form and Zod. Completed steps collapse to summaries. Mutation preserves inputs on failure, passes AbortSignal, persists explicit drafts, and invalidates exact dependent query keys.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run: `cd frontend && npm test -- PreparePaymentPage`
 
@@ -576,15 +576,15 @@ git commit -m "feat(frontend): add Relay payment preparation workspace"
 - Consumes: typed schemas and shared form/status components.
 - Produces: direct routes for each tool and a tracking timeline labeled as simulated.
 
-- [ ] **Step 1: Write one behavioral matrix test per tool**
+- [x] **Step 1: Write one behavioral matrix test per tool**
 
 For every tool cover valid submit, 422 field error, 500 retry, and stale result after input edit. Tracking additionally covers unknown UETR, empty timeline, partial/stale timeline, and terminal status.
 
-- [ ] **Step 2: Implement tools using shared boundaries**
+- [x] **Step 2: Implement tools using shared boundaries**
 
 Each page has one task, specific button labels, persisted query inputs only where useful, and related Learn/Explore links. Tracking always displays `Simulation — not a real payment` and uses text/icon/color statuses.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run: `cd frontend && npm test -- OperateTools`
 
@@ -610,23 +610,23 @@ git commit -m "feat(frontend): migrate Relay operational tools"
 **Interfaces:**
 - Produces: typed `CurriculumModule`, prerequisite gating, completion records, exercise attempts, and capstone draft bridge to Operate.
 
-- [ ] **Step 1: Create an explicit legacy parity table in the test**
+- [x] **Step 1: Create an explicit legacy parity table in the test**
 
 Assert all current modules appear exactly once: labs 1–7, capstone, fees, FX, sanctions, settlement, MT103, cases, glossary, and progress. Each entry declares route, prerequisites, completion contract, and estimated duration.
 
-- [ ] **Step 2: Write curriculum and accessibility tests**
+- [x] **Step 2: Write curriculum and accessibility tests**
 
 Cover first incomplete module, prerequisite lock explanation, revisit completed module, exercise success/failure, reduced-motion visualizers, prior/next navigation, and migrated legacy progress.
 
-- [ ] **Step 3: Implement Learn while preserving the strongest legacy qualities**
+- [x] **Step 3: Implement Learn while preserving the strongest legacy qualities**
 
 Keep the existing readable measure, concept-to-exercise pacing, inline diagrams, and explicit prior/next controls. Replace the repetitive card catalogue with current module, curriculum sequence, and compact completed work. Status markers use numbers/icons, never overflowing words.
 
-- [ ] **Step 4: Implement capstone handoff**
+- [x] **Step 4: Implement capstone handoff**
 
 The capstone creates a versioned `PrepareDraft`, opens `/app/operate/prepare?draft=<id>`, and returns to completion feedback after the simulated result.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run: `cd frontend && npm test -- Learn`
 
@@ -653,23 +653,23 @@ git commit -m "feat(frontend): migrate Relay learning workspace"
 **Interfaces:**
 - Produces: Chromium projects `desktop` at 1440×900 and `mobile` at 390×844; bundle budget gate.
 
-- [ ] **Step 1: Configure Playwright web servers**
+- [x] **Step 1: Configure Playwright web servers**
 
 Start FastAPI on 8000 and Vite preview on 4173. Record traces and screenshots on first retry. Add `@axe-core/playwright` version `4.12.1` to `frontend/devDependencies`.
 
-- [ ] **Step 2: Implement primary journeys**
+- [x] **Step 2: Implement primary journeys**
 
 Test first run, adaptive return, grouped search, bank-to-corridor cross-link, successful preparation, partial preparation retry, simulated tracking, lesson completion, progress reload, and capstone handoff on both projects.
 
-- [ ] **Step 3: Add visual regression assertions**
+- [x] **Step 3: Add visual regression assertions**
 
 Capture shell top regions, Overview, Learn index, module, Explore detail, Prepare form/result, horizontal route, vertical route, and tracking. These assertions must catch legacy FINDING-001, FINDING-002, and undersized navigation regressions.
 
-- [ ] **Step 4: Add bundle gate**
+- [x] **Step 4: Add bundle gate**
 
 Read Vite manifest assets, gzip eager shell chunks, fail above 204800 bytes, and print each eager asset’s compressed size.
 
-- [ ] **Step 5: Run the complete frontend gate and commit**
+- [x] **Step 5: Run the complete frontend gate and commit**
 
 Run: `cd frontend && npm test && npm run build && npm run test:e2e && npm run check:bundle`
 
@@ -694,7 +694,7 @@ git commit -m "test(frontend): add Relay release quality gates"
 **Interfaces:**
 - Produces: `/`, `/learn`, and `/ui` redirects to `/app`; manifest identifies Relay; no dormant legacy shell remains.
 
-- [ ] **Step 1: Write failing cutover tests**
+- [x] **Step 1: Write failing cutover tests**
 
 ```py
 import pytest
@@ -710,25 +710,25 @@ def test_manifest_uses_relay_identity(client):
     assert body["service"] == "Relay — Educational payment simulation"
 ```
 
-- [ ] **Step 2: Run every parity and quality gate before deletion**
+- [x] **Step 2: Run every parity and quality gate before deletion**
 
 Run: `.venv/bin/pytest tests -q && cd frontend && npm test && npm run build && npm run test:e2e && npm run check:bundle`
 
 Expected: all Python and frontend gates pass. Stop retirement if any command fails.
 
-- [ ] **Step 3: Perform trademark/domain clearance outside code**
+- [x] **Step 3: Perform trademark/domain clearance outside code**
 
 Record the approved public name in the release ticket. If Relay fails clearance, update only brand copy tokens, document title, manifest identity, and wordmark tests; do not reopen layout or interaction decisions.
 
-- [ ] **Step 4: Switch routes and remove replaced legacy files**
+- [x] **Step 4: Switch routes and remove replaced legacy files**
 
 Update FastAPI redirects and manifest. Delete only files mapped as replaced in the parity table. Search built and source output for `Corridor Labs` and `SWIFT Routing Lab`; allowed matches are historical docs only.
 
-- [ ] **Step 5: Update operating documentation**
+- [x] **Step 5: Update operating documentation**
 
 Document architecture boundaries, token/component rules, local development, tests, production build, deployment, local persistence, accessibility verification, and legacy removal.
 
-- [ ] **Step 6: Run final verification and commit**
+- [x] **Step 6: Run final verification and commit**
 
 Run: `rg -n "Corridor Labs|SWIFT Routing Lab" frontend app/main.py app/static/relay || true`
 
@@ -747,15 +747,15 @@ git commit -m "feat(frontend): cut over to Relay and retire legacy shells"
 
 ## Final Acceptance Checklist
 
-- [ ] Overview selects the correct action for first visit, unfinished Learn, unfinished Operate, incomplete curriculum, and completed curriculum.
-- [ ] Learn, Explore, Operate, and Overview have stable URLs and restore committed query state.
-- [ ] Every feature renders loading, empty, error, success, and partial/unavailable behavior defined by the spec.
-- [ ] Partial Operate checks retain successful evidence, retry narrowly, and never produce a conclusive recommendation with required missing evidence.
-- [ ] Desktop and mobile routes render from one semantic model with complete screen-reader summaries.
-- [ ] All legacy capabilities have a mapped Relay route and passing parity test.
-- [ ] Desktop and mobile Playwright journeys pass with no serious or critical accessibility violations.
-- [ ] Primary screenshot comparisons pass at 1440×900 and 390×844.
-- [ ] Eager shell bundle is ≤200KB gzip.
-- [ ] Production UI contains Relay only and keeps simulation labeling persistent.
-- [ ] Python tests pass after legacy removal.
-- [ ] `git status --short` is clean.
+- [x] Overview selects the correct action for first visit, unfinished Learn, unfinished Operate, incomplete curriculum, and completed curriculum.
+- [x] Learn, Explore, Operate, and Overview have stable URLs and restore committed query state.
+- [x] Every feature renders loading, empty, error, success, and partial/unavailable behavior defined by the spec.
+- [x] Partial Operate checks retain successful evidence, retry narrowly, and never produce a conclusive recommendation with required missing evidence.
+- [x] Desktop and mobile routes render from one semantic model with complete screen-reader summaries.
+- [x] All legacy capabilities have a mapped Relay route and passing parity test.
+- [x] Desktop and mobile Playwright journeys pass with no serious or critical accessibility violations.
+- [x] Primary screenshot comparisons pass at 1440×900 and 390×844.
+- [x] Eager shell bundle is ≤200KB gzip.
+- [x] Production UI contains Relay only and keeps simulation labeling persistent.
+- [x] Python tests pass after legacy removal.
+- [x] `git status --short` is clean.
