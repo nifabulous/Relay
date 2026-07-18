@@ -57,7 +57,8 @@ a {
   text-decoration: none;
 }
 
-a:hover {
+/* Only underline plain text links — never buttons styled as links */
+a:not(.relay-btn):hover {
   text-decoration: underline;
 }
 

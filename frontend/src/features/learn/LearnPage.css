@@ -64,6 +64,14 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-region);
+  transition: border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+
+.learn-module:not(.learn-module--locked):hover {
+  border-color: var(--color-border-strong);
+  transform: translateY(-1px);
 }
 
 .learn-module--locked {
@@ -106,9 +114,7 @@
   text-decoration: none;
 }
 
-.learn-module__title:hover {
-  text-decoration: underline;
-}
+/* No underline on hover — the card lift handles the interaction */
 
 .learn-module__title--locked {
   color: var(--color-ink-muted);

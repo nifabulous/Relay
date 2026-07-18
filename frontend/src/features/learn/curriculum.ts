@@ -20,7 +20,7 @@ export interface CurriculumModule {
 export const CURRICULUM: CurriculumModule[] = [
   {
     id: "lab-1",
-    title: "Who's Who: BICs & IBANs",
+    title: "Identifiers: BICs & IBANs",
     subtitle: "The two codes that identify banks and accounts worldwide",
     href: "/learn/lab-1",
     duration: 10,
