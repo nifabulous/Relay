@@ -1,4 +1,5 @@
 import { useState, useCallback, type ReactNode } from "react";
+import "./LabComponents.css";
 
 export interface MultipleChoiceOption {
   id: string;

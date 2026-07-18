@@ -9,10 +9,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/app", label: "Overview", icon: "grid" },
-  { to: "/app/learn", label: "Learn", icon: "book" },
-  { to: "/app/explore", label: "Explore", icon: "search" },
-  { to: "/app/operate", label: "Operate", icon: "play" },
+  { to: "", label: "Overview", icon: "grid" },
+  { to: "/learn", label: "Learn", icon: "book" },
+  { to: "/explore", label: "Explore", icon: "search" },
+  { to: "/operate", label: "Operate", icon: "play" },
 ];
 
 function NavIcon({ name }: { name: string }) {

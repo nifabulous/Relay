@@ -22,7 +22,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-1",
     title: "Who's Who: BICs & IBANs",
     subtitle: "The two codes that identify banks and accounts worldwide",
-    href: "/app/learn/lab-1",
+    href: "/learn/lab-1",
     duration: 10,
     prerequisites: [],
     outcomes: [
@@ -36,7 +36,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-2",
     title: "Is It Real? IBAN Checksums",
     subtitle: "Validate IBANs using the MOD-97 algorithm",
-    href: "/app/learn/lab-2",
+    href: "/learn/lab-2",
     duration: 15,
     prerequisites: ["lab-1"],
     outcomes: [
@@ -50,7 +50,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-3",
     title: "Right Person? Verification of Payee",
     subtitle: "Check that the payee name matches the account holder",
-    href: "/app/learn/lab-3",
+    href: "/learn/lab-3",
     duration: 12,
     prerequisites: ["lab-1", "lab-2"],
     outcomes: [
@@ -64,7 +64,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-4",
     title: "How Money Moves: Correspondent Routing",
     subtitle: "Why a payment hops through intermediary banks",
-    href: "/app/learn/lab-4",
+    href: "/learn/lab-4",
     duration: 15,
     prerequisites: ["lab-1"],
     outcomes: [
@@ -78,7 +78,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-5",
     title: "Where to Send: Standard Settlement Instructions",
     subtitle: "How banks publish which correspondent to use per currency",
-    href: "/app/learn/lab-5",
+    href: "/learn/lab-5",
     duration: 12,
     prerequisites: ["lab-1", "lab-4"],
     outcomes: [
@@ -92,7 +92,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-6",
     title: "Did It Arrive? Tracking with UETR",
     subtitle: "SWIFT gpi tracking and the UETR",
-    href: "/app/learn/lab-6",
+    href: "/learn/lab-6",
     duration: 10,
     prerequisites: ["lab-1", "lab-4"],
     outcomes: [
@@ -106,7 +106,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "lab-7",
     title: "Which Rail? Payment Schemes",
     subtitle: "Compare Faster Payments, SEPA, Fedwire, CHAPS, and more",
-    href: "/app/learn/lab-7",
+    href: "/learn/lab-7",
     duration: 12,
     prerequisites: ["lab-1"],
     outcomes: [
@@ -120,7 +120,7 @@ export const CURRICULUM: CurriculumModule[] = [
     id: "capstone",
     title: "Capstone: Full Payment Simulation",
     subtitle: "Apply everything: validate, verify, route, and track a payment",
-    href: "/app/learn/capstone",
+    href: "/learn/capstone",
     duration: 20,
     prerequisites: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7"],
     outcomes: [

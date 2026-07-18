@@ -386,7 +386,7 @@ export function PreparePaymentPage() {
               <Link to={`/app/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
                 Track this payment
               </Link>
-              <Link to="/app/explore" className="relay-btn relay-btn--secondary">
+              <Link to="/explore" className="relay-btn relay-btn--secondary">
                 Explore corridor details
               </Link>
             </div>

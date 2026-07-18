@@ -72,15 +72,15 @@ export function OverviewPage() {
 
       {/* Utility row — quick links */}
       <section className="overview__utility">
-        <Link to="/app/explore" className="overview__utility-link">
+        <Link to="/explore" className="overview__utility-link">
           <span className="overview__utility-label">Search</span>
           <span className="overview__utility-sub">Find banks, corridors, terms</span>
         </Link>
-        <Link to="/app/explore/banks" className="overview__utility-link">
+        <Link to="/explore/banks" className="overview__utility-link">
           <span className="overview__utility-label">Directory</span>
           <span className="overview__utility-sub">Browse all banks</span>
         </Link>
-        <Link to="/app/operate" className="overview__utility-link">
+        <Link to="/operate" className="overview__utility-link">
           <span className="overview__utility-label">Track</span>
           <span className="overview__utility-sub">Prepare or track a payment</span>
         </Link>

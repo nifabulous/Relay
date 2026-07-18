@@ -3,11 +3,13 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./AppShell";
 
-function renderShell(path = "/app") {
+// Render with basename="/app" to match production BrowserRouter config.
+// NAV_ITEMS use paths like "/learn" (no /app prefix) — the basename handles it.
+function renderShell(path = "") {
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter basename="/app" initialEntries={[`/app${path}`]}>
       <Routes>
-        <Route path="/app" element={<AppShell />}>
+        <Route element={<AppShell />}>
           <Route index element={<div>Overview placeholder</div>} />
           <Route path="learn" element={<div>Learn placeholder</div>} />
           <Route path="explore" element={<div>Explore placeholder</div>} />
@@ -45,20 +47,19 @@ describe("AppShell", () => {
   });
 
   it("marks the active destination with aria-current=page", () => {
-    renderShell("/app/learn");
+    renderShell("/learn");
     const desktopNav = screen.getByLabelText("Primary navigation");
     const learnLink = desktopNav.querySelector('a[href="/app/learn"]');
     expect(learnLink).toHaveAttribute("aria-current", "page");
   });
 
   it("renders child route content", () => {
-    renderShell("/app/explore");
+    renderShell("/explore");
     expect(screen.getByText("Explore placeholder")).toBeVisible();
   });
 
   it("renders mobile navigation with four bottom-bar items", () => {
     renderShell();
-    // The mobile nav should exist in the DOM (hidden on desktop via CSS)
     const mobileNav = screen.getByLabelText("Mobile navigation");
     expect(mobileNav).toBeInTheDocument();
     const links = mobileNav.querySelectorAll("a");

@@ -26,7 +26,7 @@ export function LearnModulePage() {
     return (
       <div className="learn-page">
         <h1>Module not found</h1>
-        <Link to="/app/learn" className="relay-btn relay-btn--secondary">Back to curriculum</Link>
+        <Link to="/learn" className="relay-btn relay-btn--secondary">Back to curriculum</Link>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function LearnModulePage() {
         <div className="learn-locked">
           <h1>Locked: {mod.title}</h1>
           <p>Complete the prerequisite modules first.</p>
-          <Link to="/app/learn" className="relay-btn relay-btn--secondary">Back to curriculum</Link>
+          <Link to="/learn" className="relay-btn relay-btn--secondary">Back to curriculum</Link>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ export function LearnModulePage() {
   return (
     <div className="learn-page">
       <nav className="learn-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/app/learn">Learn</Link>
+        <Link to="/learn">Learn</Link>
         <span aria-hidden="true">/</span>
         <span>{mod.title}</span>
       </nav>
@@ -109,7 +109,7 @@ export function LearnModulePage() {
             {nextModule.title} →
           </Link>
         ) : (
-          <Link to="/app/learn" className="relay-btn relay-btn--primary learn-nav__next">
+          <Link to="/learn" className="relay-btn relay-btn--primary learn-nav__next">
             Back to curriculum →
           </Link>
         )}

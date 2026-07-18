@@ -27,7 +27,7 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
   if (ctx.firstVisit) {
     return {
       kind: "explore_intro",
-      href: "/app/explore?intro=1",
+      href: "/explore?intro=1",
       label: "Explore how payments move",
     };
   }
@@ -41,13 +41,13 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
     if ((ctx.unfinishedOperateAt ?? 0) >= (ctx.unfinishedLearnAt ?? 0)) {
       return {
         kind: "resume_operate",
-        href: "/app/operate",
+        href: "/operate",
         label: "Resume payment preparation",
       };
     }
     return {
       kind: "resume_learn",
-      href: "/app/learn",
+      href: "/learn",
       label: "Continue learning",
     };
   }
@@ -55,7 +55,7 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
   if (hasOperate) {
     return {
       kind: "resume_operate",
-      href: "/app/operate",
+      href: "/operate",
       label: "Resume payment preparation",
     };
   }
@@ -63,7 +63,7 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
   if (hasLearn) {
     return {
       kind: "resume_learn",
-      href: "/app/learn",
+      href: "/learn",
       label: "Continue learning",
     };
   }
@@ -81,7 +81,7 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
   // 4. Curriculum complete — offer a simulated payment
   return {
     kind: "prepare_payment",
-    href: "/app/operate/prepare",
+    href: "/operate/prepare",
     label: "Prepare a simulated payment",
   };
 }

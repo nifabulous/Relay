@@ -1,3 +1,5 @@
+import "./LabComponents.css";
+
 export interface StepInfo {
   id: string;
   label: string;

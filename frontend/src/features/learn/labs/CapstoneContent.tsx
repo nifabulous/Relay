@@ -237,7 +237,8 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
         )}
       </section>
 
-      {/* Step results */}
+      {/* Step results — announced to screen readers via aria-live */}
+      <div aria-live="polite" aria-label="Simulation step results">
       {state.results.validation && (
         <section className="lab-section">
           <h3>Step 1: Validate</h3>
@@ -290,10 +291,11 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           <PaymentTimeline payment={state.results.tracking} />
         </section>
       )}
+      </div>
 
       <p className="measure">
         Prefer the full tool?{" "}
-        <Link to="/app/operate/prepare" className="relay-btn relay-btn--secondary">
+        <Link to="/operate/prepare" className="relay-btn relay-btn--secondary">
           Open Operate → Prepare Payment
         </Link>
       </p>

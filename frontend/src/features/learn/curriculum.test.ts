@@ -18,7 +18,7 @@ describe("curriculum", () => {
     for (const mod of CURRICULUM) {
       expect(mod.id).toBeTruthy();
       expect(mod.title).toBeTruthy();
-      expect(mod.href).toMatch(/^\/app\/learn\//);
+      expect(mod.href).toMatch(/^\/learn\//);
       expect(mod.duration).toBeGreaterThan(0);
       expect(mod.outcomes.length).toBeGreaterThan(0);
     }

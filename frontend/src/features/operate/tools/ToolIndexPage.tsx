@@ -8,11 +8,11 @@ interface ToolEntry {
 }
 
 const TOOLS: ToolEntry[] = [
-  { href: "/app/operate/fees", name: "Fee Calculator", description: "Simulate OUR/SHA/BEN fee deduction across intermediary hops" },
-  { href: "/app/operate/screening", name: "Sanctions Screening", description: "Screen sender and beneficiary against a fictional watchlist" },
-  { href: "/app/operate/value-date", name: "Value Date Calculator", description: "Calculate settlement value date with cut-offs and holidays" },
-  { href: "/app/operate/stp", name: "MT103 STP Checker", description: "Validate an MT103 message for straight-through processing" },
-  { href: "/app/operate/tracking", name: "Payment Tracking", description: "Look up a simulated payment by UETR" },
+  { href: "/operate/fees", name: "Fee Calculator", description: "Simulate OUR/SHA/BEN fee deduction across intermediary hops" },
+  { href: "/operate/screening", name: "Sanctions Screening", description: "Screen sender and beneficiary against a fictional watchlist" },
+  { href: "/operate/value-date", name: "Value Date Calculator", description: "Calculate settlement value date with cut-offs and holidays" },
+  { href: "/operate/stp", name: "MT103 STP Checker", description: "Validate an MT103 message for straight-through processing" },
+  { href: "/operate/tracking", name: "Payment Tracking", description: "Look up a simulated payment by UETR" },
 ];
 
 export function ToolIndexPage() {

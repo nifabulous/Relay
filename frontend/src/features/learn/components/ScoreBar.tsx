@@ -1,3 +1,5 @@
+import "./LabComponents.css";
+
 interface ScoreBarProps {
   score: number;
   label?: string;

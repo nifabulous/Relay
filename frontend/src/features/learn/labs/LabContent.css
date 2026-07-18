@@ -2,6 +2,49 @@
  * Relay Learn lab content — shared styles for all lab content components.
  */
 
+/* ── Capstone form ──────────────────────────────────────── */
+.lab-capstone-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.lab-capstone-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.lab-capstone-form label > span {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink-strong);
+}
+
+.lab-capstone-form input {
+  height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  background: var(--color-surface);
+  font-variant-ligatures: none;
+}
+
+.lab-capstone-form input:focus {
+  outline: none;
+  border-color: var(--color-action);
+  box-shadow: 0 0 0 3px var(--color-action-surface);
+}
+
+.lab-capstone-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .lab-content {
   display: flex;
   flex-direction: column;

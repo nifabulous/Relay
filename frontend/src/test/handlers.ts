@@ -163,4 +163,20 @@ export const handlers = [
       all_badges: [],
     }),
   ),
+
+  http.get("/api/schemes", ({ request }) => {
+    const url = new URL(request.url);
+    const currency = url.searchParams.get("currency") ?? "GBP";
+    return HttpResponse.json({
+      currency,
+      country: "United Kingdom",
+      countryCode: "GB",
+      iban: true,
+      localIdentifier: "Sort Code",
+      schemes: [
+        { name: "Faster Payments", speed: "Instant", limit: "£1M", cost: "Free", useCase: "Retail", operator: "Pay.UK" },
+        { name: "CHAPS", speed: "Same-day", limit: "No limit", cost: "£25", useCase: "High-value", operator: "BoE" },
+      ],
+    });
+  }),
 ];

@@ -27,15 +27,15 @@ export function ExplorePage() {
 
       {/* Quick categories */}
       <div className="explore__categories">
-        <Link to="/app/explore/banks" className="explore__category">
+        <Link to="/explore/banks" className="explore__category">
           <span className="explore__category-label">Bank Directory</span>
           <span className="explore__category-sub">Browse and look up banks by BIC</span>
         </Link>
-        <Link to="/app/explore/schemes" className="explore__category">
+        <Link to="/explore/schemes" className="explore__category">
           <span className="explore__category-label">Payment Schemes</span>
           <span className="explore__category-sub">Compare rails: Faster Payments, SEPA, Fedwire, CHAPS</span>
         </Link>
-        <Link to="/app/explore/glossary" className="explore__category">
+        <Link to="/explore/glossary" className="explore__category">
           <span className="explore__category-label">Glossary</span>
           <span className="explore__category-sub">Payment terminology reference</span>
         </Link>
@@ -158,7 +158,7 @@ export function SchemesPage() {
       </div>
       <div className="schemes-list">
         <p className="explore__muted">Payment scheme comparison loads from the API. Use the Operate workspace to check schemes for a specific currency.</p>
-        <Link to="/app/operate" className="relay-btn relay-btn--secondary">
+        <Link to="/operate" className="relay-btn relay-btn--secondary">
           Go to Operate
         </Link>
       </div>

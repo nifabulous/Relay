@@ -39,7 +39,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             <Button variant="primary" onClick={this.handleReload}>
               Reload
             </Button>
-            <Link to="/app" className="relay-btn relay-btn--secondary">
+            <Link to="" className="relay-btn relay-btn--secondary">
               Return to overview
             </Link>
           </div>
