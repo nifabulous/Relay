@@ -6,6 +6,7 @@ import { Lab3Content } from "./labs/Lab3Content";
 import { Lab4Content } from "./labs/Lab4Content";
 import { Lab5Content } from "./labs/Lab5Content";
 import { Lab6Content } from "./labs/Lab6Content";
+import { Lab7Content } from "./labs/Lab7Content";
 
 /**
  * Temporary placeholder content component.
@@ -45,7 +46,7 @@ export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-4": { component: Lab4Content, requiredCheckpoints: CORE_LAB_PARITY["lab-4"].requiredCheckpoints },
   "lab-5": { component: Lab5Content, requiredCheckpoints: CORE_LAB_PARITY["lab-5"].requiredCheckpoints },
   "lab-6": { component: Lab6Content, requiredCheckpoints: CORE_LAB_PARITY["lab-6"].requiredCheckpoints },
-  "lab-7": placeholderDef(CORE_LAB_PARITY["lab-7"].requiredCheckpoints),
+  "lab-7": { component: Lab7Content, requiredCheckpoints: CORE_LAB_PARITY["lab-7"].requiredCheckpoints },
   "capstone": placeholderDef(CORE_LAB_PARITY["capstone"].requiredCheckpoints),
 };
 
