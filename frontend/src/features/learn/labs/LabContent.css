@@ -127,6 +127,11 @@
   font-weight: 600;
 }
 
+.lab-muted {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
 .lab-error {
   padding: var(--space-2) var(--space-3);
   background: var(--color-danger-bg);

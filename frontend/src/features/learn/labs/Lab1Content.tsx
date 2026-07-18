@@ -154,20 +154,20 @@ export function Lab1Content({ moduleId, onCheckpoint }: LabContentProps) {
         {result && (
           <div className="lab-analyzer__result">
             <p>
-              Type: <strong>{result.input_type.toUpperCase()}</strong>
-              {" — "}
-              {result.valid ? (
-                <span className="lab-valid">Valid ✓</span>
-              ) : (
-                <span className="lab-invalid">Invalid</span>
-              )}
+              <strong>{result.input_type === "bic" ? "BIC / SWIFT code" : "IBAN"}</strong> analysis:
             </p>
-            {result.bic && <p>Derived BIC: <span className="mono">{result.bic}</span></p>}
-            {result.errors.length > 0 && (
-              <ul>{result.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            {result.valid ? (
+              <p className="lab-valid">✓ Format is valid{result.bic ? ` — BIC: ${result.bic}` : ""}</p>
+            ) : (
+              <p className="lab-invalid">✗ Invalid format{result.errors.length > 0 ? ` — ${result.errors[0]}` : ""}</p>
             )}
-            {bankInfo && (
-              <p>Bank: <strong>{bankInfo.bank_name}</strong>, {bankInfo.country_code}</p>
+            {bankInfo ? (
+              <p>Bank: <strong>{bankInfo.bank_name}</strong>, {bankInfo.country_code}{bankInfo.city ? `, ${bankInfo.city}` : ""}</p>
+            ) : result.valid && result.bic ? (
+              <p className="lab-muted">Format is correct but this BIC is not in our directory database.</p>
+            ) : null}
+            {result.errors.length > 1 && (
+              <ul>{result.errors.slice(1).map((e, i) => <li key={i}>{e}</li>)}</ul>
             )}
           </div>
         )}

@@ -67,7 +67,7 @@ export function LearnModulePage() {
         </div>
         <p className="measure">{mod.subtitle}</p>
         <div className="learn-module-header__meta">
-          <span>{mod.duration} minutes</span>
+          <span>~{mod.duration} min</span>
         </div>
       </div>
 
