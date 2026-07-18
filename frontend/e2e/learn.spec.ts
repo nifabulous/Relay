@@ -10,7 +10,7 @@ test.describe("Learn", () => {
     // Wait for lazy-loaded page
     await expect(page.locator("h1")).toHaveText("Learn", { timeout: 10_000 });
     const modules = page.locator(".learn-module");
-    expect(await modules.count()).toBe(8);
+    expect(await modules.count()).toBe(9);
   });
 
   test("lab-2 is locked without lab-1 complete", async ({ page }) => {
