@@ -10,7 +10,7 @@ import type { SearchResult } from "./searchTypes";
 
 // ─── Glossary terms ──────────────────────────────────────
 
-const GLOSSARY_TERMS: Array<[string, string]> = [
+export const GLOSSARY_TERMS: Array<[string, string]> = [
   ["BIC", "Bank Identifier Code — a unique 8-11 character code identifying a bank globally"],
   ["SWIFT code", "Same as a BIC. Standardized bank identifier for routing SWIFT payments"],
   ["IBAN", "International Bank Account Number — up to 34 chars, starts with country code + checksum"],

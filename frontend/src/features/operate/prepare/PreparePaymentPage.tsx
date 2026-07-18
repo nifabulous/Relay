@@ -35,7 +35,7 @@ export function PreparePaymentPage() {
       beneficiary_name: "",
       beneficiary_bic: draftBic,
       currency: "GBP",
-      amount: undefined as unknown as number,
+      amount: NaN,
       strictness: "standard",
     },
   });
@@ -186,7 +186,7 @@ export function PreparePaymentPage() {
               min="0"
               className="mono"
               placeholder="500.00"
-              {...register("amount")}
+              {...register("amount", { valueAsNumber: true })}
               aria-invalid={!!errors.amount}
               aria-describedby={errors.amount ? "amount-error" : undefined}
             />
@@ -262,6 +262,10 @@ export function PreparePaymentPage() {
             missingEvidence={missingEvidence}
           />
 
+          <p className="prepare-payment__sim-label" role="note">
+            <strong>Simulation — not a real payment.</strong> This recommendation is based on illustrative data and must not be used for real payment decisions.
+          </p>
+
           <CheckResult
             title="IBAN Validation"
             status={result.validation.valid ? "passed" : "failed"}
@@ -290,6 +294,12 @@ export function PreparePaymentPage() {
               <p>Match score: <span className="mono">{(result.vop.score * 100).toFixed(0)}%</span></p>
             )}
             <p>{result.vop.advice}</p>
+            {result.vop.outcome === "CLOSE_MATCH" && result.vop.account_holder_name && (
+              <div className="prepare-payment__vop-compare">
+                <p>You entered: <strong>{formValues.beneficiary_name}</strong></p>
+                <p>Account holder: <strong className="mono">{result.vop.account_holder_name}</strong></p>
+              </div>
+            )}
           </CheckResult>
 
           <CheckResult
@@ -321,7 +331,31 @@ export function PreparePaymentPage() {
             }
           >
             {result.ssi.instructions.length > 0 ? (
-              <p>{result.ssi.instructions.length} instruction(s) on file.</p>
+              <>
+                <p>{result.ssi.instructions.length} instruction(s) on file:</p>
+                <table className="prepare-payment__ssi-table">
+                  <thead>
+                    <tr>
+                      <th>Intermediary</th>
+                      <th>BIC</th>
+                      <th>Nostro Account</th>
+                      <th>Charge</th>
+                      <th>Value Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.ssi.instructions.map((inst, i) => (
+                      <tr key={i}>
+                        <td>{String(inst.intermediary_bank_name ?? inst.intermediary_bic)}</td>
+                        <td className="mono">{inst.intermediary_bic}</td>
+                        <td className="mono">{inst.intermediary_account ?? "—"}</td>
+                        <td>{inst.charge_code}</td>
+                        <td>{inst.value_date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             ) : (
               <p>No settlement instructions on file for this bank/currency.</p>
             )}

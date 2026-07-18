@@ -149,10 +149,23 @@
 
   .app-shell__mobile-link--active {
     color: var(--color-action);
+    position: relative;
+  }
+
+  /* Non-color active indicator: top border bar (not color alone) */
+  .app-shell__mobile-link--active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 25%;
+    right: 25%;
+    height: 3px;
+    background: var(--color-action);
+    border-radius: 0 0 var(--radius-control) var(--radius-control);
   }
 
   .app-shell__mobile-label {
-    font-size: 10px;
+    font-size: var(--text-xs);
     line-height: 1;
   }
 

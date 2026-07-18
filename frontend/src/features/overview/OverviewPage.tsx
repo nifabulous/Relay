@@ -5,16 +5,13 @@ import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
 import { HealthResponseSchema, ProgressResponseSchema } from "../../api/schemas";
 import type { HealthResponse, ProgressResponse } from "../../api/schemas";
-import { loadProgress, migrateLegacyProgressOnce } from "../../lib/persistence/storage";
+import { loadProgress } from "../../lib/persistence/storage";
 import { Button } from "../../design-system/Button";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
-  // Migrate legacy progress once on first load
-  const migration = migrateLegacyProgressOnce();
-  const progress = migration.didImport
-    ? { completedModuleIds: migration.completedModuleIds }
-    : loadProgress();
+  // Legacy migration runs once at app startup in main.tsx — not in render
+  const progress = loadProgress();
 
   // Health check
   const healthQuery = useQuery({
@@ -84,9 +81,9 @@ export function OverviewPage() {
           <span className="overview__utility-label">Directory</span>
           <span className="overview__utility-sub">Browse all banks</span>
         </Link>
-        <Link to="/app/operate/tracking" className="overview__utility-link">
+        <Link to="/app/operate" className="overview__utility-link">
           <span className="overview__utility-label">Track</span>
-          <span className="overview__utility-sub">Look up a UETR</span>
+          <span className="overview__utility-sub">Prepare or track a payment</span>
         </Link>
       </section>
 

@@ -17,8 +17,8 @@ export function StatusChip({ status, className = "" }: StatusChipProps) {
   const meta = statusMeta[status];
   return (
     <span
-      role="status"
       className={["status-chip", meta.className, className].filter(Boolean).join(" ")}
+      aria-label={meta.label}
     >
       <span className="status-chip__icon" aria-hidden="true">{meta.icon}</span>
       {meta.label}

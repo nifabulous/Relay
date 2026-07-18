@@ -139,8 +139,8 @@ function BankDetailCard({ bank }: { bank: NonNullable<LookupResponse["bank"]> })
         <Link to={`/app/operate/prepare?bic=${encodeURIComponent(bank.bic)}`}>
           <Button variant="secondary">Prepare payment to this bank</Button>
         </Link>
-        <Link to={`/app/explore/corridors?country=${encodeURIComponent(bank.country_code)}`}>
-          <Button variant="secondary">View corridors</Button>
+        <Link to={`/app/explore?country=${encodeURIComponent(bank.country_code)}`}>
+          <Button variant="secondary">Search corridors</Button>
         </Link>
       </div>
     </div>
@@ -158,8 +158,8 @@ export function SchemesPage() {
       </div>
       <div className="schemes-list">
         <p className="explore__muted">Payment scheme comparison loads from the API. Use the Operate workspace to check schemes for a specific currency.</p>
-        <Link to="/app/operate/fees">
-          <Button variant="secondary">Open Fee Calculator</Button>
+        <Link to="/app/operate">
+          <Button variant="secondary">Go to Operate</Button>
         </Link>
       </div>
     </div>
@@ -168,26 +168,7 @@ export function SchemesPage() {
 
 // ─── Glossary ────────────────────────────────────────────
 
-const GLOSSARY_TERMS: Array<[string, string]> = [
-  ["BIC", "Bank Identifier Code — a unique 8-11 character code identifying a bank globally"],
-  ["SWIFT code", "Same as a BIC. Standardized bank identifier for routing SWIFT payments"],
-  ["IBAN", "International Bank Account Number — up to 34 chars, starts with country code + checksum"],
-  ["MOD-97", "The checksum algorithm used to validate IBANs"],
-  ["Nostro", "'Our' account held at another bank, usually in that bank's local currency"],
-  ["Vostro", "'Your' account — another bank's account held at our bank"],
-  ["Correspondent bank", "Intermediary bank providing services across borders"],
-  ["SSI", "Standard Settlement Instructions — which correspondent to use per currency"],
-  ["UETR", "Unique End-to-End Transaction Reference — 36-char UUID for SWIFT gpi tracking"],
-  ["MT103", "SWIFT message type for customer credit transfers"],
-  ["VoP", "Verification of Payee — checks payee name matches account holder"],
-  ["CHAPS", "UK RTGS for same-day GBP high-value payments"],
-  ["SEPA", "Single Euro Payments Area — standardized euro payments across 36 countries"],
-  ["Fedwire", "US Federal Reserve RTGS for USD wire transfers"],
-  ["RTGS", "Real-Time Gross Settlement — individual immediate settlement"],
-  ["Value date", "The date funds become available — settlement date"],
-  ["Charge code", "OUR, SHA, or BEN — who pays the fees in a cross-border payment"],
-  ["STP", "Straight-Through Processing — processed automatically without repair"],
-];
+import { GLOSSARY_TERMS } from "./search/searchIndex";
 
 export function GlossaryPage() {
   const [searchParams] = useSearchParams();

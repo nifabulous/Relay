@@ -268,6 +268,57 @@
   letter-spacing: var(--tracking-micro);
 }
 
+/* ── Simulation label ───────────────────────────────────── */
+.prepare-payment__sim-label {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+}
+
+/* ── SSI detail table ───────────────────────────────────── */
+.prepare-payment__ssi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+  margin-top: var(--space-2);
+}
+
+.prepare-payment__ssi-table th {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.prepare-payment__ssi-table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+
+.prepare-payment__ssi-table td.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── VoP name comparison ────────────────────────────────── */
+.prepare-payment__vop-compare {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-control);
+}
+
+.prepare-payment__vop-compare p {
+  font-size: var(--text-sm);
+  margin-bottom: 2px;
+}
+
 /* ── Route ──────────────────────────────────────────────── */
 .prepare-payment__route {
   margin-top: var(--space-3);

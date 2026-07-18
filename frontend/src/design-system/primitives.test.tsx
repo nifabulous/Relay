@@ -50,9 +50,12 @@ describe("StatusChip", () => {
     expect(screen.getByText("Unavailable")).toBeVisible();
   });
 
-  it("uses role=status for assistive technology", () => {
+  it("uses aria-label for assistive technology without role=status chatter", () => {
     render(<StatusChip status="passed" />);
-    expect(screen.getByRole("status")).toHaveTextContent("Passed");
+    const chip = screen.getByLabelText("Passed");
+    expect(chip).toBeVisible();
+    // Should NOT have role=status to avoid live-region chatter on every render
+    expect(chip).not.toHaveAttribute("role", "status");
   });
 });
 

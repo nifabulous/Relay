@@ -52,8 +52,7 @@ describe("PreparePaymentPage form accessibility", () => {
   it("associates name field error with aria-describedby", async () => {
     const { user } = renderPage();
 
-    // Fill IBAN but not name
-    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    // Submit without filling anything
     await user.click(screen.getByRole("button", { name: /run payment checks/i }));
 
     const nameInput = screen.getByLabelText(/beneficiary name/i);

@@ -22,7 +22,8 @@ export const preparePaymentInputSchema = z.object({
   currency: z
     .string()
     .length(3, "Currency must be a 3-letter code")
-    .regex(/^[A-Z]{3}$/, "Currency must be 3 uppercase letters"),
+    .regex(/^[A-Za-z]{3}$/, "Currency must be 3 letters")
+    .transform((v) => v.toUpperCase()),
   amount: z
     .number({ message: "Amount must be a number" })
     .positive("Amount must be greater than 0")
