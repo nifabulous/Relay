@@ -1,4 +1,4 @@
-import type { LabDefinition, LabContentProps } from "./labTypes";
+import type { LabDefinition } from "./labTypes";
 import { CORE_LAB_PARITY } from "./legacyParity";
 import { Lab1Content } from "./labs/Lab1Content";
 import { Lab2Content } from "./labs/Lab2Content";
@@ -7,37 +7,13 @@ import { Lab4Content } from "./labs/Lab4Content";
 import { Lab5Content } from "./labs/Lab5Content";
 import { Lab6Content } from "./labs/Lab6Content";
 import { Lab7Content } from "./labs/Lab7Content";
-
-/**
- * Temporary placeholder content component.
- * Each lab task replaces one entry with the real content component.
- */
-function UnavailableLabContent({ moduleId }: LabContentProps) {
-  return (
-    <div className="lab-unavailable">
-      <p>Interactive content for this module is being developed.</p>
-      <p className="lab-unavailable__id mono">{moduleId}</p>
-    </div>
-  );
-}
-
-/**
- * Build a placeholder definition from a parity entry.
- * Replaced one-at-a-time as labs are ported.
- */
-function placeholderDef(checkpoints: readonly string[]): LabDefinition {
-  return {
-    component: UnavailableLabContent,
-    requiredCheckpoints: checkpoints,
-  };
-}
+import { CapstoneContent } from "./labs/CapstoneContent";
 
 /**
  * The lab registry maps module IDs to their content component
  * and required completion checkpoints.
  *
- * Initially all entries use the placeholder. Each lab task replaces
- * one entry with the real content component.
+ * All 8 modules now have real interactive content.
  */
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-1": { component: Lab1Content, requiredCheckpoints: CORE_LAB_PARITY["lab-1"].requiredCheckpoints },
@@ -47,17 +23,9 @@ export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-5": { component: Lab5Content, requiredCheckpoints: CORE_LAB_PARITY["lab-5"].requiredCheckpoints },
   "lab-6": { component: Lab6Content, requiredCheckpoints: CORE_LAB_PARITY["lab-6"].requiredCheckpoints },
   "lab-7": { component: Lab7Content, requiredCheckpoints: CORE_LAB_PARITY["lab-7"].requiredCheckpoints },
-  "capstone": placeholderDef(CORE_LAB_PARITY["capstone"].requiredCheckpoints),
+  "capstone": { component: CapstoneContent, requiredCheckpoints: CORE_LAB_PARITY["capstone"].requiredCheckpoints },
 };
 
 export function getLabDefinition(moduleId: string): LabDefinition | undefined {
   return LAB_REGISTRY[moduleId];
-}
-
-/**
- * Replace a lab definition. Used by lab content files as they are ported.
- * Call this at module load time (not inside a component).
- */
-export function registerLab(moduleId: string, definition: LabDefinition): void {
-  LAB_REGISTRY[moduleId] = definition;
 }
