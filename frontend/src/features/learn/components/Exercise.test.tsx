@@ -109,4 +109,25 @@ describe("Exercise", () => {
     await user.click(screen.getByRole("button", { name: /check answer/i }));
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
+
+  it("prevents duplicate submission while loading (button disables)", async () => {
+    let callCount = 0;
+    const checkAnswer = async () => {
+      callCount++;
+      await new Promise((r) => setTimeout(r, 100));
+      return { correct: true, feedback: "Correct!" };
+    };
+
+    const { user } = renderExercise({ checkAnswer });
+    await user.type(screen.getByLabelText("Your answer"), "4");
+    await user.click(screen.getByRole("button", { name: /check answer/i }));
+
+    // Button should be disabled during loading
+    const checkingBtn = screen.getByRole("button", { name: /checking/i });
+    expect(checkingBtn).toBeDisabled();
+
+    // Wait for completion
+    await screen.findByText("Correct!");
+    expect(callCount).toBe(1);
+  });
 });

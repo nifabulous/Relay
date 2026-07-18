@@ -14,6 +14,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+@pytest.fixture(autouse=True)
+def reset_auth_state():
+    """Ensure _admin_api_key is reset to None after each auth test.
+
+    The mock.patch context managers in client_with_auth/client_dev_mode
+    should restore the value, but TestClient lifespan startup can
+    re-read module state, causing leaks into subsequent test files.
+    This autouse fixture guarantees a clean state.
+    """
+    yield
+    import app.auth
+    app.auth._admin_api_key = None
+
+
 @pytest.fixture
 def client_with_auth():
     """A client where ADMIN_API_KEY is set (prod-like auth enforced)."""
