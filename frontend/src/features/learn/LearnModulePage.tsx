@@ -1,7 +1,10 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useCallback } from "react";
 import { getModuleById, isModuleUnlocked, CURRICULUM } from "./curriculum";
+import { getLabDefinition } from "./labRegistry";
+import { useLabCompletion } from "./useLabCompletion";
 import { loadProgress, saveProgress } from "../../lib/persistence/storage";
+import { StatusChip } from "../../design-system/StatusChip";
 import "./LearnPage.css";
 
 export function LearnModulePage() {
@@ -9,6 +12,15 @@ export function LearnModulePage() {
   const [completed, setCompleted] = useState<string[]>(() => loadProgress().completedModuleIds);
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
+
+  const completeModule = useCallback((id: string) => {
+    setCompleted((prev) => {
+      if (prev.includes(id)) return prev; // Idempotent
+      const next = [...prev, id];
+      saveProgress({ schemaVersion: 1, completedModuleIds: next });
+      return next;
+    });
+  }, []);
 
   if (!mod) {
     return (
@@ -25,14 +37,6 @@ export function LearnModulePage() {
   const prevModule = moduleIndex > 0 ? CURRICULUM[moduleIndex - 1] : null;
   const nextModule = moduleIndex < CURRICULUM.length - 1 ? CURRICULUM[moduleIndex + 1] : null;
 
-  const toggleComplete = useCallback(() => {
-    const next = isComplete
-      ? completed.filter((c) => c !== mod.id)
-      : [...completed, mod.id];
-    setCompleted(next);
-    saveProgress({ schemaVersion: 1, completedModuleIds: next });
-  }, [completed, isComplete, mod.id]);
-
   if (!unlocked) {
     return (
       <div className="learn-page">
@@ -45,6 +49,9 @@ export function LearnModulePage() {
     );
   }
 
+  // Resolve the lab content from the registry
+  const definition = getLabDefinition(mod.id);
+
   return (
     <div className="learn-page">
       <nav className="learn-breadcrumb" aria-label="Breadcrumb">
@@ -54,18 +61,13 @@ export function LearnModulePage() {
       </nav>
 
       <div className="learn-module-header">
-        <h1>{mod.title}</h1>
+        <div className="learn-module-header__title-row">
+          <h1>{mod.title}</h1>
+          {isComplete && <StatusChip status="passed" />}
+        </div>
         <p className="measure">{mod.subtitle}</p>
         <div className="learn-module-header__meta">
           <span>{mod.duration} minutes</span>
-          <button
-            type="button"
-            className="learn-module__toggle"
-            onClick={toggleComplete}
-            aria-pressed={isComplete}
-          >
-            {isComplete ? "✓ Completed" : "Mark as complete"}
-          </button>
         </div>
       </div>
 
@@ -76,37 +78,22 @@ export function LearnModulePage() {
             <li key={i}>{outcome}</li>
           ))}
         </ul>
-
-        <div className="learn-content__body">
-          <h2>Concept</h2>
-          <p className="measure">
-            This module covers the fundamentals of {mod.title.toLowerCase()}. The interactive
-            exercises and tools in the Explore and Operate workspaces complement this material.
-          </p>
-
-          {mod.category === "core" && (
-            <div className="learn-content__callout">
-              <p>
-                <strong>Try it:</strong> After reading, use the{" "}
-                <Link to="/app/operate/prepare">Prepare Payment</Link> tool to see these concepts
-                in action, or explore the{" "}
-                <Link to="/app/explore/glossary">glossary</Link> for related terms.
-              </p>
-            </div>
-          )}
-
-          {mod.id === "capstone" && (
-            <div className="learn-content__callout">
-              <p>
-                <strong>Capstone exercise:</strong> Prepare a simulated payment using all the
-                skills you've learned. Go to{" "}
-                <Link to="/app/operate/prepare">Prepare Payment</Link> and complete a full
-                check run.
-              </p>
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Lab content from registry */}
+      {definition ? (
+        <LabContentRenderer
+          moduleId={mod.id}
+          isComplete={isComplete}
+          requiredCheckpoints={definition.requiredCheckpoints}
+          component={definition.component}
+          onComplete={() => completeModule(mod.id)}
+        />
+      ) : (
+        <div className="learn-content__body">
+          <p className="measure">Interactive content for this module is coming soon.</p>
+        </div>
+      )}
 
       {/* Prior / Next navigation */}
       <nav className="learn-nav" aria-label="Module navigation">
@@ -127,4 +114,25 @@ export function LearnModulePage() {
       </nav>
     </div>
   );
+}
+
+/**
+ * Wrapper that connects the lab completion hook to the lab content component.
+ */
+function LabContentRenderer({
+  moduleId,
+  isComplete,
+  requiredCheckpoints,
+  component: LabComponent,
+  onComplete,
+}: {
+  moduleId: string;
+  isComplete: boolean;
+  requiredCheckpoints: readonly string[];
+  component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
+  onComplete: () => void;
+}) {
+  const { markCheckpoint } = useLabCompletion(requiredCheckpoints, onComplete);
+
+  return <LabComponent moduleId={moduleId} isComplete={isComplete} onCheckpoint={markCheckpoint} />;
 }
