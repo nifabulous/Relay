@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiPost } from "../../../api/client";
-import { STPCheckResponseSchema } from "../../../api/schemas";
-import type { STPCheckResponse } from "../../../api/schemas";
+import { STPCheckResponseSchema, TranslateResponseSchema } from "../../../api/schemas";
+import type { STPCheckResponse, TranslateResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import { Button } from "../../../design-system/Button";
 import { StatusChip } from "../../../design-system/StatusChip";
+import { Pacs008View } from "./Pacs008View";
 import "./OperateTools.css";
 
 export function StpPage() {
@@ -14,6 +15,7 @@ export function StpPage() {
   const [currency, setCurrency] = useState("USD");
   const [amount, setAmount] = useState("");
   const [result, setResult] = useState<STPCheckResponse | null>(null);
+  const [translation, setTranslation] = useState<TranslateResponse | null>(null);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -28,6 +30,21 @@ export function StpPage() {
         STPCheckResponseSchema,
       ),
     onSuccess: setResult,
+  });
+
+  const translateMutation = useMutation({
+    mutationFn: () =>
+      apiPost<TranslateResponse>(
+        "/api/message/translate",
+        {
+          transaction_reference: txRef,
+          value_date: valueDate,
+          currency,
+          interbank_amount: Number(amount),
+        },
+        TranslateResponseSchema,
+      ),
+    onSuccess: setTranslation,
   });
 
   const error = mutation.error as ApiProblem | null;
@@ -70,6 +87,11 @@ export function StpPage() {
           </div>
         </div>
         <Button type="submit" variant="primary" isLoading={mutation.isPending}>Check STP compliance</Button>
+        <Button type="button" variant="secondary"
+          isLoading={translateMutation.isPending}
+          onClick={() => { if (txRef && valueDate && amount) translateMutation.mutate(); }}>
+          View as pacs.008
+        </Button>
       </form>
 
       {error && (
@@ -106,6 +128,8 @@ export function StpPage() {
           <p className="tool-sim-label"><strong>Simulation — not a real payment.</strong></p>
         </div>
       )}
+
+      {translation && <Pacs008View result={translation} />}
     </div>
   );
 }

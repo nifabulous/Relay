@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { http, HttpResponse } from "msw";
+import { server } from "../../../test/server";
 import { ToolIndexPage } from "./ToolIndexPage";
 import { FeePage } from "./FeePage";
 import { ScreeningPage } from "./ScreeningPage";
@@ -66,6 +69,35 @@ describe("StpPage", () => {
     expect(screen.getByLabelText(/value date/i)).toBeVisible();
     expect(screen.getByLabelText(/currency/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /check/i })).toBeVisible();
+  });
+
+  it("shows the pacs.008 view when toggled", async () => {
+    server.use(
+      http.post("/api/message/translate", () =>
+        HttpResponse.json({
+          mapping: [
+            {
+              mt_tag: "59",
+              mt_label: "Beneficiary Customer",
+              iso_path: "Cdtr/Nm",
+              iso_label: "Creditor Name",
+              value: "Beta Ltd",
+            },
+          ],
+          xml: "<Document/>",
+          disclaimer: "primer",
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<StpPage />);
+    await user.type(screen.getByLabelText(/transaction reference/i), "REF1");
+    await user.type(screen.getByLabelText(/value date/i), "2026-07-20");
+    await user.type(screen.getByLabelText(/interbank amount/i), "100000");
+    await user.click(screen.getByRole("button", { name: /view as pacs\.008/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/MT103 → pacs\.008 field mapping/i)).toBeInTheDocument(),
+    );
   });
 });
 
