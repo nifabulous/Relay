@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import type { LabContentProps } from "../labTypes";
-import type { PaymentRouteNode, CheckStatus } from "../../../design-system/types";
+import type { PaymentRouteNode } from "../../../design-system/types";
 import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
+import { buildRouteNodes } from "./routeNodes";
 import { Exercise } from "../components/Exercise";
 import { Button } from "../../../design-system/Button";
 import { apiRequest } from "../../../api/client";
@@ -45,33 +46,9 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
     }
   }, [bic, currency, onCheckpoint]);
 
-  // Build route nodes from the API response for the PaymentRoute component
-  function buildRouteNodes(data: RouteResponse): PaymentRouteNode[] {
-    const nodes: PaymentRouteNode[] = [];
-    nodes.push({
-      id: "origin",
-      kind: "originator",
-      bic: "—",
-      name: "Your bank",
-      status: "passed" as CheckStatus,
-    });
-    data.suggested_intermediaries.forEach((inter, i) => {
-      nodes.push({
-        id: `inter-${i}`,
-        kind: "intermediary",
-        bic: inter.bic,
-        name: String(inter.bank ?? inter.bic),
-        status: "passed" as CheckStatus,
-      });
-    });
-    nodes.push({
-      id: "beneficiary",
-      kind: "beneficiary",
-      bic: data.bic,
-      name: "Beneficiary bank",
-      status: "passed" as CheckStatus,
-    });
-    return nodes;
+  // Build route nodes from the API response using shared helper
+  function getRouteNodes(data: RouteResponse): PaymentRouteNode[] {
+    return buildRouteNodes(data.suggested_intermediaries, data.bic);
   }
 
   // Japan exercise: learner enters the BIC for Bank of Tokyo-Mitsubishi
@@ -148,7 +125,7 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
 
                 {/* Payment route visualization */}
                 <PaymentRoute
-                  nodes={buildRouteNodes(route)}
+                  nodes={getRouteNodes(route)}
                   currency={route.currency}
                 />
 

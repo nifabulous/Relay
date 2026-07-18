@@ -10,7 +10,8 @@ import { PaymentTimeline } from "../../../features/operate/tracking/PaymentTimel
 import { apiRequest, apiPost } from "../../../api/client";
 import { ValidateResponseSchema, VoPResponseSchema, RouteResponseSchema, SSIResponseSchema, PreparePaymentResponseSchema, TrackPaymentResponseSchema } from "../../../api/schemas";
 import type { ValidateResponse, VoPResponse, RouteResponse, SSIResponse, PreparePaymentResponse, TrackPaymentResponse } from "../../../api/schemas";
-import type { PaymentRouteNode, CheckStatus } from "../../../design-system/types";
+import type { PaymentRouteNode } from "../../../design-system/types";
+import { buildRouteNodes } from "./routeNodes";
 import "./LabContent.css";
 
 const DEFAULT_INPUT: CapstonePaymentInput = {
@@ -138,24 +139,10 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
   const completedSteps = new Set<number>();
   for (let i = 0; i < state.step; i++) completedSteps.add(i);
 
-  function buildRouteNodes(): PaymentRouteNode[] {
+  function getRouteNodes(): PaymentRouteNode[] {
     const routing = state.results.routing;
     if (!routing) return [];
-    const nodes: PaymentRouteNode[] = [{
-      id: "origin", kind: "originator", bic: "—", name: "Your bank", status: "passed" as CheckStatus,
-    }];
-    routing.suggested_intermediaries.forEach((inter, i) => {
-      nodes.push({
-        id: `inter-${i}`, kind: "intermediary", bic: inter.bic,
-        name: String(inter.bank ?? inter.bic), status: "passed" as CheckStatus,
-      });
-    });
-    nodes.push({
-      id: "beneficiary", kind: "beneficiary",
-      bic: state.results.validation?.bic ?? "—",
-      name: "Beneficiary", status: "passed" as CheckStatus,
-    });
-    return nodes;
+    return buildRouteNodes(routing.suggested_intermediaries, state.results.validation?.bic ?? "—");
   }
 
   return (
@@ -271,7 +258,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
         <section className="lab-section">
           <h3>Step 3: Route</h3>
           {state.results.routing.suggested_intermediaries.length > 0 ? (
-            <PaymentRoute nodes={buildRouteNodes()} currency={state.paymentInput.currency} />
+            <PaymentRoute nodes={getRouteNodes()} currency={state.paymentInput.currency} />
           ) : (
             <p className="lab-muted">No intermediaries found.</p>
           )}
