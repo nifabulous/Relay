@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
+
+from .validator import validate_bic
 
 PACS008_NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"
 
@@ -178,3 +180,133 @@ def _build_xml(**f) -> str:
         _sub(_sub(tx, f"{{{ns}}}RmtInf"), f"{{{ns}}}Ustrd", f["remittance"])
 
     return ET.tostring(doc, encoding="unicode")
+
+
+@dataclass
+class Pacs008Finding:
+    field: str
+    field_name: str
+    severity: str  # error | warning | info
+    code: str
+    message: str
+    repair: Optional[str] = None
+
+
+@dataclass
+class Pacs008ValidateResult:
+    verdict: str  # CLEAN | REPAIRABLE | REJECTED
+    passes: bool
+    findings: List[Pacs008Finding] = field(default_factory=list)
+
+
+def validate_pacs008(document: dict) -> Pacs008ValidateResult:
+    """
+    PRIMER validator for a handful of structured pacs.008 fields.
+
+    Rules (production engines run far more):
+      1. Structured PstlAdr completeness — a country-only creditor address is
+         REPAIRABLE (the Nov-2026 SWIFT structured-address mandate; also the
+         Travel-Rule data-completeness intent).
+      2. Debtor/creditor agent BICFI present and valid.
+      3. Settlement amount > 0 and currency present; instructed vs settled
+         currency mismatch is a warning.
+      4. Debtor and creditor names present.
+    """
+    document = document or {}
+    findings: List[Pacs008Finding] = []
+
+    addr = document.get("creditor_postal_address") or {}
+    street = _s(addr.get("street_name") if isinstance(addr, dict) else None)
+    town = _s(addr.get("town_name") if isinstance(addr, dict) else None)
+    country = _s(addr.get("country") if isinstance(addr, dict) else None)
+
+    # Rule 1: structured address completeness.
+    if country and not (street and town):
+        findings.append(Pacs008Finding(
+            field="Cdtr/PstlAdr", field_name="Creditor Postal Address",
+            severity="warning", code="PACS-ADDR-UNSTRUCTURED",
+            message=(
+                "Creditor address has a country but no street/town. From "
+                "November 2026 SWIFT accepts only structured or hybrid postal "
+                "addresses; a country-only address fails the data-completeness "
+                "intent even though the field is non-empty."
+            ),
+            repair=(
+                "Supply structured StrtNm and TwnNm. A country-only address "
+                "triggers a request-for-information back to the sending bank."
+            ),
+        ))
+
+    # Rule 2: agent BICFI present + valid.
+    for bic, tag, label in (
+        (_s(document.get("debtor_agent_bic")), "DbtrAgt/FinInstnId/BICFI", "Debtor Agent"),
+        (_s(document.get("creditor_agent_bic")), "CdtrAgt/FinInstnId/BICFI", "Creditor Agent"),
+    ):
+        if not bic:
+            findings.append(Pacs008Finding(
+                field=tag, field_name=f"{label} BIC",
+                severity="error", code="PACS-BIC-MISSING",
+                message=f"{label} BICFI is missing.",
+                repair="Supply the agent's BIC (BICFI).",
+            ))
+        else:
+            valid, _n, _c, errs = validate_bic(bic)
+            if not valid:
+                findings.append(Pacs008Finding(
+                    field=tag, field_name=f"{label} BIC",
+                    severity="error", code="PACS-BIC-INVALID",
+                    message=f"{label} BICFI {bic!r} is invalid ({errs or 'format error'}).",
+                    repair="Correct the BIC to an 8- or 11-character SWIFT code.",
+                ))
+
+    # Rule 3: settlement amount + currency.
+    amount = document.get("settlement_amount")
+    currency = _s(document.get("settlement_currency"))
+    if not (isinstance(amount, (int, float)) and amount > 0):
+        findings.append(Pacs008Finding(
+            field="IntrBkSttlmAmt", field_name="Interbank Settlement Amount",
+            severity="error", code="PACS-AMOUNT-INVALID",
+            message=f"Settlement amount must be greater than zero (got {amount!r}).",
+            repair="Supply a positive settlement amount.",
+        ))
+    if not currency:
+        findings.append(Pacs008Finding(
+            field="IntrBkSttlmAmt/@Ccy", field_name="Settlement Currency",
+            severity="error", code="PACS-CCY-MISSING",
+            message="Settlement currency is missing.",
+            repair="Supply the settlement currency (ISO 4217).",
+        ))
+    instructed = _s(document.get("instructed_currency"))
+    if instructed and currency and instructed.upper() != currency.upper():
+        findings.append(Pacs008Finding(
+            field="InstdAmt/@Ccy", field_name="Instructed Currency",
+            severity="warning", code="PACS-CCY-MISMATCH",
+            message=(
+                f"Instructed currency {instructed!r} differs from settled "
+                f"currency {currency!r}; an FX conversion is implied."
+            ),
+            repair="Confirm the FX leg is intended and disclosed.",
+        ))
+
+    # Rule 4: party names.
+    for name_val, tag, label in (
+        (_s(document.get("debtor_name")), "Dbtr/Nm", "Debtor"),
+        (_s(document.get("creditor_name")), "Cdtr/Nm", "Creditor"),
+    ):
+        if not name_val:
+            findings.append(Pacs008Finding(
+                field=tag, field_name=f"{label} Name",
+                severity="error", code="PACS-NAME-MISSING",
+                message=f"{label} name is missing.",
+                repair=f"Supply the {label.lower()} name.",
+            ))
+
+    has_error = any(f.severity == "error" for f in findings)
+    has_warning = any(f.severity == "warning" for f in findings)
+    if has_error:
+        verdict = "REJECTED"
+    elif has_warning:
+        verdict = "REPAIRABLE"
+    else:
+        verdict = "CLEAN"
+    return Pacs008ValidateResult(verdict=verdict, passes=not has_error, findings=findings)

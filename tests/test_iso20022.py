@@ -7,6 +7,7 @@ from app.services.iso20022 import (
     CHARGE_MAP,
     PACS008_NAMESPACE,
     translate_mt103_to_pacs008,
+    validate_pacs008,
 )
 
 _SAMPLE_MT103 = {
@@ -88,3 +89,68 @@ def test_translate_includes_pmt_typ_inf_and_instd_amt_when_present():
     assert instd_amt is not None, "InstdAmt element not found"
     assert instd_amt.get("Ccy") == "EUR", "InstdAmt should have Ccy='EUR'"
     assert instd_amt.text == "100000.0", "InstdAmt should contain settlement amount"
+
+
+_VALID_DOC = {
+    "debtor_name": "Acme Corp",
+    "debtor_agent_bic": "CHASUS33",
+    "creditor_name": "Beta Ltd",
+    "creditor_agent_bic": "BARCGB22",
+    "creditor_postal_address": {
+        "street_name": "1 High St", "town_name": "London", "country": "GB",
+    },
+    "settlement_amount": 100000.0,
+    "settlement_currency": "USD",
+}
+
+
+def test_validate_clean_document_passes():
+    r = validate_pacs008(_VALID_DOC)
+    assert r.verdict == "CLEAN"
+    assert r.passes is True
+    assert r.findings == []
+
+
+def test_country_only_address_is_repairable():
+    doc = dict(_VALID_DOC)
+    doc["creditor_postal_address"] = {"street_name": "", "town_name": "", "country": "USA"}
+    r = validate_pacs008(doc)
+    assert r.verdict == "REPAIRABLE"
+    assert r.passes is True  # warning only, still sendable
+    codes = {f.code for f in r.findings}
+    assert "PACS-ADDR-UNSTRUCTURED" in codes
+    addr = next(f for f in r.findings if f.code == "PACS-ADDR-UNSTRUCTURED")
+    assert addr.repair  # explains the request-for-information
+
+
+def test_missing_agent_bic_is_rejected():
+    doc = dict(_VALID_DOC)
+    doc["creditor_agent_bic"] = ""
+    r = validate_pacs008(doc)
+    assert r.verdict == "REJECTED"
+    assert r.passes is False
+    assert any(f.code == "PACS-BIC-MISSING" for f in r.findings)
+
+
+def test_zero_amount_is_rejected():
+    doc = dict(_VALID_DOC)
+    doc["settlement_amount"] = 0
+    r = validate_pacs008(doc)
+    assert r.verdict == "REJECTED"
+    assert any(f.code == "PACS-AMOUNT-INVALID" for f in r.findings)
+
+
+def test_instructed_settled_currency_mismatch_is_warning():
+    doc = dict(_VALID_DOC)
+    doc["instructed_currency"] = "EUR"
+    r = validate_pacs008(doc)
+    assert r.verdict == "REPAIRABLE"
+    assert any(f.code == "PACS-CCY-MISMATCH" for f in r.findings)
+
+
+def test_missing_creditor_name_is_rejected():
+    doc = dict(_VALID_DOC)
+    doc["creditor_name"] = ""
+    r = validate_pacs008(doc)
+    assert r.verdict == "REJECTED"
+    assert any(f.code == "PACS-NAME-MISSING" for f in r.findings)
