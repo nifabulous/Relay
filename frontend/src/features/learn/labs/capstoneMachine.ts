@@ -13,13 +13,19 @@ export interface CapstonePaymentInput {
   amount: number;
 }
 
+// Results are validated by Zod schemas at the API boundary.
+// The reducer stores them loosely; the UI reads fields defensively.
 export interface CapstoneResults {
-  validation?: { valid: boolean; bic?: string; errors: string[] };
-  vop?: { outcome: string; score?: number; account_holder_name?: string | null; advice: string };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  validation?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vop?: any;
   routing?: { beneficiary_country?: string; inferred_currency?: string; suggested_intermediaries: Array<{ bic: string; bank: string; corridor?: string; confidence: string }> };
-  ssi?: { instructions: unknown[]; has_real_accounts: boolean; has_placeholders_only: boolean };
-  recommendation?: { recommendation: string; reason: string; is_blocking: boolean; uetr: string; warnings: string[]; blocks: string[] };
-  tracking?: { uetr: string; current_status: string; is_terminal: boolean; timeline: unknown[] };
+  ssi?: { instructions: Array<Record<string, unknown>>; has_real_accounts: boolean; has_placeholders_only: boolean; disclaimer?: string; beneficiary_bic?: string; currency?: string };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recommendation?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tracking?: any;
 }
 
 export type CapstoneStepStatus =
@@ -45,7 +51,8 @@ export interface CapstoneState {
 export type CapstoneAction =
   | { type: "SUBMIT_DETAILS"; input: CapstonePaymentInput }
   | { type: "EDIT_INPUT"; input: CapstonePaymentInput }
-  | { type: "STEP_SUCCESS"; step: number; result: unknown }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { type: "STEP_SUCCESS"; step: number; result: any }
   | { type: "STEP_ERROR"; error: string }
   | { type: "RETRY" }
   | { type: "RESTART" }

@@ -1,20 +1,17 @@
+import { lazy } from "react";
 import type { LabDefinition } from "./labTypes";
 import { CORE_LAB_PARITY } from "./legacyParity";
-import { Lab1Content } from "./labs/Lab1Content";
-import { Lab2Content } from "./labs/Lab2Content";
-import { Lab3Content } from "./labs/Lab3Content";
-import { Lab4Content } from "./labs/Lab4Content";
-import { Lab5Content } from "./labs/Lab5Content";
-import { Lab6Content } from "./labs/Lab6Content";
-import { Lab7Content } from "./labs/Lab7Content";
-import { CapstoneContent } from "./labs/CapstoneContent";
 
-/**
- * The lab registry maps module IDs to their content component
- * and required completion checkpoints.
- *
- * All 8 modules now have real interactive content.
- */
+// Lazy-load lab components so only the active lab's code is downloaded
+const Lab1Content = lazy(() => import("./labs/Lab1Content").then(m => ({ default: m.Lab1Content })));
+const Lab2Content = lazy(() => import("./labs/Lab2Content").then(m => ({ default: m.Lab2Content })));
+const Lab3Content = lazy(() => import("./labs/Lab3Content").then(m => ({ default: m.Lab3Content })));
+const Lab4Content = lazy(() => import("./labs/Lab4Content").then(m => ({ default: m.Lab4Content })));
+const Lab5Content = lazy(() => import("./labs/Lab5Content").then(m => ({ default: m.Lab5Content })));
+const Lab6Content = lazy(() => import("./labs/Lab6Content").then(m => ({ default: m.Lab6Content })));
+const Lab7Content = lazy(() => import("./labs/Lab7Content").then(m => ({ default: m.Lab7Content })));
+const CapstoneContent = lazy(() => import("./labs/CapstoneContent").then(m => ({ default: m.CapstoneContent })));
+
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-1": { component: Lab1Content, requiredCheckpoints: CORE_LAB_PARITY["lab-1"].requiredCheckpoints },
   "lab-2": { component: Lab2Content, requiredCheckpoints: CORE_LAB_PARITY["lab-2"].requiredCheckpoints },

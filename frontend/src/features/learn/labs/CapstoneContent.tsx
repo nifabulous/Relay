@@ -300,7 +300,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
       {state.results.tracking && (
         <section className="lab-section">
           <h3>Step 6: Track</h3>
-          <PaymentTimeline payment={state.results.tracking as TrackPaymentResponse} />
+          <PaymentTimeline payment={state.results.tracking} />
         </section>
       )}
 

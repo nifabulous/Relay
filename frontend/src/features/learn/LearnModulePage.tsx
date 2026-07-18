@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { getModuleById, isModuleUnlocked, CURRICULUM } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
@@ -80,15 +80,17 @@ export function LearnModulePage() {
         </ul>
       </div>
 
-      {/* Lab content from registry */}
+      {/* Lab content from registry (lazy-loaded) */}
       {definition ? (
-        <LabContentRenderer
-          moduleId={mod.id}
-          isComplete={isComplete}
-          requiredCheckpoints={definition.requiredCheckpoints}
-          component={definition.component}
-          onComplete={() => completeModule(mod.id)}
-        />
+        <Suspense fallback={<div className="skeleton skeleton--line" style={{ width: "60%", height: "100px" }} />}>
+          <LabContentRenderer
+            moduleId={mod.id}
+            isComplete={isComplete}
+            requiredCheckpoints={definition.requiredCheckpoints}
+            component={definition.component}
+            onComplete={() => completeModule(mod.id)}
+          />
+        </Suspense>
       ) : (
         <div className="learn-content__body">
           <p className="measure">Interactive content for this module is coming soon.</p>

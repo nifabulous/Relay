@@ -67,7 +67,6 @@ describe("Lab2Content", () => {
   });
 
   it("emits break-checksum checkpoint when a broken IBAN is checked", async () => {
-    const { user, onCheckpoint } = renderLab();
     server.use(
       http.get("/api/validate", () =>
         HttpResponse.json({
@@ -78,6 +77,8 @@ describe("Lab2Content", () => {
         }),
       ),
     );
+
+    const { user, onCheckpoint } = renderLab();
 
     // Find the break-it input by its aria-label
     const breakInput = screen.getByLabelText("IBAN to break");

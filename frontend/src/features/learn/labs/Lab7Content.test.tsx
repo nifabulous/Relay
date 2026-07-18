@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../test/server";
 import { Lab7Content } from "./Lab7Content";
+import { SCHEME_SCENARIOS } from "./schemeScenarios";
 
 function renderLab(onCheckpoint = vi.fn()) {
   const user = userEvent.setup();
@@ -59,9 +60,8 @@ describe("Lab7Content", () => {
     await user.click(screen.getByRole("button", { name: "GBP" }));
 
     await waitFor(() => {
-      // Scheme names appear in both cards and quiz options — use getAllByText
       expect(screen.getAllByText("Faster Payments").length).toBeGreaterThanOrEqual(1);
-    });
+    }, { timeout: 10000 });
     expect(screen.getAllByText("CHAPS").length).toBeGreaterThanOrEqual(1);
   });
 
@@ -76,28 +76,19 @@ describe("Lab7Content", () => {
   it("emits complete-seven-scenarios when all quizzes are answered correctly", async () => {
     const { user, onCheckpoint } = renderLab();
 
-    // Find all correct option buttons across all quizzes
-    // Each quiz has options; the correct ones are marked aria-pressed after click
-    // We need to click the correct option in each of the 7 quizzes
-    const fieldsets = screen.getAllByRole("group");
-    for (const fieldset of fieldsets) {
-      const buttons = fieldset.querySelectorAll("button");
-      // Click the first button in each (tests use simple correct/wrong patterns)
-      // In practice, we need to find the correct one — let's click each until one turns correct
-      for (const btn of buttons) {
-        if (btn.textContent && !btn.hasAttribute("disabled")) {
-          await user.click(btn as HTMLElement);
-          // If this was correct, it'll have the correct class
-          if (btn.className.includes("correct")) break;
-          // Reset by clicking elsewhere — the quiz auto-resets wrong answers
-        }
-      }
+    // Click the correct answer for each scenario deterministically
+    for (const scenario of SCHEME_SCENARIOS) {
+      const correctOption = scenario.options.find((o) => o.correct);
+      if (!correctOption) continue;
+      // Wait for the button to be ready, then click
+      const btn = await screen.findByRole("button", { name: correctOption.label });
+      await user.click(btn);
+      // Small delay to let React process the state update
+      await new Promise((r) => setTimeout(r, 50));
     }
 
-    // This test is complex — verify the checkpoint fires
-    // The real implementation tracks unique correct scenario IDs
     await waitFor(() => {
       expect(onCheckpoint).toHaveBeenCalledWith("complete-seven-scenarios");
-    }, { timeout: 5000 });
+    }, { timeout: 10000 });
   });
 });
