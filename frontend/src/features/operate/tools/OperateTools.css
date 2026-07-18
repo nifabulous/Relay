@@ -1,0 +1,286 @@
+/*
+ * Relay Operate tools — shared form/result styling.
+ * Each tool has one task, specific button labels, and a simulation label.
+ */
+
+.tool-page,
+.tool-index,
+.tracking-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: var(--content-max);
+}
+
+.tool-page h1,
+.tool-index h1,
+.tracking-page h1 {
+  margin-bottom: var(--space-1);
+}
+
+/* ── Tool index ─────────────────────────────────────────── */
+.tool-index__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tool-index__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--duration-fast) var(--ease);
+}
+
+.tool-index__item:hover {
+  border-color: var(--color-border-strong);
+  text-decoration: none;
+}
+
+.tool-index__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.tool-index__desc {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+/* ── Shared form ────────────────────────────────────────── */
+.tool-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.tool-form__row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.tool-form__row > * {
+  flex: 1;
+}
+
+.tool-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tool-form__field label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink-strong);
+}
+
+.tool-form__field input,
+.tool-form__field select {
+  height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  background: var(--color-surface);
+}
+
+.tool-form__field input.mono,
+.tool-form__field select.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+.tool-form__field input:focus,
+.tool-form__field select:focus {
+  outline: none;
+  border-color: var(--color-action);
+  box-shadow: 0 0 0 3px var(--color-action-surface);
+}
+
+/* ── Error ──────────────────────────────────────────────── */
+.tool-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  color: var(--color-ink-strong);
+}
+
+/* ── Simulation label ───────────────────────────────────── */
+.tool-sim-label {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+}
+
+/* ── Results ────────────────────────────────────────────── */
+.tool-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.tool-result h2 {
+  font-size: var(--text-lg);
+}
+
+/* ── Fee summary ────────────────────────────────────────── */
+.fee-summary {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.fee-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fee-summary__label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.fee-summary__value {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.fee-summary__item--warn .fee-summary__value {
+  color: var(--color-warning);
+}
+
+/* ── Tables (fee hops, screening, STP findings) ─────────── */
+.fee-hops,
+.screen-table,
+.stp-findings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.fee-hops th,
+.screen-table th,
+.stp-findings th {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 10px;
+}
+
+.fee-hops td,
+.screen-table td,
+.stp-findings td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+
+.fee-hops td.mono,
+.screen-table td.mono,
+.stp-findings td.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Screening ──────────────────────────────────────────── */
+.screen-result__overall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.screen-result__blocked {
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+/* ── Value date ─────────────────────────────────────────── */
+.value-date__grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.value-date__grid dt {
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.value-date__grid dd {
+  color: var(--color-ink-strong);
+}
+
+.value-date__holidays {
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  margin-top: var(--space-2);
+}
+
+.value-date__explanation {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: var(--leading-snug);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-control);
+}
+
+/* ── STP verdict ────────────────────────────────────────── */
+.stp-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .tool-form__row {
+    flex-direction: column;
+  }
+
+  .fee-hops,
+  .screen-table,
+  .stp-findings {
+    display: block;
+    overflow-x: auto;
+  }
+}

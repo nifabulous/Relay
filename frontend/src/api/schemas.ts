@@ -397,6 +397,59 @@ const BadgeSchema = z
 
 export type Badge = z.infer<typeof BadgeSchema>;
 
+/* ------------------------------------------------------------------ *
+ * Value Date
+ * ------------------------------------------------------------------ */
+
+export const ValueDateResponseSchema = z
+  .object({
+    trade_date: z.string().catch(""),
+    cut_off_local: z.string().catch(""),
+    cut_off_tz: z.string().catch(""),
+    cut_off_note: z.string().catch(""),
+    missed_cut_off: z.coerce.boolean().catch(false),
+    value_date: z.string().catch(""),
+    settlement_type: z.string().catch(""),
+    business_days: z.coerce.number().int().catch(0),
+    skipped_holidays: z.array(z.string()).catch([]),
+    explanation: z.string().catch(""),
+    disclaimer: z.string().catch(""),
+  })
+  .passthrough();
+
+export type ValueDateResponse = z.infer<typeof ValueDateResponseSchema>;
+
+/* ------------------------------------------------------------------ *
+ * STP Checker (MT103)
+ * ------------------------------------------------------------------ */
+
+const safeOptionalStringForCatch = z.string().nullish().catch(null);
+
+export const STPFindingSchema = z
+  .object({
+    field: z.string().catch(""),
+    field_name: z.string().catch(""),
+    severity: z.string().catch("info"),
+    code: z.string().catch(""),
+    message: z.string().catch(""),
+    repair: safeOptionalStringForCatch,
+  })
+  .passthrough();
+
+export type STPFinding = z.infer<typeof STPFindingSchema>;
+
+export const STPCheckResponseSchema = z
+  .object({
+    verdict: z.string().catch("REPAIRABLE"),
+    stp_passes: z.coerce.boolean().catch(false),
+    findings: z.array(STPFindingSchema).catch([]),
+    field_summary: z.array(z.record(z.string(), z.unknown())).catch([]),
+    disclaimer: z.string().catch(""),
+  })
+  .passthrough();
+
+export type STPCheckResponse = z.infer<typeof STPCheckResponseSchema>;
+
 export const ProgressResponseSchema = z
   .object({
     completed_count: z.coerce.number().int().catch(0),

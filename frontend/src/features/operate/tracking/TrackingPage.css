@@ -1,0 +1,125 @@
+/*
+ * Relay Tracking page — timeline + simulation label.
+ */
+
+.tracking-page__sim-label {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+}
+
+.tracking-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tracking-result__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  flex-wrap: wrap;
+}
+
+.tracking-result__amounts {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  flex-wrap: wrap;
+}
+
+/* ── Timeline ───────────────────────────────────────────── */
+.tracking-timeline {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tracking-timeline__item {
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  position: relative;
+}
+
+.tracking-timeline__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.tracking-timeline__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  flex-shrink: 0;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.tracking-timeline__item--credited .tracking-timeline__dot,
+.tracking-timeline__item--accepted .tracking-timeline__dot {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.tracking-timeline__item--rejected .tracking-timeline__dot,
+.tracking-timeline__item--returned .tracking-timeline__dot {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.tracking-timeline__item--in_transit .tracking-timeline__dot,
+.tracking-timeline__item--pending .tracking-timeline__dot {
+  border-color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.tracking-timeline__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.tracking-timeline__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: 2px;
+}
+
+.tracking-timeline__time {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+.tracking-timeline__bank {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink-strong);
+}
+
+.tracking-timeline__message {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  margin-top: 2px;
+}
+
+.tracking-timeline__amount {
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
