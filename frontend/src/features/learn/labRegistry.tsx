@@ -1,6 +1,7 @@
 import type { LabDefinition, LabContentProps } from "./labTypes";
 import { CORE_LAB_PARITY } from "./legacyParity";
 import { Lab1Content } from "./labs/Lab1Content";
+import { Lab2Content } from "./labs/Lab2Content";
 
 /**
  * Temporary placeholder content component.
@@ -35,7 +36,7 @@ function placeholderDef(checkpoints: readonly string[]): LabDefinition {
  */
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "lab-1": { component: Lab1Content, requiredCheckpoints: CORE_LAB_PARITY["lab-1"].requiredCheckpoints },
-  "lab-2": placeholderDef(CORE_LAB_PARITY["lab-2"].requiredCheckpoints),
+  "lab-2": { component: Lab2Content, requiredCheckpoints: CORE_LAB_PARITY["lab-2"].requiredCheckpoints },
   "lab-3": placeholderDef(CORE_LAB_PARITY["lab-3"].requiredCheckpoints),
   "lab-4": placeholderDef(CORE_LAB_PARITY["lab-4"].requiredCheckpoints),
   "lab-5": placeholderDef(CORE_LAB_PARITY["lab-5"].requiredCheckpoints),
