@@ -42,9 +42,9 @@ describe("useLabCompletion", () => {
     act(() => result.current.markCheckpoint("a"));
     expect(result.current.completed.has("a")).toBe(true);
     expect(result.current.completed.has("b")).toBe(false);
-    expect(result.current.isReady).toBe(false);
+    expect(onComplete).not.toHaveBeenCalled(); // Not ready yet
 
     act(() => result.current.markCheckpoint("b"));
-    expect(result.current.isReady).toBe(true);
+    expect(onComplete).toHaveBeenCalledTimes(1); // Ready — fires
   });
 });
