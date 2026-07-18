@@ -213,7 +213,7 @@ def value_date_endpoint(request: ValueDateRequest):
 @router.post("/message/stp-check", response_model=STPCheckResponse)
 def stp_check_endpoint(request: STPCheckRequest):
     """
-    Run the 12 MT103 straight-through-processing checks and return a verdict.
+    Run the 12-rule MT103 STP primer (production engines run 40–80+ rules) and return a verdict.
 
     Returns one of:
     - **CLEAN** — no errors, no warnings; flows straight through

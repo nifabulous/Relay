@@ -1,9 +1,14 @@
 """
 STP (Straight-Through Processing) checker for MT103 messages.
 
-A pure function `check_stp(message: dict) -> STPResult` that runs the 12
-validation rules a correspondent bank applies to decide whether an MT103 can
-flow through the chain without manual repair.
+A pure function `check_stp(message: dict) -> STPResult` running a 12-rule STP
+PRIMER (production engines apply 40–80+ rules). It decides whether an MT103
+could flow through the chain without manual repair.
+
+Note: MT103 was retired for cross-border payment instructions on 22 Nov 2025
+when SWIFT's CBPR+ coexistence period ended; the message is now pacs.008 in
+ISO 20022. See `iso20022.py` and the Learn "Message Standards" lab for the
+mapping. This checker is retained to teach the field-level structure.
 
 Verdict semantics:
   CLEAN     — no errors and no warnings (info-only still counts as clean)
@@ -120,7 +125,7 @@ def _parse_value_date(raw) -> Optional[date]:
 
 def check_stp(message: dict) -> STPResult:
     """
-    Run the 12 STP validation rules against an MT103-shaped message dict.
+    Run the 12-rule STP primer against an MT103-shaped message dict.
 
     The dict mirrors STPCheckRequest: transaction_reference, bank_op_code,
     value_date, currency, interbank_amount, charge_code, ordering {account,
