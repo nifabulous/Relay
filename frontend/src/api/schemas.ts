@@ -103,10 +103,11 @@ export type LookupResponse = z.infer<typeof LookupResponseSchema>;
  * Route
  * ------------------------------------------------------------------ */
 
-const SuggestedIntermediarySchema = z
+export const SuggestedIntermediarySchema = z
   .object({
     bic: z.string().catch(""),
-    bank: BankInfoSchema.nullish().catch(null),
+    // Pydantic IntermediarySuggestion.bank is a str (bank name), not a BankInfo object
+    bank: z.string().catch(""),
     corridor: z.string().catch(""),
     confidence: confidenceSchema,
   })

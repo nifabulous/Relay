@@ -13,10 +13,13 @@
   --color-action-pressed: #1f3aa0;
   --color-action-surface: #eef2fc;
   --color-action-border: #c3d0f5;
+  --color-on-action: #ffffff;    /* white text on action-colored surfaces */
+  --color-on-danger: #ffffff;    /* white text on danger-colored surfaces */
+  --color-danger-hover: #8a2530; /* darkened danger for hover state */
 
   --color-ink-strong: #16233d;
   --color-ink: #2d3a52;
-  --color-ink-muted: #68748a;
+  --color-ink-muted: #586273;   /* darkened from #68748a → 5.11:1 on surface-3 (AA) */
 
   --color-canvas: #f6f8fc;
   --color-surface: #ffffff;
@@ -26,15 +29,15 @@
   --color-border: #dce2eb;
   --color-border-strong: #c4cdd9;
 
-  --color-success: #16825d;
+  --color-success: #0e5c44;     /* darkened from #16825d → 7.16:1 on success-bg (AAA) */
   --color-success-bg: #e8f6ef;
   --color-success-border: #a3d9c4;
 
-  --color-warning: #c87b16;
+  --color-warning: #9a5a0c;     /* darkened from #c87b16 → 5.01:1 on warning-bg (AA) */
   --color-warning-bg: #fdf4e6;
   --color-warning-border: #f0d4a0;
 
-  --color-danger: #c8424d;
+  --color-danger: #9e2b34;      /* darkened from #c8424d → 6.45:1 on danger-bg (AA) */
   --color-danger-bg: #fcecef;
   --color-danger-border: #f0b8be;
 

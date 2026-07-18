@@ -77,4 +77,34 @@ describe("CommandSearch", () => {
     const input = screen.getByRole("searchbox") as HTMLInputElement;
     expect(input.value).toBe("SEPA");
   });
+
+  it("exposes aria-expanded on the input when results are open", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    // Closed initially
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    // Open after typing
+    await user.type(input, "IBAN");
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    // aria-controls points to the listbox
+    expect(input).toHaveAttribute("aria-controls");
+    const listboxId = input.getAttribute("aria-controls");
+    expect(screen.getByRole("listbox")).toHaveAttribute("id", listboxId);
+  });
+
+  it("updates aria-activedescendant when navigating with ArrowDown", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "IBAN");
+
+    // No active descendant initially
+    expect(input.getAttribute("aria-activedescendant")).toBeNull();
+
+    // Navigate down — should point to the first option
+    await user.keyboard("{ArrowDown}");
+    const activeId = input.getAttribute("aria-activedescendant");
+    expect(activeId).toBeTruthy();
+    // The option with that id should exist
+    expect(document.getElementById(activeId!)).not.toBeNull();
+  });
 });

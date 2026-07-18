@@ -30,7 +30,7 @@
 
 .status-chip--success .status-chip__icon {
   background: var(--color-success);
-  color: #fff;
+  color: var(--color-on-action);
 }
 
 .status-chip--warning {
@@ -40,7 +40,7 @@
 
 .status-chip--warning .status-chip__icon {
   background: var(--color-warning);
-  color: #fff;
+  color: var(--color-on-action);
 }
 
 .status-chip--danger {
@@ -50,7 +50,7 @@
 
 .status-chip--danger .status-chip__icon {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-action);
 }
 
 .status-chip--muted {
@@ -60,5 +60,5 @@
 
 .status-chip--muted .status-chip__icon {
   background: var(--color-ink-muted);
-  color: #fff;
+  color: var(--color-on-action);
 }

@@ -131,18 +131,16 @@
 }
 
 /* ── Check result cards ─────────────────────────────────── */
+/* Anti-template: no colored card edges. Status is carried by the StatusChip
+   (text + icon + color), not by decorative border colors. */
 .check-result {
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border-strong);
   border-radius: var(--radius-control);
 }
 
-.check-result--passed { border-left-color: var(--color-success); }
-.check-result--needs_attention { border-left-color: var(--color-warning); }
-.check-result--failed { border-left-color: var(--color-danger); }
-.check-result--unavailable { border-left-color: var(--color-ink-muted); opacity: 0.85; }
+.check-result--unavailable { opacity: 0.85; }
 
 .check-result__header {
   display: flex;

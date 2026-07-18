@@ -1,0 +1,70 @@
+import { describe, it, expect } from "vitest";
+import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema } from "./schemas";
+
+describe("SuggestedIntermediary schema", () => {
+  it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {
+    const data = {
+      bic: "CITIUS33",
+      bank: "Citibank",
+      corridor: "USD-NGN",
+      confidence: "high",
+    };
+    const result = SuggestedIntermediarySchema.parse(data);
+    expect(result.bank).toBe("Citibank");
+    expect(typeof result.bank).toBe("string");
+  });
+
+  it("preserves bank name through RouteResponseSchema", () => {
+    const data = {
+      bic: "GTBINGLAXXX",
+      currency: "NGN",
+      valid: true,
+      beneficiary_country: "NG",
+      suggested_intermediaries: [
+        { bic: "CITIUS33", bank: "Citibank", corridor: "USD-NGN", confidence: "high" },
+        { bic: "BARCGB22", bank: "Barclays", corridor: "GBP-NGN", confidence: "medium" },
+      ],
+      notes: "Test",
+      source: "curated-corridor-table",
+    };
+    const result = RouteResponseSchema.parse(data);
+    expect(result.suggested_intermediaries[0].bank).toBe("Citibank");
+    expect(result.suggested_intermediaries[1].bank).toBe("Barclays");
+  });
+
+  it("preserves bank name through PreparePaymentResponseSchema routing", () => {
+    const data = {
+      recommendation: "PROCEED",
+      reason: "ok",
+      is_blocking: false,
+      uetr: "test-uetr",
+      validation: { valid: true, errors: [] },
+      vop: { outcome: "MATCH", advice: "ok" },
+      routing: {
+        beneficiary_country: "GB",
+        inferred_currency: "GBP",
+        suggested_intermediaries: [
+          { bic: "BARCGB22", bank: "Barclays", corridor: "GBP-GB", confidence: "high" },
+        ],
+      },
+      ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: true },
+      warnings: [],
+      blocks: [],
+    };
+    const result = PreparePaymentResponseSchema.parse(data);
+    expect(result.routing.suggested_intermediaries[0].bank).toBe("Barclays");
+  });
+
+  it("defaults bank to empty string on malformed data, not null", () => {
+    const data = {
+      bic: "CITIUS33",
+      bank: null,
+      corridor: "USD-NGN",
+      confidence: "high",
+    };
+    const result = SuggestedIntermediarySchema.parse(data);
+    // bank should be a string (empty), never null or undefined
+    expect(typeof result.bank).toBe("string");
+    expect(result.bank).not.toBeNull();
+  });
+});

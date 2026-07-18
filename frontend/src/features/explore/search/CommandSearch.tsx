@@ -1,4 +1,4 @@
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, useId, type KeyboardEvent } from "react";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
 import "./CommandSearch.css";
@@ -36,10 +36,16 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const results = isOpen ? searchStatic(query) : [];
   const groups = groupResults(results);
   const flatResults = groups.flatMap((g) => g.results);
+
+  // Compute the active option's id for aria-activedescendant
+  const activeOptionId = activeIndex >= 0 && activeIndex < flatResults.length
+    ? `${listboxId}-opt-${activeIndex}`
+    : undefined;
 
   function handleChange(value: string) {
     setQuery(value);
@@ -118,11 +124,14 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
           onFocus={() => {
             if (query.trim()) setIsOpen(true);
           }}
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-activedescendant={activeOptionId}
         />
       </div>
 
       {isOpen && (
-        <div className="command-search__results" ref={listRef} role="listbox">
+        <div className="command-search__results" ref={listRef} role="listbox" id={listboxId}>
           {flatResults.length === 0 ? (
             <div className="command-search__empty">
               No results for &ldquo;{query}&rdquo;. Try a bank name, currency, or payment term.
@@ -137,6 +146,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                   return (
                     <a
                       key={result.id}
+                      id={`${listboxId}-opt-${runningIndex}`}
                       href={result.href}
                       className={[
                         "command-search__item",

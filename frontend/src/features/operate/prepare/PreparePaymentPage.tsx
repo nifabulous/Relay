@@ -69,19 +69,13 @@ export function PreparePaymentPage() {
   const apiError = mutation.error as ApiProblem | null;
   const isDuplicate = mutation.isPending;
 
-  // Determine recommendation state
-  let recState: RecommendationState = "conclusive";
-  let missingEvidence: string[] = [];
-  if (result) {
-    if (result.vop.outcome === "NOT_CHECKED") {
-      recState = "incomplete";
-      missingEvidence.push("Verification of Payee — not checked");
-    }
-    if (result.routing.suggested_intermediaries.length === 0) {
-      recState = "incomplete";
-      missingEvidence.push("Routing — no intermediaries found");
-    }
-  }
+  // The backend recommendation engine is authoritative — it already maps
+  // NOT_CHECKED → CAUTION/STOP and no-routing → BLOCKED with correct semantics.
+  // The frontend must NOT override these with "incomplete" because those are
+  // valid conclusive outcomes, not missing evidence. "Incomplete" is reserved
+  // for when a sub-check itself fails to run (handled by the error state).
+  const recState: RecommendationState = "conclusive";
+  const missingEvidence: string[] = [];
 
   // Build route nodes from routing data
   function buildRouteNodes(data: PreparePaymentResponse): PaymentRouteNode[] {
@@ -144,9 +138,10 @@ export function PreparePaymentPage() {
             placeholder="GB29NWBK60161331926819"
             {...register("beneficiary_iban")}
             aria-invalid={!!errors.beneficiary_iban}
+            aria-describedby={errors.beneficiary_iban ? "beneficiary_iban-error" : undefined}
           />
           {errors.beneficiary_iban && (
-            <span className="prepare-payment__error">{errors.beneficiary_iban.message}</span>
+            <span id="beneficiary_iban-error" className="prepare-payment__error" role="alert">{errors.beneficiary_iban.message}</span>
           )}
         </div>
 
@@ -158,9 +153,10 @@ export function PreparePaymentPage() {
             placeholder="Account holder name"
             {...register("beneficiary_name")}
             aria-invalid={!!errors.beneficiary_name}
+            aria-describedby={errors.beneficiary_name ? "beneficiary_name-error" : undefined}
           />
           {errors.beneficiary_name && (
-            <span className="prepare-payment__error">{errors.beneficiary_name.message}</span>
+            <span id="beneficiary_name-error" className="prepare-payment__error" role="alert">{errors.beneficiary_name.message}</span>
           )}
         </div>
 
@@ -174,9 +170,10 @@ export function PreparePaymentPage() {
               placeholder="GBP"
               {...register("currency")}
               aria-invalid={!!errors.currency}
+              aria-describedby={errors.currency ? "currency-error" : undefined}
             />
             {errors.currency && (
-              <span className="prepare-payment__error">{errors.currency.message}</span>
+              <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
             )}
           </div>
 
@@ -191,9 +188,10 @@ export function PreparePaymentPage() {
               placeholder="500.00"
               {...register("amount")}
               aria-invalid={!!errors.amount}
+              aria-describedby={errors.amount ? "amount-error" : undefined}
             />
             {errors.amount && (
-              <span className="prepare-payment__error">{errors.amount.message}</span>
+              <span id="amount-error" className="prepare-payment__error" role="alert">{errors.amount.message}</span>
             )}
           </div>
         </div>

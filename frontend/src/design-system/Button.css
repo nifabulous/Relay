@@ -21,7 +21,7 @@
 .relay-btn--primary {
   background: var(--color-action);
   border-color: var(--color-action);
-  color: #fff;
+  color: var(--color-on-action);
 }
 
 .relay-btn--primary:hover {
@@ -49,12 +49,12 @@
 .relay-btn--danger {
   background: var(--color-danger);
   border-color: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-danger);
 }
 
 .relay-btn--danger:hover {
-  background: #b03b45;
-  border-color: #b03b45;
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
 }
 
 /* Disabled / loading */
