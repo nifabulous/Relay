@@ -154,3 +154,20 @@ def test_missing_creditor_name_is_rejected():
     r = validate_pacs008(doc)
     assert r.verdict == "REJECTED"
     assert any(f.code == "PACS-NAME-MISSING" for f in r.findings)
+
+
+def test_invalid_agent_bic_is_rejected():
+    doc = dict(_VALID_DOC)
+    doc["creditor_agent_bic"] = "NOTABIC"  # malformed, not just missing
+    r = validate_pacs008(doc)
+    assert r.verdict == "REJECTED"
+    assert r.passes is False
+    assert any(f.code == "PACS-BIC-INVALID" for f in r.findings)
+
+
+def test_missing_settlement_currency_is_rejected():
+    doc = dict(_VALID_DOC)
+    doc["settlement_currency"] = ""
+    r = validate_pacs008(doc)
+    assert r.verdict == "REJECTED"
+    assert any(f.code == "PACS-CCY-MISSING" for f in r.findings)
