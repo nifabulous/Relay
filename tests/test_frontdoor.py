@@ -65,3 +65,15 @@ class TestRelayAppServing:
         for ref in asset_refs:
             r = client.get(ref)
             assert r.status_code == 200, f"Asset {ref} returned {r.status_code}"
+
+
+class TestRelayManifest:
+    """The API manifest should reference Relay identity."""
+
+    def test_manifest_identifies_relay(self, client):
+        body = client.get("/api/manifest").json()
+        # Manifest should reference Relay (may say "Relay" or the working brand)
+        service = body.get("service", "")
+        assert "relay" in service.lower() or "educational" in service.lower(), (
+            f"Manifest service should identify Relay, got: {service!r}"
+        )

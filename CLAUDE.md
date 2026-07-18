@@ -1,13 +1,14 @@
-# CLAUDE.md — SWIFT Routing Lab
+# CLAUDE.md — Relay Educational Payment Simulation
 
-> Guidance for AI coding agents (Claude, Codex, etc.) working on this codebase.
+> Guidance for AI coding agents working on this codebase.
 
 ## What this project is
 
-An **educational sandbox** for learning how cross-border payments work. Two halves:
+An **educational payment simulation** for learning how cross-border payments work. Two halves:
 
 1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 19 API endpoints under `/api/*`.
-2. **Interactive learning labs** (`app/static/`) — 6 progressive labs + capstone + 8 "go deeper" modules teaching beginners how international payments work by doing.
+2. **Relay frontend** (`frontend/`) — React 19 + TypeScript 7 + Vite 8 application with four workspaces: Overview, Learn, Explore, Operate. Served at `/app`.
+3. **Legacy frontend** (`app/static/`) — vanilla HTML/JS/CSS at `/learn` and `/ui`. Being replaced by Relay. Still available until parity is reached.
 
 **It is NOT a production payment system.** No real money moves. Every "payment" is simulated. Account numbers are `ACCT-` placeholders.
 
@@ -17,12 +18,57 @@ An **educational sandbox** for learning how cross-border payments work. Two halv
 cd swift-routing
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+
+# Backend
 uvicorn app.main:app --reload
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev
 ```
 
 - API docs: http://127.0.0.1:8000/docs
-- Learning labs: http://127.0.0.1:8000/learn (root `/` redirects here)
-- Admin dashboard: http://127.0.0.1:8000/ui
+- Relay app: http://127.0.0.1:8000/app (or http://127.0.0.1:5173/app/ via Vite dev)
+- Legacy learn: http://127.0.0.1:8000/learn (still available)
+- Legacy admin: http://127.0.0.1:8000/ui (still available)
+
+## Architecture
+
+### Backend (`app/`)
+```
+app/
+  main.py           FastAPI app, lifespan, static serving (/app, /learn, /ui)
+  routers/          11 domain routers (directory, routing, ssi, vop, tracking, etc.)
+  services/         domain logic (validator, routing, vop, prepare, seed, etc.)
+  models.py         SQLAlchemy 2.0 models
+  schemas.py        Pydantic v2 request/response schemas
+  auth.py           API key authentication (X-Admin-Key header)
+```
+
+### Frontend (`frontend/`)
+```
+frontend/src/
+  app-shell/        AppShell (rail + bottom nav), AppErrorBoundary, router
+  design-system/    tokens.css, Button, StatusChip, AsyncRegion, PaymentRoute
+  api/              typed client (apiRequest/apiPost), Zod schemas, query keys
+  lib/persistence/  versioned localStorage, legacy progress migration
+  features/
+    overview/       adaptive home with selectPrimaryAction decision table
+    explore/        CommandSearch, BankDirectory, Glossary
+    operate/
+      prepare/      PreparePaymentPage with partial-results pattern
+      tools/        FeePage, ScreeningPage, ValueDatePage, StpPage
+      tracking/     TrackingPage with timeline
+    learn/          curriculum.ts (8 modules), LearnIndexPage, LearnModulePage
+```
+
+### Design system
+The canonical design contract is `DESIGN.md`. All components consume tokens from `design-system/tokens.css`. Key principles:
+- Blue (#3157D5) reserved for actions, selection, progress only
+- Thin structural borders, no decorative shadows or colored card edges
+- Status with text + icon + color (never color alone)
+- WCAG 2.2 AA contrast (≥4.5:1) on all semantic tokens
+- Route-level code splitting (React.lazy per feature)
+- Eager shell ≤200KB gzip
 
 ## Architecture
 
