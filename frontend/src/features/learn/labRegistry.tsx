@@ -1,0 +1,56 @@
+import type { LabDefinition, LabContentProps } from "./labTypes";
+import { CORE_LAB_PARITY } from "./legacyParity";
+
+/**
+ * Temporary placeholder content component.
+ * Each lab task (Tasks 5-12) replaces one entry with the real content component.
+ */
+function UnavailableLabContent({ moduleId }: LabContentProps) {
+  return (
+    <div className="lab-unavailable">
+      <p>Interactive content for this module is being developed.</p>
+      <p className="lab-unavailable__id mono">{moduleId}</p>
+    </div>
+  );
+}
+
+/**
+ * Build a placeholder definition from a parity entry.
+ * Replaced one-at-a-time as labs are ported.
+ */
+function placeholderDef(checkpoints: readonly string[]): LabDefinition {
+  return {
+    component: UnavailableLabContent,
+    requiredCheckpoints: checkpoints,
+  };
+}
+
+/**
+ * The lab registry maps module IDs to their content component
+ * and required completion checkpoints.
+ *
+ * Initially all entries use the placeholder. Each lab task replaces
+ * one entry with the real content component.
+ */
+export const LAB_REGISTRY: Record<string, LabDefinition> = {
+  "lab-1": placeholderDef(CORE_LAB_PARITY["lab-1"].requiredCheckpoints),
+  "lab-2": placeholderDef(CORE_LAB_PARITY["lab-2"].requiredCheckpoints),
+  "lab-3": placeholderDef(CORE_LAB_PARITY["lab-3"].requiredCheckpoints),
+  "lab-4": placeholderDef(CORE_LAB_PARITY["lab-4"].requiredCheckpoints),
+  "lab-5": placeholderDef(CORE_LAB_PARITY["lab-5"].requiredCheckpoints),
+  "lab-6": placeholderDef(CORE_LAB_PARITY["lab-6"].requiredCheckpoints),
+  "lab-7": placeholderDef(CORE_LAB_PARITY["lab-7"].requiredCheckpoints),
+  "capstone": placeholderDef(CORE_LAB_PARITY["capstone"].requiredCheckpoints),
+};
+
+export function getLabDefinition(moduleId: string): LabDefinition | undefined {
+  return LAB_REGISTRY[moduleId];
+}
+
+/**
+ * Replace a lab definition. Used by lab content files as they are ported.
+ * Call this at module load time (not inside a component).
+ */
+export function registerLab(moduleId: string, definition: LabDefinition): void {
+  LAB_REGISTRY[moduleId] = definition;
+}
