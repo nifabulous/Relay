@@ -5,6 +5,7 @@ import "../tracking/TrackingPage.css";
 
 interface PaymentTimelineProps {
   payment: TrackPaymentResponse;
+  hideFees?: boolean;
 }
 
 function eventStatus(s: string): CheckStatus {
@@ -14,7 +15,7 @@ function eventStatus(s: string): CheckStatus {
   return "unavailable";
 }
 
-export function PaymentTimeline({ payment }: PaymentTimelineProps) {
+export function PaymentTimeline({ payment, hideFees = false }: PaymentTimelineProps) {
   return (
     <div className="tracking-result">
       <div className="tracking-result__header">
@@ -26,7 +27,7 @@ export function PaymentTimeline({ payment }: PaymentTimelineProps) {
         <div className="tracking-result__amounts">
           <span>Sent: <span className="mono">{payment.sent_amount}</span></span>
           <span>Final: <span className="mono">{payment.final_amount}</span></span>
-          {payment.total_fees !== null && payment.total_fees !== undefined && (
+          {!hideFees && payment.total_fees !== null && payment.total_fees !== undefined && (
             <span>Fees: <span className="mono">{payment.total_fees.toFixed(2)}</span></span>
           )}
         </div>

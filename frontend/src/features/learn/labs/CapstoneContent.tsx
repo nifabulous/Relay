@@ -120,15 +120,15 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
     }
   }, [state.results, fireCheckpoint]);
 
-  // Handle submit — start the chain
+  // Handle submit — dispatch starts the chain; the useEffect runs step 0
   const handleSubmit = useCallback(() => {
     dispatch({ type: "SUBMIT_DETAILS", input: state.paymentInput });
-    runStep(0, state.paymentInput);
-  }, [state.paymentInput, runStep]);
+  }, [state.paymentInput]);
 
-  // Auto-advance: when status changes to a new step, run it via useEffect
-  // (except details, complete, blocked, and error states).
-  // Using useEffect avoids render-time side effects and properly cleans up on unmount.
+  // Auto-advance: the effect owns ALL step execution.
+  // SUBMIT_DETAILS sets status to "validating", which triggers this effect for step 0.
+  // Each STEP_SUCCESS changes status, triggering the next step.
+  // No double-fire: only one execution path.
   useEffect(() => {
     if (state.status === "details" || state.status === "complete" || state.status === "error" || state.status === "blocked") {
       return;
@@ -208,9 +208,14 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
         </div>
 
         {state.status === "details" && (
-          <Button variant="primary" onClick={handleSubmit}>
-            Start simulation
-          </Button>
+          <>
+            <Button variant="primary" onClick={handleSubmit}>
+              Start simulation
+            </Button>
+            <p className="lab-capstone-hint">
+              <strong>Tip:</strong> Change the beneficiary name to something wrong (e.g. "Fraudster") to see how the simulation handles a name mismatch.
+            </p>
+          </>
         )}
 
         {state.status === "complete" && (

@@ -19,7 +19,7 @@ export const SCHEME_SCENARIOS: SchemeScenario[] = [
     id: "q1-gbp-payroll",
     question: "A UK company pays 500 employees their monthly salaries in GBP. Which rail?",
     options: [
-      { id: "a", label: "Faster Payments", correct: false, explanation: "FPS works but 500 individual instant payments would overwhelm ops. Bacs is built for batch payroll." },
+      { id: "a", label: "Faster Payments", correct: false, explanation: "FPS supports corporate batch files, but per-item cost (~£2.50) and per-bank file caps make it expensive for 500 salaries. Bacs is purpose-built for high-volume payroll at ~5-50p per item with scheduled delivery." },
       { id: "b", label: "Bacs Direct Credit", correct: true, explanation: "Correct! Bacs is designed for bulk payroll — batch processing, low cost, scheduled delivery." },
       { id: "c", label: "CHAPS", correct: false, explanation: "CHAPS is for high-value individual payments (£25+ per payment). Far too expensive for 500 salaries." },
     ],
@@ -39,7 +39,7 @@ export const SCHEME_SCENARIOS: SchemeScenario[] = [
     options: [
       { id: "a", label: "ACH", correct: false, explanation: "ACH is for retail batch payments, not $50M movements. Too slow (1-2 business days)." },
       { id: "b", label: "Fedwire", correct: true, explanation: "Correct! Fedwire is the US RTGS for large-value, real-time, irrevocable transfers." },
-      { id: "c", label: "RTP", correct: false, explanation: "RTP has a $1M limit and is designed for retail, not treasury operations." },
+      { id: "c", label: "RTP", correct: false, explanation: "RTP caps at $10M per payment (raised in 2025) — still well short of a $50M treasury move, and Fedwire is the purpose-built irrevocable RTGS rail." },
     ],
   },
   {

@@ -39,8 +39,8 @@ _SCHEMES = {
             {"name": "Fedwire", "speed": "Real-time (RTGS)", "limit": "No limit", "cost": "$10-35", "useCase": "High-value, wires", "operator": "Federal Reserve"},
             {"name": "FedACH", "speed": "1-2 business days", "limit": "~$25,000-1M", "cost": "$0.10-0.50", "useCase": "Payroll, direct deposit", "operator": "Federal Reserve"},
             {"name": "CHIPS", "speed": "Same-day (net settle)", "limit": "No limit", "cost": "$5-20", "useCase": "Wholesale, international", "operator": "The Clearing House"},
-            {"name": "RTP", "speed": "Instant (<10s)", "limit": "$1,000,000", "cost": "Free", "useCase": "Instant retail", "operator": "The Clearing House"},
-            {"name": "FedNow", "speed": "Instant (seconds)", "limit": "$500,000", "cost": "Free", "useCase": "Instant retail", "operator": "Federal Reserve"},
+            {"name": "RTP", "speed": "Instant (<10s)", "limit": "$10,000,000", "cost": "Free", "useCase": "Instant retail", "operator": "The Clearing House"},
+            {"name": "FedNow", "speed": "Instant (seconds)", "limit": "$10,000,000", "cost": "Free", "useCase": "Instant retail", "operator": "Federal Reserve"},
         ],
     },
     "EUR": {

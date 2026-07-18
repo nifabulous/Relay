@@ -111,7 +111,7 @@ export function Lab6Content({ moduleId, onCheckpoint }: LabContentProps) {
       {payment && (
         <section className="lab-section">
           <h2>Payment timeline</h2>
-          <PaymentTimeline payment={payment} />
+          <PaymentTimeline payment={payment} hideFees />
 
           <Exercise
             id="ex-fee"
