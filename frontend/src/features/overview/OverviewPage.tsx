@@ -6,7 +6,6 @@ import { apiRequest } from "../../api/client";
 import { HealthResponseSchema, ProgressResponseSchema } from "../../api/schemas";
 import type { HealthResponse, ProgressResponse } from "../../api/schemas";
 import { loadProgress } from "../../lib/persistence/storage";
-import { Button } from "../../design-system/Button";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
@@ -43,8 +42,8 @@ export function OverviewPage() {
         <p className="overview__tagline measure">
           Explore the network behind every payment.
         </p>
-        <Link to={action.href}>
-          <Button variant="primary" className="overview__cta">{action.label}</Button>
+        <Link to={action.href} className="relay-btn relay-btn--primary overview__cta">
+          {action.label}
         </Link>
       </section>
 

@@ -136,11 +136,11 @@ function BankDetailCard({ bank }: { bank: NonNullable<LookupResponse["bank"]> })
         )}
       </dl>
       <div className="bank-detail__actions">
-        <Link to={`/app/operate/prepare?bic=${encodeURIComponent(bank.bic)}`}>
-          <Button variant="secondary">Prepare payment to this bank</Button>
+        <Link to={`/app/operate/prepare?bic=${encodeURIComponent(bank.bic)}`} className="relay-btn relay-btn--secondary">
+          Prepare payment to this bank
         </Link>
-        <Link to={`/app/explore?country=${encodeURIComponent(bank.country_code)}`}>
-          <Button variant="secondary">Search corridors</Button>
+        <Link to={`/app/explore?country=${encodeURIComponent(bank.country_code)}`} className="relay-btn relay-btn--secondary">
+          Search corridors
         </Link>
       </div>
     </div>
@@ -158,8 +158,8 @@ export function SchemesPage() {
       </div>
       <div className="schemes-list">
         <p className="explore__muted">Payment scheme comparison loads from the API. Use the Operate workspace to check schemes for a specific currency.</p>
-        <Link to="/app/operate">
-          <Button variant="secondary">Go to Operate</Button>
+        <Link to="/app/operate" className="relay-btn relay-btn--secondary">
+          Go to Operate
         </Link>
       </div>
     </div>

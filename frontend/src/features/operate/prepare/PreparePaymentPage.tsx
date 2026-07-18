@@ -55,8 +55,12 @@ export function PreparePaymentPage() {
     onSuccess: (data) => {
       setResult(data);
       setIsStale(false);
-      // Invalidate dependent queries
+      // Invalidate dependent queries — progress, route, ssi, vop
       queryClient.invalidateQueries({ queryKey: apiKeys.progress });
+      // Clear stale route/ssi data since inputs may have changed
+      queryClient.removeQueries({ queryKey: ["route"] });
+      queryClient.removeQueries({ queryKey: ["ssi"] });
+      queryClient.removeQueries({ queryKey: ["vop"] });
     },
   });
 
@@ -379,11 +383,11 @@ export function PreparePaymentPage() {
               UETR: <span className="mono">{result.uetr}</span>
             </p>
             <div className="prepare-payment__links">
-              <Link to={`/app/operate/tracking?uetr=${result.uetr}`}>
-                <Button variant="secondary">Track this payment</Button>
+              <Link to={`/app/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
+                Track this payment
               </Link>
-              <Link to="/app/explore">
-                <Button variant="secondary">Explore corridor details</Button>
+              <Link to="/app/explore" className="relay-btn relay-btn--secondary">
+                Explore corridor details
               </Link>
             </div>
           </div>
