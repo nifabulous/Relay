@@ -1,9 +1,10 @@
 import type { LabDefinition, LabContentProps } from "./labTypes";
 import { CORE_LAB_PARITY } from "./legacyParity";
+import { Lab1Content } from "./labs/Lab1Content";
 
 /**
  * Temporary placeholder content component.
- * Each lab task (Tasks 5-12) replaces one entry with the real content component.
+ * Each lab task replaces one entry with the real content component.
  */
 function UnavailableLabContent({ moduleId }: LabContentProps) {
   return (
@@ -33,7 +34,7 @@ function placeholderDef(checkpoints: readonly string[]): LabDefinition {
  * one entry with the real content component.
  */
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
-  "lab-1": placeholderDef(CORE_LAB_PARITY["lab-1"].requiredCheckpoints),
+  "lab-1": { component: Lab1Content, requiredCheckpoints: CORE_LAB_PARITY["lab-1"].requiredCheckpoints },
   "lab-2": placeholderDef(CORE_LAB_PARITY["lab-2"].requiredCheckpoints),
   "lab-3": placeholderDef(CORE_LAB_PARITY["lab-3"].requiredCheckpoints),
   "lab-4": placeholderDef(CORE_LAB_PARITY["lab-4"].requiredCheckpoints),
