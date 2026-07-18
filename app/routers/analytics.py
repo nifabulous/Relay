@@ -8,20 +8,30 @@ from ..schemas import (
     FeeSimulateRequest,
     FeeSimulateResponse,
     HopScreenInfo,
+    Pacs008CheckRequest,
+    Pacs008CheckResponse,
+    Pacs008MappingEntryModel,
     PartyScreenInfo,
     ScreenRequest,
     ScreenResponse,
     STPCheckRequest,
     STPCheckResponse,
     STPFinding,
+    TranslateRequest,
+    TranslateResponse,
     ValueDateRequest,
     ValueDateResponse,
 )
+from ..schemas import (
+    Pacs008Finding as Pacs008FindingSchema,
+)
 from ..services.fee_calculator import simulate_fees
+from ..services.iso20022 import translate_mt103_to_pacs008, validate_pacs008
 from ..services.screening import screen_payment as do_screening
 from ..services.stp_checker import check_stp as do_stp_check
 from ..services.value_date import calculate_value_date
 from ._shared import (
+    _PACS008_DISCLAIMER,
     _STP_DISCLAIMER,
     _VALUE_DATE_DISCLAIMER,
     SCREENING_DISCLAIMER_TEXT,
@@ -245,4 +255,56 @@ def stp_check_endpoint(request: STPCheckRequest):
         findings=findings,
         field_summary=field_summary,
         disclaimer=_STP_DISCLAIMER,
+    )
+
+
+# ---------------------------------------------------------------------------
+# ISO 20022 — MT103 -> pacs.008 translation + structured-field validation
+# ---------------------------------------------------------------------------
+
+
+@router.post("/message/translate", response_model=TranslateResponse)
+def translate_message_endpoint(request: TranslateRequest):
+    """
+    Translate an MT103-shaped message into its ISO 20022 pacs.008 equivalent.
+
+    Returns a field-by-field mapping (MT tag -> pacs.008 element path) plus an
+    ILLUSTRATIVE pacs.008 XML document. MT103 was retired for cross-border on
+    22 Nov 2025; this teaches the mapping, not a production converter.
+    """
+    result = translate_mt103_to_pacs008(request.model_dump())
+    return TranslateResponse(
+        mapping=[
+            Pacs008MappingEntryModel(
+                mt_tag=e.mt_tag, mt_label=e.mt_label,
+                iso_path=e.iso_path, iso_label=e.iso_label, value=e.value,
+            )
+            for e in result.mapping
+        ],
+        xml=result.xml,
+        disclaimer=_PACS008_DISCLAIMER,
+    )
+
+
+@router.post("/message/pacs008-check", response_model=Pacs008CheckResponse)
+def pacs008_check_endpoint(request: Pacs008CheckRequest):
+    """
+    Validate a handful of structured pacs.008 fields (a primer, not production).
+
+    Notably flags a country-only creditor address as REPAIRABLE — the SWIFT
+    structured-address mandate (from Nov 2026) and the Travel-Rule
+    data-completeness intent both require structured StrtNm / TwnNm.
+    """
+    result = validate_pacs008(request.model_dump())
+    return Pacs008CheckResponse(
+        verdict=result.verdict,
+        passes=result.passes,
+        findings=[
+            Pacs008FindingSchema(
+                field=f.field, field_name=f.field_name, severity=f.severity,
+                code=f.code, message=f.message, repair=f.repair,
+            )
+            for f in result.findings
+        ],
+        disclaimer=_PACS008_DISCLAIMER,
     )

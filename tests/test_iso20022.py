@@ -171,3 +171,38 @@ def test_missing_settlement_currency_is_rejected():
     r = validate_pacs008(doc)
     assert r.verdict == "REJECTED"
     assert any(f.code == "PACS-CCY-MISSING" for f in r.findings)
+
+
+def test_translate_endpoint(client):
+    resp = client.post("/api/message/translate", json={
+        "transaction_reference": "REF123456",
+        "value_date": "2026-07-20",
+        "currency": "USD",
+        "interbank_amount": 100000.0,
+        "charge_code": "OUR",
+        "ordering": {"name": "Acme Corp", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta Ltd", "bic": "BARCGB22"},
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert any(m["iso_path"] == "Cdtr/Nm" and m["value"] == "Beta Ltd" for m in data["mapping"])
+    assert "FIToFICstmrCdtTrf" in data["xml"]
+    assert data["disclaimer"]
+
+
+def test_pacs008_check_endpoint_flags_country_only_address(client):
+    resp = client.post("/api/message/pacs008-check", json={
+        "debtor_name": "Acme Corp",
+        "debtor_agent_bic": "CHASUS33",
+        "creditor_name": "Beta Ltd",
+        "creditor_agent_bic": "BARCGB22",
+        "creditor_postal_address": {"street_name": "", "town_name": "", "country": "USA"},
+        "settlement_amount": 100000.0,
+        "settlement_currency": "USD",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["verdict"] == "REPAIRABLE"
+    assert data["passes"] is True
+    assert any(f["code"] == "PACS-ADDR-UNSTRUCTURED" for f in data["findings"])
+    assert data["disclaimer"]
