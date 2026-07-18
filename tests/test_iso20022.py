@@ -51,3 +51,40 @@ def test_translate_emits_wellformed_namespaced_xml():
     assert "Beta Ltd" in result.xml
     # Values are escaped (no raw stray ampersand breaking the doc)
     assert "&" not in result.xml.replace("&amp;", "").replace("&lt;", "").replace("&gt;", "")
+
+
+def test_translate_includes_pmt_typ_inf_and_instd_amt_when_present():
+    """Regression test: PmtTpInf and InstdAmt must be emitted when op_code and instructed_ccy are present."""
+    message = {
+        "transaction_reference": "TEST789",
+        "bank_op_code": "CRED",
+        "instructed_currency": "EUR",
+        "value_date": "2026-07-20",
+        "currency": "USD",
+        "interbank_amount": 100000.0,
+        "charge_code": "OUR",
+        "ordering": {"name": "Acme Corp", "bic": "CHASUS33", "account": "ACCT-0001"},
+        "beneficiary": {"name": "Beta Ltd", "bic": "BARCGB22", "account": "ACCT-0002"},
+    }
+    result = translate_mt103_to_pacs008(message)
+
+    # Verify XML is well-formed
+    root = ET.fromstring(result.xml)
+    assert root.tag == f"{{{PACS008_NAMESPACE}}}Document"
+
+    # Check mapping rows include the expected entries
+    paths = {e.iso_path: e.value for e in result.mapping}
+    assert paths.get("PmtTpInf") == "CRED"
+    assert paths.get("InstdAmt/@Ccy") == "EUR"
+
+    # Parse and navigate the XML tree to verify elements are present
+    ns = {"p": PACS008_NAMESPACE}
+    pmt_typ_inf = root.find(".//p:PmtTpInf", ns)
+    assert pmt_typ_inf is not None, "PmtTpInf element not found"
+    prtry = pmt_typ_inf.find(".//p:Prtry", ns)
+    assert prtry is not None and prtry.text == "CRED", "Prtry element should contain CRED"
+
+    instd_amt = root.find(".//p:InstdAmt", ns)
+    assert instd_amt is not None, "InstdAmt element not found"
+    assert instd_amt.get("Ccy") == "EUR", "InstdAmt should have Ccy='EUR'"
+    assert instd_amt.text == "100000.0", "InstdAmt should contain settlement amount"

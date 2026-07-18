@@ -16,9 +16,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import List, Optional
-
-from .validator import validate_bic
+from typing import List
 
 PACS008_NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"
 
@@ -109,8 +107,8 @@ def translate_mt103_to_pacs008(message: dict) -> Pacs008TranslateResult:
     ]
 
     xml = _build_xml(
-        tx_ref=tx_ref, uetr=uetr, value_date=value_date, currency=currency,
-        amount_str=amount_str, charge_iso=charge_iso,
+        tx_ref=tx_ref, uetr=uetr, op_code=op_code, value_date=value_date, currency=currency,
+        amount_str=amount_str, instructed_ccy=instructed_ccy, charge_iso=charge_iso,
         o_name=o_name, o_bic=o_bic, o_acct=o_acct,
         b_name=b_name, b_bic=b_bic, b_acct=b_acct, remittance=remittance,
     )
@@ -140,6 +138,15 @@ def _build_xml(**f) -> str:
     _sub(pmtid, f"{{{ns}}}EndToEndId", f["tx_ref"])
     if f["uetr"]:
         _sub(pmtid, f"{{{ns}}}UETR", f["uetr"])
+
+    if f["op_code"]:
+        pmttypinf = _sub(tx, f"{{{ns}}}PmtTpInf")
+        lclinstrm = _sub(pmttypinf, f"{{{ns}}}LclInstrm")
+        _sub(lclinstrm, f"{{{ns}}}Prtry", f["op_code"])
+
+    if f["instructed_ccy"]:
+        instd = _sub(tx, f"{{{ns}}}InstdAmt", f["amount_str"])
+        instd.set("Ccy", f["instructed_ccy"])
 
     amt = _sub(tx, f"{{{ns}}}IntrBkSttlmAmt", f["amount_str"])
     if f["currency"]:
