@@ -517,6 +517,17 @@ export type ProgressResponse = z.infer<typeof ProgressResponseSchema>;
  * Payment Schemes
  * ------------------------------------------------------------------ */
 
+const SchemeLimitsSchema = z
+  .object({
+    perTransaction: z.string().catch(""),
+    perDay: z.string().catch(""),
+    perMonth: z.string().catch(""),
+    receiving: z.string().catch(""),
+    note: z.string().catch(""),
+  })
+  .partial()
+  .passthrough();
+
 export const SchemeInfoSchema = z
   .object({
     name: z.string().catch(""),
@@ -525,6 +536,14 @@ export const SchemeInfoSchema = z
     cost: z.string().catch(""),
     useCase: z.string().catch(""),
     operator: z.string().catch(""),
+    howItWorks: z.array(z.string()).nullish().catch(null),
+    features: z.array(z.string()).nullish().catch(null),
+    limits: SchemeLimitsSchema.nullish().catch(null),
+    processingWindows: z.array(z.string()).nullish().catch(null),
+    settlement: z.string().nullish().catch(null),
+    reversible: z.boolean().nullish().catch(null),
+    protections: z.array(z.string()).nullish().catch(null),
+    roadmap: z.array(z.string()).nullish().catch(null),
   })
   .passthrough();
 

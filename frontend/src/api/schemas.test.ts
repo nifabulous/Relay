@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema } from "./schemas";
+import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema } from "./schemas";
 import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
@@ -120,5 +120,18 @@ describe("ISO 20022 schemas", () => {
       disclaimer: "primer",
     });
     expect(r.findings[0].code).toBe("PACS-ADDR-UNSTRUCTURED");
+  });
+});
+
+describe("SchemeInfoSchema enriched fields", () => {
+  it("SchemeInfoSchema keeps enriched fields and still parses without them", () => {
+    const rich = SchemeInfoSchema.parse({
+      name: "Interac e-Transfer", speed: "Instant", limit: "x", cost: "y", useCase: "z", operator: "Interac",
+      features: ["Autodeposit"], limits: { perMonth: "$30,000" }, reversible: false, roadmap: ["RTR Q3 2026"],
+    });
+    expect(rich.features?.[0]).toBe("Autodeposit");
+    expect(rich.limits?.perMonth).toBe("$30,000");
+    const plain = SchemeInfoSchema.parse({ name: "Fedwire", speed: "RTGS", limit: "x", cost: "y", useCase: "z", operator: "Fed" });
+    expect(plain.roadmap ?? null).toBeNull();
   });
 });
