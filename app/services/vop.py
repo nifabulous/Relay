@@ -1,16 +1,24 @@
 """
 Verification of Payee (VoP) service.
 
-Implements the EPC103-24 VoP scheme contract: given an IBAN + a payer-submitted
-name, check the name against the account-holder name on record and return
-MATCH / CLOSE_MATCH / NO_MATCH / NOT_CHECKED.
+Given an IBAN + a payer-submitted name, checks the name against the
+account-holder name on record and returns MATCH / CLOSE_MATCH / NO_MATCH /
+NOT_CHECKED.
+
+LEGAL BASIS (teaching note): VoP for SEPA transfers is a legal requirement
+under the EU Instant Payments Regulation (IPR, 2024), implemented operationally
+via the EPC's VoP Scheme Rulebook (v1.0, effective October 2025). This is
+distinct from the UK's Confirmation of Payee, which runs under separate PSR
+direction. A CLOSE_MATCH or NO_MATCH requires the payer to be warned before the
+payment proceeds; proceeding anyway can shift misdirected-payment liability to
+the payer. This module is a simulation of that check, not a certified gateway.
 
 ARCHITECTURE:
   - VoPVerifier is the entry point. It resolves the account, runs the name
     matcher, and returns the result.
-  - A real deployment would call out to the scheme's VoP gateway (SurePay,
-    Tink, TrueLayer) or the receiving bank's core banking system. Here we
-    resolve against the local Account table (seeded synthetic records).
+  - A real deployment would call the scheme's VoP gateway (SurePay, Tink,
+    TrueLayer) or the receiving bank's core system. Here we resolve against the
+    local Account table (seeded synthetic records).
   - The VoPBackend protocol defines the adapter interface so a real gateway
     can be dropped in without changing the endpoint.
 """

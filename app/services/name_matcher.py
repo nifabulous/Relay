@@ -1,11 +1,14 @@
 """
 Name-matching engine for Verification of Payee (VoP).
 
-Implements the MATCH / CLOSE_MATCH / NO_MATCH decision per the EPC VoP scheme.
-Uses normalization + fuzzy matching (difflib.SequenceMatcher) to compare the
-payer-supplied name against the account holder name on record.
+Produces MATCH / CLOSE_MATCH / NO_MATCH by normalizing both names and comparing
+them with difflib.SequenceMatcher. This is a TEACHING APPROXIMATION: the EU
+Instant Payments Regulation mandates that a VoP check happen, but it does NOT
+mandate a matching algorithm or a numeric threshold. The 0.90 / 0.75 values
+below are illustrative, commonly tuned around these levels by banks, not a
+standard.
 
-Thresholds (tunable, based on EPC guidance and real-world tuning):
+Thresholds (illustrative, commonly tuned around these levels):
   - ratio >= MATCH_THRESHOLD      → MATCH
   - CLOSE_THRESHOLD <= ratio < MATCH_THRESHOLD → CLOSE_MATCH
                                       (return the actual name for payer review)
@@ -33,7 +36,8 @@ class MatchOutcome(str, Enum):
     NO_MATCH = "NO_MATCH"
 
 
-# Tunable thresholds. EPC recommends ~90% for MATCH; banks tune their own.
+# Illustrative thresholds — commonly tuned around these levels. The EPC/IPR
+# do NOT mandate an algorithm or a numeric threshold; banks tune their own.
 MATCH_THRESHOLD = 0.90
 CLOSE_MATCH_THRESHOLD = 0.75
 
