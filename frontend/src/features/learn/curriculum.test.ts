@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CURRICULUM, getModuleById, getNextModule, getPrerequisiteChain, isModuleUnlocked } from "./curriculum";
+import { CURRICULUM, getModuleById, getNextModule, getPrerequisiteChain, isModuleUnlocked, computeProgress } from "./curriculum";
 
 describe("curriculum", () => {
   it("contains all expected core modules", () => {
@@ -67,5 +67,29 @@ describe("curriculum", () => {
     const lab8 = CURRICULUM.find((m) => m.id === "lab-8");
     expect(lab8).toBeDefined();
     expect(lab8?.prerequisites).toContain("lab-7");
+  });
+});
+
+describe("computeProgress", () => {
+  it("reports 0% for a fresh learner and points at lab-1", () => {
+    const s = computeProgress([]);
+    expect(s.completedCount).toBe(0);
+    expect(s.totalCount).toBe(CURRICULUM.length);
+    expect(s.percentage).toBe(0);
+    expect(s.nextModuleId).toBe("lab-1");
+  });
+
+  it("counts completed modules including lab-8 and ignores unknown ids", () => {
+    const s = computeProgress(["lab-1", "lab-2", "lab-8", "bogus"]);
+    expect(s.completedCount).toBe(3);
+    expect(s.percentage).toBe(Math.round((3 / CURRICULUM.length) * 100));
+  });
+
+  it("reaches 100% when every module is complete", () => {
+    const all = CURRICULUM.map((m) => m.id);
+    const s = computeProgress(all);
+    expect(s.completedCount).toBe(CURRICULUM.length);
+    expect(s.percentage).toBe(100);
+    expect(s.nextModuleId).toBeNull();
   });
 });

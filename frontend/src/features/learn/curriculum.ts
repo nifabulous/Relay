@@ -190,3 +190,24 @@ export function getNextModule(completedIds: string[]): CurriculumModule | null {
   }
   return null;
 }
+
+// ─── Progress ────────────────────────────────────────────
+
+export interface ProgressStats {
+  completedCount: number;
+  totalCount: number;
+  percentage: number;
+  nextModuleId: string | null;
+}
+
+/**
+ * Derive progress from the local list of completed module ids. Local storage
+ * is the single source of truth; this is a pure function over CURRICULUM.
+ */
+export function computeProgress(completedIds: string[]): ProgressStats {
+  const totalCount = CURRICULUM.length;
+  const completedCount = CURRICULUM.filter((m) => completedIds.includes(m.id)).length;
+  const percentage = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+  const nextModuleId = getNextModule(completedIds)?.id ?? null;
+  return { completedCount, totalCount, percentage, nextModuleId };
+}
