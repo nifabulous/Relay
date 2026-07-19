@@ -450,6 +450,56 @@ export const STPCheckResponseSchema = z
 
 export type STPCheckResponse = z.infer<typeof STPCheckResponseSchema>;
 
+/* ------------------------------------------------------------------ *
+ * ISO 20022 (pacs.008) translation & checker
+ * ------------------------------------------------------------------ */
+
+export const Pacs008MappingEntrySchema = z
+  .object({
+    mt_tag: z.string().catch(""),
+    mt_label: z.string().catch(""),
+    iso_path: z.string().catch(""),
+    iso_label: z.string().catch(""),
+    value: z.string().catch(""),
+  })
+  .passthrough();
+
+export type Pacs008MappingEntry = z.infer<typeof Pacs008MappingEntrySchema>;
+
+export const TranslateResponseSchema = z
+  .object({
+    mapping: z.array(Pacs008MappingEntrySchema).catch([]),
+    xml: z.string().catch(""),
+    disclaimer: z.string().catch(""),
+  })
+  .passthrough();
+
+export type TranslateResponse = z.infer<typeof TranslateResponseSchema>;
+
+export const Pacs008FindingSchema = z
+  .object({
+    field: z.string().catch(""),
+    field_name: z.string().catch(""),
+    severity: z.string().catch("info"),
+    code: z.string().catch(""),
+    message: z.string().catch(""),
+    repair: z.string().nullish().catch(null),
+  })
+  .passthrough();
+
+export type Pacs008Finding = z.infer<typeof Pacs008FindingSchema>;
+
+export const Pacs008CheckResponseSchema = z
+  .object({
+    verdict: z.string().catch("REPAIRABLE"),
+    passes: z.coerce.boolean().catch(false),
+    findings: z.array(Pacs008FindingSchema).catch([]),
+    disclaimer: z.string().catch(""),
+  })
+  .passthrough();
+
+export type Pacs008CheckResponse = z.infer<typeof Pacs008CheckResponseSchema>;
+
 export const ProgressResponseSchema = z
   .object({
     completed_count: z.coerce.number().int().catch(0),

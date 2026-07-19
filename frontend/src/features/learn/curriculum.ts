@@ -117,6 +117,20 @@ export const CURRICULUM: CurriculumModule[] = [
     category: "core",
   },
   {
+    id: "lab-8",
+    title: "Message Standards: MT103 → ISO 20022",
+    subtitle: "How the correspondent-banking message changed in 2025",
+    href: "/learn/lab-8",
+    duration: 15,
+    prerequisites: ["lab-7"],
+    outcomes: [
+      "Map MT103 fields to their pacs.008 elements",
+      "Explain why and when SWIFT retired MT103 for cross-border",
+      "Spot a structured-address failure that holds a payment",
+    ],
+    category: "core",
+  },
+  {
     id: "capstone",
     title: "Capstone: Full Payment Simulation",
     subtitle: "Apply everything: validate, verify, route, and track a payment",

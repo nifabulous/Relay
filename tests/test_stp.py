@@ -130,3 +130,55 @@ class TestSTPEndpoint:
         from app.data.mt103_samples import SAMPLE_MT103
         r = client.post("/api/message/stp-check", json=SAMPLE_MT103)
         assert "disclaimer" in r.json()
+
+
+def test_repairable_verdict_on_long_reference():
+    # Rule 10: reference > 16 chars is a warning -> REPAIRABLE (no errors).
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "THIS-REF-IS-WAY-TOO-LONG-1234567890",
+        "value_date": "2026-07-20",
+        "currency": "USD",
+        "interbank_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert result.verdict == "REPAIRABLE"
+    assert result.stp_passes is True
+    assert any(f.code == "STP-REF-TOO-LONG" for f in result.findings)
+
+
+def test_value_date_in_past_is_warning():
+    # Rule 11.
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1",
+        "value_date": "2000-01-01",
+        "currency": "USD",
+        "interbank_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert result.verdict == "REPAIRABLE"
+    assert any(f.code == "STP-VALUE-DATE-STALE" for f in result.findings)
+
+
+def test_duplicate_bic_in_chain_is_warning():
+    # Rule 12.
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1",
+        "value_date": "2026-07-20",
+        "currency": "USD",
+        "interbank_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "CHASUS33"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert result.verdict == "REPAIRABLE"
+    assert any(f.code == "STP-DUPLICATE-BIC" for f in result.findings)

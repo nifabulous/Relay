@@ -408,6 +408,72 @@ class STPCheckResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# ISO 20022 (pacs.008) translation + validation
+# ---------------------------------------------------------------------------
+
+
+class TranslateRequest(BaseModel):
+    transaction_reference: str = Field("", description="MT field 20")
+    bank_op_code: str = Field("CRED", description="MT field 23B")
+    value_date: str = Field("", description="MT field 32A date")
+    currency: str = Field("", description="MT field 32A currency")
+    interbank_amount: Optional[float] = Field(None, description="MT field 32A amount")
+    charge_code: str = Field("SHA", description="MT field 71A")
+    ordering: OrderingParty = Field(default_factory=OrderingParty)
+    beneficiary: BeneficiaryParty = Field(default_factory=BeneficiaryParty)
+    uetr: Optional[str] = Field(None, description="MT field 121")
+    instructed_currency: Optional[str] = Field(None, description="MT field 33B currency")
+    remittance: Optional[str] = Field(None, description="MT field 70")
+
+
+class Pacs008MappingEntryModel(BaseModel):
+    mt_tag: str
+    mt_label: str
+    iso_path: str
+    iso_label: str
+    value: str
+
+
+class TranslateResponse(BaseModel):
+    mapping: List[Pacs008MappingEntryModel]
+    xml: str
+    disclaimer: str
+
+
+class Pacs008PostalAddress(BaseModel):
+    street_name: str = ""
+    town_name: str = ""
+    country: str = ""
+
+
+class Pacs008CheckRequest(BaseModel):
+    debtor_name: str = ""
+    debtor_agent_bic: str = ""
+    creditor_name: str = ""
+    creditor_agent_bic: str = ""
+    creditor_postal_address: Pacs008PostalAddress = Field(default_factory=Pacs008PostalAddress)
+    settlement_amount: Optional[float] = None
+    settlement_currency: str = ""
+    instructed_currency: Optional[str] = None
+
+
+class Pacs008Finding(BaseModel):
+    field: str
+    field_name: str
+    severity: str
+    code: str
+    message: str
+    repair: Optional[str] = None
+
+
+class Pacs008CheckResponse(BaseModel):
+    verdict: str
+    passes: bool
+    findings: List[Pacs008Finding]
+    disclaimer: str
+
+
+# ---------------------------------------------------------------------------
 # Progress & badges (learning platform dashboard)
 # ---------------------------------------------------------------------------
 

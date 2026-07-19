@@ -44,6 +44,13 @@ _STP_DISCLAIMER = (
     "screening on top of these structural checks."
 )
 
+_PACS008_DISCLAIMER = (
+    "Educational ISO 20022 primer. The pacs.008 XML shown is illustrative — "
+    "it uses the real element hierarchy and namespace but is NOT validated "
+    "against the official XSD and omits mandatory production elements. "
+    "MT103 was retired for cross-border on 22 Nov 2025 (SWIFT CBPR+)."
+)
+
 __all__ = [
     "SCREENING_DISCLAIMER_TEXT",
     "_SSI_DISCLAIMER",
@@ -51,4 +58,5 @@ __all__ = [
     "_TRACKING_DISCLAIMER",
     "_VALUE_DATE_DISCLAIMER",
     "_STP_DISCLAIMER",
+    "_PACS008_DISCLAIMER",
 ]

@@ -111,6 +111,20 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
     requiredCheckpoints: ["load-schemes", "complete-seven-scenarios"],
   },
 
+  "lab-8": {
+    title: "Message Standards: MT103 → ISO 20022",
+    legacySources: [],
+    apiEndpoints: ["/api/message/translate", "/api/message/pacs008-check"],
+    interactions: [
+      "Decompose a sample MT103",
+      "Field-mapping quiz (MT tag → pacs.008 element)",
+      "Side-by-side MT vs pacs.008 XML via /api/message/translate",
+      "Coexistence timeline (2023 start · 22 Nov 2025 MT retired · Nov 2026 structured address)",
+      "Structured-address fat-finger: country-only address → REPAIRABLE hold",
+    ],
+    requiredCheckpoints: ["map-fields", "translate-message", "flag-address"],
+  },
+
   "capstone": {
     title: "Capstone: Full Payment Simulation",
     legacySources: ["app/static/js/learn-capstone.js"],

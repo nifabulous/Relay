@@ -62,4 +62,10 @@ describe("curriculum", () => {
     const allIds = CURRICULUM.map((m) => m.id);
     expect(getNextModule(allIds)).toBeNull();
   });
+
+  it("includes lab-8 requiring lab-7", () => {
+    const lab8 = CURRICULUM.find((m) => m.id === "lab-8");
+    expect(lab8).toBeDefined();
+    expect(lab8?.prerequisites).toContain("lab-7");
+  });
 });

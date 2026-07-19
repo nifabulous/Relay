@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema } from "./schemas";
+import {
+  TranslateResponseSchema,
+  Pacs008CheckResponseSchema,
+} from "./schemas";
 
 describe("SuggestedIntermediary schema", () => {
   it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {
@@ -87,5 +91,26 @@ describe("SchemesResponse schema", () => {
     expect(result.iban).toBe(true);
     expect(result.schemes.length).toBe(2);
     expect(result.schemes[0].name).toBe("Faster Payments");
+  });
+});
+
+describe("ISO 20022 schemas", () => {
+  it("parses a translate response", () => {
+    const r = TranslateResponseSchema.parse({
+      mapping: [{ mt_tag: "59", mt_label: "Beneficiary", iso_path: "Cdtr/Nm", iso_label: "Creditor Name", value: "Beta Ltd" }],
+      xml: "<Document/>",
+      disclaimer: "primer",
+    });
+    expect(r.mapping[0].iso_path).toBe("Cdtr/Nm");
+  });
+
+  it("parses a pacs008 check response", () => {
+    const r = Pacs008CheckResponseSchema.parse({
+      verdict: "REPAIRABLE",
+      passes: true,
+      findings: [{ field: "Cdtr/PstlAdr", field_name: "Creditor Postal Address", severity: "warning", code: "PACS-ADDR-UNSTRUCTURED", message: "x", repair: "y" }],
+      disclaimer: "primer",
+    });
+    expect(r.findings[0].code).toBe("PACS-ADDR-UNSTRUCTURED");
   });
 });
