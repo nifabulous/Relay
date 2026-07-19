@@ -41,6 +41,7 @@ ALL_MODULE_IDS: List[str] = [
     "5",          # Lab 5: Settlement Instructions
     "6",          # Lab 6: UETR & gpi Tracking
     "7",          # Lab 7: Payment Schemes
+    "8",          # Lab 8: Message Standards (MT103 -> ISO 20022)
     "capstone",   # Capstone: Full Payment
     "fees",       # Fee Calculator
     "fx",         # FX Calculator
@@ -126,7 +127,7 @@ ALL_BADGES: List[Badge] = [
         name="Payment Operator",
         description="You can route a payment end-to-end through the full chain.",
         requirement="Complete all 7 labs and the capstone.",
-        required_ids=["1", "2", "3", "4", "5", "6", "7", "capstone"],
+        required_ids=["1", "2", "3", "4", "5", "6", "7", "8", "capstone"],
     ),
     Badge(
         id="wire-wizard",
