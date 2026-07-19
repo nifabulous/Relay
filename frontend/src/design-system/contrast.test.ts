@@ -38,7 +38,7 @@ const TOKENS = {
   warningBg: "#fdf4e6",
   danger: "#9e2b34",         // darkened from #c8424d
   dangerBg: "#fcecef",
-  inkMuted: "#586273",       // darkened from #68748a
+  inkMuted: "#586273",       // darkened from DESIGN.md for WCAG AA
   surface3: "#e6eaf2",
   inkStrong: "#16233d",
   surface: "#ffffff",

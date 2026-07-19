@@ -11,7 +11,7 @@
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
-  min-height: 40px;
+  min-height: 44px;
   /* No transition:all — only border-color and background */
   transition: border-color var(--duration-fast) var(--ease),
     background var(--duration-fast) var(--ease);

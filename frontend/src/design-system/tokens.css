@@ -19,7 +19,7 @@
 
   --color-ink-strong: #16233d;
   --color-ink: #2d3a52;
-  --color-ink-muted: #586273;   /* darkened from #68748a → 5.11:1 on surface-3 (AA) */
+  --color-ink-muted: #586273;   /* darkened from DESIGN.md #68748a for WCAG AA on surface-3 */
 
   --color-canvas: #f6f8fc;
   --color-surface: #ffffff;

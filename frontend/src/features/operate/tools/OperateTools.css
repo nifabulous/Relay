@@ -201,7 +201,7 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-micro);
   border-bottom: 1px solid var(--color-border);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .fee-hops td,

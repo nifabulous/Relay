@@ -62,6 +62,11 @@ a:not(.relay-btn):hover {
   text-decoration: underline;
 }
 
+/* Visited links distinguishable per DESIGN.md */
+a:not(.relay-btn):visited {
+  color: var(--color-action-pressed);
+}
+
 /* Mono — for identifiers, amounts, code; disable ligatures, enable tabular nums */
 .mono {
   font-family: var(--font-mono);
