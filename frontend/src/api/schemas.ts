@@ -538,6 +538,7 @@ export const SchemesResponseSchema = z
     iban: z.coerce.boolean().catch(false),
     localIdentifier: z.string().catch(""),
     schemes: z.array(SchemeInfoSchema).catch([]),
+    verifiedAsof: z.string().nullish().catch(null),
   })
   .passthrough();
 
