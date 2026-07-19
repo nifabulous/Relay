@@ -24,10 +24,15 @@ day / month / receiving). CAD is mid-transformation (Real-Time Rail arriving ~Q3
 - **Interac e-Transfer** — alias-based (email/phone; money moves over bank rails, alias only
   carries the notification/deposit instructions). Features: **Autodeposit** (pre-authorized deposit;
   the sender is shown the recipient's *registered legal name* before sending — a Confirmation-of-Payee-like
-  control), **Request Money** (pull), manual claim (security Q&A). Limits (Big-Five personal):
-  **$3,000/transaction (network ceiling), $10,000/day, $30,000/month; receiving up to $25,000;
-  Business up to $25,000/transfer**. Settlement: today over existing rails; **moving to the
-  Real-Time Rail (RTR) for real-time clearing/settlement**. Irreversible once deposited.
+  control; note autodeposit isn't always instant — routine interbank fraud checks can delay it),
+  **Request Money** (pull), **manual claim via a security question** (the sender sets a Q&A; the
+  answer must not be guessable or publicly derivable, and must **not** travel on the same channel as
+  the transfer — a social-engineering guardrail). Limits (Big-Five personal): **$3,000/transaction
+  (network ceiling; typical consumer per-txn ~$2,000–3,000, bank-set), $10,000/day, $30,000/month;
+  receiving up to $25,000; Business up to $25,000/transfer**. **Reversibility:** a transfer is
+  **cancellable while pending/unclaimed**, but **irreversible once deposited or autodeposited**.
+  **International:** can go cross-border **if the sender's bank participates**. Settlement: today over
+  existing rails; **moving to the Real-Time Rail (RTR) for real-time clearing/settlement**.
 - **EFT (via ACSS)** — batch; **three daily windows ≈ 05:00 / 14:15 / 19:00 ET**; 1–2 business
   days; no weekends/holidays. Payroll/vendor.
 - **Lynx** — RTGS, high-value, real-time final, ISO 20022. Pre-funding underpins RTR.
@@ -103,8 +108,10 @@ Checkpoints (all six must fire to complete): `autodeposit-vop`, `chaps-pacs008`,
 1. **Interac Autodeposit ↔ VoP** (`autodeposit-vop`) — reuses `POST /api/verify-payee`. A toggle:
    *Autodeposit ON* → call verify-payee for the recipient, show the returned account-holder legal
    name (a MATCH-style reveal) and explain "the sender sees who they're paying — a CoP-like control";
-   *OFF* → show the security-question path (no name reveal) and the fraud tradeoff. Fires when the
-   learner has seen the ON (name-revealed) path.
+   *OFF* → show the security-question path (no name reveal) and teach the guardrail: the answer must
+   not be guessable/public and must not be shared on the same channel as the transfer (the
+   social-engineering failure mode). Reinforce the reversibility window (cancellable while pending,
+   irreversible once claimed/autodeposited). Fires when the learner has seen the ON (name-revealed) path.
 2. **CHAPS → pacs.008 structured address** (`chaps-pacs008`) — reuses `POST /api/message/pacs008-check`.
    A CHAPS payment form with a creditor address; submitting a country-only address returns REPAIRABLE
    (`PACS-ADDR-UNSTRUCTURED`) with the Nov-2026 CHAPS mandate explained. Fires on the hold.
