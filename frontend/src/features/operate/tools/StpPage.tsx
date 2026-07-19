@@ -48,6 +48,7 @@ export function StpPage() {
   });
 
   const error = mutation.error as ApiProblem | null;
+  const translateError = translateMutation.error as ApiProblem | null;
 
   const verdictStatus = (verdict: string) =>
     verdict === "CLEAN" ? "passed" as const :
@@ -98,6 +99,13 @@ export function StpPage() {
         <div className="tool-error" role="alert">
           <strong>{error.title}</strong>
           {error.retryable && <Button variant="secondary" onClick={() => mutation.mutate()}>Retry</Button>}
+        </div>
+      )}
+
+      {translateError && (
+        <div className="tool-error" role="alert">
+          <strong>Translation failed: {translateError.title}</strong>
+          {translateError.retryable && <Button variant="secondary" onClick={() => translateMutation.mutate()}>Retry</Button>}
         </div>
       )}
 

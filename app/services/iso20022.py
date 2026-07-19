@@ -96,10 +96,10 @@ def translate_mt103_to_pacs008(message: dict) -> Pacs008TranslateResult:
         ("33B", "Instructed Currency", "InstdAmt/@Ccy", "Instructed Currency", instructed_ccy),
         ("71A", "Details of Charges", "ChrgBr", "Charge Bearer", charge_iso),
         ("50K", "Ordering Customer", "Dbtr/Nm", "Debtor Name", o_name),
-        ("50K", "Ordering Customer BIC", "DbtrAgt/FinInstnId/BICFI", "Debtor Agent BIC", o_bic),
+        ("52A", "Ordering Institution", "DbtrAgt/FinInstnId/BICFI", "Debtor Agent BIC", o_bic),
         ("50K", "Ordering Account", "DbtrAcct/Id", "Debtor Account", o_acct),
         ("59", "Beneficiary Customer", "Cdtr/Nm", "Creditor Name", b_name),
-        ("59", "Beneficiary BIC", "CdtrAgt/FinInstnId/BICFI", "Creditor Agent BIC", b_bic),
+        ("57A", "Account With Institution", "CdtrAgt/FinInstnId/BICFI", "Creditor Agent BIC", b_bic),
         ("59", "Beneficiary Account", "CdtrAcct/Id", "Creditor Account", b_acct),
         ("70", "Remittance Information", "RmtInf/Ustrd", "Unstructured Remittance", remittance),
     ]
