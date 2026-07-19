@@ -54,6 +54,7 @@ const LESSON_MODULES: Array<[string, string, string]> = [
   ["lab-6", "Did It Arrive? Tracking with UETR", "/app/learn/lab-6"],
   ["lab-7", "Which Rail? Payment Schemes", "/app/learn/lab-7"],
   ["lab-8", "Message Standards: MT103 → ISO 20022", "/app/learn/lab-8"],
+  ["lab-9", "Rails Deep-Dive: Canada & UK", "/app/learn/lab-9"],
   ["capstone", "Capstone: Full Payment Simulation", "/app/learn/capstone"],
 ];
 

@@ -5,7 +5,7 @@ describe("CORE_LAB_PARITY", () => {
   it("defines behavior parity for all nine core learning modules", () => {
     expect(Object.keys(CORE_LAB_PARITY)).toEqual([
       "lab-1", "lab-2", "lab-3", "lab-4",
-      "lab-5", "lab-6", "lab-7", "lab-8", "capstone",
+      "lab-5", "lab-6", "lab-7", "lab-8", "lab-9", "capstone",
     ]);
   });
 
@@ -13,8 +13,9 @@ describe("CORE_LAB_PARITY", () => {
     for (const [id, entry] of Object.entries(CORE_LAB_PARITY)) {
       expect(entry.interactions.length).toBeGreaterThan(0);
       expect(entry.requiredCheckpoints.length).toBeGreaterThan(0);
-      // lab-8 is net-new (MT103 -> ISO 20022) with no legacy predecessor.
-      if (id !== "lab-8") {
+      // lab-8 and lab-9 are net-new (MT103 -> ISO 20022 / rails deep-dive) with
+      // no legacy predecessor.
+      if (id !== "lab-8" && id !== "lab-9") {
         expect(entry.legacySources.length).toBeGreaterThan(0);
       }
     }
