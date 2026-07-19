@@ -4,8 +4,8 @@ import { useState } from "react";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema } from "../../api/schemas";
-import type { LookupResponse } from "../../api/schemas";
+import { LookupResponseSchema, SchemesResponseSchema } from "../../api/schemas";
+import type { LookupResponse, SchemesResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
@@ -149,19 +149,80 @@ function BankDetailCard({ bank }: { bank: NonNullable<LookupResponse["bank"]> })
 
 // ─── Payment Schemes ─────────────────────────────────────
 
+const SCHEME_CURRENCIES = ["GBP", "CAD", "USD", "EUR", "NGN", "KES", "INR", "AUD", "JPY", "AED"];
+
 export function SchemesPage() {
+  const [currency, setCurrency] = useState<string | null>(null);
+
+  const query = useQuery({
+    queryKey: currency ? apiKeys.schemes(currency) : ["schemes", "idle"],
+    enabled: currency !== null,
+    queryFn: () =>
+      apiRequest<SchemesResponse>(
+        `/api/schemes?currency=${encodeURIComponent(currency!)}`,
+        undefined,
+        SchemesResponseSchema,
+      ),
+  });
+
+  let status: "idle" | "loading" | "success" | "error" | "empty" = "idle";
+  if (currency === null) status = "idle";
+  else if (query.isLoading) status = "loading";
+  else if (query.isError) status = "error";
+  else if (query.data) status = query.data.schemes.length > 0 ? "success" : "empty";
+
+  const error = query.error as Record<string, unknown> | null;
+
   return (
     <div className="explore">
       <div className="explore__header">
         <h1>Payment Schemes</h1>
-        <p className="measure">Compare payment rails by speed, cost, and currency.</p>
+        <p className="measure">Compare domestic payment rails by speed, cost, and limits. Educational reference — always check the operator's current rules.</p>
       </div>
-      <div className="schemes-list">
-        <p className="explore__muted">Payment scheme comparison loads from the API. Use the Operate workspace to check schemes for a specific currency.</p>
-        <Link to="/operate" className="relay-btn relay-btn--secondary">
-          Go to Operate
-        </Link>
+
+      <div className="lab-currency-pills">
+        {SCHEME_CURRENCIES.map((ccy) => (
+          <button
+            key={ccy}
+            type="button"
+            className={["lab-currency-pill", currency === ccy && "lab-currency-pill--active"].filter(Boolean).join(" ")}
+            aria-pressed={currency === ccy}
+            onClick={() => setCurrency(ccy)}
+          >
+            {ccy}
+          </button>
+        ))}
       </div>
+
+      {currency && (
+        <AsyncRegion
+          status={status}
+          loadingLabel="Loading schemes"
+          emptyMessage={`No scheme data for ${currency}.`}
+          error={error ? { status: 0, title: "Load failed", detail: "Could not load schemes.", fieldErrors: {}, retryable: true } : null}
+          onRetry={() => query.refetch()}
+        >
+          {query.data && (
+            <table className="lab-table">
+              <thead>
+                <tr><th>Rail</th><th>Speed</th><th>Limit</th><th>Cost</th><th>Use case</th><th>Operator</th></tr>
+              </thead>
+              <tbody>
+                {query.data.schemes.map((s) => (
+                  <tr key={s.name}>
+                    <td><strong>{s.name}</strong></td>
+                    <td>{s.speed}</td>
+                    <td className="mono">{s.limit}</td>
+                    <td>{s.cost}</td>
+                    <td>{s.useCase}</td>
+                    <td>{s.operator}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </AsyncRegion>
+      )}
     </div>
   );
 }
