@@ -131,6 +131,20 @@ export const CURRICULUM: CurriculumModule[] = [
     category: "core",
   },
   {
+    id: "lab-9",
+    title: "Rails Deep-Dive: Canada & UK",
+    subtitle: "Interac, EFT, CHAPS, Faster Payments — in depth",
+    href: "/learn/lab-9",
+    duration: 20,
+    prerequisites: ["lab-7", "lab-8"],
+    outcomes: [
+      "Explain Interac Autodeposit, Request Money, limits, and the RTR roadmap",
+      "Read EFT processing windows and CHAPS's ISO 20022 structured-address mandate",
+      "Compare UK Confirmation of Payee and APP-scam reimbursement",
+    ],
+    category: "core",
+  },
+  {
     id: "capstone",
     title: "Capstone: Full Payment Simulation",
     subtitle: "Apply everything: validate, verify, route, and track a payment",

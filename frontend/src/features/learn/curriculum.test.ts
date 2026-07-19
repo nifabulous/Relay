@@ -68,6 +68,12 @@ describe("curriculum", () => {
     expect(lab8).toBeDefined();
     expect(lab8?.prerequisites).toContain("lab-7");
   });
+
+  it("includes lab-9 requiring lab-7 and lab-8", () => {
+    const lab9 = CURRICULUM.find((m) => m.id === "lab-9");
+    expect(lab9).toBeDefined();
+    expect(lab9?.prerequisites).toEqual(expect.arrayContaining(["lab-7", "lab-8"]));
+  });
 });
 
 describe("computeProgress", () => {

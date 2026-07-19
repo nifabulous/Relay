@@ -125,6 +125,20 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
     requiredCheckpoints: ["map-fields", "translate-message", "flag-address"],
   },
 
+  "lab-9": {
+    title: "Rails Deep-Dive: Canada & UK",
+    legacySources: [],
+    apiEndpoints: ["/api/schemes", "/api/verify-payee", "/api/message/pacs008-check"],
+    interactions: [
+      "Enriched CAD/GBP rail detail from /api/schemes",
+      "Interac Autodeposit ↔ VoP name reveal",
+      "CHAPS → pacs.008 structured-address hold",
+      "EFT window simulator, layered-limit checker, APP 'who pays' panel",
+      "Rail-chooser scenarios",
+    ],
+    requiredCheckpoints: ["autodeposit-vop", "chaps-pacs008", "eft-window", "limit-check", "rail-chooser", "app-reimbursement"],
+  },
+
   "capstone": {
     title: "Capstone: Full Payment Simulation",
     legacySources: ["app/static/js/learn-capstone.js"],
