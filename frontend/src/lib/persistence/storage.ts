@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   draft: (id: string) => `relay:draft:${id}`,
   legacyProgress: "swift-lab-progress",
   migrationFlag: "relay:legacy-imported",
+  activity: "relay:activity",
 } as const;
 
 // ─── Preferences ──────────────────────────────────────────
@@ -115,6 +116,32 @@ export function migrateLegacyProgressOnce(): MigrationResult {
     localStorage.setItem(STORAGE_KEYS.migrationFlag, "1");
     return { completedModuleIds: [], didImport: false };
   }
+}
+
+// ─── Activity log ─────────────────────────────────────────
+
+export interface RelayActivityEntry {
+  type: "module" | "tool";
+  label: string;
+  at: number; // epoch ms
+}
+
+export interface RelayActivityLog {
+  schemaVersion: 1;
+  entries: RelayActivityEntry[]; // newest-first, capped
+}
+
+const ACTIVITY_CAP = 20;
+const defaultActivity: RelayActivityLog = { schemaVersion: 1, entries: [] };
+
+export function loadActivity(): RelayActivityLog {
+  return safeLoad(STORAGE_KEYS.activity, defaultActivity);
+}
+
+export function recordActivity(entry: RelayActivityEntry): void {
+  const current = loadActivity();
+  const entries = [entry, ...current.entries].slice(0, ACTIVITY_CAP);
+  safeSave(STORAGE_KEYS.activity, { schemaVersion: 1, entries });
 }
 
 // ─── Internal helpers ─────────────────────────────────────

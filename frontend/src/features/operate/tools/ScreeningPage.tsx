@@ -7,6 +7,7 @@ import type { ApiProblem } from "../../../api/problem";
 import { Button } from "../../../design-system/Button";
 import { StatusChip } from "../../../design-system/StatusChip";
 import "./OperateTools.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function ScreeningPage() {
   const [senderName, setSenderName] = useState("");
@@ -20,7 +21,7 @@ export function ScreeningPage() {
         { sender_name: senderName, beneficiary_name: beneficiaryName },
         ScreenResponseSchema,
       ),
-    onSuccess: setResult,
+    onSuccess: (data) => { setResult(data); recordActivity({ type: "tool", label: "Sanctions screening", at: Date.now() }); },
   });
 
   const error = mutation.error as ApiProblem | null;

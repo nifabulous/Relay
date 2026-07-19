@@ -15,6 +15,7 @@ import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
 import "./PreparePaymentPage.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function PreparePaymentPage() {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ export function PreparePaymentPage() {
         PreparePaymentResponseSchema,
       );
     },
-    onSuccess: (data) => {
+    onSuccess: (data) => { recordActivity({ type: "tool", label: "Prepare payment", at: Date.now() });
       setResult(data);
       setIsStale(false);
       // Invalidate dependent queries — progress, route, ssi, vop

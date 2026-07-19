@@ -3,7 +3,7 @@ import { useState, useCallback, Suspense } from "react";
 import { getModuleById, isModuleUnlocked, CURRICULUM } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
-import { loadProgress, saveProgress } from "../../lib/persistence/storage";
+import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
 import "./LearnPage.css";
 
@@ -15,9 +15,11 @@ export function LearnModulePage() {
 
   const completeModule = useCallback((id: string) => {
     setCompleted((prev) => {
-      if (prev.includes(id)) return prev; // Idempotent
+      if (prev.includes(id)) return prev;
       const next = [...prev, id];
       saveProgress({ schemaVersion: 1, completedModuleIds: next });
+      const title = getModuleById(id)?.title ?? id;
+      recordActivity({ type: "module", label: title, at: Date.now() });
       return next;
     });
   }, []);

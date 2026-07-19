@@ -6,6 +6,7 @@ import type { ValueDateResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import { Button } from "../../../design-system/Button";
 import "./OperateTools.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function ValueDatePage() {
   const [sendDatetime, setSendDatetime] = useState("");
@@ -20,7 +21,7 @@ export function ValueDatePage() {
         { send_datetime: sendDatetime, currency, scheme: scheme || undefined },
         ValueDateResponseSchema,
       ),
-    onSuccess: setResult,
+    onSuccess: (data) => { setResult(data); recordActivity({ type: "tool", label: "Value date calculator", at: Date.now() }); },
   });
 
   const error = mutation.error as ApiProblem | null;

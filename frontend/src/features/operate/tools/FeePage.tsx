@@ -6,6 +6,7 @@ import type { FeeSimulateResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import { Button } from "../../../design-system/Button";
 import "./OperateTools.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function FeePage() {
   const [amount, setAmount] = useState("");
@@ -20,7 +21,7 @@ export function FeePage() {
         { amount: Number(amount), currency, charge_code: chargeCode },
         FeeSimulateResponseSchema,
       ),
-    onSuccess: setResult,
+    onSuccess: (data) => { setResult(data); recordActivity({ type: "tool", label: "Fee simulator", at: Date.now() }); },
   });
 
   const error = mutation.error as ApiProblem | null;

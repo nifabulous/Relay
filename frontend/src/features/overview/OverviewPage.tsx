@@ -5,38 +5,46 @@ import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
 import { HealthResponseSchema, ProgressResponseSchema } from "../../api/schemas";
 import type { HealthResponse, ProgressResponse } from "../../api/schemas";
-import { loadProgress } from "../../lib/persistence/storage";
+import { loadProgress, loadActivity } from "../../lib/persistence/storage";
+import { computeProgress } from "../learn/curriculum";
+import { toBackendModuleId } from "./badgeIds";
+import { relativeTime } from "./relativeTime";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
-  // Legacy migration runs once at app startup in main.tsx — not in render
   const progress = loadProgress();
+  const stats = computeProgress(progress.completedModuleIds);
+  const completedParam = progress.completedModuleIds.map(toBackendModuleId).join(",");
+  const activity = loadActivity().entries;
+  const now = Date.now();
 
-  // Health check
   const healthQuery = useQuery({
     queryKey: apiKeys.health,
     queryFn: () => apiRequest<HealthResponse>("/api/health", undefined, HealthResponseSchema),
   });
 
-  // Progress from API
-  const progressQuery = useQuery({
-    queryKey: apiKeys.progress,
-    queryFn: () => apiRequest<ProgressResponse>("/api/progress", undefined, ProgressResponseSchema),
+  // Badges only — count/%/next come from local stats
+  const badgesQuery = useQuery({
+    queryKey: [...apiKeys.progress, completedParam],
+    queryFn: () =>
+      apiRequest<ProgressResponse>(
+        `/api/progress?completed=${encodeURIComponent(completedParam)}`,
+        undefined,
+        ProgressResponseSchema,
+      ),
   });
 
   const isFirstVisit = progress.completedModuleIds.length === 0;
-  const curriculumComplete =
-    progressQuery.data?.percentage === 100;
+  const curriculumComplete = stats.percentage === 100;
 
   const action = selectPrimaryAction({
     firstVisit: isFirstVisit,
     curriculumComplete,
-    nextModuleId: progressQuery.data?.next_recommended ?? undefined,
+    nextModuleId: stats.nextModuleId ?? undefined,
   });
 
   return (
     <div className="overview">
-      {/* Adaptive primary action — one dominant CTA */}
       <section className="overview__primary">
         <h1 className="overview__heading">Relay</h1>
         <p className="overview__tagline measure">
@@ -47,30 +55,26 @@ export function OverviewPage() {
         </Link>
       </section>
 
-      {/* Current context — progress or health */}
       <section className="overview__context">
         <h2 className="overview__section-title">Your progress</h2>
-        {progressQuery.isLoading ? (
-          <div className="skeleton skeleton--line" style={{ width: "200px" }} />
-        ) : progressQuery.data ? (
-          <div className="overview__progress-row">
-            <span className="overview__progress-count mono">
-              {progressQuery.data.completed_count} / {progressQuery.data.total_count}
-            </span>
-            <span className="overview__progress-label">modules completed</span>
-            <div className="overview__progress-bar">
-              <div
-                className="overview__progress-fill"
-                style={{ width: `${progressQuery.data.percentage}%` }}
-              />
-            </div>
+        <div className="overview__progress-row">
+          <span className="overview__progress-count mono">
+            {stats.completedCount} / {stats.totalCount}
+          </span>
+          <span className="overview__progress-label">modules completed</span>
+          <div className="overview__progress-bar">
+            <div className="overview__progress-fill" style={{ width: `${stats.percentage}%` }} />
           </div>
-        ) : (
-          <p className="overview__muted">Progress unavailable</p>
+        </div>
+        {badgesQuery.data && badgesQuery.data.earned_badges.length > 0 && (
+          <div className="overview__badges">
+            {badgesQuery.data.earned_badges.map((b) => (
+              <span key={b.id} className="overview__badge">{b.name}</span>
+            ))}
+          </div>
         )}
       </section>
 
-      {/* Utility row — quick links */}
       <section className="overview__utility">
         <Link to="/explore" className="overview__utility-link">
           <span className="overview__utility-label">Search</span>
@@ -86,17 +90,29 @@ export function OverviewPage() {
         </Link>
       </section>
 
-      {/* Recent activity — empty state for first-time users */}
       <section className="overview__activity">
         <h2 className="overview__section-title">Recent activity</h2>
-        <p className="overview__muted">
-          {isFirstVisit
-            ? "No activity yet. Start by exploring how payments move."
-            : "Your recent simulations and learning activity will appear here."}
-        </p>
+        {activity.length === 0 ? (
+          <p className="overview__muted">
+            {isFirstVisit
+              ? "No activity yet. Start by exploring how payments move."
+              : "Your recent simulations and learning activity will appear here."}
+          </p>
+        ) : (
+          <ul className="overview__activity-list">
+            {activity.map((e, i) => (
+              <li key={i} className="overview__activity-item">
+                <span className={`overview__activity-tag overview__activity-tag--${e.type}`}>
+                  {e.type === "module" ? "Module" : "Tool"}
+                </span>
+                <span className="overview__activity-label">{e.label}</span>
+                <span className="overview__activity-time">{relativeTime(e.at, now)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      {/* System status */}
       {healthQuery.data && (
         <section className="overview__status">
           <p className="overview__status-text">

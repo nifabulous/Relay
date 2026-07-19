@@ -8,6 +8,7 @@ import { Button } from "../../../design-system/Button";
 import { StatusChip } from "../../../design-system/StatusChip";
 import { Pacs008View } from "./Pacs008View";
 import "./OperateTools.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function StpPage() {
   const [txRef, setTxRef] = useState("");
@@ -29,7 +30,7 @@ export function StpPage() {
         },
         STPCheckResponseSchema,
       ),
-    onSuccess: setResult,
+    onSuccess: (data) => { setResult(data); recordActivity({ type: "tool", label: "MT103 STP check", at: Date.now() }); },
   });
 
   const translateMutation = useMutation({

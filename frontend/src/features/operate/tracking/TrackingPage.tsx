@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -11,6 +11,7 @@ import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { PaymentTimeline } from "./PaymentTimeline";
 import "./TrackingPage.css";
+import { recordActivity } from "../../../lib/persistence/storage";
 
 export function TrackingPage() {
   const [searchParams] = useSearchParams();
@@ -33,7 +34,16 @@ export function TrackingPage() {
   if (submittedUetr === null) status = "idle";
   else if (query.isLoading) status = "loading";
   else if (query.isError) status = "error";
-  else if (query.data) status = "success";
+  else if (query.data) { status = "success"; }
+
+  // Record activity on successful track (once per UETR lookup)
+  const recordedUetr = useRef<string | null>(null);
+  useEffect(() => {
+    if (query.data && query.data.uetr !== recordedUetr.current) {
+      recordedUetr.current = query.data.uetr;
+      recordActivity({ type: "tool", label: "Payment tracking", at: Date.now() });
+    }
+  }, [query.data]);
 
   const error = query.error as ApiProblem | null;
   const data = query.data;
