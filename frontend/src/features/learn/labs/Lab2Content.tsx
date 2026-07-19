@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import type { LabContentProps } from "../labTypes";
-import { mod97Remainder } from "./mod97";
+import { mod97Remainder, mod97Steps } from "./mod97";
 import { Decompose } from "../components/Decompose";
 import { MultipleChoice } from "../components/MultipleChoice";
 import { Button } from "../../../design-system/Button";
@@ -79,6 +79,8 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
       setIsBreaking(false);
     }
   }, [breakInput, onCheckpoint]);
+
+  const steps = mod97Steps(breakInput);
 
   return (
     <div className="lab-content" data-module-id={moduleId}>
@@ -167,6 +169,36 @@ export function Lab2Content({ moduleId, onCheckpoint }: LabContentProps) {
             )}
           </div>
         )}
+      </section>
+
+      {/* Step-through: rearrange → convert → divide */}
+      <section className="lab-section">
+        <h2>Watch the checksum work, step by step</h2>
+        <p className="measure">
+          Edit the IBAN above and watch each stage update. A valid IBAN always
+          leaves a remainder of exactly 1.
+        </p>
+        <ol className="mod97-steps">
+          <li><strong>1. Move the first 4 characters to the end:</strong>{" "}
+            <span className="mono">{steps.rearranged || "—"}</span></li>
+          <li><strong>2. Convert letters to numbers (A=10 … Z=35):</strong>{" "}
+            <span className="mono mod97-numeric">{steps.numeric || "—"}</span></li>
+          <li><strong>3. Divide by 97 (processed in chunks):</strong>
+            <ol className="mod97-chunks">
+              {steps.chunks.map((c, i) => (
+                <li key={i} className="mono">{c.chunk} mod 97 = {c.remainderAfter}</li>
+              ))}
+            </ol>
+          </li>
+          <li><strong>4. Remainder:</strong>{" "}
+            <span className="mono">{steps.numeric ? steps.remainder : "—"}</span>{" "}
+            {steps.numeric && (
+              steps.valid
+                ? <span className="lab-valid">= 1 → valid ✓</span>
+                : <span className="lab-invalid">≠ 1 → invalid ✗</span>
+            )}
+          </li>
+        </ol>
       </section>
 
       {/* Exercise: Find the typo */}

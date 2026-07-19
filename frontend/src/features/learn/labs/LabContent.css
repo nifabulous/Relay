@@ -339,3 +339,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mod97-steps { display: flex; flex-direction: column; gap: var(--space-2, 8px); }
+.mod97-numeric { word-break: break-all; }
+.mod97-chunks { margin-top: var(--space-1, 4px); padding-left: var(--space-4, 16px); }

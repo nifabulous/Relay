@@ -92,6 +92,14 @@ describe("SchemesResponse schema", () => {
     expect(result.schemes.length).toBe(2);
     expect(result.schemes[0].name).toBe("Faster Payments");
   });
+
+  it("keeps verifiedAsof when present", () => {
+    const r = SchemesResponseSchema.parse({
+      currency: "KES", country: "Kenya", countryCode: "KE",
+      iban: false, localIdentifier: "x", schemes: [], verifiedAsof: "2026-07",
+    });
+    expect(r.verifiedAsof).toBe("2026-07");
+  });
 });
 
 describe("ISO 20022 schemas", () => {

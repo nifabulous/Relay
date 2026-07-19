@@ -114,4 +114,12 @@ describe("Lab2Content", () => {
       expect(onCheckpoint).toHaveBeenCalledWith("find-valid-iban");
     });
   });
+
+  it("renders the MOD-97 step-through with the rearranged form", () => {
+    renderLab();
+    // Default IBAN DE89370400440532013000 rearranged → 370400440532013000DE89.
+    expect(screen.getByText(/370400440532013000DE89/)).toBeInTheDocument();
+    // Remainder line shows the valid marker for the default (valid) IBAN.
+    expect(screen.getByText(/= 1 → valid/)).toBeInTheDocument();
+  });
 });

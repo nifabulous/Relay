@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeIban, ibanToNumericString, mod97Remainder } from "./mod97";
+import { normalizeIban, ibanToNumericString, mod97Remainder, mod97Steps } from "./mod97";
 
 describe("normalizeIban", () => {
   it("removes spaces and uppercases", () => {
@@ -73,5 +73,27 @@ describe("mod97Remainder", () => {
     // A real 34-char IBAN: MT84MALT011000012345MTLCAST001S
     expect(() => mod97Remainder("MT84MALT011000012345MTLCAST001S")).not.toThrow();
     expect(mod97Remainder("MT84MALT011000012345MTLCAST001S")).toBe(1);
+  });
+});
+
+describe("mod97Steps", () => {
+  it("traces the rearrange → convert → divide steps for a valid IBAN", () => {
+    const s = mod97Steps("GB29NWBK60161331926819");
+    expect(s.normalized).toBe("GB29NWBK60161331926819");
+    // First 4 chars (GB29) moved to the end.
+    expect(s.rearranged).toBe("NWBK60161331926819GB29");
+    // N=23, W=32, B=11, K=20 → starts "23321120..."
+    expect(s.numeric.startsWith("23321120")).toBe(true);
+    expect(s.remainder).toBe(1);
+    expect(s.valid).toBe(true);
+    expect(s.chunks.length).toBeGreaterThan(0);
+    // The last chunk's remainderAfter is the final remainder.
+    expect(s.chunks[s.chunks.length - 1].remainderAfter).toBe(1);
+  });
+
+  it("shows a non-1 remainder for a single-digit typo", () => {
+    const s = mod97Steps("GB29NWBK60161331926818"); // last digit 9→8
+    expect(s.remainder).not.toBe(1);
+    expect(s.valid).toBe(false);
   });
 });

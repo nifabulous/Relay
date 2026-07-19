@@ -111,6 +111,12 @@ export function Lab7Content({ moduleId, onCheckpoint }: LabContentProps) {
         {schemes && schemes.schemes.length === 0 && (
           <p className="lab-muted">No schemes data available for {selectedCurrency}.</p>
         )}
+
+        {schemes?.verifiedAsof && (
+          <p className="lab-caption">
+            Rail data verified as of {schemes.verifiedAsof}. Always check the operator's current rules.
+          </p>
+        )}
       </section>
 
       {/* Seven scenario quizzes */}

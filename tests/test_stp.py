@@ -182,3 +182,61 @@ def test_duplicate_bic_in_chain_is_warning():
     })
     assert result.verdict == "REPAIRABLE"
     assert any(f.code == "STP-DUPLICATE-BIC" for f in result.findings)
+
+
+def test_invalid_bank_op_code_is_rejected():
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1",
+        "bank_op_code": "XXXX",  # not a valid 23B code
+        "value_date": "2026-07-20", "currency": "USD", "interbank_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert result.verdict == "REJECTED"
+    assert any(f.code == "STP-BANK-OP-CODE-INVALID" for f in result.findings)
+
+
+def test_valid_bank_op_code_cred_passes():
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1", "bank_op_code": "CRED",
+        "value_date": "2026-07-20", "currency": "USD", "interbank_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert not any(f.code == "STP-BANK-OP-CODE-INVALID" for f in result.findings)
+
+
+def test_amount_divergence_is_warning():
+    # 33B instructed 1000 vs 32A settled 950 -> beneficiary got less.
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1", "bank_op_code": "CRED",
+        "value_date": "2026-07-20", "currency": "USD",
+        "interbank_amount": 950.0, "instructed_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert result.verdict == "REPAIRABLE"
+    assert any(f.code == "STP-AMOUNT-DIVERGENCE" for f in result.findings)
+
+
+def test_matching_amounts_no_divergence():
+    from app.services.stp_checker import check_stp
+    result = check_stp({
+        "transaction_reference": "REF1", "bank_op_code": "CRED",
+        "value_date": "2026-07-20", "currency": "USD",
+        "interbank_amount": 1000.0, "instructed_amount": 1000.0,
+        "charge_code": "SHA",
+        "ordering": {"name": "Acme", "bic": "CHASUS33"},
+        "beneficiary": {"name": "Beta", "account": "ACCT-1", "bic": "BARCGB22"},
+        "uetr": "97ed4827-7b6f-4491-a06f-b548d5a7512d",
+    })
+    assert not any(f.code == "STP-AMOUNT-DIVERGENCE" for f in result.findings)

@@ -15,6 +15,7 @@ _SCHEMES = {
         "currency": "GBP", "country": "United Kingdom", "countryCode": "GB",
         "iban": True,
         "localIdentifier": "Sort Code (6 digits) + Account Number (8 digits)",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "Faster Payments (FPS)", "speed": "Instant (<2s)", "limit": "£1,000,000", "cost": "Free", "useCase": "Retail, bills, transfers", "operator": "Pay.UK"},
             {"name": "CHAPS", "speed": "Same-day (RTGS)", "limit": "No limit", "cost": "£20-35", "useCase": "High-value, house purchases", "operator": "Bank of England"},
@@ -25,6 +26,7 @@ _SCHEMES = {
         "currency": "CAD", "country": "Canada", "countryCode": "CA",
         "iban": False,
         "localIdentifier": "Bank (3) + Transit (5) + Account (7-12)",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "Interac e-Transfer", "speed": "Instant (<30s)", "limit": "$3,000-10,000", "cost": "Free", "useCase": "P2P, retail", "operator": "Interac Corp."},
             {"name": "EFT", "speed": "1-2 business days", "limit": "No limit", "cost": "$0.50-2", "useCase": "Payroll, vendor", "operator": "Payments Canada"},
@@ -35,6 +37,7 @@ _SCHEMES = {
         "currency": "USD", "country": "United States", "countryCode": "US",
         "iban": False,
         "localIdentifier": "ABA Routing (9) + Account Number",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "Fedwire", "speed": "Real-time (RTGS)", "limit": "No limit", "cost": "$10-35", "useCase": "High-value, wires", "operator": "Federal Reserve"},
             {"name": "FedACH", "speed": "1-2 business days", "limit": "~$25,000-1M", "cost": "$0.10-0.50", "useCase": "Payroll, direct deposit", "operator": "Federal Reserve"},
@@ -47,6 +50,7 @@ _SCHEMES = {
         "currency": "EUR", "country": "Eurozone (20 countries)", "countryCode": "EU",
         "iban": True,
         "localIdentifier": "IBAN (mandatory within SEPA)",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "SEPA Instant (SCT Inst)", "speed": "Instant (<10s)", "limit": "€100,000", "cost": "Free", "useCase": "Instant P2P, retail", "operator": "EBA Clearing"},
             {"name": "SEPA Credit Transfer", "speed": "1 business day", "limit": "No limit", "cost": "Free", "useCase": "Standard EUR cross-border", "operator": "EBA Clearing"},
@@ -57,6 +61,7 @@ _SCHEMES = {
         "currency": "NGN", "country": "Nigeria", "countryCode": "NG",
         "iban": False,
         "localIdentifier": "NUBAN (10-digit account number)",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "NIBSS Instant Pay", "speed": "Instant (seconds)", "limit": "₦5,000,000", "cost": "Free", "useCase": "Retail, P2P", "operator": "NIBSS"},
             {"name": "NEFT", "speed": "1-2 hours (batch)", "limit": "No limit", "cost": "Minimal", "useCase": "Bulk, payroll", "operator": "NIBSS"},
@@ -66,9 +71,11 @@ _SCHEMES = {
         "currency": "KES", "country": "Kenya", "countryCode": "KE",
         "iban": False,
         "localIdentifier": "Bank Account Number (per bank)",
+        "verifiedAsof": "2026-07",
         "schemes": [
-            {"name": "M-Pesa", "speed": "Instant (seconds)", "limit": "KES 300,000/day", "cost": "Free under KES 1,000", "useCase": "P2P, retail, everything", "operator": "Safaricom"},
-            {"name": "PesaLink", "speed": "Instant (seconds)", "limit": "KES 999,999", "cost": "KES 0-150", "useCase": "Bank-to-bank", "operator": "Kenya Bankers Assoc."},
+            {"name": "KEPSS", "speed": "Real-time (RTGS)", "limit": "No limit", "cost": "Bank-set", "useCase": "High-value, interbank, government", "operator": "Central Bank of Kenya"},
+            {"name": "PesaLink", "speed": "Instant (seconds)", "limit": "~KES 1,000,000 (bank-set)", "cost": "KES 0-150", "useCase": "Bank-to-bank, alias-capable", "operator": "IPSL (Kenya Bankers Assoc.)"},
+            {"name": "M-Pesa", "speed": "Instant (seconds)", "limit": "KES 250,000/txn, 500,000/day, 500,000 wallet cap", "cost": "Tiered tariff", "useCase": "Mobile wallet, P2P, merchant", "operator": "Safaricom"},
             {"name": "EFT", "speed": "1-2 business days", "limit": "No limit", "cost": "Minimal", "useCase": "Payroll, bulk", "operator": "Kenya Bankers Assoc."},
         ],
     },
@@ -76,6 +83,7 @@ _SCHEMES = {
         "currency": "INR", "country": "India", "countryCode": "IN",
         "iban": False,
         "localIdentifier": "IFSC (11 chars) + Account Number",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "UPI", "speed": "Instant (seconds)", "limit": "₹1-5L", "cost": "Free", "useCase": "Everything (P2P, retail, bills)", "operator": "NPCI"},
             {"name": "IMPS", "speed": "Instant (seconds)", "limit": "₹5,00,000", "cost": "₹5-15", "useCase": "Instant bank-to-bank", "operator": "NPCI"},
@@ -87,6 +95,7 @@ _SCHEMES = {
         "currency": "AUD", "country": "Australia", "countryCode": "AU",
         "iban": False,
         "localIdentifier": "BSB (6) + Account Number",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "NPP / PayID", "speed": "Instant (<15s)", "limit": "AUD 100,000+", "cost": "Free", "useCase": "Instant P2P, retail", "operator": "NPP Australia"},
             {"name": "Direct Entry (BECS)", "speed": "1-2 business days", "limit": "No limit", "cost": "AUD 0.10-0.50", "useCase": "Payroll, direct debit", "operator": "AusPayNet"},
@@ -97,6 +106,7 @@ _SCHEMES = {
         "currency": "JPY", "country": "Japan", "countryCode": "JP",
         "iban": False,
         "localIdentifier": "Bank (4) + Branch (3) + Account",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "Zengin", "speed": "Same-day (batch)", "limit": "No limit", "cost": "Variable", "useCase": "Standard domestic", "operator": "JBA"},
             {"name": "More Time", "speed": "Instant 24/7", "limit": "JPY 100K-1M", "cost": "Free", "useCase": "Instant P2P", "operator": "JBA"},
@@ -107,6 +117,7 @@ _SCHEMES = {
         "currency": "AED", "country": "UAE", "countryCode": "AE",
         "iban": True,
         "localIdentifier": "IBAN (mandatory since 2011)",
+        "verifiedAsof": "2026-07",
         "schemes": [
             {"name": "UAEFTS", "speed": "Same-day (3 cut-offs)", "limit": "AED 35K-500K", "cost": "AED 1-16", "useCase": "Standard domestic", "operator": "CBUAE"},
             {"name": "Aani", "speed": "Instant (seconds)", "limit": "AED 100,000", "cost": "Free", "useCase": "Instant P2P, retail", "operator": "Al Etihad Payments"},
