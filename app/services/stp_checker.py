@@ -39,6 +39,9 @@ from .validator import validate_bic
 # Charge codes recognised by MT field 71A.
 _VALID_CHARGE_CODES = ("OUR", "SHA", "BEN")
 
+# MT field 23B (Bank Operation Code) production values.
+_VALID_BANK_OP_CODES = ("CRED", "SPAY", "SPRI", "SSTD")
+
 # MT field 20 (Sender's Reference) max length per SWIFT spec.
 _TX_REF_MAX_LEN = 16
 
@@ -326,6 +329,38 @@ def check_stp(message: dict) -> STPResult:
                 repair="Verify the ordering and beneficiary BICs are distinct.",
             ))
 
+    # ---- Rule 13: bank operation code valid (23B) -------------------------
+    bank_op_code = message.get("bank_op_code")
+    if _truthy(bank_op_code) and str(bank_op_code).strip().upper() not in _VALID_BANK_OP_CODES:
+        findings.append(Finding(
+            field="23B", field_name=_FIELD_NAMES["23B"],
+            severity="error", code="STP-BANK-OP-CODE-INVALID",
+            message=(
+                f"Bank operation code {bank_op_code!r} is not one of "
+                f"{', '.join(_VALID_BANK_OP_CODES)}."
+            ),
+            repair="Use CRED (normal credit transfer) or another valid 23B code.",
+        ))
+
+    # ---- Rule 14: instructed (33B) vs settled (32A) amount divergence -----
+    instructed_amount = message.get("instructed_amount")
+    if (
+        isinstance(instructed_amount, (int, float))
+        and isinstance(amount, (int, float))
+        and instructed_amount > 0
+        and amount != instructed_amount
+    ):
+        findings.append(Finding(
+            field="33B", field_name=_FIELD_NAMES["33B"],
+            severity="warning", code="STP-AMOUNT-DIVERGENCE",
+            message=(
+                f"Settled amount (32A) {amount} differs from instructed amount "
+                f"(33B) {instructed_amount}; the beneficiary receives a different "
+                "sum than instructed — typically charges deducted along the chain."
+            ),
+            repair="Confirm the difference matches disclosed 71F/71G charges.",
+        ))
+
     # ---- Build the per-field summary --------------------------------------
     known_tags = [
         "20", "23B", "32A", "33B", "50K", "59", "71A", "121",
@@ -342,7 +377,7 @@ def check_stp(message: dict) -> STPResult:
             present, valid = _truthy(tx_ref), _truthy(tx_ref) and len(str(tx_ref)) <= _TX_REF_MAX_LEN
         elif tag == "23B":
             present = _truthy(message.get("bank_op_code"))
-            valid = present
+            valid = present and str(message.get("bank_op_code")).strip().upper() in _VALID_BANK_OP_CODES
         elif tag == "32A":
             present = _truthy(value_date_raw) and _truthy(currency) and amount is not None
             valid = present and parsed_date is not None and (

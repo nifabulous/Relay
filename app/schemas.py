@@ -367,6 +367,7 @@ class STPCheckRequest(BaseModel):
     ordering: OrderingParty = Field(default_factory=OrderingParty, description="MT field 50K")
     beneficiary: BeneficiaryParty = Field(default_factory=BeneficiaryParty, description="MT field 59")
     uetr: Optional[str] = Field(None, description="MT field 121 (UETR)")
+    instructed_amount: Optional[float] = Field(None, description="MT field 33B instructed amount, before charges")
 
     @field_validator("currency")
     @classmethod
