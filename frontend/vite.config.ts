@@ -19,6 +19,12 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     restoreMocks: true,
+    // Async UI tests (waitFor/userEvent) can exceed the 5s default when many
+    // jsdom workers contend for CPU under the full-suite parallel run; they
+    // pass comfortably in isolation. Give them headroom so the suite is not
+    // flaky. See fix/frontend-test-flake.
+    testTimeout: 15000,
+    hookTimeout: 15000,
     exclude: ["node_modules", "dist", "e2e", "playwright-report", "test-results"],
   },
 });
