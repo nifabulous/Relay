@@ -67,8 +67,9 @@ _SCHEMES = {
         "iban": False,
         "localIdentifier": "Bank Account Number (per bank)",
         "schemes": [
-            {"name": "M-Pesa", "speed": "Instant (seconds)", "limit": "KES 300,000/day", "cost": "Free under KES 1,000", "useCase": "P2P, retail, everything", "operator": "Safaricom"},
-            {"name": "PesaLink", "speed": "Instant (seconds)", "limit": "KES 999,999", "cost": "KES 0-150", "useCase": "Bank-to-bank", "operator": "Kenya Bankers Assoc."},
+            {"name": "KEPSS", "speed": "Real-time (RTGS)", "limit": "No limit", "cost": "Bank-set", "useCase": "High-value, interbank, government", "operator": "Central Bank of Kenya"},
+            {"name": "PesaLink", "speed": "Instant (seconds)", "limit": "~KES 1,000,000 (bank-set)", "cost": "KES 0-150", "useCase": "Bank-to-bank, alias-capable", "operator": "IPSL (Kenya Bankers Assoc.)"},
+            {"name": "M-Pesa", "speed": "Instant (seconds)", "limit": "KES 250,000/txn, 500,000/day, 500,000 wallet cap", "cost": "Tiered tariff", "useCase": "Mobile wallet, P2P, merchant", "operator": "Safaricom"},
             {"name": "EFT", "speed": "1-2 business days", "limit": "No limit", "cost": "Minimal", "useCase": "Payroll, bulk", "operator": "Kenya Bankers Assoc."},
         ],
     },
