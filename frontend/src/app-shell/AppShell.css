@@ -11,7 +11,7 @@
   flex-direction: column;
 }
 
-/* ── Top bar — sticky on scroll ─────────────────────────── */
+/* ── Top bar — sticky below sim banner ─────────────────── */
 .app-shell__topbar {
   display: flex;
   align-items: center;
@@ -21,7 +21,7 @@
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   position: sticky;
-  top: 0;
+  top: var(--sim-banner-height);
   z-index: 200;
 }
 
@@ -51,7 +51,7 @@
   min-height: 0;
 }
 
-/* ── Desktop navigation rail — sticky on scroll ────────── */
+/* ── Desktop navigation rail — sticky below banner + topbar ── */
 .app-shell__rail {
   width: var(--nav-width-desktop);
   flex-shrink: 0;
@@ -59,8 +59,8 @@
   border-right: 1px solid var(--color-border);
   padding: var(--space-4) 0;
   position: sticky;
-  top: var(--topbar-height);
-  height: calc(100vh - var(--topbar-height));
+  top: calc(var(--sim-banner-height) + var(--topbar-height));
+  height: calc(100vh - var(--sim-banner-height) - var(--topbar-height));
   overflow-y: auto;
 }
 
