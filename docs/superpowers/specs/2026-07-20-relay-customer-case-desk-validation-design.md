@@ -1,8 +1,8 @@
 # Relay Customer Case Desk Validation Design
 
-**Status:** Approved  
-**Date:** 2026-07-20  
-**Mode:** Open-source education first, with commercialization earned through user pull  
+**Status:** Approved
+**Date:** 2026-07-20
+**Mode:** Open-source education first, with commercialization earned through user pull
 **Target release:** Research prototype, not a complete curriculum rewrite
 
 ## Problem Statement
@@ -108,9 +108,62 @@ Existing concept-led material is decomposed into short, searchable references th
 
 References do not have mastery or completion states. MOD-97 remains an optional technical exercise and is not an early progression gate.
 
+## Information Architecture
+
+Case Desk is the primary experience inside the existing **Learn** workspace. Relay keeps its four top-level workspaces: Overview, Learn, Explore, and Operate. It does not add a fifth Cases destination.
+
+```text
+Learn
+├── Primary action: Start or resume a customer case
+├── Customer cases
+│   ├── Canadian collection and receipt
+│   └── Canada-to-US supplier payment
+├── Reference library
+│   └── Searchable payment concepts opened in case context
+└── Technical labs
+    └── Existing concept-led modules, presented as optional deep dives
+```
+
+The Learn landing page shows, in order:
+
+1. One dominant start-or-resume case action.
+2. The two available research cases and their simple session state: not started, in progress, or completed.
+3. A reference-library entry point.
+4. A visually quieter Technical Labs section containing the existing curriculum.
+
+Case completion on this page means the experience was finished. The landing page must not label completion as mastery or certification.
+
+The learner-facing state label is exactly **Completed** and means only that the case experience was finished. The case debrief separately reports decision-quality classifications, supported performance, independent transfer, and retention. Do not use **Passed**, **Mastered**, **Certified**, percentage scores, trophies, or progress visuals that imply a credential.
+
 ## Customer Case Desk Interaction
 
 The selected interaction is a scenario-first Customer Case Desk. It has three learner-facing phases.
+
+### Workspace Composition
+
+Desktop and tablet use a focused two-region workspace rather than a dashboard grid:
+
+```text
+Case header: case title · phase progress · exit case
+┌──────────────────────────────────────┬──────────────────────┐
+│ PRIMARY TASK AREA                    │ EVIDENCE RAIL        │
+│                                      │ Customer request     │
+│ Current phase heading                │ Facts supplied       │
+│ One active decision or question      │ Facts gathered       │
+│ Contextual feedback                  │ Assumptions/unknowns │
+│ One dominant next action             │ Source status        │
+└──────────────────────────────────────┴──────────────────────┘
+```
+
+- The primary task area receives approximately two-thirds of the available width and contains only the current decision.
+- The evidence rail receives approximately one-third, remains visible while the task area scrolls, and contains no competing primary action.
+- The customer request is the rail's first and strongest item. Gathered facts are grouped separately from assumptions and unavailable facts.
+- References open as contextual secondary content and never replace or reset the active task. Desktop opens a sheet aligned to the evidence side of the workspace; mobile opens a full-height sheet.
+- The case header shows location and phase, not mastery, score, badges, or celebratory decoration.
+
+At 390px, the task area becomes full-width. A persistent **Evidence** control shows the number of gathered facts and opens a labelled bottom sheet. The sheet preserves document order, traps focus while open, closes with Escape or an explicit close control, and restores focus to the Evidence control. The current customer request remains visible as a compact summary above the active task so the learner is never required to memorize it.
+
+Reference sheets use the same focus and dismissal contract. Their header shows the concept name, jurisdiction or scope, and verification date. The body stays within a 45–75 character reading measure. Closing returns focus to the exact **Reference** control that opened the sheet. Opening a reference is recorded as supported learning, but it neither changes decision quality nor marks case progress.
 
 ### Investigate
 
@@ -130,13 +183,52 @@ The selected interaction is a scenario-first Customer Case Desk. It has three le
 
 ### Resolve
 
-1. Reveal the simulated consequence and its certainty category.
-2. Ask the learner to diagnose any failure or mismatch.
-3. Show a concise worked explanation.
-4. Present a close transfer case without the worked example.
-5. Deliver a contrast retention case three to seven days later.
+1. Present a concise read-only summary of the learner's recommendation and reasoning.
+2. Require an explicit **Send recommendation** action; selection changes before this point do not reveal evaluation.
+3. Preserve the first submitted attempt and reveal its decision-quality classification, reasoning feedback, and simulated consequence.
+4. Ask the learner to diagnose any failure or mismatch.
+5. Allow a clearly labelled revision without overwriting the first attempt.
+6. Show a concise worked explanation after the learner has reviewed the consequence.
+7. Present a close transfer case without the worked example.
+8. Deliver a contrast retention case three to seven days later.
 
 The interface progressively removes scaffolding. Later cases require learners to identify candidate rails and material questions with less prompting.
+
+### Draft, Resume, and Revision
+
+- Persist each material action to the existing versioned local-storage layer: requested facts, shortlist, structured reasoning, references opened, current phase, and optional free text.
+- The Learn landing page shows **Resume case** for a valid draft and a secondary **Start again** action with confirmation.
+- **Exit case** saves the current draft and returns to Learn without an additional confirmation. **Start again** is a separate, secondary action that opens a confirmation naming the case and the draft state that will be cleared. The preserved first submitted attempt remains available in the research record.
+- Restore the exact phase and evidence state after refresh, tab closure, or navigation away.
+- Never restore transient loading, open sheets, alerts, or focus position.
+- Editing an upstream fact or changing a requested fact invalidates every dependent shortlist, recommendation, and outcome. Explain what was cleared and return focus to the first affected decision.
+- Preserve the first submitted recommendation separately from the mutable draft so research evidence cannot be overwritten by later revision.
+- A corrupt or obsolete draft is discarded safely. Show: “This draft could not be restored. Start the case again.” with one primary restart action.
+
+### Focus and Announcement Contract
+
+- After a successful phase transition, move focus to the new phase heading or outcome heading and expose the same change through a polite live-region announcement.
+- After a recommendation is sent, focus the operational-consequence heading before any secondary classification or revision control.
+- When an upstream fact change clears dependent decisions, announce what was cleared, move focus to the first affected decision, and keep the explanation adjacent to that control.
+- On validation failure, render a concise error summary at the start of the primary task, link each message to its control, and move focus to the summary. Inline messages remain visible beside their fields.
+- Evidence-count changes and sheet open/close events use polite announcements without stealing focus. Sheet focus trapping and restoration continue to follow the contract above.
+- Respect `prefers-reduced-motion`; state changes must remain understandable without animation, and focus must never depend on a transition completing visually.
+
+### Control Semantics
+
+- Use a native radio group for selecting one rail or route, with a visible legend and a clearly associated error message.
+- Use native checkboxes for selecting multiple facts or evidence requests. Do not encode selection state in clickable cards alone.
+- Use native buttons for phase actions, sheet controls, revision, restart, and exit. Buttons must communicate disabled, pending, and completed states without changing their accessible name unexpectedly.
+- Use labelled native inputs or textareas for confidence, assumptions, and optional customer explanation. Preserve entered text across validation errors.
+- Visual enhancements may style these controls as compact options or rows, but must preserve native keyboard order, focus visibility, accessible names, and pointer target sizes.
+- Do not require drag-and-drop, hover, double-click, or pointer-only gestures for any case decision.
+
+### Responsive Breakpoints
+
+- Wide desktop uses the two-region composition: primary task at roughly two-thirds of the available width and an evidence rail at roughly one-third.
+- At tablet widths where either region would fall below its minimum readable measure, collapse to the task-first composition. Keep the customer request as a compact summary above the task and expose the evidence rail through the persistent Evidence control and labelled sheet.
+- Mobile uses the same collapsed composition and sheet behavior. The breakpoint is defined by minimum content widths and tested at 390px, 768px, 1024px, and 1440px rather than by device labels alone.
+- The implementation must not produce horizontal scrolling, clipped controls, or a rail that becomes an icon-only affordance without a text label.
 
 ## Assessment Model
 
@@ -161,9 +253,60 @@ The debrief reports dimensions separately:
 | Independent transfer | Solved a new close case without assistance |
 | Retention | Solved a contrast case three to seven days later |
 
+### Research Consent and Export
+
+- Before the first case, offer an optional, plain-language research consent step describing the purpose, synthetic-data boundary, event categories collected, retention period, and withdrawal path.
+- A learner may use every case without consenting. Consent is never required for completion, debrief access, or reference-library access.
+- Store consent separately from learning progress. Revoking consent stops future research capture and does not delete the learner's local draft unless they explicitly request deletion.
+- Provide a separate export/review action that shows the learner what was recorded, including first attempt, revision, hints, references, and timestamps. Export is not required to finish a case.
+- Research events are append-only for the session and must not silently overwrite the learner's mutable draft or first submitted recommendation.
+
 Hints do not reduce a learner's score. They distinguish supported performance from independent transfer. Time spent is recorded for UX diagnosis only and never used as competency evidence.
 
 Free-text responses are manually reviewed during research and do not automatically determine completion or mastery.
+
+## User Journey and Feedback Tone
+
+The Case Desk uses calm operational coaching. It should feel like supervised practice with a respected senior colleague, not a game and not a formal disciplinary audit.
+
+| Step | Learner does | Intended feeling | Interface support |
+|---|---|---|---|
+| Enter Learn | Sees the next available case | Oriented, not overwhelmed | One dominant start-or-resume action; technical labs remain visually secondary |
+| Read the brief | Understands role, customer need, and stakes | Curious with appropriate seriousness | Short brief, explicit synthetic-data label, customer request kept visible |
+| Give baseline view | Makes an ungraded initial recommendation | Safe enough to commit | “This captures your starting view; it is not scored” appears beside the action |
+| Investigate | Requests facts and builds a shortlist | Increasingly in control | Evidence visibly accumulates; unavailable facts explain why; no answer is pre-highlighted |
+| Recommend | Reviews and sends reasoning | Deliberate and accountable | Read-only summary, explicit **Send recommendation**, no correctness cues before commitment |
+| See consequence | Learns what the decision would cause | Challenged without shame | Feedback leads with consequence, names the reasoning gap, confirms what was sound, and offers one next action |
+| Revise | Applies the feedback | Capable of improvement | First attempt stays visible as history; revision language avoids “You failed” framing |
+| Review debrief | Sees what was considered and missed | Clear about current ability | Separate supported performance from independent transfer; no grades, streaks, confetti, or celebratory decoration |
+| Return later | Opens the second case without guidance | Recognized and independent | Resume context is brief; the new case does not restate the full tutorial |
+
+Feedback copy follows this order:
+
+1. **Operational consequence:** what this recommendation would likely cause.
+2. **Decision quality:** invalid, possible, defensible, or preferred under the disclosed assumptions.
+3. **Sound reasoning:** the material considerations the learner handled correctly.
+4. **Reasoning gap:** one prioritized issue, not a wall of corrections.
+5. **Next action:** revise, inspect one reference, or continue to the debrief.
+
+Decision quality is presented as supporting metadata, not as the feedback headline. Lead with a plain-language operational consequence, then show Invalid, Possible, Defensible, or Preferred in the existing `StatusChip` with both text and an accompanying icon. Semantic color reinforces the state but is never its only signal. Do not create custom success/failure result panels or use chip styling as a substitute for the reasoning explanation.
+
+The first five seconds establish role and stakes. The first five minutes establish that requesting information is part of the job rather than a sign of weakness. The long-term relationship is built through trustworthy sourcing, honest uncertainty, and recognition of improved independent reasoning rather than accumulating points.
+
+## Visual Direction
+
+The Case Desk is an **evidence-led operations workspace**, not a conversational simulation, dashboard grid, or sequence of decorative cards. The learner should recognize one coherent working surface organized around a customer request, an accumulating evidence record, and a recommendation that must be defended.
+
+- Treat the customer request as the visual anchor. Give it clear hierarchy without placing it in an oversized promotional card.
+- Use the evidence rail as a structured ledger: supplied facts, gathered facts, assumptions, unknowns, and source status are separated by labels and thin dividers rather than individually elevated cards.
+- Keep the active decision visually dominant through spacing, type hierarchy, and one primary action. Avoid nested panels, repeated rounded rectangles, ornamental gradients, glass effects, and decorative shadows.
+- Use Instrument Sans for interface and explanatory copy and IBM Plex Mono only for identifiers, amounts, dates, route codes, and other operational data.
+- Use the established canvas, ink, action blue, border, and semantic-status tokens from `DESIGN.md`; do not introduce a case-specific color system.
+- Use `PaymentRoute` only when route topology materially helps the learner understand a cross-border recommendation or consequence. It must reflect the selected or revealed route and must never serve as decorative filler.
+- Do not use chat bubbles, assistant avatars, typing indicators, or generated-looking “AI coach” treatments. Coaching appears as concise contextual feedback attached to the learner's decision.
+- Preserve quiet space around the current task. Secondary references and evidence may be available, but they must not compete with the dominant next action.
+
+Visual acceptance test: if the customer request, evidence categories, and active decision were removed, the remaining page should not resemble a generic analytics dashboard. If the same component treatment repeats three or more times, verify that the repetition communicates a real operational structure rather than merely filling the layout.
 
 ## Fact and Source Governance
 
@@ -176,6 +319,8 @@ Every material payment claim must record:
 - Claim scope
 - Review-by date
 
+The evidence rail shows a compact source status for every material fact, for example **Verified 2026-07-20 · Canada · Scheme rule**. A labelled **View source details** control opens the contextual reference sheet with the full source, owner, claim scope, verification date, and review-by date. Provenance must be visible at the decision point without repeating the complete metadata block inline.
+
 Claim scope is one of:
 
 - Payment-system or scheme rule
@@ -185,6 +330,21 @@ Claim scope is one of:
 - Simulation-only value
 
 Cases use ranges and explicit assumptions when no universal institution-independent answer exists. Expired claims make the affected case unavailable until reviewed; they are not silently presented as current guidance.
+
+An expired case remains visible on Learn with an **Under review** status. Starting and resuming are disabled. The case explains which jurisdictional facts require review, shows its last verification date, and offers one verified reference or relevant technical lab. Existing drafts remain stored and become resumable only after the case is verified again.
+
+## Interaction State Matrix
+
+| Feature | Initial or empty | Loading or pending | Error or unavailable | Success | Partial or recovery |
+|---|---|---|---|---|---|
+| Learn case list | Two authored cases with not-started status | Stable skeleton matching title, purpose, and action layout when state is being restored | Under-review case remains visible with reason, verification date, and safe alternative | Shows one dominant start-or-resume action and quiet state labels | Corrupt draft offers one restart action without affecting the other case |
+| Case draft | Role, stakes, supplied facts, and one obvious first action | Local saves do not block interaction; a brief saved status appears without stealing focus | Restore failure states that the draft could not be recovered and offers **Start case again** | Exact phase, evidence, and editable draft return after navigation or refresh | Upstream edits explain which dependent decisions were cleared and focus the first affected field |
+| Fact request | Supplied, requestable, and unavailable facts are visually distinct but unrevealed answers are not preselected | Live enrichment, when used, marks only the requested fact as checking | Specific failure explains that authored case facts remain safe; unavailable facts explain why they cannot be obtained | Requested fact moves into gathered evidence and is announced through a polite live region | Institution-dependent information displays its scope and assumption instead of pretending to be universal |
+| Rail shortlist | Search or browse prompt with no recommended rail pre-highlighted | Search results use stable rows rather than a full-page spinner | No match suggests checking spelling or opening the rail directory; expired rail facts cannot be added | Added candidates appear in a reviewable shortlist with remove actions | Invalid candidates remain visible after evaluation with the exclusion reason; missed candidates appear only after commitment |
+| Contextual reference | Closed by default; opening control includes the concept name | Reference skeleton preserves heading and reading measure | Missing or expired reference states what is unavailable and returns to the case safely | Sheet shows concept, scope, source owner, and verification date | Closing restores focus and preserves every case answer |
+| Recommendation | Editable structured draft with no correctness cues | **Send recommendation** becomes disabled and announces evaluation in progress | Evaluation failure preserves the full draft and offers retry; no first attempt is recorded until evaluation succeeds | First attempt receives invalid, possible, defensible, or preferred feedback plus consequence | Revision is clearly separated and never overwrites the preserved first attempt |
+| Outcome and debrief | Hidden until the first recommendation is committed | Consequence region uses a stable pending state if enrichment is required | Missing enrichment is labelled; authored reasoning and safe debrief remain available | Shows decision quality, consequence, what was considered, what was missed, and one next action | Supported and independent performance remain separate; uncertainty categories remain visible |
+| Research consent/export | No research events leave the device before consent | Export action shows progress without blocking case review | Failure states that data remains local and offers retry or deletion | Confirms exactly what was exported and offers deletion | Declining telemetry leaves the full learning experience available |
 
 ## Research Prototype Scope
 
@@ -214,6 +374,24 @@ A Canadian business wants to pay a US supplier in USD with stated urgency, cost 
 ## Prototype Technical Approach
 
 Use existing React, design-system, API, and Learn components to implement the first two cases directly. Do not first build a universal case schema or runtime.
+
+## What Already Exists
+
+The implementation should extend the current frontend rather than introduce a parallel shell or visual language:
+
+| Existing asset | Reuse in the prototype |
+|---|---|
+| `frontend/src/app-shell/AppShell.tsx` and `AppShell.css` | Keep the four-workspace shell, navigation, responsive frame, and global focus behavior |
+| `frontend/src/features/learn/LearnPage.tsx` and `LearnPage.css` | Add the case-first Learn landing order and neutral case states |
+| `frontend/src/features/learn/LearnModulePage.tsx` | Reuse the module/page composition patterns for brief, debrief, and optional technical deep dives |
+| `frontend/src/design-system/Button.tsx` | Use for all primary, secondary, sheet, exit, restart, and revision actions |
+| `frontend/src/design-system/AsyncRegion.tsx` | Provide loading, error, unavailable, and recovery states for evidence and reference content |
+| `frontend/src/design-system/StatusChip.tsx` | Render source status and decision-quality metadata with text and icon |
+| `frontend/src/design-system/payment-route/PaymentRoute.tsx` | Render only materially useful cross-border route topology |
+| `frontend/src/design-system/tokens.css` and `global.css` | Keep typography, spacing, color, focus, target-size, and reduced-motion tokens from `DESIGN.md` |
+| `frontend/src/features/learn/useLabCompletion.test.tsx` and existing telemetry services | Adapt event naming and completion semantics without treating engagement as mastery |
+
+Introduce only the case-specific units required by observed flows: `CaseDesk`, `EvidenceRail`, `ReferenceSheet`, `FactRequest`, `RailShortlist`, `RecommendationSummary`, and `CaseDebrief`. Each should have focused tests and use the existing primitives. Do not duplicate `Button`, `StatusChip`, `AsyncRegion`, navigation, or token definitions.
 
 After both cases have been observed and revised, extract only proven common units:
 
@@ -348,7 +526,7 @@ Compliments, waitlist entries, and guided completion do not count as demand by t
 - Consent, export, and deletion verification
 - Facilitator-script rehearsal before the first session
 
-## Explicit Non-Goals
+## NOT in scope
 
 - Rebuilding every current lab
 - Preserving the current curriculum order
@@ -359,6 +537,49 @@ Compliments, waitlist entries, and guided completion do not count as demand by t
 - Guaranteeing price, arrival, or traceability
 - Issuing credentials or claiming job readiness
 - Commercializing before learner behavior creates a credible buyer hypothesis
+
+## Implementation Tasks
+
+- [ ] **T1 (P1, human: ~1d / CC: ~30min)** — Trust gate and source pack — audit both case briefs against primary sources; record scope, owner, verification date, review-by date, assumptions, and jurisdiction; quarantine stale claims and unsupported mastery promises.
+  - Surfaced by: Fact and Source Governance; Stage 0 Validation-Path Trust Gate.
+  - Files: `frontend/src/features/learn/cases/`, `frontend/src/features/learn/curriculum.ts`, `docs/`.
+  - Verify: domain-review checklist and stale-claim tests pass.
+- [ ] **T2 (P1, human: ~1d / CC: ~30min)** — Learn entry and case state — add case-first Start, Resume, Completed, and Under review states with neutral completion language.
+  - Surfaced by: Information Architecture; Completion state language.
+  - Files: `frontend/src/features/learn/LearnPage.tsx`, `frontend/src/features/learn/LearnPage.css`, related tests.
+  - Verify: Learn landing and expired-case journeys pass at desktop and mobile widths.
+- [ ] **T3 (P1, human: ~2d / CC: ~1h)** — Case Desk shell — build the two-region desktop and task-first tablet/mobile layouts using existing shell, tokens, Button, and AsyncRegion primitives; add request anchor, phase progress, Evidence control, and safe Exit case.
+  - Surfaced by: Workspace Composition; Visual Direction; Responsive Breakpoints.
+  - Files: `frontend/src/features/learn/cases/CaseDesk.tsx`, `frontend/src/features/learn/cases/CaseDesk.css`, `frontend/src/app-shell/`.
+  - Verify: screenshots at 390×844, 768, 1024, and 1440 show no horizontal scroll or competing primary action.
+- [ ] **T4 (P1, human: ~2d / CC: ~1h)** — Evidence and reference workflow — implement evidence groupings, compact source status, contextual sheet, focus trap/restore, stale-claim behavior, and loading/error/recovery states.
+  - Surfaced by: Evidence Rail; Fact and Source Governance; Source visibility.
+  - Files: `frontend/src/features/learn/cases/EvidenceRail.tsx`, `ReferenceSheet.tsx`, `frontend/src/design-system/AsyncRegion.tsx`.
+  - Verify: source metadata, unavailable facts, expired claims, Escape, and focus restoration are covered by tests.
+- [ ] **T5 (P1, human: ~2d / CC: ~1h)** — Investigation controls — implement native fact-request checkboxes and learner-created rail shortlist with eligibility rules, legends, validation, and draft persistence.
+  - Surfaced by: Investigate; Control Semantics.
+  - Files: `frontend/src/features/learn/cases/FactRequest.tsx`, `RailShortlist.tsx`, case state module.
+  - Verify: keyboard-only selection and invalid/possible option handling pass.
+- [ ] **T6 (P1, human: ~2d / CC: ~1h)** — Recommendation and consequence loop — implement structured reasoning, read-only pre-send summary, explicit commit, first-attempt history, operational consequence, decision-quality metadata, worked explanation, and revision.
+  - Surfaced by: Recommend/Resolve; Decision-quality presentation.
+  - Files: `frontend/src/features/learn/cases/RecommendationSummary.tsx`, `CaseOutcome.tsx`, `CaseDebrief.tsx`.
+  - Verify: evaluation is hidden before Send recommendation and the first attempt remains immutable.
+- [ ] **T7 (P2, human: ~1d / CC: ~30min)** — Debrief and transfer — report supported performance, independent transfer, and retention separately; implement close and delayed contrast cases without game-like scoring.
+  - Surfaced by: Assessment Model; User Journey and Feedback Tone.
+  - Files: `frontend/src/features/learn/cases/CaseDebrief.tsx`, retention-case fixtures and tests.
+  - Verify: transfer case has reduced scaffolding and no mastery/certification label.
+- [ ] **T8 (P1, human: ~2d / CC: ~1h)** — Persistence and research controls — version drafts, invalidate dependent decisions, handle corrupt drafts, add optional consent, append-only export, withdrawal, deletion, and learner review.
+  - Surfaced by: Draft, Resume, and Revision; Research Consent and Export; Privacy Contract.
+  - Files: `frontend/src/features/learn/cases/caseStore.ts`, `frontend/src/services/telemetry.ts`, consent/export UI and tests.
+  - Verify: refresh, tab close, restart confirmation, consent withdrawal, export, and deletion journeys pass.
+- [ ] **T9 (P1, human: ~1d / CC: ~30min)** — Accessibility and responsive QA — test breakpoints, keyboard and screen reader journeys, managed focus, announcements, 44px targets, error summaries, no horizontal scroll, and reduced motion.
+  - Surfaced by: Focus and Announcement Contract; Responsive Breakpoints; Control Semantics.
+  - Files: `frontend/e2e/case-desk.spec.ts`, accessibility fixtures, `frontend/src/design-system/`.
+  - Verify: Playwright and axe checks pass at all target viewports.
+- [ ] **T10 (P2, human: ~3d / CC: ~1h)** — Observed validation release — prepare facilitator, observation, interview, consent, and export templates; run Round 1 with five learners and review repeatable patterns before extracting shared case units.
+  - Surfaced by: Project Sequence; Success Criteria.
+  - Files: `docs/research/`, facilitator and consent templates, research export artifacts.
+  - Verify: five sessions complete and a decision memo records observed demand, misconceptions, and next product direction.
 
 ## Decision Log
 
@@ -384,3 +605,17 @@ Schedule a 20-minute discovery interview with Marvellous before implementation. 
 - [Bank of England CHAPS overview](https://www.bankofengland.co.uk/payment-and-settlement/chaps)
 - [SWIFT ISO 20022 customer-payment exercises](https://www.swift.com/myswift/services/training/swift-training-catalogue/browse-swift-training-catalogue/customer-payments-using-iso-20022-exercises)
 - [DiXiO ISO 20022 operations training](https://dixio.cloud/iso-20022-operations-training-program)
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; office-hours strategy review already established the validation-first direction |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | Not run |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | Required next because this review added substantial interaction, persistence, and accessibility contracts |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR (FULL) | Score: 6/10 → 10/10; 17 decisions resolved; 0 unresolved |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not run |
+
+**VERDICT:** DESIGN CLEAR — ready for implementation planning; eng review required before implementation is considered ship-ready.
+
+NO UNRESOLVED DECISIONS
