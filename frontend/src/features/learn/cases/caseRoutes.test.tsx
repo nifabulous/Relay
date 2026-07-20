@@ -1,18 +1,23 @@
 /**
  * Task 3 — case entry + route tests.
  *
- * These tests cover the five required entry/route states for the supplier case
- * on the Learn landing page:
- *   1. Fresh (no session)        → dominant "Start case" action
- *   2. Resume (in_progress)      → dominant "Resume case" action
- *   3. Completed                 → "Completed" label + revisit affordance
- *   4. Under review (catalog)    → last verification date, Start/Resume
- *                                  disabled, draft preserved, one lab/
- *                                  reference alternative offered
- *   5. Missing case id           → route shows "case not found" + link back
+ * These tests cover the entry/route states for the supplier case on the Learn
+ * landing page:
+ *   1. Fresh (no session)             → dominant "Start case" action
+ *   2. Resume (in_progress)           → dominant "Resume case" action
+ *   3. Completed                      → "Completed" label + revisit affordance
+ *   4. Under review (catalog)         → last verification date, Start/Resume
+ *                                       disabled, draft preserved, one lab/
+ *                                       reference alternative offered
+ *   5. Under review (session-level)   → stale-draft-specific message
+ *       (revision mismatch recovery)    (distinct from the catalog message);
+ *                                       also covers the last branch of
+ *                                       deriveCaseEntryState.
+ *   6. Missing case id                → route shows "case not found" + link back
  *
- * Plus a route-ordering guard: `/learn/cases/:caseId` must render the case
- * desk placeholder, NOT the legacy `learn/:moduleId` page.
+ * Plus a documentation-of-intent route-ordering test (the REAL App.tsx route
+ * tree is guarded in app-shell/App.test.tsx). A LearnIndexPage production-
+ * wiring test covers Resume rendering + byte-for-byte localStorage integrity.
  *
  * Testability design: `CaseEntry` is a pure presentational component that
  * takes the case definition and the loaded session as props. Production wires
@@ -27,9 +32,14 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { CaseEntry } from "./CaseEntry";
 import { CaseDeskRoute } from "./CaseDeskRoute";
 import { supplierCase } from "./caseCatalog";
-import { createInitialCaseSession, type CaseSession } from "./caseStore";
+import {
+  createInitialCaseSession,
+  saveCaseSession,
+  type CaseSession,
+} from "./caseStore";
 import type { CaseDefinition } from "./caseTypes";
 import { LearnModulePage } from "../LearnModulePage";
+import { LearnIndexPage } from "../LearnIndexPage";
 
 beforeEach(() => {
   localStorage.clear();
@@ -189,16 +199,62 @@ describe("CaseEntry — under review state (catalog-level)", () => {
   });
 });
 
+// ─── Under review (session-level stale draft) ──────────────────────────────
+
+describe("CaseEntry — under review state (session-level stale draft)", () => {
+  // A session reaches status "under_review" via caseStore's `recoverStaleSession`
+  // when a stored draft's caseRevision no longer matches the current catalog
+  // revision. The catalog reviewStatus stays "current" here — this is NOT the
+  // catalog-level under_review state. CaseEntry renders a DISTINCT message for
+  // this branch (focused on the stale draft, not the catalog pause), so a
+  // refactor that silently dropped the branch would lose learner-facing
+  // accuracy. This also exercises the last untested branch of
+  // deriveCaseEntryState.
+  const staleDraftSession = makeSession({
+    status: "under_review",
+    phase: "investigate",
+  });
+
+  it("renders the stale-draft-specific message (not the catalog-under_review message)", () => {
+    renderEntry(supplierCase, staleDraftSession);
+    expect(
+      screen.getByText(/your saved draft was based on older case material/i),
+    ).toBeInTheDocument();
+    // It must NOT render the catalog-level under_review message — the two
+    // branches are intentionally distinct.
+    expect(
+      screen.queryByText(/start is paused while we update the source material/i),
+    ).toBeNull();
+  });
+
+  it("does not offer a working Start/Resume link (entry is paused)", () => {
+    renderEntry(supplierCase, staleDraftSession);
+    expect(
+      screen.queryByRole("link", { name: /start case|resume case/i }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: /start case/i })).toBeDisabled();
+  });
+});
+
 // ─── Route: ordering + missing case id ─────────────────────────────────────
+//
+// NOTE on scope: this build-its-own-<Routes> test is a documentation-of-intent
+// test, NOT a regression guard on App.tsx. React Router v6 ranks static
+// segments above dynamic ones regardless of declaration order, so the
+// `cases` segment is never captured by `learn/:moduleId` even if App.tsx
+// reordered its routes. The REAL App.tsx route tree (lazy chunks, Suspense,
+// BrowserRouter basename) is guarded in app-shell/App.test.tsx
+// ("renders the Case Desk for /learn/cases/canada-us-supplier"). This test
+// documents the intended ordering invariant and exercises CaseDeskRoute's
+// known-id / unknown-id rendering directly.
 
 function renderRoutes(url: string) {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        {/* MUST be declared before learn/:moduleId so 'cases' is never
-            captured as a module id. (React Router v6 ranks static segments
-            above dynamic ones, but the explicit ordering is a regression
-            guard and matches the App.tsx declaration.) */}
+        {/* Declared before learn/:moduleId to mirror App.tsx. RR v6's
+            static>dynamic ranking makes the ordering belt-and-suspenders;
+            see the App-level test for the genuine regression guard. */}
         <Route path="learn/cases/:caseId" element={<CaseDeskRoute />} />
         <Route path="learn/:moduleId" element={<LearnModulePage />} />
       </Routes>
@@ -207,7 +263,7 @@ function renderRoutes(url: string) {
 }
 
 describe("learn/cases/:caseId route", () => {
-  it("renders the case desk for a known case id (not swallowed by learn/:moduleId)", () => {
+  it("renders the case desk for a known case id (documents the cases-before-module ordering intent)", () => {
     renderRoutes("/learn/cases/canada-us-supplier");
     // CaseDeskRoute renders the case title as the page <h1>. The title also
     // appears in the breadcrumb, so query by heading role to assert the page
@@ -216,8 +272,6 @@ describe("learn/cases/:caseId route", () => {
       screen.getByRole("heading", { name: /Canada → US supplier payment/i }),
     ).toBeInTheDocument();
     // The legacy module page renders "Module not found" for unknown modules.
-    // If route ordering regresses (cases captured as moduleId), this text
-    // would appear instead.
     expect(screen.queryByText(/module not found/i)).toBeNull();
   });
 
@@ -226,5 +280,63 @@ describe("learn/cases/:caseId route", () => {
     expect(screen.getByText(/case not found/i)).toBeInTheDocument();
     const backLink = screen.getByRole("link", { name: /back to learn/i });
     expect(backLink).toHaveAttribute("href", "/learn");
+  });
+});
+
+// ─── Production wiring: LearnIndexPage → CaseEntry ──────────────────────────
+//
+// The CaseEntry tests above render the pure component directly. This block
+// verifies the PRODUCTION wiring: LearnIndexPage loads the session via
+// `loadCaseSession` and passes it through to CaseEntry, and a learner
+// returning to Learn with an in-progress draft sees Resume (not Start) — and
+// the seeded session JSON is byte-for-byte unchanged after render (the page
+// reads, it never writes).
+
+describe("LearnIndexPage — production wiring of the case session", () => {
+  it("renders 'Resume case' (not 'Start case') for an in-progress draft", () => {
+    const session = makeSession({
+      status: "in_progress",
+      phase: "investigate",
+      requestedFactIds: ["price-sensitivity"],
+    });
+    saveCaseSession(session);
+
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /resume case/i }),
+    ).toHaveAttribute("href", "/learn/cases/canada-us-supplier");
+    expect(
+      screen.queryByRole("link", { name: /^start case$/i }),
+    ).toBeNull();
+  });
+
+  it("does not mutate the persisted session when LearnIndexPage renders", () => {
+    // Seed storage with a real persisted session and snapshot the raw bytes.
+    const session = makeSession({
+      status: "in_progress",
+      phase: "investigate",
+      requestedFactIds: ["price-sensitivity"],
+    });
+    saveCaseSession(session);
+    const key = "relay:case-session:canada-us-supplier";
+    const before = localStorage.getItem(key);
+
+    expect(before).not.toBeNull();
+
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    // Byte-for-byte: production wiring must READ ONLY. If LearnIndexPage or
+    // loadCaseSession ever writes (e.g. a "recover-and-persist" side effect),
+    // this assertion fails.
+    expect(localStorage.getItem(key)).toBe(before);
   });
 });

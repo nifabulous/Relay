@@ -61,25 +61,44 @@ export type CaseEntryState =
  * material is being updated, so no Start/Resume regardless of draft state).
  * Session-level under_review (from caseStore's revision-mismatch recovery)
  * is distinct so the message can name the stale draft.
+ *
+ * The `switch` on `session.status` carries an exhaustiveness guard
+ * (`const _: never = session.status`) so adding a new `CaseSession.status`
+ * variant without handling it here is a compile error rather than a silent
+ * fall-through to the stale-draft message. Mirrors the caseStore reducer's
+ * `never`-check on CaseAction.
  */
 export function deriveCaseEntryState(
   caseDef: CaseDefinition,
   session: CaseSession | null,
 ): CaseEntryState {
+  // Catalog-level under_review beats any session state.
   if (caseDef.reviewStatus === "under_review") {
     return "under_review_catalog";
   }
-  if (session === null || session.status === "not_started") {
+  if (session === null) {
     return "fresh";
   }
-  if (session.status === "in_progress") {
-    return "resume";
+  switch (session.status) {
+    case "not_started":
+      return "fresh";
+    case "in_progress":
+      return "resume";
+    case "completed":
+      return "completed";
+    case "under_review":
+      // Revision-mismatch recovery path (caseStore.recoverStaleSession).
+      return "under_review_stale";
+    default: {
+      // Exhaustiveness: if CaseSession.status gains a variant, this binding
+      // becomes non-`never` and TypeScript fails to compile. At runtime an
+      // unrecognized status degrades to the stale-draft surface (the safest
+      // "start is paused" affordance) rather than offering Start/Resume.
+      const _: never = session.status;
+      void _;
+      return "under_review_stale";
+    }
   }
-  if (session.status === "completed") {
-    return "completed";
-  }
-  // session.status === "under_review" — revision-mismatch recovery path.
-  return "under_review_stale";
 }
 
 const CASE_HREF = (caseId: string) => `/learn/cases/${caseId}`;
