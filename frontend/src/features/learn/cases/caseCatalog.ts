@@ -241,6 +241,21 @@ const transferRails: RailOption[] = [
 
 // ─── The case ───────────────────────────────────────────────────────────────
 
+/**
+ * Content revision of the authored case (NOT the session schema version).
+ *
+ * Bump this whenever the case's authored facts, rails, eligibility text, or
+ * disclosed priorities change in a way that would invalidate an in-flight
+ * learner draft. The caseStore compares a stored session's `caseRevision`
+ * against this constant on load: a mismatch means the stored draft was built
+ * against stale case content and must NOT silently resume.
+ *
+ * Convention: an ISO-ish date tag plus a short slug, e.g. "2026-07-01.r1".
+ * The exact format is not load-bearing — only equality is checked — but a
+ * human-readable tag makes the bump easy to audit.
+ */
+export const CASE_REVISION = "2026-07-01.r1";
+
 export const supplierCase: CaseDefinition = {
   id: "canada-us-supplier",
   title: "Canada → US supplier payment",

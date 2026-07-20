@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   loadPreferences,
   savePreferences,
@@ -8,6 +8,9 @@ import {
   saveDraft,
   migrateLegacyProgressOnce,
   defaultPreferences,
+  loadVersioned,
+  saveVersioned,
+  removeStored,
 } from "./storage";
 
 beforeEach(() => {
@@ -103,5 +106,155 @@ describe("legacy migration", () => {
     localStorage.setItem("swift-lab-progress", "corrupt");
     const result = migrateLegacyProgressOnce();
     expect(result.completedModuleIds).toEqual([]);
+  });
+});
+
+// ─── Generic versioned primitives ───────────────────────────────────────────
+// New in Task 2: caseStore consumes these directly so it can surface a
+// recoverable save failure to the UI (instead of silently swallowing it, as
+// the existing wrappers do for preferences/progress/drafts).
+
+describe("loadVersioned", () => {
+  it("returns the stored value when it has schemaVersion", () => {
+    interface Shape {
+      schemaVersion: 1;
+      name: string;
+    }
+    const value: Shape = { schemaVersion: 1, name: "round-trip" };
+    localStorage.setItem("relay:test:load", JSON.stringify(value));
+    expect(loadVersioned<Shape>("relay:test:load", { schemaVersion: 1, name: "fallback" })).toEqual(value);
+  });
+
+  it("returns fallback when the key is absent", () => {
+    const fallback = { schemaVersion: 1, n: 42 };
+    expect(loadVersioned("relay:test:absent", fallback)).toBe(fallback);
+  });
+
+  it("returns fallback for corrupt JSON", () => {
+    localStorage.setItem("relay:test:corrupt", "not-json{");
+    const fallback = { schemaVersion: 1, n: 0 };
+    expect(loadVersioned("relay:test:corrupt", fallback)).toEqual(fallback);
+  });
+
+  it("returns fallback when schemaVersion is missing", () => {
+    localStorage.setItem("relay:test:no-version", JSON.stringify({ name: "no-version" }));
+    const fallback = { schemaVersion: 1, n: 0 };
+    expect(loadVersioned("relay:test:no-version", fallback)).toEqual(fallback);
+  });
+
+  it("returns fallback when schemaVersion is the wrong version", () => {
+    localStorage.setItem(
+      "relay:test:wrong-version",
+      JSON.stringify({ schemaVersion: 99, name: "obsolete" }),
+    );
+    const fallback = { schemaVersion: 1, n: 0 };
+    expect(loadVersioned("relay:test:wrong-version", fallback)).toEqual(fallback);
+  });
+});
+
+describe("saveVersioned", () => {
+  it("returns ok:true and persists a versioned value", () => {
+    interface Shape {
+      schemaVersion: 1;
+      name: string;
+    }
+    const value: Shape = { schemaVersion: 1, name: "saved" };
+    const result = saveVersioned<Shape>("relay:test:save", value);
+    expect(result).toEqual({ ok: true });
+    expect(JSON.parse(localStorage.getItem("relay:test:save")!)).toEqual(value);
+  });
+
+  it("returns reason:quota on QuotaExceededError", () => {
+    const original = localStorage.setItem;
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      const err = new DOMException("quota exceeded", "QuotaExceededError");
+      throw err;
+    });
+    try {
+      const result = saveVersioned("relay:test:quota", { schemaVersion: 1, x: 1 });
+      expect(result).toEqual({ ok: false, reason: "quota" });
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+      // sanity: storage behaviour restored
+      expect(typeof original).toBe("function");
+    }
+  });
+
+  it("returns reason:unavailable on SecurityError", () => {
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      const err = new DOMException("security denied", "SecurityError");
+      throw err;
+    });
+    try {
+      const result = saveVersioned("relay:test:security", { schemaVersion: 1, x: 1 });
+      expect(result).toEqual({ ok: false, reason: "unavailable" });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("returns reason:unavailable on a generic unexpected throw", () => {
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("private mode / unknown");
+    });
+    try {
+      const result = saveVersioned("relay:test:generic", { schemaVersion: 1, x: 1 });
+      expect(result).toEqual({ ok: false, reason: "unavailable" });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("treats a QuotaExceededError-shaped object (.name only) as quota", () => {
+    // Some environments throw a plain object instead of a real DOMException.
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw { name: "QuotaExceededError", message: "fake quota" };
+    });
+    try {
+      const result = saveVersioned("relay:test:quota-shape", { schemaVersion: 1, x: 1 });
+      expect(result).toEqual({ ok: false, reason: "quota" });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe("removeStored", () => {
+  it("removes a stored key", () => {
+    localStorage.setItem("relay:test:remove", JSON.stringify({ schemaVersion: 1 }));
+    expect(localStorage.getItem("relay:test:remove")).not.toBeNull();
+    removeStored("relay:test:remove");
+    expect(localStorage.getItem("relay:test:remove")).toBeNull();
+  });
+
+  it("does not throw when the key is absent", () => {
+    expect(() => removeStored("relay:test:never-was")).not.toThrow();
+  });
+
+  it("does not throw when removeItem fails", () => {
+    const spy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new DOMException("denied", "SecurityError");
+    });
+    try {
+      expect(() => removeStored("relay:test:denied")).not.toThrow();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+// ensure `vi` is referenced for the spies above (vitest globals are enabled
+// but importing explicitly keeps the test file self-documenting).
+describe("regression: existing wrappers still non-throwing", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("savePreferences silently ignores a quota failure (does not throw)", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("quota", "QuotaExceededError");
+    });
+    expect(() => savePreferences(defaultPreferences)).not.toThrow();
   });
 });
