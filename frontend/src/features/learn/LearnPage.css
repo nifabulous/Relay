@@ -281,3 +281,137 @@
     margin-left: 0;
   }
 }
+
+/* ── Case-first entry (Task 3) ─────────────────────────── */
+/*
+ * The case entry is the dominant action on the Learn landing page. It
+ * outweighs the legacy lab cards via a heavier border (action-tinted), a
+ * larger surface, and a prominent primary button. The lab cards below stay
+ * visually subordinate so the learner's eye lands on the supplier case first.
+ *
+ * Tokens only — no new dependencies, no decorative gradients/shadows.
+ */
+
+.case-entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-action-surface);
+  border: 1px solid var(--color-action-border);
+  border-radius: var(--radius-region);
+}
+
+.case-entry__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-entry__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  color: var(--color-action);
+  margin: 0;
+}
+
+.case-entry__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  letter-spacing: var(--tracking-tight);
+}
+
+.case-entry__subtitle {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  max-width: 60ch;
+}
+
+.case-entry__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+/* The dominant primary action — min 44px hit target inherited from .relay-btn */
+.case-entry__action {
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-5);
+}
+
+/* Completed surface: calm, not celebratory (no gold/checkmark flourishes) */
+.case-entry--completed {
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.case-entry__completed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* Under-review surface: warning-tinted so the disabled state reads as
+   intentional, not broken. */
+.case-entry--under-review {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+}
+
+.case-entry__under-review {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.case-entry__status-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.case-entry__status-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  max-width: 60ch;
+  line-height: var(--leading-snug);
+}
+
+.case-entry__alternative-label {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+/* Section heading above the technical-labs list, so the labs read as the
+   secondary/reference path beneath the dominant case entry. */
+.learn-page__section-heading h2 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-1);
+}
+
+.learn-page__section-heading .measure {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 768px) {
+  .case-entry {
+    padding: var(--space-4);
+  }
+
+  .case-entry__title {
+    font-size: var(--text-lg);
+  }
+}
+
