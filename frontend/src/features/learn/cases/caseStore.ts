@@ -67,6 +67,12 @@ export interface CaseSession {
     submittedAt: string;
   } | null;
   openedReferenceIds: string[];
+  // Advanced by the Task 4 UI on material writes (e.g. on saveCaseSession).
+  // The reducer itself does not advance this; it preserves whatever value is
+  // present. Keeping timestamps out of the reducer preserves purity (no clock
+  // calls) — the UI owns the wall-clock and stamps `updatedAt` when it
+  // persists. Until then the field is "" (set by createInitialCaseSession /
+  // restart) and stays "" through reducer transitions.
   updatedAt: string;
 }
 
@@ -77,7 +83,8 @@ export type CaseAction =
   | { type: "send-recommendation"; outcome: CaseOutcome; submittedAt: string }
   | { type: "begin-revision" }
   | { type: "complete-transfer"; outcome: CaseOutcome }
-  | { type: "restart" };
+  | { type: "restart" }
+  | { type: "open-reference"; referenceId: string };
 
 // ─── Storage key ────────────────────────────────────────────────────────────
 
@@ -176,12 +183,20 @@ function patchDraft(
  *                         begin-revision, and no-op in brief.
  *   send-recommendation — sets firstAttempt (or revisedAttempt during a
  *                         revision); double-submit is a no-op; no-op in brief.
- *   begin-revision      — legal only when a first attempt exists and the
- *                         working draft is not currently being revised.
+ *   begin-revision      — legal only when a first attempt exists AND no
+ *                         revised attempt has been submitted (one revision
+ *                         per case — the Phase-1 contract); idempotent if
+ *                         already in the recommend (revising) phase; no-op
+ *                         once revisedAttempt is set.
  *   complete-transfer   — legal only after at least a first attempt (resolve
  *                         or later); no-op in brief/investigate.
  *   restart             — always legal; clears the working draft and facts,
  *                         preserves attempt history, returns to investigate.
+ *   open-reference      — legal in investigate/recommend (including the
+ *                         recommend phase entered via begin-revision); appends
+ *                         the reference id to openedReferenceIds, deduped;
+ *                         no-op (same reference) if the id is already present,
+ *                         and no-op outside the legal phases.
  */
 export function caseReducer(session: CaseSession, action: CaseAction): CaseSession {
   switch (action.type) {
@@ -309,6 +324,16 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       if (session.firstAttempt === null) {
         return session;
       }
+      // One revision per case (the Phase-1 contract). Once a revised attempt
+      // has been submitted, begin-revision must NOT re-open the recommend
+      // phase: doing so would reset the working draft to the first attempt's
+      // and strand the learner in `recommend` with a Send that no-ops (the
+      // revised-submit branch guards on `revisedAttempt !== null`), producing
+      // an unwinnable state. This guard sits ABOVE the idempotency guard
+      // because revisedAttempt !== null is the more restrictive condition.
+      if (session.revisedAttempt !== null) {
+        return session;
+      }
       // If already in the recommend (revising) phase, this is idempotent —
       // do NOT wipe in-progress revision edits.
       if (session.phase === "recommend" && session.firstAttempt !== null) {
@@ -354,6 +379,26 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         revisedAttempt: preserved.revisedAttempt,
         openedReferenceIds: [],
         updatedAt: "",
+      };
+    }
+
+    case "open-reference": {
+      // The Task 4 ReferenceSheet UI dispatches this when the learner opens a
+      // source/rule reference. Legal during the investigation/recommendation
+      // phases — including the recommend phase entered via begin-revision
+      // (revising a recommendation still benefits from consulting sources).
+      // Illegal elsewhere (brief, resolve/debrief) returns the SAME reference.
+      if (session.phase !== "investigate" && session.phase !== "recommend") {
+        return session;
+      }
+      // Dedupe: opening the same reference twice is a TRUE no-op (same
+      // reference back), so a rapid re-dispatch is cheap for the UI to ignore.
+      if (session.openedReferenceIds.includes(action.referenceId)) {
+        return session;
+      }
+      return {
+        ...cloneSession(session),
+        openedReferenceIds: [...session.openedReferenceIds, action.referenceId],
       };
     }
 
@@ -427,8 +472,8 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
 }
 
 /**
- * Build a recovered session from a stale one. Pure (no I/O). Exported only
- * for symmetry / future testing; callers reach it via `loadCaseSession`.
+ * Build a recovered session from a stale one. Pure (no I/O). Callers reach
+ * it via `loadCaseSession`.
  */
 function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
   return {
@@ -487,6 +532,9 @@ export const FIRST_AFFECTED_CONTROL_ID = "case-shortlist";
  *   - `draft.shortlist`, `draft.selectedRail`, `draft.reasons`
  *     (the recommendation-specific fields the learner built against the old
  *     facts),
+ *   - `draft.customerExplanation` (it typically NAMES the selected rail, so it
+ *     is stale once the shortlist is invalidated; the prose that justifies a
+ *     specific rail no longer applies),
  *   - `firstAttempt` and `revisedAttempt` (their outcomes were scored against
  *     the old facts and are now stale),
  * and KEEPS:
@@ -494,9 +542,10 @@ export const FIRST_AFFECTED_CONTROL_ID = "case-shortlist";
  *   - `status`, `phase` (the learner stays where they are),
  *   - `requestedFactIds` is UPDATED to the new ids (the caller is telling us
  *     the new fact set),
- *   - the remaining draft fields (conditions, expectations, explanation) —
- *     these are the learner's prose and are not fact-derived. (If a future
- *     case makes them fact-derived, narrow this.)
+ *   - the remaining draft fields (conditions, and the three expectation
+ *     fields price/arrival/tracking) — these describe rail PROPERTIES rather
+ *     than specific rails and are softer prose, so they survive the
+ *     invalidation. (If a future case makes them rail-specific, narrow this.)
  *
  * Returns `{ firstAffectedControlId }` so the UI can move focus to the
  * shortlist control after invalidation, or `{ firstAffectedControlId: null }`
@@ -535,6 +584,12 @@ export function updateRequestedFacts(
     shortlist: [],
     selectedRail: null,
     reasons: [],
+    // The customer explanation typically names the selected rail ("I recommend
+    // SWIFT-to-Fedwire because..."), so it is stale after a shortlist
+    // invalidation. The three expectation fields below describe rail
+    // PROPERTIES (price/arrival/tracking) rather than specific rails, so they
+    // are softer and survive — they stay in `...session.draft` via spread.
+    customerExplanation: "",
   };
 
   const next: CaseSession = {

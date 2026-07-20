@@ -117,6 +117,16 @@ describe("caseReducer — request-facts", () => {
     const next = caseReducer(submitted, { type: "request-facts", ids: ["a"] });
     expect(next).toBe(submitted);
   });
+
+  it("is a no-op returning the SAME reference when the ids are identical (arrayEqual guard)", () => {
+    const session = startedSession();
+    const first = caseReducer(session, { type: "request-facts", ids: ["price-sensitivity", "tracking-need"] });
+    // A second dispatch with the SAME ids must short-circuit through the
+    // arrayEqual guard and hand back the same reference, not a copy.
+    const second = caseReducer(first, { type: "request-facts", ids: ["price-sensitivity", "tracking-need"] });
+    expect(second).toBe(first);
+    expect(second.requestedFactIds).toEqual(["price-sensitivity", "tracking-need"]);
+  });
 });
 
 describe("caseReducer — edit-draft", () => {
@@ -158,6 +168,15 @@ describe("caseReducer — edit-draft", () => {
     const initial = createInitialCaseSession(CASE_ID);
     const next = caseReducer(initial, { type: "edit-draft", patch: { selectedRail: "x" } });
     expect(next).toBe(initial);
+  });
+
+  it("is a no-op returning the SAME reference when the patch produces no field change (draftsEqual guard)", () => {
+    // Set selectedRail to a value, then re-send a patch that sets it to the
+    // same value — draftsEqual must short-circuit and hand back the same
+    // reference, not a copy.
+    const session = caseReducer(startedSession(), { type: "edit-draft", patch: { selectedRail: "swift-fedwire" } });
+    const next = caseReducer(session, { type: "edit-draft", patch: { selectedRail: "swift-fedwire" } });
+    expect(next).toBe(session);
   });
 });
 
@@ -267,6 +286,33 @@ describe("caseReducer — begin-revision", () => {
     // second begin-revision must not wipe in-progress revision edits
     expect(twice).toBe(once);
   });
+
+  it("is a no-op after a revised attempt has been submitted (one revision per case)", () => {
+    // Trace the unwinnable-state path: submit first → begin-revision → send
+    // revised → begin-revision AGAIN must return the SAME reference.
+    const revised = caseReducer(
+      caseReducer(submitted(), { type: "begin-revision" }),
+      {
+        type: "send-recommendation",
+        outcome: PREFERRED_OUTCOME,
+        submittedAt: "2026-07-02T10:00:00Z",
+      },
+    );
+    // revisedAttempt is now set and phase is back at resolve.
+    expect(revised.revisedAttempt).not.toBeNull();
+    expect(revised.phase).toBe("resolve");
+
+    const next = caseReducer(revised, { type: "begin-revision" });
+    // The second begin-revision is a TRUE no-op — same reference, nothing
+    // changed. Without this guard the learner would be reset into the
+    // recommend phase with a draft whose Send can never fire (the revised
+    // submit branch no-ops because revisedAttempt is already set), producing
+    // an unwinnable state.
+    expect(next).toBe(revised);
+    expect(next.phase).toBe("resolve");
+    expect(next.revisedAttempt).not.toBeNull();
+    expect(next.revisedAttempt!.outcome).toEqual(PREFERRED_OUTCOME);
+  });
 });
 
 describe("caseReducer — send-recommendation during revision (second attempt)", () => {
@@ -304,6 +350,67 @@ describe("caseReducer — send-recommendation during revision (second attempt)",
     });
     expect(twice).toBe(once);
     expect(twice.revisedAttempt!.outcome).toEqual(PREFERRED_OUTCOME);
+  });
+});
+
+describe("caseReducer — open-reference", () => {
+  it("appends the reference id to openedReferenceIds during investigate", () => {
+    const session = startedSession();
+    const next = caseReducer(session, { type: "open-reference", referenceId: "scheme-ref" });
+    expect(next.openedReferenceIds).toEqual(["scheme-ref"]);
+  });
+
+  it("appends a second distinct reference id without losing the first", () => {
+    const session = startedSession();
+    const first = caseReducer(session, { type: "open-reference", referenceId: "scheme-ref" });
+    const second = caseReducer(first, { type: "open-reference", referenceId: "ops-bulletin" });
+    expect(second.openedReferenceIds).toEqual(["scheme-ref", "ops-bulletin"]);
+  });
+
+  it("is legal in the recommend phase (initial recommend, pre-submit)", () => {
+    // Move to recommend via edit-draft in investigate — the recommend phase
+    // is also reachable post begin-revision; both must allow opening a ref.
+    const session = startedSession();
+    const after = caseReducer(session, { type: "open-reference", referenceId: "scheme-ref" });
+    expect(after.openedReferenceIds).toEqual(["scheme-ref"]);
+  });
+
+  it("is legal during a revision (recommend phase after begin-revision)", () => {
+    const submitted = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    const revising = caseReducer(submitted, { type: "begin-revision" });
+    expect(revising.phase).toBe("recommend");
+    const next = caseReducer(revising, { type: "open-reference", referenceId: "scheme-ref" });
+    expect(next.openedReferenceIds).toEqual(["scheme-ref"]);
+  });
+
+  it("dedupes: reopening the SAME reference is a no-op returning the SAME reference", () => {
+    const session = startedSession();
+    const first = caseReducer(session, { type: "open-reference", referenceId: "scheme-ref" });
+    const second = caseReducer(first, { type: "open-reference", referenceId: "scheme-ref" });
+    // already in the list — no mutation, same reference back
+    expect(second).toBe(first);
+    expect(second.openedReferenceIds).toEqual(["scheme-ref"]);
+  });
+
+  it("is a no-op in the brief phase (investigation not started)", () => {
+    const initial = createInitialCaseSession(CASE_ID);
+    const next = caseReducer(initial, { type: "open-reference", referenceId: "scheme-ref" });
+    expect(next).toBe(initial);
+    expect(next.openedReferenceIds).toEqual([]);
+  });
+
+  it("is a no-op in resolve after a first attempt (until a revision begins)", () => {
+    const submitted = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    expect(submitted.phase).toBe("resolve");
+    const next = caseReducer(submitted, { type: "open-reference", referenceId: "scheme-ref" });
+    expect(next).toBe(submitted);
+    expect(next.openedReferenceIds).toEqual([]);
   });
 });
 
@@ -367,6 +474,44 @@ describe("caseReducer — restart", () => {
     expect(restart.status).toBe("in_progress");
     expect(restart.phase).toBe("investigate");
   });
+
+  it("preserves BOTH firstAttempt and revisedAttempt when both exist, and clears the working draft", () => {
+    // Set up a session with both attempts: submit first → begin-revision →
+    // send revised. The current restart test only seeds firstAttempt; this
+    // covers the revisedAttempt preservation path.
+    const submitted = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    const revised = caseReducer(
+      caseReducer(submitted, { type: "begin-revision" }),
+      {
+        type: "send-recommendation",
+        outcome: PREFERRED_OUTCOME,
+        submittedAt: "2026-07-02T10:00:00Z",
+      },
+    );
+    expect(revised.firstAttempt).not.toBeNull();
+    expect(revised.revisedAttempt).not.toBeNull();
+
+    // Restart from a state where the working draft has diverged from both
+    // snapshots — the working draft must be reset, history untouched.
+    const dirty = caseReducer(revised, { type: "edit-draft", patch: { customerExplanation: "dirty" } });
+    // (edit-draft is illegal in resolve, so dirty === revised; that's fine —
+    // we only need firstAttempt/revisedAttempt populated.)
+
+    const restart = caseReducer(revised, { type: "restart" });
+    // history preserved
+    expect(restart.firstAttempt).toEqual(revised.firstAttempt);
+    expect(restart.revisedAttempt).toEqual(revised.revisedAttempt);
+    // working draft cleared
+    expect(restart.draft).toEqual(EMPTY_DRAFT);
+    expect(restart.requestedFactIds).toEqual([]);
+    expect(restart.openedReferenceIds).toEqual([]);
+    // phase back to investigate
+    expect(restart.phase).toBe("investigate");
+    void dirty;
+  });
 });
 
 describe("caseReducer — purity", () => {
@@ -396,6 +541,46 @@ describe("caseReducer — purity", () => {
     // edit-draft is illegal in brief
     const next = caseReducer(initial, { type: "edit-draft", patch: { selectedRail: "x" } });
     expect(next).toBe(initial);
+  });
+
+  it("never touches localStorage (no setItem/getItem/removeItem) for ANY action type", () => {
+    // Spy on the storage prototype so we catch ANY localStorage access
+    // regardless of key, including side-effect leaks that the same-reference
+    // no-op assertion above would miss (e.g. a "read-then-write" that happens
+    // to return the same reference).
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+
+    // A representative session in the resolve phase, so every action below
+    // hits its LEGAL branch at least once (legal branches are where a stray
+    // save/load would most plausibly sneak in). For begin-revision we use the
+    // pre-revised state so the action actually does work rather than no-op.
+    const session = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+
+    const actions: Parameters<typeof caseReducer>[1][] = [
+      { type: "start" },
+      { type: "request-facts", ids: ["a"] },
+      { type: "edit-draft", patch: { selectedRail: "x" } },
+      { type: "send-recommendation", outcome: PREFERRED_OUTCOME, submittedAt: "2026-07-02T00:00:00Z" },
+      { type: "begin-revision" },
+      { type: "complete-transfer", outcome: PREFERRED_OUTCOME },
+      { type: "restart" },
+      { type: "open-reference", referenceId: "scheme-ref" },
+    ];
+
+    for (const action of actions) {
+      caseReducer(session, action);
+    }
+
+    expect(setItemSpy).not.toHaveBeenCalled();
+    expect(getItemSpy).not.toHaveBeenCalled();
+    expect(removeItemSpy).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
   });
 });
 
@@ -585,7 +770,7 @@ describe("saveCaseSession — recoverable save failure", () => {
 // ─── Store: updateRequestedFacts invalidation ───────────────────────────────
 
 describe("updateRequestedFacts", () => {
-  it("clears shortlist, selectedRail, reasons, and outcomes while retaining the case shell", () => {
+  it("clears shortlist, selectedRail, reasons, customerExplanation, and outcomes while retaining the case shell", () => {
     const session = caseReducer(
       caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
       { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
@@ -606,6 +791,16 @@ describe("updateRequestedFacts", () => {
     expect(after.draft.shortlist).toEqual([]);
     expect(after.draft.selectedRail).toBeNull();
     expect(after.draft.reasons).toEqual([]);
+    // customerExplanation names the selected rail, so it's stale after a
+    // shortlist invalidation and is cleared alongside the rail fields.
+    expect(after.draft.customerExplanation).toBe("");
+    // The three expectation fields describe rail PROPERTIES (not specific
+    // rails), so they survive the invalidation — softer prose stays.
+    expect(after.draft.priceExpectation).toBe(session.draft.priceExpectation);
+    expect(after.draft.arrivalExpectation).toBe(session.draft.arrivalExpectation);
+    expect(after.draft.trackingExpectation).toBe(session.draft.trackingExpectation);
+    // conditions also survive (learner's prose, not rail-derived)
+    expect(after.draft.conditions).toEqual(session.draft.conditions);
     // stale outcomes cleared (they depended on now-invalid facts)
     expect(after.firstAttempt).toBeNull();
     expect(after.revisedAttempt).toBeNull();
