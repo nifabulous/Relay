@@ -352,6 +352,8 @@ Review this Phase 1 plan against the approved design spec before implementation.
 | Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR (FULL) | Score: 6/10 → 10/10; 17 decisions; 0 unresolved |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not run |
 
+Staleness note: the design review predates the scope-reduced Phase 1 plan; its approved principles remain applicable, but a post-implementation `/design-review` should verify the final vertical slice.
+
 **VERDICT:** ENG + DESIGN CLEARED — Phase 1 is ready for implementation; Phase 2 remains evidence-gated.
 
 NO UNRESOLVED DECISIONS
