@@ -222,7 +222,7 @@ const transferFacts: CaseFact[] = [
   {
     id: "urgency",
     label: "Timing / urgency",
-    value: "Supplier can wait up to a week; not time-critical.",
+    value: "Supplier can wait up to a week; not time-sensitive.",
     state: "supplied",
     requestable: false,
   },

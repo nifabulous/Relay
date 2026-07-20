@@ -102,8 +102,12 @@ function isNonEmpty(text: string): boolean {
  * priority tags the best-fit rail can be matched against. Conservative and
  * case-shaped: only flags a priority when the corresponding fact is present and
  * (for requestable facts) actually gathered.
+ *
+ * Exported so the catalog↔evaluator keyword contract is directly testable: a
+ * catalog test can assert "this case discloses urgency+tracking+cost" without
+ * going through the full tier scoring.
  */
-function disclosedPriorities(definition: CaseDefinition): Set<"urgency" | "tracking" | "cost"> {
+export function disclosedPriorities(definition: CaseDefinition): Set<"urgency" | "tracking" | "cost"> {
   const priorities = new Set<"urgency" | "tracking" | "cost">();
   const urgency = findFact(definition, "urgency");
   if (urgency && urgency.state !== "unknown" && hasWord(urgency.value, /business day|urgent|asap|deadline|time-critical|within \d/)) {
@@ -137,8 +141,12 @@ function railSatisfies(rail: RailOption, priority: "urgency" | "tracking" | "cos
  * The single rail that best satisfies ALL disclosed priorities, preferring
  * rails that satisfy more priorities. Returns undefined when no eligible rail
  * covers the (urgency+tracking) bundle the case emphasizes.
+ *
+ * Exported so the catalog↔evaluator contract is directly testable: a catalog
+ * test can assert "swift-fedwire is the best-fit rail for this case" without
+ * building a full draft and tracing it through tier scoring.
  */
-function bestFitRailId(definition: CaseDefinition): string | undefined {
+export function bestFitRailId(definition: CaseDefinition): string | undefined {
   const priorities = disclosedPriorities(definition);
   if (priorities.size === 0) return undefined;
 
@@ -189,7 +197,9 @@ export function validateShortlist(
     const rail = findRail(definition, id);
     if (!rail) continue;
     if (isRailIneligible(definition, rail)) {
-      invalidRailIds.push(id);
+      // De-dupe: the shortlist is advisory and may contain repeats; never leak
+      // duplicate ids out to callers that render them.
+      if (!invalidRailIds.includes(id)) invalidRailIds.push(id);
       continue;
     }
     for (const factId of missingRequiredFacts(definition, rail)) {
@@ -204,6 +214,10 @@ export function validateShortlist(
 }
 
 // ─── evaluateRecommendation ─────────────────────────────────────────────────
+// NOTE: the consequence/nextAction prose below assumes the CA→US/USD corridor
+// (the only case in Phase 1). The grading LOGIC is corridor-agnostic, but the
+// human-readable copy hardcodes "USD" and "United States". Generalize the copy
+// when Phase 2 adds a second case.
 
 function emptyOutcome(): CaseOutcome {
   return {

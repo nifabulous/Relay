@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { supplierCase } from "./caseCatalog";
+import { disclosedPriorities, bestFitRailId } from "./caseEvaluator";
 import type { SourceClaim } from "./caseTypes";
 
 // ─── supplierCase: identity & review ────────────────────────────────────────
@@ -190,5 +191,33 @@ describe("supplierCase synthetic-data safety", () => {
     expect(blob).not.toMatch(/account\s*number/i);
     // Author must flag the content as simulation/example.
     expect(blob).toMatch(/simulat|fictional|example|training/);
+  });
+});
+
+// ─── catalog ↔ evaluator contract (direct, not end-to-end) ──────────────────
+// Enforces the keyword contract the module docstring promises. If a future edit
+// weakens the catalog's rail cues or fact wording, these fail directly rather
+// than silently flipping a tier label.
+
+describe("supplierCase ↔ evaluator contract", () => {
+  it("discloses urgency, tracking, and cost priorities", () => {
+    const priorities = disclosedPriorities(supplierCase);
+    expect(priorities.has("urgency")).toBe(true);
+    expect(priorities.has("tracking")).toBe(true);
+    expect(priorities.has("cost")).toBe(true);
+  });
+
+  it("identifies swift-fedwire as the unique best-fit rail", () => {
+    expect(bestFitRailId(supplierCase)).toBe("swift-fedwire");
+  });
+
+  it("the transfer fixture does NOT disclose urgency (no keyword false-positive)", () => {
+    // The transfer urgency text must avoid the evaluator's urgency trigger words
+    // (e.g. "time-critical", "business day") so it cannot be mis-scored if the
+    // debrief ever runs it through the evaluator.
+    const transferUrgency = supplierCase.transfer.facts.find((f) => f.id === "urgency");
+    expect(transferUrgency).toBeDefined();
+    const value = (transferUrgency?.value ?? "").toLowerCase();
+    expect(value).not.toMatch(/time-critical|business day|asap|urgent|deadline|within \d/);
   });
 });

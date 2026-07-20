@@ -259,6 +259,20 @@ describe("evaluateRecommendation with multiple shortlisted alternatives", () => 
   it("selecting a viable-but-suboptimal rail among several yields defensible (not preferred)", () => {
     const outcome = evaluateRecommendation(makeCase(), draft("cross-border-ach"));
     expect(outcome.quality).toBe("defensible");
+    // Lock the bestFitRailId differentiator: the gap must name the better-fit rail.
+    // This is the most regression-prone boundary between `defensible` and `preferred`.
+    expect(outcome.reasoningGap).not.toBeNull();
+    expect(outcome.reasoningGap).toContain("SWIFT wire to Fedwire");
+  });
+
+  it("tolerates duplicate rail ids in the shortlist without duplicate invalid ids", () => {
+    // Shortlist is advisory; duplicates must not produce duplicate invalid entries.
+    const result = validateShortlist(makeCase(), {
+      ...fullDraft("interac-etransfer"),
+      shortlist: ["interac-etransfer", "interac-etransfer"],
+      selectedRail: "interac-etransfer",
+    });
+    expect(result.invalidRailIds).toEqual(["interac-etransfer"]);
   });
 });
 
@@ -289,5 +303,19 @@ describe("evaluateRecommendation outcome shape", () => {
   it("evaluates the real supplierCase catalog entry without throwing", () => {
     const outcome = evaluateRecommendation(supplierCase, fullDraft("swift-fedwire"));
     expect(["invalid", "possible", "defensible", "preferred"]).toContain(outcome.quality);
+  });
+
+  it("locks the catalog↔evaluator contract: swift-fedwire is preferred against the real catalog", () => {
+    // Canary for every future edit to caseCatalog.ts OR caseEvaluator.ts: the
+    // authored priorities and rail cues must keep producing `preferred` here.
+    const outcome = evaluateRecommendation(supplierCase, fullDraft("swift-fedwire"));
+    expect(outcome.quality).toBe("preferred");
+    expect(outcome.reasoningGap).toBeNull();
+  });
+
+  it("locks the catalog↔evaluator contract: cross-border-ach is defensible against the real catalog", () => {
+    const outcome = evaluateRecommendation(supplierCase, fullDraft("cross-border-ach"));
+    expect(outcome.quality).toBe("defensible");
+    expect(outcome.reasoningGap).not.toBeNull();
   });
 });
