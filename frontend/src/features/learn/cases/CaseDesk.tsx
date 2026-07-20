@@ -54,6 +54,7 @@ import { RailShortlist } from "./RailShortlist";
 import { ReferenceSheet } from "./ReferenceSheet";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { Button } from "../../../design-system/Button";
+import { StatusChip } from "../../../design-system/StatusChip";
 import type { AsyncStatus } from "../../../design-system/types";
 import "./CaseDesk.css";
 
@@ -199,6 +200,18 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // Save failures are surfaced (not swallowed) but the in-memory draft is
   // never lost.
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // ── Recovery notice ───────────────────────────────────────────────────────
+  // When loadCaseSession returns a recovered session (status "under_review"),
+  // the case content changed under the learner: their draft was wiped and the
+  // preserved firstAttempt is kept. We must not silently show an empty draft —
+  // the plan's failure-modes table promises "Restart explanation and safe
+  // action" / "your prior draft was invalidated." This notice is shown on mount
+  // for recovered sessions and is dismissible; the dismissal is local (it is
+  // not a material decision and should not be persisted).
+  const [recoveryDismissed, setRecoveryDismissed] = useState(false);
+  const showRecoveryNotice =
+    session.status === "under_review" && !recoveryDismissed;
   function persist(next: CaseSession) {
     const stamped = { ...next, updatedAt: new Date().toISOString() };
     const result = saveCaseSession(stamped);
@@ -381,6 +394,13 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         {evidenceAnnouncement}
       </div>
 
+      {showRecoveryNotice && (
+        <RecoveryNotice
+          hasSubmittedAttempt={session.firstAttempt !== null}
+          onDismiss={() => setRecoveryDismissed(true)}
+        />
+      )}
+
       {session.phase === "brief" && (
         <BriefPhase
           definition={definition}
@@ -471,6 +491,48 @@ function BriefPhase({ definition, onStart, phaseHeadingRef }: BriefPhaseProps) {
       </p>
       <Button variant="primary" onClick={onStart} className="case-desk__primary-action">
         Start investigation
+      </Button>
+    </section>
+  );
+}
+
+// ─── Recovery notice (under_review sessions) ────────────────────────────────
+
+interface RecoveryNoticeProps {
+  hasSubmittedAttempt: boolean;
+  onDismiss: () => void;
+}
+
+/**
+ * Dismissible, accessible announcement shown when a recovered session resumes.
+ * A recovered session (status "under_review") means the case content changed
+ * under the learner: their in-progress draft was invalidated and reset to the
+ * current case material, while their submitted first attempt is preserved.
+ *
+ * Uses role="status" (a polite announcement) rather than role="alert" (which
+ * would be interruptive) — this is an informative recovery state, not an
+ * error. The warning styling + StatusChip("under_review") make it visually
+ * distinct from the body content and the save-error alert.
+ */
+function RecoveryNotice({ hasSubmittedAttempt, onDismiss }: RecoveryNoticeProps) {
+  return (
+    <section
+      className="case-desk__recovery"
+      aria-label="Case updated"
+      role="status"
+    >
+      <div className="case-desk__recovery-heading">
+        <StatusChip status="under_review" />
+        <h2 className="case-desk__recovery-title">This case was updated since your last visit</h2>
+      </div>
+      <p className="case-desk__recovery-detail">
+        Your in-progress draft was reset to the current case material —
+        re-investigate to continue.
+        {hasSubmittedAttempt &&
+          " Your submitted attempt is preserved."}
+      </p>
+      <Button variant="secondary" onClick={onDismiss}>
+        Got it
       </Button>
     </section>
   );
@@ -653,7 +715,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
 
       <div className="case-desk__nav">
         <button
-          ref={referenceOpenerRef as never}
+          ref={referenceOpenerRef}
           type="button"
           className="relay-btn relay-btn--secondary"
           // Hidden helper that exists only to give the reference-opener ref a

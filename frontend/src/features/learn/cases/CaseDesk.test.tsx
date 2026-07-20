@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { CaseDesk } from "./CaseDesk";
 import type { CaseEnrichment, CaseFact } from "./caseTypes";
-import { createInitialCaseSession } from "./caseStore";
+import { createInitialCaseSession, type CaseSession } from "./caseStore";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 // The CaseDesk reads/writes localStorage via caseStore. We clear it between
@@ -25,6 +25,49 @@ function seedStartedSession() {
     `relay:case-session:${CASE_ID}`,
     JSON.stringify(started),
   );
+}
+
+// Seed a recovered session: the case content changed under the learner, so
+// loadCaseSession's recovery contract yields status "under_review" with a
+// wiped draft and a PRESERVED firstAttempt. Mirrors recoverStaleSession.
+function seedUnderReviewSession() {
+  const initial = createInitialCaseSession(CASE_ID);
+  const recovered: CaseSession = {
+    ...initial,
+    status: "under_review",
+    phase: "investigate",
+    // The working draft is wiped (built against stale case content)...
+    draft: { ...initial.draft },
+    // ...but the learner's first attempt is preserved.
+    firstAttempt: {
+      draft: {
+        ...initial.draft,
+        selectedRail: "swift-fedwire",
+        shortlist: ["swift-fedwire"],
+        customerExplanation: "I recommend SWIFT-to-Fedwire.",
+      },
+      outcome: {
+        quality: "defensible",
+        consequence: "Arrives next business day.",
+        soundReasoning: ["Uses an eligible rail."],
+        reasoningGap: null,
+        nextAction: "Send the transfer.",
+        invalidRailIds: [],
+        missingFactIds: [],
+      },
+      submittedAt: "2026-06-15T10:00:00.000Z",
+    },
+  };
+  localStorage.setItem(
+    `relay:case-session:${CASE_ID}`,
+    JSON.stringify(recovered),
+  );
+}
+
+function readStoredSession(): CaseSession | null {
+  const raw = localStorage.getItem(`relay:case-session:${CASE_ID}`);
+  if (!raw) return null;
+  return JSON.parse(raw) as CaseSession;
 }
 
 function renderDesk(props: { enrichment?: CaseEnrichment } = {}) {
@@ -288,11 +331,177 @@ describe("CaseDesk — phase rendering", () => {
     });
   });
 
-  it("announces evidence changes through a polite live region", () => {
+  it("announces evidence changes through a polite live region", async () => {
+    const user = userEvent.setup();
     seedStartedSession();
     renderDesk();
     // A polite live region exists for evidence changes.
     const live = document.querySelector('[aria-live="polite"]');
     expect(live).not.toBeNull();
+    // Initially empty (no facts requested yet).
+    expect(live?.textContent).toBe("");
+    // Request a fact and confirm the live region announces the new facts.
+    const cb = screen.getByRole("checkbox", { name: /fee sensitivity/i });
+    await user.click(cb);
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+    await waitFor(() => {
+      expect(live?.textContent ?? "").toMatch(/1 new fact available/i);
+    });
+  });
+});
+
+// ─── customerExplanation debounce + flush (I1) ──────────────────────────────
+// The debounce machinery (three refs, setTimeout, unmount cleanup, sync effect)
+// is the highest-risk code in CaseDesk. These tests cover the full contract:
+//   - writes are debounced 300ms,
+//   - blur flushes immediately,
+//   - the in-memory text stays authoritative during the pending window,
+//   - unmount flushes the latest text (sessionRef defeats the stale closure).
+//
+// We use vi.useFakeTimers + fireEvent.change on the textarea. user.type with
+// fake timers advances time per keystroke (its own delay), which races with
+// the 300ms debounce window and makes "NOT updated immediately" assertions
+// unreliable. Direct fireEvent.change updates the value without advancing the
+// clock, so the debounce window is genuinely under our control.
+
+describe("CaseDesk — customerExplanation debounce + flush", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function getExplanationTextarea() {
+    return screen.getByRole("textbox", { name: /explanation for the customer/i });
+  }
+  function storedExplanation(): string {
+    return readStoredSession()?.draft.customerExplanation ?? "";
+  }
+
+  it("debounces the write: localStorage is NOT updated until 300ms elapse", () => {
+    seedStartedSession();
+    renderDesk();
+    const textarea = getExplanationTextarea();
+    // Type — no clock advancement yet.
+    fireEvent.change(textarea, { target: { value: "drafting an explanation" } });
+    // localStorage must NOT reflect the typed text yet (write is pending).
+    expect(storedExplanation()).toBe("");
+    // Advance past the debounce window.
+    vi.advanceTimersByTime(300);
+    expect(storedExplanation()).toBe("drafting an explanation");
+  });
+
+  it("flushes immediately on blur without waiting for the 300ms window", () => {
+    seedStartedSession();
+    renderDesk();
+    const textarea = getExplanationTextarea();
+    fireEvent.change(textarea, { target: { value: "flushed on blur" } });
+    expect(storedExplanation()).toBe("");
+    // Blur flushes the pending write at once.
+    fireEvent.blur(textarea);
+    expect(storedExplanation()).toBe("flushed on blur");
+  });
+
+  it("keeps the in-memory draft authoritative: the controlled input shows typed text BEFORE the 300ms flush", () => {
+    seedStartedSession();
+    renderDesk();
+    const textarea = getExplanationTextarea();
+    fireEvent.change(textarea, { target: { value: "visible immediately" } });
+    // localStorage is still empty (debounce pending)...
+    expect(storedExplanation()).toBe("");
+    // ...but the controlled input already shows the typed text — the in-memory
+    // state is the source of truth for the UI while a write is pending.
+    expect(textarea).toHaveValue("visible immediately");
+  });
+
+  it("flushes the latest text on unmount (sessionRef defeats the stale closure)", () => {
+    seedStartedSession();
+    const { unmount } = renderDesk();
+    const textarea = getExplanationTextarea();
+    // Simulate several keystrokes without advancing the clock; the timer is
+    // rescheduled each time so only the LAST value should be persisted.
+    fireEvent.change(textarea, { target: { value: "first" } });
+    fireEvent.change(textarea, { target: { value: "second" } });
+    fireEvent.change(textarea, { target: { value: "final value" } });
+    expect(storedExplanation()).toBe("");
+    unmount();
+    expect(storedExplanation()).toBe("final value");
+  });
+});
+
+// ─── Save-failure surfacing (I2) ────────────────────────────────────────────
+// The typed SaveResult failure path maps quota/unavailable to a user-visible
+// saveError alert, and the in-memory draft MUST survive the failed write.
+
+describe("CaseDesk — surfaces typed save failures and keeps the in-memory draft", () => {
+  let setItemSpy: ReturnType<typeof vi.spyOn>;
+
+  afterEach(() => {
+    if (setItemSpy) setItemSpy.mockRestore();
+  });
+
+  it("shows the save-error alert when a persist fails and preserves the edit", async () => {
+    const user = userEvent.setup();
+    // Seed BEFORE installing the spy — otherwise the seed write itself throws.
+    seedStartedSession();
+    // Force every subsequent localStorage.setItem to throw QuotaExceededError.
+    // The storage module's saveVersioned classifies this as reason:"quota".
+    setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    renderDesk();
+    // Trigger a persist via a non-debounced edit (the price expectation input
+    // dispatches edit-draft and persists synchronously).
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    await user.type(priceInput, "next-day");
+    // The save-error alert (role=alert) surfaces the quota failure.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't save your progress/i);
+    expect(alert).toHaveTextContent(/storage is full|quota/i);
+    // The in-memory draft survives: the controlled input keeps the edit.
+    expect(priceInput).toHaveValue("next-day");
+    // A further edit still works (the draft is not frozen by the failure).
+    await user.type(priceInput, "!");
+    expect(priceInput).toHaveValue("next-day!");
+  });
+});
+
+// ─── Recovery notice for under_review sessions (I3) ─────────────────────────
+// When loadCaseSession returns a recovered session (the case content changed
+// under the learner), CaseDesk must surface a visible, accessible notice — not
+// a silent empty draft. The preserved firstAttempt must NOT be lost.
+
+describe("CaseDesk — under_review recovery notice", () => {
+  it("renders a dismissible recovery notice above the investigate phase", () => {
+    seedUnderReviewSession();
+    renderDesk();
+    // The recovery notice is present, accessible, and carries the key message.
+    const notice = screen.getByRole("status", { name: /case updated/i });
+    expect(notice).toHaveTextContent(/updated since your last visit/i);
+    expect(notice).toHaveTextContent(/draft was reset|re-investigate/i);
+    // The investigate phase still renders below the notice.
+    expect(screen.getByRole("heading", { name: /gather evidence|investigate/i })).toBeInTheDocument();
+  });
+
+  it("preserves the submitted firstAttempt in storage (recovery never loses it)", () => {
+    seedUnderReviewSession();
+    renderDesk();
+    // Rendering the recovered session must not have wiped the preserved
+    // firstAttempt. (No material action has been dispatched yet; if it had,
+    // persist would re-write storage with firstAttempt intact.)
+    const stored = readStoredSession();
+    expect(stored?.firstAttempt).not.toBeNull();
+    expect(stored?.firstAttempt?.draft.selectedRail).toBe("swift-fedwire");
+  });
+
+  it("can be dismissed by the learner", async () => {
+    const user = userEvent.setup();
+    seedUnderReviewSession();
+    renderDesk();
+    const notice = screen.getByRole("status", { name: /case updated/i });
+    const dismiss = within(notice).getByRole("button", { name: /dismiss|got it|close/i });
+    await user.click(dismiss);
+    expect(screen.queryByRole("status", { name: /case updated/i })).not.toBeInTheDocument();
   });
 });

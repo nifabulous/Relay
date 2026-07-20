@@ -42,6 +42,12 @@ const TOKENS = {
   surface3: "#e6eaf2",
   inkStrong: "#16233d",
   surface: "#ffffff",
+  // Action palette — used by the `preferred` StatusChip modifier
+  // (--color-action / --color-action-surface in tokens.css). A future token
+  // tweak could silently drop this below AA, so it is guarded here alongside
+  // the other semantic pairs.
+  action: "#3157d5",
+  actionSurface: "#eef2fc",
 } as const;
 
 describe("WCAG 2.2 AA contrast for semantic tokens", () => {
@@ -63,5 +69,12 @@ describe("WCAG 2.2 AA contrast for semantic tokens", () => {
 
   it("ink-strong on surface meets 7:1 (AAA)", () => {
     expect(contrastRatio(TOKENS.inkStrong, TOKENS.surface)).toBeGreaterThanOrEqual(7);
+  });
+
+  it("action text on action-surface meets 4.5:1 (preferred StatusChip)", () => {
+    // Regression guard for the `--action` modifier used by the `preferred`
+    // StatusChip. The action blue on its tinted surface is the chip's
+    // foreground/background pair; ~5.43:1 today, AA requires 4.5:1.
+    expect(contrastRatio(TOKENS.action, TOKENS.actionSurface)).toBeGreaterThanOrEqual(4.5);
   });
 });

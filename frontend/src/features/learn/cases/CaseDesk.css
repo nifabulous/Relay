@@ -56,6 +56,39 @@
   border: 0;
 }
 
+/* Recovery notice for under_review sessions (case content changed under the
+   learner). Warning-palette so it reads as distinct from the save-error alert
+   (danger) and the phase content. role="status" carries the announcement. */
+.case-desk__recovery {
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.case-desk__recovery-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.case-desk__recovery-title {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-warning);
+}
+
+.case-desk__recovery-detail {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
 /* ── Phase headers ───────────────────────────────────────────────────────── */
 
 .case-desk__phase-header {
