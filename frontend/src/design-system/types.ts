@@ -18,6 +18,31 @@ export type AsyncStatus =
 
 export type CheckStatus = "passed" | "needs_attention" | "failed" | "unavailable";
 
+/**
+ * Source-claim statuses used by the Case Desk's evidence layer. A fact's
+ * SourceClaim is either verified (current, within its review-by date) or
+ * under review (the source material is being refreshed). Distinct from
+ * CheckStatus (check pass/fail) and DecisionQuality (recommendation grade).
+ */
+export type SourceStatus = "verified" | "under_review";
+
+/**
+ * Decision-quality grades, reused from the Case Desk domain. Re-exported here
+ * so the design-system StatusChip can compose the full status union without a
+ * circular dependency on the feature module. The canonical definition stays
+ * in features/learn/cases/caseTypes.ts; this is a structural alias.
+ */
+export type DecisionQuality = "invalid" | "possible" | "defensible" | "preferred";
+
+/**
+ * The full union of statuses StatusChip can render. Composed exhaustively:
+ * CheckStatus (legacy check pass/fail) + DecisionQuality (recommendation
+ * grade) + SourceStatus (evidence provenance). Widening the `status` prop to
+ * this union is non-breaking — every existing caller passes a CheckStatus
+ * value, which remains a valid member.
+ */
+export type StatusChipStatus = CheckStatus | DecisionQuality | SourceStatus;
+
 export type Workspace = "overview" | "learn" | "explore" | "operate";
 
 export type RecommendationState = "conclusive" | "incomplete";

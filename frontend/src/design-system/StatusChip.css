@@ -62,3 +62,19 @@
   background: var(--color-ink-muted);
   color: var(--color-on-action);
 }
+
+/*
+ * Action modifier — reserved for the single highest-status grade ("preferred":
+ * the best-fit recommendation). Uses the action blue so it reads as the
+ * standout choice without introducing a new palette. Pairs a star icon with
+ * the label so meaning never depends on colour alone.
+ */
+.status-chip--action {
+  background: var(--color-action-surface);
+  color: var(--color-action);
+}
+
+.status-chip--action .status-chip__icon {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}

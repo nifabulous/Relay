@@ -1,22 +1,20 @@
 /**
  * CaseDeskRoute — the lazy-loaded route target for `/learn/cases/:caseId`.
  *
- * Task 3 deliverable: a MINIMAL placeholder that
- *   - reads the `:caseId` route param,
- *   - looks the case up in the catalog,
+ * Reads the `:caseId` route param, looks the case up in the catalog, and:
  *   - renders a clear "case not found" state with a link back to Learn when
  *     the id is unknown (so a typo or stale bookmark degrades gracefully),
- *   - otherwise renders the case title + a Task-4 placeholder note.
+ *   - otherwise renders the real Case Desk.
  *
- * Task 4 will replace the placeholder body with the real CaseDesk component
+ * Task 4 replaced the prior placeholder body with the CaseDesk component
  * (brief → investigate → recommend → resolve → debrief). The route's
- * EXISTENCE and ORDERING in App.tsx is the critical Task-3 deliverable; this
- * file just gives the route something honest to render.
+ * missing-case handling and breadcrumb are preserved.
  */
 
 import { useParams, Link } from "react-router-dom";
 import { supplierCase } from "./caseCatalog";
 import type { CaseDefinition } from "./caseTypes";
+import { CaseDesk } from "./CaseDesk";
 import "../LearnPage.css";
 
 const KNOWN_CASES: ReadonlyArray<CaseDefinition> = [supplierCase];
@@ -55,29 +53,11 @@ export function CaseDeskRoute() {
         <span>{match.title}</span>
       </nav>
 
-      <div className="learn-module-header">
-        <div className="learn-module-header__title-row">
-          <h1>{match.title}</h1>
-        </div>
-        <p className="measure">{match.customerRequest}</p>
-        <div className="learn-module-header__meta">
-          <span>Last verified {match.verifiedAt}</span>
-        </div>
-      </div>
-
-      {/* TASK-4 REPLACE POINT — the real Case Desk (brief → investigate →
-          recommend → resolve → debrief) will replace this note. Keeping the
-          surface minimal here so the route resolves to SOMETHING honest
-          while the full experience is built in Task 4. */}
-      <div className="learn-content__callout">
-        Case desk coming in Task 4.
-      </div>
-
-      <div className="learn-nav">
-        <Link to="/learn" className="relay-btn relay-btn--secondary learn-nav__prev">
-          Back to Learn
-        </Link>
-      </div>
+      {/* The Case Desk owns the brief → investigate → recommend → resolve →
+          debrief flow, persistence, and focus management. The route just
+          passes the matched caseId and keeps the breadcrumb + missing-case
+          handling intact. */}
+      <CaseDesk caseId={match.id} />
     </div>
   );
 }
