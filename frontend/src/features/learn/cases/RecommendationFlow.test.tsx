@@ -721,20 +721,18 @@ describe("RecommendationFlow 5c — completion is tied to complete-transfer, NOT
 describe("RecommendationFlow — preferred tier is reachable via the UI", () => {
   it("lets a learner request the required facts, enter a substantive reason, and reach `preferred`", async () => {
     // Seed only the SHELL — an in-progress session in the recommend phase with
-    // NO reasoning fields filled and NO facts requested. The learner must
-    // investigate AND reason through the UI.
+    // NO reasoning fields filled, NO facts requested, and NO rail selected.
+    // The learner must investigate, select a rail, AND reason through the UI.
+    // (Pre-invalidation-contract, this test seeded the shortlist/selectedRail
+    // up front. Under the contract, changing evidence mid-recommend clears
+    // dependent decisions, so the rail must be selected AFTER facts are
+    // requested — the order a real learner follows.)
     const initial = createInitialCaseSession(CASE_ID);
     const shell: CaseSession = {
       ...initial,
       status: "in_progress",
       phase: "recommend",
-      // Draft has the best-fit rail selected but NOTHING else — the learner
-      // must request the facts and provide the reasoning through the UI.
-      draft: {
-        ...initial.draft,
-        shortlist: ["swift-fedwire"],
-        selectedRail: "swift-fedwire",
-      },
+      draft: { ...initial.draft },
       requestedFactIds: [],
       firstAttempt: null,
     };
@@ -755,6 +753,12 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     await user.click(screen.getByRole("checkbox", { name: /intermediary correspondent/i }));
     await user.click(screen.getByRole("checkbox", { name: /institution variation/i }));
     await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // After gathering evidence, the learner selects the best-fit rail. This
+    // step now happens POST fact-request because the invalidation contract
+    // (DESIGN spec §invalidation) clears a rail selected before evidence
+    // gathering.
+    await user.click(screen.getByRole("radio", { name: /swift.*fedwire|fedwire.*swift/i }));
 
     // The learner fills each reasoning field via its UI input. T1b: the primary
     // reason is a real sentence (well above the substantive threshold); filler

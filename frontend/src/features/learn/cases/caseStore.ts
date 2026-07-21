@@ -286,9 +286,24 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       if (arrayEqual(session.requestedFactIds, action.ids)) {
         return session;
       }
+      // Invalidation contract (DESIGN spec §invalidation, lines 204 + 212):
+      // editing an upstream/requested fact during the RECOMMEND phase
+      // invalidates every dependent shortlist, recommendation, and outcome.
+      // We clear the mutable working draft (shortlist, selected rail,
+      // reasons, conditions, expectations, explanation) so the learner
+      // rebuilds the recommendation against the new evidence. The frozen
+      // firstAttempt/revisedAttempt snapshots are untouched (we never read
+      // or write them here). During INVESTIGATE the draft is exploratory
+      // and not yet tied to a committed recommendation, so it survives —
+      // invalidating would destroy in-progress reasoning for no benefit.
+      // The live-region announcement + focus restoration live in the Case
+      // Desk component (the reducer is pure; it cannot dispatch side
+      // effects). The Desk detects invalidation by diffing draft identity.
+      const invalidateDraft = session.phase === "recommend";
       return {
         ...cloneSession(session),
         requestedFactIds: [...action.ids],
+        ...(invalidateDraft ? { draft: { ...EMPTY_DRAFT } } : {}),
       };
     }
 

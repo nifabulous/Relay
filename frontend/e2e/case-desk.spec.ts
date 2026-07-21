@@ -274,8 +274,10 @@ test.describe("Case Desk core journey", () => {
   test("announces evidence growth via the polite live region", async ({ page }) => {
     await startAndEnterInvestigate(page);
 
-    // The live region starts empty.
-    const live = page.locator(".case-desk__live");
+    // The evidence live region starts empty. (.first() because the Case Desk
+    // now hosts two polite live regions — the evidence region and the
+    // invalidation-announcement region added by the §invalidation contract.)
+    const live = page.locator(".case-desk__live").first();
     await expect(live).toHaveAttribute("aria-live", "polite");
     await expect(live).toHaveText("");
 
@@ -411,7 +413,7 @@ test.describe("Case Desk recovery scenarios", () => {
 
     // The freshly-reset draft has no requested facts — the live region is
     // empty and no "Requested" tag is present.
-    await expect(page.locator(".case-desk__live")).toHaveText("");
+    await expect(page.locator(".case-desk__live").first()).toHaveText("");
     await expect(page.getByText("Requested", { exact: true })).toHaveCount(0);
 
     // Restart sets status to "in_progress" (the learner is investigating
