@@ -13,13 +13,14 @@ import { createInitialCaseSession, type CaseSession } from "./caseStore";
 
 const CASE_ID = "canada-us-supplier";
 
-function seedStartedSession() {
+function seedStartedSession(overrides: Partial<CaseSession> = {}) {
   const initial = createInitialCaseSession(CASE_ID);
   // Dispatch `start` to move brief → investigate.
   const started = {
     ...initial,
     status: "in_progress" as const,
     phase: "investigate" as const,
+    ...overrides,
   };
   localStorage.setItem(
     `relay:case-session:${CASE_ID}`,
@@ -138,6 +139,31 @@ describe("CaseDesk — fact sections by state", () => {
     expect(screen.getByText("USD")).toBeInTheDocument();
     expect(screen.getByText("Invoice amount")).toBeInTheDocument();
     expect(screen.getByText("USD 48,000.00")).toBeInTheDocument();
+  });
+
+  it("T1 UI: a requestable unknown fact's VALUE is hidden until requested (no answer leak)", () => {
+    // The investigation must be load-bearing at the UI layer too, not just the
+    // evaluator. A requestable fact that ships `unknown` shows its LABEL (so the
+    // learner knows it exists and can request it) but NOT its value (the answer)
+    // until the learner actually requests it. Otherwise a learner reads the
+    // answer without investigating, defeating T1's premise even though the
+    // evaluator scores correctly.
+    seedStartedSession();
+    renderDesk();
+    // The fee-sensitivity fact's value must NOT be visible before request.
+    const feeValue = "Customer is fee-conscious; willing to pay more only if it protects the deadline.";
+    expect(screen.queryByText(feeValue)).not.toBeInTheDocument();
+    // The "Not yet requested" placeholder stands in for the hidden value.
+    const unknown = screen.getByRole("region", { name: /unknown/i });
+    expect(unknown).toHaveTextContent(/not yet requested/i);
+  });
+
+  it("T1 UI: after a requestable fact is requested, its value becomes visible", () => {
+    // Seed a session where fee-sensitivity has been requested.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+    const feeValue = "Customer is fee-conscious; willing to pay more only if it protects the deadline.";
+    expect(screen.getByText(feeValue)).toBeInTheDocument();
   });
 });
 
