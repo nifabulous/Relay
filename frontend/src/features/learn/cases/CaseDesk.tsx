@@ -747,6 +747,18 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }
 
+  // ── Baseline (spec L171 ungraded starting view) ───────────────────────────
+  // The baseline rail + confidence are captured at the start of investigate,
+  // before any facts are requested. Dispatch is immediate + persist immediate
+  // (the baseline is a one-shot capture, not free text — no debounce needed).
+  function handleSetBaseline(railId: string | null, confidence: "low" | "medium" | "high" | null) {
+    const next = caseReducer(session, { type: "set-baseline", railId, confidence });
+    if (next !== session) {
+      dispatch({ type: "set-baseline", railId, confidence });
+      persist(next);
+    }
+  }
+
   function scheduleDiagnosisPersist(next: CaseSession) {
     if (diagnosisTimerRef.current !== null) {
       clearTimeout(diagnosisTimerRef.current);
@@ -900,6 +912,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           isSending={isSending}
           validationErrors={validationErrors}
           validationSummaryRef={validationSummaryRef}
+          onSetBaseline={handleSetBaseline}
         />
       )}
 
@@ -1048,6 +1061,8 @@ interface InvestigatePhaseProps {
   /** Validation error-summary (spec L213). Null when no validation failure. */
   validationErrors: string[] | null;
   validationSummaryRef: RefObject<HTMLDivElement | null>;
+  /** Baseline rail + confidence capture (spec L171). */
+  onSetBaseline: (railId: string | null, confidence: "low" | "medium" | "high" | null) => void;
 }
 
 // The customerExplanation 1,000-char ceiling. Enforced by maxLength on the
@@ -1080,6 +1095,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     isSending,
     validationErrors,
     validationSummaryRef,
+    onSetBaseline,
   } = props;
 
   const enrichmentAsyncStatus = enrichment ? enrichmentStatus(enrichment.state) : undefined;
@@ -1105,6 +1121,66 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           Gather evidence and weigh the rails
         </h2>
       </header>
+
+      {/* Baseline + confidence capture (design spec L171, Investigate step 2).
+          Shown ONLY in the investigate phase before any facts are requested —
+          this is the learner's ungraded starting view. Once they request their
+          first fact, the baseline is frozen (the reducer rejects set-baseline
+          after that point) and this panel disappears. Explicitly labelled
+          "not scored" so the learner gives an honest first instinct. */}
+      {phaseKey === "investigate" && session.requestedFactIds.length === 0 && (
+        <section className="case-desk__baseline" aria-label="Baseline starting view">
+          <h3 className="case-desk__section-title">Your starting view</h3>
+          <p className="case-desk__baseline-note">
+            Before you investigate: which rail would you lean toward, and how confident are you?
+            This captures your starting view; it is <strong>not scored</strong>.
+          </p>
+          <div className="case-desk__baseline-controls">
+            <fieldset className="case-desk__baseline-rails">
+              <legend className="case-desk__baseline-legend">If you had to pick now</legend>
+              {definition.rails.map((rail) => (
+                <label key={rail.id} className="case-desk__baseline-rail">
+                  <input
+                    type="radio"
+                    name="baseline-rail"
+                    value={rail.id}
+                    checked={session.baselineRailId === rail.id}
+                    onChange={() => onSetBaseline(rail.id, session.baselineConfidence)}
+                  />
+                  <span className="case-desk__baseline-rail-name">{rail.name}</span>
+                </label>
+              ))}
+              <label className="case-desk__baseline-rail">
+                <input
+                  type="radio"
+                  name="baseline-rail"
+                  value=""
+                  checked={session.baselineRailId === null}
+                  onChange={() => onSetBaseline(null, session.baselineConfidence)}
+                />
+                <span className="case-desk__baseline-rail-name">Not sure yet</span>
+              </label>
+            </fieldset>
+            <fieldset className="case-desk__baseline-confidence">
+              <legend className="case-desk__baseline-legend">Confidence</legend>
+              {(["low", "medium", "high"] as const).map((level) => (
+                <label key={level} className="case-desk__baseline-confidence-option">
+                  <input
+                    type="radio"
+                    name="baseline-confidence"
+                    value={level}
+                    checked={session.baselineConfidence === level}
+                    onChange={() => onSetBaseline(session.baselineRailId, level)}
+                  />
+                  <span className="case-desk__baseline-confidence-label">
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          </div>
+        </section>
+      )}
 
       <div className="case-desk__split">
         {/* The task column: fact request + rail shortlist. On wide screens this

@@ -92,6 +92,15 @@ export interface CaseSession {
   // Persisted so it survives refresh; normalized to "" by loadCaseSession for
   // older sessions that lack the field.
   diagnosis: string;
+  // The learner's ungraded starting view (design spec L171, Investigate step 2:
+  // "Capture an ungraded baseline recommendation and confidence"). Captured at
+  // the START of investigate, before requesting facts. Both are optional — the
+  // learner can skip. Frozen once the learner requests their first fact (the
+  // baseline is a *starting* view; changing it after investigating would
+  // defeat the debrief's before/after comparison). Normalized to null by
+  // loadCaseSession for older sessions that lack the fields.
+  baselineRailId: string | null;
+  baselineConfidence: "low" | "medium" | "high" | null;
   updatedAt: string;
 }
 
@@ -104,7 +113,8 @@ export type CaseAction =
   | { type: "complete-transfer"; outcome: CaseOutcome }
   | { type: "restart" }
   | { type: "open-reference"; referenceId: string }
-  | { type: "set-diagnosis"; diagnosis: string };
+  | { type: "set-diagnosis"; diagnosis: string }
+  | { type: "set-baseline"; railId: string | null; confidence: "low" | "medium" | "high" | null };
 
 // ─── Storage key ────────────────────────────────────────────────────────────
 
@@ -148,6 +158,8 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
     openedReferenceIds: [],
     transferOutcome: null,
     diagnosis: "",
+    baselineRailId: null,
+    baselineConfidence: null,
     updatedAt: "",
   };
 }
@@ -506,6 +518,8 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         // is reset because it represents "this run's transfer".)
         transferOutcome: null,
         diagnosis: "",
+        baselineRailId: null,
+        baselineConfidence: null,
         updatedAt: "",
       };
     }
@@ -544,6 +558,31 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       return {
         ...cloneSession(session),
         diagnosis: action.diagnosis,
+      };
+    }
+
+    case "set-baseline": {
+      // The ungraded starting view (design spec L171, Investigate step 2).
+      // Legal ONLY in the investigate phase AND before any facts have been
+      // requested — the baseline is a *starting* view; once the learner
+      // commits to investigating, the baseline is frozen so the debrief's
+      // before/after comparison stays honest. No-op when unchanged.
+      if (session.phase !== "investigate") {
+        return session;
+      }
+      if (session.requestedFactIds.length > 0) {
+        return session;
+      }
+      if (
+        session.baselineRailId === action.railId &&
+        session.baselineConfidence === action.confidence
+      ) {
+        return session;
+      }
+      return {
+        ...cloneSession(session),
+        baselineRailId: action.railId,
+        baselineConfidence: action.confidence,
       };
     }
 
@@ -703,6 +742,13 @@ export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSess
     // lack it; accept undefined and normalize to "" in the loader so consumers
     // can branch on `=== ""` without guarding both null/undefined.
     (v.diagnosis === undefined || typeof v.diagnosis === "string") &&
+    // `baselineRailId` + `baselineConfidence` are additive (spec L171). Older
+    // sessions lack them; accept undefined and normalize to null.
+    (v.baselineRailId === undefined || v.baselineRailId === null || typeof v.baselineRailId === "string") &&
+    (v.baselineConfidence === undefined ||
+      v.baselineConfidence === null ||
+      (typeof v.baselineConfidence === "string" &&
+        ["low", "medium", "high"].includes(v.baselineConfidence))) &&
     typeof v.updatedAt === "string"
   );
 }
@@ -773,7 +819,7 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // read-time coercion — no schema bump, no migration write.
   // Spec-L189 diagnose-step: `diagnosis` is likewise additive — older sessions
   // lack it. Normalize to "" in the same pass.
-  return normalizeDiagnosis(normalizeTransferOutcome(stored));
+  return normalizeBaseline(normalizeDiagnosis(normalizeTransferOutcome(stored)));
 }
 
 /**
@@ -798,6 +844,8 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
     // predate the field) — see loadCaseSession.
     transferOutcome: null,
     diagnosis: "",
+    baselineRailId: null,
+    baselineConfidence: null,
     updatedAt: stale.updatedAt,
   };
 }
@@ -822,6 +870,21 @@ function normalizeTransferOutcome(session: CaseSession): CaseSession {
 function normalizeDiagnosis(session: CaseSession): CaseSession {
   if (session.diagnosis === undefined) {
     return { ...session, diagnosis: "" };
+  }
+  return session;
+}
+
+/**
+ * Coerce missing baseline fields to null. Both are additive (spec L171);
+ * older persisted payloads lack them.
+ */
+function normalizeBaseline(session: CaseSession): CaseSession {
+  if (session.baselineRailId === undefined || session.baselineConfidence === undefined) {
+    return {
+      ...session,
+      baselineRailId: session.baselineRailId ?? null,
+      baselineConfidence: session.baselineConfidence ?? null,
+    };
   }
   return session;
 }

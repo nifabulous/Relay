@@ -840,6 +840,8 @@ describe("caseReducer — restart closes the unwinnable state (T2)", () => {
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -903,6 +905,8 @@ describe("caseReducer — restart from under_review (T11)", () => {
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -941,6 +945,8 @@ describe("caseReducer — restart from under_review (T11)", () => {
       openedReferenceIds: [],
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -1192,6 +1198,8 @@ describe("loadCaseSession — case-revision mismatch", () => {
       // never reached the transfer phase has null here.
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1233,6 +1241,8 @@ describe("loadCaseSession — case-revision mismatch", () => {
       // has null.
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1376,6 +1386,8 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       openedReferenceIds: [] as string[],
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-07-01T00:00:00Z",
     };
   }
@@ -1590,6 +1602,8 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
       diagnosis: "",
+      baselineRailId: null,
+      baselineConfidence: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     seedRaw(stale);

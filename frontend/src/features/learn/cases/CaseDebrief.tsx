@@ -124,6 +124,45 @@ export function CaseDebrief({
         </p>
       </aside>
 
+      {/* ── BASELINE COMPARISON (spec L171, L276) ───────────────────────────
+          The learner's ungraded starting view vs their first-attempt
+          recommendation. This is the learning signal: did the investigation
+          change their mind? Only shown when a baseline was captured (the
+          learner could skip it). Sits before the supported-performance section
+          so the before/after framing leads the debrief. */}
+      {session.baselineRailId !== null && first && (
+        <section
+          className="case-desk__debrief-baseline"
+          aria-label="Baseline vs investigated recommendation"
+        >
+          <h3 className="case-desk__section-title">How your view changed</h3>
+          {(() => {
+            const baselineName =
+              definition.rails.find((r) => r.id === session.baselineRailId)?.name ?? "Not sure yet";
+            const firstRailName =
+              definition.rails.find((r) => r.id === first.draft.selectedRail)?.name ?? "no rail";
+            const changed = session.baselineRailId !== first.draft.selectedRail;
+            return (
+              <p className="case-desk__debrief-baseline-text">
+                {changed ? (
+                  <>
+                    You started leaning toward <strong>{baselineName}</strong>
+                    {session.baselineConfidence && <> ({session.baselineConfidence} confidence)</>}.
+                    After investigating, you recommended <strong>{firstRailName}</strong>.
+                  </>
+                ) : (
+                  <>
+                    You started with <strong>{baselineName}</strong>
+                    {session.baselineConfidence && <> ({session.baselineConfidence} confidence)</>}
+                    and stuck with it after investigating.
+                  </>
+                )}
+              </p>
+            );
+          })()}
+        </section>
+      )}
+
       {/* ── SECTION 1: SUPPORTED PERFORMANCE ────────────────────────────────
           The main case. Full scaffolding (all authored facts, full reasoning
           fields, the rail shortlist). The most-recent attempt wins; if the

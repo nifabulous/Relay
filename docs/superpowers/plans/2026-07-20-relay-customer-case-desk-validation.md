@@ -323,6 +323,33 @@ Regression baseline: `docs/superpowers/reviews/2026-07-21-case-desk-design-basel
 
 ### Engineering follow-ups (from the six-skill review)
 
+### Silently-dropped spec contracts (found in post-shipping /plan-eng-review)
+
+A post-shipping `/plan-eng-review` (2026-07-21) ran a source audit
+against the approved design spec and found four contracts that Phase 1
+silently dropped — they were never surfaced as a deferral decision, so
+they read as gaps rather than scope choices. Per the review's scope
+gate, the decision is to **implement all four** (they are independent of
+each other and ship as four sequential commits on one branch,
+dependency-ordered: worked-explanation → validation error-summary →
+diagnose-failure → baseline+confidence). Each contract below cites the
+spec line it implements.
+
+| Contract | Spec line | Status |
+|---|---|---|
+| Worked explanation revealed post-consequence | spec L191 (Resolve step 6) | **Implementing** — add `workedExplanation` to `CaseOutcome`, author per-rail in catalog + evaluator, render in `CaseOutcome.tsx` after the learner has reviewed the consequence. |
+| Linked validation error-summary | spec L213 (Focus & Announcement Contract) | **Implementing** — replace the current `disabled={!canSend}` hard-gate on Send with a linked error summary at the start of the primary task (each message linked to its control, focus moved to the summary on validation failure). |
+| Diagnose-failure step | spec L189 (Resolve step 4) | **Implementing** — after the consequence is shown and before revision, prompt the learner to diagnose the mismatch; capture the diagnosis in session state. |
+| Ungraded baseline + confidence capture | spec L171 (Investigate step 2), L276 (User Journey) | **Implementing** — capture a baseline rail pick + confidence at the start of investigate (ungraded, "captures your starting view"); show the reasoning change vs baseline in the debrief. |
+
+The two partially-honored contracts the audit also flagged
+(shortlist-before-reveal L174, sheet open/close announcements L214,
+consequence-heading focus L211, seven debrief dimensions L244-254) are
+recorded as **deferred** — each needs a UX/design call (e.g. is hiding
+rail invalidity until shortlist-add actually better for learners, or
+does early visibility of ineligibility teach the constraint?) and is
+lower-signal than the four being implemented.
+
 - **T7 — Transfer second rail.** Phase 1's transfer step is a single-rail
   pick (it reuses the shortlist machinery for completion only). The CEO
   plan anticipates a genuine transfer case that contrasts two rails; the
