@@ -583,7 +583,7 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
     expect(supportedHeading).not.toBe(transferHeading);
   });
 
-  it("surfaces the main-case decision-quality in the supported section and the transfer decision-quality in the transfer section", () => {
+  it("surfaces the main-case decision-quality in the supported section and an HONEST completion marker (not a constant-quality chip) in the transfer section", () => {
     seedResolveSession();
     renderDesk();
     // The preferred draft scores "preferred" on the main case (fully investigated).
@@ -592,67 +592,56 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
 
     driveCompleteTransfer();
     const stored = readStoredSession()!;
-    // The transfer outcome is persisted (Piece 5c CRITICAL FIX).
+    // The transfer outcome is persisted (Piece 5c CRITICAL FIX). The transfer
+    // still runs through the evaluator (for the consequence text), but T12
+    // makes the debrief HONEST: the structurally-constant transfer quality is
+    // NOT surfaced as a graded chip. The persisted quality is an internal
+    // artifact, not learner-facing.
     expect(stored.transferOutcome).not.toBeNull();
-    const transferQuality = stored.transferOutcome!.quality;
 
-    // Two decision-quality chips are present (one per section). Each chip
-    // renders its quality label as accessible text via a StatusChip whose
-    // aria-label is the quality, so we can scope each chip precisely.
-    const mainQualityExact = new RegExp(`^${mainOutcome.quality}$`, "i");
-    const transferQualityExact = new RegExp(`^${transferQuality}$`, "i");
-    expect(screen.getByText(mainQualityExact)).toBeInTheDocument();
-    expect(screen.getByText(transferQualityExact)).toBeInTheDocument();
-
-    // The supported section is distinct from the transfer section. We assert
-    // the chip for each quality lives INSIDE its respective section by
-    // walking up from the chip's text node to the enclosing <section>. This
-    // proves structural containment — they are NOT blended.
+    // The MAIN-CASE decision-quality chip IS present (the supported section is
+    // a real graded outcome). Scoped by section so a future change can't
+    // accidentally surface it inside the transfer card.
     const supportedSection = screen.getByRole("heading", { name: /supported performance/i }).closest("section");
     const transferSection = screen.getByRole("heading", { name: /independent transfer/i }).closest("section");
     expect(supportedSection).not.toBeNull();
     expect(transferSection).not.toBeNull();
     expect(supportedSection).not.toBe(transferSection);
 
-    // Find each chip's <span> (StatusChip renders role-less <span> with the
-    // quality as its textContent and aria-label) and assert it is contained
-    // in the correct section.
-    const mainChip = screen.getByText(mainQualityExact).closest("span");
-    const transferChip = screen.getByText(transferQualityExact).closest("span");
+    const mainQualityExact = new RegExp(`^${mainOutcome.quality}$`, "i");
+    const mainChip = supportedSection!.querySelector("span.status-chip");
     expect(mainChip).not.toBeNull();
-    expect(transferChip).not.toBeNull();
-    expect(supportedSection!.contains(mainChip)).toBe(true);
-    expect(transferSection!.contains(transferChip)).toBe(true);
+    expect((mainChip!.textContent ?? "").trim()).toMatch(mainQualityExact);
 
-    // Cross-contamination guard: the transfer quality chip must NOT live in
-    // the supported section, and vice versa. (If the two qualities happen to
-    // be equal this guard is a no-op; the structural-containment assertions
-    // above still carry the load.)
-    if (mainOutcome.quality !== transferQuality) {
-      expect(supportedSection!.contains(transferChip)).toBe(false);
-      expect(transferSection!.contains(mainChip)).toBe(false);
-    }
+    // T12 — HONEST TRANSFER: the transfer section does NOT surface a
+    // decision-quality StatusChip. The transfer has one rail, no
+    // investigation surface, and the evaluator would always return `possible`
+    // (empty expectations + filler reason by construction). Showing a quality
+    // chip would be a misleading constant. The debrief instead frames the
+    // transfer as completion — see the dedicated T12 describe block below.
+    const transferChip = transferSection!.querySelector("span.status-chip");
+    expect(transferChip).toBeNull();
   });
 
-  it("renders the consequence BEFORE the decision-quality chip in DOM order within each debrief PerformanceCard", () => {
+  it("renders the consequence BEFORE the decision-quality chip in DOM order within the supported-performance card (T12: transfer card has no chip)", () => {
     // Mirrors the resolve-phase "consequence precedes classification" assertion
     // so a future CSS `order:` / `column-reverse` change can't silently flip
-    // the debrief's cards while the resolve-phase test stays green. The plan
-    // invariant (consequence-first) applies to BOTH phases; this closes the
-    // gap where only the resolve-phase DOM order was asserted.
+    // the debrief's supported card while the resolve-phase test stays green.
+    //
+    // T12: the transfer card no longer surfaces a decision-quality chip (the
+    // structurally-constant `possible` was misleading). So consequence-first
+    // is now asserted only for the SUPPORTED card — the only card with a
+    // graded chip. The transfer card's consequence text is still surfaced
+    // (it's informative — what would happen with this rail on this corridor),
+    // but it is not followed by a quality chip; see the dedicated T12
+    // describe block below for the transfer card's honest contract.
     const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
     seedResolveSession();
     renderDesk();
     driveCompleteTransfer();
 
-    // The debrief renders one PerformanceCard per section. Each card's
-    // consequence text node precedes its quality-chip text node in DOM order.
-    // We assert this for BOTH cards (supported + transfer) so the invariant
-    // holds across the two conditions.
     const supportedSection = screen.getByRole("heading", { name: /supported performance/i }).closest("section");
-    const transferSection = screen.getByRole("heading", { name: /independent transfer/i }).closest("section");
     expect(supportedSection).not.toBeNull();
-    expect(transferSection).not.toBeNull();
 
     // Supported-performance card: consequence precedes the main-case quality.
     const supportedConsequence = supportedSection!.querySelector(".case-desk__debrief-card-consequence");
@@ -663,28 +652,6 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
     // PRECEDING bit set (i.e. (mask & 0x2) !== 0).
     const supportedMask = supportedQualityText.compareDocumentPosition(supportedConsequence!);
     expect(supportedMask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-
-    // Transfer card: consequence precedes the transfer quality. The transfer
-    // quality is read from the persisted outcome (it varies from the main
-    // quality when the transfer scores differently).
-    const stored = readStoredSession()!;
-    expect(stored.transferOutcome).not.toBeNull();
-    const transferQuality = stored.transferOutcome!.quality;
-    const transferConsequence = transferSection!.querySelector(".case-desk__debrief-card-consequence");
-    // The transfer quality chip lives inside the transfer section. If the two
-    // qualities are identical, getByText would return multiple nodes; scope to
-    // the transfer section to disambiguate.
-    const transferQualityEls = transferSection!.querySelectorAll("span");
-    let transferQualityText: Element | null = null;
-    transferQualityEls.forEach((el) => {
-      if (new RegExp(`^${transferQuality}$`, "i").test((el.textContent ?? "").trim())) {
-        transferQualityText = el;
-      }
-    });
-    expect(transferConsequence).not.toBeNull();
-    expect(transferQualityText).not.toBeNull();
-    const transferMask = transferQualityText!.compareDocumentPosition(transferConsequence!);
-    expect(transferMask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 });
 
@@ -891,5 +858,135 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     expect(stored.firstAttempt).not.toBeNull();
     // Filler reason → `possible`, never defensible/preferred.
     expect(stored.firstAttempt!.outcome.quality).toBe("possible");
+  });
+});
+
+// =============================================================================
+// T12 — Honest transfer evaluation (Group D).
+//
+// CONTEXT: the transfer sub-step (TransferStep in CaseOutcome.tsx) builds its
+// draft with empty reasons + empty expectations + a single pre-filtered rail
+// (cross-border-ach). Group A's evaluator requires (a) a substantive primary
+// reason AND (b) all three expectations non-empty to clear `possible`. So the
+// transfer outcome is STRUCTURALLY ALWAYS `possible` — every transfer pick,
+// every time. The debrief's "Independent transfer" StatusChip showed "Possible"
+// as if it were a graded outcome, but it is a constant. The plan's T7 defers
+// "add a second rail + reasoning capture" to Phase 2, so making the transfer a
+// real evaluation is out of scope.
+//
+// DIRECTION A (chosen): reframe the transfer as completion. The transfer is a
+// single rail with no investigation surface (all facts supplied) — in Phase 1
+// it is a completion confirmation, not a graded decision. The honest contract:
+//   1. NO QUALITY CHIP in the transfer section (a constant "Possible" is
+//      misleading).
+//   2. The transfer consequence text IS still surfaced (it's informative — it
+//      tells the learner what would happen with this rail on this corridor).
+//   3. The transfer section is framed neutrally as completion — not as
+//      success/mastery, and not as a comparison to the main case.
+//   4. The MAIN-CASE supported section KEEPS its decision-quality chip (the
+//      main case is a real graded outcome).
+//
+// Why Direction B (capture reasoning) was rejected: even with a substantive
+// reason + the three expectations filled, the transfer's `urgency` fact value
+// ("Supplier can wait up to a week; not time-sensitive") doesn't match the
+// evaluator's urgency cue, and there's no tracking/price fact, so
+// `disclosedPriorities` returns empty → `bestFitRailId` returns undefined →
+// `preferred` is unreachable. With one rail there's nothing to be "preferred"
+// over. Reaching `defensible` would require capturing all three expectations
+// (over-asking for a single-rail transfer), and without them the evaluator
+// tops at `possible` regardless of the reason. A transfer-specific evaluator
+// path was rejected as scope creep (the brief says keep the evaluator general).
+// =============================================================================
+
+describe("RecommendationFlow T12 — honest transfer: no constant-quality chip, reframed as completion", () => {
+  it("does NOT render a decision-quality StatusChip inside the transfer section (the `possible` was a structural constant)", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    // The persisted transfer outcome is still `possible` (the evaluator ran
+    // against an empty-reason draft). T12's job is to make the DEBRIEF honest
+    // about that — not to change the evaluator. So the persisted quality is
+    // `possible`, but the debrief must NOT surface it as a graded chip.
+    const stored = readStoredSession()!;
+    expect(stored.transferOutcome).not.toBeNull();
+    expect(stored.transferOutcome!.quality).toBe("possible");
+
+    const transferSection = screen
+      .getByRole("heading", { name: /independent transfer/i })
+      .closest("section");
+    expect(transferSection).not.toBeNull();
+    // No StatusChip anywhere in the transfer section.
+    const transferChip = transferSection!.querySelector("span.status-chip");
+    expect(transferChip).toBeNull();
+  });
+
+  it("still surfaces the transfer consequence text (it's informative — what would happen with this rail)", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    const stored = readStoredSession()!;
+    expect(stored.transferOutcome).not.toBeNull();
+    // The consequence text is real evaluator output and tells the learner what
+    // would happen with the picked rail on this corridor. Keeping it is honest;
+    // dropping the quality chip is what removes the misleading grade.
+    const transferSection = screen
+      .getByRole("heading", { name: /independent transfer/i })
+      .closest("section");
+    const consequenceEl = transferSection!.querySelector(
+      ".case-desk__debrief-card-consequence",
+    );
+    expect(consequenceEl).not.toBeNull();
+    expect((consequenceEl!.textContent ?? "").length).toBeGreaterThan(0);
+    expect(consequenceEl!.textContent).toContain(stored.transferOutcome!.consequence);
+  });
+
+  it("frames the transfer section as completion (neutral copy, no credential/mastery language)", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    const transferSection = screen
+      .getByRole("heading", { name: /independent transfer/i })
+      .closest("section");
+    expect(transferSection).not.toBeNull();
+    const text = (transferSection!.textContent ?? "").toLowerCase();
+    // Honest completion framing: the learner "completed" / "applied" the
+    // transfer. NOT framed as a graded decision or a pass/fail.
+    expect(/complet|applied/i.test(text)).toBe(true);
+    // No credential/mastery language (global constraint).
+    expect(text).not.toMatch(/master|certif|badge|pass|fail/);
+  });
+
+  it("still renders the main-case decision-quality chip in the supported section (the main case is a real graded outcome)", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    // The supported section KEEPS its decision-quality chip — only the
+    // transfer section loses its (structurally-constant) chip. This proves the
+    // T12 fix is scoped to the transfer, not a blanket removal of grading.
+    const supportedSection = screen
+      .getByRole("heading", { name: /supported performance/i })
+      .closest("section");
+    expect(supportedSection).not.toBeNull();
+    const supportedChip = supportedSection!.querySelector("span.status-chip");
+    expect(supportedChip).not.toBeNull();
+  });
+
+  it("does NOT surface a transfer reasoning-gap callout in the debrief (the gap was a `possible`-tier artifact)", () => {
+    // The evaluator returns a reasoningGap for `possible` outcomes. That gap
+    // ("state a substantive primary reason... give a price expectation...")
+    // is a main-case-shaped instruction that doesn't apply to the single-rail
+    // transfer. Surfacing it would be busywork / misleading. The debrief must
+    // not show a "One thing to strengthen" callout in the transfer section.
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    const transferSection = screen
+      .getByRole("heading", { name: /independent transfer/i })
+      .closest("section");
+    expect(transferSection).not.toBeNull();
+    const transferGapSummary = transferSection!.querySelector(
+      ".case-desk__debrief-card-summary",
+    );
+    expect(transferGapSummary).toBeNull();
   });
 });

@@ -164,7 +164,26 @@ export function CaseDebrief({
           facts and a rail pick). Framed as a DIFFERENT CONDITION — independent
           application — never as a comparison to the main case. The heading is
           the section-distinct label so the two sections read as DISTINCT
-          regions, never blended. */}
+          regions, never blended.
+
+          T12 — HONEST TRANSFER (Group D): in Phase 1 the transfer is a SINGLE
+          rail (cross-border-ach) with all facts supplied — there is no
+          investigation surface and no alternative to pick between. The
+          transfer draft is built with empty reasons + empty expectations, so
+          the evaluator structurally always returns `possible`. Surfacing that
+          constant as a StatusChip would be misleading (it reads as a graded
+          "Possible" when it is in fact a constant). The plan's T7 defers
+          "add a second rail + reasoning capture" to Phase 2.
+
+          So in Phase 1 the transfer is reframed as COMPLETION: the learner
+          applied the same reasoning to a simpler variant and completed it.
+          The PerformanceCard for the transfer uses variant="completion",
+          which suppresses the decision-quality chip and the reasoning-gap
+          callout (both are main-case grading artifacts). The consequence text
+          IS still surfaced — it's informative (what would happen with this
+          rail on this corridor) and not a grade. Phase 2 (T7) makes the
+          transfer a real multi-rail decision; this card will then switch
+          back to variant="graded". */}
       <section
         className="case-desk__debrief-transfer"
         aria-labelledby="case-debrief-transfer-title"
@@ -174,12 +193,13 @@ export function CaseDebrief({
           <h3 id="case-debrief-transfer-title" className="case-desk__section-title">
             Independent transfer
           </h3>
-          <p className="case-desk__debrief-subtitle">Transfer variant — with less scaffolding</p>
+          <p className="case-desk__debrief-subtitle">Transfer variant — completed</p>
         </header>
         <p className="case-desk__debrief-framing">
-          You applied the same reasoning with fewer facts and only a rail pick.
-          This is a different condition, not a comparison — a check on
-          independent application.
+          You applied the same reasoning with fewer facts and picked the rail
+          for a simpler variant. This is a different condition, not a
+          comparison — a check on independent application. You completed the
+          transfer case.
         </p>
         {transfer ? (
           <PerformanceCard
@@ -189,6 +209,12 @@ export function CaseDebrief({
             // The transfer rail id space is the transfer's own rails. Look up
             // by id against the transfer's rails so the name resolves.
             railPool={definition.transfer.rails}
+            // T12: the transfer is reframed as completion (see the section
+            // comment above). variant="completion" suppresses the
+            // decision-quality chip and the reasoning-gap callout — both are
+            // main-case grading artifacts that don't apply to the single-rail
+            // transfer.
+            variant="completion"
           />
         ) : (
           // Defensive: complete-transfer persists the outcome (Piece 5c CRITICAL
@@ -218,13 +244,29 @@ interface PerformanceCardProps {
   selectedRailId: string | null;
   /** When looking up a transfer rail, search the transfer's own rail pool. */
   railPool?: CaseDefinition["rails"];
+  /**
+   * T12 (Group D): the card's framing.
+   * - `"graded"` (default): the main-case view. Surfaces the decision-quality
+   *   StatusChip, the sound-reasoning list, and the reasoning-gap callout.
+   *   This is the load-bearing graded outcome.
+   * - `"completion"`: the Phase-1 transfer view. The transfer is a single
+   *   rail with no investigation surface; its evaluator outcome is
+   *   structurally `possible` (empty reasons + empty expectations by
+   *   construction). Surfacing that constant as a chip would be misleading,
+   *   so the completion variant suppresses the quality chip and the
+   *   reasoning-gap callout. The consequence text IS still surfaced — it's
+   *   informative, not a grade. Phase 2 (T7) makes the transfer a real
+   *   multi-rail decision; this card will then switch back to "graded".
+   */
+  variant?: "graded" | "completion";
 }
 
 /**
  * A compact performance summary for one condition (main case OR transfer).
  * Consequence-first (the real-world impact), followed by the decision-quality
- * chip. Mirrors the resolve-phase ordering so the learner sees a consistent
- * "what happened, then how it scored" rhythm across phases.
+ * chip (in the graded variant). Mirrors the resolve-phase ordering so the
+ * learner sees a consistent "what happened, then how it scored" rhythm across
+ * phases.
  *
  * The card is intentionally NEUTRAL: it surfaces the outcome factually. It
  * does NOT frame a "preferred" outcome as mastery or an "invalid" outcome as
@@ -236,25 +278,36 @@ function PerformanceCard({
   outcome,
   selectedRailId,
   railPool,
+  variant = "graded",
 }: PerformanceCardProps) {
   const pool = railPool ?? definition.rails;
   const selectedRailName = selectedRailId
     ? pool.find((r) => r.id === selectedRailId)?.name ?? null
     : null;
+  // T12: the completion variant (Phase-1 transfer) suppresses the
+  // decision-quality chip and the reasoning-gap callout. The graded variant
+  // (main case) keeps both — they are load-bearing grading artifacts.
+  const isCompletion = variant === "completion";
 
   return (
     <div className="case-desk__debrief-card">
       <p className="case-desk__debrief-card-consequence">{outcome.consequence}</p>
-      <div className="case-desk__debrief-card-quality">
-        <StatusChip status={outcome.quality} />
-      </div>
+      {!isCompletion && (
+        <div className="case-desk__debrief-card-quality">
+          <StatusChip status={outcome.quality} />
+        </div>
+      )}
       {selectedRailName && (
         <p className="case-desk__debrief-card-rail">
           You recommended <strong>{selectedRailName}</strong>.
         </p>
       )}
       {/* Sound reasoning surfaced as the supportive list. Kept compact (the
-          full resolve-phase view is the deep dive; the debrief summarizes). */}
+          full resolve-phase view is the deep dive; the debrief summarizes).
+          T12: the completion variant still surfaces "what you reasoned well"
+          when present — it's supportive, not a grade. (In Phase 1 the
+          transfer's draft has empty reasons, so this list is empty for the
+          transfer; the guard keeps it future-proof for Phase 2.) */}
       {outcome.soundReasoning.length > 0 && (
         <details className="case-desk__debrief-card-details">
           <summary className="case-desk__debrief-card-summary">
@@ -267,8 +320,13 @@ function PerformanceCard({
           </ul>
         </details>
       )}
-      {/* Reasoning gap (if any) — surfaced factually, not as a "you failed". */}
-      {outcome.reasoningGap && (
+      {/* Reasoning gap (if any) — surfaced factually, not as a "you failed".
+          T12: suppressed in the completion variant. The Phase-1 transfer's
+          `possible`-tier reasoning gap is a main-case-shaped instruction
+          ("state a substantive primary reason... give a price expectation...")
+          that doesn't apply to the single-rail transfer; surfacing it would
+          be busywork and would contradict the completion framing. */}
+      {!isCompletion && outcome.reasoningGap && (
         <details className="case-desk__debrief-card-details">
           <summary className="case-desk__debrief-card-summary">
             One thing to strengthen
