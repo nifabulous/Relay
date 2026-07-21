@@ -141,10 +141,23 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
 
   // Invalidation announcement (DESIGN spec §invalidation): when the learner
   // changes the requested-fact set during the recommend phase, the reducer
-  // clears the dependent working draft. This flag carries that event from
-  // the request-facts handler to a focus+announce effect. The effect reads
-  // and clears it, so it never re-announces on re-render.
-  const [invalidationAnnouncement, setInvalidationAnnouncement] = useState("");
+  // clears the dependent working draft. This event carries that signal from
+  // the request-facts handler to a focus+announce effect.
+  //
+  // Why an event object, not a string: a second sequential invalidation
+  // would produce the SAME announcement text, and React's useState setter
+  // short-circuits when the new value === the old — so neither the live
+  // region nor the focus effect would re-fire. Each invalidation mints a
+  // new object with an incrementing id, so React always sees a new
+  // reference and the effect re-runs every time. The effect clears the
+  // event (sets null) after focusing, so the live region text is spoken
+  // once and then empties — ready for the next announcement to register
+  // as a distinct change.
+  const [invalidationEvent, setInvalidationEvent] = useState<
+    { id: number; message: string } | null
+  >(null);
+  const invalidationIdRef = useRef(0);
+  const invalidationClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shortlistHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   // The phase heading ref — focus moves here on phase transition.
@@ -615,22 +628,48 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       // references would be wrong because cloneSession always produces a new
       // draft reference even when content is unchanged.
       if (session.phase === "recommend") {
-        setInvalidationAnnouncement(
-          "Evidence changed — your rail shortlist, selected rail, and reasoning have been cleared. Rebuild your recommendation against the new evidence.",
-        );
+        // Mint a new event object (new reference) so a second sequential
+        // invalidation with the same message text still triggers the
+        // effect below.
+        invalidationIdRef.current += 1;
+        setInvalidationEvent({
+          id: invalidationIdRef.current,
+          message:
+            "Evidence changed — your rail shortlist, selected rail, and reasoning have been cleared. Rebuild your recommendation against the new evidence.",
+        });
       }
     }
   }
 
-  // Invalidation focus + announce. Fires when the announcement is set,
-  // moves focus to the shortlist heading (the first affected decision),
-  // and clears the announcement so it speaks once. The heading carries
-  // tabIndex={-1} so it is a valid programmatic-focus target without
-  // joining the tab order.
+  // Invalidation focus + announce. Fires when a new invalidation event is
+  // set, moves focus to the shortlist heading (the first affected decision),
+  // then schedules a clear so the live region text is spoken once and then
+  // empties. Clearing (rather than leaving the text) is what lets a
+  // subsequent invalidation register as a distinct change even if its
+  // message text is identical. The heading carries tabIndex={-1} so it is
+  // a valid programmatic-focus target without joining the tab order.
+  //
+  // The clear runs after a short delay rather than synchronously: React
+  // batches synchronous setState in the same effect, which would wipe the
+  // message before it ever reached the DOM (defeating the announcement).
+  // The delay is long enough for AT to read the polite region and short
+  // enough that the region is empty well before any plausible second
+  // invalidation.
   useEffect(() => {
-    if (!invalidationAnnouncement) return;
+    if (!invalidationEvent) return;
     shortlistHeadingRef.current?.focus();
-  }, [invalidationAnnouncement]);
+    if (invalidationClearTimerRef.current) {
+      clearTimeout(invalidationClearTimerRef.current);
+    }
+    invalidationClearTimerRef.current = setTimeout(() => {
+      setInvalidationEvent(null);
+    }, 1000);
+    return () => {
+      if (invalidationClearTimerRef.current) {
+        clearTimeout(invalidationClearTimerRef.current);
+      }
+    };
+  }, [invalidationEvent]);
 
   function handleDraftPatch(patch: Partial<CaseSession["draft"]>) {
     const next = caseReducer(session, { type: "edit-draft", patch });
@@ -728,7 +767,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           delivers both the "evidence changed" and "decisions cleared" messages
           distinctly. Cleared after focus moves to the shortlist. */}
       <div className="case-desk__live" aria-live="polite">
-        {invalidationAnnouncement}
+        {invalidationEvent?.message}
       </div>
 
       {showRecoveryNotice && (

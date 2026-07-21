@@ -155,13 +155,24 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 
 export function loadCaseSession(caseId: CaseId): CaseSession | null;
 export function saveCaseSession(session: CaseSession): void;
-export function clearCaseDraft(caseId: CaseId): void;
-export function updateRequestedFacts(caseId: CaseId, ids: string[]): { firstAffectedControlId: string | null };
+// NOTE (shipped architecture): an earlier draft of this plan specified
+// `clearCaseDraft(caseId)` and `updateRequestedFacts(caseId, ids): { firstAffectedControlId }`
+// as exported store functions. Those were never wired into the UI and were
+// removed (commit 1f5a8e5, T13). The invalidation contract is implemented
+// INSIDE the pure reducer instead: the `request-facts` action, when dispatched
+// during the `recommend` phase, resets the working draft to EMPTY_DRAFT
+// (clearing shortlist, selected rail, reasons, conditions, expectations,
+// explanation) while preserving the immutable firstAttempt/revisedAttempt
+// snapshots. The Case Desk component detects the phase condition, announces
+// the reset via a polite live region (an event-nonce state so repeated
+// invalidations re-fire), and moves focus to the RailShortlist heading
+// (the first affected decision) via a tabIndex={-1} ref. No per-case
+// invalidation function is exported. (commit a9bff0c + retrigger fix.)
 ```
 
 - [x] Export generic `loadVersioned<T>(key, fallback)`, `saveVersioned<T>(key, value): { ok: true } | { ok: false; reason: "unavailable" | "quota" }`, and `removeStored(key)` from `storage.ts`; preserve existing non-throwing wrappers for current callers while allowing `caseStore` to surface a recoverable save failure.
 - [x] Test round-trip persistence, corrupt JSON, obsolete schema, absent session, case-revision mismatch, restart clearing only the selected case, preserving the immutable first attempt, and `localStorage.setItem` failure returning a typed result.
-- [x] Test that changing an upstream fact clears shortlist, recommendation, and outcomes while retaining the case shell and returning the first affected control id.
+- [x] Test that changing an upstream/requested fact during the recommend phase clears the dependent shortlist, selected rail, and reasoning (working draft reset to EMPTY_DRAFT) while preserving the immutable firstAttempt/revisedAttempt snapshots; the live-region announcement + focus restoration are covered by CaseDesk component tests. (The originally specified `firstAffectedControlId` store return was replaced by a UI-level ref on the RailShortlist heading — see the interface note above.)
 - [x] Test reducer legal transitions, rejected phase actions, double-submit protection, immutable first attempt, revision isolation, transfer completion, and restart reset.
 - [x] Run `npm test -- --run src/features/learn/cases/caseStore.test.ts src/lib/persistence/persistence.test.ts` and confirm red before implementation.
 - [x] Implement `caseStore.ts` with keys `relay:case-session:<caseId>` by calling the shared storage primitives; compare `caseRevision` before resume and return a recoverable restart state on mismatch; keep case-specific invalidation and first-attempt rules in this module, and never persist loading, open sheets, alerts, or focus.
