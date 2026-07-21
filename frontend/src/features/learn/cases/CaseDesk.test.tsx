@@ -535,3 +535,98 @@ describe("CaseDesk — under_review recovery notice", () => {
     expect(screen.queryByRole("status", { name: /case updated/i })).not.toBeInTheDocument();
   });
 });
+
+// ─── T9: malformed localStorage must NOT crash CaseDesk at mount ─────────────
+//
+// Before the fix, `loadCaseSession`'s 2-field guard (`schemaVersion === 1` &&
+// `caseId === caseId`) let structurally-broken payloads through to the
+// consumer, where they crashed on first render (`useState(session.draft.
+// customerExplanation)` throws on a missing `draft`; `requestedFactIds.length`
+// throws on null; CaseOutcome's `current.draft.selectedRail` throws on a
+// half-formed attempt). The fix is a full nested-shape type guard inside
+// `loadCaseSession`; these mount-level tests pin the contract end-to-end by
+// seeding each crash-class payload and asserting CaseDesk renders the brief /
+// fresh state instead of throwing.
+
+describe("CaseDesk — malformed localStorage payloads render the fresh state, never crash (T9)", () => {
+  function seedRaw(payload: unknown) {
+    localStorage.setItem(
+      `relay:case-session:${CASE_ID}`,
+      JSON.stringify(payload),
+    );
+  }
+
+  function baseShape(): Record<string, unknown> {
+    return {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      // A valid caseRevision so the loader takes the happy (non-recovery)
+      // path and the type guard is the only thing standing between the
+      // payload and render.
+      caseRevision: "2026-07-20.investigation-load-bearing",
+      status: "in_progress",
+      phase: "investigate",
+      requestedFactIds: [] as string[],
+      draft: {
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["fast"],
+        conditions: [],
+        priceExpectation: "",
+        arrivalExpectation: "",
+        trackingExpectation: "",
+        customerExplanation: "I recommend SWIFT-to-Fedwire.",
+      },
+      firstAttempt: null,
+      revisedAttempt: null,
+      openedReferenceIds: [] as string[],
+      transferOutcome: null,
+      updatedAt: "2026-07-01T00:00:00Z",
+    };
+  }
+
+  it("renders the brief (fresh state) when `draft` is missing entirely", () => {
+    const payload = baseShape();
+    delete payload.draft;
+    seedRaw(payload);
+    // Must not throw. The brief is reachable on a fresh session because
+    // loadCaseSession returns null → createInitialCaseSession yields
+    // status not_started / phase brief.
+    expect(() => renderDesk()).not.toThrow();
+    // The fresh state surfaces the Start investigation affordance.
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `requestedFactIds` is null (previously crashed on .length)", () => {
+    const payload = baseShape();
+    payload.requestedFactIds = null;
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `firstAttempt` is a half-formed object (previously crashed CaseOutcome)", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = { submittedAt: "2026-07-01T00:00:00Z" };
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `phase` is not a real phase value", () => {
+    const payload = baseShape();
+    payload.phase = "not-a-real-phase";
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+});

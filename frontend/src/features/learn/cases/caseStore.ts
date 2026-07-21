@@ -508,6 +508,142 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 
 // ─── I/O boundary ───────────────────────────────────────────────────────────
 
+// ─── Runtime shape guard (T9) ────────────────────────────────────────────────
+//
+// `loadCaseSession` reads localStorage, the I/O boundary for case state. The
+// stored payload is `unknown` until proven otherwise. The pre-fix code cast
+// after a 2-field check (`schemaVersion === 1` && `caseId === caseId`), which
+// let payloads that passed those two fields but were otherwise broken (missing
+// `draft`, `requestedFactIds: null`, a half-formed `firstAttempt`) reach the
+// consumer and crash at mount. The guard below validates the full nested
+// shape that CaseDesk + its children actually READ at mount and during normal
+// flow, so a payload that would crash render returns null instead (fresh
+// start) rather than crashing.
+//
+// Defensiveness bar: validate the crash-class fields. We do NOT deep-validate
+// every field of `CaseOutcome` (the outcome is opaque prose + arrays authored
+// by the evaluator, and the consumer reads its fields defensively via optional
+// chaining / guards in the UI). We DO validate:
+//   - top-level scalars (`schemaVersion`, `caseId`, `caseRevision`, `status`,
+//     `phase`, `updatedAt`) — these drive switch/derivation logic,
+//   - top-level arrays (`requestedFactIds`, `openedReferenceIds`) — `.length`
+//     is read on mount,
+//   - the working `draft` and the attempt drafts (validated deeply because
+//     CaseDesk reads `draft.customerExplanation`, `draft.shortlist`,
+//     `draft.reasons`, `draft.selectedRail`, etc. at mount, and CaseOutcome
+//     reads `firstAttempt.draft.selectedRail` in the resolve phase),
+//   - the attempt shells (`outcome` must be a non-null object with `quality`;
+//     `submittedAt` must be a string) — enough to prove "an attempt really
+//     lives here" without trying to enforce the evaluator's outcome contract.
+//
+// What we intentionally leave to runtime reducer guards: a structurally-valid
+// but semantically weird payload (e.g. `phase: "debrief"` with
+// `firstAttempt: null`) is NOT rejected — it won't crash, it just yields an
+// odd state the reducer no-ops on. Focus is the crash-class only.
+
+const SESSION_STATUSES = new Set<string>([
+  "not_started",
+  "in_progress",
+  "completed",
+  "under_review",
+]);
+
+const SESSION_PHASES = new Set<string>([
+  "brief",
+  "investigate",
+  "recommend",
+  "resolve",
+  "debrief",
+]);
+
+const SESSION_QUALITIES = new Set<string>([
+  "invalid",
+  "possible",
+  "defensible",
+  "preferred",
+]);
+
+function isStringArray(value: unknown): value is string[] {
+  if (!Array.isArray(value)) return false;
+  for (const item of value) {
+    if (typeof item !== "string") return false;
+  }
+  return true;
+}
+
+function isRecommendationDraft(value: unknown): value is RecommendationDraft {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isStringArray(v.shortlist) &&
+    (v.selectedRail === null || typeof v.selectedRail === "string") &&
+    isStringArray(v.reasons) &&
+    isStringArray(v.conditions) &&
+    typeof v.priceExpectation === "string" &&
+    typeof v.arrivalExpectation === "string" &&
+    typeof v.trackingExpectation === "string" &&
+    typeof v.customerExplanation === "string"
+  );
+}
+
+function isCaseOutcomeShallow(value: unknown): boolean {
+  // Outcome is opaque prose + arrays authored by the evaluator. We only
+  // confirm it is a non-null object that LOOKS like an outcome (has a
+  // `quality` field set to a known enum value). Deep validation of every
+  // prose field is the evaluator's job; the consumer reads these fields
+  // defensively.
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.quality === "string" && SESSION_QUALITIES.has(v.quality)
+  );
+}
+
+function isAttemptSnapshot(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isRecommendationDraft(v.draft) &&
+    isCaseOutcomeShallow(v.outcome) &&
+    typeof v.submittedAt === "string"
+  );
+}
+
+/**
+ * Runtime type guard for a loaded CaseSession payload. Pure (no side effects).
+ *
+ * Certifies the payload is a structurally-valid `CaseSession` for the
+ * expected `caseId`. Use this before any `as CaseSession` cast at the I/O
+ * boundary; the narrowing makes the cast unnecessary.
+ */
+export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSession {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    v.schemaVersion === 1 &&
+    v.caseId === caseId &&
+    typeof v.caseRevision === "string" &&
+    typeof v.status === "string" &&
+    SESSION_STATUSES.has(v.status) &&
+    typeof v.phase === "string" &&
+    SESSION_PHASES.has(v.phase) &&
+    isStringArray(v.requestedFactIds) &&
+    isRecommendationDraft(v.draft) &&
+    (v.firstAttempt === null || isAttemptSnapshot(v.firstAttempt)) &&
+    (v.revisedAttempt === null || isAttemptSnapshot(v.revisedAttempt)) &&
+    isStringArray(v.openedReferenceIds) &&
+    // `transferOutcome` is additive (Piece 5c) — older sessions lack it. The
+    // guard accepts null, undefined (handled by normalizeTransferOutcome), or
+    // an object that looks like an outcome. The deep shape is the evaluator's
+    // contract; we only confirm "object-or-nullish" so the consumer's
+    // `=== null` branch is safe.
+    (v.transferOutcome === null ||
+      v.transferOutcome === undefined ||
+      isCaseOutcomeShallow(v.transferOutcome)) &&
+    typeof v.updatedAt === "string"
+  );
+}
+
 /**
  * Load a persisted session for a case.
  *
@@ -532,9 +668,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // We read localStorage directly (rather than via `loadVersioned`) because
   // our contract is "null when absent/corrupt", while `loadVersioned`'s
-  // contract is "fallback when absent/corrupt". We still apply the same
-  // structural schema guard `loadVersioned` does (schemaVersion === 1), then
-  // add the caseId match and the caseRevision recovery on top.
+  // contract is "fallback when absent/corrupt".
   const key = sessionKey(caseId);
   let parsed: unknown;
   try {
@@ -544,19 +678,27 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   } catch {
     return null;
   }
-  // Structural/schema guard: only schemaVersion === 1 with a matching caseId
-  // is a real session for THIS case.
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    (parsed as { schemaVersion?: unknown }).schemaVersion !== 1 ||
-    (parsed as { caseId?: unknown }).caseId !== caseId
-  ) {
+  // T9: validate the FULL nested shape. The pre-fix guard checked only
+  // `schemaVersion === 1` and `caseId === caseId` before `parsed as
+  // CaseSession`, which let payloads that passed those two fields but
+  // omitted nested sub-objects (e.g. `draft` missing, `requestedFactIds:
+  // null`, a half-formed `firstAttempt`) reach the consumer and crash at
+  // mount (`session.draft.customerExplanation`,
+  // `session.requestedFactIds.length`, CaseOutcome's
+  // `current.draft.selectedRail`). Reachability is real: any other writer
+  // under `relay:case-session:<id>` (a future migration, a partial write
+  // interrupted by tab close, a hand-edited localStorage entry, a sibling
+  // key from an older build) lands here. The type guard is pure (no side
+  // effects) so the I/O boundary contract is preserved.
+  if (!isCaseSession(parsed, caseId)) {
     return null;
   }
-  const stored = parsed as CaseSession;
+  const stored = parsed;
 
-  // Revision mismatch: recover without losing the first attempt.
+  // Revision mismatch: recover without losing the first attempt. The
+  // recovery contract (recoverStaleSession) constructs a known-good shape,
+  // so a structurally-valid session with a mismatched caseRevision still
+  // resumes — it does NOT hit the null-on-corrupt path.
   if (stored.caseRevision !== CASE_REVISION) {
     return recoverStaleSession(caseId, stored);
   }

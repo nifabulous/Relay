@@ -1291,3 +1291,278 @@ describe("updateRequestedFacts", () => {
     expect(result).toEqual({ firstAffectedControlId: null });
   });
 });
+
+// ─── T9: malformed payloads must NOT crash CaseDesk at mount ─────────────────
+//
+// The pre-fix guard only checked `schemaVersion === 1` and `caseId === caseId`
+// before `parsed as CaseSession`. A payload that passes those two fields but
+// omits nested sub-objects would crash at mount:
+//   - missing `draft` → `useState(session.draft.customerExplanation)` throws
+//     TypeError ("Cannot read properties of undefined (reading
+//     'customerExplanation')").
+//   - `requestedFactIds: null` (or a string) → `session.requestedFactIds.length`
+//     throws.
+//   - `firstAttempt: { submittedAt }` with no draft/outcome, phase "resolve" →
+//     CaseOutcome's `current.draft.selectedRail` throws.
+//
+// The reachability is not theoretical: any other code writing under
+// `relay:case-session:<id>` (a future migration, a partial write interrupted
+// by tab close, a hand-edited localStorage entry, a sibling key from an older
+// build) lands here. The contract is: "null on corrupt" must mean "null on
+// ANY structurally-invalid payload that would crash render," not "null on
+// corrupt-schemaVersion-or-caseId, otherwise trust everything via `as`."
+//
+// These tests pin the contract by injecting each crash-class payload and
+// asserting `loadCaseSession` returns null. A regression that reverts the
+// guard to the 2-field check would make at least one of these fail (the
+// pre-fix implementation returned a non-null value that crashed when the
+// consumer touched the missing field).
+
+describe("loadCaseSession — malformed payloads return null (T9)", () => {
+  // Helper: write a raw payload under the case-session key. The shape is
+  // intentionally untyped at the boundary so each test can inject a precise
+  // malformed variant.
+  function seedRaw(payload: unknown) {
+    localStorage.setItem(
+      "relay:case-session:canada-us-supplier",
+      JSON.stringify(payload),
+    );
+  }
+
+  // The minimal fields that satisfy the OLD 2-field guard. Each test below
+  // starts from this and removes/corrupts a single nested field, mirroring
+  // the adversarial injection pass.
+  function baseShape(): Record<string, unknown> {
+    return {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: CASE_REVISION,
+      status: "in_progress",
+      phase: "investigate",
+      requestedFactIds: [] as string[],
+      draft: filledDraft(),
+      firstAttempt: null,
+      revisedAttempt: null,
+      openedReferenceIds: [] as string[],
+      transferOutcome: null,
+      updatedAt: "2026-07-01T00:00:00Z",
+    };
+  }
+
+  it("returns null when `draft` is missing entirely (previously crashed on draft.customerExplanation)", () => {
+    const payload = baseShape();
+    delete payload.draft;
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `requestedFactIds` is null (previously crashed on .length)", () => {
+    const payload = baseShape();
+    payload.requestedFactIds = null;
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `requestedFactIds` is a string instead of an array", () => {
+    const payload = baseShape();
+    payload.requestedFactIds = "not-an-array";
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `firstAttempt` is an object missing draft/outcome (previously crashed in CaseOutcome)", () => {
+    // phase resolve + a half-formed firstAttempt: CaseOutcome would read
+    // `current.draft.selectedRail` and throw. The guard must reject the
+    // snapshot before render.
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = { submittedAt: "2026-07-01T00:00:00Z" };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `phase` is not one of the 5 valid values", () => {
+    const payload = baseShape();
+    payload.phase = "not-a-real-phase";
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `status` is not one of the 4 valid values", () => {
+    const payload = baseShape();
+    payload.status = "not-a-real-status";
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `caseRevision` is missing", () => {
+    const payload = baseShape();
+    delete payload.caseRevision;
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `updatedAt` is missing", () => {
+    const payload = baseShape();
+    delete payload.updatedAt;
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `openedReferenceIds` is not an array", () => {
+    const payload = baseShape();
+    payload.openedReferenceIds = "scheme-ref";
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `draft.shortlist` is not an array", () => {
+    const payload = baseShape();
+    payload.draft = { ...filledDraft(), shortlist: "swift-fedwire" };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `draft.selectedRail` is a number (not string|null)", () => {
+    const payload = baseShape();
+    payload.draft = { ...filledDraft(), selectedRail: 42 };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `draft.customerExplanation` is missing (CaseDesk reads it at mount via useState)", () => {
+    const payload = baseShape();
+    payload.draft = { ...filledDraft() };
+    delete (payload.draft as Record<string, unknown>).customerExplanation;
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `firstAttempt` has a draft but no outcome", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = {
+      draft: filledDraft(),
+      submittedAt: "2026-07-01T00:00:00Z",
+    };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `firstAttempt.outcome` is not an object", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = {
+      draft: filledDraft(),
+      outcome: "defensible",
+      submittedAt: "2026-07-01T00:00:00Z",
+    };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `firstAttempt.submittedAt` is missing", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = {
+      draft: filledDraft(),
+      outcome: VALID_OUTCOME,
+    };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `revisedAttempt` is a non-null non-object", () => {
+    const payload = baseShape();
+    payload.revisedAttempt = "garbage";
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  // ── Regression guards: the happy paths must STILL work ──────────────────
+
+  it("loads a structurally-valid session (happy path preserved)", () => {
+    // Build a fully-valid session via the reducer so any future tightening of
+    // the guard that rejects a known-good shape fails loudly here.
+    const session = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    saveCaseSession(session);
+    const loaded = loadCaseSession(CASE_ID);
+    expect(loaded).not.toBeNull();
+    expect(loaded).toEqual(session);
+  });
+
+  it("loads a structurally-valid session with transferOutcome set (completed debrief shape)", () => {
+    const submitted = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    const completed = caseReducer(submitted, {
+      type: "complete-transfer",
+      outcome: PREFERRED_OUTCOME,
+    });
+    saveCaseSession(completed);
+    const loaded = loadCaseSession(CASE_ID);
+    expect(loaded).not.toBeNull();
+    expect(loaded).toEqual(completed);
+    expect(loaded!.transferOutcome).toEqual(PREFERRED_OUTCOME);
+  });
+
+  it("recovers (does NOT return null) a structurally-valid session with a mismatched caseRevision", () => {
+    // Recovery contract preserved: a valid-shape stale session goes through
+    // recoverStaleSession, NOT the null-on-corrupt path.
+    const stale: CaseSession = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: "2099-01-01-stale",
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: ["price-sensitivity"],
+      draft: filledDraft(),
+      firstAttempt: {
+        draft: filledDraft(),
+        outcome: VALID_OUTCOME,
+        submittedAt: "2026-01-01T00:00:00Z",
+      },
+      revisedAttempt: null,
+      openedReferenceIds: ["scheme-ref"],
+      transferOutcome: null,
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    seedRaw(stale);
+    const recovered = loadCaseSession(CASE_ID);
+    expect(recovered).not.toBeNull();
+    expect(recovered!.status).toBe("under_review");
+    expect(recovered!.caseRevision).toBe(CASE_REVISION);
+    expect(recovered!.firstAttempt).toEqual(stale.firstAttempt);
+  });
+
+  it("normalizes a structurally-valid session missing `transferOutcome` to null (Piece 5c additive field)", () => {
+    // Old sessions (Piece 5b) lack transferOutcome entirely. The guard must
+    // accept the payload and let the existing normalizeTransferOutcome path
+    // coerce undefined → null.
+    const payload = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: CASE_REVISION,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: [] as string[],
+      draft: filledDraft(),
+      firstAttempt: {
+        draft: filledDraft(),
+        outcome: VALID_OUTCOME,
+        submittedAt: "2026-01-01T00:00:00Z",
+      },
+      revisedAttempt: null,
+      openedReferenceIds: [] as string[],
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    seedRaw(payload);
+    const loaded = loadCaseSession(CASE_ID);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.transferOutcome).toBeNull();
+  });
+});
