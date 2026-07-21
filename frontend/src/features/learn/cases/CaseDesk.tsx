@@ -130,9 +130,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   const referenceOpenerRef = useRef<HTMLButtonElement | null>(null);
 
   // Polite live region content for evidence changes (e.g. "2 new facts
-  // available"). Updated when the requested-fact set grows.
+  // available"). Updated when the requested-fact set changes.
+  // T18: the dependency is the array IDENTITY (session.requestedFactIds),
+  // not its length. A same-length swap (uncheck A + check B in the same
+  // Request action) changes the evidence content without changing the count;
+  // the live region must still announce it. Tracking the previous ids (not
+  // just the previous count) lets us phrase the message precisely.
   const [evidenceAnnouncement, setEvidenceAnnouncement] = useState("");
-  const prevRequestedCountRef = useRef(session.requestedFactIds.length);
+  const prevRequestedIdsRef = useRef<string[]>(session.requestedFactIds);
 
   // The phase heading ref — focus moves here on phase transition.
   const phaseHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -305,22 +310,51 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   }, [openReferenceFactId]);
 
   // ── Evidence live region ──────────────────────────────────────────────────
-  // Announce when the requested-fact set grows (facts became available).
+  // Announce when the requested-fact set changes. T18: announce on the array
+  // IDENTITY change (which fires for both count growth AND same-length swaps),
+  // not just on count growth. The reducer's arrayEqual guard produces a new
+  // reference only when content differs, so depending on the array itself
+  // captures every material change.
   useEffect(() => {
-    const prev = prevRequestedCountRef.current;
-    const curr = session.requestedFactIds.length;
-    if (curr > prev) {
-      const delta = curr - prev;
+    const prev = prevRequestedIdsRef.current;
+    const curr = session.requestedFactIds;
+    // No-op if the reference is unchanged (the reducer returns the SAME
+    // reference for an identical set).
+    if (prev === curr) {
+      return;
+    }
+    const prevSet = new Set(prev);
+    const currSet = new Set(curr);
+    // Diff the sets so the announcement is precise: "added", "removed", or
+    // "updated" (a swap where some were added AND some were removed).
+    let added = 0;
+    let removed = 0;
+    for (const id of currSet) if (!prevSet.has(id)) added++;
+    for (const id of prevSet) if (!currSet.has(id)) removed++;
+    if (added > 0 && removed === 0) {
       setEvidenceAnnouncement(
-        delta === 1
+        added === 1
           ? "1 new fact available in your evidence."
-          : `${delta} new facts available in your evidence.`,
+          : `${added} new facts available in your evidence.`,
       );
-    } else if (curr < prev) {
+    } else if (added === 0 && removed > 0) {
+      // Pure removal (rare in the Phase 1 UI but the contract must hold).
+      setEvidenceAnnouncement("");
+    } else if (added > 0 && removed > 0) {
+      // Same-length swap or a mixed change. Phrase as "updated" so the
+      // learner knows the evidence changed even though the count may be the
+      // same.
+      setEvidenceAnnouncement(
+        added === 1 && removed === 1
+          ? "Evidence updated: 1 fact changed."
+          : `Evidence updated: ${added} added, ${removed} removed.`,
+      );
+    } else {
+      // No diff (shouldn't happen — the reference differed — but be safe).
       setEvidenceAnnouncement("");
     }
-    prevRequestedCountRef.current = curr;
-  }, [session.requestedFactIds.length]);
+    prevRequestedIdsRef.current = curr;
+  }, [session.requestedFactIds]);
 
   // ── Action handlers ───────────────────────────────────────────────────────
   function handleStart() {

@@ -378,6 +378,50 @@ describe("CaseDesk — phase rendering", () => {
       expect(live?.textContent ?? "").toMatch(/1 new fact available/i);
     });
   });
+
+  // T18: the live region depended on requestedFactIds.length, so a same-
+  // length swap (uncheck A + check B in the same Request action) announced
+  // nothing — the count was unchanged even though the evidence content
+  // changed. The fix announces on the array IDENTITY change, not just count
+  // growth.
+  it("T18: announces a same-length evidence swap (count unchanged but content changed)", async () => {
+    const user = userEvent.setup();
+    // Seed a session where one fact is already requested so the starting
+    // count is 1.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+    const live = document.querySelector('[aria-live="polite"]');
+    expect(live).not.toBeNull();
+    // The live region starts empty (no transition yet).
+    expect(live?.textContent ?? "").toBe("");
+
+    // Uncheck the requested fact and check a different one, then Request.
+    // The new requestedFactIds has length 1 (same as before) but a different
+    // member. The reducer's arrayEqual guard fires (different content) and
+    // produces a new array reference — the live region must announce.
+    const feeCb = screen.getByRole("checkbox", { name: /fee sensitivity/i });
+    const trackingCb = screen.getByRole("checkbox", { name: /tracking requirement/i });
+    // fee is currently checked (seeded); uncheck it.
+    expect(feeCb).toBeChecked();
+    await user.click(feeCb);
+    expect(feeCb).not.toBeChecked();
+    // Check the other fact.
+    await user.click(trackingCb);
+    expect(trackingCb).toBeChecked();
+    // Commit the request — count is still 1, but the content changed.
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // The live region announces the swap (not silent). The exact phrasing is
+    // flexible — the contract is "something was announced" for a content
+    // change, not just a count growth.
+    await waitFor(() => {
+      expect(live?.textContent ?? "").not.toBe("");
+    });
+    // And the announcement is NOT the misleading "0 new facts available"
+    // (which a count-growth-only implementation would have produced if it
+    // fell through to a zero delta).
+    expect(live?.textContent ?? "").not.toMatch(/^0 new facts available/i);
+  });
 });
 
 // ─── customerExplanation debounce + flush (I1) ──────────────────────────────
