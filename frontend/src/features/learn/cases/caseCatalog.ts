@@ -107,7 +107,12 @@ const supplierCaseFacts: CaseFact[] = [
     id: "price-sensitivity",
     label: "Fee sensitivity",
     value: "Customer is fee-conscious; willing to pay more only if it protects the deadline.",
-    state: "gathered",
+    // T1: requestable facts ship `unknown` so the value is NOT visible in the
+    // EvidenceRail until the learner requests it. The value above is what gets
+    // revealed on request. Shipping `gathered` here was the cosmetic-
+    // investigation bug: a learner could read every gathered value without
+    // doing anything, then fill four boxes and reach `preferred`.
+    state: "unknown",
     requestable: true,
     claim: OPERATOR_GUIDANCE,
   },
@@ -123,7 +128,8 @@ const supplierCaseFacts: CaseFact[] = [
     id: "tracking-need",
     label: "Tracking requirement",
     value: "Customer wants end-to-end tracking and confirmation of credit.",
-    state: "gathered",
+    // T1: see price-sensitivity — ships unknown, revealed on request.
+    state: "unknown",
     requestable: true,
     claim: OPERATOR_GUIDANCE,
   },
@@ -139,7 +145,8 @@ const supplierCaseFacts: CaseFact[] = [
     id: "intermediary",
     label: "Intermediary correspondent",
     value: "USD routed via BNY Mellon (simulation) for Fedwire credit.",
-    state: "gathered",
+    // T1: see price-sensitivity — ships unknown, revealed on request.
+    state: "unknown",
     requestable: true,
     claim: OPERATOR_GUIDANCE,
   },
@@ -147,7 +154,8 @@ const supplierCaseFacts: CaseFact[] = [
     id: "institution-variation",
     label: "Institution variation",
     value: "Outcome varies by sender bank; Maple Ridge Credit Union wires via a single USD correspondent.",
-    state: "gathered",
+    // T1: see price-sensitivity — ships unknown, revealed on request.
+    state: "unknown",
     requestable: true,
     claim: INSTITUTION_CONFIG,
   },
@@ -253,8 +261,15 @@ const transferRails: RailOption[] = [
  * Convention: an ISO-ish date tag plus a short slug, e.g. "2026-07-01.r1".
  * The exact format is not load-bearing — only equality is checked — but a
  * human-readable tag makes the bump easy to audit.
+ *
+ * 2026-07-20.investigation-load-bearing — the four requestable facts
+ * (price-sensitivity, tracking-need, intermediary, institution-variation) now
+ * ship `state: "unknown"` instead of `gathered`. A stored draft built against
+ * the old "gathered" facts assumed their values were visible without
+ * investigation; under the new contract the evaluator gates those facts on
+ * `requestedFactIds`, so any in-flight draft must be re-investigated.
  */
-export const CASE_REVISION = "2026-07-01.r1";
+export const CASE_REVISION = "2026-07-20.investigation-load-bearing";
 
 export const supplierCase: CaseDefinition = {
   id: "canada-us-supplier",

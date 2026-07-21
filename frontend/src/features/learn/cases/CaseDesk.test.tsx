@@ -101,20 +101,24 @@ describe("CaseDesk — customer request anchor", () => {
 // ─── Fact sections ──────────────────────────────────────────────────────────
 
 describe("CaseDesk — fact sections by state", () => {
-  it("groups facts into supplied, gathered, assumption, and unknown sections", () => {
+  it("groups facts into supplied and unknown sections before any investigation (T1: requestable facts ship unknown)", () => {
     seedStartedSession();
     renderDesk();
-    // The catalog has supplied and gathered facts (no authored assumption or
-    // unknown facts in the default case). We assert the section headings that
-    // DO have facts render, and that the section structure exists for all four.
+    // T1: the four requestable facts (price-sensitivity, tracking-need,
+    // intermediary, institution-variation) ship `state: "unknown"` so their
+    // values are not pre-disclosed as gathered. Before the learner requests
+    // anything, the EvidenceRail shows the Supplied section (given context)
+    // and the Unknown section (the investigation surface). The Gathered
+    // section is empty and not rendered until a fact is requested.
     expect(screen.getByRole("heading", { name: /supplied/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /gathered/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /unknown/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^gathered$/i })).not.toBeInTheDocument();
     // A supplied fact value renders in its section.
     const supplied = screen.getByRole("region", { name: /supplied/i });
     expect(supplied).toHaveTextContent(/United States/);
-    // A gathered fact value renders in its section.
-    const gathered = screen.getByRole("region", { name: /gathered/i });
-    expect(gathered).toHaveTextContent(/fee-conscious|tracking/i);
+    // A requestable fact renders in the Unknown section before being requested.
+    const unknown = screen.getByRole("region", { name: /unknown/i });
+    expect(unknown).toHaveTextContent(/fee sensitivity|tracking requirement/i);
   });
 
   it("shows a compact source status for facts that carry a claim", () => {

@@ -321,7 +321,9 @@ test.describe("Case Desk recovery scenarios", () => {
     const inProgressSession = {
       schemaVersion: 1,
       caseId: "canada-us-supplier",
-      caseRevision: "2026-07-01.r1",
+      // Must match the current catalog CASE_REVISION so the session resumes
+      // (a mismatch triggers the stale-claim recovery and wipes the draft).
+      caseRevision: "2026-07-20.investigation-load-bearing",
       status: "in_progress",
       phase: "investigate",
       requestedFactIds: ["price-sensitivity"],

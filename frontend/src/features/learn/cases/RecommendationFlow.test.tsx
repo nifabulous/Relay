@@ -20,6 +20,7 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { CaseDesk } from "./CaseDesk";
 import { createInitialCaseSession, type CaseSession } from "./caseStore";
@@ -31,6 +32,22 @@ import type { RecommendationDraft } from "./caseTypes";
 
 const CASE_ID = "canada-us-supplier";
 const STORAGE_KEY = `relay:case-session:${CASE_ID}`;
+
+/**
+ * T1: the requestable fact ids in the supplier case (mirrors the catalog). The
+ * seed helpers model a learner who has fully investigated (requested every
+ * requestable fact), so the evaluator's requestedFactIds gate doesn't block.
+ * swift-fedwire specifically requires `tracking-need` (requestable) plus the
+ * supplied facts (urgency, beneficiary-bank, amount, destination-currency), so
+ * requesting the full set is the honest "fully investigated" state.
+ */
+const ALL_REQUESTABLE_FACT_IDS = [
+  "price-sensitivity",
+  "tracking-need",
+  "intermediary",
+  "institution-variation",
+];
+const FULLY_INVESTIGATED = new Set(ALL_REQUESTABLE_FACT_IDS);
 
 /**
  * A fully-reasoned draft that selects the best-fit rail (swift-fedwire) with
@@ -70,6 +87,9 @@ function seedRecommendSession(
     phase: "recommend",
     draft: preferredDraft(draftOverrides),
     firstAttempt: null,
+    // T1: model a learner who has fully investigated. Without this, Send
+    // scores `invalid` (tracking-need not requested) instead of `preferred`.
+    requestedFactIds: ALL_REQUESTABLE_FACT_IDS,
     ...sessionOverrides,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -115,7 +135,7 @@ describe("RecommendationFlow — evaluation hidden before commit", () => {
     // surfaced to the learner yet. The evaluation is deliberately withheld
     // until commit so the learner commits to a recommendation before learning
     // how it was scored.
-    const outcome = evaluateRecommendation(supplierCase, draft);
+    const outcome = evaluateRecommendation(supplierCase, draft, FULLY_INVESTIGATED);
     expect(outcome.consequence.length).toBeGreaterThan(0);
     expect(screen.queryByText(outcome.consequence)).not.toBeInTheDocument();
     // No decision-quality evaluation chip (distinct from rail-eligibility chips
@@ -304,12 +324,16 @@ function seedResolveSession(
   sessionOverrides: Partial<CaseSession> = {},
 ): CaseSession {
   const draft = preferredDraft(draftOverrides);
-  const outcome = evaluateRecommendation(supplierCase, draft);
+  // T1: the seeded firstAttempt models a learner who fully investigated (so the
+  // evaluator produces `preferred`, matching what CaseDesk would produce on
+  // Send when requestedFactIds is the full set).
+  const outcome = evaluateRecommendation(supplierCase, draft, FULLY_INVESTIGATED);
   const session: CaseSession = {
     ...createInitialCaseSession(CASE_ID),
     status: "in_progress",
     phase: "resolve",
     draft,
+    requestedFactIds: ALL_REQUESTABLE_FACT_IDS,
     firstAttempt: {
       draft,
       outcome,
@@ -339,7 +363,7 @@ function getCompleteTransferButton(): HTMLButtonElement {
 describe("RecommendationFlow 5b — consequence precedes classification", () => {
   it("renders the consequence text BEFORE the decision-quality chip in DOM order", () => {
     const draft = preferredDraft();
-    const outcome = evaluateRecommendation(supplierCase, draft);
+    const outcome = evaluateRecommendation(supplierCase, draft, FULLY_INVESTIGATED);
     seedResolveSession();
     renderDesk();
 
@@ -360,7 +384,7 @@ describe("RecommendationFlow 5b — consequence precedes classification", () => 
     renderDesk();
     // The sound-reasoning list is surfaced ("What you reasoned well"). At
     // least one sound-reasoning item exists for the preferred draft.
-    const outcome = evaluateRecommendation(supplierCase, preferredDraft());
+    const outcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
     expect(outcome.soundReasoning.length).toBeGreaterThan(0);
     expect(screen.getByText(/what you reasoned well/i)).toBeInTheDocument();
     // Preferred outcome has no reasoning gap → a positive "No gaps" heading.
@@ -436,7 +460,7 @@ describe("RecommendationFlow 5b — evaluation failure preserves the draft", () 
       shortlist: ["interac-etransfer"],
       selectedRail: "interac-etransfer",
     });
-    const invalidOutcome = evaluateRecommendation(supplierCase, invalidDraft);
+    const invalidOutcome = evaluateRecommendation(supplierCase, invalidDraft, FULLY_INVESTIGATED);
     expect(invalidOutcome.quality).toBe("invalid");
 
     renderDesk();
@@ -562,8 +586,8 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
   it("surfaces the main-case decision-quality in the supported section and the transfer decision-quality in the transfer section", () => {
     seedResolveSession();
     renderDesk();
-    // The preferred draft scores "preferred" on the main case.
-    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft());
+    // The preferred draft scores "preferred" on the main case (fully investigated).
+    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
     expect(mainOutcome.quality).toBe("preferred");
 
     driveCompleteTransfer();
@@ -616,7 +640,7 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
     // the debrief's cards while the resolve-phase test stays green. The plan
     // invariant (consequence-first) applies to BOTH phases; this closes the
     // gap where only the resolve-phase DOM order was asserted.
-    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft());
+    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
     seedResolveSession();
     renderDesk();
     driveCompleteTransfer();
@@ -689,7 +713,7 @@ describe("RecommendationFlow 5c — completion is tied to complete-transfer, NOT
     // explicit: completion is the finish (transfer), not a quality gate.
     // Preferred ≠ completed.
     const draft = preferredDraft();
-    const outcome = evaluateRecommendation(supplierCase, draft);
+    const outcome = evaluateRecommendation(supplierCase, draft, FULLY_INVESTIGATED);
     expect(outcome.quality).toBe("preferred");
     seedResolveSession();
     const seeded = readStoredSession()!;
@@ -719,53 +743,78 @@ describe("RecommendationFlow 5c — completion is tied to complete-transfer, NOT
 // ─── Full-flow reachability via the UI (no draft seeding) ───────────────────
 // Regression guard: a production learner (who cannot seed localStorage) must be
 // able to reach the `preferred` decision-quality tier through the UI alone. The
-// evaluator requires a non-empty `reasons` entry for any tier above `possible`,
-// so the Reasoning section MUST expose a reason input. Without it the entire
-// decision-quality spine (defensible/preferred) is unreachable and the
-// experience is hollow.
+// evaluator now requires BOTH:
+//   - the investigation (requesting the facts the best-fit rail needs, e.g.
+//     tracking-need for swift-fedwire), AND
+//   - a substantive primary reason (T1b: ≥ MIN_REASON_CHARS chars and
+//     ≥ MIN_REASON_WORDS words; filler like "x" no longer reaches defensible).
+// So the FactRequest controls AND the Reasoning section MUST both be reachable
+// and usable from the UI. Without either, the tier spine collapses.
 
 describe("RecommendationFlow — preferred tier is reachable via the UI", () => {
-  it("lets a learner enter a primary reason and reach `preferred` without seeding the draft", () => {
+  it("lets a learner request the required facts, enter a substantive reason, and reach `preferred`", async () => {
     // Seed only the SHELL — an in-progress session in the recommend phase with
-    // NO reasoning fields filled. The learner must fill every field the
-    // evaluator scores via the UI.
+    // NO reasoning fields filled and NO facts requested. The learner must
+    // investigate AND reason through the UI.
     const initial = createInitialCaseSession(CASE_ID);
     const shell: CaseSession = {
       ...initial,
       status: "in_progress",
       phase: "recommend",
       // Draft has the best-fit rail selected but NOTHING else — the learner
-      // must provide the reasoning through the UI.
+      // must request the facts and provide the reasoning through the UI.
       draft: {
         ...initial.draft,
         shortlist: ["swift-fedwire"],
         selectedRail: "swift-fedwire",
       },
+      requestedFactIds: [],
       firstAttempt: null,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(shell));
 
+    const user = userEvent.setup();
     renderDesk();
 
-    // The learner fills each reasoning field via its UI input.
-    const reasonInput = screen.getByRole("textbox", { name: /primary reason/i });
-    fireEvent.change(reasonInput, { target: { value: "Fast same-day USD value protects the 2-business-day deadline." } });
+    // T1: the learner requests every available fact via the FactRequest UI.
+    // swift-fedwire requires tracking-need (requestable); the other requestable
+    // facts (price-sensitivity, intermediary, institution-variation) unlock the
+    // cost priority and round out the investigation. Using userEvent (not
+    // fireEvent) so each toggle's state update flushes before the next click —
+    // FactRequest's toggle reads the current pending set from props, so we
+    // cannot batch-throw clicks at stale checkbox nodes.
+    await user.click(screen.getByRole("checkbox", { name: /fee sensitivity/i }));
+    await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
+    await user.click(screen.getByRole("checkbox", { name: /intermediary correspondent/i }));
+    await user.click(screen.getByRole("checkbox", { name: /institution variation/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
 
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
-    fireEvent.change(priceInput, { target: { value: "The wire fee is justified by the shipment deadline." } });
+    // The learner fills each reasoning field via its UI input. T1b: the primary
+    // reason is a real sentence (well above the substantive threshold); filler
+    // like "x" would leave the learner at `possible`.
+    await user.type(
+      screen.getByRole("textbox", { name: /primary reason/i }),
+      "Fast same-day USD value protects the 2-business-day deadline.",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /price expectation/i }),
+      "The wire fee is justified by the shipment deadline.",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /arrival expectation/i }),
+      "Same-day USD value, well within 2 business days.",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /tracking expectation/i }),
+      "Full UETR tracking with confirmation of credit.",
+    );
 
-    const arrivalInput = screen.getByRole("textbox", { name: /arrival expectation/i });
-    fireEvent.change(arrivalInput, { target: { value: "Same-day USD value, well within 2 business days." } });
-
-    const trackingInput = screen.getByRole("textbox", { name: /tracking expectation/i });
-    fireEvent.change(trackingInput, { target: { value: "Full UETR tracking with confirmation of credit." } });
-
-    // Send. The evaluator scores the now-complete draft.
-    fireEvent.click(getSendButton());
+    // Send. The evaluator scores the now-complete, fully-investigated draft.
+    await user.click(getSendButton());
 
     // CRITICAL: the learner reached `preferred` through the UI alone. If the
-    // reason input is removed or renamed, this fails — the tier spine collapses
-    // back to `possible`.
+    // FactRequest controls or the reason input are removed/renamed, this fails
+    // — the tier spine collapses back to `invalid`/`possible`.
     const stored = readStoredSession()!;
     expect(stored.firstAttempt).not.toBeNull();
     expect(stored.firstAttempt!.outcome.quality).toBe("preferred");
@@ -773,5 +822,74 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     expect(stored.firstAttempt!.draft.reasons).toContain(
       "Fast same-day USD value protects the 2-business-day deadline.",
     );
+    // T1: the requested facts are captured in the immutable session.
+    expect(stored.requestedFactIds).toEqual(expect.arrayContaining(ALL_REQUESTABLE_FACT_IDS));
+  });
+
+  it("blocks `preferred` when the learner skips the investigation (does not request tracking-need)", () => {
+    // The inverse of the reachability guard: a learner who fills every
+    // reasoning field with genuine content but does NOT request tracking-need
+    // (required by swift-fedwire) cannot reach `preferred`. This is the T1
+    // contract — the investigation is load-bearing.
+    const initial = createInitialCaseSession(CASE_ID);
+    const shell: CaseSession = {
+      ...initial,
+      status: "in_progress",
+      phase: "recommend",
+      draft: {
+        ...initial.draft,
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["Fast same-day USD value protects the 2-business-day deadline."],
+        priceExpectation: "The wire fee is justified by the shipment deadline.",
+        arrivalExpectation: "Same-day USD value, well within 2 business days.",
+        trackingExpectation: "Full UETR tracking with confirmation of credit.",
+      },
+      requestedFactIds: [],
+      firstAttempt: null,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shell));
+
+    renderDesk();
+    fireEvent.click(getSendButton());
+
+    const stored = readStoredSession()!;
+    expect(stored.firstAttempt).not.toBeNull();
+    // Without tracking-need requested, swift-fedwire is missing a required fact
+    // → `invalid`. Definitely NOT `preferred`.
+    expect(stored.firstAttempt!.outcome.quality).toBe("invalid");
+    expect(stored.firstAttempt!.outcome.missingFactIds).toContain("tracking-need");
+  });
+
+  it("blocks `preferred`/`defensible` when the learner types filler in the reason field (even fully investigated)", () => {
+    // The T1b contract: filler ("x") in the Primary reason field cannot reach
+    // defensible/preferred, even with the full investigation done and every
+    // expectation filled. The reason must clear the substantive threshold.
+    const initial = createInitialCaseSession(CASE_ID);
+    const shell: CaseSession = {
+      ...initial,
+      status: "in_progress",
+      phase: "recommend",
+      draft: {
+        ...initial.draft,
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["x"], // filler — below the substantive threshold
+        priceExpectation: "The wire fee is justified by the shipment deadline.",
+        arrivalExpectation: "Same-day USD value, well within 2 business days.",
+        trackingExpectation: "Full UETR tracking with confirmation of credit.",
+      },
+      requestedFactIds: ALL_REQUESTABLE_FACT_IDS,
+      firstAttempt: null,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shell));
+
+    renderDesk();
+    fireEvent.click(getSendButton());
+
+    const stored = readStoredSession()!;
+    expect(stored.firstAttempt).not.toBeNull();
+    // Filler reason → `possible`, never defensible/preferred.
+    expect(stored.firstAttempt!.outcome.quality).toBe("possible");
   });
 });

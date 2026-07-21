@@ -353,8 +353,17 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     try {
       // 3) Evaluate the FLUSHED draft and snapshot it. The evaluator is pure
       //    and deterministic — the same draft always yields the same outcome.
+      //    T1: pass the set of facts the learner actually requested so the
+      //    investigation is load-bearing (a requestable fact not requested is
+      //    treated as unknown for scoring). flushedSession derives from
+      //    session (only customerExplanation may differ), so it carries the
+      //    same requestedFactIds.
       if (!definition) return;
-      const outcome = evaluateRecommendation(definition, flushedSession.draft);
+      const outcome = evaluateRecommendation(
+        definition,
+        flushedSession.draft,
+        new Set(flushedSession.requestedFactIds),
+      );
       const submittedAt = new Date().toISOString();
       const next = caseReducer(flushedSession, {
         type: "send-recommendation",

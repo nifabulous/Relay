@@ -63,6 +63,39 @@ describe("supplierCase facts", () => {
     expect(requestable.every((f) => f.requestable === true)).toBe(true);
   });
 
+  // ─── T1 regression guard: the investigation must be load-bearing ───────────
+  // The four requestable facts (price-sensitivity, tracking-need, intermediary,
+  // institution-variation) MUST ship `state: "unknown"` so their VALUES are not
+  // visible in the EvidenceRail before the learner requests them. If a future
+  // edit flips them back to "gathered", the investigation becomes cosmetic: a
+  // learner can read every gathered value without doing anything. These four
+  // tests prevent re-introducing the cosmetic-investigation bug.
+  it.each([
+    "price-sensitivity",
+    "tracking-need",
+    "intermediary",
+    "institution-variation",
+  ])(`ships the requestable fact %s as state "unknown" (T1 regression guard)`, (id) => {
+    const fact = supplierCase.facts.find((f) => f.id === id);
+    expect(fact).toBeDefined();
+    expect(fact!.requestable).toBe(true);
+    expect(fact!.state).toBe("unknown");
+  });
+
+  it("ships every requestable fact as unknown and every non-requestable fact as supplied (T1 invariant)", () => {
+    // The clean partition: requestable facts are the investigation surface, so
+    // they ship unknown. Non-requestable facts are the given context, so they
+    // ship supplied. No fact should sit in the in-between "gathered" state at
+    // author time — that state is a runtime transition (Group B owns it).
+    for (const fact of supplierCase.facts) {
+      if (fact.requestable) {
+        expect(fact.state).toBe("unknown");
+      } else {
+        expect(fact.state).toBe("supplied");
+      }
+    }
+  });
+
   it("every fact has a non-empty label and value", () => {
     for (const f of supplierCase.facts) {
       expect(f.label.length).toBeGreaterThan(0);
@@ -200,15 +233,50 @@ describe("supplierCase synthetic-data safety", () => {
 // than silently flipping a tier label.
 
 describe("supplierCase ↔ evaluator contract", () => {
-  it("discloses urgency, tracking, and cost priorities", () => {
-    const priorities = disclosedPriorities(supplierCase);
+  // The investigation is load-bearing (T1): requestable facts ship unknown, so
+  // the tracking + cost priorities (derived from requestable facts) only fire
+  // once the learner has REQUESTED them. Urgency is non-requestable, so it
+  // fires from the supplied fact alone. A learner who skips the investigation
+  // gets only the urgency priority and cannot reach `preferred`.
+  const ALL_REQUESTABLE_FACT_IDS = [
+    "price-sensitivity",
+    "tracking-need",
+    "intermediary",
+    "institution-variation",
+  ];
+
+  it("discloses ONLY urgency before any facts are requested (investigation is load-bearing)", () => {
+    const priorities = disclosedPriorities(supplierCase, new Set());
+    expect(priorities.has("urgency")).toBe(true);
+    expect(priorities.has("tracking")).toBe(false);
+    expect(priorities.has("cost")).toBe(false);
+  });
+
+  it("discloses urgency, tracking, and cost once the relevant facts are requested", () => {
+    const priorities = disclosedPriorities(
+      supplierCase,
+      new Set(ALL_REQUESTABLE_FACT_IDS),
+    );
     expect(priorities.has("urgency")).toBe(true);
     expect(priorities.has("tracking")).toBe(true);
     expect(priorities.has("cost")).toBe(true);
   });
 
-  it("identifies swift-fedwire as the unique best-fit rail", () => {
-    expect(bestFitRailId(supplierCase)).toBe("swift-fedwire");
+  it("identifies swift-fedwire as the unique best-fit rail once the investigation is complete", () => {
+    expect(bestFitRailId(supplierCase, new Set(ALL_REQUESTABLE_FACT_IDS))).toBe("swift-fedwire");
+  });
+
+  it("discloses only the urgency priority before the investigation (tracking + cost need requesting)", () => {
+    // The investigation-gating contract at the priorities level: urgency
+    // (non-requestable, supplied) fires regardless; tracking + cost (derived
+    // from requestable facts) only fire once requested. A learner who skips the
+    // investigation therefore cannot unlock the full priority set the best-fit
+    // matcher uses to distinguish swift-fedwire on tracking+cost.
+    const before = disclosedPriorities(supplierCase, new Set());
+    expect(before.has("urgency")).toBe(true);
+    expect(before.has("tracking")).toBe(false);
+    expect(before.has("cost")).toBe(false);
+    expect(before.size).toBe(1);
   });
 
   it("the transfer fixture does NOT disclose urgency (no keyword false-positive)", () => {

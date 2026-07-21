@@ -9,9 +9,10 @@
  * - `invalid`     — selected rail ineligible, or required facts unknown,
  *                   or no rail selected at all.
  * - `possible`    — selected rail is eligible and facts are gathered, but the
- *                   reasoning does not yet cover price/arrival/tracking.
+ *                   reasoning does not yet cover price/arrival/tracking OR the
+ *                   primary reason is filler (fails the substantive threshold).
  * - `defensible`  — eligible + facts gathered + reasoning covers the three
- *                   expectations with at least one fact-grounded reason.
+ *                   expectations with a substantive primary reason.
  * - `preferred`   — defensible AND the selected rail is the best fit under the
  *                   case's disclosed priorities.
  *
@@ -19,6 +20,29 @@
  * (destination country / currency) against cues in each rail's authored
  * `eligibility` string. All data is authored by us, so this keyword contract is
  * stable and explainable.
+ *
+ * ─── Load-bearing investigation (T1) ─────────────────────────────────────────
+ * The evaluator takes a `requestedFactIds: Set<string>` argument representing
+ * the facts the learner ACTUALLY gathered. A requestable fact (e.g.
+ * `tracking-need`, `price-sensitivity`) is treated as "unknown for scoring
+ * purposes" if its id is NOT in `requestedFactIds`, even though its authored
+ * `value` is present in the catalog. This makes the investigation load-bearing:
+ * a learner who skips it cannot reach `preferred` (or `defensible`/`possible`
+ * for rails whose `requiredFacts` include un-requested requestable facts).
+ *
+ * The catalog ships requestable facts as `state: "unknown"`, so this gating is
+ * the only thing that turns a requestable fact "known" for scoring. Supplied
+ * (non-requestable) facts (destination, currency, amount, urgency,
+ * beneficiary-bank) are always gathered — they are the given context.
+ *
+ * ─── Load-bearing reasoning (T1b) ────────────────────────────────────────────
+ * The Primary reason must clear a substantive threshold (`isSubstantiveReason`)
+ * — not just `isNonEmpty`. A learner who types filler ("x", "asdf", "fast") in
+ * the reason field must NOT reach `defensible`/`preferred`. The threshold is a
+ * tunable length + word-count floor; see `MIN_REASON_CHARS` /
+ * `MIN_REASON_WORDS`. The three expectations (price/arrival/tracking) keep the
+ * lighter `isNonEmpty` bar — they are shorter by nature and the contract is
+ * "did the learner articulate something," not "did they reason."
  */
 
 import type {
@@ -28,6 +52,23 @@ import type {
   RailOption,
   RecommendationDraft,
 } from "./caseTypes";
+
+// ─── T1b: substantive-reason threshold ──────────────────────────────────────
+// The Primary reason is the load-bearing reasoning control. `isNonEmpty` alone
+// accepts "x" — filler that lets a learner reach `preferred` without reasoning.
+// The threshold below rejects filler ("x", "asdf", "fast", "a b") while
+// accepting any genuine one-sentence reason (the real sentence the existing
+// RecommendationFlow test types is 62 chars / 7 words; well clear).
+//
+// Why length AND word count:
+//   - char floor rejects short gibberish tokens ("asdf", 4 chars).
+//   - word floor rejects a single long gibberish run and any one-word answer.
+//   - the two together accept the shortest plausible real reason ("It meets
+//     the deadline." = 21 chars / 4 words) while rejecting every filler shape
+//     we've seen.
+// Keep both tunable as named constants so future tuning is one edit + a test.
+export const MIN_REASON_CHARS = 20;
+export const MIN_REASON_WORDS = 3;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -85,12 +126,43 @@ function findRail(definition: CaseDefinition, id: string): RailOption | undefine
   return definition.rails.find((r) => r.id === id);
 }
 
-/** Required facts for a rail that are still in the `unknown` state. */
-function missingRequiredFacts(definition: CaseDefinition, rail: RailOption): string[] {
-  return rail.requiredFacts.filter((id) => {
-    const fact = findFact(definition, id);
-    return !fact || fact.state === "unknown";
-  });
+// ─── T1: effective fact state from requestedFactIds ─────────────────────────
+// A requestable fact counts as "gathered for scoring" ONLY if the learner
+// actually requested it. Non-requestable supplied facts always count. This is
+// the single place that decision is made; every other helper consumes it.
+
+/**
+ * True if the fact is effectively gathered for scoring purposes.
+ *
+ * - Non-requestable facts: gathered unless their authored state is `unknown`.
+ *   Supplied facts (destination, currency, amount, urgency, beneficiary-bank)
+ *   ship `supplied`, so this is always true for them.
+ * - Requestable facts: gathered only if the learner REQUESTED them — i.e. their
+ *   id is in `requestedFactIds`. The catalog ships requestable facts as
+ *   `unknown`, so without an entry in `requestedFactIds` they are NOT gathered.
+ *
+ * `requestedFactIds` defaults to an empty set so callers that genuinely don't
+ * know the requested set (none in production, but defensive) get the strict
+ * "investigation skipped" behaviour rather than silently treating requestable
+ * facts as gathered.
+ */
+function isFactGathered(fact: CaseFact | undefined, requestedFactIds: Set<string>): boolean {
+  if (!fact) return false;
+  if (fact.requestable) return requestedFactIds.has(fact.id);
+  return fact.state !== "unknown";
+}
+
+/**
+ * Required facts for a rail that are NOT gathered given what the learner
+ * actually requested. A requestable required fact the learner did not request
+ * is missing — even though its authored value is present in the catalog.
+ */
+function missingRequiredFacts(
+  definition: CaseDefinition,
+  rail: RailOption,
+  requestedFactIds: Set<string>,
+): string[] {
+  return rail.requiredFacts.filter((id) => !isFactGathered(findFact(definition, id), requestedFactIds));
 }
 
 function isNonEmpty(text: string): boolean {
@@ -98,27 +170,66 @@ function isNonEmpty(text: string): boolean {
 }
 
 /**
- * Determine the case's disclosed priorities from its facts. Returns a set of
- * priority tags the best-fit rail can be matched against. Conservative and
- * case-shaped: only flags a priority when the corresponding fact is present and
- * (for requestable facts) actually gathered.
+ * T1b: the Primary reason's substantive threshold. Rejects filler ("x",
+ * "asdf", "fast") by requiring both a minimum character count AND a minimum
+ * word count. Genuine one-sentence reasons clear both. Exported so the
+ * threshold is directly testable and the catalog/UI can reference the same
+ * contract.
+ */
+export function isSubstantiveReason(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_REASON_CHARS) return false;
+  // Whitespace-delimited token count. A real sentence clears MIN_REASON_WORDS
+  // easily; one-word answers and "a b"-style filler do not.
+  const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
+  return words.length >= MIN_REASON_WORDS;
+}
+
+/**
+ * Determine the case's disclosed priorities from its facts AND what the learner
+ * actually requested. Returns a set of priority tags the best-fit rail can be
+ * matched against. Conservative and case-shaped: only flags a priority when the
+ * corresponding fact is present and effectively gathered (see `isFactGathered`).
+ *
+ * T1 composition: priorities derived from requestable facts (price-sensitivity
+ * → cost; tracking-need → tracking) only fire once the learner REQUESTS them.
+ * Urgency is non-requestable and supplied, so it fires regardless of the
+ * investigation. A learner who skips the investigation therefore cannot unlock
+ * the tracking + cost priorities the best-fit matcher needs to select
+ * swift-fedwire — so `preferred` is structurally unreachable without
+ * investigating.
  *
  * Exported so the catalog↔evaluator keyword contract is directly testable: a
- * catalog test can assert "this case discloses urgency+tracking+cost" without
- * going through the full tier scoring.
+ * catalog test can assert "this case discloses urgency+tracking+cost ONCE the
+ * relevant facts are requested" without going through the full tier scoring.
  */
-export function disclosedPriorities(definition: CaseDefinition): Set<"urgency" | "tracking" | "cost"> {
+export function disclosedPriorities(
+  definition: CaseDefinition,
+  requestedFactIds: Set<string> = new Set(),
+): Set<"urgency" | "tracking" | "cost"> {
   const priorities = new Set<"urgency" | "tracking" | "cost">();
   const urgency = findFact(definition, "urgency");
-  if (urgency && urgency.state !== "unknown" && hasWord(urgency.value, /business day|urgent|asap|deadline|time-critical|within \d/)) {
+  if (
+    urgency &&
+    isFactGathered(urgency, requestedFactIds) &&
+    hasWord(urgency.value, /business day|urgent|asap|deadline|time-critical|within \d/)
+  ) {
     priorities.add("urgency");
   }
   const tracking = findFact(definition, "tracking-need");
-  if (tracking && tracking.state !== "unknown" && hasWord(tracking.value, /track|tracking|uetr|confirmation of credit|confirm/)) {
+  if (
+    tracking &&
+    isFactGathered(tracking, requestedFactIds) &&
+    hasWord(tracking.value, /track|tracking|uetr|confirmation of credit|confirm/)
+  ) {
     priorities.add("tracking");
   }
   const price = findFact(definition, "price-sensitivity");
-  if (price && price.state !== "unknown" && hasWord(price.value, /fee|cost|cheap|price|sensitivity|budget|willing to pay/)) {
+  if (
+    price &&
+    isFactGathered(price, requestedFactIds) &&
+    hasWord(price.value, /fee|cost|cheap|price|sensitivity|budget|willing to pay/)
+  ) {
     priorities.add("cost");
   }
   return priorities;
@@ -142,12 +253,20 @@ function railSatisfies(rail: RailOption, priority: "urgency" | "tracking" | "cos
  * rails that satisfy more priorities. Returns undefined when no eligible rail
  * covers the (urgency+tracking) bundle the case emphasizes.
  *
+ * T1: takes `requestedFactIds` so the disclosed priorities reflect what the
+ * learner actually gathered. Without the investigation, no best-fit rail is
+ * selected → `preferred` is unreachable.
+ *
  * Exported so the catalog↔evaluator contract is directly testable: a catalog
- * test can assert "swift-fedwire is the best-fit rail for this case" without
- * building a full draft and tracing it through tier scoring.
+ * test can assert "swift-fedwire is the best-fit rail for this case ONCE the
+ * investigation is complete" without building a full draft and tracing it
+ * through tier scoring.
  */
-export function bestFitRailId(definition: CaseDefinition): string | undefined {
-  const priorities = disclosedPriorities(definition);
+export function bestFitRailId(
+  definition: CaseDefinition,
+  requestedFactIds: Set<string> = new Set(),
+): string | undefined {
+  const priorities = disclosedPriorities(definition, requestedFactIds);
   if (priorities.size === 0) return undefined;
 
   const eligible = definition.rails.filter((r) => !isRailIneligible(definition, r));
@@ -183,12 +302,17 @@ export interface ShortlistValidation {
  * - `missingFactIds`: union of still-unknown required facts across the
  *   shortlisted eligible rails.
  *
+ * T1: a requestable required fact the learner did NOT request counts as
+ * missing — the shortlist surfaces it so the learner sees the gap before
+ * committing.
+ *
  * Unknown shortlist ids are ignored (they cannot be scored and are surfaced
  * downstream as part of the selection review).
  */
 export function validateShortlist(
   definition: CaseDefinition,
   draft: RecommendationDraft,
+  requestedFactIds: Set<string> = new Set(),
 ): ShortlistValidation {
   const invalidRailIds: string[] = [];
   const missing = new Set<string>();
@@ -202,7 +326,7 @@ export function validateShortlist(
       if (!invalidRailIds.includes(id)) invalidRailIds.push(id);
       continue;
     }
-    for (const factId of missingRequiredFacts(definition, rail)) {
+    for (const factId of missingRequiredFacts(definition, rail, requestedFactIds)) {
       missing.add(factId);
     }
   }
@@ -234,10 +358,15 @@ function emptyOutcome(): CaseOutcome {
 /**
  * Score a learner's recommendation against the case's disclosed facts and rail
  * eligibility. Pure and deterministic.
+ *
+ * T1: `requestedFactIds` is the set of facts the learner actually gathered.
+ * A requestable fact not in this set is treated as unknown for scoring (see
+ * `isFactGathered`).
  */
 export function evaluateRecommendation(
   definition: CaseDefinition,
   draft: RecommendationDraft,
+  requestedFactIds: Set<string> = new Set(),
 ): CaseOutcome {
   // 1) No selection at all.
   if (draft.selectedRail === null) {
@@ -275,8 +404,9 @@ export function evaluateRecommendation(
     };
   }
 
-  // 3) Missing required facts → cannot responsibly recommend yet.
-  const missing = missingRequiredFacts(definition, rail);
+  // 3) Missing required facts → cannot responsibly recommend yet. T1: a
+  //    requestable required fact the learner did not request is missing here.
+  const missing = missingRequiredFacts(definition, rail, requestedFactIds);
   if (missing.length > 0) {
     return {
       ...emptyOutcome(),
@@ -290,16 +420,19 @@ export function evaluateRecommendation(
   }
 
   // 4) Eligible + facts gathered. Now grade the reasoning.
+  //    T1b: the Primary reason must be SUBSTANTIVE (not just non-empty). The
+  //    three expectations keep the lighter isNonEmpty bar (they're shorter by
+  //    nature and the contract is "did the learner articulate something").
   const expectationsCovered = {
     price: isNonEmpty(draft.priceExpectation),
     arrival: isNonEmpty(draft.arrivalExpectation),
     tracking: isNonEmpty(draft.trackingExpectation),
   };
-  const hasReasons = draft.reasons.some((r) => isNonEmpty(r));
+  const hasSubstantiveReason = draft.reasons.some((r) => isSubstantiveReason(r));
 
   const soundReasoning: string[] = [];
-  if (hasReasons) {
-    soundReasoning.push("Gave at least one reason for the recommendation.");
+  if (hasSubstantiveReason) {
+    soundReasoning.push("Gave a substantive reason for the recommendation.");
   }
   if (expectationsCovered.price) soundReasoning.push("Articulated a price expectation.");
   if (expectationsCovered.arrival) soundReasoning.push("Articulated an arrival expectation.");
@@ -310,10 +443,14 @@ export function evaluateRecommendation(
     Number(expectationsCovered.arrival) +
     Number(expectationsCovered.tracking);
 
-  // possible: eligible + facts, but reasoning is thin.
-  if (!hasReasons || coveredCount < 3) {
+  // possible: eligible + facts, but reasoning is thin OR filler.
+  if (!hasSubstantiveReason || coveredCount < 3) {
     const gaps: string[] = [];
-    if (!hasReasons) gaps.push("state at least one reason");
+    if (!hasSubstantiveReason) {
+      gaps.push(
+        `state a substantive primary reason (at least ${MIN_REASON_CHARS} characters and ${MIN_REASON_WORDS} words)`,
+      );
+    }
     if (!expectationsCovered.price) gaps.push("give a price expectation");
     if (!expectationsCovered.arrival) gaps.push("give an arrival expectation");
     if (!expectationsCovered.tracking) gaps.push("give a tracking expectation");
@@ -331,8 +468,9 @@ export function evaluateRecommendation(
     };
   }
 
-  // 5) defensible: eligible + gathered + full expectations + reasons.
-  const bestId = bestFitRailId(definition);
+  // 5) defensible: eligible + gathered + full expectations + substantive reason.
+  //    T1: best-fit selection reflects what the learner actually gathered.
+  const bestId = bestFitRailId(definition, requestedFactIds);
   const isBestFit = bestId !== undefined && bestId === rail.id;
 
   if (!isBestFit) {
