@@ -82,6 +82,11 @@ const RAILS: RailOption[] = [
     eligibility: "USD payments to the United States via Fedwire; fast and tracked.",
     requiredFacts: ["beneficiary-bank", "destination-currency", "amount", "urgency", "tracking-need"],
     reasons: ["Fast same-day USD value", "Full UETR tracking confirmation"],
+    // workedExplanation: authored per-rail, revealed in the resolve phase
+    // AFTER the learner has reviewed the consequence (spec L191). Surfaced
+    // onto CaseOutcome.workedExplanation for eligible rails only.
+    workedExplanation:
+      "SWIFT/Fedwire moves USD same-day with finality; the UETR lets you trace the hop from your bank through the correspondent to the supplier's bank, confirming credit — not just delivery.",
     source: sim,
   },
 ];
@@ -279,6 +284,47 @@ describe("evaluateRecommendation quality tiers", () => {
     expect(outcome.invalidRailIds).toEqual([]);
     expect(outcome.missingFactIds).toEqual([]);
     expect(outcome.consequence.toLowerCase()).toContain("no rail");
+  });
+});
+
+// ─── workedExplanation (spec L191: worked explanation post-consequence) ──────
+// An eligible rail carries an authored `workedExplanation`. The evaluator
+// surfaces it onto CaseOutcome.workedExplanation so the resolve phase can
+// reveal it AFTER the learner reviews the consequence. Ineligible rails (or
+// rails with no authored worked explanation) get null — there is no worked
+// example to show for a rail that cannot serve the corridor.
+describe("evaluateRecommendation — workedExplanation surfacing (spec L191)", () => {
+  it("surfaces the authored workedExplanation for an eligible, selected rail", () => {
+    const outcome = evaluateRecommendation(
+      makeCase(),
+      fullDraft("swift-fedwire"),
+      requestedAll(),
+    );
+    expect(outcome.quality).toBe("preferred");
+    expect(outcome.workedExplanation).toBe(
+      "SWIFT/Fedwire moves USD same-day with finality; the UETR lets you trace the hop from your bank through the correspondent to the supplier's bank, confirming credit — not just delivery.",
+    );
+  });
+
+  it("returns null workedExplanation for an ineligible rail (no worked example to show)", () => {
+    const outcome = evaluateRecommendation(
+      makeCase(),
+      fullDraft("interac-etransfer"),
+      requestedAll(),
+    );
+    expect(outcome.quality).toBe("invalid");
+    expect(outcome.workedExplanation).toBeNull();
+  });
+
+  it("returns null workedExplanation when the rail authors none", () => {
+    // cross-border-ach has no workedExplanation authored in the fixture.
+    const outcome = evaluateRecommendation(
+      makeCase(),
+      fullDraft("cross-border-ach"),
+      requestedAll(),
+    );
+    expect(outcome.quality).toBe("defensible");
+    expect(outcome.workedExplanation).toBeNull();
   });
 });
 

@@ -42,6 +42,10 @@ export interface CaseOutcomeProps {
   /** Finish the case by completing the transfer. Receives the computed
    * transfer outcome so CaseDesk dispatches `complete-transfer { outcome }`. */
   onCompleteTransfer: (outcome: CaseOutcomeData) => void;
+  /** Capture the learner's diagnosis reflection (spec L189). */
+  onDiagnosisChange: (diagnosis: string) => void;
+  /** Flush the diagnosis persist on blur (debounced writes, same as reasoning). */
+  onDiagnosisBlur: () => void;
 }
 
 export function CaseOutcome({
@@ -50,6 +54,8 @@ export function CaseOutcome({
   phaseHeadingRef,
   onBeginRevision,
   onCompleteTransfer,
+  onDiagnosisChange,
+  onDiagnosisBlur,
 }: CaseOutcomeProps) {
   // The most-recent attempt wins. Both attempts are immutable snapshots; we
   // never read the working draft here.
@@ -145,6 +151,48 @@ export function CaseOutcome({
           </ul>
         </section>
       )}
+
+      {/* Worked explanation (design spec L191, Resolve step 6): revealed AFTER
+          the learner has reviewed the consequence, sound reasoning, and gap.
+          Teaches why the selected rail fits the corridor — independent of the
+          learner's score. Only eligible rails carry one; ineligible selections
+          get null and this section is omitted. */}
+      {outcome.workedExplanation && (
+        <section className="case-desk__outcome-worked" aria-label="Worked explanation">
+          <h3 className="case-desk__section-title">How this rail works here</h3>
+          <p className="case-desk__outcome-worked-text">{outcome.workedExplanation}</p>
+        </section>
+      )}
+
+      {/* Diagnose step (design spec L189, Resolve step 4): after the learner
+          has reviewed the consequence, gap, sound reasoning, and worked
+          explanation, prompt them to reflect on the outcome. The prompt is
+          adaptive: for non-preferred outcomes it asks what to strengthen; for
+          preferred it asks what made it the right call. Captured into the
+          session (persisted) and surfaced in the debrief. NOT scored — it is
+          a reflection step. Sits BEFORE the revision affordances. */}
+      <section className="case-desk__outcome-diagnosis" aria-label="Reflect on the outcome">
+        <h3 className="case-desk__section-title">Reflect on this outcome</h3>
+        <label className="case-desk__field" htmlFor="case-desk-diagnosis">
+          <span className="case-desk__field-label">
+            {outcome.quality === "preferred"
+              ? "What made this the right call? What would you tell a colleague?"
+              : "What would you do differently? Where did the reasoning diverge from the best fit?"}
+          </span>
+          <textarea
+            id="case-desk-diagnosis"
+            className="case-desk__textarea"
+            rows={3}
+            value={session.diagnosis}
+            onChange={(e) => onDiagnosisChange(e.target.value)}
+            onBlur={onDiagnosisBlur}
+            aria-describedby="case-desk-diagnosis-hint"
+          />
+        </label>
+        <p id="case-desk-diagnosis-hint" className="case-desk__field-hint">
+          This reflection is saved with your case and shown in the debrief. It is not scored.
+        </p>
+      </section>
 
       {/* When a revised attempt exists, surface that the first attempt is
           preserved and immutable (kept simple — a short note rather than a

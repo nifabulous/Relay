@@ -55,6 +55,7 @@ function seedUnderReviewSession() {
         nextAction: "Send the transfer.",
         invalidRailIds: [],
         missingFactIds: [],
+        workedExplanation: null,
       },
       submittedAt: "2026-06-15T10:00:00.000Z",
     },
@@ -243,12 +244,22 @@ describe("CaseDesk — FactRequest native checkboxes", () => {
 // ─── Native rail selection (RailShortlist) ──────────────────────────────────
 
 describe("CaseDesk — RailShortlist native controls", () => {
+  // Helper: the recommendation radios only (excludes the baseline panel's
+  // radios, which use name="baseline-rail"/"baseline-confidence"). The
+  // RailShortlist radios share a "selectedRail" name suffix.
+  function recommendationRadios() {
+    return screen
+      .getAllByRole("radio")
+      .filter((r) => (r as HTMLInputElement).name.includes("selectedRail"));
+  }
+
   it("renders each rail as a radio for the selected rail (single select)", () => {
     seedStartedSession();
     renderDesk();
-    const radios = screen.getAllByRole("radio");
+    const radios = recommendationRadios();
     expect(radios.length).toBeGreaterThanOrEqual(3);
-    // All radios share a name (a radio group) so only one is selectable.
+    // All recommendation radios share a name (a radio group) so only one is
+    // selectable at a time.
     const names = new Set(radios.map((r) => (r as HTMLInputElement).name));
     expect(names.size).toBe(1);
   });
@@ -256,7 +267,7 @@ describe("CaseDesk — RailShortlist native controls", () => {
   it("does NOT preselect a recommendation (no radio checked by default)", () => {
     seedStartedSession();
     renderDesk();
-    const radios = screen.getAllByRole("radio");
+    const radios = recommendationRadios();
     const checked = radios.filter((r) => (r as HTMLInputElement).checked);
     expect(checked).toHaveLength(0);
   });
@@ -264,8 +275,10 @@ describe("CaseDesk — RailShortlist native controls", () => {
   it("renders a shortlist checkbox per rail (multi-select) separate from the radio", () => {
     seedStartedSession();
     renderDesk();
-    // Interac e-Transfer is the domestic-only rail — it appears by name.
-    expect(screen.getByText(/Interac e-Transfer/i)).toBeInTheDocument();
+    // Interac e-Transfer is the domestic-only rail — it appears by name in
+    // the RailShortlist (scope to its region to avoid matching the baseline).
+    const interacRegion = screen.getByRole("region", { name: /Interac e-Transfer/i });
+    expect(interacRegion).toBeInTheDocument();
     // There is a checkbox labelled for adding to the shortlist, distinct from
     // the selection radio.
     const shortlistCheckboxes = screen.getAllByRole("checkbox", { name: /shortlist|add to shortlist/i });
@@ -290,8 +303,10 @@ describe("CaseDesk — RailShortlist native controls", () => {
     const shortlistCb = within(swiftRegion).getByRole("checkbox", { name: /add to shortlist/i });
     await user.click(shortlistCb);
     expect(shortlistCb).toBeChecked();
-    // Then select a DIFFERENT rail via radio.
-    const radio = screen.getByRole("radio", { name: /Cross-border ACH/i });
+    // Then select a DIFFERENT rail via radio. Scope to the RailShortlist's
+    // rail region so we don't match the baseline panel's radios.
+    const achRegion = screen.getByRole("region", { name: /Cross-border ACH/i });
+    const radio = within(achRegion).getByRole("radio");
     await user.click(radio);
     expect(radio).toBeChecked();
     // The shortlist checkbox stays checked (independent controls).
@@ -416,6 +431,52 @@ describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec 
     expect(screen.queryByText(/evidence changed/i)).not.toBeInTheDocument();
     // Exploratory reasoning survives.
     expect(screen.getByDisplayValue("exploring options")).toBeInTheDocument();
+  });
+});
+
+// ─── Baseline + confidence capture (spec L171, L276) ────────────────────────
+// At the start of the investigate phase, the learner captures an ungraded
+// starting view: which rail they'd lean toward + a confidence level. Explicitly
+// labeled "not scored." The debrief later shows whether the investigation
+// changed their mind. Both are optional — the learner can skip straight to
+// investigating.
+describe("CaseDesk — baseline + confidence capture (spec L171, L276)", () => {
+  it("renders an ungraded baseline panel at the start of the investigate phase", () => {
+    seedStartedSession();
+    renderDesk();
+    // The baseline panel heading + the "not scored" label are present.
+    expect(screen.getByRole("heading", { name: /your starting view/i })).toBeInTheDocument();
+    expect(screen.getByText(/not scored/i)).toBeInTheDocument();
+    // A labelled region for the baseline, with rail + confidence fieldsets.
+    expect(screen.getByRole("region", { name: /baseline starting view/i })).toBeInTheDocument();
+    expect(screen.getByText("If you had to pick now")).toBeInTheDocument();
+    expect(screen.getByText("Confidence")).toBeInTheDocument();
+  });
+
+  it("captures the baseline rail + confidence into the session on change", async () => {
+    const user = userEvent.setup();
+    seedStartedSession();
+    renderDesk();
+    // Scope to the baseline panel so we don't match the RailShortlist radios.
+    const baselinePanel = screen.getByRole("region", { name: /baseline starting view/i });
+    // Pick a baseline rail.
+    await user.click(
+      within(baselinePanel).getByRole("radio", { name: /interac.*e-transfer|e-transfer.*interac/i }),
+    );
+    // Pick a confidence level.
+    await user.click(within(baselinePanel).getByRole("radio", { name: /^low$/i }));
+    // The baseline is captured in the session (dispatched immediately).
+    const stored = JSON.parse(localStorage.getItem(`relay:case-session:${CASE_ID}`) || "null");
+    expect(stored.baselineRailId).toBe("interac-etransfer");
+    expect(stored.baselineConfidence).toBe("low");
+  });
+
+  it("does NOT render the baseline panel after the learner has started investigating (requested facts)", () => {
+    // Once the learner has committed to investigating (requested facts), the
+    // baseline is frozen — they can no longer change their starting view.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+    expect(screen.queryByRole("region", { name: /baseline starting view/i })).not.toBeInTheDocument();
   });
 });
 

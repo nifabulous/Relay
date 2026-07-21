@@ -199,6 +199,11 @@ const supplierCaseRails: RailOption[] = [
       "tracking-need",
     ],
     reasons: ["Fast same-day USD value", "Full UETR tracking confirmation"],
+    // Worked explanation revealed in the resolve phase after the learner
+    // reviews the consequence (design spec L191). Teaches why this rail fits
+    // the CA→US/USD corridor under the disclosed urgency + tracking priorities.
+    workedExplanation:
+      "SWIFT to Fedwire is the canonical path for urgent USD value to a US supplier: your bank sends a MT103/Fedwire message through its correspondent, the funds settle same-day at the supplier's bank, and the UETR lets you trace the hop and confirm credit — not just dispatch. The fee is justified when a missed deadline would cost more than the wire.",
     source: SCHEME_REF,
   },
 ];

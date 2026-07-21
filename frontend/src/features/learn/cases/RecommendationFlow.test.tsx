@@ -160,6 +160,51 @@ describe("RecommendationFlow — evaluation hidden before commit", () => {
   });
 });
 
+// ─── Linked validation error-summary (spec L213) ────────────────────────────
+// On Send with an incomplete recommendation, a concise error summary renders
+// at the start of the primary task, each message linked to its control, and
+// focus moves to the summary. This replaces the old disabled-gate (Send was
+// hard-disabled when no rail was selected, giving zero validation feedback).
+describe("RecommendationFlow — linked validation error-summary on Send (spec L213)", () => {
+  it("shows a linked error summary and focuses it when Send is clicked with no rail selected", () => {
+    // Seed a recommend session with NO rail selected and NO reasoning.
+    seedRecommendSession(
+      { selectedRail: null, shortlist: [], reasons: [], priceExpectation: "", arrivalExpectation: "", trackingExpectation: "" },
+    );
+    renderDesk();
+
+    // Send is now clickable (no longer disabled-gated). Clicking produces a
+    // validation summary rather than committing.
+    const sendBtn = getSendButton();
+    expect(sendBtn).not.toBeDisabled();
+    fireEvent.click(sendBtn);
+
+    // A role="alert" summary appears (the linked error summary). It names the
+    // missing rail. Focus moved to the summary.
+    const summary = screen.getByRole("alert");
+    expect(summary).toHaveTextContent(/select a rail/i);
+    expect(document.activeElement).toBe(summary);
+    // No firstAttempt was recorded — validation failed before the snapshot.
+    expect(readStoredSession()?.firstAttempt).toBeNull();
+  });
+
+  it("clears the error summary once the learner fixes the validation failure and re-sends", () => {
+    seedRecommendSession(
+      { selectedRail: null, shortlist: [], reasons: [], priceExpectation: "", arrivalExpectation: "", trackingExpectation: "" },
+    );
+    renderDesk();
+    fireEvent.click(getSendButton());
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    // Fix: select a rail (the radio) and send again. The summary clears and
+    // the recommendation commits.
+    const swiftRadio = screen.getByRole("radio", { name: /swift.*fedwire|fedwire.*swift/i });
+    fireEvent.click(swiftRadio);
+    // The summary clears as soon as the learner edits (not only on re-send).
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
 // ─── One immutable first attempt ─────────────────────────────────────────────
 
 describe("RecommendationFlow — one immutable first attempt", () => {
@@ -389,6 +434,76 @@ describe("RecommendationFlow 5b — consequence precedes classification", () => 
     expect(screen.getByText(/what you reasoned well/i)).toBeInTheDocument();
     // Preferred outcome has no reasoning gap → a positive "No gaps" heading.
     expect(screen.getByRole("heading", { name: /no gaps/i })).toBeInTheDocument();
+  });
+});
+
+// ─── Worked explanation (design spec L191, Resolve step 6) ──────────────────
+// Revealed AFTER the learner reviews consequence + sound reasoning + gap.
+// Authored per-rail on swift-fedwire (the preferred rail for this case), so a
+// seeded preferred outcome carries a real worked explanation.
+describe("RecommendationFlow 5b — worked explanation revealed post-consequence (spec L191)", () => {
+  it("renders the worked explanation for an eligible preferred rail", () => {
+    seedResolveSession();
+    renderDesk();
+    // The preferred draft selects swift-fedwire, which authors a worked
+    // explanation. It renders under a "How this rail works here" heading,
+    // AFTER the sound-reasoning section in DOM order.
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    expect(workedHeading).toBeInTheDocument();
+    // The worked text itself (authored in caseCatalog) is present.
+    const outcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
+    expect(outcome.workedExplanation).not.toBeNull();
+    expect(screen.getByText(outcome.workedExplanation!)).toBeInTheDocument();
+  });
+
+  it("places the worked explanation AFTER the sound-reasoning section in DOM order", () => {
+    seedResolveSession();
+    renderDesk();
+    const soundHeading = screen.getByRole("heading", { name: /what you reasoned well/i });
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    // workedHeading comes after soundHeading in DOM order.
+    const mask = soundHeading.compareDocumentPosition(workedHeading);
+    // Node.DOCUMENT_POSITION_FOLLOWING = 0x4
+    expect(mask & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+// ─── Diagnose-failure step (design spec L189, Resolve step 4) ───────────────
+// After the learner reviews the consequence (and before revision), they are
+// prompted to diagnose the outcome: what went wrong, or what made it right.
+// The diagnosis is captured into the session (persisted) and surfaced in the
+// debrief. It is NOT scored — it's a reflection step.
+describe("RecommendationFlow 5b — diagnose step before revision (spec L189)", () => {
+  it("renders a diagnosis prompt after the consequence and before the revision affordances", () => {
+    seedResolveSession();
+    renderDesk();
+    // The diagnosis prompt is a labelled textarea.
+    const diagnosisField = screen.getByRole("textbox", { name: /diagnos|reflect|what would you/i });
+    expect(diagnosisField).toBeInTheDocument();
+    // It sits AFTER the worked explanation and BEFORE the Revise button in
+    // DOM order.
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    const reviseBtn = getReviseButton();
+    const diagRegion = diagnosisField.closest("section");
+    expect(diagRegion).not.toBeNull();
+    // diagRegion after workedHeading
+    let mask = workedHeading.compareDocumentPosition(diagRegion!);
+    expect(mask & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // diagRegion before reviseBtn
+    mask = reviseBtn.compareDocumentPosition(diagRegion!);
+    expect(mask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it("captures the learner's diagnosis into the session and persists it", async () => {
+    const user = userEvent.setup();
+    seedResolveSession();
+    renderDesk();
+    const diagnosisField = screen.getByRole("textbox", { name: /diagnos|reflect|what would you/i });
+    await user.type(diagnosisField, "I should have checked the tracking requirement earlier.");
+    // Blur to flush the debounced persist.
+    await user.tab();
+    const stored = readStoredSession();
+    expect(stored?.diagnosis).toContain("checked the tracking requirement earlier");
   });
 });
 

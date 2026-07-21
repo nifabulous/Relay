@@ -488,9 +488,33 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // never lost.
   const [isSending, setIsSending] = useState(false);
 
+  // Validation error-summary (design spec L213, Focus & Announcement Contract):
+  // when the learner clicks Send with an incomplete recommendation, a concise
+  // error summary renders at the start of the primary task, each message
+  // linked to its control, and focus moves to the summary. Null when there
+  // are no errors (the resting state). Any draft edit clears it so the
+  // summary never goes stale.
+  const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
+  const validationSummaryRef = useRef<HTMLDivElement | null>(null);
+
+  // Focus the validation summary when it appears (spec L213). A new array
+  // reference each validation failure re-fires this even if the message text
+  // repeats (mirrors the invalidation-announcement nonce pattern).
+  useEffect(() => {
+    if (validationErrors === null) return;
+    validationSummaryRef.current?.focus();
+  }, [validationErrors]);
+
   function handleSendRecommendation() {
-    // 1) Capture the pending text and clear the debounce timer. The pending
-    //    ref holds the latest keystrokes that have not yet been written.
+    // 0) Validation gate (spec L213). Before flushing/evaluating/snapshotting,
+    //    validate the recommendation is complete enough to commit. If not,
+    //    surface a linked error summary and abort the send (no evaluator call,
+    //    no firstAttempt). Validation rules mirror the evaluator's
+    //    pre-conditions: a rail must be selected, and the primary reason must
+    //    be substantive (T1b threshold). Expectations are NOT validated here —
+    //    the evaluator scores `possible` for thin expectations rather than
+    //    blocking the commit, and a learner may legitimately send a partial
+    //    recommendation to see the consequence.
     let flushedText = session.draft.customerExplanation;
     if (explanationTimerRef.current !== null) {
       clearTimeout(explanationTimerRef.current);
@@ -525,6 +549,26 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       flushedText === session.draft.customerExplanation
         ? session
         : caseReducer(session, { type: "edit-draft", patch: { customerExplanation: flushedText } });
+
+    // 2b) Validate the flushed draft (spec L213). Build the error list against
+    //     the FLUSHED draft so a pending rail selection just before Send counts.
+    //     On any error, surface the linked summary and abort — no evaluator,
+    //     no snapshot, no phase change.
+    //
+    //     Validation scope: STRUCTURAL incompleteness only (no rail selected).
+    //     Reasoning QUALITY (filler reasons, thin expectations) is NOT validated
+    //     here — the evaluator scores those `possible` after commit, and the
+    //     Resolve phase is explicitly designed to show the learner the
+    //     consequence of thin reasoning (spec L188-192). Blocking filler at
+    //     the gate would deny the learner that learning signal.
+    const errors: string[] = [];
+    if (flushedSession.draft.selectedRail === null) {
+      errors.push("Select a rail to recommend.");
+    }
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
 
     setIsSending(true);
     try {
@@ -675,12 +719,61 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     const next = caseReducer(session, { type: "edit-draft", patch });
     if (next !== session) {
       dispatch({ type: "edit-draft", patch });
+      // Clear any pending validation error-summary (spec L213): the summary
+      // is stale the moment the learner edits the draft. It re-surfaces only
+      // if they re-send and the draft is still invalid.
+      setValidationErrors(null);
       // T4: debounce the persist (not the dispatch). The UI reflects the edit
       // immediately via the synchronous dispatch; the localStorage write is
       // coalesced across rapid keystrokes and flushed on blur / send /
       // restart / unmount. This avoids structuredClone + JSON.stringify +
       // setItem per keystroke for the reasoning free-text fields.
       scheduleDraftPersist(next);
+    }
+  }
+
+  // ── Diagnosis (spec L189 resolve-phase reflection) ────────────────────────
+  // The diagnosis textarea in the resolve phase captures the learner's
+  // reflection. Dispatch is immediate (pure, cheap) so the UI reflects the
+  // edit at once; the persist is debounced 300ms (same cadence as the
+  // reasoning fields, T4) and flushed on blur / send / restart / unmount.
+  const diagnosisTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleDiagnosisChange(diagnosis: string) {
+    const next = caseReducer(session, { type: "set-diagnosis", diagnosis });
+    if (next !== session) {
+      dispatch({ type: "set-diagnosis", diagnosis });
+      scheduleDiagnosisPersist(next);
+    }
+  }
+
+  // ── Baseline (spec L171 ungraded starting view) ───────────────────────────
+  // The baseline rail + confidence are captured at the start of investigate,
+  // before any facts are requested. Dispatch is immediate + persist immediate
+  // (the baseline is a one-shot capture, not free text — no debounce needed).
+  function handleSetBaseline(railId: string | null, confidence: "low" | "medium" | "high" | null) {
+    const next = caseReducer(session, { type: "set-baseline", railId, confidence });
+    if (next !== session) {
+      dispatch({ type: "set-baseline", railId, confidence });
+      persist(next);
+    }
+  }
+
+  function scheduleDiagnosisPersist(next: CaseSession) {
+    if (diagnosisTimerRef.current !== null) {
+      clearTimeout(diagnosisTimerRef.current);
+    }
+    diagnosisTimerRef.current = setTimeout(() => {
+      persist(next);
+      diagnosisTimerRef.current = null;
+    }, 300);
+  }
+
+  function flushDiagnosisToDisk() {
+    if (diagnosisTimerRef.current !== null) {
+      clearTimeout(diagnosisTimerRef.current);
+      diagnosisTimerRef.current = null;
+      persist(sessionRef.current);
     }
   }
 
@@ -817,6 +910,9 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRestart={handleRestart}
           onSendRecommendation={handleSendRecommendation}
           isSending={isSending}
+          validationErrors={validationErrors}
+          validationSummaryRef={validationSummaryRef}
+          onSetBaseline={handleSetBaseline}
         />
       )}
 
@@ -831,6 +927,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           phaseHeadingRef={phaseHeadingRef}
           onBeginRevision={handleBeginRevision}
           onCompleteTransfer={handleCompleteTransfer}
+          onDiagnosisChange={handleDiagnosisChange}
+          onDiagnosisBlur={flushDiagnosisToDisk}
         />
       )}
 
@@ -960,6 +1058,11 @@ interface InvestigatePhaseProps {
   onRestart: () => void;
   onSendRecommendation: () => void;
   isSending: boolean;
+  /** Validation error-summary (spec L213). Null when no validation failure. */
+  validationErrors: string[] | null;
+  validationSummaryRef: RefObject<HTMLDivElement | null>;
+  /** Baseline rail + confidence capture (spec L171). */
+  onSetBaseline: (railId: string | null, confidence: "low" | "medium" | "high" | null) => void;
 }
 
 // The customerExplanation 1,000-char ceiling. Enforced by maxLength on the
@@ -990,6 +1093,9 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onRestart,
     onSendRecommendation,
     isSending,
+    validationErrors,
+    validationSummaryRef,
+    onSetBaseline,
   } = props;
 
   const enrichmentAsyncStatus = enrichment ? enrichmentStatus(enrichment.state) : undefined;
@@ -1016,11 +1122,94 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
         </h2>
       </header>
 
+      {/* Baseline + confidence capture (design spec L171, Investigate step 2).
+          Shown ONLY in the investigate phase before any facts are requested —
+          this is the learner's ungraded starting view. Once they request their
+          first fact, the baseline is frozen (the reducer rejects set-baseline
+          after that point) and this panel disappears. Explicitly labelled
+          "not scored" so the learner gives an honest first instinct. */}
+      {phaseKey === "investigate" && session.requestedFactIds.length === 0 && (
+        <section className="case-desk__baseline" aria-label="Baseline starting view">
+          <h3 className="case-desk__section-title">Your starting view</h3>
+          <p className="case-desk__baseline-note">
+            Before you investigate: which rail would you lean toward, and how confident are you?
+            This captures your starting view; it is <strong>not scored</strong>.
+          </p>
+          <div className="case-desk__baseline-controls">
+            <fieldset className="case-desk__baseline-rails">
+              <legend className="case-desk__baseline-legend">If you had to pick now</legend>
+              {definition.rails.map((rail) => (
+                <label key={rail.id} className="case-desk__baseline-rail">
+                  <input
+                    type="radio"
+                    name="baseline-rail"
+                    value={rail.id}
+                    checked={session.baselineRailId === rail.id}
+                    onChange={() => onSetBaseline(rail.id, session.baselineConfidence)}
+                  />
+                  <span className="case-desk__baseline-rail-name">{rail.name}</span>
+                </label>
+              ))}
+              <label className="case-desk__baseline-rail">
+                <input
+                  type="radio"
+                  name="baseline-rail"
+                  value=""
+                  checked={session.baselineRailId === null}
+                  onChange={() => onSetBaseline(null, session.baselineConfidence)}
+                />
+                <span className="case-desk__baseline-rail-name">Not sure yet</span>
+              </label>
+            </fieldset>
+            <fieldset className="case-desk__baseline-confidence">
+              <legend className="case-desk__baseline-legend">Confidence</legend>
+              {(["low", "medium", "high"] as const).map((level) => (
+                <label key={level} className="case-desk__baseline-confidence-option">
+                  <input
+                    type="radio"
+                    name="baseline-confidence"
+                    value={level}
+                    checked={session.baselineConfidence === level}
+                    onChange={() => onSetBaseline(session.baselineRailId, level)}
+                  />
+                  <span className="case-desk__baseline-confidence-label">
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          </div>
+        </section>
+      )}
+
       <div className="case-desk__split">
         {/* The task column: fact request + rail shortlist. On wide screens this
             sits beside the evidence rail; on narrow screens the evidence sheet
             stacks below (labelled so AT can navigate it). */}
         <div className="case-desk__task">
+          {/* Validation error-summary (design spec L213): on Send with an
+              incomplete recommendation, a concise summary renders at the start
+              of the primary task. role="alert" so AT announces it; tabIndex=-1
+              so the focus effect can land on it. Each message links to its
+              control via a fragment anchor so a learner can jump to fix it. */}
+          {validationErrors && validationErrors.length > 0 && (
+            <div
+              ref={validationSummaryRef}
+              className="case-desk__validation-summary"
+              role="alert"
+              tabIndex={-1}
+              aria-label="Fix these issues before sending"
+            >
+              <h3 className="case-desk__validation-title">
+                Fix these issues before sending
+              </h3>
+              <ul className="case-desk__validation-list">
+                {validationErrors.map((msg, i) => (
+                  <li key={i} className="case-desk__validation-item">{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <FactRequest
             definition={definition}
             requestedFactIds={pendingRequestedIds}

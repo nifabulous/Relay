@@ -352,6 +352,9 @@ function emptyOutcome(): CaseOutcome {
     nextAction: "",
     invalidRailIds: [],
     missingFactIds: [],
+    // No worked example for invalid/ineligible/missing-facts outcomes — the
+    // learner hasn't reached a recommendation that warrants one.
+    workedExplanation: null,
   };
 }
 
@@ -423,6 +426,13 @@ export function evaluateRecommendation(
   //    T1b: the Primary reason must be SUBSTANTIVE (not just non-empty). The
   //    three expectations keep the lighter isNonEmpty bar (they're shorter by
   //    nature and the contract is "did the learner articulate something").
+  //
+  //    workedExplanation (spec L191): the rail's authored worked example is
+  //    surfaced onto the outcome for EVERY eligible tier (possible/
+  //    defensible/preferred). It is revealed in the resolve phase after the
+  //    learner reviews the consequence, regardless of how well they reasoned —
+  //    the worked example teaches the rail, not the score.
+  const workedExplanation = rail.workedExplanation ?? null;
   const expectationsCovered = {
     price: isNonEmpty(draft.priceExpectation),
     arrival: isNonEmpty(draft.arrivalExpectation),
@@ -465,6 +475,7 @@ export function evaluateRecommendation(
       nextAction: "Fill in the price, arrival, and tracking expectations with fact-grounded reasons.",
       invalidRailIds: [],
       missingFactIds: [],
+      workedExplanation,
     };
   }
 
@@ -490,6 +501,7 @@ export function evaluateRecommendation(
       nextAction: "Either commit to this rail with justification, or re-recommend the best-fit rail.",
       invalidRailIds: [],
       missingFactIds: [],
+      workedExplanation,
     };
   }
 
@@ -504,5 +516,6 @@ export function evaluateRecommendation(
     nextAction: "Release the payment and share the tracking expectation with the synthetic customer.",
     invalidRailIds: [],
     missingFactIds: [],
+    workedExplanation,
   };
 }

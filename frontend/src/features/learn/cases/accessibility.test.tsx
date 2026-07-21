@@ -186,6 +186,7 @@ describe("CaseDebrief distinct-section invariant", () => {
           nextAction: "",
           invalidRailIds: [],
           missingFactIds: [],
+          workedExplanation: null,
         },
         submittedAt: "2026-07-01T00:00:00.000Z",
       },
@@ -199,6 +200,7 @@ describe("CaseDebrief distinct-section invariant", () => {
         nextAction: "",
         invalidRailIds: [],
         missingFactIds: [],
+        workedExplanation: null,
       },
       updatedAt: "2026-07-01T00:00:00.000Z",
     };
@@ -264,6 +266,7 @@ describe("CaseDesk recovery notice accessibility", () => {
           nextAction: "",
           invalidRailIds: [],
           missingFactIds: [],
+          workedExplanation: null,
         },
         submittedAt: "2026-01-01T00:00:00.000Z",
       },
