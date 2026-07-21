@@ -392,6 +392,37 @@ describe("RecommendationFlow 5b — consequence precedes classification", () => 
   });
 });
 
+// ─── Worked explanation (design spec L191, Resolve step 6) ──────────────────
+// Revealed AFTER the learner reviews consequence + sound reasoning + gap.
+// Authored per-rail on swift-fedwire (the preferred rail for this case), so a
+// seeded preferred outcome carries a real worked explanation.
+describe("RecommendationFlow 5b — worked explanation revealed post-consequence (spec L191)", () => {
+  it("renders the worked explanation for an eligible preferred rail", () => {
+    seedResolveSession();
+    renderDesk();
+    // The preferred draft selects swift-fedwire, which authors a worked
+    // explanation. It renders under a "How this rail works here" heading,
+    // AFTER the sound-reasoning section in DOM order.
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    expect(workedHeading).toBeInTheDocument();
+    // The worked text itself (authored in caseCatalog) is present.
+    const outcome = evaluateRecommendation(supplierCase, preferredDraft(), FULLY_INVESTIGATED);
+    expect(outcome.workedExplanation).not.toBeNull();
+    expect(screen.getByText(outcome.workedExplanation!)).toBeInTheDocument();
+  });
+
+  it("places the worked explanation AFTER the sound-reasoning section in DOM order", () => {
+    seedResolveSession();
+    renderDesk();
+    const soundHeading = screen.getByRole("heading", { name: /what you reasoned well/i });
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    // workedHeading comes after soundHeading in DOM order.
+    const mask = soundHeading.compareDocumentPosition(workedHeading);
+    // Node.DOCUMENT_POSITION_FOLLOWING = 0x4
+    expect(mask & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
 // ─── Revision does not mutate the first attempt ────────────────────────────
 
 describe("RecommendationFlow 5b — revision does not mutate the first attempt", () => {

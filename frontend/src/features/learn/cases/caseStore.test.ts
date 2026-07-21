@@ -26,6 +26,7 @@ const VALID_OUTCOME: CaseOutcome = {
   nextAction: "Release the payment.",
   invalidRailIds: [],
   missingFactIds: [],
+  workedExplanation: null,
 };
 
 const PREFERRED_OUTCOME: CaseOutcome = {
@@ -36,6 +37,7 @@ const PREFERRED_OUTCOME: CaseOutcome = {
   nextAction: "Release.",
   invalidRailIds: [],
   missingFactIds: [],
+  workedExplanation: null,
 };
 
 function filledDraft(): RecommendationDraft {

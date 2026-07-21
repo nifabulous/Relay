@@ -146,6 +146,18 @@ export function CaseOutcome({
         </section>
       )}
 
+      {/* Worked explanation (design spec L191, Resolve step 6): revealed AFTER
+          the learner has reviewed the consequence, sound reasoning, and gap.
+          Teaches why the selected rail fits the corridor — independent of the
+          learner's score. Only eligible rails carry one; ineligible selections
+          get null and this section is omitted. */}
+      {outcome.workedExplanation && (
+        <section className="case-desk__outcome-worked" aria-label="Worked explanation">
+          <h3 className="case-desk__section-title">How this rail works here</h3>
+          <p className="case-desk__outcome-worked-text">{outcome.workedExplanation}</p>
+        </section>
+      )}
+
       {/* When a revised attempt exists, surface that the first attempt is
           preserved and immutable (kept simple — a short note rather than a
           full collapsed comparison view). */}

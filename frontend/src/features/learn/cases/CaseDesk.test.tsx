@@ -55,6 +55,7 @@ function seedUnderReviewSession() {
         nextAction: "Send the transfer.",
         invalidRailIds: [],
         missingFactIds: [],
+        workedExplanation: null,
       },
       submittedAt: "2026-06-15T10:00:00.000Z",
     },

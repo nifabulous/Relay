@@ -44,6 +44,13 @@ export interface RailOption {
   requiredFacts: string[];
   reasons: string[];
   source?: SourceClaim;
+  /**
+   * Optional concise worked explanation revealed in the resolve phase after
+   * the learner reviews the consequence (design spec L191). Surfaced onto
+   * `CaseOutcome.workedExplanation` for eligible rails only. Optional because
+   * not every rail warrants a worked example (e.g. a close-transfer variant).
+   */
+  workedExplanation?: string;
 }
 
 export interface TransferDefinition {
@@ -84,6 +91,14 @@ export interface CaseOutcome {
   nextAction: string;
   invalidRailIds: string[];
   missingFactIds: string[];
+  /**
+   * A concise worked explanation revealed in the resolve phase AFTER the
+   * learner has reviewed the consequence (design spec L191, Resolve step 6).
+   * Authored per-rail (`RailOption.workedExplanation`) and surfaced only for
+   * eligible rails — an ineligible rail has no worked example to show. Null
+   * when the rail authors none or the selection is ineligible/invalid.
+   */
+  workedExplanation: string | null;
 }
 
 export type EnrichmentState = "idle" | "loading" | "success" | "unavailable" | "error";
