@@ -11,7 +11,7 @@
 
 | Metric | Grade | Verdict |
 |---|---|---|
-| **Design Score** | **B+** | Solid fundamentals, one medium contradiction introduced by the fix-pass, plus pre-existing interaction-state debt. |
+| **Design Score** | **B+** | Solid fundamentals, one medium contradiction exposed by the fix-pass (the "Verified" chip logic pre-dates it; T1's value-hiding made the contradiction visible), plus pre-existing interaction-state debt. |
 | **AI Slop Score** | **A** | No slop patterns present. No gradients, no card grids, no emoji, no centered-everything, no default font stacks, no decorative icon circles. |
 
 ## Phase 1 — First impression
@@ -59,7 +59,7 @@ Extracted from the live DOM and cross-checked against `tokens.css`:
 
 ## Findings
 
-### FINDING-001 — "Verified" chip renders on facts whose value is hidden (medium) `[cross-model]`
+### FINDING-001 — "Verified" chip renders on facts whose value is hidden (medium) `[primary-review]`
 **Evidence:** DOM scrape of the investigate phase, pre-request:
 
 ```
@@ -72,6 +72,8 @@ Institution variation       Verified  Not yet requested
 **Why it matters:** The T1 fix correctly hides the *value* until requested, but the "Verified" chip is gated on `fact.claim` (`EvidenceRail.tsx:109`), not on whether the value is visible. Every authored fact has a `claim` (catalog lines 80–160), so the chip shows even when the value is literally "Not yet requested." A learner reads "Verified — Not yet requested" as a contradiction: verified by whom, of what? It undermines the fix-pass's core premise (investigation is load-bearing).
 
 **Source:** `frontend/src/features/learn/cases/EvidenceRail.tsx:107-120` — the chip renders whenever `fact.claim` is truthy; `valueHidden` is computed at `:103-104` but not consulted by the chip.
+
+**Provenance:** Found by the primary `/design-review` pass via a live DOM scrape of the investigate phase; not corroborated by an outside voice (Codex timed out; the Claude subagent source audit did not flag this one). Re-running Codex before any re-grade would be worthwhile.
 
 **Severity:** medium (semantic contradiction, not a crash; but it directly weakens the fix-pass's load-bearing-investigation premise).
 
