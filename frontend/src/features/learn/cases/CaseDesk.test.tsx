@@ -346,6 +346,58 @@ describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec 
     expect(screen.queryByDisplayValue("fast same-day USD value")).not.toBeInTheDocument();
   });
 
+  it("moves focus to the rail shortlist heading (the first affected decision)", async () => {
+    const user = userEvent.setup();
+    seedRecommendSessionWithDraft();
+    renderDesk();
+
+    // Before the evidence change, focus is NOT on the shortlist heading.
+    const shortlistHeading = screen.getByRole("heading", { name: /^rails$/i });
+    expect(shortlistHeading).not.toBe(document.activeElement);
+
+    // Change the evidence set.
+    await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // After the invalidation, focus has moved to the shortlist heading —
+    // the first affected decision per DESIGN spec §invalidation.
+    await waitFor(() => {
+      expect(document.activeElement).toBe(shortlistHeading);
+    });
+  });
+
+  it("re-announces and re-focuses on a SECOND sequential evidence change (not just the first)", async () => {
+    // Regression guard: invalidationAnnouncement must carry a unique event
+    // identity, not a static string. If the state is a string, React
+    // short-circuits the second identical setState and neither the live
+    // region nor the focus effect fires again. (Caught in review of 0c7c4c0.)
+    const user = userEvent.setup();
+    seedRecommendSessionWithDraft();
+    renderDesk();
+
+    // First invalidation: toggle tracking-need on.
+    await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+    const shortlistHeading = screen.getByRole("heading", { name: /^rails$/i });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(shortlistHeading);
+    });
+
+    // Move focus off the heading so the second focus move is detectable.
+    await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
+    expect(document.activeElement).not.toBe(shortlistHeading);
+
+    // Second invalidation: request a DIFFERENT fact set. The announcement
+    // must fire again and focus must move back to the shortlist heading.
+    await user.click(screen.getByRole("checkbox", { name: /intermediary correspondent/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(shortlistHeading);
+    });
+    // The announcement text is still present (re-announced).
+    expect(screen.getByText(/evidence changed/i)).toBeInTheDocument();
+  });
+
   it("does NOT announce or clear when evidence changes during investigate (no recommendation built yet)", async () => {
     const user = userEvent.setup();
     seedStartedSession({
