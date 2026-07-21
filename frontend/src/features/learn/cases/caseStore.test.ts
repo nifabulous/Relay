@@ -7,8 +7,6 @@ import {
   caseReducer,
   loadCaseSession,
   saveCaseSession,
-  clearCaseDraft,
-  updateRequestedFacts,
   createInitialCaseSession,
   EMPTY_DRAFT,
 } from "./caseStore";
@@ -1176,30 +1174,6 @@ describe("loadCaseSession — case-revision mismatch", () => {
   });
 });
 
-// ─── Store: clearCaseDraft (only the selected case is cleared) ───────────────
-
-describe("clearCaseDraft", () => {
-  it("removes the stored session for the given case only", () => {
-    const a = startedSession();
-    const b: CaseSession = { ...a, caseId: CASE_ID }; // same id space; we use a sibling key below
-    saveCaseSession(a);
-    // store a sibling key to prove isolation
-    localStorage.setItem("relay:case-session:other-case", JSON.stringify(b));
-    localStorage.setItem("relay:preferences", JSON.stringify({ schemaVersion: 1 }));
-
-    clearCaseDraft(CASE_ID);
-
-    expect(loadCaseSession(CASE_ID)).toBeNull();
-    // sibling case and unrelated keys survive
-    expect(localStorage.getItem("relay:case-session:other-case")).not.toBeNull();
-    expect(localStorage.getItem("relay:preferences")).not.toBeNull();
-  });
-
-  it("does not throw when there is nothing to clear", () => {
-    expect(() => clearCaseDraft(CASE_ID)).not.toThrow();
-  });
-});
-
 // ─── Store: save failure surfacing ──────────────────────────────────────────
 
 describe("saveCaseSession — recoverable save failure", () => {
@@ -1226,69 +1200,6 @@ describe("saveCaseSession — recoverable save failure", () => {
   it("returns ok:true on a successful write", () => {
     const result = saveCaseSession(startedSession());
     expect(result).toEqual({ ok: true });
-  });
-});
-
-// ─── Store: updateRequestedFacts invalidation ───────────────────────────────
-
-describe("updateRequestedFacts", () => {
-  it("clears shortlist, selectedRail, reasons, customerExplanation, and outcomes while retaining the case shell", () => {
-    const session = caseReducer(
-      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
-      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
-    );
-    saveCaseSession(session);
-
-    const result = updateRequestedFacts(CASE_ID, ["price-sensitivity", "tracking-need"]);
-    expect(result.firstAffectedControlId).not.toBeNull();
-
-    const after = loadCaseSession(CASE_ID)!;
-    // case shell retained
-    expect(after.caseId).toBe(CASE_ID);
-    expect(after.caseRevision).toBe(CASE_REVISION);
-    expect(after.schemaVersion).toBe(1);
-    // requested facts updated to the new set
-    expect(after.requestedFactIds).toEqual(["price-sensitivity", "tracking-need"]);
-    // recommendation-specific draft fields cleared
-    expect(after.draft.shortlist).toEqual([]);
-    expect(after.draft.selectedRail).toBeNull();
-    expect(after.draft.reasons).toEqual([]);
-    // customerExplanation names the selected rail, so it's stale after a
-    // shortlist invalidation and is cleared alongside the rail fields.
-    expect(after.draft.customerExplanation).toBe("");
-    // The three expectation fields describe rail PROPERTIES (not specific
-    // rails), so they survive the invalidation — softer prose stays.
-    expect(after.draft.priceExpectation).toBe(session.draft.priceExpectation);
-    expect(after.draft.arrivalExpectation).toBe(session.draft.arrivalExpectation);
-    expect(after.draft.trackingExpectation).toBe(session.draft.trackingExpectation);
-    // conditions also survive (learner's prose, not rail-derived)
-    expect(after.draft.conditions).toEqual(session.draft.conditions);
-    // stale outcomes cleared (they depended on now-invalid facts)
-    expect(after.firstAttempt).toBeNull();
-    expect(after.revisedAttempt).toBeNull();
-  });
-
-  it("returns a stable control id for the shortlist control", () => {
-    const session = caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() });
-    saveCaseSession(session);
-    const result = updateRequestedFacts(CASE_ID, ["price-sensitivity"]);
-    // convention: the first affected control is the shortlist, id "case-shortlist"
-    expect(result.firstAffectedControlId).toBe("case-shortlist");
-  });
-
-  it("returns { firstAffectedControlId: null } when no session exists", () => {
-    const result = updateRequestedFacts(CASE_ID, ["a"]);
-    expect(result).toEqual({ firstAffectedControlId: null });
-    // no session created as a side effect
-    expect(loadCaseSession(CASE_ID)).toBeNull();
-  });
-
-  it("returns { firstAffectedControlId: null } when there is nothing material to invalidate", () => {
-    // fresh started session with empty shortlist and no attempts
-    const session = startedSession();
-    saveCaseSession(session);
-    const result = updateRequestedFacts(CASE_ID, ["price-sensitivity"]);
-    expect(result).toEqual({ firstAffectedControlId: null });
   });
 });
 

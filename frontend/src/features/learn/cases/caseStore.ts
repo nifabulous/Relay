@@ -9,10 +9,10 @@
  *      randomness, no side effects. The Case Desk UI (Task 4) owns the
  *      reducer and dispatches actions.
  *
- *   2. `loadCaseSession` / `saveCaseSession` / `clearCaseDraft` /
- *      `updateRequestedFacts` — the I/O boundary. These wrap localStorage via
- *      the shared versioned primitives in `lib/persistence/storage`. They are
- *      the ONLY place case state touches storage.
+ *   2. `loadCaseSession` / `saveCaseSession` — the I/O boundary. These wrap
+ *      localStorage via the shared versioned primitives in
+ *      `lib/persistence/storage`. They are the ONLY place case state touches
+ *      storage.
  *
  * Design invariants (verified by caseStore.test.ts):
  *   - The first attempt is IMMUTABLE: once `send-recommendation` snapshots it,
@@ -41,7 +41,6 @@ import type {
 } from "./caseTypes";
 import { CASE_REVISION } from "./caseCatalog";
 import {
-  removeStored,
   saveVersioned,
   type SaveResult,
 } from "../../../lib/persistence/storage";
@@ -762,109 +761,6 @@ function normalizeTransferOutcome(session: CaseSession): CaseSession {
  */
 export function saveCaseSession(session: CaseSession): SaveResult {
   return saveVersioned(sessionKey(session.caseId), session);
-}
-
-/**
- * Remove the stored session for a case. Used by "discard draft" affordances.
- * Only the selected case's key is touched; sibling cases and unrelated keys
- * are untouched.
- */
-export function clearCaseDraft(caseId: CaseId): void {
-  removeStored(sessionKey(caseId));
-}
-
-// ─── Invalidation ───────────────────────────────────────────────────────────
-
-/**
- * DOM id of the first UI control the learner should refocus on after an
- * upstream-fact change invalidates their in-progress recommendation. The
- * shortlist is always the first recommendation-specific control, so a single
- * stable constant suffices for Phase 1. (If a later phase adds per-rail
- * controls, generalize to `rail-${id}` then — YAGNI now.)
- */
-export const FIRST_AFFECTED_CONTROL_ID = "case-shortlist";
-
-/**
- * Apply an upstream-fact change to a stored session.
- *
- * Per the plan's invalidation rule: "changing an upstream fact clears
- * shortlist, recommendation, and outcomes while retaining the case shell and
- * returning the first affected control id."
- *
- * Specifically this clears:
- *   - `draft.shortlist`, `draft.selectedRail`, `draft.reasons`
- *     (the recommendation-specific fields the learner built against the old
- *     facts),
- *   - `draft.customerExplanation` (it typically NAMES the selected rail, so it
- *     is stale once the shortlist is invalidated; the prose that justifies a
- *     specific rail no longer applies),
- *   - `firstAttempt` and `revisedAttempt` (their outcomes were scored against
- *     the old facts and are now stale),
- * and KEEPS:
- *   - the case shell (`caseId`, `caseRevision`, `schemaVersion`),
- *   - `status`, `phase` (the learner stays where they are),
- *   - `requestedFactIds` is UPDATED to the new ids (the caller is telling us
- *     the new fact set),
- *   - the remaining draft fields (conditions, and the three expectation
- *     fields price/arrival/tracking) — these describe rail PROPERTIES rather
- *     than specific rails and are softer prose, so they survive the
- *     invalidation. (If a future case makes them rail-specific, narrow this.)
- *
- * Returns `{ firstAffectedControlId }` so the UI can move focus to the
- * shortlist control after invalidation, or `{ firstAffectedControlId: null }`
- * when nothing material was invalidated (no session, or a session with no
- * recommendation-specific state to clear).
- */
-export function updateRequestedFacts(
-  caseId: CaseId,
-  ids: string[],
-): { firstAffectedControlId: string | null } {
-  const session = loadCaseSession(caseId);
-  if (session === null) {
-    // Nothing to invalidate.
-    return { firstAffectedControlId: null };
-  }
-
-  const hadShortlist = session.draft.shortlist.length > 0;
-  const hadSelectedRail = session.draft.selectedRail !== null;
-  const hadReasons = session.draft.reasons.length > 0;
-  const hadAttempts = session.firstAttempt !== null || session.revisedAttempt !== null;
-
-  if (!hadShortlist && !hadSelectedRail && !hadReasons && !hadAttempts) {
-    // Nothing recommendation-specific to invalidate. Still record the new
-    // requested fact set so the session reflects the upstream change, but do
-    // not claim a control to refocus.
-    const next: CaseSession = {
-      ...session,
-      requestedFactIds: [...ids],
-    };
-    saveCaseSession(next);
-    return { firstAffectedControlId: null };
-  }
-
-  const nextDraft: RecommendationDraft = {
-    ...session.draft,
-    shortlist: [],
-    selectedRail: null,
-    reasons: [],
-    // The customer explanation typically names the selected rail ("I recommend
-    // SWIFT-to-Fedwire because..."), so it is stale after a shortlist
-    // invalidation. The three expectation fields below describe rail
-    // PROPERTIES (price/arrival/tracking) rather than specific rails, so they
-    // are softer and survive — they stay in `...session.draft` via spread.
-    customerExplanation: "",
-  };
-
-  const next: CaseSession = {
-    ...session,
-    requestedFactIds: [...ids],
-    draft: nextDraft,
-    firstAttempt: null,
-    revisedAttempt: null,
-  };
-  saveCaseSession(next);
-
-  return { firstAffectedControlId: FIRST_AFFECTED_CONTROL_ID };
 }
 
 // ─── Internal equality helpers ──────────────────────────────────────────────
