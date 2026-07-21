@@ -246,6 +246,26 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }, [session.phase]);
 
+  // ── Focus restoration after the reference sheet closes ───────────────────
+  // The ReferenceSheet is conditionally rendered (`referenceFact && <Sheet/>`),
+  // so when it closes it UNMOUNTS rather than re-rendering with open=false.
+  // Its own close-effect (which calls returnFocusRef.current.focus()) never
+  // fires because the component is gone. CaseDesk owns the close transition
+  // and restores focus to the opener here. The opener button was captured on
+  // open via referenceOpenerRef; if no opener was captured the ref falls back
+  // to the hidden sentinel, which is harmless.
+  const prevOpenReferenceRef = useRef(openReferenceFactId);
+  useEffect(() => {
+    const prev = prevOpenReferenceRef.current;
+    const curr = openReferenceFactId;
+    prevOpenReferenceRef.current = curr;
+    // Transition from open (non-null) → closed (null): restore focus.
+    if (prev !== null && curr === null) {
+      const opener = referenceOpenerRef.current;
+      if (opener) opener.focus();
+    }
+  }, [openReferenceFactId]);
+
   // ── Evidence live region ──────────────────────────────────────────────────
   // Announce when the requested-fact set grows (facts became available).
   useEffect(() => {
@@ -717,7 +737,13 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
 
   const enrichmentAsyncStatus = enrichment ? enrichmentStatus(enrichment.state) : undefined;
   const isRecommendPhase = phaseKey === "recommend";
-  const isPreCommitReview = isRecommendPhase && session.firstAttempt === null;
+  // Pre-commit review renders whenever the learner has NOT yet submitted a
+  // first attempt — in either the investigate OR recommend phase. The reducer
+  // has no investigate→recommend transition on a first pass (the recommend
+  // phase is only entered via begin-revision after a first submit), so the
+  // Send button MUST be reachable from investigate. The reducer's
+  // send-recommendation action explicitly accepts phase "investigate".
+  const isPreCommitReview = session.firstAttempt === null;
 
   // Remaining characters for the customerExplanation. Clamped at 0 (never
   // negative) so the counter doesn't read "-3 characters left".

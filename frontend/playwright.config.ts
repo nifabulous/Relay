@@ -21,8 +21,63 @@ export default defineConfig({
       name: "mobile",
       use: { ...devices["iPhone 13"] },
     },
+    // ─── Case Desk viewport matrix ───────────────────────────────────────────
+    // Four explicitly-named projects that exercise the supplier-case journey
+    // across the target device widths. The case-desk.spec.ts suite asserts the
+    // per-viewport invariants (no horizontal scroll, ≥44px tap targets, keyboard
+    // traversal, labelled sheet, focus restoration, live announcements) inside
+    // each of these viewports. All projects run the whole e2e/ tree — the case
+    // journey's per-viewport tests simply run in four widths, while the legacy
+    // explore/learn/prepare suites run once per project (acceptable cost).
+    {
+      name: "case-mobile-390",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 390, height: 844 },
+      },
+    },
+    {
+      name: "case-tablet-768",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 768, height: 844 },
+      },
+    },
+    {
+      name: "case-desktop-1024",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1024, height: 900 },
+      },
+    },
+    {
+      name: "case-wide-1440",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    // ─── Reduced motion ───────────────────────────────────────────────────────
+    // Emulates prefers-reduced-motion: reduce for the case journey. The case's
+    // animations are token-driven (tokens.css zeroes durations under reduced
+    // motion); this project verifies the journey still completes (transitions
+    // do not block) when the user has reduced motion enabled.
+    {
+      name: "case-reduced-motion",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1024, height: 900 },
+        reducedMotion: "reduce",
+      },
+    },
   ],
   webServer: {
+    // The .venv and the FastAPI app live at the repo root, but `npm run
+    // test:e2e` is invoked from frontend/. Set cwd to the repo root so the
+    // relative `.venv/bin/uvicorn` path resolves and the app module is
+    // importable. reuseExistingServer lets a developer-run uvicorn (or a
+    // prior run) short-circuit the spawn.
+    cwd: "..",
     command: ".venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000",
     url: "http://127.0.0.1:8000/api/health",
     reuseExistingServer: true,
