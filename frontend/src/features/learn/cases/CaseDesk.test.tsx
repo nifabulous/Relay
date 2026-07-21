@@ -165,6 +165,36 @@ describe("CaseDesk — fact sections by state", () => {
     const feeValue = "Customer is fee-conscious; willing to pay more only if it protects the deadline.";
     expect(screen.getByText(feeValue)).toBeInTheDocument();
   });
+
+  it("FINDING-001 (design-review): a hidden-value fact shows NO 'Verified' chip, but a requested one does", () => {
+    // The source-status chip ("Verified") asserts the fact's claim has been
+    // checked. That is only true for the learner once they have requested
+    // the fact — rendering "Verified" next to a "Not yet requested" value
+    // is a contradiction the design-review caught. The chip must be
+    // suppressed while the value is hidden and appear once requested.
+    //
+    // Seed: only price-sensitivity is requested; the other three
+    // requestable facts (tracking-need, intermediary, institution-variation)
+    // remain hidden.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+
+    // Scope to the EvidenceRail so we don't match the FactRequest labels.
+    const evidence = screen.getByRole("complementary", { name: /evidence/i });
+
+    // The requested fact's row is adjacent to a "Verified" chip — it lives
+    // in the same fact <li> as the "Requested" tag.
+    const requestedRow = within(evidence).getByText("Fee sensitivity").closest("li");
+    expect(requestedRow).not.toBeNull();
+    expect(within(requestedRow!).queryByLabelText(/Verified/i)).not.toBeNull();
+
+    // A still-hidden requestable fact has NO "Verified" chip in its row.
+    const hiddenRow = within(evidence).getByText("Tracking requirement").closest("li");
+    expect(hiddenRow).not.toBeNull();
+    expect(within(hiddenRow!).queryByLabelText(/Verified/i)).toBeNull();
+    // And it still carries the "Not yet requested" placeholder.
+    expect(hiddenRow).toHaveTextContent(/not yet requested/i);
+  });
 });
 
 // ─── Native fact checkboxes (FactRequest) ───────────────────────────────────

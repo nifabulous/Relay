@@ -106,7 +106,14 @@ export function EvidenceRail({ definition, requestedFactIds, onOpenReference }: 
                   <li key={fact.id} className="evidence-rail__fact">
                     <div className="evidence-rail__fact-head">
                       <span className="evidence-rail__fact-label">{fact.label}</span>
-                      {fact.claim && (
+                      {/* The source-status chip ("Verified" / "Under review")
+                          asserts the fact's claim has been checked. That is
+                          only true for the learner once they have requested
+                          the fact — rendering it next to a "Not yet requested"
+                          value is a contradiction (the claim hasn't been
+                          verified *for them* yet). Suppress the chip while the
+                          value is hidden; the value text carries the state. */}
+                      {fact.claim && !valueHidden && (
                         <StatusChip
                           status={factStatus}
                           className="evidence-rail__fact-status"
