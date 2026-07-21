@@ -13,13 +13,14 @@ import { createInitialCaseSession, type CaseSession } from "./caseStore";
 
 const CASE_ID = "canada-us-supplier";
 
-function seedStartedSession() {
+function seedStartedSession(overrides: Partial<CaseSession> = {}) {
   const initial = createInitialCaseSession(CASE_ID);
   // Dispatch `start` to move brief → investigate.
   const started = {
     ...initial,
     status: "in_progress" as const,
     phase: "investigate" as const,
+    ...overrides,
   };
   localStorage.setItem(
     `relay:case-session:${CASE_ID}`,
@@ -101,20 +102,24 @@ describe("CaseDesk — customer request anchor", () => {
 // ─── Fact sections ──────────────────────────────────────────────────────────
 
 describe("CaseDesk — fact sections by state", () => {
-  it("groups facts into supplied, gathered, assumption, and unknown sections", () => {
+  it("groups facts into supplied and unknown sections before any investigation (T1: requestable facts ship unknown)", () => {
     seedStartedSession();
     renderDesk();
-    // The catalog has supplied and gathered facts (no authored assumption or
-    // unknown facts in the default case). We assert the section headings that
-    // DO have facts render, and that the section structure exists for all four.
+    // T1: the four requestable facts (price-sensitivity, tracking-need,
+    // intermediary, institution-variation) ship `state: "unknown"` so their
+    // values are not pre-disclosed as gathered. Before the learner requests
+    // anything, the EvidenceRail shows the Supplied section (given context)
+    // and the Unknown section (the investigation surface). The Gathered
+    // section is empty and not rendered until a fact is requested.
     expect(screen.getByRole("heading", { name: /supplied/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /gathered/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /unknown/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^gathered$/i })).not.toBeInTheDocument();
     // A supplied fact value renders in its section.
     const supplied = screen.getByRole("region", { name: /supplied/i });
     expect(supplied).toHaveTextContent(/United States/);
-    // A gathered fact value renders in its section.
-    const gathered = screen.getByRole("region", { name: /gathered/i });
-    expect(gathered).toHaveTextContent(/fee-conscious|tracking/i);
+    // A requestable fact renders in the Unknown section before being requested.
+    const unknown = screen.getByRole("region", { name: /unknown/i });
+    expect(unknown).toHaveTextContent(/fee sensitivity|tracking requirement/i);
   });
 
   it("shows a compact source status for facts that carry a claim", () => {
@@ -134,6 +139,61 @@ describe("CaseDesk — fact sections by state", () => {
     expect(screen.getByText("USD")).toBeInTheDocument();
     expect(screen.getByText("Invoice amount")).toBeInTheDocument();
     expect(screen.getByText("USD 48,000.00")).toBeInTheDocument();
+  });
+
+  it("T1 UI: a requestable unknown fact's VALUE is hidden until requested (no answer leak)", () => {
+    // The investigation must be load-bearing at the UI layer too, not just the
+    // evaluator. A requestable fact that ships `unknown` shows its LABEL (so the
+    // learner knows it exists and can request it) but NOT its value (the answer)
+    // until the learner actually requests it. Otherwise a learner reads the
+    // answer without investigating, defeating T1's premise even though the
+    // evaluator scores correctly.
+    seedStartedSession();
+    renderDesk();
+    // The fee-sensitivity fact's value must NOT be visible before request.
+    const feeValue = "Customer is fee-conscious; willing to pay more only if it protects the deadline.";
+    expect(screen.queryByText(feeValue)).not.toBeInTheDocument();
+    // The "Not yet requested" placeholder stands in for the hidden value.
+    const unknown = screen.getByRole("region", { name: /unknown/i });
+    expect(unknown).toHaveTextContent(/not yet requested/i);
+  });
+
+  it("T1 UI: after a requestable fact is requested, its value becomes visible", () => {
+    // Seed a session where fee-sensitivity has been requested.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+    const feeValue = "Customer is fee-conscious; willing to pay more only if it protects the deadline.";
+    expect(screen.getByText(feeValue)).toBeInTheDocument();
+  });
+
+  it("FINDING-001 (design-review): a hidden-value fact shows NO 'Verified' chip, but a requested one does", () => {
+    // The source-status chip ("Verified") asserts the fact's claim has been
+    // checked. That is only true for the learner once they have requested
+    // the fact — rendering "Verified" next to a "Not yet requested" value
+    // is a contradiction the design-review caught. The chip must be
+    // suppressed while the value is hidden and appear once requested.
+    //
+    // Seed: only price-sensitivity is requested; the other three
+    // requestable facts (tracking-need, intermediary, institution-variation)
+    // remain hidden.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+
+    // Scope to the EvidenceRail so we don't match the FactRequest labels.
+    const evidence = screen.getByRole("complementary", { name: /evidence/i });
+
+    // The requested fact's row is adjacent to a "Verified" chip — it lives
+    // in the same fact <li> as the "Requested" tag.
+    const requestedRow = within(evidence).getByText("Fee sensitivity").closest("li");
+    expect(requestedRow).not.toBeNull();
+    expect(within(requestedRow!).queryByLabelText(/Verified/i)).not.toBeNull();
+
+    // A still-hidden requestable fact has NO "Verified" chip in its row.
+    const hiddenRow = within(evidence).getByText("Tracking requirement").closest("li");
+    expect(hiddenRow).not.toBeNull();
+    expect(within(hiddenRow!).queryByLabelText(/Verified/i)).toBeNull();
+    // And it still carries the "Not yet requested" placeholder.
+    expect(hiddenRow).toHaveTextContent(/not yet requested/i);
   });
 });
 
@@ -348,6 +408,50 @@ describe("CaseDesk — phase rendering", () => {
       expect(live?.textContent ?? "").toMatch(/1 new fact available/i);
     });
   });
+
+  // T18: the live region depended on requestedFactIds.length, so a same-
+  // length swap (uncheck A + check B in the same Request action) announced
+  // nothing — the count was unchanged even though the evidence content
+  // changed. The fix announces on the array IDENTITY change, not just count
+  // growth.
+  it("T18: announces a same-length evidence swap (count unchanged but content changed)", async () => {
+    const user = userEvent.setup();
+    // Seed a session where one fact is already requested so the starting
+    // count is 1.
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+    const live = document.querySelector('[aria-live="polite"]');
+    expect(live).not.toBeNull();
+    // The live region starts empty (no transition yet).
+    expect(live?.textContent ?? "").toBe("");
+
+    // Uncheck the requested fact and check a different one, then Request.
+    // The new requestedFactIds has length 1 (same as before) but a different
+    // member. The reducer's arrayEqual guard fires (different content) and
+    // produces a new array reference — the live region must announce.
+    const feeCb = screen.getByRole("checkbox", { name: /fee sensitivity/i });
+    const trackingCb = screen.getByRole("checkbox", { name: /tracking requirement/i });
+    // fee is currently checked (seeded); uncheck it.
+    expect(feeCb).toBeChecked();
+    await user.click(feeCb);
+    expect(feeCb).not.toBeChecked();
+    // Check the other fact.
+    await user.click(trackingCb);
+    expect(trackingCb).toBeChecked();
+    // Commit the request — count is still 1, but the content changed.
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // The live region announces the swap (not silent). The exact phrasing is
+    // flexible — the contract is "something was announced" for a content
+    // change, not just a count growth.
+    await waitFor(() => {
+      expect(live?.textContent ?? "").not.toBe("");
+    });
+    // And the announcement is NOT the misleading "0 new facts available"
+    // (which a count-growth-only implementation would have produced if it
+    // fell through to a zero delta).
+    expect(live?.textContent ?? "").not.toMatch(/^0 new facts available/i);
+  });
 });
 
 // ─── customerExplanation debounce + flush (I1) ──────────────────────────────
@@ -428,6 +532,97 @@ describe("CaseDesk — customerExplanation debounce + flush", () => {
     unmount();
     expect(storedExplanation()).toBe("final value");
   });
+
+  // T4: the reasoning free-text fields (primary reason, conditions, price /
+  // arrival / tracking expectations) persisted synchronously on every
+  // keystroke. Each keystroke ran structuredClone + JSON.stringify + setItem
+  // for the whole session — wasteful for a few-KB payload. Debounce the
+  // persist (NOT the dispatch — the UI stays responsive) to 300ms after the
+  // last edit, with flush on blur / send / restart / unmount.
+  it("T4: debounces free-text draft persists (reasoning fields) — localStorage is NOT updated until 300ms elapse", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    // Type — no clock advancement yet.
+    fireEvent.change(priceInput, { target: { value: "next-day" } });
+    // localStorage must NOT reflect the edit yet (the dispatch fired and the
+    // UI shows the edit, but the persist is debounced).
+    expect(priceInput).toHaveValue("next-day");
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    // Advance past the debounce window — the persist fires.
+    vi.advanceTimersByTime(300);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("next-day");
+  });
+
+  it("T4: flushes the reasoning-field persist on blur (the in-memory edit reaches storage immediately)", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    fireEvent.change(priceInput, { target: { value: "flushed on blur" } });
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    // Blur flushes the pending write at once.
+    fireEvent.blur(priceInput);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("flushed on blur");
+  });
+
+  it("T4: coalesces rapid reasoning-field edits — only the LAST value is persisted", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    fireEvent.change(priceInput, { target: { value: "a" } });
+    fireEvent.change(priceInput, { target: { value: "ab" } });
+    fireEvent.change(priceInput, { target: { value: "abc" } });
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    vi.advanceTimersByTime(300);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("abc");
+  });
+
+  // T17 Part A: the unmount cleanup previously called flushExplanation →
+  // persist (→ dispatch + setSaveError + saveCaseSession) on an unmounted
+  // component. The unmount-time write is best-effort (the learner is leaving;
+  // the in-memory draft was authoritative), so the cleanup must:
+  //   1. NOT propagate any failure out of the unmount path (regression guard
+  //      for saveVersioned's catch; a future refactor must not regress to an
+  //      unhandled unmount-time exception), and
+  //   2. NOT trigger React state updates on the unmounted component (no
+  //      dispatch, no setSaveError — the write-only path goes straight to
+  //      localStorage and swallows any error).
+  it("T17: the unmount-flush persist does not throw and does not log a state-update warning even if saveCaseSession fails", () => {
+    // Seed BEFORE installing the spy — otherwise the seed write itself throws.
+    seedStartedSession();
+    // The unmount-time persist would call setItem. Make it throw a NON-
+    // DOMException error (anything that could escape saveVersioned's catch in
+    // a future regression). The unmount flush must swallow it.
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("unexpected non-DOMException throw on unmount persist");
+      });
+    // Capture console.error so we can detect any React warning about a state
+    // update on an unmounted component (React 19 tolerates this silently, but
+    // a future React version — or the dispatch path being restored — would
+    // log it; this assertion is future-proof).
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { unmount } = renderDesk();
+      const textarea = getExplanationTextarea();
+      // Type without advancing the clock so a write is pending at unmount.
+      fireEvent.change(textarea, { target: { value: "pending-on-unmount" } });
+      expect(storedExplanation()).toBe("");
+      // Unmounting triggers the cleanup, which flushes the pending write.
+      // The cleanup must not throw — the unmount itself must not throw.
+      expect(() => unmount()).not.toThrow();
+      // No React state-update warning should fire from the unmount-flush path
+      // (the write-only path does not call dispatch or setSaveError).
+      const warnedAboutUnmountedState = errSpy.mock.calls.some((args) =>
+        String(args[0] ?? "").match(/unmounted|state update on an unmounted/i),
+      );
+      expect(warnedAboutUnmountedState).toBe(false);
+    } finally {
+      setItemSpy.mockRestore();
+      errSpy.mockRestore();
+    }
+  });
 });
 
 // ─── Save-failure surfacing (I2) ────────────────────────────────────────────
@@ -451,8 +646,9 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
     renderDesk();
-    // Trigger a persist via a non-debounced edit (the price expectation input
-    // dispatches edit-draft and persists synchronously).
+    // Trigger a persist via a reasoning-field edit. (T4 made the reasoning-
+    // field persist debounced; user.type + findByRole's polling lets the
+    // 300ms debounce fire before the assertion.)
     const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
     await user.type(priceInput, "next-day");
     // The save-error alert (role=alert) surfaces the quota failure.
@@ -464,6 +660,40 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
     // A further edit still works (the draft is not frozen by the failure).
     await user.type(priceInput, "!");
     expect(priceInput).toHaveValue("next-day!");
+  });
+
+  // T15: the persist wrapper only set saveError on the failure branch; there
+  // was no setSaveError(null) on success. A one-time transient quota failure
+  // left the "Couldn't save your progress" alert visible forever, even after
+  // every later write succeeded. The fix clears saveError on the next
+  // successful persist.
+  it("T15: clears the save-error alert on the next successful persist", async () => {
+    const user = userEvent.setup();
+    // Seed BEFORE installing the spy — otherwise the seed write itself throws.
+    seedStartedSession();
+    // Force the FIRST write (the failing persist) to throw QuotaExceededError.
+    let throwOnce = true;
+    setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      if (throwOnce) {
+        throwOnce = false;
+        throw new DOMException("quota exceeded", "QuotaExceededError");
+      }
+      // Subsequent writes succeed (Storage.prototype.setItem default behaviour).
+    });
+    renderDesk();
+    // Trigger the failing persist (price expectation input is debounced;
+    // findByRole's polling lets the 300ms debounce fire before the assert).
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    await user.type(priceInput, "a");
+    // The alert surfaces the quota failure.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't save your progress/i);
+    // A second edit triggers a persist that now succeeds — the alert MUST
+    // clear (T15). Previously it stayed forever.
+    await user.type(priceInput, "b");
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
   });
 });
 
@@ -503,5 +733,100 @@ describe("CaseDesk — under_review recovery notice", () => {
     const dismiss = within(notice).getByRole("button", { name: /dismiss|got it|close/i });
     await user.click(dismiss);
     expect(screen.queryByRole("status", { name: /case updated/i })).not.toBeInTheDocument();
+  });
+});
+
+// ─── T9: malformed localStorage must NOT crash CaseDesk at mount ─────────────
+//
+// Before the fix, `loadCaseSession`'s 2-field guard (`schemaVersion === 1` &&
+// `caseId === caseId`) let structurally-broken payloads through to the
+// consumer, where they crashed on first render (`useState(session.draft.
+// customerExplanation)` throws on a missing `draft`; `requestedFactIds.length`
+// throws on null; CaseOutcome's `current.draft.selectedRail` throws on a
+// half-formed attempt). The fix is a full nested-shape type guard inside
+// `loadCaseSession`; these mount-level tests pin the contract end-to-end by
+// seeding each crash-class payload and asserting CaseDesk renders the brief /
+// fresh state instead of throwing.
+
+describe("CaseDesk — malformed localStorage payloads render the fresh state, never crash (T9)", () => {
+  function seedRaw(payload: unknown) {
+    localStorage.setItem(
+      `relay:case-session:${CASE_ID}`,
+      JSON.stringify(payload),
+    );
+  }
+
+  function baseShape(): Record<string, unknown> {
+    return {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      // A valid caseRevision so the loader takes the happy (non-recovery)
+      // path and the type guard is the only thing standing between the
+      // payload and render.
+      caseRevision: "2026-07-20.investigation-load-bearing",
+      status: "in_progress",
+      phase: "investigate",
+      requestedFactIds: [] as string[],
+      draft: {
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["fast"],
+        conditions: [],
+        priceExpectation: "",
+        arrivalExpectation: "",
+        trackingExpectation: "",
+        customerExplanation: "I recommend SWIFT-to-Fedwire.",
+      },
+      firstAttempt: null,
+      revisedAttempt: null,
+      openedReferenceIds: [] as string[],
+      transferOutcome: null,
+      updatedAt: "2026-07-01T00:00:00Z",
+    };
+  }
+
+  it("renders the brief (fresh state) when `draft` is missing entirely", () => {
+    const payload = baseShape();
+    delete payload.draft;
+    seedRaw(payload);
+    // Must not throw. The brief is reachable on a fresh session because
+    // loadCaseSession returns null → createInitialCaseSession yields
+    // status not_started / phase brief.
+    expect(() => renderDesk()).not.toThrow();
+    // The fresh state surfaces the Start investigation affordance.
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `requestedFactIds` is null (previously crashed on .length)", () => {
+    const payload = baseShape();
+    payload.requestedFactIds = null;
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `firstAttempt` is a half-formed object (previously crashed CaseOutcome)", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = { submittedAt: "2026-07-01T00:00:00Z" };
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the brief when `phase` is not a real phase value", () => {
+    const payload = baseShape();
+    payload.phase = "not-a-real-phase";
+    seedRaw(payload);
+    expect(() => renderDesk()).not.toThrow();
+    expect(
+      screen.getByRole("button", { name: /start investigation/i }),
+    ).toBeInTheDocument();
   });
 });

@@ -130,9 +130,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   const referenceOpenerRef = useRef<HTMLButtonElement | null>(null);
 
   // Polite live region content for evidence changes (e.g. "2 new facts
-  // available"). Updated when the requested-fact set grows.
+  // available"). Updated when the requested-fact set changes.
+  // T18: the dependency is the array IDENTITY (session.requestedFactIds),
+  // not its length. A same-length swap (uncheck A + check B in the same
+  // Request action) changes the evidence content without changing the count;
+  // the live region must still announce it. Tracking the previous ids (not
+  // just the previous count) lets us phrase the message precisely.
   const [evidenceAnnouncement, setEvidenceAnnouncement] = useState("");
-  const prevRequestedCountRef = useRef(session.requestedFactIds.length);
+  const prevRequestedIdsRef = useRef<string[]>(session.requestedFactIds);
 
   // The phase heading ref — focus moves here on phase transition.
   const phaseHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -167,12 +172,43 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // not lose the last keystrokes. Reads sessionRef so it persists the LATEST
   // session, not the one captured at mount (which could be many renders stale
   // after a long investigation session).
+  //
+  // T17 Part A: the unmount-time flush is BEST-EFFORT. The component is
+  // leaving the tree, so dispatching a state update or surfacing a save
+  // error is pointless (the learner is gone and the in-memory draft was
+  // authoritative). The cleanup writes directly to localStorage via the
+  // write-only `persistToDisk` helper (a try/catch around saveCaseSession
+  // that swallows any failure) instead of going through `persist` (which
+  // dispatches + setSaveError). This avoids both:
+  //   - state updates on an unmounted component (semantically wrong, and
+  //     older React logged a warning), and
+  //   - any unhandled throw escaping the unmount path (saveVersioned already
+  //     catches, but a future regression — e.g. a stray throw before the
+  //     catch — would propagate without this guard).
   useEffect(() => {
     return () => {
       if (explanationTimerRef.current !== null) {
         clearTimeout(explanationTimerRef.current);
         explanationTimerRef.current = null;
-        flushExplanation(pendingExplanationRef.current);
+        flushExplanationToDisk(pendingExplanationRef.current);
+      }
+      // T4: also flush any pending debounced reasoning-field persist on
+      // unmount, so the latest free-text edits reach storage. Best-effort
+      // write-only path (same shape as flushExplanationToDisk): never
+      // dispatches, never calls setSaveError, swallows any failure.
+      if (draftPersistTimerRef.current !== null) {
+        clearTimeout(draftPersistTimerRef.current);
+        draftPersistTimerRef.current = null;
+        const pending = pendingDraftPersistRef.current;
+        pendingDraftPersistRef.current = null;
+        if (pending !== null) {
+          const stamped = { ...pending, updatedAt: new Date().toISOString() };
+          try {
+            saveCaseSession(stamped);
+          } catch {
+            // Best-effort unmount-time write; see flushExplanationToDisk.
+          }
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,6 +222,26 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         dispatch({ type: "edit-draft", patch: { customerExplanation: text } });
         persist(next);
       }
+    }
+  }
+
+  // T17 Part A: write-only flush used by the unmount cleanup. Stamps the
+  // session with a fresh updatedAt and writes it via saveCaseSession, then
+  // swallows any failure (the write is best-effort; the in-memory draft was
+  // authoritative and the learner is leaving). Never dispatches, never calls
+  // setSaveError — those are pointless on an unmounted component.
+  function flushExplanationToDisk(text: string) {
+    const current = sessionRef.current;
+    if (text === current.draft.customerExplanation) return;
+    const next = caseReducer(current, { type: "edit-draft", patch: { customerExplanation: text } });
+    if (next === current) return;
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
+    try {
+      saveCaseSession(stamped);
+    } catch {
+      // Best-effort: a failed unmount-time write is not recoverable (the
+      // learner is leaving) and not actionable (the in-memory draft was
+      // authoritative while the component was mounted). Swallow.
     }
   }
 
@@ -226,6 +282,57 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           ? "We couldn't save your progress — this browser's storage is full. Your work in this tab is kept, but won't persist if you leave."
           : "We couldn't save your progress — this browser may be blocking storage. Your work in this tab is kept, but won't persist if you leave.",
       );
+    } else {
+      // T15: clear any prior transient save-failure alert once a later write
+      // succeeds. Without this, a one-time quota failure leaves the alert
+      // visible forever, even after every subsequent write succeeds.
+      setSaveError(null);
+    }
+  }
+
+  // ── Debounced free-text draft persist (T4) ─────────────────────────────────
+  // The reasoning free-text fields (primary reason, conditions, price / arrival
+  // / tracking expectations) used to persist synchronously on every keystroke.
+  // Each keystroke ran structuredClone + JSON.stringify + setItem for the
+  // whole session — wasteful for a few-KB payload. Debounce the persist (NOT
+  // the dispatch — the UI stays responsive) to 300ms after the last edit,
+  // with flush on blur / send / restart / unmount. customerExplanation has
+  // its own debounce machinery above (it has its own pending-text ref so the
+  // dispatch can be deferred too); this debounce wraps only the persist.
+  //
+  // The pending session ref always holds the LATEST next-session computed by
+  // handleDraftPatch, so coalescing rapid edits persists only the final value
+  // (matching the customerExplanation behaviour).
+  const draftPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDraftPersistRef = useRef<CaseSession | null>(null);
+
+  function scheduleDraftPersist(next: CaseSession) {
+    pendingDraftPersistRef.current = next;
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+    }
+    draftPersistTimerRef.current = setTimeout(() => {
+      draftPersistTimerRef.current = null;
+      const pending = pendingDraftPersistRef.current;
+      pendingDraftPersistRef.current = null;
+      if (pending !== null) {
+        persist(pending);
+      }
+    }, 300);
+  }
+
+  // Flush a pending debounced persist immediately. Called on blur (per
+  // field), Send, Restart, and unmount. Idempotent: a no-op when nothing is
+  // pending.
+  function flushDraftPersist() {
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+      draftPersistTimerRef.current = null;
+      const pending = pendingDraftPersistRef.current;
+      pendingDraftPersistRef.current = null;
+      if (pending !== null) {
+        persist(pending);
+      }
     }
   }
 
@@ -267,22 +374,51 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   }, [openReferenceFactId]);
 
   // ── Evidence live region ──────────────────────────────────────────────────
-  // Announce when the requested-fact set grows (facts became available).
+  // Announce when the requested-fact set changes. T18: announce on the array
+  // IDENTITY change (which fires for both count growth AND same-length swaps),
+  // not just on count growth. The reducer's arrayEqual guard produces a new
+  // reference only when content differs, so depending on the array itself
+  // captures every material change.
   useEffect(() => {
-    const prev = prevRequestedCountRef.current;
-    const curr = session.requestedFactIds.length;
-    if (curr > prev) {
-      const delta = curr - prev;
+    const prev = prevRequestedIdsRef.current;
+    const curr = session.requestedFactIds;
+    // No-op if the reference is unchanged (the reducer returns the SAME
+    // reference for an identical set).
+    if (prev === curr) {
+      return;
+    }
+    const prevSet = new Set(prev);
+    const currSet = new Set(curr);
+    // Diff the sets so the announcement is precise: "added", "removed", or
+    // "updated" (a swap where some were added AND some were removed).
+    let added = 0;
+    let removed = 0;
+    for (const id of currSet) if (!prevSet.has(id)) added++;
+    for (const id of prevSet) if (!currSet.has(id)) removed++;
+    if (added > 0 && removed === 0) {
       setEvidenceAnnouncement(
-        delta === 1
+        added === 1
           ? "1 new fact available in your evidence."
-          : `${delta} new facts available in your evidence.`,
+          : `${added} new facts available in your evidence.`,
       );
-    } else if (curr < prev) {
+    } else if (added === 0 && removed > 0) {
+      // Pure removal (rare in the Phase 1 UI but the contract must hold).
+      setEvidenceAnnouncement("");
+    } else if (added > 0 && removed > 0) {
+      // Same-length swap or a mixed change. Phrase as "updated" so the
+      // learner knows the evidence changed even though the count may be the
+      // same.
+      setEvidenceAnnouncement(
+        added === 1 && removed === 1
+          ? "Evidence updated: 1 fact changed."
+          : `Evidence updated: ${added} added, ${removed} removed.`,
+      );
+    } else {
+      // No diff (shouldn't happen — the reference differed — but be safe).
       setEvidenceAnnouncement("");
     }
-    prevRequestedCountRef.current = curr;
-  }, [session.requestedFactIds.length]);
+    prevRequestedIdsRef.current = curr;
+  }, [session.requestedFactIds]);
 
   // ── Action handlers ───────────────────────────────────────────────────────
   function handleStart() {
@@ -300,6 +436,12 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       explanationTimerRef.current = null;
       flushExplanation(pendingExplanationRef.current);
     }
+    // T4: flush any pending debounced reasoning-field persist too, so the
+    // latest free-text edits reach storage before the restart wipes the
+    // working draft. (The persisted session is then overwritten by the
+    // restart persist below; the point is to NOT lose edits that were still
+    // in the 300ms window.)
+    flushDraftPersist();
     const next = caseReducer(session, { type: "restart" });
     if (next !== session) {
       dispatch({ type: "restart" });
@@ -341,6 +483,20 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     // true double-Submit a no-op; this hardens the invariant for the revision
     // path, where Send is legal again.
     pendingExplanationRef.current = flushedText;
+    // T4: cancel any pending debounced reasoning-field persist so it cannot
+    // fire AFTER the send-recommendation persist and overwrite the snapshot
+    // with a stale pre-send session. The reasoning edits themselves are
+    // already in `session` (the dispatch was immediate) and are folded into
+    // the send's persist via the snapshot. Cancelling the timer here means
+    // the debounced persist's stale write can't race with the snapshot.
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+      draftPersistTimerRef.current = null;
+      // Drop the pending payload WITHOUT persisting — the send-recommendation
+      // persist below will persist the same edits (plus the snapshot) in the
+      // correct order.
+      pendingDraftPersistRef.current = null;
+    }
 
     // 2) Compute the flushed session locally by folding the pending text into
     //    the draft. If nothing was pending, this is a no-op (same reference).
@@ -353,8 +509,17 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     try {
       // 3) Evaluate the FLUSHED draft and snapshot it. The evaluator is pure
       //    and deterministic — the same draft always yields the same outcome.
+      //    T1: pass the set of facts the learner actually requested so the
+      //    investigation is load-bearing (a requestable fact not requested is
+      //    treated as unknown for scoring). flushedSession derives from
+      //    session (only customerExplanation may differ), so it carries the
+      //    same requestedFactIds.
       if (!definition) return;
-      const outcome = evaluateRecommendation(definition, flushedSession.draft);
+      const outcome = evaluateRecommendation(
+        definition,
+        flushedSession.draft,
+        new Set(flushedSession.requestedFactIds),
+      );
       const submittedAt = new Date().toISOString();
       const next = caseReducer(flushedSession, {
         type: "send-recommendation",
@@ -441,7 +606,12 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     const next = caseReducer(session, { type: "edit-draft", patch });
     if (next !== session) {
       dispatch({ type: "edit-draft", patch });
-      persist(next);
+      // T4: debounce the persist (not the dispatch). The UI reflects the edit
+      // immediately via the synchronous dispatch; the localStorage write is
+      // coalesced across rapid keystrokes and flushed on blur / send /
+      // restart / unmount. This avoids structuredClone + JSON.stringify +
+      // setItem per keystroke for the reasoning free-text fields.
+      scheduleDraftPersist(next);
     }
   }
 
@@ -549,6 +719,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRequestedFactChange={handleRequestedFactChange}
           onRequestFacts={handleRequestFacts}
           onDraftPatch={handleDraftPatch}
+          onDraftFieldBlur={flushDraftPersist}
           onOpenReference={handleOpenReference}
           onCloseReference={handleCloseReference}
           referenceFact={referenceFact}
@@ -695,6 +866,10 @@ interface InvestigatePhaseProps {
   onRequestedFactChange: (ids: string[]) => void;
   onRequestFacts: (ids: string[]) => void;
   onDraftPatch: (patch: Partial<CaseSession["draft"]>) => void;
+  // T4: blur flush for the reasoning free-text fields. Fired by each reasoning
+  // input's onBlur so a pending debounced persist writes to localStorage at
+  // once when the learner leaves the field.
+  onDraftFieldBlur: () => void;
   onOpenReference: (factId: string, opener?: HTMLButtonElement | null) => void;
   onCloseReference: () => void;
   referenceFact: CaseFact | null;
@@ -723,6 +898,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onRequestedFactChange,
     onRequestFacts,
     onDraftPatch,
+    onDraftFieldBlur,
     onOpenReference,
     onCloseReference,
     referenceFact,
@@ -794,6 +970,8 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 // the learner's path to those tiers.
                 value={session.draft.reasons[0] ?? ""}
                 onChange={(e) => onDraftPatch({ reasons: [e.target.value] })}
+                // T4: blur flushes the debounced reasoning-field persist.
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -803,6 +981,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.conditions[0] ?? ""}
                 onChange={(e) => onDraftPatch({ conditions: e.target.value ? [e.target.value] : [] })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -812,6 +991,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.priceExpectation}
                 onChange={(e) => onDraftPatch({ priceExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -821,6 +1001,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.arrivalExpectation}
                 onChange={(e) => onDraftPatch({ arrivalExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -830,6 +1011,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.trackingExpectation}
                 onChange={(e) => onDraftPatch({ trackingExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">

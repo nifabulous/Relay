@@ -189,8 +189,26 @@ export function CaseOutcome({
             // Compute the transfer outcome via the pure evaluator against the
             // transfer's facts/rails (adapted into a CaseDefinition-like
             // shape). CaseDesk dispatches complete-transfer with this outcome.
+            //
+            // T1 (requestedFactIds handling for the transfer): the transfer
+            // variant has NO requestable facts — every transfer fact ships
+            // `supplied` (destination-currency, amount, urgency). So the
+            // investigation-gating can never block: supplied facts are always
+            // gathered regardless of the requestedFactIds set. We pass the
+            // transfer's own fact ids as "requested" to make the intent
+            // explicit and future-proof: if a future transfer ever adds a
+            // requestable fact, this call would surface the gate instead of
+            // silently passing. (Group D owns making the transfer a real
+            // investigation decision; here we only keep the call WORKING.)
             const transferDefinition = transferAsDefinition(definition, definition.transfer);
-            const outcome = evaluateRecommendation(transferDefinition, draft);
+            const transferRequestedFactIds = new Set(
+              definition.transfer.facts.map((f) => f.id),
+            );
+            const outcome = evaluateRecommendation(
+              transferDefinition,
+              draft,
+              transferRequestedFactIds,
+            );
             onCompleteTransfer(outcome);
           }}
         />

@@ -102,6 +102,13 @@
   line-height: var(--leading-snug);
 }
 
+/* Placeholder shown when a requestable fact's value is not yet revealed
+   (T1 UI: the investigation must be load-bearing at the UI layer too). */
+.evidence-rail__fact-value--hidden {
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
 .evidence-rail__fact-reference {
   align-self: flex-start;
   min-height: 44px;

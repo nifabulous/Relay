@@ -95,11 +95,25 @@ export function EvidenceRail({ definition, requestedFactIds, onOpenReference }: 
             <ul className="evidence-rail__facts">
               {facts.map((fact) => {
                 const requested = requestedSet.has(fact.id);
+                // T1 UI: a requestable fact that ships `unknown` must not
+                // disclose its VALUE (the answer) until the learner actually
+                // requests it. The LABEL stays visible so the learner knows the
+                // fact exists and can request it via FactRequest. Non-requestable
+                // facts (supplied context) always show their value.
+                const valueHidden =
+                  fact.requestable && fact.state === "unknown" && !requested;
                 return (
                   <li key={fact.id} className="evidence-rail__fact">
                     <div className="evidence-rail__fact-head">
                       <span className="evidence-rail__fact-label">{fact.label}</span>
-                      {fact.claim && (
+                      {/* The source-status chip ("Verified" / "Under review")
+                          asserts the fact's claim has been checked. That is
+                          only true for the learner once they have requested
+                          the fact — rendering it next to a "Not yet requested"
+                          value is a contradiction (the claim hasn't been
+                          verified *for them* yet). Suppress the chip while the
+                          value is hidden; the value text carries the state. */}
+                      {fact.claim && !valueHidden && (
                         <StatusChip
                           status={factStatus}
                           className="evidence-rail__fact-status"
@@ -111,8 +125,14 @@ export function EvidenceRail({ definition, requestedFactIds, onOpenReference }: 
                         </span>
                       )}
                     </div>
-                    <p className="evidence-rail__fact-value">{fact.value}</p>
-                    {fact.claim && (
+                    {valueHidden ? (
+                      <p className="evidence-rail__fact-value evidence-rail__fact-value--hidden">
+                        Not yet requested
+                      </p>
+                    ) : (
+                      <p className="evidence-rail__fact-value">{fact.value}</p>
+                    )}
+                    {fact.claim && !valueHidden && (
                       <Button
                         variant="secondary"
                         className="evidence-rail__fact-reference"

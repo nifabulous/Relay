@@ -9,10 +9,10 @@
  *      randomness, no side effects. The Case Desk UI (Task 4) owns the
  *      reducer and dispatches actions.
  *
- *   2. `loadCaseSession` / `saveCaseSession` / `clearCaseDraft` /
- *      `updateRequestedFacts` — the I/O boundary. These wrap localStorage via
- *      the shared versioned primitives in `lib/persistence/storage`. They are
- *      the ONLY place case state touches storage.
+ *   2. `loadCaseSession` / `saveCaseSession` — the I/O boundary. These wrap
+ *      localStorage via the shared versioned primitives in
+ *      `lib/persistence/storage`. They are the ONLY place case state touches
+ *      storage.
  *
  * Design invariants (verified by caseStore.test.ts):
  *   - The first attempt is IMMUTABLE: once `send-recommendation` snapshots it,
@@ -41,7 +41,6 @@ import type {
 } from "./caseTypes";
 import { CASE_REVISION } from "./caseCatalog";
 import {
-  removeStored,
   saveVersioned,
   type SaveResult,
 } from "../../../lib/persistence/storage";
@@ -56,6 +55,12 @@ export interface CaseSession {
   phase: CasePhase;
   requestedFactIds: string[];
   draft: RecommendationDraft;
+  // An attempt snapshot is an IMMUTABLE point-in-time record of one
+  // recommendation. It intentionally excludes `requestedFactIds`: the outcome
+  // is computed at send-time (by the caller, via evaluateRecommendation) from
+  // the session-level requestedFactIds, then frozen here. Re-requesting facts
+  // during a later revision therefore cannot retroactively mutate a stored
+  // attempt — see T10 (caseStore.test.ts).
   firstAttempt: {
     draft: RecommendationDraft;
     outcome: CaseOutcome;
@@ -141,17 +146,28 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
 // ─── Purity helpers ─────────────────────────────────────────────────────────
 
 /**
- * Deep-clone a session using the runtime's structured-clone. Used so that
- * snapshot fields (firstAttempt/revisedAttempt) are fully decoupled from the
- * mutable working draft — a later `edit-draft` cannot mutate a snapshot even
- * by accident.
+ * Deep-clone a session. Exported so the deep-copy contract is directly
+ * testable (T14 — the structuredClone fallback path).
+ *
+ * Used so that snapshot fields (firstAttempt/revisedAttempt) are fully
+ * decoupled from the mutable working draft — a later `edit-draft` cannot
+ * mutate a snapshot even by accident.
  */
-function cloneSession(session: CaseSession): CaseSession {
-  // structuredClone is available in all evergreen browsers and in Node 17+;
-  // it preserves Dates/arrays/plain objects and throws on functions (which a
-  // CaseSession never contains). This keeps the reducer free of `JSON.parse(
-  // JSON.stringify(...))` round-tripping quirks (e.g. `undefined` fields).
-  return structuredClone(session);
+export function cloneSession(session: CaseSession): CaseSession {
+  // structuredClone is available in all evergreen browsers (iOS Safari 15.4+,
+  // March 2022). Fall back to a JSON round-trip for older WebViews (Safari
+  // <15.4 / iOS 15.3 and earlier, and many in-app WebViews) where it is
+  // undefined — without the guard, every dispatch would throw a
+  // ReferenceError and crash the desk synchronously.
+  //
+  // The session is plain JSON-serializable data — no Dates, Maps, or
+  // `undefined` fields that JSON.stringify would mangle in a way that matters
+  // here; the reducer already normalizes `transferOutcome` to null (never
+  // undefined), every other field is a string, string[], or a plain object of
+  // the same shape. So JSON.parse(JSON.stringify(...)) yields a faithful,
+  // fully decoupled copy.
+  if (typeof structuredClone === "function") return structuredClone(session);
+  return JSON.parse(JSON.stringify(session));
 }
 
 /** Merge a draft patch by replacement of each top-level field (no magic). */
@@ -174,10 +190,19 @@ function patchDraft(
  *                   `start`.
  *   investigate  — gathering facts (request-facts) and forming a draft
  *                   (edit-draft). The learner can also send straight from
- *                   here.
+ *                   here. Also the terminal re-investigation phase entered
+ *                   via `restart` once a revisedAttempt already exists (the
+ *                   T2 "review-only" path: request-facts + edit-draft are
+ *                   legal; no further send is possible because the case's
+ *                   one revision has been used; complete-transfer is the
+ *                   forward path).
  *   recommend     — the working recommendation phase. edit-draft and
  *                   send-recommendation are legal; begin-revision returns
  *                   here after a first attempt to revise from the original.
+ *                   `restart` with firstAttempt set and revisedAttempt null
+ *                   also lands here (T2: route the learner into the revision
+ *                   path so they can re-send; the next send creates
+ *                   revisedAttempt via the existing revision branch).
  *   resolve       — a recommendation has been submitted; the learner reviews
  *                   the outcome. begin-revision or complete-transfer are the
  *                   forward paths.
@@ -185,10 +210,21 @@ function patchDraft(
  *
  * Legality summary (illegal ⇒ return SAME reference, no partial mutation):
  *   start               — legal only in `brief`; idempotent otherwise.
- *   request-facts       — legal in investigate/recommend; no-op elsewhere.
- *   edit-draft          — legal in investigate/recommend (and after
- *                         begin-revision); no-op after a first attempt until
- *                         begin-revision, and no-op in brief.
+ *   request-facts       — legal in investigate/recommend, INCLUDING during a
+ *                         revision (T10). Each attempt's outcome is an
+ *                         immutable snapshot frozen at send-time, so re-
+ *                         requesting facts during a revision changes only the
+ *                         next send's evaluation; it cannot retroactively
+ *                         mutate firstAttempt's stored outcome. no-op in
+ *                         brief/resolve/debrief.
+ *   edit-draft          — legal in investigate/recommend. After a first
+ *                         attempt, the working draft is frozen ONLY in the
+ *                         resolve/debrief review flow; it becomes editable
+ *                         again in recommend (via begin-revision OR via
+ *                         restart-with-firstAttempt-set) and in investigate
+ *                         (the terminal re-investigation entered via restart-
+ *                         with-revisedAttempt-set, T2). no-op in brief and in
+ *                         resolve/debrief.
  *   send-recommendation — sets firstAttempt (or revisedAttempt during a
  *                         revision); double-submit is a no-op; no-op in brief.
  *   begin-revision      — legal only when a first attempt exists AND no
@@ -196,15 +232,26 @@ function patchDraft(
  *                         per case — the Phase-1 contract); idempotent if
  *                         already in the recommend (revising) phase; no-op
  *                         once revisedAttempt is set.
- *   complete-transfer   — legal only after at least a first attempt (resolve
- *                         or later); no-op in brief/investigate.
+ *   complete-transfer   — legal once a first attempt exists (any phase except
+ *                         brief); the forward path out of the T2 terminal
+ *                         re-investigation. no-op in brief / before any
+ *                         submission.
  *   restart             — always legal; clears the working draft and facts,
- *                         preserves attempt history, returns to investigate.
+ *                         preserves attempt history. T2 two-branch routing:
+ *                         firstAttempt set + revisedAttempt null → phase
+ *                         "recommend" (revision path); firstAttempt set +
+ *                         revisedAttempt set → phase "investigate" (terminal
+ *                         re-investigation); otherwise phase "investigate".
+ *                         T11: always sets status "in_progress" — clicking
+ *                         "Start again" acknowledges any under_review
+ *                         recovery and moves the learner past the stale-draft
+ *                         state.
  *   open-reference      — legal in investigate/recommend (including the
- *                         recommend phase entered via begin-revision); appends
- *                         the reference id to openedReferenceIds, deduped;
- *                         no-op (same reference) if the id is already present,
- *                         and no-op outside the legal phases.
+ *                         recommend phase entered via begin-revision or
+ *                         restart); appends the reference id to
+ *                         openedReferenceIds, deduped; no-op (same reference)
+ *                         if the id is already present, and no-op outside the
+ *                         legal phases.
  */
 export function caseReducer(session: CaseSession, action: CaseAction): CaseSession {
   switch (action.type) {
@@ -223,8 +270,14 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
     }
 
     case "request-facts": {
-      // Legal only while gathering/recommending. After submission the facts
-      // are fixed (a revision re-requests its own facts via edit-draft).
+      // Legal while gathering (investigate) or recommending. T10: request-
+      // facts is ALSO legal during a revision (begin-revision re-enters
+      // recommend). This is intentional post Group A: each attempt's outcome
+      // is an IMMUTABLE snapshot frozen at send-time, so re-requesting facts
+      // during a revision changes only the working session's requestedFactIds
+      // (which feeds the next send's evaluation) — it cannot retroactively
+      // mutate firstAttempt's stored outcome. A revision is a fresh
+      // recommendation that may legitimately reconsider the evidence.
       if (session.phase !== "investigate" && session.phase !== "recommend") {
         return session;
       }
@@ -240,29 +293,23 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
     }
 
     case "edit-draft": {
-      // Illegal before the case is started, or after a first attempt has been
-      // submitted (the first attempt is immutable; revision begins via
-      // begin-revision which re-opens the draft).
-      const inRevisablePhase =
-        session.phase === "investigate" || session.phase === "recommend";
-      if (!inRevisablePhase) {
+      // Legal in the gathering/recommending phases. The blocked cases are
+      // brief (case not started), and the post-submit review flow (resolve/
+      // debrief — the learner is reviewing an outcome, not editing). The
+      // draft is editable in:
+      //   - `investigate` (the fresh investigation phase — also the terminal
+      //     re-investigation phase entered via restart-when-revisedAttempt-
+      //     already-set, T2; the learner can re-request facts and edit the
+      //     draft for understanding even though no further send is possible),
+      //   - `recommend` (the initial recommend phase OR a revision reached
+      //     via begin-revision OR restart-with-firstAttempt-set — T2 routes
+      //     the learner into the revision path so they can re-send).
+      // The firstAttempt/revisedAttempt snapshots themselves are IMMUTABLE —
+      // edit-draft mutates only the working draft; the snapshots are deep-
+      // cloned at send-time and never aliased.
+      if (session.phase !== "investigate" && session.phase !== "recommend") {
         return session;
       }
-      // After a first attempt, the working draft is frozen until the learner
-      // explicitly begins a revision. We detect "first attempt submitted but
-      // not yet revising" as: firstAttempt !== null AND the session is still
-      // in the post-submit resolve/debrief flow OR the working draft still
-      // matches the frozen snapshot. The simplest invariant: once
-      // firstAttempt is set, edit-draft is only legal in the `recommend`
-      // phase (which begin-revision puts us back into).
-      if (session.firstAttempt !== null && session.phase !== "recommend") {
-        return session;
-      }
-      // If we're in `recommend` but have NOT begun a revision (i.e. this is
-      // the initial recommend phase before any submission), editing is fine.
-      // If we ARE revising (firstAttempt set + phase recommend via
-      // begin-revision), editing is also fine. The only blocked case is
-      // `resolve`/`debrief`, handled above.
       const nextDraft = patchDraft(session.draft, action.patch);
       // No-op if the patch produced no change (referential equality on every
       // field via shallow spread).
@@ -379,13 +426,50 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       // state but PRESERVES the attempt history (firstAttempt/revisedAttempt)
       // so the learner's record is never erased by a restart. See the plan's
       // E2E coverage map: "restart confirmation preserves history".
+      //
+      // T2 — the unwinnable state. Before this fix, restart ALWAYS returned
+      // phase: "investigate". But from investigate-with-firstAttempt-set,
+      // edit-draft was blocked and send-recommendation was blocked. The
+      // begin-revision ACTION is legal from investigate at the reducer level
+      // (it falls through all guards), but the UI only surfaced it via
+      // <CaseOutcome> in the resolve phase — so from investigate there was no
+      // button to reach it. A learner who clicked "Start again" (or landed via
+      // stale recovery with the same shape) was stuck with no forward path.
+      //
+      // The fix routes the learner into a winnable state with a two-branch
+      // model:
+      //   - firstAttempt set AND revisedAttempt null → phase: "recommend"
+      //     (revising from scratch; empty working draft; the next send
+      //     creates revisedAttempt via the existing send-recommendation
+      //     revision branch). Reuses the begin-revision machinery without
+      //     a new state. The learner re-investigates inside the recommend
+      //     phase (request-facts + edit-draft are legal there).
+      //   - firstAttempt set AND revisedAttempt already set → phase:
+      //     "investigate" (terminal re-investigation; one-revision-per-case
+      //     is enforced, so no further send is possible). The learner can
+      //     re-request facts and edit the draft for understanding; the
+      //     forward path is complete-transfer (legal in investigate once
+      //     firstAttempt is set). They are never stuck.
+      //   - firstAttempt null → phase: "investigate" (unchanged; a fresh
+      //     restart before any submission).
+      //
+      // T11 — restart from under_review. recoverStaleSession sets status
+      // "under_review" so CaseEntry can surface the stale-draft context.
+      // When the learner clicks "Start again" they have acknowledged the
+      // recovery and are actively re-engaging with the current case
+      // content — status becomes "in_progress" (correct semantics). The
+      // "loss" of the under_review signal is correct: the learner has
+      // moved past the stale-draft state.
       const preserved = cloneSession(session);
+      const hasFirst = preserved.firstAttempt !== null;
+      const hasRevised = preserved.revisedAttempt !== null;
+      const nextPhase: CasePhase = hasFirst && !hasRevised ? "recommend" : "investigate";
       return {
         schemaVersion: 1,
         caseId: session.caseId,
         caseRevision: CASE_REVISION,
         status: "in_progress",
-        phase: "investigate",
+        phase: nextPhase,
         requestedFactIds: [],
         draft: { ...EMPTY_DRAFT, shortlist: [], reasons: [], conditions: [] },
         firstAttempt: preserved.firstAttempt,
@@ -434,6 +518,149 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 
 // ─── I/O boundary ───────────────────────────────────────────────────────────
 
+// ─── Runtime shape guard (T9) ────────────────────────────────────────────────
+//
+// `loadCaseSession` reads localStorage, the I/O boundary for case state. The
+// stored payload is `unknown` until proven otherwise. The pre-fix code cast
+// after a 2-field check (`schemaVersion === 1` && `caseId === caseId`), which
+// let payloads that passed those two fields but were otherwise broken (missing
+// `draft`, `requestedFactIds: null`, a half-formed `firstAttempt`) reach the
+// consumer and crash at mount. The guard below validates the full nested
+// shape that CaseDesk + its children actually READ at mount and during normal
+// flow, so a payload that would crash render returns null instead (fresh
+// start) rather than crashing.
+//
+// Defensiveness bar: validate the crash-class fields. We do NOT deep-validate
+// every field of `CaseOutcome` (the outcome is opaque prose + arrays authored
+// by the evaluator, and the consumer reads its fields defensively via optional
+// chaining / guards in the UI). We DO validate:
+//   - top-level scalars (`schemaVersion`, `caseId`, `caseRevision`, `status`,
+//     `phase`, `updatedAt`) — these drive switch/derivation logic,
+//   - top-level arrays (`requestedFactIds`, `openedReferenceIds`) — `.length`
+//     is read on mount,
+//   - the working `draft` and the attempt drafts (validated deeply because
+//     CaseDesk reads `draft.customerExplanation`, `draft.shortlist`,
+//     `draft.reasons`, `draft.selectedRail`, etc. at mount, and CaseOutcome
+//     reads `firstAttempt.draft.selectedRail` in the resolve phase),
+//   - the attempt shells (`outcome` must be a non-null object with `quality`;
+//     `submittedAt` must be a string) — enough to prove "an attempt really
+//     lives here" without trying to enforce the evaluator's outcome contract.
+//
+// What we intentionally leave to runtime reducer guards: a structurally-valid
+// but semantically weird payload (e.g. `phase: "debrief"` with
+// `firstAttempt: null`) is NOT rejected — it won't crash, it just yields an
+// odd state the reducer no-ops on. Focus is the crash-class only.
+
+const SESSION_STATUSES = new Set<string>([
+  "not_started",
+  "in_progress",
+  "completed",
+  "under_review",
+]);
+
+const SESSION_PHASES = new Set<string>([
+  "brief",
+  "investigate",
+  "recommend",
+  "resolve",
+  "debrief",
+]);
+
+const SESSION_QUALITIES = new Set<string>([
+  "invalid",
+  "possible",
+  "defensible",
+  "preferred",
+]);
+
+function isStringArray(value: unknown): value is string[] {
+  if (!Array.isArray(value)) return false;
+  for (const item of value) {
+    if (typeof item !== "string") return false;
+  }
+  return true;
+}
+
+function isRecommendationDraft(value: unknown): value is RecommendationDraft {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isStringArray(v.shortlist) &&
+    (v.selectedRail === null || typeof v.selectedRail === "string") &&
+    isStringArray(v.reasons) &&
+    isStringArray(v.conditions) &&
+    typeof v.priceExpectation === "string" &&
+    typeof v.arrivalExpectation === "string" &&
+    typeof v.trackingExpectation === "string" &&
+    typeof v.customerExplanation === "string"
+  );
+}
+
+function isCaseOutcomeShallow(value: unknown): boolean {
+  // Outcome is opaque prose + arrays authored by the evaluator. We validate
+  // the fields the UI reads WITHOUT defensive guards:
+  //   - `quality` (enum) — read in StatusChip and consequence framing.
+  //   - `soundReasoning` (string[]) — CaseOutcome.tsx and CaseDebrief.tsx call
+  //     `outcome.soundReasoning.length` and `.map(...)` directly (no optional
+  //     chaining), so a missing/non-array value crashes at render.
+  // Other prose fields (`consequence`, `reasoningGap`, `nextAction`,
+  // `invalidRailIds`, `missingFactIds`) are read truthily or render-safely as
+  // undefined text, so they stay shallow. Deep validation of every prose field
+  // is the evaluator's job; this guard only closes the crash-class.
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.quality === "string" &&
+    SESSION_QUALITIES.has(v.quality) &&
+    isStringArray(v.soundReasoning)
+  );
+}
+
+function isAttemptSnapshot(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isRecommendationDraft(v.draft) &&
+    isCaseOutcomeShallow(v.outcome) &&
+    typeof v.submittedAt === "string"
+  );
+}
+
+/**
+ * Runtime type guard for a loaded CaseSession payload. Pure (no side effects).
+ *
+ * Certifies the payload is a structurally-valid `CaseSession` for the
+ * expected `caseId`. Use this before any `as CaseSession` cast at the I/O
+ * boundary; the narrowing makes the cast unnecessary.
+ */
+export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSession {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    v.schemaVersion === 1 &&
+    v.caseId === caseId &&
+    typeof v.caseRevision === "string" &&
+    typeof v.status === "string" &&
+    SESSION_STATUSES.has(v.status) &&
+    typeof v.phase === "string" &&
+    SESSION_PHASES.has(v.phase) &&
+    isStringArray(v.requestedFactIds) &&
+    isRecommendationDraft(v.draft) &&
+    (v.firstAttempt === null || isAttemptSnapshot(v.firstAttempt)) &&
+    (v.revisedAttempt === null || isAttemptSnapshot(v.revisedAttempt)) &&
+    isStringArray(v.openedReferenceIds) &&
+    // `transferOutcome` is additive (Piece 5c) — older sessions lack it. The
+    // guard accepts null, undefined (handled by normalizeTransferOutcome), or
+    // an object that looks like an outcome. The deep shape is the evaluator's
+    // contract; we only confirm "object-or-nullish" so the consumer's
+    // `=== null` branch is safe.
+    (v.transferOutcome === null ||
+      v.transferOutcome === undefined ||
+      isCaseOutcomeShallow(v.transferOutcome)) &&
+    typeof v.updatedAt === "string"
+  );
+}
+
 /**
  * Load a persisted session for a case.
  *
@@ -458,9 +685,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // We read localStorage directly (rather than via `loadVersioned`) because
   // our contract is "null when absent/corrupt", while `loadVersioned`'s
-  // contract is "fallback when absent/corrupt". We still apply the same
-  // structural schema guard `loadVersioned` does (schemaVersion === 1), then
-  // add the caseId match and the caseRevision recovery on top.
+  // contract is "fallback when absent/corrupt".
   const key = sessionKey(caseId);
   let parsed: unknown;
   try {
@@ -470,19 +695,27 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   } catch {
     return null;
   }
-  // Structural/schema guard: only schemaVersion === 1 with a matching caseId
-  // is a real session for THIS case.
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    (parsed as { schemaVersion?: unknown }).schemaVersion !== 1 ||
-    (parsed as { caseId?: unknown }).caseId !== caseId
-  ) {
+  // T9: validate the FULL nested shape. The pre-fix guard checked only
+  // `schemaVersion === 1` and `caseId === caseId` before `parsed as
+  // CaseSession`, which let payloads that passed those two fields but
+  // omitted nested sub-objects (e.g. `draft` missing, `requestedFactIds:
+  // null`, a half-formed `firstAttempt`) reach the consumer and crash at
+  // mount (`session.draft.customerExplanation`,
+  // `session.requestedFactIds.length`, CaseOutcome's
+  // `current.draft.selectedRail`). Reachability is real: any other writer
+  // under `relay:case-session:<id>` (a future migration, a partial write
+  // interrupted by tab close, a hand-edited localStorage entry, a sibling
+  // key from an older build) lands here. The type guard is pure (no side
+  // effects) so the I/O boundary contract is preserved.
+  if (!isCaseSession(parsed, caseId)) {
     return null;
   }
-  const stored = parsed as CaseSession;
+  const stored = parsed;
 
-  // Revision mismatch: recover without losing the first attempt.
+  // Revision mismatch: recover without losing the first attempt. The
+  // recovery contract (recoverStaleSession) constructs a known-good shape,
+  // so a structurally-valid session with a mismatched caseRevision still
+  // resumes — it does NOT hit the null-on-corrupt path.
   if (stored.caseRevision !== CASE_REVISION) {
     return recoverStaleSession(caseId, stored);
   }
@@ -539,109 +772,6 @@ function normalizeTransferOutcome(session: CaseSession): CaseSession {
  */
 export function saveCaseSession(session: CaseSession): SaveResult {
   return saveVersioned(sessionKey(session.caseId), session);
-}
-
-/**
- * Remove the stored session for a case. Used by "discard draft" affordances.
- * Only the selected case's key is touched; sibling cases and unrelated keys
- * are untouched.
- */
-export function clearCaseDraft(caseId: CaseId): void {
-  removeStored(sessionKey(caseId));
-}
-
-// ─── Invalidation ───────────────────────────────────────────────────────────
-
-/**
- * DOM id of the first UI control the learner should refocus on after an
- * upstream-fact change invalidates their in-progress recommendation. The
- * shortlist is always the first recommendation-specific control, so a single
- * stable constant suffices for Phase 1. (If a later phase adds per-rail
- * controls, generalize to `rail-${id}` then — YAGNI now.)
- */
-export const FIRST_AFFECTED_CONTROL_ID = "case-shortlist";
-
-/**
- * Apply an upstream-fact change to a stored session.
- *
- * Per the plan's invalidation rule: "changing an upstream fact clears
- * shortlist, recommendation, and outcomes while retaining the case shell and
- * returning the first affected control id."
- *
- * Specifically this clears:
- *   - `draft.shortlist`, `draft.selectedRail`, `draft.reasons`
- *     (the recommendation-specific fields the learner built against the old
- *     facts),
- *   - `draft.customerExplanation` (it typically NAMES the selected rail, so it
- *     is stale once the shortlist is invalidated; the prose that justifies a
- *     specific rail no longer applies),
- *   - `firstAttempt` and `revisedAttempt` (their outcomes were scored against
- *     the old facts and are now stale),
- * and KEEPS:
- *   - the case shell (`caseId`, `caseRevision`, `schemaVersion`),
- *   - `status`, `phase` (the learner stays where they are),
- *   - `requestedFactIds` is UPDATED to the new ids (the caller is telling us
- *     the new fact set),
- *   - the remaining draft fields (conditions, and the three expectation
- *     fields price/arrival/tracking) — these describe rail PROPERTIES rather
- *     than specific rails and are softer prose, so they survive the
- *     invalidation. (If a future case makes them rail-specific, narrow this.)
- *
- * Returns `{ firstAffectedControlId }` so the UI can move focus to the
- * shortlist control after invalidation, or `{ firstAffectedControlId: null }`
- * when nothing material was invalidated (no session, or a session with no
- * recommendation-specific state to clear).
- */
-export function updateRequestedFacts(
-  caseId: CaseId,
-  ids: string[],
-): { firstAffectedControlId: string | null } {
-  const session = loadCaseSession(caseId);
-  if (session === null) {
-    // Nothing to invalidate.
-    return { firstAffectedControlId: null };
-  }
-
-  const hadShortlist = session.draft.shortlist.length > 0;
-  const hadSelectedRail = session.draft.selectedRail !== null;
-  const hadReasons = session.draft.reasons.length > 0;
-  const hadAttempts = session.firstAttempt !== null || session.revisedAttempt !== null;
-
-  if (!hadShortlist && !hadSelectedRail && !hadReasons && !hadAttempts) {
-    // Nothing recommendation-specific to invalidate. Still record the new
-    // requested fact set so the session reflects the upstream change, but do
-    // not claim a control to refocus.
-    const next: CaseSession = {
-      ...session,
-      requestedFactIds: [...ids],
-    };
-    saveCaseSession(next);
-    return { firstAffectedControlId: null };
-  }
-
-  const nextDraft: RecommendationDraft = {
-    ...session.draft,
-    shortlist: [],
-    selectedRail: null,
-    reasons: [],
-    // The customer explanation typically names the selected rail ("I recommend
-    // SWIFT-to-Fedwire because..."), so it is stale after a shortlist
-    // invalidation. The three expectation fields below describe rail
-    // PROPERTIES (price/arrival/tracking) rather than specific rails, so they
-    // are softer and survive — they stay in `...session.draft` via spread.
-    customerExplanation: "",
-  };
-
-  const next: CaseSession = {
-    ...session,
-    requestedFactIds: [...ids],
-    draft: nextDraft,
-    firstAttempt: null,
-    revisedAttempt: null,
-  };
-  saveCaseSession(next);
-
-  return { firstAffectedControlId: FIRST_AFFECTED_CONTROL_ID };
 }
 
 // ─── Internal equality helpers ──────────────────────────────────────────────
