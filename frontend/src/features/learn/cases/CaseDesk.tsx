@@ -48,9 +48,11 @@ import {
   type CaseSession,
 } from "./caseStore";
 import { supplierCase } from "./caseCatalog";
+import { evaluateRecommendation } from "./caseEvaluator";
 import { EvidenceRail } from "./EvidenceRail";
 import { FactRequest } from "./FactRequest";
 import { RailShortlist } from "./RailShortlist";
+import { RecommendationSummary } from "./RecommendationSummary";
 import { ReferenceSheet } from "./ReferenceSheet";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { Button } from "../../../design-system/Button";
@@ -282,6 +284,69 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }
 
+  // ── Send recommendation ──────────────────────────────────────────────────
+  // The commit. CRITICAL ORDERING: fold any pending customerExplanation write
+  // into the snapshot FIRST so the immutable firstAttempt captures the latest
+  // typed text. We compute the flushed session LOCALLY (not via sessionRef)
+  // because flushExplanation's edit-draft dispatch is batched by React and
+  // sessionRef.current would still hold the pre-flush draft at this point.
+  //
+  // The reducer's double-submit protection handles rapid double-clicks: once
+  // firstAttempt is set, a second send returns the SAME session reference and
+  // the `next !== flushedSession` guard skips a redundant dispatch/persist.
+  //
+  // `isSending` is transient UI (not persisted): it gates the Send button's
+  // pending state. The evaluator is pure and synchronous, so the pending
+  // window is the time spent in persist()/storage I/O. Save failures surface
+  // through the existing saveError affordance — the in-memory snapshot is
+  // never lost.
+  const [isSending, setIsSending] = useState(false);
+
+  function handleSendRecommendation() {
+    // 1) Capture the pending text and clear the debounce timer. The pending
+    //    ref holds the latest keystrokes that have not yet been written.
+    let flushedText = session.draft.customerExplanation;
+    if (explanationTimerRef.current !== null) {
+      clearTimeout(explanationTimerRef.current);
+      explanationTimerRef.current = null;
+      flushedText = pendingExplanationRef.current;
+    }
+
+    // 2) Compute the flushed session locally by folding the pending text into
+    //    the draft. If nothing was pending, this is a no-op (same reference).
+    const flushedSession =
+      flushedText === session.draft.customerExplanation
+        ? session
+        : caseReducer(session, { type: "edit-draft", patch: { customerExplanation: flushedText } });
+
+    setIsSending(true);
+    try {
+      // 3) Evaluate the FLUSHED draft and snapshot it. The evaluator is pure
+      //    and deterministic — the same draft always yields the same outcome.
+      if (!definition) return;
+      const outcome = evaluateRecommendation(definition, flushedSession.draft);
+      const submittedAt = new Date().toISOString();
+      const next = caseReducer(flushedSession, {
+        type: "send-recommendation",
+        outcome,
+        submittedAt,
+      });
+      // 4) Legal dispatch (not a double-submit no-op): replay the edit-draft
+      //    (when text was pending) then send-recommendation so React's
+      //    in-memory state matches the persisted snapshot. The reducer is
+      //    deterministic, so re-running it from the same inputs yields `next`.
+      if (next !== flushedSession) {
+        if (flushedSession !== session) {
+          dispatch({ type: "edit-draft", patch: { customerExplanation: flushedText } });
+        }
+        dispatch({ type: "send-recommendation", outcome, submittedAt });
+        persist(next);
+      }
+    } finally {
+      setIsSending(false);
+    }
+  }
+
   // Local mirror of the in-flight checkbox selection (before "Request facts"
   // commits it). Keeps FactRequest's checkboxes responsive without a dispatch
   // per toggle. Re-synced from the session whenever the committed requested
@@ -437,6 +502,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
             flushExplanation(pendingExplanationRef.current);
           }}
           onRestart={handleRestart}
+          onSendRecommendation={handleSendRecommendation}
+          isSending={isSending}
         />
       )}
 
@@ -558,7 +625,14 @@ interface InvestigatePhaseProps {
   onExplanationChange: (text: string) => void;
   onExplanationBlur: () => void;
   onRestart: () => void;
+  onSendRecommendation: () => void;
+  isSending: boolean;
 }
+
+// The customerExplanation 1,000-char ceiling. Enforced by maxLength on the
+// textarea AND clamped in the change handler so a paste can't sneak past the
+// native cap. Exported for tests/consistency.
+export const CUSTOMER_EXPLANATION_MAX = 1000;
 
 function InvestigatePhase(props: InvestigatePhaseProps) {
   const {
@@ -579,10 +653,18 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onExplanationChange,
     onExplanationBlur,
     onRestart,
+    onSendRecommendation,
+    isSending,
   } = props;
 
   const enrichmentAsyncStatus = enrichment ? enrichmentStatus(enrichment.state) : undefined;
   const isRecommendPhase = phaseKey === "recommend";
+  const isPreCommitReview = isRecommendPhase && session.firstAttempt === null;
+
+  // Remaining characters for the customerExplanation. Clamped at 0 (never
+  // negative) so the counter doesn't read "-3 characters left".
+  const remaining = Math.max(0, CUSTOMER_EXPLANATION_MAX - explanationText.length);
+  const isCounterLow = remaining === 0;
 
   return (
     <section className="case-desk__investigate" aria-label="Investigate the case">
@@ -649,17 +731,53 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               <textarea
                 className="case-desk__textarea"
                 rows={4}
+                maxLength={CUSTOMER_EXPLANATION_MAX}
                 value={explanationText}
-                onChange={(e) => onExplanationChange(e.target.value)}
+                onChange={(e) => {
+                  // Defensive clamp: maxLength is enforced by the browser, but a
+                  // programmatic value or an autofill could exceed it. Clamp so
+                  // the persisted draft can NEVER exceed the 1,000-char ceiling.
+                  const clamped = e.target.value.slice(0, CUSTOMER_EXPLANATION_MAX);
+                  onExplanationChange(clamped);
+                }}
                 onBlur={onExplanationBlur}
               />
+              <span className="case-desk__field-meta">
+                <span className="case-desk__field-helper">
+                  Use synthetic details only — no real customer or account data.
+                </span>
+                <span
+                  className={[
+                    "case-desk__field-counter",
+                    isCounterLow ? "case-desk__field-counter--low" : "",
+                  ].filter(Boolean).join(" ")}
+                  aria-live="polite"
+                >
+                  {remaining} characters left
+                </span>
+              </span>
             </label>
-            {isRecommendPhase && (
+            {isRecommendPhase && !isPreCommitReview && (
+              /* During a revision (firstAttempt set + recommend phase), the
+                 full summary is not re-rendered here — the revision UI is a
+                 later piece. Keep an honest placeholder so the phase doesn't
+                 look empty. */
               <p className="case-desk__phase-note">
                 The recommendation summary and outcome are part of the next step.
               </p>
             )}
           </section>
+
+          {/* The pre-commit review + Send. Renders ONLY in the recommend phase
+              before the first attempt — the outcome is HIDDEN until Send. */}
+          {isPreCommitReview && (
+            <RecommendationSummary
+              definition={definition}
+              draft={session.draft}
+              onSend={onSendRecommendation}
+              isSending={isSending}
+            />
+          )}
         </div>
 
         {/* The evidence column. */}
