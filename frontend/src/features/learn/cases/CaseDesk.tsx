@@ -314,6 +314,13 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       explanationTimerRef.current = null;
       flushedText = pendingExplanationRef.current;
     }
+    // Reset the pending ref to the flushed value so a second Send during the
+    // window before React commits the send-recommendation dispatch cannot
+    // re-flush a stale (pre-edit) value. Matches flushExplanation's canonical
+    // post-clear behaviour. The reducer's double-submit guard already makes a
+    // true double-Submit a no-op; this hardens the invariant for the revision
+    // path, where Send is legal again.
+    pendingExplanationRef.current = flushedText;
 
     // 2) Compute the flushed session locally by folding the pending text into
     //    the draft. If nothing was pending, this is a no-op (same reference).
@@ -372,6 +379,11 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // phase `debrief`. The debrief UI is Piece 5c — we render a minimal
   // placeholder for it below.
   function handleCompleteTransfer(outcome: CaseOutcomeData) {
+    // The `next !== session` guard is defensive: from the resolve phase,
+    // complete-transfer always advances (the reducer only no-ops when the
+    // session is still in `brief` or `firstAttempt === null`, neither of
+    // which is reachable once we render CaseOutcome). The guard mirrors the
+    // other handlers' pattern for consistency.
     const next = caseReducer(session, { type: "complete-transfer", outcome });
     if (next !== session) {
       dispatch({ type: "complete-transfer", outcome });

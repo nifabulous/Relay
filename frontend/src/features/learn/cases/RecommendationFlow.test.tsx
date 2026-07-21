@@ -488,6 +488,27 @@ describe("RecommendationFlow 5b — complete-transfer", () => {
     // framed ("You've completed this case") — NOT as success/mastery.
     expect(screen.getByRole("heading", { name: /completed this case/i })).toBeInTheDocument();
   });
+
+  it("moves focus into the transfer fieldset when it opens (so a screen-reader user lands in the new region)", () => {
+    // Accessibility: clicking "Complete transfer" reveals a new region. Focus
+    // must move INTO that region (the fieldset's legend or first radio) so a
+    // screen-reader user hears/lands in it instead of being stranded on the
+    // button. The aria-expanded/aria-controls wiring is already correct; this
+    // asserts the focus move.
+    seedResolveSession();
+    renderDesk();
+    const completeButton = getCompleteTransferButton();
+    fireEvent.click(completeButton);
+    // The transfer fieldset mounts. A <fieldset> with a <legend> exposes the
+    // `group` role with the legend text as its accessible name. Focus should
+    // now be the fieldset itself (the legend carries tabindex=-1) or a
+    // descendant (a radio).
+    const transferFieldset = screen.getByRole("group", { name: /pick a rail/i });
+    const active = document.activeElement;
+    expect(active).not.toBeNull();
+    const inside = active === transferFieldset || transferFieldset.contains(active);
+    expect(inside).toBe(true);
+  });
 });
 
 // =============================================================================
@@ -587,6 +608,59 @@ describe("RecommendationFlow 5c — debrief separates supported performance from
       expect(supportedSection!.contains(transferChip)).toBe(false);
       expect(transferSection!.contains(mainChip)).toBe(false);
     }
+  });
+
+  it("renders the consequence BEFORE the decision-quality chip in DOM order within each debrief PerformanceCard", () => {
+    // Mirrors the resolve-phase "consequence precedes classification" assertion
+    // so a future CSS `order:` / `column-reverse` change can't silently flip
+    // the debrief's cards while the resolve-phase test stays green. The plan
+    // invariant (consequence-first) applies to BOTH phases; this closes the
+    // gap where only the resolve-phase DOM order was asserted.
+    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft());
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+
+    // The debrief renders one PerformanceCard per section. Each card's
+    // consequence text node precedes its quality-chip text node in DOM order.
+    // We assert this for BOTH cards (supported + transfer) so the invariant
+    // holds across the two conditions.
+    const supportedSection = screen.getByRole("heading", { name: /supported performance/i }).closest("section");
+    const transferSection = screen.getByRole("heading", { name: /independent transfer/i }).closest("section");
+    expect(supportedSection).not.toBeNull();
+    expect(transferSection).not.toBeNull();
+
+    // Supported-performance card: consequence precedes the main-case quality.
+    const supportedConsequence = supportedSection!.querySelector(".case-desk__debrief-card-consequence");
+    const supportedQualityText = screen.getByText(new RegExp(`^${mainOutcome.quality}$`, "i"));
+    expect(supportedConsequence).not.toBeNull();
+    // Node.DOCUMENT_POSITION_PRECEDING = 0x2. If the consequence precedes the
+    // quality chip, qualityEl.compareDocumentPosition(consequenceEl) has the
+    // PRECEDING bit set (i.e. (mask & 0x2) !== 0).
+    const supportedMask = supportedQualityText.compareDocumentPosition(supportedConsequence!);
+    expect(supportedMask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+
+    // Transfer card: consequence precedes the transfer quality. The transfer
+    // quality is read from the persisted outcome (it varies from the main
+    // quality when the transfer scores differently).
+    const stored = readStoredSession()!;
+    expect(stored.transferOutcome).not.toBeNull();
+    const transferQuality = stored.transferOutcome!.quality;
+    const transferConsequence = transferSection!.querySelector(".case-desk__debrief-card-consequence");
+    // The transfer quality chip lives inside the transfer section. If the two
+    // qualities are identical, getByText would return multiple nodes; scope to
+    // the transfer section to disambiguate.
+    const transferQualityEls = transferSection!.querySelectorAll("span");
+    let transferQualityText: Element | null = null;
+    transferQualityEls.forEach((el) => {
+      if (new RegExp(`^${transferQuality}$`, "i").test((el.textContent ?? "").trim())) {
+        transferQualityText = el;
+      }
+    });
+    expect(transferConsequence).not.toBeNull();
+    expect(transferQualityText).not.toBeNull();
+    const transferMask = transferQualityText!.compareDocumentPosition(transferConsequence!);
+    expect(transferMask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 });
 

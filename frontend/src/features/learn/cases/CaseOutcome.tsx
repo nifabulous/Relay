@@ -20,9 +20,10 @@
  * complete-transfer) and computes the transfer outcome. This keeps the
  * component free of reducer/storage/evaluator dependencies.
  */
-import { useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import type {
   CaseDefinition,
+  CaseId,
   CaseOutcome as CaseOutcomeData,
   RecommendationDraft,
   TransferDefinition,
@@ -96,7 +97,14 @@ export function CaseOutcome({
           decision-quality chip in DOM order — a plan invariant asserted in
           Piece 5b's "consequence precedes classification" test. */}
       <div className="case-desk__outcome">
-        <p className="case-desk__outcome-consequence">{outcome.consequence}</p>
+        {/* aria-live="polite" so a screen-reader user hears the consequence
+            announced when the outcome renders after Send. The phase-heading
+            focus move lands them on "Recommendation submitted"; this live
+            region announces the consequence itself. Polite (not assertive)
+            because the consequence is informational, not an error. */}
+        <p className="case-desk__outcome-consequence" aria-live="polite">
+          {outcome.consequence}
+        </p>
         <div className="case-desk__outcome-quality">
           <StatusChip status={outcome.quality} />
         </div>
@@ -211,6 +219,16 @@ interface TransferStepProps {
  */
 function TransferStep({ id, transfer, onConfirm }: TransferStepProps) {
   const [selectedRail, setSelectedRail] = useState<string | null>(null);
+  // Ref to the transfer fieldset so focus moves into the new region on open.
+  // When the learner clicks "Complete transfer", the TransferStep mounts and
+  // this effect runs once, moving focus to the fieldset (tabindex=-1) so a
+  // screen-reader user lands in the newly-revealed region instead of being
+  // stranded on the toggle button. The aria-expanded/aria-controls wiring on
+  // the button is already correct; this adds the focus move.
+  const fieldsetRef = useRef<HTMLFieldSetElement | null>(null);
+  useEffect(() => {
+    fieldsetRef.current?.focus();
+  }, []);
 
   return (
     <section
@@ -232,7 +250,11 @@ function TransferStep({ id, transfer, onConfirm }: TransferStepProps) {
         ))}
       </dl>
 
-      <fieldset className="case-desk__transfer-rails">
+      <fieldset
+        ref={fieldsetRef}
+        tabIndex={-1}
+        className="case-desk__transfer-rails"
+      >
         <legend className="case-desk__transfer-rails-legend">Pick a rail</legend>
         {transfer.rails.map((rail) => (
           <label key={rail.id} className="case-desk__transfer-rail">
@@ -284,9 +306,15 @@ function TransferStep({ id, transfer, onConfirm }: TransferStepProps) {
  * `definition.id`. A `TransferDefinition` carries facts + rails but is its own
  * shape (no top-level id/title/...). This adapter builds a CaseDefinition-like
  * view so the transfer can be scored by the SAME logic, without duplicating
- * the evaluator. The borrowed `id`/`title`/etc. are carry-over cosmetic
- * fields the evaluator does not depend on for grading (it only reads
- * `facts`/`rails`/`id`).
+ * the evaluator.
+ *
+ * The `id` is sourced from the transfer (not the parent case) so any future
+ * evaluator error message references the transfer, not the parent case (e.g.
+ * "Choose a rail defined for the canada-us-supplier-transfer case."). The
+ * cast is necessary because `CaseDefinition.id` is typed as the parent-case
+ * `CaseId` literal, but the evaluator only reads `id` for error prose — it
+ * does not type-narrow on it. The title is carry-over cosmetic (the evaluator
+ * never reads it for grading).
  */
 function transferAsDefinition(
   parent: CaseDefinition,
@@ -294,7 +322,7 @@ function transferAsDefinition(
 ): CaseDefinition {
   return {
     ...parent,
-    id: parent.id,
+    id: transfer.id as CaseId,
     title: parent.title,
     customerRequest: transfer.customerRequest,
     facts: transfer.facts,
