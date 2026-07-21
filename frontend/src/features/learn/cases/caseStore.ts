@@ -146,17 +146,28 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
 // ─── Purity helpers ─────────────────────────────────────────────────────────
 
 /**
- * Deep-clone a session using the runtime's structured-clone. Used so that
- * snapshot fields (firstAttempt/revisedAttempt) are fully decoupled from the
- * mutable working draft — a later `edit-draft` cannot mutate a snapshot even
- * by accident.
+ * Deep-clone a session. Exported so the deep-copy contract is directly
+ * testable (T14 — the structuredClone fallback path).
+ *
+ * Used so that snapshot fields (firstAttempt/revisedAttempt) are fully
+ * decoupled from the mutable working draft — a later `edit-draft` cannot
+ * mutate a snapshot even by accident.
  */
-function cloneSession(session: CaseSession): CaseSession {
-  // structuredClone is available in all evergreen browsers and in Node 17+;
-  // it preserves Dates/arrays/plain objects and throws on functions (which a
-  // CaseSession never contains). This keeps the reducer free of `JSON.parse(
-  // JSON.stringify(...))` round-tripping quirks (e.g. `undefined` fields).
-  return structuredClone(session);
+export function cloneSession(session: CaseSession): CaseSession {
+  // structuredClone is available in all evergreen browsers (iOS Safari 15.4+,
+  // March 2022). Fall back to a JSON round-trip for older WebViews (Safari
+  // <15.4 / iOS 15.3 and earlier, and many in-app WebViews) where it is
+  // undefined — without the guard, every dispatch would throw a
+  // ReferenceError and crash the desk synchronously.
+  //
+  // The session is plain JSON-serializable data — no Dates, Maps, or
+  // `undefined` fields that JSON.stringify would mangle in a way that matters
+  // here; the reducer already normalizes `transferOutcome` to null (never
+  // undefined), every other field is a string, string[], or a plain object of
+  // the same shape. So JSON.parse(JSON.stringify(...)) yields a faithful,
+  // fully decoupled copy.
+  if (typeof structuredClone === "function") return structuredClone(session);
+  return JSON.parse(JSON.stringify(session));
 }
 
 /** Merge a draft patch by replacement of each top-level field (no magic). */

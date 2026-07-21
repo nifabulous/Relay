@@ -8,6 +8,7 @@ import {
   loadCaseSession,
   saveCaseSession,
   createInitialCaseSession,
+  cloneSession,
   EMPTY_DRAFT,
 } from "./caseStore";
 import { CASE_REVISION } from "./caseCatalog";
@@ -1504,5 +1505,94 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
     const loaded = loadCaseSession(CASE_ID);
     expect(loaded).not.toBeNull();
     expect(loaded!.transferOutcome).toBeNull();
+  });
+});
+
+// ─── T14: structuredClone fallback for old WebViews ──────────────────────────
+//
+// `cloneSession` used `structuredClone(session)` with no fallback. On Safari
+// <15.4 (iOS 15.3 and earlier, March 2022) and old in-app WebViews (still
+// common on enterprise iOS), `structuredClone` is undefined → ReferenceError
+// on every dispatch → the desk crashes synchronously. The session is plain
+// JSON-serializable data (no Dates, Maps, or `undefined` that JSON.stringify
+// would mangle), so a JSON round-trip is a safe fallback.
+
+describe("cloneSession (T14 — structuredClone fallback)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("produces a deep, independent copy: mutating the clone does not affect the original", () => {
+    // A representative session with populated nested arrays and an attempt
+    // snapshot — the deepest fields are the ones that would alias without a
+    // true deep copy.
+    const session = caseReducer(
+      caseReducer(
+        caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+        { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+      ),
+      { type: "complete-transfer", outcome: PREFERRED_OUTCOME },
+    );
+    const clone = cloneSession(session);
+    // The clone is value-equal to the original...
+    expect(clone).toEqual(session);
+    // ...but NOT reference-equal (top level is a new object).
+    expect(clone).not.toBe(session);
+    // ...nested objects are independent (mutating the clone's draft leaves the
+    // original untouched).
+    clone.draft.shortlist.push("mutated");
+    clone.draft.reasons[0] = "mutated";
+    clone.requestedFactIds.push("mutated");
+    if (clone.firstAttempt) {
+      clone.firstAttempt.draft.shortlist.push("mutated");
+      clone.firstAttempt.outcome.soundReasoning.push("mutated");
+    }
+    expect(session.draft.shortlist).not.toContain("mutated");
+    expect(session.draft.reasons[0]).not.toBe("mutated");
+    expect(session.requestedFactIds).not.toContain("mutated");
+    if (session.firstAttempt) {
+      expect(session.firstAttempt.draft.shortlist).not.toContain("mutated");
+      expect(session.firstAttempt.outcome.soundReasoning).not.toContain("mutated");
+    }
+  });
+
+  it("falls back to a JSON round-trip when structuredClone is unavailable (old WebView) and still produces a deep copy", () => {
+    // Simulate an old WebView (Safari <15.4 / iOS 15.3 and earlier, plus many
+    // in-app WebViews) where globalThis.structuredClone is undefined. The
+    // fallback is JSON.parse(JSON.stringify(session)), which is safe for the
+    // plain-JSON session shape (no Dates, Maps, or undefined fields that
+    // JSON.stringify would mangle; the reducer already normalizes
+    // transferOutcome to null).
+    const structuredCloneRef = (globalThis as { structuredClone?: unknown }).structuredClone;
+    // Delete the runtime global so the fallback branch runs. Cast through
+    // Record so TypeScript doesn't complain about deleting an optional key.
+    delete (globalThis as Record<string, unknown>).structuredClone;
+    try {
+      const session = caseReducer(
+        caseReducer(
+          caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+          { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+        ),
+        { type: "complete-transfer", outcome: PREFERRED_OUTCOME },
+      );
+      const clone = cloneSession(session);
+      // Value-equal...
+      expect(clone).toEqual(session);
+      // ...but not reference-equal, and nested objects are independent.
+      expect(clone).not.toBe(session);
+      clone.draft.shortlist.push("mutated");
+      if (clone.firstAttempt) {
+        clone.firstAttempt.draft.shortlist.push("mutated");
+      }
+      expect(session.draft.shortlist).not.toContain("mutated");
+      if (session.firstAttempt) {
+        expect(session.firstAttempt.draft.shortlist).not.toContain("mutated");
+      }
+    } finally {
+      // Restore the global so other tests are unaffected.
+      if (structuredCloneRef !== undefined) {
+        (globalThis as { structuredClone?: unknown }).structuredClone = structuredCloneRef;
+      }
+    }
   });
 });

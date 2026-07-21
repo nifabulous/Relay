@@ -34,5 +34,19 @@
     "typescript": "7.0.2",
     "vite": "8.1.5",
     "vitest": "4.1.10"
+  },
+  "browserslist": {
+    "production": [
+      "iOS >= 15.4",
+      "Safari >= 15.4",
+      "last 2 Chrome versions",
+      "last 2 Firefox versions",
+      "last 2 Edge versions"
+    ],
+    "development": [
+      "last 1 Chrome version",
+      "last 1 Firefox version"
+    ],
+    "comment": "iOS/Safari 15.4 (March 2022) is the structuredClone floor; caseStore.cloneSession carries a JSON fallback for older WebViews but the supported target is 15.4+. See T14."
   }
 }
