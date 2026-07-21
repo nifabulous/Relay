@@ -715,3 +715,63 @@ describe("RecommendationFlow 5c — completion is tied to complete-transfer, NOT
     expect(stored.transferOutcome).not.toBeNull();
   });
 });
+
+// ─── Full-flow reachability via the UI (no draft seeding) ───────────────────
+// Regression guard: a production learner (who cannot seed localStorage) must be
+// able to reach the `preferred` decision-quality tier through the UI alone. The
+// evaluator requires a non-empty `reasons` entry for any tier above `possible`,
+// so the Reasoning section MUST expose a reason input. Without it the entire
+// decision-quality spine (defensible/preferred) is unreachable and the
+// experience is hollow.
+
+describe("RecommendationFlow — preferred tier is reachable via the UI", () => {
+  it("lets a learner enter a primary reason and reach `preferred` without seeding the draft", () => {
+    // Seed only the SHELL — an in-progress session in the recommend phase with
+    // NO reasoning fields filled. The learner must fill every field the
+    // evaluator scores via the UI.
+    const initial = createInitialCaseSession(CASE_ID);
+    const shell: CaseSession = {
+      ...initial,
+      status: "in_progress",
+      phase: "recommend",
+      // Draft has the best-fit rail selected but NOTHING else — the learner
+      // must provide the reasoning through the UI.
+      draft: {
+        ...initial.draft,
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+      },
+      firstAttempt: null,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shell));
+
+    renderDesk();
+
+    // The learner fills each reasoning field via its UI input.
+    const reasonInput = screen.getByRole("textbox", { name: /primary reason/i });
+    fireEvent.change(reasonInput, { target: { value: "Fast same-day USD value protects the 2-business-day deadline." } });
+
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    fireEvent.change(priceInput, { target: { value: "The wire fee is justified by the shipment deadline." } });
+
+    const arrivalInput = screen.getByRole("textbox", { name: /arrival expectation/i });
+    fireEvent.change(arrivalInput, { target: { value: "Same-day USD value, well within 2 business days." } });
+
+    const trackingInput = screen.getByRole("textbox", { name: /tracking expectation/i });
+    fireEvent.change(trackingInput, { target: { value: "Full UETR tracking with confirmation of credit." } });
+
+    // Send. The evaluator scores the now-complete draft.
+    fireEvent.click(getSendButton());
+
+    // CRITICAL: the learner reached `preferred` through the UI alone. If the
+    // reason input is removed or renamed, this fails — the tier spine collapses
+    // back to `possible`.
+    const stored = readStoredSession()!;
+    expect(stored.firstAttempt).not.toBeNull();
+    expect(stored.firstAttempt!.outcome.quality).toBe("preferred");
+    // And the reason the learner typed was captured in the immutable snapshot.
+    expect(stored.firstAttempt!.draft.reasons).toContain(
+      "Fast same-day USD value protects the 2-business-day deadline.",
+    );
+  });
+});

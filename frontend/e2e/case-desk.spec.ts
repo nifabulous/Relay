@@ -145,7 +145,10 @@ async function driveToSendRecommendation(page: import("@playwright/test").Page) 
   await swiftRail.getByRole("radio").check();
   await swiftRail.locator("input[type='checkbox']").check();
 
-  // Fill the three reasoning fields the evaluator keys off of.
+  // Fill the reasoning fields the evaluator keys off of. The Primary reason is
+  // required to reach `defensible`/`preferred` (without it the evaluator scores
+  // `possible`), so this MUST be filled for the journey to reach `preferred`.
+  await page.getByLabel("Primary reason").fill("Fast same-day USD value protects the 2-business-day deadline.");
   await page.getByLabel("Price expectation").fill("Wire fees are higher but justified by the deadline.");
   await page.getByLabel("Arrival expectation").fill("Same-day USD value protects the 2-day shipment release.");
   await page.getByLabel("Tracking expectation").fill("Full UETR tracking confirms credit to the supplier.");
@@ -197,6 +200,13 @@ test.describe("Case Desk core journey", () => {
       return (c.compareDocumentPosition(ch) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
     });
     expect(orderOk, "consequence must precede the decision-quality chip in DOM order").toBe(true);
+
+    // The journey fills every field the evaluator scores (primary reason +
+    // price/arrival/tracking expectations) and selects the best-fit rail, so the
+    // outcome MUST be `preferred`. This guards the decision-quality spine: if the
+    // reason input is removed or the evaluator tightens, this fails loudly rather
+    // than silently collapsing to `possible`.
+    await expect(chip).toHaveText(/Preferred/i, { timeout: LAZY_TIMEOUT });
 
     // ── revision ─────────────────────────────────────────────────────────────
     // One revision per case. Begin it, edit the draft, re-Send.

@@ -784,6 +784,28 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               Reasoning
             </h2>
             <label className="case-desk__field">
+              <span className="case-desk__field-label">Primary reason</span>
+              <input
+                type="text"
+                className="case-desk__input"
+                // `reasons` is an array; the UI surfaces a single primary reason
+                // (Phase 1 scope). The evaluator requires at least one non-empty
+                // reason to reach `defensible` or `preferred`, so this input is
+                // the learner's path to those tiers.
+                value={session.draft.reasons[0] ?? ""}
+                onChange={(e) => onDraftPatch({ reasons: [e.target.value] })}
+              />
+            </label>
+            <label className="case-desk__field">
+              <span className="case-desk__field-label">Conditions / risks</span>
+              <input
+                type="text"
+                className="case-desk__input"
+                value={session.draft.conditions[0] ?? ""}
+                onChange={(e) => onDraftPatch({ conditions: e.target.value ? [e.target.value] : [] })}
+              />
+            </label>
+            <label className="case-desk__field">
               <span className="case-desk__field-label">Price expectation</span>
               <input
                 type="text"
