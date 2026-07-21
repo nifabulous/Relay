@@ -226,6 +226,11 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           ? "We couldn't save your progress — this browser's storage is full. Your work in this tab is kept, but won't persist if you leave."
           : "We couldn't save your progress — this browser may be blocking storage. Your work in this tab is kept, but won't persist if you leave.",
       );
+    } else {
+      // T15: clear any prior transient save-failure alert once a later write
+      // succeeds. Without this, a one-time quota failure leaves the alert
+      // visible forever, even after every subsequent write succeeds.
+      setSaveError(null);
     }
   }
 

@@ -495,6 +495,39 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
     await user.type(priceInput, "!");
     expect(priceInput).toHaveValue("next-day!");
   });
+
+  // T15: the persist wrapper only set saveError on the failure branch; there
+  // was no setSaveError(null) on success. A one-time transient quota failure
+  // left the "Couldn't save your progress" alert visible forever, even after
+  // every later write succeeded. The fix clears saveError on the next
+  // successful persist.
+  it("T15: clears the save-error alert on the next successful persist", async () => {
+    const user = userEvent.setup();
+    // Seed BEFORE installing the spy — otherwise the seed write itself throws.
+    seedStartedSession();
+    // Force the FIRST write (the failing persist) to throw QuotaExceededError.
+    let throwOnce = true;
+    setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      if (throwOnce) {
+        throwOnce = false;
+        throw new DOMException("quota exceeded", "QuotaExceededError");
+      }
+      // Subsequent writes succeed (Storage.prototype.setItem default behaviour).
+    });
+    renderDesk();
+    // Trigger the failing persist (price expectation input is synchronous).
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    await user.type(priceInput, "a");
+    // The alert surfaces the quota failure.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't save your progress/i);
+    // A second edit triggers a persist that now succeeds — the alert MUST
+    // clear (T15). Previously it stayed forever.
+    await user.type(priceInput, "b");
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+  });
 });
 
 // ─── Recovery notice for under_review sessions (I3) ─────────────────────────
