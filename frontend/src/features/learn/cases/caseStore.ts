@@ -85,6 +85,13 @@ export interface CaseSession {
   // calls) — the UI owns the wall-clock and stamps `updatedAt` when it
   // persists. Until then the field is "" (set by createInitialCaseSession /
   // restart) and stays "" through reducer transitions.
+  // The learner's reflection on the resolve-phase outcome (design spec L189,
+  // Resolve step 4: "diagnose any failure or mismatch"). Captured AFTER the
+  // consequence is shown and BEFORE revision. Unscored — it's a reflection
+  // step, surfaced in the debrief. Empty string until the learner writes one.
+  // Persisted so it survives refresh; normalized to "" by loadCaseSession for
+  // older sessions that lack the field.
+  diagnosis: string;
   updatedAt: string;
 }
 
@@ -96,7 +103,8 @@ export type CaseAction =
   | { type: "begin-revision" }
   | { type: "complete-transfer"; outcome: CaseOutcome }
   | { type: "restart" }
-  | { type: "open-reference"; referenceId: string };
+  | { type: "open-reference"; referenceId: string }
+  | { type: "set-diagnosis"; diagnosis: string };
 
 // ─── Storage key ────────────────────────────────────────────────────────────
 
@@ -139,6 +147,7 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
     revisedAttempt: null,
     openedReferenceIds: [],
     transferOutcome: null,
+    diagnosis: "",
     updatedAt: "",
   };
 }
@@ -496,6 +505,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         // preserved because they are the learner's record; transferOutcome
         // is reset because it represents "this run's transfer".)
         transferOutcome: null,
+        diagnosis: "",
         updatedAt: "",
       };
     }
@@ -517,6 +527,23 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       return {
         ...cloneSession(session),
         openedReferenceIds: [...session.openedReferenceIds, action.referenceId],
+      };
+    }
+
+    case "set-diagnosis": {
+      // The resolve-phase reflection step (design spec L189, Resolve step 4:
+      // "diagnose any failure or mismatch"). Legal only in the resolve phase
+      // (after the consequence is shown). No-op (same reference) when the text
+      // is unchanged so debounced dispatches don't churn persistence.
+      if (session.phase !== "resolve") {
+        return session;
+      }
+      if (session.diagnosis === action.diagnosis) {
+        return session;
+      }
+      return {
+        ...cloneSession(session),
+        diagnosis: action.diagnosis,
       };
     }
 
@@ -672,6 +699,10 @@ export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSess
     (v.transferOutcome === null ||
       v.transferOutcome === undefined ||
       isCaseOutcomeShallow(v.transferOutcome)) &&
+    // `diagnosis` is additive (the spec-L189 diagnose step). Older sessions
+    // lack it; accept undefined and normalize to "" in the loader so consumers
+    // can branch on `=== ""` without guarding both null/undefined.
+    (v.diagnosis === undefined || typeof v.diagnosis === "string") &&
     typeof v.updatedAt === "string"
   );
 }
@@ -740,7 +771,9 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // `undefined`. Normalize to null here (a single point) so consumers can
   // branch on `=== null` without a second guard for undefined. Purely a
   // read-time coercion — no schema bump, no migration write.
-  return normalizeTransferOutcome(stored);
+  // Spec-L189 diagnose-step: `diagnosis` is likewise additive — older sessions
+  // lack it. Normalize to "" in the same pass.
+  return normalizeDiagnosis(normalizeTransferOutcome(stored));
 }
 
 /**
@@ -764,6 +797,7 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
     // outcome for this run yet. Normalize defensively (stale sessions may
     // predate the field) — see loadCaseSession.
     transferOutcome: null,
+    diagnosis: "",
     updatedAt: stale.updatedAt,
   };
 }
@@ -776,6 +810,18 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
 function normalizeTransferOutcome(session: CaseSession): CaseSession {
   if (session.transferOutcome === undefined) {
     return { ...session, transferOutcome: null };
+  }
+  return session;
+}
+
+/**
+ * Coerce a missing `diagnosis` to "". The field is additive (the spec-L189
+ * diagnose step); older persisted payloads lack the key. Reading code should
+ * only ever see a string, never undefined.
+ */
+function normalizeDiagnosis(session: CaseSession): CaseSession {
+  if (session.diagnosis === undefined) {
+    return { ...session, diagnosis: "" };
   }
   return session;
 }

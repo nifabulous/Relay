@@ -839,6 +839,7 @@ describe("caseReducer — restart closes the unwinnable state (T2)", () => {
       revisedAttempt: null,
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -901,6 +902,7 @@ describe("caseReducer — restart from under_review (T11)", () => {
       revisedAttempt: null,
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -938,6 +940,7 @@ describe("caseReducer — restart from under_review (T11)", () => {
       revisedAttempt: null,
       openedReferenceIds: [],
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -1188,6 +1191,7 @@ describe("loadCaseSession — case-revision mismatch", () => {
       // The transferOutcome field is additive (Piece 5c). A stale session that
       // never reached the transfer phase has null here.
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1228,6 +1232,7 @@ describe("loadCaseSession — case-revision mismatch", () => {
       // transferOutcome is additive (Piece 5c); a stale session pre-first-attempt
       // has null.
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1370,6 +1375,7 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       revisedAttempt: null,
       openedReferenceIds: [] as string[],
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-07-01T00:00:00Z",
     };
   }
@@ -1583,6 +1589,7 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       revisedAttempt: null,
       openedReferenceIds: ["scheme-ref"],
       transferOutcome: null,
+      diagnosis: "",
       updatedAt: "2026-01-01T00:00:00Z",
     };
     seedRaw(stale);

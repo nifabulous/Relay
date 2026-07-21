@@ -468,6 +468,45 @@ describe("RecommendationFlow 5b — worked explanation revealed post-consequence
   });
 });
 
+// ─── Diagnose-failure step (design spec L189, Resolve step 4) ───────────────
+// After the learner reviews the consequence (and before revision), they are
+// prompted to diagnose the outcome: what went wrong, or what made it right.
+// The diagnosis is captured into the session (persisted) and surfaced in the
+// debrief. It is NOT scored — it's a reflection step.
+describe("RecommendationFlow 5b — diagnose step before revision (spec L189)", () => {
+  it("renders a diagnosis prompt after the consequence and before the revision affordances", () => {
+    seedResolveSession();
+    renderDesk();
+    // The diagnosis prompt is a labelled textarea.
+    const diagnosisField = screen.getByRole("textbox", { name: /diagnos|reflect|what would you/i });
+    expect(diagnosisField).toBeInTheDocument();
+    // It sits AFTER the worked explanation and BEFORE the Revise button in
+    // DOM order.
+    const workedHeading = screen.getByRole("heading", { name: /how this rail works here/i });
+    const reviseBtn = getReviseButton();
+    const diagRegion = diagnosisField.closest("section");
+    expect(diagRegion).not.toBeNull();
+    // diagRegion after workedHeading
+    let mask = workedHeading.compareDocumentPosition(diagRegion!);
+    expect(mask & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // diagRegion before reviseBtn
+    mask = reviseBtn.compareDocumentPosition(diagRegion!);
+    expect(mask & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it("captures the learner's diagnosis into the session and persists it", async () => {
+    const user = userEvent.setup();
+    seedResolveSession();
+    renderDesk();
+    const diagnosisField = screen.getByRole("textbox", { name: /diagnos|reflect|what would you/i });
+    await user.type(diagnosisField, "I should have checked the tracking requirement earlier.");
+    // Blur to flush the debounced persist.
+    await user.tab();
+    const stored = readStoredSession();
+    expect(stored?.diagnosis).toContain("checked the tracking requirement earlier");
+  });
+});
+
 // ─── Revision does not mutate the first attempt ────────────────────────────
 
 describe("RecommendationFlow 5b — revision does not mutate the first attempt", () => {

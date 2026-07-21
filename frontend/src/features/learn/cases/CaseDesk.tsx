@@ -732,6 +732,39 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }
 
+  // ── Diagnosis (spec L189 resolve-phase reflection) ────────────────────────
+  // The diagnosis textarea in the resolve phase captures the learner's
+  // reflection. Dispatch is immediate (pure, cheap) so the UI reflects the
+  // edit at once; the persist is debounced 300ms (same cadence as the
+  // reasoning fields, T4) and flushed on blur / send / restart / unmount.
+  const diagnosisTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleDiagnosisChange(diagnosis: string) {
+    const next = caseReducer(session, { type: "set-diagnosis", diagnosis });
+    if (next !== session) {
+      dispatch({ type: "set-diagnosis", diagnosis });
+      scheduleDiagnosisPersist(next);
+    }
+  }
+
+  function scheduleDiagnosisPersist(next: CaseSession) {
+    if (diagnosisTimerRef.current !== null) {
+      clearTimeout(diagnosisTimerRef.current);
+    }
+    diagnosisTimerRef.current = setTimeout(() => {
+      persist(next);
+      diagnosisTimerRef.current = null;
+    }, 300);
+  }
+
+  function flushDiagnosisToDisk() {
+    if (diagnosisTimerRef.current !== null) {
+      clearTimeout(diagnosisTimerRef.current);
+      diagnosisTimerRef.current = null;
+      persist(sessionRef.current);
+    }
+  }
+
   function handleOpenReference(factId: string, opener?: HTMLButtonElement | null) {
     const next = caseReducer(session, { type: "open-reference", referenceId: factId });
     if (next !== session) {
@@ -881,6 +914,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           phaseHeadingRef={phaseHeadingRef}
           onBeginRevision={handleBeginRevision}
           onCompleteTransfer={handleCompleteTransfer}
+          onDiagnosisChange={handleDiagnosisChange}
+          onDiagnosisBlur={flushDiagnosisToDisk}
         />
       )}
 
