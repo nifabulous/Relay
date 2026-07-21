@@ -486,7 +486,10 @@ describe("caseReducer — restart", () => {
     expect(restart.draft).toEqual(EMPTY_DRAFT);
     expect(restart.requestedFactIds).toEqual([]);
     expect(restart.openedReferenceIds).toEqual([]);
-    expect(restart.phase).toBe("investigate");
+    // T2 fix: restart with firstAttempt set and revisedAttempt null routes
+    // into the revision path (phase recommend) so the learner is never
+    // stuck. See the dedicated T2 describe block below for full coverage.
+    expect(restart.phase).toBe("recommend");
     expect(restart.status).toBe("in_progress");
     // history preserved
     expect(restart.firstAttempt).toEqual(submitted.firstAttempt);
@@ -541,6 +544,379 @@ describe("caseReducer — restart", () => {
     void dirty;
   });
 });
+
+// ─── T2: the restart-after-firstAttempt unwinnable state ─────────────────────
+//
+// Before the fix, restart always returned phase: "investigate" while keeping
+// firstAttempt. From that state edit-draft was blocked (firstAttempt !== null
+// && phase !== "recommend"), send-recommendation was blocked (firstAttempt !==
+// null), and begin-revision was illegal from investigate. A learner who clicked
+// "Start again" after a first attempt — or landed there via stale recovery with
+// the same shape — was stuck with no forward path.
+//
+// The fix: restart with firstAttempt set AND revisedAttempt null routes the
+// learner into the SAME revision machinery (phase: recommend, empty draft), so
+// the next send creates revisedAttempt via the existing revision branch. The
+// learner re-investigates inside the recommend phase (request-facts + edit-draft
+// remain legal there). When revisedAttempt is already set, restart lands in
+// investigate as a read-only-ish re-investigation — the learner can still
+// re-request facts / edit the draft for understanding and complete the case
+// via complete-transfer (legal in investigate once firstAttempt is set).
+
+describe("caseReducer — restart closes the unwinnable state (T2)", () => {
+  function submittedFirst() {
+    return caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+  }
+
+  it("routes restart-with-firstAttempt into the revision path (phase recommend) so the learner is never stuck", () => {
+    const restart = caseReducer(submittedFirst(), { type: "restart" });
+    expect(restart.firstAttempt).not.toBeNull();
+    expect(restart.revisedAttempt).toBeNull();
+    // KEY: phase recommend, not investigate. This is what makes the post-
+    // restart state winnable — edit-draft + send-recommendation are both
+    // legal in recommend when firstAttempt is set.
+    expect(restart.phase).toBe("recommend");
+    // Empty working draft: the learner is revising from scratch, NOT starting
+    // from a copy of the first attempt (begin-revision does that; restart is
+    // a clean slate).
+    expect(restart.draft).toEqual(EMPTY_DRAFT);
+    expect(restart.requestedFactIds).toEqual([]);
+    expect(restart.openedReferenceIds).toEqual([]);
+    // History preserved.
+    expect(restart.firstAttempt).toEqual(submittedFirst().firstAttempt);
+  });
+
+  it("after restart-with-firstAttempt, edit-draft is legal (working draft is editable)", () => {
+    const restart = caseReducer(submittedFirst(), { type: "restart" });
+    const edited = caseReducer(restart, { type: "edit-draft", patch: { selectedRail: "cross-border-ach" } });
+    expect(edited).not.toBe(restart);
+    expect(edited.draft.selectedRail).toBe("cross-border-ach");
+  });
+
+  it("after restart-with-firstAttempt, request-facts is legal (re-investigation works)", () => {
+    const restart = caseReducer(submittedFirst(), { type: "restart" });
+    const next = caseReducer(restart, { type: "request-facts", ids: ["price-sensitivity"] });
+    expect(next).not.toBe(restart);
+    expect(next.requestedFactIds).toEqual(["price-sensitivity"]);
+  });
+
+  it("after restart-with-firstAttempt, a send creates revisedAttempt (not a second firstAttempt)", () => {
+    const restart = caseReducer(submittedFirst(), { type: "restart" });
+    // Re-investigate + re-edit within the recommend phase, then send.
+    const ready = caseReducer(
+      caseReducer(restart, { type: "request-facts", ids: ["tracking-need"] }),
+      { type: "edit-draft", patch: { selectedRail: "swift-fedwire", reasons: ["tracked"] } },
+    );
+    const sent = caseReducer(ready, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-02T10:00:00Z",
+    });
+    // The send creates the ONE revision (revisedAttempt), not a second
+    // firstAttempt. firstAttempt immutability preserved.
+    expect(sent.revisedAttempt).not.toBeNull();
+    expect(sent.revisedAttempt!.outcome).toEqual(PREFERRED_OUTCOME);
+    expect(sent.revisedAttempt!.draft).toEqual(ready.draft);
+    expect(sent.firstAttempt).toEqual(submittedFirst().firstAttempt);
+    // Phase advances to the post-submit resolve.
+    expect(sent.phase).toBe("resolve");
+  });
+
+  it("after restart-with-firstAttempt, a SECOND send is a no-op (one revision per case, enforced)", () => {
+    const restart = caseReducer(submittedFirst(), { type: "restart" });
+    const sent = caseReducer(restart, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-02T10:00:00Z",
+    });
+    const twice = caseReducer(sent, {
+      type: "send-recommendation",
+      outcome: VALID_OUTCOME,
+      submittedAt: "2026-07-03T10:00:00Z",
+    });
+    expect(twice).toBe(sent);
+  });
+
+  it("restart-with-revisedAttempt lands in investigate as a read-only re-investigation (no further send possible)", () => {
+    // Build a session that already has both attempts.
+    const revised = caseReducer(
+      caseReducer(submittedFirst(), { type: "begin-revision" }),
+      {
+        type: "send-recommendation",
+        outcome: PREFERRED_OUTCOME,
+        submittedAt: "2026-07-02T10:00:00Z",
+      },
+    );
+    expect(revised.revisedAttempt).not.toBeNull();
+
+    const restart = caseReducer(revised, { type: "restart" });
+    // Both attempts preserved.
+    expect(restart.firstAttempt).toEqual(revised.firstAttempt);
+    expect(restart.revisedAttempt).toEqual(revised.revisedAttempt);
+    // Phase investigate (terminal re-investigation; no further revision is
+    // allowed).
+    expect(restart.phase).toBe("investigate");
+    expect(restart.draft).toEqual(EMPTY_DRAFT);
+
+    // Send from this state is a no-op (revisedAttempt guard + the
+    // firstAttempt guard both apply). The learner CANNOT create a third
+    // attempt — one-revision-per-case is enforced.
+    const sent = caseReducer(restart, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-03T10:00:00Z",
+    });
+    expect(sent).toBe(restart);
+  });
+
+  it("restart-with-revisedAttempt still lets the learner re-investigate (request-facts + edit-draft) and complete the case at the reducer level", () => {
+    // The forward path out of the terminal re-investigation is complete-
+    // transfer (legal in investigate once firstAttempt is set), so the
+    // learner is never stuck at the reducer level. (The CaseDesk UI does
+    // not currently surface a complete-transfer affordance from the
+    // investigate phase — the natural exit from the terminal re-investigation
+    // is "Exit case" / restart-again. The reducer contract is what's pinned
+    // here; the UI gap is tracked separately.)
+    const revised = caseReducer(
+      caseReducer(submittedFirst(), { type: "begin-revision" }),
+      {
+        type: "send-recommendation",
+        outcome: PREFERRED_OUTCOME,
+        submittedAt: "2026-07-02T10:00:00Z",
+      },
+    );
+    const restart = caseReducer(revised, { type: "restart" });
+
+    // Re-investigation is allowed.
+    const reInvestigated = caseReducer(
+      caseReducer(restart, { type: "request-facts", ids: ["price-sensitivity"] }),
+      { type: "edit-draft", patch: { customerExplanation: "re-reading for understanding" } },
+    );
+    expect(reInvestigated.requestedFactIds).toEqual(["price-sensitivity"]);
+    expect(reInvestigated.draft.customerExplanation).toBe("re-reading for understanding");
+
+    // complete-transfer is legal from investigate once firstAttempt is set;
+    // the reducer permits the learner to finish the case from here.
+    const completed = caseReducer(reInvestigated, {
+      type: "complete-transfer",
+      outcome: PREFERRED_OUTCOME,
+    });
+    expect(completed.status).toBe("completed");
+    expect(completed.phase).toBe("debrief");
+    expect(completed.transferOutcome).toEqual(PREFERRED_OUTCOME);
+  });
+
+  it("the stale-recovery path (firstAttempt preserved, phase investigate) lets the learner progress via restart → recommend", () => {
+    // recoverStaleSession yields: firstAttempt preserved, phase investigate,
+    // status under_review, revisedAttempt null. Without the fix, a learner
+    // who landed here had no winnable path. Simulate the stale payload and
+    // exercise the round-trip.
+    const staleRevision = "2099-01-01-stale";
+    const stale: CaseSession = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: staleRevision,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: ["price-sensitivity"],
+      draft: filledDraft(),
+      firstAttempt: { draft: filledDraft(), outcome: VALID_OUTCOME, submittedAt: "2026-01-01T00:00:00Z" },
+      revisedAttempt: null,
+      openedReferenceIds: ["scheme-ref"],
+      transferOutcome: null,
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
+    const recovered = loadCaseSession(CASE_ID)!;
+    expect(recovered.status).toBe("under_review");
+    expect(recovered.phase).toBe("investigate");
+    expect(recovered.firstAttempt).not.toBeNull();
+
+    // "Start again" routes the learner into the revision path so the
+    // unwinnable state is closed even on the recovery entry point.
+    const restart = caseReducer(recovered, { type: "restart" });
+    expect(restart.phase).toBe("recommend");
+    expect(restart.firstAttempt).toEqual(recovered.firstAttempt);
+    expect(restart.revisedAttempt).toBeNull();
+
+    // And they can send, producing revisedAttempt.
+    const ready = caseReducer(restart, { type: "edit-draft", patch: { selectedRail: "cross-border-ach" } });
+    const sent = caseReducer(ready, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-02T10:00:00Z",
+    });
+    expect(sent.revisedAttempt).not.toBeNull();
+    expect(sent.phase).toBe("resolve");
+  });
+
+  it("restart on a session with no firstAttempt still returns phase investigate (fresh restart unchanged)", () => {
+    // Regression guard: the new two-branch logic must not change the no-
+    // first-attempt path. A learner who restarts before any submission
+    // should still land in a fresh investigate phase.
+    const restart = caseReducer(startedSession(), { type: "restart" });
+    expect(restart.phase).toBe("investigate");
+    expect(restart.firstAttempt).toBeNull();
+    expect(restart.revisedAttempt).toBeNull();
+  });
+});
+
+// ─── T11: restart from under_review is deliberate ────────────────────────────
+//
+// recoverStaleSession sets status: "under_review" so CaseEntry can surface the
+// stale-draft context. When the learner clicks "Start again" they have
+// acknowledged the recovery and are actively re-engaging — flipping to
+// in_progress is the correct semantics (the "loss" of the under_review signal
+// is correct: the learner has moved past the stale-draft state).
+
+describe("caseReducer — restart from under_review (T11)", () => {
+  it("clears the under_review recovery signal and moves to in_progress (the learner has re-engaged)", () => {
+    // A recovered session: status under_review, phase investigate, firstAttempt
+    // preserved.
+    const staleRevision = "2099-01-01-stale";
+    const stale: CaseSession = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: staleRevision,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: ["price-sensitivity"],
+      draft: filledDraft(),
+      firstAttempt: { draft: filledDraft(), outcome: VALID_OUTCOME, submittedAt: "2026-01-01T00:00:00Z" },
+      revisedAttempt: null,
+      openedReferenceIds: ["scheme-ref"],
+      transferOutcome: null,
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
+    const recovered = loadCaseSession(CASE_ID)!;
+    expect(recovered.status).toBe("under_review");
+
+    // Restart: the learner has clicked "Start again" — they have acknowledged
+    // the recovery notice and are actively re-engaging with the current case
+    // content. status flips to in_progress.
+    const restart = caseReducer(recovered, { type: "restart" });
+    expect(restart.status).toBe("in_progress");
+    // The working draft is cleared (fresh re-investigation).
+    expect(restart.draft).toEqual(EMPTY_DRAFT);
+    expect(restart.requestedFactIds).toEqual([]);
+    expect(restart.openedReferenceIds).toEqual([]);
+    // firstAttempt history is preserved (the learner's record is never lost).
+    expect(restart.firstAttempt).toEqual(recovered.firstAttempt);
+    // firstAttempt !== null && revisedAttempt === null → phase recommend so
+    // the learner can re-send (see T2).
+    expect(restart.phase).toBe("recommend");
+  });
+
+  it("restart from an under_review session with NO firstAttempt also clears to in_progress", () => {
+    // A recovered session that had no first attempt (fresh shell recovery).
+    const staleRevision = "2099-01-01-stale";
+    const stale: CaseSession = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: staleRevision,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: ["x"],
+      draft: filledDraft(),
+      firstAttempt: null,
+      revisedAttempt: null,
+      openedReferenceIds: [],
+      transferOutcome: null,
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
+    const recovered = loadCaseSession(CASE_ID)!;
+    expect(recovered.status).toBe("under_review");
+
+    const restart = caseReducer(recovered, { type: "restart" });
+    expect(restart.status).toBe("in_progress");
+    expect(restart.phase).toBe("investigate");
+    expect(restart.firstAttempt).toBeNull();
+  });
+});
+
+// ─── T10: request-facts during revision — outcomes are immutable snapshots ───
+//
+// The pre-fix comment claimed "after submission the facts are fixed." That was
+// false: request-facts remained legal in `recommend`, and begin-revision re-
+// enters recommend, so a revising learner COULD re-request facts.
+//
+// Post Group A, this is NOT a bug. The evaluator scores each attempt against
+// the requestedFactIds AT SEND TIME, and send-recommendation freezes that
+// outcome into the immutable firstAttempt / revisedAttempt snapshot. Re-
+// requesting facts during a revision therefore affects only the revised
+// attempt's send-time evaluation (which is desirable — a revision is a fresh
+// recommendation that may consider new evidence); it cannot retroactively
+// change the first attempt's stored outcome.
+//
+// These tests pin that behavior so a future change is intentional.
+
+describe("caseReducer — request-facts during revision is legal and does not retro-corrupt attempts (T10)", () => {
+  function submittedFirst() {
+    return caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+  }
+
+  it("request-facts is legal during a revision (begin-revision → recommend → request-facts changes the set)", () => {
+    const revising = caseReducer(submittedFirst(), { type: "begin-revision" });
+    expect(revising.phase).toBe("recommend");
+    // Re-request a fresh fact set mid-revision.
+    const reRequested = caseReducer(revising, { type: "request-facts", ids: ["tracking-need", "price-sensitivity"] });
+    expect(reRequested).not.toBe(revising);
+    expect(reRequested.requestedFactIds).toEqual(["tracking-need", "price-sensitivity"]);
+  });
+
+  it("firstAttempt's frozen outcome is independent of a later request-facts (the snapshot is immutable)", () => {
+    const submitted = submittedFirst();
+    const frozenOutcome = submitted.firstAttempt!.outcome;
+    const frozenDraft = JSON.parse(JSON.stringify(submitted.firstAttempt!.draft));
+
+    // Re-request facts during the revision.
+    const revising = caseReducer(submitted, { type: "begin-revision" });
+    const reRequested = caseReducer(revising, { type: "request-facts", ids: ["entirely-new-fact"] });
+
+    // The first attempt's outcome AND draft are untouched. The re-request
+    // only changes session-level requestedFactIds (which governs the next
+    // send's evaluation), never the frozen snapshot.
+    expect(reRequested.firstAttempt!.outcome).toEqual(frozenOutcome);
+    expect(reRequested.firstAttempt!.draft).toEqual(frozenDraft);
+  });
+
+  it("send-recommendation during a revision captures the revised outcome; firstAttempt stays frozen", () => {
+    // Build a revision with a fresh fact set and send. The revised attempt's
+    // outcome is whatever the caller passed (the evaluator computed it at
+    // send-time against the then-current requestedFactIds); firstAttempt is
+    // untouched.
+    const revising = buildRevisionWithReRequestedFacts();
+    const sent = caseReducer(revising, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-02T10:00:00Z",
+    });
+    expect(sent.revisedAttempt).not.toBeNull();
+    expect(sent.revisedAttempt!.outcome).toEqual(PREFERRED_OUTCOME);
+    // firstAttempt preserved exactly.
+    expect(sent.firstAttempt).toEqual(submittedFirst().firstAttempt);
+  });
+});
+
+// Helper used by the T10 block above: build a session that has begun a
+// revision and re-requested a fresh fact set, so the send-recommendation
+// branch is exercised against a re-requested fact set during revision.
+function buildRevisionWithReRequestedFacts(): CaseSession {
+  const submitted = caseReducer(
+    caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+    { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+  );
+  const revising = caseReducer(submitted, { type: "begin-revision" });
+  return caseReducer(revising, { type: "request-facts", ids: ["tracking-need"] });
+}
 
 describe("caseReducer — purity", () => {
   it("does not mutate the input session for any action type", () => {

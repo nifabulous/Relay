@@ -174,10 +174,19 @@ function patchDraft(
  *                   `start`.
  *   investigate  — gathering facts (request-facts) and forming a draft
  *                   (edit-draft). The learner can also send straight from
- *                   here.
+ *                   here. Also the terminal re-investigation phase entered
+ *                   via `restart` once a revisedAttempt already exists (the
+ *                   T2 "review-only" path: request-facts + edit-draft are
+ *                   legal; no further send is possible because the case's
+ *                   one revision has been used; complete-transfer is the
+ *                   forward path).
  *   recommend     — the working recommendation phase. edit-draft and
  *                   send-recommendation are legal; begin-revision returns
  *                   here after a first attempt to revise from the original.
+ *                   `restart` with firstAttempt set and revisedAttempt null
+ *                   also lands here (T2: route the learner into the revision
+ *                   path so they can re-send; the next send creates
+ *                   revisedAttempt via the existing revision branch).
  *   resolve       — a recommendation has been submitted; the learner reviews
  *                   the outcome. begin-revision or complete-transfer are the
  *                   forward paths.
@@ -185,10 +194,21 @@ function patchDraft(
  *
  * Legality summary (illegal ⇒ return SAME reference, no partial mutation):
  *   start               — legal only in `brief`; idempotent otherwise.
- *   request-facts       — legal in investigate/recommend; no-op elsewhere.
- *   edit-draft          — legal in investigate/recommend (and after
- *                         begin-revision); no-op after a first attempt until
- *                         begin-revision, and no-op in brief.
+ *   request-facts       — legal in investigate/recommend, INCLUDING during a
+ *                         revision (T10). Each attempt's outcome is an
+ *                         immutable snapshot frozen at send-time, so re-
+ *                         requesting facts during a revision changes only the
+ *                         next send's evaluation; it cannot retroactively
+ *                         mutate firstAttempt's stored outcome. no-op in
+ *                         brief/resolve/debrief.
+ *   edit-draft          — legal in investigate/recommend. After a first
+ *                         attempt, the working draft is frozen ONLY in the
+ *                         resolve/debrief review flow; it becomes editable
+ *                         again in recommend (via begin-revision OR via
+ *                         restart-with-firstAttempt-set) and in investigate
+ *                         (the terminal re-investigation entered via restart-
+ *                         with-revisedAttempt-set, T2). no-op in brief and in
+ *                         resolve/debrief.
  *   send-recommendation — sets firstAttempt (or revisedAttempt during a
  *                         revision); double-submit is a no-op; no-op in brief.
  *   begin-revision      — legal only when a first attempt exists AND no
@@ -196,15 +216,26 @@ function patchDraft(
  *                         per case — the Phase-1 contract); idempotent if
  *                         already in the recommend (revising) phase; no-op
  *                         once revisedAttempt is set.
- *   complete-transfer   — legal only after at least a first attempt (resolve
- *                         or later); no-op in brief/investigate.
+ *   complete-transfer   — legal once a first attempt exists (any phase except
+ *                         brief); the forward path out of the T2 terminal
+ *                         re-investigation. no-op in brief / before any
+ *                         submission.
  *   restart             — always legal; clears the working draft and facts,
- *                         preserves attempt history, returns to investigate.
+ *                         preserves attempt history. T2 two-branch routing:
+ *                         firstAttempt set + revisedAttempt null → phase
+ *                         "recommend" (revision path); firstAttempt set +
+ *                         revisedAttempt set → phase "investigate" (terminal
+ *                         re-investigation); otherwise phase "investigate".
+ *                         T11: always sets status "in_progress" — clicking
+ *                         "Start again" acknowledges any under_review
+ *                         recovery and moves the learner past the stale-draft
+ *                         state.
  *   open-reference      — legal in investigate/recommend (including the
- *                         recommend phase entered via begin-revision); appends
- *                         the reference id to openedReferenceIds, deduped;
- *                         no-op (same reference) if the id is already present,
- *                         and no-op outside the legal phases.
+ *                         recommend phase entered via begin-revision or
+ *                         restart); appends the reference id to
+ *                         openedReferenceIds, deduped; no-op (same reference)
+ *                         if the id is already present, and no-op outside the
+ *                         legal phases.
  */
 export function caseReducer(session: CaseSession, action: CaseAction): CaseSession {
   switch (action.type) {
@@ -223,8 +254,14 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
     }
 
     case "request-facts": {
-      // Legal only while gathering/recommending. After submission the facts
-      // are fixed (a revision re-requests its own facts via edit-draft).
+      // Legal while gathering (investigate) or recommending. T10: request-
+      // facts is ALSO legal during a revision (begin-revision re-enters
+      // recommend). This is intentional post Group A: each attempt's outcome
+      // is an IMMUTABLE snapshot frozen at send-time, so re-requesting facts
+      // during a revision changes only the working session's requestedFactIds
+      // (which feeds the next send's evaluation) — it cannot retroactively
+      // mutate firstAttempt's stored outcome. A revision is a fresh
+      // recommendation that may legitimately reconsider the evidence.
       if (session.phase !== "investigate" && session.phase !== "recommend") {
         return session;
       }
@@ -240,29 +277,23 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
     }
 
     case "edit-draft": {
-      // Illegal before the case is started, or after a first attempt has been
-      // submitted (the first attempt is immutable; revision begins via
-      // begin-revision which re-opens the draft).
-      const inRevisablePhase =
-        session.phase === "investigate" || session.phase === "recommend";
-      if (!inRevisablePhase) {
+      // Legal in the gathering/recommending phases. The blocked cases are
+      // brief (case not started), and the post-submit review flow (resolve/
+      // debrief — the learner is reviewing an outcome, not editing). The
+      // draft is editable in:
+      //   - `investigate` (the fresh investigation phase — also the terminal
+      //     re-investigation phase entered via restart-when-revisedAttempt-
+      //     already-set, T2; the learner can re-request facts and edit the
+      //     draft for understanding even though no further send is possible),
+      //   - `recommend` (the initial recommend phase OR a revision reached
+      //     via begin-revision OR restart-with-firstAttempt-set — T2 routes
+      //     the learner into the revision path so they can re-send).
+      // The firstAttempt/revisedAttempt snapshots themselves are IMMUTABLE —
+      // edit-draft mutates only the working draft; the snapshots are deep-
+      // cloned at send-time and never aliased.
+      if (session.phase !== "investigate" && session.phase !== "recommend") {
         return session;
       }
-      // After a first attempt, the working draft is frozen until the learner
-      // explicitly begins a revision. We detect "first attempt submitted but
-      // not yet revising" as: firstAttempt !== null AND the session is still
-      // in the post-submit resolve/debrief flow OR the working draft still
-      // matches the frozen snapshot. The simplest invariant: once
-      // firstAttempt is set, edit-draft is only legal in the `recommend`
-      // phase (which begin-revision puts us back into).
-      if (session.firstAttempt !== null && session.phase !== "recommend") {
-        return session;
-      }
-      // If we're in `recommend` but have NOT begun a revision (i.e. this is
-      // the initial recommend phase before any submission), editing is fine.
-      // If we ARE revising (firstAttempt set + phase recommend via
-      // begin-revision), editing is also fine. The only blocked case is
-      // `resolve`/`debrief`, handled above.
       const nextDraft = patchDraft(session.draft, action.patch);
       // No-op if the patch produced no change (referential equality on every
       // field via shallow spread).
@@ -379,13 +410,48 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       // state but PRESERVES the attempt history (firstAttempt/revisedAttempt)
       // so the learner's record is never erased by a restart. See the plan's
       // E2E coverage map: "restart confirmation preserves history".
+      //
+      // T2 — the unwinnable state. Before this fix, restart ALWAYS returned
+      // phase: "investigate". But from investigate-with-firstAttempt-set,
+      // edit-draft was blocked, send-recommendation was blocked, and
+      // begin-revision was illegal from investigate — a learner who clicked
+      // "Start again" (or landed via stale recovery with the same shape)
+      // was stuck with no forward path.
+      //
+      // The fix routes the learner into a winnable state with a two-branch
+      // model:
+      //   - firstAttempt set AND revisedAttempt null → phase: "recommend"
+      //     (revising from scratch; empty working draft; the next send
+      //     creates revisedAttempt via the existing send-recommendation
+      //     revision branch). Reuses the begin-revision machinery without
+      //     a new state. The learner re-investigates inside the recommend
+      //     phase (request-facts + edit-draft are legal there).
+      //   - firstAttempt set AND revisedAttempt already set → phase:
+      //     "investigate" (terminal re-investigation; one-revision-per-case
+      //     is enforced, so no further send is possible). The learner can
+      //     re-request facts and edit the draft for understanding; the
+      //     forward path is complete-transfer (legal in investigate once
+      //     firstAttempt is set). They are never stuck.
+      //   - firstAttempt null → phase: "investigate" (unchanged; a fresh
+      //     restart before any submission).
+      //
+      // T11 — restart from under_review. recoverStaleSession sets status
+      // "under_review" so CaseEntry can surface the stale-draft context.
+      // When the learner clicks "Start again" they have acknowledged the
+      // recovery and are actively re-engaging with the current case
+      // content — status becomes "in_progress" (correct semantics). The
+      // "loss" of the under_review signal is correct: the learner has
+      // moved past the stale-draft state.
       const preserved = cloneSession(session);
+      const hasFirst = preserved.firstAttempt !== null;
+      const hasRevised = preserved.revisedAttempt !== null;
+      const nextPhase: CasePhase = hasFirst && !hasRevised ? "recommend" : "investigate";
       return {
         schemaVersion: 1,
         caseId: session.caseId,
         caseRevision: CASE_REVISION,
         status: "in_progress",
-        phase: "investigate",
+        phase: nextPhase,
         requestedFactIds: [],
         draft: { ...EMPTY_DRAFT, shortlist: [], reasons: [], conditions: [] },
         firstAttempt: preserved.firstAttempt,
