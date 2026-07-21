@@ -172,6 +172,10 @@ source .venv/bin/activate && python -m pytest tests/ -q
 
 # Frontend unit/integration tests
 cd frontend && npm test
+# NOTE: the full parallel run occasionally times out a single long jsdom scenario
+# (RecommendationFlow preferred-tier, ~15s) under suite-load sensitivity — it
+# passes in isolation and in CI with workers pinned. If you hit it, re-run with
+# file parallelism off:  cd frontend && npm test -- --no-file-parallelism
 
 # E2E tests (requires running FastAPI)
 cd frontend && npm run test:e2e
