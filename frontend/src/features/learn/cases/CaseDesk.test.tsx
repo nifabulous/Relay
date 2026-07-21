@@ -458,6 +458,53 @@ describe("CaseDesk — customerExplanation debounce + flush", () => {
     unmount();
     expect(storedExplanation()).toBe("final value");
   });
+
+  // T17 Part A: the unmount cleanup previously called flushExplanation →
+  // persist (→ dispatch + setSaveError + saveCaseSession) on an unmounted
+  // component. The unmount-time write is best-effort (the learner is leaving;
+  // the in-memory draft was authoritative), so the cleanup must:
+  //   1. NOT propagate any failure out of the unmount path (regression guard
+  //      for saveVersioned's catch; a future refactor must not regress to an
+  //      unhandled unmount-time exception), and
+  //   2. NOT trigger React state updates on the unmounted component (no
+  //      dispatch, no setSaveError — the write-only path goes straight to
+  //      localStorage and swallows any error).
+  it("T17: the unmount-flush persist does not throw and does not log a state-update warning even if saveCaseSession fails", () => {
+    // Seed BEFORE installing the spy — otherwise the seed write itself throws.
+    seedStartedSession();
+    // The unmount-time persist would call setItem. Make it throw a NON-
+    // DOMException error (anything that could escape saveVersioned's catch in
+    // a future regression). The unmount flush must swallow it.
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("unexpected non-DOMException throw on unmount persist");
+      });
+    // Capture console.error so we can detect any React warning about a state
+    // update on an unmounted component (React 19 tolerates this silently, but
+    // a future React version — or the dispatch path being restored — would
+    // log it; this assertion is future-proof).
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { unmount } = renderDesk();
+      const textarea = getExplanationTextarea();
+      // Type without advancing the clock so a write is pending at unmount.
+      fireEvent.change(textarea, { target: { value: "pending-on-unmount" } });
+      expect(storedExplanation()).toBe("");
+      // Unmounting triggers the cleanup, which flushes the pending write.
+      // The cleanup must not throw — the unmount itself must not throw.
+      expect(() => unmount()).not.toThrow();
+      // No React state-update warning should fire from the unmount-flush path
+      // (the write-only path does not call dispatch or setSaveError).
+      const warnedAboutUnmountedState = errSpy.mock.calls.some((args) =>
+        String(args[0] ?? "").match(/unmounted|state update on an unmounted/i),
+      );
+      expect(warnedAboutUnmountedState).toBe(false);
+    } finally {
+      setItemSpy.mockRestore();
+      errSpy.mockRestore();
+    }
+  });
 });
 
 // ─── Save-failure surfacing (I2) ────────────────────────────────────────────

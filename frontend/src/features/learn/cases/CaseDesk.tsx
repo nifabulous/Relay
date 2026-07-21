@@ -167,12 +167,25 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // not lose the last keystrokes. Reads sessionRef so it persists the LATEST
   // session, not the one captured at mount (which could be many renders stale
   // after a long investigation session).
+  //
+  // T17 Part A: the unmount-time flush is BEST-EFFORT. The component is
+  // leaving the tree, so dispatching a state update or surfacing a save
+  // error is pointless (the learner is gone and the in-memory draft was
+  // authoritative). The cleanup writes directly to localStorage via the
+  // write-only `persistToDisk` helper (a try/catch around saveCaseSession
+  // that swallows any failure) instead of going through `persist` (which
+  // dispatches + setSaveError). This avoids both:
+  //   - state updates on an unmounted component (semantically wrong, and
+  //     older React logged a warning), and
+  //   - any unhandled throw escaping the unmount path (saveVersioned already
+  //     catches, but a future regression — e.g. a stray throw before the
+  //     catch — would propagate without this guard).
   useEffect(() => {
     return () => {
       if (explanationTimerRef.current !== null) {
         clearTimeout(explanationTimerRef.current);
         explanationTimerRef.current = null;
-        flushExplanation(pendingExplanationRef.current);
+        flushExplanationToDisk(pendingExplanationRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,6 +199,26 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         dispatch({ type: "edit-draft", patch: { customerExplanation: text } });
         persist(next);
       }
+    }
+  }
+
+  // T17 Part A: write-only flush used by the unmount cleanup. Stamps the
+  // session with a fresh updatedAt and writes it via saveCaseSession, then
+  // swallows any failure (the write is best-effort; the in-memory draft was
+  // authoritative and the learner is leaving). Never dispatches, never calls
+  // setSaveError — those are pointless on an unmounted component.
+  function flushExplanationToDisk(text: string) {
+    const current = sessionRef.current;
+    if (text === current.draft.customerExplanation) return;
+    const next = caseReducer(current, { type: "edit-draft", patch: { customerExplanation: text } });
+    if (next === current) return;
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
+    try {
+      saveCaseSession(stamped);
+    } catch {
+      // Best-effort: a failed unmount-time write is not recoverable (the
+      // learner is leaving) and not actionable (the in-memory draft was
+      // authoritative while the component was mounted). Swallow.
     }
   }
 
