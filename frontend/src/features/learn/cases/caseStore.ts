@@ -56,6 +56,12 @@ export interface CaseSession {
   phase: CasePhase;
   requestedFactIds: string[];
   draft: RecommendationDraft;
+  // An attempt snapshot is an IMMUTABLE point-in-time record of one
+  // recommendation. It intentionally excludes `requestedFactIds`: the outcome
+  // is computed at send-time (by the caller, via evaluateRecommendation) from
+  // the session-level requestedFactIds, then frozen here. Re-requesting facts
+  // during a later revision therefore cannot retroactively mutate a stored
+  // attempt — see T10 (caseStore.test.ts).
   firstAttempt: {
     draft: RecommendationDraft;
     outcome: CaseOutcome;
@@ -413,10 +419,12 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       //
       // T2 — the unwinnable state. Before this fix, restart ALWAYS returned
       // phase: "investigate". But from investigate-with-firstAttempt-set,
-      // edit-draft was blocked, send-recommendation was blocked, and
-      // begin-revision was illegal from investigate — a learner who clicked
-      // "Start again" (or landed via stale recovery with the same shape)
-      // was stuck with no forward path.
+      // edit-draft was blocked and send-recommendation was blocked. The
+      // begin-revision ACTION is legal from investigate at the reducer level
+      // (it falls through all guards), but the UI only surfaced it via
+      // <CaseOutcome> in the resolve phase — so from investigate there was no
+      // button to reach it. A learner who clicked "Start again" (or landed via
+      // stale recovery with the same shape) was stuck with no forward path.
       //
       // The fix routes the learner into a winnable state with a two-branch
       // model:

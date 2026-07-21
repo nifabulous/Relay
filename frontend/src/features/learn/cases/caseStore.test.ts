@@ -888,6 +888,20 @@ describe("caseReducer — request-facts during revision is legal and does not re
     expect(reRequested.firstAttempt!.draft).toEqual(frozenDraft);
   });
 
+  it("the attempt snapshot intentionally excludes requestedFactIds (regression guard)", () => {
+    // T10's safety rests on the snapshot carrying only draft+outcome+submittedAt.
+    // If a future change adds requestedFactIds to the snapshot (the way T10 could
+    // regress), this test fails loudly. See the comment on CaseSession.firstAttempt.
+    const submitted = submittedFirst();
+    expect(Object.keys(submitted.firstAttempt!).sort()).toEqual(["draft", "outcome", "submittedAt"]);
+    const revising = caseReducer(submittedFirst(), {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-02T10:00:00Z",
+    });
+    void revising;
+  });
+
   it("send-recommendation during a revision captures the revised outcome; firstAttempt stays frozen", () => {
     // Build a revision with a fresh fact set and send. The revised attempt's
     // outcome is whatever the caller passed (the evaluator computed it at
