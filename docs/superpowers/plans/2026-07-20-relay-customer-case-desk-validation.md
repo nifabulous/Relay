@@ -1,5 +1,15 @@
 # Relay Customer Case Desk — Phase 1 Vertical Slice Implementation Plan
 
+> **Status (2026-07-21):** Phase 1 shipped, then a six-skill review
+> (`plan-eng-review`, `plan-ceo-review`, `qa`, `design-review`, `review` ×2)
+> found the investigation was cosmetic. The resulting fix-pass — which made
+> the investigation load-bearing at the catalog, evaluator, and UI layers,
+> hardened the state machine + persistence, and reframed the transfer
+> honestly — is merged to `main` as `7b0ec43`. See **Post-fix-pass
+> follow-ups (not research-gated)** below for the deferred design debt and
+> engineering follow-ups that survived the fix-pass. Phase 2 remains
+> evidence-gated.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship one complete, researchable Customer Case Desk experience for a Canada-to-US supplier payment before expanding Relay to a second case or a reusable case engine.
@@ -263,6 +273,64 @@ enrichment adapter                                      evidence/reference UI
 ```
 
 Legend: ★★★ = behavior + edge + error coverage; `[→E2E]` = browser journey; `[→EVAL]` = deterministic evaluation suite.
+
+## Post-fix-pass follow-ups (not research-gated)
+
+These items came out of the six-skill review of shipped Phase 1 and the
+post-fix-pass `/design-review`. Unlike the Phase 2 expansion below, they
+are **not** gated on observed-research evidence — they can ship in a
+janitorial branch at any time. They were deliberately **not** folded into
+the fix-pass (`fix/case-desk-phase-1-premise`, merged as `7b0ec43`)
+because each needs its own design call or touches deliberately-regraded
+UI, and the fix-pass's job was to make the investigation load-bearing,
+not to redesign the surface.
+
+Full design-review report (with screenshots and severity grades):
+`docs/superpowers/reviews/2026-07-21-case-desk-design-review.md`.
+Regression baseline: `docs/superpowers/reviews/2026-07-21-case-desk-design-baseline.json`.
+
+### Design debt (from `/design-review`)
+
+| ID | Finding | Severity | Source | Why deferred |
+|---|---|---|---|---|
+| FINDING-002 | `role="note"` is non-standard (not in WAI-ARIA 1.2); the intended AT announcement doesn't fire reliably. Used at `CaseDebrief.tsx:114`, `AsyncRegion.tsx:97`. | high | subagent source audit | Fix needs a design call: `role="status"` (polite live) vs a labelled region. Not a one-line change. |
+| FINDING-003 | `.case-desk__transfer-rail` (`CaseDesk.css:469-490`) has `cursor: pointer` only — no selected/hover/active state on the primary Resolve-phase control. DESIGN.md §Components requires pressed/selected states. | high | subagent source audit | Touches the transfer UI that the fix-pass deliberately regraded from "possible" to honest completion (T12). Re-styling now risks re-introducing the "this is being graded" signal T12 removed. |
+| FINDING-004 | DESIGN.md line 48's nested-radius rule ("nested = outer − gap") is never encoded. Outer 12px regions with 24px padding contain 8px controls; `12 − 24 ≠ 8`. | medium | subagent source audit | Either the rule or the implementation is wrong; resolving requires a design-system decision, not a CSS tweak. |
+| FINDING-005 | `2px` micro-spacing appears ~16× across Case Desk + design-system CSS but `--space-0.5` is absent from `tokens.css:44-52`. | polish | subagent source audit | Janitorial; token-add then find/replace. Unrelated to the premise fix. |
+| FINDING-006 | Custom controls (`.case-desk__input`, `.case-desk__textarea`, `.case-desk__transfer-rail`, `.fact-request__checkbox`, `.rail-shortlist__radio`) rely solely on the global `:focus-visible` ring (`global.css:78`), unlike `Button.css` which styles its own states. | polish | subagent source audit | AA is met via the global ring; this is consistency-only. |
+
+### Engineering follow-ups (from the six-skill review)
+
+- **T7 — Transfer second rail.** Phase 1's transfer step is a single-rail
+  pick (it reuses the shortlist machinery for completion only). The CEO
+  plan anticipates a genuine transfer case that contrasts two rails; the
+  Case Desk needs a second-rail comparison path before that can ship.
+  Deferred because the transfer was reframed to "completion, not graded"
+  in T12, so the single-rail pick is currently honest — a second rail is
+  only needed when transfer becomes a real graded exercise.
+- **T8 — `CaseDesk.tsx` decomposition.** The orchestrator component is
+  ~1170 lines and carries all reducer wiring, persistence, live-region
+  announcements, and phase routing. It works and is well-tested, but it's
+  past the point where adding a phase is cheap. A focused extraction
+  (persistence hook, live-region hook, phase router) would make Phase 2's
+  second-case work safer. Deferred because the fix-pass intentionally
+  concentrated changes in one well-tested file; decomposition is pure
+  refactor and should be its own PR with its own review.
+- **Terminal re-investigation nav affordance.** After a learner completes
+  the case, there is no obvious way back to re-investigate the evidence
+  (you have to "Start again," which resets the draft). The fix-pass closed
+  the unwinnable-restart state (T2) but did not add a post-completion
+  re-investigation entry point. This is a small UX addition that needs a
+  design call (where does it live? debrief? resolve?) before coding.
+
+### Outside voices status
+
+- **Codex design source audit:** unavailable on 2026-07-21 (`codex exec`
+  produced no output within the 5-minute budget and was killed). Re-run
+  Codex review as the first step when picking up FINDING-002 or FINDING-003
+  — its independent source audit is worth the latency on those two.
+- **Claude subagent source audit:** complete; findings folded into the
+  table above with `file:line` evidence.
 
 ## Phase 2 — Deferred follow-up
 

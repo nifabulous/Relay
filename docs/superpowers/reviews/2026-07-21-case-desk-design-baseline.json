@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-21",
+  "url": "http://127.0.0.1:8000/app/learn/cases/canada-us-supplier",
+  "branch": "fix/case-desk-phase-1-premise",
+  "designScore": "B+",
+  "aiSlopScore": "A",
+  "categoryGrades": {
+    "hierarchy": "A",
+    "typography": "A",
+    "spacing": "B",
+    "color": "A",
+    "interaction-states": "C",
+    "responsive": "A",
+    "content": "A",
+    "ai-slop": "A",
+    "motion": "A",
+    "performance": "A"
+  },
+  "findings": [
+    { "id": "FINDING-001", "title": "Verified chip on hidden-value facts", "impact": "medium", "category": "interaction-states", "status": "fixed", "commit": "097b0f0" },
+    { "id": "FINDING-002", "title": "role=note non-standard; AT announcement unreliable", "impact": "high", "category": "a11y", "status": "deferred" },
+    { "id": "FINDING-003", "title": "Transfer-rail control lacks selected/hover/active state", "impact": "high", "category": "interaction-states", "status": "deferred" },
+    { "id": "FINDING-004", "title": "Nested-radius rule (outer - gap) never encoded", "impact": "medium", "category": "spacing", "status": "deferred" },
+    { "id": "FINDING-005", "title": "2px micro-spacing not tokenized (--space-0.5 absent)", "impact": "polish", "category": "spacing", "status": "deferred" },
+    { "id": "FINDING-006", "title": "Custom controls rely solely on global focus-visible ring", "impact": "polish", "category": "a11y", "status": "deferred" }
+  ]
+}
