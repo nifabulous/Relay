@@ -75,8 +75,9 @@ describe("App routing — case desk route resolves against the real App tree", (
       ).toBeInTheDocument();
     });
     expect(screen.queryByText(/module not found/i)).toBeNull();
-    // The case desk placeholder is the honest Task-3 surface; assert it so a
-    // future change that routes to the wrong lazy chunk is caught.
-    expect(screen.getByText(/case desk coming in task 4/i)).toBeInTheDocument();
+    // The Case Desk renders the customer request text. Assert it so a future
+    // change that routes to the wrong lazy chunk is caught. (This replaced an
+    // earlier assertion for the Task-3 placeholder copy, which Task 4 removed.)
+    expect(screen.getByText(/Maple Ridge Outfitters/i)).toBeInTheDocument();
   });
 });
