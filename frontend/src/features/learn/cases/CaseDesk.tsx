@@ -38,6 +38,7 @@ import type {
   CaseDefinition,
   CaseEnrichment,
   CaseFact,
+  CaseOutcome as CaseOutcomeData,
   EnrichmentState,
 } from "./caseTypes";
 import {
@@ -49,6 +50,7 @@ import {
 } from "./caseStore";
 import { supplierCase } from "./caseCatalog";
 import { evaluateRecommendation } from "./caseEvaluator";
+import { CaseOutcome } from "./CaseOutcome";
 import { EvidenceRail } from "./EvidenceRail";
 import { FactRequest } from "./FactRequest";
 import { RailShortlist } from "./RailShortlist";
@@ -347,6 +349,35 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }
 
+  // ── Begin revision ────────────────────────────────────────────────────────
+  // The one-shot do-over. The reducer's begin-revision branch is the ultimate
+  // guard for the one-revision-per-case contract: it returns the SAME session
+  // reference when firstAttempt is null OR revisedAttempt is already set, so a
+  // stale click (e.g. after a rapid double-tap on Revise) is a cheap no-op.
+  // We persist only when the reducer actually advanced (next !== session).
+  function handleBeginRevision() {
+    const next = caseReducer(session, { type: "begin-revision" });
+    if (next !== session) {
+      dispatch({ type: "begin-revision" });
+      persist(next);
+    }
+  }
+
+  // ── Complete transfer ────────────────────────────────────────────────────
+  // Finishes the experience. CaseOutcome computes the transfer outcome via the
+  // pure evaluator against the transfer's facts/rails (adapted into a
+  // CaseDefinition-like shape) and hands it here. We dispatch
+  // `complete-transfer { outcome }`; the reducer sets status `completed` and
+  // phase `debrief`. The debrief UI is Piece 5c — we render a minimal
+  // placeholder for it below.
+  function handleCompleteTransfer(outcome: CaseOutcomeData) {
+    const next = caseReducer(session, { type: "complete-transfer", outcome });
+    if (next !== session) {
+      dispatch({ type: "complete-transfer", outcome });
+      persist(next);
+    }
+  }
+
   // Local mirror of the in-flight checkbox selection (before "Request facts"
   // commits it). Keeps FactRequest's checkboxes responsive without a dispatch
   // per toggle. Re-synced from the session whenever the committed requested
@@ -507,14 +538,25 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         />
       )}
 
-      {(session.phase === "resolve" || session.phase === "debrief") && (
-        // Task-5 scaffolding: the full recommendation summary, outcome, and
-        // debrief live in Task 5. Here we render an honest placeholder so the
-        // phase resolves to SOMETHING usable; the rail selection the learner
-        // made is preserved in the session and will be picked up by Task 5.
-        <ResolvePhase
+      {session.phase === "resolve" && (
+        // Piece 5b: the resolve phase is driven by <CaseOutcome> —
+        // consequence-first feedback, decision-quality chip, the prioritized
+        // reasoning gap, the sound-reasoning list, and the revise/transfer
+        // affordances. CaseDesk owns the handlers.
+        <CaseOutcome
           definition={definition}
           session={session}
+          phaseHeadingRef={phaseHeadingRef}
+          onBeginRevision={handleBeginRevision}
+          onCompleteTransfer={handleCompleteTransfer}
+        />
+      )}
+
+      {session.phase === "debrief" && (
+        // Piece 5c owns the full debrief UI. For Piece 5b we render a minimal,
+        // honest placeholder so complete-transfer resolves to something real:
+        // the case is finished; the debrief summary is coming next.
+        <DebriefPlaceholder
           phaseHeadingRef={phaseHeadingRef}
           onRestart={handleRestart}
         />
@@ -759,17 +801,19 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
             </label>
             {isRecommendPhase && !isPreCommitReview && (
               /* During a revision (firstAttempt set + recommend phase), the
-                 full summary is not re-rendered here — the revision UI is a
-                 later piece. Keep an honest placeholder so the phase doesn't
-                 look empty. */
+                 learner re-reviews their working draft before re-sending. The
+                 outcome is still HIDDEN — the revised commit produces the
+                 revised outcome. The label differs so the learner knows this
+                 Send produces the revised attempt, not the first. */
               <p className="case-desk__phase-note">
-                The recommendation summary and outcome are part of the next step.
+                You’re revising your recommendation. Your first attempt is preserved.
               </p>
             )}
           </section>
 
-          {/* The pre-commit review + Send. Renders ONLY in the recommend phase
-              before the first attempt — the outcome is HIDDEN until Send. */}
+          {/* The pre-commit review + Send (first attempt). Renders ONLY in the
+              recommend phase BEFORE the first attempt — the outcome is HIDDEN
+              until Send. */}
           {isPreCommitReview && (
             <RecommendationSummary
               definition={definition}
@@ -778,6 +822,23 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               isSending={isSending}
             />
           )}
+
+          {/* The revision review + re-Send. Renders when the learner has begun
+              a revision (firstAttempt set + recommend phase + no revised
+              attempt yet). Reuses RecommendationSummary with the revised label
+              so the learner commits the revised draft knowingly. */}
+          {isRecommendPhase &&
+            session.firstAttempt !== null &&
+            session.revisedAttempt === null && (
+              <RecommendationSummary
+                definition={definition}
+                draft={session.draft}
+                onSend={onSendRecommendation}
+                isSending={isSending}
+                sendLabel="Send revised recommendation"
+                eyebrowLabel="Customer case desk — revision"
+              />
+            )}
         </div>
 
         {/* The evidence column. */}
@@ -863,36 +924,32 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
   );
 }
 
-// ─── Resolve/debrief (Task-5 scaffolding) ───────────────────────────────────
+// ─── Debrief placeholder (Piece 5c replaces this) ──────────────────────────
 
-interface ResolvePhaseProps {
-  definition: CaseDefinition;
-  session: CaseSession;
+interface DebriefPlaceholderProps {
   phaseHeadingRef: RefObject<HTMLHeadingElement | null>;
   onRestart: () => void;
 }
 
-function ResolvePhase({ definition, session, phaseHeadingRef, onRestart }: ResolvePhaseProps) {
-  const railName =
-    session.draft.selectedRail &&
-    definition.rails.find((r) => r.id === session.draft.selectedRail)?.name;
-
+/**
+ * MINIMAL debrief surface for Piece 5b. complete-transfer sets status
+ * `completed` and phase `debrief`; Piece 5c will replace this with the full
+ * debrief summary (transfer outcome, overall reflection, next-case nudges).
+ * For now, render an honest "case complete — debrief coming next" so the
+ * phase resolves to something real rather than an empty screen.
+ */
+function DebriefPlaceholder({ phaseHeadingRef, onRestart }: DebriefPlaceholderProps) {
   return (
-    <section className="case-desk__resolve" aria-label="Case outcome">
+    <section className="case-desk__resolve" aria-label="Case debrief">
       <header className="case-desk__phase-header">
-        <p className="case-desk__eyebrow">Customer case desk — outcome</p>
+        <p className="case-desk__eyebrow">Customer case desk — debrief</p>
         <h2 ref={phaseHeadingRef} className="case-desk__phase-title">
-          {session.phase === "debrief" ? "Case complete" : "Recommendation submitted"}
+          Case complete
         </h2>
       </header>
-      {railName && (
-        <p className="case-desk__resolve-summary">
-          You recommended <strong>{railName}</strong>.
-        </p>
-      )}
       <p className="case-desk__phase-note">
-        The recommendation summary, consequence, and debrief are part of the
-        next step in this experience.
+        You’ve finished this case. The full debrief summary is coming in the
+        next step.
       </p>
       <div className="case-desk__nav">
         <Button variant="secondary" onClick={onRestart}>Start again</Button>

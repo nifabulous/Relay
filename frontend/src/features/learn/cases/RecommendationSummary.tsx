@@ -26,6 +26,18 @@ export interface RecommendationSummaryProps {
   onSend: () => void;
   /** While the send is in flight, the button shows pending state + disables. */
   isSending: boolean;
+  /**
+   * Override the Send button label. During a revision (firstAttempt set +
+   * recommend phase), CaseDesk passes "Send revised recommendation" so the
+   * learner knows this commit produces the revised attempt, not the first.
+   * Defaults to "Send recommendation" for the pre-commit review.
+   */
+  sendLabel?: string;
+  /**
+   * Optional eyebrow heading override. Used during revision so the summary
+   * reads as "Revising your recommendation" rather than a fresh review.
+   */
+  eyebrowLabel?: string;
 }
 
 // Long explanations are previewed (not fully rendered) so the summary stays
@@ -37,6 +49,8 @@ export function RecommendationSummary({
   draft,
   onSend,
   isSending,
+  sendLabel = "Send recommendation",
+  eyebrowLabel = "Customer case desk — recommendation",
 }: RecommendationSummaryProps) {
   const selectedRail = definition.rails.find((r) => r.id === draft.selectedRail) ?? null;
   const canSend = draft.selectedRail !== null;
@@ -61,7 +75,7 @@ export function RecommendationSummary({
   return (
     <section className="case-desk__recommendation" aria-label="Recommendation summary">
       <header className="case-desk__phase-header">
-        <p className="case-desk__eyebrow">Customer case desk — recommendation</p>
+        <p className="case-desk__eyebrow">{eyebrowLabel}</p>
         <h2 className="case-desk__section-title">Review your recommendation</h2>
       </header>
 
@@ -142,7 +156,7 @@ export function RecommendationSummary({
           isLoading={isSending}
           disabled={!canSend}
         >
-          Send recommendation
+          {sendLabel}
         </Button>
         {!canSend && (
           <p className="case-desk__recommendation-hint">

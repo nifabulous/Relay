@@ -317,7 +317,7 @@
   align-items: center;
 }
 
-/* ── Resolve phase (Task-5 scaffolding) ──────────────────────────────────── */
+/* ── Resolve phase — Case outcome (Piece 5b) ─────────────────────────────── */
 
 .case-desk__resolve {
   display: flex;
@@ -329,6 +329,183 @@
 .case-desk__resolve-summary {
   font-size: var(--text-base);
   color: var(--color-ink);
+}
+
+/* CONSEQUENCE FIRST block: the consequence text sits above the quality chip.
+   A surface region sets it off from the phase header and the rest of the
+   outcome detail so the real-world impact reads as the lead signal. */
+.case-desk__outcome {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.case-desk__outcome-consequence {
+  font-size: var(--text-lg);
+  color: var(--color-ink-strong);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.case-desk__outcome-quality {
+  display: flex;
+  align-items: center;
+}
+
+/* Reasoning-gap callout: the single most important thing to strengthen. Uses
+   the warning palette so it reads as actionable, distinct from the consequence
+   surface. The positive variant (preferred outcome, no gap) uses the success
+   palette. */
+.case-desk__outcome-gap {
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__outcome-gap--positive {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+}
+
+.case-desk__outcome-gap-text {
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+/* Sound-reasoning list: a supportive, scan-friendly list. */
+.case-desk__outcome-sound {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__outcome-sound-list {
+  list-style: disc;
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-desk__outcome-sound-item {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+/* Forward affordances: Revise (secondary) + Complete transfer (primary). */
+.case-desk__outcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* ── Transfer sub-step ──────────────────────────────────────────────────── */
+
+.case-desk__transfer {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.case-desk__transfer-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+}
+
+.case-desk__transfer-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.case-desk__transfer-fact-label {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+}
+
+.case-desk__transfer-fact-value {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.case-desk__transfer-rails {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__transfer-rails-legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink-strong);
+}
+
+.case-desk__transfer-rail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 2px var(--space-3);
+  align-items: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.case-desk__transfer-rail input[type="radio"] {
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--color-action);
+  cursor: pointer;
+}
+
+.case-desk__transfer-rail-name {
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  font-weight: 500;
+}
+
+.case-desk__transfer-rail-eligibility {
+  grid-column: 2;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.case-desk__transfer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
 }
 
 /* ── Recommendation summary (pre-commit review + Send) ───────────────────── */
