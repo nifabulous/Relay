@@ -128,6 +128,117 @@ describe("caseReducer — request-facts", () => {
   });
 });
 
+// ─── Invalidation contract (DESIGN spec lines 204, 212) ─────────────────────
+// Editing an upstream/requested fact during the recommend phase invalidates
+// every dependent shortlist, recommendation, and outcome. The reducer clears
+// the mutable working draft (shortlist, selected rail, reasons, conditions,
+// expectations, explanation) while preserving the immutable first/revised
+// attempt snapshots and the case shell. The live-region announcement and
+// focus restoration live in the Case Desk component (not the pure reducer).
+describe("caseReducer — request-facts invalidation during recommend (DESIGN spec §invalidation)", () => {
+  // Build a session that has reached the recommend phase with a populated
+  // working draft AND a frozen first attempt. This is the state where an
+  // evidence change must invalidate dependent decisions.
+  function sessionInRecommendWithDraft(): CaseSession {
+    const submitted = caseReducer(
+      caseReducer(startedSession(), { type: "edit-draft", patch: filledDraft() }),
+      { type: "send-recommendation", outcome: VALID_OUTCOME, submittedAt: "2026-07-01T10:00:00Z" },
+    );
+    // begin-revision moves resolve → recommend with the draft restored for editing.
+    return caseReducer(submitted, { type: "begin-revision" });
+  }
+
+  it("clears the working draft when requested facts change during recommend", () => {
+    const session = sessionInRecommendWithDraft();
+    expect(session.draft.shortlist).toEqual(["swift-fedwire"]); // pre-condition: draft populated
+    expect(session.phase).toBe("recommend");
+
+    const next = caseReducer(session, { type: "request-facts", ids: ["tracking-need", "intermediary"] });
+
+    // The new evidence set is recorded.
+    expect(next.requestedFactIds).toEqual(["tracking-need", "intermediary"]);
+    // Every dependent decision is cleared back to the empty baseline.
+    expect(next.draft).toEqual(EMPTY_DRAFT);
+    // The phase is preserved (still recommend — the learner re-builds the
+    // recommendation against the new evidence).
+    expect(next.phase).toBe("recommend");
+  });
+
+  it("preserves the immutable firstAttempt snapshot when evidence changes mid-recommend", () => {
+    const session = sessionInRecommendWithDraft();
+    const frozenDraft = JSON.parse(JSON.stringify(session.firstAttempt!.draft));
+    const frozenOutcome = JSON.parse(JSON.stringify(session.firstAttempt!.outcome));
+
+    const next = caseReducer(session, { type: "request-facts", ids: ["tracking-need"] });
+
+    // The research record is untouched: invalidation only clears the
+    // MUTABLE working draft, never the frozen first attempt. We assert
+    // deep equality (the reducer clones defensively, so reference identity
+    // through the clone is not the invariant — content preservation is).
+    expect(next.firstAttempt!.draft).toEqual(frozenDraft);
+    expect(next.firstAttempt!.outcome).toEqual(frozenOutcome);
+    // The INPUT session is never mutated by the pure reducer.
+    expect(session.firstAttempt!.draft).toEqual(frozenDraft);
+  });
+
+  it("preserves a frozen revisedAttempt snapshot if one exists when evidence changes", () => {
+    // Once a revised attempt is submitted, begin-revision is a no-op (one
+    // revision per case). But request-facts can still fire during the
+    // single legal revision window (revisedAttempt already set from a
+    // PRIOR case session, restored on resume). Verify the frozen revised
+    // snapshot survives an evidence change in that window.
+    const first = sessionInRecommendWithDraft();
+    const revisedSubmitted = caseReducer(first, {
+      type: "send-recommendation",
+      outcome: PREFERRED_OUTCOME,
+      submittedAt: "2026-07-01T11:00:00Z",
+    });
+    // Simulate a resumed session still in the recommend window with a
+    // frozen revised attempt already on the record.
+    const resumedInRecommend: CaseSession = {
+      ...revisedSubmitted,
+      phase: "recommend",
+      draft: filledDraft(),
+    };
+    const frozenRevised = resumedInRecommend.revisedAttempt!;
+    const frozenRevisedDraft = JSON.parse(JSON.stringify(frozenRevised.draft));
+
+    const next = caseReducer(resumedInRecommend, { type: "request-facts", ids: ["intermediary"] });
+
+    expect(next.draft).toEqual(EMPTY_DRAFT); // working draft cleared
+    // The reducer clones the session (defensive copy), so we assert deep
+    // equality of the snapshot's CONTENT, not reference identity through
+    // the clone. The invariant that matters: invalidation did not mutate
+    // the frozen revised attempt's recorded draft or outcome.
+    expect(next.revisedAttempt!.draft).toEqual(frozenRevisedDraft);
+    expect(next.revisedAttempt!.outcome).toEqual(frozenRevised.outcome);
+  });
+
+  it("does NOT clear the draft when requested facts change during investigate (no recommendation built yet)", () => {
+    // During investigate the draft is exploratory and not tied to a submitted
+    // recommendation — invalidation would destroy in-progress reasoning for
+    // no benefit. The contract applies to the recommend phase only.
+    const investigating = caseReducer(startedSession(), { type: "edit-draft", patch: { reasons: ["exploring"] } });
+    expect(investigating.phase).toBe("investigate");
+
+    const next = caseReducer(investigating, { type: "request-facts", ids: ["price-sensitivity"] });
+
+    expect(next.requestedFactIds).toEqual(["price-sensitivity"]);
+    // Draft reasoning survives — investigate is the gathering phase.
+    expect(next.draft.reasons).toEqual(["exploring"]);
+  });
+
+  it("is a no-op (SAME reference) when the recommend-phase evidence set is unchanged", () => {
+    // The arrayEqual guard fires before invalidation: an identical set must
+    // not produce a new draft (which would wipe the learner's work for nothing).
+    const session = sessionInRecommendWithDraft();
+    const sameIds = [...session.requestedFactIds];
+    const next = caseReducer(session, { type: "request-facts", ids: sameIds });
+    expect(next).toBe(session);
+    expect(next.draft).toBe(session.draft); // identical reference, not cleared
+  });
+});
+
 describe("caseReducer — edit-draft", () => {
   it("merges a patch into the working draft during investigate", () => {
     const session = startedSession();

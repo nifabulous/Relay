@@ -139,6 +139,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   const [evidenceAnnouncement, setEvidenceAnnouncement] = useState("");
   const prevRequestedIdsRef = useRef<string[]>(session.requestedFactIds);
 
+  // Invalidation announcement (DESIGN spec §invalidation): when the learner
+  // changes the requested-fact set during the recommend phase, the reducer
+  // clears the dependent working draft. This flag carries that event from
+  // the request-facts handler to a focus+announce effect. The effect reads
+  // and clears it, so it never re-announces on re-render.
+  const [invalidationAnnouncement, setInvalidationAnnouncement] = useState("");
+  const shortlistHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
   // The phase heading ref — focus moves here on phase transition.
   const phaseHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
@@ -599,8 +607,30 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (next !== session) {
       dispatch({ type: "request-facts", ids });
       persist(next);
+      // Invalidation contract (DESIGN spec §invalidation): during the
+      // recommend phase, an evidence change clears the dependent working
+      // draft. The reducer applies this conditionally on phase === "recommend"
+      // (investigate leaves the draft intact). We mirror that exact condition
+      // here to arm the announcement + focus effect — comparing draft
+      // references would be wrong because cloneSession always produces a new
+      // draft reference even when content is unchanged.
+      if (session.phase === "recommend") {
+        setInvalidationAnnouncement(
+          "Evidence changed — your rail shortlist, selected rail, and reasoning have been cleared. Rebuild your recommendation against the new evidence.",
+        );
+      }
     }
   }
+
+  // Invalidation focus + announce. Fires when the announcement is set,
+  // moves focus to the shortlist heading (the first affected decision),
+  // and clears the announcement so it speaks once. The heading carries
+  // tabIndex={-1} so it is a valid programmatic-focus target without
+  // joining the tab order.
+  useEffect(() => {
+    if (!invalidationAnnouncement) return;
+    shortlistHeadingRef.current?.focus();
+  }, [invalidationAnnouncement]);
 
   function handleDraftPatch(patch: Partial<CaseSession["draft"]>) {
     const next = caseReducer(session, { type: "edit-draft", patch });
@@ -693,6 +723,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         {evidenceAnnouncement}
       </div>
 
+      {/* Polite live region for invalidation announcements (DESIGN spec
+          §invalidation). Separate from the evidence region so a screen reader
+          delivers both the "evidence changed" and "decisions cleared" messages
+          distinctly. Cleared after focus moves to the shortlist. */}
+      <div className="case-desk__live" aria-live="polite">
+        {invalidationAnnouncement}
+      </div>
+
       {showRecoveryNotice && (
         <RecoveryNotice
           hasSubmittedAttempt={session.firstAttempt !== null}
@@ -716,6 +754,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           pendingRequestedIds={pendingRequestedIds}
           phaseKey={session.phase}
           phaseHeadingRef={phaseHeadingRef}
+          shortlistHeadingRef={shortlistHeadingRef}
           onRequestedFactChange={handleRequestedFactChange}
           onRequestFacts={handleRequestFacts}
           onDraftPatch={handleDraftPatch}
@@ -863,6 +902,8 @@ interface InvestigatePhaseProps {
   pendingRequestedIds: string[];
   phaseKey: string;
   phaseHeadingRef: RefObject<HTMLHeadingElement | null>;
+  // Focus target for the invalidation announcement (DESIGN spec §invalidation).
+  shortlistHeadingRef: RefObject<HTMLHeadingElement | null>;
   onRequestedFactChange: (ids: string[]) => void;
   onRequestFacts: (ids: string[]) => void;
   onDraftPatch: (patch: Partial<CaseSession["draft"]>) => void;
@@ -895,6 +936,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     pendingRequestedIds,
     phaseKey,
     phaseHeadingRef,
+    shortlistHeadingRef,
     onRequestedFactChange,
     onRequestFacts,
     onDraftPatch,
@@ -950,6 +992,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
             definition={definition}
             draft={session.draft}
             onChange={onDraftPatch}
+            headingRef={shortlistHeadingRef}
           />
           {/* Light recommend-phase scaffolding: the draft fields the evaluator
               needs are usable here so the learner can compose a reasoning

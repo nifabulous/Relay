@@ -299,6 +299,74 @@ describe("CaseDesk — RailShortlist native controls", () => {
   });
 });
 
+// ─── Invalidation contract (DESIGN spec §invalidation) ─────────────────────
+// When the learner changes the requested-fact set during the recommend phase,
+// the dependent working draft is cleared, a polite live region announces what
+// was cleared, and focus moves to the shortlist heading (the first affected
+// decision). During investigate, no announcement fires and the draft survives.
+describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec §invalidation)", () => {
+  // Seed a session in the recommend phase with a populated draft (shortlist,
+  // selected rail, reasoning). This is the state where an evidence change
+  // must trigger the invalidation contract.
+  function seedRecommendSessionWithDraft() {
+    const initial = createInitialCaseSession(CASE_ID);
+    const session: CaseSession = {
+      ...initial,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: ["price-sensitivity"],
+      draft: {
+        ...initial.draft,
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["fast same-day USD value"],
+        customerExplanation: "I recommend SWIFT-to-Fedwire.",
+      },
+      firstAttempt: null,
+    };
+    localStorage.setItem(`relay:case-session:${CASE_ID}`, JSON.stringify(session));
+  }
+
+  it("announces the reset and clears the working draft when evidence changes during recommend", async () => {
+    const user = userEvent.setup();
+    seedRecommendSessionWithDraft();
+    renderDesk();
+
+    // The seeded reasoning is visible before the evidence change.
+    expect(screen.getByDisplayValue("fast same-day USD value")).toBeInTheDocument();
+
+    // Change the evidence set: toggle a NEW fact (tracking-need) and request.
+    await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // The live region announces what was cleared.
+    expect(screen.getByText(/evidence changed/i)).toBeInTheDocument();
+    expect(screen.getByText(/shortlist.*cleared|cleared.*shortlist/i)).toBeInTheDocument();
+    // The seeded reasoning has been wiped (the input is empty).
+    expect(screen.queryByDisplayValue("fast same-day USD value")).not.toBeInTheDocument();
+  });
+
+  it("does NOT announce or clear when evidence changes during investigate (no recommendation built yet)", async () => {
+    const user = userEvent.setup();
+    seedStartedSession({
+      phase: "investigate",
+      draft: {
+        ...createInitialCaseSession(CASE_ID).draft,
+        reasons: ["exploring options"],
+      },
+    });
+    renderDesk();
+
+    await user.click(screen.getByRole("checkbox", { name: /fee sensitivity/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+
+    // No invalidation announcement during investigate.
+    expect(screen.queryByText(/evidence changed/i)).not.toBeInTheDocument();
+    // Exploratory reasoning survives.
+    expect(screen.getByDisplayValue("exploring options")).toBeInTheDocument();
+  });
+});
+
 // ─── Enrichment states ─────────────────────────────────────────────────────
 
 describe("CaseDesk — enrichment adapter", () => {

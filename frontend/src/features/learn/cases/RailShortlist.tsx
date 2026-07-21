@@ -16,7 +16,7 @@
  * Purely presentational: takes the definition + draft and an onChange patch
  * callback. The Case Desk owns the dispatch + persistence.
  */
-import { useId } from "react";
+import { useId, type RefObject } from "react";
 import type { CaseDefinition, RecommendationDraft } from "./caseTypes";
 import { validateShortlist } from "./caseEvaluator";
 import { StatusChip } from "../../../design-system/StatusChip";
@@ -26,9 +26,17 @@ export interface RailShortlistProps {
   definition: CaseDefinition;
   draft: RecommendationDraft;
   onChange: (patch: Partial<RecommendationDraft>) => void;
+  /**
+   * Optional ref applied to the section heading. The Case Desk uses this as
+   * the programmatic focus target after an evidence change invalidates the
+   * dependent decisions (DESIGN spec §invalidation: "move focus to the
+   * first affected decision"). The heading carries tabIndex={-1} only when
+   * a ref is passed, so it joins the focus order solely as a target.
+   */
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
-export function RailShortlist({ definition, draft, onChange }: RailShortlistProps) {
+export function RailShortlist({ definition, draft, onChange, headingRef }: RailShortlistProps) {
   const fieldsetId = useId();
   // validateShortlist reports ineligible rails across the current shortlist;
   // for per-rail invalid marking we also evaluate a single-rail shortlist so
@@ -49,7 +57,15 @@ export function RailShortlist({ definition, draft, onChange }: RailShortlistProp
   return (
     <section className="rail-shortlist" aria-labelledby={`${fieldsetId}-title`}>
       <header className="rail-shortlist__header">
-        <h2 id={`${fieldsetId}-title`} className="rail-shortlist__title">
+        <h2
+          id={`${fieldsetId}-title`}
+          className="rail-shortlist__title"
+          ref={headingRef}
+          // tabIndex={-1} only when a focus target is needed (ref passed),
+          // so the heading is a programmatic-focus target without joining
+          // the keyboard tab order.
+          tabIndex={headingRef ? -1 : undefined}
+        >
           Rails
         </h2>
         <p className="rail-shortlist__desc">
