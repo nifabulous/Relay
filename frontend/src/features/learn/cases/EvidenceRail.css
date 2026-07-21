@@ -1,0 +1,108 @@
+/*
+ * EvidenceRail — the evidence ledger.
+ * Compact fact list grouped by state. Token-only values.
+ */
+
+.evidence-rail {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Customer request anchor — prominent at the top. */
+.evidence-rail__customer-request {
+  background: var(--color-action-surface);
+  border: 1px solid var(--color-action-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-4);
+}
+
+.evidence-rail__customer-request-text {
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  line-height: var(--leading-relaxed);
+}
+
+.evidence-rail__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.evidence-rail__section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evidence-rail__section-title {
+  font-size: var(--text-lg);
+  margin: 0;
+}
+
+.evidence-rail__customer-request .evidence-rail__section-title {
+  font-size: var(--text-base);
+}
+
+.evidence-rail__section-desc {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+.evidence-rail__facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.evidence-rail__fact {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.evidence-rail__fact:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.evidence-rail__fact-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.evidence-rail__fact-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.evidence-rail__fact-tag {
+  font-size: var(--text-xs);
+  color: var(--color-action);
+  background: var(--color-action-surface);
+  border-radius: var(--radius-full);
+  padding: 1px var(--space-2);
+}
+
+.evidence-rail__fact-value {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: var(--leading-snug);
+}
+
+.evidence-rail__fact-reference {
+  align-self: flex-start;
+  min-height: 44px;
+}

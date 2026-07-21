@@ -10,7 +10,7 @@ test.describe("Learn", () => {
     // Wait for lazy-loaded page
     await expect(page.locator("h1")).toHaveText("Learn", { timeout: 10_000 });
     const modules = page.locator(".learn-module");
-    expect(await modules.count()).toBe(9);
+    expect(await modules.count()).toBe(10);
   });
 
   test("lab-2 is locked without lab-1 complete", async ({ page }) => {
@@ -25,6 +25,6 @@ test.describe("Learn", () => {
     // Navigate directly to avoid SPA navigation timing issues
     await page.goto("/app/learn/lab-1", { waitUntil: "networkidle" });
     await page.waitForTimeout(2000); // Allow lazy chunk to load
-    await expect(page.locator("h1")).toContainText("Who's Who", { timeout: 15_000 });
+    await expect(page.locator("h1")).toContainText("Identifiers", { timeout: 15_000 });
   });
 });

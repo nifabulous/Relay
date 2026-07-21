@@ -144,13 +144,30 @@ export function recordActivity(entry: RelayActivityEntry): void {
   safeSave(STORAGE_KEYS.activity, { schemaVersion: 1, entries });
 }
 
-// ─── Internal helpers ─────────────────────────────────────
+// ─── Generic versioned primitives ───────────────────────────────────────────
+// Exported so the Customer Case Desk (caseStore.ts) can persist sessions via
+// the SAME versioned path as preferences/progress, while still surfacing a
+// recoverable save failure to the UI instead of silently dropping the write.
+//
+// Contract:
+//   - Every persisted object carries `schemaVersion: 1` (the only version in
+//     Phase 1). `loadVersioned` returns the fallback for: absent key, corrupt
+//     JSON, missing schemaVersion, or any non-1 schemaVersion. (When a future
+//     phase introduces schemaVersion: 2 for a different payload, generalize
+//     this guard then — YAGNI for now.)
+//   - `saveVersioned` distinguishes `quota` (QuotaExceededError) from
+//     `unavailable` (SecurityError / private mode / anything else) so callers
+//     can show a targeted recovery affordance instead of a generic "saved".
 
-function safeLoad<T>(key: string, fallback: T): T {
+export function loadVersioned<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
+    // Strict schema-version guard: only schemaVersion === 1 is accepted. This
+    // matches the prior private `safeLoad` exactly, so all existing callers
+    // (preferences/progress/activity) keep their behaviour, and the caseStore
+    // re-validates caseRevision on top of this structural check.
     if (parsed?.schemaVersion !== 1) return fallback;
     return parsed as T;
   } catch {
@@ -158,11 +175,46 @@ function safeLoad<T>(key: string, fallback: T): T {
   }
 }
 
-function safeSave(key: string, value: unknown): void {
+export type SaveResult = { ok: true } | { ok: false; reason: "unavailable" | "quota" };
+
+export function saveVersioned<T>(key: string, value: T): SaveResult {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Storage denied, quota exceeded, or private mode — silently ignore.
-    // The app continues to work without persistence.
+    return { ok: true };
+  } catch (err: unknown) {
+    // Real browsers throw a DOMException with .name set; some environments
+    // (and some test doubles) throw a plain object with only .name. Sniff by
+    // name so both paths classify correctly.
+    const name = (err as { name?: string } | null)?.name;
+    if (name === "QuotaExceededError") {
+      return { ok: false, reason: "quota" };
+    }
+    // SecurityError (private mode / denied), unknown errors, or anything else
+    // the browser might throw when storage is unavailable.
+    return { ok: false, reason: "unavailable" };
   }
+}
+
+export function removeStored(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage denied / unavailable — nothing to remove, nothing to surface.
+  }
+}
+
+// ─── Internal helpers ─────────────────────────────────────
+// Thin non-throwing wrappers that delegate to the exported primitives. Kept
+// private so existing callers (preferences/progress/activity) retain their
+// exact current behaviour: silently ignore ALL storage failures, never throw,
+// never return a typed result.
+
+function safeLoad<T>(key: string, fallback: T): T {
+  return loadVersioned<T>(key, fallback);
+}
+
+function safeSave(key: string, value: unknown): void {
+  // Intentionally discard the typed result: existing callers were written
+  // against a void-returning helper and must not change behaviour.
+  saveVersioned(key, value);
 }

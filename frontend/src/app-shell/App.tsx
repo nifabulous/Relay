@@ -19,6 +19,7 @@ const StpPage = lazy(() => import("../features/operate/tools/StpPage").then(m =>
 const TrackingPage = lazy(() => import("../features/operate/tracking/TrackingPage").then(m => ({ default: m.TrackingPage })));
 const LearnIndexPage = lazy(() => import("../features/learn/LearnIndexPage").then(m => ({ default: m.LearnIndexPage })));
 const LearnModulePage = lazy(() => import("../features/learn/LearnModulePage").then(m => ({ default: m.LearnModulePage })));
+const CaseDeskRoute = lazy(() => import("../features/learn/cases/CaseDeskRoute").then(m => ({ default: m.CaseDeskRoute })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,10 @@ export function App() {
             <Route element={<AppShell />}>
               <Route index element={<OverviewPage />} />
               <Route path="learn" element={<Suspense fallback={null}><LearnIndexPage /></Suspense>} />
+            {/* MUST precede learn/:moduleId so 'cases' is never captured as a
+                module id. React Router v6 ranks static segments above dynamic
+                ones, but the explicit ordering is a regression guard. */}
+            <Route path="learn/cases/:caseId" element={<Suspense fallback={null}><CaseDeskRoute /></Suspense>} />
             <Route path="learn/:moduleId" element={<Suspense fallback={null}><LearnModulePage /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={null}><ExplorePage /></Suspense>} />
               <Route path="explore/banks" element={<Suspense fallback={null}><BankDirectoryPage /></Suspense>} />

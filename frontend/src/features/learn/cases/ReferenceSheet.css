@@ -1,0 +1,131 @@
+/*
+ * ReferenceSheet — modal source-details overlay.
+ *
+ * Anti-template: no decorative shadows, no gradients. A solid surface with a
+ * thin structural border over a dimmed overlay. All values are tokens.
+ */
+
+.reference-sheet__overlay {
+  position: fixed;
+  inset: 0;
+  /* Dimmed backdrop — a translucent ink-strong scrim, not a blur/glass
+     effect. Expressed via color-mix over the ink-strong token so the palette
+     stays single-sourced. */
+  background: color-mix(in srgb, var(--color-ink-strong) 45%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 400;
+  padding: var(--space-4);
+  /* Fade the overlay in over the fast token duration; reduced-motion zeros it. */
+  animation: reference-sheet__overlay-in var(--duration-fast) var(--ease);
+}
+
+@keyframes reference-sheet__overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (min-width: 768px) {
+  /* On wide screens, centre the sheet as a dialog rather than a bottom sheet. */
+  .reference-sheet__overlay {
+    align-items: center;
+  }
+}
+
+.reference-sheet {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  /* Slide up on mobile / scale-in on desktop; reduced-motion zeros duration. */
+  animation: reference-sheet__panel-in var(--duration-normal) var(--ease);
+}
+
+@keyframes reference-sheet__panel-in {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.reference-sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reference-sheet__title {
+  font-size: var(--text-lg);
+  margin: 0;
+}
+
+.reference-sheet__body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.reference-sheet__fact {
+  margin: 0;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-control);
+  padding: var(--space-4);
+}
+
+.reference-sheet__term {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.reference-sheet__value {
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  margin-top: var(--space-1);
+}
+
+.reference-sheet__claim {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.reference-sheet__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reference-sheet__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.reference-sheet__row dt {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-weight: 500;
+  flex: 0 0 9rem;
+}
+
+.reference-sheet__row dd {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  flex: 1 1 auto;
+}
+
+.reference-sheet__no-claim {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}

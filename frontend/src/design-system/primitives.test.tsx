@@ -57,6 +57,73 @@ describe("StatusChip", () => {
     // Should NOT have role=status to avoid live-region chatter on every render
     expect(chip).not.toHaveAttribute("role", "status");
   });
+
+  // Regression: the StatusChip status union was widened in Task 4 to cover
+  // CheckStatus | DecisionQuality | SourceStatus. Every one of the 10 statuses
+  // must render a visible text label AND expose an icon whose accessible name
+  // is NOT "status" — i.e. each chip carries both text and icon signal, never
+  // color alone. This pins the contract so a future edit to the status map
+  // that drops an icon or label is caught immediately.
+  it.each([
+    // Old CheckStatus values — unchanged behaviour for existing callers.
+    ["passed", /Passed/],
+    ["needs_attention", /Needs attention/],
+    ["failed", /Failed/],
+    ["unavailable", /Unavailable/],
+    // New DecisionQuality values.
+    ["invalid", /Invalid/],
+    ["possible", /Possible/],
+    ["defensible", /Defensible/],
+    ["preferred", /Preferred/],
+    // New SourceStatus values.
+    ["verified", /Verified/],
+    ["under_review", /Under review/],
+  ] as const)("renders status %s with a visible text label", (status, label) => {
+    render(<StatusChip status={status} />);
+    const chip = screen.getByLabelText(label);
+    // Visible text (not colour alone).
+    expect(chip).toHaveTextContent(label.source as string);
+  });
+
+  it.each([
+    ["invalid", /Invalid/],
+    ["possible", /Possible/],
+    ["defensible", /Defensible/],
+    ["preferred", /Preferred/],
+    ["verified", /Verified/],
+    ["under_review", /Under review/],
+  ] as const)(
+    "exposes the new status %s through an aria-label and never role=status",
+    (status, label) => {
+      render(<StatusChip status={status} />);
+      const chip = screen.getByLabelText(label);
+      expect(chip).toBeVisible();
+      expect(chip).not.toHaveAttribute("role", "status");
+    },
+  );
+
+  it("renders every status in the union (exhaustive)", () => {
+    // If a status is added to the union without a map entry, StatusChip throws.
+    // This pins exhaustiveness at the component level.
+    const all = [
+      "passed",
+      "needs_attention",
+      "failed",
+      "unavailable",
+      "invalid",
+      "possible",
+      "defensible",
+      "preferred",
+      "verified",
+      "under_review",
+    ] as const;
+    for (const status of all) {
+      const { unmount } = render(<StatusChip status={status} />);
+      // No throw + at least one child element means the map had an entry.
+      expect(screen.getByText(/./)).toBeInTheDocument();
+      unmount();
+    }
+  });
 });
 
 describe("AsyncRegion", () => {

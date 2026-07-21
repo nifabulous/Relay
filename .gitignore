@@ -48,3 +48,5 @@ app/static/relay/index.html
 
 # Playwright/test output artifacts
 frontend/output/
+output/
+.playwright-cli/
