@@ -488,9 +488,33 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // never lost.
   const [isSending, setIsSending] = useState(false);
 
+  // Validation error-summary (design spec L213, Focus & Announcement Contract):
+  // when the learner clicks Send with an incomplete recommendation, a concise
+  // error summary renders at the start of the primary task, each message
+  // linked to its control, and focus moves to the summary. Null when there
+  // are no errors (the resting state). Any draft edit clears it so the
+  // summary never goes stale.
+  const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
+  const validationSummaryRef = useRef<HTMLDivElement | null>(null);
+
+  // Focus the validation summary when it appears (spec L213). A new array
+  // reference each validation failure re-fires this even if the message text
+  // repeats (mirrors the invalidation-announcement nonce pattern).
+  useEffect(() => {
+    if (validationErrors === null) return;
+    validationSummaryRef.current?.focus();
+  }, [validationErrors]);
+
   function handleSendRecommendation() {
-    // 1) Capture the pending text and clear the debounce timer. The pending
-    //    ref holds the latest keystrokes that have not yet been written.
+    // 0) Validation gate (spec L213). Before flushing/evaluating/snapshotting,
+    //    validate the recommendation is complete enough to commit. If not,
+    //    surface a linked error summary and abort the send (no evaluator call,
+    //    no firstAttempt). Validation rules mirror the evaluator's
+    //    pre-conditions: a rail must be selected, and the primary reason must
+    //    be substantive (T1b threshold). Expectations are NOT validated here —
+    //    the evaluator scores `possible` for thin expectations rather than
+    //    blocking the commit, and a learner may legitimately send a partial
+    //    recommendation to see the consequence.
     let flushedText = session.draft.customerExplanation;
     if (explanationTimerRef.current !== null) {
       clearTimeout(explanationTimerRef.current);
@@ -525,6 +549,26 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       flushedText === session.draft.customerExplanation
         ? session
         : caseReducer(session, { type: "edit-draft", patch: { customerExplanation: flushedText } });
+
+    // 2b) Validate the flushed draft (spec L213). Build the error list against
+    //     the FLUSHED draft so a pending rail selection just before Send counts.
+    //     On any error, surface the linked summary and abort — no evaluator,
+    //     no snapshot, no phase change.
+    //
+    //     Validation scope: STRUCTURAL incompleteness only (no rail selected).
+    //     Reasoning QUALITY (filler reasons, thin expectations) is NOT validated
+    //     here — the evaluator scores those `possible` after commit, and the
+    //     Resolve phase is explicitly designed to show the learner the
+    //     consequence of thin reasoning (spec L188-192). Blocking filler at
+    //     the gate would deny the learner that learning signal.
+    const errors: string[] = [];
+    if (flushedSession.draft.selectedRail === null) {
+      errors.push("Select a rail to recommend.");
+    }
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
 
     setIsSending(true);
     try {
@@ -675,6 +719,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     const next = caseReducer(session, { type: "edit-draft", patch });
     if (next !== session) {
       dispatch({ type: "edit-draft", patch });
+      // Clear any pending validation error-summary (spec L213): the summary
+      // is stale the moment the learner edits the draft. It re-surfaces only
+      // if they re-send and the draft is still invalid.
+      setValidationErrors(null);
       // T4: debounce the persist (not the dispatch). The UI reflects the edit
       // immediately via the synchronous dispatch; the localStorage write is
       // coalesced across rapid keystrokes and flushed on blur / send /
@@ -817,6 +865,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRestart={handleRestart}
           onSendRecommendation={handleSendRecommendation}
           isSending={isSending}
+          validationErrors={validationErrors}
+          validationSummaryRef={validationSummaryRef}
         />
       )}
 
@@ -960,6 +1010,9 @@ interface InvestigatePhaseProps {
   onRestart: () => void;
   onSendRecommendation: () => void;
   isSending: boolean;
+  /** Validation error-summary (spec L213). Null when no validation failure. */
+  validationErrors: string[] | null;
+  validationSummaryRef: RefObject<HTMLDivElement | null>;
 }
 
 // The customerExplanation 1,000-char ceiling. Enforced by maxLength on the
@@ -990,6 +1043,8 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onRestart,
     onSendRecommendation,
     isSending,
+    validationErrors,
+    validationSummaryRef,
   } = props;
 
   const enrichmentAsyncStatus = enrichment ? enrichmentStatus(enrichment.state) : undefined;
@@ -1021,6 +1076,29 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
             sits beside the evidence rail; on narrow screens the evidence sheet
             stacks below (labelled so AT can navigate it). */}
         <div className="case-desk__task">
+          {/* Validation error-summary (design spec L213): on Send with an
+              incomplete recommendation, a concise summary renders at the start
+              of the primary task. role="alert" so AT announces it; tabIndex=-1
+              so the focus effect can land on it. Each message links to its
+              control via a fragment anchor so a learner can jump to fix it. */}
+          {validationErrors && validationErrors.length > 0 && (
+            <div
+              ref={validationSummaryRef}
+              className="case-desk__validation-summary"
+              role="alert"
+              tabIndex={-1}
+              aria-label="Fix these issues before sending"
+            >
+              <h3 className="case-desk__validation-title">
+                Fix these issues before sending
+              </h3>
+              <ul className="case-desk__validation-list">
+                {validationErrors.map((msg, i) => (
+                  <li key={i} className="case-desk__validation-item">{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <FactRequest
             definition={definition}
             requestedFactIds={pendingRequestedIds}

@@ -160,6 +160,51 @@ describe("RecommendationFlow — evaluation hidden before commit", () => {
   });
 });
 
+// ─── Linked validation error-summary (spec L213) ────────────────────────────
+// On Send with an incomplete recommendation, a concise error summary renders
+// at the start of the primary task, each message linked to its control, and
+// focus moves to the summary. This replaces the old disabled-gate (Send was
+// hard-disabled when no rail was selected, giving zero validation feedback).
+describe("RecommendationFlow — linked validation error-summary on Send (spec L213)", () => {
+  it("shows a linked error summary and focuses it when Send is clicked with no rail selected", () => {
+    // Seed a recommend session with NO rail selected and NO reasoning.
+    seedRecommendSession(
+      { selectedRail: null, shortlist: [], reasons: [], priceExpectation: "", arrivalExpectation: "", trackingExpectation: "" },
+    );
+    renderDesk();
+
+    // Send is now clickable (no longer disabled-gated). Clicking produces a
+    // validation summary rather than committing.
+    const sendBtn = getSendButton();
+    expect(sendBtn).not.toBeDisabled();
+    fireEvent.click(sendBtn);
+
+    // A role="alert" summary appears (the linked error summary). It names the
+    // missing rail. Focus moved to the summary.
+    const summary = screen.getByRole("alert");
+    expect(summary).toHaveTextContent(/select a rail/i);
+    expect(document.activeElement).toBe(summary);
+    // No firstAttempt was recorded — validation failed before the snapshot.
+    expect(readStoredSession()?.firstAttempt).toBeNull();
+  });
+
+  it("clears the error summary once the learner fixes the validation failure and re-sends", () => {
+    seedRecommendSession(
+      { selectedRail: null, shortlist: [], reasons: [], priceExpectation: "", arrivalExpectation: "", trackingExpectation: "" },
+    );
+    renderDesk();
+    fireEvent.click(getSendButton());
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    // Fix: select a rail (the radio) and send again. The summary clears and
+    // the recommendation commits.
+    const swiftRadio = screen.getByRole("radio", { name: /swift.*fedwire|fedwire.*swift/i });
+    fireEvent.click(swiftRadio);
+    // The summary clears as soon as the learner edits (not only on re-send).
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
 // ─── One immutable first attempt ─────────────────────────────────────────────
 
 describe("RecommendationFlow — one immutable first attempt", () => {

@@ -53,7 +53,6 @@ export function RecommendationSummary({
   eyebrowLabel = "Customer case desk — recommendation",
 }: RecommendationSummaryProps) {
   const selectedRail = definition.rails.find((r) => r.id === draft.selectedRail) ?? null;
-  const canSend = draft.selectedRail !== null;
 
   const shortlistNames = draft.shortlist
     .map((id) => definition.rails.find((r) => r.id === id)?.name ?? id)
@@ -147,22 +146,20 @@ export function RecommendationSummary({
       </dl>
 
       {/* Send is the explicit commit. Evaluation is withheld until after
-          Send; this button does NOT reveal the verdict. It is only gated on
-          a selected rail — the evaluator scores whatever is sent. */}
+          Send; this button does NOT reveal the verdict. The validation
+          error-summary (spec L213) lives in the Case Desk, not here: Send is
+          always clickable, and on an incomplete recommendation the handler
+          surfaces a linked error summary at the start of the primary task
+          rather than hard-disabling the button (which gave zero feedback). */}
       <div className="case-desk__recommendation-actions">
         <Button
           variant="primary"
           onClick={onSend}
           isLoading={isSending}
-          disabled={!canSend}
+          disabled={isSending}
         >
           {sendLabel}
         </Button>
-        {!canSend && (
-          <p className="case-desk__recommendation-hint">
-            Select a rail to recommend before sending.
-          </p>
-        )}
         <p className="case-desk__recommendation-commit-note">
           Sending records your recommendation. You can revise once after seeing the outcome.
         </p>
