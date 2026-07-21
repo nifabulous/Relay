@@ -430,6 +430,34 @@ describe("caseReducer — complete-transfer", () => {
     expect(next.status).toBe("completed");
   });
 
+  it("PERSISTS the transfer outcome on the session so the debrief can show it", () => {
+    // Piece 5c CRITICAL FIX: the reducer's complete-transfer branch MUST
+    // persist action.outcome on the session as `transferOutcome`. Without
+    // this, the debrief has no way to retrieve the transfer's decision
+    // quality / consequence from storage.
+    const next = caseReducer(submitted(), {
+      type: "complete-transfer",
+      outcome: PREFERRED_OUTCOME,
+    });
+    expect(next.transferOutcome).toEqual(PREFERRED_OUTCOME);
+    expect(next.transferOutcome?.quality).toBe("preferred");
+  });
+
+  it("initializes transferOutcome to null on a fresh session (additive field)", () => {
+    const initial = createInitialCaseSession(CASE_ID);
+    expect(initial.transferOutcome).toBeNull();
+  });
+
+  it("restart resets transferOutcome to null (the prior transfer does not leak into a new run)", () => {
+    const completed = caseReducer(submitted(), {
+      type: "complete-transfer",
+      outcome: PREFERRED_OUTCOME,
+    });
+    expect(completed.transferOutcome).not.toBeNull();
+    const restarted = caseReducer(completed, { type: "restart" });
+    expect(restarted.transferOutcome).toBeNull();
+  });
+
   it("is a no-op before any recommendation is submitted", () => {
     const session = startedSession();
     const next = caseReducer(session, { type: "complete-transfer", outcome: VALID_OUTCOME });
@@ -655,6 +683,9 @@ describe("loadCaseSession — case-revision mismatch", () => {
       firstAttempt: staleFirstAttempt,
       revisedAttempt: null,
       openedReferenceIds: ["scheme-ref"],
+      // The transferOutcome field is additive (Piece 5c). A stale session that
+      // never reached the transfer phase has null here.
+      transferOutcome: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -692,6 +723,9 @@ describe("loadCaseSession — case-revision mismatch", () => {
       firstAttempt: null,
       revisedAttempt: null,
       openedReferenceIds: [],
+      // transferOutcome is additive (Piece 5c); a stale session pre-first-attempt
+      // has null.
+      transferOutcome: null,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -711,6 +745,44 @@ describe("loadCaseSession — case-revision mismatch", () => {
       JSON.stringify({ caseId: CASE_ID, caseRevision: CASE_REVISION }),
     );
     expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("Piece 5c: tolerates an OLD session persisted WITHOUT transferOutcome (treats missing as null)", () => {
+    // The transferOutcome field is additive — older persisted sessions (from
+    // Piece 5b) lack the field entirely. loadCaseSession must NOT crash and
+    // must surface null (not undefined) so the debrief can branch on a stable
+    // "no transfer outcome" value.
+    const staleRevision = "2099-01-01-stale";
+    const staleFirstAttempt = {
+      draft: filledDraft(),
+      outcome: VALID_OUTCOME,
+      submittedAt: "2026-01-01T00:00:00Z",
+    };
+    // Build an "old" payload that has every Piece 5b field but no
+    // transferOutcome key at all.
+    const oldPayload = {
+      schemaVersion: 1,
+      caseId: CASE_ID,
+      caseRevision: staleRevision,
+      status: "in_progress",
+      phase: "recommend",
+      requestedFactIds: [],
+      draft: filledDraft(),
+      firstAttempt: staleFirstAttempt,
+      revisedAttempt: null,
+      openedReferenceIds: [],
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    localStorage.setItem(
+      "relay:case-session:canada-us-supplier",
+      JSON.stringify(oldPayload),
+    );
+
+    const recovered = loadCaseSession(CASE_ID)!;
+    expect(recovered).not.toBeNull();
+    // Defensive normalization: undefined → null so the debrief can branch on
+    // `transferOutcome === null` cleanly.
+    expect(recovered.transferOutcome).toBeNull();
   });
 });
 

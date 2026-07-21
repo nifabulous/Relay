@@ -598,3 +598,140 @@
   border-radius: var(--radius-control);
   padding: var(--space-1) var(--space-2);
 }
+
+/* ── Debrief phase (Piece 5c) ────────────────────────────────────────────── */
+
+.case-desk__debrief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-4);
+}
+
+/* Synthetic-data disclosure — UNMISSABLE. A bordered callout at the top of
+   the debrief, never buried fine print. role="note" carries it as a
+   semi-prominent announcement for AT without being interruptive (role would
+   be "alert" if it were an error). Uses the action surface palette so it
+   reads as informative rather than warning/danger. */
+.case-desk__debrief-disclosure {
+  border: 1px solid var(--color-action-border);
+  background: var(--color-action-surface);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__debrief-disclosure-title {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-action);
+  font-weight: 600;
+}
+
+.case-desk__debrief-disclosure-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: var(--leading-relaxed);
+}
+
+/* Two DISTINCT sections — supported performance and independent transfer.
+   Each is its own surface region with its own heading, never blended. The
+   plan invariant: "the debrief separates supported performance from
+   independent transfer." */
+.case-desk__debrief-supported,
+.case-desk__debrief-transfer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.case-desk__debrief-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-desk__debrief-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+.case-desk__debrief-framing {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+/* Performance card — consequence-first, then the decision-quality chip.
+   Mirrors the resolve-phase rhythm. Kept neutral (no pass/fail framing). */
+.case-desk__debrief-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.case-desk__debrief-card-consequence {
+  font-size: var(--text-base);
+  color: var(--color-ink-strong);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.case-desk__debrief-card-quality {
+  display: flex;
+  align-items: center;
+}
+
+.case-desk__debrief-card-rail {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  margin: 0;
+}
+
+/* Collapsible details keep the debrief scannable while preserving the full
+   sound-reasoning / gap content for learners who want it. The summary is a
+   44px-tall native control (focus + reduced-motion tokens apply). */
+.case-desk__debrief-card-details {
+  width: 100%;
+}
+
+.case-desk__debrief-card-summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-ink-strong);
+  font-weight: 500;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.case-desk__debrief-card-list {
+  list-style: disc;
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-desk__debrief-card-list-item {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.case-desk__debrief-card-gap {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  margin: var(--space-2) 0 0;
+  line-height: var(--leading-relaxed);
+}

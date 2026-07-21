@@ -67,6 +67,13 @@ export interface CaseSession {
     submittedAt: string;
   } | null;
   openedReferenceIds: string[];
+  // Piece 5c: the outcome the learner produced on the transfer variant. Set by
+  // `complete-transfer` so the debrief can render the independent-transfer
+  // section alongside the main-case performance. Additive — sessions persisted
+  // by Piece 5b lack this field entirely; `loadCaseSession` normalizes a
+  // missing value back to null so consumers can branch on `=== null` instead
+  // of guarding both null and undefined.
+  transferOutcome: CaseOutcome | null;
   // Advanced by the Task 4 UI on material writes (e.g. on saveCaseSession).
   // The reducer itself does not advance this; it preserves whatever value is
   // present. Keeping timestamps out of the reducer preserves purity (no clock
@@ -126,6 +133,7 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
     firstAttempt: null,
     revisedAttempt: null,
     openedReferenceIds: [],
+    transferOutcome: null,
     updatedAt: "",
   };
 }
@@ -358,6 +366,11 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         ...cloneSession(session),
         status: "completed",
         phase: "debrief",
+        // Piece 5c CRITICAL FIX: persist the transfer outcome so the debrief
+        // can render the independent-transfer section. Without this the
+        // outcome was computed by the CaseOutcome UI, dispatched, and then
+        // thrown away — the debrief had no way to recover it.
+        transferOutcome: action.outcome,
       };
     }
 
@@ -378,6 +391,12 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         firstAttempt: preserved.firstAttempt,
         revisedAttempt: preserved.revisedAttempt,
         openedReferenceIds: [],
+        // The transfer outcome belongs to the prior completed run; a restart
+        // begins a fresh run and must NOT carry a stale transfer outcome
+        // into the new attempt history. (firstAttempt/revisedAttempt ARE
+        // preserved because they are the learner's record; transferOutcome
+        // is reset because it represents "this run's transfer".)
+        transferOutcome: null,
         updatedAt: "",
       };
     }
@@ -468,7 +487,12 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
     return recoverStaleSession(caseId, stored);
   }
 
-  return stored;
+  // Piece 5c additive-field normalization: `transferOutcome` is new. Sessions
+  // persisted by Piece 5b lack the key entirely and would surface
+  // `undefined`. Normalize to null here (a single point) so consumers can
+  // branch on `=== null` without a second guard for undefined. Purely a
+  // read-time coercion — no schema bump, no migration write.
+  return normalizeTransferOutcome(stored);
 }
 
 /**
@@ -488,8 +512,24 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
     firstAttempt: stale.firstAttempt,
     revisedAttempt: null, // a revised attempt built on stale facts is also stale
     openedReferenceIds: [],
+    // The recovered session is back at investigate; there is no transfer
+    // outcome for this run yet. Normalize defensively (stale sessions may
+    // predate the field) — see loadCaseSession.
+    transferOutcome: null,
     updatedAt: stale.updatedAt,
   };
+}
+
+/**
+ * Coerce a missing `transferOutcome` to null. The field is additive (Piece
+ * 5c); older persisted payloads (Piece 5b and earlier) lack the key. Reading
+ * code should only ever see null, never undefined.
+ */
+function normalizeTransferOutcome(session: CaseSession): CaseSession {
+  if (session.transferOutcome === undefined) {
+    return { ...session, transferOutcome: null };
+  }
+  return session;
 }
 
 /**

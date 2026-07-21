@@ -51,6 +51,7 @@ import {
 import { supplierCase } from "./caseCatalog";
 import { evaluateRecommendation } from "./caseEvaluator";
 import { CaseOutcome } from "./CaseOutcome";
+import { CaseDebrief } from "./CaseDebrief";
 import { EvidenceRail } from "./EvidenceRail";
 import { FactRequest } from "./FactRequest";
 import { RailShortlist } from "./RailShortlist";
@@ -553,10 +554,13 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       )}
 
       {session.phase === "debrief" && (
-        // Piece 5c owns the full debrief UI. For Piece 5b we render a minimal,
-        // honest placeholder so complete-transfer resolves to something real:
-        // the case is finished; the debrief summary is coming next.
-        <DebriefPlaceholder
+        // Piece 5c: the finish. Renders the supported-performance section
+        // (main case, full scaffolding) and the independent-transfer section
+        // (transfer variant, less scaffolding) as DISTINCT regions, plus the
+        // synthetic-data disclosure and Back-to-Learn / Start-again.
+        <CaseDebrief
+          definition={definition}
+          session={session}
           phaseHeadingRef={phaseHeadingRef}
           onRestart={handleRestart}
         />
@@ -920,41 +924,6 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           returnFocusRef={referenceOpenerRef}
         />
       )}
-    </section>
-  );
-}
-
-// ─── Debrief placeholder (Piece 5c replaces this) ──────────────────────────
-
-interface DebriefPlaceholderProps {
-  phaseHeadingRef: RefObject<HTMLHeadingElement | null>;
-  onRestart: () => void;
-}
-
-/**
- * MINIMAL debrief surface for Piece 5b. complete-transfer sets status
- * `completed` and phase `debrief`; Piece 5c will replace this with the full
- * debrief summary (transfer outcome, overall reflection, next-case nudges).
- * For now, render an honest "case complete — debrief coming next" so the
- * phase resolves to something real rather than an empty screen.
- */
-function DebriefPlaceholder({ phaseHeadingRef, onRestart }: DebriefPlaceholderProps) {
-  return (
-    <section className="case-desk__resolve" aria-label="Case debrief">
-      <header className="case-desk__phase-header">
-        <p className="case-desk__eyebrow">Customer case desk — debrief</p>
-        <h2 ref={phaseHeadingRef} className="case-desk__phase-title">
-          Case complete
-        </h2>
-      </header>
-      <p className="case-desk__phase-note">
-        You’ve finished this case. The full debrief summary is coming in the
-        next step.
-      </p>
-      <div className="case-desk__nav">
-        <Button variant="secondary" onClick={onRestart}>Start again</Button>
-        <Link to="/learn" className="relay-btn relay-btn--secondary">Back to Learn</Link>
-      </div>
     </section>
   );
 }

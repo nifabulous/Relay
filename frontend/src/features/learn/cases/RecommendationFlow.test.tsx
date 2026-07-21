@@ -478,13 +478,166 @@ describe("RecommendationFlow 5b — complete-transfer", () => {
     expect(stored?.firstAttempt).not.toBeNull();
   });
 
-  it("renders a minimal debrief placeholder after transfer (Piece 5c replaces it)", () => {
+  it("renders the debrief after complete-transfer (Piece 5c replaces the placeholder)", () => {
     seedResolveSession();
     renderDesk();
     fireEvent.click(getCompleteTransferButton());
     fireEvent.click(screen.getByRole("radio", { name: /cross-border ach/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirm transfer recommendation/i }));
-    // The debrief placeholder heading appears.
-    expect(screen.getByRole("heading", { name: /case complete/i })).toBeInTheDocument();
+    // Piece 5c: the debrief renders. The completion heading is neutrally
+    // framed ("You've completed this case") — NOT as success/mastery.
+    expect(screen.getByRole("heading", { name: /completed this case/i })).toBeInTheDocument();
+  });
+});
+
+// =============================================================================
+// Piece 5c — Case debrief: separated performance + transfer, synthetic-data
+// disclosure, and completion tied to complete-transfer (NOT to preferred
+// quality). The contract under test:
+//   1. SEPARATION: the debrief renders TWO distinct sections — one for the
+//      main-case (supported) performance and one for the independent transfer.
+//      Each surfaces its own decision-quality. The plan invariant: "the debrief
+//      separates supported performance from independent transfer."
+//   2. SYNTHETIC-DATA DISCLOSURE: a prominent, clearly-labelled callout
+//      discloses that the case used synthetic (fictional) data — not buried
+//      fine print.
+//   3. COMPLETION = TRANSFER, NOT PREFERRED: a preferred first-attempt does
+//      NOT mark the session completed. Only complete-transfer does. This proves
+//      preferred ≠ completed (completion is the finish, neutrally framed).
+// =============================================================================
+
+/**
+ * Drive the Case Desk through the full complete-transfer flow (resolve →
+ * transfer step open → pick the only transfer rail → confirm). Returns the
+ * stored session after the transfer completes for assertions.
+ */
+function driveCompleteTransfer(): CaseSession {
+  fireEvent.click(getCompleteTransferButton());
+  fireEvent.click(screen.getByRole("radio", { name: /cross-border ach/i }));
+  fireEvent.click(screen.getByRole("button", { name: /confirm transfer recommendation/i }));
+  return readStoredSession()!;
+}
+
+describe("RecommendationFlow 5c — debrief separates supported performance from independent transfer", () => {
+  it("renders TWO distinct sections (supported performance AND independent transfer) after complete-transfer", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    // The debrief is rendered. The two key invariants:
+    //   (a) a "supported performance" section exists (the main case, with its
+    //       decision-quality surfaced),
+    //   (b) an "independent transfer" section exists (the transfer, with its
+    //       decision-quality surfaced).
+    // The two are SEMANTICALLY distinct regions so a learner (and AT) can
+    // tell them apart — never blended into a single score.
+    const supportedHeading = screen.getByRole("heading", { name: /supported performance/i });
+    const transferHeading = screen.getByRole("heading", { name: /independent transfer/i });
+    expect(supportedHeading).toBeInTheDocument();
+    expect(transferHeading).toBeInTheDocument();
+    // They are DISTINCT nodes (not the same element mis-labelled).
+    expect(supportedHeading).not.toBe(transferHeading);
+  });
+
+  it("surfaces the main-case decision-quality in the supported section and the transfer decision-quality in the transfer section", () => {
+    seedResolveSession();
+    renderDesk();
+    // The preferred draft scores "preferred" on the main case.
+    const mainOutcome = evaluateRecommendation(supplierCase, preferredDraft());
+    expect(mainOutcome.quality).toBe("preferred");
+
+    driveCompleteTransfer();
+    const stored = readStoredSession()!;
+    // The transfer outcome is persisted (Piece 5c CRITICAL FIX).
+    expect(stored.transferOutcome).not.toBeNull();
+    const transferQuality = stored.transferOutcome!.quality;
+
+    // Two decision-quality chips are present (one per section). Each chip
+    // renders its quality label as accessible text via a StatusChip whose
+    // aria-label is the quality, so we can scope each chip precisely.
+    const mainQualityExact = new RegExp(`^${mainOutcome.quality}$`, "i");
+    const transferQualityExact = new RegExp(`^${transferQuality}$`, "i");
+    expect(screen.getByText(mainQualityExact)).toBeInTheDocument();
+    expect(screen.getByText(transferQualityExact)).toBeInTheDocument();
+
+    // The supported section is distinct from the transfer section. We assert
+    // the chip for each quality lives INSIDE its respective section by
+    // walking up from the chip's text node to the enclosing <section>. This
+    // proves structural containment — they are NOT blended.
+    const supportedSection = screen.getByRole("heading", { name: /supported performance/i }).closest("section");
+    const transferSection = screen.getByRole("heading", { name: /independent transfer/i }).closest("section");
+    expect(supportedSection).not.toBeNull();
+    expect(transferSection).not.toBeNull();
+    expect(supportedSection).not.toBe(transferSection);
+
+    // Find each chip's <span> (StatusChip renders role-less <span> with the
+    // quality as its textContent and aria-label) and assert it is contained
+    // in the correct section.
+    const mainChip = screen.getByText(mainQualityExact).closest("span");
+    const transferChip = screen.getByText(transferQualityExact).closest("span");
+    expect(mainChip).not.toBeNull();
+    expect(transferChip).not.toBeNull();
+    expect(supportedSection!.contains(mainChip)).toBe(true);
+    expect(transferSection!.contains(transferChip)).toBe(true);
+
+    // Cross-contamination guard: the transfer quality chip must NOT live in
+    // the supported section, and vice versa. (If the two qualities happen to
+    // be equal this guard is a no-op; the structural-containment assertions
+    // above still carry the load.)
+    if (mainOutcome.quality !== transferQuality) {
+      expect(supportedSection!.contains(transferChip)).toBe(false);
+      expect(transferSection!.contains(mainChip)).toBe(false);
+    }
+  });
+});
+
+describe("RecommendationFlow 5c — visible synthetic-data disclosure", () => {
+  it("renders a prominent disclosure that the case used synthetic (fictional) data", () => {
+    seedResolveSession();
+    renderDesk();
+    driveCompleteTransfer();
+    // The disclosure is rendered as an ARIA-labelled callout (role="note")
+    // so it is unmissable — not buried fine print. The text must clearly say
+    // "synthetic" or "fictional" so a learner can never mistake the case for
+    // real customer data.
+    const disclosure = screen.getByRole("note");
+    const text = (disclosure.textContent ?? "").toLowerCase();
+    expect(text.length).toBeGreaterThan(0);
+    expect(/synthetic|fictional/.test(text)).toBe(true);
+    // The disclosure must reference that NO real customer/account/transaction
+    // data was used (the global synthetic-data constraint).
+    expect(text).toMatch(/no real|no actual/);
+  });
+});
+
+describe("RecommendationFlow 5c — completion is tied to complete-transfer, NOT to preferred quality", () => {
+  it("a preferred first attempt does NOT mark the session completed (status stays in_progress until transfer)", () => {
+    // Seed a resolve session whose firstAttempt scored PREFERRED. The plan is
+    // explicit: completion is the finish (transfer), not a quality gate.
+    // Preferred ≠ completed.
+    const draft = preferredDraft();
+    const outcome = evaluateRecommendation(supplierCase, draft);
+    expect(outcome.quality).toBe("preferred");
+    seedResolveSession();
+    const seeded = readStoredSession()!;
+    expect(seeded.firstAttempt!.outcome.quality).toBe("preferred");
+    // CRITICAL: a preferred first attempt does NOT complete the session.
+    expect(seeded.status).not.toBe("completed");
+    expect(seeded.phase).toBe("resolve");
+  });
+
+  it("complete-transfer (not preferred quality) marks the session completed", () => {
+    seedResolveSession();
+    renderDesk();
+    // Before transfer: preferred first attempt is set but status is NOT
+    // completed.
+    expect(readStoredSession()!.status).not.toBe("completed");
+    // Complete the transfer.
+    driveCompleteTransfer();
+    // After transfer: the session IS completed, and the transfer outcome is
+    // persisted for the debrief.
+    const stored = readStoredSession()!;
+    expect(stored.status).toBe("completed");
+    expect(stored.phase).toBe("debrief");
+    expect(stored.transferOutcome).not.toBeNull();
   });
 });
