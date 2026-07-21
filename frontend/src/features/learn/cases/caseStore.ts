@@ -587,15 +587,22 @@ function isRecommendationDraft(value: unknown): value is RecommendationDraft {
 }
 
 function isCaseOutcomeShallow(value: unknown): boolean {
-  // Outcome is opaque prose + arrays authored by the evaluator. We only
-  // confirm it is a non-null object that LOOKS like an outcome (has a
-  // `quality` field set to a known enum value). Deep validation of every
-  // prose field is the evaluator's job; the consumer reads these fields
-  // defensively.
+  // Outcome is opaque prose + arrays authored by the evaluator. We validate
+  // the fields the UI reads WITHOUT defensive guards:
+  //   - `quality` (enum) — read in StatusChip and consequence framing.
+  //   - `soundReasoning` (string[]) — CaseOutcome.tsx and CaseDebrief.tsx call
+  //     `outcome.soundReasoning.length` and `.map(...)` directly (no optional
+  //     chaining), so a missing/non-array value crashes at render.
+  // Other prose fields (`consequence`, `reasoningGap`, `nextAction`,
+  // `invalidRailIds`, `missingFactIds`) are read truthily or render-safely as
+  // undefined text, so they stay shallow. Deep validation of every prose field
+  // is the evaluator's job; this guard only closes the crash-class.
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
-    typeof v.quality === "string" && SESSION_QUALITIES.has(v.quality)
+    typeof v.quality === "string" &&
+    SESSION_QUALITIES.has(v.quality) &&
+    isStringArray(v.soundReasoning)
   );
 }
 

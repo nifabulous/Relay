@@ -1461,6 +1461,35 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
     expect(loadCaseSession(CASE_ID)).toBeNull();
   });
 
+  it("returns null when `firstAttempt.outcome` has a valid quality but no soundReasoning (CaseOutcome reads .length)", () => {
+    // Review catch: isCaseOutcomeShallow originally only validated `quality`,
+    // but CaseOutcome.tsx reads outcome.soundReasoning.length without a
+    // defensive guard. A shallow outcome { quality: "defensible" } would pass
+    // the guard and crash at render. The guard now requires soundReasoning to
+    // be a string array.
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = {
+      draft: filledDraft(),
+      outcome: { quality: "defensible" },
+      submittedAt: "2026-07-01T00:00:00Z",
+    };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("returns null when `firstAttempt.outcome.soundReasoning` is not an array", () => {
+    const payload = baseShape();
+    payload.phase = "resolve";
+    payload.firstAttempt = {
+      draft: filledDraft(),
+      outcome: { quality: "defensible", soundReasoning: "fast" },
+      submittedAt: "2026-07-01T00:00:00Z",
+    };
+    seedRaw(payload);
+    expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
   it("returns null when `firstAttempt.submittedAt` is missing", () => {
     const payload = baseShape();
     payload.phase = "resolve";
