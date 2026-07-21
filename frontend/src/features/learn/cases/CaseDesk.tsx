@@ -192,6 +192,24 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         explanationTimerRef.current = null;
         flushExplanationToDisk(pendingExplanationRef.current);
       }
+      // T4: also flush any pending debounced reasoning-field persist on
+      // unmount, so the latest free-text edits reach storage. Best-effort
+      // write-only path (same shape as flushExplanationToDisk): never
+      // dispatches, never calls setSaveError, swallows any failure.
+      if (draftPersistTimerRef.current !== null) {
+        clearTimeout(draftPersistTimerRef.current);
+        draftPersistTimerRef.current = null;
+        const pending = pendingDraftPersistRef.current;
+        pendingDraftPersistRef.current = null;
+        if (pending !== null) {
+          const stamped = { ...pending, updatedAt: new Date().toISOString() };
+          try {
+            saveCaseSession(stamped);
+          } catch {
+            // Best-effort unmount-time write; see flushExplanationToDisk.
+          }
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -269,6 +287,52 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       // succeeds. Without this, a one-time quota failure leaves the alert
       // visible forever, even after every subsequent write succeeds.
       setSaveError(null);
+    }
+  }
+
+  // ── Debounced free-text draft persist (T4) ─────────────────────────────────
+  // The reasoning free-text fields (primary reason, conditions, price / arrival
+  // / tracking expectations) used to persist synchronously on every keystroke.
+  // Each keystroke ran structuredClone + JSON.stringify + setItem for the
+  // whole session — wasteful for a few-KB payload. Debounce the persist (NOT
+  // the dispatch — the UI stays responsive) to 300ms after the last edit,
+  // with flush on blur / send / restart / unmount. customerExplanation has
+  // its own debounce machinery above (it has its own pending-text ref so the
+  // dispatch can be deferred too); this debounce wraps only the persist.
+  //
+  // The pending session ref always holds the LATEST next-session computed by
+  // handleDraftPatch, so coalescing rapid edits persists only the final value
+  // (matching the customerExplanation behaviour).
+  const draftPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDraftPersistRef = useRef<CaseSession | null>(null);
+
+  function scheduleDraftPersist(next: CaseSession) {
+    pendingDraftPersistRef.current = next;
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+    }
+    draftPersistTimerRef.current = setTimeout(() => {
+      draftPersistTimerRef.current = null;
+      const pending = pendingDraftPersistRef.current;
+      pendingDraftPersistRef.current = null;
+      if (pending !== null) {
+        persist(pending);
+      }
+    }, 300);
+  }
+
+  // Flush a pending debounced persist immediately. Called on blur (per
+  // field), Send, Restart, and unmount. Idempotent: a no-op when nothing is
+  // pending.
+  function flushDraftPersist() {
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+      draftPersistTimerRef.current = null;
+      const pending = pendingDraftPersistRef.current;
+      pendingDraftPersistRef.current = null;
+      if (pending !== null) {
+        persist(pending);
+      }
     }
   }
 
@@ -372,6 +436,12 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       explanationTimerRef.current = null;
       flushExplanation(pendingExplanationRef.current);
     }
+    // T4: flush any pending debounced reasoning-field persist too, so the
+    // latest free-text edits reach storage before the restart wipes the
+    // working draft. (The persisted session is then overwritten by the
+    // restart persist below; the point is to NOT lose edits that were still
+    // in the 300ms window.)
+    flushDraftPersist();
     const next = caseReducer(session, { type: "restart" });
     if (next !== session) {
       dispatch({ type: "restart" });
@@ -413,6 +483,20 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     // true double-Submit a no-op; this hardens the invariant for the revision
     // path, where Send is legal again.
     pendingExplanationRef.current = flushedText;
+    // T4: cancel any pending debounced reasoning-field persist so it cannot
+    // fire AFTER the send-recommendation persist and overwrite the snapshot
+    // with a stale pre-send session. The reasoning edits themselves are
+    // already in `session` (the dispatch was immediate) and are folded into
+    // the send's persist via the snapshot. Cancelling the timer here means
+    // the debounced persist's stale write can't race with the snapshot.
+    if (draftPersistTimerRef.current !== null) {
+      clearTimeout(draftPersistTimerRef.current);
+      draftPersistTimerRef.current = null;
+      // Drop the pending payload WITHOUT persisting — the send-recommendation
+      // persist below will persist the same edits (plus the snapshot) in the
+      // correct order.
+      pendingDraftPersistRef.current = null;
+    }
 
     // 2) Compute the flushed session locally by folding the pending text into
     //    the draft. If nothing was pending, this is a no-op (same reference).
@@ -522,7 +606,12 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     const next = caseReducer(session, { type: "edit-draft", patch });
     if (next !== session) {
       dispatch({ type: "edit-draft", patch });
-      persist(next);
+      // T4: debounce the persist (not the dispatch). The UI reflects the edit
+      // immediately via the synchronous dispatch; the localStorage write is
+      // coalesced across rapid keystrokes and flushed on blur / send /
+      // restart / unmount. This avoids structuredClone + JSON.stringify +
+      // setItem per keystroke for the reasoning free-text fields.
+      scheduleDraftPersist(next);
     }
   }
 
@@ -630,6 +719,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRequestedFactChange={handleRequestedFactChange}
           onRequestFacts={handleRequestFacts}
           onDraftPatch={handleDraftPatch}
+          onDraftFieldBlur={flushDraftPersist}
           onOpenReference={handleOpenReference}
           onCloseReference={handleCloseReference}
           referenceFact={referenceFact}
@@ -776,6 +866,10 @@ interface InvestigatePhaseProps {
   onRequestedFactChange: (ids: string[]) => void;
   onRequestFacts: (ids: string[]) => void;
   onDraftPatch: (patch: Partial<CaseSession["draft"]>) => void;
+  // T4: blur flush for the reasoning free-text fields. Fired by each reasoning
+  // input's onBlur so a pending debounced persist writes to localStorage at
+  // once when the learner leaves the field.
+  onDraftFieldBlur: () => void;
   onOpenReference: (factId: string, opener?: HTMLButtonElement | null) => void;
   onCloseReference: () => void;
   referenceFact: CaseFact | null;
@@ -804,6 +898,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onRequestedFactChange,
     onRequestFacts,
     onDraftPatch,
+    onDraftFieldBlur,
     onOpenReference,
     onCloseReference,
     referenceFact,
@@ -875,6 +970,8 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 // the learner's path to those tiers.
                 value={session.draft.reasons[0] ?? ""}
                 onChange={(e) => onDraftPatch({ reasons: [e.target.value] })}
+                // T4: blur flushes the debounced reasoning-field persist.
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -884,6 +981,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.conditions[0] ?? ""}
                 onChange={(e) => onDraftPatch({ conditions: e.target.value ? [e.target.value] : [] })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -893,6 +991,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.priceExpectation}
                 onChange={(e) => onDraftPatch({ priceExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -902,6 +1001,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.arrivalExpectation}
                 onChange={(e) => onDraftPatch({ arrivalExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">
@@ -911,6 +1011,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 className="case-desk__input"
                 value={session.draft.trackingExpectation}
                 onChange={(e) => onDraftPatch({ trackingExpectation: e.target.value })}
+                onBlur={onDraftFieldBlur}
               />
             </label>
             <label className="case-desk__field">

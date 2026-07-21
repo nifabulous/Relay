@@ -503,6 +503,50 @@ describe("CaseDesk — customerExplanation debounce + flush", () => {
     expect(storedExplanation()).toBe("final value");
   });
 
+  // T4: the reasoning free-text fields (primary reason, conditions, price /
+  // arrival / tracking expectations) persisted synchronously on every
+  // keystroke. Each keystroke ran structuredClone + JSON.stringify + setItem
+  // for the whole session — wasteful for a few-KB payload. Debounce the
+  // persist (NOT the dispatch — the UI stays responsive) to 300ms after the
+  // last edit, with flush on blur / send / restart / unmount.
+  it("T4: debounces free-text draft persists (reasoning fields) — localStorage is NOT updated until 300ms elapse", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    // Type — no clock advancement yet.
+    fireEvent.change(priceInput, { target: { value: "next-day" } });
+    // localStorage must NOT reflect the edit yet (the dispatch fired and the
+    // UI shows the edit, but the persist is debounced).
+    expect(priceInput).toHaveValue("next-day");
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    // Advance past the debounce window — the persist fires.
+    vi.advanceTimersByTime(300);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("next-day");
+  });
+
+  it("T4: flushes the reasoning-field persist on blur (the in-memory edit reaches storage immediately)", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    fireEvent.change(priceInput, { target: { value: "flushed on blur" } });
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    // Blur flushes the pending write at once.
+    fireEvent.blur(priceInput);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("flushed on blur");
+  });
+
+  it("T4: coalesces rapid reasoning-field edits — only the LAST value is persisted", () => {
+    seedStartedSession();
+    renderDesk();
+    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    fireEvent.change(priceInput, { target: { value: "a" } });
+    fireEvent.change(priceInput, { target: { value: "ab" } });
+    fireEvent.change(priceInput, { target: { value: "abc" } });
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    vi.advanceTimersByTime(300);
+    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("abc");
+  });
+
   // T17 Part A: the unmount cleanup previously called flushExplanation →
   // persist (→ dispatch + setSaveError + saveCaseSession) on an unmounted
   // component. The unmount-time write is best-effort (the learner is leaving;
@@ -572,8 +616,9 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
     renderDesk();
-    // Trigger a persist via a non-debounced edit (the price expectation input
-    // dispatches edit-draft and persists synchronously).
+    // Trigger a persist via a reasoning-field edit. (T4 made the reasoning-
+    // field persist debounced; user.type + findByRole's polling lets the
+    // 300ms debounce fire before the assertion.)
     const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
     await user.type(priceInput, "next-day");
     // The save-error alert (role=alert) surfaces the quota failure.
@@ -606,7 +651,8 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
       // Subsequent writes succeed (Storage.prototype.setItem default behaviour).
     });
     renderDesk();
-    // Trigger the failing persist (price expectation input is synchronous).
+    // Trigger the failing persist (price expectation input is debounced;
+    // findByRole's polling lets the 300ms debounce fire before the assert).
     const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
     await user.type(priceInput, "a");
     // The alert surfaces the quota failure.
