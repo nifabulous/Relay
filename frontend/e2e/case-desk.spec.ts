@@ -399,7 +399,8 @@ test.describe("Case Desk recovery scenarios", () => {
       page.getByRole("heading", { name: "You’ve completed this case" }),
     ).toBeVisible({ timeout: LAZY_TIMEOUT });
 
-    // Start again returns to investigate with a fresh, empty working draft.
+    // Start again clears the working draft and routes the learner back into
+    // the shared investigate/recommend surface with a fresh, empty draft.
     // (No reload here — the global beforeEach's addInitScript would wipe
     // storage on reload. The restart is in-memory + persisted; we read the
     // post-restart state directly.)
@@ -424,7 +425,12 @@ test.describe("Case Desk recovery scenarios", () => {
     }, SESSION_KEY);
     expect(stored).not.toBeNull();
     expect(stored.status).toBe("in_progress");
-    expect(stored.phase).toBe("investigate");
+    // T2: after a restart with a firstAttempt set (and no revision yet), the
+    // reducer routes the learner to `phase: "recommend"` (the revising phase)
+    // rather than `investigate` — this reuses the existing revision machinery
+    // so the learner can re-send and create a revisedAttempt, instead of being
+    // stranded in an unwinnable investigate-with-firstAttempt state.
+    expect(stored.phase).toBe("recommend");
     // firstAttempt is preserved — the learner's record survives the restart.
     expect(stored.firstAttempt).not.toBeNull();
     // transferOutcome is reset (it belonged to the prior completed run).
