@@ -494,7 +494,16 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // linked to its control, and focus moves to the summary. Null when there
   // are no errors (the resting state). Any draft edit clears it so the
   // summary never goes stale.
-  const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
+  //
+  // Each error carries a `controlId` — the DOM id of the control the learner
+  // must interact with to resolve it. The summary renders each message as a
+  // fragment anchor (`<a href="#{controlId}">`) so a learner can jump to fix
+  // it, and the target control carries `aria-describedby` pointing back.
+  interface ValidationEntry {
+    message: string;
+    controlId: string;
+  }
+  const [validationErrors, setValidationErrors] = useState<ValidationEntry[] | null>(null);
   const validationSummaryRef = useRef<HTMLDivElement | null>(null);
 
   // Focus the validation summary when it appears (spec L213). A new array
@@ -561,9 +570,11 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     //     Resolve phase is explicitly designed to show the learner the
     //     consequence of thin reasoning (spec L188-192). Blocking filler at
     //     the gate would deny the learner that learning signal.
-    const errors: string[] = [];
+    const errors: ValidationEntry[] = [];
     if (flushedSession.draft.selectedRail === null) {
-      errors.push("Select a rail to recommend.");
+      // The rail-selection fieldset is the control the learner must interact
+      // with. Its id is set on the RailShortlist's fieldset element.
+      errors.push({ message: "Select a rail to recommend.", controlId: "case-desk-rail-shortlist" });
     }
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -1059,7 +1070,7 @@ interface InvestigatePhaseProps {
   onSendRecommendation: () => void;
   isSending: boolean;
   /** Validation error-summary (spec L213). Null when no validation failure. */
-  validationErrors: string[] | null;
+  validationErrors: { message: string; controlId: string }[] | null;
   validationSummaryRef: RefObject<HTMLDivElement | null>;
   /** Baseline rail + confidence capture (spec L171). */
   onSetBaseline: (railId: string | null, confidence: "low" | "medium" | "high" | null) => void;
@@ -1190,8 +1201,9 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           {/* Validation error-summary (design spec L213): on Send with an
               incomplete recommendation, a concise summary renders at the start
               of the primary task. role="alert" so AT announces it; tabIndex=-1
-              so the focus effect can land on it. Each message links to its
-              control via a fragment anchor so a learner can jump to fix it. */}
+              so the focus effect can land on it. Each message is a fragment
+              anchor linking to the control the learner must fix (spec L213:
+              "link each message to its control"). */}
           {validationErrors && validationErrors.length > 0 && (
             <div
               ref={validationSummaryRef}
@@ -1204,8 +1216,12 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
                 Fix these issues before sending
               </h3>
               <ul className="case-desk__validation-list">
-                {validationErrors.map((msg, i) => (
-                  <li key={i} className="case-desk__validation-item">{msg}</li>
+                {validationErrors.map((entry, i) => (
+                  <li key={i} className="case-desk__validation-item">
+                    <a className="case-desk__validation-link" href={`#${entry.controlId}`}>
+                      {entry.message}
+                    </a>
+                  </li>
                 ))}
               </ul>
             </div>

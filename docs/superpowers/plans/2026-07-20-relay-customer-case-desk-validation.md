@@ -155,20 +155,21 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
 
 export function loadCaseSession(caseId: CaseId): CaseSession | null;
 export function saveCaseSession(session: CaseSession): void;
-// NOTE (shipped architecture): an earlier draft of this plan specified
-// `clearCaseDraft(caseId)` and `updateRequestedFacts(caseId, ids): { firstAffectedControlId }`
-// as exported store functions. Those were never wired into the UI and were
-// removed (commit 1f5a8e5, T13). The invalidation contract is implemented
-// INSIDE the pure reducer instead: the `request-facts` action, when dispatched
-// during the `recommend` phase, resets the working draft to EMPTY_DRAFT
-// (clearing shortlist, selected rail, reasons, conditions, expectations,
-// explanation) while preserving the immutable firstAttempt/revisedAttempt
-// snapshots. The Case Desk component detects the phase condition, announces
-// the reset via a polite live region (an event-nonce state so repeated
-// invalidations re-fire), and moves focus to the RailShortlist heading
-// (the first affected decision) via a tabIndex={-1} ref. No per-case
-// invalidation function is exported. (commit a9bff0c + retrigger fix.)
 ```
+
+> **Shipped-architecture note (invalidation):** an earlier draft of this plan
+> specified two additional exported store functions for invalidation. Those
+> were never wired into the UI and were removed (commit `1f5a8e5`, T13). The
+> invalidation contract is implemented **inside the pure reducer** instead:
+> the `request-facts` action, when dispatched during the `recommend` phase,
+> resets the working draft to `EMPTY_DRAFT` (clearing shortlist, selected
+> rail, reasons, conditions, expectations, explanation) while preserving the
+> immutable `firstAttempt`/`revisedAttempt` snapshots. The Case Desk component
+> detects the phase condition, announces the reset via a polite live region
+> (an event-nonce state so repeated invalidations re-fire), and moves focus to
+> the RailShortlist heading (the first affected decision) via a `tabIndex={-1}`
+> ref. **No per-case invalidation function is exported.** (Commits `a9bff0c`
+> + retrigger fix `c9a9882`.)
 
 - [x] Export generic `loadVersioned<T>(key, fallback)`, `saveVersioned<T>(key, value): { ok: true } | { ok: false; reason: "unavailable" | "quota" }`, and `removeStored(key)` from `storage.ts`; preserve existing non-throwing wrappers for current callers while allowing `caseStore` to surface a recoverable save failure.
 - [x] Test round-trip persistence, corrupt JSON, obsolete schema, absent session, case-revision mismatch, restart clearing only the selected case, preserving the immutable first attempt, and `localStorage.setItem` failure returning a typed result.

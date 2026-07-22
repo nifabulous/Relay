@@ -130,15 +130,20 @@ export function CaseDebrief({
           change their mind? Only shown when a baseline was captured (the
           learner could skip it). Sits before the supported-performance section
           so the before/after framing leads the debrief. */}
-      {session.baselineRailId !== null && first && (
+      {session.baselineCaptured && first && (
         <section
           className="case-desk__debrief-baseline"
           aria-label="Baseline vs investigated recommendation"
         >
           <h3 className="case-desk__section-title">How your view changed</h3>
           {(() => {
+            // baselineRailId is null both for "skipped" and for an explicit
+            // "Not sure yet" — but baselineCaptured distinguishes them. An
+            // explicit "Not sure yet" with a confidence still renders here.
             const baselineName =
-              definition.rails.find((r) => r.id === session.baselineRailId)?.name ?? "Not sure yet";
+              session.baselineRailId === null
+                ? "Not sure yet"
+                : definition.rails.find((r) => r.id === session.baselineRailId)?.name ?? "an unknown rail";
             const firstRailName =
               definition.rails.find((r) => r.id === first.draft.selectedRail)?.name ?? "no rail";
             const changed = session.baselineRailId !== first.draft.selectedRail;

@@ -99,8 +99,15 @@ export interface CaseSession {
   // baseline is a *starting* view; changing it after investigating would
   // defeat the debrief's before/after comparison). Normalized to null by
   // loadCaseSession for older sessions that lack the fields.
+  //
+  // baselineCaptured distinguishes "the learner engaged with the baseline"
+  // (true) from "the learner skipped it" (false). Without it, an explicit
+  // "Not sure yet" response (baselineRailId: null) would be indistinguishable
+  // from a skip, and the debrief would silently discard the learner's stated
+  // uncertainty + confidence.
   baselineRailId: string | null;
   baselineConfidence: "low" | "medium" | "high" | null;
+  baselineCaptured: boolean;
   updatedAt: string;
 }
 
@@ -160,6 +167,7 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
     diagnosis: "",
     baselineRailId: null,
     baselineConfidence: null,
+      baselineCaptured: false,
     updatedAt: "",
   };
 }
@@ -520,6 +528,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         diagnosis: "",
         baselineRailId: null,
         baselineConfidence: null,
+      baselineCaptured: false,
         updatedAt: "",
       };
     }
@@ -566,14 +575,19 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       // Legal ONLY in the investigate phase AND before any facts have been
       // requested — the baseline is a *starting* view; once the learner
       // commits to investigating, the baseline is frozen so the debrief's
-      // before/after comparison stays honest. No-op when unchanged.
+      // before/after comparison stays honest.
       if (session.phase !== "investigate") {
         return session;
       }
       if (session.requestedFactIds.length > 0) {
         return session;
       }
+      // No-op only when the values are unchanged AND the baseline was already
+      // captured. The first dispatch (baselineCaptured: false → true) is
+      // always a real transition even if the values are null — it signals
+      // the learner engaged with the baseline panel.
       if (
+        session.baselineCaptured &&
         session.baselineRailId === action.railId &&
         session.baselineConfidence === action.confidence
       ) {
@@ -583,6 +597,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
         ...cloneSession(session),
         baselineRailId: action.railId,
         baselineConfidence: action.confidence,
+        baselineCaptured: true,
       };
     }
 
@@ -749,6 +764,8 @@ export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSess
       v.baselineConfidence === null ||
       (typeof v.baselineConfidence === "string" &&
         ["low", "medium", "high"].includes(v.baselineConfidence))) &&
+    // baselineCaptured is additive; accept undefined (older sessions) + bool.
+    (v.baselineCaptured === undefined || typeof v.baselineCaptured === "boolean") &&
     typeof v.updatedAt === "string"
   );
 }
@@ -846,6 +863,7 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
     diagnosis: "",
     baselineRailId: null,
     baselineConfidence: null,
+      baselineCaptured: false,
     updatedAt: stale.updatedAt,
   };
 }
@@ -879,11 +897,16 @@ function normalizeDiagnosis(session: CaseSession): CaseSession {
  * older persisted payloads lack them.
  */
 function normalizeBaseline(session: CaseSession): CaseSession {
-  if (session.baselineRailId === undefined || session.baselineConfidence === undefined) {
+  if (
+    session.baselineRailId === undefined ||
+    session.baselineConfidence === undefined ||
+    session.baselineCaptured === undefined
+  ) {
     return {
       ...session,
       baselineRailId: session.baselineRailId ?? null,
       baselineConfidence: session.baselineConfidence ?? null,
+      baselineCaptured: session.baselineCaptured ?? false,
     };
   }
   return session;
