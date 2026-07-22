@@ -478,6 +478,26 @@ describe("CaseDesk — baseline + confidence capture (spec L171, L276)", () => {
     renderDesk();
     expect(screen.queryByRole("region", { name: /baseline starting view/i })).not.toBeInTheDocument();
   });
+
+  it("preserves an explicit 'Not sure yet' baseline distinctly from a skipped baseline", async () => {
+    // Regression: 'Not sure yet' stores baselineRailId: null, the same value
+    // used when the learner skips. A baselineCaptured flag distinguishes the
+    // two so the debrief shows the explicit uncertainty (with its confidence)
+    // rather than silently discarding it.
+    const user = userEvent.setup();
+    seedStartedSession();
+    renderDesk();
+    const baselinePanel = screen.getByRole("region", { name: /baseline starting view/i });
+    // Pick 'Not sure yet' + medium confidence.
+    await user.click(within(baselinePanel).getByRole("radio", { name: /not sure yet/i }));
+    await user.click(within(baselinePanel).getByRole("radio", { name: /^medium$/i }));
+    const stored = JSON.parse(localStorage.getItem(`relay:case-session:${CASE_ID}`) || "null");
+    expect(stored.baselineRailId).toBeNull();
+    expect(stored.baselineConfidence).toBe("medium");
+    // The explicit interaction was captured — this flag is what the debrief
+    // uses to decide whether to render the baseline comparison.
+    expect(stored.baselineCaptured).toBe(true);
+  });
 });
 
 // ─── Enrichment states ─────────────────────────────────────────────────────

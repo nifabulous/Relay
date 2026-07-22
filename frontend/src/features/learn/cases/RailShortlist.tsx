@@ -74,7 +74,12 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
         </p>
       </header>
 
-      <ul className="rail-shortlist__list">
+      {/* id="case-desk-rail-shortlist" is the stable validation-link target
+          (spec L213): the validation error-summary links here so a learner
+          can jump from the error to the rail-selection controls. The id is
+          hardcoded (not useId-prefixed) so the summary's fragment anchor
+          resolves regardless of React's generated-id prefix. */}
+      <ul className="rail-shortlist__list" id="case-desk-rail-shortlist">
         {definition.rails.map((rail) => {
           const railRegionLabel = rail.name;
           const invalid = isRailInvalid(rail.id);

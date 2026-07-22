@@ -842,6 +842,7 @@ describe("caseReducer — restart closes the unwinnable state (T2)", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -907,6 +908,7 @@ describe("caseReducer — restart from under_review (T11)", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -947,6 +949,7 @@ describe("caseReducer — restart from under_review (T11)", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem("relay:case-session:canada-us-supplier", JSON.stringify(stale));
@@ -1200,6 +1203,7 @@ describe("loadCaseSession — case-revision mismatch", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1243,6 +1247,7 @@ describe("loadCaseSession — case-revision mismatch", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     localStorage.setItem(
@@ -1388,6 +1393,7 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-07-01T00:00:00Z",
     };
   }
@@ -1604,6 +1610,7 @@ describe("loadCaseSession — malformed payloads return null (T9)", () => {
       diagnosis: "",
       baselineRailId: null,
       baselineConfidence: null,
+      baselineCaptured: false,
       updatedAt: "2026-01-01T00:00:00Z",
     };
     seedRaw(stale);
