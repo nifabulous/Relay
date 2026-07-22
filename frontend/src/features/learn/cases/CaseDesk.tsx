@@ -1218,7 +1218,19 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               <ul className="case-desk__validation-list">
                 {validationErrors.map((entry, i) => (
                   <li key={i} className="case-desk__validation-item">
-                    <a className="case-desk__validation-link" href={`#${entry.controlId}`}>
+                    <a
+                      className="case-desk__validation-link"
+                      href={`#${entry.controlId}`}
+                      // A bare fragment anchor only scrolls in many browsers;
+                      // programmatic focus reliably lands the learner on the
+                      // target control (spec L213: "move focus to ... its
+                      // control"). preventDefault keeps the browser from
+                      // fighting the focus move with its own scroll handling.
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById(entry.controlId)?.focus();
+                      }}
+                    >
                       {entry.message}
                     </a>
                   </li>
