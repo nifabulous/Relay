@@ -571,6 +571,19 @@ test.describe("Case Desk viewport + a11y invariants", () => {
     expect(scrollWidth).toBeLessThanOrEqual(vw + 1);
   });
 
+  test("resets native rail fieldset chrome while keeping its legend available to assistive technology", async ({ page }) => {
+    await startAndEnterInvestigate(page);
+
+    const fieldset = page.getByRole("group", { name: "Select a rail to recommend" });
+    await expect(fieldset).toHaveCSS("border-style", "none");
+    await expect(fieldset).toHaveCSS("padding", "0px");
+
+    const legend = fieldset.locator("legend");
+    await expect(legend).toHaveCSS("position", "absolute");
+    await expect(legend).toHaveCSS("width", "1px");
+    await expect(legend).toHaveCSS("height", "1px");
+  });
+
   test("interactive controls meet the 44px minimum target size", async ({ page }) => {
     await startAndEnterInvestigate(page);
 
