@@ -204,10 +204,12 @@ describe("RecommendationFlow — linked validation error-summary on Send (spec L
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("links each error message to its target control via a resolvable anchor (spec L213)", () => {
-    // The spec requires each summary message to link to its control so a
-    // learner can jump to fix it. The "Select a rail" message must link to
-    // the rail-selection fieldset.
+  it("links each error message to a focusable fieldset target and moves focus on activate (spec L213)", () => {
+    // The spec requires each summary message to link to its control. The
+    // target must be a semantic, focusable form control (fieldset with
+    // tabIndex=-1) — NOT a bare <ul>, which neither receives focus nor
+    // carries the error relationship. Activating the link must move focus
+    // to the target so a keyboard/AT learner lands on the control to fix.
     seedRecommendSession(
       { selectedRail: null, shortlist: [], reasons: [], priceExpectation: "", arrivalExpectation: "", trackingExpectation: "" },
     );
@@ -216,16 +218,19 @@ describe("RecommendationFlow — linked validation error-summary on Send (spec L
 
     // The error message is rendered as a link.
     const railErrorLink = screen.getByRole("link", { name: /select a rail/i });
-    // The link's href is a fragment pointing at a real element on the page.
     const href = railErrorLink.getAttribute("href") ?? "";
     expect(href.startsWith("#")).toBe(true);
     const targetId = href.slice(1);
     const target = document.getElementById(targetId);
     expect(target).not.toBeNull();
-    // The target is the rail-selection list (the control the learner
-    // must interact with to resolve the error).
-    expect(target?.tagName).toBe("UL");
-    expect(target?.id).toBe("case-desk-rail-shortlist");
+    // The target is a FIELDSET (the semantic grouping for the radio group),
+    // not a bare list. It carries the stable id + tabIndex=-1 so it is a
+    // valid programmatic-focus target.
+    expect(target?.tagName).toBe("FIELDSET");
+    expect(target?.getAttribute("tabindex")).toBe("-1");
+    // Activating the link moves focus to the fieldset.
+    fireEvent.click(railErrorLink);
+    expect(document.activeElement).toBe(target);
   });
 });
 

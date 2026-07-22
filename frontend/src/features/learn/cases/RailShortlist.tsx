@@ -74,12 +74,23 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
         </p>
       </header>
 
-      {/* id="case-desk-rail-shortlist" is the stable validation-link target
-          (spec L213): the validation error-summary links here so a learner
-          can jump from the error to the rail-selection controls. The id is
+      {/* The fieldset is the semantic grouping for the rail-selection radio
+          group AND the stable validation-link target (spec L213). id is
           hardcoded (not useId-prefixed) so the summary's fragment anchor
-          resolves regardless of React's generated-id prefix. */}
-      <ul className="rail-shortlist__list" id="case-desk-rail-shortlist">
+          resolves regardless of React's generated-id prefix. tabIndex={-1}
+          makes it a valid programmatic-focus target so activating the
+          validation link moves the learner to an actionable control, not
+          just scroll-position. The legend is visually-hidden but available
+          to AT. */}
+      <fieldset
+        className="rail-shortlist__rails"
+        id="case-desk-rail-shortlist"
+        tabIndex={-1}
+      >
+        <legend className="rail-shortlist__rails-legend">
+          Select a rail to recommend
+        </legend>
+      <ul className="rail-shortlist__list">
         {definition.rails.map((rail) => {
           const railRegionLabel = rail.name;
           const invalid = isRailInvalid(rail.id);
@@ -137,6 +148,7 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
           );
         })}
       </ul>
+      </fieldset>
     </section>
   );
 }
