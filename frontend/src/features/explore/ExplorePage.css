@@ -278,3 +278,27 @@
     gap: var(--space-2);
   }
 }
+
+/* ─── Bank detail route ─────────────────────────────────────────────── */
+
+.explore__breadcrumb {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.bank-detail__resolution {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-left: 2px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  max-width: 60ch;
+}
+
+.bank-detail__not-found {
+  padding: var(--space-6) 0;
+}
