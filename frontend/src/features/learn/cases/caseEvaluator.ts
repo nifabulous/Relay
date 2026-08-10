@@ -9,10 +9,11 @@
  * - `invalid`     — selected rail ineligible, or required facts unknown,
  *                   or no rail selected at all.
  * - `possible`    — selected rail is eligible and facts are gathered, but the
- *                   reasoning does not yet cover price/arrival/tracking OR the
- *                   primary reason is filler (fails the substantive threshold).
- * - `defensible`  — eligible + facts gathered + reasoning covers the three
- *                   expectations with a substantive primary reason.
+ *                   reasoning does not yet include a substantive reason and
+ *                   customer expectation.
+ * - `defensible`  — eligible + facts gathered + reasoning covers the
+ *                   consolidated customer expectation with a substantive
+ *                   primary reason.
  * - `preferred`   — defensible AND the selected rail is the best fit under the
  *                   case's disclosed priorities.
  *
@@ -40,18 +41,20 @@
  * — not just `isNonEmpty`. A learner who types filler ("x", "asdf", "fast") in
  * the reason field must NOT reach `defensible`/`preferred`. The threshold is a
  * tunable length + word-count floor; see `MIN_REASON_CHARS` /
- * `MIN_REASON_WORDS`. The three expectations (price/arrival/tracking) keep the
- * lighter `isNonEmpty` bar — they are shorter by nature and the contract is
- * "did the learner articulate something," not "did they reason."
+ * `MIN_REASON_WORDS`. The consolidated customer expectation keeps the lighter
+ * `isNonEmpty` bar — it is shorter by nature and the contract is "did the
+ * learner articulate something," not "did they reason."
  */
 
 import type {
   CaseDefinition,
   CaseFact,
   CaseOutcome,
+  RailEligibilityRule,
   RailOption,
   RecommendationDraft,
 } from "./caseTypes";
+import { customerExpectationFor } from "./caseDraft";
 
 // ─── T1b: substantive-reason threshold ──────────────────────────────────────
 // The Primary reason is the load-bearing reasoning control. `isNonEmpty` alone
@@ -84,34 +87,35 @@ function hasWord(text: string, pattern: RegExp): boolean {
   return pattern.test(text.toLowerCase());
 }
 
-/** True if the rail is explicitly domestic-only in its eligibility text. */
-function isDomesticOnlyRail(rail: RailOption): boolean {
+function ruleMatches(definition: CaseDefinition, rule: RailEligibilityRule): boolean {
+  const actual = factValueLower(definition, rule.factId);
+  const expected = rule.value.toLowerCase();
+  return rule.operator === "equals" ? actual === expected : actual.includes(expected);
+}
+
+/** Legacy fallback for older authored rails that do not yet have explicit rules. */
+function isDomesticOnlyRailByText(rail: RailOption): boolean {
   const text = `${rail.eligibility} ${rail.name}`.toLowerCase();
   return /\bdomestic\b|canada only|within canada|cad only|in-country only/.test(text);
 }
 
-/** True if the case's destination is the United States. */
-function destinationIsUnitedStates(definition: CaseDefinition): boolean {
+/** Legacy fallback for older authored rails that do not yet have explicit rules. */
+function destinationIsUnitedStatesByText(definition: CaseDefinition): boolean {
   const dest = factValueLower(definition, "destination-country");
   return /\bunited states\b|\bu\.?s\.?(a)?\b/.test(dest);
 }
 
-/** True if the case's destination currency is USD. */
-function destinationIsUsd(definition: CaseDefinition): boolean {
+/** Legacy fallback for older authored rails that do not yet have explicit rules. */
+function destinationIsUsdByText(definition: CaseDefinition): boolean {
   const ccy = factValueLower(definition, "destination-currency");
   return /\busd\b|u\.?s\.? dollar/.test(ccy);
 }
 
-/**
- * A rail is ineligible when it is domestic-only but the case targets the US,
- * OR when its eligibility text calls out a currency the case does not use.
- */
-function isRailIneligible(definition: CaseDefinition, rail: RailOption): boolean {
-  if (isDomesticOnlyRail(rail) && destinationIsUnitedStates(definition)) {
+function isRailIneligibleByLegacyText(definition: CaseDefinition, rail: RailOption): boolean {
+  if (isDomesticOnlyRailByText(rail) && destinationIsUnitedStatesByText(definition)) {
     return true;
   }
-  // Currency-exclusion: "X only" where X is a currency the case does NOT use.
-  const caseUsd = destinationIsUsd(definition);
+  const caseUsd = destinationIsUsdByText(definition);
   const eligibility = rail.eligibility.toLowerCase();
   if (/\bcad\b/.test(eligibility) && /\bonly\b/.test(eligibility) && caseUsd) {
     return true;
@@ -120,6 +124,20 @@ function isRailIneligible(definition: CaseDefinition, rail: RailOption): boolean
     return true;
   }
   return false;
+}
+
+function isRailIneligible(definition: CaseDefinition, rail: RailOption): boolean {
+  const rules = rail.eligibilityRules ?? [];
+  if (rules.length === 0) return isRailIneligibleByLegacyText(definition, rail);
+
+  if (rules.some((rule) => rule.outcome === "ineligible" && ruleMatches(definition, rule))) {
+    return true;
+  }
+
+  const eligibleRules = rules.filter((rule) => rule.outcome === "eligible");
+  if (eligibleRules.length === 0) return false;
+
+  return eligibleRules.some((rule) => !ruleMatches(definition, rule));
 }
 
 function findRail(definition: CaseDefinition, id: string): RailOption | undefined {
@@ -165,6 +183,21 @@ function missingRequiredFacts(
   return rail.requiredFacts.filter((id) => !isFactGathered(findFact(definition, id), requestedFactIds));
 }
 
+/**
+ * Return the facts that must be gathered before a specific rail can be
+ * recommended. The Case Desk uses this as its pre-submit workflow gate so the
+ * learner gets a useful direction back to investigation instead of reaching
+ * the evaluator's "should have waited" outcome.
+ */
+export function missingRequiredFactsForRail(
+  definition: CaseDefinition,
+  railId: string,
+  requestedFactIds: Set<string> = new Set(),
+): string[] {
+  const rail = findRail(definition, railId);
+  return rail ? missingRequiredFacts(definition, rail, requestedFactIds) : [];
+}
+
 function isNonEmpty(text: string): boolean {
   return text.trim().length > 0;
 }
@@ -208,35 +241,55 @@ export function disclosedPriorities(
   requestedFactIds: Set<string> = new Set(),
 ): Set<"urgency" | "tracking" | "cost"> {
   const priorities = new Set<"urgency" | "tracking" | "cost">();
-  const urgency = findFact(definition, "urgency");
-  if (
-    urgency &&
-    isFactGathered(urgency, requestedFactIds) &&
-    hasWord(urgency.value, /business day|urgent|asap|deadline|time-critical|within \d/)
-  ) {
-    priorities.add("urgency");
+  if (!definition.recommendation?.priorityFactIds) {
+    const urgency = findFact(definition, "urgency");
+    if (
+      urgency &&
+      isFactGathered(urgency, requestedFactIds) &&
+      hasWord(urgency.value, /business day|urgent|asap|deadline|time-critical|within \d/)
+    ) {
+      priorities.add("urgency");
+    }
+    const tracking = findFact(definition, "tracking-need");
+    if (
+      tracking &&
+      isFactGathered(tracking, requestedFactIds) &&
+      hasWord(tracking.value, /track|tracking|uetr|confirmation of credit|confirm/)
+    ) {
+      priorities.add("tracking");
+    }
+    const price = findFact(definition, "price-sensitivity");
+    if (
+      price &&
+      isFactGathered(price, requestedFactIds) &&
+      hasWord(price.value, /fee|cost|cheap|price|sensitivity|budget|willing to pay/)
+    ) {
+      priorities.add("cost");
+    }
+    return priorities;
   }
-  const tracking = findFact(definition, "tracking-need");
-  if (
-    tracking &&
-    isFactGathered(tracking, requestedFactIds) &&
-    hasWord(tracking.value, /track|tracking|uetr|confirmation of credit|confirm/)
-  ) {
-    priorities.add("tracking");
-  }
-  const price = findFact(definition, "price-sensitivity");
-  if (
-    price &&
-    isFactGathered(price, requestedFactIds) &&
-    hasWord(price.value, /fee|cost|cheap|price|sensitivity|budget|willing to pay/)
-  ) {
-    priorities.add("cost");
+
+  for (const [priority, factId] of Object.entries(
+    definition.recommendation.priorityFactIds,
+  ) as Array<["urgency" | "tracking" | "cost", string | undefined]>) {
+    if (!factId) continue;
+    const fact = findFact(definition, factId);
+    if (fact && isFactGathered(fact, requestedFactIds) && isNonEmpty(fact.value)) {
+      priorities.add(priority);
+    }
   }
   return priorities;
 }
 
-/** A rail satisfies a priority if its authored reasons mention the relevant cue. */
+/** A rail satisfies a priority when the authored fit tags mark it that way. */
 function railSatisfies(rail: RailOption, priority: "urgency" | "tracking" | "cost"): boolean {
+  return rail.fitTags?.includes(priority) ?? false;
+}
+
+function railSatisfiesByLegacyText(
+  rail: RailOption,
+  priority: "urgency" | "tracking" | "cost",
+): boolean {
   const text = `${rail.reasons.join(" ")} ${rail.eligibility}`.toLowerCase();
   switch (priority) {
     case "urgency":
@@ -268,6 +321,42 @@ export function bestFitRailId(
 ): string | undefined {
   const priorities = disclosedPriorities(definition, requestedFactIds);
   if (priorities.size === 0) return undefined;
+
+  if (!definition.recommendation) {
+    const eligible = definition.rails.filter((r) => !isRailIneligible(definition, r));
+    let bestId: string | undefined;
+    let bestScore = 0;
+    for (const rail of eligible) {
+      let score = 0;
+      for (const priority of priorities) {
+        if (railSatisfiesByLegacyText(rail, priority)) score += 1;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = rail.id;
+      }
+    }
+    const mustCover = priorities.has("urgency") || priorities.has("tracking");
+    if (mustCover && bestScore === 0) return undefined;
+    return bestId;
+  }
+
+  const priorityFactIds = Object.values(definition.recommendation.priorityFactIds).filter(
+    (factId): factId is string => Boolean(factId),
+  );
+  const allPriorityFactsGathered =
+    priorityFactIds.length > 0 &&
+    priorityFactIds.every((factId) =>
+      isFactGathered(findFact(definition, factId), requestedFactIds),
+    );
+  const preferredRail = findRail(definition, definition.recommendation.preferredRailId);
+  if (
+    allPriorityFactsGathered &&
+    preferredRail &&
+    !isRailIneligible(definition, preferredRail)
+  ) {
+    return preferredRail.id;
+  }
 
   const eligible = definition.rails.filter((r) => !isRailIneligible(definition, r));
   let bestId: string | undefined;
@@ -338,10 +427,8 @@ export function validateShortlist(
 }
 
 // ─── evaluateRecommendation ─────────────────────────────────────────────────
-// NOTE: the consequence/nextAction prose below assumes the CA→US/USD corridor
-// (the only case in Phase 1). The grading LOGIC is corridor-agnostic, but the
-// human-readable copy hardcodes "USD" and "United States". Generalize the copy
-// when Phase 2 adds a second case.
+// Outcome prose is authored per case through its recommendation profile, so
+// adding a corridor does not require another evaluator branch.
 
 function emptyOutcome(): CaseOutcome {
   return {
@@ -358,6 +445,28 @@ function emptyOutcome(): CaseOutcome {
   };
 }
 
+function paymentContext(definition: CaseDefinition): {
+  corridorLabel: string;
+  corridorLabelLower: string;
+  paymentLabel: string;
+  paymentLabelLower: string;
+} {
+  const corridorLabel =
+    definition.recommendation?.corridorLabel ??
+    findFact(definition, "destination-country")?.value ??
+    definition.title ??
+    definition.id;
+  const paymentLabel =
+    definition.recommendation?.paymentLabel ??
+    "payment";
+  return {
+    corridorLabel,
+    corridorLabelLower: corridorLabel.toLowerCase(),
+    paymentLabel,
+    paymentLabelLower: paymentLabel.toLowerCase(),
+  };
+}
+
 /**
  * Score a learner's recommendation against the case's disclosed facts and rail
  * eligibility. Pure and deterministic.
@@ -371,12 +480,13 @@ export function evaluateRecommendation(
   draft: RecommendationDraft,
   requestedFactIds: Set<string> = new Set(),
 ): CaseOutcome {
+  const { corridorLabel, corridorLabelLower, paymentLabelLower } = paymentContext(definition);
+
   // 1) No selection at all.
   if (draft.selectedRail === null) {
     return {
       ...emptyOutcome(),
-      consequence:
-        "No rail was selected, so the synthetic customer's supplier payment cannot be released.",
+      consequence: `No rail was selected, so the synthetic customer's ${paymentLabelLower} on ${corridorLabelLower} cannot be released.`,
       reasoningGap: "Select a payment rail to recommend.",
       nextAction: "Shortlist at least one eligible rail and pick one to recommend.",
     };
@@ -387,7 +497,7 @@ export function evaluateRecommendation(
     return {
       ...emptyOutcome(),
       consequence:
-        "The recommended rail is not part of this case, so the synthetic customer's payment cannot be released.",
+        `The recommended rail is not part of this case, so the synthetic customer's ${paymentLabelLower} on ${corridorLabelLower} cannot be released.`,
       reasoningGap: `Choose a rail defined for the ${definition.id} case.`,
       nextAction: "Pick a rail from the case's available options.",
       invalidRailIds: [draft.selectedRail],
@@ -400,10 +510,11 @@ export function evaluateRecommendation(
       ...emptyOutcome(),
       invalidRailIds: [rail.id],
       consequence:
-        `Recommending ${rail.name} would not deliver the synthetic customer's USD payment to the United States; ` +
+        `Recommending ${rail.name} would not deliver the synthetic customer's ${paymentLabelLower} on ${corridorLabel}; ` +
         "this rail does not serve that corridor.",
       reasoningGap: `Confirm the rail's eligibility: ${rail.eligibility}`,
-      nextAction: "Re-shortlist using a rail whose eligibility matches USD to the United States.",
+      nextAction:
+        `Re-shortlist using a rail whose eligibility matches the ${paymentLabelLower} requirements for ${corridorLabel}.`,
     };
   }
 
@@ -415,7 +526,7 @@ export function evaluateRecommendation(
       ...emptyOutcome(),
       missingFactIds: missing,
       consequence:
-        `Recommending ${rail.name} before the required facts are gathered could mislead the synthetic customer; ` +
+        `Recommending ${rail.name} before the required facts are gathered could mislead the synthetic customer about the ${paymentLabelLower}; ` +
         "key information is still unknown.",
       reasoningGap: `Gather the required facts before recommending: ${missing.join(", ")}`,
       nextAction: "Request the missing facts, then re-evaluate this rail.",
@@ -433,46 +544,34 @@ export function evaluateRecommendation(
   //    learner reviews the consequence, regardless of how well they reasoned —
   //    the worked example teaches the rail, not the score.
   const workedExplanation = rail.workedExplanation ?? null;
-  const expectationsCovered = {
-    price: isNonEmpty(draft.priceExpectation),
-    arrival: isNonEmpty(draft.arrivalExpectation),
-    tracking: isNonEmpty(draft.trackingExpectation),
-  };
+  const hasCustomerExpectation = isNonEmpty(customerExpectationFor(draft));
   const hasSubstantiveReason = draft.reasons.some((r) => isSubstantiveReason(r));
 
   const soundReasoning: string[] = [];
   if (hasSubstantiveReason) {
     soundReasoning.push("Gave a substantive reason for the recommendation.");
   }
-  if (expectationsCovered.price) soundReasoning.push("Articulated a price expectation.");
-  if (expectationsCovered.arrival) soundReasoning.push("Articulated an arrival expectation.");
-  if (expectationsCovered.tracking) soundReasoning.push("Articulated a tracking expectation.");
-
-  const coveredCount =
-    Number(expectationsCovered.price) +
-    Number(expectationsCovered.arrival) +
-    Number(expectationsCovered.tracking);
+  if (hasCustomerExpectation) soundReasoning.push("Articulated a customer expectation.");
 
   // possible: eligible + facts, but reasoning is thin OR filler.
-  if (!hasSubstantiveReason || coveredCount < 3) {
+  if (!hasSubstantiveReason || !hasCustomerExpectation) {
     const gaps: string[] = [];
     if (!hasSubstantiveReason) {
       gaps.push(
         `state a substantive primary reason (at least ${MIN_REASON_CHARS} characters and ${MIN_REASON_WORDS} words)`,
       );
     }
-    if (!expectationsCovered.price) gaps.push("give a price expectation");
-    if (!expectationsCovered.arrival) gaps.push("give an arrival expectation");
-    if (!expectationsCovered.tracking) gaps.push("give a tracking expectation");
+    if (!hasCustomerExpectation) gaps.push("give a customer expectation");
     const reasoningGap = `Strengthen the reasoning: ${gaps.join(", ")}.`;
     return {
       quality: "possible",
       consequence:
-        `${rail.name} is eligible and its prerequisites are gathered, but the recommendation is not yet fully reasoned; ` +
+        `${rail.name} is eligible for ${corridorLabelLower} and its prerequisites are gathered, but the recommendation is not yet fully reasoned; ` +
         "the synthetic customer would need clearer expectations before proceeding.",
       soundReasoning,
       reasoningGap,
-      nextAction: "Fill in the price, arrival, and tracking expectations with fact-grounded reasons.",
+      nextAction:
+        `Describe what the customer should expect for timing, fees, and confirmation on the ${paymentLabelLower}.`,
       invalidRailIds: [],
       missingFactIds: [],
       workedExplanation,
@@ -492,13 +591,14 @@ export function evaluateRecommendation(
     return {
       quality: "defensible",
       consequence:
-        `${rail.name} would plausibly deliver the synthetic customer's USD payment with the gathered facts, ` +
+        `${rail.name} would plausibly deliver the synthetic customer's ${paymentLabelLower} on ${corridorLabelLower} with the gathered facts, ` +
         `but it is not the best fit under the disclosed priorities.${fitClause}`,
       soundReasoning,
       reasoningGap: preferredName
-        ? `Consider ${preferredName}, which better matches the case's urgency and tracking priorities.`
+        ? `Consider ${preferredName}, which better matches the case's disclosed priorities for the ${paymentLabelLower}.`
         : "Re-check whether another eligible rail better matches the case's priorities.",
-      nextAction: "Either commit to this rail with justification, or re-recommend the best-fit rail.",
+      nextAction:
+        `Either commit to this rail with justification, or re-recommend the best-fit rail for the ${paymentLabelLower}.`,
       invalidRailIds: [],
       missingFactIds: [],
       workedExplanation,
@@ -509,11 +609,11 @@ export function evaluateRecommendation(
   return {
     quality: "preferred",
     consequence:
-      `${rail.name} is the best-fit rail under the case's disclosed urgency and tracking priorities and would deliver ` +
-      "the synthetic customer's USD supplier payment on time with confirmation of credit.",
+      `${rail.name} is the best-fit rail for the synthetic customer's ${paymentLabelLower} on ${corridorLabelLower} and would deliver the expected outcome under the disclosed priorities.`,
     soundReasoning,
     reasoningGap: null,
-    nextAction: "Release the payment and share the tracking expectation with the synthetic customer.",
+    nextAction:
+      `Release the ${paymentLabelLower} and share the customer expectation for ${corridorLabel}.`,
     invalidRailIds: [],
     missingFactIds: [],
     workedExplanation,

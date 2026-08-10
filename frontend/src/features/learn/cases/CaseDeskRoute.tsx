@@ -12,16 +12,13 @@
  */
 
 import { useParams, Link } from "react-router-dom";
-import { supplierCase } from "./caseCatalog";
-import type { CaseDefinition } from "./caseTypes";
+import { getCaseById } from "./caseCatalog";
 import { CaseDesk } from "./CaseDesk";
 import "../LearnPage.css";
 
-const KNOWN_CASES: ReadonlyArray<CaseDefinition> = [supplierCase];
-
 export function CaseDeskRoute() {
   const { caseId } = useParams<{ caseId: string }>();
-  const match = KNOWN_CASES.find((c) => c.id === caseId) ?? null;
+  const match = caseId ? getCaseById(caseId) ?? null : null;
 
   if (!match) {
     return (

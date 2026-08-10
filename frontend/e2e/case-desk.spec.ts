@@ -613,13 +613,12 @@ test.describe("Case Desk viewport + a11y invariants", () => {
     }
   });
 
-  test("keyboard traversal reaches the reference sheet; Escape closes and restores focus", async ({ page }) => {
+  test("keyboard traversal reaches the consolidated reference sheet; Escape closes and restores focus", async ({ page }) => {
     await startAndEnterInvestigate(page);
 
-    // The desk renders one "Open reference" button per claim-bearing fact.
-    // Focus the first one via its accessible name, then activate it with
-    // the keyboard (Enter). The reference sheet opens.
-    const openRef = page.getByRole("button", { name: "Open reference" }).first();
+    // The desk renders one consolidated reference action. Focus it via its
+    // accessible name, then activate it with the keyboard (Enter).
+    const openRef = page.getByRole("button", { name: /Open all references/i });
     await openRef.focus();
     await expect(openRef).toBeFocused();
     await page.keyboard.press("Enter");
@@ -633,7 +632,7 @@ test.describe("Case Desk viewport + a11y invariants", () => {
     // The labelled-by id must reference a real heading inside the dialog.
     const heading = dialog.locator(`#${labelledBy}`);
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText(/reference/i);
+    await expect(heading).toContainText(/Evidence references/i);
 
     // Escape closes the dialog.
     await page.keyboard.press("Escape");
@@ -687,7 +686,7 @@ test.describe("Case Desk viewport + a11y invariants", () => {
     expectClean(await new AxeBuilder({ page }).analyze());
 
     // ── reference sheet (open) ─────────────────────────────────────────────
-    await page.getByRole("button", { name: "Open reference" }).first().click();
+    await page.getByRole("button", { name: /Open all references/i }).click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: LAZY_TIMEOUT });
     expectClean(await new AxeBuilder({ page }).analyze());
     await page.keyboard.press("Escape");

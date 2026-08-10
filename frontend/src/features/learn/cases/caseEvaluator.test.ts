@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type {
+  AuthoredCaseDefinition,
   CaseDefinition,
   CaseFact,
   RailOption,
@@ -13,7 +14,7 @@ import {
   MIN_REASON_CHARS,
   MIN_REASON_WORDS,
 } from "./caseEvaluator";
-import { supplierCase } from "./caseCatalog";
+import { getCaseById, supplierCase } from "./caseCatalog";
 
 // ─── Test fixtures ──────────────────────────────────────────────────────────
 // A minimal, realistic Canada→US supplier case used to exercise the evaluator
@@ -57,6 +58,12 @@ const REQUESTABLE_FACT_IDS = [
 /** Default "fully investigated" set: every requestable fact was requested. */
 function requestedAll(): Set<string> {
   return new Set(REQUESTABLE_FACT_IDS);
+}
+
+function requestedAllFor(definition: CaseDefinition): Set<string> {
+  return new Set(
+    definition.facts.filter((fact) => fact.requestable).map((fact) => fact.id),
+  );
 }
 
 const RAILS: RailOption[] = [
@@ -139,6 +146,23 @@ function fullDraft(railId: string): RecommendationDraft {
     arrivalExpectation: "Value to beneficiary within 1-2 business days.",
     trackingExpectation: "UETR issued; confirmation of credit available via gpi tracking.",
     customerExplanation: "We will wire USD via Fedwire so the supplier is credited before the deadline.",
+  };
+}
+
+function authoredDraft(definition: AuthoredCaseDefinition, railId: string): RecommendationDraft {
+  return {
+    shortlist: [railId],
+    selectedRail: railId,
+    reasons: [
+      `${railId} matches the gathered corridor requirements, supports the payment objective, and is the strongest fit for the case facts.`,
+    ],
+    conditions: ["Confirm the beneficiary details and release prerequisites before sending."],
+    customerExpectation:
+      `The customer should expect the ${definition.recommendation.paymentLabel.toLowerCase()} to follow the recommended timing, fee, and tracking path for ${definition.recommendation.corridorLabel}.`,
+    priceExpectation: "",
+    arrivalExpectation: "",
+    trackingExpectation: "",
+    customerExplanation: "",
   };
 }
 
@@ -242,6 +266,21 @@ describe("evaluateRecommendation quality tiers", () => {
     const outcome = evaluateRecommendation(makeCase(), thin, requestedAll());
     expect(outcome.quality).toBe("possible");
     expect(outcome.reasoningGap).not.toBeNull();
+  });
+
+  it("uses one customer expectation instead of three separate expectation fields", () => {
+    const consolidated = {
+      ...fullDraft("swift-fedwire"),
+      priceExpectation: "",
+      arrivalExpectation: "",
+      trackingExpectation: "",
+      customerExpectation: "The customer should expect a justified fee, same-day value, and tracking confirmation.",
+    };
+
+    const outcome = evaluateRecommendation(makeCase(), consolidated, requestedAll());
+
+    expect(["defensible", "preferred"]).toContain(outcome.quality);
+    expect(outcome.soundReasoning).toContain("Articulated a customer expectation.");
   });
 
   it("rates an eligible, fully-reasoned but non-best-fit rail as defensible", () => {
@@ -617,4 +656,70 @@ describe("evaluateRecommendation — T1b substantive-reason threshold", () => {
     const outcome = evaluateRecommendation(supplierCase, draft, requestedAll());
     expect(outcome.quality).toBe("preferred");
   });
+});
+
+describe("evaluateRecommendation — authored cross-corridor cases", () => {
+  const authoredCases = [
+    {
+      caseId: "uk-eurozone-supplier",
+      preferredRailId: "sepa-instant",
+      alternativeRailId: "swift-eur-shared",
+      invalidRailId: "chaps-gbp-domestic",
+    },
+    {
+      caseId: "nigeria-uk-contractor",
+      preferredRailId: "swift-gbp",
+      alternativeRailId: "local-collection-gbp",
+      invalidRailId: "sepa-eur-payout",
+    },
+    {
+      caseId: "us-mexico-vendor",
+      preferredRailId: "swift-usd-mexico",
+      alternativeRailId: "cross-border-ach-mexico",
+      invalidRailId: "fednow-domestic",
+    },
+  ] as const;
+
+  it.each(authoredCases)(
+    "scores %s using authored rules and recommendation metadata",
+    ({ caseId, preferredRailId, alternativeRailId, invalidRailId }) => {
+      const definition = getCaseById(caseId);
+      expect(definition).toBeDefined();
+      const requestedFactIds = requestedAllFor(definition!);
+      const preferredRail = definition!.rails.find((rail) => rail.id === preferredRailId);
+
+      expect(preferredRail?.fitTags).toEqual(
+        expect.arrayContaining(["urgency", "tracking", "cost"]),
+      );
+
+      const preferredOutcome = evaluateRecommendation(
+        definition!,
+        authoredDraft(definition!, preferredRailId),
+        requestedFactIds,
+      );
+      expect(preferredOutcome.quality).toBe("preferred");
+
+      const alternativeOutcome = evaluateRecommendation(
+        definition!,
+        authoredDraft(definition!, alternativeRailId),
+        requestedFactIds,
+      );
+      expect(alternativeOutcome.quality).toBe("defensible");
+
+      const invalidOutcome = evaluateRecommendation(
+        definition!,
+        authoredDraft(definition!, invalidRailId),
+        requestedFactIds,
+      );
+      expect(invalidOutcome.quality).toBe("invalid");
+      expect(invalidOutcome.invalidRailIds).toContain(invalidRailId);
+
+      const outcomesBlob = JSON.stringify([
+        preferredOutcome,
+        alternativeOutcome,
+        invalidOutcome,
+      ]);
+      expect(outcomesBlob).not.toContain("USD payment to the United States");
+    },
+  );
 });

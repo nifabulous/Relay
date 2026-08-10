@@ -1,9 +1,7 @@
 /**
  * EvidenceRail — the evidence ledger for the Case Desk.
  *
- * Renders the synthetic customer's request as a prominent anchor landmark at
- * the top (the single most important context: what the customer needs), then
- * groups the case's facts by their `state`:
+ * Groups the case's facts by their `state`:
  *
  *   supplied   — given up front by the customer / scenario
  *   gathered   — the learner requested these (they are now in evidence)
@@ -14,11 +12,13 @@
  *   - `verified`     for facts whose SourceClaim is current
  *   - `under_review` for facts whose source is being refreshed
  *
- * Each claim-bearing fact has an "Open reference" button that calls
- * `onOpenReference(fact.id)` so the Case Desk can open the ReferenceSheet.
+ * The rail offers one consolidated reference action for all currently
+ * available claim-bearing facts. Requestable unknown values remain excluded
+ * until the learner gathers them, so the sheet never discloses an answer early.
  *
  * The rail is purely presentational: it takes the definition, the set of
- * requested fact ids, and an open-reference callback. It never writes state.
+ * requested fact ids, and a consolidated-reference callback. It never writes
+ * state.
  */
 import type { CaseDefinition, CaseFact } from "./caseTypes";
 import { StatusChip } from "../../../design-system/StatusChip";
@@ -28,11 +28,17 @@ import "./EvidenceRail.css";
 export interface EvidenceRailProps {
   definition: CaseDefinition;
   requestedFactIds: string[];
-  /**
-   * Called when the learner opens the reference sheet for a fact. The opener
-   * button is passed so the Case Desk can restore focus to it on close.
-   */
-  onOpenReference: (factId: string, opener?: HTMLButtonElement | null) => void;
+  /** Open one consolidated sheet for all currently available references. */
+  onOpenAllReferences?: (opener?: HTMLButtonElement | null) => void;
+}
+
+export function CustomerRequestAnchor({ request }: { request: string }) {
+  return (
+    <section className="evidence-rail__customer-request" aria-label="Customer request">
+      <h2 className="evidence-rail__section-title">Customer request</h2>
+      <p className="evidence-rail__customer-request-text">{request}</p>
+    </section>
+  );
 }
 
 type FactState = CaseFact["state"];
@@ -66,18 +72,29 @@ function sourceStatus(definition: CaseDefinition): "verified" | "under_review" {
   return definition.reviewStatus === "under_review" ? "under_review" : "verified";
 }
 
-export function EvidenceRail({ definition, requestedFactIds, onOpenReference }: EvidenceRailProps) {
+export function EvidenceRail({
+  definition,
+  requestedFactIds,
+  onOpenAllReferences,
+}: EvidenceRailProps) {
   const requestedSet = new Set(requestedFactIds);
   const factStatus = sourceStatus(definition);
+  const referenceableFacts = definition.facts.filter((fact) => {
+    const valueHidden = fact.requestable && fact.state === "unknown" && !requestedSet.has(fact.id);
+    return Boolean(fact.claim) && !valueHidden;
+  });
 
   return (
     <aside className="evidence-rail" aria-label="Evidence">
-      {/* Customer request anchor — the single most important context. A region
-          with an accessible name so AT users can jump to it. */}
-      <section className="evidence-rail__customer-request" aria-label="Customer request">
-        <h2 className="evidence-rail__section-title">Customer request</h2>
-        <p className="evidence-rail__customer-request-text">{definition.customerRequest}</p>
-      </section>
+      {onOpenAllReferences && referenceableFacts.length > 0 && (
+        <Button
+          variant="secondary"
+          className="evidence-rail__all-references"
+          onClick={(e) => onOpenAllReferences(e.currentTarget)}
+        >
+          Open all references ({referenceableFacts.length})
+        </Button>
+      )}
 
       {SECTIONS.map(({ state, heading, description }) => {
         const facts = factsByState(definition.facts, state);
@@ -131,15 +148,6 @@ export function EvidenceRail({ definition, requestedFactIds, onOpenReference }: 
                       </p>
                     ) : (
                       <p className="evidence-rail__fact-value">{fact.value}</p>
-                    )}
-                    {fact.claim && !valueHidden && (
-                      <Button
-                        variant="secondary"
-                        className="evidence-rail__fact-reference"
-                        onClick={(e) => onOpenReference(fact.id, e.currentTarget)}
-                      >
-                        Open reference
-                      </Button>
                     )}
                   </li>
                 );

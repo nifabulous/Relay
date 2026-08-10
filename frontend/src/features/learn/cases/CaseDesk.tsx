@@ -2,14 +2,14 @@
  * CaseDesk — the orchestrator for the evidence-led supplier case workspace.
  *
  * Owns the reducer (`useReducer(caseReducer, …)`), persistence
- * (`saveCaseSession`), the debounced customerExplanation write, the optional
+ * (`saveCaseSession`), the debounced customer-expectation write, the optional
  * injected enrichment adapter (rendered through AsyncRegion), focus
  * management across phase transitions, and the polite live region for
  * evidence changes.
  *
  * Phase rendering (Phase-1 scope):
  *   brief        → the customer request + a Start action.
- *   investigate  → the EvidenceRail + FactRequest + RailShortlist + Reference
+ *   investigate  → the EvidenceRail + FactRequest + Rail choice + Reference
  *                  Sheet. This is the heart of Task 4.
  *   recommend    → light scaffolding (the same evidence + a note that the full
  *                  recommendation flow is Task 5). The rail/draft controls are
@@ -18,9 +18,9 @@
  *                  case outcome, debrief) fleshes these out.
  *
  * Persistence + debounce:
- *   - Material actions (start, request-facts, edit-draft, open-reference)
+ *   - Material actions (start, request-facts, edit-draft, open-all-references)
  *     dispatch AND persist the resulting session.
- *   - customerExplanation writes are DEBOUNCED 300ms after the last edit and
+ *   - customer-expectation writes are DEBOUNCED 300ms after the last edit and
  *     flushed on blur, Exit case, and Start again. The in-memory draft is
  *     authoritative while a write is pending (the ref holds the latest text).
  *
@@ -48,11 +48,11 @@ import {
   saveCaseSession,
   type CaseSession,
 } from "./caseStore";
-import { supplierCase } from "./caseCatalog";
-import { evaluateRecommendation } from "./caseEvaluator";
+import { getCaseById } from "./caseCatalog";
+import { evaluateRecommendation, missingRequiredFactsForRail } from "./caseEvaluator";
 import { CaseOutcome } from "./CaseOutcome";
 import { CaseDebrief } from "./CaseDebrief";
-import { EvidenceRail } from "./EvidenceRail";
+import { CustomerRequestAnchor, EvidenceRail } from "./EvidenceRail";
 import { FactRequest } from "./FactRequest";
 import { RailShortlist } from "./RailShortlist";
 import { RecommendationSummary } from "./RecommendationSummary";
@@ -97,19 +97,10 @@ function enrichmentStatus(state: EnrichmentState): AsyncStatus {
   }
 }
 
-// The known-cases lookup. In Phase 1 there is a single case; keeping the map
-// explicit makes a future second case a single edit point and lets the route
-// pass through any caseId without a special case here.
-const KNOWN_CASES: ReadonlyArray<CaseDefinition> = [supplierCase];
-
-function findCase(caseId: string): CaseDefinition | null {
-  return KNOWN_CASES.find((c) => c.id === caseId) ?? null;
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
-  const definition = findCase(caseId);
+  const definition = getCaseById(caseId)!;
   // Lazy initializer: if a stored session exists, resume from it; else start
   // fresh. loadCaseSession returns null when absent/corrupt and a recovered
   // session on revision mismatch — both are handled by passing the result
@@ -125,7 +116,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // must not be persisted. The reducer's `open-reference` action still records
   // that a reference was opened (for analytics / the debrief), but the sheet's
   // open/close is purely local.
-  const [openReferenceFactId, setOpenReferenceFactId] = useState<string | null>(null);
+  const [openAllReferences, setOpenAllReferences] = useState(false);
   // The opener button for the currently-open sheet, used to restore focus.
   const referenceOpenerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -163,14 +154,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // The phase heading ref — focus moves here on phase transition.
   const phaseHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
-  // ── customerExplanation debounce ──────────────────────────────────────────
+  // ── customer expectation debounce ─────────────────────────────────────────
   // The in-memory draft is authoritative during a pending write: the text box
   // is controlled by `explanationText` (local state), and a debounced
   // edit-draft action persists it. We flush on blur, Exit case, and Start
   // again. 300ms matches the plan.
-  const [explanationText, setExplanationText] = useState(session.draft.customerExplanation);
+  const [explanationText, setExplanationText] = useState(session.draft.customerExpectation ?? "");
   const explanationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingExplanationRef = useRef(session.draft.customerExplanation);
+  const pendingExplanationRef = useRef(session.draft.customerExpectation ?? "");
 
   // Always-current view of the session so async callbacks (the debounce
   // timer, the unmount cleanup) never close over a stale session snapshot.
@@ -179,15 +170,15 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     sessionRef.current = session;
   }, [session]);
 
-  // Keep the local text in sync if the session's customerExplanation changes
+  // Keep the local text in sync if the session's customerExpectation changes
   // out from under us (e.g. restart, revision reset). We only adopt the
   // session value when nothing is pending so we never clobber an unsaved edit.
   useEffect(() => {
     if (explanationTimerRef.current === null) {
-      setExplanationText(session.draft.customerExplanation);
-      pendingExplanationRef.current = session.draft.customerExplanation;
+      setExplanationText(session.draft.customerExpectation ?? "");
+      pendingExplanationRef.current = session.draft.customerExpectation ?? "";
     }
-  }, [session.draft.customerExplanation]);
+  }, [session.draft.customerExpectation]);
 
   // Cleanup: flush any pending write on unmount so an Exit mid-debounce does
   // not lose the last keystrokes. Reads sessionRef so it persists the LATEST
@@ -237,10 +228,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
 
   function flushExplanation(text: string) {
     const current = sessionRef.current;
-    if (text !== current.draft.customerExplanation) {
-      const next = caseReducer(current, { type: "edit-draft", patch: { customerExplanation: text } });
+    if (text !== current.draft.customerExpectation) {
+      const next = caseReducer(current, { type: "edit-draft", patch: { customerExpectation: text } });
       if (next !== current) {
-        dispatch({ type: "edit-draft", patch: { customerExplanation: text } });
+        dispatch({ type: "edit-draft", patch: { customerExpectation: text } });
         persist(next);
       }
     }
@@ -253,8 +244,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // setSaveError — those are pointless on an unmounted component.
   function flushExplanationToDisk(text: string) {
     const current = sessionRef.current;
-    if (text === current.draft.customerExplanation) return;
-    const next = caseReducer(current, { type: "edit-draft", patch: { customerExplanation: text } });
+    if (text === current.draft.customerExpectation) return;
+    const next = caseReducer(current, { type: "edit-draft", patch: { customerExpectation: text } });
     if (next === current) return;
     const stamped = { ...next, updatedAt: new Date().toISOString() };
     try {
@@ -317,13 +308,13 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   // Each keystroke ran structuredClone + JSON.stringify + setItem for the
   // whole session — wasteful for a few-KB payload. Debounce the persist (NOT
   // the dispatch — the UI stays responsive) to 300ms after the last edit,
-  // with flush on blur / send / restart / unmount. customerExplanation has
+  // with flush on blur / send / restart / unmount. The expectation has
   // its own debounce machinery above (it has its own pending-text ref so the
   // dispatch can be deferred too); this debounce wraps only the persist.
   //
   // The pending session ref always holds the LATEST next-session computed by
   // handleDraftPatch, so coalescing rapid edits persists only the final value
-  // (matching the customerExplanation behaviour).
+  // (matching the expectation behaviour).
   const draftPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDraftPersistRef = useRef<CaseSession | null>(null);
 
@@ -375,24 +366,19 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   }, [session.phase]);
 
   // ── Focus restoration after the reference sheet closes ───────────────────
-  // The ReferenceSheet is conditionally rendered (`referenceFact && <Sheet/>`),
-  // so when it closes it UNMOUNTS rather than re-rendering with open=false.
-  // Its own close-effect (which calls returnFocusRef.current.focus()) never
-  // fires because the component is gone. CaseDesk owns the close transition
-  // and restores focus to the opener here. The opener button was captured on
-  // open via referenceOpenerRef; if no opener was captured the ref falls back
-  // to the hidden sentinel, which is harmless.
-  const prevOpenReferenceRef = useRef(openReferenceFactId);
+  // The ReferenceSheet is conditionally rendered, so when it closes it
+  // UNMOUNTS rather than re-rendering with open=false. CaseDesk owns the close
+  // transition and restores focus to the opener here. The same contract covers
+  // the consolidated all-references sheet.
+  const prevOpenReferencesRef = useRef(openAllReferences);
   useEffect(() => {
-    const prev = prevOpenReferenceRef.current;
-    const curr = openReferenceFactId;
-    prevOpenReferenceRef.current = curr;
-    // Transition from open (non-null) → closed (null): restore focus.
-    if (prev !== null && curr === null) {
+    const wasOpen = prevOpenReferencesRef.current;
+    prevOpenReferencesRef.current = openAllReferences;
+    if (wasOpen && !openAllReferences) {
       const opener = referenceOpenerRef.current;
       if (opener) opener.focus();
     }
-  }, [openReferenceFactId]);
+  }, [openAllReferences]);
 
   // ── Evidence live region ──────────────────────────────────────────────────
   // Announce when the requested-fact set changes. T18: announce on the array
@@ -471,7 +457,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   }
 
   // ── Send recommendation ──────────────────────────────────────────────────
-  // The commit. CRITICAL ORDERING: fold any pending customerExplanation write
+  // The commit. CRITICAL ORDERING: fold any pending customer-expectation write
   // into the snapshot FIRST so the immutable firstAttempt captures the latest
   // typed text. We compute the flushed session LOCALLY (not via sessionRef)
   // because flushExplanation's edit-draft dispatch is batched by React and
@@ -524,7 +510,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     //    the evaluator scores `possible` for thin expectations rather than
     //    blocking the commit, and a learner may legitimately send a partial
     //    recommendation to see the consequence.
-    let flushedText = session.draft.customerExplanation;
+    let flushedText = session.draft.customerExpectation ?? "";
     if (explanationTimerRef.current !== null) {
       clearTimeout(explanationTimerRef.current);
       explanationTimerRef.current = null;
@@ -555,9 +541,9 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     // 2) Compute the flushed session locally by folding the pending text into
     //    the draft. If nothing was pending, this is a no-op (same reference).
     const flushedSession =
-      flushedText === session.draft.customerExplanation
+      flushedText === (session.draft.customerExpectation ?? "")
         ? session
-        : caseReducer(session, { type: "edit-draft", patch: { customerExplanation: flushedText } });
+        : caseReducer(session, { type: "edit-draft", patch: { customerExpectation: flushedText } });
 
     // 2b) Validate the flushed draft (spec L213). Build the error list against
     //     the FLUSHED draft so a pending rail selection just before Send counts.
@@ -574,7 +560,22 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (flushedSession.draft.selectedRail === null) {
       // The rail-selection fieldset is the control the learner must interact
       // with. Its id is set on the RailShortlist's fieldset element.
-      errors.push({ message: "Select a rail to recommend.", controlId: "case-desk-rail-shortlist" });
+      errors.push({ message: "Select a rail to recommend.", controlId: "case-desk-rail-choice" });
+    } else if (definition) {
+      const missingFactIds = missingRequiredFactsForRail(
+        definition,
+        flushedSession.draft.selectedRail,
+        new Set(flushedSession.requestedFactIds),
+      );
+      if (missingFactIds.length > 0) {
+        const missingFactLabels = missingFactIds.map(
+          (id) => definition.facts.find((fact) => fact.id === id)?.label ?? id,
+        );
+        errors.push({
+          message: `Gather these facts before recommending: ${missingFactLabels.join(", ")}.`,
+          controlId: "case-desk-fact-request",
+        });
+      }
     }
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -588,7 +589,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       //    T1: pass the set of facts the learner actually requested so the
       //    investigation is load-bearing (a requestable fact not requested is
       //    treated as unknown for scoring). flushedSession derives from
-      //    session (only customerExplanation may differ), so it carries the
+      //    session (only customer expectation may differ), so it carries the
       //    same requestedFactIds.
       if (!definition) return;
       const outcome = evaluateRecommendation(
@@ -608,7 +609,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       //    deterministic, so re-running it from the same inputs yields `next`.
       if (next !== flushedSession) {
         if (flushedSession !== session) {
-          dispatch({ type: "edit-draft", patch: { customerExplanation: flushedText } });
+          dispatch({ type: "edit-draft", patch: { customerExpectation: flushedText } });
         }
         dispatch({ type: "send-recommendation", outcome, submittedAt });
         persist(next);
@@ -690,14 +691,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         setInvalidationEvent({
           id: invalidationIdRef.current,
           message:
-            "Evidence changed — your rail shortlist, selected rail, and reasoning have been cleared. Rebuild your recommendation against the new evidence.",
+            "Evidence changed — your rail choice and reasoning have been cleared. Rebuild your recommendation against the new evidence.",
         });
       }
     }
   }
 
   // Invalidation focus + announce. Fires when a new invalidation event is
-  // set, moves focus to the shortlist heading (the first affected decision),
+  // set, moves focus to the rail heading (the first affected decision),
   // then schedules a clear so the live region text is spoken once and then
   // empties. Clearing (rather than leaving the text) is what lets a
   // subsequent invalidation register as a distinct change even if its
@@ -788,21 +789,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     }
   }
 
-  function handleOpenReference(factId: string, opener?: HTMLButtonElement | null) {
-    const next = caseReducer(session, { type: "open-reference", referenceId: factId });
-    if (next !== session) {
-      dispatch({ type: "open-reference", referenceId: factId });
-      persist(next);
-    }
-    // Capture the actual opener button so focus is restored to it on close.
-    // Falls back to whatever the ref currently points at (the hidden sentinel)
-    // so the ReferenceSheet's returnFocusRef contract always resolves.
-    if (opener) referenceOpenerRef.current = opener;
-    setOpenReferenceFactId(factId);
-  }
-
   function handleCloseReference() {
-    setOpenReferenceFactId(null);
+    setOpenAllReferences(false);
   }
 
   // ── Enrichment: build an extended definition by APPENDING enrichment facts ─
@@ -826,11 +814,35 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     return { ...definition, facts: [...definition.facts, ...additions] };
   }, [definition, enrichmentFacts]);
 
-  // The fact currently shown in the ReferenceSheet (if any).
-  const referenceFact =
-    openReferenceFactId && effectiveDefinition
-      ? effectiveDefinition.facts.find((f) => f.id === openReferenceFactId) ?? null
-      : null;
+  // A consolidated sheet must obey the same disclosure rule as the evidence
+  // rail: requestable unknown values are not referenceable until gathered.
+  const referenceFacts =
+    effectiveDefinition
+      ? effectiveDefinition.facts.filter((fact) => {
+          const valueHidden =
+            fact.requestable && fact.state === "unknown" && !session.requestedFactIds.includes(fact.id);
+          return Boolean(fact.claim) && !valueHidden;
+        })
+      : [];
+
+  function handleOpenAllReferences(opener?: HTMLButtonElement | null) {
+    if (opener) referenceOpenerRef.current = opener;
+
+    // Keep the existing review telemetry meaningful: opening the consolidated
+    // sheet counts as reviewing every reference currently disclosed in it.
+    let next = session;
+    for (const fact of referenceFacts) {
+      next = caseReducer(next, { type: "open-reference", referenceId: fact.id });
+    }
+    if (next !== session) {
+      dispatch({ type: "open-reference", referenceId: referenceFacts[0].id });
+      for (const fact of referenceFacts.slice(1)) {
+        dispatch({ type: "open-reference", referenceId: fact.id });
+      }
+      persist(next);
+    }
+    setOpenAllReferences(true);
+  }
 
   // Unknown-case guard: if the route passed an id we don't know, render a
   // minimal honest state. (The route already guards this, but the Case Desk is
@@ -869,7 +881,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       {/* Polite live region for invalidation announcements (DESIGN spec
           §invalidation). Separate from the evidence region so a screen reader
           delivers both the "evidence changed" and "decisions cleared" messages
-          distinctly. Cleared after focus moves to the shortlist. */}
+          distinctly. Cleared after focus moves to the rail choice. */}
       <div className="case-desk__live" aria-live="polite">
         {invalidationEvent?.message}
       </div>
@@ -902,9 +914,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRequestFacts={handleRequestFacts}
           onDraftPatch={handleDraftPatch}
           onDraftFieldBlur={flushDraftPersist}
-          onOpenReference={handleOpenReference}
+          onOpenAllReferences={handleOpenAllReferences}
           onCloseReference={handleCloseReference}
-          referenceFact={referenceFact}
+          openAllReferences={openAllReferences}
+          referenceFacts={referenceFacts}
           referenceOpenerRef={referenceOpenerRef}
           explanationText={explanationText}
           onExplanationChange={(text) => {
@@ -1059,9 +1072,10 @@ interface InvestigatePhaseProps {
   // input's onBlur so a pending debounced persist writes to localStorage at
   // once when the learner leaves the field.
   onDraftFieldBlur: () => void;
-  onOpenReference: (factId: string, opener?: HTMLButtonElement | null) => void;
+  onOpenAllReferences: (opener?: HTMLButtonElement | null) => void;
   onCloseReference: () => void;
-  referenceFact: CaseFact | null;
+  openAllReferences: boolean;
+  referenceFacts: CaseFact[];
   referenceOpenerRef: RefObject<HTMLButtonElement | null>;
   explanationText: string;
   onExplanationChange: (text: string) => void;
@@ -1094,9 +1108,10 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     onRequestFacts,
     onDraftPatch,
     onDraftFieldBlur,
-    onOpenReference,
+    onOpenAllReferences,
     onCloseReference,
-    referenceFact,
+    openAllReferences,
+    referenceFacts,
     referenceOpenerRef,
     explanationText,
     onExplanationChange,
@@ -1193,8 +1208,14 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
         </section>
       )}
 
+      {/* Keep the customer's need in view before the workbench. On narrow
+          screens this prevents the evidence rail from pushing the request
+          below every task control; on wide screens it remains a clear context
+          anchor above the task/evidence columns. */}
+      <CustomerRequestAnchor request={definition.customerRequest} />
+
       <div className="case-desk__split">
-        {/* The task column: fact request + rail shortlist. On wide screens this
+        {/* The task column: fact request + rail choice. On wide screens this
             sits beside the evidence rail; on narrow screens the evidence sheet
             stacks below (labelled so AT can navigate it). */}
         <div className="case-desk__task">
@@ -1259,7 +1280,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               Reasoning
             </h2>
             <label className="case-desk__field">
-              <span className="case-desk__field-label">Primary reason</span>
+              <span className="case-desk__field-label">Why this rail?</span>
               <input
                 type="text"
                 className="case-desk__input"
@@ -1274,7 +1295,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               />
             </label>
             <label className="case-desk__field">
-              <span className="case-desk__field-label">Conditions / risks</span>
+              <span className="case-desk__field-label">Key risk or trade-off?</span>
               <input
                 type="text"
                 className="case-desk__input"
@@ -1284,37 +1305,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               />
             </label>
             <label className="case-desk__field">
-              <span className="case-desk__field-label">Price expectation</span>
-              <input
-                type="text"
-                className="case-desk__input"
-                value={session.draft.priceExpectation}
-                onChange={(e) => onDraftPatch({ priceExpectation: e.target.value })}
-                onBlur={onDraftFieldBlur}
-              />
-            </label>
-            <label className="case-desk__field">
-              <span className="case-desk__field-label">Arrival expectation</span>
-              <input
-                type="text"
-                className="case-desk__input"
-                value={session.draft.arrivalExpectation}
-                onChange={(e) => onDraftPatch({ arrivalExpectation: e.target.value })}
-                onBlur={onDraftFieldBlur}
-              />
-            </label>
-            <label className="case-desk__field">
-              <span className="case-desk__field-label">Tracking expectation</span>
-              <input
-                type="text"
-                className="case-desk__input"
-                value={session.draft.trackingExpectation}
-                onChange={(e) => onDraftPatch({ trackingExpectation: e.target.value })}
-                onBlur={onDraftFieldBlur}
-              />
-            </label>
-            <label className="case-desk__field">
-              <span className="case-desk__field-label">Explanation for the customer</span>
+              <span className="case-desk__field-label">What should the customer expect?</span>
               <textarea
                 className="case-desk__textarea"
                 rows={4}
@@ -1331,7 +1322,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
               />
               <span className="case-desk__field-meta">
                 <span className="case-desk__field-helper">
-                  Use synthetic details only — no real customer or account data.
+                  Cover cost, timing, tracking, and what you’ll tell the customer. Use synthetic details only — no real customer or account data.
                 </span>
                 <span
                   className={[
@@ -1391,10 +1382,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           <EvidenceRail
             definition={definition}
             requestedFactIds={session.requestedFactIds}
-            onOpenReference={(factId, opener) => {
-              // Capture the opener button so focus is restored to it on close.
-              onOpenReference(factId, opener);
-            }}
+            onOpenAllReferences={onOpenAllReferences}
           />
 
           {/* Enrichment region — rendered through AsyncRegion. Authored facts
@@ -1444,8 +1432,8 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           className="relay-btn relay-btn--secondary"
           // Hidden helper that exists only to give the reference-opener ref a
           // stable home when no fact-specific button has been clicked. The
-          // actual opener (the EvidenceRail's "Open reference" button) is
-          // captured on click via captureOpener below. This fallback keeps the
+          // actual opener (the EvidenceRail's consolidated reference button)
+          // is captured on click. This fallback keeps the
           // ref non-null for the ReferenceSheet contract.
           aria-hidden="true"
           tabIndex={-1}
@@ -1457,9 +1445,9 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
         <Link to="/learn" className="relay-btn relay-btn--secondary">Exit case</Link>
       </div>
 
-      {referenceFact && (
+      {openAllReferences && referenceFacts.length > 0 && (
         <ReferenceSheet
-          fact={referenceFact}
+          facts={referenceFacts}
           open={true}
           onClose={onCloseReference}
           returnFocusRef={referenceOpenerRef}

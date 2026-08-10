@@ -9,9 +9,27 @@
  * This module is types-only: no runtime values, no logic.
  */
 
-export type CaseId = "canada-us-supplier";
+export type CaseId = string;
 export type CasePhase = "brief" | "investigate" | "recommend" | "resolve" | "debrief";
 export type DecisionQuality = "invalid" | "possible" | "defensible" | "preferred";
+
+export interface CaseRecommendationProfile {
+  preferredRailId: string;
+  priorityFactIds: {
+    urgency?: string;
+    tracking?: string;
+    cost?: string;
+  };
+  corridorLabel: string;
+  paymentLabel: string;
+}
+
+export interface RailEligibilityRule {
+  factId: string;
+  operator: "equals" | "includes";
+  value: string;
+  outcome: "eligible" | "ineligible";
+}
 
 export interface SourceClaim {
   source: string;
@@ -42,7 +60,9 @@ export interface RailOption {
   name: string;
   eligibility: string;
   requiredFacts: string[];
+  eligibilityRules?: RailEligibilityRule[];
   reasons: string[];
+  fitTags?: string[];
   source?: SourceClaim;
   /**
    * Optional concise worked explanation revealed in the resolve phase after
@@ -54,7 +74,7 @@ export interface RailOption {
 }
 
 export interface TransferDefinition {
-  id: "canada-us-supplier-transfer";
+  id: string;
   customerRequest: string;
   facts: CaseFact[];
   rails: RailOption[];
@@ -63,20 +83,35 @@ export interface TransferDefinition {
 export interface CaseDefinition {
   id: CaseId;
   title: string;
+  summary?: string;
   customerRequest: string;
+  contentRevision?: string;
   verifiedAt: string;
   reviewBy: string;
   reviewStatus: "current" | "under_review";
   facts: CaseFact[];
   rails: RailOption[];
+  recommendation?: CaseRecommendationProfile;
   transfer: TransferDefinition;
 }
+
+/**
+ * Authored catalog entries keep the metadata required. The looser
+ * CaseDefinition shape exists only as a compatibility boundary for legacy
+ * fixtures and consumers that intentionally omit those fields.
+ */
+export type AuthoredCaseDefinition = CaseDefinition & Required<
+  Pick<CaseDefinition, "summary" | "contentRevision" | "recommendation">
+>;
 
 export interface RecommendationDraft {
   shortlist: string[];
   selectedRail: string | null;
   reasons: string[];
   conditions: string[];
+  /** Consolidated learner-facing expectation for cost, timing, tracking, and explanation. */
+  customerExpectation?: string;
+  /** Legacy fields retained so persisted drafts and old attempts remain readable. */
   priceExpectation: string;
   arrivalExpectation: string;
   trackingExpectation: string;

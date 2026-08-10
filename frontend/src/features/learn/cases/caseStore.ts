@@ -39,7 +39,8 @@ import type {
   CasePhase,
   RecommendationDraft,
 } from "./caseTypes";
-import { CASE_REVISION } from "./caseCatalog";
+import { customerExpectationFor } from "./caseDraft";
+import { CASE_REVISION, getCaseById } from "./caseCatalog";
 import {
   saveVersioned,
   type SaveResult,
@@ -140,11 +141,16 @@ export const EMPTY_DRAFT: RecommendationDraft = {
   selectedRail: null,
   reasons: [],
   conditions: [],
+  customerExpectation: "",
   priceExpectation: "",
   arrivalExpectation: "",
   trackingExpectation: "",
   customerExplanation: "",
 };
+
+export function getCaseRevision(caseId: CaseId): string {
+  return getCaseById(caseId)?.contentRevision ?? CASE_REVISION;
+}
 
 /**
  * The very first session state for a case, before the learner has started.
@@ -155,7 +161,7 @@ export function createInitialCaseSession(caseId: CaseId): CaseSession {
   return {
     schemaVersion: 1,
     caseId,
-    caseRevision: CASE_REVISION,
+    caseRevision: getCaseRevision(caseId),
     status: "not_started",
     phase: "brief",
     requestedFactIds: [],
@@ -511,7 +517,7 @@ export function caseReducer(session: CaseSession, action: CaseAction): CaseSessi
       return {
         schemaVersion: 1,
         caseId: session.caseId,
-        caseRevision: CASE_REVISION,
+        caseRevision: getCaseRevision(session.caseId),
         status: "in_progress",
         phase: nextPhase,
         requestedFactIds: [],
@@ -685,6 +691,7 @@ function isRecommendationDraft(value: unknown): value is RecommendationDraft {
     (v.selectedRail === null || typeof v.selectedRail === "string") &&
     isStringArray(v.reasons) &&
     isStringArray(v.conditions) &&
+    (v.customerExpectation === undefined || typeof v.customerExpectation === "string") &&
     typeof v.priceExpectation === "string" &&
     typeof v.arrivalExpectation === "string" &&
     typeof v.trackingExpectation === "string" &&
@@ -766,8 +773,70 @@ export function isCaseSession(value: unknown, caseId: CaseId): value is CaseSess
         ["low", "medium", "high"].includes(v.baselineConfidence))) &&
     // baselineCaptured is additive; accept undefined (older sessions) + bool.
     (v.baselineCaptured === undefined || typeof v.baselineCaptured === "boolean") &&
-    typeof v.updatedAt === "string"
+    normalizeLocalSessionUpdatedAt(v.updatedAt) !== null
   );
+}
+
+/**
+ * Parse an unknown payload into a normalized CaseSession for the given case.
+ * Returns null when the payload does not satisfy the same structural guard
+ * used by the storage loader.
+ */
+export function parseCaseSessionPayload(caseId: CaseId, value: unknown): CaseSession | null {
+  if (!isCaseSession(value, caseId)) {
+    return null;
+  }
+  const updatedAt = normalizeLocalSessionUpdatedAt(value.updatedAt);
+  if (updatedAt === null) {
+    return null;
+  }
+  return normalizeParsedCaseSession(value, updatedAt);
+}
+
+/**
+ * Parse an imported learner-backup case session. Imported payloads are
+ * intentionally stricter than browser-local legacy storage: the import path
+ * rejects empty or malformed timestamps before merge, while still normalizing
+ * older-but-valid ISO strings such as second-only `...Z` forms.
+ */
+export function parseImportedCaseSessionPayload(caseId: CaseId, value: unknown): CaseSession | null {
+  if (!isCaseSession(value, caseId)) {
+    return null;
+  }
+  const updatedAt = normalizeImportedSessionUpdatedAt(value.updatedAt);
+  if (updatedAt === null) {
+    return null;
+  }
+  return normalizeParsedCaseSession(value, updatedAt);
+}
+
+function normalizeParsedCaseSession(session: CaseSession, updatedAt: string): CaseSession {
+  return normalizeBaseline(
+    normalizeDiagnosis(
+      normalizeTransferOutcome(normalizeDrafts({ ...session, updatedAt })),
+    ),
+  );
+}
+
+function normalizeLocalSessionUpdatedAt(value: unknown): string | null {
+  if (value === "") {
+    return "";
+  }
+  return normalizeImportedSessionUpdatedAt(value);
+}
+
+function normalizeImportedSessionUpdatedAt(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
+    return null;
+  }
+  const epoch = Date.parse(value);
+  if (!Number.isFinite(epoch)) {
+    return null;
+  }
+  return new Date(epoch).toISOString();
 }
 
 /**
@@ -816,16 +885,14 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // interrupted by tab close, a hand-edited localStorage entry, a sibling
   // key from an older build) lands here. The type guard is pure (no side
   // effects) so the I/O boundary contract is preserved.
-  if (!isCaseSession(parsed, caseId)) {
-    return null;
-  }
-  const stored = parsed;
+  const stored = parseCaseSessionPayload(caseId, parsed);
+  if (!stored) return null;
 
   // Revision mismatch: recover without losing the first attempt. The
   // recovery contract (recoverStaleSession) constructs a known-good shape,
   // so a structurally-valid session with a mismatched caseRevision still
   // resumes — it does NOT hit the null-on-corrupt path.
-  if (stored.caseRevision !== CASE_REVISION) {
+  if (stored.caseRevision !== getCaseRevision(caseId)) {
     return recoverStaleSession(caseId, stored);
   }
 
@@ -836,7 +903,7 @@ export function loadCaseSession(caseId: CaseId): CaseSession | null {
   // read-time coercion — no schema bump, no migration write.
   // Spec-L189 diagnose-step: `diagnosis` is likewise additive — older sessions
   // lack it. Normalize to "" in the same pass.
-  return normalizeBaseline(normalizeDiagnosis(normalizeTransferOutcome(stored)));
+  return stored;
 }
 
 /**
@@ -847,7 +914,7 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
   return {
     schemaVersion: 1,
     caseId,
-    caseRevision: CASE_REVISION,
+    caseRevision: getCaseRevision(caseId),
     status: "under_review",
     phase: "investigate",
     requestedFactIds: [],
@@ -865,6 +932,21 @@ function recoverStaleSession(caseId: CaseId, stale: CaseSession): CaseSession {
     baselineConfidence: null,
       baselineCaptured: false,
     updatedAt: stale.updatedAt,
+  };
+}
+
+function normalizeDraft(draft: RecommendationDraft): RecommendationDraft {
+  // New drafts persist the consolidated field (including an intentional empty
+  // value). Only older payloads that predate the field need the compatibility
+  // fallback, so do not rewrite a current draft on every load.
+  if (typeof draft.customerExpectation === "string") return draft;
+  return { ...draft, customerExpectation: customerExpectationFor(draft) };
+}
+
+function normalizeDrafts(session: CaseSession): CaseSession {
+  return {
+    ...session,
+    draft: normalizeDraft(session.draft),
   };
 }
 
@@ -941,6 +1023,7 @@ function draftsEqual(a: RecommendationDraft, b: RecommendationDraft): boolean {
   if (a.priceExpectation !== b.priceExpectation) return false;
   if (a.arrivalExpectation !== b.arrivalExpectation) return false;
   if (a.trackingExpectation !== b.trackingExpectation) return false;
+  if (a.customerExpectation !== b.customerExpectation) return false;
   if (a.customerExplanation !== b.customerExplanation) return false;
   if (!arrayEqual(a.shortlist, b.shortlist)) return false;
   if (!arrayEqual(a.reasons, b.reasons)) return false;

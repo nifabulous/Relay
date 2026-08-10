@@ -218,6 +218,134 @@
   color: var(--color-ink-muted);
 }
 
+/* ── Ungraded baseline capture ──────────────────────────────────────────── */
+
+.case-desk__baseline {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-action);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.case-desk__baseline-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.case-desk__baseline-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.55fr);
+  gap: var(--space-4);
+}
+
+.case-desk__baseline-rails,
+.case-desk__baseline-confidence {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__baseline-legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+}
+
+.case-desk__baseline-rail,
+.case-desk__baseline-confidence-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.case-desk__baseline-rail:hover,
+.case-desk__baseline-confidence-option:hover {
+  background: var(--color-action-surface);
+  border-color: var(--color-action-border);
+}
+
+.case-desk__baseline-rail input,
+.case-desk__baseline-confidence-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-action);
+  flex-shrink: 0;
+}
+
+.case-desk__baseline-rail-name,
+.case-desk__baseline-confidence-label {
+  font-size: var(--text-sm);
+  color: var(--color-ink-strong);
+}
+
+@media (max-width: 768px) {
+  .case-desk__baseline-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Validation summary ─────────────────────────────────────────────────── */
+
+.case-desk__validation-summary {
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-bg);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-desk__validation-title {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-danger);
+}
+
+.case-desk__validation-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-desk__validation-item {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.case-desk__validation-link {
+  color: var(--color-danger);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.case-desk__validation-link:hover {
+  color: var(--color-danger-hover);
+}
+
 /* ── Enrichment region ───────────────────────────────────────────────────── */
 
 .case-desk__enrichment {
@@ -355,6 +483,31 @@
 .case-desk__outcome-quality {
   display: flex;
   align-items: center;
+}
+
+.case-desk__outcome-worked,
+.case-desk__outcome-diagnosis {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.case-desk__outcome-worked-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: var(--leading-relaxed);
+}
+
+.case-desk__field-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-snug);
 }
 
 /* Reasoning-gap callout: the single most important thing to strengthen. Uses
@@ -632,6 +785,20 @@
 
 .case-desk__debrief-disclosure-text {
   margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: var(--leading-relaxed);
+}
+
+.case-desk__debrief-baseline {
+  border: 1px solid var(--color-action-border);
+  background: var(--color-action-surface);
+  border-radius: var(--radius-region);
+  padding: var(--space-4);
+}
+
+.case-desk__debrief-baseline-text {
+  margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
   color: var(--color-ink);
   line-height: var(--leading-relaxed);

@@ -109,7 +109,7 @@
   font-style: italic;
 }
 
-.evidence-rail__fact-reference {
+.evidence-rail__all-references {
   align-self: flex-start;
   min-height: 44px;
 }

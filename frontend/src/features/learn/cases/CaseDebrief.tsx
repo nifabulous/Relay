@@ -11,7 +11,7 @@
  *
  *   1. SUPPORTED PERFORMANCE — how the learner did on the MAIN case. They had
  *      full scaffolding: all authored facts, the full reasoning fields
- *      (price/arrival/tracking/customerExplanation), and the rail shortlist.
+ *      (price/arrival/tracking/customerExplanation), and the chosen rail.
  *      The most-recent attempt (revisedAttempt if present, else firstAttempt)
  *      is the load-bearing outcome. If they revised, both attempts are
  *      acknowledged factually without framing either as better.
@@ -170,7 +170,7 @@ export function CaseDebrief({
 
       {/* ── SECTION 1: SUPPORTED PERFORMANCE ────────────────────────────────
           The main case. Full scaffolding (all authored facts, full reasoning
-          fields, the rail shortlist). The most-recent attempt wins; if the
+          fields, the chosen rail). The most-recent attempt wins; if the
           learner revised, both attempts are acknowledged factually — never
           framed as better/worse. The heading is the section-distinct label
           ("Supported performance") so AT and the plan's "distinct headings"

@@ -28,10 +28,11 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { CaseEntry } from "./CaseEntry";
 import { CaseDeskRoute } from "./CaseDeskRoute";
-import { supplierCase } from "./caseCatalog";
+import { CASE_CATALOG, getCaseById, supplierCase } from "./caseCatalog";
 import {
   createInitialCaseSession,
   saveCaseSession,
@@ -40,6 +41,7 @@ import {
 import type { CaseDefinition } from "./caseTypes";
 import { LearnModulePage } from "../LearnModulePage";
 import { LearnIndexPage } from "../LearnIndexPage";
+import { saveProgress } from "../../../lib/persistence/storage";
 
 beforeEach(() => {
   localStorage.clear();
@@ -82,6 +84,14 @@ describe("CaseEntry — fresh state", () => {
     renderEntry(supplierCase, null);
     expect(screen.queryByRole("link", { name: /resume case/i })).toBeNull();
     expect(screen.queryByText(/^completed$/i)).toBeNull();
+  });
+
+  it("falls back to the customer request when summary metadata is omitted at the compatibility boundary", () => {
+    const { summary: _summary, contentRevision: _contentRevision, recommendation: _recommendation, ...legacyCase } =
+      supplierCase;
+
+    renderEntry(legacyCase, null);
+    expect(screen.getByText(supplierCase.customerRequest)).toBeInTheDocument();
   });
 });
 
@@ -281,6 +291,55 @@ describe("learn/cases/:caseId route", () => {
     const backLink = screen.getByRole("link", { name: /back to learn/i });
     expect(backLink).toHaveAttribute("href", "/learn");
   });
+
+  it.each([
+    "uk-eurozone-supplier",
+    "nigeria-uk-contractor",
+    "us-mexico-vendor",
+  ])("renders the case desk for %s", (caseId) => {
+    const definition = getCaseById(caseId);
+    expect(definition).toBeDefined();
+
+    renderRoutes(`/learn/cases/${caseId}`);
+
+    expect(
+      screen.getByRole("heading", { name: definition!.title }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/case not found/i)).toBeNull();
+  });
+});
+
+describe("LearnModulePage — gated module navigation", () => {
+  function renderModulePage() {
+    return render(
+      <MemoryRouter initialEntries={["/learn/lab-3"]}>
+        <Routes>
+          <Route path="/learn/:moduleId" element={<LearnModulePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  it("disables the next module until the current lab is complete", () => {
+    saveProgress({ schemaVersion: 1, completedModuleIds: ["lab-1", "lab-2"] });
+    renderModulePage();
+
+    expect(screen.queryByRole("link", { name: /How Money Moves: Correspondent Routing/i })).toBeNull();
+    expect(screen.getByText(/How Money Moves: Correspondent Routing.*Complete this lab to unlock/i)).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
+  it("enables the next module after the current lab is complete", () => {
+    saveProgress({ schemaVersion: 1, completedModuleIds: ["lab-1", "lab-2", "lab-3"] });
+    renderModulePage();
+
+    expect(screen.getByRole("link", { name: /How Money Moves: Correspondent Routing/i })).toHaveAttribute(
+      "href",
+      "/learn/lab-4",
+    );
+  });
 });
 
 // ─── Production wiring: LearnIndexPage → CaseEntry ──────────────────────────
@@ -307,11 +366,17 @@ describe("LearnIndexPage — production wiring of the case session", () => {
       </MemoryRouter>,
     );
 
+    const canadaHeading = screen.getByRole("heading", {
+      name: "Canada → US supplier payment",
+    });
+    const canadaSection = canadaHeading.closest("section");
+
+    expect(canadaSection).not.toBeNull();
     expect(
-      screen.getByRole("link", { name: /resume case/i }),
+      within(canadaSection!).getByRole("link", { name: /resume case/i }),
     ).toHaveAttribute("href", "/learn/cases/canada-us-supplier");
     expect(
-      screen.queryByRole("link", { name: /^start case$/i }),
+      within(canadaSection!).queryByRole("link", { name: /^start case$/i }),
     ).toBeNull();
   });
 
@@ -338,5 +403,97 @@ describe("LearnIndexPage — production wiring of the case session", () => {
     // loadCaseSession ever writes (e.g. a "recover-and-persist" side effect),
     // this assertion fails.
     expect(localStorage.getItem(key)).toBe(before);
+  });
+
+  it("renders one case card per catalog entry with matching routes, summaries, and unique heading ids", () => {
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    const caseHeadings = CASE_CATALOG.map((definition) =>
+      screen.getByRole("heading", { name: definition.title }),
+    );
+
+    expect(caseHeadings).toHaveLength(4);
+
+    const headingIds = new Set<string>();
+    for (const definition of CASE_CATALOG) {
+      const heading = screen.getByRole("heading", { name: definition.title });
+      const section = heading.closest("section");
+
+      expect(heading).toHaveAttribute("id", `case-entry__title-${definition.id}`);
+      expect(section).not.toBeNull();
+      expect(section).toHaveAttribute("aria-labelledby", `case-entry__title-${definition.id}`);
+      expect(within(section!).getByText(definition.summary)).toBeInTheDocument();
+      expect(
+        within(section!).getByRole("link", { name: /start case/i }),
+      ).toHaveAttribute("href", `/learn/cases/${definition.id}`);
+
+      headingIds.add(heading.id);
+    }
+
+    expect(headingIds.size).toBe(CASE_CATALOG.length);
+  });
+
+  it("groups all case entries in the labelled Customer case desks region", () => {
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    const rail = screen.getByRole("region", { name: "Customer case desks" });
+    const tracks = Array.from(rail.children).filter((child) =>
+      child.classList.contains("learn-case-desks__track"),
+    );
+    expect(tracks).toHaveLength(1);
+
+    const track = tracks[0];
+    expect(track.children).toHaveLength(CASE_CATALOG.length);
+    expect(
+      Array.from(track.children).every((child) => child.matches("section.case-entry")),
+    ).toBe(true);
+    expect(rail.querySelectorAll('a[href^="/learn/cases/"]')).toHaveLength(
+      CASE_CATALOG.filter((definition) => definition.reviewStatus !== "under_review").length,
+    );
+  });
+
+  it("keeps the Canada card fresh when only the Mexico case has a saved session", () => {
+    const mexicoSession = {
+      ...createInitialCaseSession("us-mexico-vendor"),
+      status: "in_progress" as const,
+      phase: "investigate" as const,
+      requestedFactIds: ["tracking-need"],
+    };
+    saveCaseSession(mexicoSession);
+
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    const canadaHeading = screen.getByRole("heading", {
+      name: "Canada → US supplier payment",
+    });
+    const canadaSection = canadaHeading.closest("section");
+    expect(canadaSection).not.toBeNull();
+    expect(
+      within(canadaSection!).getByRole("link", { name: /start case/i }),
+    ).toHaveAttribute("href", "/learn/cases/canada-us-supplier");
+    expect(
+      within(canadaSection!).queryByRole("link", { name: /resume case/i }),
+    ).toBeNull();
+
+    const mexicoHeading = screen.getByRole("heading", {
+      name: "US → Mexico urgent vendor payment",
+    });
+    const mexicoSection = mexicoHeading.closest("section");
+    expect(mexicoSection).not.toBeNull();
+    expect(
+      within(mexicoSection!).getByRole("link", { name: /resume case/i }),
+    ).toHaveAttribute("href", "/learn/cases/us-mexico-vendor");
   });
 });

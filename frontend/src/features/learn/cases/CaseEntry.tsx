@@ -35,7 +35,7 @@
  *
  * Testability: `CaseEntry` is pure presentation — it takes `caseDef` and
  * `session` as props and never touches storage or globals. Production wires
- * `supplierCase` + `loadCaseSession(...)`; tests inject overrides (e.g. an
+ * `CASE_CATALOG` + `loadCaseSession(...)`; tests inject overrides (e.g. an
  * under_review case) directly.
  */
 
@@ -123,6 +123,7 @@ interface CaseEntryProps {
 export function CaseEntry({ caseDef, session }: CaseEntryProps) {
   const state = deriveCaseEntryState(caseDef, session);
   const href = CASE_HREF(caseDef.id);
+  const titleId = `case-entry__title-${caseDef.id}`;
 
   return (
     <section
@@ -134,16 +135,15 @@ export function CaseEntry({ caseDef, session }: CaseEntryProps) {
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-labelledby="case-entry__title"
+      aria-labelledby={titleId}
     >
       <div className="case-entry__header">
         <p className="case-entry__eyebrow">Customer case desk</p>
-        <h2 id="case-entry__title" className="case-entry__title">
+        <h2 id={titleId} className="case-entry__title">
           {caseDef.title}
         </h2>
         <p className="case-entry__subtitle">
-          A guided scenario: gather the facts, weigh the rails, and recommend
-          the right payment path for a real-feeling supplier payment.
+          {caseDef.summary ?? caseDef.customerRequest}
         </p>
       </div>
 

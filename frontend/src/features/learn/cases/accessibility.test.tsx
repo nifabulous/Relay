@@ -15,9 +15,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { CaseDesk } from "./CaseDesk";
-import { CASE_REVISION, supplierCase } from "./caseCatalog";
+import { CASE_CATALOG, CASE_REVISION, supplierCase } from "./caseCatalog";
 import type { CaseSession } from "./caseStore";
 import { createInitialCaseSession } from "./caseStore";
+import { LearnIndexPage } from "../LearnIndexPage";
 
 const CASE_ID = supplierCase.id;
 const SESSION_KEY = `relay:case-session:${CASE_ID}`;
@@ -136,6 +137,25 @@ describe("CaseDesk accessibility", () => {
     chips.forEach((chip) => {
       expect(chip).not.toHaveAttribute("role", "status");
     });
+  });
+});
+
+describe("Learn index case entry accessibility", () => {
+  it("gives each case card a distinct labelled region tied to that case heading", () => {
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    for (const definition of CASE_CATALOG) {
+      const heading = screen.getByRole("heading", { name: definition.title });
+      const section = heading.closest("section");
+
+      expect(heading).toHaveAttribute("id", `case-entry__title-${definition.id}`);
+      expect(section).not.toBeNull();
+      expect(section).toHaveAttribute("aria-labelledby", `case-entry__title-${definition.id}`);
+    }
   });
 });
 
@@ -312,21 +332,33 @@ describe("CaseDesk recovery notice accessibility", () => {
 // ─── ReferenceSheet button has an accessible name ──────────────────────────
 
 describe("ReferenceSheet trigger labelling", () => {
-  it("the EvidenceRail's open-reference buttons are labelled buttons (not icon-only)", async () => {
+  it("offers one consolidated trigger for the currently available references", async () => {
     await startInvestigate();
-    // Every claim-bearing fact renders an "Open reference" button with a
-    // visible text label — never an icon-only control.
-    const buttons = screen.getAllByRole("button", { name: "Open reference" });
-    expect(buttons.length).toBeGreaterThan(0);
-    buttons.forEach((btn) => {
-      expect(btn.textContent?.trim()).toBe("Open reference");
-    });
+    const button = screen.getByRole("button", { name: /open all references/i });
+    expect(button).toBeVisible();
+  });
+
+  it("opens the currently available references in one consolidated sheet", async () => {
+    await startInvestigate();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /open all references/i }));
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("Evidence references");
+    expect(dialog).toHaveTextContent("Beneficiary country");
+    expect(dialog).toHaveTextContent("Invoice currency");
+  });
+
+  it("uses one consolidated reference action instead of repeating per-fact actions", async () => {
+    await startInvestigate();
+    expect(screen.getAllByRole("button", { name: /open all references/i })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Open reference" })).not.toBeInTheDocument();
   });
 
   it("the reference sheet's close button has an aria-label", async () => {
     await startInvestigate();
     const user = userEvent.setup();
-    await user.click(screen.getAllByRole("button", { name: "Open reference" })[0]);
+    await user.click(screen.getByRole("button", { name: /open all references/i }));
     // The close button exposes an accessible name even though its visible
     // text is just "Close" — the aria-label disambiguates it from any other
     // "Close" control on the page.

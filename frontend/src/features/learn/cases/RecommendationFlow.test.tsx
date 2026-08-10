@@ -6,10 +6,10 @@
  *     until Send is clicked).
  *   - Send creates exactly one immutable firstAttempt.
  *   - Rapid double-submit creates only ONE firstAttempt (reducer guard).
- *   - Debounced customerExplanation writes are flushed on Send so the snapshot
+ *   - Debounced customer expectation writes are flushed on Send so the snapshot
  *     includes the latest text.
- *   - Empty customerExplanation is allowed (the field is optional).
- *   - customerExplanation is capped at 1,000 chars; the remaining-count shows
+ *   - Empty customer expectation is allowed (the field is optional).
+ *   - Customer expectation is capped at 1,000 chars; the remaining-count shows
  *     and over-limit input is rejected.
  *   - Exiting before Send does NOT create a firstAttempt; the in-progress
  *     draft is preserved in storage.
@@ -51,7 +51,7 @@ const FULLY_INVESTIGATED = new Set(ALL_REQUESTABLE_FACT_IDS);
 
 /**
  * A fully-reasoned draft that selects the best-fit rail (swift-fedwire) with
- * price/arrival/tracking expectations and a reason. This scores "preferred" so
+ * one consolidated customer expectation and a reason. This scores "preferred" so
  * the evaluator produces a distinctive consequence string the "evaluation
  * hidden" test can assert is absent before Send.
  */
@@ -61,9 +61,10 @@ function preferredDraft(overrides: Partial<RecommendationDraft> = {}): Recommend
     selectedRail: "swift-fedwire",
     reasons: ["Fast same-day USD value protects the 2-business-day deadline."],
     conditions: [],
-    priceExpectation: "The wire fee is justified by the shipment deadline.",
-    arrivalExpectation: "Same-day USD value, well within 2 business days.",
-    trackingExpectation: "Full UETR tracking with confirmation of credit.",
+    customerExpectation: "The wire fee is justified by the shipment deadline; same-day USD value arrives within 2 business days with full UETR tracking and confirmation of credit.",
+    priceExpectation: "",
+    arrivalExpectation: "",
+    trackingExpectation: "",
     customerExplanation: "",
     ...overrides,
   };
@@ -114,8 +115,8 @@ function getSendButton(): HTMLButtonElement {
   return screen.getByRole("button", { name: /send recommendation/i });
 }
 
-function getExplanationTextarea(): HTMLTextAreaElement {
-  return screen.getByRole("textbox", { name: /explanation for the customer/i });
+function getExpectationTextarea(): HTMLTextAreaElement {
+  return screen.getByRole("textbox", { name: /what should the customer expect/i });
 }
 
 beforeEach(() => {
@@ -238,14 +239,14 @@ describe("RecommendationFlow — linked validation error-summary on Send (spec L
 
 describe("RecommendationFlow — one immutable first attempt", () => {
   it("snapshots the draft into firstAttempt on Send and preserves it across re-renders", () => {
-    const draft = preferredDraft({ customerExplanation: "committed explanation" });
-    seedRecommendSession({ customerExplanation: "committed explanation" });
+    const draft = preferredDraft({ customerExpectation: "committed expectation" });
+    seedRecommendSession({ customerExpectation: "committed expectation" });
     const { rerender } = renderDesk();
     fireEvent.click(getSendButton());
     // The snapshot captured the draft verbatim.
     let stored = readStoredSession();
     expect(stored?.firstAttempt?.draft).toEqual(draft);
-    expect(stored?.firstAttempt?.draft.customerExplanation).toBe("committed explanation");
+    expect(stored?.firstAttempt?.draft.customerExpectation).toBe("committed expectation");
     // Re-rendering does not mutate the immutable snapshot. (edit-draft is
     // illegal in the resolve phase per the reducer, so the snapshot is
     // structurally protected; we assert it here all the same.)
@@ -287,50 +288,50 @@ describe("RecommendationFlow — rapid double-submit", () => {
 // ─── Debounce + flush-on-send ────────────────────────────────────────────────
 
 describe("RecommendationFlow — debounced explanation flushes on Send", () => {
-  it("flushes the pending customerExplanation so the submitted snapshot includes the latest text", () => {
-    seedRecommendSession({ customerExplanation: "" });
+  it("flushes the pending customer expectation so the submitted snapshot includes the latest text", () => {
+    seedRecommendSession({ customerExpectation: "" });
     renderDesk();
-    const textarea = getExplanationTextarea();
+    const textarea = getExpectationTextarea();
     // Type into the explanation. The write is debounced 300ms, so localStorage
     // does NOT yet reflect the typed text.
     fireEvent.change(textarea, { target: { value: "flushed right before send" } });
-    expect(readStoredSession()?.draft.customerExplanation ?? "").toBe("");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("");
     // Immediately click Send WITHOUT waiting for the debounce window. The
     // flush-on-send must fold the pending text into the snapshot.
     fireEvent.click(getSendButton());
     const stored = readStoredSession();
     expect(stored?.firstAttempt).not.toBeNull();
-    expect(stored?.firstAttempt?.draft.customerExplanation).toBe("flushed right before send");
+    expect(stored?.firstAttempt?.draft.customerExpectation).toBe("flushed right before send");
   });
 });
 
 // ─── Empty optional explanation ──────────────────────────────────────────────
 
 describe("RecommendationFlow — empty optional explanation", () => {
-  it("allows Send with an empty customerExplanation", () => {
-    seedRecommendSession({ customerExplanation: "" });
+  it("allows Send with an empty customer expectation", () => {
+    seedRecommendSession({ customerExpectation: "" });
     renderDesk();
     fireEvent.click(getSendButton());
     const stored = readStoredSession();
     // Send succeeded — firstAttempt is set with an empty explanation.
     expect(stored?.firstAttempt).not.toBeNull();
-    expect(stored?.firstAttempt?.draft.customerExplanation).toBe("");
+    expect(stored?.firstAttempt?.draft.customerExpectation).toBe("");
   });
 });
 
 // ─── Maximum-length rejection (1,000-char limit) ─────────────────────────────
 
-describe("RecommendationFlow — customerExplanation 1,000-char limit", () => {
+describe("RecommendationFlow — customer expectation 1,000-char limit", () => {
   it("shows a remaining-character counter that starts at 1000", () => {
-    seedRecommendSession({ customerExplanation: "" });
+    seedRecommendSession({ customerExpectation: "" });
     renderDesk();
     expect(screen.getByText(/1000 characters left/i)).toBeInTheDocument();
   });
 
   it("caps input at 1000 characters and clamps the counter at 0", () => {
-    seedRecommendSession({ customerExplanation: "" });
+    seedRecommendSession({ customerExpectation: "" });
     renderDesk();
-    const textarea = getExplanationTextarea();
+    const textarea = getExpectationTextarea();
     // Attempt to enter 1,001 characters. The field clamps to 1,000.
     const tooLong = "a".repeat(1001);
     fireEvent.change(textarea, { target: { value: tooLong } });
@@ -339,16 +340,16 @@ describe("RecommendationFlow — customerExplanation 1,000-char limit", () => {
     expect(screen.getByText(/0 characters left/i)).toBeInTheDocument();
   });
 
-  it("never persists a customerExplanation longer than 1000 characters", () => {
-    seedRecommendSession({ customerExplanation: "" });
+  it("never persists a customer expectation longer than 1000 characters", () => {
+    seedRecommendSession({ customerExpectation: "" });
     renderDesk();
-    const textarea = getExplanationTextarea();
+    const textarea = getExpectationTextarea();
     fireEvent.change(textarea, { target: { value: "b".repeat(1200) } });
     // Flush via blur so the write lands in storage.
     fireEvent.blur(textarea);
     const stored = readStoredSession();
-    expect(stored?.draft.customerExplanation.length).toBeLessThanOrEqual(1000);
-    expect(stored?.draft.customerExplanation).toBe("b".repeat(1000));
+    expect(stored?.draft.customerExpectation?.length).toBeLessThanOrEqual(1000);
+    expect(stored?.draft.customerExpectation).toBe("b".repeat(1000));
   });
 });
 
@@ -356,8 +357,8 @@ describe("RecommendationFlow — customerExplanation 1,000-char limit", () => {
 
 describe("RecommendationFlow — exiting before Send preserves the draft, no firstAttempt", () => {
   it("does NOT create a firstAttempt when the learner has not clicked Send", () => {
-    const draft = preferredDraft({ customerExplanation: "in-progress draft" });
-    seedRecommendSession({ customerExplanation: "in-progress draft" });
+    const draft = preferredDraft({ customerExpectation: "in-progress draft" });
+    seedRecommendSession({ customerExpectation: "in-progress draft" });
     renderDesk();
     // The learner is in the recommend phase reviewing their draft. They have
     // NOT clicked Send.
@@ -548,7 +549,7 @@ describe("RecommendationFlow 5b — revision does not mutate the first attempt",
     // Begin a revision — phase returns to recommend, draft reset to firstAttempt.
     fireEvent.click(getReviseButton());
     // Change the reasoning to make the revised draft DISTINCT from the first.
-    const priceInput = screen.getByLabelText(/price expectation/i) as HTMLInputElement;
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i }) as HTMLTextAreaElement;
     fireEvent.change(priceInput, { target: { value: "Revised: lower fee tolerance." } });
     // Re-send the revised recommendation.
     fireEvent.click(getSendRevisedButton());
@@ -558,7 +559,7 @@ describe("RecommendationFlow 5b — revision does not mutate the first attempt",
     expect(stored?.firstAttempt).toEqual(beforeFirst);
     // The revised attempt exists and is separate.
     expect(stored?.revisedAttempt).not.toBeNull();
-    expect(stored?.revisedAttempt?.draft.priceExpectation).toBe("Revised: lower fee tolerance.");
+    expect(stored?.revisedAttempt?.draft.customerExpectation).toBe("Revised: lower fee tolerance.");
     expect(stored?.revisedAttempt?.draft).not.toEqual(stored?.firstAttempt?.draft);
     // Back in resolve, showing the revised outcome.
     expect(stored?.phase).toBe("resolve");
@@ -908,20 +909,12 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     // reason is a real sentence (well above the substantive threshold); filler
     // like "x" would leave the learner at `possible`.
     await user.type(
-      screen.getByRole("textbox", { name: /primary reason/i }),
+      screen.getByRole("textbox", { name: /why this rail/i }),
       "Fast same-day USD value protects the 2-business-day deadline.",
     );
     await user.type(
-      screen.getByRole("textbox", { name: /price expectation/i }),
-      "The wire fee is justified by the shipment deadline.",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /arrival expectation/i }),
-      "Same-day USD value, well within 2 business days.",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /tracking expectation/i }),
-      "Full UETR tracking with confirmation of credit.",
+      screen.getByRole("textbox", { name: /what should the customer expect/i }),
+      "The wire fee is justified by the shipment deadline; same-day USD value arrives within 2 business days with full UETR tracking and confirmation of credit.",
     );
 
     // Send. The evaluator scores the now-complete, fully-investigated draft.
@@ -941,11 +934,11 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     expect(stored.requestedFactIds).toEqual(expect.arrayContaining(ALL_REQUESTABLE_FACT_IDS));
   });
 
-  it("blocks `preferred` when the learner skips the investigation (does not request tracking-need)", () => {
-    // The inverse of the reachability guard: a learner who fills every
-    // reasoning field with genuine content but does NOT request tracking-need
-    // (required by swift-fedwire) cannot reach `preferred`. This is the T1
-    // contract — the investigation is load-bearing.
+  it("keeps the learner in investigation when the selected rail needs missing facts", () => {
+    // The investigation is now an explicit workflow gate: a learner who fills
+    // every reasoning field with genuine content but does NOT request
+    // tracking-need (required by swift-fedwire) is sent back to the fact
+    // request rather than receiving a confusing post-submit invalid outcome.
     const initial = createInitialCaseSession(CASE_ID);
     const shell: CaseSession = {
       ...initial,
@@ -969,11 +962,9 @@ describe("RecommendationFlow — preferred tier is reachable via the UI", () => 
     fireEvent.click(getSendButton());
 
     const stored = readStoredSession()!;
-    expect(stored.firstAttempt).not.toBeNull();
-    // Without tracking-need requested, swift-fedwire is missing a required fact
-    // → `invalid`. Definitely NOT `preferred`.
-    expect(stored.firstAttempt!.outcome.quality).toBe("invalid");
-    expect(stored.firstAttempt!.outcome.missingFactIds).toContain("tracking-need");
+    expect(stored.firstAttempt).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent(/gather.*before recommending/i);
+    expect(screen.getByRole("heading", { name: /gather evidence and weigh the rails/i })).toBeInTheDocument();
   });
 
   it("blocks `preferred`/`defensible` when the learner types filler in the reason field (even fully investigated)", () => {

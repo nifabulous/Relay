@@ -1,14 +1,9 @@
 /**
  * RailShortlist — the rail selection surface for the Case Desk.
  *
- * Each rail is exposed through TWO independent native controls:
- *
- *   1. A radio (single-select) for the learner's RECOMMENDED rail
- *      (`draft.selectedRail`). No rail is preselected — selectedRail starts
- *      null and the radios render unchecked.
- *   2. A checkbox (multi-select) for the SHORTLIST (`draft.shortlist`). The
- *      shortlist is the advisory set of rails the learner is weighing; the
- *      radio is the single rail they would recommend.
+ * Each rail is exposed through one native radio control for the learner's
+ * recommended rail (`draft.selectedRail`). No rail is preselected —
+ * selectedRail starts null and the radios render unchecked.
  *
  * Ineligible rails (per `validateShortlist`) show an `invalid` StatusChip so
  * the learner sees why a domestic-only rail does not fit a cross-border case.
@@ -45,15 +40,6 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
     return validateShortlist(definition, { ...draft, shortlist: [railId] }).invalidRailIds.includes(railId);
   }
 
-  function toggleShortlist(railId: string, checked: boolean) {
-    const set = new Set(draft.shortlist);
-    if (checked) set.add(railId);
-    else set.delete(railId);
-    // Preserve authored rail order for a stable list.
-    const ordered = definition.rails.filter((r) => set.has(r.id)).map((r) => r.id);
-    onChange({ shortlist: ordered });
-  }
-
   return (
     <section className="rail-shortlist" aria-labelledby={`${fieldsetId}-title`}>
       <header className="rail-shortlist__header">
@@ -69,8 +55,8 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
           Rails
         </h2>
         <p className="rail-shortlist__desc">
-          Add rails to your shortlist to weigh them, then choose one to
-          recommend. Nothing is preselected.
+          Review each rail, then choose the one you would recommend. Nothing is
+          preselected.
         </p>
       </header>
 
@@ -84,17 +70,16 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
           to AT. */}
       <fieldset
         className="rail-shortlist__rails"
-        id="case-desk-rail-shortlist"
+        id="case-desk-rail-choice"
         tabIndex={-1}
       >
         <legend className="rail-shortlist__rails-legend">
-          Select a rail to recommend
+          Choose one rail to recommend
         </legend>
       <ul className="rail-shortlist__list">
         {definition.rails.map((rail) => {
           const railRegionLabel = rail.name;
           const invalid = isRailInvalid(rail.id);
-          const shortlisted = draft.shortlist.includes(rail.id);
           const selected = draft.selectedRail === rail.id;
           return (
             <li
@@ -115,21 +100,12 @@ export function RailShortlist({ definition, draft, onChange, headingRef }: RailS
                       className="rail-shortlist__radio"
                       value={rail.id}
                       checked={selected}
-                      onChange={() => onChange({ selectedRail: rail.id })}
+                      // Keep the legacy shortlist field in sync for persisted
+                      // sessions and evaluator compatibility; it is no longer
+                      // a separate learner-facing decision.
+                      onChange={() => onChange({ selectedRail: rail.id, shortlist: [rail.id] })}
                     />
                     <span className="rail-shortlist__rail-name">{rail.name}</span>
-                  </label>
-
-                  {/* The shortlist checkbox (multi-select). Distinct from the
-                      radio: lives on the same row but is an independent input. */}
-                  <label className="rail-shortlist__shortlist-label">
-                    <input
-                      type="checkbox"
-                      className="rail-shortlist__shortlist-checkbox"
-                      checked={shortlisted}
-                      onChange={(e) => toggleShortlist(rail.id, e.target.checked)}
-                    />
-                    <span className="rail-shortlist__shortlist-text">Add to shortlist</span>
                   </label>
 
                   {invalid && <StatusChip status="invalid" className="rail-shortlist__invalid" />}

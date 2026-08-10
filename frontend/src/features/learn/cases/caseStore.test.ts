@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import * as caseCatalogModule from "./caseCatalog";
 import type {
   CaseOutcome,
   RecommendationDraft,
@@ -6,6 +7,7 @@ import type {
 import {
   caseReducer,
   loadCaseSession,
+  parseCaseSessionPayload,
   saveCaseSession,
   createInitialCaseSession,
   cloneSession,
@@ -17,6 +19,15 @@ import type { CaseSession } from "./caseStore";
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
 const CASE_ID = "canada-us-supplier" as const;
+const US_MEXICO_CASE_ID = "us-mexico-vendor" as const;
+
+function catalogRevisionFor(caseId: string): string {
+  const definition = caseCatalogModule.getCaseById(caseId);
+  if (!definition) {
+    throw new Error(`Missing case fixture for ${caseId}`);
+  }
+  return definition.contentRevision;
+}
 
 const VALID_OUTCOME: CaseOutcome = {
   quality: "defensible",
@@ -57,8 +68,43 @@ function startedSession(): CaseSession {
   return caseReducer(createInitialCaseSession(CASE_ID), { type: "start" });
 }
 
+function startedSessionFor(caseId: string): CaseSession {
+  return caseReducer(
+    {
+      ...createInitialCaseSession(caseId),
+      caseRevision: catalogRevisionFor(caseId),
+    },
+    { type: "start" },
+  );
+}
+
 beforeEach(() => {
   localStorage.clear();
+});
+
+describe("legacy reasoning draft compatibility", () => {
+  it("derives a consolidated expectation when loading a legacy draft", () => {
+    const initial = createInitialCaseSession(CASE_ID);
+    const { customerExpectation: _customerExpectation, ...legacyDraft } = initial.draft;
+    const legacy = {
+      ...initial,
+      draft: {
+        ...legacyDraft,
+        priceExpectation: "Fee is acceptable for the deadline.",
+        arrivalExpectation: "Funds arrive within two business days.",
+        trackingExpectation: "The sender receives tracking confirmation.",
+        customerExplanation: "Explain the timing and confirmation to the customer.",
+      },
+    };
+
+    localStorage.setItem(`relay:case-session:${CASE_ID}`, JSON.stringify(legacy));
+    const loaded = loadCaseSession(CASE_ID);
+    const expectation = (loaded?.draft as unknown as { customerExpectation: string }).customerExpectation;
+
+    expect(expectation).toContain("Fee is acceptable");
+    expect(expectation).toContain("Funds arrive");
+    expect(expectation).toContain("tracking confirmation");
+  });
 });
 
 // ─── Reducer: legal transitions ─────────────────────────────────────────────
@@ -78,6 +124,11 @@ describe("caseReducer — start", () => {
     expect(next.caseRevision).toBe(CASE_REVISION);
     expect(next.schemaVersion).toBe(1);
     expect(next.caseId).toBe(CASE_ID);
+  });
+
+  it("uses the case definition revision for non-Canada initial sessions", () => {
+    const initial = createInitialCaseSession(US_MEXICO_CASE_ID);
+    expect(initial.caseRevision).toBe(catalogRevisionFor(US_MEXICO_CASE_ID));
   });
 
   it("is a no-op (returns the SAME reference) when already in_progress", () => {
@@ -1173,6 +1224,52 @@ describe("loadCaseSession / saveCaseSession", () => {
       JSON.stringify({ schemaVersion: 99, caseId: CASE_ID }),
     );
     expect(loadCaseSession(CASE_ID)).toBeNull();
+  });
+
+  it("keeps structurally valid legacy local sessions with empty updatedAt readable", () => {
+    const legacySession: CaseSession = {
+      ...startedSession(),
+      updatedAt: "",
+    };
+    localStorage.setItem(
+      "relay:case-session:canada-us-supplier",
+      JSON.stringify(legacySession),
+    );
+
+    expect(loadCaseSession(CASE_ID)).toEqual(legacySession);
+    expect(parseCaseSessionPayload(CASE_ID, legacySession)).toEqual(legacySession);
+  });
+
+  it("keeps other cases resumable until THAT case's catalog revision changes", () => {
+    const canada = startedSessionFor(CASE_ID);
+    const usMexico = startedSessionFor(US_MEXICO_CASE_ID);
+    saveCaseSession(canada);
+    saveCaseSession(usMexico);
+
+    expect(loadCaseSession(CASE_ID)?.status).toBe("in_progress");
+    expect(loadCaseSession(US_MEXICO_CASE_ID)?.status).toBe("in_progress");
+
+    const usMexicoDefinition = caseCatalogModule.getCaseById(US_MEXICO_CASE_ID);
+    if (!usMexicoDefinition) {
+      throw new Error(`Missing case fixture for ${US_MEXICO_CASE_ID}`);
+    }
+    const originalRevision = usMexicoDefinition.contentRevision;
+
+    try {
+      (usMexicoDefinition as { contentRevision: string }).contentRevision =
+        "2026-08-10.us-mexico-vendor-r2";
+
+      const canadaLoaded = loadCaseSession(CASE_ID)!;
+      const usMexicoLoaded = loadCaseSession(US_MEXICO_CASE_ID)!;
+
+      expect(canadaLoaded.status).toBe("in_progress");
+      expect(canadaLoaded.caseRevision).toBe(catalogRevisionFor(CASE_ID));
+      expect(usMexicoLoaded.status).toBe("under_review");
+      expect(usMexicoLoaded.caseRevision).toBe("2026-08-10.us-mexico-vendor-r2");
+    } finally {
+      (usMexicoDefinition as { contentRevision: string }).contentRevision =
+        originalRevision;
+    }
   });
 });
 

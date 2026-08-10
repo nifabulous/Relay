@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { supplierCase } from "./caseCatalog";
+import { CASE_CATALOG, getCaseById, supplierCase } from "./caseCatalog";
 import { disclosedPriorities, bestFitRailId } from "./caseEvaluator";
 import type { SourceClaim } from "./caseTypes";
 
@@ -287,5 +287,57 @@ describe("supplierCase ↔ evaluator contract", () => {
     expect(transferUrgency).toBeDefined();
     const value = (transferUrgency?.value ?? "").toLowerCase();
     expect(value).not.toMatch(/time-critical|business day|asap|urgent|deadline|within \d/);
+  });
+});
+
+describe("case catalog registry", () => {
+  it("exports the ordered authored registry", () => {
+    expect(CASE_CATALOG.map((c) => c.id)).toEqual([
+      "canada-us-supplier",
+      "uk-eurozone-supplier",
+      "nigeria-uk-contractor",
+      "us-mexico-vendor",
+    ]);
+  });
+
+  it("looks up a case by id and returns undefined for unknown cases", () => {
+    expect(getCaseById("us-mexico-vendor")?.title).toContain("Mexico");
+    expect(getCaseById("missing-case")).toBeUndefined();
+  });
+
+  it("keeps registry ids unique", () => {
+    expect(new Set(CASE_CATALOG.map((c) => c.id)).size).toBe(CASE_CATALOG.length);
+  });
+
+  it("ships revision and recommendation metadata for every case", () => {
+    for (const definition of CASE_CATALOG) {
+      expect(definition.contentRevision.length).toBeGreaterThan(0);
+      expect(definition.recommendation.preferredRailId).toEqual(
+        expect.stringMatching(/.+/),
+      );
+      expect(definition.rails.map((rail) => rail.id)).toContain(
+        definition.recommendation.preferredRailId,
+      );
+    }
+  });
+
+  it("maps every authored priority fact id to a fact that exists on the case", () => {
+    for (const definition of CASE_CATALOG) {
+      for (const factId of Object.values(definition.recommendation.priorityFactIds)) {
+        if (!factId) continue;
+        expect(definition.facts.some((fact) => fact.id === factId)).toBe(true);
+      }
+    }
+  });
+
+  it("uses the authored preferredRailId as the best-fit rail once all requestable facts are gathered", () => {
+    for (const definition of CASE_CATALOG) {
+      const requestedFactIds = new Set(
+        definition.facts.filter((fact) => fact.requestable).map((fact) => fact.id),
+      );
+      expect(bestFitRailId(definition, requestedFactIds)).toBe(
+        definition.recommendation.preferredRailId,
+      );
+    }
   });
 });

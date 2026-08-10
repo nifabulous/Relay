@@ -18,7 +18,7 @@
  */
 
 import type {
-  CaseDefinition,
+  AuthoredCaseDefinition,
   CaseFact,
   RailOption,
   SourceClaim,
@@ -67,6 +67,22 @@ const SCENARIO_ASSUMPTION: SourceClaim = {
   currency: "USD",
   scope: "example-assumption",
 };
+
+function createSimulationClaim(
+  source: string,
+  jurisdiction: string,
+  currency?: string,
+): SourceClaim {
+  return {
+    source,
+    owner: "Relay Learn",
+    verifiedAt: "2026-08-05",
+    reviewBy: "2027-02-05",
+    jurisdiction,
+    currency,
+    scope: "simulation-only",
+  };
+}
 
 // ─── Facts ──────────────────────────────────────────────────────────────────
 
@@ -274,20 +290,32 @@ const transferRails: RailOption[] = [
  * investigation; under the new contract the evaluator gates those facts on
  * `requestedFactIds`, so any in-flight draft must be re-investigated.
  */
-export const CASE_REVISION = "2026-07-20.investigation-load-bearing";
+const SUPPLIER_CASE_CONTENT_REVISION = "2026-07-20.investigation-load-bearing";
 
-export const supplierCase: CaseDefinition = {
+export const supplierCase: AuthoredCaseDefinition = {
   id: "canada-us-supplier",
   title: "Canada → US supplier payment",
+  summary: "Canadian business paying a US supplier in USD",
   customerRequest:
     "Maple Ridge Outfitters (fictional simulation) needs to pay a US supplier, United-side Mercantile Supply, " +
     "USD 48,000 for a shipment. The supplier needs value within 2 business days to release the goods and wants " +
     "confirmation that the funds arrived. Recommend the right payment rail under these disclosed priorities.",
+  contentRevision: SUPPLIER_CASE_CONTENT_REVISION,
   verifiedAt: "2026-02-01",
   reviewBy: "2026-08-01",
   reviewStatus: "current",
   facts: supplierCaseFacts,
   rails: supplierCaseRails,
+  recommendation: {
+    preferredRailId: "swift-fedwire",
+    priorityFactIds: {
+      urgency: "urgency",
+      tracking: "tracking-need",
+      cost: "price-sensitivity",
+    },
+    corridorLabel: "Canada → United States",
+    paymentLabel: "Urgent USD supplier payment",
+  },
   transfer: {
     id: "canada-us-supplier-transfer",
     customerRequest:
@@ -297,3 +325,572 @@ export const supplierCase: CaseDefinition = {
     rails: transferRails,
   },
 };
+
+const ukEurozoneSupplierCaseFacts: CaseFact[] = [
+  {
+    id: "destination-country",
+    label: "Beneficiary country",
+    value: "Germany",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay UK→DE case brief (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "destination-currency",
+    label: "Invoice currency",
+    value: "EUR",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay UK→DE case brief (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "amount",
+    label: "Invoice amount",
+    value: "EUR 18,500.00",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay UK→DE case brief (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "urgency",
+    label: "Timing / urgency",
+    value: "Supplier wants value today if possible; next-morning credit is acceptable.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay UK→DE timing note (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "beneficiary-bank",
+    label: "Beneficiary bank",
+    value: "Rhein Commerce Bank AG (simulation), SEPA Instant reachable.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay UK→DE banking setup (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "tracking-need",
+    label: "Tracking requirement",
+    value: "Buyer wants confirmation when funds hit the supplier account before goods dispatch.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay UK→DE customer preference (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "fee-sensitivity",
+    label: "Fee sensitivity",
+    value: "Customer accepts a moderate premium for reliability but prefers scheme pricing over correspondent fees.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay UK→DE customer preference (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "beneficiary-reachability",
+    label: "Beneficiary reachability",
+    value: "Beneficiary bank confirms SCT Inst reachability and can receive instant EUR credits.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay UK→DE reachability note (simulation)", "GB→DE", "EUR"),
+  },
+];
+
+const ukEurozoneSupplierCaseRails: RailOption[] = [
+  {
+    id: "sepa-instant",
+    name: "SEPA Instant",
+    eligibility:
+      "EUR payments to reachable eurozone beneficiaries with near-real-time settlement and scheme confirmation.",
+    eligibilityRules: [
+      { factId: "destination-currency", operator: "equals", value: "EUR", outcome: "eligible" },
+      {
+        factId: "beneficiary-reachability",
+        operator: "includes",
+        value: "SCT Inst reachability",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: [
+      "destination-currency",
+      "amount",
+      "urgency",
+      "beneficiary-bank",
+      "beneficiary-reachability",
+    ],
+    reasons: [
+      "Fast EUR settlement into the eurozone",
+      "Meets same-day supplier release pressure",
+    ],
+    fitTags: ["urgency", "tracking", "cost"],
+    workedExplanation:
+      "SEPA Instant fits because the payment is already in EUR, the German beneficiary is reachable, and the case rewards speed without needing a full correspondent-wire path. It gets value to the supplier quickly while avoiding the extra cost and operational drag of a SWIFT EUR payment.",
+    source: createSimulationClaim("Relay UK→DE rail matrix (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "swift-eur-shared",
+    name: "SWIFT EUR shared-charge wire",
+    eligibility:
+      "EUR correspondent transfer to Germany with broader bank coverage, but slower settlement and higher fees than SEPA Instant.",
+    requiredFacts: ["destination-currency", "amount", "beneficiary-bank", "tracking-need"],
+    reasons: ["Broad reach", "Tracking available", "More expensive than scheme rails"],
+    fitTags: ["correspondent", "tracked", "fallback-coverage"],
+    source: createSimulationClaim("Relay UK→DE rail matrix (simulation)", "GB→DE", "EUR"),
+  },
+  {
+    id: "chaps-gbp-domestic",
+    name: "CHAPS domestic GBP",
+    eligibility:
+      "Domestic GBP settlement within the United Kingdom only. Not a fit for a German beneficiary receiving EUR.",
+    eligibilityRules: [
+      {
+        factId: "destination-country",
+        operator: "equals",
+        value: "United Kingdom",
+        outcome: "eligible",
+      },
+      {
+        factId: "destination-currency",
+        operator: "equals",
+        value: "GBP",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: ["destination-country", "destination-currency"],
+    reasons: ["Domestic same-day rail", "Not cross-border EUR capable"],
+    fitTags: ["domestic-only", "wrong-currency", "ineligible"],
+    source: createSimulationClaim("Relay UK domestic rail note (simulation)", "GB", "GBP"),
+  },
+];
+
+const nigeriaUkContractorCaseFacts: CaseFact[] = [
+  {
+    id: "destination-country",
+    label: "Beneficiary country",
+    value: "United Kingdom",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay NG→UK case brief (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "destination-currency",
+    label: "Invoice currency",
+    value: "GBP",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay NG→UK case brief (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "amount",
+    label: "Invoice amount",
+    value: "GBP 9,800.00",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay NG→UK case brief (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "urgency",
+    label: "Timing / urgency",
+    value: "Contractor wants cleared funds this week before payroll close.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay NG→UK timing note (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "beneficiary-bank",
+    label: "Beneficiary bank",
+    value: "Northbridge Business Bank plc (simulation), UK domestic GBP account.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay NG→UK banking setup (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "tracking-need",
+    label: "Tracking requirement",
+    value: "Finance lead wants a message reference and proof of credit for the contractor file.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay NG→UK customer preference (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "compliance-doc",
+    label: "Documentation readiness",
+    value: "Underlying invoice and contract packet are already approved for a standard cross-border wire review.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay NG→UK compliance note (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "fee-sensitivity",
+    label: "Fee sensitivity",
+    value: "Customer prefers predictable fees and accepts a higher cost if it avoids rework or payment delay.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay NG→UK customer preference (simulation)", "NG→GB", "GBP"),
+  },
+];
+
+const nigeriaUkContractorCaseRails: RailOption[] = [
+  {
+    id: "swift-gbp",
+    name: "SWIFT GBP wire",
+    eligibility:
+      "Cross-border GBP payment with correspondent delivery into a UK GBP account and message-level tracking.",
+    eligibilityRules: [
+      { factId: "destination-currency", operator: "equals", value: "GBP", outcome: "eligible" },
+      {
+        factId: "beneficiary-bank",
+        operator: "includes",
+        value: "GBP account",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: [
+      "destination-currency",
+      "beneficiary-bank",
+      "urgency",
+      "tracking-need",
+      "compliance-doc",
+    ],
+    reasons: [
+      "Direct fit for GBP into the UK",
+      "Tracking and proof of payment align with the case priority",
+    ],
+    fitTags: ["urgency", "tracking", "cost"],
+    workedExplanation:
+      "SWIFT GBP is the best fit because the contractor needs funds this week, the beneficiary can receive GBP locally, and the sender wants traceable delivery evidence. It avoids forcing a currency conversion path and gives the operations team a clear reference trail if the contractor asks for confirmation.",
+    source: createSimulationClaim("Relay NG→UK rail matrix (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "local-collection-gbp",
+    name: "GBP local collection via partner",
+    eligibility:
+      "GBP payout through a UK collection partner. Lower cost, but partner batching can delay same-week certainty.",
+    requiredFacts: ["destination-currency", "beneficiary-bank", "fee-sensitivity"],
+    reasons: ["Lower cost path", "Less control over exact delivery timing"],
+    fitTags: ["partner-payout", "lower-cost", "slower-confirmation"],
+    source: createSimulationClaim("Relay NG→UK rail matrix (simulation)", "NG→GB", "GBP"),
+  },
+  {
+    id: "sepa-eur-payout",
+    name: "SEPA EUR payout",
+    eligibility:
+      "EUR-only eurozone settlement rail. Not suitable for a UK GBP contractor payment.",
+    eligibilityRules: [
+      { factId: "destination-currency", operator: "equals", value: "EUR", outcome: "eligible" },
+    ],
+    requiredFacts: ["destination-currency", "destination-country"],
+    reasons: ["Cheap for EUR in the eurozone", "Wrong currency and corridor here"],
+    fitTags: ["wrong-currency", "eurozone-only", "ineligible"],
+    source: createSimulationClaim("Relay eurozone fallback note (simulation)", "EU", "EUR"),
+  },
+];
+
+const usMexicoVendorCaseFacts: CaseFact[] = [
+  {
+    id: "destination-country",
+    label: "Beneficiary country",
+    value: "Mexico",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→MX case brief (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "destination-currency",
+    label: "Invoice currency",
+    value: "USD",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→MX case brief (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "amount",
+    label: "Invoice amount",
+    value: "USD 32,400.00",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→MX case brief (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "urgency",
+    label: "Timing / urgency",
+    value: "Vendor needs same-day value in USD to release goods from customs hold.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→MX timing note (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "beneficiary-bank",
+    label: "Beneficiary bank",
+    value: "Banco Costera (simulation), USD credit via US correspondent routing.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→MX banking setup (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "tracking-need",
+    label: "Tracking requirement",
+    value: "Operations wants traceability through final credit because the shipment is at the border now.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→MX customer preference (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "same-day-cutoff",
+    label: "Same-day cutoff",
+    value: "Sender is still within the correspondent's same-day USD cutoff window.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→MX cutoff note (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "fee-sensitivity",
+    label: "Fee sensitivity",
+    value: "Customer will pay expedited fees to avoid demurrage and customs delay.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→MX customer preference (simulation)", "US→MX", "USD"),
+  },
+];
+
+const usMexicoVendorCaseRails: RailOption[] = [
+  {
+    id: "swift-usd-mexico",
+    name: "SWIFT USD wire to Mexico",
+    eligibility:
+      "Urgent USD payment routed through a US correspondent for final credit to a Mexican beneficiary bank.",
+    eligibilityRules: [
+      { factId: "destination-currency", operator: "equals", value: "USD", outcome: "eligible" },
+      {
+        factId: "beneficiary-bank",
+        operator: "includes",
+        value: "USD credit",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: [
+      "destination-currency",
+      "beneficiary-bank",
+      "urgency",
+      "tracking-need",
+      "same-day-cutoff",
+    ],
+    reasons: [
+      "Fastest path for same-day USD value",
+      "Tracking helps confirm release-critical credit",
+    ],
+    fitTags: ["urgency", "tracking", "cost"],
+    workedExplanation:
+      "SWIFT USD to Mexico is the best fit because this case is genuinely time-critical, the beneficiary can accept USD through a correspondent, and the sender is still inside the same-day cutoff. The wire path costs more, but it directly optimizes for customs release and traceable final credit.",
+    source: createSimulationClaim("Relay US→MX rail matrix (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "cross-border-ach-mexico",
+    name: "Cross-border ACH to Mexico",
+    eligibility:
+      "Lower-cost USD payout into Mexico through a partner batch file. Delivery is usually next day or later.",
+    requiredFacts: ["destination-currency", "amount", "fee-sensitivity"],
+    reasons: ["Lower fees", "Not ideal for same-day release pressure"],
+    fitTags: ["batch", "lower-cost", "slower-arrival"],
+    source: createSimulationClaim("Relay US→MX rail matrix (simulation)", "US→MX", "USD"),
+  },
+  {
+    id: "fednow-domestic",
+    name: "FedNow domestic USD",
+    eligibility:
+      "US domestic instant payment rail only. Not available for a Mexican beneficiary bank.",
+    eligibilityRules: [
+      {
+        factId: "destination-country",
+        operator: "equals",
+        value: "United States",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: ["destination-country", "destination-currency"],
+    reasons: ["Domestic instant USD rail", "Cross-border Mexico corridor is out of scope"],
+    fitTags: ["domestic-only", "wrong-corridor", "ineligible"],
+    source: createSimulationClaim("Relay US domestic rail note (simulation)", "US", "USD"),
+  },
+];
+
+const ukEurozoneSupplierCase: AuthoredCaseDefinition = {
+  id: "uk-eurozone-supplier",
+  title: "UK → Eurozone supplier payment",
+  summary: "UK buyer paying a German supplier in EUR",
+  customerRequest:
+    "North Quay Retail (fictional simulation) is paying a German supplier EUR 18,500 for inventory replenishment. The supplier wants funds quickly enough to dispatch today, and the buyer wants confidence the credit lands without paying unnecessary correspondent-wire fees.",
+  contentRevision: "2026-08-10.uk-eurozone-supplier-r1",
+  verifiedAt: "2026-08-05",
+  reviewBy: "2027-02-05",
+  reviewStatus: "current",
+  facts: ukEurozoneSupplierCaseFacts,
+  rails: ukEurozoneSupplierCaseRails,
+  recommendation: {
+    preferredRailId: "sepa-instant",
+    priorityFactIds: {
+      urgency: "urgency",
+      tracking: "tracking-need",
+      cost: "fee-sensitivity",
+    },
+    corridorLabel: "United Kingdom → Germany",
+    paymentLabel: "EUR supplier payment",
+  },
+  transfer: {
+    id: "uk-eurozone-supplier-transfer",
+    customerRequest:
+      "Transfer variant (debrief): a routine EUR supplier payment to Germany where next-day settlement is acceptable.",
+    facts: [
+      ukEurozoneSupplierCaseFacts[0],
+      ukEurozoneSupplierCaseFacts[1],
+      {
+        id: "amount",
+        label: "Invoice amount",
+        value: "EUR 4,250.00",
+        state: "supplied",
+        requestable: false,
+      },
+      {
+        id: "urgency",
+        label: "Timing / urgency",
+        value: "Supplier can wait until tomorrow morning.",
+        state: "supplied",
+        requestable: false,
+      },
+    ],
+    rails: [
+      {
+        id: "sepa-credit-transfer",
+        name: "SEPA Credit Transfer",
+        eligibility:
+          "Standard EUR transfer into the eurozone with next-day style settlement.",
+        requiredFacts: ["destination-currency", "amount"],
+        reasons: ["Low-cost routine EUR payment"],
+      },
+    ],
+  },
+};
+
+const nigeriaUkContractorCase: AuthoredCaseDefinition = {
+  id: "nigeria-uk-contractor",
+  title: "Nigeria → UK contractor payment",
+  summary: "Nigerian company paying a UK contractor in GBP",
+  customerRequest:
+    "Lagos Beacon Services (fictional simulation) needs to pay a UK contractor GBP 9,800 for completed project work. The contractor expects funds this week, and the finance lead wants a traceable path that minimizes rework if payment proof is requested.",
+  contentRevision: "2026-08-10.nigeria-uk-contractor-r1",
+  verifiedAt: "2026-08-05",
+  reviewBy: "2027-02-05",
+  reviewStatus: "current",
+  facts: nigeriaUkContractorCaseFacts,
+  rails: nigeriaUkContractorCaseRails,
+  recommendation: {
+    preferredRailId: "swift-gbp",
+    priorityFactIds: {
+      urgency: "urgency",
+      tracking: "tracking-need",
+      cost: "fee-sensitivity",
+    },
+    corridorLabel: "Nigeria → United Kingdom",
+    paymentLabel: "GBP contractor payment",
+  },
+  transfer: {
+    id: "nigeria-uk-contractor-transfer",
+    customerRequest:
+      "Transfer variant (debrief): a smaller GBP contractor payment where timing matters less than price.",
+    facts: [
+      nigeriaUkContractorCaseFacts[0],
+      nigeriaUkContractorCaseFacts[1],
+      {
+        id: "amount",
+        label: "Invoice amount",
+        value: "GBP 2,100.00",
+        state: "supplied",
+        requestable: false,
+      },
+      {
+        id: "urgency",
+        label: "Timing / urgency",
+        value: "Funds can land next week.",
+        state: "supplied",
+        requestable: false,
+      },
+    ],
+    rails: [
+      {
+        id: "local-collection-gbp",
+        name: "GBP local collection via partner",
+        eligibility:
+          "GBP payout through a UK collection partner when delivery speed is less critical.",
+        requiredFacts: ["destination-currency", "amount"],
+        reasons: ["Low-cost routine payout"],
+      },
+    ],
+  },
+};
+
+const usMexicoVendorCase: AuthoredCaseDefinition = {
+  id: "us-mexico-vendor",
+  title: "US → Mexico urgent vendor payment",
+  summary: "US buyer paying an urgent Mexico vendor in USD",
+  customerRequest:
+    "Harborline Imports (fictional simulation) needs to send a USD 32,400 payment to a Mexico vendor whose shipment is waiting at customs. The vendor needs same-day value to release the goods, and operations needs traceable confirmation that credit actually landed.",
+  contentRevision: "2026-08-10.us-mexico-vendor-r1",
+  verifiedAt: "2026-08-05",
+  reviewBy: "2027-02-05",
+  reviewStatus: "current",
+  facts: usMexicoVendorCaseFacts,
+  rails: usMexicoVendorCaseRails,
+  recommendation: {
+    preferredRailId: "swift-usd-mexico",
+    priorityFactIds: {
+      urgency: "urgency",
+      tracking: "tracking-need",
+      cost: "fee-sensitivity",
+    },
+    corridorLabel: "United States → Mexico",
+    paymentLabel: "Urgent USD vendor payment",
+  },
+  transfer: {
+    id: "us-mexico-vendor-transfer",
+    customerRequest:
+      "Transfer variant (debrief): a smaller USD vendor payment to Mexico where next-day arrival is acceptable.",
+    facts: [
+      usMexicoVendorCaseFacts[0],
+      usMexicoVendorCaseFacts[1],
+      {
+        id: "amount",
+        label: "Invoice amount",
+        value: "USD 7,600.00",
+        state: "supplied",
+        requestable: false,
+      },
+      {
+        id: "urgency",
+        label: "Timing / urgency",
+        value: "Vendor can wait until tomorrow.",
+        state: "supplied",
+        requestable: false,
+      },
+    ],
+    rails: [
+      {
+        id: "cross-border-ach-mexico",
+        name: "Cross-border ACH to Mexico",
+        eligibility:
+          "Lower-cost USD payout into Mexico when same-day delivery is not required.",
+        requiredFacts: ["destination-currency", "amount"],
+        reasons: ["Lower-cost non-urgent payout"],
+      },
+    ],
+  },
+};
+
+export const CASE_CATALOG: readonly AuthoredCaseDefinition[] = [
+  supplierCase,
+  ukEurozoneSupplierCase,
+  nigeriaUkContractorCase,
+  usMexicoVendorCase,
+];
+
+export function getCaseById(caseId: string): AuthoredCaseDefinition | undefined {
+  return CASE_CATALOG.find((definition) => definition.id === caseId);
+}
+
+export const CASE_REVISION = supplierCase.contentRevision;

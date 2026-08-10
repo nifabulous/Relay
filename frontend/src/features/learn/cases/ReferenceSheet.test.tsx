@@ -84,6 +84,33 @@ describe("ReferenceSheet", () => {
     expect(text).toMatch(/operator guidance|operator-guidance/i);
   });
 
+  it("renders all supplied facts in one consolidated dialog", () => {
+    const first = factFixture();
+    const second = factFixture({
+      id: "tracking-need",
+      label: "Tracking requirement",
+      value: "UETR tracking is required.",
+    });
+    const returnFocusRef = createRef<HTMLButtonElement>();
+
+    render(
+      <ReferenceSheet
+        facts={[first, second]}
+        open={true}
+        onClose={vi.fn()}
+        returnFocusRef={returnFocusRef}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Evidence references (2)" })).toBeVisible();
+    const dialog = screen.getByRole("dialog");
+    expect(screen.getByRole("heading", { name: "Facts reviewed" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Source details" })).toBeVisible();
+    expect(dialog).toHaveTextContent("Tracking requirement");
+    expect(dialog).toHaveTextContent("UETR tracking is required.");
+    expect(screen.getAllByText(first.claim!.source)).toHaveLength(1);
+  });
+
   it("shows the fact value inside the sheet", () => {
     renderSheet(true, factFixture({ value: "Customer is fee-conscious; willing to pay more." }));
     expect(screen.getByText(/Customer is fee-conscious/)).toBeVisible();

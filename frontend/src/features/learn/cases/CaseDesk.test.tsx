@@ -100,6 +100,33 @@ describe("CaseDesk — customer request anchor", () => {
   });
 });
 
+describe("CaseDesk — consolidated reasoning prompts", () => {
+  it("shows three concise prompts and removes the legacy expectation fields", () => {
+    seedStartedSession();
+    renderDesk();
+
+    expect(screen.getByRole("textbox", { name: /why this rail/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /key risk or trade-off/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /what should the customer expect/i })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /price expectation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /arrival expectation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /tracking expectation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /explanation for the customer/i })).not.toBeInTheDocument();
+  });
+
+  it("places the request anchor before the task/evidence split", () => {
+    seedStartedSession();
+    renderDesk();
+    const investigate = document.querySelector(".case-desk__investigate")!;
+    const request = investigate.querySelector(".evidence-rail__customer-request")!;
+    const split = investigate.querySelector(".case-desk__split")!;
+
+    expect(request.compareDocumentPosition(split) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(split.querySelector(".evidence-rail")).toBeInTheDocument();
+    expect(split.querySelector(".evidence-rail__customer-request")).not.toBeInTheDocument();
+  });
+});
+
 // ─── Fact sections ──────────────────────────────────────────────────────────
 
 describe("CaseDesk — fact sections by state", () => {
@@ -272,17 +299,11 @@ describe("CaseDesk — RailShortlist native controls", () => {
     expect(checked).toHaveLength(0);
   });
 
-  it("renders a shortlist checkbox per rail (multi-select) separate from the radio", () => {
+  it("does not expose a separate shortlist control", () => {
     seedStartedSession();
     renderDesk();
-    // Interac e-Transfer is the domestic-only rail — it appears by name in
-    // the RailShortlist (scope to its region to avoid matching the baseline).
-    const interacRegion = screen.getByRole("region", { name: /Interac e-Transfer/i });
-    expect(interacRegion).toBeInTheDocument();
-    // There is a checkbox labelled for adding to the shortlist, distinct from
-    // the selection radio.
-    const shortlistCheckboxes = screen.getAllByRole("checkbox", { name: /shortlist|add to shortlist/i });
-    expect(shortlistCheckboxes.length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByRole("checkbox", { name: /shortlist|add to shortlist/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^rails$/i })).toBeInTheDocument();
   });
 
   it("marks ineligible rails with an invalid StatusChip", () => {
@@ -293,34 +314,42 @@ describe("CaseDesk — RailShortlist native controls", () => {
     expect(within(railRegion).getByLabelText(/Invalid/i)).toBeInTheDocument();
   });
 
-  it("selecting a radio sets the selectedRail without disturbing the shortlist", async () => {
+  it("selecting a radio is the single rail decision", async () => {
     const user = userEvent.setup();
     seedStartedSession();
     renderDesk();
-    // Check SWIFT-to-Fedwire into the shortlist first (its checkbox lives in
-    // its own rail region, labelled "Add to shortlist").
-    const swiftRegion = screen.getByRole("region", { name: /SWIFT wire to Fedwire/i });
-    const shortlistCb = within(swiftRegion).getByRole("checkbox", { name: /add to shortlist/i });
-    await user.click(shortlistCb);
-    expect(shortlistCb).toBeChecked();
-    // Then select a DIFFERENT rail via radio. Scope to the RailShortlist's
-    // rail region so we don't match the baseline panel's radios.
+    // Select a rail via its radio. Scope to the rail region so we don't match
+    // the baseline panel's radios.
     const achRegion = screen.getByRole("region", { name: /Cross-border ACH/i });
     const radio = within(achRegion).getByRole("radio");
     await user.click(radio);
     expect(radio).toBeChecked();
-    // The shortlist checkbox stays checked (independent controls).
-    expect(shortlistCb).toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: /add to shortlist/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps the learner in investigation when the selected rail needs missing facts", async () => {
+    const user = userEvent.setup();
+    seedStartedSession();
+    renderDesk();
+
+    const swiftRegion = screen.getByRole("region", { name: /SWIFT wire to Fedwire/i });
+    await user.click(within(swiftRegion).getByRole("radio"));
+    await user.click(screen.getByRole("button", { name: "Send recommendation" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/gather.*fact|before recommending/i);
+    expect(screen.getByRole("heading", { name: "Gather evidence and weigh the rails" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Recommendation submitted/i })).not.toBeInTheDocument();
   });
 });
 
 // ─── Invalidation contract (DESIGN spec §invalidation) ─────────────────────
 // When the learner changes the requested-fact set during the recommend phase,
 // the dependent working draft is cleared, a polite live region announces what
-// was cleared, and focus moves to the shortlist heading (the first affected
+// was cleared, and focus moves to the rail heading (the first affected
 // decision). During investigate, no announcement fires and the draft survives.
 describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec §invalidation)", () => {
-  // Seed a session in the recommend phase with a populated draft (shortlist,
+  // Seed a session in the recommend phase with a populated draft (legacy
+  // shortlist field plus selected rail,
   // selected rail, reasoning). This is the state where an evidence change
   // must trigger the invalidation contract.
   function seedRecommendSessionWithDraft() {
@@ -356,28 +385,28 @@ describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec 
 
     // The live region announces what was cleared.
     expect(screen.getByText(/evidence changed/i)).toBeInTheDocument();
-    expect(screen.getByText(/shortlist.*cleared|cleared.*shortlist/i)).toBeInTheDocument();
+    expect(screen.getByText(/rail choice.*cleared|cleared.*rail choice/i)).toBeInTheDocument();
     // The seeded reasoning has been wiped (the input is empty).
     expect(screen.queryByDisplayValue("fast same-day USD value")).not.toBeInTheDocument();
   });
 
-  it("moves focus to the rail shortlist heading (the first affected decision)", async () => {
+  it("moves focus to the rail heading (the first affected decision)", async () => {
     const user = userEvent.setup();
     seedRecommendSessionWithDraft();
     renderDesk();
 
-    // Before the evidence change, focus is NOT on the shortlist heading.
-    const shortlistHeading = screen.getByRole("heading", { name: /^rails$/i });
-    expect(shortlistHeading).not.toBe(document.activeElement);
+    // Before the evidence change, focus is NOT on the rail heading.
+    const railHeading = screen.getByRole("heading", { name: /^rails$/i });
+    expect(railHeading).not.toBe(document.activeElement);
 
     // Change the evidence set.
     await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
     await user.click(screen.getByRole("button", { name: /request facts/i }));
 
-    // After the invalidation, focus has moved to the shortlist heading —
+    // After the invalidation, focus has moved to the rail heading —
     // the first affected decision per DESIGN spec §invalidation.
     await waitFor(() => {
-      expect(document.activeElement).toBe(shortlistHeading);
+      expect(document.activeElement).toBe(railHeading);
     });
   });
 
@@ -393,21 +422,21 @@ describe("CaseDesk — request-facts invalidation announce + focus (DESIGN spec 
     // First invalidation: toggle tracking-need on.
     await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
     await user.click(screen.getByRole("button", { name: /request facts/i }));
-    const shortlistHeading = screen.getByRole("heading", { name: /^rails$/i });
+    const railHeading = screen.getByRole("heading", { name: /^rails$/i });
     await waitFor(() => {
-      expect(document.activeElement).toBe(shortlistHeading);
+      expect(document.activeElement).toBe(railHeading);
     });
 
     // Move focus off the heading so the second focus move is detectable.
     await user.click(screen.getByRole("checkbox", { name: /tracking requirement/i }));
-    expect(document.activeElement).not.toBe(shortlistHeading);
+    expect(document.activeElement).not.toBe(railHeading);
 
     // Second invalidation: request a DIFFERENT fact set. The announcement
-    // must fire again and focus must move back to the shortlist heading.
+    // must fire again and focus must move back to the rail heading.
     await user.click(screen.getByRole("checkbox", { name: /intermediary correspondent/i }));
     await user.click(screen.getByRole("button", { name: /request facts/i }));
     await waitFor(() => {
-      expect(document.activeElement).toBe(shortlistHeading);
+      expect(document.activeElement).toBe(railHeading);
     });
     // The announcement text is still present (re-announced).
     expect(screen.getByText(/evidence changed/i)).toBeInTheDocument();
@@ -655,7 +684,7 @@ describe("CaseDesk — phase rendering", () => {
   });
 });
 
-// ─── customerExplanation debounce + flush (I1) ──────────────────────────────
+// ─── customer expectation debounce + flush (I1) ─────────────────────────────
 // The debounce machinery (three refs, setTimeout, unmount cleanup, sync effect)
 // is the highest-risk code in CaseDesk. These tests cover the full contract:
 //   - writes are debounced 300ms,
@@ -678,10 +707,10 @@ describe("CaseDesk — customerExplanation debounce + flush", () => {
   });
 
   function getExplanationTextarea() {
-    return screen.getByRole("textbox", { name: /explanation for the customer/i });
+    return screen.getByRole("textbox", { name: /what should the customer expect/i });
   }
   function storedExplanation(): string {
-    return readStoredSession()?.draft.customerExplanation ?? "";
+    return readStoredSession()?.draft.customerExpectation ?? "";
   }
 
   it("debounces the write: localStorage is NOT updated until 300ms elapse", () => {
@@ -743,39 +772,39 @@ describe("CaseDesk — customerExplanation debounce + flush", () => {
   it("T4: debounces free-text draft persists (reasoning fields) — localStorage is NOT updated until 300ms elapse", () => {
     seedStartedSession();
     renderDesk();
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i });
     // Type — no clock advancement yet.
     fireEvent.change(priceInput, { target: { value: "next-day" } });
     // localStorage must NOT reflect the edit yet (the dispatch fired and the
     // UI shows the edit, but the persist is debounced).
     expect(priceInput).toHaveValue("next-day");
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("");
     // Advance past the debounce window — the persist fires.
     vi.advanceTimersByTime(300);
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("next-day");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("next-day");
   });
 
   it("T4: flushes the reasoning-field persist on blur (the in-memory edit reaches storage immediately)", () => {
     seedStartedSession();
     renderDesk();
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i });
     fireEvent.change(priceInput, { target: { value: "flushed on blur" } });
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("");
     // Blur flushes the pending write at once.
     fireEvent.blur(priceInput);
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("flushed on blur");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("flushed on blur");
   });
 
   it("T4: coalesces rapid reasoning-field edits — only the LAST value is persisted", () => {
     seedStartedSession();
     renderDesk();
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i });
     fireEvent.change(priceInput, { target: { value: "a" } });
     fireEvent.change(priceInput, { target: { value: "ab" } });
     fireEvent.change(priceInput, { target: { value: "abc" } });
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("");
     vi.advanceTimersByTime(300);
-    expect(readStoredSession()?.draft.priceExpectation ?? "").toBe("abc");
+    expect(readStoredSession()?.draft.customerExpectation ?? "").toBe("abc");
   });
 
   // T17 Part A: the unmount cleanup previously called flushExplanation →
@@ -850,7 +879,7 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
     // Trigger a persist via a reasoning-field edit. (T4 made the reasoning-
     // field persist debounced; user.type + findByRole's polling lets the
     // 300ms debounce fire before the assertion.)
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i });
     await user.type(priceInput, "next-day");
     // The save-error alert (role=alert) surfaces the quota failure.
     const alert = await screen.findByRole("alert");
@@ -884,7 +913,7 @@ describe("CaseDesk — surfaces typed save failures and keeps the in-memory draf
     renderDesk();
     // Trigger the failing persist (price expectation input is debounced;
     // findByRole's polling lets the 300ms debounce fire before the assert).
-    const priceInput = screen.getByRole("textbox", { name: /price expectation/i });
+    const priceInput = screen.getByRole("textbox", { name: /what should the customer expect/i });
     await user.type(priceInput, "a");
     // The alert surfaces the quota failure.
     const alert = await screen.findByRole("alert");

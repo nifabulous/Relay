@@ -47,15 +47,15 @@ export function FactRequest({ definition, requestedFactIds, onChange, onRequest 
           Request facts
         </h2>
         <p className="fact-request__desc">
-          Select the facts you want to gather, then request them to add the
-          results to your evidence.
+          Select the facts you need to make a responsible recommendation, then
+          request them to add the results to your evidence.
         </p>
       </header>
 
       {requestableFacts.length === 0 ? (
         <p className="fact-request__empty">There are no additional facts to request.</p>
       ) : (
-        <fieldset className="fact-request__fieldset" id={fieldsetId}>
+        <fieldset className="fact-request__fieldset" id="case-desk-fact-request">
           <legend className="fact-request__legend">Available facts</legend>
           <ul className="fact-request__list">
             {requestableFacts.map((fact) => {
