@@ -138,24 +138,26 @@ async function driveToSendRecommendation(page: import("@playwright/test").Page) 
   await requestFact(page, "Intermediary correspondent");
   await requestFact(page, "Institution variation");
 
-  // Shortlist + recommend the SWIFT→Fedwire rail. Each rail renders as a
-  // <section aria-label={rail.name}> (the RailShortlist component). The
-  // radio drives draft.selectedRail; the checkbox drives draft.shortlist.
+  // Recommend the SWIFT→Fedwire rail. Each rail renders as a
+  // <section aria-label={rail.name}> (the RailShortlist component). The radio
+  // now drives both draft.selectedRail and draft.shortlist — the separate
+  // shortlist checkbox was removed when the rail went horizontal, since it is
+  // no longer a distinct learner-facing decision. See RailShortlist.tsx.
   const swiftRail = page.getByRole("region", { name: "SWIFT wire to Fedwire" });
   await swiftRail.getByRole("radio").check();
-  await swiftRail.locator("input[type='checkbox']").check();
 
-  // Fill the reasoning fields the evaluator keys off of. The Primary reason is
-  // required to reach `defensible`/`preferred` (without it the evaluator scores
-  // `possible`), so this MUST be filled for the journey to reach `preferred`.
-  await page.getByLabel("Primary reason").fill("Fast same-day USD value protects the 2-business-day deadline.");
-  await page.getByLabel("Price expectation").fill("Wire fees are higher but justified by the deadline.");
-  await page.getByLabel("Arrival expectation").fill("Same-day USD value protects the 2-day shipment release.");
-  await page.getByLabel("Tracking expectation").fill("Full UETR tracking confirms credit to the supplier.");
+  // Fill the reasoning fields the evaluator keys off of. "Why this rail?" writes
+  // draft.reasons[0], and the evaluator requires at least one non-empty reason to
+  // reach `defensible`/`preferred` (without it it scores `possible`), so this MUST
+  // be filled for the journey to reach `preferred`.
+  await page.getByLabel("Why this rail?").fill("Fast same-day USD value protects the 2-business-day deadline.");
+  await page.getByLabel("Key risk or trade-off?").fill("Wire fees are higher but justified by the deadline.");
 
-  // Type the customer-facing explanation. The pre-commit review requires a
-  // selected rail only — explanation is optional but produces a fuller outcome.
-  const explanation = page.getByLabel("Explanation for the customer");
+  // The separate price/arrival/tracking expectation inputs were consolidated into
+  // one customer-expectation textarea when the rail went horizontal; the old
+  // fields survive on the draft only so persisted sessions stay readable. See
+  // caseTypes.ts CaseDraft.customerExpectation.
+  const explanation = page.getByLabel("What should the customer expect?");
   await explanation.fill(
     "Recommend SWIFT wire to Fedwire: it lands USD same-day with UETR tracking, which protects the supplier's 2-business-day release deadline and the tracking requirement.",
   );
@@ -216,7 +218,7 @@ test.describe("Case Desk core journey", () => {
     ).toBeVisible({ timeout: LAZY_TIMEOUT });
 
     // Edit the customer-facing explanation; flush via blur before re-Send.
-    const revisedExplanation = page.getByLabel("Explanation for the customer");
+    const revisedExplanation = page.getByLabel("What should the customer expect?");
     await revisedExplanation.fill(
       "Revised: still recommend SWIFT→Fedwire — same-day value + UETR tracking remains the right fit; the cost is offset by deadline protection.",
     );
@@ -372,11 +374,18 @@ test.describe("Case Desk recovery scenarios", () => {
     // in-progress draft. Navigate there and assert.
     await page.goto(LEARN_URL, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/app\/learn\/?$/, { timeout: LAZY_TIMEOUT });
+    // Scope to the seeded case's own entry. CaseEntry renders each case as a
+    // <section aria-labelledby={title}>, and the catalog now holds four cases —
+    // the three without a draft still legitimately offer "Start case", so a
+    // page-wide count would assert the wrong thing.
+    const supplierEntry = page.getByRole("region", {
+      name: "Canada → US supplier payment",
+    });
     await expect(
-      page.getByRole("link", { name: "Resume case" }),
+      supplierEntry.getByRole("link", { name: "Resume case" }),
     ).toBeVisible({ timeout: LAZY_TIMEOUT });
-    // There must be NO enabled "Start case" affordance once a draft exists.
-    await expect(page.getByRole("link", { name: "Start case" })).toHaveCount(0);
+    // This entry must NOT also offer a fresh "Start case" once a draft exists.
+    await expect(supplierEntry.getByRole("link", { name: "Start case" })).toHaveCount(0);
   });
 
   test("Start again clears the working draft while preserving attempt history", async ({ page }) => {
@@ -526,7 +535,7 @@ test.describe("Case Desk recovery scenarios", () => {
 
     // The draft was reset — no stale "stale draft from older case material"
     // text leaks into the customer explanation textarea.
-    await expect(page.getByLabel("Explanation for the customer")).toHaveValue("");
+    await expect(page.getByLabel("What should the customer expect?")).toHaveValue("");
 
     // The investigate phase heading is present (not brief, not resolve).
     await expect(
@@ -574,7 +583,10 @@ test.describe("Case Desk viewport + a11y invariants", () => {
   test("resets native rail fieldset chrome while keeping its legend available to assistive technology", async ({ page }) => {
     await startAndEnterInvestigate(page);
 
-    const fieldset = page.getByRole("group", { name: "Select a rail to recommend" });
+    // The fieldset's accessible name comes from its visually-hidden <legend>.
+    // "Select a rail to recommend." is the validation *error* copy (CaseDesk.tsx),
+    // not the legend — they are deliberately different strings.
+    const fieldset = page.getByRole("group", { name: "Choose one rail to recommend" });
     await expect(fieldset).toHaveCSS("border-style", "none");
     await expect(fieldset).toHaveCSS("padding", "0px");
 
@@ -692,6 +704,15 @@ test.describe("Case Desk viewport + a11y invariants", () => {
     await page.keyboard.press("Escape");
 
     // ── recommend (pre-commit review) ──────────────────────────────────────
+    // Gather the facts the SWIFT rail requires first. Submit validation now
+    // blocks on missing required facts as well as on an unselected rail
+    // (missingRequiredFactsForRail in CaseDesk.tsx), so without these the Send
+    // below is rejected and the outcome phase is never reached.
+    await requestFact(page, "Fee sensitivity");
+    await requestFact(page, "Tracking requirement");
+    await requestFact(page, "Intermediary correspondent");
+    await requestFact(page, "Institution variation");
+
     // The RecommendationSummary only renders once a rail is selected.
     const swiftRail = page.getByRole("region", { name: "SWIFT wire to Fedwire" });
     await swiftRail.getByRole("radio").check();

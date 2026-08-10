@@ -7,6 +7,12 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "list",
+  // Seven viewport projects share one webServer, so a `networkidle` goto can
+  // exceed Playwright's 30s default while other projects are hammering the same
+  // uvicorn. The failure moved between tests and projects run to run — always a
+  // navigation timeout, never an assertion — so the budget is the problem, not
+  // any one test. The three full-pipeline tests keep their own 120s overrides.
+  timeout: 60_000,
   use: {
     baseURL: "http://127.0.0.1:8000",
     trace: "on-first-retry",
