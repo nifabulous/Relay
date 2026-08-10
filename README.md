@@ -21,7 +21,7 @@ remains a learning prototype — not production payment processing.
 | Core platform | Shipped | FastAPI backend plus the React Relay app at `/app` |
 | Technical syllabus | Refined | Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and a capstone — interactive, gated on correct answers, and tested |
 | Applied learning | Phase 1 shipped | One supplier-payment Case Desk is available at `/app/learn/cases/canada-us-supplier` |
-| Learning persistence | Shipped (browser-local) | Anonymous learner profiles, local progress/activity/practice/case-session storage, and manual JSON backup import/export are available on `/app` |
+| Learning persistence | Shipped (browser-local) | Anonymous learner profiles and local progress/activity/practice/case-session storage. Manual JSON backup import/export is built but its Overview panel is hidden for now |
 | Legacy migration | Front door cut over | `/` now lands on Relay at `/app`. Vanilla `/learn` and `/ui` remain reachable, and `/` falls back to `/learn` when the Relay build is absent |
 | Retention loop | Shipped | Daily practice drill, spaced review of missed questions, and streaks at `/app/learn/practice` |
 | Next focus | Open for contribution | Case Desk Phase 2, a sanctions-screening track, and an ops-workflow module (Nostro recon / STP repair) |
@@ -36,16 +36,17 @@ These numbers were run against the current checkout on 2026-08-10:
 |---|---|
 | Backend tests | **612 passed** (`.venv/bin/python -m pytest tests/ -q`) |
 | Frontend unit/integration tests | **808 passed** with file parallelism disabled |
-| Playwright E2E | **288 passed, 6 intentional skips** across **294 cases** — last verified 2026-08-09; re-run pending after the Playwright 1.62 bump |
+| Playwright E2E | **288 passed, 13 skips** across **301 cases** (all configured projects green) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **128,002 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **124,514 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **13 entries** (12 learning modules plus capstone) + daily practice drill |
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
-Case Desk test is load-sensitive under the default runner. The six E2E skips are intentional,
-reduced-motion variants outside the dedicated reduced-motion project. See [Testing](#testing) for
-the recommended commands.
+Case Desk test is load-sensitive under the default runner. Of the 13 E2E skips, 12 are the
+intentional reduced-motion variants outside the dedicated reduced-motion project; the 13th is the
+learner-state round trip, skipped while the Learning backup panel is hidden. See
+[Testing](#testing) for the recommended commands.
 
 ---
 
@@ -57,8 +58,8 @@ the recommended commands.
 |---|---|
 | Backend tests | 612 passing |
 | Frontend tests | 808 passing in serial file mode |
-| E2E tests (Playwright) | 288 passing, 6 intentional skips across 294 cases |
-| Eager shell bundle | 128,002 bytes gzip (budget: 204,800 bytes) |
+| E2E tests (Playwright) | 288 passing, 13 skips across 301 cases |
+| Eager shell bundle | 124,514 bytes gzip (budget: 204,800 bytes) |
 | Git history | 186 commits |
 | Learning curriculum | 13 entries (12 learning modules plus capstone) |
 | Backend API endpoints | 22 |
@@ -211,13 +212,16 @@ modules, resurfaces missed questions on a 1/3/7-day review schedule, and tracks 
 
 Relay keeps learning state anonymous and browser-local. There are no learner accounts, no backend learner database, and no automatic cross-device sync yet.
 
-The Overview page at `/app` includes a manual learning-backup flow:
+A manual learning-backup flow is implemented, but **its Overview panel is hidden
+for now**, so there is currently no way to reach it from the UI. The behaviour
+below describes the flow as built (`LearnerDataPanel`, `learnerStateTransfer`,
+`learnerStateMerge`); restore the panel in `OverviewPage.tsx` to expose it again.
 
 - Included in backup JSON: completed modules, daily-practice history/review state, recent learning activity, and Case Desk sessions
 - Excluded from backup JSON: payment drafts, UI preferences, telemetry, secrets, caches, and transient UI state
 - Transfer model: download a JSON backup from one browser/device, then import it manually into another browser/device
 
-If browser storage is unavailable, Relay falls back to a session-only learner profile. In that mode the current tab still works, but progress may not survive closing the browser, so the app warns the learner to export a backup before leaving.
+If browser storage is unavailable, Relay falls back to a session-only learner profile. In that mode the current tab still works, but progress may not survive closing the browser — and with the backup panel hidden there is no in-app way to export before leaving.
 
 ---
 
@@ -262,7 +266,7 @@ lesson scripts:
 ### What is intentionally not finished
 
 - The legacy `/learn` and `/ui` surfaces are still kept for rollback and parity comparison.
-- Learning state is local to the browser; manual JSON backup/export is available, but there are still no accounts or automatic cross-device sync.
+- Learning state is local to the browser; manual JSON backup/export is built but its panel is hidden for now, and there are still no accounts or automatic cross-device sync.
 - The Case Desk is a Phase 1 learning/research slice, not yet a multi-case curriculum.
 - The project simulates payment behavior and reference data; it must not be treated as a live
   payment system.
@@ -333,14 +337,14 @@ cd frontend && npm run build && npm run check:bundle
 | Dimension | Status |
 |---|---|
 | Version control | Git, 186 commits |
-| Tests | 612 backend + 808 frontend passing; 288 E2E passing with 6 intentional skips across 294 cases |
+| Tests | 612 backend + 808 frontend passing; 288 E2E passing with 13 skips across 301 cases |
 | CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-| Bundle | 128,002 bytes gzip (under 204,800-byte budget) |
+| Bundle | 124,514 bytes gzip (under 204,800-byte budget) |
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
 | Learning | 13 curriculum entries (12 modules + capstone), daily practice loop, and Phase 1 Case Desk |
 
@@ -362,7 +366,7 @@ landing changed.
 ## Known limitations
 
 - **Simulated data only** — SSI accounts are `ACCT-` placeholders, routing is curated/heuristic
-- **Browser-local learning state** — backups are manual JSON export/import; there is still no account-based or automatic cross-device sync
+- **Browser-local learning state** — backups are manual JSON export/import and the panel is hidden for now; there is still no account-based or automatic cross-device sync
 - **No FX margin/spread modeling in the API** — the fee calculator models lift fees only;
   the Fees & FX lab teaches margin arithmetic client-side
 - **No exceptions/returns workflow** — happy path only in capstone

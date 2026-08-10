@@ -138,7 +138,7 @@ python -m pytest tests/ --cov=app       # coverage (~92%)
 cd frontend && npm test -- --no-file-parallelism  # 808 tests
 
 # End-to-end tests
-cd frontend && npm run test:e2e                    # 288 passed, 6 intentional skips / 294 cases
+cd frontend && npm run test:e2e                    # 288 passed, 13 skips / 301 cases
 ```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
