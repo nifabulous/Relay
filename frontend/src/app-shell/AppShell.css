@@ -93,10 +93,18 @@
   text-decoration: none;
 }
 
+.app-shell__nav-link:visited {
+  color: var(--color-ink-muted);
+}
+
 .app-shell__nav-link--active {
   color: var(--color-action);
   border-left-color: var(--color-action);
   background: var(--color-action-surface);
+}
+
+.app-shell__nav-link--active:visited {
+  color: var(--color-action);
 }
 
 /* ── Main content ──────────────────────────────────────── */
@@ -154,9 +162,17 @@
     text-decoration: none;
   }
 
+  .app-shell__mobile-link:visited {
+    color: var(--color-ink-muted);
+  }
+
   .app-shell__mobile-link--active {
     color: var(--color-action);
     position: relative;
+  }
+
+  .app-shell__mobile-link--active:visited {
+    color: var(--color-action);
   }
 
   /* Non-color active indicator: top border bar (not color alone) */

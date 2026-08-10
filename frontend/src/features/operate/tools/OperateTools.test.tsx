@@ -42,6 +42,35 @@ describe("FeePage", () => {
     expect(screen.getByLabelText(/charge code/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /simulate/i })).toBeVisible();
   });
+
+  it("sends the illustrative intermediary chain to the fee simulator", async () => {
+    let requestBody: Record<string, unknown> = {};
+    server.use(
+      http.post("/api/fees/simulate", async ({ request }) => {
+        requestBody = await request.json() as Record<string, unknown>;
+        return HttpResponse.json({
+          charge_code: "SHA",
+          currency: "USD",
+          sent_amount: 1000,
+          received_amount: 972.5,
+          total_fees: 27.5,
+          sender_pays_extra: 0,
+          hops: [],
+          fee_breakdown: "Simulation",
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<FeePage />);
+    await user.type(screen.getByLabelText(/amount/i), "1000");
+    await user.click(screen.getByRole("button", { name: /simulate/i }));
+
+    await waitFor(() => expect(requestBody.intermediary_bics).toEqual([
+      "CITIUS33XXX", "BOFAUS3NXXX",
+    ]));
+    expect(requestBody.intermediary_names).toEqual(["Citibank", "Bank of America"]);
+  });
 });
 
 describe("ScreeningPage", () => {

@@ -281,29 +281,54 @@
 /* ── SSI detail table ───────────────────────────────────── */
 .prepare-payment__ssi-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: var(--color-surface);
   font-size: var(--text-xs);
   margin-top: var(--space-2);
 }
 
 .prepare-payment__ssi-table th {
   text-align: left;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
   font-weight: 600;
   color: var(--color-ink-muted);
   text-transform: uppercase;
   letter-spacing: var(--tracking-micro);
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 
 .prepare-payment__ssi-table td {
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-ink);
+  vertical-align: top;
+}
+
+.prepare-payment__ssi-table td:first-child {
+  color: var(--color-ink-strong);
+  font-weight: 600;
+}
+
+.prepare-payment__ssi-table tbody tr:nth-child(even) {
+  background: var(--color-canvas);
+}
+
+.prepare-payment__ssi-table tbody tr:hover {
+  background: var(--color-action-surface);
+}
+
+.prepare-payment__ssi-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .prepare-payment__ssi-table td.mono {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ── VoP name comparison ────────────────────────────────── */

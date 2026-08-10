@@ -187,7 +187,12 @@
 .screen-table,
 .stp-findings {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: var(--color-surface);
   font-size: var(--text-xs);
 }
 
@@ -195,27 +200,60 @@
 .screen-table th,
 .stp-findings th {
   text-align: left;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
   font-weight: 600;
   color: var(--color-ink-muted);
   text-transform: uppercase;
   letter-spacing: var(--tracking-micro);
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
   font-size: var(--text-xs);
 }
 
 .fee-hops td,
 .screen-table td,
 .stp-findings td {
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-ink);
+  vertical-align: top;
+}
+
+.fee-hops td:first-child,
+.screen-table td:first-child,
+.stp-findings td:first-child {
+  color: var(--color-ink-strong);
+  font-weight: 600;
+}
+
+.fee-hops tbody tr:nth-child(even),
+.screen-table tbody tr:nth-child(even),
+.stp-findings tbody tr:nth-child(even) {
+  background: var(--color-canvas);
+}
+
+.fee-hops tbody tr:hover,
+.screen-table tbody tr:hover,
+.stp-findings tbody tr:hover {
+  background: var(--color-action-surface);
+}
+
+.fee-hops tbody tr:last-child td,
+.screen-table tbody tr:last-child td,
+.stp-findings tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .fee-hops td.mono,
 .screen-table td.mono,
 .stp-findings td.mono {
   font-variant-numeric: tabular-nums;
+}
+
+.fee-hops td.mono,
+.screen-table td.mono,
+.stp-findings td.mono {
+  white-space: nowrap;
 }
 
 /* ── Screening ──────────────────────────────────────────── */
@@ -292,5 +330,7 @@
   .stp-findings {
     display: block;
     overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
   }
 }

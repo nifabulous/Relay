@@ -11,6 +11,7 @@ import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { PaymentTimeline } from "./PaymentTimeline";
 import "./TrackingPage.css";
+import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 
 export function TrackingPage() {

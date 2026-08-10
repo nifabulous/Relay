@@ -53,6 +53,13 @@ describe("AppShell", () => {
     expect(learnLink).toHaveAttribute("aria-current", "page");
   });
 
+  it("keeps inactive destinations neutral while the current route is active", () => {
+    renderShell("/explore");
+    const nav = screen.getByLabelText("Primary navigation");
+    expect(nav.querySelector('a[href="/app/explore"]')).toHaveClass("app-shell__nav-link--active");
+    expect(nav.querySelector('a[href="/app/learn"]')).not.toHaveClass("app-shell__nav-link--active");
+  });
+
   it("renders child route content", () => {
     renderShell("/explore");
     expect(screen.getByText("Explore placeholder")).toBeVisible();

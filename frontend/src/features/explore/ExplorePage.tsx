@@ -11,6 +11,7 @@ import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import "./ExplorePage.css";
+import "../learn/labs/LabContent.css";
 
 export function ExplorePage() {
   const [searchParams] = useSearchParams();
@@ -231,6 +232,16 @@ export function SchemesPage() {
 
 import { GLOSSARY_TERMS } from "./search/searchIndex";
 
+const GLOSSARY_GROUPS = [
+  { id: "identifiers", label: "Identifiers", terms: ["BIC", "SWIFT code", "IBAN", "MOD-97"] },
+  {
+    id: "correspondent-banking",
+    label: "Correspondent banking",
+    terms: ["Nostro", "Vostro", "Correspondent bank", "Intermediary bank", "SSI"],
+  },
+  { id: "tracking-messaging", label: "Tracking & messaging", terms: ["UETR", "gpi", "MT103", "pacs.008"] },
+] as const;
+
 export function GlossaryPage() {
   const [searchParams] = useSearchParams();
   const highlightTerm = searchParams.get("term");
@@ -242,6 +253,29 @@ export function GlossaryPage() {
     return term.toLowerCase().includes(q) || def.toLowerCase().includes(q);
   });
 
+  const termsByName = new Map<string, [string, string]>(GLOSSARY_TERMS.map((entry) => [entry[0], entry]));
+  const groupedTerms = GLOSSARY_GROUPS.map((group) => ({
+    ...group,
+    entries: group.terms
+      .map((term) => termsByName.get(term))
+      .filter((entry): entry is [string, string] => Boolean(entry && filtered.includes(entry))),
+  })).filter((group) => group.entries.length > 0);
+  const groupedTermNames = new Set<string>(GLOSSARY_GROUPS.flatMap((group) => group.terms));
+  const otherEntries = filtered.filter(([term]) => !groupedTermNames.has(term));
+
+  const renderEntry = ([term, def]: [string, string]) => (
+    <div
+      key={term}
+      className={[
+        "glossary-entry",
+        highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
+      ].filter(Boolean).join(" ")}
+    >
+      <dt className="glossary-entry__term mono">{term}</dt>
+      <dd className="glossary-entry__def">{def}</dd>
+    </div>
+  );
+
   return (
     <div className="explore">
       <div className="explore__header">
@@ -249,33 +283,52 @@ export function GlossaryPage() {
         <p className="measure">Payment terminology used across Relay.</p>
       </div>
 
-      <input
-        type="search"
-        className="explore__glossary-filter"
-        placeholder="Filter terms…"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        aria-label="Filter glossary terms"
-      />
-
-      <div className="glossary-list">
-        {filtered.length === 0 ? (
-          <p className="explore__muted">No terms match &ldquo;{filter}&rdquo;</p>
-        ) : (
-          filtered.map(([term, def]) => (
-            <div
-              key={term}
-              className={[
-                "glossary-entry",
-                highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
-              ].filter(Boolean).join(" ")}
-            >
-              <dt className="glossary-entry__term mono">{term}</dt>
-              <dd className="glossary-entry__def">{def}</dd>
-            </div>
-          ))
-        )}
+      <div className="glossary-toolbar">
+        <label className="glossary-toolbar__label" htmlFor="glossary-filter">Find a term</label>
+        <div className="glossary-toolbar__controls">
+          <input
+            id="glossary-filter"
+            type="search"
+            className="explore__glossary-filter"
+            placeholder="Filter terms…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            aria-label="Filter glossary terms"
+          />
+          <span className="glossary-toolbar__count" aria-live="polite">
+            {filtered.length} {filtered.length === 1 ? "term" : "terms"}
+          </span>
+        </div>
       </div>
+
+      {filtered.length === 0 ? (
+        <div className="glossary-empty">
+          <h2>No terms match that search</h2>
+          <p>Try a broader word or clear the filter to browse the full glossary.</p>
+        </div>
+      ) : (
+        <div className="glossary-sections">
+          {groupedTerms.map((group) => (
+            <section className="glossary-section" key={group.id} aria-labelledby={`glossary-${group.id}`}>
+              <div className="glossary-section__heading">
+                <h2 id={`glossary-${group.id}`}>{group.label}</h2>
+                <span>{group.entries.length} {group.entries.length === 1 ? "term" : "terms"}</span>
+              </div>
+              <dl className="glossary-grid">{group.entries.map(renderEntry)}</dl>
+            </section>
+          ))}
+
+          {otherEntries.length > 0 && (
+            <section className="glossary-section" aria-labelledby="glossary-other">
+              <div className="glossary-section__heading">
+                <h2 id="glossary-other">Other payment terms</h2>
+                <span>{otherEntries.length} terms</span>
+              </div>
+              <dl className="glossary-grid">{otherEntries.map(renderEntry)}</dl>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }

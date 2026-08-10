@@ -9,11 +9,11 @@ import { apiKeys } from "../../../api/queryKeys";
 import { PreparePaymentResponseSchema } from "../../../api/schemas";
 import type { PreparePaymentResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
-import type { CheckStatus, RecommendationState, PaymentRouteNode } from "../../../design-system/types";
+import type { RecommendationState } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
 import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
-import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
+import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 
@@ -81,43 +81,6 @@ export function PreparePaymentPage() {
   // for when a sub-check itself fails to run (handled by the error state).
   const recState: RecommendationState = "conclusive";
   const missingEvidence: string[] = [];
-
-  // Build route nodes from routing data
-  function buildRouteNodes(data: PreparePaymentResponse): PaymentRouteNode[] {
-    const nodes: PaymentRouteNode[] = [];
-    // Originator is implicit (the user's bank)
-    nodes.push({
-      id: "origin",
-      kind: "originator",
-      bic: "—",
-      name: "Your bank",
-      status: "passed" as CheckStatus,
-    });
-    // Intermediaries
-    data.routing.suggested_intermediaries.slice(0, 3).forEach((inter, i) => {
-      nodes.push({
-        id: `inter-${i}`,
-        kind: "intermediary",
-        bic: inter.bic,
-        name: String(inter.bank ?? "Intermediary"),
-        status: "passed" as CheckStatus,
-        amount: data.routing.inferred_currency
-          ? `${data.routing.inferred_currency} ${"—"}`
-          : undefined,
-      });
-    });
-    // Beneficiary
-    if (data.validation.bic) {
-      nodes.push({
-        id: "beneficiary",
-        kind: "beneficiary",
-        bic: data.validation.bic,
-        name: "Beneficiary bank",
-        status: data.validation.valid ? ("passed" as CheckStatus) : ("failed" as CheckStatus),
-      });
-    }
-    return nodes;
-  }
 
   return (
     <div className="prepare-payment">
@@ -308,12 +271,12 @@ export function PreparePaymentPage() {
           </CheckResult>
 
           <CheckResult
-            title="Correspondent Routing"
-            status={result.routing.suggested_intermediaries.length > 0 ? "passed" : "unavailable"}
+            title="Correspondent Routing (heuristic)"
+            status={result.routing.suggested_intermediaries.length > 0 ? "needs_attention" : "unavailable"}
           >
             {result.routing.suggested_intermediaries.length > 0 ? (
               <>
-                <p>{result.routing.suggested_intermediaries.length} intermediary option(s):</p>
+                <p>{result.routing.suggested_intermediaries.length} possible correspondent option(s):</p>
                 <ul className="prepare-payment__intermediaries">
                   {result.routing.suggested_intermediaries.slice(0, 5).map((inter, i) => (
                     <li key={i}>
@@ -366,14 +329,13 @@ export function PreparePaymentPage() {
             )}
           </CheckResult>
 
-          {/* Payment route visualization */}
+          {/* Heuristic routing summary */}
           {result.routing.suggested_intermediaries.length > 0 && (
             <div className="prepare-payment__route">
-              <h3>Payment route</h3>
-              <PaymentRoute
-                nodes={buildRouteNodes(result)}
-                currency={formValues.currency}
-                amount={formValues.amount?.toString()}
+              <CorrespondentOptions
+                options={result.routing.suggested_intermediaries}
+                currency={result.routing.inferred_currency ?? formValues.currency}
+                notes="The backend provides ranked candidates, not a confirmed sequence of hops. Your bank's correspondent relationships determine the actual path."
               />
             </div>
           )}

@@ -57,13 +57,13 @@ a {
   text-decoration: none;
 }
 
-/* Only underline plain text links — never buttons styled as links */
+/* Navigation links use color and component states, not hover underlines. */
 a:not(.relay-btn):hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 /* Visited links distinguishable per DESIGN.md */
-a:not(.relay-btn):visited {
+a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited {
   color: var(--color-action-pressed);
 }
 

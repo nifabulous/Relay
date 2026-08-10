@@ -8,6 +8,11 @@ import { Button } from "../../../design-system/Button";
 import "./OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 
+const ILLUSTRATIVE_CHAIN = [
+  { bic: "CITIUS33XXX", name: "Citibank" },
+  { bic: "BOFAUS3NXXX", name: "Bank of America" },
+] as const;
+
 export function FeePage() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -18,7 +23,13 @@ export function FeePage() {
     mutationFn: () =>
       apiPost<FeeSimulateResponse>(
         "/api/fees/simulate",
-        { amount: Number(amount), currency, charge_code: chargeCode },
+        {
+          amount: Number(amount),
+          currency,
+          charge_code: chargeCode,
+          intermediary_bics: ILLUSTRATIVE_CHAIN.map((hop) => hop.bic),
+          intermediary_names: ILLUSTRATIVE_CHAIN.map((hop) => hop.name),
+        },
         FeeSimulateResponseSchema,
       ),
     onSuccess: (data) => { setResult(data); recordActivity({ type: "tool", label: "Fee simulator", at: Date.now() }); },
@@ -30,6 +41,7 @@ export function FeePage() {
     <div className="tool-page">
       <h1>Fee Calculator</h1>
       <p className="measure">Simulate fee deduction across intermediary hops for OUR, SHA, or BEN charge codes.</p>
+      <p className="tool-sim-label">Uses an illustrative two-hop chain: Citibank → Bank of America.</p>
 
       <form
         className="tool-form"
