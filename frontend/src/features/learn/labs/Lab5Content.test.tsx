@@ -57,6 +57,12 @@ describe("Lab5Content", () => {
     expect(screen.getByText(/placeholder/i)).toBeVisible();
   });
 
+  it("labels the lookup as simulated SSI data", () => {
+    renderLab();
+    expect(screen.getByRole("heading", { name: /look up simulated SSI data/i })).toBeVisible();
+    expect(screen.getByText(/seeded training record/i)).toBeVisible();
+  });
+
   it("emits lookup-ssi checkpoint when instructions are found", async () => {
     server.use(
       http.get("/api/ssi", () => HttpResponse.json(SSI_FIXTURE)),
@@ -107,6 +113,47 @@ describe("Lab5Content", () => {
     await waitFor(() => {
       expect(onCheckpoint).toHaveBeenCalledWith("identify-correspondent");
     });
+  });
+
+  it("renders the worked example with all six SSI fields", () => {
+    renderLab();
+    expect(screen.getByText(/Worked example/i)).toBeVisible();
+    expect(screen.getByText("Correspondent (intermediary)")).toBeVisible();
+    expect(screen.getByText("Nostro account")).toBeVisible();
+    expect(screen.getByText("Value date")).toBeVisible();
+  });
+
+  it("renders both decision-point questions", () => {
+    renderLab();
+    expect(screen.getByText(/Which charge code do you put in the instruction\?/)).toBeVisible();
+    expect(screen.getByText(/What happens to the payment\?/)).toBeVisible();
+  });
+
+  it("does not emit choose-charge-code after one correct answer", async () => {
+    const { user, onCheckpoint } = renderLab();
+    await user.click(screen.getByRole("button", { name: /OUR — the sender covers every fee/i }));
+    expect(onCheckpoint).not.toHaveBeenCalledWith("choose-charge-code");
+  });
+
+  it("emits choose-charge-code only after both decisions are correct", async () => {
+    const { user, onCheckpoint } = renderLab();
+
+    // A wrong answer never fires the checkpoint
+    await user.click(screen.getByRole("button", { name: /it's the market default/i }));
+    expect(onCheckpoint).not.toHaveBeenCalledWith("choose-charge-code");
+
+    await user.click(screen.getByRole("button", { name: /OUR — the sender covers every fee/i }));
+    await user.click(screen.getByRole("button", { name: /stalls in manual repair/i }));
+
+    await waitFor(() => {
+      expect(onCheckpoint).toHaveBeenCalledWith("choose-charge-code");
+    });
+  });
+
+  it("links forward to the capstone Settle step", () => {
+    renderLab();
+    expect(screen.getByText(/Where you'll use this next/i)).toBeVisible();
+    expect(screen.getByText("Settle")).toBeVisible();
   });
 
   it("handles empty SSI instructions gracefully", async () => {

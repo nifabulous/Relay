@@ -56,8 +56,9 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
       "Demo form with quick-scenario buttons (John Smith / Jon Smyth / Fraudster)",
       "Score bar visualization",
       "Close-match exercise: find a name scoring 0.75–0.90",
+      "Decision drill: two multiple-choice judgment calls (CLOSE_MATCH and NOT_CHECKED)",
     ],
-    requiredCheckpoints: ["run-match", "run-close-match", "identify-fraud-risk"],
+    requiredCheckpoints: ["run-match", "run-close-match", "identify-fraud-risk", "decide-outcome"],
   },
 
   "lab-4": {
@@ -78,12 +79,15 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
     legacySources: ["app/static/js/learn-labs-4-6.js"],
     apiEndpoints: ["/api/ssi"],
     interactions: [
+      "Worked example: annotated field-by-field read of one SSI record",
       "SSI lookup: BIC + currency → instructions table",
       "Charge code explainer (OUR/SHA/BEN)",
+      "Decision points: charge-code choice and wrong-correspondent consequence (MC)",
       "Placeholder account warning",
       "Find-correspondent exercise: identify Emirates NBD's USD correspondent",
+      "Forward link to the capstone Settle step",
     ],
-    requiredCheckpoints: ["lookup-ssi", "identify-correspondent"],
+    requiredCheckpoints: ["lookup-ssi", "choose-charge-code", "identify-correspondent"],
   },
 
   "lab-6": {
@@ -137,6 +141,52 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
       "Rail-chooser scenarios",
     ],
     requiredCheckpoints: ["autodeposit-vop", "chaps-pacs008", "eft-window", "limit-check", "rail-chooser", "app-reimbursement"],
+  },
+
+  "gbp-eur-rails": {
+    title: "Rails Deep-Dive: UK & Eurozone",
+    legacySources: [],
+    apiEndpoints: ["/api/schemes"],
+    interactions: [
+      "Enriched GBP/EUR rail detail from /api/schemes",
+      "CHAPS attribute table (RTGS, finality, hours, ISO 20022 mandates)",
+      "Bacs three-day-cycle simulator with cut-off and weekend rolls",
+      "Faster Payments limits + protections panel",
+      "GBP rail-chooser scenarios (payroll / completion / Sunday night)",
+      "SEPA + TARGET2 explainer with Instant Payments Regulation timeline",
+      "EUR rail picker: amount + urgency → SCT Inst / SCT / TARGET2",
+      "EUR rail-chooser scenarios (Friday evening / treasury)",
+    ],
+    requiredCheckpoints: ["gbp-rail-detail", "bacs-cycle", "gbp-rail-chooser", "eur-rail-detail", "sct-inst-limit", "eur-rail-chooser"],
+  },
+
+  "cad-rails": {
+    title: "Rails Deep-Dive: Canada",
+    legacySources: [],
+    apiEndpoints: ["/api/schemes"],
+    interactions: [
+      "Enriched CAD rail detail from /api/schemes",
+      "Three-layer stack table (Lynx / EFT via ACSS / Interac)",
+      "CAD rail picker: amount + urgency → Interac / Lynx / EFT",
+      "RTR roadmap multiple-choice",
+      "CAD rail-chooser scenarios (acquisition / vendor run)",
+    ],
+    requiredCheckpoints: ["cad-rail-detail", "lynx-vs-eft", "rtr-roadmap", "cad-rail-chooser"],
+  },
+
+  "fees-fx": {
+    title: "Follow the Money: Fees & FX",
+    legacySources: ["app/static/js/learn.js (fees + fx hash modules)"],
+    apiEndpoints: ["/api/fees/simulate"],
+    interactions: [
+      "Currency picker: USD, CAD, GBP, EUR — each with its own correspondent chain",
+      "Fee chain simulator: amount + charge code → per-hop deduction table",
+      "Charge-code comparison: run OUR and SHA on the same payment",
+      "Predict-the-received exercise (per currency) before running the simulation",
+      "FX margin panel: mid-market vs offered rate, hidden cost calculation",
+      "FX margin multiple-choice: spot the real cost of the spread",
+    ],
+    requiredCheckpoints: ["simulate-fees", "predict-received", "spot-fx-margin"],
   },
 
   "capstone": {

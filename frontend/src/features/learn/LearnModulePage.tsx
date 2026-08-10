@@ -1,8 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useCallback, Suspense } from "react";
-import { getModuleById, isModuleUnlocked, CURRICULUM } from "./curriculum";
+import { CURRICULUM, formatDuration, formatDurationAriaLabel, getModuleById, isModuleUnlocked } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
+import { LabCompletionChecklist } from "./LabCompletionChecklist";
 import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
 import "./LearnPage.css";
@@ -65,12 +66,15 @@ export function LearnModulePage() {
       <div className="learn-module-header">
         <div className="learn-module-header__title-row">
           <h1>{mod.title}</h1>
+          <span
+            className="learn-module-header__duration"
+            aria-label={formatDurationAriaLabel(mod.duration)}
+          >
+            {formatDuration(mod.duration)}
+          </span>
           {isComplete && <StatusChip status="passed" />}
         </div>
         <p className="measure">{mod.subtitle}</p>
-        <div className="learn-module-header__meta">
-          <span>~{mod.duration} min</span>
-        </div>
       </div>
 
       <div className="learn-content">
@@ -107,9 +111,20 @@ export function LearnModulePage() {
           </Link>
         ) : <span />}
         {nextModule ? (
-          <Link to={nextModule.href} className="relay-btn relay-btn--secondary learn-nav__next">
-            {nextModule.title} →
-          </Link>
+          isComplete ? (
+            <Link to={nextModule.href} className="relay-btn relay-btn--secondary learn-nav__next">
+              {nextModule.title} →
+            </Link>
+          ) : (
+            <span
+              className="relay-btn relay-btn--secondary learn-nav__next learn-nav__next--disabled"
+              aria-disabled="true"
+              aria-label={`${nextModule.title}. Complete this lab to unlock.`}
+              title="Complete this lab to unlock"
+            >
+              {nextModule.title} → · Complete this lab to unlock
+            </span>
+          )
         ) : (
           <Link to="/learn" className="relay-btn relay-btn--primary learn-nav__next">
             Back to curriculum →
@@ -136,7 +151,16 @@ function LabContentRenderer({
   component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
   onComplete: () => void;
 }) {
-  const { markCheckpoint } = useLabCompletion(requiredCheckpoints, onComplete);
+  const { completed, markCheckpoint } = useLabCompletion(requiredCheckpoints, onComplete);
 
-  return <LabComponent moduleId={moduleId} isComplete={isComplete} onCheckpoint={markCheckpoint} />;
+  return (
+    <>
+      <LabCompletionChecklist
+        required={requiredCheckpoints}
+        completed={completed}
+        isComplete={isComplete}
+      />
+      <LabComponent moduleId={moduleId} isComplete={isComplete} onCheckpoint={markCheckpoint} />
+    </>
+  );
 }

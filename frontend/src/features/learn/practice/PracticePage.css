@@ -1,0 +1,73 @@
+/* Daily practice drill — follows the Relay design contract:
+   thin 1px borders, no decorative shadows, blue only for action/progress. */
+
+.practice-page {
+  max-width: 720px;
+}
+
+.practice-intro h1,
+.practice-summary h1 {
+  margin-bottom: var(--space-2, 8px);
+}
+
+.practice-stats {
+  display: flex;
+  gap: var(--space-4, 16px);
+  margin: var(--space-5, 24px) 0;
+  flex-wrap: wrap;
+}
+
+.practice-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  min-width: 96px;
+}
+
+.practice-stat__value {
+  font-size: var(--text-xl, 1.5rem);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.practice-stat__label {
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--color-ink-muted);
+}
+
+.practice-done-note {
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-action);
+  background: var(--color-action-surface);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  color: var(--color-ink);
+  margin-bottom: var(--space-4, 16px);
+  max-width: 60ch;
+}
+
+.practice-progress {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm, 0.8125rem);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.practice-question {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.practice-score {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  margin: var(--space-3, 12px) 0;
+}
+
+.practice-summary__actions {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-5, 24px);
+  flex-wrap: wrap;
+}

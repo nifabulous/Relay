@@ -41,7 +41,8 @@ describe("Lab 3 API error handling", () => {
     );
 
     const { user, onCheckpoint } = renderLab(Lab3Content);
-    await user.click(screen.getByRole("button", { name: /Match scenario.*Exact name match/ }));
+    await user.click(screen.getByRole("button", { name: /use exact match.*fills john smith/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeVisible();

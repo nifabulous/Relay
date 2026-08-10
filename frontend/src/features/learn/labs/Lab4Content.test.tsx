@@ -73,7 +73,7 @@ describe("Lab4Content", () => {
     });
   });
 
-  it("renders the PaymentRoute visualization with intermediaries", async () => {
+  it("renders ranked correspondents as possible options, not one confirmed chain", async () => {
     server.use(
       http.get("/api/route", () => HttpResponse.json(ROUTE_FIXTURE)),
     );
@@ -81,12 +81,15 @@ describe("Lab4Content", () => {
     const { user } = renderLab();
     await user.click(screen.getByRole("button", { name: /find.*intermediar/i }));
 
-    // Names appear in both route viz and the details table
     await waitFor(() => {
       const citi = screen.getAllByText("Citibank");
       expect(citi.length).toBeGreaterThanOrEqual(1);
     });
     expect(screen.getAllByText("Bank of America").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("heading", { name: "Possible correspondent options" })).toBeVisible();
+    expect(screen.getByText(/candidates, not a confirmed chain/i)).toBeVisible();
+    expect(screen.queryByRole("img", { name: /Payment from Your bank/i })).toBeNull();
+    expect(screen.getByRole("table")).toHaveClass("lab-route-result__table");
   });
 
   it("shows the Japan exercise prompt", () => {

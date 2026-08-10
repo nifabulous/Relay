@@ -63,3 +63,131 @@ export function appReimbursement(amountMinor: number): AppReimbursement {
     cappedAtMinor: APP_CAP_MINOR,
   };
 }
+
+// ── UK & Eurozone deep-dive helpers ─────────────────────────────
+
+/**
+ * Bacs three-day cycle. Day 1: file submitted (cut-off 22:30 London),
+ * Day 2: processing at the banks, Day 3: simultaneous debit/credit.
+ * Weekend/late submissions roll to the next business day.
+ */
+export interface BacsCycle {
+  submissionDay: string;
+  processingDay: string;
+  settlementDay: string;
+  caughtCutoff: boolean;
+}
+
+const BACS_CUTOFF_MINUTES = 22 * 60 + 30; // 22:30
+
+function nextBusinessDay(d: Date): Date {
+  const out = new Date(d);
+  out.setUTCDate(out.getUTCDate() + 1);
+  return rollToBusinessDayLocal(out);
+}
+
+function rollToBusinessDayLocal(d: Date): Date {
+  const out = new Date(d);
+  while (out.getUTCDay() === 0 || out.getUTCDay() === 6) out.setUTCDate(out.getUTCDate() + 1);
+  return out;
+}
+
+export function bacsCycle(submitIso: string): BacsCycle {
+  const dt = new Date(`${submitIso}Z`);
+  if (isNaN(dt.getTime())) {
+    return { submissionDay: "—", processingDay: "—", settlementDay: "—", caughtCutoff: false };
+  }
+  const minutes = dt.getUTCHours() * 60 + dt.getUTCMinutes();
+  let base = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
+  const isBusinessDay = base.getUTCDay() !== 0 && base.getUTCDay() !== 6;
+  const caughtCutoff = isBusinessDay && minutes <= BACS_CUTOFF_MINUTES;
+  if (!caughtCutoff) {
+    // Missed the input window — file enters the next business day's cycle.
+    base = nextBusinessDay(base);
+  }
+  const day2 = nextBusinessDay(base);
+  const day3 = nextBusinessDay(day2);
+  return {
+    submissionDay: base.toISOString().slice(0, 10),
+    processingDay: day2.toISOString().slice(0, 10),
+    settlementDay: day3.toISOString().slice(0, 10),
+    caughtCutoff,
+  };
+}
+
+/**
+ * EUR rail picker. Bank-set SCT Inst limit (the scheme cap was removed under
+ * the Instant Payments Regulation), with TARGET2 as the high-value fallback
+ * when the payment can't wait for a batch cycle.
+ */
+export interface EurRailChoice {
+  rail: "SCT Inst" | "SCT" | "TARGET2";
+  reason: string;
+}
+
+export function chooseEurRail(
+  amountMinor: number,
+  bankInstLimitMinor: number,
+  urgent: boolean,
+): EurRailChoice {
+  if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+    return { rail: "SCT", reason: "Enter a positive amount to compare rails." };
+  }
+  if (amountMinor <= bankInstLimitMinor) {
+    return {
+      rail: "SCT Inst",
+      reason:
+        "Within your bank's instant limit — settles in under 10 seconds, 24/7, at the same price as a standard SCT.",
+    };
+  }
+  if (urgent) {
+    return {
+      rail: "TARGET2",
+      reason:
+        "Above the bank's instant limit and it can't wait for a batch cycle — the Eurosystem RTGS settles it the same business day, finally and irrevocably.",
+    };
+  }
+  return {
+    rail: "SCT",
+    reason:
+      "Above the instant limit but not urgent — the standard SEPA Credit Transfer lands next business day at domestic price.",
+  };
+}
+
+/**
+ * CAD rail picker. Interac for small urgent transfers (bank-set cap),
+ * Lynx when finality today is non-negotiable, EFT for everything scheduled.
+ */
+export interface CadRailChoice {
+  rail: "Interac e-Transfer" | "Lynx" | "EFT";
+  reason: string;
+}
+
+export function chooseCadRail(
+  amountMinor: number,
+  urgent: boolean,
+  interacCapMinor: number,
+): CadRailChoice {
+  if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+    return { rail: "EFT", reason: "Enter a positive amount to compare rails." };
+  }
+  if (urgent && amountMinor <= interacCapMinor) {
+    return {
+      rail: "Interac e-Transfer",
+      reason:
+        "Small and urgent — Interac lands in seconds, 24/7, and stays inside the bank's e-Transfer cap.",
+    };
+  }
+  if (urgent) {
+    return {
+      rail: "Lynx",
+      reason:
+        "Too large for Interac and it must be final today — Lynx settles in real time, irrevocably, in central-bank money.",
+    };
+  }
+  return {
+    rail: "EFT",
+    reason:
+      "Not urgent — the ACSS batch rail carries it for cents. Submit before a processing window and it lands in 1-2 business days.",
+  };
+}

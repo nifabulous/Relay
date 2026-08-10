@@ -1,8 +1,5 @@
 import { useState, useRef, useCallback } from "react";
 import type { LabContentProps } from "../labTypes";
-import type { PaymentRouteNode } from "../../../design-system/types";
-import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
-import { buildRouteNodes } from "./routeNodes";
 import { Exercise } from "../components/Exercise";
 import { Button } from "../../../design-system/Button";
 import { apiRequest } from "../../../api/client";
@@ -46,11 +43,6 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
     }
   }, [bic, currency, onCheckpoint]);
 
-  // Build route nodes from the API response using shared helper
-  function getRouteNodes(data: RouteResponse): PaymentRouteNode[] {
-    return buildRouteNodes(data.suggested_intermediaries, data.bic);
-  }
-
   // Japan exercise: learner enters the BIC for Bank of Tokyo-Mitsubishi
   const checkJapan: Parameters<typeof Exercise>[0]["checkAnswer"] = async (answer, signal) => {
     const cleaned = answer.trim().toUpperCase();
@@ -89,7 +81,7 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
       <section className="lab-section">
         <h2>Route a payment</h2>
         <p className="measure">
-          Enter a beneficiary bank BIC and currency to see the intermediary chain.
+          Enter a beneficiary bank BIC and currency to see possible correspondent options.
         </p>
         <div className="lab-analyzer">
           <input
@@ -121,16 +113,29 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
           <div className="lab-route-result">
             {route.suggested_intermediaries.length > 0 ? (
               <>
-                <p>{route.suggested_intermediaries.length} intermediary option(s) found for {currency} → {route.beneficiary_country} (local: {route.currency}):</p>
+                <p>{route.suggested_intermediaries.length} possible correspondent option(s) found for {currency} → {route.beneficiary_country} (local: {route.currency}):</p>
 
-                {/* Payment route visualization */}
-                <PaymentRoute
-                  nodes={getRouteNodes(route)}
-                  currency={route.currency}
-                />
+                <div className="lab-route-options" role="group" aria-labelledby="lab-route-options-title">
+                  <div className="lab-route-options__header">
+                    <div>
+                      <h3 id="lab-route-options-title">Possible correspondent options</h3>
+                      <p className="lab-route-options__note">
+                        These are candidates, not a confirmed chain. The actual path may use one or more correspondents—or a different bank—depending on your bank&apos;s Nostro relationships.
+                      </p>
+                    </div>
+                    <span className="lab-route-options__currency mono">{route.currency}</span>
+                  </div>
+                  <div className="lab-route-options__diagram" aria-hidden="true">
+                    <span className="lab-route-options__endpoint">Your bank</span>
+                    <span className="lab-route-options__bridge">selects from {route.suggested_intermediaries.length} candidates</span>
+                    <span className="lab-route-options__endpoint">Beneficiary bank</span>
+                  </div>
+                  <p className="lab-route-result__note">{route.notes}</p>
+                </div>
 
                 {/* Intermediary details table */}
-                <table className="lab-table">
+                <h3 className="lab-route-result__table-title">Candidate details</h3>
+                <table className="lab-table lab-route-result__table">
                   <thead>
                     <tr><th>#</th><th>Bank</th><th>BIC</th><th>Corridor</th><th>Confidence</th></tr>
                   </thead>

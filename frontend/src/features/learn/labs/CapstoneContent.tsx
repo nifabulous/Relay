@@ -5,13 +5,11 @@ import { capstoneReducer, STEP_LABELS, type CapstoneState, type CapstonePaymentI
 import { StepIndicator } from "../components/StepIndicator";
 import { Button } from "../../../design-system/Button";
 import { StatusChip } from "../../../design-system/StatusChip";
-import { PaymentRoute } from "../../../design-system/payment-route/PaymentRoute";
+import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
 import { PaymentTimeline } from "../../../features/operate/tracking/PaymentTimeline";
 import { apiRequest, apiPost } from "../../../api/client";
 import { ValidateResponseSchema, VoPResponseSchema, RouteResponseSchema, SSIResponseSchema, PreparePaymentResponseSchema, TrackPaymentResponseSchema } from "../../../api/schemas";
 import type { ValidateResponse, VoPResponse, RouteResponse, SSIResponse, PreparePaymentResponse, TrackPaymentResponse } from "../../../api/schemas";
-import type { PaymentRouteNode } from "../../../design-system/types";
-import { buildRouteNodes } from "./routeNodes";
 import "./LabContent.css";
 
 const DEFAULT_INPUT: CapstonePaymentInput = {
@@ -139,12 +137,6 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
   const completedSteps = new Set<number>();
   for (let i = 0; i < state.step; i++) completedSteps.add(i);
 
-  function getRouteNodes(): PaymentRouteNode[] {
-    const routing = state.results.routing;
-    if (!routing) return [];
-    return buildRouteNodes(routing.suggested_intermediaries, state.results.validation?.bic ?? "—");
-  }
-
   return (
     <div className="lab-content" data-module-id={moduleId}>
       <div className="lab-sim-notice" role="note">
@@ -264,7 +256,11 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
         <section className="lab-section">
           <h3>Step 3: Route</h3>
           {state.results.routing.suggested_intermediaries.length > 0 ? (
-            <PaymentRoute nodes={getRouteNodes()} currency={state.paymentInput.currency} />
+            <CorrespondentOptions
+              options={state.results.routing.suggested_intermediaries}
+              currency={state.results.routing.inferred_currency ?? state.paymentInput.currency}
+              notes="The backend provides ranked candidates, not a confirmed sequence of hops. Your bank's correspondent relationships determine the actual path."
+            />
           ) : (
             <p className="lab-muted">No intermediaries found.</p>
           )}

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import type { LabContentProps } from "../labTypes";
 import type { ExerciseChecker } from "../labTypes";
 import { Exercise } from "../components/Exercise";
+import { MultipleChoice } from "../components/MultipleChoice";
 import { Button } from "../../../design-system/Button";
 import { apiRequest } from "../../../api/client";
 import { SSIResponseSchema } from "../../../api/schemas";
@@ -14,6 +15,103 @@ const CHARGE_CODES = [
   { code: "BEN", meaning: "Beneficiary pays all fees", example: "Beneficiary receives $485 from a $500 send" },
 ];
 
+/**
+ * The worked example record. Field values are deliberately rendered with
+ * suffixes ("SHA — shared") so they never collide with the exact-text
+ * charge-code reference table above.
+ */
+const WORKED_EXAMPLE_STEPS = [
+  {
+    field: "Beneficiary bank",
+    value: "EBILAEADXXX · Emirates NBD",
+    reading: "The bank your client's supplier uses. This is who you looked up.",
+  },
+  {
+    field: "Currency",
+    value: "USD",
+    reading: "Each currency has its own instruction — the same bank uses different correspondents for USD, EUR, and GBP.",
+  },
+  {
+    field: "Correspondent (intermediary)",
+    value: "CITIUS33XXX · Citibank N.A.",
+    reading: "Emirates NBD's chosen USD correspondent. Your USD must arrive here, not at Emirates NBD directly.",
+  },
+  {
+    field: "Nostro account",
+    value: "ACCT-0480291 (simulated)",
+    reading: "Emirates NBD's USD account held at Citibank. Crediting this account IS paying Emirates NBD.",
+  },
+  {
+    field: "Charge code",
+    value: "SHA — shared",
+    reading: "Who pays the fees along the way. This changes what the beneficiary actually receives.",
+  },
+  {
+    field: "Value date",
+    value: "spot (T+2)",
+    reading: "When funds become usable. 'Spot' means two business days after execution.",
+  },
+];
+
+const CHARGE_DECISIONS = [
+  {
+    id: "exact-amount",
+    question:
+      "Your client is paying a $50,000 supplier invoice and the contract says the supplier must receive exactly $50,000. Which charge code do you put in the instruction?",
+    options: [
+      {
+        id: "sha",
+        label: "SHA — it's the market default, so it's always safest",
+        correct: false,
+        explanation:
+          "Under SHA each intermediary deducts its fee from the payment, so the supplier would receive less than $50,000 and the invoice stays technically unpaid.",
+      },
+      {
+        id: "our",
+        label: "OUR — the sender covers every fee so the full amount arrives",
+        correct: true,
+        explanation:
+          "Correct. With OUR, intermediary fees are billed back to the sender and the beneficiary receives the full $50,000. That's why contracts with exact-amount clauses need OUR.",
+      },
+      {
+        id: "ben",
+        label: "BEN — the beneficiary agreed to pay the invoice fees",
+        correct: false,
+        explanation:
+          "BEN deducts everything, including the sender bank's own outgoing fee, from the amount. The supplier receives the least of all three options.",
+      },
+    ],
+  },
+  {
+    id: "wrong-correspondent",
+    question:
+      "A colleague sends USD for Emirates NBD to a correspondent that is NOT the one in the SSI. What happens to the payment?",
+    options: [
+      {
+        id: "arrives",
+        label: "It arrives anyway — any large USD bank can pass it on",
+        correct: false,
+        explanation:
+          "It may eventually get there, but not cleanly: the receiving bank has no instruction linking those funds to Emirates NBD.",
+      },
+      {
+        id: "repair",
+        label: "It likely stalls in manual repair, gets delayed, and may incur investigation fees",
+        correct: true,
+        explanation:
+          "Correct. Ignoring the published SSI is a classic cause of delayed payments: the funds land somewhere Emirates NBD holds no Nostro, and humans have to reroute them.",
+      },
+      {
+        id: "bounce",
+        label: "It's automatically rejected within seconds",
+        correct: false,
+        explanation:
+          "Correspondent banking has no instant global rejection. Misrouted payments linger — that's exactly why SSIs are published.",
+      },
+    ],
+  },
+];
+
 export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
   const [bic, setBic] = useState("EBILAEADXXX");
   const [currency, setCurrency] = useState("USD");
@@ -21,7 +119,17 @@ export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lookupFired = useRef(false);
+  const chargeFired = useRef(false);
+  const correctDecisions = useRef(new Set<string>());
   const lastInstructions = useRef<SSIResponse["instructions"]>([]);
+
+  const handleChargeDecision = useCallback((questionId: string) => {
+    correctDecisions.current.add(questionId);
+    if (!chargeFired.current && correctDecisions.current.size === CHARGE_DECISIONS.length) {
+      chargeFired.current = true;
+      onCheckpoint("choose-charge-code");
+    }
+  }, [onCheckpoint]);
 
   const lookupSsi = useCallback(async () => {
     const effectiveBic = bic.trim();
@@ -80,10 +188,45 @@ export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
       <section className="lab-section">
         <h2>What are Settlement Instructions (SSI)?</h2>
         <p className="measure">
-          When a bank wants to send a payment in a foreign currency, it needs to know which
-          correspondent bank holds its Nostro account. <strong>Standard Settlement Instructions
-          (SSI)</strong> are the published list of which intermediary to use for each currency,
-          along with the Nostro account number and charge code.
+          Put yourself in the chair: you're the payments analyst at a UK bank, and a client
+          needs to pay a supplier who banks with Emirates NBD in Dubai — in US dollars.
+          Your bank doesn't hold a dollar account at Emirates NBD. So where exactly do you
+          send the money?
+        </p>
+        <p className="measure">
+          The answer is published in <strong>Standard Settlement Instructions (SSI)</strong>:
+          each bank's list of which correspondent bank to route each currency through, which
+          Nostro account to credit there, and which charge code applies. In Lab 4 you saw
+          <em> why</em> payments hop through correspondents; the SSI is the table that tells
+          you <em>which</em> correspondent — per bank, per currency.
+        </p>
+      </section>
+
+      {/* Worked example — read one record together */}
+      <section className="lab-section">
+        <h2>Worked example: Read one SSI record</h2>
+        <p className="measure">
+          Here is the record you'd pull for USD payments to Emirates NBD, read field by field
+          the way an analyst reads it:
+        </p>
+        <table className="lab-table">
+          <thead>
+            <tr><th>Field</th><th>Value</th><th>How to read it</th></tr>
+          </thead>
+          <tbody>
+            {WORKED_EXAMPLE_STEPS.map((step) => (
+              <tr key={step.field}>
+                <td><strong>{step.field}</strong></td>
+                <td className="mono">{step.value}</td>
+                <td className="lab-muted">{step.reading}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="measure">
+          The practical takeaway: to pay Emirates NBD in USD, your dollars go to
+          Citibank in New York, into the account Citibank holds <em>for</em> Emirates NBD.
+          Send them anywhere else and the payment stalls.
         </p>
       </section>
 
@@ -106,6 +249,22 @@ export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
         </table>
       </section>
 
+      {/* Decision points — completion requires getting these right */}
+      <section className="lab-section">
+        <h2>Decision points: You're the analyst</h2>
+        <p className="measure">
+          Two calls you'd make on a real desk. Answer both correctly to progress.
+        </p>
+        {CHARGE_DECISIONS.map((q) => (
+          <MultipleChoice
+            key={q.id}
+            question={q.question}
+            options={q.options}
+            onCorrect={() => handleChargeDecision(q.id)}
+          />
+        ))}
+      </section>
+
       {/* Placeholder warning */}
       <div className="lab-sim-notice" role="note">
         <strong>Account numbers are illustrative placeholders.</strong> Never initiate a real payment with this data.
@@ -113,10 +272,11 @@ export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
 
       {/* SSI lookup */}
       <section className="lab-section">
-        <h2>Look up real SSI data</h2>
+        <h2>Look up simulated SSI data</h2>
         <p className="measure">
-          Emirates NBD (EBILAEADXXX) is a UAE bank with published correspondent relationships.
-          Look up their USD settlement instructions.
+          Pull the seeded training record yourself. Emirates NBD (EBILAEADXXX) is a UAE
+          bank with published correspondent relationships. Fetch the simulated USD
+          settlement record — then try GBP or EUR and watch the illustrative correspondent change.
         </p>
         <div className="lab-analyzer">
           <input
@@ -190,6 +350,16 @@ export function Lab5Content({ moduleId, onCheckpoint }: LabContentProps) {
         checkAnswer={checkCorrespondent}
         onCorrect={() => onCheckpoint("identify-correspondent")}
       />
+
+      {/* Forward link to the capstone */}
+      <section className="lab-section">
+        <h2>Where you'll use this next</h2>
+        <p className="measure">
+          In the capstone's <strong>Settle</strong> step you'll pull an SSI exactly like this
+          one, mid-payment, to decide where the money physically goes. The fee consequences of
+          the charge code you just chose are the subject of the Fees &amp; FX module.
+        </p>
+      </section>
     </div>
   );
 }

@@ -11,10 +11,27 @@ export interface CurriculumModule {
   title: string;
   subtitle: string;
   href: string;
-  duration: number; // minutes
+  duration: DurationRange;
   prerequisites: string[];
   outcomes: string[];
   category: "core" | "tool" | "capstone";
+}
+
+export interface DurationRange {
+  min: number;
+  max: number;
+}
+
+export function formatDuration(range: DurationRange): string {
+  return range.min === range.max
+    ? `${range.min} min`
+    : `${range.min}–${range.max} min`;
+}
+
+export function formatDurationAriaLabel(range: DurationRange): string {
+  return range.min === range.max
+    ? `Estimated time: ${range.min} minutes`
+    : `Estimated time: ${range.min} to ${range.max} minutes`;
 }
 
 export const CURRICULUM: CurriculumModule[] = [
@@ -23,7 +40,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Identifiers: BICs & IBANs",
     subtitle: "The two codes that identify banks and accounts worldwide",
     href: "/learn/lab-1",
-    duration: 10,
+    duration: { min: 10, max: 15 },
     prerequisites: [],
     outcomes: [
       "Decode a BIC into bank, country, and location",
@@ -37,7 +54,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Is It Real? IBAN Checksums",
     subtitle: "Validate IBANs using the MOD-97 algorithm",
     href: "/learn/lab-2",
-    duration: 15,
+    duration: { min: 15, max: 20 },
     prerequisites: ["lab-1"],
     outcomes: [
       "Explain how the MOD-97 checksum protects against typos",
@@ -51,7 +68,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Right Person? Verification of Payee",
     subtitle: "Check that the payee name matches the account holder",
     href: "/learn/lab-3",
-    duration: 12,
+    duration: { min: 15, max: 20 },
     prerequisites: ["lab-1", "lab-2"],
     outcomes: [
       "Understand MATCH, CLOSE_MATCH, NO_MATCH, and NOT_CHECKED outcomes",
@@ -65,7 +82,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "How Money Moves: Correspondent Routing",
     subtitle: "Why a payment hops through intermediary banks",
     href: "/learn/lab-4",
-    duration: 15,
+    duration: { min: 10, max: 15 },
     prerequisites: ["lab-1"],
     outcomes: [
       "Trace a payment from sender to beneficiary through correspondents",
@@ -79,11 +96,12 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Where to Send: Standard Settlement Instructions",
     subtitle: "How banks publish which correspondent to use per currency",
     href: "/learn/lab-5",
-    duration: 12,
+    duration: { min: 15, max: 20 },
     prerequisites: ["lab-1", "lab-4"],
     outcomes: [
-      "Read an SSI record and identify the Nostro account",
-      "Explain charge codes (OUR, SHA, BEN) in settlement",
+      "Read an SSI record field-by-field and identify the Nostro account",
+      "Choose the right charge code (OUR, SHA, BEN) for a given payment",
+      "Predict what happens when a payment ignores the published SSI",
       "Understand value dates and settlement timing",
     ],
     category: "core",
@@ -93,7 +111,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Did It Arrive? Tracking with UETR",
     subtitle: "SWIFT gpi tracking and the UETR",
     href: "/learn/lab-6",
-    duration: 10,
+    duration: { min: 10, max: 15 },
     prerequisites: ["lab-1", "lab-4"],
     outcomes: [
       "Explain the UETR and its role in SWIFT gpi",
@@ -107,7 +125,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Which Rail? Payment Schemes",
     subtitle: "Compare Faster Payments, SEPA, Fedwire, CHAPS, and more",
     href: "/learn/lab-7",
-    duration: 12,
+    duration: { min: 15, max: 20 },
     prerequisites: ["lab-1"],
     outcomes: [
       "Compare payment schemes by speed, cost, and currency",
@@ -121,7 +139,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Message Standards: MT103 → ISO 20022",
     subtitle: "How the correspondent-banking message changed in 2025",
     href: "/learn/lab-8",
-    duration: 15,
+    duration: { min: 15, max: 20 },
     prerequisites: ["lab-7"],
     outcomes: [
       "Map MT103 fields to their pacs.008 elements",
@@ -135,7 +153,7 @@ export const CURRICULUM: CurriculumModule[] = [
     title: "Rails Deep-Dive: Canada & UK",
     subtitle: "Interac, EFT, CHAPS, Faster Payments — in depth",
     href: "/learn/lab-9",
-    duration: 20,
+    duration: { min: 25, max: 35 },
     prerequisites: ["lab-7", "lab-8"],
     outcomes: [
       "Explain Interac Autodeposit, Request Money, limits, and the RTR roadmap",
@@ -145,12 +163,56 @@ export const CURRICULUM: CurriculumModule[] = [
     category: "core",
   },
   {
+    id: "gbp-eur-rails",
+    title: "Rails Deep-Dive: UK & Eurozone",
+    subtitle: "CHAPS, Bacs, Faster Payments, TARGET2, SEPA — in depth",
+    href: "/learn/gbp-eur-rails",
+    duration: { min: 25, max: 35 },
+    prerequisites: ["lab-7", "lab-9"],
+    outcomes: [
+      "Choose between CHAPS, Bacs, and Faster Payments by speed, cost, and ceiling",
+      "Walk a Bacs file through its three-day cycle, cut-offs and weekends included",
+      "Explain how the Instant Payments Regulation reshaped SCT Inst limits and pricing",
+      "Route a euro payment across SCT, SCT Inst, and TARGET2",
+    ],
+    category: "core",
+  },
+  {
+    id: "cad-rails",
+    title: "Rails Deep-Dive: Canada",
+    subtitle: "Lynx, EFT/ACSS, Interac, and the Real-Time Rail",
+    href: "/learn/cad-rails",
+    duration: { min: 20, max: 25 },
+    prerequisites: ["lab-7", "lab-9"],
+    outcomes: [
+      "Place Lynx, EFT, and Interac in Canada's three-layer rail stack",
+      "Explain ACSS netting and why EFT value-dates in business days",
+      "Pick the right CAD rail for a payment's size and urgency",
+      "Describe what the Real-Time Rail changes for Interac settlement",
+    ],
+    category: "core",
+  },
+  {
+    id: "fees-fx",
+    title: "Follow the Money: Fees & FX",
+    subtitle: "Why the beneficiary receives less than you sent",
+    href: "/learn/fees-fx",
+    duration: { min: 15, max: 20 },
+    prerequisites: ["lab-5", "lab-6"],
+    outcomes: [
+      "Simulate how lift fees erode a payment hop by hop in USD, CAD, GBP, and EUR",
+      "Predict what a beneficiary receives under OUR, SHA, and BEN",
+      "Expose the hidden cost of an FX margin versus the visible wire fee",
+    ],
+    category: "core",
+  },
+  {
     id: "capstone",
     title: "Capstone: Full Payment Simulation",
     subtitle: "Apply everything: validate, verify, route, and track a payment",
     href: "/learn/capstone",
-    duration: 20,
-    prerequisites: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7"],
+    duration: { min: 30, max: 45 },
+    prerequisites: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "lab-8", "lab-9"],
     outcomes: [
       "Execute a complete cross-border payment simulation",
       "Interpret a combined recommendation across all checks",

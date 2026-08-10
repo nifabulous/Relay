@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { CURRICULUM, getModuleById, getNextModule, getPrerequisiteChain, isModuleUnlocked, computeProgress } from "./curriculum";
+import {
+  CURRICULUM,
+  computeProgress,
+  formatDuration,
+  formatDurationAriaLabel,
+  getModuleById,
+  getNextModule,
+  getPrerequisiteChain,
+  isModuleUnlocked,
+} from "./curriculum";
 
 describe("curriculum", () => {
   it("contains all expected core modules", () => {
@@ -14,14 +23,45 @@ describe("curriculum", () => {
     expect(ids).toContain("capstone");
   });
 
-  it("each module has a title, route, estimated duration, and learning outcomes", () => {
+  it("each module has a title, route, approved duration range, and learning outcomes", () => {
+    const approvedRanges: Record<string, { min: number; max: number }> = {
+      "lab-1": { min: 10, max: 15 },
+      "lab-2": { min: 15, max: 20 },
+      "lab-3": { min: 15, max: 20 },
+      "lab-4": { min: 10, max: 15 },
+      "lab-5": { min: 15, max: 20 },
+      "lab-6": { min: 10, max: 15 },
+      "lab-7": { min: 15, max: 20 },
+      "lab-8": { min: 15, max: 20 },
+      "lab-9": { min: 25, max: 35 },
+      "gbp-eur-rails": { min: 25, max: 35 },
+      "cad-rails": { min: 20, max: 25 },
+      "fees-fx": { min: 15, max: 20 },
+      capstone: { min: 30, max: 45 },
+    };
+
     for (const mod of CURRICULUM) {
+      const expected = approvedRanges[mod.id];
       expect(mod.id).toBeTruthy();
       expect(mod.title).toBeTruthy();
       expect(mod.href).toMatch(/^\/learn\//);
-      expect(mod.duration).toBeGreaterThan(0);
+      expect(expected).toBeDefined();
+      expect(mod.duration).toEqual(expected);
+      expect(mod.duration.min).toBeGreaterThan(0);
+      expect(mod.duration.max).toBeGreaterThan(0);
+      expect(mod.duration.max).toBeGreaterThanOrEqual(mod.duration.min);
+      expect(Number.isInteger(mod.duration.min)).toBe(true);
+      expect(Number.isInteger(mod.duration.max)).toBe(true);
       expect(mod.outcomes.length).toBeGreaterThan(0);
     }
+  });
+
+  it("formats duration ranges for display and aria labels", () => {
+    expect(formatDuration({ min: 15, max: 20 })).toBe("15–20 min");
+    expect(formatDuration({ min: 15, max: 15 })).toBe("15 min");
+    expect(formatDurationAriaLabel({ min: 15, max: 20 })).toBe(
+      "Estimated time: 15 to 20 minutes",
+    );
   });
 
   it("lab-2 has lab-1 as prerequisite", () => {
@@ -73,6 +113,22 @@ describe("curriculum", () => {
     const lab9 = CURRICULUM.find((m) => m.id === "lab-9");
     expect(lab9).toBeDefined();
     expect(lab9?.prerequisites).toEqual(expect.arrayContaining(["lab-7", "lab-8"]));
+  });
+
+  it("capstone requires all nine technical labs (8 and 9 included)", () => {
+    const capstone = getModuleById("capstone");
+    expect(capstone?.prerequisites).toEqual(
+      expect.arrayContaining([
+        "lab-1", "lab-2", "lab-3", "lab-4", "lab-5",
+        "lab-6", "lab-7", "lab-8", "lab-9",
+      ]),
+    );
+  });
+
+  it("capstone stays locked until labs 8 and 9 are complete", () => {
+    const throughSeven = ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7"];
+    expect(isModuleUnlocked("capstone", throughSeven)).toBe(false);
+    expect(isModuleUnlocked("capstone", [...throughSeven, "lab-8", "lab-9"])).toBe(true);
   });
 });
 

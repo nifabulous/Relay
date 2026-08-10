@@ -51,19 +51,82 @@ describe("Lab3Content", () => {
 
   it("renders the demo form with IBAN and name inputs", () => {
     renderLab();
-    expect(screen.getByLabelText(/iban/i)).toBeVisible();
-    expect(screen.getByLabelText(/payee name/i)).toBeVisible();
+    const iban = screen.getByLabelText("IBAN");
+    expect(iban).toBeVisible();
+    expect(iban).toHaveAttribute("type", "text");
+    expect(iban).not.toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Payee name")).toBeVisible();
   });
 
   it("renders three quick-scenario buttons", () => {
     renderLab();
     // Each button contains its label + description text
-    const matchBtn = screen.getByRole("button", { name: /Match scenario.*Exact name match/ });
-    const closeBtn = screen.getByRole("button", { name: /Close match scenario.*Typo/ });
-    const fraudBtn = screen.getByRole("button", { name: /Fraud scenario.*Wrong person/ });
+    const matchBtn = screen.getByRole("button", { name: /Use exact match.*Fills John Smith/ });
+    const closeBtn = screen.getByRole("button", { name: /Use close match.*Fills Jon Smyth/ });
+    const fraudBtn = screen.getByRole("button", { name: /Use fraud example.*Fills a different name/ });
     expect(matchBtn).toBeVisible();
     expect(closeBtn).toBeVisible();
     expect(fraudBtn).toBeVisible();
+  });
+
+  it("submits the edited IBAN and payee name and renders the VoP result", async () => {
+    let requestBody: Record<string, string> | null = null;
+    server.use(
+      http.post("/api/verify-payee", async ({ request }) => {
+        requestBody = await request.json() as Record<string, string>;
+        return HttpResponse.json(VOP_FIXTURES.match);
+      }),
+    );
+
+    const { user } = renderLab();
+    const iban = screen.getByLabelText("IBAN");
+    await user.clear(iban);
+    await user.type(iban, "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText("Payee name"), "John Smith");
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("MATCH");
+    });
+    expect(requestBody).toEqual({ iban: "GB29NWBK60161331926819", name: "John Smith" });
+  });
+
+  it("shows validation feedback without requesting when a form field is empty", async () => {
+    let requestCount = 0;
+    server.use(
+      http.post("/api/verify-payee", () => {
+        requestCount += 1;
+        return HttpResponse.json(VOP_FIXTURES.match);
+      }),
+    );
+
+    const { user, onCheckpoint } = renderLab();
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/enter an iban and payee name/i);
+    expect(requestCount).toBe(0);
+    expect(onCheckpoint).not.toHaveBeenCalled();
+
+    const section = screen.getByRole("heading", { name: /Try it: Verify a payee/i }).closest("section");
+    expect(section?.querySelector(".lab-vop-scenarios")).not.toBeNull();
+    expect(section?.querySelector(".lab-error")).not.toBeNull();
+  });
+
+  it("fills a scenario without submitting it", async () => {
+    let requestCount = 0;
+    server.use(
+      http.post("/api/verify-payee", () => {
+        requestCount += 1;
+        return HttpResponse.json(VOP_FIXTURES.close);
+      }),
+    );
+
+    const { user } = renderLab();
+    await user.click(screen.getByRole("button", { name: /use close match/i }));
+
+    expect(screen.getByLabelText("Payee name")).toHaveValue("Jon Smyth");
+    expect(requestCount).toBe(0);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("emits run-match checkpoint when MATCH scenario is run", async () => {
@@ -72,7 +135,8 @@ describe("Lab3Content", () => {
     );
 
     const { user, onCheckpoint } = renderLab();
-    await user.click(screen.getByRole("button", { name: /Match scenario.*Exact name match/ }));
+    await user.click(screen.getByRole("button", { name: /use exact match/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(onCheckpoint).toHaveBeenCalledWith("run-match");
@@ -85,7 +149,8 @@ describe("Lab3Content", () => {
     );
 
     const { user, onCheckpoint } = renderLab();
-    await user.click(screen.getByRole("button", { name: /close.*scenario/i }));
+    await user.click(screen.getByRole("button", { name: /use close match/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(onCheckpoint).toHaveBeenCalledWith("run-close-match");
@@ -98,7 +163,8 @@ describe("Lab3Content", () => {
     );
 
     const { user } = renderLab();
-    await user.click(screen.getByRole("button", { name: /close.*scenario/i }));
+    await user.click(screen.getByRole("button", { name: /use close match/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(screen.getByText("John Smith")).toBeVisible();
@@ -111,7 +177,8 @@ describe("Lab3Content", () => {
     );
 
     const { user } = renderLab();
-    await user.click(screen.getByRole("button", { name: /Match scenario.*Exact name match/ }));
+    await user.click(screen.getByRole("button", { name: /use exact match/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     // Wait for result to render (the advice text is unique to the result)
     await waitFor(() => {
@@ -127,7 +194,8 @@ describe("Lab3Content", () => {
     );
 
     const { user, onCheckpoint } = renderLab();
-    await user.click(screen.getByRole("button", { name: /fraud.*scenario/i }));
+    await user.click(screen.getByRole("button", { name: /use fraud example/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(onCheckpoint).toHaveBeenCalledWith("identify-fraud-risk");
@@ -140,7 +208,8 @@ describe("Lab3Content", () => {
     );
 
     const { user } = renderLab();
-    await user.click(screen.getByRole("button", { name: /close.*scenario/i }));
+    await user.click(screen.getByRole("button", { name: /use close match/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(screen.getByText(/82%/)).toBeVisible();
@@ -153,10 +222,49 @@ describe("Lab3Content", () => {
     );
 
     const { user } = renderLab();
-    await user.click(screen.getByRole("button", { name: /fraud.*scenario/i }));
+    await user.click(screen.getByRole("button", { name: /use fraud example/i }));
+    await user.click(screen.getByRole("button", { name: "Verify payee" }));
 
     await waitFor(() => {
       expect(screen.getByText(/do not proceed/i)).toBeVisible();
+    });
+  });
+
+  it("renders the decision drill with two questions", () => {
+    renderLab();
+    expect(screen.getByRole("heading", { name: /Choose the safest next step/i })).toBeVisible();
+    expect(screen.getByText(/Use each VoP result to decide what should happen next/i)).toBeVisible();
+    expect(screen.getByText(/CLOSE_MATCH.*Jonathan Smythe.*John Smith/i)).toBeVisible();
+    expect(screen.getByText(/NOT_CHECKED.*beneficiary bank/i)).toBeVisible();
+  });
+
+  it("does not emit decide-outcome after only one correct answer", async () => {
+    const { user, onCheckpoint } = renderLab();
+    await user.click(
+      screen.getByRole("button", { name: /Pause and confirm the account holder name/i }),
+    );
+    expect(onCheckpoint).not.toHaveBeenCalledWith("decide-outcome");
+  });
+
+  it("emits decide-outcome only after both decision questions are answered correctly", async () => {
+    const { user, onCheckpoint } = renderLab();
+
+    // Wrong answer first — no checkpoint
+    await user.click(
+      screen.getByRole("button", { name: /Send it — 0\.81 is a high score/i }),
+    );
+    expect(onCheckpoint).not.toHaveBeenCalledWith("decide-outcome");
+
+    // Correct answers to both questions
+    await user.click(
+      screen.getByRole("button", { name: /Pause and confirm the account holder name/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /doesn't participate in VoP, so the name was never compared/i }),
+    );
+
+    await waitFor(() => {
+      expect(onCheckpoint).toHaveBeenCalledWith("decide-outcome");
     });
   });
 });

@@ -146,4 +146,16 @@ describe("CapstoneContent", () => {
     renderCapstone();
     expect(screen.getByRole("link", { name: /operate.*prepare/i })).toBeVisible();
   });
+
+  it("labels route suggestions as candidates instead of a confirmed chain", async () => {
+    mockAllSteps();
+    const { user } = renderCapstone();
+    await user.click(screen.getByRole("button", { name: /start.*simulation/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /possible correspondent options/i })).toBeVisible();
+    }, { timeout: 10000 });
+    expect(screen.getByText(/candidates, not a confirmed chain/i)).toBeVisible();
+    expect(screen.queryByRole("img", { name: /Payment from Your bank/i })).toBeNull();
+  });
 });

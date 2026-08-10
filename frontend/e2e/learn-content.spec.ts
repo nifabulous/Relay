@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
     }));
     localStorage.setItem("relay:progress", JSON.stringify({
       schemaVersion: 1,
-      completedModuleIds: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "capstone"],
+      completedModuleIds: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails", "capstone"],
     }));
     localStorage.setItem("relay:legacy-imported", "1");
   });
@@ -62,12 +62,14 @@ test.describe("Lab content parity", () => {
   test("Lab 5 renders SSI lookup and charge codes", async ({ page }) => {
     await page.goto("/app/learn/lab-5", { waitUntil: "networkidle" });
     await page.waitForTimeout(2000);
-    // Charge code table should have the definitions
-    const table = page.locator(".lab-table").first();
+    // The worked example table comes first; the charge-code table follows.
+    const worked = page.locator(".lab-table").first();
+    await expect(worked).toContainText("Nostro account");
+    const table = page.locator(".lab-table").nth(1);
     await expect(table).toContainText("Sender pays all fees"); // OUR
     await expect(table).toContainText("Fees shared"); // SHA
     await expect(table).toContainText("Beneficiary pays all fees"); // BEN
-    await expect(page.getByText(/placeholder/i)).toBeVisible();
+    await expect(page.getByText(/illustrative placeholders/i)).toBeVisible();
   });
 
   test("Lab 6 renders tracking form", async ({ page }) => {
@@ -92,6 +94,66 @@ test.describe("Lab content parity", () => {
     // All labs are pre-completed in beforeEach, so capstone is unlocked
     await expect(page.locator(".lab-content")).toBeVisible();
     await expect(page.locator(".lab-step-indicator")).toBeVisible();
+  });
+
+  test("Fees & FX module renders concept, simulator, and FX sections", async ({ page }) => {
+    await page.goto("/app/learn/fees-fx", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByText(/case of the missing \$25/i)).toBeVisible();
+    // The three charge-code buttons
+    for (const code of ["OUR", "SHA", "BEN"]) {
+      await expect(page.getByRole("button", { name: code, exact: true })).toBeVisible();
+    }
+  });
+
+  test("Fees & FX module renders the currency picker", async ({ page }) => {
+    await page.goto("/app/learn/fees-fx", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    const group = page.getByRole("group", { name: /currency/i });
+    for (const ccy of ["USD", "CAD", "GBP", "EUR"]) {
+      await expect(group.getByRole("button", { name: ccy })).toBeVisible();
+    }
+    // Switching to CAD swaps the demo chain
+    await group.getByRole("button", { name: "CAD" }).click();
+    await expect(page.getByText(/RBC Royal Bank/).first()).toBeVisible();
+  });
+
+  test("UK & Eurozone rails module renders deep-dive sections", async ({ page }) => {
+    await page.goto("/app/learn/gbp-eur-rails", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /CHAPS: the sterling RTGS/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Bacs: the three-day workhorse/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /one currency, one payment area/i })).toBeVisible();
+    // Bacs cycle simulator round-trip
+    await page.getByRole("button", { name: /Monday 09:00/ }).click();
+    await expect(page.getByTestId("bacs-cycle-result")).toContainText("2026-07-22");
+    // Live GBP rail detail from the real backend
+    await page.getByRole("button", { name: "GBP", exact: true }).click();
+    await expect(page.locator(".lab-rail-card").first()).toBeVisible();
+  });
+
+  test("Canada rails module renders deep-dive sections", async ({ page }) => {
+    await page.goto("/app/learn/cad-rails", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Lynx: wholesale finality/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /The Real-Time Rail/i })).toBeVisible();
+    // Rail picker round-trip
+    await page.getByRole("button", { name: /choose the rail/i }).click();
+    await expect(page.getByTestId("cad-rail-result")).toContainText("Interac e-Transfer");
+    // Live CAD rail detail from the real backend
+    await page.getByRole("button", { name: "CAD", exact: true }).click();
+    await expect(page.locator(".lab-rail-card").first()).toBeVisible();
+  });
+
+  test("Daily practice page renders intro with streak stats", async ({ page }) => {
+    await page.goto("/app/learn/practice", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    await expect(page.getByRole("heading", { name: /daily practice/i })).toBeVisible();
+    await expect(page.getByText(/day streak/i).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /start today's five|practice again/i })).toBeVisible();
   });
 
   test("No module shows placeholder text", async ({ page }) => {

@@ -1,19 +1,36 @@
 import { Link } from "react-router-dom";
-import { CURRICULUM, isModuleUnlocked, getPrerequisiteChain } from "./curriculum";
+import {
+  CURRICULUM,
+  formatDuration,
+  formatDurationAriaLabel,
+  isModuleUnlocked,
+  getPrerequisiteChain,
+} from "./curriculum";
 import { loadProgress } from "../../lib/persistence/storage";
 import { useState, useCallback } from "react";
 import { CaseEntry } from "./cases/CaseEntry";
-import { supplierCase } from "./cases/caseCatalog";
+import { CASE_CATALOG } from "./cases/caseCatalog";
 import { loadCaseSession } from "./cases/caseStore";
+import { loadPracticeState, dueReviews, practicedToday, displayStreak, dayKey } from "./practice/practiceStore";
 import "./LearnPage.css";
 
 export function LearnIndexPage() {
   const [completed] = useState<string[]>(() => loadProgress().completedModuleIds);
-  // Load the case session once on mount. LearnIndexPage is the single source
-  // of truth for the case entry's visible state; CaseEntry itself is pure
+  const [practice] = useState(() => loadPracticeState());
+  const today = dayKey(new Date());
+  const streak = displayStreak(practice, today);
+  const reviewsDue = dueReviews(practice, today).length;
+  const doneToday = practicedToday(practice, today);
+  // Load each case session once on mount. LearnIndexPage is the single source
+  // of truth for the case entries' visible state; CaseEntry itself is pure
   // presentation. We read here (not inside CaseEntry) so CaseEntry stays
   // trivially testable with injected props.
-  const [caseSession] = useState(() => loadCaseSession(supplierCase.id));
+  const [caseEntries] = useState(() =>
+    CASE_CATALOG.map((definition) => ({
+      definition,
+      session: loadCaseSession(definition.id),
+    })),
+  );
 
   const isComplete = useCallback((id: string) => completed.includes(id), [completed]);
 
@@ -24,10 +41,41 @@ export function LearnIndexPage() {
         <p className="measure">Guided modules covering the full cross-border payment lifecycle.</p>
       </div>
 
-      {/* Case-first entry: the dominant action sits ABOVE the legacy
-          curriculum so a learner's eye lands on the supplier case first.
+      {/* Case-first entry: the dominant actions sit ABOVE the legacy
+          curriculum so a learner's eye lands on the case work first.
           The curriculum list below is unchanged. */}
-      <CaseEntry caseDef={supplierCase} session={caseSession} />
+      <section
+        className="learn-case-desks"
+        aria-label="Customer case desks"
+      >
+        <div className="learn-case-desks__track">
+          {caseEntries.map(({ definition, session }) => (
+            <CaseEntry key={definition.id} caseDef={definition} session={session} />
+          ))}
+        </div>
+      </section>
+
+      {/* Daily practice strip — the return habit */}
+      <div className="learn-practice-strip">
+        <div className="learn-practice-strip__text">
+          <span className="learn-practice-strip__title">Daily practice</span>
+          <span className="learn-practice-strip__sub">
+            {doneToday
+              ? `Done for today — ${streak}-day streak`
+              : reviewsDue > 0
+                ? `${reviewsDue} question${reviewsDue === 1 ? "" : "s"} due for review · 5-minute drill`
+                : streak > 0
+                  ? `Keep your ${streak}-day streak alive · 5-minute drill`
+                  : "Five quick questions from what you've learned"}
+          </span>
+        </div>
+        <Link
+          to="/learn/practice"
+          className={`relay-btn ${doneToday ? "relay-btn--secondary" : "relay-btn--primary"}`}
+        >
+          {doneToday ? "Practice again" : "Start drill"}
+        </Link>
+      </div>
 
       <div className="learn-page__progress">
         <span className="mono">{completed.length} / {CURRICULUM.length}</span>
@@ -65,7 +113,12 @@ export function LearnIndexPage() {
                 )}
                 <p className="learn-module__subtitle">{mod.subtitle}</p>
                 <div className="learn-module__meta">
-                  <span className="learn-module__duration">{mod.duration} min</span>
+                  <span
+                    className="learn-module__duration"
+                    aria-label={formatDurationAriaLabel(mod.duration)}
+                  >
+                    {formatDuration(mod.duration)}
+                  </span>
                   {!unlocked && (
                     <span className="learn-module__locked-reason">
                       Complete first: {getPrerequisiteChain(mod.id)
