@@ -141,6 +141,36 @@ cd frontend && npm run build
 
 ---
 
+## Deploying to Vercel
+
+Import the repository at [vercel.com/new](https://vercel.com/new). Vercel
+auto-detects the FastAPI instance exported as `app` in `app/main.py`, so the
+whole project — API, Relay SPA, and the legacy `/learn` and `/ui` surfaces —
+deploys as a single Vercel Function. `vercel.json` supplies the frontend build
+step and trims the function bundle.
+
+### Environment variables
+
+| Variable | Value | Why |
+| --- | --- | --- |
+| `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `app/auth.py` treats the deployment as dev mode and leaves `/api/import/*` and `/api/track/create` open to anyone. |
+| `DATABASE_URL` | `sqlite:////tmp/swift_routing.db` | The project filesystem is read-only; `/tmp` is the only writable path. `app/config.py` falls back to this automatically when `VERCEL` is set, but that system variable is opt-in per project — setting `DATABASE_URL` explicitly is the reliable route. |
+
+Note the four slashes in the SQLite URL: `sqlite://` plus the absolute path
+`/tmp/swift_routing.db`.
+
+### What the ephemeral database means
+
+Each function instance gets its own `/tmp`, recreated and reseeded on cold
+start. Everything the app reads — 210 banks, 301 SSI records, 66 corridor
+rules — comes from `seed.py`, so reads behave identically to local. Writes do
+not persist: a simulated gpi timeline created through `/api/track/create` can
+return 404 from `/api/track/{uetr}` if the follow-up request lands on a
+different instance. Point `DATABASE_URL` at managed Postgres (and run
+`alembic upgrade head`) if you need writes to survive.
+
+---
+
 ## The learning curriculum (13 entries: 12 learning modules plus capstone)
 
 Each lab teaches one concept through concept → demo → exercise → feedback, with checkpoint-based
