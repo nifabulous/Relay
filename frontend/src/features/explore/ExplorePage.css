@@ -343,3 +343,16 @@
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
 }
+
+.bank-route {
+  margin-top: var(--space-6);
+}
+
+.bank-route__intro,
+.bank-route__notes {
+  color: var(--color-ink-muted);
+}
+
+.bank-route__meta {
+  margin-top: var(--space-3);
+}

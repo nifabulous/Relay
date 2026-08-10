@@ -2,9 +2,11 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema, SSIResponseSchema } from "../../api/schemas";
-import type { LookupResponse, SSIResponse } from "../../api/schemas";
+import { LookupResponseSchema, SSIResponseSchema, RouteResponseSchema } from "../../api/schemas";
+import type { LookupResponse, SSIResponse, RouteResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
+import { PaymentRoute } from "../../design-system/payment-route/PaymentRoute";
+import { buildRouteNodes } from "../../design-system/payment-route/routeNodes";
 import { groupByCurrency } from "./ssiGrouping";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
@@ -33,11 +35,9 @@ export function BankDetailRoute() {
     enabled: requestedBic.length > 0,
   });
 
-  // ── Later tasks insert their queries here ──────────────────────────────
-  // Task 4 adds the SSI query, Task 5 the heuristic route query. They belong
-  // ABOVE the not-found early return: hooks must run unconditionally on every
-  // render, so a query placed after the return would violate the rules of
-  // hooks the first time a BIC misses.
+  // The ssi and heuristic queries must stay ABOVE the not-found early return:
+  // hooks run unconditionally on every render, so a query placed after the
+  // return would violate the rules of hooks the first time a BIC misses.
 
   const ssi = useQuery({
     queryKey: apiKeys.ssi(requestedBic, ""),
@@ -55,6 +55,22 @@ export function BankDetailRoute() {
   const hasSSI = currencyGroups.length > 0;
 
   const bank = lookup.data?.bank ?? null;
+
+  const routeCurrency = bank?.country_currency || "USD";
+
+  // Fired in parallel with the SSI query rather than after it. 87% of banks have
+  // no published SSI, so a conditional fetch would make the common case pay two
+  // sequential round trips to save one request for the uncommon case.
+  const heuristic = useQuery({
+    queryKey: apiKeys.route(requestedBic, routeCurrency),
+    queryFn: () =>
+      apiRequest<RouteResponse>(
+        `/api/route?bic=${encodeURIComponent(requestedBic)}&currency=${encodeURIComponent(routeCurrency)}`,
+        undefined,
+        RouteResponseSchema,
+      ),
+    enabled: requestedBic.length > 0 && Boolean(bank),
+  });
 
   // The route param is what the learner typed; bank.bic is what the API
   // resolved it to. They differ for any branch BIC.
@@ -199,6 +215,42 @@ export function BankDetailRoute() {
                 {ssi.data?.disclaimer && (
                   <p className="bank-ssi__disclaimer">{ssi.data.disclaimer}</p>
                 )}
+              </section>
+            )}
+
+            {!hasSSI && !ssi.isLoading && (
+              <section className="bank-route" aria-labelledby="bank-route-title">
+                <h2 id="bank-route-title">Heuristic correspondent route</h2>
+                <p className="measure bank-route__intro">
+                  No published settlement instructions are on file for this bank.
+                  Real correspondent relationships are private and bank-specific,
+                  so the chain below is an informed suggestion from the curated
+                  corridor table — not a published instruction.
+                </p>
+
+                {heuristic.data && heuristic.data.suggested_intermediaries.length > 0 && (
+                  <>
+                    <PaymentRoute
+                      nodes={buildRouteNodes(
+                        heuristic.data.suggested_intermediaries,
+                        bank.bic,
+                      )}
+                      currency={heuristic.data.currency}
+                    />
+                    <dl className="bank-route__meta">
+                      <dt>Confidence</dt>
+                      <dd>{heuristic.data.suggested_intermediaries[0].confidence}</dd>
+                      <dt>Source</dt>
+                      <dd>{heuristic.data.source}</dd>
+                    </dl>
+                  </>
+                )}
+
+                {heuristic.data &&
+                  heuristic.data.suggested_intermediaries.length === 0 &&
+                  heuristic.data.notes && (
+                    <p className="bank-route__notes measure">{heuristic.data.notes}</p>
+                  )}
               </section>
             )}
           </>

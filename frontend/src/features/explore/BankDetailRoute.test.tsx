@@ -212,3 +212,129 @@ describe("BankDetailRoute settlement instructions", () => {
     expect(screen.queryByRole("heading", { name: "ALL" })).toBeNull();
   });
 });
+
+const EMPTY_SSI = {
+  beneficiary_bic: "GTBINGLAXXX",
+  currency: "ALL",
+  instructions: [],
+  disclaimer: "SIMULATION",
+};
+
+const NIGERIA_BANK = {
+  bic: "GTBINGLAXXX",
+  bank_name: "Guaranty Trust Bank",
+  country_code: "NG",
+  city: "Lagos",
+  country_currency: "NGN",
+};
+
+describe("BankDetailRoute heuristic fallback", () => {
+  it("shows the heuristic chain when the bank has no published SSI", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", () =>
+        HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          bank: null,
+          beneficiary_country: "NG",
+          currency: "NGN",
+          valid: true,
+          suggested_intermediaries: [
+            { bic: "CITIUS33", bank: "Citibank NY", corridor: "USD-NGN", confidence: "high" },
+          ],
+          notes: "Heuristic suggestion.",
+          source: "curated-corridor-table",
+        }),
+      ),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    expect(
+      await screen.findByRole("heading", { name: "Heuristic correspondent route" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Published settlement instructions" })).toBeNull();
+    expect(await screen.findByText(/high/)).toBeVisible();
+  });
+
+  it("requests the heuristic route in the bank's own country currency", async () => {
+    const seen: string[] = [];
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", ({ request }) => {
+        seen.push(new URL(request.url).searchParams.get("currency") ?? "");
+        return HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          bank: null,
+          beneficiary_country: "NG",
+          currency: "NGN",
+          valid: true,
+          suggested_intermediaries: [],
+          notes: "No curated corridor rule for currency=NGN country=NG.",
+          source: "curated-corridor-table",
+        });
+      }),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    await screen.findByRole("heading", { name: "Heuristic correspondent route" });
+    await waitFor(() => expect(seen).toContain("NGN"));
+  });
+
+  it("renders the backend's own explanation when nothing matches", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", () =>
+        HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          bank: null,
+          beneficiary_country: "NG",
+          currency: "NGN",
+          valid: true,
+          suggested_intermediaries: [],
+          notes: "No curated corridor rule for currency=NGN country=NG. Contact originator bank for exact chain.",
+          source: "curated-corridor-table",
+        }),
+      ),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    expect(
+      await screen.findByText(/No curated corridor rule for currency=NGN country=NG/),
+    ).toBeVisible();
+  });
+
+  it("keeps the settlement panel when the heuristic route request fails", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "SBININBBXXX", found: true, bank: INDIA_BANK }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [ssiRecord("USD", "BOFAUS3N", "Bank of America New York")],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+      http.get("/api/route", () => HttpResponse.json({ detail: "boom" }, { status: 500 })),
+    );
+
+    renderBank("SBININBBXXX");
+
+    expect(
+      await screen.findByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+  });
+});
