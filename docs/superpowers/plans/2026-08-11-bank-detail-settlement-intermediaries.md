@@ -22,6 +22,7 @@ Every task's requirements implicitly include these.
 - **Published and heuristic data stay visually and semantically distinct.** Headings are exactly `Published settlement instructions` and `Heuristic correspondent route`.
 - **Group by `SSIRecord.currency`, never `SSIResponse.currency`** — the latter is the literal sentinel `"ALL"` when the request omits a currency.
 - **Confidence renders as plain text, never a `StatusChip`.** `StatusChipStatus` has no `high`/`medium`/`low` member.
+- **`Link to` paths must NOT include `/app`.** The router sets `basename="/app"` (`App.tsx:37`), so `to="/explore/banks"` renders `href="/app/explore/banks"`. Writing `to="/app/explore/banks"` renders `/app/app/explore/banks`, which resolves to no route and paints an empty page. Three existing links have this bug — verified live — and Task 6 removes two of them as a side effect of replacing that block. Copy the surrounding style at your peril: `ExplorePage.tsx` currently demonstrates the wrong convention.
 - **Run tests with** `cd frontend && npm test -- --no-file-parallelism` (the default parallel run is load-sensitive).
 - **Eager shell bundle stays under 204,800 bytes gzip.** Verify with `npm run check:bundle`.
 - Existing suite baseline: 808 frontend unit tests, 612 backend tests, e2e 288 passed / 13 skipped.
@@ -495,14 +496,47 @@ export function BankDetailRoute() {
     enabled: requestedBic.length > 0,
   });
 
-  let status: AsyncStatus = "loading";
-  if (lookup.isError) status = "error";
-  else if (lookup.data) status = lookup.data.found ? "success" : "empty";
+  // ── Later tasks insert their queries here ──────────────────────────────
+  // Task 4 adds the SSI query, Task 5 the heuristic route query. They belong
+  // ABOVE the not-found early return: hooks must run unconditionally on every
+  // render, so a query placed after the return would violate the rules of
+  // hooks the first time a BIC misses.
 
   const bank = lookup.data?.bank ?? null;
+
   // The route param is what the learner typed; bank.bic is what the API
   // resolved it to. They differ for any branch BIC.
   const resolvedDiffers = Boolean(bank && bank.bic && bank.bic !== requestedBic);
+
+  // Not-found is a page-level state, NOT an AsyncRegion empty slot. AsyncRegion
+  // returns its own empty message *instead of* children for status="empty", so
+  // a not-found block passed as a child would never render.
+  if (lookup.data && !lookup.data.found) {
+    return (
+      <div className="explore">
+        <nav className="explore__breadcrumb" aria-label="Breadcrumb">
+          <Link to="/explore/banks">Bank Directory</Link>
+          <span aria-hidden="true">/</span>
+          <span className="mono">{requestedBic}</span>
+        </nav>
+        <div className="bank-detail__not-found">
+          <h1>Bank not found</h1>
+          <p className="measure">
+            No bank in the directory matches <span className="mono">{requestedBic}</span>.
+            The BIC may be mistyped, or the link may be out of date.
+          </p>
+          <Link to="/explore/banks" className="relay-btn relay-btn--secondary">
+            Back to Bank Directory
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Only loading / error / success reach AsyncRegion now.
+  let status: AsyncStatus = "loading";
+  if (lookup.isError) status = "error";
+  else if (lookup.data) status = "success";
 
   return (
     <div className="explore">
@@ -515,23 +549,9 @@ export function BankDetailRoute() {
       <AsyncRegion
         status={status}
         loadingLabel="Loading bank"
-        emptyMessage=""
         error={lookup.error as ApiProblem | null}
         onRetry={() => lookup.refetch()}
       >
-        {status === "empty" && (
-          <div className="bank-detail__not-found">
-            <h1>Bank not found</h1>
-            <p className="measure">
-              No bank in the directory matches <span className="mono">{requestedBic}</span>.
-              The BIC may be mistyped, or the link may be out of date.
-            </p>
-            <Link to="/explore/banks" className="relay-btn relay-btn--secondary">
-              Back to Bank Directory
-            </Link>
-          </div>
-        )}
-
         {bank && (
           <>
             <div className="bank-detail">
@@ -778,7 +798,7 @@ import type { LookupResponse, SSIResponse } from "../../api/schemas";
 import { groupByCurrency } from "./ssiGrouping";
 ```
 
-Add the query below the `lookup` query. Note the empty-string currency in the key — `apiKeys.ssi` is `(bic, currency)` and this call deliberately omits the currency to get every currency at once:
+Add the query at the insertion-point comment left by Task 3 — after the `lookup` query and **above** the `const bank = ...` line and the not-found early return. Note the empty-string currency in the key: `apiKeys.ssi` is `(bic, currency)` and this call deliberately omits the currency to get every currency at once:
 
 ```tsx
   const ssi = useQuery({
@@ -1079,7 +1099,9 @@ import { PaymentRoute } from "../../design-system/payment-route/PaymentRoute";
 import { buildRouteNodes } from "../../design-system/payment-route/routeNodes";
 ```
 
-Add after the `ssi` query. The currency comes from the resolved bank; `USD` is a defensive fallback, since `country_currency` is populated for every seeded bank:
+This query reads `bank`, so unlike the SSI query it goes **below** the `const bank = ...` line — but still **above** the not-found early return, because hooks must run unconditionally. Placing it beside the SSI query would reference `bank` before its declaration and fail to compile.
+
+The currency comes from the resolved bank; `USD` is a defensive fallback, since `country_currency` is populated for every seeded bank:
 
 ```tsx
   const routeCurrency = bank?.country_currency || "USD";
@@ -1099,7 +1121,7 @@ Add after the `ssi` query. The currency comes from the resolved bank; `USD` is a
   });
 ```
 
-`bank` is declared above these queries in Task 3, so no reordering is needed.
+The not-found early return added in Task 3 sits below all three queries, so every hook still runs on every render.
 
 Add this block immediately after the `{hasSSI && (...)}` section:
 
@@ -1193,13 +1215,25 @@ git commit -m "feat(explore): fall back to the heuristic correspondent chain"
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `frontend/src/features/explore/ExplorePage.test.tsx`:
+`ExplorePage.test.tsx` already imports `userEvent`, `MemoryRouter`, `screen` and `GlossaryPage`. Do **not** append fresh import lines for those — a second `import userEvent from ...` is a redeclaration error. Make two edits:
+
+1. Extend the existing line 5 import to pull in the other page:
 
 ```tsx
-import { BankDirectoryPage } from "./ExplorePage";
-import { renderRelay, queryClient } from "../../test/render";
-import userEvent from "@testing-library/user-event";
+import { GlossaryPage, BankDirectoryPage } from "./ExplorePage";
+```
 
+2. Add one genuinely new import beneath it:
+
+```tsx
+import { renderRelay, queryClient } from "../../test/render";
+```
+
+`BankDirectoryPage` uses `useQuery`, so it needs `renderRelay` (which supplies the `QueryClientProvider`) rather than the bare `render` the glossary tests use.
+
+Then append the test block:
+
+```tsx
 describe("BankDirectoryPage", () => {
   it("links a found bank to its detail route instead of expanding inline", async () => {
     queryClient.clear();
@@ -1314,7 +1348,7 @@ test.describe("Bank detail", () => {
   });
 
   test("a bank without SSI shows the heuristic route instead", async ({ page }) => {
-    await page.goto("/app/explore/banks/GTBINGLAXXX", { waitUntil: "networkidle" });
+    await page.goto("/app/explore/banks/COBADEFFXXX", { waitUntil: "networkidle" });
 
     await expect(
       page.getByRole("heading", { name: "Heuristic correspondent route" }),
@@ -1360,7 +1394,7 @@ Expected: clean.
 - [ ] **Step 3: Run the e2e spec**
 
 Run: `cd frontend && npx playwright test e2e/explore.spec.ts --project=desktop`
-Expected: PASS. `SBININBBXXX` has 36 seeded SSI rows and `GTBINGLAXXX` has none, so both fixtures are real seed data — verify with `curl 'http://127.0.0.1:8000/api/ssi?bic=GTBINGLAXXX'` if a test fails unexpectedly.
+Expected: PASS. Both fixtures are real seed data: `SBININBBXXX` has 36 SSI rows, `COBADEFFXXX` (Commerzbank, EUR) has none but does resolve 3 heuristic intermediaries. Do NOT substitute `GTBINGLAXXX` — it carries 3 SSI rows and would take the published branch. Confirm with `curl 'http://127.0.0.1:8000/api/ssi?bic=COBADEFFXXX'`.
 
 - [ ] **Step 4: Check the bundle budget**
 
@@ -1425,3 +1459,10 @@ git commit -m "test(e2e): cover bank detail deep links, fallback, and accessibil
 - MSW handlers for `/api/lookup`, `/api/route` and `/api/ssi` already exist in `src/test/handlers.ts`. The default `/api/ssi` handler returns `instructions: []`, which is the fallback path — tests asserting SSI-present must override with `server.use(...)`, as Task 4 does.
 - `e2e/explore.spec.ts` does **not** currently import `AxeBuilder`, so Task 7 adds it.
 - `PaymentRoute` accepts `{ nodes, currency, amount, activeNodeId }`; Task 5 passes `nodes` and `currency` only.
+
+**Defects found in the first draft of this plan and fixed:**
+
+1. **`AsyncRegion` returns its empty state *instead of* children.** Task 3 originally passed the not-found block as a child guarded by `status === "empty"`, which would never have rendered and would have failed its own test. Not-found is now a page-level early return.
+2. **Hook ordering.** Task 5's heuristic query reads `bank`, and the first draft told the implementer to place it beside the SSI query — above `bank`'s declaration — while asserting no reordering was needed. That is a use-before-declaration compile error. Insertion points are now explicit, and all three queries sit above the early return so the rules of hooks hold.
+3. **Invalid e2e fixture.** `GTBINGLAXXX` was used as the "bank with no SSI" case; it actually carries 3 SSI rows and would take the published branch. Replaced with `COBADEFFXXX`, verified through the API (which accounts for prefix-fallback matching, so a bank with no exact row can still return records).
+4. **Duplicate imports.** Task 6 appended `import userEvent`, already imported in `ExplorePage.test.tsx` — a redeclaration error. Now specifies editing the existing import line.
