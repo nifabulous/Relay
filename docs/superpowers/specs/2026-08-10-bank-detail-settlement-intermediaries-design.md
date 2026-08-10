@@ -1,0 +1,196 @@
+# Bank detail: settlement instructions and intermediaries
+
+_Design spec — 2026-08-10._
+
+## Purpose
+
+A learner who looks up a bank in Relay currently sees four facts: name, BIC,
+country, city. The app already holds far more — published settlement
+instructions with real correspondent chains, plus a heuristic corridor
+table — but none of it is reachable from the directory.
+
+This spec adds a dedicated bank detail route that surfaces settlement and
+intermediary data, and teaches the distinction between the two sources.
+
+## Scope
+
+**In scope:** a deep-linkable bank detail route showing identity, published
+SSI grouped by currency, and a heuristic correspondent chain when no SSI
+exists.
+
+**Out of scope:** bank street address. There is no address field on `Bank`
+(`app/models.py:7`), and no source for the 209 seeded international banks.
+`FedACHBank.address` (`app/models.py:90`) exists but that table is empty, is
+keyed by ABA routing number rather than BIC, requires `FEDACH_URL`, and is
+US-only. Address is deferred until there is a real source. The view shows
+city and country and does not pretend to more.
+
+**Also out of scope:** any change to backend endpoints, schemas, or seed data.
+
+## Data reality this design is built on
+
+Measured against the current checkout:
+
+| Fact | Value |
+| --- | --- |
+| Banks in directory | 209 |
+| SSI rows | 303 |
+| Banks with any SSI | 28 (13.4%) |
+| Corridor rules | 72 |
+| Currencies per covered bank | min 1, median 9, max 36 |
+
+Coverage is lopsided by design — the covered banks are the major
+correspondents. `SBININBBXXX` (State Bank of India) carries 36 SSI rows across
+**36 distinct intermediaries**, four of which are USD alone: Bank of America
+New York, Deutsche Bank Trust NY, JP Morgan Chase NY, and Citibank NY.
+
+Two consequences drive the design:
+
+1. **87% of banks have no SSI**, so an SSI-only panel would be blank for most
+   lookups. A heuristic fallback is required for the view to be useful.
+2. **A bank holds Nostro accounts with several correspondents per currency.**
+   Flattening the list would hide that, and it is exactly the mechanic the
+   curriculum teaches. Grouping is by currency, with intermediaries nested.
+
+## Route and file layout
+
+New route `explore/banks/:bic`, nested under the existing `explore/banks`
+index (`frontend/src/app-shell/App.tsx:52`). Sibling routes are
+`explore/schemes` and `explore/glossary`, so this shape is consistent.
+
+New file `frontend/src/features/explore/BankDetailRoute.tsx`, lazy-loaded in
+`App.tsx` following the pattern used by every other route target.
+
+`BankDetailCard` today is a module-local function at
+`frontend/src/features/explore/ExplorePage.tsx:113`, rendered inside
+`BankDirectoryPage` (`ExplorePage.tsx:50`). It moves into the new file.
+`BankDirectoryPage`'s search result becomes a link to
+`/app/explore/banks/{bic}` rather than rendering the card inline — that link
+is what makes a bank shareable.
+
+Unknown or malformed BIC renders a not-found state with a breadcrumb back to
+the directory, mirroring `CaseDeskRoute`
+(`frontend/src/features/learn/cases/CaseDeskRoute.tsx:23`), so a stale
+bookmark degrades gracefully instead of erroring.
+
+## Data flow
+
+Three endpoints, all of which already exist:
+
+| Call | Endpoint | Note |
+| --- | --- | --- |
+| Identity | `GET /api/lookup?bic=` | `app/routers/directory.py:59` |
+| Settlement | `GET /api/ssi?bic=` | currency **omitted** — `app/routers/ssi.py:20` types it `Optional`, and omitting it returns every currency in one call |
+| Heuristic | `GET /api/route?bic=&currency=` | `app/routers/routing.py:22`; currency is **required** |
+
+The heuristic currency defaults to the bank's `country_currency`, falling back
+to `USD` when that column is null. A Nigerian bank defaults to NGN, a UK bank
+to GBP — matching the intent of "how do I pay this bank".
+
+**Fire the SSI and route queries in parallel, not conditionally.** The
+intuitive design awaits SSI and fetches the route only when it comes back
+empty, but 87% of banks take that empty path, so a waterfall penalises the
+majority case with two sequential round trips. Firing both costs one wasted
+request for the 13% that have SSI and gives every bank a single round trip.
+Render SSI when `instructions` is non-empty; otherwise render the heuristic
+block.
+
+Each query owns its own loading and error state. A failed `/api/route` must
+not blank the SSI panel, and vice versa.
+
+### Query keys
+
+`apiKeys.ssi` and `apiKeys.route` (`frontend/src/api/queryKeys.ts:38-50`) are
+both `(bic: string, currency: string)`. The all-currencies SSI call passes the
+empty string as the currency component — `apiKeys.ssi(bic, "")` — so it cannot
+collide with a currency-scoped entry cached by another surface.
+
+### Schemas
+
+No API-client work. `LookupResponseSchema` (`schemas.ts:92`),
+`RouteResponseSchema` (`schemas.ts:118`), `SSIRecordSchema` (`schemas.ts:137`)
+and `SSIResponseSchema` (`schemas.ts:154`) already exist and cover every field
+this view needs.
+
+## Presentation
+
+### Published settlement instructions
+
+Grouped by `currency`; each group lists its intermediaries with
+`intermediary_bic`, `intermediary_bank_name`, `intermediary_account` (the
+Nostro account), `charge_code`, and `value_date`. A currency with four
+intermediaries reads as one heading with four rows, which is the point.
+
+`SSIResponse.disclaimer` (`app/schemas.py:97`) is rendered, not dropped.
+CLAUDE.md requires the simulation disclaimer on every payment-shaped response,
+and settlement accounts are the most payment-shaped data in the app.
+
+### Heuristic correspondent chain
+
+Reuses the existing `PaymentRoute` component
+(`frontend/src/design-system/payment-route/PaymentRoute.tsx:148`) via
+`buildRouteNodes(intermediaries, beneficiaryBic)`
+(`frontend/src/features/learn/labs/routeNodes.ts:12`). Its `IntermediaryLike`
+shape (`bic`, optional `bank`) already matches `SuggestedIntermediary`
+(`schemas.ts:106`), so the chain renders with no adapter.
+
+**Targeted refactor:** `buildRouteNodes` currently lives under
+`features/learn/labs/` while serving Lab 4 and the Capstone. Importing it from
+`features/explore/` would create a cross-feature dependency for what is really
+a design-system concern. Move it to
+`frontend/src/design-system/payment-route/routeNodes.ts` beside the component
+it feeds, and update the two existing importers. This is the only refactor in
+scope.
+
+Confidence renders as a plain labelled value, **not** a `StatusChip`.
+`StatusChipStatus` is `CheckStatus | DecisionQuality | SourceStatus`
+(`frontend/src/design-system/types.ts:44`) and has no `high`/`medium`/`low`
+member; the existing precedent is plain text (`Lab4Content.tsx:149`). Forcing
+confidence through the chip would mean mapping it onto pass/fail semantics it
+does not have.
+
+### Labelling the two sources
+
+The blocks are headed **"Published settlement instructions"** and **"Heuristic
+correspondent route"**, and are never blended into one list. Relay already
+teaches that real correspondent relationships are private and that routing
+suggestions are advisory (`app/routers/routing.py:30`). Presenting a guess
+with the same weight as a curated instruction would quietly undo that lesson.
+
+## Empty and error states
+
+| Condition | Behaviour |
+| --- | --- |
+| SSI present | Render grouped settlement instructions |
+| No SSI, corridor rule found | Render heuristic chain with its confidence and currency |
+| Neither | Explain that no published SSI is on file and that real correspondent relationships are bank-specific and private — not a bare blank |
+| Unknown BIC | Not-found state with breadcrumb back to the directory |
+| Query error | Per-block error; the other block still renders |
+
+## Accessibility
+
+Currency groups use real headings so the structure is navigable by heading
+order rather than by sight. `PaymentRoute` already carries
+`role="img"` with a generated `aria-label` (`PaymentRoute.tsx:153`).
+Status meaning is never carried by colour alone, per `DESIGN.md`.
+
+## Testing
+
+- Unit tests via MSW for: bank found, unknown BIC, SSI present and grouped,
+  SSI empty with heuristic fallback, both empty, and independent per-query
+  error states.
+- A route test asserting the deep link `/app/explore/banks/:bic` resolves and
+  that `BankDirectoryPage` links into it.
+- E2E coverage in the Explore spec including an axe pass, since this adds a
+  page.
+- `buildRouteNodes` tests follow it to its new location.
+- New lazy chunk, so the eager shell bundle budget is unaffected. Verify with
+  `npm run check:bundle`.
+
+## Invariants preserved
+
+- No backend, schema, or seed changes.
+- The SSI disclaimer ships with any rendered settlement data.
+- `ACCT-` placeholder accounts are displayed as-is and never presented as
+  real. This view reads seed data; it does not add any.
+- Heuristic and published data stay visually and semantically distinct.
