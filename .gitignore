@@ -36,6 +36,7 @@ Thumbs.db
 .env.*
 
 # Frontend (Relay)
+node_modules/
 frontend/node_modules/
 frontend/coverage/
 frontend/test-results/
@@ -50,3 +51,7 @@ app/static/relay/index.html
 frontend/output/
 output/
 .playwright-cli/
+.gstack/
+
+# Local scratch / staging archives (never publish)
+_to_delete/
