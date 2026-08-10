@@ -83,9 +83,38 @@ Three endpoints, all of which already exist:
 | Settlement | `GET /api/ssi?bic=` | currency **omitted** — `app/routers/ssi.py:20` types it `Optional`, and omitting it returns every currency in one call |
 | Heuristic | `GET /api/route?bic=&currency=` | `app/routers/routing.py:22`; currency is **required** |
 
-The heuristic currency defaults to the bank's `country_currency`, falling back
-to `USD` when that column is null. A Nigerian bank defaults to NGN, a UK bank
-to GBP — matching the intent of "how do I pay this bank".
+The heuristic currency defaults to the bank's `country_currency`. A Nigerian
+bank defaults to NGN, a UK bank to GBP — matching the intent of "how do I pay
+this bank". That column is populated for all 209 seeded banks, so the `USD`
+fallback for a null value is a defensive path, not a routine one.
+
+### BIC resolution is institution-level, and must be disclosed
+
+All three endpoints resolve a BIC by trying the exact value, then the 8-char
+prefix + `XXX`, then the 6-char prefix + `XXXXX`
+(`app/routers/ssi.py:39`, `app/services/routing.py:58`). A branch BIC
+therefore resolves to its head office:
+
+```
+GET /api/ssi?bic=SBININBB123
+  → response.beneficiary_bic = "SBININBB123"   (echoes the query)
+  → instructions[0].beneficiary_bic = "SBININBBXXX"   (head office)
+  → 36 records
+```
+
+`GET /api/lookup?bic=SBININBB123` likewise returns `found: true` with bank
+`SBININBBXXX`, and `/api/route` resolves the same way.
+
+So the `:bic` route param can differ from the resolved bank's BIC, and the
+settlement records can belong to a different BIC than the one searched.
+**When the resolved BIC differs from the requested one, the page says so
+once, near the bank identity** — e.g. "Showing institution-level records for
+SBININBBXXX". Presenting a head office's Nostro accounts as though they were a
+specific branch's would overstate their precision, which is the same failure
+as blending heuristic data with published data.
+
+Disclose rather than redirect: rewriting the URL to the canonical BIC would
+silently discard what the learner actually typed.
 
 **Fire the SSI and route queries in parallel, not conditionally.** The
 intuitive design awaits SSI and fetches the route only when it comes back
@@ -116,10 +145,15 @@ this view needs.
 
 ### Published settlement instructions
 
-Grouped by `currency`; each group lists its intermediaries with
-`intermediary_bic`, `intermediary_bank_name`, `intermediary_account` (the
+Grouped by each record's own `currency`; each group lists its intermediaries
+with `intermediary_bic`, `intermediary_bank_name`, `intermediary_account` (the
 Nostro account), `charge_code`, and `value_date`. A currency with four
 intermediaries reads as one heading with four rows, which is the point.
+
+Group by `SSIRecord.currency`, never by the response's top-level `currency`
+field. When the request omits a currency the endpoint sets that field to the
+literal sentinel string `"ALL"` (`app/routers/ssi.py`, `currency=ccy or "ALL"`),
+which is not a currency and must never be rendered as one.
 
 `SSIResponse.disclaimer` (`app/schemas.py:97`) is rendered, not dropped.
 CLAUDE.md requires the simulation disclaimer on every payment-shaped response,
@@ -159,11 +193,27 @@ with the same weight as a curated instruction would quietly undo that lesson.
 
 ## Empty and error states
 
+`/api/route` does **not** 404 when no corridor rule matches. It returns 200
+with an empty `suggested_intermediaries` and an explanatory `notes` string,
+verified live:
+
+```
+GET /api/route?bic=SBININBBXXX&currency=XPF
+  → 200, suggested_intermediaries: []
+  → notes: "No curated corridor rule for currency=XPF country=IN.
+            Contact originator bank for exact chain."
+```
+
+Render that `notes` value rather than authoring parallel copy — the backend
+already names the currency and country, and duplicating the sentence in the
+frontend would let the two drift.
+
 | Condition | Behaviour |
 | --- | --- |
 | SSI present | Render grouped settlement instructions |
 | No SSI, corridor rule found | Render heuristic chain with its confidence and currency |
-| Neither | Explain that no published SSI is on file and that real correspondent relationships are bank-specific and private — not a bare blank |
+| Neither | Render the backend's `notes` explanation, plus a line that real correspondent relationships are bank-specific and private — not a bare blank |
+| Resolved BIC ≠ requested BIC | Institution-level disclosure near the identity block |
 | Unknown BIC | Not-found state with breadcrumb back to the directory |
 | Query error | Per-block error; the other block still renders |
 
@@ -179,6 +229,11 @@ Status meaning is never carried by colour alone, per `DESIGN.md`.
 - Unit tests via MSW for: bank found, unknown BIC, SSI present and grouped,
   SSI empty with heuristic fallback, both empty, and independent per-query
   error states.
+- A test that a branch BIC whose records resolve to a head office renders the
+  institution-level disclosure, and that an exact match does **not** render it.
+  Fixture: request `SBININBB123`, records carrying `SBININBBXXX`.
+- A test that the `"ALL"` sentinel never reaches the rendered output as a
+  currency heading.
 - A route test asserting the deep link `/app/explore/banks/:bic` resolves and
   that `BankDirectoryPage` links into it.
 - E2E coverage in the Explore spec including an axe pass, since this adds a
@@ -189,8 +244,17 @@ Status meaning is never carried by colour alone, per `DESIGN.md`.
 
 ## Invariants preserved
 
+The governing invariant: **the view never presents data with more authority or
+more precision than it actually has, and adds no data of its own.** Every rule
+below is an instance of it.
+
 - No backend, schema, or seed changes.
 - The SSI disclaimer ships with any rendered settlement data.
 - `ACCT-` placeholder accounts are displayed as-is and never presented as
   real. This view reads seed data; it does not add any.
-- Heuristic and published data stay visually and semantically distinct.
+- Heuristic and published data stay visually and semantically distinct
+  (authority).
+- Institution-level records resolved from a branch BIC are disclosed as such
+  (precision).
+- Empty states use the backend's own explanation rather than frontend copy
+  that can drift from it.
