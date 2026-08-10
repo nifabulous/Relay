@@ -139,8 +139,17 @@ def learn_ui(rest: str = ""):
 
 @app.get("/")
 def root():
-    """Redirect to the learning labs — the flagship experience."""
-    return RedirectResponse(url="/learn", status_code=302)
+    """Redirect to Relay — the flagship experience.
+
+    The legacy vanilla surface stays reachable at /learn and /ui, but first
+    visitors land on Relay rather than the surface it replaces.
+
+    When the Relay build is absent — a fresh clone that has not run
+    `cd frontend && npm run build` yet — fall back to /learn so the root
+    serves a working page instead of the 503 that /app would raise.
+    """
+    target = "/app" if _relay_mounted and RELAY_INDEX.exists() else "/learn"
+    return RedirectResponse(url=target, status_code=302)
 
 
 @app.get("/api/manifest")

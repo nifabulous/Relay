@@ -2,22 +2,53 @@
 Tests for the front-door fix (item 2.1).
 
 UX panel: GET / returns raw JSON — the single biggest beginner drop-off.
-Fix: redirect / to /learn (the flagship education experience). The JSON
-manifest moves to /api.
+Fix: redirect / to the flagship education experience. The JSON manifest moves
+to /api.
+
+The front door now points at Relay (/app). It previously pointed at the legacy
+vanilla surface (/learn), which stays reachable but is no longer what a first
+visitor sees.
 """
 
 
 class TestRootRedirect:
-    """/ must redirect to /learn, not return raw JSON."""
+    """/ must redirect to Relay, not return raw JSON or the legacy surface."""
 
-    def test_root_redirects_to_learn(self, client):
+    def test_root_redirects_to_relay(self, client):
         r = client.get("/", follow_redirects=False)
         assert r.status_code in (301, 302, 303, 307, 308), (
             f"GET / must redirect (3xx), got {r.status_code} — beginners landing "
             f"on the root see raw JSON and bounce"
         )
+        location = r.headers.get("location", "")
+        assert "/app" in location, (
+            f"Redirect must point to Relay at /app, got {location!r}"
+        )
+        assert "/learn" not in location, (
+            f"Front door must not send first visitors to the legacy surface, "
+            f"got {location!r}"
+        )
+
+    def test_root_redirect_lands_on_relay_shell(self, client):
+        """Following the redirect must reach the built Relay shell, not a 503."""
+        r = client.get("/")
+        assert r.status_code == 200
+        assert '<div id="root"></div>' in r.text
+
+    def test_root_falls_back_to_legacy_when_relay_unbuilt(self, client, monkeypatch):
+        """A fresh clone has no Relay build; the root must still serve something.
+
+        README's Quick start runs the backend before the frontend build, so
+        pointing / at an unbuilt /app would land newcomers on a 503.
+        """
+        from app import main as main_module
+
+        monkeypatch.setattr(main_module, "_relay_mounted", False)
+        r = client.get("/", follow_redirects=False)
+        assert r.status_code in (301, 302, 303, 307, 308)
         assert "/learn" in r.headers.get("location", ""), (
-            f"Redirect must point to /learn, got {r.headers.get('location')!r}"
+            "With no Relay build present the root must fall back to the legacy "
+            f"surface, got {r.headers.get('location')!r}"
         )
 
     def test_api_manifest_still_available(self, client):
