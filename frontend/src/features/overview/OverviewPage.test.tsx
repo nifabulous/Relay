@@ -1,5 +1,31 @@
-import { describe, it, expect } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, it, expect } from "vitest";
 import { selectPrimaryAction } from "./selectPrimaryAction";
+import { OverviewPage } from "./OverviewPage";
+
+function renderOverviewPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <OverviewPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe("selectPrimaryAction", () => {
   it("selects explore_intro for first-time users", () => {
@@ -56,5 +82,34 @@ describe("selectPrimaryAction", () => {
       curriculumComplete: false,
     });
     expect(action.kind).toBe("resume_learn");
+  });
+});
+
+describe("OverviewPage", () => {
+  it("places Learning backup after Recent activity and before the lower data summary", async () => {
+    renderOverviewPage();
+
+    const activitySection = screen
+      .getByRole("heading", { name: /recent activity/i })
+      .closest("section");
+    const backupSection = screen
+      .getByRole("heading", { name: /learning backup/i })
+      .closest("section");
+
+    expect(activitySection).not.toBeNull();
+    expect(backupSection).not.toBeNull();
+
+    await waitFor(() => {
+      expect(document.querySelector(".overview__status")).not.toBeNull();
+    });
+
+    const statusSection = document.querySelector(".overview__status");
+
+    expect(
+      activitySection!.compareDocumentPosition(backupSection!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      backupSection!.compareDocumentPosition(statusSection!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

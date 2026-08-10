@@ -5,18 +5,26 @@ import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
 import { HealthResponseSchema, ProgressResponseSchema } from "../../api/schemas";
 import type { HealthResponse, ProgressResponse } from "../../api/schemas";
-import { loadProgress, loadActivity } from "../../lib/persistence/storage";
+import { loadLearningState } from "../../lib/persistence/learnerStateTransfer";
+import { displayStreak, dueReviews, practicedToday, dayKey } from "../learn/practice/practiceStore";
 import { computeProgress } from "../learn/curriculum";
-import { toBackendModuleId } from "./badgeIds";
+import { toBackendModuleIds } from "./badgeIds";
+import { LearnerDataPanel } from "./LearnerDataPanel";
 import { relativeTime } from "./relativeTime";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
-  const progress = loadProgress();
+  const learningState = loadLearningState();
+  const progress = learningState.state.progress;
   const stats = computeProgress(progress.completedModuleIds);
-  const completedParam = progress.completedModuleIds.map(toBackendModuleId).join(",");
-  const activity = loadActivity().entries;
+  const completedParam = progress.completedModuleIds.flatMap(toBackendModuleIds).join(",");
+  const activity = learningState.state.activity.entries;
   const now = Date.now();
+  const practice = learningState.state.practice;
+  const today = dayKey(new Date());
+  const streak = displayStreak(practice, today);
+  const reviewsDue = dueReviews(practice, today).length;
+  const practiceDone = practicedToday(practice, today);
 
   const healthQuery = useQuery({
     queryKey: apiKeys.health,
@@ -66,6 +74,21 @@ export function OverviewPage() {
             <div className="overview__progress-fill" style={{ width: `${stats.percentage}%` }} />
           </div>
         </div>
+        {(streak > 0 || reviewsDue > 0) && (
+          <p className="overview__practice-line">
+            {streak > 0 && (
+              <span className="overview__streak">
+                <span className="mono">{streak}</span>-day practice streak
+                {!practiceDone && " — practice today to keep it"}
+              </span>
+            )}
+            {reviewsDue > 0 && (
+              <Link to="/learn/practice" className="overview__review-due">
+                {reviewsDue} question{reviewsDue === 1 ? "" : "s"} due for review
+              </Link>
+            )}
+          </p>
+        )}
         {badgesQuery.data && badgesQuery.data.earned_badges.length > 0 && (
           <div className="overview__badges">
             {badgesQuery.data.earned_badges.map((b) => (
@@ -87,6 +110,12 @@ export function OverviewPage() {
         <Link to="/operate" className="overview__utility-link">
           <span className="overview__utility-label">Track</span>
           <span className="overview__utility-sub">Prepare or track a payment</span>
+        </Link>
+        <Link to="/learn/practice" className="overview__utility-link">
+          <span className="overview__utility-label">Practice</span>
+          <span className="overview__utility-sub">
+            {practiceDone ? "Done for today" : "Today's five-question drill"}
+          </span>
         </Link>
       </section>
 
@@ -112,6 +141,8 @@ export function OverviewPage() {
           </ul>
         )}
       </section>
+
+      <LearnerDataPanel profilePersistence={learningState.persistence} />
 
       {healthQuery.data && (
         <section className="overview__status">

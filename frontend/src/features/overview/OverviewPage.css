@@ -119,9 +119,144 @@
 }
 
 /* ── Recent activity ────────────────────────────────────── */
+.overview__activity {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.overview__activity .overview__section-title {
+  margin-bottom: var(--space-2);
+}
+
 .overview__muted {
   font-size: var(--text-sm);
   color: var(--color-ink-muted);
+}
+
+/* ── Learner backup ─────────────────────────────────────── */
+.overview__learner-data {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.overview__learner-data-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.overview__learner-data-header .overview__section-title {
+  margin-bottom: var(--space-2);
+}
+
+.overview__learner-data-action {
+  flex-shrink: 0;
+}
+
+.overview__learner-data-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.overview__learner-data-copy,
+.overview__learner-data-import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.overview__learner-data-note,
+.overview__learner-data-label {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.overview__learner-data-label {
+  font-weight: 600;
+}
+
+.overview__learner-data-input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.overview__learner-data-preview {
+  padding: var(--space-3);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.overview__learner-data-preview-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.overview__learner-data-preview-list {
+  list-style: disc;
+  margin-left: var(--space-4);
+  color: var(--color-ink-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.overview__learner-data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.overview__learner-data-feedback {
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+}
+
+.overview__learner-data-feedback--success {
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
+}
+
+.overview__learner-data-feedback--error {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+}
+
+.overview__learner-data-warning {
+  padding: var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+}
+
+.overview__learner-data-warning-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-warning);
+  margin-bottom: var(--space-1);
+}
+
+.overview__learner-data-warning-copy {
+  font-size: var(--text-sm);
+  color: var(--color-warning);
 }
 
 /* ── System status ──────────────────────────────────────── */
@@ -153,16 +288,84 @@
   .overview__utility {
     flex-direction: column;
   }
+
+  .overview__learner-data-header,
+  .overview__learner-data-body,
+  .overview__learner-data-actions {
+    flex-direction: column;
+    display: flex;
+  }
 }
 
 /* ── Activity list ──────────────────────────────────────── */
-.overview__activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.overview__activity-item { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; }
-.overview__activity-tag { font-size: var(--text-xs); padding: 1px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-control); color: var(--color-ink-muted); }
-.overview__activity-tag--module { color: var(--color-action); border-color: var(--color-action-border); }
+.overview__activity-list { list-style: none; margin: 0; padding: 0; }
+.overview__activity-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+}
+.overview__activity-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.overview__activity-item:last-child {
+  padding-bottom: 0;
+}
+.overview__activity-tag {
+  min-width: 52px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+.overview__activity-tag--module {
+  color: var(--color-action);
+  border-color: var(--color-action-border);
+  background: var(--color-action-surface);
+}
 .overview__activity-label { font-size: var(--text-sm); color: var(--color-ink-strong); }
 .overview__activity-time { margin-left: auto; color: var(--color-ink-muted); font-size: var(--text-xs); }
+
+@media (max-width: 768px) {
+  .overview__activity-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .overview__activity-time {
+    grid-column: 2;
+    margin-left: 0;
+  }
+}
 
 /* ── Badges ─────────────────────────────────────────────── */
 .overview__badges { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
 .overview__badge { font-size: var(--text-xs); padding: 2px var(--space-2); border: 1px solid var(--color-success-border); border-radius: var(--radius-full); color: var(--color-success); background: var(--color-success-bg); }
+
+/* ── Practice streak + review nudge ───────────────────── */
+
+.overview__practice-line {
+  display: flex;
+  gap: var(--space-4, 16px);
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin-top: var(--space-3, 12px);
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--color-ink);
+}
+
+.overview__streak .mono {
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.overview__review-due {
+  color: var(--color-action);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

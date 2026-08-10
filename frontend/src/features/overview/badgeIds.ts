@@ -1,8 +1,16 @@
 /**
  * Map a frontend curriculum module id to the backend progress-service id.
- * Labs are numeric backend ids ("lab-3" -> "3"); capstone and non-lab ids
- * pass through unchanged.
+ * The backend now uses the same current curriculum IDs; legacy aliases are
+ * normalized server-side for previously saved progress.
  */
 export function toBackendModuleId(labId: string): string {
-  return labId.startsWith("lab-") ? labId.slice(4) : labId;
+  return labId;
+}
+
+/**
+ * Keep the frontend/backend contract one module to one ID. Fees & FX is a
+ * single current curriculum module even though it replaced two legacy tools.
+ */
+export function toBackendModuleIds(labId: string): string[] {
+  return [toBackendModuleId(labId)];
 }
