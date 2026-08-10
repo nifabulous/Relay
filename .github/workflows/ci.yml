@@ -45,3 +45,36 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests/ -q
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      # `npm run build` is `tsc --noEmit && vite build`, so this covers the
+      # typecheck as well as the production bundle.
+      - name: Typecheck and build
+        run: npm run build
+        working-directory: frontend
+
+      # File parallelism is disabled deliberately: the preferred-tier Case Desk
+      # test is load-sensitive under the default runner. See CLAUDE.md.
+      - name: Unit and integration tests
+        run: npm test -- --no-file-parallelism
+        working-directory: frontend
+
+      - name: Bundle budget
+        run: npm run check:bundle
+        working-directory: frontend
