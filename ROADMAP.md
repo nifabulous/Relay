@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-07-20 · **Tests:** 913+ total (608 backend + 283+ frontend + 22 E2E) · **Commits:** 117+ · **Modules:** 10
+**Last updated:** 2026-08-09 · **Verified locally:** 608 backend + 723 frontend + 288 E2E passing (6 intentional skips across 294 cases) · **Commits:** 173 · **Curriculum:** 13 entries (12 modules + capstone)
 
 ---
 
@@ -48,7 +48,7 @@ Full plan at `docs/superpowers/plans/2026-07-17-relay-ui-rebuild.md`. Design con
 | T6-T7 | Responsive shell (desktop rail + mobile bottom nav), adaptive Overview |
 | T8-T9 | Explore workspace (CommandSearch), PaymentRoute visualization |
 | T10-T11 | Operate workspace (PreparePayment, Fees, Screening, ValueDate, STP, Tracking) |
-| T12-T13 | Learn curriculum (8 modules), E2E tests, bundle gate |
+| T12-T13 | Initial Learn curriculum foundation, E2E tests, bundle gate |
 | T14 | Documentation, branding, manifest test |
 
 ### Code review (4 expert reviewers — all findings resolved)
@@ -63,7 +63,9 @@ Full plan at `docs/superpowers/plans/2026-07-18-learn-content-parity.md`.
 
 ### All 14 tasks shipped
 
-8 interactive labs with checkpoint-based completion, real API integration, and accessible primitives (Exercise, MultipleChoice, Decompose, ScoreBar, StepIndicator). Capstone is a 6-step state machine with NO_MATCH branching.
+The initial 8 interactive labs grew into a 13-entry curriculum with checkpoint-based completion,
+real API integration, and accessible primitives (Exercise, MultipleChoice, Decompose, ScoreBar,
+StepIndicator). Capstone is a 6-step state machine with NO_MATCH branching.
 
 ### Lab 8 — MT103 → ISO 20022 (Complete)
 
@@ -84,6 +86,19 @@ Full plan at `docs/superpowers/plans/2026-07-19-overview-explore-data-truth.md`.
 - Schemes page is a real rails comparison table (was a stub)
 - Badge IDs mapped correctly between frontend and backend
 
+## ✅ Phase 5 — Syllabus refinement and retention (Complete for this update)
+
+- Curriculum expanded to Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and capstone.
+- Capstone sequencing and every lab's correct-answer completion gate are covered by tests.
+- Lab 5 now includes a field-by-field SSI example, charge-code decisions, live lookup, and a
+  forward link to the capstone Settle step.
+- `/app/learn/practice` provides a five-question daily drill, a 30-question bank, 1/3/7-day
+  missed-question review, and device-local streaks.
+- Relay learner-state portability is now shipped for anonymous browser-local use: Overview can
+  export/import learning backups as JSON for progress, practice, activity, and Case Desk sessions,
+  while payment drafts and UI preferences remain local-only.
+- GBP, CAD, and EUR rail data and the generated Relay build are up to date with the shipped UI.
+
 ---
 
 ## ✅ Design Audit (Complete)
@@ -100,15 +115,23 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 
 ---
 
-## 🔲 Remaining work
+## 🔲 Current focus and remaining work
+
+The next contribution slice is content-led rather than a rebuild:
+
+1. Case Desk Phase 2: research learner behavior before adding more scenarios.
+2. Add sanctions-screening content as the next technical track.
+3. Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.
+4. Extend practice questions and expose review outcomes through telemetry/assessment reporting.
 
 ### From the 20-expert review — prioritized
 
-**Phase A — Data fixes (1 hour):**
-1. Add Labs 8-9 to capstone prerequisites
-2. Fix Lab 9 Interac limit to match scheme data ($3,000)
+**Phase A — Data and consistency follow-up:**
+1. ~~Add Labs 8-9 to capstone prerequisites~~ ✅ Done (curriculum.ts; capstone now requires Labs 1–9)
+2. ~~Fix Lab 9 Interac limit to match scheme data ($3,000)~~ ✅ Done (scheme data and lesson agree)
 3. Fix tracking.py to use LIFT_FEES table instead of hardcoded $2.50
-4. Align backend module catalog (16→10 modules, remove phantom badges)
+4. Align the legacy backend module catalogue and badge bridge with the Relay curriculum (the
+   backend still carries legacy IDs such as `fees`, `fx`, `settlement`, `mt103`, and `cases`)
 
 **Phase B — Domain accuracy (2 hours):**
 5. Map gpi statuses to ISO 20022 TransactionStatus codes (ACSP/ACSC/PDNG/RJCT)
@@ -116,12 +139,12 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 7. Fix 23B→CdtDbtInd mapping + add GrpHdr mandatory elements
 
 **Phase C — Assessment integrity (product change):**
-8. Gate at least one checkpoint per lab on a correct answer, not just interaction
+8. ~~Gate at least one checkpoint per lab on a correct answer, not just interaction~~ ✅ Done (Lab 3 decision drill, Lab 5 decision points; all other labs already had a correct-answer gate)
 9. Fix MultipleChoice answer leakage in wrong-option explanations
-10. Add worked examples to Labs 4 and 9
+10. Add worked examples to Labs 4 and 9 where the current lesson still needs more guided practice
 
 **Phase D — Missing curriculum track:**
-11. Fees/FX module (badge catalog promises it)
+11. ~~Fees/FX module (badge catalog promises it)~~ ✅ Done (module 12 "Follow the Money: Fees & FX" — earns the fees + fx badges)
 12. Sanctions screening lab (badge catalog promises it)
 13. Exceptions/returns workflow
 
@@ -130,12 +153,12 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 | Item | Why |
 |---|---|
 | Dark theme | Not required for initial rebuild |
-| User accounts / cloud sync | No real payment initiation (spec §16) |
+| User accounts / cloud sync | Manual browser-local learner backup/import is shipped; account-based sync is still future work |
 | French i18n | Francophone Africa audience — separate effort |
 | Instructor dashboard / cohort management | Converts free tool to paid product |
 | Serial-vs-cover correspondent model | Advanced domain concept |
 | FX margin/spread modeling | Where fintechs make money — separate module |
-| Cross-device persistence | Currently localStorage only |
+| Automatic cross-device persistence | Manual JSON backup/export-import exists today; automatic sync between devices does not |
 
 ---
 
@@ -143,16 +166,16 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 
 | Dimension | Phase 0 | Phase 1 | Phase 2 | Phase 3-4 | Current |
 |---|---|---|---|---|---|
-| Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ 117+ commits |
-| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 913+ |
+| Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ 173 commits |
+| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 608 backend + 723 frontend + 288 E2E (+ 6 intentional skips) |
 | CI | ❌ | ✅ GitHub Actions | ✅ + Vitest | ✅ + Playwright | ✅ Full pipeline |
 | Auth | ❌ | ✅ admin_required | ✅ | ✅ | ✅ |
 | Security | ❌ Real accounts | ✅ ACCT- placeholders | ✅ | ✅ | ✅ |
 | Accessibility | ❌ | ✅ AA contrast | ✅ + ARIA + keyboard | ✅ | ✅ WCAG 2.2 AA |
 | Mobile | ❌ | ✅ Responsive | ✅ Bottom nav + 44px | ✅ | ✅ |
 | Architecture | ❌ God-router | ✅ 10 routers | ✅ + typed React | ✅ + lazy-loaded | ✅ |
-| Frontend | ❌ Vanilla JS | ✅ Shared utils | ✅ React 19 + TS + design system | ✅ + 10 labs | ✅ |
-| Bundle | N/A | N/A | ✅ 111KB | ✅ 108KB | ✅ Under 200KB |
+| Frontend | ❌ Vanilla JS | ✅ Shared utils | ✅ React 19 + TS + design system | ✅ + 10 labs | ✅ 13 curriculum entries + Case Desk |
+| Bundle | N/A | N/A | ✅ 111KB | ✅ 108KB | ✅ 114,893 bytes gzip, under 200KB |
 
 ---
 
@@ -161,7 +184,7 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 The following documents are archived as historical references:
 
 - `IMPLEMENTATION_PLAN.md` — the original 23-reviewer remediation plan (Tiers 0-2 complete)
-- `ENGINEERING_ROADMAP.md` — the post-review tracking document (all items shipped)
+- `ENGINEERING_ROADMAP.md` — the post-review engineering baseline and current depth backlog
 - `docs/superpowers/specs/2026-07-16-corridor-labs-redesign.md` — interim design spec (superseded by Relay)
 - `docs/superpowers/specs/2026-07-17-relay-ui-rebuild-design.md` — approved Relay design spec (still authoritative)
 - `docs/superpowers/plans/2026-07-17-relay-ui-rebuild.md` — 14-task implementation plan (all tasks complete)

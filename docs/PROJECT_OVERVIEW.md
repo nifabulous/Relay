@@ -5,7 +5,7 @@ actually work — identifiers, validation, correspondent routing, settlement, tr
 compliance, and message standards. **It is not a production payment system. No real money
 moves.** Every payment is simulated and all account numbers are `ACCT-` placeholders.
 
-_Last updated: 2026-07-19._
+_Last updated: 2026-08-09._
 
 ---
 
@@ -35,8 +35,8 @@ _Last updated: 2026-07-19._
   route signature). Contract in **`DESIGN.md`**; WCAG 2.2 AA, reduced-motion, mobile-first.
 
 ### Testing & tooling
-- **Backend:** pytest (~601 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
-- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (~254 unit/integration tests),
+- **Backend:** pytest (608 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
+- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (723 unit/integration tests),
   Playwright + `@axe-core/playwright` (e2e + accessibility), bundle-size gate
   (`npm run check:bundle`), `tsc --noEmit`.
 - **CI:** pytest + ruff across Python 3.9–3.12 (`.github/workflows/ci.yml`).
@@ -104,7 +104,7 @@ JPY, AED) — including Kenya's KEPSS/PesaLink/M-Pesa/EFT layers.
 **Overview** — adaptive home: one dominant primary action (first-visit / next-module / complete),
 progress summary, quick-links, recent activity, system status.
 
-**Learn** — a guided curriculum of **8 interactive labs + a capstone**, with typed prerequisite
+**Learn** — a guided curriculum of **12 learning modules + a capstone**, with typed prerequisite
 chains, checkpoint-gated completion, and progress persistence:
 1. Identifiers: BICs & IBANs
 2. Is It Real? IBAN Checksums (MOD-97, with a visual step-through + live digit-flip)
@@ -114,8 +114,15 @@ chains, checkpoint-gated completion, and progress persistence:
 6. Did It Arrive? Tracking with UETR (SWIFT gpi)
 7. Which Rail? Payment Schemes
 8. Message Standards: MT103 → ISO 20022
+- **Lab 9:** Rails Deep-Dive: Canada & UK (Interac, EFT, CHAPS, Faster Payments)
+- **Module 10:** Rails Deep-Dive: UK & Eurozone (CHAPS, Bacs, Faster Payments, TARGET2, SEPA)
+- **Module 11:** Rails Deep-Dive: Canada (Lynx, EFT/ACSS, Interac, Real-Time Rail)
+- **Module 12:** Follow the Money: Fees & FX (lift fees, OUR/SHA/BEN, FX margin)
 - **Capstone:** a reducer-driven 6-step full payment simulation (validate → verify → route →
   settle → decide → track).
+- **Daily practice:** five-question drills from a 30-question bank, with 1/3/7-day review and
+  device-local streaks.
+- **Case Desk:** one Phase 1 supplier-payment scenario, separate from the technical curriculum.
 - Shared interactive components: `Decompose`, `MultipleChoice`, `Exercise`, `StepIndicator`, `ScoreBar`.
 
 **Explore** — reference tools: command search (indexed), bank directory (live `/api/lookup`),
@@ -150,25 +157,25 @@ SWIFT gpi / UETR tracking · MT103 fields & straight-through processing · the M
 - Full Relay frontend rebuild (Overview / Learn / Explore / Operate) + design system.
 - Backend API surface (directory, routing, SSI, VoP, screening, fees, value-date, tracking,
   prepare-payment, progress, imports, telemetry).
-- Learn curriculum labs 1–7 + capstone, checkpoint completion, progress persistence.
+- Learn curriculum Labs 1–9, the UK/Eurozone and Canada rail deep dives, Fees & FX, and capstone,
+  with checkpoint completion and progress persistence.
 - **MT103 → ISO 20022 reframe** — `iso20022` translator + pacs.008 validator, translate/check
   endpoints, **Lab 8**, Operate pacs.008 toggle, STP "primer" relabel.
 - **Correctness cluster** — VoP legal-basis docstrings (IPR vs EPC vs UK CoP); STP field-23B +
   32A/33B amount-divergence; BIC 8-vs-11 handling; Kenya **KEPSS** + corrected M-Pesa limits;
   per-scheme `verifiedAsof` date-stamps; **MOD-97 visual step-through** (Lab 2).
-- **Test-infra:** fixed the vitest parallel-load flake (`testTimeout` 5s→15s).
+- **Assessment and retention:** every lab has a correct-answer completion path; daily practice
+  adds spaced review and streaks.
+- **Applied learning:** Phase 1 Case Desk supplier-payment scenario is live in Relay.
+- **Test-infra:** fixed the vitest parallel-load flake (`testTimeout` 5s→15s); current verification
+  uses file-parallelism-disabled frontend tests because the preferred-tier Case Desk test is load-sensitive.
 
-### 🚧 In progress — Overview/Explore data-truth
-Plan: `docs/superpowers/plans/2026-07-19-overview-explore-data-truth.md`
-(spec: `docs/superpowers/specs/2026-07-19-overview-explore-data-truth-design.md`).
-- **#8 Progress source-of-truth** — Overview progress bar currently always shows **0/N** because
-  `/api/progress` is called with no params (it is a stateless calculator). Fix: compute count/%/next
-  client-side from `CURRICULUM`; feed the endpoint mapped ids for **badges only**; add lab-8 to the
-  backend catalogue; also fixes a wrong next-module CTA. **Task 1 (`computeProgress`) is committed;
-  Tasks 2–7 remain.**
-- **#7a Recent activity** — new local activity log (module completions + tool runs), rendered on
-  Overview with relative time.
-- **#7b Explore Schemes page** — replace the redirect stub with a currency-picker rails table.
+### 🔲 Current focus
+
+- Case Desk Phase 2: conduct learner research before adding more cases.
+- Add a sanctions-screening learning track.
+- Add exceptions/returns content and an operations workflow such as Nostro reconciliation or STP repair.
+- Expand the practice bank and connect review outcomes to telemetry/assessment reporting.
 
 ### ⏸ Deferred — need a product/design decision before building
 - **Sanctions vs Travel-Rule split (3.6)** — model the two as independent pass/fail outcomes (all
@@ -207,10 +214,10 @@ Plan: `docs/superpowers/plans/2026-07-19-overview-explore-data-truth.md`
 # Backend
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 uvicorn app.main:app --reload            # http://127.0.0.1:8000 (docs at /docs)
-python -m pytest tests/ -q               # ~601 tests
+python -m pytest tests/ -q               # 608 tests
 
 # Frontend
 cd frontend && npm install && npm run dev # http://127.0.0.1:5173/app/
-npm test -- --run                         # ~254 tests
+npm test -- --no-file-parallelism        # 723 tests
 ```
 Relay app: `http://127.0.0.1:8000/app` · Legacy: `/learn`, `/ui`.

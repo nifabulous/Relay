@@ -1,8 +1,8 @@
 # Engineering Roadmap — SWIFT Routing Lab
 
-> Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. Tracks what's done, what's in progress, and what remains.
+> Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-07-15 · **Baseline tests:** 522+ · **Commits:** 19
+**Last updated:** 2026-08-09 · **Current verification:** 608 backend + 723 frontend + 288 E2E passing (6 intentional skips across 294 cases) · **Current curriculum:** 13 entries (12 modules + capstone) · **Commits:** 173
 
 ---
 
@@ -41,6 +41,18 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
 | 2.3 | Mobile responsive | `49c66c3` | `@media (max-width: 768px)` in both CSS files: sidebar collapses, tables scroll |
 | 2.8 | Prerequisite gating | `f517442` | Core labs locked until previous lab completed; "go deeper" modules ungated |
 
+## ✅ Current shipped work since this baseline
+
+- MOD-97 has a visual step-through explainer in Lab 2.
+- Lab 5 is a guided SSI lesson with a worked example, charge-code decisions, live lookup, and a
+  capstone Settle link.
+- Assessment integrity now requires a correct answer for every lab's completion path; Lab 3 and
+  Lab 5 have explicit decision drills.
+- The Learn curriculum includes Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and the
+  capstone. The daily practice route adds a 30-question bank, spaced review, and local streaks.
+- The React Relay app includes the Phase 1 Case Desk scenario, while the legacy `/learn` and `/ui`
+  surfaces remain available for parity and rollback.
+
 ---
 
 ## 🔲 Remaining — Tier 2 items deferred
@@ -64,8 +76,8 @@ Pick by appetite. No hard dependencies between these items.
 | 3.4 | Expand MT103 STP checker + relabel | Payments | Validate field 23B; note 50A/F, 59F, 71F/G; relabel as "12-rule primer" |
 | 3.5 | Fix value-date holiday fallback + GBP default | Payments | `value_date.py:154` empty set for unsupported currencies |
 | 3.6 | Clarify sanctions threshold drift | Payments | `screening.py:152` — threshold gets stricter (lower) per hop; comment intent |
-| 3.7 | MOD-97 visual step-through explainer | Education | The hardest concept, currently told-not-shown |
-| 3.8 | Enrich Lab 5 (SSI) into a real lesson | Education | Currently a dashboard lookup, not a guided lesson |
+| 3.7 | ~~MOD-97 visual step-through explainer~~ ✅ Done | Education | Shipped in Lab 2 with a step-by-step remainder view and digit-flip exercise |
+| 3.8 | ~~Enrich Lab 5 (SSI) into a real lesson~~ ✅ Done | Education | Now a guided lesson: worked example, decision points, capstone link |
 | 3.9 | Ops-workflow module (Nostro recon / STP repair) | Users/Ops | Biggest content gap for the training audience |
 | 3.10 | French localization (i18n) | Education | Francophone Africa audience named twice in ROADMAP |
 | 3.11 | Telemetry + assessment layer | Product | Every ROADMAP success metric is currently unmeasurable |
@@ -77,8 +89,8 @@ Pick by appetite. No hard dependencies between these items.
 
 | Dimension | Before review | After Tier 0-2 | Target |
 |---|---|---|---|
-| Version control | ❌ Not a git repo | ✅ Git, 19 commits, clean tree | Maintain |
-| Tests | ✅ 522 passing, 92% coverage | ✅ 550+ passing, 29 new tests | Add frontend tests |
+| Version control | ❌ Not a git repo | ✅ Git, 19-commit baseline | Maintain; current tree is actively changing |
+| Tests | ✅ 522 passing, 92% coverage | ✅ 550+ passing, 29 new tests | ✅ 608 backend + 723 frontend + 288 E2E; keep CI aligned |
 | CI | ❌ None | ✅ GitHub Actions (pytest + ruff) | Add coverage gate |
 | Auth | ❌ Zero (anyone could wipe tables) | ✅ `admin_required` on all mutating endpoints | Add rate limiting |
 | Security | ❌ Real accounts, GitHub default URL | ✅ ACCT- placeholders, fail-closed importer | Add checksum verification |
@@ -87,8 +99,8 @@ Pick by appetite. No hard dependencies between these items.
 | Architecture | ❌ 921-line god-router | ✅ 10 domain routers, largest 248 lines | — |
 | Migrations | ❌ `create_all` only | ✅ Alembic baseline + 1 migration | Add migration CI check |
 | Logging | ❌ None (errors swallowed) | ✅ Logger in all services, `/health` reports degraded | Add request middleware |
-| Frontend duplication | ❌ 15 copies of `esc()` | ✅ One `LearnUtils.esc()` | Extract complete-button, buildExercise |
-| Product positioning | ❌ Two products, muddled story | ✅ Education is flagship, `/` → `/learn` | Rename product |
+| Frontend duplication | ❌ 15 copies of `esc()` | ✅ One `LearnUtils.esc()` | Keep legacy and Relay paths explicit during cutover |
+| Product positioning | ❌ Two products, muddled story | ✅ Education is flagship, `/` → `/learn` | Continue Relay migration when parity criteria are met |
 
 ---
 

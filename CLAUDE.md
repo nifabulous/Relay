@@ -6,7 +6,7 @@
 
 An **educational payment simulation** for learning how cross-border payments work. Two halves:
 
-1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 19 API endpoints under `/api/*`.
+1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 22 API endpoints under `/api/*`.
 2. **Relay frontend** (`frontend/`) — React 19 + TypeScript 7 + Vite 8 application with four workspaces: Overview, Learn, Explore, Operate. Served at `/app`.
 3. **Legacy frontend** (`app/static/`) — vanilla HTML/JS/CSS at `/learn` and `/ui`. Being replaced by Relay. Still available until parity is reached.
 
@@ -58,7 +58,8 @@ frontend/src/
       prepare/      PreparePaymentPage with partial-results pattern
       tools/        FeePage, ScreeningPage, ValueDatePage, StpPage
       tracking/     TrackingPage with timeline
-    learn/          curriculum.ts (8 modules), LearnIndexPage, LearnModulePage
+    learn/          curriculum.ts (13 entries: 12 modules + capstone), labs, practice, cases,
+                    LearnIndexPage, LearnModulePage
 ```
 
 ### Design system
@@ -121,14 +122,23 @@ app/
 - **Router → Service → Model** layering. Routers are thin (validation, error mapping). Services are pure functions that take a `Session` arg. Models are anemic SQLAlchemy 2.0 entities.
 - **Auth**: `admin_required` dependency gates mutating endpoints (`/import/*`, `/track/create`). Dev mode (no `ADMIN_API_KEY` set) is open; prod requires the `X-Admin-Key` header.
 - **Migrations**: `create_all` in dev (SQLite). Alembic in prod (`alembic upgrade head`). The baseline migration exists; new models need `alembic revision --autogenerate`.
-- **Frontend**: vanilla JS, no framework. `window.LearnUtils` holds shared utils (`esc`, `fmtMoney`, `api`, `getProgress`). `window.LearnLabs` is the lab registry. `window.PaymentViz` has the animated chain + timeline visualizers.
+- **Frontend**: Relay is the React/TypeScript application under `frontend/`; the legacy vanilla
+  surface remains under `app/static/`. In the legacy surface, `window.LearnUtils` holds shared
+  utils (`esc`, `fmtMoney`, `api`, `getProgress`), `window.LearnLabs` is the lab registry, and
+  `window.PaymentViz` provides the animated chain and timeline visualizers.
 
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (522+ tests, <2s)
+python -m pytest tests/ -q              # full suite (608 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
+
+# Frontend unit/integration tests
+cd frontend && npm test -- --no-file-parallelism  # 723 tests
+
+# End-to-end tests
+cd frontend && npm run test:e2e                    # 288 passed, 6 intentional skips / 294 cases
 ```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
@@ -162,6 +172,7 @@ ruff check . --fix  # auto-fix import order etc.
 
 ## Known issues
 
-- `tests/test_ssi_importer.py::TestSSIImportEndpoint::test_upload_json` fails in full-suite order due to a session-scoped `client` fixture DB-state leak (pre-existing, flagged by QA panel). Passes in file scope.
-- The frontend has no JS test runner. `esc()` and routing regexes are untested.
+- The frontend's default parallel Vitest run is load-sensitive for the preferred-tier Case Desk
+  scenario; use `--no-file-parallelism` for the verified full suite.
+- Six E2E skips are intentional reduced-motion variants outside the dedicated reduced-motion project.
 - `fed_importer.py` has no remote default URL — you must set `FEDWIRE_URL`/`FEDACH_URL` env vars to import Fedwire/FedACH data.

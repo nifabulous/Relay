@@ -18,7 +18,7 @@ frontend/src/
       prepare/        payment preparation workspace
       tools/          fee calculator, screening, value date, STP checker
       tracking/       UETR lookup + timeline
-    learn/            curriculum, modules, progress
+    learn/            13-entry curriculum, modules, practice, cases, progress
   test/               MSW handlers, render helper, setup
 ```
 
@@ -59,8 +59,8 @@ Outputs to `app/static/relay/`. Served by FastAPI at `http://127.0.0.1:8000/app`
 ```bash
 cd frontend
 
-# Unit/integration tests
-npm test
+# Unit/integration tests (verified path)
+npm test -- --no-file-parallelism
 
 # E2E tests (requires running FastAPI)
 npm run test:e2e
@@ -87,9 +87,12 @@ Key principles:
 | `/app` | OverviewPage | Adaptive home with one dominant action |
 | `/app/learn` | LearnIndexPage | Curriculum list with prerequisite gating |
 | `/app/learn/:moduleId` | LearnModulePage | Individual module content |
+| `/app/learn/practice` | PracticePage | Daily five-question drill and spaced review |
+| `/app/learn/cases/:caseId` | CaseDeskRoute | Applied Case Desk scenario |
 | `/app/explore` | ExplorePage | Command search + categories |
 | `/app/explore/banks` | BankDirectoryPage | BIC lookup |
 | `/app/explore/glossary` | GlossaryPage | Filterable payment terms |
+| `/app/explore/schemes` | SchemesPage | Currency-picker payment-rail comparison |
 | `/app/operate` | PreparePaymentPage | Guided payment preparation |
 | `/app/operate/fees` | FeePage | Fee calculator |
 | `/app/operate/screening` | ScreeningPage | Sanctions screening |
