@@ -25,8 +25,10 @@ def get_ssi(
     """
     Return Standard Settlement Instructions for a beneficiary bank.
 
-    Unlike /route (heuristic intermediary suggestions), SSI records carry the
-    actual Nostro account numbers and charge codes that make a payment settle.
+    Unlike /route (heuristic intermediary suggestions), SSI records represent
+    the published/curated settlement instruction fields that make a payment
+    settle. Seeded records may contain illustrative placeholder account
+    numbers; the response disclaimer identifies that limitation.
     """
     normalized, valid, errors, _ = _normalize_bic_input(bic)
     if not valid:

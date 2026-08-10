@@ -24,9 +24,9 @@ def get_progress(
     and the next recommended module.
 
     Pass the learner's completed module IDs as `?completed=1,2,3,fees`.
-    Module IDs match the hash routes in the learning UI
-    (`1`–`7`, `capstone`, `fees`, `fx`, `sanctions`, `settlement`,
-    `mt103`, `cases`, `glossary`). Unknown IDs are ignored.
+    Module IDs match the current learning UI (`lab-1`–`lab-9`,
+    `gbp-eur-rails`, `cad-rails`, `fees-fx`, `capstone`). Legacy numeric IDs
+    and legacy tool IDs are accepted for compatibility. Unknown IDs are ignored.
 
     The response always lists **all** badges (with `earned: true|false`),
     so the frontend can render locked/unlocked badges in one call.

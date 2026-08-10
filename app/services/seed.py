@@ -1774,6 +1774,10 @@ LIFT_FEES = [
     ("COBADEFFXXX", "Commerzbank", "EUR", 8.00, "flat"),
     ("DEUTDEFFXXX", "Deutsche Bank", "EUR", 10.00, "flat"),
     ("BNPAFRPPXXX", "BNP Paribas", "EUR", 9.00, "flat"),
+    # CAD correspondents
+    ("ROYCCAT2XXX", "RBC Royal Bank", "CAD", 17.50, "flat"),
+    ("TDOMCATTXXX", "Toronto-Dominion Bank", "CAD", 12.00, "flat"),
+    ("BOFMCAM2XXX", "BMO Bank of Montreal", "CAD", 15.00, "flat"),
     # JPY
     ("BOTKJPJTXXX", "MUFG (BoT)", "JPY", 2000, "flat"),
     ("SMBCJPJTXXX", "SMBC", "JPY", 1500, "flat"),

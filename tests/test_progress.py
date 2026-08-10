@@ -60,10 +60,10 @@ class TestProgressService:
         assert "Payment Fundamentals" not in badge_names
 
     def test_operator_badge_earned_on_capstone(self):
-        """'Payment Operator' badge: complete all 8 labs + capstone."""
+        """'Payment Operator' badge: complete all 9 labs + capstone."""
         from app.services.progress import get_progress_summary
         result = get_progress_summary(
-            ["1", "2", "3", "4", "5", "6", "7", "8", "capstone"]
+            ["1", "2", "3", "4", "5", "6", "7", "8", "9", "capstone"]
         )
         badge_names = [b.name for b in result.earned_badges]
         assert "Payment Operator" in badge_names
@@ -130,6 +130,20 @@ class TestProgressService:
         for mid in ALL_MODULE_IDS:
             assert isinstance(mid, str)
 
+    def test_catalogue_matches_current_frontend_curriculum(self):
+        from app.services.progress import ALL_MODULE_IDS
+        assert ALL_MODULE_IDS == [
+            "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6",
+            "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails",
+            "fees-fx", "capstone",
+        ]
+
+    def test_legacy_numeric_ids_are_normalized_to_current_ids(self):
+        from app.services.progress import get_progress_summary
+        result = get_progress_summary(["1", "2", "3"])
+        assert result.completed_count == 3
+        assert result.next_recommended == "lab-4"
+
 
 class TestProgressEndpoint:
     """HTTP tests for GET /api/progress."""
@@ -180,14 +194,18 @@ class TestProgressEndpoint:
 
 def test_all_module_ids_includes_lab_8():
     from app.services.progress import ALL_MODULE_IDS
-    assert "8" in ALL_MODULE_IDS
+    assert "lab-8" in ALL_MODULE_IDS
 
 
-def test_payment_operator_badge_requires_all_eight_labs():
+def test_payment_operator_badge_requires_all_nine_labs():
     from app.services.progress import get_progress_summary
-    # Labs 1-7 + capstone but NOT lab-8 -> operator badge not yet earned.
-    seven = get_progress_summary(["1", "2", "3", "4", "5", "6", "7", "capstone"])
-    assert "payment-operator" not in {b.id for b in seven.earned_badges}
-    # All 8 labs + capstone -> earned.
-    eight = get_progress_summary(["1", "2", "3", "4", "5", "6", "7", "8", "capstone"])
-    assert "payment-operator" in {b.id for b in eight.earned_badges}
+    # Labs 1-8 + capstone but NOT lab-9 -> operator badge not yet earned.
+    eight = get_progress_summary([
+        "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "lab-8", "capstone",
+    ])
+    assert "payment-operator" not in {b.id for b in eight.earned_badges}
+    # All 9 labs + capstone -> earned.
+    nine = get_progress_summary([
+        "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "lab-8", "lab-9", "capstone",
+    ])
+    assert "payment-operator" in {b.id for b in nine.earned_badges}

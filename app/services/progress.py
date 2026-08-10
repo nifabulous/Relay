@@ -12,8 +12,9 @@ This is a pure-function service — no database, no side effects. The frontend
 is the source of truth for which modules a learner has completed; we just
 compute the derived summary.
 
-Module IDs match the hash-route fragments in learn.js (e.g. `#lab-1` → "1",
-`#fees` → "fees", `#lab-capstone` → "capstone").
+Module IDs match the current frontend curriculum (e.g. `lab-1`, `lab-9`,
+`gbp-eur-rails`, `fees-fx`, and `capstone`). Legacy numeric and tool IDs are
+accepted as aliases so existing saved progress remains readable.
 """
 
 from __future__ import annotations
@@ -30,30 +31,31 @@ from typing import List, Optional
 # Module catalogue
 # ---------------------------------------------------------------------------
 
-# Canonical ordered list of all module IDs in the learning journey.
+# Canonical ordered list of all current curriculum module IDs.
 # The order here defines both the completion percentage denominator and the
-# "next recommended" suggestion. These IDs match the hash routes in learn.js.
+# "next recommended" suggestion. This is intentionally kept in sync with
+# frontend/src/features/learn/curriculum.ts.
 ALL_MODULE_IDS: List[str] = [
-    "1",          # Lab 1: BICs & IBANs
-    "2",          # Lab 2: Checksums
-    "3",          # Lab 3: Verification of Payee
-    "4",          # Lab 4: Routing Chains
-    "5",          # Lab 5: Settlement Instructions
-    "6",          # Lab 6: UETR & gpi Tracking
-    "7",          # Lab 7: Payment Schemes
-    "8",          # Lab 8: Message Standards (MT103 -> ISO 20022)
-    "capstone",   # Capstone: Full Payment
-    "fees",       # Fee Calculator
-    "fx",         # FX Calculator
-    "sanctions",  # Sanctions Screening
-    "settlement", # Settlement Cycles
-    "mt103",      # MT103 Decoder
-    "cases",      # Case Studies
-    "glossary",   # Glossary
+    "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6",
+    "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails",
+    "fees-fx", "capstone",
 ]
 
 # Fast lookup set for membership checks.
 _VALID_IDS = set(ALL_MODULE_IDS)
+
+# Compatibility aliases for progress written by the previous curriculum.
+# The aliases normalize into current IDs before counts, badges, or ordering
+# are computed. Standalone legacy tool IDs remain accepted only for their
+# existing badges; they are not counted as curriculum modules.
+_LEGACY_ID_ALIASES = {
+    **{str(i): f"lab-{i}" for i in range(1, 10)},
+    "fees": "fees-fx",
+    "fx": "fees-fx",
+    "settlement": "lab-5",
+    "mt103": "lab-8",
+}
+_LEGACY_TOOL_IDS = {"sanctions", "cases", "glossary"}
 
 
 # ---------------------------------------------------------------------------
@@ -84,15 +86,15 @@ ALL_BADGES: List[Badge] = [
         id="fee-forensics",
         name="Fee Forensics",
         description="You traced every dollar lost to intermediary lift fees.",
-        requirement="Complete the Fee Calculator module.",
-        required_ids=["fees"],
+        requirement="Complete the Fees & FX module.",
+        required_ids=["fees-fx"],
     ),
     Badge(
         id="fx-sharp",
         name="FX Sharp",
         description="You exposed the hidden cost of exchange-rate spreads.",
-        requirement="Complete the FX Calculator module.",
-        required_ids=["fx"],
+        requirement="Complete the Fees & FX module.",
+        required_ids=["fees-fx"],
     ),
     Badge(
         id="compliance-aware",
@@ -106,28 +108,31 @@ ALL_BADGES: List[Badge] = [
         name="Payment Fundamentals",
         description="You mastered the identifiers that make payments work.",
         requirement="Complete Labs 1, 2, and 3.",
-        required_ids=["1", "2", "3"],
+        required_ids=["lab-1", "lab-2", "lab-3"],
     ),
     Badge(
         id="gpi-tracker",
         name="gpi Tracker",
         description="You decoded the MT103 and followed the UETR trail.",
         requirement="Complete the MT103 Decoder module.",
-        required_ids=["mt103"],
+        required_ids=["lab-6"],
     ),
     Badge(
         id="settlement-sage",
         name="Settlement Sage",
         description="You understand value dates, cut-offs, and holidays.",
         requirement="Complete the Settlement Cycles module.",
-        required_ids=["settlement"],
+        required_ids=["lab-5"],
     ),
     Badge(
         id="payment-operator",
         name="Payment Operator",
         description="You can route a payment end-to-end through the full chain.",
-        requirement="Complete all 7 labs and the capstone.",
-        required_ids=["1", "2", "3", "4", "5", "6", "7", "8", "capstone"],
+        requirement="Complete all 9 labs and the capstone.",
+        required_ids=[
+            "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6",
+            "lab-7", "lab-8", "lab-9", "capstone",
+        ],
     ),
     Badge(
         id="wire-wizard",
@@ -158,13 +163,14 @@ class ProgressSummary:
 # ---------------------------------------------------------------------------
 
 def _normalise_completed(completed_ids: List[str]) -> List[str]:
-    """Deduplicate, filter to known IDs, preserving first-seen order."""
+    """Normalize current/legacy IDs and preserve first-seen order."""
     seen = []
     seen_set = set()
     for mid in completed_ids:
-        if mid in _VALID_IDS and mid not in seen_set:
-            seen.append(mid)
-            seen_set.add(mid)
+        canonical = _LEGACY_ID_ALIASES.get(mid, mid)
+        if (canonical in _VALID_IDS or canonical in _LEGACY_TOOL_IDS) and canonical not in seen_set:
+            seen.append(canonical)
+            seen_set.add(canonical)
     return seen
 
 
@@ -195,7 +201,7 @@ def get_progress_summary(completed_ids: List[str]) -> ProgressSummary:
     completed_set = set(completed)
 
     total = len(ALL_MODULE_IDS)
-    count = len(completed)
+    count = sum(mid in _VALID_IDS for mid in completed)
     percentage = int(round(100 * count / total)) if total else 0
 
     # Guard against floating-point rounding pushing 100% when it shouldn't be.
