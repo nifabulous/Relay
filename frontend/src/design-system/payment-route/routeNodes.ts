@@ -1,4 +1,4 @@
-import type { PaymentRouteNode, CheckStatus } from "../../../design-system/types";
+import type { PaymentRouteNode, CheckStatus } from "../types";
 
 interface IntermediaryLike {
   bic: string;
@@ -7,7 +7,10 @@ interface IntermediaryLike {
 
 /**
  * Build PaymentRouteNode[] from a list of intermediaries.
- * Shared between Lab 4 (route demo) and the Capstone (route step).
+ *
+ * Lives beside PaymentRoute because it exists to feed it. Its `IntermediaryLike`
+ * shape matches the API's SuggestedIntermediary, so a /api/route response can be
+ * rendered without an adapter.
  */
 export function buildRouteNodes(
   intermediaries: IntermediaryLike[],
