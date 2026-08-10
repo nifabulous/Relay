@@ -81,7 +81,12 @@ async function clearLearningKeys(page: Parameters<typeof test>[0]["page"]) {
   }, [...LEARNING_KEYS]);
 }
 
-test.describe("Learner state portability", () => {
+// Skipped while the Learning backup panel is hidden on the Overview page. The
+// download and import controls are its only UI entry point, so this round trip
+// has nothing to drive. The merge/transfer logic stays covered by
+// learnerStateMerge.test.ts, learnerStateTransfer.test.ts and
+// LearnerDataPanel.test.tsx. Un-skip when the panel is restored.
+test.describe.skip("Learner state portability", () => {
   test("restores learning progress without overwriting drafts or preferences", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "coverage is not viewport-dependent");
 

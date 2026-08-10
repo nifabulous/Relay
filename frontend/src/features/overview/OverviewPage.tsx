@@ -9,7 +9,6 @@ import { loadLearningState } from "../../lib/persistence/learnerStateTransfer";
 import { displayStreak, dueReviews, practicedToday, dayKey } from "../learn/practice/practiceStore";
 import { computeProgress } from "../learn/curriculum";
 import { toBackendModuleIds } from "./badgeIds";
-import { LearnerDataPanel } from "./LearnerDataPanel";
 import { relativeTime } from "./relativeTime";
 import "./OverviewPage.css";
 
@@ -142,7 +141,9 @@ export function OverviewPage() {
         )}
       </section>
 
-      <LearnerDataPanel profilePersistence={learningState.persistence} />
+      {/* Learning backup panel hidden for now. LearnerDataPanel and its tests
+          are intact — restore by re-adding the import and:
+          <LearnerDataPanel profilePersistence={learningState.persistence} /> */}
 
       {healthQuery.data && (
         <section className="overview__status">

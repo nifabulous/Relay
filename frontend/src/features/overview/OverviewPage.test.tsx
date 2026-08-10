@@ -86,30 +86,18 @@ describe("selectPrimaryAction", () => {
 });
 
 describe("OverviewPage", () => {
-  it("places Learning backup after Recent activity and before the lower data summary", async () => {
+  // The Learning backup panel is deliberately hidden for now. LearnerDataPanel
+  // and LearnerDataPanel.test.tsx are untouched, so the component stays covered;
+  // this asserts it is absent from the page so it cannot reappear unnoticed.
+  // Restore the placement assertion when the panel comes back.
+  it("does not render the Learning backup panel", async () => {
     renderOverviewPage();
-
-    const activitySection = screen
-      .getByRole("heading", { name: /recent activity/i })
-      .closest("section");
-    const backupSection = screen
-      .getByRole("heading", { name: /learning backup/i })
-      .closest("section");
-
-    expect(activitySection).not.toBeNull();
-    expect(backupSection).not.toBeNull();
 
     await waitFor(() => {
       expect(document.querySelector(".overview__status")).not.toBeNull();
     });
 
-    const statusSection = document.querySelector(".overview__status");
-
-    expect(
-      activitySection!.compareDocumentPosition(backupSection!) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      backupSection!.compareDocumentPosition(statusSection!) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /learning backup/i })).toBeNull();
+    expect(document.querySelector(".overview__learner-data")).toBeNull();
   });
 });
