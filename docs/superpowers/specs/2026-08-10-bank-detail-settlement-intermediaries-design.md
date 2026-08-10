@@ -168,13 +168,23 @@ Reuses the existing `PaymentRoute` component
 shape (`bic`, optional `bank`) already matches `SuggestedIntermediary`
 (`schemas.ts:106`), so the chain renders with no adapter.
 
-**Targeted refactor:** `buildRouteNodes` currently lives under
-`features/learn/labs/` while serving Lab 4 and the Capstone. Importing it from
-`features/explore/` would create a cross-feature dependency for what is really
-a design-system concern. Move it to
-`frontend/src/design-system/payment-route/routeNodes.ts` beside the component
-it feeds, and update the two existing importers. This is the only refactor in
-scope.
+**Both are currently dead code.** `PaymentRoute` is referenced only by its own
+test file, and `buildRouteNodes` has no importers at all — its docstring claims
+it is "Shared between Lab 4 (route demo) and the Capstone (route step)", but
+Lab 4 renders its own `<table>` (`Lab4Content.tsx:138`) and nothing imports the
+helper. The docstring is stale; verify with
+`grep -rn "buildRouteNodes\|<PaymentRoute" frontend/src`.
+
+This is good news rather than bad: a tested, unused component is exactly the
+right thing to adopt, and bank detail becomes its first production consumer.
+
+**Targeted refactor:** move `routeNodes.ts` to
+`frontend/src/design-system/payment-route/routeNodes.ts`, beside the component
+it feeds, since it is a design-system concern and importing it from
+`features/explore/` would otherwise create a cross-feature dependency on a
+`learn/labs` module. There are **no importers to update** — the move is a
+rename plus the new consumer. It also currently has no test file; the move adds
+one. This is the only refactor in scope.
 
 Confidence renders as a plain labelled value, **not** a `StatusChip`.
 `StatusChipStatus` is `CheckStatus | DecisionQuality | SourceStatus`
@@ -238,7 +248,7 @@ Status meaning is never carried by colour alone, per `DESIGN.md`.
   that `BankDirectoryPage` links into it.
 - E2E coverage in the Explore spec including an axe pass, since this adds a
   page.
-- `buildRouteNodes` tests follow it to its new location.
+- `buildRouteNodes` has no test file today; the move adds one covering the origin/intermediary/beneficiary node sequence and the empty-intermediaries case.
 - New lazy chunk, so the eager shell bundle budget is unaffected. Verify with
   `npm run check:bundle`.
 
