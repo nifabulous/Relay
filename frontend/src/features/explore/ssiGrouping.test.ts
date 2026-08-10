@@ -13,7 +13,7 @@ function record(currency: string, intermediaryBic: string): SSIRecord {
     beneficiary_account: "ACCT-0002",
     charge_code: "SHA",
     value_date: "spot",
-    notes: null,
+    notes: undefined,
   };
 }
 
