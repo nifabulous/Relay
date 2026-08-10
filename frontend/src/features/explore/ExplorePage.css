@@ -302,3 +302,44 @@
 .bank-detail__not-found {
   padding: var(--space-6) 0;
 }
+
+.bank-ssi {
+  margin-top: var(--space-6);
+}
+
+.bank-ssi__intro {
+  color: var(--color-ink-muted);
+}
+
+.bank-ssi__group {
+  margin-top: var(--space-4);
+}
+
+.bank-ssi__currency {
+  margin-bottom: var(--space-2);
+}
+
+.bank-ssi__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.bank-ssi__item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-3);
+}
+
+.bank-ssi__intermediary {
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.bank-ssi__disclaimer {
+  margin-top: var(--space-4);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}

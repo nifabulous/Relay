@@ -2,9 +2,10 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema } from "../../api/schemas";
-import type { LookupResponse } from "../../api/schemas";
+import { LookupResponseSchema, SSIResponseSchema } from "../../api/schemas";
+import type { LookupResponse, SSIResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
+import { groupByCurrency } from "./ssiGrouping";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import "./ExplorePage.css";
@@ -37,6 +38,21 @@ export function BankDetailRoute() {
   // ABOVE the not-found early return: hooks must run unconditionally on every
   // render, so a query placed after the return would violate the rules of
   // hooks the first time a BIC misses.
+
+  const ssi = useQuery({
+    queryKey: apiKeys.ssi(requestedBic, ""),
+    queryFn: () =>
+      apiRequest<SSIResponse>(
+        `/api/ssi?bic=${encodeURIComponent(requestedBic)}`,
+        undefined,
+        SSIResponseSchema,
+      ),
+    enabled: requestedBic.length > 0,
+  });
+
+  const instructions = ssi.data?.instructions ?? [];
+  const currencyGroups = groupByCurrency(instructions);
+  const hasSSI = currencyGroups.length > 0;
 
   const bank = lookup.data?.bank ?? null;
 
@@ -132,6 +148,59 @@ export function BankDetailRoute() {
                 </Link>
               </div>
             </div>
+
+            {hasSSI && (
+              <section className="bank-ssi" aria-labelledby="bank-ssi-title">
+                <h2 id="bank-ssi-title">Published settlement instructions</h2>
+                <p className="measure bank-ssi__intro">
+                  Where this bank holds Nostro accounts, and which correspondent
+                  to pay for each currency. A currency can list more than one
+                  correspondent.
+                </p>
+
+                {currencyGroups.map((group) => (
+                  <div className="bank-ssi__group" key={group.currency}>
+                    <h3 className="bank-ssi__currency mono">{group.currency}</h3>
+                    <ul className="bank-ssi__list">
+                      {group.records.map((r) => (
+                        <li
+                          className="bank-ssi__item"
+                          key={`${group.currency}-${r.intermediary_bic}`}
+                        >
+                          <p className="bank-ssi__intermediary">
+                            {r.intermediary_bank_name ?? r.intermediary_bic}
+                          </p>
+                          <dl className="bank-ssi__fields">
+                            <dt>Intermediary BIC</dt>
+                            <dd className="mono">{r.intermediary_bic}</dd>
+                            {r.intermediary_account && (
+                              <>
+                                <dt>Nostro account</dt>
+                                <dd className="mono">{r.intermediary_account}</dd>
+                              </>
+                            )}
+                            {r.beneficiary_account && (
+                              <>
+                                <dt>Credit to</dt>
+                                <dd className="mono">{r.beneficiary_account}</dd>
+                              </>
+                            )}
+                            <dt>Charges</dt>
+                            <dd className="mono">{r.charge_code}</dd>
+                            <dt>Value date</dt>
+                            <dd>{r.value_date}</dd>
+                          </dl>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+
+                {ssi.data?.disclaimer && (
+                  <p className="bank-ssi__disclaimer">{ssi.data.disclaimer}</p>
+                )}
+              </section>
+            )}
           </>
         )}
       </AsyncRegion>
