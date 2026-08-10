@@ -29,5 +29,19 @@ jobs:
       - name: Lint with ruff
         run: ruff check .
 
+      # tests/test_frontdoor.py asserts /app serves the built Relay shell.
+      # app/static/relay/ is generated, not committed, so a fresh checkout has
+      # no shell and those tests 503 unless the frontend is built first.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Relay frontend
+        run: npm ci && npm run build
+        working-directory: frontend
+
       - name: Run tests
         run: python -m pytest tests/ -q
