@@ -5,7 +5,7 @@ actually work — identifiers, validation, correspondent routing, settlement, tr
 compliance, and message standards. **It is not a production payment system. No real money
 moves.** Every payment is simulated and all account numbers are `ACCT-` placeholders.
 
-_Last updated: 2026-08-09._
+_Last updated: 2026-08-10._
 
 ---
 
@@ -35,11 +35,11 @@ _Last updated: 2026-08-09._
   route signature). Contract in **`DESIGN.md`**; WCAG 2.2 AA, reduced-motion, mobile-first.
 
 ### Testing & tooling
-- **Backend:** pytest (608 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
-- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (723 unit/integration tests),
+- **Backend:** pytest (612 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
+- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (808 unit/integration tests),
   Playwright + `@axe-core/playwright` (e2e + accessibility), bundle-size gate
   (`npm run check:bundle`), `tsc --noEmit`.
-- **CI:** pytest + ruff across Python 3.9–3.12 (`.github/workflows/ci.yml`).
+- **CI:** pytest + ruff across Python 3.9–3.12, plus a frontend job (typecheck, build, vitest, bundle budget) (`.github/workflows/ci.yml`).
 
 ### Legacy surface
 - Vanilla HTML/JS/CSS at `/learn` and `/ui` (`app/static/`) — being replaced by Relay, kept
@@ -214,10 +214,10 @@ SWIFT gpi / UETR tracking · MT103 fields & straight-through processing · the M
 # Backend
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 uvicorn app.main:app --reload            # http://127.0.0.1:8000 (docs at /docs)
-python -m pytest tests/ -q               # 608 tests
+python -m pytest tests/ -q               # 612 tests
 
 # Frontend
 cd frontend && npm install && npm run dev # http://127.0.0.1:5173/app/
-npm test -- --no-file-parallelism        # 723 tests
+npm test -- --no-file-parallelism        # 808 tests
 ```
 Relay app: `http://127.0.0.1:8000/app` · Legacy: `/learn`, `/ui`.

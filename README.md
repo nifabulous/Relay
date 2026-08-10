@@ -10,7 +10,7 @@ Relay is a hands-on, browser-based simulator that teaches how cross-border payme
 
 ## Current status
 
-**Status as of 2026-08-09:** Relay is a working educational learning prototype. The platform,
+**Status as of 2026-08-10:** Relay is a working educational learning prototype. The platform,
 backend APIs, Relay frontend, a 13-entry curriculum (12 learning modules plus a capstone), a daily-practice retention loop,
 and the first Case Desk scenario are implemented. Assessment integrity (correct-answer gating),
 capstone sequencing, and Lab 5 depth from the prior review round are addressed; the project
@@ -22,24 +22,23 @@ remains a learning prototype — not production payment processing.
 | Technical syllabus | Refined | Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and a capstone — interactive, gated on correct answers, and tested |
 | Applied learning | Phase 1 shipped | One supplier-payment Case Desk is available at `/app/learn/cases/canada-us-supplier` |
 | Learning persistence | Shipped (browser-local) | Anonymous learner profiles, local progress/activity/practice/case-session storage, and manual JSON backup import/export are available on `/app` |
-| Legacy migration | In progress | Vanilla `/learn` and `/ui` remain available until cutover criteria are met |
+| Legacy migration | Front door cut over | `/` now lands on Relay at `/app`. Vanilla `/learn` and `/ui` remain reachable, and `/` falls back to `/learn` when the Relay build is absent |
 | Retention loop | Shipped | Daily practice drill, spaced review of missed questions, and streaks at `/app/learn/practice` |
 | Next focus | Open for contribution | Case Desk Phase 2, a sanctions-screening track, and an ops-workflow module (Nostro recon / STP repair) |
 
-The current checkout is `main` at commit `2480a53`, the latest commit in this workspace. The syllabus handoff is in
-[Syllabus handoff](#syllabus-handoff) below.
+The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-09:
+These numbers were run against the current checkout on 2026-08-10:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **608 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **723 passed** with file parallelism disabled |
-| Playwright E2E | **288 passed, 6 intentional skips** across **294 cases** (all configured projects are green) |
+| Backend tests | **612 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Frontend unit/integration tests | **808 passed** with file parallelism disabled |
+| Playwright E2E | **288 passed, 6 intentional skips** across **294 cases** — last verified 2026-08-09; re-run pending after the Playwright 1.62 bump |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **114,893 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **128,002 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **13 entries** (12 learning modules plus capstone) + daily practice drill |
 | Backend API endpoints | **22** |
 
@@ -56,11 +55,11 @@ the recommended commands.
 
 | Metric | Value |
 |---|---|
-| Backend tests | 608 passing |
-| Frontend tests | 723 passing in serial file mode |
+| Backend tests | 612 passing |
+| Frontend tests | 808 passing in serial file mode |
 | E2E tests (Playwright) | 288 passing, 6 intentional skips across 294 cases |
-| Eager shell bundle | 114,893 bytes gzip (budget: 204,800 bytes) |
-| Git history | 173 commits; current main commit `2480a53` |
+| Eager shell bundle | 128,002 bytes gzip (budget: 204,800 bytes) |
+| Git history | 186 commits |
 | Learning curriculum | 13 entries (12 learning modules plus capstone) |
 | Backend API endpoints | 22 |
 
@@ -92,10 +91,10 @@ swift-routing/
           practice/           Daily drill, question bank, spaced review, streaks
           cases/              Case Desk, supplier case catalog, evidence and debrief flow
           components/         Exercise, MultipleChoice, Decompose, ScoreBar, StepIndicator
-  tests/                      Backend test suite (608 tests)
+  tests/                      Backend test suite (612 tests)
   DESIGN.md                   Canonical design contract
   alembic/                    Database migrations
-  .github/workflows/          CI (pytest + ruff)
+  .github/workflows/          CI (pytest + ruff, plus frontend build/tests)
 ```
 
 ### Tech stack
@@ -107,7 +106,7 @@ swift-routing/
 | State | TanStack Query 5 (server), React Hook Form 7 (forms) |
 | Validation | Zod 4 (frontend), Pydantic v2 (backend) |
 | Testing | pytest (backend), Vitest + RTL + MSW (frontend), Playwright (E2E) |
-| CI | GitHub Actions (pytest + ruff, Python 3.9-3.12) |
+| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 
 ---
 
@@ -333,15 +332,15 @@ cd frontend && npm run build && npm run check:bundle
 
 | Dimension | Status |
 |---|---|
-| Version control | Git, 173 commits; current main commit `2480a53` |
-| Tests | 608 backend + 723 frontend passing; 288 E2E passing with 6 intentional skips across 294 cases |
-| CI | GitHub Actions (pytest + ruff, Python 3.9-3.12) |
+| Version control | Git, 186 commits |
+| Tests | 612 backend + 808 frontend passing; 288 E2E passing with 6 intentional skips across 294 cases |
+| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-| Bundle | 114,893 bytes gzip (under 204,800-byte budget) |
+| Bundle | 128,002 bytes gzip (under 204,800-byte budget) |
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
 | Learning | 13 curriculum entries (12 modules + capstone), daily practice loop, and Phase 1 Case Desk |
 
@@ -349,7 +348,14 @@ cd frontend && npm run build && npm run check:bundle
 
 ## Legacy migration status
 
-Legacy vanilla JS frontend (`/learn`, `/ui`) remains available. Relay runs at `/app` alongside it. Cutover (redirects + file removal) deferred until full content parity is confirmed.
+The front door has cut over: `/` redirects to Relay at `/app`, so first visitors
+land on Relay rather than the surface it replaces. When the Relay build is absent
+— a fresh clone that has not run `npm run build` — `/` falls back to `/learn` so
+the root still serves a working page.
+
+The legacy vanilla JS frontend stays reachable at `/learn` and `/ui`. File
+removal remains deferred until full content parity is confirmed; only the default
+landing changed.
 
 ---
 

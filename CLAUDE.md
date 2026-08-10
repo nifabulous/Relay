@@ -130,12 +130,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (608 tests)
+python -m pytest tests/ -q              # full suite (612 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --no-file-parallelism  # 723 tests
+cd frontend && npm test -- --no-file-parallelism  # 808 tests
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # 288 passed, 6 intentional skips / 294 cases
