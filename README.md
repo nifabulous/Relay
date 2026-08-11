@@ -35,10 +35,10 @@ These numbers were run against the current checkout on 2026-08-10:
 | Metric | Result |
 |---|---|
 | Backend tests | **612 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **808 passed** with file parallelism disabled |
-| Playwright E2E | **288 passed, 13 skips** across **301 cases** (all configured projects green) |
+| Frontend unit/integration tests | **836 passed** with file parallelism disabled |
+| Playwright E2E | **316 passed, 13 skips** across **329 cases** (all configured projects green) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **124,514 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **124,592 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **13 entries** (12 learning modules plus capstone) + daily practice drill |
 | Backend API endpoints | **22** |
 
@@ -57,9 +57,9 @@ learner-state round trip, skipped while the Learning backup panel is hidden. See
 | Metric | Value |
 |---|---|
 | Backend tests | 612 passing |
-| Frontend tests | 808 passing in serial file mode |
-| E2E tests (Playwright) | 288 passing, 13 skips across 301 cases |
-| Eager shell bundle | 124,514 bytes gzip (budget: 204,800 bytes) |
+| Frontend tests | 836 passing in serial file mode |
+| E2E tests (Playwright) | 316 passing, 13 skips across 329 cases |
+| Eager shell bundle | 124,592 bytes gzip (budget: 204,800 bytes) |
 | Git history | 186 commits |
 | Learning curriculum | 13 entries (12 learning modules plus capstone) |
 | Backend API endpoints | 22 |
@@ -337,14 +337,14 @@ cd frontend && npm run build && npm run check:bundle
 | Dimension | Status |
 |---|---|
 | Version control | Git, 186 commits |
-| Tests | 612 backend + 808 frontend passing; 288 E2E passing with 13 skips across 301 cases |
+| Tests | 612 backend + 836 frontend passing; 316 E2E passing with 13 skips across 329 cases |
 | CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-| Bundle | 124,514 bytes gzip (under 204,800-byte budget) |
+| Bundle | 124,592 bytes gzip (under 204,800-byte budget) |
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
 | Learning | 13 curriculum entries (12 modules + capstone), daily practice loop, and Phase 1 Case Desk |
 
