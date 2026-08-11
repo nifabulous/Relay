@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 test.describe("Explore", () => {
   test("search shows results for 'IBAN'", async ({ page }) => {
@@ -19,5 +20,54 @@ test.describe("Explore", () => {
     // Should have at least 20 glossary entries
     const entries = page.locator(".glossary-entry");
     expect(await entries.count()).toBeGreaterThan(20);
+  });
+});
+
+test.describe("Bank detail", () => {
+  test("deep link shows published settlement instructions grouped by currency", async ({ page }) => {
+    await page.goto("/app/explore/banks/SBININBBXXX", { waitUntil: "networkidle" });
+
+    await expect(
+      page.getByRole("heading", { name: "State Bank of India" }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "USD" })).toBeVisible();
+  });
+
+  test("a bank without SSI shows the heuristic route instead", async ({ page }) => {
+    await page.goto("/app/explore/banks/COBADEFFXXX", { waitUntil: "networkidle" });
+
+    await expect(
+      page.getByRole("heading", { name: "Heuristic correspondent route" }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByRole("heading", { name: "Published settlement instructions" }),
+    ).toHaveCount(0);
+  });
+
+  test("an unknown BIC degrades to a not-found state", async ({ page }) => {
+    await page.goto("/app/explore/banks/XXXXUS33XXX", { waitUntil: "networkidle" });
+
+    await expect(
+      page.getByRole("heading", { name: "Bank not found" }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByRole("link", { name: "Back to Bank Directory" }),
+    ).toBeVisible();
+  });
+
+  test("axe: no serious violations on bank detail", async ({ page }) => {
+    await page.goto("/app/explore/banks/SBININBBXXX", { waitUntil: "networkidle" });
+    await expect(
+      page.getByRole("heading", { name: "State Bank of India" }),
+    ).toBeVisible({ timeout: 10_000 });
+
+    const results = await new AxeBuilder({ page }).analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 });
