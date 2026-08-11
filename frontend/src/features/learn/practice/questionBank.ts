@@ -462,6 +462,143 @@ export const QUESTION_BANK: PracticeQuestion[] = [
       { id: "d", label: "Sunday at midnight", correct: false, explanation: "No ACSS exchange happens on weekends at all." },
     ],
   },
+  // ── Sanctions screening ──
+  {
+    id: "sx-bands",
+    moduleId: "sanctions",
+    question: "A payment party scores 0.93 against a watchlist entry. What happens?",
+    options: [
+      { id: "a", label: "Held 24 hours for review", correct: false, explanation: "The hold band sits below this — 0.75 to 0.90. This score clears the harder bar." },
+      { id: "b", label: "Automatic rejection — it's a hard hit", correct: true, explanation: "At and above 0.90 the engine rejects outright; a score this close to a listed name never proceeds on its own." },
+      { id: "c", label: "Cleared — only exact 1.00 matches count", correct: false, explanation: "Requiring exact spelling would make evasion trivial. Fuzzy scoring exists precisely to catch variants." },
+      { id: "d", label: "The name is auto-corrected to the listed spelling", correct: false, explanation: "Screening never rewrites party data — it only decides pass, hold, or reject." },
+    ],
+  },
+  {
+    id: "sx-every-hop",
+    moduleId: "sanctions",
+    question: "Your payment cleared your own bank's sanctions filter. Can it still be blocked for sanctions?",
+    options: [
+      { id: "a", label: "No — screening happens once, at origination", correct: false, explanation: "Every bank carries its own sanctions liability, so every bank runs its own filter." },
+      { id: "b", label: "Yes — every bank in the chain re-screens, with its own thresholds", correct: true, explanation: "Each hop screens independently and tunes its own engine; clearing one filter says nothing about the next." },
+      { id: "c", label: "Only if it crosses a border", correct: false, explanation: "Re-screening happens at every institution regardless of geography." },
+      { id: "d", label: "Only for amounts over $10,000", correct: false, explanation: "Sanctions screening has no de-minimis amount — a $5 payment to a listed party is still prohibited." },
+    ],
+  },
+  {
+    id: "sx-vop-vs-screening",
+    moduleId: "sanctions",
+    question: "VoP and sanctions screening use the same fuzzy name-matching engine. What's the key difference in what a mid-band score (say 0.80) means?",
+    options: [
+      { id: "a", label: "VoP: confirm and proceed if satisfied; screening: the payment stops until compliance clears it", correct: true, explanation: "Same arithmetic, opposite posture. A close VoP match is a nudge to double-check; a close screening match takes the decision out of the sender's hands." },
+      { id: "b", label: "Screening scores are computed on the account number instead", correct: false, explanation: "Both compare names — screening just compares against a watchlist instead of the account holder." },
+      { id: "c", label: "There is no difference", correct: false, explanation: "The consequence differs completely: advisory for VoP, mandatory hold for screening." },
+      { id: "d", label: "VoP blocks; screening only warns", correct: false, explanation: "It's the reverse — screening is the one with legal force." },
+    ],
+  },
+  {
+    id: "sx-false-positive",
+    moduleId: "sanctions",
+    question: "What do real screening engines add beyond the name to cut false positives?",
+    options: [
+      { id: "a", label: "Secondary identifiers: date of birth, address, nationality, document numbers", correct: true, explanation: "Context separates the listed person from the thousands who share the name — the core fix for over-flagging." },
+      { id: "b", label: "Stricter spelling requirements", correct: false, explanation: "Stricter spelling would create false NEGATIVES — missing listed parties who transliterate their names differently." },
+      { id: "c", label: "A whitelist of common names that skip screening", correct: false, explanation: "Exempting common names would be an open evasion channel." },
+      { id: "d", label: "Machine learning that removes the human review step", correct: false, explanation: "Models help rank hits, but possible matches still land with human analysts." },
+    ],
+  },
+
+  // ── Exceptions & returns ──
+  {
+    id: "ex-reject-vs-return",
+    moduleId: "exceptions-returns",
+    question: "What separates a reject from a return?",
+    options: [
+      { id: "a", label: "A reject happens before settlement; a return sends already-settled money back", correct: true, explanation: "That timing difference drives everything: rejects are cheap (nothing to recover), returns involve real money moving again — minus possible fees." },
+      { id: "b", label: "Rejects are for fraud, returns for errors", correct: false, explanation: "Either can involve fraud or error — the distinction is whether settlement happened." },
+      { id: "c", label: "They're two names for the same event", correct: false, explanation: "They ride different messages (pacs.002 vs pacs.004) at different stages." },
+      { id: "d", label: "Returns only exist on domestic rails", correct: false, explanation: "Cross-border returns are routine — that's exactly what pacs.004 carries." },
+    ],
+  },
+  {
+    id: "ex-camt056",
+    moduleId: "exceptions-returns",
+    question: "What does a camt.056 message do?",
+    options: [
+      { id: "a", label: "Reverses a settled payment", correct: false, explanation: "Settlement is final — no message unwinds it." },
+      { id: "b", label: "Requests cancellation/return of a payment — the receiving side can refuse", correct: true, explanation: "The recall is a request; the answer comes back as a camt.029, and returning settled funds usually needs the account holder's consent." },
+      { id: "c", label: "Confirms a payment was credited", correct: false, explanation: "Credit confirmation is a different message family entirely." },
+      { id: "d", label: "Reports a sanctions hit", correct: false, explanation: "Screening outcomes travel through status and case messages, not camt.056." },
+    ],
+  },
+  {
+    id: "ex-ac04",
+    moduleId: "exceptions-returns",
+    question: "A pacs.004 arrives with reason code AC04. What happened?",
+    options: [
+      { id: "a", label: "The beneficiary account is closed", correct: true, explanation: "AC04 = account closed. The funds couldn't be credited and came back." },
+      { id: "b", label: "The account number was wrong", correct: false, explanation: "A wrong account number carries its own code — AC01." },
+      { id: "c", label: "The payment was a duplicate", correct: false, explanation: "Duplicates return under AM05." },
+      { id: "d", label: "The receiving bank suspects fraud", correct: false, explanation: "Fraud-related returns use FRAD." },
+    ],
+  },
+  {
+    id: "ex-speed",
+    moduleId: "exceptions-returns",
+    question: "Why does speed matter so much when recalling a misdirected payment?",
+    options: [
+      { id: "a", label: "The recall only works while the funds are still in the receiving account", correct: true, explanation: "Once the account holder withdraws or forwards the money, a consented return becomes impossible and recovery turns legal — slow and uncertain." },
+      { id: "b", label: "camt.056 messages expire after one hour", correct: false, explanation: "The message doesn't expire — the money's availability does." },
+      { id: "c", label: "Banks charge more for recalls after 24 hours", correct: false, explanation: "Fees vary, but cost isn't the reason to hurry — recoverability is." },
+      { id: "d", label: "It doesn't — settled payments are equally recoverable at any time", correct: false, explanation: "Every hour increases the chance the funds have moved beyond easy reach." },
+    ],
+  },
+
+  // ── Ops desk: STP repair & Nostro recon ──
+  {
+    id: "ops-stp-meaning",
+    moduleId: "ops-repair",
+    question: "A payment 'fails STP'. What does that actually mean?",
+    options: [
+      { id: "a", label: "The payment is cancelled and the sender must start over", correct: false, explanation: "Failing STP doesn't kill a payment — it takes it off the automated path." },
+      { id: "b", label: "It drops out of straight-through processing into a manual repair queue", correct: true, explanation: "STP failure means a human must fix something before the payment continues — slower and more expensive, but recoverable." },
+      { id: "c", label: "It settled without fees being taken", correct: false, explanation: "STP is about automated message processing, not fee treatment." },
+      { id: "d", label: "The SWIFT network rejected the connection", correct: false, explanation: "Network delivery and message validity are separate layers — STP failures are content problems." },
+    ],
+  },
+  {
+    id: "ops-repair-target",
+    moduleId: "ops-repair",
+    question: "An STP check flags field 59 (beneficiary) as incomplete. The best repair-desk move is:",
+    options: [
+      { id: "a", label: "Complete the named field from reliable data and resubmit", correct: true, explanation: "Repairs are surgical: fix exactly what the finding names, using standing instructions or an RFI, and re-run the check." },
+      { id: "b", label: "Return the payment to the sender immediately", correct: false, explanation: "Returning a repairable payment wastes days — repair exists to avoid exactly that." },
+      { id: "c", label: "Remove the failing field so validation passes", correct: false, explanation: "Deleting required data makes the failure worse, never better." },
+      { id: "d", label: "Change the charge code and hope", correct: false, explanation: "Repairs unrelated to the finding fix nothing and can introduce new errors." },
+    ],
+  },
+  {
+    id: "ops-break-fee",
+    moduleId: "ops-repair",
+    question: "Nostro recon: the ledger expected a +50,000 credit; the statement shows +49,965 in the same currency. The most likely explanation is:",
+    options: [
+      { id: "a", label: "Intermediaries lifted fees from the amount in flight (SHA)", correct: true, explanation: "A small same-currency shortfall on an inbound credit is the classic lift-fee signature — confirm against disclosed charges and book to fees." },
+      { id: "b", label: "An FX conversion loss", correct: false, explanation: "No conversion happened — both figures are in the same currency." },
+      { id: "c", label: "The correspondent misplaced the funds", correct: false, explanation: "Correspondents rarely lose money outright; small deltas almost always trace to fees or charges." },
+      { id: "d", label: "Fraud at the sending bank", correct: false, explanation: "Escalate patterns of unexplained differences — a single small delta with a fee-shaped explanation isn't that." },
+    ],
+  },
+  {
+    id: "ops-break-discipline",
+    moduleId: "ops-repair",
+    question: "Why can't a recon analyst just adjust the ledger to match the statement and move on?",
+    options: [
+      { id: "a", label: "Every break must be explained first — silent adjustments can hide errors or real losses", correct: true, explanation: "Reconciliation is a control, not bookkeeping hygiene. An unexplained adjustment defeats the whole point and is how losses (and fraud) stay hidden." },
+      { id: "b", label: "Ledger systems don't allow manual entries", correct: false, explanation: "They do — with authorization. The barrier is discipline, not software." },
+      { id: "c", label: "Statements are frequently wrong", correct: false, explanation: "Statements usually reflect what happened; the question is why the ledger expected something different." },
+      { id: "d", label: "Adjustments require the correspondent's permission", correct: false, explanation: "Your ledger is your own — the constraint is your bank's control framework." },
+    ],
+  },
 ];
 
 /** All questions belonging to a set of completed modules. */
