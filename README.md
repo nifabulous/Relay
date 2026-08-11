@@ -36,18 +36,18 @@ These numbers were run against the current checkout on 2026-08-11:
 | Metric | Result |
 |---|---|
 | Backend tests | **615 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **883 passed** with file parallelism disabled |
+| Frontend unit/integration tests | **884 passed** with file parallelism disabled |
 | Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,134 bytes gzip** (budget: 204,800 bytes) |
-| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (51-question bank) |
+| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (50-question bank) |
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
-Case Desk test is load-sensitive under the default runner. Of the 13 E2E skips, 12 are the
-intentional reduced-motion variants outside the dedicated reduced-motion project; the 13th is the
-learner-state round trip, skipped while the Learning backup panel is hidden. See
-[Testing](#testing) for the recommended commands.
+Case Desk test is load-sensitive under the default runner. All 11 E2E skips are intentional: 6 are
+the learner-state round trip (one per chromium project), skipped while the Learning backup panel is
+hidden; the other 5 are the reduced-motion case journey, which runs only in the dedicated
+`case-reduced-motion` project. See [Testing](#testing) for the recommended commands.
 
 ---
 
@@ -58,7 +58,7 @@ learner-state round trip, skipped while the Learning backup panel is hidden. See
 | Metric | Value |
 |---|---|
 | Backend tests | 615 passing |
-| Frontend tests | 883 passing in serial file mode |
+| Frontend tests | 884 passing in serial file mode |
 | E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,134 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
@@ -93,7 +93,7 @@ swift-routing/
           practice/           Daily drill, question bank, spaced review, streaks
           cases/              Case Desk, supplier case catalog, evidence and debrief flow
           components/         Exercise, MultipleChoice, Decompose, ScoreBar, StepIndicator
-  tests/                      Backend test suite (612 tests)
+  tests/                      Backend test suite (pytest)
   DESIGN.md                   Canonical design contract
   alembic/                    Database migrations
   .github/workflows/          CI (pytest + ruff, plus frontend build/tests)
@@ -199,7 +199,7 @@ the case is an applied scenario and is not counted in the curriculum total.
 
 Every lab now gates completion on at least one correct answer — opening demos alone never
 completes a module. A daily five-question drill at `/app/learn/practice` draws from completed
-modules (from a 51-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
+modules (from a 50-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
 
 ### Four workspaces
 
@@ -263,7 +263,7 @@ lesson scripts:
    Exceptions & Returns (module 14, earning "Exception Handler"), and the Ops Desk
    (module 15, STP repair + Nostro recon, earning "Ops Ready").
 6. **Grow the retention loop.** The daily drill, spaced review, and streaks shipped
-   (`frontend/src/features/learn/practice/`). The question bank has 51 questions —
+   (`frontend/src/features/learn/practice/`). The question bank has 50 questions —
    extend it as modules deepen, and consider surfacing review stats in telemetry.
 
 ### What is intentionally not finished
@@ -337,19 +337,21 @@ cd frontend && npm run build && npm run check:bundle
 
 ## Engineering health
 
+Test counts, bundle size, and curriculum totals are not repeated here — see the
+[Verified health snapshot](#verified-health-snapshot) and [The numbers](#the-numbers), so a
+count can never go stale in a third table. This one covers qualitative dimensions only.
+
 | Dimension | Status |
 |---|---|
-| Version control | Git, 186 commits |
-| Tests | 612 backend + 808 frontend passing; 288 E2E passing with 13 skips across 301 cases |
+| Version control | Git, `main` plus short-lived feature branches |
 | CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-| Bundle | 124,514 bytes gzip (under 204,800-byte budget) |
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
-| Learning | 16 curriculum entries (15 modules + capstone), daily practice loop, and 5 Case Desk scenarios |
+| Learning | Gated module completion, daily practice loop, spaced review, Case Desk scenarios |
 
 ---
 

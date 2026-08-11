@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-11 · **Current verification:** 615 backend + 883 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-11 · **Current verification:** 615 backend + 884 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -54,7 +54,7 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
   surfaces remain available for parity and rollback.
 - Modules 13–15 shipped: Sanctions Screening (`/api/screen`), Exceptions & Returns
   (rejects/returns/recalls on the tracking simulator), and The Ops Desk (STP repair +
-  Nostro reconciliation). The practice bank grew to 51 questions covering every module.
+  Nostro reconciliation). The practice bank grew to 50 questions covering every module.
 
 ---
 
@@ -93,7 +93,7 @@ Pick by appetite. No hard dependencies between these items.
 | Dimension | Before review | After Tier 0-2 | Target |
 |---|---|---|---|
 | Version control | ❌ Not a git repo | ✅ Git, 19-commit baseline | Maintain; current tree is actively changing |
-| Tests | ✅ 522 passing, 92% coverage | ✅ 550+ passing, 29 new tests | ✅ 608 backend + 723 frontend + 288 E2E; keep CI aligned |
+| Tests | ✅ 522 passing, 92% coverage | ✅ 550+ passing, 29 new tests | ✅ Current counts in the header above; keep CI aligned |
 | CI | ❌ None | ✅ GitHub Actions (pytest + ruff) | Add coverage gate |
 | Auth | ❌ Zero (anyone could wipe tables) | ✅ `admin_required` on all mutating endpoints | Add rate limiting |
 | Security | ❌ Real accounts, GitHub default URL | ✅ ACCT- placeholders, fail-closed importer | Add checksum verification |
