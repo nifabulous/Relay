@@ -189,6 +189,60 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
     requiredCheckpoints: ["simulate-fees", "predict-received", "spot-fx-margin"],
   },
 
+  "sanctions": {
+    title: "Stopped at the Border: Sanctions Screening",
+    legacySources: ["app/static/js/learn.js (sanctions hash module)"],
+    apiEndpoints: ["/api/screen"],
+    interactions: [
+      "Decision-band reference table (CLEAR / POSSIBLE_HIT / HARD_HIT)",
+      "Live screening demo with quick scenarios (clean / possible hit / hard hit)",
+      "Per-hop screening table showing every bank re-screening the chain",
+      "Threshold judgment multiple-choice (0.82 score)",
+      "Find-the-grey-zone exercise: craft a name scoring 0.75–0.90 against the live API",
+      "Escalation and false-positive decision drills",
+    ],
+    requiredCheckpoints: [
+      "screen-scenarios", "judge-threshold", "find-possible-hit",
+      "escalation-decision", "false-positive",
+    ],
+  },
+
+  "exceptions-returns": {
+    title: "When Payments Fail: Exceptions & Returns",
+    legacySources: [],
+    apiEndpoints: ["/api/track/create"],
+    interactions: [
+      "Exception taxonomy table (reject / return / recall with ISO 20022 messages)",
+      "Doomed-payment demo: create a rejected payment and read its timeline",
+      "Where-did-it-die exercise against the live timeline",
+      "Return reason code table (AC01, AC04, AC06, AM05, CUST, FOCR, FRAD) + drill",
+      "Recall-reality decision (camt.056 is a request, not a command)",
+      "NO_MATCH aftermath decision drill",
+    ],
+    requiredCheckpoints: [
+      "simulate-rejection", "read-rejection", "map-return-code",
+      "recall-reality", "misdirected-aftermath",
+    ],
+  },
+
+  "ops-repair": {
+    title: "The Ops Desk: STP Repair & Nostro Recon",
+    legacySources: [],
+    apiEndpoints: ["/api/message/stp-check"],
+    interactions: [
+      "Repair queue: broken MT103-shaped payment with an empty field 59",
+      "Live STP check with findings and suggested repairs",
+      "Choose-the-repair decision drill, then repaired re-run to CLEAN",
+      "Nostro ledger vs correspondent statement (camt.053) comparison tables",
+      "Break-classification decision (lift-fee amount break)",
+      "Size-the-break exercise (expected minus received)",
+    ],
+    requiredCheckpoints: [
+      "run-stp-check", "choose-repair", "rerun-clean",
+      "spot-break", "size-break",
+    ],
+  },
+
   "capstone": {
     title: "Capstone: Full Payment Simulation",
     legacySources: ["app/static/js/learn-capstone.js"],

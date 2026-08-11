@@ -37,6 +37,9 @@ describe("curriculum", () => {
       "gbp-eur-rails": { min: 25, max: 35 },
       "cad-rails": { min: 20, max: 25 },
       "fees-fx": { min: 15, max: 20 },
+      sanctions: { min: 15, max: 20 },
+      "exceptions-returns": { min: 15, max: 20 },
+      "ops-repair": { min: 20, max: 25 },
       capstone: { min: 30, max: 45 },
     };
 
@@ -123,6 +126,35 @@ describe("curriculum", () => {
         "lab-6", "lab-7", "lab-8", "lab-9",
       ]),
     );
+  });
+
+  it("includes the sanctions module requiring labs 3 and 4", () => {
+    const sanctions = getModuleById("sanctions");
+    expect(sanctions).toBeDefined();
+    expect(sanctions?.prerequisites).toEqual(expect.arrayContaining(["lab-3", "lab-4"]));
+  });
+
+  it("includes exceptions-returns requiring tracking and ISO 20022 context", () => {
+    const mod = getModuleById("exceptions-returns");
+    expect(mod).toBeDefined();
+    expect(mod?.prerequisites).toEqual(expect.arrayContaining(["lab-3", "lab-6", "lab-8"]));
+  });
+
+  it("includes ops-repair requiring routing, SSI, and message context", () => {
+    const mod = getModuleById("ops-repair");
+    expect(mod).toBeDefined();
+    expect(mod?.prerequisites).toEqual(expect.arrayContaining(["lab-4", "lab-5", "lab-8"]));
+  });
+
+  it("orders the new modules after fees-fx and before the capstone", () => {
+    const ids = CURRICULUM.map((m) => m.id);
+    const feesIdx = ids.indexOf("fees-fx");
+    const capIdx = ids.indexOf("capstone");
+    for (const id of ["sanctions", "exceptions-returns", "ops-repair"]) {
+      const idx = ids.indexOf(id);
+      expect(idx).toBeGreaterThan(feesIdx);
+      expect(idx).toBeLessThan(capIdx);
+    }
   });
 
   it("capstone stays locked until labs 8 and 9 are complete", () => {

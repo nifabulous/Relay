@@ -6,7 +6,8 @@ describe("CORE_LAB_PARITY", () => {
     expect(Object.keys(CORE_LAB_PARITY)).toEqual([
       "lab-1", "lab-2", "lab-3", "lab-4",
       "lab-5", "lab-6", "lab-7", "lab-8", "lab-9",
-      "gbp-eur-rails", "cad-rails", "fees-fx", "capstone",
+      "gbp-eur-rails", "cad-rails", "fees-fx",
+      "sanctions", "exceptions-returns", "ops-repair", "capstone",
     ]);
   });
 
@@ -14,9 +15,9 @@ describe("CORE_LAB_PARITY", () => {
     for (const [id, entry] of Object.entries(CORE_LAB_PARITY)) {
       expect(entry.interactions.length).toBeGreaterThan(0);
       expect(entry.requiredCheckpoints.length).toBeGreaterThan(0);
-      // lab-8, lab-9, and the rails deep-dives are net-new with no legacy
-      // predecessor.
-      if (!["lab-8", "lab-9", "gbp-eur-rails", "cad-rails"].includes(id)) {
+      // lab-8, lab-9, the rails deep-dives, and the exceptions/ops modules
+      // are net-new with no legacy predecessor.
+      if (!["lab-8", "lab-9", "gbp-eur-rails", "cad-rails", "exceptions-returns", "ops-repair"].includes(id)) {
         expect(entry.legacySources.length).toBeGreaterThan(0);
       }
     }
