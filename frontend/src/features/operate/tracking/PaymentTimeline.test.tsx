@@ -109,3 +109,48 @@ describe("PaymentTimeline", () => {
     expect(screen.queryByText(/Sent:/i)).not.toBeInTheDocument();
   });
 });
+
+// IN_PROGRESS was the one emitted status the mapping test did not cover.
+//
+// It is deliberately mapped to "passed". Verified against the real backend: a
+// multi-hop credited payment emits
+//   INITIATED, ACCEPTED, IN_PROGRESS, FORWARDED, ACCEPTED, IN_PROGRESS,
+//   FORWARDED, ACCEPTED, CREDITED
+// so IN_PROGRESS only ever appears mid-chain, immediately followed by
+// FORWARDED — a hop that was processing and then completed. generate_timeline
+// writes the whole chain in one call, so current_status is always terminal and
+// IN_PROGRESS is never the latest event. Marking it "needs attention" would
+// flag completed hops on every multi-hop payment in the app.
+describe("PaymentTimeline IN_PROGRESS hops", () => {
+  const multiHop: TrackPaymentResponse = {
+    ...samplePayment,
+    current_status: "CREDITED",
+    is_terminal: true,
+    event_count: 5,
+    timeline: [
+      { status: "INITIATED", bank_bic: "GTBINGLA", bank_name: "GTBank", hop: 0, timestamp: "2026-01-01T10:00:00", message: undefined, amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+      { status: "ACCEPTED", bank_bic: "DEUTDEFF", bank_name: "Deutsche", hop: 1, timestamp: "2026-01-01T10:01:00", message: undefined, amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+      { status: "IN_PROGRESS", bank_bic: "DEUTDEFF", bank_name: "Deutsche", hop: 1, timestamp: "2026-01-01T10:02:00", message: undefined, amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+      { status: "FORWARDED", bank_bic: "DEUTDEFF", bank_name: "Deutsche", hop: 1, timestamp: "2026-01-01T10:03:00", message: undefined, amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+      { status: "CREDITED", bank_bic: "CITIUS33", bank_name: "Citibank", hop: 2, timestamp: "2026-01-01T10:04:00", message: undefined, amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+    ],
+  };
+
+  it("treats a forwarded IN_PROGRESS hop as completed, not unavailable", () => {
+    render(<PaymentTimeline payment={multiHop} />);
+    const list = screen.getByLabelText("Payment timeline");
+    expect(list.querySelectorAll(".tracking-timeline__event--unavailable").length).toBe(0);
+    expect(list.querySelectorAll(".tracking-timeline__event--failed").length).toBe(0);
+  });
+
+  it("still reports the payment as passed overall", () => {
+    const { container } = render(<PaymentTimeline payment={multiHop} />);
+    // Scoped to the header: the per-hop chips also read "Passed", so an
+    // unscoped query matches several nodes.
+    const header = container.querySelector(".tracking-result__header")!;
+    expect(header.querySelector(".status-chip--success")).toHaveAttribute(
+      "aria-label",
+      "Passed",
+    );
+  });
+});
