@@ -69,8 +69,12 @@
   z-index: 1;
 }
 
-.tracking-timeline__item--credited .tracking-timeline__dot,
-.tracking-timeline__item--accepted .tracking-timeline__dot {
+/* Modifiers are the lowercased form of the backend's own status vocabulary
+   (app/services/tracking.py:37-43). `in_transit` and `pending` used to appear
+   here; neither is a status the backend has ever emitted, so those rules were
+   dead while the real statuses went unstyled. */
+
+.tracking-timeline__item--credited .tracking-timeline__dot {
   border-color: var(--color-success);
   background: var(--color-success-bg);
 }
@@ -81,10 +85,13 @@
   background: var(--color-danger-bg);
 }
 
-.tracking-timeline__item--in_transit .tracking-timeline__dot,
-.tracking-timeline__item--pending .tracking-timeline__dot {
-  border-color: var(--color-warning);
-  background: var(--color-warning-bg);
+/* In-flight hops: the payment moved through this bank and kept going. */
+.tracking-timeline__item--initiated .tracking-timeline__dot,
+.tracking-timeline__item--accepted .tracking-timeline__dot,
+.tracking-timeline__item--in_progress .tracking-timeline__dot,
+.tracking-timeline__item--forwarded .tracking-timeline__dot {
+  border-color: var(--color-action-border);
+  background: var(--color-action-surface);
 }
 
 .tracking-timeline__content {
