@@ -10,6 +10,7 @@ const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m 
 const BankDirectoryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.BankDirectoryPage })));
 const SchemesPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.SchemesPage })));
 const GlossaryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.GlossaryPage })));
+const BankDetailRoute = lazy(() => import("../features/explore/BankDetailRoute").then(m => ({ default: m.BankDetailRoute })));
 const PreparePaymentPage = lazy(() => import("../features/operate/prepare/PreparePaymentPage").then(m => ({ default: m.PreparePaymentPage })));
 const ToolIndexPage = lazy(() => import("../features/operate/tools/ToolIndexPage").then(m => ({ default: m.ToolIndexPage })));
 const FeePage = lazy(() => import("../features/operate/tools/FeePage").then(m => ({ default: m.FeePage })));
@@ -50,6 +51,7 @@ export function App() {
             <Route path="learn/:moduleId" element={<Suspense fallback={null}><LearnModulePage /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={null}><ExplorePage /></Suspense>} />
               <Route path="explore/banks" element={<Suspense fallback={null}><BankDirectoryPage /></Suspense>} />
+              <Route path="explore/banks/:bic" element={<Suspense fallback={null}><BankDetailRoute /></Suspense>} />
               <Route path="explore/schemes" element={<Suspense fallback={null}><SchemesPage /></Suspense>} />
               <Route path="explore/glossary" element={<Suspense fallback={null}><GlossaryPage /></Suspense>} />
             <Route path="operate" element={<Suspense fallback={null}><PreparePaymentPage /></Suspense>} />

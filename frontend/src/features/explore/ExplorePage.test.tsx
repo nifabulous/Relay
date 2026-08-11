@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { GlossaryPage } from "./ExplorePage";
+import { GlossaryPage, BankDirectoryPage } from "./ExplorePage";
+import { renderRelay, queryClient } from "../../test/render";
 
 function renderGlossary(path = "/app/explore/glossary") {
   return render(
@@ -40,5 +41,24 @@ describe("GlossaryPage", () => {
     renderGlossary("/app/explore/glossary?term=IBAN");
     expect(screen.getByText("IBAN", { selector: "dt" }).closest(".glossary-entry"))
       .toHaveClass("glossary-entry--highlighted");
+  });
+});
+
+describe("BankDirectoryPage", () => {
+  it("links a found bank to its detail route instead of expanding inline", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("BIC to look up"), "CITIUS33");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+
+    const link = await screen.findByRole("link", { name: /View settlement details/i });
+    expect(link).toHaveAttribute("href", "/explore/banks/CITIUS33");
   });
 });

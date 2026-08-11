@@ -278,3 +278,114 @@
     gap: var(--space-2);
   }
 }
+
+/* ─── Bank detail route ─────────────────────────────────────────────── */
+
+.explore__breadcrumb {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.bank-detail__resolution {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-left: 2px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  max-width: 60ch;
+}
+
+.bank-detail__not-found {
+  padding: var(--space-6) 0;
+}
+
+.bank-ssi {
+  margin-top: var(--space-6);
+}
+
+.bank-ssi__intro {
+  color: var(--color-ink-muted);
+}
+
+.bank-ssi__group {
+  margin-top: var(--space-4);
+}
+
+.bank-ssi__currency {
+  margin-bottom: var(--space-2);
+}
+
+.bank-ssi__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.bank-ssi__item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  padding: var(--space-3);
+}
+
+.bank-ssi__intermediary {
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.bank-ssi__disclaimer {
+  margin-top: var(--space-4);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.bank-route {
+  margin-top: var(--space-6);
+}
+
+.bank-route__intro,
+.bank-route__notes {
+  color: var(--color-ink-muted);
+}
+
+.bank-route__error,
+.bank-ssi__error {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.bank-ssi__fields {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.bank-ssi__fields dt {
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.bank-route__meta {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+}
+
+.bank-route__meta dt {
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}

@@ -101,49 +101,37 @@ export function BankDirectoryPage() {
             onRetry={() => query.refetch()}
           >
             {query.data?.bank && (
-              <BankDetailCard bank={query.data.bank} />
+              <div className="bank-detail">
+                <h2 className="bank-detail__name">{query.data.bank.bank_name}</h2>
+                <dl className="bank-detail__grid">
+                  <dt>BIC</dt>
+                  <dd className="mono">{query.data.bank.bic}</dd>
+                  {query.data.bank.country_code && (
+                    <>
+                      <dt>Country</dt>
+                      <dd className="mono">{query.data.bank.country_code}</dd>
+                    </>
+                  )}
+                  {query.data.bank.city && (
+                    <>
+                      <dt>City</dt>
+                      <dd>{query.data.bank.city}</dd>
+                    </>
+                  )}
+                </dl>
+                <div className="bank-detail__actions">
+                  <Link
+                    to={`/explore/banks/${encodeURIComponent(query.data.bank.bic)}`}
+                    className="relay-btn relay-btn--primary"
+                  >
+                    View settlement details
+                  </Link>
+                </div>
+              </div>
             )}
           </AsyncRegion>
         </div>
       )}
-    </div>
-  );
-}
-
-function BankDetailCard({ bank }: { bank: NonNullable<LookupResponse["bank"]> }) {
-  return (
-    <div className="bank-detail">
-      <h2 className="bank-detail__name">{bank.bank_name}</h2>
-      <dl className="bank-detail__grid">
-        <dt>BIC</dt>
-        <dd className="mono">{bank.bic}</dd>
-        {bank.country_code && (
-          <>
-            <dt>Country</dt>
-            <dd className="mono">{bank.country_code}</dd>
-          </>
-        )}
-        {bank.city && (
-          <>
-            <dt>City</dt>
-            <dd>{bank.city}</dd>
-          </>
-        )}
-        {bank.country_currency && (
-          <>
-            <dt>Currency</dt>
-            <dd className="mono">{bank.country_currency}</dd>
-          </>
-        )}
-      </dl>
-      <div className="bank-detail__actions">
-        <Link to={`/app/operate/prepare?bic=${encodeURIComponent(bank.bic)}`} className="relay-btn relay-btn--secondary">
-          Prepare payment to this bank
-        </Link>
-        <Link to={`/app/explore?country=${encodeURIComponent(bank.country_code)}`} className="relay-btn relay-btn--secondary">
-          Search corridors
-        </Link>
-      </div>
     </div>
   );
 }

@@ -19,6 +19,13 @@ export type AsyncStatus =
 export type CheckStatus = "passed" | "needs_attention" | "failed" | "unavailable";
 
 /**
+ * Statuses a PaymentRouteNode may wear. CheckStatus covers executed routes;
+ * DecisionQuality grades like "possible" let suggested/hypothetical chains
+ * avoid claiming a verification they never had.
+ */
+export type RouteNodeStatus = CheckStatus | DecisionQuality;
+
+/**
  * Source-claim statuses used by the Case Desk's evidence layer. A fact's
  * SourceClaim is either verified (current, within its review-by date) or
  * under review (the source material is being refreshed). Distinct from
@@ -77,7 +84,7 @@ export interface PaymentRouteNode {
   kind: "originator" | "intermediary" | "beneficiary";
   bic: string;
   name: string;
-  status: CheckStatus;
+  status: RouteNodeStatus;
   amount?: string;
   fee?: string;
   timing?: string;

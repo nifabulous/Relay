@@ -36,7 +36,7 @@ _Last updated: 2026-08-10._
 
 ### Testing & tooling
 - **Backend:** pytest (612 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
-- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (808 unit/integration tests),
+- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (836 unit/integration tests),
   Playwright + `@axe-core/playwright` (e2e + accessibility), bundle-size gate
   (`npm run check:bundle`), `tsc --noEmit`.
 - **CI:** pytest + ruff across Python 3.9–3.12, plus a frontend job (typecheck, build, vitest, bundle budget) (`.github/workflows/ci.yml`).
@@ -218,6 +218,6 @@ python -m pytest tests/ -q               # 612 tests
 
 # Frontend
 cd frontend && npm install && npm run dev # http://127.0.0.1:5173/app/
-npm test -- --no-file-parallelism        # 808 tests
+npm test -- --no-file-parallelism        # 836 tests
 ```
 Relay app: `http://127.0.0.1:8000/app` · Legacy: `/learn`, `/ui`.

@@ -156,6 +156,12 @@
     color: var(--color-warning);
   }
 
+  .payment-route__step-dot--possible {
+    border-color: var(--color-warning);
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
   .payment-route__step-line {
     width: 2px;
     flex: 1;
@@ -230,6 +236,10 @@
 .payment-route__node--needs_attention {
   border-color: var(--color-warning-border);
   background: var(--color-warning-bg);
+}
+
+.payment-route__node--possible {
+  border-color: var(--color-warning-border);
 }
 
 .payment-route__node--active {
