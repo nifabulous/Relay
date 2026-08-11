@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-12 · **Current verification:** 615 backend + 888 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Current verification:** 621 backend + 911 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 

@@ -35,11 +35,11 @@ These numbers were run against the current checkout on 2026-08-12:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **615 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **888 passed** with file parallelism disabled |
+| Backend tests | **621 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Frontend unit/integration tests | **911 passed** with file parallelism disabled |
 | Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **127,138 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **127,167 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (50-question bank) |
 | Backend API endpoints | **22** |
 
@@ -64,10 +64,10 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 615 passing |
-| Frontend tests | 888 passing in serial file mode |
+| Backend tests | 621 passing |
+| Frontend tests | 911 passing in serial file mode |
 | E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
-| Eager shell bundle | 127,138 bytes gzip (budget: 204,800 bytes) |
+| Eager shell bundle | 127,167 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
 | Backend API endpoints | 22 |
