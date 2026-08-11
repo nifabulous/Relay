@@ -46,4 +46,14 @@ describe("buildRouteNodes", () => {
 
     expect(nodes.map((n) => n.kind)).toEqual(["originator", "beneficiary"]);
   });
+
+  it("defaults to passed and honours an explicit status override", () => {
+    const passed = buildRouteNodes([{ bic: "CITIUS33" }], "SBININBBXXX");
+
+    expect(passed.every((n) => n.status === "passed")).toBe(true);
+
+    const possible = buildRouteNodes([{ bic: "CITIUS33" }], "SBININBBXXX", "possible");
+
+    expect(possible.every((n) => n.status === "possible")).toBe(true);
+  });
 });

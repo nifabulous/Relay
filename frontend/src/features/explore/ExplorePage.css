@@ -353,6 +353,7 @@
   color: var(--color-ink-muted);
 }
 
+.bank-route__error,
 .bank-ssi__error {
   margin-top: var(--space-4);
   font-size: var(--text-sm);

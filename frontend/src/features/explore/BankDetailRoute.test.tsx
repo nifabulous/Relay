@@ -258,6 +258,29 @@ describe("BankDetailRoute heuristic fallback", () => {
     ).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Published settlement instructions" })).toBeNull();
     expect(await screen.findByText(/high/)).toBeVisible();
+    // Suggested chains never wear verified-state visuals: the nodes read
+    // "Possible", never "Passed".
+    expect((await screen.findAllByText("Possible")).length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByText("Passed")).toBeNull();
+  });
+
+  it("explains when the suggested chain fails to load", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", () => HttpResponse.json({ detail: "boom" }, { status: 500 })),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    expect(
+      await screen.findByRole("heading", { name: "Heuristic correspondent route" }),
+    ).toBeVisible();
+    expect(
+      await screen.findByText(/suggested chain could not be loaded/i),
+    ).toBeVisible();
   });
 
   it("requests the heuristic route in the bank's own country currency", async () => {

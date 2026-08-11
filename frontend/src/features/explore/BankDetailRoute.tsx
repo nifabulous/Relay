@@ -227,12 +227,22 @@ export function BankDetailRoute() {
             {ssi.data !== undefined && !hasSSI && (
               <section className="bank-route" aria-labelledby="bank-route-title">
                 <h2 id="bank-route-title">Heuristic correspondent route</h2>
-                <p className="measure bank-route__intro">
-                  No published settlement instructions are on file for this bank.
-                  Real correspondent relationships are private and bank-specific,
-                  so the chain below is an informed suggestion from the curated
-                  corridor table — not a published instruction.
-                </p>
+
+                {heuristic.isError ? (
+                  <p className="bank-route__error">
+                    No published settlement instructions are on file for this
+                    bank, and the suggested chain could not be loaded. Try
+                    reloading the page.
+                  </p>
+                ) : (
+                  <p className="measure bank-route__intro">
+                    No published settlement instructions are on file for this
+                    bank. Real correspondent relationships are private and
+                    bank-specific, so the chain below is an informed suggestion
+                    from the curated corridor table — not a published
+                    instruction.
+                  </p>
+                )}
 
                 {heuristic.data && heuristic.data.suggested_intermediaries.length > 0 && (
                   <>
@@ -240,6 +250,7 @@ export function BankDetailRoute() {
                       nodes={buildRouteNodes(
                         heuristic.data.suggested_intermediaries,
                         bank.bic,
+                        "possible",
                       )}
                       currency={heuristic.data.currency}
                     />

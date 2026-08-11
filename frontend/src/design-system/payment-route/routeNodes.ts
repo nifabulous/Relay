@@ -1,4 +1,4 @@
-import type { PaymentRouteNode, CheckStatus } from "../types";
+import type { PaymentRouteNode, RouteNodeStatus } from "../types";
 
 interface IntermediaryLike {
   bic: string;
@@ -10,15 +10,16 @@ interface IntermediaryLike {
  *
  * Lives beside PaymentRoute because it exists to feed it. Its `IntermediaryLike`
  * shape matches the API's SuggestedIntermediary, so a /api/route response can be
- * rendered without an adapter.
+ * rendered without an adapter. Nodes default to "passed" for executed routes;
+ * suggested chains pass "possible" so they never claim a verification.
  */
 export function buildRouteNodes(
   intermediaries: IntermediaryLike[],
   beneficiaryBic: string,
+  status: RouteNodeStatus = "passed",
 ): PaymentRouteNode[] {
-  const passed: CheckStatus = "passed";
   const nodes: PaymentRouteNode[] = [
-    { id: "origin", kind: "originator", bic: "—", name: "Your bank", status: passed },
+    { id: "origin", kind: "originator", bic: "—", name: "Your bank", status },
   ];
 
   intermediaries.forEach((inter, i) => {
@@ -27,7 +28,7 @@ export function buildRouteNodes(
       kind: "intermediary",
       bic: inter.bic,
       name: String(inter.bank ?? inter.bic),
-      status: passed,
+      status,
     });
   });
 
@@ -36,7 +37,7 @@ export function buildRouteNodes(
     kind: "beneficiary",
     bic: beneficiaryBic,
     name: "Beneficiary bank",
-    status: passed,
+    status,
   });
 
   return nodes;
