@@ -416,7 +416,7 @@ describe("LearnIndexPage — production wiring of the case session", () => {
       screen.getByRole("heading", { name: definition.title }),
     );
 
-    expect(caseHeadings).toHaveLength(4);
+    expect(caseHeadings).toHaveLength(CASE_CATALOG.length);
 
     const headingIds = new Set<string>();
     for (const definition of CASE_CATALOG) {
