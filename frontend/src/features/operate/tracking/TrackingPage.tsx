@@ -16,9 +16,26 @@ import { recordActivity } from "../../../lib/persistence/storage";
 
 export function TrackingPage() {
   const [searchParams] = useSearchParams();
-  const initialUetr = searchParams.get("uetr") ?? "";
-  const [uetr, setUetr] = useState(initialUetr);
-  const [submittedUetr, setSubmittedUetr] = useState<string | null>(initialUetr || null);
+  const paramUetr = searchParams.get("uetr") ?? "";
+  const [uetr, setUetr] = useState(paramUetr);
+  const [submittedUetr, setSubmittedUetr] = useState<string | null>(paramUetr || null);
+
+  // `useState` reads its initializer only on mount, so seeding from the URL
+  // there alone meant navigating ?uetr=A -> ?uetr=B on this same route reused
+  // the mounted component and kept querying A: the page showed one payment's
+  // timeline under another payment's URL.
+  //
+  // Adjusting state during render (React's documented pattern for reacting to a
+  // changed input) rather than in an effect, so there is no render showing the
+  // previous payment under the new URL. Gated on the param having actually
+  // changed, which is what keeps a UETR the user typed by hand from being
+  // overwritten while the URL still carries the old one.
+  const [appliedParam, setAppliedParam] = useState(paramUetr);
+  if (paramUetr !== appliedParam) {
+    setAppliedParam(paramUetr);
+    setUetr(paramUetr);
+    setSubmittedUetr(paramUetr || null);
+  }
 
   const query = useQuery({
     queryKey: submittedUetr ? apiKeys.track(submittedUetr) : ["track", "idle"],
