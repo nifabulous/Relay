@@ -160,6 +160,50 @@ class TestGenerateTimeline:
         assert events[0].status == STATUS_INITIATED
         assert events[-1].status == STATUS_CREDITED
 
+    def test_direct_payment_honours_rejected_outcome(self, db_session):
+        """
+        A rejected direct payment must not end CREDITED.
+
+        Rejection used to fire only inside the intermediary loop, at i == 1. With
+        no intermediaries `chain[1:-1]` is empty, the loop never runs, and the
+        caller's `outcome="rejected"` was silently discarded — the payment ran
+        through to CREDITED as though nothing had been asked. A caller asking for
+        a rejection and getting a successful payment is the worst kind of
+        silence, because the response looks entirely valid.
+
+        With no correspondent in the chain there is only one bank that can refuse
+        the payment: the beneficiary's own.
+        """
+        uetr = generate_uetr()
+        events = generate_timeline(
+            session=db_session, uetr=uetr,
+            originator_bic="BOFAUS3NXXX", originator_name="BofA",
+            beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+            intermediary_bics=[], intermediary_names=[],
+            currency="USD", amount=1000.00,
+            outcome="rejected",
+        )
+        assert events[-1].status == STATUS_REJECTED
+        assert events[-1].status in TERMINAL_STATUSES
+        assert events[-1].bank_bic == "GTBINGLAXXX"
+        assert STATUS_CREDITED not in [e.status for e in events]
+
+    def test_direct_payment_rejection_is_reflected_in_status(self, db_session):
+        """The persisted status summary must agree with the event stream."""
+        uetr = generate_uetr()
+        generate_timeline(
+            session=db_session, uetr=uetr,
+            originator_bic="BOFAUS3NXXX", originator_name="BofA",
+            beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+            intermediary_bics=[], intermediary_names=[],
+            currency="USD", amount=1000.00,
+            outcome="rejected",
+        )
+        status = get_payment_status(db_session, uetr)
+        assert status is not None
+        assert status["current_status"] == STATUS_REJECTED
+        assert status["is_terminal"] is True
+
 
 # ===========================================================================
 # get_payment_status
