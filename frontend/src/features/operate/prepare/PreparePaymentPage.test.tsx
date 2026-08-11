@@ -7,14 +7,14 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../../test/server";
 import { PreparePaymentPage } from "./PreparePaymentPage";
 
-function renderPage() {
+function renderPage(options: { basename?: string; initialEntries?: string[] } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const user = userEvent.setup();
   const utils = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter basename={options.basename} initialEntries={options.initialEntries}>
         <PreparePaymentPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -97,5 +97,43 @@ describe("PreparePaymentPage form accessibility", () => {
     expect(screen.queryByRole("img", { name: /Payment from Your bank/i })).toBeNull();
     expect(screen.getByText("Correspondent Routing (heuristic)")).toBeVisible();
     expect(screen.getByText("Needs attention")).toBeVisible();
+  });
+});
+
+describe("PreparePaymentPage result cross-links", () => {
+  // The router mounts with basename="/app" (app-shell/App.tsx), so React Router
+  // prefixes it itself. A `to` value that also carries /app renders /app/app/...,
+  // which matches no route and paints an empty page.
+  it("renders footer links under a single /app prefix when the router has basename='/app'", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "PROCEED",
+        reason: "Illustrative result",
+        is_blocking: false,
+        uetr: "abc-123",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "MATCH", score: 1, advice: "Matches" },
+        routing: {
+          beneficiary_country: "GB",
+          inferred_currency: "GBP",
+          suggested_intermediaries: [],
+        },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: ["Simulation"],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage({ basename: "/app", initialEntries: ["/app/operate/prepare"] });
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    const trackLink = await screen.findByRole("link", { name: /track this payment/i });
+    expect(trackLink).toHaveAttribute("href", "/app/operate/tracking?uetr=abc-123");
+
+    expect(screen.getByRole("link", { name: /explore corridor details/i }))
+      .toHaveAttribute("href", "/app/explore");
   });
 });

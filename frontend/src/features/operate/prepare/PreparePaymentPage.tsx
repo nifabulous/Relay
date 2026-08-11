@@ -346,7 +346,7 @@ export function PreparePaymentPage() {
               UETR: <span className="mono">{result.uetr}</span>
             </p>
             <div className="prepare-payment__links">
-              <Link to={`/app/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
+              <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
                 Track this payment
               </Link>
               <Link to="/explore" className="relay-btn relay-btn--secondary">
