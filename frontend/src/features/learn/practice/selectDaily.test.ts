@@ -6,6 +6,14 @@ import { CURRICULUM } from "../curriculum";
 const ALL_MODULES = CURRICULUM.map((m) => m.id);
 
 describe("question bank", () => {
+  // The bank size is advertised in README.md, ROADMAP.md, and
+  // ENGINEERING_ROADMAP.md. Pin it here so a doc claim can never drift away
+  // from the real bank again — if you add questions, update this and the docs
+  // in the same commit.
+  it("holds the documented number of questions", () => {
+    expect(QUESTION_BANK).toHaveLength(50);
+  });
+
   it("has unique question ids", () => {
     const ids = QUESTION_BANK.map((q) => q.id);
     expect(new Set(ids).size).toBe(ids.length);

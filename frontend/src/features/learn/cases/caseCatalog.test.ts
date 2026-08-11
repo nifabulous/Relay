@@ -297,6 +297,7 @@ describe("case catalog registry", () => {
       "uk-eurozone-supplier",
       "nigeria-uk-contractor",
       "us-mexico-vendor",
+      "us-nigeria-family-support",
     ]);
   });
 

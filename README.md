@@ -10,43 +10,39 @@ Relay is a hands-on, browser-based simulator that teaches how cross-border payme
 
 ## Current status
 
-**Status as of 2026-08-10:** Relay is a working educational learning prototype. The platform,
-backend APIs, Relay frontend, a 13-entry curriculum (12 learning modules plus a capstone), a daily-practice retention loop,
-and the first Case Desk scenario are implemented. Assessment integrity (correct-answer gating),
-capstone sequencing, and Lab 5 depth from the prior review round are addressed; the project
+**Status as of 2026-08-11:** Relay is a working educational learning prototype. The platform,
+backend APIs, Relay frontend, a 16-entry curriculum (15 learning modules plus a capstone), a daily-practice retention loop,
+and five Case Desk scenarios are implemented. The three curriculum tracks the prior review named as gaps
+— sanctions screening, exceptions/returns, and an ops workflow (STP repair + Nostro reconciliation) —
+shipped as modules 13-15 with correct-answer gating and tests; the project
 remains a learning prototype — not production payment processing.
 
 | Area | Status | What that means |
 |---|---|---|
 | Core platform | Shipped | FastAPI backend plus the React Relay app at `/app` |
-| Technical syllabus | Refined | Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and a capstone — interactive, gated on correct answers, and tested |
-| Applied learning | Phase 1 shipped | One supplier-payment Case Desk is available at `/app/learn/cases/canada-us-supplier` |
+| Technical syllabus | Refined | Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, Sanctions Screening, Exceptions & Returns, the Ops Desk, and a capstone — interactive, gated on correct answers, and tested |
+| Applied learning | Expanded | Five Case Desk scenarios (CA→US, UK→DE, NG→UK, US→MX, US→NG) at `/app/learn/cases/:caseId` |
 | Learning persistence | Shipped (browser-local) | Anonymous learner profiles and local progress/activity/practice/case-session storage. Manual JSON backup import/export is built but its Overview panel is hidden for now |
 | Legacy migration | Front door cut over | `/` now lands on Relay at `/app`. Vanilla `/learn` and `/ui` remain reachable, and `/` falls back to `/learn` when the Relay build is absent |
 | Retention loop | Shipped | Daily practice drill, spaced review of missed questions, and streaks at `/app/learn/practice` |
-| Next focus | Open for contribution | Case Desk Phase 2, a sanctions-screening track, and an ops-workflow module (Nostro recon / STP repair) |
+| Next focus | Open for contribution | Case Desk learner research, telemetry/assessment reporting, and French i18n |
 
 The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-10:
+These numbers were run against the current checkout on 2026-08-11:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **612 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **836 passed** with file parallelism disabled |
-| Playwright E2E | **316 passed, 13 skips** across **329 cases** (all configured projects green) |
-| TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **124,592 bytes gzip** (budget: 204,800 bytes) |
-| Learning curriculum | **13 entries** (12 learning modules plus capstone) + daily practice drill |
+
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
-Case Desk test is load-sensitive under the default runner. Of the 13 E2E skips, 12 are the
-intentional reduced-motion variants outside the dedicated reduced-motion project; the 13th is the
-learner-state round trip, skipped while the Learning backup panel is hidden. See
-[Testing](#testing) for the recommended commands.
+Case Desk test is load-sensitive under the default runner. All 11 E2E skips are intentional: 6 are
+the learner-state round trip (one per chromium project), skipped while the Learning backup panel is
+hidden; the other 5 are the reduced-motion case journey, which runs only in the dedicated
+`case-reduced-motion` project. See [Testing](#testing) for the recommended commands.
 
 ---
 
@@ -56,12 +52,7 @@ learner-state round trip, skipped while the Learning backup panel is hidden. See
 
 | Metric | Value |
 |---|---|
-| Backend tests | 612 passing |
-| Frontend tests | 836 passing in serial file mode |
-| E2E tests (Playwright) | 316 passing, 13 skips across 329 cases |
-| Eager shell bundle | 124,592 bytes gzip (budget: 204,800 bytes) |
-| Git history | 186 commits |
-| Learning curriculum | 13 entries (12 learning modules plus capstone) |
+
 | Backend API endpoints | 22 |
 
 ### Architecture
@@ -92,7 +83,7 @@ swift-routing/
           practice/           Daily drill, question bank, spaced review, streaks
           cases/              Case Desk, supplier case catalog, evidence and debrief flow
           components/         Exercise, MultipleChoice, Decompose, ScoreBar, StepIndicator
-  tests/                      Backend test suite (612 tests)
+  tests/                      Backend test suite (pytest)
   DESIGN.md                   Canonical design contract
   alembic/                    Database migrations
   .github/workflows/          CI (pytest + ruff, plus frontend build/tests)
@@ -171,7 +162,7 @@ different instance. Point `DATABASE_URL` at managed Postgres (and run
 
 ---
 
-## The learning curriculum (13 entries: 12 learning modules plus capstone)
+## The learning curriculum (16 entries: 15 learning modules plus capstone)
 
 Each lab teaches one concept through concept → demo → exercise → feedback, with checkpoint-based
 completion. The Learn index currently puts the Case Desk entry above these technical modules;
@@ -191,11 +182,14 @@ the case is an applied scenario and is not counted in the curriculum total.
 | 10 | Rails Deep-Dive: UK & Eurozone | CHAPS, Bacs, Faster Payments, TARGET2, SEPA, SCT Inst, and cut-offs | `/api/schemes` (enriched), `/api/value-date` |
 | 11 | Rails Deep-Dive: Canada | Lynx, EFT/ACSS, Interac, and the Real-Time Rail | `/api/schemes` (enriched) |
 | 12 | Follow the Money: Fees & FX | Lift-fee chains under OUR/SHA/BEN, predict-then-verify, hidden FX margin | `/api/fees/simulate` |
+| 13 | Stopped at the Border: Sanctions Screening | Watchlist decision bands, per-hop re-screening, grey-zone exercise, false positives | `/api/screen` |
+| 14 | When Payments Fail: Exceptions & Returns | pacs.002 rejects vs pacs.004 returns vs camt.056 recalls, return reason codes, NO_MATCH aftermath | `/api/track/create` |
+| 15 | The Ops Desk: STP Repair & Nostro Recon | Repair-queue workflow on the live STP checker, ledger-vs-statement break hunting | `/api/message/stp-check` |
 | ★ | Capstone | 6-step full payment simulation with NO_MATCH branching (requires Labs 1–9) | All endpoints |
 
 Every lab now gates completion on at least one correct answer — opening demos alone never
 completes a module. A daily five-question drill at `/app/learn/practice` draws from completed
-modules, resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
+modules (from a 50-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
 
 ### Four workspaces
 
@@ -254,20 +248,19 @@ lesson scripts:
 4. ~~**Deepen Lab 5.**~~ Done — Lab 5 is now a guided lesson: a field-by-field worked
    example, two decision points, the live lookup, and a forward link to the capstone's
    Settle step.
-5. **Choose the next track deliberately.** Fees/FX shipped as module 12 (built on
-   `/api/fees/simulate`, earning the existing "Fee Forensics" and "FX Sharp" badges).
-   The UK/Eurozone and Canada deep dives are also shipped as modules 10 and 11. Remaining
-   candidates: sanctions screening, exceptions/returns, and an operations workflow such as
-   Nostro reconciliation or STP repair.
+5. ~~**Choose the next track deliberately.**~~ Done — all three named candidates shipped:
+   Sanctions Screening (module 13, on `/api/screen`, earning "Compliance Aware"),
+   Exceptions & Returns (module 14, earning "Exception Handler"), and the Ops Desk
+   (module 15, STP repair + Nostro recon, earning "Ops Ready").
 6. **Grow the retention loop.** The daily drill, spaced review, and streaks shipped
-   (`frontend/src/features/learn/practice/`). The question bank has 30 questions —
+   (`frontend/src/features/learn/practice/`). The question bank has 50 questions —
    extend it as modules deepen, and consider surfacing review stats in telemetry.
 
 ### What is intentionally not finished
 
 - The legacy `/learn` and `/ui` surfaces are still kept for rollback and parity comparison.
 - Learning state is local to the browser; manual JSON backup/export is built but its panel is hidden for now, and there are still no accounts or automatic cross-device sync.
-- The Case Desk is a Phase 1 learning/research slice, not yet a multi-case curriculum.
+- The Case Desk has five authored scenarios; learner research on how they're used is still open.
 - The project simulates payment behavior and reference data; it must not be treated as a live
   payment system.
 
@@ -334,19 +327,22 @@ cd frontend && npm run build && npm run check:bundle
 
 ## Engineering health
 
+Test counts, bundle size, and curriculum totals are not repeated here — see the
+[Verified health snapshot](#verified-health-snapshot) and [The numbers](#the-numbers), so a
+count can never go stale in a third table. This one covers qualitative dimensions only.
+
 | Dimension | Status |
 |---|---|
-| Version control | Git, 186 commits |
-| Tests | 612 backend + 836 frontend passing; 316 E2E passing with 13 skips across 329 cases |
+
 | CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-| Bundle | 124,592 bytes gzip (under 204,800-byte budget) |
+
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
-| Learning | 13 curriculum entries (12 modules + capstone), daily practice loop, and Phase 1 Case Desk |
+| Learning | Gated module completion, daily practice loop, spaced review, Case Desk scenarios |
 
 ---
 
@@ -369,7 +365,7 @@ landing changed.
 - **Browser-local learning state** — backups are manual JSON export/import and the panel is hidden for now; there is still no account-based or automatic cross-device sync
 - **No FX margin/spread modeling in the API** — the fee calculator models lift fees only;
   the Fees & FX lab teaches margin arithmetic client-side
-- **No exceptions/returns workflow** — happy path only in capstone
+- **Capstone is happy-path only** — exceptions/returns are taught in module 14, but the capstone wizard itself doesn't branch into returns
 - **gpi status vocabulary** uses simplified names, not ISO 20022 TransactionStatus codes
 - **Sanctions screening** is name-only (no DOB/address/phonetic matching)
 - **Session-only fallback exists** — if browser storage is unavailable, Relay keeps the current session usable but cannot promise persistence after the tab/browser closes

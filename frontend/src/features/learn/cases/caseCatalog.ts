@@ -882,11 +882,208 @@ const usMexicoVendorCase: AuthoredCaseDefinition = {
   },
 };
 
+const usNigeriaFamilyCaseFacts: CaseFact[] = [
+  {
+    id: "destination-country",
+    label: "Beneficiary country",
+    value: "Nigeria",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG case brief (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "destination-currency",
+    label: "Payout currency",
+    value: "NGN",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG case brief (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "amount",
+    label: "Send amount",
+    value: "USD 1,200.00 (paid out in NGN)",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG case brief (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "sender-location",
+    label: "Sender location",
+    value: "United States",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG case brief (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "urgency",
+    label: "Timing / urgency",
+    value: "Family needs the naira today for a medical deposit.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG timing note (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "beneficiary-bank",
+    label: "Beneficiary bank",
+    value: "Zenith Trust Bank (simulation), NGN account, NIP reachable.",
+    state: "supplied",
+    requestable: false,
+    claim: createSimulationClaim("Relay US→NG banking setup (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "tracking-need",
+    label: "Confirmation requirement",
+    value: "Sender wants a receipt confirming the naira actually landed in the family account.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→NG customer preference (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "fx-transparency",
+    label: "FX transparency",
+    value: "Sender compares providers on the NGN rate and wants the margin disclosed before sending.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→NG customer preference (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "fee-sensitivity",
+    label: "Fee sensitivity",
+    value: "Highly fee-sensitive: every dollar of fees comes out of the family's support.",
+    state: "unknown",
+    requestable: true,
+    claim: createSimulationClaim("Relay US→NG customer preference (simulation)", "US→NG", "NGN"),
+  },
+];
+
+const usNigeriaFamilyCaseRails: RailOption[] = [
+  {
+    id: "imto-ngn-payout",
+    name: "Licensed IMTO NGN payout",
+    eligibility:
+      "USD funded in the US and paid out in NGN to a Nigerian bank account through a licensed money-transfer operator riding NIP. Minutes-fast payout with the FX margin disclosed upfront.",
+    eligibilityRules: [
+      { factId: "destination-currency", operator: "equals", value: "NGN", outcome: "eligible" },
+      {
+        factId: "beneficiary-bank",
+        operator: "includes",
+        value: "NIP reachable",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: [
+      "destination-currency",
+      "amount",
+      "urgency",
+      "tracking-need",
+      "fx-transparency",
+    ],
+    reasons: [
+      "NGN lands in minutes via NIP payout",
+      "Disclosed FX margin and payout receipt fit the sender's priorities",
+    ],
+    fitTags: ["urgency", "tracking", "cost"],
+    workedExplanation:
+      "The IMTO payout fits because the family needs naira, not dollars: funding in the US and paying out in NGN over NIP gets value to the account in minutes, the payout receipt answers the confirmation need, and the disclosed FX margin lets a fee-sensitive sender compare the true cost. A correspondent wire would cost more, take days, and still leave the conversion problem unsolved.",
+    source: createSimulationClaim("Relay US→NG rail matrix (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "swift-usd-domiciliary",
+    name: "SWIFT USD wire to a domiciliary account",
+    eligibility:
+      "USD correspondent wire into a Nigerian domiciliary (USD) account. Broad coverage and tracking, but days of correspondent time, lift fees on the way, and the family still has to convert to NGN themselves.",
+    requiredFacts: ["amount", "beneficiary-bank", "fee-sensitivity"],
+    reasons: [
+      "Works even where payout partners don't reach",
+      "Tracked end to end, but slower and more expensive for a small remittance",
+    ],
+    fitTags: ["correspondent", "tracked", "fallback-coverage"],
+    source: createSimulationClaim("Relay US→NG rail matrix (simulation)", "US→NG", "NGN"),
+  },
+  {
+    id: "nip-domestic",
+    name: "NIP domestic transfer",
+    eligibility:
+      "NGN instant transfers between Nigerian bank accounts only. The sender is funding from the United States, so a purely domestic NIP transfer is not available to them.",
+    eligibilityRules: [
+      {
+        factId: "sender-location",
+        operator: "equals",
+        value: "Nigeria",
+        outcome: "eligible",
+      },
+    ],
+    requiredFacts: ["sender-location", "destination-currency"],
+    reasons: ["Instant and near-free inside Nigeria", "No cross-border funding leg"],
+    fitTags: ["domestic-only", "wrong-corridor", "ineligible"],
+    source: createSimulationClaim("Relay NG domestic rail note (simulation)", "NG", "NGN"),
+  },
+];
+
+const usNigeriaFamilyCase: AuthoredCaseDefinition = {
+  id: "us-nigeria-family-support",
+  title: "US → Nigeria family support",
+  summary: "US sender paying family support into an NGN account",
+  customerRequest:
+    "Chinwe A. (fictional simulation) is sending USD 1,200 from the United States to family in Lagos for a medical deposit. The family needs naira in their Zenith Trust Bank account today, the sender wants proof the money landed, and every dollar of fees matters. Recommend the right payment rail under these disclosed priorities.",
+  contentRevision: "2026-08-11.us-nigeria-family-support-r1",
+  verifiedAt: "2026-08-11",
+  reviewBy: "2027-02-11",
+  reviewStatus: "current",
+  facts: usNigeriaFamilyCaseFacts,
+  rails: usNigeriaFamilyCaseRails,
+  recommendation: {
+    preferredRailId: "imto-ngn-payout",
+    priorityFactIds: {
+      urgency: "urgency",
+      tracking: "tracking-need",
+      cost: "fee-sensitivity",
+    },
+    corridorLabel: "United States → Nigeria",
+    paymentLabel: "NGN family-support payout",
+  },
+  transfer: {
+    id: "us-nigeria-family-support-transfer",
+    customerRequest:
+      "Transfer variant (debrief): a routine monthly NGN allowance to the same family where arrival can slip a day or two.",
+    facts: [
+      usNigeriaFamilyCaseFacts[0],
+      usNigeriaFamilyCaseFacts[1],
+      {
+        id: "amount",
+        label: "Send amount",
+        value: "USD 300.00 (paid out in NGN)",
+        state: "supplied",
+        requestable: false,
+      },
+      {
+        id: "urgency",
+        label: "Timing / urgency",
+        value: "The family can wait until later in the week.",
+        state: "supplied",
+        requestable: false,
+      },
+    ],
+    rails: [
+      {
+        id: "imto-ngn-payout",
+        name: "Licensed IMTO NGN payout",
+        eligibility:
+          "Standard NGN payout for a routine remittance when arrival timing is flexible.",
+        requiredFacts: ["destination-currency", "amount"],
+        reasons: ["Low-cost routine NGN payout"],
+      },
+    ],
+  },
+};
+
 export const CASE_CATALOG: readonly AuthoredCaseDefinition[] = [
   supplierCase,
   ukEurozoneSupplierCase,
   nigeriaUkContractorCase,
   usMexicoVendorCase,
+  usNigeriaFamilyCase,
 ];
 
 export function getCaseById(caseId: string): AuthoredCaseDefinition | undefined {

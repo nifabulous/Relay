@@ -89,6 +89,26 @@ class TestProgressService:
         badge_names = [b.name for b in result.earned_badges]
         assert "Compliance Aware" in badge_names
 
+    def test_exception_handler_badge_earned(self):
+        """'Exception Handler' badge: complete Exceptions & Returns."""
+        from app.services.progress import get_progress_summary
+        result = get_progress_summary(["exceptions-returns"])
+        badge_names = [b.name for b in result.earned_badges]
+        assert "Exception Handler" in badge_names
+
+    def test_ops_ready_badge_earned(self):
+        """'Ops Ready' badge: complete the Ops Desk module."""
+        from app.services.progress import get_progress_summary
+        result = get_progress_summary(["ops-repair"])
+        badge_names = [b.name for b in result.earned_badges]
+        assert "Ops Ready" in badge_names
+
+    def test_sanctions_counts_as_curriculum_module(self):
+        """The sanctions module is a real curriculum entry, not a legacy tool id."""
+        from app.services.progress import get_progress_summary
+        result = get_progress_summary(["sanctions"])
+        assert result.completed_count == 1
+
     def test_completionist_badge_earned(self):
         """'Wire Wizard' badge: complete ALL modules."""
         from app.services.progress import ALL_MODULE_IDS, get_progress_summary
@@ -135,7 +155,8 @@ class TestProgressService:
         assert ALL_MODULE_IDS == [
             "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6",
             "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails",
-            "fees-fx", "capstone",
+            "fees-fx", "sanctions", "exceptions-returns", "ops-repair",
+            "capstone",
         ]
 
     def test_legacy_numeric_ids_are_normalized_to_current_ids(self):

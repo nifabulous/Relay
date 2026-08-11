@@ -38,7 +38,8 @@ from typing import List, Optional
 ALL_MODULE_IDS: List[str] = [
     "lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6",
     "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails",
-    "fees-fx", "capstone",
+    "fees-fx", "sanctions", "exceptions-returns", "ops-repair",
+    "capstone",
 ]
 
 # Fast lookup set for membership checks.
@@ -55,7 +56,7 @@ _LEGACY_ID_ALIASES = {
     "settlement": "lab-5",
     "mt103": "lab-8",
 }
-_LEGACY_TOOL_IDS = {"sanctions", "cases", "glossary"}
+_LEGACY_TOOL_IDS = {"cases", "glossary"}
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +103,20 @@ ALL_BADGES: List[Badge] = [
         description="You learned why payments get stopped and screened.",
         requirement="Complete the Sanctions Screening module.",
         required_ids=["sanctions"],
+    ),
+    Badge(
+        id="exception-handler",
+        name="Exception Handler",
+        description="You know what happens when a payment fails — and how to get money back.",
+        requirement="Complete the Exceptions & Returns module.",
+        required_ids=["exceptions-returns"],
+    ),
+    Badge(
+        id="ops-ready",
+        name="Ops Ready",
+        description="You repaired a broken payment and reconciled the Nostro.",
+        requirement="Complete the Ops Desk module.",
+        required_ids=["ops-repair"],
     ),
     Badge(
         id="payment-fundamentals",

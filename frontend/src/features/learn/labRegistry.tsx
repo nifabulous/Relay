@@ -15,6 +15,9 @@ const Lab9Content = lazy(() => import("./labs/Lab9Content").then(m => ({ default
 const GbpEurRailsContent = lazy(() => import("./labs/GbpEurRailsContent").then(m => ({ default: m.GbpEurRailsContent })));
 const CadRailsContent = lazy(() => import("./labs/CadRailsContent").then(m => ({ default: m.CadRailsContent })));
 const FeesFxContent = lazy(() => import("./labs/FeesFxContent").then(m => ({ default: m.FeesFxContent })));
+const SanctionsContent = lazy(() => import("./labs/SanctionsContent").then(m => ({ default: m.SanctionsContent })));
+const ExceptionsReturnsContent = lazy(() => import("./labs/ExceptionsReturnsContent").then(m => ({ default: m.ExceptionsReturnsContent })));
+const OpsRepairContent = lazy(() => import("./labs/OpsRepairContent").then(m => ({ default: m.OpsRepairContent })));
 const CapstoneContent = lazy(() => import("./labs/CapstoneContent").then(m => ({ default: m.CapstoneContent })));
 
 export const LAB_REGISTRY: Record<string, LabDefinition> = {
@@ -30,6 +33,9 @@ export const LAB_REGISTRY: Record<string, LabDefinition> = {
   "gbp-eur-rails": { component: GbpEurRailsContent, requiredCheckpoints: CORE_LAB_PARITY["gbp-eur-rails"].requiredCheckpoints },
   "cad-rails": { component: CadRailsContent, requiredCheckpoints: CORE_LAB_PARITY["cad-rails"].requiredCheckpoints },
   "fees-fx": { component: FeesFxContent, requiredCheckpoints: CORE_LAB_PARITY["fees-fx"].requiredCheckpoints },
+  "sanctions": { component: SanctionsContent, requiredCheckpoints: CORE_LAB_PARITY["sanctions"].requiredCheckpoints },
+  "exceptions-returns": { component: ExceptionsReturnsContent, requiredCheckpoints: CORE_LAB_PARITY["exceptions-returns"].requiredCheckpoints },
+  "ops-repair": { component: OpsRepairContent, requiredCheckpoints: CORE_LAB_PARITY["ops-repair"].requiredCheckpoints },
   "capstone": { component: CapstoneContent, requiredCheckpoints: CORE_LAB_PARITY["capstone"].requiredCheckpoints },
 };
 

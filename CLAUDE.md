@@ -58,7 +58,7 @@ frontend/src/
       prepare/      PreparePaymentPage with partial-results pattern
       tools/        FeePage, ScreeningPage, ValueDatePage, StpPage
       tracking/     TrackingPage with timeline
-    learn/          curriculum.ts (13 entries: 12 modules + capstone), labs, practice, cases,
+    learn/          curriculum.ts (16 entries: 15 modules + capstone), labs, practice, cases,
                     LearnIndexPage, LearnModulePage
 ```
 
@@ -130,16 +130,11 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (612 tests)
+python -m pytest tests/ -q              # full suite (615 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --no-file-parallelism  # 836 tests
-
-# End-to-end tests
-cd frontend && npm run test:e2e                    # 316 passed, 13 skips / 329 cases
-```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
 - `db_session` — shared session for service-level tests
@@ -174,5 +169,7 @@ ruff check . --fix  # auto-fix import order etc.
 
 - The frontend's default parallel Vitest run is load-sensitive for the preferred-tier Case Desk
   scenario; use `--no-file-parallelism` for the verified full suite.
-- Six E2E skips are intentional reduced-motion variants outside the dedicated reduced-motion project.
+- All 11 E2E skips are intentional: 6 are the learner-state round trip (one per chromium
+  project), skipped while the Learning backup panel is hidden; the other 5 are the reduced-motion
+  case journey, which runs only in the dedicated `case-reduced-motion` project.
 - `fed_importer.py` has no remote default URL — you must set `FEDWIRE_URL`/`FEDACH_URL` env vars to import Fedwire/FedACH data.
