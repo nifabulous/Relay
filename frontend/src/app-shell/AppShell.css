@@ -211,3 +211,25 @@
     display: none;
   }
 }
+
+/* ─── Not Found ──────────────────────────────────────────────────────────────
+   Terminal state for an unmatched /app URL. Deliberately plain: this is an
+   error state, not a destination, so it gets no decoration beyond what makes
+   the path readable and the way out obvious. */
+.app-shell__not-found {
+  max-width: 60ch;
+}
+
+.app-shell__not-found p {
+  margin: var(--space-3) 0;
+  color: var(--color-ink);
+}
+
+.app-shell__not-found-hint {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.app-shell__not-found .relay-btn {
+  margin-top: var(--space-4);
+}

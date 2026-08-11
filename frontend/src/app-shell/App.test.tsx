@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -79,5 +79,51 @@ describe("App routing — case desk route resolves against the real App tree", (
     // change that routes to the wrong lazy chunk is caught. (This replaced an
     // earlier assertion for the Task-3 placeholder copy, which Task 4 removed.)
     expect(screen.getByText(/Maple Ridge Outfitters/i)).toBeInTheDocument();
+  });
+});
+
+// ─── Unmatched-URL recovery ────────────────────────────────────────────────
+//
+// The catch-all used to be <Navigate to="" replace />, which is a no-op in a
+// React Router splat route: the component renders, no navigation happens, and
+// the outlet stays empty. Every mistyped URL, stale bookmark, or broken
+// internal link painted the shell chrome over a blank content area, forever,
+// with no error and no console warning. That silence is why a dead link in the
+// Operate flow survived to production.
+
+describe("App routing — unmatched URLs under /app", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("renders a Not Found page instead of empty shell chrome", async () => {
+    // The exact URL the double-basename bug produced.
+    window.history.replaceState({}, "", "/app/app/operate/tracking");
+
+    const { App } = await import("./App");
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
+    });
+
+    // A way out from inside the content area, or the page is still a dead end.
+    // Scoped to <main> because both nav rails also link to Overview.
+    const main = screen.getByRole("main");
+    expect(within(main).getByRole("link", { name: /go to overview/i })).toBeInTheDocument();
+    // The path is echoed so a bug report can carry it.
+    expect(within(main).getByText("/app/operate/tracking")).toBeInTheDocument();
+  });
+
+  it("keeps the unmatched path in the URL so a bug report can carry it", async () => {
+    window.history.replaceState({}, "", "/app/nonsense");
+
+    const { App } = await import("./App");
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
+    });
+    expect(window.location.pathname).toBe("/app/nonsense");
   });
 });
