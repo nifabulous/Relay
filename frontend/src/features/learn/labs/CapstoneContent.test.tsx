@@ -59,11 +59,11 @@ function mockAllSteps() {
     ),
     http.post("/api/track/create", () =>
       HttpResponse.json({
-        uetr: "capstone-uetr", current_status: "credited", is_terminal: true,
+        uetr: "capstone-uetr", current_status: "CREDITED", is_terminal: true,
         event_count: 1, sent_amount: "5000.00", final_amount: "5000.00",
         total_fees: 0, last_updated: "2026-01-01T12:00:00",
         timeline: [{
-          status: "credited", bank_bic: "NWBKGB2L", bank_name: "NatWest",
+          status: "CREDITED", bank_bic: "NWBKGB2L", bank_name: "NatWest",
           hop: 0, timestamp: "2026-01-01T12:00:00",
           amount: undefined, currency: undefined, message: undefined,
           instructing_bic: undefined, instructed_bic: undefined,

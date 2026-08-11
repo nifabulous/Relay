@@ -15,7 +15,7 @@ function renderLab(onCheckpoint = vi.fn()) {
 
 const TRACK_FIXTURE = {
   uetr: "11111111-2222-3333-4444-555555555555",
-  current_status: "credited",
+  current_status: "CREDITED",
   is_terminal: true,
   event_count: 3,
   sent_amount: "5000.00",
@@ -23,9 +23,9 @@ const TRACK_FIXTURE = {
   total_fees: 30,
   last_updated: "2026-01-01T12:00:00",
   timeline: [
-    { status: "initiated", bank_bic: "BOFAUS3N", bank_name: "Bank of America", hop: 0, timestamp: "2026-01-01T10:00:00", message: "Payment initiated", amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
-    { status: "in_transit", bank_bic: "CITIUS33", bank_name: "Citibank", hop: 1, timestamp: "2026-01-01T10:30:00", message: "Forwarded", amount: "4990.00", currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
-    { status: "credited", bank_bic: "GTBINGLAXXX", bank_name: "GTBank", hop: 2, timestamp: "2026-01-01T11:00:00", message: "Credited", amount: "4970.00", currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+    { status: "INITIATED", bank_bic: "BOFAUS3N", bank_name: "Bank of America", hop: 0, timestamp: "2026-01-01T10:00:00", message: "Payment initiated", amount: undefined, currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+    { status: "FORWARDED", bank_bic: "CITIUS33", bank_name: "Citibank", hop: 1, timestamp: "2026-01-01T10:30:00", message: "Forwarded", amount: "4990.00", currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
+    { status: "CREDITED", bank_bic: "GTBINGLAXXX", bank_name: "GTBank", hop: 2, timestamp: "2026-01-01T11:00:00", message: "Credited", amount: "4970.00", currency: undefined, instructing_bic: undefined, instructed_bic: undefined },
   ],
   disclaimer: "SIMULATION",
 };
