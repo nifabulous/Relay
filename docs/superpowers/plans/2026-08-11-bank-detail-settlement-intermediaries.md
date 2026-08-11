@@ -203,7 +203,7 @@ function record(currency: string, intermediaryBic: string): SSIRecord {
     beneficiary_account: "ACCT-0002",
     charge_code: "SHA",
     value_date: "spot",
-    notes: null,
+    notes: undefined,
   };
 }
 
@@ -339,7 +339,7 @@ Create `frontend/src/features/explore/BankDetailRoute.test.tsx`:
 
 ```tsx
 import { describe, expect, it } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { server } from "../../test/server";
@@ -380,18 +380,21 @@ describe("BankDetailRoute identity", () => {
     expect(
       await screen.findByRole("heading", { name: "State Bank of India" }),
     ).toBeVisible();
-    expect(screen.getByText("SBININBBXXX")).toBeVisible();
-    expect(screen.getByText("Mumbai")).toBeVisible();
+    // Scope to the identity grid: the BIC also appears in the breadcrumb, so
+    // an unscoped getByText would throw on multiple matches.
+    const grid = screen.getByText("BIC").closest("dl")!;
+    expect(within(grid).getByText("SBININBBXXX")).toBeVisible();
+    expect(within(grid).getByText("Mumbai")).toBeVisible();
   });
 
   it("shows a not-found state with a way back when the BIC is unknown", async () => {
     server.use(
       http.get("/api/lookup", () =>
-        HttpResponse.json({ bic: "ZZZZZZ99XXX", found: false, bank: null }),
+        HttpResponse.json({ bic: "XXXXUS33XXX", found: false, bank: null }),
       ),
     );
 
-    renderBank("ZZZZZZ99XXX");
+    renderBank("XXXXUS33XXX");
 
     expect(
       await screen.findByRole("heading", { name: "Bank not found" }),
@@ -702,7 +705,7 @@ function ssiRecord(currency: string, intermediaryBic: string, name: string) {
     beneficiary_account: "ACCT-BENE-1",
     charge_code: "SHA",
     value_date: "spot",
-    notes: null,
+    notes: undefined,
   };
 }
 
@@ -1000,7 +1003,9 @@ describe("BankDetailRoute heuristic fallback", () => {
       await screen.findByRole("heading", { name: "Heuristic correspondent route" }),
     ).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Published settlement instructions" })).toBeNull();
-    expect(screen.getByText(/high/)).toBeVisible();
+    // findByText, not getByText: the confidence dd appears after the route
+    // query resolves asynchronously.
+    expect(await screen.findByText(/high/)).toBeVisible();
   });
 
   it("requests the heuristic route in the bank's own country currency", async () => {
@@ -1086,7 +1091,7 @@ describe("BankDetailRoute heuristic fallback", () => {
 - [ ] **Step 2: Run to confirm the new tests fail**
 
 Run: `cd frontend && npx vitest run src/features/explore/BankDetailRoute.test.tsx`
-Expected: the 7 earlier tests PASS; the 4 new ones FAIL on the missing "Heuristic correspondent route" heading.
+Expected: the 7 earlier tests PASS; the 3 genuinely new ones FAIL on the missing "Heuristic correspondent route" heading. (The 4th new test — the SSI-precedence regression guard — already passes at this point.)
 
 - [ ] **Step 3: Add the route query and fallback block**
 
@@ -1126,15 +1131,25 @@ The not-found early return added in Task 3 sits below all three queries, so ever
 Add this block immediately after the `{hasSSI && (...)}` section:
 
 ```tsx
-            {!hasSSI && !ssi.isLoading && (
+            {ssi.data !== undefined && !hasSSI && (
               <section className="bank-route" aria-labelledby="bank-route-title">
                 <h2 id="bank-route-title">Heuristic correspondent route</h2>
-                <p className="measure bank-route__intro">
-                  No published settlement instructions are on file for this bank.
-                  Real correspondent relationships are private and bank-specific,
-                  so the chain below is an informed suggestion from the curated
-                  corridor table — not a published instruction.
-                </p>
+
+                {heuristic.isError ? (
+                  <p className="bank-route__error">
+                    No published settlement instructions are on file for this
+                    bank, and the suggested chain could not be loaded. Try
+                    reloading the page.
+                  </p>
+                ) : (
+                  <p className="measure bank-route__intro">
+                    No published settlement instructions are on file for this
+                    bank. Real correspondent relationships are private and
+                    bank-specific, so the chain below is an informed suggestion
+                    from the curated corridor table — not a published
+                    instruction.
+                  </p>
+                )}
 
                 {heuristic.data && heuristic.data.suggested_intermediaries.length > 0 && (
                   <>
@@ -1142,6 +1157,7 @@ Add this block immediately after the `{hasSSI && (...)}` section:
                       nodes={buildRouteNodes(
                         heuristic.data.suggested_intermediaries,
                         bank.bic,
+                        "possible",
                       )}
                       currency={heuristic.data.currency}
                     />
@@ -1163,12 +1179,14 @@ Add this block immediately after the `{hasSSI && (...)}` section:
             )}
 ```
 
-Confidence is rendered as plain text inside a `<dd>`, deliberately not a `StatusChip` — `StatusChipStatus` has no `high`/`medium`/`low` member.
+The gate is `ssi.data !== undefined && !hasSSI`, NOT `!hasSSI && !ssi.isLoading`: the former distinguishes "loaded, empty" from "request failed", so a settlement-service failure can never render the false claim "No published settlement instructions are on file" (that claim is suppressed on error — see the separate `ssi.isError` note beside the SSI section). The `heuristic.isError` branch keeps the per-block error contract from the spec's error table: no dangling "the chain below…" with no chain.
+
+Confidence is rendered as plain text inside a `<dd>`, deliberately not a `StatusChip` — `StatusChipStatus` has no `high`/`medium`/`low` member. The chain nodes are built with status `"possible"` (not the `"passed"` default) so a suggested chain never wears the verified-state visuals of an executed route.
 
 - [ ] **Step 4: Run the tests**
 
 Run: `cd frontend && npx vitest run src/features/explore/BankDetailRoute.test.tsx`
-Expected: PASS, 11 tests.
+Expected: PASS, 13 tests. (The review fix wave added two tests to Task 5's file: the suggested-chain error state, and assertions that heuristic chains render "Possible" chips, never "Passed".)
 
 - [ ] **Step 5: Add the styles**
 
@@ -1359,7 +1377,10 @@ test.describe("Bank detail", () => {
   });
 
   test("an unknown BIC degrades to a not-found state", async ({ page }) => {
-    await page.goto("/app/explore/banks/ZZZZZZ99XXX", { waitUntil: "networkidle" });
+    // XXXXUS33XXX: the plan's original ZZZZZZ99XXX is rejected by the API's BIC
+    // validation (non-ISO country code "99" -> 400 before lookup), so a
+    // valid-format-but-absent BIC is required to reach the not-found path.
+    await page.goto("/app/explore/banks/XXXXUS33XXX", { waitUntil: "networkidle" });
 
     await expect(
       page.getByRole("heading", { name: "Bank not found" }),
