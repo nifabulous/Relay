@@ -161,6 +161,29 @@ export const QUESTION_BANK: PracticeQuestion[] = [
     ],
   },
 
+  {
+    id: "l4-chips-fedwire",
+    moduleId: "lab-4",
+    question: "A cross-border USD payment's final leg moves between two New York banks. Where does that leg most likely settle?",
+    options: [
+      { id: "a", label: "On the SWIFT network", correct: false, explanation: "SWIFT carries the instruction only — no money ever settles on it." },
+      { id: "b", label: "Over CHIPS, with net positions settling on Fedwire", correct: true, explanation: "Roughly 9 in 10 cross-border USD value clears through CHIPS's continuous netting; the residual net positions settle in central bank money over Fedwire." },
+      { id: "c", label: "By physical transfer at the Federal Reserve vault", correct: false, explanation: "Interbank settlement is ledger entries, never cash movement." },
+      { id: "d", label: "It doesn't settle — correspondent balances just float", correct: false, explanation: "Every USD leg lands on a ledger: a correspondent's books, CHIPS, or Fedwire." },
+    ],
+  },
+  {
+    id: "l4-published-vs-heuristic",
+    moduleId: "lab-4",
+    question: "A beneficiary bank publishes its settlement instructions naming Citi NY as its USD correspondent. A routing tool suggests Bank of America. Which do you follow?",
+    options: [
+      { id: "a", label: "The published instruction — the bank has told the world exactly where its USD lands", correct: true, explanation: "An SSI is the beneficiary bank's own instruction; a routing suggestion is an educated guess. Ignoring the published correspondent is how payments end up delayed and manually repaired." },
+      { id: "b", label: "The tool's suggestion — software knows best", correct: false, explanation: "Heuristics fill gaps where nothing is published; they never override the bank's own instruction." },
+      { id: "c", label: "Either — all USD correspondents are interchangeable", correct: false, explanation: "Only the published correspondent holds the beneficiary bank's Nostro. Anywhere else, the funds land where the bank has no account." },
+      { id: "d", label: "Neither — ask SWIFT to route it", correct: false, explanation: "SWIFT delivers messages to the banks you address; it does not choose correspondents." },
+    ],
+  },
+
   // ── Lab 5: SSI ──
   {
     id: "l5-ssi-purpose",

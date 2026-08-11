@@ -28,7 +28,7 @@ describe("curriculum", () => {
       "lab-1": { min: 10, max: 15 },
       "lab-2": { min: 15, max: 20 },
       "lab-3": { min: 15, max: 20 },
-      "lab-4": { min: 10, max: 15 },
+      "lab-4": { min: 15, max: 20 },
       "lab-5": { min: 15, max: 20 },
       "lab-6": { min: 10, max: 15 },
       "lab-7": { min: 15, max: 20 },

@@ -66,12 +66,15 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
     legacySources: ["app/static/js/learn-labs-4-6.js", "app/static/js/visualizers.js"],
     apiEndpoints: ["/api/route"],
     interactions: [
-      "Route demo: BIC + currency → find intermediaries",
+      "Route demo: BIC + currency → published SSI correspondents or heuristic candidates, labeled by basis",
+      "Settlement IDs on candidates (CHIPS participant number + ABA routing number)",
       "Payment route visualization (animated chain)",
       "Nostro/Vostro accounting diagram",
+      "CHIPS vs Fedwire settlement-layer table + decision drill",
+      "Serial vs cover payment decision drill",
       "Route-to-Japan exercise: enter intermediary count for BOTKJPJTXXX/USD",
     ],
-    requiredCheckpoints: ["route-demo", "route-japan"],
+    requiredCheckpoints: ["route-demo", "settlement-system", "serial-cover", "route-japan"],
   },
 
   "lab-5": {

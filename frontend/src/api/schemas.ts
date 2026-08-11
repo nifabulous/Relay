@@ -35,6 +35,16 @@ const safeOptionalNumber = z.coerce
 /** Confidence ranking for a suggested intermediary. */
 const confidenceSchema = z.enum(["high", "medium", "low"]).catch("low");
 
+export const SettlementIdsSchema = z
+  .object({
+    chips_uid: safeOptionalString,
+    aba: safeOptionalString,
+  })
+  .passthrough();
+
+export type SettlementIds = z.infer<typeof SettlementIdsSchema>;
+
+
 /* ------------------------------------------------------------------ *
  * Health
  * ------------------------------------------------------------------ */
@@ -94,6 +104,7 @@ export const LookupResponseSchema = z
     bic: z.string().catch(""),
     bank: BankInfoSchema.nullish().catch(null),
     found: z.coerce.boolean().catch(false),
+    settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();
 
@@ -110,6 +121,8 @@ export const SuggestedIntermediarySchema = z
     bank: z.string().catch(""),
     corridor: z.string().catch(""),
     confidence: confidenceSchema,
+    basis: z.enum(["published-ssi", "corridor-heuristic"]).catch("corridor-heuristic"),
+    settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();
 
@@ -146,6 +159,7 @@ export const SSIRecordSchema = z
     charge_code: z.string().catch(""),
     value_date: z.string().catch(""),
     notes: safeOptionalString,
+    intermediary_settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();
 
