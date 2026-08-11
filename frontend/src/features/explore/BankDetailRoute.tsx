@@ -3,7 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
 import { LookupResponseSchema, SSIResponseSchema, RouteResponseSchema } from "../../api/schemas";
-import type { LookupResponse, SSIResponse, RouteResponse } from "../../api/schemas";
+import type {
+  LookupResponse,
+  SSIResponse,
+  RouteResponse,
+  SuggestedIntermediary,
+} from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { PaymentRoute } from "../../design-system/payment-route/PaymentRoute";
 import { buildRouteNodes } from "../../design-system/payment-route/routeNodes";
@@ -11,6 +16,31 @@ import { groupByCurrency } from "./ssiGrouping";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import "./ExplorePage.css";
+
+const CONFIDENCE_RANK: Record<SuggestedIntermediary["confidence"], number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
+/**
+ * The confidence of the weakest hop in a suggested chain.
+ *
+ * A chain is only as trustworthy as its least certain leg, and the seeded
+ * corridor table disagrees hop to hop for 122 of the 139 banks that render a
+ * chain. Reporting `intermediaries[0]` would tell the learner a route is more
+ * reliable than the curated table claims — the same overstatement the
+ * "Possible" chips exist to avoid.
+ *
+ * Caller guarantees a non-empty list (the chain only renders when it has hops).
+ */
+function weakestConfidence(
+  intermediaries: SuggestedIntermediary[],
+): SuggestedIntermediary["confidence"] {
+  return intermediaries.reduce((weakest, hop) =>
+    CONFIDENCE_RANK[hop.confidence] < CONFIDENCE_RANK[weakest.confidence] ? hop : weakest,
+  ).confidence;
+}
 
 /**
  * Bank detail — `/app/explore/banks/:bic`.
@@ -178,10 +208,13 @@ export function BankDetailRoute() {
                   <div className="bank-ssi__group" key={group.currency}>
                     <h3 className="bank-ssi__currency mono">{group.currency}</h3>
                     <ul className="bank-ssi__list">
-                      {group.records.map((r) => (
+                      {group.records.map((r, index) => (
+                        // The index disambiguates: /api/import/ssi can add rows,
+                        // so currency + intermediary BIC is not guaranteed unique
+                        // even though the seeded data has no collisions today.
                         <li
                           className="bank-ssi__item"
-                          key={`${group.currency}-${r.intermediary_bic}`}
+                          key={`${group.currency}-${r.intermediary_bic}-${index}`}
                         >
                           <p className="bank-ssi__intermediary">
                             {r.intermediary_bank_name ?? r.intermediary_bic}
@@ -219,9 +252,18 @@ export function BankDetailRoute() {
             )}
 
             {ssi.isError && (
-              <p className="bank-ssi__error">
-                Published settlement instructions could not be loaded for this bank. Try again.
-              </p>
+              <div className="bank-ssi__error">
+                <p>
+                  Published settlement instructions could not be loaded for this bank.
+                </p>
+                <button
+                  type="button"
+                  className="relay-btn relay-btn--secondary"
+                  onClick={() => ssi.refetch()}
+                >
+                  Retry settlement instructions
+                </button>
+              </div>
             )}
 
             {ssi.data !== undefined && !hasSSI && (
@@ -255,8 +297,8 @@ export function BankDetailRoute() {
                       currency={heuristic.data.currency}
                     />
                     <dl className="bank-route__meta">
-                      <dt>Confidence</dt>
-                      <dd>{heuristic.data.suggested_intermediaries[0].confidence}</dd>
+                      <dt>Confidence (weakest hop)</dt>
+                      <dd>{weakestConfidence(heuristic.data.suggested_intermediaries)}</dd>
                       <dt>Source</dt>
                       <dd>{heuristic.data.source}</dd>
                     </dl>

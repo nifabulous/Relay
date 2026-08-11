@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { server } from "../../test/server";
@@ -394,5 +395,148 @@ describe("BankDetailRoute heuristic fallback", () => {
     expect(
       await screen.findByRole("heading", { name: "Published settlement instructions" }),
     ).toBeVisible();
+  });
+});
+
+describe("BankDetailRoute heuristic confidence honesty", () => {
+  it("reports the weakest hop's confidence, not the first hop's", async () => {
+    // Real corridor chains disagree hop to hop: 122 of the 139 seeded banks that
+    // render a heuristic chain contain a hop weaker than the first. Labelling the
+    // chain with intermediaries[0] tells the learner the route is more reliable
+    // than the curated table actually claims.
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "COBADEFFXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", () =>
+        HttpResponse.json({
+          bic: "COBADEFFXXX",
+          bank: null,
+          beneficiary_country: "DE",
+          currency: "EUR",
+          valid: true,
+          suggested_intermediaries: [
+            { bic: "COBADEFFXXX", bank: "Commerzbank", corridor: "EUR-DE", confidence: "high" },
+            { bic: "BNPAFRPPXXX", bank: "BNP Paribas", corridor: "EUR-DE", confidence: "high" },
+            { bic: "DEUTDEFFXXX", bank: "Deutsche Bank", corridor: "EUR-DE", confidence: "medium" },
+          ],
+          notes: "Heuristic suggestion.",
+          source: "curated-corridor-table",
+        }),
+      ),
+    );
+
+    renderBank("COBADEFFXXX");
+
+    const term = await screen.findByText(/Confidence \(weakest hop\)/i);
+    const value = term.nextElementSibling;
+    expect(value).toHaveTextContent("medium");
+  });
+
+  it("reports that confidence plainly when every hop agrees", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json(EMPTY_SSI)),
+      http.get("/api/route", () =>
+        HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          bank: null,
+          beneficiary_country: "NG",
+          currency: "NGN",
+          valid: true,
+          suggested_intermediaries: [
+            { bic: "CITIUS33", bank: "Citibank NY", corridor: "USD-NGN", confidence: "high" },
+            { bic: "DEUTDEFF", bank: "Deutsche Bank", corridor: "USD-NGN", confidence: "high" },
+          ],
+          notes: "Heuristic suggestion.",
+          source: "curated-corridor-table",
+        }),
+      ),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    const term = await screen.findByText(/Confidence \(weakest hop\)/i);
+    expect(term.nextElementSibling).toHaveTextContent("high");
+  });
+});
+
+describe("BankDetailRoute settlement list keys", () => {
+  it("renders two correspondents that share a currency and BIC without a key collision", async () => {
+    // /api/import/ssi can add rows, so currency + intermediary_bic is not a
+    // guaranteed-unique React key even though the seed data happens to have no
+    // collisions today.
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const first = ssiRecord("USD", "CITIUS33", "Citibank NY");
+    const second = {
+      ...ssiRecord("USD", "CITIUS33", "Citibank NY"),
+      beneficiary_account: "ACCT-BENE-2",
+      intermediary_account: "ACCT-CITIUS33-B",
+    };
+
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "SBININBBXXX", found: true, bank: INDIA_BANK }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [first, second],
+          disclaimer: "SIMULATION — illustrative settlement data.",
+        }),
+      ),
+    );
+
+    renderBank("SBININBBXXX");
+
+    expect(
+      await screen.findByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+    // Both records must survive to the DOM.
+    expect(await screen.findByText("ACCT-CITIUS33")).toBeVisible();
+    expect(await screen.findByText("ACCT-CITIUS33-B")).toBeVisible();
+
+    const duplicateKeyWarning = errorSpy.mock.calls.some((call) =>
+      String(call[0] ?? "").includes("same key"),
+    );
+    expect(duplicateKeyWarning).toBe(false);
+  });
+});
+
+describe("BankDetailRoute settlement retry", () => {
+  it("lets the learner retry a failed settlement load", async () => {
+    let attempt = 0;
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "SBININBBXXX", found: true, bank: INDIA_BANK }),
+      ),
+      http.get("/api/ssi", () => {
+        attempt += 1;
+        if (attempt === 1) {
+          return HttpResponse.json({ detail: "boom" }, { status: 500 });
+        }
+        return HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [ssiRecord("USD", "CITIUS33", "Citibank NY")],
+          disclaimer: "SIMULATION — illustrative settlement data.",
+        });
+      }),
+    );
+
+    renderBank("SBININBBXXX");
+
+    const retry = await screen.findByRole("button", { name: /retry settlement instructions/i });
+    await userEvent.click(retry);
+
+    expect(
+      await screen.findByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+    expect(await screen.findByText("CITIUS33")).toBeVisible();
   });
 });
