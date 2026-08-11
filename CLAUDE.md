@@ -135,11 +135,6 @@ python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --no-file-parallelism  # 884 tests
-
-# End-to-end tests
-cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
-```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
 - `db_session` — shared session for service-level tests
