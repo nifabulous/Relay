@@ -23,6 +23,10 @@ function mockAllSteps() {
       HttpResponse.json({
         input: "GB29NWBK60161331926819", input_type: "iban", valid: true,
         bic: "NWBKGB2L", errors: [],
+        // The real endpoint resolves the institution behind the IBAN. Included
+        // here because the track step needs the receiving BANK's name, which is
+        // a different thing from the payee's name.
+        bank: { bic: "NWBKGB2L", bank_name: "NatWest Bank plc", country_code: "GB" },
       }),
     ),
     http.post("/api/verify-payee", () =>
@@ -140,6 +144,41 @@ describe("CapstoneContent", () => {
     await waitFor(() => {
       expect(screen.getByText("capstone-uetr")).toBeVisible();
     }, { timeout: 10000 });
+  });
+
+  // TrackPaymentRequest.beneficiary_name is documented in app/schemas.py:123 as
+  // "The receiving bank's name", and generate_timeline uses it as the bank_name
+  // on the final hop. The Capstone was sending the payee's name, so the last row
+  // of the timeline read like a person rather than a bank — in a lab whose whole
+  // subject is which institution holds which leg of the payment.
+  it("sends the receiving bank's name to track/create, not the payee's", async () => {
+    mockAllSteps();
+    let trackBody: Record<string, unknown> | null = null;
+    server.use(
+      http.post("/api/track/create", async ({ request }) => {
+        trackBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          uetr: "capstone-uetr", current_status: "CREDITED", is_terminal: true,
+          event_count: 1, sent_amount: "5000.00", final_amount: "5000.00",
+          total_fees: 0, last_updated: "2026-01-01T12:00:00",
+          timeline: [{
+            status: "CREDITED", bank_bic: "NWBKGB2L", bank_name: "NatWest Bank plc",
+            hop: 0, timestamp: "2026-01-01T12:00:00",
+          }],
+          disclaimer: "SIMULATION",
+        });
+      }),
+    );
+
+    const { user } = renderCapstone();
+    await user.click(screen.getByRole("button", { name: /start.*simulation/i }));
+
+    await waitFor(() => {
+      expect(trackBody).not.toBeNull();
+    }, { timeout: 5000 });
+
+    expect(trackBody!.beneficiary_name).toBe("NatWest Bank plc");
+    expect(trackBody!.beneficiary_name).not.toBe("John Smith");
   });
 
   it("renders a link to the Operate workspace", () => {
