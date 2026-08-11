@@ -135,7 +135,7 @@ export const handlers = [
   http.get("/api/track/:uetr", () =>
     HttpResponse.json({
       uetr: "test",
-      current_status: "credited",
+      current_status: "CREDITED",
       is_terminal: true,
       event_count: 1,
       sent_amount: "1000.00",
@@ -144,7 +144,7 @@ export const handlers = [
       last_updated: "2026-01-01T00:00:00",
       timeline: [
         {
-          status: "credited",
+          status: "CREDITED",
           bank_bic: "GTBINGLAXXX",
           bank_name: "GTBank",
           hop: 1,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./AppShell";
 
@@ -60,6 +60,24 @@ describe("AppShell", () => {
     expect(nav.querySelector('a[href="/app/learn"]')).not.toHaveClass("app-shell__nav-link--active");
   });
 
+  // Overview's `to` is "" (the index route), so it needs `end` to match exactly.
+  // Without it every path starting at the root counts as a match and two nav
+  // items light up at once.
+  it("does not mark Overview as active on a child route", () => {
+    renderShell("/explore");
+    const nav = screen.getByLabelText("Primary navigation");
+    const overview = within(nav).getByRole("link", { name: /overview/i });
+    expect(overview).not.toHaveClass("app-shell__nav-link--active");
+    expect(overview).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks Overview as active on the index route", () => {
+    renderShell();
+    const nav = screen.getByLabelText("Primary navigation");
+    const overview = within(nav).getByRole("link", { name: /overview/i });
+    expect(overview).toHaveClass("app-shell__nav-link--active");
+  });
+
   it("renders child route content", () => {
     renderShell("/explore");
     expect(screen.getByText("Explore placeholder")).toBeVisible();
@@ -71,6 +89,34 @@ describe("AppShell", () => {
     expect(mobileNav).toBeInTheDocument();
     const links = mobileNav.querySelectorAll("a");
     expect(links.length).toBe(4);
+  });
+
+  // The mobile bar needs the same `end` guard as the rail. It compared
+  // `item.to === "/app"`, but NAV_ITEMS spells Overview as "" — the basename
+  // supplies the "/app" — so the comparison was never true and `end` was
+  // permanently false, leaving Overview lit on every child route. The rail's
+  // equivalent tests above passed throughout, which is how it stayed hidden.
+  it("does not mark mobile Overview as active on a child route", () => {
+    renderShell("/explore");
+    const mobileNav = screen.getByLabelText("Mobile navigation");
+    const overview = within(mobileNav).getByRole("link", { name: /overview/i });
+    expect(overview).not.toHaveClass("app-shell__mobile-link--active");
+    expect(overview).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks mobile Overview as active on the index route", () => {
+    renderShell();
+    const mobileNav = screen.getByLabelText("Mobile navigation");
+    const overview = within(mobileNav).getByRole("link", { name: /overview/i });
+    expect(overview).toHaveClass("app-shell__mobile-link--active");
+  });
+
+  it("marks only the current destination active in the mobile bar", () => {
+    renderShell("/explore");
+    const mobileNav = screen.getByLabelText("Mobile navigation");
+    const active = mobileNav.querySelectorAll(".app-shell__mobile-link--active");
+    expect(active.length).toBe(1);
+    expect(active[0]).toHaveAttribute("href", "/app/explore");
   });
 
   it("renders a desktop rail", () => {
