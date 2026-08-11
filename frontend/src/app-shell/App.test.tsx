@@ -111,8 +111,12 @@ describe("App routing — unmatched URLs under /app", () => {
     // Scoped to <main> because both nav rails also link to Overview.
     const main = screen.getByRole("main");
     expect(within(main).getByRole("link", { name: /go to overview/i })).toBeInTheDocument();
-    // The path is echoed so a bug report can carry it.
-    expect(within(main).getByText("/app/operate/tracking")).toBeInTheDocument();
+    // The path is echoed so a bug report can carry it — which means the FULL
+    // URL, doubled basename and all. This previously asserted
+    // "/app/operate/tracking", the basename-stripped form: a real, routable
+    // path that hides the very bug the page exists to surface.
+    expect(within(main).getByText("/app/app/operate/tracking")).toBeInTheDocument();
+    expect(within(main).queryByText("/app/operate/tracking")).toBeNull();
   });
 
   it("keeps the unmatched path in the URL so a bug report can carry it", async () => {

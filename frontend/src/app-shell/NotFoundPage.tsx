@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useHref, useLocation } from "react-router-dom";
 
 /**
  * Terminal state for any URL under /app that matches no route.
@@ -17,11 +17,19 @@ import { Link, useLocation } from "react-router-dom";
 export function NotFoundPage() {
   const { pathname, search } = useLocation();
 
+  // `useLocation()` reports the basename-STRIPPED path, so under
+  // basename="/app" it turns the address bar's /app/nope into /nope — and the
+  // doubled /app/app/operate/tracking into /app/operate/tracking, a path that
+  // is real and routable. Either way the page printed something the user could
+  // not find in their address bar, which defeats the point of printing it.
+  // `useHref` re-applies the basename, giving back the URL as typed.
+  const displayPath = useHref(pathname) + search;
+
   return (
     <div className="app-shell__not-found">
       <h1>Page not found</h1>
       <p>
-        Nothing is routed at <code className="mono">{pathname}{search}</code>.
+        Nothing is routed at <code className="mono">{displayPath}</code>.
       </p>
       <p className="app-shell__not-found-hint">
         If you followed a link inside Relay to get here, that link is broken —
