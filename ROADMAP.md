@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-12 · **Verified locally:** 615 backend + 888 frontend + 271 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Verified locally:** 630 backend + 898 frontend + 271 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -157,7 +157,7 @@ The next contribution slice is content-led rather than a rebuild:
 | User accounts / cloud sync | Manual browser-local learner backup/import is shipped; account-based sync is still future work |
 | French i18n | Francophone Africa audience — separate effort |
 | Instructor dashboard / cohort management | Converts free tool to paid product |
-| Serial-vs-cover correspondent model | Advanced domain concept |
+| ~~Serial-vs-cover correspondent model~~ | ✅ Taught in Lab 4's settlement-layer section (serial vs cover decision drill) |
 | FX margin/spread modeling | Where fintechs make money — separate module |
 | Automatic cross-device persistence | Manual JSON backup/export-import exists today; automatic sync between devices does not |
 

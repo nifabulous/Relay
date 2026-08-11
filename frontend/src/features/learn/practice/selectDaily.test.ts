@@ -11,7 +11,7 @@ describe("question bank", () => {
   // from the real bank again — if you add questions, update this and the docs
   // in the same commit.
   it("holds the documented number of questions", () => {
-    expect(QUESTION_BANK).toHaveLength(50);
+    expect(QUESTION_BANK).toHaveLength(52);
   });
 
   it("has unique question ids", () => {

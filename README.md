@@ -35,8 +35,8 @@ These numbers were run against the current checkout on 2026-08-12:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **615 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **888 passed** with file parallelism disabled |
+| Backend tests | **630 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Frontend unit/integration tests | **898 passed** with file parallelism disabled |
 | Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,138 bytes gzip** (budget: 204,800 bytes) |
@@ -64,8 +64,8 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 615 passing |
-| Frontend tests | 888 passing in serial file mode |
+| Backend tests | 630 passing |
+| Frontend tests | 898 passing in serial file mode |
 | E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,138 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
@@ -190,7 +190,7 @@ the case is an applied scenario and is not counted in the curriculum total.
 | 1 | Identifiers: BICs & IBANs | BIC/IBAN decomposition, live validation | `/api/validate`, `/api/lookup` |
 | 2 | MOD-97 Checksums | IBAN checksum algorithm (chunked modulo) | `/api/validate` |
 | 3 | Verification of Payee | MATCH/CLOSE_MATCH/NO_MATCH/NOT_CHECKED + score bars | `/api/verify-payee` |
-| 4 | Correspondent Routing | Nostro/Vostro, intermediary chains, PaymentRoute viz | `/api/route` |
+| 4 | Correspondent Routing | Nostro/Vostro, SSI-first routing, CHIPS vs Fedwire, serial vs cover | `/api/route` |
 | 5 | Settlement Instructions | SSI tables, OUR/SHA/BEN charge codes | `/api/ssi` |
 | 6 | UETR Tracking | SWIFT gpi tracking, payment timelines, fee deduction | `/api/track/create` |
 | 7 | Payment Schemes | 7 scenario quizzes comparing global payment rails | `/api/schemes` |
@@ -290,7 +290,7 @@ lesson scripts:
 | `GET` | `/api/health` | Service + data status |
 | `GET` | `/api/validate` | IBAN/BIC validation |
 | `GET` | `/api/lookup` | Bank directory lookup by BIC |
-| `GET` | `/api/route` | Suggested correspondent intermediaries |
+| `GET` | `/api/route` | Published SSI correspondents (SSI-first) with corridor-heuristic fallback |
 | `GET` | `/api/ssi` | Standard Settlement Instructions |
 | `POST` | `/api/verify-payee` | Verification of Payee |
 | `POST` | `/api/prepare-payment` | One-call orchestration: validate + VoP + route + SSI → recommendation |
@@ -377,7 +377,7 @@ landing changed.
 
 ## Known limitations
 
-- **Simulated data only** — SSI accounts are `ACCT-` placeholders, routing is curated/heuristic
+- **Simulated data only** — SSI accounts are `ACCT-` placeholders; routing is SSI-first where a bank's published instructions are seeded and curated/heuristic elsewhere
 - **Browser-local learning state** — backups are manual JSON export/import and the panel is hidden for now; there is still no account-based or automatic cross-device sync
 - **No FX margin/spread modeling in the API** — the fee calculator models lift fees only;
   the Fees & FX lab teaches margin arithmetic client-side

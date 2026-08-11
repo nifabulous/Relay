@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-12 · **Current verification:** 615 backend + 888 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Current verification:** 630 backend + 898 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -114,3 +114,9 @@ Pick by appetite. No hard dependencies between these items.
 3. **`2.2` before `2.3`** — RESOLVED. Both done; they edit the same CSS files and were serialized.
 4. **`2.6` before `2.7`** — DEFERRED. Token unification (2.7) needs the inline-style extraction first; 2.6 only extracted `esc()`.
 5. **`2.4` before `2.5`** — DEFERRED. The capstone rebuild (2.5) should reuse the improved chain from 2.4.
+
+- Routing is now SSI-first: `/api/route` returns the beneficiary bank's full published
+  correspondent list (labeled `published-ssi`) when seeded, falling back to the corridor
+  heuristic. A settlement directory exposes CHIPS participant numbers and ABA routing
+  numbers on `/api/lookup`, `/api/route`, and `/api/ssi`; Lab 4 gained a CHIPS-vs-Fedwire
+  settlement-layer section and a serial-vs-cover drill.
