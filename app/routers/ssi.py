@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import SSI
 from ..schemas import SSIRecord, SSIResponse
-from ..services.routing import _normalize_bic_input
+from ..services.routing import _normalize_bic_input, _settlement_for
 from ._shared import _SSI_DISCLAIMER
 
 router = APIRouter(prefix="/api", tags=["swift"])
@@ -59,6 +59,7 @@ def get_ssi(
             charge_code=r.charge_code,
             value_date=r.value_date,
             notes=r.notes,
+            intermediary_settlement=_settlement_for(r.intermediary_bic),
         )
         for r in rows
     ]

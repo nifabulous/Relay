@@ -20,8 +20,9 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import Bank, CorridorRule, FedACHBank, FedwireBank
-from ..schemas import BankInfo, IntermediarySuggestion
+from ..data.settlement_directory import get_settlement_ids
+from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
+from ..schemas import BankInfo, IntermediarySuggestion, SettlementIds
 from .validator import detect_type, validate_bic, validate_iban
 
 
@@ -128,6 +129,69 @@ def infer_destination_currency(
     return passed_currency
 
 
+def _settlement_for(bic: Optional[str]) -> Optional[SettlementIds]:
+    """Attach CHIPS/ABA identifiers when the bank is a tracked USD clearer."""
+    ids = get_settlement_ids(bic)
+    if not ids:
+        return None
+    return SettlementIds(chips_uid=ids.get("chips_uid"), aba=ids.get("aba"))
+
+
+def suggest_from_ssi(
+    session: Session,
+    beneficiary_bic_11: str,
+    settlement_currency: str,
+    destination_country: Optional[str],
+) -> List[IntermediarySuggestion]:
+    """
+    Build intermediary suggestions from the beneficiary bank's PUBLISHED
+    settlement instructions, when we hold them for this settlement currency.
+
+    This is the authoritative path: an SSI names the exact correspondent the
+    beneficiary bank wants its funds routed through. The corridor table below
+    is only a heuristic fallback for banks whose SSIs we don't carry.
+
+    Matches the SSI table the same way /api/ssi does: exact 11-char BIC, then
+    the 8-char prefix, then the 6-char bank code.
+    """
+    suggestions: list[IntermediarySuggestion] = []
+    seen: set[str] = set()
+
+    candidates = [
+        beneficiary_bic_11,
+        beneficiary_bic_11[:8] + "XXX",
+        beneficiary_bic_11[:6] + "XXXXX",
+    ]
+    rows: list = []
+    for cand in candidates:
+        rows = session.execute(
+            select(SSI).where(
+                SSI.beneficiary_bic == cand,
+                SSI.currency == settlement_currency,
+            )
+        ).scalars().all()
+        if rows:
+            break
+
+    corridor = f"{settlement_currency}->{destination_country or '??'}"
+    for r in rows:
+        if r.intermediary_bic in seen:
+            continue
+        suggestions.append(
+            IntermediarySuggestion(
+                bic=r.intermediary_bic,
+                bank=r.intermediary_bank_name or r.intermediary_bic,
+                corridor=corridor,
+                confidence="high",
+                basis="published-ssi",
+                settlement=_settlement_for(r.intermediary_bic),
+            )
+        )
+        seen.add(r.intermediary_bic)
+
+    return suggestions
+
+
 def suggest_intermediaries(
     session: Session,
     destination_currency: str,
@@ -156,6 +220,8 @@ def suggest_intermediaries(
                         bank=r.intermediary_name,
                         corridor=r.corridor,
                         confidence=r.confidence,
+                        basis="corridor-heuristic",
+                        settlement=_settlement_for(r.intermediary_bic),
                     )
                 )
                 seen.add(r.intermediary_bic)
@@ -179,11 +245,40 @@ def suggest_intermediaries(
                         bank=r.intermediary_name,
                         corridor=r.corridor,
                         confidence=r.confidence,
+                        basis="corridor-heuristic",
+                        settlement=_settlement_for(r.intermediary_bic),
                     )
                 )
                 seen.add(r.intermediary_bic)
 
     return suggestions
+
+
+def suggest_route(
+    session: Session,
+    beneficiary_bic_11: str,
+    settlement_currency: str,
+    destination_currency: str,
+    destination_country: Optional[str],
+) -> tuple[List[IntermediarySuggestion], str]:
+    """
+    SSI-first routing: return (suggestions, basis).
+
+    1. If we hold the beneficiary bank's published SSIs for the settlement
+       currency, return the FULL published correspondent list
+       (basis="published-ssi") — no guessing when the bank has told the world
+       exactly where to send its funds.
+    2. Otherwise fall back to the curated corridor heuristic
+       (basis="corridor-heuristic").
+    """
+    published = suggest_from_ssi(
+        session, beneficiary_bic_11, settlement_currency, destination_country
+    )
+    if published:
+        return published, "published-ssi"
+
+    heuristic = suggest_intermediaries(session, destination_currency, destination_country)
+    return heuristic, "corridor-heuristic"
 
 
 # ---------------------------------------------------------------------------

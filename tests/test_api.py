@@ -245,7 +245,11 @@ def test_route_usd_to_japan(client):
     assert body["valid"] is True
     assert body["currency"] == "JPY"  # inferred from JP
     assert len(body["suggested_intermediaries"]) >= 1
-    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+    # SSI-first: MUFG has a published USD instruction (its own NY branch),
+    # so the authoritative list wins over the corridor heuristic.
+    assert body["source"] == "published-ssi"
+    assert body["suggested_intermediaries"][0]["bic"] == "BOTKJPJTXXX"
+    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
 
 
 def test_route_usd_to_china(client):
@@ -291,7 +295,13 @@ def test_route_usd_to_uae(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "AED"
-    assert body["suggested_intermediaries"][0]["bic"] == "CITIUS33XXX"
+    # SSI-first: Emirates NBD publishes its USD correspondents (BofA, Citi,
+    # SCB New York) — the published list replaces the corridor guess.
+    assert body["source"] == "published-ssi"
+    bics = [s["bic"] for s in body["suggested_intermediaries"]]
+    assert "BOFAUS3NXXX" in bics
+    assert "CITIUS33XXX" in bics
+    assert "SCBLUS33XXX" in bics
 
 
 def test_route_usd_to_saudi(client):

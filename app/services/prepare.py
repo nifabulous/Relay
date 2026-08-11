@@ -36,7 +36,7 @@ from .routing import (
     _normalize_bic_input,
     infer_destination_currency,
     lookup_bank,
-    suggest_intermediaries,
+    suggest_route,
 )
 from .tracking import generate_uetr
 from .validator import detect_type, validate_bic, validate_iban
@@ -158,7 +158,13 @@ def prepare_payment(
     if not dest_country and len(iban) >= 2:
         dest_country = iban[:2]
     inferred_currency = infer_destination_currency(currency, bank, dest_country)
-    intermediaries = suggest_intermediaries(session, inferred_currency, dest_country)
+    intermediaries, _routing_basis = suggest_route(
+        session,
+        beneficiary_bic_11=bic_11 or "",
+        settlement_currency=currency,
+        destination_currency=inferred_currency,
+        destination_country=dest_country,
+    )
     routing_info = PrepareRoutingInfo(
         beneficiary_country=dest_country,
         inferred_currency=inferred_currency,

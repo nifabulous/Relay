@@ -393,3 +393,158 @@ class TestLookupUSBank:
         # If data is present, it resolves; if not, None — both fine.
         if result is not None:
             assert "FEDERAL RESERVE" in result.bank_name
+
+
+# ===========================================================================
+# SSI-first routing — published instructions beat corridor guesses
+# ===========================================================================
+
+
+class TestSuggestFromSSI:
+    def test_access_bank_usd_returns_published_correspondents(self, db_session):
+        from app.services.routing import suggest_from_ssi
+        suggestions = suggest_from_ssi(db_session, "ABNGNGLAXXX", "USD", "NG")
+        bics = [s.bic for s in suggestions]
+        assert "CITIUS33XXX" in bics
+        assert "SCBLUS33XXX" in bics
+        assert "BKTRUS33XXX" in bics
+        for s in suggestions:
+            assert s.basis == "published-ssi"
+            assert s.confidence == "high"
+
+    def test_published_correspondents_carry_settlement_ids(self, db_session):
+        from app.services.routing import suggest_from_ssi
+        suggestions = suggest_from_ssi(db_session, "ABNGNGLAXXX", "USD", "NG")
+        by_bic = {s.bic: s for s in suggestions}
+        citi = by_bic["CITIUS33XXX"]
+        assert citi.settlement is not None
+        assert citi.settlement.chips_uid == "0008"
+        assert citi.settlement.aba == "021000089"
+        dbtca = by_bic["BKTRUS33XXX"]
+        assert dbtca.settlement is not None
+        assert dbtca.settlement.chips_uid == "0103"
+        assert dbtca.settlement.aba == "021001033"
+
+    def test_no_ssi_returns_empty(self, db_session):
+        from app.services.routing import suggest_from_ssi
+        # A bank with no seeded SSI records
+        assert suggest_from_ssi(db_session, "ZZZZXX99XXX", "USD", "XX") == []
+
+    def test_ssi_lookup_matches_8char_prefix(self, db_session):
+        from app.services.routing import suggest_from_ssi
+        # Branch BIC should still find the head-office SSI rows
+        suggestions = suggest_from_ssi(db_session, "ABNGNGLA001", "USD", "NG")
+        assert len(suggestions) >= 3
+
+
+class TestSuggestRoute:
+    def test_ssi_wins_over_corridor_for_access_bank(self, db_session):
+        from app.services.routing import suggest_route
+        suggestions, basis = suggest_route(
+            db_session,
+            beneficiary_bic_11="ABNGNGLAXXX",
+            settlement_currency="USD",
+            destination_currency="NGN",
+            destination_country="NG",
+        )
+        assert basis == "published-ssi"
+        bics = [s.bic for s in suggestions]
+        # The corridor table's BofA guess must NOT appear — the bank's
+        # published list doesn't include it.
+        assert "BOFAUS3NXXX" not in bics
+        assert "BKTRUS33XXX" in bics
+
+    def test_corridor_fallback_when_no_ssi(self, db_session):
+        from app.services.routing import suggest_route
+        # GTBank Nigeria has corridor rules but (in seed) no USD SSI rows.
+        suggestions, basis = suggest_route(
+            db_session,
+            beneficiary_bic_11="GTBINGLAXXX",
+            settlement_currency="USD",
+            destination_currency="NGN",
+            destination_country="NG",
+        )
+        if basis == "corridor-heuristic":
+            assert suggestions[0].bic == "CITIUS33XXX"
+            assert suggestions[0].basis == "corridor-heuristic"
+        else:
+            # If GTBank SSIs are ever seeded, published must win instead.
+            assert all(s.basis == "published-ssi" for s in suggestions)
+
+    def test_corridor_suggestions_carry_settlement_ids_when_known(self, db_session):
+        from app.services.routing import suggest_route
+        suggestions, basis = suggest_route(
+            db_session,
+            beneficiary_bic_11="GLBBNPKAXXX",  # Nepal — corridor path
+            settlement_currency="USD",
+            destination_currency="NPR",
+            destination_country="NP",
+        )
+        for s in suggestions:
+            if s.bic.startswith("CITIUS33"):
+                assert s.settlement is not None
+                assert s.settlement.chips_uid == "0008"
+
+
+class TestSettlementDirectory:
+    def test_known_clearers(self):
+        from app.data.settlement_directory import get_settlement_ids
+        assert get_settlement_ids("CITIUS33XXX")["chips_uid"] == "0008"
+        assert get_settlement_ids("chasus33")["aba"] == "021000021"
+        assert get_settlement_ids("BKTRUS33XXX")["chips_uid"] == "0103"
+
+    def test_unknown_bank_returns_none(self):
+        from app.data.settlement_directory import get_settlement_ids
+        assert get_settlement_ids("GTBINGLAXXX") is None
+        assert get_settlement_ids("") is None
+        assert get_settlement_ids(None) is None
+
+
+class TestRouteEndpointSSIFirst:
+    def test_route_access_bank_usd_uses_published_ssi(self, client):
+        r = client.get("/api/route", params={"bic": "ABNGNGLA", "currency": "USD"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["source"] == "published-ssi"
+        bics = [s["bic"] for s in body["suggested_intermediaries"]]
+        assert "CITIUS33XXX" in bics
+        assert "BKTRUS33XXX" in bics
+        assert "BOFAUS3NXXX" not in bics
+        assert "published" in body["notes"].lower()
+
+    def test_route_endpoint_settlement_ids_serialized(self, client):
+        r = client.get("/api/route", params={"bic": "ABNGNGLA", "currency": "USD"})
+        body = r.json()
+        citi = next(s for s in body["suggested_intermediaries"] if s["bic"] == "CITIUS33XXX")
+        assert citi["settlement"]["chips_uid"] == "0008"
+        assert citi["settlement"]["aba"] == "021000089"
+
+    def test_route_corridor_fallback_still_labeled(self, client):
+        r = client.get("/api/route", params={"bic": "GTBINGLAXXX", "currency": "USD"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["source"] in ("published-ssi", "curated-corridor-table")
+        if body["source"] == "curated-corridor-table":
+            assert all(
+                s["basis"] == "corridor-heuristic"
+                for s in body["suggested_intermediaries"]
+            )
+
+    def test_lookup_exposes_settlement_ids_for_clearer(self, client):
+        r = client.get("/api/lookup", params={"bic": "CITIUS33XXX"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["settlement"]["chips_uid"] == "0008"
+
+    def test_lookup_no_settlement_ids_for_non_clearer(self, client):
+        r = client.get("/api/lookup", params={"bic": "ABNGNGLA"})
+        assert r.status_code == 200
+        assert r.json()["settlement"] is None
+
+    def test_ssi_rows_carry_correspondent_settlement_ids(self, client):
+        r = client.get("/api/ssi", params={"bic": "ABNGNGLA", "currency": "USD"})
+        assert r.status_code == 200
+        body = r.json()
+        by_bic = {i["intermediary_bic"]: i for i in body["instructions"]}
+        assert by_bic["CITIUS33XXX"]["intermediary_settlement"]["chips_uid"] == "0008"
+        assert by_bic["BKTRUS33XXX"]["intermediary_settlement"]["aba"] == "021001033"

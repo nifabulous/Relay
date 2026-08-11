@@ -12,7 +12,7 @@ from ..services.routing import (
     is_us_routing_number,
     lookup_bank,
     lookup_us_bank,
-    suggest_intermediaries,
+    suggest_route,
 )
 
 router = APIRouter(prefix="/api", tags=["swift"])
@@ -69,17 +69,36 @@ def route(
     # translate to the local currency so corridor rules match.
     dest_currency = infer_destination_currency(currency, bank, dest_country)
 
-    suggestions = suggest_intermediaries(db, dest_currency, dest_country)
-
-    notes = (
-        "Routing is heuristic. Exact chain depends on originator bank's "
-        "Nostro relationships and may differ from these suggestions."
+    # SSI-first: when the beneficiary bank has PUBLISHED settlement
+    # instructions for the settlement currency the caller asked about,
+    # return that full correspondent list instead of corridor guesses.
+    suggestions, basis = suggest_route(
+        db,
+        beneficiary_bic_11=normalized,
+        settlement_currency=currency,
+        destination_currency=dest_currency,
+        destination_country=dest_country,
     )
-    if not suggestions:
+
+    if basis == "published-ssi":
         notes = (
-            f"No curated corridor rule for currency={dest_currency} "
-            f"country={dest_country}. Contact originator bank for exact chain."
+            f"These are the beneficiary bank's published {currency} "
+            "correspondents (from its settlement instructions) — the "
+            "authoritative list, not a heuristic. Account numbers are "
+            "placeholders; verify current details with the bank."
         )
+        source = "published-ssi"
+    else:
+        notes = (
+            "Routing is heuristic. Exact chain depends on originator bank's "
+            "Nostro relationships and may differ from these suggestions."
+        )
+        source = "curated-corridor-table"
+        if not suggestions:
+            notes = (
+                f"No curated corridor rule for currency={dest_currency} "
+                f"country={dest_country}. Contact originator bank for exact chain."
+            )
 
     return RouteResponse(
         bic=normalized,
@@ -89,7 +108,7 @@ def route(
         valid=True,
         suggested_intermediaries=suggestions,
         notes=notes,
-        source="curated-corridor-table",
+        source=source,
     )
 
 
