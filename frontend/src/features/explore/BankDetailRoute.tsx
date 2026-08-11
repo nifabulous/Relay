@@ -218,7 +218,13 @@ export function BankDetailRoute() {
               </section>
             )}
 
-            {!hasSSI && !ssi.isLoading && (
+            {ssi.isError && (
+              <p className="bank-ssi__error">
+                Published settlement instructions could not be loaded for this bank. Try again.
+              </p>
+            )}
+
+            {ssi.data !== undefined && !hasSSI && (
               <section className="bank-route" aria-labelledby="bank-route-title">
                 <h2 id="bank-route-title">Heuristic correspondent route</h2>
                 <p className="measure bank-route__intro">

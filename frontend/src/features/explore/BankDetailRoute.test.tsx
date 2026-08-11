@@ -315,6 +315,41 @@ describe("BankDetailRoute heuristic fallback", () => {
     ).toBeVisible();
   });
 
+  it("does not claim an absence of SSI when the settlement request fails", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "GTBINGLAXXX", found: true, bank: NIGERIA_BANK }),
+      ),
+      http.get("/api/ssi", () => HttpResponse.json({ detail: "boom" }, { status: 500 })),
+      http.get("/api/route", () =>
+        HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          bank: null,
+          beneficiary_country: "NG",
+          currency: "NGN",
+          valid: true,
+          suggested_intermediaries: [
+            { bic: "CITIUS33", bank: "Citibank NY", corridor: "USD-NGN", confidence: "high" },
+          ],
+          notes: "Heuristic suggestion.",
+          source: "curated-corridor-table",
+        }),
+      ),
+    );
+
+    renderBank("GTBINGLAXXX");
+
+    expect(
+      await screen.findByText(/could not be loaded/i),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Heuristic correspondent route" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeNull();
+  });
+
   it("keeps the settlement panel when the heuristic route request fails", async () => {
     server.use(
       http.get("/api/lookup", () =>

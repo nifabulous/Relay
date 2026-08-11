@@ -353,6 +353,34 @@
   color: var(--color-ink-muted);
 }
 
+.bank-ssi__error {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.bank-ssi__fields {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.bank-ssi__fields dt {
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
 .bank-route__meta {
-  margin-top: var(--space-3);
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+}
+
+.bank-route__meta dt {
+  color: var(--color-ink-muted);
+  font-weight: 500;
 }

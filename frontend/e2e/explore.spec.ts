@@ -48,6 +48,9 @@ test.describe("Bank detail", () => {
   });
 
   test("an unknown BIC degrades to a not-found state", async ({ page }) => {
+    // XXXXUS33XXX: the plan's original ZZZZZZ99XXX is rejected by the API's BIC
+    // validation (non-ISO country code "99" -> 400 before lookup), so a
+    // valid-format-but-absent BIC is required to reach the not-found path.
     await page.goto("/app/explore/banks/XXXXUS33XXX", { waitUntil: "networkidle" });
 
     await expect(
