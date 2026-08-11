@@ -117,7 +117,13 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/app"}
+            // Same guard as the rail. This read `item.to === "/app"`, which no
+            // NAV_ITEM ever equals (Overview is "", the basename supplies the
+            // prefix), so `end` was permanently false here. Harmless in practice
+            // — React Router's prefix match requires the next char to be "/", so
+            // "/explore" never matches the root — but a comparison that cannot
+            // be true reads as intent that is not there.
+            end={item.to === ""}
             className={({ isActive }) =>
               ["app-shell__mobile-link", isActive && "app-shell__mobile-link--active"]
                 .filter(Boolean)
