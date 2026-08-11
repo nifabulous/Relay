@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-09 · **Verified locally:** 608 backend + 723 frontend + 288 E2E passing (6 intentional skips across 294 cases) · **Commits:** 173 · **Curriculum:** 13 entries (12 modules + capstone)
+**Last updated:** 2026-08-11 · **Verified locally:** 615 backend + 883 frontend + 271 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -119,10 +119,10 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 
 The next contribution slice is content-led rather than a rebuild:
 
-1. Case Desk Phase 2: research learner behavior before adding more scenarios.
-2. Add sanctions-screening content as the next technical track.
-3. Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.
-4. Extend practice questions and expose review outcomes through telemetry/assessment reporting.
+1. Case Desk learner research: five scenarios are authored (CA→US, UK→DE, NG→UK, US→MX, US→NG); observe how learners use them before adding more.
+2. ~~Add sanctions-screening content as the next technical track.~~ ✅ Done (module 13).
+3. ~~Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.~~ ✅ Done (modules 14 and 15).
+4. Extend practice questions (bank is at 51) and expose review outcomes through telemetry/assessment reporting.
 
 ### From the 20-expert review — prioritized
 
@@ -145,8 +145,9 @@ The next contribution slice is content-led rather than a rebuild:
 
 **Phase D — Missing curriculum track:**
 11. ~~Fees/FX module (badge catalog promises it)~~ ✅ Done (module 12 "Follow the Money: Fees & FX" — earns the fees + fx badges)
-12. Sanctions screening lab (badge catalog promises it)
-13. Exceptions/returns workflow
+12. ~~Sanctions screening lab (badge catalog promises it)~~ ✅ Done (module 13 — earns "Compliance Aware"; per-hop screening, grey-zone exercise, escalation + false-positive drills)
+13. ~~Exceptions/returns workflow~~ ✅ Done (module 14 — rejects vs returns vs recalls, pacs.004 reason codes, doomed-payment timeline)
+14. ~~Ops workflow (Nostro recon / STP repair)~~ ✅ Done (module 15 "The Ops Desk" — repair queue on the live STP checker + ledger-vs-statement reconciliation)
 
 ### Deferred
 

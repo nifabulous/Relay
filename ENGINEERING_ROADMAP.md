@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-09 · **Current verification:** 608 backend + 723 frontend + 288 E2E passing (6 intentional skips across 294 cases) · **Current curriculum:** 13 entries (12 modules + capstone) · **Commits:** 173
+**Last updated:** 2026-08-11 · **Current verification:** 615 backend + 883 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -50,8 +50,11 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
   Lab 5 have explicit decision drills.
 - The Learn curriculum includes Labs 1–9, UK/Eurozone rails, Canada rails, Fees & FX, and the
   capstone. The daily practice route adds a 30-question bank, spaced review, and local streaks.
-- The React Relay app includes the Phase 1 Case Desk scenario, while the legacy `/learn` and `/ui`
+- The React Relay app includes five Case Desk scenarios, while the legacy `/learn` and `/ui`
   surfaces remain available for parity and rollback.
+- Modules 13–15 shipped: Sanctions Screening (`/api/screen`), Exceptions & Returns
+  (rejects/returns/recalls on the tracking simulator), and The Ops Desk (STP repair +
+  Nostro reconciliation). The practice bank grew to 51 questions covering every module.
 
 ---
 
@@ -78,7 +81,7 @@ Pick by appetite. No hard dependencies between these items.
 | 3.6 | Clarify sanctions threshold drift | Payments | `screening.py:152` — threshold gets stricter (lower) per hop; comment intent |
 | 3.7 | ~~MOD-97 visual step-through explainer~~ ✅ Done | Education | Shipped in Lab 2 with a step-by-step remainder view and digit-flip exercise |
 | 3.8 | ~~Enrich Lab 5 (SSI) into a real lesson~~ ✅ Done | Education | Now a guided lesson: worked example, decision points, capstone link |
-| 3.9 | Ops-workflow module (Nostro recon / STP repair) | Users/Ops | Biggest content gap for the training audience |
+| 3.9 | ~~Ops-workflow module (Nostro recon / STP repair)~~ ✅ Done | Users/Ops | Shipped as module 15 "The Ops Desk": live STP repair queue + Nostro break-hunting |
 | 3.10 | French localization (i18n) | Education | Francophone Africa audience named twice in ROADMAP |
 | 3.11 | Telemetry + assessment layer | Product | Every ROADMAP success metric is currently unmeasurable |
 | 3.12 | Migrate `seed.py` SSI data to CSV/JSON | Backend | 1,863-line Python data file → `app/data/ssi.csv` |

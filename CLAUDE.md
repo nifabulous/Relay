@@ -58,7 +58,7 @@ frontend/src/
       prepare/      PreparePaymentPage with partial-results pattern
       tools/        FeePage, ScreeningPage, ValueDatePage, StpPage
       tracking/     TrackingPage with timeline
-    learn/          curriculum.ts (13 entries: 12 modules + capstone), labs, practice, cases,
+    learn/          curriculum.ts (16 entries: 15 modules + capstone), labs, practice, cases,
                     LearnIndexPage, LearnModulePage
 ```
 
@@ -130,15 +130,15 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (612 tests)
+python -m pytest tests/ -q              # full suite (615 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --no-file-parallelism  # 808 tests
+cd frontend && npm test -- --no-file-parallelism  # 883 tests
 
 # End-to-end tests
-cd frontend && npm run test:e2e                    # 288 passed, 13 skips / 301 cases
+cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
 ```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
