@@ -68,7 +68,7 @@ const THRESHOLD_QUESTION = {
       label: "Holds it for a human compliance review",
       correct: true,
       explanation:
-        "Correct. 0.82 sits in the possible-hit band (0.75–0.90): too close to ignore, not close enough to auto-reject. A compliance analyst decides — and the payment waits, typically for hours or days.",
+        "Correct. 0.82 sits in the possible-hit band (0.75 to just under 0.90): too close to ignore, not close enough to auto-reject. A compliance analyst decides — and the payment waits, typically for hours or days.",
     },
     {
       id: "reject",
@@ -235,7 +235,7 @@ export function SanctionsContent({ moduleId, onCheckpoint }: LabContentProps) {
     if (rec === "REVIEW") {
       return {
         correct: true,
-        feedback: `"${input}" scores ${scoreText} — inside the possible-hit band (0.75–0.90). This payment holds for compliance review: close enough to worry, not close enough to auto-reject.`,
+        feedback: `"${input}" scores ${scoreText} — inside the possible-hit band (0.75 to just under 0.90). This payment holds for compliance review: close enough to worry, not close enough to auto-reject.`,
       };
     }
     if (rec === "REJECT") {
@@ -294,7 +294,7 @@ export function SanctionsContent({ moduleId, onCheckpoint }: LabContentProps) {
               <td>Stopped on the spot; funds may be frozen</td>
             </tr>
             <tr>
-              <td className="mono">0.75 – 0.90</td>
+              <td className="mono">0.75 – &lt; 0.90</td>
               <td>POSSIBLE_HIT</td>
               <td>HOLD</td>
               <td>Waits ~24h+ for a human compliance analyst</td>
@@ -308,8 +308,8 @@ export function SanctionsContent({ moduleId, onCheckpoint }: LabContentProps) {
           </tbody>
         </table>
         <p className="measure lab-muted">
-          Compare Lab 3: VoP treated 0.75–0.90 as a "close match" you could confirm and
-          proceed with. Screening treats the same band as a reason to stop the payment.
+          Compare Lab 3: VoP treated 0.75 up to 0.90 as a "close match" you could confirm
+          and proceed with. Screening treats the same band as a reason to stop the payment.
           Sanctions errs cautious — a missed hit costs far more than a delayed transfer.
         </p>
         <MultipleChoice
@@ -437,7 +437,7 @@ export function SanctionsContent({ moduleId, onCheckpoint }: LabContentProps) {
           <>
             The training watchlist includes <strong>Tariq Kassem</strong>. Enter a
             beneficiary name that scores as a <strong>POSSIBLE_HIT</strong> — flagged for
-            review (0.75–0.90), but not an automatic reject.
+            review (0.75 to just under 0.90), but not an automatic reject.
           </>
         }
         label="Name to screen"
