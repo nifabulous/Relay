@@ -540,3 +540,108 @@ describe("BankDetailRoute settlement retry", () => {
     expect(await screen.findByText("CITIUS33")).toBeVisible();
   });
 });
+
+describe("BankDetailRoute settlement identifiers", () => {
+  it("shows CHIPS and ABA identifiers for a direct USD clearer", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "CITIUS33XXX",
+          found: true,
+          bank: {
+            bic: "CITIUS33XXX",
+            bank_name: "Citibank N.A.",
+            country_code: "US",
+            city: "New York",
+            country_currency: "USD",
+          },
+          settlement: { chips_uid: "0008", aba: "021000089" },
+        }),
+      ),
+    );
+
+    renderBank("CITIUS33XXX");
+
+    expect(await screen.findByRole("heading", { name: "Citibank N.A." })).toBeVisible();
+    const grid = screen.getByText("BIC").closest("dl")!;
+    expect(within(grid).getByText("CHIPS participant")).toBeVisible();
+    expect(within(grid).getByText("0008")).toBeVisible();
+    expect(within(grid).getByText("ABA (Fedwire)")).toBeVisible();
+    expect(within(grid).getByText("021000089")).toBeVisible();
+    expect(screen.getByText(/direct participant in the US settlement systems/i)).toBeVisible();
+  });
+
+  it("omits settlement identifiers for a bank that has none", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "SBININBBXXX",
+          found: true,
+          bank: {
+            bic: "SBININBBXXX",
+            bank_name: "State Bank of India",
+            country_code: "IN",
+            city: "Mumbai",
+            country_currency: "INR",
+          },
+          settlement: null,
+        }),
+      ),
+    );
+
+    renderBank("SBININBBXXX");
+
+    await screen.findByRole("heading", { name: "State Bank of India" });
+    expect(screen.queryByText("CHIPS participant")).toBeNull();
+    expect(screen.queryByText("ABA (Fedwire)")).toBeNull();
+  });
+
+  it("shows the correspondent's settlement IDs on published SSI records", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "ABNGNGLAXXX",
+          found: true,
+          bank: {
+            bic: "ABNGNGLAXXX",
+            bank_name: "Access Bank Plc",
+            country_code: "NG",
+            city: "Lagos",
+            country_currency: "NGN",
+          },
+          settlement: null,
+        }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "ABNGNGLAXXX",
+          currency: "ALL",
+          instructions: [
+            {
+              beneficiary_bic: "ABNGNGLAXXX",
+              beneficiary_bank_name: "Access Bank Plc",
+              currency: "USD",
+              intermediary_bic: "CITIUS33XXX",
+              intermediary_bank_name: "Citibank NA New York",
+              intermediary_account: "ACCT-31308",
+              beneficiary_account: "ACCT-11356",
+              charge_code: "SHA",
+              value_date: "spot",
+              notes: "Source: Access Bank SwiftCode PDF.",
+              intermediary_settlement: { chips_uid: "0008", aba: "021000089" },
+            },
+          ],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    renderBank("ABNGNGLAXXX");
+
+    expect(
+      await screen.findByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+    expect(screen.getByText("Settlement IDs")).toBeVisible();
+    expect(screen.getByText("CHIPS 0008 · ABA 021000089")).toBeVisible();
+  });
+});

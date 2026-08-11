@@ -175,7 +175,28 @@ export function BankDetailRoute() {
                     <dd className="mono">{bank.country_currency}</dd>
                   </>
                 )}
+                {lookup.data?.settlement?.chips_uid && (
+                  <>
+                    <dt>CHIPS participant</dt>
+                    <dd className="mono">{lookup.data.settlement.chips_uid}</dd>
+                  </>
+                )}
+                {lookup.data?.settlement?.aba && (
+                  <>
+                    <dt>ABA (Fedwire)</dt>
+                    <dd className="mono">{lookup.data.settlement.aba}</dd>
+                  </>
+                )}
               </dl>
+
+              {lookup.data?.settlement && (
+                <p className="measure bank-detail__settlement-note">
+                  This bank is a direct participant in the US settlement systems:
+                  the CHIPS participant number and ABA routing number above are its
+                  addresses on CHIPS and Fedwire — why it appears as a USD
+                  correspondent in other banks' settlement instructions.
+                </p>
+              )}
 
               {resolvedDiffers && (
                 <p className="bank-detail__resolution">
@@ -238,6 +259,25 @@ export function BankDetailRoute() {
                             <dd className="mono">{r.charge_code}</dd>
                             <dt>Value date</dt>
                             <dd>{r.value_date}</dd>
+                            {r.intermediary_settlement &&
+                              (r.intermediary_settlement.chips_uid ||
+                                r.intermediary_settlement.aba) && (
+                                <>
+                                  <dt>Settlement IDs</dt>
+                                  <dd className="mono">
+                                    {[
+                                      r.intermediary_settlement.chips_uid
+                                        ? `CHIPS ${r.intermediary_settlement.chips_uid}`
+                                        : null,
+                                      r.intermediary_settlement.aba
+                                        ? `ABA ${r.intermediary_settlement.aba}`
+                                        : null,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </dd>
+                                </>
+                              )}
                           </dl>
                         </li>
                       ))}
