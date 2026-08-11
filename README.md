@@ -10,7 +10,7 @@ Relay is a hands-on, browser-based simulator that teaches how cross-border payme
 
 ## Current status
 
-**Status as of 2026-08-11:** Relay is a working educational learning prototype. The platform,
+**Status as of 2026-08-12:** Relay is a working educational learning prototype. The platform,
 backend APIs, Relay frontend, a 16-entry curriculum (15 learning modules plus a capstone), a daily-practice retention loop,
 and five Case Desk scenarios are implemented. The three curriculum tracks the prior review named as gaps
 — sanctions screening, exceptions/returns, and an ops workflow (STP repair + Nostro reconciliation) —
@@ -31,18 +31,30 @@ The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-11:
+These numbers were run against the current checkout on 2026-08-12:
 
 | Metric | Result |
 |---|---|
-
+| Backend tests | **621 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Frontend unit/integration tests | **911 passed** with file parallelism disabled |
+| Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
+| TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
+| Eager shell bundle | **127,167 bytes gzip** (budget: 204,800 bytes) |
+| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (50-question bank) |
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
-Case Desk test is load-sensitive under the default runner. All 11 E2E skips are intentional: 6 are
-the learner-state round trip (one per chromium project), skipped while the Learning backup panel is
-hidden; the other 5 are the reduced-motion case journey, which runs only in the dedicated
-`case-reduced-motion` project. See [Testing](#testing) for the recommended commands.
+Case Desk test is load-sensitive under the default runner.
+
+Every E2E skip is intentional, and the total depends on how many projects you run rather than on
+anything being broken. Two tests skip by rule:
+
+- **Learner-state round trip** — skips in *every* project while the Learning backup panel is hidden.
+- **Reduced-motion case journey** — skips in every project *except* `case-reduced-motion`.
+
+So a 6-project chromium run skips `6 + 5 = 11` (what the table above records, on a machine without
+WebKit), and a full 7-project run including the WebKit `mobile` project skips `7 + 6 = 13`. Both are
+correct; quote the rule, not a bare total. See [Testing](#testing) for the recommended commands.
 
 ---
 
@@ -52,7 +64,12 @@ hidden; the other 5 are the reduced-motion case journey, which runs only in the 
 
 | Metric | Value |
 |---|---|
-
+| Backend tests | 621 passing |
+| Frontend tests | 911 passing in serial file mode |
+| E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
+| Eager shell bundle | 127,167 bytes gzip (budget: 204,800 bytes) |
+| Learning curriculum | 16 entries (15 learning modules plus capstone) |
+| Case Desk scenarios | 5 |
 | Backend API endpoints | 22 |
 
 ### Architecture
@@ -333,14 +350,13 @@ count can never go stale in a third table. This one covers qualitative dimension
 
 | Dimension | Status |
 |---|---|
-
+| Version control | Git, `main` plus short-lived feature branches |
 | CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
 | Architecture | 11 domain routers, typed React frontend, design-system tokens |
-
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
 | Learning | Gated module completion, daily practice loop, spaced review, Case Desk scenarios |
 
