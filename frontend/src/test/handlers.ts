@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 
+import { CURRICULUM } from "../features/learn/curriculum";
+
 /**
  * Default MSW handlers for the Relay API.
  *
@@ -153,10 +155,13 @@ export const handlers = [
     }),
   ),
 
+  // `total_count` is derived from CURRICULUM rather than hardcoded so the mock
+  // cannot drift out of sync with the backend catalogue (app/services/progress.py
+  // keeps ALL_MODULE_IDS aligned with the same list) when modules are added.
   http.get("/api/progress", () =>
     HttpResponse.json({
       completed_count: 0,
-      total_count: 15,
+      total_count: CURRICULUM.length,
       percentage: 0,
       earned_badges: [],
       next_recommended: "lab-1",
