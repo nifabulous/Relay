@@ -84,9 +84,13 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <ul className="app-shell__nav-list">
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
+                {/* Overview's `to` is "", which resolves to the router root. `end`
+                    is belt-and-braces here: React Router's prefix match already
+                    requires the next char to be "/", so "/explore" never matches
+                    "/". Kept explicit so the intent survives a route reshuffle. */}
                 <NavLink
                   to={item.to}
-                  end={item.to === "/app"}
+                  end={item.to === ""}
                   className={({ isActive }) =>
                     ["app-shell__nav-link", isActive && "app-shell__nav-link--active"]
                       .filter(Boolean)

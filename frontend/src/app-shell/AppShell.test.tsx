@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./AppShell";
 
@@ -58,6 +58,24 @@ describe("AppShell", () => {
     const nav = screen.getByLabelText("Primary navigation");
     expect(nav.querySelector('a[href="/app/explore"]')).toHaveClass("app-shell__nav-link--active");
     expect(nav.querySelector('a[href="/app/learn"]')).not.toHaveClass("app-shell__nav-link--active");
+  });
+
+  // Overview's `to` is "" (the index route), so it needs `end` to match exactly.
+  // Without it every path starting at the root counts as a match and two nav
+  // items light up at once.
+  it("does not mark Overview as active on a child route", () => {
+    renderShell("/explore");
+    const nav = screen.getByLabelText("Primary navigation");
+    const overview = within(nav).getByRole("link", { name: /overview/i });
+    expect(overview).not.toHaveClass("app-shell__nav-link--active");
+    expect(overview).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks Overview as active on the index route", () => {
+    renderShell();
+    const nav = screen.getByLabelText("Primary navigation");
+    const overview = within(nav).getByRole("link", { name: /overview/i });
+    expect(overview).toHaveClass("app-shell__nav-link--active");
   });
 
   it("renders child route content", () => {
