@@ -1,4 +1,6 @@
 """Health check, IBAN/BIC validation, and bank directory lookup."""
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
@@ -28,9 +30,35 @@ def health(request: Request, db: Session = Depends(get_db)):
     )
 
 
+def _resolve_bank(db: Session, bic: Optional[str]):
+    """Resolve the directory entry behind a validated BIC, or None.
+
+    ValidateResponse has always declared `bank: Optional[BankInfo]`, but the
+    router never populated it, so the field could not be non-null for any input
+    — the declared contract and the OpenAPI docs both promised something the
+    endpoint never delivered, and callers reading `validation.bank` fell back
+    forever without any signal. Absent from the directory is not an error here;
+    it is simply a null bank.
+    """
+    if not bic:
+        return None
+    normalized, valid, _errors, _ = _normalize_bic_input(bic)
+    if not valid:
+        return None
+    return lookup_bank(db, normalized)
+
+
 @router.get("/validate", response_model=ValidateResponse)
-def validate(value: str = Query(..., description="IBAN or BIC to validate")):
-    """Validate an IBAN or BIC. Type is auto-detected."""
+def validate(
+    value: str = Query(..., description="IBAN or BIC to validate"),
+    db: Session = Depends(get_db),
+):
+    """Validate an IBAN or BIC. Type is auto-detected.
+
+    When the input resolves to a BIC that is in the directory, the bank is
+    returned alongside it, so a caller does not need a second /lookup round
+    trip to name the institution.
+    """
     raw = value.strip()
     input_type = detect_type(raw)
 
@@ -41,6 +69,7 @@ def validate(value: str = Query(..., description="IBAN or BIC to validate")):
             input_type="iban",
             valid=result.valid,
             bic=result.bic,
+            bank=_resolve_bank(db, result.bic) if result.valid else None,
             errors=result.errors,
         )
 
@@ -51,6 +80,7 @@ def validate(value: str = Query(..., description="IBAN or BIC to validate")):
         input_type="bic",
         valid=valid,
         bic=normalized,
+        bank=_resolve_bank(db, normalized) if valid else None,
         errors=errors,
     )
 

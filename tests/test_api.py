@@ -48,6 +48,42 @@ def test_validate_invalid_bic(client):
     assert r.json()["valid"] is False
 
 
+class TestValidateResolvesBank:
+    """ValidateResponse declares `bank: Optional[BankInfo]`, so it must be able
+    to carry one. It never did: the router returned the field unset for every
+    input, which made the declared contract (and the OpenAPI docs) a lie and
+    left callers that read `validation.bank` silently falling back forever.
+    """
+
+    def test_bic_input_resolves_the_bank(self, client):
+        r = client.get("/api/validate", params={"value": "CITIUS33"})
+        assert r.status_code == 200
+        bank = r.json()["bank"]
+        assert bank is not None, "a seeded BIC must resolve to its directory entry"
+        assert bank["bank_name"]
+        assert bank["bic"].startswith("CITIUS33")
+
+    def test_iban_input_resolves_the_bank_behind_it(self, client):
+        # A German IBAN whose BIC (COBADEFFXXX) is in the seeded directory.
+        r = client.get("/api/validate", params={"value": "DE89370400440532013000"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["valid"] is True
+        assert body["bank"] is not None, "an IBAN must resolve the bank behind its BIC"
+        assert body["bank"]["bic"] == body["bic"]
+
+    def test_unknown_but_well_formed_bic_stays_null(self, client):
+        """Absent from the directory is not an error; the field is simply null."""
+        r = client.get("/api/validate", params={"value": "ZZZZZZ99"})
+        assert r.status_code == 200
+        assert r.json()["bank"] is None
+
+    def test_invalid_input_stays_null(self, client):
+        r = client.get("/api/validate", params={"value": "NOTREAL1"})
+        assert r.status_code == 200
+        assert r.json()["bank"] is None
+
+
 def test_lookup_known_bank(client):
     r = client.get("/api/lookup", params={"bic": "GTBINGLAXXX"})
     assert r.status_code == 200

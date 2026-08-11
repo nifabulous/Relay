@@ -76,7 +76,10 @@ def generate_timeline(
     Each hop gets ACCEPTED + FORWARDED events; the final gets CREDITED.
 
     Args:
-        outcome: "credited" (success) | "rejected" (fails at an intermediary)
+        outcome: "credited" (success) | "rejected". A rejection fires at the
+            first intermediary when there is one; with no intermediaries the
+            beneficiary's own bank refuses it, since that is the only bank in
+            the chain that can.
     """
     start = start_time or datetime.now(timezone.utc)
     events: List[PaymentEvent] = []
@@ -164,13 +167,28 @@ def generate_timeline(
     ))
     hop += 1
     t += timedelta(seconds=90)
-    events.append(PaymentEvent(
-        uetr=uetr, status=STATUS_CREDITED, bank_bic=ben_bic, bank_name=ben_name,
-        hop=hop, timestamp=_iso(t),
-        amount=f"{current_amount:.2f}", currency=currency,
-        message=f"Credited to beneficiary account by {ben_name}",
-        instructing_bic=chain[-2][0], instructed_bic=ben_bic,
-    ))
+
+    # A rejection with at least one intermediary already returned early above, at
+    # i == 1. So reaching here with outcome="rejected" means there was no
+    # correspondent in the chain, and the only bank that can refuse the payment
+    # is the beneficiary's own. Without this branch the caller's requested
+    # outcome was silently discarded and every direct payment ended CREDITED.
+    if outcome == "rejected":
+        events.append(PaymentEvent(
+            uetr=uetr, status=STATUS_REJECTED, bank_bic=ben_bic, bank_name=ben_name,
+            hop=hop, timestamp=_iso(t),
+            amount=f"{current_amount:.2f}", currency=currency,
+            message=f"Rejected by {ben_name}: compliance screening failed",
+            instructing_bic=chain[-2][0], instructed_bic=None,
+        ))
+    else:
+        events.append(PaymentEvent(
+            uetr=uetr, status=STATUS_CREDITED, bank_bic=ben_bic, bank_name=ben_name,
+            hop=hop, timestamp=_iso(t),
+            amount=f"{current_amount:.2f}", currency=currency,
+            message=f"Credited to beneficiary account by {ben_name}",
+            instructing_bic=chain[-2][0], instructed_bic=ben_bic,
+        ))
 
     session.add_all(events)
     session.commit()

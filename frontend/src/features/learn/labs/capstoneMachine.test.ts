@@ -88,7 +88,7 @@ describe("capstoneReducer", () => {
     const next = capstoneReducer(deciding, {
       type: "STEP_SUCCESS",
       step: 5,
-      result: { uetr: "test-uetr", current_status: "credited", is_terminal: true, timeline: [] },
+      result: { uetr: "test-uetr", current_status: "CREDITED", is_terminal: true, timeline: [] },
     });
     expect(next.status).toBe("complete");
   });

@@ -91,13 +91,23 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           break;
         }
         case 5: {
+          // `beneficiary_name` on TrackPaymentRequest is the receiving BANK's
+          // name (app/schemas.py:123) — generate_timeline uses it as the
+          // bank_name on the final hop. It is not the payee. Passing
+          // input.beneficiary_name here put a person's name in the last row of
+          // the timeline, in a lab about which institution holds which leg.
+          // Fall back to the BIC, which identifies the bank on its own, rather
+          // than to the payee.
+          const beneficiaryBic = state.results.validation?.bic ?? "NWBKGB2L";
+          const beneficiaryBankName =
+            state.results.validation?.bank?.bank_name ?? beneficiaryBic;
           result = await apiPost<TrackPaymentResponse>(
             "/api/track/create",
             {
               originator_bic: "TESTORIG",
               originator_name: "Test Sender Bank",
-              beneficiary_bic: state.results.validation?.bic ?? "NWBKGB2L",
-              beneficiary_name: input.beneficiary_name,
+              beneficiary_bic: beneficiaryBic,
+              beneficiary_name: beneficiaryBankName,
               currency: input.currency,
               amount: input.amount,
               charge_code: "SHA",
