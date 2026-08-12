@@ -40,7 +40,7 @@ These numbers were run against the current checkout on 2026-08-12:
 | Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,387 bytes gzip** (budget: 204,800 bytes) |
-| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (50-question bank) |
+| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
@@ -206,7 +206,7 @@ the case is an applied scenario and is not counted in the curriculum total.
 
 Every lab now gates completion on at least one correct answer — opening demos alone never
 completes a module. A daily five-question drill at `/app/learn/practice` draws from completed
-modules (from a 50-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
+modules (from a 52-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
 
 ### Four workspaces
 
@@ -270,7 +270,7 @@ lesson scripts:
    Exceptions & Returns (module 14, earning "Exception Handler"), and the Ops Desk
    (module 15, STP repair + Nostro recon, earning "Ops Ready").
 6. **Grow the retention loop.** The daily drill, spaced review, and streaks shipped
-   (`frontend/src/features/learn/practice/`). The question bank has 50 questions —
+   (`frontend/src/features/learn/practice/`). The question bank has 52 questions —
    extend it as modules deepen, and consider surfacing review stats in telemetry.
 
 ### What is intentionally not finished

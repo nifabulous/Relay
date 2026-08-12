@@ -122,7 +122,7 @@ The next contribution slice is content-led rather than a rebuild:
 1. Case Desk learner research: five scenarios are authored (CA→US, UK→DE, NG→UK, US→MX, US→NG); observe how learners use them before adding more.
 2. ~~Add sanctions-screening content as the next technical track.~~ ✅ Done (module 13).
 3. ~~Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.~~ ✅ Done (modules 14 and 15).
-4. Extend practice questions (bank is at 50) and expose review outcomes through telemetry/assessment reporting.
+4. Extend practice questions (bank is at 52) and expose review outcomes through telemetry/assessment reporting.
 
 ### From the 20-expert review — prioritized
 
