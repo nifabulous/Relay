@@ -130,7 +130,7 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (638 tests)
+python -m pytest tests/ -q              # full suite (645 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 

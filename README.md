@@ -35,7 +35,7 @@ These numbers were run against the current checkout on 2026-08-12:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **638 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Backend tests | **645 passed** (`.venv/bin/python -m pytest tests/ -q`) |
 | Frontend unit/integration tests | **922 passed** with file parallelism disabled |
 | Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
@@ -64,7 +64,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 638 passing |
+| Backend tests | 645 passing |
 | Frontend tests | 922 passing in serial file mode |
 | E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,387 bytes gzip (budget: 204,800 bytes) |
