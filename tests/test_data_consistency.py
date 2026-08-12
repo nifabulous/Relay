@@ -34,6 +34,14 @@ UNVERIFIED_US_CLEARERS = {
     "SBINUS33",  # SBI New York
     "SMBCUS33",  # SMBC New York
     "USBKUS44",  # U.S. Bank National Association
+    # BDO's published USD SSI names Bank of America New York; the directory
+    # already tracks the N.A. branch (BOFAUS3N) — verify this NY branch's
+    # CHIPS/ABA and add to SETTLEMENT_DIRECTORY before removing.
+    "BOFAUS6S",
+    # BOCHK's published USD SSI routes through Bank of China New York — a
+    # legitimate US clearer. Verify its CHIPS/ABA and promote to
+    # SETTLEMENT_DIRECTORY before removing.
+    "BKCHUS33",
 }
 
 
@@ -175,4 +183,87 @@ class TestAfricaSsiCoverage:
         uba_senegal = [r for r in SSI_RECORDS if r[0] == "UNAFSNDAXXX"]
         assert any(r[2] == "USD" for r in uba_senegal), (
             "UBA Senegal (UNAFSNDA) must carry a USD SSI record"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Asia-Pacific SSI coverage expansion
+# ---------------------------------------------------------------------------
+#
+# Same at-least semantics as the Africa block: one tuple per beneficiary —
+# BIC, name, currencies that MUST have seeded records. Only banks with
+# publicly published settlement instructions were included; ASEAN banks
+# without published SSIs (Maybank, CIMB, Kasikorn, Mandiri, BCA, Techcombank,
+# DBS, Vietcombank) stay corridor-heuristic only.
+#
+# Sourced from bank-published pages / archived copies:
+#   - BDO (BNORPHMM)      — bdo.com.ph cross-border USD remittance (9 ccys)
+#   - BOCHK (BKCHHKHH)    — Bank of China Hong Kong, via Bank of China
+#                           branch network (14 ccys, bn.bankofchina.com)
+#   - HSBC HK (HSBCHKHH)  — hsbc.com.hk multi-currency remittance page,
+#                           USD via HSBC Bank USA (MRMDUS33, CHIPS 0108)
+#   - OCBC (OCBCSGSG)     — ocbc.com USD via JPMorgan Chase New York
+ASIA_SSI_COVERAGE = [
+    ("BNORPHMMXXX", "Banco de Oro (BDO)", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "AUD"}),
+    ("BKCHHKHHXXX", "Bank of China Hong Kong", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CHF", "AUD"}),
+    ("HSBCHKHHXXX", "HSBC Hong Kong", {"USD", "EUR", "GBP", "JPY"}),
+    ("OCBCSGSGXXX", "OCBC Bank", {"USD"}),
+]
+
+
+class TestAsiaSsiCoverage:
+    def test_asian_beneficiaries_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            ben_bic = record[0]
+            seeded.setdefault(ben_bic, set()).add(record[2])
+        for bic, name, currencies in ASIA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_asian_beneficiaries_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in ASIA_SSI_COVERAGE if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"Asian SSI beneficiaries must also be seeded in BANKS so Explore "
+            f"can show their settlement instructions: {missing}"
+        )
+
+    def test_philippines_and_vietnam_have_usd_coverage(self):
+        """BDO is the flagship PH beneficiary; Vietcombank's BIC is pinned
+        separately by TestVietcombankBicIsCorrect (no published SSIs)."""
+        bdo = [r for r in SSI_RECORDS if r[0] == "BNORPHMMXXX"]
+        assert any(r[2] == "USD" for r in bdo), "BDO must carry a USD SSI record"
+
+
+class TestVietcombankBicIsCorrect:
+    """The pre-fix regression: ICBVVNVX is VIETINBANK's BIC, not
+    Vietcombank's. Vietcombank publishes BFTVVNVX. Pin the correction so the
+    wrong BIC never quietly comes back."""
+
+    def test_no_vietcombank_record_keyed_under_vietinbank_bic(self):
+        vietcombank_banks = [
+            row[0] for row in BANKS if "Vietcombank" in row[1]
+        ]
+        assert vietcombank_banks == ["BFTVVNVXXXX"], (
+            f"Vietcombank must be keyed under BFTVVNVXXXX, not a VietinBank "
+            f"BIC: {vietcombank_banks}"
+        )
+        for record in SSI_RECORDS:
+            assert not (record[0] == "ICBVVNVXXXX" and "Vietcombank" in record[1]), (
+                "SSI record claims Vietcombank under the ICBVVNVX BIC"
+            )
+
+    def test_corridor_rule_uses_the_correct_bic(self):
+        vnd_rules = [
+            (bic, name) for _ccy, _country, bic, name, corridor, _conf, _rank
+            in CORRIDOR_RULES if corridor == "USD->VN"
+        ]
+        assert ("BFTVVNVXXXX", "Vietcombank") in vnd_rules, (
+            f"USD->VN corridor must clear through Vietcombank's own BIC: {vnd_rules}"
         )

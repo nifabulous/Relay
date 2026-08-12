@@ -302,7 +302,12 @@ def test_route_usd_to_hong_kong(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "HKD"
-    assert body["suggested_intermediaries"][0]["bic"] == "HSBCHKHHXXX"
+    # SSI-first: HSBC Hong Kong publishes USD settlement via its own NY
+    # affiliate (HSBC Bank USA, MRMDUS33) — authoritative over the corridor
+    # heuristic, which would have guessed the self-loop.
+    assert body["source"] == "published-ssi"
+    assert body["suggested_intermediaries"][0]["bic"] == "MRMDUS33XXX"
+    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
 
 
 def test_route_usd_to_singapore(client):
