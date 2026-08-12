@@ -57,6 +57,11 @@ SETTLEMENT_DIRECTORY = {
         "chips_uid": "0959",
         "aba": "026009593",
     },
+    "BOFAUS6S": {
+        "bank_name": "Bank of America N.A. (Concord, CA)",
+        "chips_uid": "0959",
+        "aba": "026009593",
+    },
     "IRVTUS3N": {
         "bank_name": "The Bank of New York Mellon",
         "chips_uid": "0001",

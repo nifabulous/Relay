@@ -42,6 +42,11 @@ UNVERIFIED_US_CLEARERS = {
     # legitimate US clearer; CHIPS/ABA not verifiable from a public source
     # right now. Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "SOGEUS33",
+    # Wells Fargo Bank New York under the legacy PNBPUS33 BIC (Banorte's
+    # published USD SSI). Wells Fargo's primary BIC is WFBIUS6S; CHIPS/ABA
+    # for this legacy identifier are not verifiable from a public source.
+    # Verify and promote to SETTLEMENT_DIRECTORY before removing.
+    "PNBPUS33",
 }
 
 
@@ -432,3 +437,58 @@ class TestFrancophoneAfricaSsiCoverage:
         for bic, _name, _currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE:
             assert bic in bank_bics, f"{bic} must be seeded in BANKS"
         assert "ORBKBFBFXXX" in bank_bics, "Orabank Burkina must be ORBKBFBF, not ORBABFBF"
+
+
+# ---------------------------------------------------------------------------
+# Latin America SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Only one of the major LatAm banks publishes a full SSI table: Banorte
+# (Banco Mercantil del Norte, Mexico) prints per-currency correspondents with
+# BICs and ABA routing numbers on its transfer-instructions page (2021/2025
+# snapshots). Itaú Unibanco publishes BIC-level data only (ITAUBRSP parent,
+# ITAUUS33 New York) — no correspondents — so it stays corridor-heuristic
+# rather than inventing structures. Banco do Brasil, Bradesco, Santander MX,
+# BBVA MX, Banco de Chile and the Canadian banks publish no usable SSI.
+#
+# Discrepancy pinned: Banorte's own page and the swiftcodes registry agree
+# the head-office BIC is MENOMXMT (MENOMXMTXXX as seeded); the commonly
+# listed MNORMXMM must never appear.
+LATAM_SSI_COVERAGE = [
+    ("MENOMXMTXXX", "Banorte", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
+]
+
+
+class TestLatinAmericaSsiCoverage:
+    def test_banorte_has_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in LATAM_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_banorte_and_itau_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        assert "MENOMXMTXXX" in bank_bics, "Banorte must be seeded in BANKS"
+        assert "ITAUBRSPXXX" in bank_bics, (
+            "Itaú must be seeded in BANKS so BRL routing and Explore resolve it"
+        )
+
+    def test_banorte_bic_is_the_bank_published_value(self):
+        """Banorte's own page and the registry print MENOMXMT; the commonly
+        listed MNORMXMM is wrong and must never be used."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "MENOMXMTXXX" in bank_bics
+        assert "MNORMXMMXXX" not in bank_bics, "Common-but-wrong Banorte BIC used"
+
+    def test_itau_stays_bic_only_no_invented_ssi(self):
+        """Itaú publishes only its own BICs (no correspondents) — it must not
+        gain invented SSI records."""
+        itau_records = [r for r in SSI_RECORDS if r[0] == "ITAUBRSPXXX"]
+        assert itau_records == [], (
+            "Itaú publishes no correspondent SSIs; do not invent them"
+        )
