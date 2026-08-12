@@ -16,11 +16,22 @@ class BankInfo(BaseModel):
     country_currency: Optional[str] = None
 
 
+class SettlementIds(BaseModel):
+    """CHIPS participant number and ABA (Fedwire) routing number for a
+    direct USD clearer. Public identifiers — verify before real-world use."""
+    chips_uid: Optional[str] = None
+    aba: Optional[str] = None
+
+
 class IntermediarySuggestion(BaseModel):
     bic: str
     bank: str
     corridor: str
     confidence: str  # high | medium | low
+    # Where this suggestion comes from: the beneficiary bank's own published
+    # settlement instructions, or the curated corridor heuristic.
+    basis: str = "corridor-heuristic"  # published-ssi | corridor-heuristic
+    settlement: Optional[SettlementIds] = None
 
 
 class ValidateResponse(BaseModel):
@@ -36,6 +47,8 @@ class LookupResponse(BaseModel):
     bic: str
     bank: Optional[BankInfo] = None
     found: bool
+    # Present when the bank is a direct USD clearer we track (CHIPS/Fedwire).
+    settlement: Optional[SettlementIds] = None
 
 
 class RouteResponse(BaseModel):
@@ -92,6 +105,9 @@ class SSIRecord(BaseModel):
     charge_code: str = "SHA"
     value_date: str = "spot"
     notes: Optional[str] = None
+    # The correspondent's settlement-system addresses, when it is a direct
+    # USD clearer we track (CHIPS participant number + ABA routing number).
+    intermediary_settlement: Optional[SettlementIds] = None
 
 
 class SSIResponse(BaseModel):
@@ -201,6 +217,10 @@ class PrepareRoutingInfo(BaseModel):
     beneficiary_country: Optional[str] = None
     inferred_currency: Optional[str] = None
     suggested_intermediaries: List[IntermediarySuggestion] = Field(default_factory=list)
+    # Where the chain above came from. Mirrors RouteResponse.source so a caller
+    # can tell a bank's published correspondents from a corridor guess without
+    # inspecting every item's `basis`.
+    routing_basis: str = "corridor-heuristic"  # published-ssi | corridor-heuristic
 
 
 class PrepareSSIInfo(BaseModel):

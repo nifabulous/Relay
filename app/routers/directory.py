@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
 from ..schemas import HealthResponse, LookupResponse, ValidateResponse
-from ..services.routing import _normalize_bic_input, lookup_bank
+from ..services.routing import _normalize_bic_input, _settlement_for, lookup_bank
 from ..services.validator import detect_type, validate_bic, validate_iban
 
 router = APIRouter(prefix="/api", tags=["swift"])
@@ -96,4 +96,9 @@ def lookup(
         raise HTTPException(status_code=400, detail={"errors": errors})
 
     bank = lookup_bank(db, normalized)
-    return LookupResponse(bic=normalized, bank=bank, found=bank is not None)
+    return LookupResponse(
+        bic=normalized,
+        bank=bank,
+        found=bank is not None,
+        settlement=_settlement_for(normalized),
+    )

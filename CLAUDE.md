@@ -130,12 +130,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (621 tests)
+python -m pytest tests/ -q              # full suite (657 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --no-file-parallelism  # 911 tests
+cd frontend && npm test -- --no-file-parallelism  # 922 tests
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed

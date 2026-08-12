@@ -38,10 +38,16 @@ def client_with_auth():
         # Force re-evaluation of config by patching the settings the auth dep reads
         with mock.patch("app.auth._admin_api_key", "test-secret-key-123"):
             from tests.conftest import _client_get_db
+            # Save and RESTORE the override map instead of clear(): the
+            # session-scoped `client` fixture registered the same get_db
+            # override, and clearing it here would silently point every
+            # later client-fixture test at the real dev database.
+            previous_overrides = dict(app.dependency_overrides)
             app.dependency_overrides[get_db] = _client_get_db
             with TestClient(app) as c:
                 yield c
             app.dependency_overrides.clear()
+            app.dependency_overrides.update(previous_overrides)
 
 
 @pytest.fixture
@@ -53,10 +59,12 @@ def client_dev_mode():
             from app.db import get_db
             from app.main import app
             from tests.conftest import _client_get_db
+            previous_overrides = dict(app.dependency_overrides)
             app.dependency_overrides[get_db] = _client_get_db
             with TestClient(app) as c:
                 yield c
             app.dependency_overrides.clear()
+            app.dependency_overrides.update(previous_overrides)
 
 
 class TestImportEndpointAuth:
