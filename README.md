@@ -25,7 +25,8 @@ remains a learning prototype — not production payment processing.
 | Learning persistence | Shipped (browser-local) | Anonymous learner profiles and local progress/activity/practice/case-session storage. Manual JSON backup import/export is built but its Overview panel is hidden for now |
 | Legacy migration | Front door cut over | `/` now lands on Relay at `/app`. Vanilla `/learn` and `/ui` remain reachable, and `/` falls back to `/learn` when the Relay build is absent |
 | Retention loop | Shipped | Daily practice drill, spaced review of missed questions, and streaks at `/app/learn/practice` |
-| Next focus | Open for contribution | Implement the approved telemetry and Case Desk learner-research design; provider integration is deferred, alongside French i18n |
+| Learning analytics | Shipped (provider-neutral) | Privacy-bounded app, module, practice, and Case Desk instrumentation behind a no-op sink; provider integration remains deferred |
+| Next focus | Open for contribution | Run and synthesize the approved five-case learner research, alongside French i18n |
 
 The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
@@ -36,7 +37,7 @@ These numbers were run against the current checkout on 2026-08-12:
 | Metric | Result |
 |---|---|
 | Backend tests | **659 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **941 passed** (`cd frontend && npm test -- --run`) |
+| Frontend unit/integration tests | **942 passed** (`cd frontend && npm test -- --run`) |
 | Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,387 bytes gzip** (budget: 204,800 bytes) |
@@ -45,9 +46,9 @@ These numbers were run against the current checkout on 2026-08-12:
 
 The frontend suite is currently verified with the standard Vitest command above.
 
-The approved [telemetry and learner-research design](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md)
-defines Relay's provider-neutral instrumentation and the five-case research protocol. Provider
-integration is deliberately deferred.
+The provider-neutral instrumentation from the approved [telemetry and learner-research design](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md)
+is shipped. The next product-learning step is to run and synthesize its five-case research
+protocol. Provider integration is deliberately deferred.
 
 Every E2E skip is intentional, and the total depends on how many projects you run rather than on
 anything being broken. Two tests skip by rule:
@@ -68,7 +69,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 | Metric | Value |
 |---|---|
 | Backend tests | 659 passing |
-| Frontend tests | 941 passing |
+| Frontend tests | 942 passing |
 | E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,387 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |

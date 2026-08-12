@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
@@ -35,9 +35,14 @@ const queryClient = new QueryClient({
 });
 
 export function App() {
+  const hasTrackedAppViewRef = useRef(false);
+
   useEffect(() => {
-    // App mounts define page-view boundaries. Development remounts therefore
-    // intentionally produce a fresh app_viewed event.
+    // React StrictMode replays mount effects without replacing the component
+    // instance. Keep that development replay inside the same page-view
+    // boundary; a real unmount/remount creates a fresh ref and a fresh event.
+    if (hasTrackedAppViewRef.current) return;
+    hasTrackedAppViewRef.current = true;
     track("app_viewed", { surface: "relay" });
   }, []);
 

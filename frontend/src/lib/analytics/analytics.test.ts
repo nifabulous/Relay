@@ -55,9 +55,29 @@ describe("analytics contract", () => {
     expect(properties).not.toHaveProperty("name");
   });
 
+  it("projects dynamic payloads onto the declared property allowlist", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    const dynamicPayload = {
+      module_id: "lab-1",
+      explanation: "private learner prose",
+    };
+
+    track(
+      "module_completed",
+      dynamicPayload as unknown as AnalyticsEventMap["module_completed"],
+    );
+
+    expect(sink.events).toEqual([
+      { name: "module_completed", properties: { module_id: "lab-1" } },
+    ]);
+  });
+
   it("accepts only the declared event names and object-literal properties", () => {
-    // @ts-expect-error unknown event names are not part of the analytics contract
-    track("unknown_event", {});
+    if (false) {
+      // @ts-expect-error unknown event names are not part of the analytics contract
+      track("unknown_event", {});
+    }
 
     const properties = {
       module_id: "lab-1",
@@ -68,6 +88,26 @@ describe("analytics contract", () => {
       // @ts-expect-error object-literal properties outside the allowlist are rejected
       account: "not-permitted",
     } satisfies AnalyticsEventMap["module_completed"];
+
+    const predeclaredPayload = {
+      module_id: "lab-1",
+      explanation: "not-permitted",
+    };
+    if (false) {
+      // @ts-expect-error predeclared payloads must obey the exact property allowlist
+      track("module_completed", predeclaredPayload);
+    }
+
+    const unionName: "module_completed" | "practice_started" =
+      Math.random() > 0.5 ? "module_completed" : "practice_started";
+    const independentlyUnionedProperties:
+      | AnalyticsEventMap["module_completed"]
+      | AnalyticsEventMap["practice_started"] =
+      Math.random() > 0.5 ? { module_id: "lab-1" } : { question_count: 5 };
+    if (false) {
+      // @ts-expect-error independent unions can mismatch; callers must preserve the name/property pair
+      track(unionName, independentlyUnionedProperties);
+    }
 
     track("module_completed", properties);
     expect(invalidProperties.account).toBe("not-permitted");
