@@ -11,6 +11,7 @@ import type { LabCheckpointId } from "./labTypes";
 export function useLabCompletion(
   required: readonly LabCheckpointId[],
   onComplete: () => void,
+  onCheckpointReached?: (id: LabCheckpointId) => void,
 ): {
   completed: ReadonlySet<LabCheckpointId>;
   markCheckpoint: (id: LabCheckpointId) => void;
@@ -18,15 +19,29 @@ export function useLabCompletion(
   const [completed, setCompleted] = useState<Set<LabCheckpointId>>(new Set());
   const hasFired = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const onCheckpointReachedRef = useRef(onCheckpointReached);
+  const reportedCheckpointIdsRef = useRef<Set<LabCheckpointId>>(new Set());
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
+  useEffect(() => {
+    onCheckpointReachedRef.current = onCheckpointReached;
+  }, [onCheckpointReached]);
+
   // Memoize the required set so markCheckpoint is stable
   const requiredSet = useMemo(() => new Set(required), [required]);
 
   const isReady = required.length > 0 && required.every((id) => completed.has(id));
+
+  useEffect(() => {
+    for (const id of completed) {
+      if (reportedCheckpointIdsRef.current.has(id)) continue;
+      reportedCheckpointIdsRef.current.add(id);
+      onCheckpointReachedRef.current?.(id);
+    }
+  }, [completed]);
 
   useEffect(() => {
     if (isReady && !hasFired.current) {

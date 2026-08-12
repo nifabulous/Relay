@@ -1,11 +1,12 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { CURRICULUM, formatDuration, formatDurationAriaLabel, getModuleById, isModuleUnlocked } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
 import { LabCompletionChecklist } from "./LabCompletionChecklist";
 import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
+import { track } from "../../lib/analytics/analytics";
 import "./LearnPage.css";
 
 export function LearnModulePage() {
@@ -14,9 +15,18 @@ export function LearnModulePage() {
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
 
+  useEffect(() => {
+    if (!mod) return;
+    track("module_viewed", { module_id: mod.id });
+    if (!completed.includes(mod.id)) {
+      track("module_started", { module_id: mod.id });
+    }
+  }, [mod?.id]);
+
   const completeModule = useCallback((id: string) => {
     setCompleted((prev) => {
       if (prev.includes(id)) return prev;
+      track("module_completed", { module_id: id });
       const next = [...prev, id];
       saveProgress({ schemaVersion: 1, completedModuleIds: next });
       const title = getModuleById(id)?.title ?? id;
@@ -90,11 +100,18 @@ export function LearnModulePage() {
       {definition ? (
         <Suspense fallback={<div className="skeleton skeleton--line" style={{ width: "60%", height: "100px" }} />}>
           <LabContentRenderer
+            key={mod.id}
             moduleId={mod.id}
             isComplete={isComplete}
             requiredCheckpoints={definition.requiredCheckpoints}
             component={definition.component}
             onComplete={() => completeModule(mod.id)}
+            onCheckpointReached={(checkpointId) => {
+              track("checkpoint_reached", {
+                module_id: mod.id,
+                checkpoint_id: checkpointId,
+              });
+            }}
           />
         </Suspense>
       ) : (
@@ -144,14 +161,20 @@ function LabContentRenderer({
   requiredCheckpoints,
   component: LabComponent,
   onComplete,
+  onCheckpointReached,
 }: {
   moduleId: string;
   isComplete: boolean;
   requiredCheckpoints: readonly string[];
   component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
   onComplete: () => void;
+  onCheckpointReached: (id: string) => void;
 }) {
-  const { completed, markCheckpoint } = useLabCompletion(requiredCheckpoints, onComplete);
+  const { completed, markCheckpoint } = useLabCompletion(
+    requiredCheckpoints,
+    onComplete,
+    onCheckpointReached,
+  );
 
   return (
     <>

@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
 import { OverviewPage } from "../features/overview/OverviewPage";
+import { track } from "../lib/analytics/analytics";
 
 // Route-level code splitting — Learn, Explore, and Operate are separate chunks
 const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.ExplorePage })));
@@ -34,6 +35,12 @@ const queryClient = new QueryClient({
 });
 
 export function App() {
+  useEffect(() => {
+    // App mounts define page-view boundaries. Development remounts therefore
+    // intentionally produce a fresh app_viewed event.
+    track("app_viewed", { surface: "relay" });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename="/app">
