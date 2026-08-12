@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { StrictMode } from "react";
 import type { LabContentProps } from "./labTypes";
 import {
   createTestSink,
@@ -20,14 +21,15 @@ vi.mock("./labRegistry", () => ({
   }),
 }));
 
-function renderModule(moduleId = "lab-1") {
-  return render(
+function renderModule(moduleId = "lab-1", strict = false) {
+  const page = (
     <MemoryRouter initialEntries={[`/learn/${moduleId}`]}>
       <Routes>
         <Route path="/learn/:moduleId" element={<LearnModulePage />} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+  return render(strict ? <StrictMode>{page}</StrictMode> : page);
 }
 
 describe("LearnModulePage analytics", () => {
@@ -104,6 +106,18 @@ describe("LearnModulePage analytics", () => {
         { name: "module_viewed", properties: { module_id: "lab-2" } },
         { name: "module_started", properties: { module_id: "lab-2" } },
       ]);
+    });
+  });
+
+  it("emits module completion once when StrictMode replays state updaters", async () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    renderModule("lab-1", true);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Reach checkpoint" }));
+
+    await waitFor(() => {
+      expect(sink.events.filter((event) => event.name === "module_completed")).toHaveLength(1);
     });
   });
 });

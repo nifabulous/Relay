@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { CURRICULUM, formatDuration, formatDurationAriaLabel, getModuleById, isModuleUnlocked } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
@@ -12,6 +12,7 @@ import "./LearnPage.css";
 export function LearnModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>();
   const [completed, setCompleted] = useState<string[]>(() => loadProgress().completedModuleIds);
+  const reportedCompletedIdsRef = useRef(new Set(completed));
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
 
@@ -23,10 +24,17 @@ export function LearnModulePage() {
     }
   }, [mod?.id]);
 
+  useEffect(() => {
+    for (const id of completed) {
+      if (reportedCompletedIdsRef.current.has(id)) continue;
+      reportedCompletedIdsRef.current.add(id);
+      track("module_completed", { module_id: id });
+    }
+  }, [completed]);
+
   const completeModule = useCallback((id: string) => {
     setCompleted((prev) => {
       if (prev.includes(id)) return prev;
-      track("module_completed", { module_id: id });
       const next = [...prev, id];
       saveProgress({ schemaVersion: 1, completedModuleIds: next });
       const title = getModuleById(id)?.title ?? id;
