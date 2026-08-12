@@ -1,4 +1,5 @@
 import { useState, useCallback, type ReactNode } from "react";
+import { shuffled } from "../practice/selectDaily";
 import "./LabComponents.css";
 
 export interface MultipleChoiceOption {
@@ -20,6 +21,10 @@ export function MultipleChoice({ question, options, onCorrect }: MultipleChoiceP
   const [selected, setSelected] = useState<SelectedState>({});
   const [locked, setLocked] = useState(false);
   const [correctFired, setCorrectFired] = useState(false);
+  // Shuffle once per mount so the correct answer stops living in a fixed
+  // position — authored option order was a free tell for pattern-matching
+  // learners (and made every drill brute-forceable by position).
+  const [orderedOptions] = useState(() => shuffled(options, Math.random));
 
   const handleSelect = useCallback((opt: MultipleChoiceOption) => {
     if (locked) return;
@@ -40,7 +45,7 @@ export function MultipleChoice({ question, options, onCorrect }: MultipleChoiceP
   return (
     <fieldset className="lab-multiple-choice">
       <legend className="lab-multiple-choice__legend">{question}</legend>
-      {options.map((opt) => (
+      {orderedOptions.map((opt) => (
         <button
           key={opt.id}
           type="button"
