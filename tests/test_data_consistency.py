@@ -38,6 +38,10 @@ UNVERIFIED_US_CLEARERS = {
     # legitimate US clearer. Verify its CHIPS/ABA and promote to
     # SETTLEMENT_DIRECTORY before removing.
     "BKCHUS33",
+    # Société Générale New York (Coris/Orabank published USD SSIs) — a
+    # legitimate US clearer; CHIPS/ABA not verifiable from a public source
+    # right now. Verify and promote to SETTLEMENT_DIRECTORY before removing.
+    "SOGEUS33",
 }
 
 
@@ -347,3 +351,84 @@ class TestUbaSubsidiarySsiCoverage:
         assert "UNAFLRLMXXX" in bank_bics and "UBAGGNCNXXX" in bank_bics, (
             "Printed BICs must be present"
         )
+
+
+# ---------------------------------------------------------------------------
+# Francophone West/Central Africa SSI coverage
+# ---------------------------------------------------------------------------
+#
+# The roadmap names francophone Africa as a training audience, but the seeded
+# SSI set only covered anglophone West Africa (Nigeria, Ghana, Kenya, UBA
+# subsidiaries). These banks publish BIC-level correspondent lists (no
+# account numbers) on archived bank pages:
+#   - Coris Bank (BF)      — coris-bank.com correspondants page (2015/2017)
+#   - Bank of Africa CI    — boacoteivoire.com Correspondants page (2007)
+#   - Afriland First Bank  — afrilandfirstbank.com correspondants page (2011)
+#   - Orabank Burkina/Togo — orabank.net partners-and-correspondents (2012-2020)
+#
+# The pages print the correspondents' BICs but not the bank's own BIC; the
+# beneficiary BICs below were verified against theswiftcodes.com country
+# listings. Orabank Burkina is ORBKBFBF (a mislabeled ORBABFBF guess must
+# never appear). All intermediary BICs were cross-checked — several printed
+# BICs on the archived pages belong to OTHER banks (Natixis labeled as
+# CCBPFRPP, UBAE as UBAIITRR, BNI as CSSSCIAB, UTB as UNTBTBTGTG, BIA as
+# BILTTGT1, BFCM as CMCIFRPA) and are excluded.
+FRANCOPHONE_AFRICA_SSI_COVERAGE = [
+    ("CORIBFBFXXX", "Coris Bank International", {"USD", "EUR"}),
+    ("AFRICIABXXX", "Bank of Africa Côte d'Ivoire", {"USD", "EUR"}),
+    ("CCEICMCXXXX", "Afriland First Bank", {"USD", "EUR", "GBP"}),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", {"USD", "EUR"}),
+    ("ORBKTGTGXXX", "Orabank Togo", {"USD", "EUR"}),
+]
+
+
+class TestFrancophoneAfricaSsiCoverage:
+    def test_francophone_beneficiaries_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_francophone_beneficiaries_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"Francophone SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_mislabeled_bics_from_source_pages_are_not_used(self):
+        """The archived pages print several BICs that belong to other banks
+        (Natixis labeled CCBPFRPP, UBAE labeled UBAIITRR, BNI labeled
+        CSSSCIAB, UTB labeled UNTBTBTGTG, BIA labeled BILTTGT1, BFCM labeled
+        CMCIFRPA) and one wrong Orabank Burkina guess (ORBABFBF). None of
+        these may appear as intermediaries or beneficiaries."""
+        forbidden = {
+            "CCBPFRPP", "CCBPFRPPPAR", "UBAIITRR", "CSSSCIAB",
+            "UNTBTBTGTG", "BILTTGT1", "CMCIFRPA", "ORBABFBF",
+        }
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[0][:8])
+            used.add(record[3][:8])
+        used |= {row[0][:8] for row in BANKS}
+        offenders = sorted(forbidden & used)
+        assert not offenders, (
+            f"Mislabeled BICs from the source pages must not be seeded: {offenders}"
+        )
+
+    def test_verified_beneficiary_bics_are_used(self):
+        """The pages print only the correspondents' BICs; the bank's own BICs
+        were verified against theswiftcodes.com. Pin the verified values."""
+        bank_bics = {row[0] for row in BANKS}
+        for bic, _name, _currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE:
+            assert bic in bank_bics, f"{bic} must be seeded in BANKS"
+        assert "ORBKBFBFXXX" in bank_bics, "Orabank Burkina must be ORBKBFBF, not ORBABFBF"
