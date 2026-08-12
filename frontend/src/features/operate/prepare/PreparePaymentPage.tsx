@@ -347,13 +347,18 @@ export function PreparePaymentPage() {
             )}
           </CheckResult>
 
-          {/* Heuristic routing summary */}
+          {/* Routing summary: preserve whether the backend returned published SSI data or a heuristic. */}
           {result.routing.suggested_intermediaries.length > 0 && (
             <div className="prepare-payment__route">
               <CorrespondentOptions
                 options={result.routing.suggested_intermediaries}
                 currency={result.routing.inferred_currency ?? formValues.currency}
-                notes="The backend provides ranked candidates, not a confirmed sequence of hops. Your bank's correspondent relationships determine the actual path."
+                routingBasis={result.routing.routing_basis}
+                notes={
+                  result.routing.routing_basis === "published-ssi"
+                    ? "These correspondents come from the beneficiary bank's published settlement instructions. Verify current details with the bank before use."
+                    : "The backend provides ranked candidates, not a confirmed sequence of hops. Your bank's correspondent relationships determine the actual path."
+                }
               />
             </div>
           )}

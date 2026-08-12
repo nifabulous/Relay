@@ -42,7 +42,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function shuffled<T>(items: readonly T[], rand: () => number): T[] {
+export function shuffled<T>(items: readonly T[], rand: () => number): T[] {
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));

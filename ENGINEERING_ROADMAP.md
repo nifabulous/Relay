@@ -75,7 +75,7 @@ Pick by appetite. No hard dependencies between these items.
 |---|------|-------|-------|
 | 3.1 | Fix VoP docstrings (remove "EPC guidance" claim) | Payments | `name_matcher.py:32`, `vop.py` header |
 | 3.2 | Fix dead `fee_type` data path | Payments | `fee_calculator.py:48` — either implement pct or drop the field |
-| 3.3 | Unify fee logic (tracking → `simulate_fees`) | Payments | `tracking.py:144` hardcodes $2.50/hop |
+| 3.3 | ~~Unify fee logic (tracking → `simulate_fees`)~~ ✅ Done | Payments | Tracking deducts via the shared `get_lift_fee` lookup; a data-consistency test also pins corridor/SSI/settlement-directory agreement |
 | 3.4 | Expand MT103 STP checker + relabel | Payments | Validate field 23B; note 50A/F, 59F, 71F/G; relabel as "12-rule primer" |
 | 3.5 | Fix value-date holiday fallback + GBP default | Payments | `value_date.py:154` empty set for unsupported currencies |
 | 3.6 | Clarify sanctions threshold drift | Payments | `screening.py:152` — threshold gets stricter (lower) per hop; comment intent |

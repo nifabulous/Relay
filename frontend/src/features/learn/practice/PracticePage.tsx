@@ -12,7 +12,7 @@ import {
   type AnswerOutcome,
   type PracticeState,
 } from "./practiceStore";
-import { selectDailyQuestions } from "./selectDaily";
+import { selectDailyQuestions, shuffled } from "./selectDaily";
 import type { PracticeQuestion } from "./questionBank";
 import { StatusChip } from "../../../design-system/StatusChip";
 import "../LearnPage.css";
@@ -41,6 +41,13 @@ export function PracticePage() {
   const reviewCount = dueReviews(state, today).length;
 
   const currentQuestion: PracticeQuestion | undefined = questions[index];
+  // Shuffle the answer positions per question — the authored order otherwise
+  // leaks the correct answer's position across repeat drills.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const orderedOptions = useMemo(
+    () => (currentQuestion ? shuffled(currentQuestion.options, Math.random) : []),
+    [currentQuestion?.id],
+  );
 
   const handleSelect = useCallback((optionId: string) => {
     if (selectedId || !currentQuestion) return; // single attempt
@@ -133,7 +140,7 @@ export function PracticePage() {
 
           <fieldset className="lab-multiple-choice practice-question">
             <legend className="lab-multiple-choice__legend">{currentQuestion.question}</legend>
-            {currentQuestion.options.map((opt) => {
+            {orderedOptions.map((opt) => {
               const isSelected = selectedId === opt.id;
               const revealCorrect = selectedId !== null && opt.correct;
               return (

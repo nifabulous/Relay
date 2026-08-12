@@ -129,7 +129,7 @@ The next contribution slice is content-led rather than a rebuild:
 **Phase A — Data and consistency follow-up:**
 1. ~~Add Labs 8-9 to capstone prerequisites~~ ✅ Done (curriculum.ts; capstone now requires Labs 1–9)
 2. ~~Fix Lab 9 Interac limit to match scheme data ($3,000)~~ ✅ Done (scheme data and lesson agree)
-3. Fix tracking.py to use LIFT_FEES table instead of hardcoded $2.50
+3. ~~Fix tracking.py to use LIFT_FEES table instead of hardcoded $2.50~~ ✅ Done (tracking and the fee simulator share one `get_lift_fee` lookup)
 4. Align the legacy backend module catalogue and badge bridge with the Relay curriculum (the
    backend still carries legacy IDs such as `fees`, `fx`, `settlement`, `mt103`, and `cases`)
 
@@ -140,7 +140,7 @@ The next contribution slice is content-led rather than a rebuild:
 
 **Phase C — Assessment integrity (product change):**
 8. ~~Gate at least one checkpoint per lab on a correct answer, not just interaction~~ ✅ Done (Lab 3 decision drill, Lab 5 decision points; all other labs already had a correct-answer gate)
-9. Fix MultipleChoice answer leakage in wrong-option explanations
+9. Fix MultipleChoice answer leakage in wrong-option explanations (answer POSITIONS are now shuffled per render; explanation-text leakage still open)
 10. Add worked examples to Labs 4 and 9 where the current lesson still needs more guided practice
 
 **Phase D — Missing curriculum track:**

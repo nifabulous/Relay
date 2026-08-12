@@ -32,6 +32,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import PaymentEvent
+from .fee_calculator import get_lift_fee
 
 # Status codes per SWIFT gpi conventions
 STATUS_INITIATED = "INITIATED"
@@ -142,10 +143,12 @@ def generate_timeline(
         ))
         hop += 1
 
-        # Forwarded (Nostro debited). Apply a fee deduction for SHA/BEN.
+        # Forwarded (Nostro debited). Apply a fee deduction for SHA/BEN using
+        # the SAME lift-fee table as /api/fees/simulate — the tracker and the
+        # fee simulator must tell one story about what a hop costs.
         t += timedelta(seconds=45)
         if charge_code != "OUR":
-            current_amount = round(current_amount - 2.50, 2)  # simulated intermediary fee
+            current_amount = round(current_amount - get_lift_fee(bic, currency), 2)
         events.append(PaymentEvent(
             uetr=uetr, status=STATUS_FORWARDED, bank_bic=bic, bank_name=name,
             hop=hop, timestamp=_iso(t),

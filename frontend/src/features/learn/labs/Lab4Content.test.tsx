@@ -163,6 +163,8 @@ describe("Lab4Content", () => {
       expect(screen.getByRole("heading", { name: "Published correspondents" })).toBeVisible();
     });
     expect(screen.getByText(/authoritative instruction, not a guess/i)).toBeVisible();
+    expect(screen.queryByText(/possible correspondent option\(s\) found/i)).toBeNull();
+    expect(screen.getByText(/published correspondent\(s\) found/i)).toBeVisible();
     expect(screen.getByText("CHIPS 0008 · ABA 021000089")).toBeVisible();
     expect(screen.getByText("CHIPS 0103 · ABA 021001033")).toBeVisible();
     expect(screen.getAllByText("published SSI").length).toBe(2);

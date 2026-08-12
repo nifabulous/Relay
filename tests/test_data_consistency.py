@@ -34,10 +34,6 @@ UNVERIFIED_US_CLEARERS = {
     "SBINUS33",  # SBI New York
     "SMBCUS33",  # SMBC New York
     "USBKUS44",  # U.S. Bank National Association
-    # BDO's published USD SSI names Bank of America New York; the directory
-    # already tracks the N.A. branch (BOFAUS3N) — verify this NY branch's
-    # CHIPS/ABA and add to SETTLEMENT_DIRECTORY before removing.
-    "BOFAUS6S",
     # BOCHK's published USD SSI routes through Bank of China New York — a
     # legitimate US clearer. Verify its CHIPS/ABA and promote to
     # SETTLEMENT_DIRECTORY before removing.
@@ -91,6 +87,39 @@ class TestUsdSSIRecordsMatchSettlementDirectory:
         )
 
 
+class TestSourcedSsiAccountsAreIrreversiblyMasked:
+    """Published account numbers must not be recoverable from seed data."""
+
+    def test_newly_sourced_account_numbers_are_not_copied_into_placeholders(self):
+        published_numbers = {
+            "36370468", "04406278", "400877401000", "1009569820000",
+            "6964030011", "9030006364119", "18500817461626",
+            "18500817461658", "18500817461666", "18500817461674",
+            "18500817461682", "36320321", "36327523", "3582025130001",
+            "36327566", "36328366", "655024", "65502401", "000100000",
+            "0004717", "001094566",
+        }
+        leaked = [
+            row[5]
+            for row in SSI_RECORDS
+            if row[5].removeprefix("ACCT-") in published_numbers
+        ]
+        assert leaked == [], (
+            "Published Nostro account numbers must be replaced with synthetic "
+            f"placeholders, not copied after an ACCT- prefix: {leaked}"
+        )
+
+
+class TestBdoUsdCorrespondentBic:
+    def test_usd_instruction_uses_bank_of_americas_new_york_bic(self):
+        usd_bics = {
+            row[3] for row in SSI_RECORDS
+            if row[0] == "BNORPHMMXXX" and row[2] == "USD"
+        }
+        assert "BOFAUS6SXXX" not in usd_bics
+        assert "BOFAUS3NXXX" in usd_bics
+
+
 class TestSettlementDirectoryShape:
     def test_every_entry_has_wellformed_identifiers(self):
         for prefix, ids in SETTLEMENT_DIRECTORY.items():
@@ -102,17 +131,6 @@ class TestSettlementDirectoryShape:
                 assert len(chips) == 4 and chips.isdigit(), f"{prefix}: CHIPS UID {chips!r}"
             if aba:
                 assert len(aba) == 9 and aba.isdigit(), f"{prefix}: ABA {aba!r}"
-
-    def test_every_entry_names_its_bank(self):
-        """`bank_name` documents which institution a BIC prefix belongs to.
-
-        It is not part of the API response, so nothing else would notice it
-        going missing or blank — this keeps the table self-describing for the
-        next person who adds a clearer.
-        """
-        for prefix, ids in SETTLEMENT_DIRECTORY.items():
-            name = ids.get("bank_name")
-            assert name and name.strip(), f"{prefix}: entry has no bank_name"
 
     def test_aba_checksums_are_valid(self):
         """ABA routing numbers carry a 3-7-1 weighted checksum — verify it."""

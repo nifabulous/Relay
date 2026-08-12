@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectDailyQuestions, DRILL_SIZE } from "./selectDaily";
+import { selectDailyQuestions, DRILL_SIZE, shuffled } from "./selectDaily";
 import { QUESTION_BANK, questionsForModules } from "./questionBank";
 import { CURRICULUM } from "../curriculum";
 
@@ -96,5 +96,31 @@ describe("selectDailyQuestions", () => {
     const due = [{ questionId: "l9-autodeposit", dueDay: "2026-08-01", misses: 1 }];
     const qs = selectDailyQuestions("2026-08-09", ["lab-1"], due);
     expect(qs.some((q) => q.id === "l9-autodeposit")).toBe(false);
+  });
+});
+
+describe("shuffled (shared answer-order shuffle)", () => {
+  it("returns a permutation containing every item exactly once", () => {
+    const items = ["a", "b", "c", "d", "e"];
+    let calls = 0;
+    const rand = () => {
+      calls += 1;
+      return (calls * 0.37) % 1;
+    };
+    const out = shuffled(items, rand);
+    expect([...out].sort()).toEqual([...items].sort());
+    expect(out).toHaveLength(items.length);
+  });
+
+  it("actually reorders for a rand stream that swaps positions", () => {
+    const items = ["a", "b", "c", "d"];
+    const out = shuffled(items, () => 0); // always swap with index 0
+    expect(out).not.toEqual(items);
+  });
+
+  it("does not mutate the input", () => {
+    const items = ["a", "b", "c"];
+    shuffled(items, () => 0.5);
+    expect(items).toEqual(["a", "b", "c"]);
   });
 });
