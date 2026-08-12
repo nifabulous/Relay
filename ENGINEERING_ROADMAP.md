@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-12 · **Current verification:** 657 backend + 922 frontend + 289 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Current verification:** 659 backend + 925 frontend + 289 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -83,7 +83,7 @@ Pick by appetite. No hard dependencies between these items.
 | 3.8 | ~~Enrich Lab 5 (SSI) into a real lesson~~ ✅ Done | Education | Now a guided lesson: worked example, decision points, capstone link |
 | 3.9 | ~~Ops-workflow module (Nostro recon / STP repair)~~ ✅ Done | Users/Ops | Shipped as module 15 "The Ops Desk": live STP repair queue + Nostro break-hunting |
 | 3.10 | French localization (i18n) | Education | Francophone Africa audience named twice in ROADMAP |
-| 3.11 | Telemetry + assessment layer | Product | Every ROADMAP success metric is currently unmeasurable |
+| 3.11 | [Telemetry + learner-research design](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md) | Product | Approved provider-neutral event contract and five-case protocol; provider integration is deferred |
 | 3.12 | Migrate `seed.py` SSI data to CSV/JSON | Backend | 1,863-line Python data file → `app/data/ssi.csv` |
 
 ---

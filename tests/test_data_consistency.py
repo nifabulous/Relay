@@ -132,6 +132,12 @@ class TestSettlementDirectoryShape:
             if aba:
                 assert len(aba) == 9 and aba.isdigit(), f"{prefix}: ABA {aba!r}"
 
+    def test_every_entry_names_its_bank(self):
+        """`bank_name` keeps each directory entry self-describing."""
+        for prefix, ids in SETTLEMENT_DIRECTORY.items():
+            name = ids.get("bank_name")
+            assert name and name.strip(), f"{prefix}: entry has no bank_name"
+
     def test_aba_checksums_are_valid(self):
         """ABA routing numbers carry a 3-7-1 weighted checksum — verify it."""
         for prefix, ids in SETTLEMENT_DIRECTORY.items():
