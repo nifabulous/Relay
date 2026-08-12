@@ -4,6 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { PracticePage } from "./PracticePage";
 import { loadPracticeState, dayKey } from "./practiceStore";
+import {
+  createTestSink,
+  resetAnalyticsSink,
+  setAnalyticsSink,
+} from "../../../lib/analytics/analytics";
 
 function renderPage() {
   const user = userEvent.setup();
@@ -28,6 +33,7 @@ async function answerCurrent(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   localStorage.clear();
+  resetAnalyticsSink();
   // Seed a learner with several completed modules so the pool supports a
   // full five-question drill.
   localStorage.setItem(
@@ -80,6 +86,49 @@ describe("PracticePage", () => {
     }
     // Explanation feedback is visible
     expect(fieldset.querySelector(".lab-multiple-choice__feedback")).not.toBeNull();
+  });
+
+  it("captures bounded telemetry for a practice drill", async () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    const { user } = renderPage();
+
+    await user.click(screen.getByRole("button", { name: /start today's five/i }));
+    expect(sink.events).toContainEqual({
+      name: "practice_started",
+      properties: { question_count: 5 },
+    });
+
+    await answerCurrent(user);
+    expect(sink.events).toContainEqual({
+      name: "question_answered",
+      properties: expect.objectContaining({
+        surface: "practice",
+        question_id: expect.any(String),
+        correct: expect.any(Boolean),
+        attempt_index: 1,
+      }),
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      if (i > 1) await answerCurrent(user);
+      const nextLabel = i < 5 ? /next question/i : /finish drill/i;
+      await user.click(screen.getByRole("button", { name: nextLabel }));
+    }
+
+    expect(sink.events).toContainEqual({
+      name: "practice_completed",
+      properties: expect.objectContaining({
+        question_count: 5,
+        correct_count: expect.any(Number),
+      }),
+    });
+    const completed = sink.events.find((event) => event.name === "practice_completed");
+    if (!completed || completed.name !== "practice_completed") {
+      throw new Error("expected practice_completed telemetry");
+    }
+    expect(completed.properties.correct_count).toBeGreaterThanOrEqual(0);
+    expect(completed.properties.correct_count).toBeLessThanOrEqual(5);
   });
 
   it("offers 'practice again' once today's drill is done", async () => {
