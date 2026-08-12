@@ -19,6 +19,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     restoreMocks: true,
+    // Keep the full suite below the host's eight logical cores. Running one
+    // jsdom worker per core starves lazy imports and userEvent timers enough
+    // to make otherwise-fast tests miss their async deadlines.
+    maxWorkers: 4,
     // Async UI tests (waitFor/userEvent) can exceed the 5s default when many
     // jsdom workers contend for CPU under the full-suite parallel run; they
     // pass comfortably in isolation. Give them headroom so the suite is not

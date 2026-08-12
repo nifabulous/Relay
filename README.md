@@ -36,7 +36,7 @@ These numbers were run against the current checkout on 2026-08-12:
 | Metric | Result |
 |---|---|
 | Backend tests | **659 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **925 passed** (`cd frontend && npm test -- --run`) |
+| Frontend unit/integration tests | **941 passed** (`cd frontend && npm test -- --run`) |
 | Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,387 bytes gzip** (budget: 204,800 bytes) |
@@ -68,7 +68,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 | Metric | Value |
 |---|---|
 | Backend tests | 659 passing |
-| Frontend tests | 925 passing |
+| Frontend tests | 941 passing |
 | E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,387 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |

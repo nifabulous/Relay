@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-12 · **Verified locally:** 659 backend + 925 frontend + 289 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Verified locally:** 659 backend + 941 frontend + 289 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -168,7 +168,7 @@ The next contribution slice is content-led rather than a rebuild:
 | Dimension | Phase 0 | Phase 1 | Phase 2 | Phase 3-4 | Current |
 |---|---|---|---|---|---|
 | Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ Maintained |
-| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 659 backend + 925 frontend + 289 chromium E2E (11 intentional skips) |
+| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 659 backend + 941 frontend + 289 chromium E2E (11 intentional skips) |
 | CI | ❌ | ✅ GitHub Actions | ✅ + Vitest | ✅ + Playwright | ✅ Full pipeline |
 | Auth | ❌ | ✅ admin_required | ✅ | ✅ | ✅ |
 | Security | ❌ Real accounts | ✅ ACCT- placeholders | ✅ | ✅ | ✅ |
