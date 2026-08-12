@@ -267,3 +267,54 @@ class TestVietcombankBicIsCorrect:
         assert ("BFTVVNVXXXX", "Vietcombank") in vnd_rules, (
             f"USD->VN corridor must clear through Vietcombank's own BIC: {vnd_rules}"
         )
+
+
+# ---------------------------------------------------------------------------
+# UBA francophone/West-Africa subsidiary SSIs
+# ---------------------------------------------------------------------------
+#
+# ubagroup.com publishes a "swift-code" PDF family (archived 2021) covering
+# Nigeria, Kenya, Uganda, Senegal, Tanzania (already seeded) plus Liberia,
+# Benin, Guinea-Conakry. Each prints the USD correspondent through Citibank
+# New York (CITIUS33, ABA 021000089). The PDFs contradict earlier guessed
+# BICs (Liberia is UNAFLRLM, not UNAFLRLR; Guinea is UBAGGNCN, not
+# UNAFGNGC) — pin the printed values. Côte d'Ivoire, Cameroon, Ghana,
+# Sierra Leone, Gabon publish no such PDF — they stay corridor-heuristic.
+UBA_SUBSIDIARY_SSI_COVERAGE = [
+    ("UNAFLRLMXXX", "UBA Liberia", {"USD"}),
+    ("COBBBJBJXXX", "UBA Benin", {"USD"}),
+    ("UBAGGNCNXXX", "UBA Guinea", {"USD"}),
+]
+
+
+class TestUbaSubsidiarySsiCoverage:
+    def test_uba_subsidiaries_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in UBA_SUBSIDIARY_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_uba_subsidiaries_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in UBA_SUBSIDIARY_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"UBA subsidiary SSI beneficiaries must also be seeded in BANKS: {missing}"
+        )
+
+    def test_printed_bics_are_used_not_guesses(self):
+        """The archive-verified PDFs print different BICs than the earlier
+        guesses — never re-introduce the guessed values."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "UNAFLRLRXXX" not in bank_bics, "Guessed UBA Liberia BIC is wrong"
+        assert "UNAFGNGCXXX" not in bank_bics, "Guessed UBA Guinea BIC is wrong"
+        assert "UNAFLRLMXXX" in bank_bics and "UBAGGNCNXXX" in bank_bics, (
+            "Printed BICs must be present"
+        )

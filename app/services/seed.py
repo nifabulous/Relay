@@ -45,6 +45,9 @@ BANKS = [
     ("UNAFSNDAXXX", "UBA Senegal", "SN", "Dakar", "XOF"),
     ("UNAFTZTZXXX", "UBA Tanzania", "TZ", "Dar es Salaam", "TZS"),
     ("UNAFUGKAXXX", "UBA Uganda", "UG", "Kampala", "UGX"),
+    ("UNAFLRLMXXX", "UBA Liberia", "LR", "Monrovia", "LRD"),
+    ("COBBBJBJXXX", "UBA Benin", "BJ", "Cotonou", "XOF"),
+    ("UBAGGNCNXXX", "UBA Guinea", "GN", "Conakry", "GNF"),
     # ---- Asia-Pacific (destinations) ----
     ("BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi UFJ (MUFG)", "JP", "Tokyo", "JPY"),
     ("SMBCJPJTXXX", "Sumitomo Mitsui Banking Corp (SMBC)", "JP", "Tokyo", "JPY"),
@@ -1857,6 +1860,22 @@ SSI_RECORDS = [
      "SCBLUS33XXX", "Standard Chartered Bank New York",
      "ACCT-3582025130001", "ACCT-00573", "SHA", "spot",
      "Source: UBA subsidiary SWIFT Codes PDF. Sort Code 038601. " + _SSI_REAL_NOTE),
+
+    # ---- UBA Liberia / Benin / Guinea — swift-code PDF family (archived 2021) ----
+    # Each prints USD through Citibank New York (CITIUS33, ABA 021000089).
+    # The PDFs contradict earlier guessed BICs — the printed values are used.
+    ("UNAFLRLMXXX", "UBA Liberia", "USD",
+     "CITIUS33XXX", "Citibank N.A. New York",
+     "ACCT-36327566", "ACCT-00574", "SHA", "spot",
+     "Source: UBA Liberia SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE),
+    ("COBBBJBJXXX", "UBA Benin", "USD",
+     "CITIUS33XXX", "Citibank N.A. New York",
+     "ACCT-36328366", "ACCT-00575", "SHA", "spot",
+     "Source: UBA Benin SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE),
+    ("UBAGGNCNXXX", "UBA Guinea", "USD",
+     "CITIUS33XXX", "Citibank N.A. New York",
+     "ACCT-36327566", "ACCT-00576", "SHA", "spot",
+     "Source: UBA Guinea SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE),
 
     # ====================================================================
     # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
