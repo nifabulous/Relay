@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-12 · **Verified locally:** 630 backend + 898 frontend + 271 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Verified locally:** 657 backend + 922 frontend + 289 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -122,7 +122,7 @@ The next contribution slice is content-led rather than a rebuild:
 1. Case Desk learner research: five scenarios are authored (CA→US, UK→DE, NG→UK, US→MX, US→NG); observe how learners use them before adding more.
 2. ~~Add sanctions-screening content as the next technical track.~~ ✅ Done (module 13).
 3. ~~Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.~~ ✅ Done (modules 14 and 15).
-4. Extend practice questions (bank is at 50) and expose review outcomes through telemetry/assessment reporting.
+4. Extend practice questions (bank is at 52) and expose review outcomes through telemetry/assessment reporting.
 
 ### From the 20-expert review — prioritized
 
@@ -168,7 +168,7 @@ The next contribution slice is content-led rather than a rebuild:
 | Dimension | Phase 0 | Phase 1 | Phase 2 | Phase 3-4 | Current |
 |---|---|---|---|---|---|
 | Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ Maintained |
-| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 615 backend + 888 frontend + 271 chromium E2E (11 intentional skips) |
+| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 657 backend + 922 frontend + 289 chromium E2E (11 intentional skips) |
 | CI | ❌ | ✅ GitHub Actions | ✅ + Vitest | ✅ + Playwright | ✅ Full pipeline |
 | Auth | ❌ | ✅ admin_required | ✅ | ✅ | ✅ |
 | Security | ❌ Real accounts | ✅ ACCT- placeholders | ✅ | ✅ | ✅ |

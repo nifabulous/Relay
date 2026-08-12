@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-12 · **Current verification:** 630 backend + 898 frontend + 271 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Current verification:** 657 backend + 922 frontend + 289 chromium E2E passing (11 intentional skips) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -54,7 +54,7 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
   surfaces remain available for parity and rollback.
 - Modules 13–15 shipped: Sanctions Screening (`/api/screen`), Exceptions & Returns
   (rejects/returns/recalls on the tracking simulator), and The Ops Desk (STP repair +
-  Nostro reconciliation). The practice bank grew to 50 questions covering every module.
+  Nostro reconciliation). The practice bank grew to 52 questions covering every module.
 
 ---
 

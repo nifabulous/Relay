@@ -35,12 +35,12 @@ These numbers were run against the current checkout on 2026-08-12:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **630 passed** (`.venv/bin/python -m pytest tests/ -q`) |
-| Frontend unit/integration tests | **898 passed** with file parallelism disabled |
-| Playwright E2E | **271 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
+| Backend tests | **657 passed** (`.venv/bin/python -m pytest tests/ -q`) |
+| Frontend unit/integration tests | **922 passed** with file parallelism disabled |
+| Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **127,138 bytes gzip** (budget: 204,800 bytes) |
-| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (50-question bank) |
+| Eager shell bundle | **127,387 bytes gzip** (budget: 204,800 bytes) |
+| Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
 | Backend API endpoints | **22** |
 
 The frontend suite is currently verified with file parallelism disabled because the preferred-tier
@@ -64,10 +64,10 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 630 passing |
-| Frontend tests | 898 passing in serial file mode |
-| E2E tests (Playwright) | 271 passing on the six chromium projects (11 intentional skips) |
-| Eager shell bundle | 127,138 bytes gzip (budget: 204,800 bytes) |
+| Backend tests | 657 passing |
+| Frontend tests | 922 passing in serial file mode |
+| E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
+| Eager shell bundle | 127,387 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
 | Backend API endpoints | 22 |
@@ -206,7 +206,7 @@ the case is an applied scenario and is not counted in the curriculum total.
 
 Every lab now gates completion on at least one correct answer — opening demos alone never
 completes a module. A daily five-question drill at `/app/learn/practice` draws from completed
-modules (from a 50-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
+modules (from a 52-question bank), resurfaces missed questions on a 1/3/7-day review schedule, and tracks streaks locally.
 
 ### Four workspaces
 
@@ -270,7 +270,7 @@ lesson scripts:
    Exceptions & Returns (module 14, earning "Exception Handler"), and the Ops Desk
    (module 15, STP repair + Nostro recon, earning "Ops Ready").
 6. **Grow the retention loop.** The daily drill, spaced review, and streaks shipped
-   (`frontend/src/features/learn/practice/`). The question bank has 50 questions —
+   (`frontend/src/features/learn/practice/`). The question bank has 52 questions —
    extend it as modules deepen, and consider surfacing review stats in telemetry.
 
 ### What is intentionally not finished

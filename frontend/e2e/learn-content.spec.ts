@@ -1,8 +1,15 @@
 import { test, expect } from "@playwright/test";
 
+import { CURRICULUM } from "../src/features/learn/curriculum";
+
+// Derived from the curriculum rather than hardcoded: a hardcoded list silently
+// stopped covering modules 13-15 when they shipped, so every module added from
+// here on is pre-completed (and swept for placeholder text) automatically.
+const ALL_MODULE_IDS = CURRICULUM.map((m) => m.id);
+
 test.beforeEach(async ({ page }) => {
-  // Pre-complete all labs so no module is prerequisite-locked
-  await page.addInitScript(() => {
+  // Pre-complete every module so nothing is prerequisite-locked
+  await page.addInitScript((moduleIds: string[]) => {
     localStorage.setItem("relay:preferences", JSON.stringify({
       schemaVersion: 1,
       reducedMotion: false,
@@ -11,10 +18,10 @@ test.beforeEach(async ({ page }) => {
     }));
     localStorage.setItem("relay:progress", JSON.stringify({
       schemaVersion: 1,
-      completedModuleIds: ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7", "lab-8", "lab-9", "gbp-eur-rails", "cad-rails", "capstone"],
+      completedModuleIds: moduleIds,
     }));
     localStorage.setItem("relay:legacy-imported", "1");
-  });
+  }, ALL_MODULE_IDS);
 });
 
 test.describe("Lab content parity", () => {
@@ -156,12 +163,46 @@ test.describe("Lab content parity", () => {
     await expect(page.getByRole("button", { name: /start today's five|practice again/i })).toBeVisible();
   });
 
+  test("Sanctions module renders the decision bands and screening demo", async ({ page }) => {
+    await page.goto("/app/learn/sanctions", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /three bands, three outcomes/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /screen a payment/i })).toBeVisible();
+    // The bands must not overlap at 0.90 — the backend classifies it HARD_HIT.
+    await expect(page.locator(".lab-table").getByText("0.75 – < 0.90")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /false-positive problem/i })).toBeVisible();
+  });
+
+  test("Exceptions & Returns module renders rejects, returns, and recalls", async ({ page }) => {
+    await page.goto("/app/learn/exceptions-returns", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /watch a payment die/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /returns: the pacs\.004/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /recalls: asking for your money back/i })).toBeVisible();
+  });
+
+  test("Ops Desk module renders the repair queue and Nostro reconciliation", async ({ page }) => {
+    await page.goto("/app/learn/ops-repair", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator(".lab-content")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /workflow 1: the repair queue/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /workflow 2: nostro reconciliation/i })).toBeVisible();
+  });
+
   test("No module shows placeholder text", async ({ page }) => {
-    for (const labId of ["lab-1", "lab-2", "lab-3", "lab-4", "lab-5", "lab-6", "lab-7"]) {
+    // Sweeps every curriculum entry, not a hardcoded subset.
+    for (const labId of ALL_MODULE_IDS) {
       await page.goto(`/app/learn/${labId}`, { waitUntil: "networkidle" });
       await page.waitForTimeout(1500);
       // The old placeholder sentence must not appear
-      expect(await page.getByText(/covers the fundamentals/i).count()).toBe(0);
+      expect(
+        await page.getByText(/covers the fundamentals/i).count(),
+        `${labId} still shows placeholder text`,
+      ).toBe(0);
+      // Every module must actually render lab content, not an empty shell.
+      await expect(page.locator(".lab-content"), `${labId} rendered no lab content`).toBeVisible();
     }
   });
 });
