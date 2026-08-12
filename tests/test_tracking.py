@@ -101,7 +101,8 @@ class TestGenerateTimeline:
         sent = float(events[0].amount)
         final = float(events[-1].amount)
         assert final < sent, "Fees should be deducted for SHA"
-        assert final == pytest.approx(sent - 2.50, abs=0.01)
+        # Citi's seeded USD lift fee — the same number the fee simulator uses.
+        assert final == pytest.approx(sent - 15.00, abs=0.01)
 
     def test_our_charge_no_fee_deduction(self, db_session):
         """OUR charges mean the sender pays all fees — beneficiary gets full amount."""
@@ -236,7 +237,7 @@ class TestGetPaymentStatus:
             currency="USD", amount=5000.00, charge_code="SHA",
         )
         status = get_payment_status(db_session, uetr)
-        assert status["total_fees"] == pytest.approx(2.50, abs=0.01)
+        assert status["total_fees"] == pytest.approx(15.00, abs=0.01)
 
     def test_returns_none_for_unknown_uetr(self, db_session):
         status = get_payment_status(db_session, "00000000-0000-0000-0000-000000000000")

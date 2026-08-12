@@ -47,11 +47,20 @@ class FeeResult:
     sender_pays_extra: float = 0.0  # for OUR: fees the sender pays on top
 
 
-def _get_lift_fee(intermediary_bic: str, currency: str) -> float:
-    """Look up the lift fee for a given intermediary + currency."""
-    # Try exact match first
+def get_lift_fee(intermediary_bic: str, currency: str) -> float:
+    """
+    Look up the lift fee for a given intermediary + currency.
+
+    BICs match on the 8-character institution prefix, so an 8-char BIC
+    ("CITIUS33") finds the seeded 11-char entry ("CITIUS33XXX") and any
+    branch BIC resolves to its institution's fee. This is the SINGLE lift-fee
+    lookup — the fee simulator and the tracking timeline both use it, so the
+    two surfaces can never disagree about what a hop deducts.
+    """
+    prefix = (intermediary_bic or "").strip().upper()[:8]
+    # Try institution match first
     for bic, name, ccy, fee, fee_type in LIFT_FEES:
-        if bic == intermediary_bic and ccy == currency:
+        if bic[:8] == prefix and ccy == currency:
             return fee
     # Fall back to generic
     for bic, name, ccy, fee, fee_type in LIFT_FEES:
@@ -59,6 +68,10 @@ def _get_lift_fee(intermediary_bic: str, currency: str) -> float:
             return fee
     # Ultimate fallback
     return 15.00
+
+
+# Backwards-compatible alias for existing internal callers.
+_get_lift_fee = get_lift_fee
 
 
 def simulate_fees(
