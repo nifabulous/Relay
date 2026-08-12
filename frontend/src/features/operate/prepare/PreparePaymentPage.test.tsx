@@ -98,6 +98,54 @@ describe("PreparePaymentPage form accessibility", () => {
     expect(screen.getByText("Correspondent Routing (heuristic)")).toBeVisible();
     expect(screen.getByText("Needs attention")).toBeVisible();
   });
+
+  it("labels published SSI correspondents as published, not as heuristic guesses", async () => {
+    // Regression: prepare-payment used to discard the routing basis, so a
+    // bank's own published correspondents rendered under a "heuristic"
+    // heading as "possible options" — the opposite of what they are.
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "PROCEED",
+        reason: "Illustrative result",
+        is_blocking: false,
+        uetr: "test-uetr",
+        validation: { valid: true, bic: "SBININBBXXX", errors: [] },
+        vop: { outcome: "MATCH", score: 1, advice: "Matches" },
+        routing: {
+          beneficiary_country: "IN",
+          inferred_currency: "INR",
+          routing_basis: "published-ssi",
+          suggested_intermediaries: [
+            { bic: "CITIUS33XXX", bank: "Citibank", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+            { bic: "CHASUS33XXX", bank: "JPMorgan", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+            { bic: "BOFAUS3NXXX", bank: "Bank of America", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+            { bic: "BKTRUS33XXX", bank: "Deutsche Bank Trust", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+            { bic: "SCBLUS33XXX", bank: "Standard Chartered", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+            { bic: "IRVTUS3NXXX", bank: "BNY Mellon", corridor: "USD->IN", confidence: "high", basis: "published-ssi" },
+          ],
+        },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: ["Simulation"],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Correspondent Routing (published)")).toBeVisible();
+    });
+    expect(screen.getByText(/published correspondent\(s\) from the beneficiary bank/i)).toBeVisible();
+    expect(screen.queryByText("Correspondent Routing (heuristic)")).toBeNull();
+    // All six render — the old five-item cap silently dropped published rows.
+    const list = document.querySelector(".prepare-payment__intermediaries");
+    expect(list?.querySelectorAll("li")).toHaveLength(6);
+    expect(list?.textContent).toContain("IRVTUS3NXXX");
+  });
 });
 
 describe("PreparePaymentPage result cross-links", () => {

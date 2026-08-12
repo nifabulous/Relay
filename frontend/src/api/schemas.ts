@@ -224,6 +224,9 @@ const PrepareRoutingSchema = z
     beneficiary_country: safeOptionalString,
     inferred_currency: safeOptionalString,
     suggested_intermediaries: z.array(SuggestedIntermediarySchema).catch([]),
+    routing_basis: z
+      .enum(["published-ssi", "corridor-heuristic"])
+      .catch("corridor-heuristic"),
   })
   .passthrough();
 
@@ -256,6 +259,9 @@ export const PreparePaymentResponseSchema = z
       beneficiary_country: undefined,
       inferred_currency: undefined,
       suggested_intermediaries: [],
+      // Fall back to the weaker claim: an unparseable response must never be
+      // presented as the bank's published instruction.
+      routing_basis: "corridor-heuristic",
     }),
     ssi: PrepareSSISchema.catch({
       instructions: [],

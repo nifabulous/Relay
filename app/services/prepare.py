@@ -36,6 +36,7 @@ from .routing import (
     _normalize_bic_input,
     infer_destination_currency,
     lookup_bank,
+    suggest_intermediaries,
     suggest_route,
 )
 from .tracking import generate_uetr
@@ -158,17 +159,27 @@ def prepare_payment(
     if not dest_country and len(iban) >= 2:
         dest_country = iban[:2]
     inferred_currency = infer_destination_currency(currency, bank, dest_country)
-    intermediaries, _routing_basis = suggest_route(
-        session,
-        beneficiary_bic_11=bic_11 or "",
-        settlement_currency=currency,
-        destination_currency=inferred_currency,
-        destination_country=dest_country,
-    )
+    if bic_11:
+        intermediaries, routing_basis = suggest_route(
+            session,
+            beneficiary_bic_11=bic_11,
+            settlement_currency=currency,
+            destination_currency=inferred_currency,
+            destination_country=dest_country,
+        )
+    else:
+        # No BIC means no bank to look published instructions up against, so
+        # skip the three SSI probes an empty string would run and go straight
+        # to the corridor heuristic.
+        intermediaries = suggest_intermediaries(
+            session, inferred_currency, dest_country
+        )
+        routing_basis = "corridor-heuristic"
     routing_info = PrepareRoutingInfo(
         beneficiary_country=dest_country,
         inferred_currency=inferred_currency,
         suggested_intermediaries=intermediaries,
+        routing_basis=routing_basis,
     )
 
     # ----- Layer 4: SSI -----

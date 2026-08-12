@@ -423,3 +423,43 @@ class TestPrepareEndpoint:
         assert body["vop"]["outcome"] == "MATCH"
         # Should have routing suggestions for the NG corridor
         assert len(body["routing"]["suggested_intermediaries"]) >= 1
+    def test_published_ssi_routing_is_labelled_as_published(self, client):
+        """A bank with published SSIs must not have them reported as heuristic.
+
+        prepare-payment previously discarded the routing basis, so the UI
+        rendered a bank's authoritative published correspondents under a
+        "heuristic" heading. The response now carries the basis so callers can
+        tell a published instruction from a corridor guess.
+        """
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "IN20SBIN0000123456789012",
+            "beneficiary_name": "Test Beneficiary",
+            "beneficiary_bic": "SBININBBXXX",
+            "currency": "USD",
+            "amount": 1000,
+        })
+        assert r.status_code == 200
+        routing = r.json()["routing"]
+        assert routing["routing_basis"] == "published-ssi"
+        assert routing["suggested_intermediaries"]
+        assert all(
+            i["basis"] == "published-ssi"
+            for i in routing["suggested_intermediaries"]
+        )
+
+    def test_corridor_routing_is_labelled_as_heuristic(self, client):
+        """A bank with no published SSIs still reports the heuristic basis.
+
+        ABNANL2AXXX is seeded in the bank directory but carries no SSI rows,
+        so this exercises the fallback path rather than the published one.
+        """
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "NL91ABNA0417164300",
+            "beneficiary_name": "Test Beneficiary",
+            "beneficiary_bic": "ABNANL2AXXX",
+            "currency": "EUR",
+            "amount": 1000,
+        })
+        assert r.status_code == 200
+        routing = r.json()["routing"]
+        assert routing["routing_basis"] == "corridor-heuristic"

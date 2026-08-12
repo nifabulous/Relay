@@ -217,6 +217,10 @@ class PrepareRoutingInfo(BaseModel):
     beneficiary_country: Optional[str] = None
     inferred_currency: Optional[str] = None
     suggested_intermediaries: List[IntermediarySuggestion] = Field(default_factory=list)
+    # Where the chain above came from. Mirrors RouteResponse.source so a caller
+    # can tell a bank's published correspondents from a corridor guess without
+    # inspecting every item's `basis`.
+    routing_basis: str = "corridor-heuristic"  # published-ssi | corridor-heuristic
 
 
 class PrepareSSIInfo(BaseModel):

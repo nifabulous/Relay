@@ -270,15 +270,33 @@ export function PreparePaymentPage() {
             )}
           </CheckResult>
 
+          {/* Published settlement instructions are authoritative — the bank
+              named these correspondents itself. Corridor guesses are not.
+              Label them differently, and never call a published instruction a
+              "possible option". */}
           <CheckResult
-            title="Correspondent Routing (heuristic)"
-            status={result.routing.suggested_intermediaries.length > 0 ? "needs_attention" : "unavailable"}
+            title={
+              result.routing.routing_basis === "published-ssi"
+                ? "Correspondent Routing (published)"
+                : "Correspondent Routing (heuristic)"
+            }
+            status={
+              result.routing.suggested_intermediaries.length === 0
+                ? "unavailable"
+                : result.routing.routing_basis === "published-ssi"
+                  ? "passed"
+                  : "needs_attention"
+            }
           >
             {result.routing.suggested_intermediaries.length > 0 ? (
               <>
-                <p>{result.routing.suggested_intermediaries.length} possible correspondent option(s):</p>
+                <p>
+                  {result.routing.routing_basis === "published-ssi"
+                    ? `${result.routing.suggested_intermediaries.length} published correspondent(s) from the beneficiary bank's settlement instructions:`
+                    : `${result.routing.suggested_intermediaries.length} possible correspondent option(s):`}
+                </p>
                 <ul className="prepare-payment__intermediaries">
-                  {result.routing.suggested_intermediaries.slice(0, 5).map((inter, i) => (
+                  {result.routing.suggested_intermediaries.map((inter, i) => (
                     <li key={i}>
                       <span className="mono">{inter.bic}</span> — {String(inter.bank ?? "Unknown")}
                       <span className="prepare-payment__confidence">{inter.confidence}</span>
