@@ -13,11 +13,17 @@ export function LearnModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>();
   const [completed, setCompleted] = useState<string[]>(() => loadProgress().completedModuleIds);
   const reportedCompletedIdsRef = useRef(new Set(completed));
+  const lastViewedModuleIdRef = useRef<string | undefined>(undefined);
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
 
   useEffect(() => {
-    if (!mod) return;
+    if (!mod) {
+      lastViewedModuleIdRef.current = undefined;
+      return;
+    }
+    if (lastViewedModuleIdRef.current === mod.id) return;
+    lastViewedModuleIdRef.current = mod.id;
     track("module_viewed", { module_id: mod.id });
     if (!completed.includes(mod.id)) {
       track("module_started", { module_id: mod.id });

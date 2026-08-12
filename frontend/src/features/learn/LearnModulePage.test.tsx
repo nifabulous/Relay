@@ -107,12 +107,30 @@ describe("LearnModulePage analytics", () => {
         { name: "module_started", properties: { module_id: "lab-2" } },
       ]);
     });
+
+    fireEvent.click(screen.getByRole("link", { name: /Identifiers: BICs & IBANs/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Identifiers: BICs & IBANs" })).toBeInTheDocument();
+      expect(sink.events.at(-1)).toEqual({
+        name: "module_viewed",
+        properties: { module_id: "lab-1" },
+      });
+      expect(sink.events.filter((event) =>
+        event.name === "module_viewed" && event.properties.module_id === "lab-1"
+      )).toHaveLength(2);
+    });
   });
 
   it("emits module completion once when StrictMode replays state updaters", async () => {
     const sink = createTestSink();
     setAnalyticsSink(sink);
     renderModule("lab-1", true);
+
+    await waitFor(() => {
+      expect(sink.events.filter((event) => event.name === "module_viewed")).toHaveLength(1);
+      expect(sink.events.filter((event) => event.name === "module_started")).toHaveLength(1);
+    });
 
     fireEvent.click(await screen.findByRole("button", { name: "Reach checkpoint" }));
 
