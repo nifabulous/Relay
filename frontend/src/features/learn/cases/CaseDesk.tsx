@@ -242,6 +242,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (text !== current.draft.customerExpectation) {
       const next = caseReducer(current, { type: "edit-draft", patch: { customerExpectation: text } });
       if (next !== current) {
+        draftEditPendingRef.current = true;
         dispatch({ type: "edit-draft", patch: { customerExpectation: text } });
         persist(next);
       }
@@ -625,6 +626,9 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       //    in-memory state matches the persisted snapshot. The reducer is
       //    deterministic, so re-running it from the same inputs yields `next`.
       if (next !== flushedSession) {
+        if (flushedSession !== session) {
+          draftEditPendingRef.current = true;
+        }
         reportPendingDraftEdit();
         if (flushedSession !== session) {
           dispatch({ type: "edit-draft", patch: { customerExpectation: flushedText } });
@@ -950,7 +954,6 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onExplanationChange={(text) => {
             setExplanationText(text);
             scheduleExplanationPersist(text);
-            draftEditPendingRef.current = true;
           }}
           onExplanationBlur={() => {
             if (explanationTimerRef.current !== null) {

@@ -214,6 +214,24 @@ describe("CaseDesk — bounded learner-research telemetry", () => {
     ]));
   });
 
+  it("does not report an explanation edit that reverts before the reducer advances", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    seedStartedSession();
+    renderDesk();
+
+    const explanation = screen.getByRole("textbox", {
+      name: /what should the customer expect/i,
+    });
+    fireEvent.change(explanation, { target: { value: "temporary edit" } });
+    fireEvent.change(explanation, { target: { value: "" } });
+    fireEvent.blur(explanation);
+
+    expect(sink.events.filter(
+      (event) => event.name === "case_action" && event.properties.action === "edit-draft",
+    )).toHaveLength(0);
+  });
+
   it("captures bounded terminal events without authored or learner-entered content", async () => {
     const user = userEvent.setup();
     const sink = createTestSink();
@@ -253,6 +271,7 @@ describe("CaseDesk — bounded learner-research telemetry", () => {
       "customerExpectation",
       "diagnosis",
       "reasons",
+      "reasoning",
       "account",
       "name",
       "PRIVATE_REASON_SENTINEL",
