@@ -21,7 +21,7 @@ than letting the list grow.
 """
 
 from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_ids
-from app.services.seed import CORRIDOR_RULES, SSI_RECORDS
+from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
 
 # US-located USD intermediaries whose CHIPS/ABA identifiers are not yet
 # verified against public sources. Do NOT add entries here to silence a
@@ -118,3 +118,61 @@ class TestSettlementDirectoryShape:
     def test_lookup_normalizes_case_and_length(self):
         assert get_settlement_ids("citius33xxx") == SETTLEMENT_DIRECTORY["CITIUS33"]
         assert get_settlement_ids("CITIUS33") == SETTLEMENT_DIRECTORY["CITIUS33"]
+
+
+# ---------------------------------------------------------------------------
+# Africa SSI coverage expansion
+# ---------------------------------------------------------------------------
+#
+# The training audience is African banking (Nigeria, Kenya, Ghana, South
+# Africa, francophone West/Central Africa). SSI coverage must keep growing
+# for that corridor set. These invariants pin the banks added from published
+# sources — one tuple per beneficiary: BIC, name, currencies with seeded
+# records (at-least semantics — more currencies are fine).
+#
+# Sourced from bank-published pages / archived copies:
+#   - Bank of Kigali  — bk.rw correspondent-banks page
+#   - Equity Bank KE  — equitygroupholdings.com SWIFT-transfer page (2020)
+#   - UBA group       — "Nigeria SWIFT Codes" PDF family (archived 2021)
+#   - MCB Mauritius   — mcb.mu correspondent-banking page (BICs, no accounts)
+AFRICA_SSI_COVERAGE = [
+    ("BKRWRWRWXXX", "Bank of Kigali", {"USD", "EUR", "GBP", "KES", "TZS", "UGX", "ZAR", "AED"}),
+    ("EQBLKENAXXX", "Equity Bank", {"USD", "EUR", "GBP", "ZAR", "JPY", "CAD", "AUD", "CHF"}),
+    ("UNAFNGLAXXX", "United Bank for Africa", {"USD", "EUR", "GBP"}),
+    ("UNAFKENAXXX", "UBA Kenya", {"USD"}),
+    ("UNAFUGKAXXX", "UBA Uganda", {"USD"}),
+    ("UNAFSNDAXXX", "UBA Senegal", {"USD"}),
+    ("UNAFTZTZXXX", "UBA Tanzania", {"USD"}),
+    ("MCBLMUMUXXX", "MCB Group", {"USD", "EUR", "GBP", "ZAR", "JPY"}),
+]
+
+
+class TestAfricaSsiCoverage:
+    def test_african_beneficiaries_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            ben_bic = record[0]
+            seeded.setdefault(ben_bic, set()).add(record[2])
+        for bic, name, currencies in AFRICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_african_beneficiaries_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in AFRICA_SSI_COVERAGE if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"African SSI beneficiaries must also be seeded in BANKS so Explore "
+            f"can show their settlement instructions: {missing}"
+        )
+
+    def test_francophone_africa_has_usd_coverage(self):
+        """The roadmap names francophone Africa as a training audience."""
+        uba_senegal = [r for r in SSI_RECORDS if r[0] == "UNAFSNDAXXX"]
+        assert any(r[2] == "USD" for r in uba_senegal), (
+            "UBA Senegal (UNAFSNDA) must carry a USD SSI record"
+        )
