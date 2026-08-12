@@ -492,3 +492,66 @@ class TestLatinAmericaSsiCoverage:
         assert itau_records == [], (
             "Itaú publishes no correspondent SSIs; do not invent them"
         )
+
+
+# ---------------------------------------------------------------------------
+# Asia-Pacific (deep) SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Second Asia pass: Taiwan, Hong Kong and Vietnam branches of CTBC, Cathay
+# United Bank (Taiwan), and Bangkok Bank's own New York branch routing.
+# Sources: ctbcbank.com archived Nostro tables (2024 DOCX, 2025 PDF),
+# cathaybk.com.tw inward-remittance page (archived 2016), bangkokbank.com
+# New York branch pages (2025). All BIC-only (no account numbers printed
+# except CTBC VN's SSI circular, whose accounts are masked).
+#
+# Corrections pinned: Cathay United is UWCBTWTP, NOT the guessed CUBKTWTP;
+# the Wells Fargo New York BIC printed as PNBPUS3NNYC is normalized to the
+# canonical PNBPUS33XXX used elsewhere. Bangkok Bank's USD routing is via
+# its OWN New York branch (ABA 026008691) — the same self-loop pattern as
+# MUFG's existing record.
+ASIA_DEEP_SSI_COVERAGE = [
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", {"USD", "EUR", "GBP", "HKD", "JPY", "AUD", "SGD", "NZD", "CAD", "ZAR", "CNY"}),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", {"USD", "EUR", "JPY", "GBP", "CHF", "AUD", "CAD", "SGD", "ZAR", "NZD", "THB", "CNY"}),
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", {"USD", "EUR"}),
+    ("UWCBTWTPXXX", "Cathay United Bank", {"USD", "HKD", "GBP", "CAD", "JPY", "EUR", "SGD", "AUD", "NZD", "CNY"}),
+    ("BKKBTHBKXXX", "Bangkok Bank", {"USD"}),
+]
+
+
+class TestAsiaDeepSsiCoverage:
+    def test_asian_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in ASIA_DEEP_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_asian_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in ASIA_DEEP_SSI_COVERAGE if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"Asian SSI beneficiaries must also be seeded in BANKS so Explore "
+            f"can show their settlement instructions: {missing}"
+        )
+
+    def test_cathay_united_uses_the_bank_published_bic(self):
+        """Cathay United's own page prints UWCBTWTP; the guessed CUBKTWTP
+        must never be used."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "UWCBTWTPXXX" in bank_bics
+        assert "CUBKTWTPXXX" not in bank_bics, "Guessed Cathay United BIC used"
+
+    def test_wells_fargo_uses_the_canonical_bic(self):
+        """The printed PNBPUS3NNYC is normalized to PNBPUS33XXX (Wells Fargo
+        New York, legacy BIC family) across all records."""
+        for record in SSI_RECORDS:
+            assert record[3] != "PNBPUS3NNYC", (
+                "Normalize the printed Wells Fargo BIC to PNBPUS33XXX"
+            )
