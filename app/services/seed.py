@@ -261,10 +261,10 @@ CORRIDOR_RULES = [
     # USD -> Nigeria
     ("NGN", "NG", "CITIUS33XXX", "Citibank N.A.", "USD->NG", "high", 1),
     ("NGN", "NG", "BOFAUS3NXXX", "Bank of America", "USD->NG", "medium", 2),
-    ("NGN", "NG", "SCBLGB22XXX", "Standard Chartered", "USD->NG", "medium", 3),
+    ("NGN", "NG", "SCBLUS33XXX", "Standard Chartered NY", "USD->NG", "medium", 3),
     # USD -> Kenya
     ("KES", "KE", "CITIUS33XXX", "Citibank N.A.", "USD->KE", "high", 1),
-    ("KES", "KE", "SCBLGB22XXX", "Standard Chartered", "USD->KE", "high", 2),
+    ("KES", "KE", "SCBLUS33XXX", "Standard Chartered NY", "USD->KE", "high", 2),
     # USD -> Ghana
     ("GHS", "GH", "CITIUS33XXX", "Citibank N.A.", "USD->GH", "high", 1),
     ("GHS", "GH", "ECOCGHACXXX", "Ecobank Ghana", "USD->GH", "medium", 2),
@@ -329,16 +329,16 @@ CORRIDOR_RULES = [
     ("VND", "VN", "ICBVVNVXXXX", "Vietcombank", "USD->VN", "medium", 2),
     # BDT -> Bangladesh
     ("BDT", "BD", "CITIUS33XXX", "Citibank N.A.", "USD->BD", "high", 1),
-    ("BDT", "BD", "SCBLGB22XXX", "Standard Chartered", "USD->BD", "medium", 2),
+    ("BDT", "BD", "SCBLUS33XXX", "Standard Chartered NY", "USD->BD", "medium", 2),
     # PKR -> Pakistan
     ("PKR", "PK", "CITIUS33XXX", "Citibank N.A.", "USD->PK", "high", 1),
-    ("PKR", "PK", "SCBLGB22XXX", "Standard Chartered", "USD->PK", "medium", 2),
+    ("PKR", "PK", "SCBLUS33XXX", "Standard Chartered NY", "USD->PK", "medium", 2),
 
     # ---- Middle East corridors ----
     # AED -> UAE
     ("AED", "AE", "CITIUS33XXX", "Citibank N.A.", "USD->AE", "high", 1),
     ("AED", "AE", "EBILAEADXXX", "Emirates NBD", "USD->AE", "high", 2),
-    ("AED", "AE", "SCBLGB22XXX", "Standard Chartered", "USD->AE", "medium", 3),
+    ("AED", "AE", "SCBLUS33XXX", "Standard Chartered NY", "USD->AE", "medium", 3),
     # SAR -> Saudi Arabia
     ("SAR", "SA", "CITIUS33XXX", "Citibank N.A.", "USD->SA", "high", 1),
     ("SAR", "SA", "NCBKSAJEXXX", "Saudi National Bank", "USD->SA", "high", 2),
