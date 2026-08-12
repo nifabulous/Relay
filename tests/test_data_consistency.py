@@ -47,6 +47,10 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Mashreqbank New York (Mashreq's published USD SSI routes through its
+    # own NY branch, MSHQUS33). CHIPS/ABA not verifiable from a public
+    # source. Verify and promote to SETTLEMENT_DIRECTORY before removing.
+    "MSHQUS33",
 }
 
 
@@ -555,3 +559,74 @@ class TestAsiaDeepSsiCoverage:
             assert record[3] != "PNBPUS3NNYC", (
                 "Normalize the printed Wells Fargo BIC to PNBPUS33XXX"
             )
+
+
+# ---------------------------------------------------------------------------
+# Gulf / Middle East SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Third region pass. Three Gulf banks publish usable SSIs:
+#   - Mashreq (MASHAEAD)     — full BIC-only SSI table on its own page
+#                              (mashreq.com standard-settlement-instruction,
+#                              archived 2026); USD via its own NY branch
+#                              MSHQUS33
+#   - Doha Bank (DOHBQAQA)   — 2010 "List of Nostro Accounts" (accounts
+#                              printed, masked here); USD via Citibank NY
+#   - NBK Kuwait (NBOKKWKW)  — 2021 SSI broadcast (IBANs printed, masked
+#                              here); USD via Deutsche Bank Trust / Citi /
+#                              JPMorgan NY
+# FAB, ADCB, DIB, ADIB, QNB, KFH, Al Rajhi, Riyad, SNB, Bank Muscat, NBB
+# and the Turkish HQs publish no usable SSIs — excluded.
+#
+# The seed previously carried three WRONG beneficiary BICs for these banks
+# (NRBMAEAD for Mashreq, DOHAQAQA for Doha, NBOMKWKE for NBK) that match no
+# published source; the bank-published values (MASHAEAD, DOHBQAQA,
+# NBOKKWKW) are pinned below. Mashreq's own page also prints typos
+# (U0VBSGSG, BN0RPHMM, SCBLDEFXXXX) that must never be seeded.
+GULF_SSI_COVERAGE = [
+    ("MASHAEADXXX", "Mashreq Bank", {"USD", "EUR", "GBP", "SAR", "KWD", "BHD", "TRY"}),
+    ("DOHBQAQAXXX", "Doha Bank", {"USD", "EUR", "GBP", "SAR", "AED", "BHD"}),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", {"USD", "EUR", "GBP", "KWD", "QAR", "AED", "SAR"}),
+]
+
+
+class TestGulfSsiCoverage:
+    def test_gulf_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in GULF_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_gulf_banks_use_the_bank_published_bics(self):
+        """The old seed keyed these banks under BICs matching no published
+        source (NRBMAEAD, DOHAQAQA, NBOMKWKE). Pin the bank-published values
+        and forbid the wrong ones."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "MASHAEADXXX" in bank_bics, "Mashreq must be MASHAEAD"
+        assert "DOHBQAQAXXX" in bank_bics, "Doha Bank must be DOHBQAQA"
+        assert "NBOKKWKWXXX" in bank_bics, "NBK must be NBOKKWKW"
+        for wrong in ("NRBMAEADXXX", "DOHAQAQAXXX", "NBOMKWKEXXX"):
+            assert wrong not in bank_bics, f"Wrong BIC {wrong} still in BANKS"
+
+    def test_kuwait_corridor_clears_through_the_published_bic(self):
+        kwd_rules = [
+            bic for _ccy, _country, bic, _name, corridor, _conf, _rank
+            in CORRIDOR_RULES if corridor == "USD->KW"
+        ]
+        assert "NBOKKWKWXXX" in kwd_rules, f"USD->KW must clear via NBOKKWKW: {kwd_rules}"
+        assert "NBOMKWKEXXX" not in kwd_rules
+
+    def test_mashreq_source_typos_are_not_seeded(self):
+        """Mashreq's own page prints U0VBSGSG (UOB), BN0RPHMM (BDO) and
+        SCBLDEFXXXX (SCB Frankfurt) — OCR typos for real BICs. None may
+        appear as an intermediary."""
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[3])
+        for typo in ("U0VBSGSGXXX", "BN0RPHMMXXX", "SCBLDEFXXXX"):
+            assert typo not in used, f"Mashreq-page typo {typo} must not be seeded"
