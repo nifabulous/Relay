@@ -11,16 +11,22 @@ interface CorrespondentOptionsProps {
   options: CorrespondentOption[];
   currency?: string;
   notes?: string;
+  routingBasis?: "published-ssi" | "corridor-heuristic";
 }
 
-export function CorrespondentOptions({ options, currency, notes }: CorrespondentOptionsProps) {
+export function CorrespondentOptions({ options, currency, notes, routingBasis = "corridor-heuristic" }: CorrespondentOptionsProps) {
+  const published = routingBasis === "published-ssi";
   return (
     <div className="correspondent-options" role="group" aria-labelledby="correspondent-options-title">
       <div className="correspondent-options__header">
         <div>
-          <h3 id="correspondent-options-title">Possible correspondent options</h3>
+          <h3 id="correspondent-options-title">
+            {published ? "Published correspondents" : "Possible correspondent options"}
+          </h3>
           <p className="correspondent-options__note">
-            These are candidates, not a confirmed chain. The actual path may use one or more correspondents—or a different bank—depending on your bank&apos;s Nostro relationships.
+            {published
+              ? "This is the beneficiary bank's own published correspondent list — the authoritative instruction, not a guess."
+              : "These are candidates, not a confirmed chain. The actual path may use one or more correspondents—or a different bank—depending on your bank's Nostro relationships."}
           </p>
         </div>
         {currency && <span className="correspondent-options__currency mono">{currency}</span>}
@@ -28,13 +34,15 @@ export function CorrespondentOptions({ options, currency, notes }: Correspondent
 
       <div className="correspondent-options__diagram" aria-hidden="true">
         <span className="correspondent-options__endpoint">Your bank</span>
-        <span className="correspondent-options__bridge">selects from {options.length} candidates</span>
+        <span className="correspondent-options__bridge">
+          {published ? `uses ${options.length} published correspondents` : `selects from ${options.length} candidates`}
+        </span>
         <span className="correspondent-options__endpoint">Beneficiary bank</span>
       </div>
 
       {notes && <p className="correspondent-options__notes">{notes}</p>}
 
-      <h4>Candidate details</h4>
+      <h4>{published ? "Published correspondent details" : "Candidate details"}</h4>
       <table className="correspondent-options__table">
         <thead>
           <tr><th>#</th><th>Bank</th><th>BIC</th><th>Corridor</th><th>Confidence</th></tr>

@@ -189,7 +189,11 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
           <div className="lab-route-result">
             {route.suggested_intermediaries.length > 0 ? (
               <>
-                <p>{route.suggested_intermediaries.length} possible correspondent option(s) found for {currency} → {route.beneficiary_country} (local: {route.currency}):</p>
+                <p>
+                  {route.source === "published-ssi"
+                    ? `${route.suggested_intermediaries.length} published correspondent(s) found`
+                    : `${route.suggested_intermediaries.length} possible correspondent option(s) found`} for {currency} → {route.beneficiary_country} (local: {route.currency}):
+                </p>
 
                 <div className="lab-route-options" role="group" aria-labelledby="lab-route-options-title">
                   <div className="lab-route-options__header">
@@ -209,7 +213,11 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
                   </div>
                   <div className="lab-route-options__diagram" aria-hidden="true">
                     <span className="lab-route-options__endpoint">Your bank</span>
-                    <span className="lab-route-options__bridge">selects from {route.suggested_intermediaries.length} candidates</span>
+                    <span className="lab-route-options__bridge">
+                      {route.source === "published-ssi"
+                        ? `uses ${route.suggested_intermediaries.length} published correspondents`
+                        : `selects from ${route.suggested_intermediaries.length} candidates`}
+                    </span>
                     <span className="lab-route-options__endpoint">Beneficiary bank</span>
                   </div>
                   <p className="lab-route-result__note">{route.notes}</p>

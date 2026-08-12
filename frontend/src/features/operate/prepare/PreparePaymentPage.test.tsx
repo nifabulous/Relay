@@ -141,6 +141,8 @@ describe("PreparePaymentPage form accessibility", () => {
     });
     expect(screen.getByText(/published correspondent\(s\) from the beneficiary bank/i)).toBeVisible();
     expect(screen.queryByText("Correspondent Routing (heuristic)")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /possible correspondent options/i })).toBeNull();
+    expect(screen.getByRole("heading", { name: /published correspondent details/i })).toBeVisible();
     // All six render — the old five-item cap silently dropped published rows.
     const list = document.querySelector(".prepare-payment__intermediaries");
     expect(list?.querySelectorAll("li")).toHaveLength(6);
