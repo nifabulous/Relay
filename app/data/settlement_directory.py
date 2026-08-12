@@ -23,8 +23,6 @@ This file must never contain account numbers.
 
 from typing import Optional
 
-VERIFY_NOTE = "Public settlement identifiers. Verify current values before use."
-
 # 8-char BIC prefix → settlement identifiers.
 # chips_uid: 4-digit CHIPS participant number (The Clearing House)
 # aba: 9-digit ABA routing number (Fedwire)
