@@ -44,7 +44,7 @@ The default sink must not make network requests. This keeps the first implementa
 
 ## Event contract
 
-All event names and properties are a closed TypeScript union. Unknown properties and arbitrary payloads are not accepted by `track`.
+All event names and properties are a closed TypeScript event API. Object literals with unknown properties are rejected at compile time, and runtime sinks receive only events constructed through this API; `track` does not accept arbitrary payloads.
 
 | Event | Required properties | Meaning |
 |---|---|---|
@@ -61,7 +61,7 @@ All event names and properties are a closed TypeScript union. Unknown properties
 | `case_action` | `case_id`, `action` | A bounded research action occurred, such as requesting evidence, opening references, or submitting a recommendation |
 | `case_completed` | `case_id`, `outcome` | Case Desk reached its terminal debrief state |
 
-Allowed property values are identifiers from authored catalogs or small enums. No event may contain names, account numbers, message text, customer explanations, free-form notes, raw URLs, or full state snapshots. `question_id`, `checkpoint_id`, and `case_id` are authored synthetic identifiers, not personal data.
+Allowed property values are identifiers from authored catalogs or small enums. No event properties may contain names, account numbers, message text, customer explanations, free-form notes, raw URLs, or full state snapshots. The envelope's `name` discriminator is the approved event identifier. `question_id`, `checkpoint_id`, and `case_id` are authored synthetic identifiers, not personal data.
 
 An ephemeral random session token may be generated in memory to group events from one browser session. It is not written to localStorage, exported in backups, or treated as a user account identifier. The first implementation may omit the token from the default sink; the event interface must leave room for it so the PostHog adapter can add session-scoped grouping later.
 
@@ -69,9 +69,9 @@ An ephemeral random session token may be generated in memory to group events fro
 
 ### Module funnel
 
-`LearnModulePage` emits `module_viewed` once per mounted module view and `module_started` once when the module is incomplete. Its existing `completeModule` callback emits `module_completed` once, alongside the current local progress and activity writes. `useLabCompletion` remains the source of truth for completion; analytics must not create a second completion state machine. “Once” means once for a given mount/action transition, not once forever across reloads; repeated visits are intentionally observable.
+`LearnModulePage` emits `module_viewed` when `mod?.id` changes and emits `module_started` once when that module is incomplete. This handles route reuse as well as a fresh mount: each module entry is observable, while a missing module emits nothing. Its existing `completeModule` callback emits `module_completed` once, alongside the current local progress and activity writes. `useLabCompletion` remains the source of truth for completion; analytics must not create a second completion state machine. “Once” means once for a given module entry/action transition, not once forever across reloads; repeated visits are intentionally observable.
 
-Each accepted checkpoint emits `checkpoint_reached` once. Extend `useLabCompletion` with an optional `onCheckpointReached(id)` callback and invoke it only after the required-set guard accepts a new checkpoint (`requiredSet.has(id)` and the previous set does not already contain it). This preserves the hook as the completion source of truth and keeps analytics out of individual UI controls.
+Each accepted checkpoint emits `checkpoint_reached` once. Extend `useLabCompletion` with an optional `onCheckpointReached(id)` callback and invoke it only after the required-set guard accepts a new checkpoint (`requiredSet.has(id)` and the previous set does not already contain it). Keep the latest callback in a ref and report newly accepted IDs from an effect, rather than performing the callback as a state-updater side effect. This preserves the hook as the completion source of truth and keeps analytics out of individual UI controls.
 
 ### Practice funnel
 
@@ -79,11 +79,11 @@ Each accepted checkpoint emits `checkpoint_reached` once. Extend `useLabCompleti
 
 ### Case Desk research funnel
 
-`CaseDesk` emits `case_started` on the `start` transition, `case_phase_entered` on phase changes, `case_action` for bounded reducer actions (`request-facts`, `open-reference`, `edit-draft`, `send-recommendation`, `complete-transfer`, and `restart`), and `case_completed` when the debrief becomes terminal. Draft text is never included. The action enum is deliberately coarse enough to support observation without recording the learner's prose reasoning.
+`CaseDesk` emits `case_started` on the `start` transition, `case_phase_entered` on phase changes, `case_action` for bounded reducer actions (`request-facts`, `open-reference`, `edit-draft`, `send-recommendation`, `complete-transfer`, and `restart`), and `case_completed` when the debrief becomes terminal. Each event represents one accepted discrete interaction. `edit-draft` is a coarse, deduplicated event emitted on blur or submit, never on each keystroke; the draft patch handler itself remains uninstrumented. Opening the references sheet emits one `open-reference` action even if the reducer loops over several disclosed facts. Draft text is never included. The action enum is deliberately coarse enough to support observation without recording the learner's prose reasoning.
 
 ### App entry
 
-The Relay shell emits `app_viewed` once per page session. This event is a denominator for the module and Case Desk funnels; it is not a login or identity event.
+The Relay shell emits `app_viewed` once per `App` mount/page-view boundary. This event is a denominator for the module and Case Desk funnels; it is not a login or identity event. Provider adapters may deduplicate page-view events if their SDK runs under development-only remount behavior; tests reset the analytics sink between mounts.
 
 ## Privacy and governance constraints
 
@@ -195,7 +195,7 @@ Prioritize changes observed in at least two sessions or changes that block a par
 
 1. The review fix is committed and the documented test counts match a fresh local run.
 2. Every listed Relay funnel event is emitted from the stated source of truth and duplicate renders do not duplicate once-only events.
-3. TypeScript rejects unknown event names and unapproved properties at compile time.
+3. TypeScript rejects unknown event names and unapproved object-literal properties at compile time.
 4. Tests demonstrate that event payloads contain no free text, account values, names, or full learner state.
 5. The default analytics sink performs no network request and learner backup exports remain unchanged.
 6. The five-case research protocol can be run by another researcher using only the authored case catalog and the rubric above.
