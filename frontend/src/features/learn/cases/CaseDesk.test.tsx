@@ -5,6 +5,13 @@ import { MemoryRouter } from "react-router-dom";
 import { CaseDesk } from "./CaseDesk";
 import type { CaseEnrichment, CaseFact } from "./caseTypes";
 import { createInitialCaseSession, type CaseSession } from "./caseStore";
+import { evaluateRecommendation } from "./caseEvaluator";
+import { supplierCase } from "./caseCatalog";
+import {
+  createTestSink,
+  resetAnalyticsSink,
+  setAnalyticsSink,
+} from "../../../lib/analytics/analytics";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 // The CaseDesk reads/writes localStorage via caseStore. We clear it between
@@ -82,6 +89,189 @@ function renderDesk(props: { enrichment?: CaseEnrichment } = {}) {
 
 beforeEach(() => {
   localStorage.clear();
+});
+
+afterEach(() => {
+  resetAnalyticsSink();
+});
+
+describe("CaseDesk — bounded learner-research telemetry", () => {
+  const requestableFactIds = [
+    "price-sensitivity",
+    "tracking-need",
+    "intermediary",
+    "institution-variation",
+  ];
+
+  function seedReadyToSendSession() {
+    seedStartedSession({
+      requestedFactIds: requestableFactIds,
+      draft: {
+        ...createInitialCaseSession(CASE_ID).draft,
+        shortlist: ["swift-fedwire"],
+        selectedRail: "swift-fedwire",
+        reasons: ["The deadline makes a tracked same-day wire the best fit."],
+        customerExpectation: "Synthetic draft content that must stay private.",
+      },
+    });
+  }
+
+  function seedResolveSession() {
+    const initial = createInitialCaseSession(CASE_ID);
+    const draft = {
+      ...initial.draft,
+      shortlist: ["swift-fedwire"],
+      selectedRail: "swift-fedwire",
+      reasons: ["PRIVATE_REASON_SENTINEL"],
+      customerExpectation: "PRIVATE_CUSTOMER_SENTINEL",
+    };
+    const outcome = evaluateRecommendation(
+      supplierCase,
+      draft,
+      new Set(requestableFactIds),
+    );
+    const session: CaseSession = {
+      ...initial,
+      status: "in_progress",
+      phase: "resolve",
+      requestedFactIds: requestableFactIds,
+      draft,
+      diagnosis: "PRIVATE_DIAGNOSIS_SENTINEL",
+      firstAttempt: {
+        draft,
+        outcome,
+        submittedAt: "2026-08-12T00:00:00.000Z",
+      },
+    };
+    localStorage.setItem(
+      `relay:case-session:${CASE_ID}`,
+      JSON.stringify(session),
+    );
+  }
+
+  it("captures start, accepted fact request, and one reference-sheet open", async () => {
+    const user = userEvent.setup();
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /^start/i }));
+    await user.click(screen.getByRole("checkbox", { name: /fee sensitivity/i }));
+    await user.click(screen.getByRole("button", { name: /request facts/i }));
+    await user.click(screen.getByRole("button", { name: /open all references/i }));
+
+    expect(sink.events).toEqual(expect.arrayContaining([
+      { name: "case_started", properties: { case_id: CASE_ID } },
+      {
+        name: "case_phase_entered",
+        properties: { case_id: CASE_ID, phase: "investigate" },
+      },
+      {
+        name: "case_action",
+        properties: { case_id: CASE_ID, action: "request-facts" },
+      },
+      {
+        name: "case_action",
+        properties: { case_id: CASE_ID, action: "open-reference" },
+      },
+    ]));
+
+    await user.click(screen.getByRole("button", { name: /close reference/i }));
+    await user.click(screen.getByRole("button", { name: /open all references/i }));
+    expect(sink.events.filter(
+      (event) => event.name === "case_action" && event.properties.action === "open-reference",
+    )).toHaveLength(1);
+  });
+
+  it("coalesces draft keystrokes into one edit action and tracks an accepted send", async () => {
+    const user = userEvent.setup();
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    seedReadyToSendSession();
+    renderDesk();
+
+    const reason = screen.getByRole("textbox", { name: /why this rail/i });
+    await user.clear(reason);
+    await user.type(reason, "A bounded edit interaction");
+    expect(sink.events).toHaveLength(0);
+    fireEvent.blur(reason);
+    fireEvent.blur(reason);
+
+    expect(sink.events.filter(
+      (event) => event.name === "case_action" && event.properties.action === "edit-draft",
+    )).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: /send recommendation/i }));
+    expect(sink.events).toEqual(expect.arrayContaining([
+      {
+        name: "case_action",
+        properties: { case_id: CASE_ID, action: "send-recommendation" },
+      },
+      {
+        name: "case_phase_entered",
+        properties: { case_id: CASE_ID, phase: "resolve" },
+      },
+    ]));
+  });
+
+  it("captures bounded terminal events without authored or learner-entered content", async () => {
+    const user = userEvent.setup();
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    seedResolveSession();
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /complete transfer/i }));
+    await user.click(screen.getByRole("radio", { name: /cross-border ach/i }));
+    await user.click(screen.getByRole("button", { name: /confirm transfer recommendation/i }));
+
+    expect(sink.events).toEqual(expect.arrayContaining([
+      {
+        name: "case_action",
+        properties: { case_id: CASE_ID, action: "complete-transfer" },
+      },
+      {
+        name: "case_phase_entered",
+        properties: { case_id: CASE_ID, phase: "debrief" },
+      },
+      {
+        name: "case_completed",
+        properties: { case_id: CASE_ID, outcome: "possible" },
+      },
+    ]));
+
+    await user.click(screen.getByRole("button", { name: /start again/i }));
+    expect(sink.events).toContainEqual({
+      name: "case_action",
+      properties: { case_id: CASE_ID, action: "restart" },
+    });
+
+    const propertyPayload = JSON.stringify(
+      sink.events.map((event) => event.properties),
+    );
+    for (const forbidden of [
+      "customerExpectation",
+      "diagnosis",
+      "reasons",
+      "account",
+      "name",
+      "PRIVATE_REASON_SENTINEL",
+      "PRIVATE_CUSTOMER_SENTINEL",
+      "PRIVATE_DIAGNOSIS_SENTINEL",
+      supplierCase.customerRequest,
+    ]) {
+      expect(propertyPayload).not.toContain(forbidden);
+    }
+
+    const phases = sink.events
+      .filter((event) => event.name === "case_phase_entered")
+      .map((event) => event.properties.phase);
+    const outcomes = sink.events
+      .filter((event) => event.name === "case_completed")
+      .map((event) => event.properties.outcome);
+    expect(phases.every((phase) => ["investigate", "recommend", "resolve", "debrief"].includes(phase))).toBe(true);
+    expect(outcomes.every((outcome) => ["invalid", "possible", "defensible", "preferred"].includes(outcome))).toBe(true);
+  });
 });
 
 // ─── Customer request anchor ────────────────────────────────────────────────
