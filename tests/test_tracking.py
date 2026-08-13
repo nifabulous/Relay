@@ -603,6 +603,44 @@ class TestScheduledTimelineVisibility:
         after = get_timeline(db_session, self.uetr)
         assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
 
+    def test_hidden_plan_rows_survive_a_fresh_session(self, db_session):
+        """TRK-7 (1.2 scope): visibility is a read-time function of persisted
+        rows — a brand-new session sees the same plan and the same reveal."""
+        from app.services.tracking import (
+            generate_timeline,
+            get_timeline,
+            get_visible_timeline,
+        )
+
+        engine = db_session.get_bind()
+        SessionLocal = sessionmaker(
+            bind=engine, autoflush=False, autocommit=False, future=True
+        )
+        uetr = generate_uetr()
+        first = SessionLocal()
+        try:
+            generate_timeline(
+                session=first, uetr=uetr,
+                originator_bic="BOFAUS3NXXX", originator_name="BofA",
+                beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+                intermediary_bics=["CITIUS33XXX"], intermediary_names=["Citi"],
+                currency="USD", amount=1000.00,
+                schedule="scheduled", start_time=self.START,
+            )
+            first.commit()
+        finally:
+            first.close()
+
+        second = SessionLocal()
+        try:
+            visible = get_visible_timeline(second, uetr, now=self.START)
+            assert len(visible) == 1
+            assert visible[0].status == STATUS_INITIATED
+            pending = get_timeline(second, uetr)
+            assert len(pending) > 1, "Hidden plan rows must survive the restart"
+        finally:
+            second.close()
+
     def test_revealed_events_survive_a_fresh_session(self, db_session):
         """TRK-7: reveal state is persisted — a new session sees it."""
         from app.services.tracking import (
