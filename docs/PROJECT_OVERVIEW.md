@@ -86,7 +86,7 @@ _Last updated: 2026-08-10._
   gpi timeline with the full chain visible immediately (idempotency-key replay preserved).
 - `GET /api/track/{uetr}` — UETR tracking. Prepared payments (created through
   `/api/prepare-payment`) are *scheduled*: only INITIATED is visible at first, further events
-  surface as their planned timestamps arrive (30–90s simulated timing), and
+  surface as their planned timestamps arrive (first hop ~50s, then ~45–90s per hop), and
   `POST /api/track/{uetr}/skip|complete` reveals one event or the entire remaining chain.
   All four endpoints return the same `TrackPaymentResponse` shape.
 - `GET /api/progress` — stateless learning-progress + badge calculator (client is the source of truth).

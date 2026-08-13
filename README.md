@@ -37,8 +37,8 @@ These numbers were run against the current checkout on 2026-08-13:
 | Metric | Result |
 |---|---|
 | Backend tests | **732 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **961 passed** (`cd frontend && npm test -- --run`) |
-| Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
+| Frontend unit/integration tests | **1,006 passing — 1 timing flake under full-suite load** (1,007 total; `cd frontend && npm test -- --run`, serial-file mode per CLAUDE.md) |
+| Playwright E2E | **335 passed, 13 skips, 2 axe failures** — full run including the WebKit `mobile` project; the 2 failures are a pre-existing `scrollable-region-focusable` finding on the bank-detail SSI table scroll (WebKit-only axe rule, now exercised because WebKit is installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,474 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
@@ -69,8 +69,8 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 | Metric | Value |
 |---|---|
 | Backend tests | 732 passing |
-| Frontend tests | 961 passing |
-| E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
+| Frontend tests | 1,006 passing (+1 timing flake under full-suite load) |
+| E2E tests (Playwright) | 335 passing on the full 7-project run (13 intentional skips; 2 pre-existing axe failures on the WebKit `mobile` projects) |
 | Eager shell bundle | 127,474 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
@@ -370,7 +370,7 @@ curl -s http://127.0.0.1:8000/api/track/<uetr>
 ```
 
 Only **INITIATED** is visible at first. Further events surface as their
-planned timestamps arrive (30–90s simulated timing), so the journey unwinds in
+planned timestamps arrive (first hop ~50s, then ~45–90s per hop), so the journey unwinds in
 front of the learner instead of appearing fully-formed. Two learner controls
 reveal hidden events early:
 
