@@ -130,10 +130,10 @@ export function SettlementInstructions({
     <section className="bank-ssi" aria-labelledby="bank-ssi-title">
       <h2 id="bank-ssi-title">Published settlement instructions</h2>
       <p className="measure bank-ssi__intro">
-        Where this bank holds Nostro accounts, and which correspondent
-        to pay for each currency. A currency can list more than one
-        correspondent. Currencies lead with the settlement majors —
-        USD, EUR, GBP — then alphabetical.
+        These are the correspondent banks this institution publishes for
+        receiving payments. A currency can list more than one correspondent.
+        Currencies lead with the settlement majors — USD, EUR, GBP — then
+        alphabetical.
       </p>
 
       <SsiTabs groups={groups} />

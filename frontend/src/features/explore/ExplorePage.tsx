@@ -142,10 +142,10 @@ export function BankDirectoryPage() {
 
                 <div className="bank-detail__actions">
                   <Link
-                    to={`/explore/banks/${encodeURIComponent(query.data.bank.bic)}`}
+                    to={`/operate/prepare?bic=${encodeURIComponent(query.data.bank.bic)}`}
                     className="relay-btn relay-btn--primary"
                   >
-                    Open bank page
+                    Prepare a payment
                   </Link>
                 </div>
               </div>

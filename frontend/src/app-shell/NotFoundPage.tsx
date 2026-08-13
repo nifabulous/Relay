@@ -29,11 +29,10 @@ export function NotFoundPage() {
     <div className="app-shell__not-found">
       <h1>Page not found</h1>
       <p>
-        Nothing is routed at <code className="mono">{displayPath}</code>.
+        There's no page at <code className="mono">{displayPath}</code>.
       </p>
       <p className="app-shell__not-found-hint">
-        If you followed a link inside Relay to get here, that link is broken —
-        worth reporting with the path above.
+        If a link inside Relay brought you here, the link is broken. Report the path above.
       </p>
       <Link to="/" className="relay-btn relay-btn--secondary">
         Go to Overview

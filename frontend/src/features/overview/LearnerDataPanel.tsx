@@ -59,7 +59,7 @@ export function LearnerDataPanel({ profilePersistence }: LearnerDataPanelProps) 
         setPreview(null);
         setFeedback({
           tone: "error",
-          message: "Import payload exceeds the Relay learner backup size limit.",
+          message: "That file is too large — it exceeds the Relay learner backup size limit.",
         });
         return;
       }
@@ -80,7 +80,7 @@ export function LearnerDataPanel({ profilePersistence }: LearnerDataPanelProps) 
       setPreview(null);
       setFeedback({
         tone: "error",
-        message: "Relay could not read that file. Choose a valid Relay learner backup JSON file.",
+        message: "Relay could not read that file. Choose a valid Relay learner backup file.",
       });
     }
   }
@@ -184,7 +184,7 @@ export function LearnerDataPanel({ profilePersistence }: LearnerDataPanelProps) 
               <h3 className="overview__learner-data-preview-title">Backup preview</h3>
               <ul className="overview__learner-data-preview-list">
                 <li>{pluralize(preview.envelope.state.progress.completedModuleIds.length, "module")} completed</li>
-                <li>{pluralize(preview.envelope.state.practice.history.length, "practice history day")}</li>
+                <li>{pluralize(preview.envelope.state.practice.history.length, "practice day")}</li>
                 <li>{pluralize(preview.envelope.state.activity.entries.length, "activity entry")}</li>
                 <li>{pluralize(Object.keys(preview.envelope.state.cases).length, "case session")}</li>
               </ul>

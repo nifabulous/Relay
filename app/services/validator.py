@@ -114,7 +114,7 @@ def validate_bic(bic_str: str) -> Tuple[bool, Optional[str], Optional[str], list
         country = bic.country_code
         # Pad to 11 chars so directory lookups match consistently.
         normalized = str(bic).ljust(11, "X") if len(str(bic)) == 8 else str(bic)
-    except Exception as e:
+    except Exception:
         # Fallback for known non-standard country codes only (e.g. EB).
         cleaned = bic_str.strip().upper().replace(" ", "")
         cc = cleaned[4:6] if len(cleaned) >= 6 else ""
@@ -128,6 +128,15 @@ def validate_bic(bic_str: str) -> Tuple[bool, Optional[str], Optional[str], list
             normalized = cleaned.ljust(11, "X") if len(cleaned) == 8 else cleaned
         else:
             valid = False
-            errors.append(f"BIC invalid: {e}")
+            if len(cleaned) not in (8, 11):
+                errors.append(
+                    f"Enter a valid SWIFT BIC — it must be 8 or 11 characters "
+                    f"(you entered {len(cleaned)})."
+                )
+            else:
+                errors.append(
+                    "Enter a valid SWIFT BIC (for example CITIUS33 or "
+                    "GTBINGLAXXX)."
+                )
 
     return valid, normalized, country, errors

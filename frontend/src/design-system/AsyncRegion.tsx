@@ -19,7 +19,7 @@ interface AsyncRegionProps {
 export function AsyncRegion({
   status,
   loadingLabel = "Loading",
-  emptyMessage = "No data available",
+  emptyMessage = "No data to show yet",
   emptyActionLabel,
   onEmptyAction,
   error = null,
@@ -45,7 +45,7 @@ export function AsyncRegion({
 
   if (status === "error") {
     const title = error?.title ?? "Something went wrong";
-    const detail = error?.detail ?? "An unexpected error occurred.";
+    const detail = error?.detail ?? "This section could not load.";
     return (
       <div
         className={["async-region async-region--error", className].filter(Boolean).join(" ")}
@@ -82,7 +82,7 @@ export function AsyncRegion({
     return (
       <div className={["async-region async-region--unavailable", className].filter(Boolean).join(" ")}>
         <p className="async-region__unavailable-message">
-          This data is temporarily unavailable.
+          This data is temporarily unavailable. Try again later.
         </p>
       </div>
     );

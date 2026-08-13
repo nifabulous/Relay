@@ -47,7 +47,7 @@ describe("GlossaryPage", () => {
 });
 
 describe("BankDirectoryPage", () => {
-  it("links a found bank to its detail route", async () => {
+  it("links a found bank to payment preparation, pre-filled with its BIC", async () => {
     queryClient.clear();
     const user = userEvent.setup();
 
@@ -60,8 +60,8 @@ describe("BankDirectoryPage", () => {
     await user.type(screen.getByLabelText("BIC to look up"), "CITIUS33");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
-    const link = await screen.findByRole("link", { name: /Open bank page/i });
-    expect(link).toHaveAttribute("href", "/explore/banks/CITIUS33");
+    const link = await screen.findByRole("link", { name: /Prepare a payment/i });
+    expect(link).toHaveAttribute("href", "/operate/prepare?bic=CITIUS33");
   });
 
   it("shows the settlement details inline on the result card — no click-through", async () => {
