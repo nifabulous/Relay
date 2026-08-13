@@ -1,6 +1,11 @@
 import { http, HttpResponse } from "msw";
 
 import { CURRICULUM } from "../features/learn/curriculum";
+import {
+  usdFedwireRailFixture,
+  interacETransferFixture,
+  swiftGpiInternationalFixture,
+} from "../features/explore/schemeFixtures";
 
 /**
  * Default MSW handlers for the Relay API.
@@ -169,9 +174,39 @@ export const handlers = [
     }),
   ),
 
+  // Enriched catalogue fixtures for the currencies the Relay schemes page
+  // renders by default; the GBP branch below keeps the legacy shape that
+  // learner labs consume without overriding the default in their own tests.
   http.get("/api/schemes", ({ request }) => {
     const url = new URL(request.url);
     const currency = url.searchParams.get("currency") ?? "GBP";
+
+    if (currency === "USD") {
+      return HttpResponse.json({
+        currency: "USD",
+        country: "United States",
+        countryCode: "US",
+        iban: false,
+        localIdentifier: "Routing number",
+        verifiedAsof: "2026-07",
+        schemes: [usdFedwireRailFixture],
+      });
+    }
+
+    if (currency === "CAD") {
+      return HttpResponse.json({
+        currency: "CAD",
+        country: "Canada",
+        countryCode: "CA",
+        iban: false,
+        localIdentifier: "Institution + transit",
+        verifiedAsof: "2026-07",
+        schemes: [interacETransferFixture],
+      });
+    }
+
+    // Legacy default shape (GBP rails): learner labs consume this response
+    // shape unchanged — do not enrich or restructure it.
     return HttpResponse.json({
       currency,
       country: "United Kingdom",
@@ -184,4 +219,8 @@ export const handlers = [
       ],
     });
   }),
+
+  http.get("/api/schemes/international", () =>
+    HttpResponse.json(swiftGpiInternationalFixture),
+  ),
 ];

@@ -352,8 +352,46 @@ describe("SchemesPage red phase", () => {
     await user.click(screen.getByRole("tab", { name: /international/i }));
 
     expect(await screen.findByText("SWIFT gpi")).toBeVisible();
-    expect(screen.getByText(/UETR/i)).toBeVisible();
-    expect(screen.getByText(/MT103|pacs\.008/i)).toBeVisible();
+    // The SWIFT fixture carries UETR / MT103·pacs.008 in multiple detail
+    // sections (how-it-works steps AND features), so scope to the section to
+    // keep the assertion unambiguous once the page renders full details.
+    const how = screen
+      .getByRole("heading", { name: "How it works" })
+      .closest("section");
+    expect(how).not.toBeNull();
+    expect(within(how!).getByText(/UETR \(field 121 \/ pacs\.008\)/i)).toBeVisible();
+    expect(within(how!).getByText(/MT103 \/ pacs\.008 messages carry/i)).toBeVisible();
+  });
+
+  it("shows a retryable error and recovers through the retry action", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    let attempt = 0;
+    server.use(
+      http.get("/api/schemes", () => {
+        attempt += 1;
+        if (attempt === 1) return HttpResponse.json({ detail: "boom" }, { status: 500 });
+        return HttpResponse.json({
+          currency: "USD",
+          country: "Testland",
+          countryCode: "US",
+          iban: false,
+          localIdentifier: "Test identifier",
+          verifiedAsof: "2026-07",
+          schemes: [usdFedwireRailFixture],
+        });
+      }),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore/schemes"]}>
+        <SchemesPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("alert")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("Fedwire")).toBeVisible();
   });
 
   it("renders source references with official URLs", async () => {
@@ -378,6 +416,29 @@ describe("SchemesPage red phase", () => {
       "href",
       "https://www.frbservices.org/financial-services/wires",
     );
+  });
+});
+
+describe("SchemesPage route", () => {
+  it("resolves the existing /app/explore/schemes route to the tabbed catalogue", async () => {
+    localStorage.clear();
+    // App.tsx uses BrowserRouter with basename="/app"; seed jsdom's URL
+    // before importing App so the real route tree mounts the lazy SchemesPage.
+    window.history.replaceState({}, "", "/app/explore/schemes");
+
+    const { App } = await import("../../app-shell/App");
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Payment Schemes" }),
+    ).toBeVisible();
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    // The default MSW handler serves the enriched USD rail (Fedwire) — assert
+    // it renders end to end through the real route tree.
+    expect(await screen.findByText("Fedwire")).toBeVisible();
   });
 });
 

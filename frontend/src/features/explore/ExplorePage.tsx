@@ -4,14 +4,17 @@ import { useState } from "react";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema, SchemesResponseSchema, SSIResponseSchema } from "../../api/schemas";
-import type { LookupResponse, SchemesResponse } from "../../api/schemas";
+import { LookupResponseSchema, SchemesResponseSchema, InternationalSchemesResponseSchema, SSIResponseSchema } from "../../api/schemas";
+import type { LookupResponse, SchemesResponse, InternationalSchemesResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import { groupByCurrency } from "./ssiGrouping";
 import { SettlementInstructions } from "./SettlementInstructions";
+import { SchemeTabs } from "./SchemeTabs";
+import { SchemeDetails } from "./SchemeDetails";
+import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -206,29 +209,63 @@ export function BankDirectoryPage() {
 
 // ─── Payment Schemes ─────────────────────────────────────
 
-const SCHEME_CURRENCIES = ["GBP", "CAD", "USD", "EUR", "NGN", "KES", "INR", "AUD", "JPY", "AED"];
-
 export function SchemesPage() {
-  const [currency, setCurrency] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState(DEFAULT_SCHEME_TAB_ID);
 
-  const query = useQuery({
-    queryKey: currency ? apiKeys.schemes(currency) : ["schemes", "idle"],
-    enabled: currency !== null,
+  const activeTab =
+    SCHEME_TAB_ORDER.find((tab) => tab.id === activeTabId) ?? SCHEME_TAB_ORDER[0];
+  const isInternational = activeTab.lookupCode === null;
+
+  const currencyQuery = useQuery({
+    queryKey: activeTab.lookupCode
+      ? apiKeys.schemes(activeTab.lookupCode)
+      : ["schemes", "idle"],
+    enabled: !isInternational,
     queryFn: () =>
       apiRequest<SchemesResponse>(
-        `/api/schemes?currency=${encodeURIComponent(currency!)}`,
+        `/api/schemes?currency=${encodeURIComponent(activeTab.lookupCode as string)}`,
         undefined,
         SchemesResponseSchema,
       ),
   });
 
-  let status: "idle" | "loading" | "success" | "error" | "empty" = "idle";
-  if (currency === null) status = "idle";
-  else if (query.isLoading) status = "loading";
-  else if (query.isError) status = "error";
-  else if (query.data) status = query.data.schemes.length > 0 ? "success" : "empty";
+  // The whole-catalogue rail exists only for the International / SWIFT tab;
+  // it must not fire for any domestic tab.
+  const internationalQuery = useQuery({
+    queryKey: apiKeys.internationalSchemes,
+    enabled: isInternational,
+    queryFn: () =>
+      apiRequest<InternationalSchemesResponse>(
+        "/api/schemes/international",
+        undefined,
+        InternationalSchemesResponseSchema,
+      ),
+  });
 
-  const error = query.error as Record<string, unknown> | null;
+  const query = isInternational ? internationalQuery : currencyQuery;
+
+  // Switching tabs re-keys the query, so `query.data` belongs to the ACTIVE
+  // tab only — the previous tab's rows can never leak into the new tab.
+  let status: AsyncStatus;
+  if (query.isLoading) status = "loading";
+  else if (query.isError) status = "error";
+  else if (query.data) {
+    status =
+      isInternational || (query.data as SchemesResponse).schemes.length > 0
+        ? "success"
+        : "empty";
+  } else {
+    status = "loading";
+  }
+
+  const international =
+    isInternational && query.data
+      ? (query.data as InternationalSchemesResponse)
+      : null;
+  const domesticSchemes =
+    !isInternational && query.data
+      ? (query.data as SchemesResponse).schemes
+      : [];
 
   return (
     <div className="explore">
@@ -237,49 +274,29 @@ export function SchemesPage() {
         <p className="measure">Compare domestic payment rails by speed, cost, and limits. Educational reference — always check the operator's current rules.</p>
       </div>
 
-      <div className="lab-currency-pills">
-        {SCHEME_CURRENCIES.map((ccy) => (
-          <button
-            key={ccy}
-            type="button"
-            className={["lab-currency-pill", currency === ccy && "lab-currency-pill--active"].filter(Boolean).join(" ")}
-            aria-pressed={currency === ccy}
-            onClick={() => setCurrency(ccy)}
+      <SchemeTabs
+        tabs={SCHEME_TAB_ORDER}
+        label="Payment schemes"
+        activeId={activeTabId}
+        onChange={setActiveTabId}
+        renderPanel={(tab) => (
+          <AsyncRegion
+            status={status}
+            loadingLabel="Loading schemes"
+            emptyMessage={`No scheme data for ${tab.label}.`}
+            error={query.error as ApiProblem | null}
+            onRetry={() => query.refetch()}
           >
-            {ccy}
-          </button>
-        ))}
-      </div>
-
-      {currency && (
-        <AsyncRegion
-          status={status}
-          loadingLabel="Loading schemes"
-          emptyMessage={`No scheme data for ${currency}.`}
-          error={error ? { status: 0, title: "Load failed", detail: "Could not load schemes.", fieldErrors: {}, retryable: true } : null}
-          onRetry={() => query.refetch()}
-        >
-          {query.data && (
-            <table className="lab-table">
-              <thead>
-                <tr><th>Rail</th><th>Speed</th><th>Limit</th><th>Cost</th><th>Use case</th><th>Operator</th></tr>
-              </thead>
-              <tbody>
-                {query.data.schemes.map((s) => (
-                  <tr key={s.name}>
-                    <td><strong>{s.name}</strong></td>
-                    <td>{s.speed}</td>
-                    <td className="mono">{s.limit}</td>
-                    <td>{s.cost}</td>
-                    <td>{s.useCase}</td>
-                    <td>{s.operator}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </AsyncRegion>
-      )}
+            {international ? (
+              <SchemeDetails scheme={international} scopeLabel="International / SWIFT" />
+            ) : (
+              domesticSchemes.map((scheme) => (
+                <SchemeDetails key={scheme.name} scheme={scheme} />
+              ))
+            )}
+          </AsyncRegion>
+        )}
+      />
     </div>
   );
 }
