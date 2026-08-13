@@ -7,6 +7,11 @@ import type { LabCheckpointId } from "./labTypes";
  * Calls `onComplete` exactly once when all required checkpoints have been
  * marked. Unknown checkpoint IDs are ignored. An empty requirement set
  * never auto-completes.
+ *
+ * `onCheckpointReached` fires once per distinct newly-accepted required
+ * checkpoint, in acceptance order. It always invokes the latest callback
+ * via a ref, so callers may pass an inline closure. Unknown checkpoint IDs
+ * are filtered out before the callback fires.
  */
 export function useLabCompletion(
   required: readonly LabCheckpointId[],
