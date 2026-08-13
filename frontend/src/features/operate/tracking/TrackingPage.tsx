@@ -25,6 +25,7 @@ const POLL_INTERVAL_MS = 4500;
 interface MutationNotice {
   kind: "success" | "error";
   message: string;
+  uetr: string;
 }
 
 export function TrackingPage() {
@@ -81,11 +82,11 @@ export function TrackingPage() {
       ),
     onMutate: () => setNotice(null),
     onSuccess: (_data, uetr) => {
-      setNotice({ kind: "success", message: "Timeline advanced by one event." });
+      setNotice({ kind: "success", message: "Timeline advanced by one event.", uetr });
       void queryClient.invalidateQueries({ queryKey: apiKeys.track(uetr) });
     },
-    onError: (error) => {
-      setNotice({ kind: "error", message: `${error.title}: ${error.detail}` });
+    onError: (error, uetr) => {
+      setNotice({ kind: "error", message: `${error.title}: ${error.detail}`, uetr });
     },
   });
 
@@ -98,11 +99,11 @@ export function TrackingPage() {
       ),
     onMutate: () => setNotice(null),
     onSuccess: (_data, uetr) => {
-      setNotice({ kind: "success", message: "Simulation complete — all events revealed." });
+      setNotice({ kind: "success", message: "Simulation complete — all events revealed.", uetr });
       void queryClient.invalidateQueries({ queryKey: apiKeys.track(uetr) });
     },
-    onError: (error) => {
-      setNotice({ kind: "error", message: `${error.title}: ${error.detail}` });
+    onError: (error, uetr) => {
+      setNotice({ kind: "error", message: `${error.title}: ${error.detail}`, uetr });
     },
   });
 
@@ -159,7 +160,7 @@ export function TrackingPage() {
             <>
               <PaymentTimeline payment={data} />
               {!data.is_terminal && (
-                <div className="tracking-page__controls" aria-label="Simulation pacing controls">
+                <div className="tracking-page__controls" role="group" aria-label="Simulation pacing controls">
                   <Button
                     type="button"
                     variant="secondary"
@@ -180,7 +181,7 @@ export function TrackingPage() {
                   </Button>
                 </div>
               )}
-              {notice && (
+              {notice && notice.uetr === submittedUetr && (
                 <div
                   className={
                     notice.kind === "error"
