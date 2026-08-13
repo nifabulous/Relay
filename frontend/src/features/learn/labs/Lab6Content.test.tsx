@@ -128,14 +128,16 @@ describe("Lab6Content", () => {
 
     const { user } = renderLab();
     await user.click(screen.getByRole("button", { name: /create.*track/i }));
-    await waitFor(() => {
-      expect(screen.getByText("11111111-2222-3333-4444-555555555555")).toBeVisible();
-    });
+
+    // Await the timeline itself: the thing under test is the list, and the
+    // UETR text lives inside the same component. Same pattern as the
+    // Capstone/Exceptions equivalents so all three are immune to content
+    // appearing elsewhere in the lab before the timeline renders.
+    const timeline = await screen.findByRole("list", { name: /payment timeline/i });
 
     // "Advance one event" / "Complete simulation" live on TrackingPage (task
     // 4.1); the shared timeline embedded here renders no buttons of its own,
     // so a lab that supplies no handlers never inherits unusable controls.
-    const timeline = screen.getByRole("list", { name: /payment timeline/i });
     expect(timeline.querySelectorAll("button").length).toBe(0);
   });
 });
