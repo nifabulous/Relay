@@ -295,7 +295,7 @@ describe("SchemesPage red phase", () => {
     );
 
     // The catalogue must render immediately — no pill click to trigger it.
-    expect(await screen.findByText("Fedwire")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Fedwire" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -322,10 +322,10 @@ describe("SchemesPage red phase", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Fedwire");
+    await screen.findByRole("heading", { name: "Fedwire" });
     await user.click(screen.getByRole("tab", { name: "CAD" }));
 
-    expect(await screen.findByText("Interac e-Transfer")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Interac e-Transfer" })).toBeVisible();
     expect(screen.queryByText("Fedwire")).toBeNull();
   });
 
@@ -348,10 +348,10 @@ describe("SchemesPage red phase", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Fedwire");
+    await screen.findByRole("heading", { name: "Fedwire" });
     await user.click(screen.getByRole("tab", { name: /international/i }));
 
-    expect(await screen.findByText("SWIFT gpi")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "SWIFT gpi" })).toBeVisible();
     // The SWIFT fixture carries UETR / MT103·pacs.008 in multiple detail
     // sections (how-it-works steps AND features), so scope to the section to
     // keep the assertion unambiguous once the page renders full details.
@@ -391,7 +391,7 @@ describe("SchemesPage red phase", () => {
 
     expect(await screen.findByRole("alert")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("Fedwire")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Fedwire" })).toBeVisible();
   });
 
   it("renders source references with official URLs", async () => {
@@ -438,7 +438,7 @@ describe("SchemesPage route", () => {
     );
     // The default MSW handler serves the enriched USD rail (Fedwire) — assert
     // it renders end to end through the real route tree.
-    expect(await screen.findByText("Fedwire")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Fedwire" })).toBeVisible();
   });
 });
 

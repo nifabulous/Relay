@@ -14,6 +14,7 @@ import { groupByCurrency } from "./ssiGrouping";
 import { SettlementInstructions } from "./SettlementInstructions";
 import { SchemeTabs } from "./SchemeTabs";
 import { SchemeDetails } from "./SchemeDetails";
+import { SchemeTable } from "./SchemeTable";
 import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
@@ -288,11 +289,17 @@ export function SchemesPage() {
             onRetry={() => query.refetch()}
           >
             {international ? (
-              <SchemeDetails scheme={international} scopeLabel="International / SWIFT" />
+              <>
+                <SchemeTable schemes={[international]} />
+                <SchemeDetails scheme={international} scopeLabel="International / SWIFT" />
+              </>
             ) : (
-              domesticSchemes.map((scheme) => (
-                <SchemeDetails key={scheme.name} scheme={scheme} />
-              ))
+              <>
+                <SchemeTable schemes={domesticSchemes} />
+                {domesticSchemes.map((scheme) => (
+                  <SchemeDetails key={scheme.name} scheme={scheme} />
+                ))}
+              </>
             )}
           </AsyncRegion>
         )}
