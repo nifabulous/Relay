@@ -37,7 +37,7 @@ These numbers were run against the current checkout on 2026-08-13:
 | Metric | Result |
 |---|---|
 | Backend tests | **732 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **1,006 passing — 1 timing flake under full-suite load** (1,007 total; `cd frontend && npm test -- --run`, serial-file mode per CLAUDE.md) |
+| Frontend unit/integration tests | **1,007 passing** (serial-file AND default parallel mode; the one timing flake was fixed — `cd frontend && npm test -- --run`) |
 | Playwright E2E | **335 passed, 13 skips, 2 axe failures** — full run including the WebKit `mobile` project; the 2 failures are a pre-existing `scrollable-region-focusable` finding on the bank-detail SSI table scroll (WebKit-only axe rule, now exercised because WebKit is installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,474 bytes gzip** (budget: 204,800 bytes) |
@@ -69,7 +69,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 | Metric | Value |
 |---|---|
 | Backend tests | 732 passing |
-| Frontend tests | 1,006 passing (+1 timing flake under full-suite load) |
+| Frontend tests | 1,007 passing (serial-file AND default parallel mode) |
 | E2E tests (Playwright) | 335 passing on the full 7-project run (13 intentional skips; 2 pre-existing axe failures on the WebKit `mobile` projects) |
 | Eager shell bundle | 127,474 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
