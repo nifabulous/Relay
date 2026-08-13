@@ -89,11 +89,26 @@ export function track(
   name: keyof AnalyticsEventMap,
   properties: AnalyticsEventMap[keyof AnalyticsEventMap],
 ): void {
+  // Type-safe callers can only pass declared names, but a runtime misuse
+  // (e.g. an `as any` caller with an object-prototype key) must fail closed
+  // instead of throwing inside a learner's event handler. Own-property check
+  // matters: `analyticsPropertyKeys["__proto__"]` resolves to Object.prototype
+  // via the prototype chain, which is truthy but not iterable.
+  const keys = Object.prototype.hasOwnProperty.call(analyticsPropertyKeys, name)
+    ? (analyticsPropertyKeys[name] as readonly string[])
+    : undefined;
+  if (keys === undefined) return;
   const projected: Record<string, unknown> = {};
-  for (const key of analyticsPropertyKeys[name] as readonly string[]) {
+  for (const key of keys) {
     projected[key] = (properties as Record<string, unknown>)[key];
   }
-  activeSink.capture({ name, properties: projected } as AnalyticsEvent);
+  try {
+    activeSink.capture({ name, properties: projected } as AnalyticsEvent);
+  } catch {
+    // Analytics is fire-and-forget. A future provider adapter that throws
+    // (network flush, queue overflow, quota) must never break the learner's
+    // state machine mid-transition, so a failing sink degrades to a no-op.
+  }
 }
 
 export function setAnalyticsSink(sink: AnalyticsSink): void {

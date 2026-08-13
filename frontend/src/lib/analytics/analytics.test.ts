@@ -6,6 +6,7 @@ import {
   setAnalyticsSink,
   track,
   type AnalyticsEventMap,
+  type AnalyticsSink,
 } from "./analytics";
 
 afterEach(() => {
@@ -111,5 +112,35 @@ describe("analytics contract", () => {
 
     track("module_completed", properties);
     expect(invalidProperties.account).toBe("not-permitted");
+  });
+});
+
+describe("analytics runtime resilience", () => {
+  it("swallows adapter failures so instrumentation never breaks the learner flow", () => {
+    const throwingSink: AnalyticsSink = {
+      capture: () => {
+        throw new Error("adapter unavailable");
+      },
+    };
+    setAnalyticsSink(throwingSink);
+
+    // A future provider adapter that fails mid-flush must degrade to a no-op,
+    // not crash a practice answer or a module render mid-transition.
+    expect(() =>
+      track("practice_completed", { question_count: 5, correct_count: 4 }),
+    ).not.toThrow();
+    expect(() => track("module_viewed", { module_id: "lab-1" })).not.toThrow();
+  });
+
+  it("drops events for unknown runtime names instead of throwing", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+
+    // Type-safe callers can't express an unknown name, so widen the signature
+    // on purpose: an `as any` caller with an object-prototype key would
+    // previously throw mid-handler.
+    const trackAny = track as unknown as (name: string, properties: unknown) => void;
+    expect(() => trackAny("__proto__", {})).not.toThrow();
+    expect(sink.events).toEqual([]);
   });
 });
