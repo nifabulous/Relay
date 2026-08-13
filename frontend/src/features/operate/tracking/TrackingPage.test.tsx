@@ -338,4 +338,52 @@ describe("Scheduled pacing controls", () => {
     // ...and the control is enabled again, so retry is possible.
     expect(screen.getByRole("button", { name: "Advance one event" })).toBeEnabled();
   });
+
+  it("shows a live status message after a successful skip", async () => {
+    let revealed = 1;
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, revealed)),
+      ),
+      http.post("/api/track/:uetr/skip", ({ params }) => {
+        revealed += 1;
+        return HttpResponse.json(pacingPayload(params.uetr, revealed));
+      }),
+    );
+    const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    await screen.findByText("UETR-A");
+    await user.click(screen.getByRole("button", { name: "Advance one event" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Timeline advanced by one event.");
+  });
+
+  it("keeps the controls disabled while a mutation is in flight", async () => {
+    let release: (() => void) | undefined;
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, 1)),
+      ),
+      http.post("/api/track/:uetr/skip", ({ params }) =>
+        new Promise<Response>((resolve) => {
+          release = () => resolve(HttpResponse.json(pacingPayload(params.uetr, 2)));
+        }),
+      ),
+    );
+    const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    await screen.findByText("UETR-A");
+    const advance = screen.getByRole("button", { name: "Advance one event" });
+    await user.click(advance);
+
+    await waitFor(() => {
+      expect(advance).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Complete simulation" })).toBeDisabled();
+    });
+
+    await act(async () => {
+      release?.();
+    });
+    await waitFor(() => expect(advance).toBeEnabled());
+  });
 });

@@ -11,6 +11,33 @@
   color: var(--color-warning);
 }
 
+/* ── Scheduled pacing controls + live mutation status ─────────── */
+
+.tracking-page__controls {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tracking-page__notice {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+}
+
+.tracking-page__notice--success {
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.tracking-page__notice--error {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
+}
+
 .tracking-result {
   display: flex;
   flex-direction: column;
