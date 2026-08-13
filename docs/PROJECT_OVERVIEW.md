@@ -5,7 +5,7 @@ actually work — identifiers, validation, correspondent routing, settlement, tr
 compliance, and message standards. **It is not a production payment system. No real money
 moves.** Every payment is simulated and all account numbers are `ACCT-` placeholders.
 
-_Last updated: 2026-08-10._
+_Last updated: 2026-08-13._
 
 ---
 
