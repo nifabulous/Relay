@@ -845,8 +845,10 @@ class TestScheduledTrackEndpoints:
         assert track.json()["current_status"] == STATUS_INITIATED
         assert track.json()["event_count"] == 1
 
-        # Jump the clock past the whole chain (max ~5 minutes incl. fees).
-        FrozenClock.current += timedelta(minutes=10)
+        # Jump the clock past the whole chain. The seeded GB/USD corridor
+        # runs through several intermediaries (~10 min incl. fees), so a
+        # generous +30 min guarantees every planned timestamp has arrived.
+        FrozenClock.current += timedelta(minutes=30)
         later = client.get(f"/api/track/{uetr}")
         assert later.status_code == 200
         assert later.json()["current_status"] == STATUS_CREDITED

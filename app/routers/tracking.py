@@ -11,6 +11,8 @@ from ..models import PaymentEvent
 from ..schemas import PaymentEventInfo, TrackPaymentRequest, TrackPaymentResponse
 from ..services.idempotency import resolve_uetr
 from ..services.tracking import (
+    advance_payment,
+    complete_payment,
     generate_timeline,
     generate_uetr,
     get_payment_status,
@@ -28,6 +30,12 @@ def create_tracked_payment(
 ):
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
+
+    This is the admin/demo path: the timeline is created "instant" — every
+    event of the chain is visible immediately and the response is terminal
+    (CREDITED or REJECTED). Prepared payments (POST /api/prepare-payment)
+    are the only scheduled flow; they reveal their timeline gradually and
+    are advanced via POST /api/track/{uetr}/skip|complete.
 
     Generates a UETR (UUID v4 per SWIFT gpi spec), then creates status events
     for each hop in the correspondent chain: INITIATED → ACCEPTED →
@@ -70,6 +78,7 @@ def create_tracked_payment(
         amount=request.amount,
         charge_code=request.charge_code,
         outcome=request.outcome,
+        schedule="instant",
     )
 
     status = get_payment_status(db, uetr)
@@ -82,9 +91,52 @@ def get_tracked_payment(uetr: str, db: Session = Depends(get_db)):
     Retrieve the tracking timeline for a payment by its UETR.
 
     The UETR is the 36-character UUID assigned at initiation, embedded in
-    MT103 field 121 / pacs.008. This returns the full status timeline.
+    MT103 field 121 / pacs.008. This returns the status summary of the
+    events *visible now*: instant admin/demo payments are fully visible,
+    while scheduled prepared payments reveal events as their planned
+    timestamps arrive (or as they are advanced via
+    POST /api/track/{uetr}/skip|complete). Hidden plan rows are never
+    exposed here.
     """
     status = get_payment_status(db, uetr)
+    if status is None:
+        raise HTTPException(status_code=404, detail=f"No payment found for UETR {uetr}")
+    return _build_track_response(uetr, status)
+
+
+@router.post("/track/{uetr}/skip", response_model=TrackPaymentResponse)
+def skip_tracked_payment(uetr: str, db: Session = Depends(get_db)):
+    """
+    Advance a scheduled payment by exactly one event (learner control).
+
+    Reveals the next hidden event of a prepared payment's planned chain, in
+    hop order, and returns the updated tracking snapshot. Unlike the instant
+    admin/demo creation endpoint, prepared payments start with only
+    INITIATED visible; this control lets a learner step through the journey.
+    Safe to repeat: each call reveals one more event until the plan is
+    terminal, then becomes a no-op. No-op for instant timelines (already
+    fully visible). Hidden plan rows are never exposed beyond what this
+    single step reveals. Unknown UETRs return 404.
+    """
+    status = advance_payment(db, uetr)
+    if status is None:
+        raise HTTPException(status_code=404, detail=f"No payment found for UETR {uetr}")
+    return _build_track_response(uetr, status)
+
+
+@router.post("/track/{uetr}/complete", response_model=TrackPaymentResponse)
+def complete_tracked_payment(uetr: str, db: Session = Depends(get_db)):
+    """
+    Reveal a scheduled payment's entire remaining plan (learner control).
+
+    Makes every hidden event of a prepared payment visible at once and
+    returns the terminal tracking snapshot — the counterpart to skip's
+    one-step reveal. Safe to repeat: once the plan is fully revealed the
+    call is a no-op and returns the current terminal state. No-op for
+    instant timelines (already fully visible). Hidden plan rows are only
+    exposed through this explicit reveal. Unknown UETRs return 404.
+    """
+    status = complete_payment(db, uetr)
     if status is None:
         raise HTTPException(status_code=404, detail=f"No payment found for UETR {uetr}")
     return _build_track_response(uetr, status)

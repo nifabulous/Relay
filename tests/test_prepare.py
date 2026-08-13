@@ -495,8 +495,12 @@ class TestPreparePersistenceToTracking:
             f"{track.status_code}: {track.text[:200]}"
         )
         body = track.json()
-        assert body["current_status"] in ("ACCEPTED", "IN_PROGRESS", "FORWARDED", "CREDITED")
-        assert body["event_count"] > 0
+        # Prepared payments are the scheduled flow: the track link resolves
+        # to the initial event; the rest of the plan is gated by time or by
+        # the explicit skip/complete learner controls.
+        assert body["current_status"] == "INITIATED"
+        assert body["is_terminal"] is False
+        assert body["event_count"] == 1
 
     def test_blocked_payment_is_not_trackable(self, client):
         """A blocked recommendation must not create a credited timeline."""
