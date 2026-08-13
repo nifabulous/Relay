@@ -318,3 +318,59 @@ def get_payment_status(
         "last_updated": latest.timestamp,
         "timeline": events,
     }
+
+
+def _hidden_events(
+    session: Session, uetr: str, now: datetime
+) -> List[PaymentEvent]:
+    """The plan rows not yet visible at `now`, in planned (hop) order."""
+    return [e for e in get_timeline(session, uetr) if not _event_is_visible(e, now)]
+
+
+def advance_payment(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> Optional[dict]:
+    """Reveal exactly one hidden scheduled event, in planned order.
+
+    The first event that is not yet visible at `now` (hop order) gets its
+    `revealed_at` set to `now` and the change is committed. Returns the
+    visible status summary (same shape as `get_payment_status`). If no
+    hidden event remains — the plan is fully revealed, instant, or already
+    terminal — no rows are changed and the current status is returned.
+    Returns None for an unknown UETR (no events on disk).
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    hidden = _hidden_events(session, uetr, now)
+    if hidden:
+        hidden[0].revealed_at = _iso(now)
+        session.commit()
+    return get_payment_status(session, uetr, now=now)
+
+
+def complete_payment(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> Optional[dict]:
+    """Reveal every remaining hidden scheduled event and commit once.
+
+    All events not yet visible at `now` get `revealed_at` set to `now`; the
+    single commit persists the whole reveal. Returns the visible status
+    summary (same shape as `get_payment_status`), which is terminal for a
+    fully revealed plan. If no hidden event remains, no rows are changed.
+    Returns None for an unknown UETR (no events on disk).
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    hidden = _hidden_events(session, uetr, now)
+    if hidden:
+        revealed = _iso(now)
+        for event in hidden:
+            event.revealed_at = revealed
+        session.commit()
+    return get_payment_status(session, uetr, now=now)

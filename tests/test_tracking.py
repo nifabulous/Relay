@@ -603,6 +603,59 @@ class TestScheduledTimelineVisibility:
         after = get_timeline(db_session, self.uetr)
         assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
 
+    def test_advance_on_rejected_scheduled_payment_reveals_rejection_in_order(
+        self, db_session
+    ):
+        """TRK-4 rejected path: advancing walks the plan through the REJECTED
+        event in planned order, then the controls become no-ops."""
+        from app.services.tracking import advance_payment, get_visible_timeline
+
+        self._make_scheduled(db_session, outcome="rejected")
+        row_count = len(get_timeline(db_session, self.uetr))
+
+        first = advance_payment(db_session, self.uetr, now=self.START)
+        assert first["event_count"] == 2
+        assert first["current_status"] == STATUS_ACCEPTED
+        assert first["is_terminal"] is False
+
+        second = advance_payment(db_session, self.uetr, now=self.START)
+        assert second["event_count"] == 3
+        assert second["current_status"] == STATUS_REJECTED
+        assert second["is_terminal"] is True
+
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert [e.status for e in visible] == [
+            STATUS_INITIATED, STATUS_ACCEPTED, STATUS_REJECTED,
+        ]
+        assert len(visible) == row_count
+
+        noop = advance_payment(db_session, self.uetr, now=self.START)
+        assert noop["event_count"] == 3
+        assert len(get_timeline(db_session, self.uetr)) == row_count
+
+    def test_repeated_advance_and_complete_do_not_duplicate_rows_or_retime(
+        self, db_session
+    ):
+        """TRK-6: repeating either control never duplicates rows and never
+        rewrites planned timestamps — only reveal metadata changes."""
+        from app.services.tracking import advance_payment, complete_payment
+
+        self._make_scheduled(db_session)
+        snapshot = [
+            (e.hop, e.status, e.timestamp)
+            for e in get_timeline(db_session, self.uetr)
+        ]
+
+        advance_payment(db_session, self.uetr, now=self.START)
+        advance_payment(db_session, self.uetr, now=self.START)
+        advance_payment(db_session, self.uetr, now=self.START)
+        complete_payment(db_session, self.uetr, now=self.START)
+        complete_payment(db_session, self.uetr, now=self.START)
+
+        after = get_timeline(db_session, self.uetr)
+        assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
+        assert len(after) == len(snapshot)
+
     def test_hidden_plan_rows_survive_a_fresh_session(self, db_session):
         """TRK-7 (1.2 scope): visibility is a read-time function of persisted
         rows — a brand-new session sees the same plan and the same reveal."""
