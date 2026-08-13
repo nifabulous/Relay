@@ -72,6 +72,11 @@ SETTLEMENT_DIRECTORY = {
         "chips_uid": "",
         "aba": "026007362",
     },
+    "DEUTUS33": {
+        "bank_name": "Deutsche Bank AG New York",
+        "chips_uid": "",
+        "aba": "026003780",
+    },
     "IRVTUS3N": {
         "bank_name": "The Bank of New York Mellon",
         "chips_uid": "0001",

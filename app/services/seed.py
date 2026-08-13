@@ -196,6 +196,7 @@ BANKS = [
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEAFIHHXXX", "Nordea Bank Finland", "FI", "Helsinki", "EUR"),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
     ("LOYDGB2LXXX", "Lloyds Banking Group", "GB", "London", "GBP"),
     # ---- Access Bank Nigeria (destination) ----
     ("ABNGNGLAXXX", "Access Bank Plc", "NG", "Lagos", "NGN"),
@@ -2871,6 +2872,69 @@ SSI_RECORDS = [
      "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
      "ACCT-91000449", "ACCT-00906", "SHA", "spot",
      "Source: DFCC SSI PDF (archived 2017; printed SCBLDEFX). " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # EUROPE — first beneficiary SSIs for European banks
+    # Sources: corporates.db.com SSI PDF (DB Frankfurt, effective 2025-02-03),
+    # nordea.com FX-and-derivatives SSI, danskebank.com standard-settlement
+    # page (archived 2017). Accounts/IBANs printed and masked here.
+    # ====================================================================
+
+    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "USD",
+     "DEUTUS33XXX", "Deutsche Bank AG, New York",
+     "ACCT-91000500", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). "
+     "ABA 026003780. " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG, Frankfurt (TARGET)",
+     "ACCT-91000501", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). "
+     "Direct via TARGET. " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "GBP",
+     "DEUTGB2LXXX", "Deutsche Bank AG, London",
+     "ACCT-91000502", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "CHF",
+     "UBSWCHZH80A", "UBS Switzerland AG, Zurich",
+     "ACCT-91000503", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). " + _SSI_REAL_NOTE),
+
+    # ---- Nordea Bank Sweden (NDEASESS) ----
+    ("NDEASESSXXX", "Nordea Bank Sweden", "USD",
+     "BOFAUS3NXXX", "Bank of America N.A., New York",
+     "ACCT-91000504", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. RTN 026009593. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "SEK",
+     "NDEASESSXXX", "Nordea Bank, Stockholm",
+     "ACCT-91000505", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "GBP",
+     "BARCGB22XXX", "Barclays Bank, London",
+     "ACCT-91000506", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "CHF",
+     "UBSWCHZH80A", "UBS Switzerland AG, Zurich",
+     "ACCT-91000507", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+
+    # ---- Danske Bank (DABADKKK) ----
+    ("DABADKKKXXX", "Danske Bank", "USD",
+     "BOFAUS3NXXX", "Bank of America, New York",
+     "ACCT-91000508", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "EUR",
+     "DABADKKKXXX", "Danske Bank, Copenhagen (EBA/TARGET)",
+     "ACCT-91000509", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "GBP",
+     "MIDLGB22XXX", "HSBC Bank, London",
+     "ACCT-91000510", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank, Tokyo",
+     "ACCT-91000511", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
 ]
 
 

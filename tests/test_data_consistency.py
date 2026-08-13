@@ -711,3 +711,63 @@ class TestSouthAsiaSsiCoverage:
         for record in SSI_RECORDS:
             used.add(record[3])
         assert "BSHROMRUXXX" not in used, "Transposed Sohar BIC must not be seeded"
+
+
+# ---------------------------------------------------------------------------
+# European beneficiary SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Fifth region pass — the first banks with EUR/GBP corridors seeded as
+# BENEFICIARIES (European banks previously appeared only as intermediaries).
+# Three publish usable SSIs:
+#   - Deutsche Bank Frankfurt (DEUTDEFF) — corporates.db.com SSI PDF
+#     (effective 2025-02-03): USD via its own NY branch DEUTUS33
+#     (ABA 026003780), EUR direct via TARGET, GBP via DEUTGB2L, CHF via UBS
+#   - Nordea (NDEASESS, Sweden) — nordea.com FX-and-derivatives SSI: USD via
+#     Bank of America NY (ABA 026009593), SEK via itself, DKK via NDEADKKK,
+#     GBP via Barclays, CHF via UBS
+#   - Danske Bank (DABADKKK) — danskebank.com standard-settlement page
+#     (archived 2017): USD via BofA NY, EUR direct, GBP via HSBC, JPY via
+#     MUFG
+# BNP, Santander, BBVA, Intesa, UniCredit, UBS, SEB, ING, Rabobank publish
+# no beneficiary SSIs — excluded.
+EUROPE_SSI_COVERAGE = [
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", {"USD", "EUR", "GBP", "CHF"}),
+    ("NDEASESSXXX", "Nordea Bank Sweden", {"USD", "SEK", "GBP", "CHF"}),
+    ("DABADKKKXXX", "Danske Bank", {"USD", "EUR", "GBP", "JPY"}),
+]
+
+
+class TestEuropeSsiCoverage:
+    def test_european_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in EUROPE_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_european_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in EUROPE_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"European SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_deutsche_usd_uses_its_own_ny_branch(self):
+        """DB Frankfurt's published USD SSI is its own NY branch (DEUTUS33,
+        ABA 026003780) — not a third-party clearer. Pin it."""
+        deut_usd = [
+            r[3] for r in SSI_RECORDS
+            if r[0] == "DEUTDEFFXXX" and r[2] == "USD"
+        ]
+        assert "DEUTUS33XXX" in deut_usd, (
+            f"DB Frankfurt must clear USD via its own NY branch: {deut_usd}"
+        )
