@@ -291,6 +291,26 @@ describe("CaseDesk — bounded learner-research telemetry", () => {
     expect(phases.every((phase) => ["investigate", "recommend", "resolve", "debrief"].includes(phase))).toBe(true);
     expect(outcomes.every((outcome) => ["invalid", "possible", "defensible", "preferred"].includes(outcome))).toBe(true);
   });
+
+  it("emits case_started when restart begins a fresh run with a preserved first attempt", async () => {
+    const user = userEvent.setup();
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    seedResolveSession();
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /complete transfer/i }));
+    await user.click(screen.getByRole("radio", { name: /cross-border ach/i }));
+    await user.click(screen.getByRole("button", { name: /confirm transfer recommendation/i }));
+    await user.click(screen.getByRole("button", { name: /start again/i }));
+
+    // The restart preserves firstAttempt and begins a fresh run, so it must
+    // carry its own start event; otherwise case_completed/case_started exceeds
+    // 1.0 whenever a learner restarts after a first completion.
+    const starts = sink.events.filter((event) => event.name === "case_started");
+    expect(starts).toHaveLength(1);
+    expect(starts[0].properties).toEqual({ case_id: CASE_ID });
+  });
 });
 
 // ─── Customer request anchor ────────────────────────────────────────────────

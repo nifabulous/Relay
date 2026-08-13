@@ -233,6 +233,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           }
         }
       }
+      // Telemetry parity with the blur/submit handlers: an edit persisted on
+      // unmount (e.g. typing then exiting the case) is still a committed
+      // edit, so report it before the component leaves the tree.
+      reportPendingDraftEdit();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -471,6 +475,14 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       dispatch({ type: "restart" });
       persist(next);
       track("case_action", { case_id: caseId, action: "restart" });
+      // Restart with a firstAttempt preserved begins a fresh RUN (the reducer
+      // routes to recommend and a later send can complete again). Emit
+      // case_started so each run has a matching start+completion; without it
+      // the funnel's case_completed/case_started ratio exceeds 1.0 whenever a
+      // learner restarts after a first completion.
+      if (session.firstAttempt !== null) {
+        track("case_started", { case_id: caseId });
+      }
     }
   }
 
