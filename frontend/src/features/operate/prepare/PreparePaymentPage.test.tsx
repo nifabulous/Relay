@@ -229,3 +229,46 @@ describe("PreparePaymentPage currency selection", () => {
     expect(currency).toHaveValue("GBP");
   });
 });
+
+describe("PreparePaymentPage IBAN flexibility", () => {
+  it("requires an IBAN or account number when no BIC is given", async () => {
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(screen.getByText(/enter a beneficiary iban or account number/i)).toBeVisible();
+  });
+
+  it("allows a payment with only a BIC (no IBAN/account)", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () =>
+        HttpResponse.json({
+          recommendation: "PROCEED",
+          reason: "Illustrative result",
+          is_blocking: false,
+          uetr: "test-uetr",
+          validation: { valid: true, bic: "MASHAEADXXX", errors: [] },
+          vop: { outcome: "NOT_CHECKED", score: null, advice: "No account to check" },
+          routing: {
+            beneficiary_country: "AE",
+            inferred_currency: "AED",
+            routing_basis: "published-ssi",
+            suggested_intermediaries: [],
+          },
+          ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+          warnings: ["Simulation"],
+          blocks: [],
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(await screen.findByText(/PROCEED/i)).toBeVisible();
+    expect(screen.queryByText(/enter a beneficiary iban or account number/i)).toBeNull();
+  });
+});

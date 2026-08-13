@@ -44,8 +44,9 @@ export function PreparePaymentPage() {
 
   const {
     register,
-    handleSubmit,
     setValue,
+    setError,
+    getValues,
     trigger,
     formState: { errors },
     watch,
@@ -130,6 +131,35 @@ export function PreparePaymentPage() {
   const recState: RecommendationState = "conclusive";
   const missingEvidence: string[] = [];
 
+  // A payment needs to reach a bank: an IBAN (which implies a bank) or an
+  // explicit BIC. With neither, block and guide. Done via setError because
+  // zodResolver drops schema-level superRefine/custom issues and field-level
+  // `validate` callbacks from the error state on submit.
+  const requireIbanOrBic = () => {
+    const iban = (getValues("beneficiary_iban") ?? "").trim();
+    const bic = (getValues("beneficiary_bic") ?? "").trim();
+    if (!iban && !bic) {
+      setError("beneficiary_iban", {
+        type: "custom",
+        message: "Enter a beneficiary IBAN or account number, or a beneficiary BIC.",
+      }, { shouldFocus: true });
+      return false;
+    }
+    return true;
+  };
+
+  // Manual submit: run the schema validation, then the cross-field rule, and
+  // only then call the API. handleSubmit alone cannot express the rule —
+  // zodResolver replaces the error state with its own result on submit, and a
+  // cross-field custom issue never reaches the field.
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const schemaOk = await trigger();
+    const crossOk = requireIbanOrBic();
+    if (!schemaOk || !crossOk) return;
+    mutation.mutate(getValues());
+  };
+
   return (
     <div className="prepare-payment">
       <div className="prepare-payment__header">
@@ -142,16 +172,16 @@ export function PreparePaymentPage() {
       {/* ── Form ───────────────────────────────────── */}
       <form
         className="prepare-payment__form"
-        onSubmit={handleSubmit((data) => mutation.mutate(data))}
+        onSubmit={onSubmit}
         onChange={handleInputChange}
       >
         <div className="prepare-payment__field">
-          <label htmlFor="beneficiary_iban">Beneficiary IBAN</label>
+          <label htmlFor="beneficiary_iban">Beneficiary IBAN or account number</label>
           <input
             id="beneficiary_iban"
             type="text"
             className="mono"
-            placeholder="GB29NWBK60161331926819"
+            placeholder="GB29NWBK60161331926819, or a USD account number"
             {...register("beneficiary_iban")}
             aria-invalid={!!errors.beneficiary_iban}
             aria-describedby={errors.beneficiary_iban ? "beneficiary_iban-error" : undefined}
