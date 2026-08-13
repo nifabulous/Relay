@@ -36,13 +36,13 @@ These numbers were run against the current checkout on 2026-08-13:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **687 passed** (`.venv/bin/pytest -q`) |
+| Backend tests | **732 passed** (`.venv/bin/pytest -q`) |
 | Frontend unit/integration tests | **961 passed** (`cd frontend && npm test -- --run`) |
 | Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **127,474 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
-| Backend API endpoints | **22** |
+| Backend API endpoints | **25** |
 
 The frontend suite is currently verified with the standard Vitest command above.
 
@@ -68,13 +68,13 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 687 passing |
+| Backend tests | 732 passing |
 | Frontend tests | 961 passing |
 | E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
 | Eager shell bundle | 127,474 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
-| Backend API endpoints | 22 |
+| Backend API endpoints | 25 |
 
 ### Architecture
 
@@ -298,9 +298,12 @@ lesson scripts:
 | `GET` | `/api/ssi` | Standard Settlement Instructions |
 | `POST` | `/api/verify-payee` | Verification of Payee |
 | `POST` | `/api/prepare-payment` | One-call orchestration: validate + VoP + route + SSI → recommendation |
-| `POST` | `/api/track/create` | Create simulated payment with UETR |
-| `GET` | `/api/track/{uetr}` | Retrieve payment status timeline |
-| `GET` | `/api/schemes` | Payment schemes by currency (enriched CAD/GBP) |
+| `POST` | `/api/track/create` | **Instant** admin/demo path — create a simulated payment with its full gpi timeline immediately |
+| `GET` | `/api/track/{uetr}` | Retrieve the events of a payment's timeline that are *visible now* |
+| `POST` | `/api/track/{uetr}/skip` | Advance a prepared (scheduled) payment by exactly one event |
+| `POST` | `/api/track/{uetr}/complete` | Reveal a prepared payment's entire remaining timeline |
+| `GET` | `/api/schemes` | Domestic payment schemes by currency (ten currencies, sources verified 2026-08) |
+| `GET` | `/api/schemes/international` | International / SWIFT gpi catalogue entry |
 | `POST` | `/api/fees/simulate` | Fee simulation (OUR/SHA/BEN) |
 | `POST` | `/api/screen` | Sanctions screening |
 | `POST` | `/api/value-date` | Settlement value date calculator |
@@ -309,6 +312,103 @@ lesson scripts:
 | `POST` | `/api/message/pacs008-check` | pacs.008 structured-field validator |
 | `GET` | `/api/progress` | Learning progress + badges |
 | `POST` | `/api/telemetry` | Anonymous learning event tracking |
+
+### API examples — tracking & payment schemes
+
+All responses below are **simulated educational data** — not a production
+payment system. See the interactive OpenAPI docs at
+<http://127.0.0.1:8000/docs> for the full schemas.
+
+#### 1. Instant admin/demo timeline — `POST /api/track/create`
+
+```bash
+curl -s http://127.0.0.1:8000/api/track/create \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "originator_bic": "CITIUS33",
+    "originator_name": "Citi US",
+    "beneficiary_bic": "NWBKGB2L",
+    "beneficiary_name": "NatWest",
+    "currency": "USD",
+    "amount": 5000.00,
+    "charge_code": "SHA",
+    "intermediary_bics": ["BARCGB22"],
+    "intermediary_names": ["Barclays"],
+    "outcome": "credited"
+  }'
+```
+
+This is the **instant admin/demo path**: the full chain — INITIATED → ACCEPTED →
+IN_PROGRESS → FORWARDED → … → CREDITED (`outcome: "rejected"` terminates at the
+first intermediary instead) — is visible immediately and the response is
+terminal. Replaying the request with the same `Idempotency-Key` header returns
+the same timeline rather than creating a second one. In a public deployment
+this endpoint is gated behind the `X-Admin-Key` header.
+
+#### 2. Scheduled flow — prepare a payment, then watch it progress
+
+`POST /api/prepare-payment` persists a *scheduled* timeline when its
+recommendation is sendable and a destination bank is known. The `uetr` in the
+response is what the UI hands to the tracking endpoint ("Track payment"):
+
+```bash
+curl -s http://127.0.0.1:8000/api/prepare-payment \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "beneficiary_iban": "GB29NWBK60161331926819",
+    "beneficiary_name": "John Smith",
+    "currency": "GBP",
+    "amount": 5000.00,
+    "strictness": "standard"
+  }'
+```
+
+```bash
+curl -s http://127.0.0.1:8000/api/track/<uetr>
+```
+
+Only **INITIATED** is visible at first. Further events surface as their
+planned timestamps arrive (30–90s simulated timing), so the journey unwinds in
+front of the learner instead of appearing fully-formed. Two learner controls
+reveal hidden events early:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/track/<uetr>/skip       # reveal exactly one event
+curl -s -X POST http://127.0.0.1:8000/api/track/<uetr>/complete    # reveal the whole remaining chain
+```
+
+Both return the same `TrackPaymentResponse` shape as `GET /api/track/{uetr}`,
+are safe to repeat (they become no-ops once the plan is terminal or already
+fully visible), and return 404 for unknown UETRs. Hidden plan rows are never
+exposed beyond these controls — they become visible only on schedule or on
+explicit reveal.
+
+#### 3. Domestic payment schemes — `GET /api/schemes`
+
+Ten domestic currencies are catalogued: **USD, GBP, EUR, CAD, NGN, KES, INR,
+AUD, JPY, AED**. Every rail carries official source references and a
+`verifiedAsof` (2026-08) date-stamp:
+
+```bash
+curl -s "http://127.0.0.1:8000/api/schemes?currency=NGN"   # e.g. NIBSS Instant Pay, NEFT, CBN RTGS
+curl -s "http://127.0.0.1:8000/api/schemes"                # currency list
+```
+
+This is educational data — always check the operator's current rules for
+production routing.
+
+#### 4. International / SWIFT catalogue — `GET /api/schemes/international`
+
+```bash
+curl -s http://127.0.0.1:8000/api/schemes/international
+```
+
+Returns the single International / SWIFT entry (SWIFT gpi): cross-border
+correspondent payments with UETR end-to-end tracking and MT103 / pacs.008
+references. Its roadmap section describes the CBPR+ / ISO 20022 direction of
+travel — explicitly roadmap, not current behaviour.
 
 ---
 
