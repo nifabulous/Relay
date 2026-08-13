@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema } from "./schemas";
+import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
 import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
 } from "./schemas";
+import { usdFedwireRailFixture, interacETransferFixture, swiftGpiInternationalFixture } from "../features/explore/schemeFixtures";
 
 describe("SuggestedIntermediary schema", () => {
   it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {
@@ -133,5 +134,60 @@ describe("SchemeInfoSchema enriched fields", () => {
     expect(rich.limits?.perMonth).toBe("$30,000");
     const plain = SchemeInfoSchema.parse({ name: "Fedwire", speed: "RTGS", limit: "x", cost: "y", useCase: "z", operator: "Fed" });
     expect(plain.roadmap ?? null).toBeNull();
+  });
+
+  it("parses a legacy minimal scheme with no source/family/variant fields", () => {
+    const legacy = SchemeInfoSchema.parse({
+      name: "Bacs Direct Credit", speed: "3 business days", limit: "No limit",
+      cost: "~£0.50", useCase: "Payroll", operator: "Pay.UK",
+    });
+    expect(legacy.sources ?? null).toBeNull();
+    expect(legacy.family ?? null).toBeNull();
+    expect(legacy.variants ?? null).toBeNull();
+  });
+
+  it("parses the enriched USD Fedwire rail carrying source references", () => {
+    const fedwire = SchemeInfoSchema.parse(usdFedwireRailFixture);
+    expect(fedwire.sources?.length).toBeGreaterThan(0);
+    expect(fedwire.sources?.[0]).toEqual({
+      name: "Federal Reserve Financial Services",
+      label: "Fedwire Funds Service — official",
+      url: "https://www.frbservices.org/financial-services/wires",
+    });
+    expect(fedwire.settlement).toContain("RTGS");
+  });
+
+  it("parses the Interac parent with family and its three mandated variants", () => {
+    const interac = SchemeInfoSchema.parse(interacETransferFixture);
+    expect(interac.family).toBe("Interac e-Transfer");
+    expect(interac.variants).toHaveLength(3);
+    expect(interac.variants?.map((v) => v.name)).toEqual([
+      "Auto-Deposit",
+      "Request Money",
+      "Standard security-question claim",
+    ]);
+    expect(interac.variants?.every((v) => v.description.length > 0)).toBe(true);
+  });
+});
+
+describe("InternationalSchemesResponse schema", () => {
+  it("parses the SWIFT gpi international catalogue response", () => {
+    const r = InternationalSchemesResponseSchema.parse(swiftGpiInternationalFixture);
+    expect(r.scope).toBe("International / SWIFT");
+    expect(r.name).toBe("SWIFT gpi");
+    expect(r.operator).toBe("SWIFT");
+    expect(r.howItWorks?.join(" ")).toContain("UETR");
+    expect(r.reversible).toBe(false);
+    expect(r.verifiedAsof).toBe("2026-08");
+    expect(r.sources?.[0]?.name).toBe("SWIFT");
+    expect(r.roadmap?.join(" ")).toContain("CBPR+");
+  });
+
+  it("tolerates a stripped international payload with defensive defaults", () => {
+    const r = InternationalSchemesResponseSchema.parse({ name: "SWIFT gpi" });
+    expect(r.scope).toBe("");
+    expect(r.howItWorks ?? []).toEqual([]);
+    expect(r.sources ?? null).toBeNull();
+    expect(r.verifiedAsof ?? null).toBeNull();
   });
 });
