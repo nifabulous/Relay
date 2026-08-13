@@ -58,8 +58,8 @@ export function SchemeTabs({
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
       const tabElement = (e.target as HTMLElement).closest?.(
-      "[data-tab-id]",
-    ) as HTMLElement | null;
+        "[data-tab-id]",
+      ) as HTMLElement | null;
       if (!tabElement) return;
       e.preventDefault();
       const id = tabElement.getAttribute("data-tab-id");
