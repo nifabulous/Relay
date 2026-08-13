@@ -23,7 +23,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import PaymentEvent, SSI
+from ..models import SSI, PaymentEvent
 from ..schemas import (
     PrepareRoutingInfo,
     PrepareSSIInfo,
@@ -31,7 +31,7 @@ from ..schemas import (
     PrepareVoPInfo,
     SSIRecord,
 )
-from .recommendation import RecommendationResult, decide
+from .recommendation import Recommendation, RecommendationResult, decide
 from .routing import (
     _normalize_bic_input,
     infer_destination_currency,
@@ -49,6 +49,15 @@ _VOP_ADVICE = {
     "CLOSE_MATCH": "Name is similar but not exact — confirm with payer.",
     "NO_MATCH": "Name does not match — do not proceed.",
     "NOT_CHECKED": "Could not verify — account not found or bank doesn't participate.",
+}
+
+# A prepare check is not itself a payment. Keep the educational tracking
+# timeline limited to outcomes that the UI treats as sendable; REVIEW still
+# requires payer confirmation and STOP/BLOCKED/REJECT must never look credited.
+_TRACKABLE_RECOMMENDATIONS = {
+    Recommendation.PROCEED,
+    Recommendation.PROCEED_WITH_CAUTION,
+    Recommendation.CAUTION,
 }
 
 
@@ -247,10 +256,11 @@ def prepare_payment(
     # The UETR returned here is what the UI hands to the tracking endpoint
     # ("Track payment"), so the simulated gpi timeline must actually exist or
     # tracking 404s on a payment the learner just made. Only persist when a
-    # destination bank is known — that is the chain to walk. The payer's own
-    # institution is the originator (the form does not capture it).
+    # destination bank is known and the recommendation is sendable — that is
+    # the chain to walk. The payer's own institution is the originator (the
+    # form does not capture it).
     resolved_uetr = uetr or generate_uetr()
-    if bic_11:
+    if bic_11 and rec.recommendation in _TRACKABLE_RECOMMENDATIONS:
         existing = session.execute(
             select(PaymentEvent).where(PaymentEvent.uetr == resolved_uetr).limit(1)
         ).scalar_one_or_none()

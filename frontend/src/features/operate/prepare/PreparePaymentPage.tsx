@@ -30,6 +30,12 @@ const COMMON_CURRENCIES = [
   "THB", "TRY", "TWD", "USD", "XOF", "ZAR",
 ];
 
+const TRACKABLE_RECOMMENDATIONS = new Set([
+  "PROCEED",
+  "PROCEED_WITH_CAUTION",
+  "CAUTION",
+]);
+
 /** True when a string looks like a BIC worth querying SSI for. */
 function isBicLike(value: string): boolean {
   return /^[A-Z0-9]{8,11}$/.test(value);
@@ -476,10 +482,10 @@ export function PreparePaymentPage() {
               UETR: <span className="mono">{result.uetr}</span>
             </p>
             <div className="prepare-payment__links">
-              {/* The backend persists a simulated timeline only when the
-                  destination bank resolved (a BIC), so only link to tracking
-                  in that case — never advertise a payment it can't find. */}
-              {result.validation.bic && (
+              {/* The backend persists a simulated timeline only for a resolved
+                  destination and a sendable recommendation, so never advertise
+                  a trackable payment for a blocked or pending-review result. */}
+              {result.validation.bic && TRACKABLE_RECOMMENDATIONS.has(result.recommendation) && (
                 <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
                   Track this payment
                 </Link>

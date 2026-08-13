@@ -3021,13 +3021,76 @@ LIFT_FEES = [
 ]
 
 
+# BIC corrections shipped with the expanded static directory. Existing
+# databases may contain the old values, so seed rollout must migrate those
+# references before upserting the current rows.
+SEED_BIC_ALIASES = {
+    "HABBPKKAAXX": "HABBPKKAXXX",
+    "NRBMAEADXXX": "MASHAEADXXX",
+    "DOHAQAQAXXX": "DOHBQAQAXXX",
+    "NBOMKWKEXXX": "NBOKKWKWXXX",
+    "SCBLDEFXXXX": "SCBLDEFFXXX",
+}
+
+
+def _apply_seed_bic_aliases(session) -> None:
+    """Remove stale corrected rows and rewrite references to canonical BICs."""
+    for old_bic, new_bic in SEED_BIC_ALIASES.items():
+        # The current seed list contains the canonical beneficiary rows. An
+        # old beneficiary BIC identifies stale rows, so remove them and let
+        # the upsert below insert the current records without uniqueness
+        # collisions.
+        stale_ssi = list(session.query(SSI).filter(SSI.beneficiary_bic == old_bic))
+        for row in stale_ssi:
+            session.delete(row)
+
+        # Intermediary corrections can be updated in place unless the current
+        # canonical row is already present, in which case the old row is a
+        # duplicate of the canonical record and should be removed.
+        for row in list(session.query(SSI).filter(SSI.intermediary_bic == old_bic)):
+            if row in stale_ssi:
+                continue
+            canonical = session.query(SSI).filter(
+                SSI.beneficiary_bic == row.beneficiary_bic,
+                SSI.currency == row.currency,
+                SSI.intermediary_bic == new_bic,
+            ).first()
+            if canonical is not None:
+                session.delete(row)
+            else:
+                row.intermediary_bic = new_bic
+
+        for row in list(session.query(CorridorRule).filter(CorridorRule.intermediary_bic == old_bic)):
+            canonical = session.query(CorridorRule).filter(
+                CorridorRule.destination_currency == row.destination_currency,
+                CorridorRule.destination_country == row.destination_country,
+                CorridorRule.intermediary_bic == new_bic,
+                CorridorRule.corridor == row.corridor,
+                CorridorRule.rank == row.rank,
+            ).first()
+            if canonical is not None:
+                session.delete(row)
+            else:
+                row.intermediary_bic = new_bic
+
+        # The canonical bank row is supplied by BANKS below. Removing the old
+        # unique BIC first lets the normal insert path add the canonical
+        # directory entry without duplicate rows.
+        for row in list(session.query(Bank).filter(Bank.bic == old_bic)):
+            session.delete(row)
+
+    session.flush()
+
+
 def seed_if_empty(session) -> dict:
-    """Idempotently seed the directory + rules + SSIs + accounts if empty."""
+    """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {"banks": 0, "corridor_rules": 0, "ssi": 0, "accounts": 0}
 
-    if session.query(Bank).count() == 0:
-        for row in BANKS:
-            bic, name, cc, city, cur = row
+    _apply_seed_bic_aliases(session)
+
+    for bic, name, cc, city, cur in BANKS:
+        existing = session.query(Bank).filter(Bank.bic == bic).one_or_none()
+        if existing is None:
             session.add(
                 Bank(
                     bic=bic,
@@ -3037,11 +3100,17 @@ def seed_if_empty(session) -> dict:
                     country_currency=cur,
                 )
             )
-        inserted["banks"] = len(BANKS)
+            inserted["banks"] += 1
 
-    if session.query(CorridorRule).count() == 0:
-        for row in CORRIDOR_RULES:
-            ccy, ctry, bic, name, corr, conf, rank = row
+    for ccy, ctry, bic, name, corr, conf, rank in CORRIDOR_RULES:
+        existing = session.query(CorridorRule).filter(
+            CorridorRule.destination_currency == ccy,
+            CorridorRule.destination_country == ctry,
+            CorridorRule.intermediary_bic == bic,
+            CorridorRule.corridor == corr,
+            CorridorRule.rank == rank,
+        ).first()
+        if existing is None:
             session.add(
                 CorridorRule(
                     destination_currency=ccy,
@@ -3053,12 +3122,17 @@ def seed_if_empty(session) -> dict:
                     rank=rank,
                 )
             )
-        inserted["corridor_rules"] = len(CORRIDOR_RULES)
+            inserted["corridor_rules"] += 1
 
-    if session.query(SSI).count() == 0:
-        for row in SSI_RECORDS:
-            (ben_bic, ben_name, ccy, int_bic, int_name,
-             int_acct, ben_acct, charge, vdate, notes) = row
+    for row in SSI_RECORDS:
+        (ben_bic, ben_name, ccy, int_bic, int_name,
+         int_acct, ben_acct, charge, vdate, notes) = row
+        existing = session.query(SSI).filter(
+            SSI.beneficiary_bic == ben_bic,
+            SSI.currency == ccy,
+            SSI.intermediary_bic == int_bic,
+        ).one_or_none()
+        if existing is None:
             session.add(
                 SSI(
                     beneficiary_bic=ben_bic,
@@ -3073,8 +3147,10 @@ def seed_if_empty(session) -> dict:
                     notes=notes,
                 )
             )
-        inserted["ssi"] = len(SSI_RECORDS)
+            inserted["ssi"] += 1
 
+    # Account fixtures did not change in this PR; retain their historical
+    # empty-table behavior while the directory/rules/SSI data rolls forward.
     if session.query(Account).count() == 0:
         for row in ACCOUNT_RECORDS:
             iban, name, bic, cc, atype = row

@@ -488,3 +488,47 @@ class TestPreparePersistenceToTracking:
         body = track.json()
         assert body["current_status"] in ("ACCEPTED", "IN_PROGRESS", "FORWARDED", "CREDITED")
         assert body["event_count"] > 0
+
+    def test_blocked_payment_is_not_trackable(self, client):
+        """A blocked recommendation must not create a credited timeline."""
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "Completely Wrong Name",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["recommendation"] == "STOP"
+        assert body["is_blocking"] is True
+
+        track = client.get(f"/api/track/{body['uetr']}")
+        assert track.status_code == 404
+
+    def test_review_payment_is_not_trackable(self, client, monkeypatch):
+        """A review recommendation still requires confirmation before sending."""
+        from app.services.vop import VoPResult
+
+        monkeypatch.setattr(
+            "app.services.prepare.verify_payee",
+            lambda _session, iban, name: VoPResult(
+                iban=iban,
+                submitted_name=name,
+                outcome="CLOSE_MATCH",
+                score=0.9,
+                account_holder_name="John Smith",
+                account_type="personal",
+            ),
+        )
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "Jon Smyth",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["recommendation"] == "REVIEW"
+
+        track = client.get(f"/api/track/{body['uetr']}")
+        assert track.status_code == 404

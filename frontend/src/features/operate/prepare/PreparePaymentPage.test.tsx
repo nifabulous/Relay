@@ -186,6 +186,58 @@ describe("PreparePaymentPage result cross-links", () => {
     expect(screen.getByRole("link", { name: /explore corridor details/i }))
       .toHaveAttribute("href", "/app/explore");
   });
+
+  it("does not link a blocked recommendation to a credited tracking timeline", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "STOP",
+        reason: "Do not proceed",
+        is_blocking: true,
+        uetr: "blocked-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "NO_MATCH", score: 0, advice: "Do not proceed" },
+        routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: [],
+        blocks: ["Name does not match"],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Wrong Name");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText("Stop");
+    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+  });
+
+  it("does not link a review recommendation before confirmation", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "REVIEW",
+        reason: "Confirm before sending",
+        is_blocking: false,
+        uetr: "review-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "CLOSE_MATCH", score: 0.9, advice: "Confirm" },
+        routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: ["Confirm"],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Jon Smyth");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText("Review needed");
+    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+  });
 });
 
 describe("PreparePaymentPage currency selection", () => {

@@ -165,4 +165,62 @@ describe("BankDirectoryPage", () => {
     expect(screen.getByText("Citibank New York")).toBeVisible();
     expect(screen.getByText("ACCT-USD-1")).toBeVisible();
   });
+
+  it("shows an SSI error with retry instead of silently omitting instructions", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    let attempt = 0;
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "SBININBBXXX",
+          found: true,
+          bank: {
+            bic: "SBININBBXXX",
+            bank_name: "State Bank of India",
+            country_code: "IN",
+            city: "Mumbai",
+            country_currency: "INR",
+          },
+        }),
+      ),
+      http.get("/api/ssi", () => {
+        attempt += 1;
+        if (attempt === 1) return HttpResponse.json({ detail: "boom" }, { status: 500 });
+        return HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [
+            {
+              beneficiary_bic: "SBININBBXXX",
+              beneficiary_bank_name: "State Bank of India",
+              currency: "USD",
+              intermediary_bic: "CITIUS33XXX",
+              intermediary_bank_name: "Citibank New York",
+              intermediary_account: "ACCT-USD-1",
+              beneficiary_account: "ACCT-BENE",
+              charge_code: "SHA",
+              value_date: "spot",
+            },
+          ],
+          disclaimer: "SIMULATION",
+        });
+      }),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+
+    expect(
+      await screen.findByText(/Published settlement instructions could not be loaded/i),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /retry settlement instructions/i }));
+    expect(await screen.findByText("Citibank New York")).toBeVisible();
+  });
 });

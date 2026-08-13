@@ -20,7 +20,13 @@ have not been verified yet: verify and PROMOTE them to the directory rather
 than letting the list grow.
 """
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_ids
+from app.db import Base
+from app.models import SSI, Bank, CorridorRule
 from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
 
 # US-located USD intermediaries whose CHIPS/ABA identifiers are not yet
@@ -711,6 +717,95 @@ class TestSouthAsiaSsiCoverage:
         for record in SSI_RECORDS:
             used.add(record[3])
         assert "BSHROMRUXXX" not in used, "Transposed Sohar BIC must not be seeded"
+
+
+class TestSeedRollout:
+    def test_populated_database_receives_new_rows_and_bic_corrections(self):
+        """The PR seed must upgrade an existing pre-expansion database."""
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(Bank(
+                bic="CITIUS33XXX",
+                bank_name="Citibank",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+            ))
+            session.add(Bank(
+                bic="NRBMAEADXXX",
+                bank_name="Mashreq Bank",
+                country_code="AE",
+                city="Dubai",
+                country_currency="AED",
+            ))
+            session.add(CorridorRule(
+                destination_currency="KWD",
+                destination_country="KW",
+                intermediary_bic="NBOMKWKEXXX",
+                intermediary_name="National Bank of Kuwait",
+                corridor="USD->KW",
+                confidence="high",
+                rank=2,
+            ))
+            session.add(SSI(
+                beneficiary_bic="BCEYLKLXXXX",
+                beneficiary_bank_name="Bank of Ceylon",
+                currency="EUR",
+                intermediary_bic="SCBLDEFXXXX",
+                intermediary_bank_name="Standard Chartered Frankfurt",
+                intermediary_account="ACCT-OLD",
+                beneficiary_account="ACCT-BENE",
+                charge_code="SHA",
+                value_date="spot",
+            ))
+            session.add(SSI(
+                beneficiary_bic="GTBINGLAXXX",
+                beneficiary_bank_name="Guaranty Trust Bank",
+                currency="USD",
+                intermediary_bic="CITIUS33XXX",
+                intermediary_bank_name="Citibank New York",
+                intermediary_account="ACCT-OPERATOR-OWNED",
+                beneficiary_account="ACCT-BENE",
+                charge_code="OUR",
+                value_date="same-day",
+                notes="Operator-imported SSI must survive seed rollout",
+            ))
+            session.commit()
+
+            from app.services.seed import seed_if_empty
+
+            result = seed_if_empty(session)
+
+            assert result["banks"] > 0
+            assert session.query(Bank).filter_by(bic="MASHAEADXXX").one_or_none() is not None
+            assert session.query(Bank).filter_by(bic="NRBMAEADXXX").one_or_none() is None
+            assert session.query(CorridorRule).filter_by(intermediary_bic="NBOKKWKWXXX").one_or_none() is not None
+            assert session.query(CorridorRule).filter_by(intermediary_bic="NBOMKWKEXXX").one_or_none() is None
+            corrected = session.query(SSI).filter_by(
+                beneficiary_bic="BCEYLKLXXXX",
+                currency="EUR",
+                intermediary_bic="SCBLDEFFXXX",
+            ).one_or_none()
+            assert corrected is not None
+            assert session.query(SSI).filter_by(intermediary_bic="SCBLDEFXXXX").one_or_none() is None
+            preserved = session.query(SSI).filter_by(
+                beneficiary_bic="GTBINGLAXXX",
+                currency="USD",
+                intermediary_bic="CITIUS33XXX",
+            ).one()
+            assert preserved.intermediary_account == "ACCT-OPERATOR-OWNED"
+            assert preserved.charge_code == "OUR"
+        finally:
+            session.close()
+            engine.dispose()
 
 
 # ---------------------------------------------------------------------------

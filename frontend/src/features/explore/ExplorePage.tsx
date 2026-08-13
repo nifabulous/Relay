@@ -161,10 +161,31 @@ export function BankDirectoryPage() {
 
                 {/* Settlement details inline — the search result is the
                     answer, no click-through required. */}
-                <SettlementInstructions
-                  groups={currencyGroups}
-                  disclaimer={ssi.data?.disclaimer}
-                />
+                {ssi.isError && (
+                  <div className="bank-ssi__error" role="alert">
+                    <p>
+                      Published settlement instructions could not be loaded for this bank.
+                    </p>
+                    <button
+                      type="button"
+                      className="relay-btn relay-btn--secondary"
+                      onClick={() => ssi.refetch()}
+                    >
+                      Retry settlement instructions
+                    </button>
+                  </div>
+                )}
+                {ssi.isLoading && (
+                  <div className="bank-ssi__loading" role="status" aria-label="Loading settlement instructions">
+                    Loading published settlement instructions…
+                  </div>
+                )}
+                {ssi.data && !ssi.isError && (
+                  <SettlementInstructions
+                    groups={currencyGroups}
+                    disclaimer={ssi.data.disclaimer}
+                  />
+                )}
 
                 <div className="bank-detail__actions">
                   <Link
