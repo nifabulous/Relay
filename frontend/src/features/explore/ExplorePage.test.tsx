@@ -3,9 +3,18 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
-import { GlossaryPage, BankDirectoryPage } from "./ExplorePage";
+import {
+  GlossaryPage,
+  BankDirectoryPage,
+  SchemesPage,
+} from "./ExplorePage";
 import { renderRelay, queryClient } from "../../test/render";
 import { server } from "../../test/server";
+import {
+  usdFedwireRailFixture,
+  interacETransferFixture,
+  swiftGpiInternationalFixture,
+} from "./schemeFixtures";
 
 function renderGlossary(path = "/app/explore/glossary") {
   return render(
@@ -222,5 +231,147 @@ describe("BankDirectoryPage", () => {
     ).toBeVisible();
     await user.click(screen.getByRole("button", { name: /retry settlement instructions/i }));
     expect(await screen.findByText("Citibank New York")).toBeVisible();
+  });
+});
+
+// ─── Payment Schemes catalogue (RED phase, plan task 0.1) ────────────────────
+//
+// Acceptance matrix — schemes redesign (implementation in plan tasks 3.1/3.2):
+//
+//   FE-1  schemeFixtures parse under the current scheme shapes
+//                                                       → covered indirectly here + schemas.test.ts (task 0.2)
+//   FE-2a SchemesPage defaults to the USD tab and      → describe("SchemesPage red phase").it("selects USD by
+//        fetches USD on first load, no pill click         default and fetches USD schemes on first load")
+//   FE-2b switching currencies replaces content        → it("switches currencies without stale rows")
+//   FE-2c International / SWIFT tab fetches and        → it("fetches and renders the SWIFT gpi catalogue from
+//        renders /api/schemes/international                /api/schemes/international")
+//   FE-2d sources render as links from fixtures        → it("renders source references with official URLs")
+//
+// These tests fail today: the page renders an idle state with aria-pressed
+// pills and no sources. Plan task 3.2 replaces it with a USD-defaulting,
+// tabbed catalogue.
+
+function currencySchemesHandler(
+  byCurrency: Record<string, unknown[]>,
+  options: { international?: () => Response } = {},
+) {
+  if (options.international) {
+    server.use(http.get("/api/schemes/international", options.international));
+  }
+  return http.get("/api/schemes", ({ request }) => {
+    const url = new URL(request.url);
+    const currency = url.searchParams.get("currency") ?? "USD";
+    return HttpResponse.json({
+      currency,
+      country: "Testland",
+      countryCode: currency.slice(0, 2),
+      iban: false,
+      localIdentifier: "Test identifier",
+      verifiedAsof: "2026-07",
+      schemes: byCurrency[currency] ?? [],
+    });
+  });
+}
+
+describe("SchemesPage red phase", () => {
+  it("selects USD by default and fetches USD schemes on first load", async () => {
+    queryClient.clear();
+    server.use(
+      currencySchemesHandler({
+        USD: [usdFedwireRailFixture],
+        CAD: [interacETransferFixture],
+      }),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore/schemes"]}>
+        <SchemesPage />
+      </MemoryRouter>,
+    );
+
+    // The catalogue must render immediately — no pill click to trigger it.
+    expect(await screen.findByText("Fedwire")).toBeVisible();
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "CAD" })).not.toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("switches currencies without stale rows", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    server.use(
+      currencySchemesHandler({
+        USD: [usdFedwireRailFixture],
+        CAD: [interacETransferFixture],
+      }),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore/schemes"]}>
+        <SchemesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Fedwire");
+    await user.click(screen.getByRole("tab", { name: "CAD" }));
+
+    expect(await screen.findByText("Interac e-Transfer")).toBeVisible();
+    expect(screen.queryByText("Fedwire")).toBeNull();
+  });
+
+  it("fetches and renders the SWIFT gpi catalogue from /api/schemes/international", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    server.use(
+      currencySchemesHandler(
+        {
+          USD: [usdFedwireRailFixture],
+          CAD: [interacETransferFixture],
+        },
+        { international: () => HttpResponse.json(swiftGpiInternationalFixture) },
+      ),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore/schemes"]}>
+        <SchemesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Fedwire");
+    await user.click(screen.getByRole("tab", { name: /international/i }));
+
+    expect(await screen.findByText("SWIFT gpi")).toBeVisible();
+    expect(screen.getByText(/UETR/i)).toBeVisible();
+    expect(screen.getByText(/MT103|pacs\.008/i)).toBeVisible();
+  });
+
+  it("renders source references with official URLs", async () => {
+    queryClient.clear();
+    server.use(
+      currencySchemesHandler({
+        USD: [usdFedwireRailFixture],
+        CAD: [interacETransferFixture],
+      }),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore/schemes"]}>
+        <SchemesPage />
+      </MemoryRouter>,
+    );
+
+    const source = await screen.findByRole("link", {
+      name: /Federal Reserve Financial Services/,
+    });
+    expect(source).toHaveAttribute(
+      "href",
+      "https://www.frbservices.org/financial-services/wires",
+    );
   });
 });

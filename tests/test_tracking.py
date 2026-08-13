@@ -7,13 +7,38 @@ Covers:
   - Rejection path (stops at first intermediary)
   - Retrieval by UETR (timeline ordering, status summary, fees)
   - HTTP endpoints (create + get + 404 for unknown UETR)
+  - Scheduled pacing (RED phase, plan task 0.1): scheduled vs instant
+    timelines, time injection, persisted pending rows, one-event advancement,
+    completion, idempotent terminal controls, restart-safe visibility, and
+    the skip/complete HTTP endpoints.
+
+Acceptance matrix — scheduled pacing (plan: payment-pacing-schemes-redesign
+task 0.1; implementation lands in plan tasks 1.1-1.4. Tests below FAIL today
+by design — they are the RED phase):
+
+  Requirement                                             Test
+  ------------------------------------------------------  -------------------------------------------------
+  TRK-1  Scheduled vs instant distinction                 TestScheduledTimelineVisibility.test_schedule_value_is_persisted_on_every_row / test_instant_timeline_is_fully_visible_at_start
+  TRK-2  Time injection (fixed UTC now, read-time)        test_due_events_become_visible_at_read_time_without_mutation
+  TRK-3  Persisted pending rows (full plan on disk)       test_scheduled_timeline_persists_every_plan_row / test_scheduled_timeline_shows_only_initiated_at_start
+  TRK-4  One-event advancement                            test_advance_reveals_exactly_one_event_in_planned_order
+  TRK-5  Completion (reveals all, terminal)               test_complete_reveals_all_remaining_and_terminal / test_complete_on_rejected_scheduled_payment_reveals_rejection
+  TRK-6  Idempotent terminal controls + no rewrite        test_repeat_skip_reveals_one_event_each_time / test_advance_after_terminal_is_a_noop / test_advance_and_complete_are_noops_for_instant_timelines / test_controls_never_rewrite_planned_timestamps
+  TRK-7  Restart-safe visibility                          test_revealed_events_survive_a_fresh_session
+  TRK-8  No future leakage in status summary              test_initiated_only_status_hides_final_amount_and_fees / test_status_never_leaks_future_statuses
+  TRK-9  skip/complete HTTP endpoints + 404 + idempotent  TestScheduledTrackEndpoints.test_skip_reveals_exactly_one_event / test_complete_reveals_terminal_state / test_unknown_uetr_skip_and_complete_return_404 / test_repeated_skip_is_idempotent / test_repeated_complete_is_idempotent / test_get_advances_visibility_when_clock_passes_planned_timestamps
+  TRK-10 Prepare = scheduled, admin create = instant      TestScheduledTrackEndpoints.test_instant_admin_create_remains_terminal / TestScheduledTrackEndpoints.test_prepared_payment...
 """
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import pytest
+from sqlalchemy.orm import sessionmaker
 
 from app.services.tracking import (
+    STATUS_ACCEPTED,
     STATUS_CREDITED,
+    STATUS_IN_PROGRESS,
     STATUS_INITIATED,
     STATUS_REJECTED,
     TERMINAL_STATUSES,
@@ -347,3 +372,411 @@ class TestTrackEndpoints:
             "intermediary_names": ["Citibank only"],
         })
         assert r.status_code == 400
+
+
+# ===========================================================================
+# Scheduled pacing — RED phase (plan task 0.1, implementation in tasks 1.1-1.4)
+#
+# These tests assert behavior that does not exist yet: a `schedule` argument
+# to generate_timeline, `get_visible_timeline` / `advance_payment` /
+# `complete_payment` in app.services.tracking, `now` injection on
+# get_payment_status, and the schedule/revealed_at columns on PaymentEvent.
+# They FAIL against the current code by design. Acceptance matrix above.
+#
+# All clocks are fixed UTC datetimes; nothing here sleeps.
+# ===========================================================================
+
+
+class TestScheduledTimelineVisibility:
+    """TRK-1/2/3/4/5/6/7/8: service-level visibility contract on the plan.
+
+    RED phase: every test calls an API surface the current service does not
+    have (schedule kwarg, visible-timeline helpers, now injection), so each
+    fails now and flips green when plan tasks 1.1-1.3 land.
+    """
+
+    # Fixed UTC clock shared by all tests in this class.
+    START = datetime(2026, 8, 13, 9, 0, 0, tzinfo=timezone.utc)
+
+    def _make_scheduled(self, db_session, outcome="credited"):
+        from app.services.tracking import generate_timeline
+
+        self.uetr = generate_uetr()
+        return generate_timeline(
+            session=db_session,
+            uetr=self.uetr,
+            originator_bic="BOFAUS3NXXX",
+            originator_name="Bank of America",
+            beneficiary_bic="GTBINGLAXXX",
+            beneficiary_name="Guaranty Trust Bank",
+            intermediary_bics=["CITIUS33XXX"],
+            intermediary_names=["Citibank N.A."],
+            currency="USD",
+            amount=5000.00,
+            charge_code="SHA",
+            outcome=outcome,
+            schedule="scheduled",
+            start_time=self.START,
+        )
+
+    def test_scheduled_timeline_persists_every_plan_row(self, db_session):
+        """TRK-3: the full planned chain is persisted, not only visible rows."""
+        self._make_scheduled(db_session)
+        all_rows = get_timeline(db_session, self.uetr)
+        assert len(all_rows) >= 6, "Full plan must be on disk from the start"
+
+    def test_scheduled_timeline_shows_only_initiated_at_start(self, db_session):
+        """TRK-3: at t0 only INITIATED is visible; later banks stay hidden."""
+        from app.services.tracking import get_visible_timeline
+
+        self._make_scheduled(db_session)
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert len(visible) == 1
+        assert visible[0].status == STATUS_INITIATED
+
+    def test_instant_timeline_is_fully_visible_at_start(self, db_session):
+        """TRK-1: instant keeps today's behavior — the whole chain at once."""
+        from app.services.tracking import get_visible_timeline
+
+        uetr = generate_uetr()
+        generate_timeline(
+            session=db_session, uetr=uetr,
+            originator_bic="BOFAUS3NXXX", originator_name="BofA",
+            beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+            intermediary_bics=["CITIUS33XXX"], intermediary_names=["Citi"],
+            currency="USD", amount=1000.00,
+            start_time=self.START,
+        )
+        visible = get_visible_timeline(db_session, uetr, now=self.START)
+        assert len(visible) == len(get_timeline(db_session, uetr)) >= 6
+
+    def test_schedule_value_is_persisted_on_every_row(self, db_session):
+        """TRK-1: each row carries its schedule mode; instant stays default."""
+        self._make_scheduled(db_session)
+        for event in get_timeline(db_session, self.uetr):
+            assert event.schedule == "scheduled"
+
+        uetr = generate_uetr()
+        generate_timeline(
+            session=db_session, uetr=uetr,
+            originator_bic="BOFAUS3NXXX", originator_name="BofA",
+            beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+            intermediary_bics=[], intermediary_names=[],
+            currency="USD", amount=1000.00,
+            start_time=self.START,
+        )
+        for event in get_timeline(db_session, uetr):
+            assert event.schedule == "instant"
+
+    def test_due_events_become_visible_at_read_time_without_mutation(
+        self, db_session
+    ):
+        """TRK-2: visibility is a function of a fixed clock, not a background job."""
+        from app.services.tracking import get_visible_timeline
+
+        self._make_scheduled(db_session)
+        # With one intermediary, ACCEPTED lands at start + 50s.
+        early = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert len(early) == 1
+
+        due = get_visible_timeline(
+            db_session, self.uetr, now=self.START + timedelta(seconds=51)
+        )
+        assert len(due) == 2
+        assert due[1].status == STATUS_ACCEPTED
+
+        # Reading must not mutate: the full plan is bit-identical afterwards
+        # and none of the due rows were manually revealed.
+        snapshot = [
+            (e.hop, e.status, e.timestamp)
+            for e in get_timeline(db_session, self.uetr)
+        ]
+        after = get_timeline(db_session, self.uetr)
+        assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
+        assert all(e.revealed_at is None for e in after)
+
+    def test_advance_reveals_exactly_one_event_in_planned_order(self, db_session):
+        """TRK-4: advance exposes exactly one persisted event, in hop order."""
+        from app.services.tracking import advance_payment, get_visible_timeline
+
+        self._make_scheduled(db_session)
+        status = advance_payment(db_session, self.uetr, now=self.START)
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert len(visible) == 2
+        assert visible[1].status == STATUS_ACCEPTED
+        assert status["event_count"] == 2
+        assert status["current_status"] == STATUS_ACCEPTED
+
+    def test_complete_reveals_all_remaining_and_terminal(self, db_session):
+        """TRK-5: complete exposes the whole plan and the terminal state."""
+        from app.services.tracking import complete_payment, get_visible_timeline
+
+        self._make_scheduled(db_session)
+        status = complete_payment(db_session, self.uetr, now=self.START)
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert len(visible) == len(get_timeline(db_session, self.uetr))
+        assert visible[-1].status == STATUS_CREDITED
+        assert status["is_terminal"] is True
+        assert status["current_status"] == STATUS_CREDITED
+
+    def test_complete_on_rejected_scheduled_payment_reveals_rejection(
+        self, db_session
+    ):
+        """TRK-5: a rejected plan completes to REJECTED, never CREDITED."""
+        from app.services.tracking import complete_payment, get_visible_timeline
+
+        self._make_scheduled(db_session, outcome="rejected")
+        complete_payment(db_session, self.uetr, now=self.START)
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert visible[-1].status == STATUS_REJECTED
+        assert STATUS_CREDITED not in [e.status for e in visible]
+
+    def test_repeat_skip_reveals_one_event_each_time(self, db_session):
+        """TRK-6: repeating advance is safe — one new event per call."""
+        from app.services.tracking import advance_payment, get_visible_timeline
+
+        self._make_scheduled(db_session)
+        advance_payment(db_session, self.uetr, now=self.START)
+        advance_payment(db_session, self.uetr, now=self.START)
+        visible = get_visible_timeline(db_session, self.uetr, now=self.START)
+        assert len(visible) == 3
+        assert [e.status for e in visible] == [
+            STATUS_INITIATED, STATUS_ACCEPTED, STATUS_IN_PROGRESS,
+        ]
+
+    def test_advance_after_terminal_is_a_noop(self, db_session):
+        """TRK-6: advancing a fully-revealed payment changes nothing."""
+        from app.services.tracking import (
+            advance_payment,
+            complete_payment,
+            get_visible_timeline,
+        )
+
+        self._make_scheduled(db_session)
+        complete_payment(db_session, self.uetr, now=self.START)
+        before = get_timeline(db_session, self.uetr)
+        snapshot = [(e.hop, e.status, e.timestamp) for e in before]
+
+        status = advance_payment(db_session, self.uetr, now=self.START)
+        after = get_timeline(db_session, self.uetr)
+        assert len(after) == len(before)
+        assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
+        assert status["is_terminal"] is True
+        assert len(get_visible_timeline(db_session, self.uetr, now=self.START)) == len(before)
+
+    def test_advance_and_complete_are_noops_for_instant_timelines(self, db_session):
+        """TRK-6: instant timelines are never gated by the controls."""
+        from app.services.tracking import (
+            advance_payment,
+            complete_payment,
+            get_visible_timeline,
+        )
+
+        uetr = generate_uetr()
+        generate_timeline(
+            session=db_session, uetr=uetr,
+            originator_bic="BOFAUS3NXXX", originator_name="BofA",
+            beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+            intermediary_bics=["CITIUS33XXX"], intermediary_names=["Citi"],
+            currency="USD", amount=1000.00,
+            start_time=self.START,
+        )
+        before = len(get_timeline(db_session, uetr))
+        status = advance_payment(db_session, uetr, now=self.START)
+        assert len(get_timeline(db_session, uetr)) == before
+        assert status["is_terminal"] is True
+        complete_payment(db_session, uetr, now=self.START)
+        assert len(get_timeline(db_session, uetr)) == before
+        assert len(get_visible_timeline(db_session, uetr, now=self.START)) == before
+
+    def test_controls_never_rewrite_planned_timestamps(self, db_session):
+        """TRK-6: skip/complete mutate reveal state, never the plan itself."""
+        from app.services.tracking import advance_payment, complete_payment
+
+        self._make_scheduled(db_session)
+        snapshot = [
+            (e.hop, e.status, e.timestamp)
+            for e in get_timeline(db_session, self.uetr)
+        ]
+        advance_payment(db_session, self.uetr, now=self.START)
+        complete_payment(db_session, self.uetr, now=self.START)
+        after = get_timeline(db_session, self.uetr)
+        assert [(e.hop, e.status, e.timestamp) for e in after] == snapshot
+
+    def test_revealed_events_survive_a_fresh_session(self, db_session):
+        """TRK-7: reveal state is persisted — a new session sees it."""
+        from app.services.tracking import (
+            advance_payment,
+            generate_timeline,
+            get_timeline,
+            get_visible_timeline,
+        )
+
+        engine = db_session.get_bind()
+        SessionLocal = sessionmaker(
+            bind=engine, autoflush=False, autocommit=False, future=True
+        )
+        uetr = generate_uetr()
+        first = SessionLocal()
+        try:
+            generate_timeline(
+                session=first, uetr=uetr,
+                originator_bic="BOFAUS3NXXX", originator_name="BofA",
+                beneficiary_bic="GTBINGLAXXX", beneficiary_name="GTB",
+                intermediary_bics=["CITIUS33XXX"], intermediary_names=["Citi"],
+                currency="USD", amount=1000.00,
+                schedule="scheduled", start_time=self.START,
+            )
+            advance_payment(first, uetr, now=self.START)
+            first.commit()
+        finally:
+            first.close()
+
+        second = SessionLocal()
+        try:
+            visible = get_visible_timeline(second, uetr, now=self.START)
+            assert len(visible) == 2, "Revealed event must survive the restart"
+            pending = get_timeline(second, uetr)
+            assert len(pending) > 2, "Hidden plan rows must survive the restart"
+        finally:
+            second.close()
+
+    def test_initiated_only_status_hides_final_amount_and_fees(self, db_session):
+        """TRK-8: a payment stuck at INITIATED is non-terminal and shows no money."""
+        from app.services.tracking import get_payment_status
+
+        self._make_scheduled(db_session)
+        status = get_payment_status(db_session, self.uetr, now=self.START)
+        assert status["current_status"] == STATUS_INITIATED
+        assert status["is_terminal"] is False
+        assert status["event_count"] == 1
+        assert status["final_amount"] is None
+        assert status["total_fees"] is None
+        assert len(status["timeline"]) == 1
+
+    def test_status_never_leaks_future_statuses(self, db_session):
+        """TRK-8: the status summary is computed only from visible events."""
+        from app.services.tracking import get_payment_status
+
+        self._make_scheduled(db_session)
+        mid = get_payment_status(db_session, self.uetr, now=self.START + timedelta(seconds=51))
+        assert mid["current_status"] == STATUS_ACCEPTED
+        assert mid["event_count"] == 2
+        assert mid["is_terminal"] is False
+        assert [e.status for e in mid["timeline"]] == [
+            STATUS_INITIATED, STATUS_ACCEPTED,
+        ]
+
+
+# ===========================================================================
+# Scheduled pacing — HTTP endpoints
+# ===========================================================================
+
+
+class TestScheduledTrackEndpoints:
+    """TRK-9/10: skips and completions are public, unauthenticated learner
+    controls; admin/demo creation stays instant. RED phase — these routes do
+    not exist yet and prepared payments are not yet scheduled."""
+
+    def _prepare_scheduled_payment(self, client):
+        """The only scheduled flow is prepare-payment (plan task 1.4)."""
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        return r.json()["uetr"]
+
+    def test_skip_reveals_exactly_one_event(self, client):
+        uetr = self._prepare_scheduled_payment(client)
+        r = client.post(f"/api/track/{uetr}/skip")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["uetr"] == uetr
+        assert body["event_count"] == 2
+        assert body["current_status"] == STATUS_ACCEPTED
+        assert body["is_terminal"] is False
+
+    def test_complete_reveals_terminal_state(self, client):
+        uetr = self._prepare_scheduled_payment(client)
+        r = client.post(f"/api/track/{uetr}/complete")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["uetr"] == uetr
+        assert body["is_terminal"] is True
+        assert body["current_status"] == STATUS_CREDITED
+        assert body["timeline"][-1]["status"] == STATUS_CREDITED
+
+    def test_unknown_uetr_skip_and_complete_return_404(self, client):
+        for action in ("skip", "complete"):
+            r = client.post(f"/api/track/00000000-0000-0000-0000-000000000000/{action}")
+            assert r.status_code == 404
+
+    def test_repeated_skip_is_idempotent(self, client):
+        uetr = self._prepare_scheduled_payment(client)
+        first = client.post(f"/api/track/{uetr}/skip").json()
+        second = client.post(f"/api/track/{uetr}/skip").json()
+        assert first["event_count"] == 2
+        assert second["event_count"] == 3  # one new event per call, no dupes
+
+    def test_repeated_complete_is_idempotent(self, client):
+        uetr = self._prepare_scheduled_payment(client)
+        client.post(f"/api/track/{uetr}/complete")
+        again = client.post(f"/api/track/{uetr}/complete")
+        assert again.status_code == 200
+        body = again.json()
+        assert body["is_terminal"] is True
+        assert body["current_status"] == STATUS_CREDITED
+
+    def test_get_advances_visibility_when_clock_passes_planned_timestamps(
+        self, client, monkeypatch
+    ):
+        """TRK-9: GET reads through a clock — when it passes a planned
+        timestamp the event turns visible without any mutation request."""
+        import datetime as _dt
+
+        from app.services import tracking as tracking_module
+
+        class FrozenClock(_dt.datetime):
+            current = _dt.datetime(2026, 8, 13, 9, 0, 0, tzinfo=_dt.timezone.utc)
+
+            @classmethod
+            def now(cls, tz=None):
+                return cls.current
+
+        monkeypatch.setattr(tracking_module, "datetime", FrozenClock)
+
+        uetr = self._prepare_scheduled_payment(client)
+        track = client.get(f"/api/track/{uetr}")
+        assert track.status_code == 200
+        assert track.json()["current_status"] == STATUS_INITIATED
+        assert track.json()["event_count"] == 1
+
+        # Jump the clock past the whole chain (max ~5 minutes incl. fees).
+        FrozenClock.current += timedelta(minutes=10)
+        later = client.get(f"/api/track/{uetr}")
+        assert later.status_code == 200
+        assert later.json()["current_status"] == STATUS_CREDITED
+        assert later.json()["is_terminal"] is True
+        assert later.json()["event_count"] > 1
+
+    def test_instant_admin_create_remains_terminal(self, client):
+        """TRK-10 guard: POST /api/track/create must keep returning the full
+        terminal timeline — the admin/demo path never becomes scheduled."""
+        r = client.post("/api/track/create", json={
+            "originator_bic": "BOFAUS3NXXX",
+            "originator_name": "Bank of America",
+            "beneficiary_bic": "GTBINGLAXXX",
+            "beneficiary_name": "Guaranty Trust Bank",
+            "currency": "USD",
+            "amount": 5000.00,
+            "intermediary_bics": ["CITIUS33XXX"],
+            "intermediary_names": ["Citibank N.A."],
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["current_status"] == "CREDITED"
+        assert body["is_terminal"] is True
+        assert len(body["timeline"]) >= 6
