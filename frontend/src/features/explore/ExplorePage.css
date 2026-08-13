@@ -144,6 +144,48 @@
   color: var(--color-ink-strong);
 }
 
+/* ─── Bank Directory pre-search guidance ────────────────── */
+
+.explore__empty {
+  margin-top: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+  padding: var(--space-5);
+}
+
+.explore__empty-title {
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.explore__empty-body {
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.explore__examples {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.explore__example {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink-strong);
+}
+
+.explore__example:hover {
+  border-color: var(--color-action);
+  color: var(--color-action);
+}
+
 /* ─── Schemes placeholder ───────────────────────────────── */
 .schemes-list {
   padding: var(--space-6);

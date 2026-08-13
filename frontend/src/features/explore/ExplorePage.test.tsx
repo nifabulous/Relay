@@ -47,6 +47,37 @@ describe("GlossaryPage", () => {
 });
 
 describe("BankDirectoryPage", () => {
+  it("shows guidance with example BICs before any search", async () => {
+    queryClient.clear();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText(/Find a bank to see its settlement instructions/i),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /GTBINGLAXXX/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /MASHAEADXXX/i })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
+  });
+
+  it("runs the lookup when an example BIC is clicked", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /MASHAEADXXX/i }));
+
+    const link = await screen.findByRole("link", { name: /Prepare a payment/i });
+    expect(link).toHaveAttribute("href", "/operate/prepare?bic=MASHAEADXXX");
+  });
+
   it("links a found bank to payment preparation, pre-filled with its BIC", async () => {
     queryClient.clear();
     const user = userEvent.setup();
