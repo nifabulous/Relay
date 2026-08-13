@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
@@ -47,7 +47,7 @@ describe("GlossaryPage", () => {
 });
 
 describe("BankDirectoryPage", () => {
-  it("links a found bank to its detail route instead of expanding inline", async () => {
+  it("links a found bank to its detail route", async () => {
     queryClient.clear();
     const user = userEvent.setup();
 
@@ -60,11 +60,11 @@ describe("BankDirectoryPage", () => {
     await user.type(screen.getByLabelText("BIC to look up"), "CITIUS33");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
-    const link = await screen.findByRole("link", { name: /View settlement details/i });
+    const link = await screen.findByRole("link", { name: /Open bank page/i });
     expect(link).toHaveAttribute("href", "/explore/banks/CITIUS33");
   });
 
-  it("shows the bank's settlement currencies inline on the result card", async () => {
+  it("shows the settlement details inline on the result card — no click-through", async () => {
     queryClient.clear();
     const user = userEvent.setup();
     server.use(
@@ -123,11 +123,15 @@ describe("BankDirectoryPage", () => {
     await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
-    const strip = await screen.findByLabelText("Settlement currencies");
-    // Importance order: USD leads over EUR despite both being present.
-    const chips = within(strip).getAllByText(/·/).map((n) => n.textContent);
-    expect(chips.join(" ")).toContain("USD·1");
-    expect(chips.join(" ")).toContain("EUR·1");
-    expect(strip.textContent!.indexOf("USD")).toBeLessThan(strip.textContent!.indexOf("EUR"));
+    // The full settlement section renders on the result card itself.
+    expect(
+      await screen.findByRole("heading", { name: "Published settlement instructions" }),
+    ).toBeVisible();
+    // Importance order: USD leads over EUR.
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual(["USD1", "EUR1"]);
+    // The active (USD) table is visible.
+    expect(screen.getByText("Citibank New York")).toBeVisible();
+    expect(screen.getByText("ACCT-USD-1")).toBeVisible();
   });
 });

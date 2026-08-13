@@ -11,6 +11,7 @@ import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import { groupByCurrency } from "./ssiGrouping";
+import { SettlementInstructions } from "./SettlementInstructions";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -132,23 +133,19 @@ export function BankDirectoryPage() {
                   )}
                 </dl>
 
-                {currencyGroups.length > 0 && (
-                  <div className="bank-detail__ssi-strip" aria-label="Settlement currencies">
-                    <span className="bank-detail__ssi-strip-label">Settlement</span>
-                    {currencyGroups.map((g) => (
-                      <span className="bank-detail__ssi-strip-chip" key={g.currency}>
-                        <span className="mono">{g.currency}</span>·{g.records.length}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Settlement details inline — the search result is the
+                    answer, no click-through required. */}
+                <SettlementInstructions
+                  groups={currencyGroups}
+                  disclaimer={ssi.data?.disclaimer}
+                />
 
                 <div className="bank-detail__actions">
                   <Link
                     to={`/explore/banks/${encodeURIComponent(query.data.bank.bic)}`}
                     className="relay-btn relay-btn--primary"
                   >
-                    View settlement details
+                    Open bank page
                   </Link>
                 </div>
               </div>
