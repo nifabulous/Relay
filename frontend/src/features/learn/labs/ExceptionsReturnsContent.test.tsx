@@ -95,6 +95,22 @@ describe("ExceptionsReturnsContent", () => {
     expect(screen.getByRole("note")).toHaveTextContent(/not a real payment/i);
   });
 
+  it("renders the shared timeline without pacing controls of its own", async () => {
+    mockTrackCreate();
+    const { user } = renderLab();
+
+    await user.click(screen.getByRole("button", { name: /create the doomed payment/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/rejected by citibank/i)).toBeVisible();
+    });
+
+    // "Advance one event" / "Complete simulation" live on TrackingPage (task
+    // 4.1); the shared timeline embedded here renders no buttons of its own,
+    // so a lab that supplies no handlers never inherits unusable controls.
+    const timeline = screen.getByRole("list", { name: /payment timeline/i });
+    expect(timeline.querySelectorAll("button").length).toBe(0);
+  });
+
   it("creates the doomed payment and emits simulate-rejection", async () => {
     mockTrackCreate();
     const { user, onCheckpoint } = renderLab();

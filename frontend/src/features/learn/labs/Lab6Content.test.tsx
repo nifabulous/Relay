@@ -120,4 +120,22 @@ describe("Lab6Content", () => {
     renderLab();
     expect(screen.getByText(/simulation.*not a real payment/i)).toBeVisible();
   });
+
+  it("renders the shared timeline without pacing controls of its own", async () => {
+    server.use(
+      http.post("/api/track/create", () => HttpResponse.json(TRACK_FIXTURE)),
+    );
+
+    const { user } = renderLab();
+    await user.click(screen.getByRole("button", { name: /create.*track/i }));
+    await waitFor(() => {
+      expect(screen.getByText("11111111-2222-3333-4444-555555555555")).toBeVisible();
+    });
+
+    // "Advance one event" / "Complete simulation" live on TrackingPage (task
+    // 4.1); the shared timeline embedded here renders no buttons of its own,
+    // so a lab that supplies no handlers never inherits unusable controls.
+    const timeline = screen.getByRole("list", { name: /payment timeline/i });
+    expect(timeline.querySelectorAll("button").length).toBe(0);
+  });
 });
