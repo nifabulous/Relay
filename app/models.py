@@ -202,6 +202,8 @@ class PaymentEvent(Base):
     message = Column(String(500))  # human-readable detail
     instructing_bic = Column(String(11))  # who sent to this bank
     instructed_bic = Column(String(11))  # who this bank forwards to
+    schedule = Column(String(10), nullable=False, default="instant")  # instant | scheduled
+    revealed_at = Column(String(30))  # ISO UTC, set when a scheduled event is manually exposed
 
     __table_args__ = (
         Index("ix_payment_uetr_hop", "uetr", "hop"),
