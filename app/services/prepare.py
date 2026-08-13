@@ -23,7 +23,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import SSI
+from ..models import SSI, PaymentEvent
 from ..schemas import (
     PrepareRoutingInfo,
     PrepareSSIInfo,
@@ -31,7 +31,7 @@ from ..schemas import (
     PrepareVoPInfo,
     SSIRecord,
 )
-from .recommendation import RecommendationResult, decide
+from .recommendation import Recommendation, RecommendationResult, decide
 from .routing import (
     _normalize_bic_input,
     infer_destination_currency,
@@ -39,7 +39,7 @@ from .routing import (
     suggest_intermediaries,
     suggest_route,
 )
-from .tracking import generate_uetr
+from .tracking import generate_timeline, generate_uetr
 from .validator import detect_type, validate_bic, validate_iban
 from .vop import verify_payee
 
@@ -49,6 +49,15 @@ _VOP_ADVICE = {
     "CLOSE_MATCH": "Name is similar but not exact — confirm with payer.",
     "NO_MATCH": "Name does not match — do not proceed.",
     "NOT_CHECKED": "Could not verify — account not found or bank doesn't participate.",
+}
+
+# A prepare check is not itself a payment. Keep the educational tracking
+# timeline limited to outcomes that the UI treats as sendable; REVIEW still
+# requires payer confirmation and STOP/BLOCKED/REJECT must never look credited.
+_TRACKABLE_RECOMMENDATIONS = {
+    Recommendation.PROCEED,
+    Recommendation.PROCEED_WITH_CAUTION,
+    Recommendation.CAUTION,
 }
 
 
@@ -243,9 +252,36 @@ def prepare_payment(
         strictness=strictness,
     )
 
+    # ----- Persist a tracking timeline -----
+    # The UETR returned here is what the UI hands to the tracking endpoint
+    # ("Track payment"), so the simulated gpi timeline must actually exist or
+    # tracking 404s on a payment the learner just made. Only persist when a
+    # destination bank is known and the recommendation is sendable — that is
+    # the chain to walk. The payer's own institution is the originator (the
+    # form does not capture it).
+    resolved_uetr = uetr or generate_uetr()
+    if bic_11 and rec.recommendation in _TRACKABLE_RECOMMENDATIONS:
+        existing = session.execute(
+            select(PaymentEvent).where(PaymentEvent.uetr == resolved_uetr).limit(1)
+        ).scalar_one_or_none()
+        if existing is None:
+            generate_timeline(
+                session=session,
+                uetr=resolved_uetr,
+                originator_bic="YOURBANKXX",
+                originator_name="Your bank",
+                beneficiary_bic=bic_11,
+                beneficiary_name=bank.bank_name if bank else bic_11,
+                intermediary_bics=[i.bic for i in intermediaries],
+                intermediary_names=[i.bank for i in intermediaries],
+                currency=currency,
+                amount=amount,
+                charge_code=ssi_instructions[0].charge_code if ssi_instructions else "SHA",
+            )
+
     return PrepareResult(
         recommendation=rec,
-        uetr=uetr or generate_uetr(),
+        uetr=resolved_uetr,
         validation=validation_info,
         vop=vop_info,
         routing=routing_info,

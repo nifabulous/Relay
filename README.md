@@ -10,7 +10,7 @@ Relay is a hands-on, browser-based simulator that teaches how cross-border payme
 
 ## Current status
 
-**Status as of 2026-08-12:** Relay is a working educational learning prototype. The platform,
+**Status as of 2026-08-13:** Relay is a working educational learning prototype. The platform,
 backend APIs, Relay frontend, a 16-entry curriculum (15 learning modules plus a capstone), a daily-practice retention loop,
 and five Case Desk scenarios are implemented. The three curriculum tracks the prior review named as gaps
 — sanctions screening, exceptions/returns, and an ops workflow (STP repair + Nostro reconciliation) —
@@ -32,15 +32,15 @@ The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-12:
+These numbers were run against the current checkout on 2026-08-13:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **659 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **942 passed** (`cd frontend && npm test -- --run`) |
+| Backend tests | **687 passed** (`.venv/bin/pytest -q`) |
+| Frontend unit/integration tests | **961 passed** (`cd frontend && npm test -- --run`) |
 | Playwright E2E | **289 passed, 11 skips** across all six chromium projects (the WebKit `mobile` project needs a machine with WebKit installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **127,387 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **127,474 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
 | Backend API endpoints | **22** |
 
@@ -68,10 +68,10 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 659 passing |
-| Frontend tests | 942 passing |
+| Backend tests | 687 passing |
+| Frontend tests | 961 passing |
 | E2E tests (Playwright) | 289 passing on the six chromium projects (11 intentional skips) |
-| Eager shell bundle | 127,387 bytes gzip (budget: 204,800 bytes) |
+| Eager shell bundle | 127,474 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
 | Backend API endpoints | 22 |
@@ -174,7 +174,7 @@ Note the four slashes in the SQLite URL: `sqlite://` plus the absolute path
 ### What the ephemeral database means
 
 Each function instance gets its own `/tmp`, recreated and reseeded on cold
-start. Everything the app reads — 210 banks, 301 SSI records, 66 corridor
+start. Everything the app reads — 237 banks, 559 SSI records, 72 corridor
 rules — comes from `seed.py`, so reads behave identically to local. Writes do
 not persist: a simulated gpi timeline created through `/api/track/create` can
 return 404 from `/api/track/{uetr}` if the follow-up request lands on a

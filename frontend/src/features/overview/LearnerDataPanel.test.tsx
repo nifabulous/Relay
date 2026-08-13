@@ -115,7 +115,7 @@ describe("LearnerDataPanel", () => {
 
     expect(await screen.findByRole("heading", { name: /backup preview/i })).toBeInTheDocument();
     expect(screen.getByText(/2 modules completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 practice history day/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 practice day/i)).toBeInTheDocument();
     expect(screen.getByText(/1 activity entry/i)).toBeInTheDocument();
     expect(screen.getByText(/1 case session/i)).toBeInTheDocument();
     expect(transferMocks.importLearningExport).not.toHaveBeenCalled();

@@ -186,4 +186,141 @@ describe("PreparePaymentPage result cross-links", () => {
     expect(screen.getByRole("link", { name: /explore corridor details/i }))
       .toHaveAttribute("href", "/app/explore");
   });
+
+  it("does not link a blocked recommendation to a credited tracking timeline", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "STOP",
+        reason: "Do not proceed",
+        is_blocking: true,
+        uetr: "blocked-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "NO_MATCH", score: 0, advice: "Do not proceed" },
+        routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: [],
+        blocks: ["Name does not match"],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Wrong Name");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText("Stop");
+    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+  });
+
+  it("does not link a review recommendation before confirmation", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "REVIEW",
+        reason: "Confirm before sending",
+        is_blocking: false,
+        uetr: "review-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "CLOSE_MATCH", score: 0.9, advice: "Confirm" },
+        routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: ["Confirm"],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Jon Smyth");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText("Review needed");
+    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+  });
+});
+
+describe("PreparePaymentPage currency selection", () => {
+  it("renders currency as a dropdown, not a free-text input", () => {
+    renderPage();
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    expect(currency).toBeVisible();
+    expect(currency.tagName).toBe("SELECT");
+  });
+
+  it("offers the bank's published settlement currencies as clickable picks", async () => {
+    server.use(
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "MASHAEADXXX",
+          currency: "ALL",
+          instructions: [
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "USD", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-1", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "EUR", intermediary_bic: "BARCDEFFXXX", intermediary_bank_name: "Barclays Frankfurt", intermediary_account: "ACCT-3", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "GBP", intermediary_bic: "BARCGB22XXX", intermediary_bank_name: "Barclays London", intermediary_account: "ACCT-4", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+          ],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+
+    // The published currencies appear as clickable picks, USD first.
+    const picks = await screen.findAllByRole("button", { name: /^[A-Z]{3}$/ });
+    expect(picks.map((p) => p.textContent)).toEqual(["USD", "EUR", "GBP"]);
+
+    // USD is the default selection (importance-ordered first published).
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    expect(currency).toHaveValue("USD");
+
+    // Clicking a pick populates the dropdown; the user can change it after.
+    await user.click(screen.getByRole("button", { name: /^EUR$/ }));
+    expect(currency).toHaveValue("EUR");
+    await user.selectOptions(currency, "GBP");
+    expect(currency).toHaveValue("GBP");
+  });
+});
+
+describe("PreparePaymentPage IBAN flexibility", () => {
+  it("requires an IBAN or account number when no BIC is given", async () => {
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(screen.getByText(/enter a beneficiary iban or account number/i)).toBeVisible();
+  });
+
+  it("allows a payment with only a BIC (no IBAN/account)", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () =>
+        HttpResponse.json({
+          recommendation: "PROCEED",
+          reason: "Illustrative result",
+          is_blocking: false,
+          uetr: "test-uetr",
+          validation: { valid: true, bic: "MASHAEADXXX", errors: [] },
+          vop: { outcome: "NOT_CHECKED", score: null, advice: "No account to check" },
+          routing: {
+            beneficiary_country: "AE",
+            inferred_currency: "AED",
+            routing_basis: "published-ssi",
+            suggested_intermediaries: [],
+          },
+          ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+          warnings: ["Simulation"],
+          blocks: [],
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(await screen.findByText(/PROCEED/i)).toBeVisible();
+    expect(screen.queryByText(/enter a beneficiary iban or account number/i)).toBeNull();
+  });
 });

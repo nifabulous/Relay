@@ -70,7 +70,7 @@ export function Exercise({
       if (controller.signal.aborted) return;
       setFeedback({
         status: "error",
-        message: err instanceof Error ? err.message : "Something went wrong checking your answer.",
+        message: err instanceof Error ? err.message : "We couldn't check your answer. Please try again.",
       });
     } finally {
       if (!controller.signal.aborted) {

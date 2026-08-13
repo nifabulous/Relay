@@ -48,6 +48,15 @@ BANKS = [
     ("UNAFLRLMXXX", "UBA Liberia", "LR", "Monrovia", "LRD"),
     ("COBBBJBJXXX", "UBA Benin", "BJ", "Cotonou", "XOF"),
     ("UBAGGNCNXXX", "UBA Guinea", "GN", "Conakry", "GNF"),
+    # ---- Francophone West/Central Africa (destinations) ----
+    ("CORIBFBFXXX", "Coris Bank International", "BF", "Ouagadougou", "XOF"),
+    ("AFRICIABXXX", "Bank of Africa Côte d'Ivoire", "CI", "Abidjan", "XOF"),
+    ("CCEICMCXXXX", "Afriland First Bank", "CM", "Yaounde", "XAF"),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", "BF", "Ouagadougou", "XOF"),
+    ("ORBKTGTGXXX", "Orabank Togo", "TG", "Lome", "XOF"),
+    # ---- Latin America (destinations) ----
+    ("MENOMXMTXXX", "Banorte", "MX", "Mexico City", "MXN"),
+    ("ITAUBRSPXXX", "Itaú Unibanco", "BR", "Sao Paulo", "BRL"),
     # ---- Asia-Pacific (destinations) ----
     ("BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi UFJ (MUFG)", "JP", "Tokyo", "JPY"),
     ("SMBCJPJTXXX", "Sumitomo Mitsui Banking Corp (SMBC)", "JP", "Tokyo", "JPY"),
@@ -72,18 +81,26 @@ BANKS = [
     ("KASITHBKXXX", "Kasikornbank", "TH", "Bangkok", "THB"),
     ("BFTVVNVXXXX", "Vietcombank", "VN", "Hanoi", "VND"),
     ("BNORPHMMXXX", "Banco de Oro (BDO)", "PH", "Makati", "PHP"),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "TW", "Taipei", "TWD"),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "HK", "Hong Kong", "HKD"),
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", "VN", "Ho Chi Minh City", "VND"),
+    ("UWCBTWTPXXX", "Cathay United Bank", "TW", "Taipei", "TWD"),
     ("CITYBDDHXXX", "Citibank Bangladesh", "BD", "Dhaka", "BDT"),
-    ("HABBPKKAAXX", "Habib Bank", "PK", "Karachi", "PKR"),
+    ("HABBPKKAXXX", "Habib Bank", "PK", "Karachi", "PKR"),
     ("UNILPKKAXXX", "UBL", "PK", "Karachi", "PKR"),
+    ("MUCBPKKAXXX", "MCB Bank", "PK", "Karachi", "PKR"),
+    ("MEZNPAKAXXX", "Meezan Bank", "PK", "Karachi", "PKR"),
+    ("AGBKBDDHXXX", "Agrani Bank", "BD", "Dhaka", "BDT"),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "LK", "Colombo", "LKR"),
+    ("DFCCLKLXXXX", "DFCC Bank", "LK", "Colombo", "LKR"),
     # ---- Middle East (destinations) ----
     ("EBILAEADXXX", "Emirates NBD", "AE", "Dubai", "AED"),
-    ("NRBMAEADXXX", "Mashreq Bank", "AE", "Dubai", "AED"),
+    ("MASHAEADXXX", "Mashreq Bank", "AE", "Dubai", "AED"),
     ("NCBKSAJEXXX", "Saudi National Bank (SNB)", "SA", "Riyadh", "SAR"),
     ("RJHISARIXXX", "Al Rajhi Bank", "SA", "Riyadh", "SAR"),
     ("SAMBSARIXXX", "Samba / FAB Saudi", "SA", "Riyadh", "SAR"),
     ("NBQAQAQAXXX", "Qatar National Bank (QNB)", "QA", "Doha", "QAR"),
-    ("DOHAQAQAXXX", "Doha Bank", "QA", "Doha", "QAR"),
-    ("NBOMKWKEXXX", "National Bank of Kuwait (NBK)", "KW", "Kuwait City", "KWD"),
+    ("DOHBQAQAXXX", "Doha Bank", "QA", "Doha", "QAR"),
     ("NBOFBHBMXXX", "National Bank of Bahrain", "BH", "Manama", "BHD"),
     ("NBOOOMRXXXX", "National Bank of Oman", "OM", "Muscat", "OMR"),
     ("JGBAJOA0XXX", "Jordan Kuwait Bank", "JO", "Amman", "JOD"),
@@ -103,7 +120,7 @@ BANKS = [
     ("CITIIE2XXXX", "Citibank Europe Plc", "IE", "Dublin", "EUR"),
     ("BBRUBEBBXXX", "ING Belgium", "BE", "Brussels", "EUR"),
     ("CCFRFRPPXXX", "HSBC France", "FR", "Paris", "EUR"),
-    ("SCBLDEFXXXX", "Standard Chartered Germany", "DE", "Frankfurt", "EUR"),
+    ("SCBLDEFFXXX", "Standard Chartered Germany", "DE", "Frankfurt", "EUR"),
     ("SCBLGB2LXXX", "Standard Chartered London", "GB", "London", "GBP"),
     ("SCBLHKHHXXX", "Standard Chartered Hong Kong", "HK", "Hong Kong", "HKD"),
     ("SCBLSGSGXXX", "Standard Chartered Singapore", "SG", "Singapore", "SGD"),
@@ -179,6 +196,7 @@ BANKS = [
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEAFIHHXXX", "Nordea Bank Finland", "FI", "Helsinki", "EUR"),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
     ("LOYDGB2LXXX", "Lloyds Banking Group", "GB", "London", "GBP"),
     # ---- Access Bank Nigeria (destination) ----
     ("ABNGNGLAXXX", "Access Bank Plc", "NG", "Lagos", "NGN"),
@@ -360,7 +378,7 @@ CORRIDOR_RULES = [
     ("QAR", "QA", "NBQAQAQAXXX", "Qatar National Bank", "USD->QA", "high", 2),
     # KWD -> Kuwait
     ("KWD", "KW", "CITIUS33XXX", "Citibank N.A.", "USD->KW", "high", 1),
-    ("KWD", "KW", "NBOMKWKEXXX", "National Bank of Kuwait", "USD->KW", "high", 2),
+    ("KWD", "KW", "NBOKKWKWXXX", "National Bank of Kuwait", "USD->KW", "high", 2),
     # BHD -> Bahrain
     ("BHD", "BH", "CITIUS33XXX", "Citibank N.A.", "USD->BH", "high", 1),
     ("BHD", "BH", "NBOFBHBMXXX", "National Bank of Bahrain", "USD->BH", "medium", 2),
@@ -603,7 +621,7 @@ SSI_RECORDS = [
      "ACCT-99950", "ACCT-38823", "SHA", "spot",
      "Source: Bank of Ceylon SSI page. Sort 203253. " + _SSI_REAL_NOTE),
     ("BCEYLKLXXXX", "Bank of Ceylon", "EUR",
-     "SCBLDEFXXXX", "Standard Chartered Bank, Germany",
+     "SCBLDEFFXXX", "Standard Chartered Bank, Germany",
      "ACCT-46214", "ACCT-19835", "SHA", "spot",
      "Source: Bank of Ceylon SSI page. " + _SSI_REAL_NOTE),
 
@@ -961,7 +979,7 @@ SSI_RECORDS = [
      "ACCT-88609", "ACCT-92248", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE),
     ("ABNGNGLAXXX", "Access Bank Plc", "EUR",
-     "SCBLDEFXXXX", "Standard Chartered Bank Germany",
+     "SCBLDEFFXXX", "Standard Chartered Bank Germany",
      "ACCT-46214", "ACCT-45908", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE),
     ("ABNGNGLAXXX", "Access Bank Plc", "CHF",
@@ -1425,7 +1443,7 @@ SSI_RECORDS = [
      "ACCT-48639", "ACCT-51643", "SHA", "spot",
      "Source: Federal Bank correspondent page. " + _SSI_REAL_NOTE),
     ("FDRLINBBIBD", "Federal Bank Ltd", "EUR",
-     "SCBLDEFXXXX", "Standard Chartered Frankfurt",
+     "SCBLDEFFXXX", "Standard Chartered Frankfurt",
      "ACCT-37558", "ACCT-51643", "SHA", "spot",
      "Source: Federal Bank correspondent page. " + _SSI_REAL_NOTE),
     ("FDRLINBBIBD", "Federal Bank Ltd", "GBP",
@@ -1878,6 +1896,159 @@ SSI_RECORDS = [
      "Source: UBA Guinea SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE),
 
     # ====================================================================
+    # FRANCOPHONE WEST/CENTRAL AFRICA — BIC-level correspondent lists
+    # Sources (archived bank pages): coris-bank.com correspondants page
+    # (2015/2017), boacoteivoire.com Correspondants page (2007),
+    # afrilandfirstbank.com correspondants page (2011), orabank.net
+    # partners-and-correspondents (2012-2020). BICs printed, accounts not.
+    # Mislabeled BICs on the source pages (Natixis as CCBPFRPP, UBAE as
+    # UBAIITRR, BNI as CSSSCIAB, UTB as UNTBTBTGTG, BIA as BILTTGT1, BFCM
+    # as CMCIFRPA) were cross-checked and excluded.
+    # ====================================================================
+
+    # ---- Coris Bank International (CORIBFBF) ----
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "FIMBMTM3XXX", "FIMBank Malta",
+     "ACCT-91000020", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "UBAFFRPPXXX", "UBAF Paris",
+     "ACCT-91000021", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "SOGEFRPPXXX", "Societe Generale Paris",
+     "ACCT-91000022", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "BHFBDEFFXXX", "BHF-Bank Frankfurt",
+     "ACCT-91000023", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "UNCRITMMXXX", "UniCredit Milan",
+     "ACCT-91000024", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2017). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "EUR",
+     "ECOCFRPPXXX", "Ecobank Paris (EBI)",
+     "ACCT-91000025", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+    ("CORIBFBFXXX", "Coris Bank International", "USD",
+     "SOGEUS33XXX", "Societe Generale New York",
+     "ACCT-91000026", "ACCT-00677", "SHA", "spot",
+     "Source: Coris Bank correspondants page (archived 2015). " + _SSI_REAL_NOTE),
+
+    # ---- Bank of Africa Cote d'Ivoire (AFRICIAB) ----
+    ("AFRICIABXXX", "Bank of Africa Cote d'Ivoire", "USD",
+     "CITIUS33XXX", "Citibank New York",
+     "ACCT-91000027", "ACCT-00711", "SHA", "spot",
+     "Source: BOA Cote d'Ivoire Correspondants page (archived 2007). " + _SSI_REAL_NOTE),
+    ("AFRICIABXXX", "Bank of Africa Cote d'Ivoire", "EUR",
+     "CITIFRPPXXX", "Citibank Paris",
+     "ACCT-91000028", "ACCT-00711", "SHA", "spot",
+     "Source: BOA Cote d'Ivoire Correspondants page (archived 2007). " + _SSI_REAL_NOTE),
+    ("AFRICIABXXX", "Bank of Africa Cote d'Ivoire", "EUR",
+     "FIMBMTM3XXX", "FIMBank Malta",
+     "ACCT-91000029", "ACCT-00711", "SHA", "spot",
+     "Source: BOA Cote d'Ivoire Correspondants page (archived 2007). " + _SSI_REAL_NOTE),
+    ("AFRICIABXXX", "Bank of Africa Cote d'Ivoire", "EUR",
+     "BLOMFRPPXXX", "BLOM Bank Paris",
+     "ACCT-91000030", "ACCT-00711", "SHA", "spot",
+     "Source: BOA Cote d'Ivoire Correspondants page (archived 2007). " + _SSI_REAL_NOTE),
+    ("AFRICIABXXX", "Bank of Africa Cote d'Ivoire", "EUR",
+     "RUBBFRPPXXX", "Fortis Banque France",
+     "ACCT-91000031", "ACCT-00711", "SHA", "spot",
+     "Source: BOA Cote d'Ivoire Correspondants page (archived 2007). " + _SSI_REAL_NOTE),
+
+    # ---- Afriland First Bank (CCEICMCX) ----
+    ("CCEICMCXXXX", "Afriland First Bank", "USD",
+     "CITIUS33XXX", "Citibank New York",
+     "ACCT-91000032", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+    ("CCEICMCXXXX", "Afriland First Bank", "USD",
+     "INGBNL2AXXX", "ING Bank Amsterdam",
+     "ACCT-91000033", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+    ("CCEICMCXXXX", "Afriland First Bank", "EUR",
+     "INGBFRPPXXX", "ING Bank Paris",
+     "ACCT-91000034", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+    ("CCEICMCXXXX", "Afriland First Bank", "EUR",
+     "GENODEFFXXX", "DZ Bank Frankfurt",
+     "ACCT-91000035", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+    ("CCEICMCXXXX", "Afriland First Bank", "EUR",
+     "UNCRITMMXXX", "UniCredit Milan",
+     "ACCT-91000036", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+    ("CCEICMCXXXX", "Afriland First Bank", "GBP",
+     "INGBFRPPXXX", "ING Bank Paris",
+     "ACCT-91000037", "ACCT-00722", "SHA", "spot",
+     "Source: Afriland correspondants page (archived 2011). " + _SSI_REAL_NOTE),
+
+    # ---- Orabank Burkina Faso (ORBKBFBF) ----
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", "USD",
+     "UBAFFRPPXXX", "UBAF Paris",
+     "ACCT-91000038", "ACCT-00733", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2016). " + _SSI_REAL_NOTE),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", "EUR",
+     "UBAFFRPPXXX", "UBAF Paris",
+     "ACCT-91000038", "ACCT-00733", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2016). " + _SSI_REAL_NOTE),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", "EUR",
+     "UNCRITMMXXX", "UniCredit Milan",
+     "ACCT-91000039", "ACCT-00733", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2016). " + _SSI_REAL_NOTE),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", "EUR",
+     "BHFBDEFFXXX", "BHF-Bank Frankfurt",
+     "ACCT-91000040", "ACCT-00733", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2016). " + _SSI_REAL_NOTE),
+
+    # ---- Orabank Togo (ORBKTGTG) ----
+    ("ORBKTGTGXXX", "Orabank Togo", "USD",
+     "FIMBMTM3XXX", "FIMBank Malta",
+     "ACCT-91000041", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "USD",
+     "SOGEUS33XXX", "Societe Generale New York",
+     "ACCT-91000042", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "USD",
+     "EBILAEADXXX", "Emirates NBD Dubai",
+     "ACCT-91000043", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "USD",
+     "UBAFFRPPXXX", "UBAF Paris",
+     "ACCT-91000044", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "FIMBMTM3XXX", "FIMBank Malta",
+     "ACCT-91000041", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "AGRIFRPPXXX", "Credit Agricole Paris",
+     "ACCT-91000045", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "SOGEFRPPXXX", "Societe Generale Paris",
+     "ACCT-91000046", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "BHFBDEFFXXX", "BHF-Bank Frankfurt",
+     "ACCT-91000047", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "BMCEFRPPXXX", "BMCE Bank Paris",
+     "ACCT-91000048", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "UBAFFRPPXXX", "UBAF Paris",
+     "ACCT-91000044", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+    ("ORBKTGTGXXX", "Orabank Togo", "EUR",
+     "GENODEFFXXX", "DZ Bank Frankfurt",
+     "ACCT-91000049", "ACCT-00744", "SHA", "spot",
+     "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE),
+
+    # ====================================================================
     # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
     # Source: mcb.mu correspondent-banking page (retrieved 2026-08)
     # Correspondent BICs published; account numbers not published — masked.
@@ -2039,6 +2210,731 @@ SSI_RECORDS = [
      "CHASUS33XXX", "JPMorgan Chase, New York",
      "ACCT-91000021", "ACCT-000040004", "SHA", "spot",
      "Source: OCBC cross-border payments page. " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # LATIN AMERICA — Banorte (Banco Mercantil del Norte)
+    # Source: banorte.com transfer-instructions page (archived 2021/2025).
+    # The only major LatAm bank publishing a full SSI table: per-currency
+    # correspondents with BICs and ABA routing numbers. No account numbers
+    # are printed (the page says "pagadero a: cuenta del beneficiario").
+    # ====================================================================
+
+    # ---- Banorte (MENOMXMT) — USD ----
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000100", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. ABA 021000021. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "CITIUS33XXX", "Citibank NA, New York",
+     "ACCT-91000101", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. ABA 021000089. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "BOFAUS6SXXX", "Bank of America, Concord CA",
+     "ACCT-91000102", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. ABA 026009593. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York",
+     "ACCT-91000103", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. ABA 026002561. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York",
+     "ACCT-91000104", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. ABA 026005092. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     "ACCT-91000105", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page (2025). ABA 021000018. " + _SSI_REAL_NOTE),
+
+    # ---- Banorte (MENOMXMT) — EUR ----
+    ("MENOMXMTXXX", "Banorte", "EUR",
+     "BKBKESMMXXX", "Bankinter, Madrid",
+     "ACCT-91000106", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "EUR",
+     "BARCDEFFXXX", "Barclays Bank, Frankfurt",
+     "ACCT-91000107", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "EUR",
+     "COBADEFFXXX", "Commerzbank, Frankfurt",
+     "ACCT-91000108", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "EUR",
+     "BBRUBEBBXXX", "ING Belgium, Brussels",
+     "ACCT-91000109", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "EUR",
+     "CHASDEFXXXX", "JPMorgan Chase, Frankfurt",
+     "ACCT-91000110", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+
+    # ---- Banorte (MENOMXMT) — CAD ----
+    ("MENOMXMTXXX", "Banorte", "CAD",
+     "BOFMCAM2XXX", "Bank of Montreal, Montreal",
+     "ACCT-91000111", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "CAD",
+     "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
+     "ACCT-91000112", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "CAD",
+     "CIBCCATTXXX", "CIBC, Toronto",
+     "ACCT-91000113", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+
+    # ---- Banorte (MENOMXMT) — GBP / CHF / JPY / SEK / AUD / NOK ----
+    ("MENOMXMTXXX", "Banorte", "GBP",
+     "BARCGB22XXX", "Barclays Bank, London",
+     "ACCT-91000114", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "CHF",
+     "CRESCHZZ80A", "Credit Suisse, Zurich",
+     "ACCT-91000115", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "CHF",
+     "UBSWCHZH80A", "UBS, Zurich",
+     "ACCT-91000116", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "JPY",
+     "BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi UFJ, Tokyo",
+     "ACCT-91000117", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "SEK",
+     "NDEASESSXXX", "Nordea Bank, Stockholm",
+     "ACCT-91000118", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "SEK",
+     "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm",
+     "ACCT-91000119", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "AUD",
+     "CHASDEFXXXX", "JPMorgan Chase, Frankfurt",
+     "ACCT-91000110", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page (as printed). " + _SSI_REAL_NOTE),
+    ("MENOMXMTXXX", "Banorte", "NOK",
+     "NDEANOKKXXX", "Nordea Bank, Oslo",
+     "ACCT-91000120", "ACCT-00755", "SHA", "spot",
+     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # ASIA (DEEP) — Taiwan / Hong Kong / Vietnam
+    # Sources (archived): ctbcbank.com Nostro tables (2024 DOCX for Taiwan
+    # HQ, 2025 PDF for the HK branch, 2019 SSI circular for Vietnam),
+    # cathaybk.com.tw inward-remittance page (2016), bangkokbank.com
+    # New York branch routing pages (2025). BIC-only (no account numbers
+    # printed except CTBC VN's circular, whose accounts are masked).
+    # The printed Wells Fargo BIC PNBPUS3NNYC is normalized to PNBPUS33XXX.
+    # ====================================================================
+
+    # ---- CTBC Bank Taiwan (CTCBTWTP) ----
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     "ACCT-91000200", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "USD",
+     "CITIUS33XXX", "Citibank N.A., New York",
+     "ACCT-91000201", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000202", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "GBP",
+     "NWBKGB2LXXX", "NatWest, London",
+     "ACCT-91000203", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "HKD",
+     "HSBCHKHHXXX", "HSBC Hong Kong",
+     "ACCT-91000204", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "HKD",
+     "CTCBHKHHXXX", "CTBC Bank Hong Kong Branch",
+     "ACCT-91000205", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "JPY",
+     "SMBCJPJTXXX", "Sumitomo Mitsui Banking Corp, Tokyo",
+     "ACCT-91000206", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "AUD",
+     "ANZBAU3MXXX", "ANZ Banking Group, Melbourne",
+     "ACCT-91000207", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "SGD",
+     "UOVBSGSGXXX", "United Overseas Bank, Singapore",
+     "ACCT-91000208", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "NZD",
+     "ANZBNZ22XXX", "ANZ Bank New Zealand, Auckland",
+     "ACCT-91000209", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "CAD",
+     "TDOMCATTTOR", "TD Canada Trust, Toronto",
+     "ACCT-91000210", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "ZAR",
+     "SBZAZAJJXXX", "Standard Bank South Africa, Johannesburg",
+     "ACCT-91000211", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "CNY",
+     "BKCHHKHHXXX", "Bank of China Hong Kong",
+     "ACCT-91000212", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", "CNY",
+     "BKCHTWTP888", "Bank of China Taipei",
+     "ACCT-91000213", "ACCT-00800", "SHA", "spot",
+     "Source: CTBC Bank Taiwan Nostro table (archived 2024). " + _SSI_REAL_NOTE),
+
+    # ---- CTBC Bank Hong Kong (CTCBHKHH) ----
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000214", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     "ACCT-91000215", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York",
+     "ACCT-91000216", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025; "
+     "printed PNBPUS3NNYC). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "EUR",
+     "CHASDEFXXXX", "JPMorgan Chase, Frankfurt",
+     "ACCT-91000217", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000218", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank, Tokyo",
+     "ACCT-91000219", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "JPY",
+     "SMBCJPJTXXX", "Sumitomo Mitsui Banking Corp, Tokyo",
+     "ACCT-91000220", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "GBP",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     "ACCT-91000221", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "CHF",
+     "UBSWCHZH80A", "UBS, Zurich",
+     "ACCT-91000222", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "AUD",
+     "ANZBAU3MXXX", "ANZ Banking Group, Melbourne",
+     "ACCT-91000223", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "CAD",
+     "TDOMCATTTOR", "TD Canada Trust, Toronto",
+     "ACCT-91000224", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "SGD",
+     "UOVBSGSGXXX", "United Overseas Bank, Singapore",
+     "ACCT-91000225", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "ZAR",
+     "SBZAZAJJXXX", "Standard Bank South Africa, Johannesburg",
+     "ACCT-91000226", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "NZD",
+     "ANZBNZ22XXX", "ANZ Bank New Zealand, Auckland",
+     "ACCT-91000227", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "THB",
+     "BKKBTHBKXXX", "Bangkok Bank, Bangkok",
+     "ACCT-91000228", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", "CNY",
+     "BKCHHKHHXXX", "Bank of China Hong Kong",
+     "ACCT-91000229", "ACCT-00811", "SHA", "spot",
+     "Source: CTBC Hong Kong remittance instruction PDF (archived 2025). " + _SSI_REAL_NOTE),
+
+    # ---- CTBC Bank Vietnam (CTCBVNVX) ----
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York",
+     "ACCT-91000230", "ACCT-00822", "SHA", "spot",
+     "Source: CTBC Vietnam SSI circular (archived 2019; printed "
+     "PNBPUS3NNYC). " + _SSI_REAL_NOTE),
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", "EUR",
+     "MHCBJPJTXXX", "Mizuho Bank, Tokyo",
+     "ACCT-91000231", "ACCT-00822", "SHA", "spot",
+     "Source: CTBC Vietnam SSI circular (archived 2019). " + _SSI_REAL_NOTE),
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", "EUR",
+     "CTCBSGSGXXX", "CTBC Bank Singapore Branch",
+     "ACCT-91000232", "ACCT-00822", "SHA", "spot",
+     "Source: CTBC Vietnam SSI circular (archived 2019). " + _SSI_REAL_NOTE),
+
+    # ---- Cathay United Bank (UWCBTWTP) ----
+    ("UWCBTWTPXXX", "Cathay United Bank", "USD",
+     "CHASUS33XXX", "JPMorgan Chase, New York",
+     "ACCT-91000233", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "USD",
+     "CITIUS33XXX", "Citibank, New York",
+     "ACCT-91000234", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York",
+     "ACCT-91000235", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016; printed "
+     "PNBPUS3NNYC). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "HKD",
+     "HSBCHKHHXXX", "HSBC Hong Kong",
+     "ACCT-91000236", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "GBP",
+     "CITIGB2LXXX", "Citibank, London",
+     "ACCT-91000237", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "CAD",
+     "NOSCCATTXXX", "Bank of Nova Scotia, Toronto",
+     "ACCT-91000238", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank, Tokyo",
+     "ACCT-91000239", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "JPY",
+     "SMBCJPJTXXX", "Sumitomo Mitsui Banking Corp, Tokyo",
+     "ACCT-91000240", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000241", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "EUR",
+     "SOGEFRPPXXX", "Societe Generale, Paris",
+     "ACCT-91000242", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "SGD",
+     "CTBAAU2SXXX", "Commonwealth Bank of Australia, Sydney",
+     "ACCT-91000243", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "AUD",
+     "CITIGB2LXXX", "Citibank, London",
+     "ACCT-91000244", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "NZD",
+     "WPACNZ2WXXX", "Westpac, Wellington",
+     "ACCT-91000245", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+    ("UWCBTWTPXXX", "Cathay United Bank", "CNY",
+     "BKCHTWTP888", "Bank of China Taipei",
+     "ACCT-91000246", "ACCT-00833", "SHA", "spot",
+     "Source: Cathay United inward-remittance page (archived 2016). " + _SSI_REAL_NOTE),
+
+    # ---- Bangkok Bank (BKKBTHBK) — own New York branch ----
+    ("BKKBTHBKXXX", "Bangkok Bank", "USD",
+     "BKKBTHBKXXX", "Bangkok Bank New York Branch",
+     "ACCT-91000247", "ACCT-00844", "SHA", "spot",
+     "Source: Bangkok Bank New York branch routing page. ABA 026008691. " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # GULF / MIDDLE EAST
+    # Sources (archived bank pages): mashreq.com standard-settlement-
+    # instruction (2026), dohabank.com.qa List of Nostro Accounts (2010),
+    # nbk.com SSI broadcast (2021). Mashreq is BIC-only; Doha Bank and NBK
+    # print account numbers/IBANs which are masked here.
+    # ====================================================================
+
+    # ---- Mashreq Bank (MASHAEAD) — own SSI page ----
+    ("MASHAEADXXX", "Mashreq Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank PSC, New York",
+     "ACCT-91000300", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "EUR",
+     "BARCDEFFXXX", "Barclays Bank, Frankfurt",
+     "ACCT-91000301", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "EUR",
+     "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
+     "ACCT-91000302", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026; "
+     "printed SCBLDEFXXXX, corrected). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "EUR",
+     "LOYDGB2LXXX", "Lloyds Bank, London",
+     "ACCT-91000303", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "GBP",
+     "BARCGB22XXX", "Barclays Bank, London",
+     "ACCT-91000304", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "GBP",
+     "LOYDGB2LXXX", "Lloyds Bank, London",
+     "ACCT-91000303", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "SAR",
+     "NCBKSAJEXXX", "The National Commercial Bank, Jeddah",
+     "ACCT-91000305", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "KWD",
+     "GULBKWKWXXX", "Gulf Bank KSC, Kuwait",
+     "ACCT-91000306", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "BHD",
+     "NBOBBHBMXXX", "National Bank of Bahrain, Manama",
+     "ACCT-91000307", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+    ("MASHAEADXXX", "Mashreq Bank", "TRY",
+     "ISBKTRISXXX", "Turkiye Is Bankasi, Istanbul",
+     "ACCT-91000308", "ACCT-00855", "SHA", "spot",
+     "Source: Mashreq standard-settlement-instruction page (archived 2026). " + _SSI_REAL_NOTE),
+
+    # ---- Doha Bank (DOHBQAQA) — 2010 List of Nostro Accounts ----
+    ("DOHBQAQAXXX", "Doha Bank", "USD",
+     "CITIUS33XXX", "Citibank, New York",
+     "ACCT-91000310", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000311", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "EUR",
+     "QNBAFRPPXXX", "Qatar National Bank, Paris",
+     "ACCT-91000312", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "GBP",
+     "NWBKGB2LXXX", "NatWest (RBS), London",
+     "ACCT-91000313", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "SAR",
+     "NCBKSAJEXXX", "The National Commercial Bank, Jeddah",
+     "ACCT-91000314", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "AED",
+     "EBILAEADXXX", "Emirates NBD, Dubai",
+     "ACCT-91000315", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+    ("DOHBQAQAXXX", "Doha Bank", "BHD",
+     "NBOBBHBMXXX", "National Bank of Bahrain, Manama",
+     "ACCT-91000316", "ACCT-00866", "SHA", "spot",
+     "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE),
+
+    # ---- National Bank of Kuwait (NBOKKWKW) — 2021 SSI broadcast ----
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
+     "ACCT-91000317", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
+     "CITIUS33XXX", "Citibank N.A., New York",
+     "ACCT-91000318", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000319", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000320", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "GBP",
+     "MIDLGB22XXX", "HSBC Bank, London",
+     "ACCT-91000321", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "KWD",
+     "CBKUKWKWXXX", "Central Bank of Kuwait",
+     "ACCT-91000322", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "QAR",
+     "QNBAQAQAXXX", "Qatar National Bank, Doha",
+     "ACCT-91000323", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "AED",
+     "NBOKAEADXXX", "National Bank of Kuwait, Dubai",
+     "ACCT-91000324", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", "SAR",
+     "NBOKSAJEXXX", "National Bank of Kuwait, Jeddah",
+     "ACCT-91000325", "ACCT-00877", "SHA", "spot",
+     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # SOUTH ASIA — Pakistan / Bangladesh / Sri Lanka
+    # Sources (archived): hbl.com Nostros_and_SSI PDF (2026), ubl.com.pk SSIs
+    # PDF (2011), mcb.com.pk Nostro PDF (2021), meezanbank.com NOSTRO PDF
+    # (2019), agranibank.org List of Nostro Ac PDF (2021), combank.lk
+    # correspondent-banks page (2011), dfcc.lk SSI PDF (2017). Accounts and
+    # routing IDs are printed by these banks and masked here.
+    # ====================================================================
+
+    # ---- Habib Bank (HABBPKKA) ----
+    ("HABBPKKAXXX", "Habib Bank", "USD",
+     "CITIUS33XXX", "Citibank NA, New York",
+     "ACCT-91000400", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000401", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). ABA 021000021. " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank, New York",
+     "ACCT-91000402", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "USD",
+     "ICBKCNBJXXX", "ICBC, Beijing",
+     "ACCT-91000403", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "EUR",
+     "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
+     "ACCT-91000404", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026; printed SCBLDEFX). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "EUR",
+     "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt",
+     "ACCT-91000405", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026; printed CHASDEFX). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "EUR",
+     "COBADEFFXXX", "Commerzbank, Frankfurt",
+     "ACCT-91000406", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "GBP",
+     "HABBGB2LXXX", "HBL Bank UK, London",
+     "ACCT-91000407", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). Sort 60-95-11. " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     "ACCT-91000408", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+    ("HABBPKKAXXX", "Habib Bank", "GBP",
+     "CHASGB2LXXX", "JPMorgan Chase Bank, London",
+     "ACCT-91000409", "ACCT-00900", "SHA", "spot",
+     "Source: HBL Nostros_and_SSI PDF (archived 2026). " + _SSI_REAL_NOTE),
+
+    # ---- United Bank Limited (UNILPKKA) ----
+    ("UNILPKKAXXX", "United Bank Limited", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
+     "ACCT-91000410", "ACCT-00901", "SHA", "spot",
+     "Source: UBL SSIs PDF (archived 2011). ABA 021001033, CHIPS 0103. " + _SSI_REAL_NOTE),
+    ("UNILPKKAXXX", "United Bank Limited", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000411", "ACCT-00901", "SHA", "spot",
+     "Source: UBL SSIs PDF (archived 2011). " + _SSI_REAL_NOTE),
+    ("UNILPKKAXXX", "United Bank Limited", "GBP",
+     "NBPAGB2LXXX", "United National Bank, London",
+     "ACCT-91000412", "ACCT-00901", "SHA", "spot",
+     "Source: UBL SSIs PDF (archived 2011). Sort code CHAPS 40-53-56. " + _SSI_REAL_NOTE),
+
+    # ---- MCB Bank (MUCBPKKA) ----
+    ("MUCBPKKAXXX", "MCB Bank", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000413", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). ABA 021000021, CHIPS 0092. " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "USD",
+     "CITIUS33XXX", "Citibank NA, New York",
+     "ACCT-91000414", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). ABA 021000089. " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company, New York",
+     "ACCT-91000415", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). ABA 021001033, CHIPS 0103. " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank, New York",
+     "ACCT-91000416", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). ABA 026011743, CHIPS 0174. " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York",
+     "ACCT-91000417", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). ABA 026001561, CHIPS 0256. " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "EUR",
+     "COBADEFFXXX", "Commerzbank, Frankfurt",
+     "ACCT-91000418", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "EUR",
+     "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
+     "ACCT-91000419", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021; printed SCBLDEFX). " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000420", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "EUR",
+     "UNCRITMMXXX", "UniCredit, Milan",
+     "ACCT-91000421", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("MUCBPKKAXXX", "MCB Bank", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     "ACCT-91000422", "ACCT-00902", "SHA", "spot",
+     "Source: MCB Nostro PDF (archived 2021). " + _SSI_REAL_NOTE),
+
+    # ---- Meezan Bank (MEZNPAKA) ----
+    ("MEZNPAKAXXX", "Meezan Bank", "USD",
+     "CITIUS33XXX", "Citibank NA, New York",
+     "ACCT-91000423", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). FED ABA 021000089. " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "USD",
+     "HANYUS33XXX", "Habib American Bank, New York",
+     "ACCT-91000424", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). FED ABA 026007362. " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000425", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). FED ABA 021000021. " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank, New York",
+     "ACCT-91000426", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). FED ABA 026011743. " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York",
+     "ACCT-91000427", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). FED ABA 026001591. " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
+     "ACCT-91000428", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "EUR",
+     "UNCRITMMXXX", "UniCredit, Milan",
+     "ACCT-91000429", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). " + _SSI_REAL_NOTE),
+    ("MEZNPAKAXXX", "Meezan Bank", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     "ACCT-91000430", "ACCT-00903", "SHA", "spot",
+     "Source: Meezan Bank NOSTRO PDF (archived 2019). Sort 60-91-04. " + _SSI_REAL_NOTE),
+
+    # ---- Agrani Bank (AGBKBDDH) ----
+    ("AGBKBDDHXXX", "Agrani Bank", "USD",
+     "CITIUS33XXX", "Citibank NA, New York",
+     "ACCT-91000431", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("AGBKBDDHXXX", "Agrani Bank", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York",
+     "ACCT-91000432", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("AGBKBDDHXXX", "Agrani Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank, New York",
+     "ACCT-91000433", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("AGBKBDDHXXX", "Agrani Bank", "EUR",
+     "CITIGB2LXXX", "Citibank NA, London",
+     "ACCT-91000434", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021). " + _SSI_REAL_NOTE),
+    ("AGBKBDDHXXX", "Agrani Bank", "EUR",
+     "SCBLDEFFXXX", "Standard Chartered, Frankfurt",
+     "ACCT-91000435", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021; printed "
+     "SCBLDEFX). " + _SSI_REAL_NOTE),
+    ("AGBKBDDHXXX", "Agrani Bank", "EUR",
+     "COBADEFFXXX", "Commerzbank, Frankfurt",
+     "ACCT-91000436", "ACCT-00904", "SHA", "spot",
+     "Source: Agrani Bank List of Nostro Ac PDF (archived 2021). " + _SSI_REAL_NOTE),
+
+    # ---- Commercial Bank of Ceylon (COMBLKLX) ----
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "AEIBUS33XXX", "American Express Bank, Weehawken NJ",
+     "ACCT-91000437", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "BOFAUS6SXXX", "Bank of America, Concord CA",
+     "ACCT-91000438", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "CITIUS33XXX", "Citibank, New York",
+     "ACCT-91000439", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
+     "ACCT-91000440", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "MRMDUS33XXX", "HSBC Bank USA, Newark DE",
+     "ACCT-91000441", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     "ACCT-91000442", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     "ACCT-91000443", "ACCT-00905", "SHA", "spot",
+     "Source: ComBank correspondent-banks page (archived 2011). " + _SSI_REAL_NOTE),
+
+    # ---- DFCC Bank (DFCCLKLX) ----
+    ("DFCCLKLXXXX", "DFCC Bank", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
+     "ACCT-91000444", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017). " + _SSI_REAL_NOTE),
+    ("DFCCLKLXXXX", "DFCC Bank", "USD",
+     "MRMDUS33XXX", "HSBC Bank USA, New York",
+     "ACCT-91000445", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017). " + _SSI_REAL_NOTE),
+    ("DFCCLKLXXXX", "DFCC Bank", "USD",
+     "MSHQUS33XXX", "Mashreqbank, New York",
+     "ACCT-91000446", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017). " + _SSI_REAL_NOTE),
+    ("DFCCLKLXXXX", "DFCC Bank", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York",
+     "ACCT-91000447", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017). " + _SSI_REAL_NOTE),
+    ("DFCCLKLXXXX", "DFCC Bank", "EUR",
+     "COBADEFFXXX", "Commerzbank, Frankfurt",
+     "ACCT-91000448", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017). " + _SSI_REAL_NOTE),
+    ("DFCCLKLXXXX", "DFCC Bank", "EUR",
+     "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
+     "ACCT-91000449", "ACCT-00906", "SHA", "spot",
+     "Source: DFCC SSI PDF (archived 2017; printed SCBLDEFX). " + _SSI_REAL_NOTE),
+
+    # ====================================================================
+    # EUROPE — first beneficiary SSIs for European banks
+    # Sources: corporates.db.com SSI PDF (DB Frankfurt, effective 2025-02-03),
+    # nordea.com FX-and-derivatives SSI, danskebank.com standard-settlement
+    # page (archived 2017). Accounts/IBANs printed and masked here.
+    # ====================================================================
+
+    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "USD",
+     "DEUTUS33XXX", "Deutsche Bank AG, New York",
+     "ACCT-91000500", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). "
+     "ABA 026003780. " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG, Frankfurt (TARGET)",
+     "ACCT-91000501", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). "
+     "Direct via TARGET. " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "GBP",
+     "DEUTGB2LXXX", "Deutsche Bank AG, London",
+     "ACCT-91000502", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). " + _SSI_REAL_NOTE),
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "CHF",
+     "UBSWCHZH80A", "UBS Switzerland AG, Zurich",
+     "ACCT-91000503", "ACCT-01000", "SHA", "spot",
+     "Source: Deutsche Bank Frankfurt SSI (effective 2025-02-03). " + _SSI_REAL_NOTE),
+
+    # ---- Nordea Bank Sweden (NDEASESS) ----
+    ("NDEASESSXXX", "Nordea Bank Sweden", "USD",
+     "BOFAUS3NXXX", "Bank of America N.A., New York",
+     "ACCT-91000504", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. RTN 026009593. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "SEK",
+     "NDEASESSXXX", "Nordea Bank, Stockholm",
+     "ACCT-91000505", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "GBP",
+     "BARCGB22XXX", "Barclays Bank, London",
+     "ACCT-91000506", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+    ("NDEASESSXXX", "Nordea Bank Sweden", "CHF",
+     "UBSWCHZH80A", "UBS Switzerland AG, Zurich",
+     "ACCT-91000507", "ACCT-01001", "SHA", "spot",
+     "Source: Nordea FX-and-derivatives SSI. " + _SSI_REAL_NOTE),
+
+    # ---- Danske Bank (DABADKKK) ----
+    ("DABADKKKXXX", "Danske Bank", "USD",
+     "BOFAUS3NXXX", "Bank of America, New York",
+     "ACCT-91000508", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "EUR",
+     "DABADKKKXXX", "Danske Bank, Copenhagen (EBA/TARGET)",
+     "ACCT-91000509", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "GBP",
+     "MIDLGB22XXX", "HSBC Bank, London",
+     "ACCT-91000510", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
+    ("DABADKKKXXX", "Danske Bank", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank, Tokyo",
+     "ACCT-91000511", "ACCT-01002", "SHA", "spot",
+     "Source: Danske Bank standard-settlement page (archived 2017). " + _SSI_REAL_NOTE),
 ]
 
 
@@ -2125,13 +3021,76 @@ LIFT_FEES = [
 ]
 
 
+# BIC corrections shipped with the expanded static directory. Existing
+# databases may contain the old values, so seed rollout must migrate those
+# references before upserting the current rows.
+SEED_BIC_ALIASES = {
+    "HABBPKKAAXX": "HABBPKKAXXX",
+    "NRBMAEADXXX": "MASHAEADXXX",
+    "DOHAQAQAXXX": "DOHBQAQAXXX",
+    "NBOMKWKEXXX": "NBOKKWKWXXX",
+    "SCBLDEFXXXX": "SCBLDEFFXXX",
+}
+
+
+def _apply_seed_bic_aliases(session) -> None:
+    """Remove stale corrected rows and rewrite references to canonical BICs."""
+    for old_bic, new_bic in SEED_BIC_ALIASES.items():
+        # The current seed list contains the canonical beneficiary rows. An
+        # old beneficiary BIC identifies stale rows, so remove them and let
+        # the upsert below insert the current records without uniqueness
+        # collisions.
+        stale_ssi = list(session.query(SSI).filter(SSI.beneficiary_bic == old_bic))
+        for row in stale_ssi:
+            session.delete(row)
+
+        # Intermediary corrections can be updated in place unless the current
+        # canonical row is already present, in which case the old row is a
+        # duplicate of the canonical record and should be removed.
+        for row in list(session.query(SSI).filter(SSI.intermediary_bic == old_bic)):
+            if row in stale_ssi:
+                continue
+            canonical = session.query(SSI).filter(
+                SSI.beneficiary_bic == row.beneficiary_bic,
+                SSI.currency == row.currency,
+                SSI.intermediary_bic == new_bic,
+            ).first()
+            if canonical is not None:
+                session.delete(row)
+            else:
+                row.intermediary_bic = new_bic
+
+        for row in list(session.query(CorridorRule).filter(CorridorRule.intermediary_bic == old_bic)):
+            canonical = session.query(CorridorRule).filter(
+                CorridorRule.destination_currency == row.destination_currency,
+                CorridorRule.destination_country == row.destination_country,
+                CorridorRule.intermediary_bic == new_bic,
+                CorridorRule.corridor == row.corridor,
+                CorridorRule.rank == row.rank,
+            ).first()
+            if canonical is not None:
+                session.delete(row)
+            else:
+                row.intermediary_bic = new_bic
+
+        # The canonical bank row is supplied by BANKS below. Removing the old
+        # unique BIC first lets the normal insert path add the canonical
+        # directory entry without duplicate rows.
+        for row in list(session.query(Bank).filter(Bank.bic == old_bic)):
+            session.delete(row)
+
+    session.flush()
+
+
 def seed_if_empty(session) -> dict:
-    """Idempotently seed the directory + rules + SSIs + accounts if empty."""
+    """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {"banks": 0, "corridor_rules": 0, "ssi": 0, "accounts": 0}
 
-    if session.query(Bank).count() == 0:
-        for row in BANKS:
-            bic, name, cc, city, cur = row
+    _apply_seed_bic_aliases(session)
+
+    for bic, name, cc, city, cur in BANKS:
+        existing = session.query(Bank).filter(Bank.bic == bic).one_or_none()
+        if existing is None:
             session.add(
                 Bank(
                     bic=bic,
@@ -2141,11 +3100,17 @@ def seed_if_empty(session) -> dict:
                     country_currency=cur,
                 )
             )
-        inserted["banks"] = len(BANKS)
+            inserted["banks"] += 1
 
-    if session.query(CorridorRule).count() == 0:
-        for row in CORRIDOR_RULES:
-            ccy, ctry, bic, name, corr, conf, rank = row
+    for ccy, ctry, bic, name, corr, conf, rank in CORRIDOR_RULES:
+        existing = session.query(CorridorRule).filter(
+            CorridorRule.destination_currency == ccy,
+            CorridorRule.destination_country == ctry,
+            CorridorRule.intermediary_bic == bic,
+            CorridorRule.corridor == corr,
+            CorridorRule.rank == rank,
+        ).first()
+        if existing is None:
             session.add(
                 CorridorRule(
                     destination_currency=ccy,
@@ -2157,12 +3122,17 @@ def seed_if_empty(session) -> dict:
                     rank=rank,
                 )
             )
-        inserted["corridor_rules"] = len(CORRIDOR_RULES)
+            inserted["corridor_rules"] += 1
 
-    if session.query(SSI).count() == 0:
-        for row in SSI_RECORDS:
-            (ben_bic, ben_name, ccy, int_bic, int_name,
-             int_acct, ben_acct, charge, vdate, notes) = row
+    for row in SSI_RECORDS:
+        (ben_bic, ben_name, ccy, int_bic, int_name,
+         int_acct, ben_acct, charge, vdate, notes) = row
+        existing = session.query(SSI).filter(
+            SSI.beneficiary_bic == ben_bic,
+            SSI.currency == ccy,
+            SSI.intermediary_bic == int_bic,
+        ).one_or_none()
+        if existing is None:
             session.add(
                 SSI(
                     beneficiary_bic=ben_bic,
@@ -2177,8 +3147,10 @@ def seed_if_empty(session) -> dict:
                     notes=notes,
                 )
             )
-        inserted["ssi"] = len(SSI_RECORDS)
+            inserted["ssi"] += 1
 
+    # Account fixtures did not change in this PR; retain their historical
+    # empty-table behavior while the directory/rules/SSI data rolls forward.
     if session.query(Account).count() == 0:
         for row in ACCOUNT_RECORDS:
             iban, name, bic, cc, atype = row

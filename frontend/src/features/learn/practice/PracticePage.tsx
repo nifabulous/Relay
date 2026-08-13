@@ -111,9 +111,9 @@ export function PracticePage() {
         <div className="practice-intro">
           <h1>Daily practice</h1>
           <p className="measure">
-            Five quick questions from the material you've already completed —
-            a different set every day. Miss one and it comes back for review
-            until you've beaten it.
+            Five quick questions from material you've already completed — a new
+            set every day. Miss a question and it comes back for review until
+            you answer it correctly.
           </p>
 
           <div className="practice-stats" role="group" aria-label="Practice stats">
@@ -209,7 +209,7 @@ export function PracticePage() {
           <p className="measure">
             {correctCount === outcomes.length
               ? "Perfect round. Come back tomorrow to keep the streak alive."
-              : "Missed questions will come back for review in the next few days — that's how they stick."}
+              : "Missed questions return for review in the next few days — repetition is what makes them stick."}
           </p>
 
           <div className="practice-stats" role="group" aria-label="Practice stats">

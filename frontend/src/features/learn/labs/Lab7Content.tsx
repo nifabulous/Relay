@@ -109,7 +109,7 @@ export function Lab7Content({ moduleId, onCheckpoint }: LabContentProps) {
         )}
 
         {schemes && schemes.schemes.length === 0 && (
-          <p className="lab-muted">No schemes data available for {selectedCurrency}.</p>
+          <p className="lab-muted">No scheme data available for {selectedCurrency}.</p>
         )}
 
         {schemes?.verifiedAsof && (

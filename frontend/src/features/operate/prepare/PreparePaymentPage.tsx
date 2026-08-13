@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useSearchParams } from "react-router-dom";
 import { preparePaymentInputSchema, type PreparePaymentInput } from "./prepareSchema";
-import { apiPost } from "../../../api/client";
+import { apiPost, apiRequest } from "../../../api/client";
 import { apiKeys } from "../../../api/queryKeys";
-import { PreparePaymentResponseSchema } from "../../../api/schemas";
+import { PreparePaymentResponseSchema, SSIResponseSchema } from "../../../api/schemas";
 import type { PreparePaymentResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import type { RecommendationState } from "../../../design-system/types";
@@ -14,8 +14,32 @@ import { Button } from "../../../design-system/Button";
 import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
+import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
+
+/**
+ * Currencies offered in the Prepare-payment dropdown beyond the ones a bank
+ * publishes. Order: bank-published currencies lead, then this list sorted
+ * alphabetically. Covers the currencies used across the seeded corridors.
+ */
+const COMMON_CURRENCIES = [
+  "AED", "AUD", "BHD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP",
+  "HKD", "IDR", "INR", "JPY", "KES", "KRW", "KWD", "LKR", "MXN", "MYR",
+  "NGN", "NOK", "NZD", "OMR", "PHP", "PKR", "QAR", "SAR", "SEK", "SGD",
+  "THB", "TRY", "TWD", "USD", "XOF", "ZAR",
+];
+
+const TRACKABLE_RECOMMENDATIONS = new Set([
+  "PROCEED",
+  "PROCEED_WITH_CAUTION",
+  "CAUTION",
+]);
+
+/** True when a string looks like a BIC worth querying SSI for. */
+function isBicLike(value: string): boolean {
+  return /^[A-Z0-9]{8,11}$/.test(value);
+}
 
 export function PreparePaymentPage() {
   const [searchParams] = useSearchParams();
@@ -26,7 +50,10 @@ export function PreparePaymentPage() {
 
   const {
     register,
-    handleSubmit,
+    setValue,
+    setError,
+    getValues,
+    trigger,
     formState: { errors },
     watch,
   } = useForm<PreparePaymentInput>({
@@ -40,6 +67,34 @@ export function PreparePaymentPage() {
       strictness: "standard",
     },
   });
+
+  // Published settlement currencies for the beneficiary bank: when a BIC is
+  // present (pre-filled from ?bic= or typed), surface the currencies the bank
+  // publishes as clickable picks that populate the currency dropdown.
+  const watchedBic = watch("beneficiary_bic");
+  const bicForSsi = (watchedBic ?? "").trim().toUpperCase();
+  const ssiEnabled = isBicLike(bicForSsi);
+  const ssiQuery = useQuery({
+    queryKey: apiKeys.ssi(bicForSsi, ""),
+    queryFn: () =>
+      apiRequest(`/api/ssi?bic=${encodeURIComponent(bicForSsi)}`, undefined, SSIResponseSchema),
+    enabled: ssiEnabled,
+  });
+  const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
+    (g) => g.currency,
+  );
+  const currencyOptions = [...new Set([...publishedCurrencies, ...COMMON_CURRENCIES])];
+  const selectedCurrency = watch("currency");
+  const currencyTouched = useRef(false);
+
+  // Default the currency to the bank's first published currency (importance
+  // order, so USD leads) unless the learner has already chosen one.
+  useEffect(() => {
+    if (!currencyTouched.current && publishedCurrencies.length > 0 && publishedCurrencies[0] !== selectedCurrency) {
+      setValue("currency", publishedCurrencies[0], { shouldValidate: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publishedCurrencies, setValue]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {
@@ -82,6 +137,35 @@ export function PreparePaymentPage() {
   const recState: RecommendationState = "conclusive";
   const missingEvidence: string[] = [];
 
+  // A payment needs to reach a bank: an IBAN (which implies a bank) or an
+  // explicit BIC. With neither, block and guide. Done via setError because
+  // zodResolver drops schema-level superRefine/custom issues and field-level
+  // `validate` callbacks from the error state on submit.
+  const requireIbanOrBic = () => {
+    const iban = (getValues("beneficiary_iban") ?? "").trim();
+    const bic = (getValues("beneficiary_bic") ?? "").trim();
+    if (!iban && !bic) {
+      setError("beneficiary_iban", {
+        type: "custom",
+        message: "Enter a beneficiary IBAN or account number, or a beneficiary BIC.",
+      }, { shouldFocus: true });
+      return false;
+    }
+    return true;
+  };
+
+  // Manual submit: run the schema validation, then the cross-field rule, and
+  // only then call the API. handleSubmit alone cannot express the rule —
+  // zodResolver replaces the error state with its own result on submit, and a
+  // cross-field custom issue never reaches the field.
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const schemaOk = await trigger();
+    const crossOk = requireIbanOrBic();
+    if (!schemaOk || !crossOk) return;
+    mutation.mutate(getValues());
+  };
+
   return (
     <div className="prepare-payment">
       <div className="prepare-payment__header">
@@ -94,16 +178,16 @@ export function PreparePaymentPage() {
       {/* ── Form ───────────────────────────────────── */}
       <form
         className="prepare-payment__form"
-        onSubmit={handleSubmit((data) => mutation.mutate(data))}
+        onSubmit={onSubmit}
         onChange={handleInputChange}
       >
         <div className="prepare-payment__field">
-          <label htmlFor="beneficiary_iban">Beneficiary IBAN</label>
+          <label htmlFor="beneficiary_iban">Beneficiary IBAN or account number</label>
           <input
             id="beneficiary_iban"
             type="text"
             className="mono"
-            placeholder="GB29NWBK60161331926819"
+            placeholder="GB29NWBK60161331926819, or a USD account number"
             {...register("beneficiary_iban")}
             aria-invalid={!!errors.beneficiary_iban}
             aria-describedby={errors.beneficiary_iban ? "beneficiary_iban-error" : undefined}
@@ -131,17 +215,46 @@ export function PreparePaymentPage() {
         <div className="prepare-payment__row">
           <div className="prepare-payment__field">
             <label htmlFor="currency">Currency</label>
-            <input
+            <select
               id="currency"
-              type="text"
               className="mono"
-              placeholder="GBP"
-              {...register("currency")}
+              {...register("currency", {
+                onChange: () => { currencyTouched.current = true; },
+              })}
               aria-invalid={!!errors.currency}
               aria-describedby={errors.currency ? "currency-error" : undefined}
-            />
+            >
+              {currencyOptions.map((ccy) => (
+                <option key={ccy} value={ccy}>{ccy}</option>
+              ))}
+            </select>
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
+            )}
+            {publishedCurrencies.length > 0 && (
+              <div className="prepare-payment__currency-picks" aria-label="Published settlement currencies">
+                <span className="prepare-payment__currency-picks-label">
+                  Published for this bank:
+                </span>
+                {publishedCurrencies.map((ccy) => (
+                  <button
+                    key={ccy}
+                    type="button"
+                    className={[
+                      "prepare-payment__currency-pick",
+                      ccy === selectedCurrency && "prepare-payment__currency-pick--active",
+                    ].filter(Boolean).join(" ")}
+                    aria-pressed={ccy === selectedCurrency}
+                    onClick={() => {
+                      currencyTouched.current = true;
+                      setValue("currency", ccy, { shouldValidate: true });
+                      void trigger("currency");
+                    }}
+                  >
+                    <span className="mono">{ccy}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
@@ -369,9 +482,14 @@ export function PreparePaymentPage() {
               UETR: <span className="mono">{result.uetr}</span>
             </p>
             <div className="prepare-payment__links">
-              <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
-                Track this payment
-              </Link>
+              {/* The backend persists a simulated timeline only for a resolved
+                  destination and a sendable recommendation, so never advertise
+                  a trackable payment for a blocked or pending-review result. */}
+              {result.validation.bic && TRACKABLE_RECOMMENDATIONS.has(result.recommendation) && (
+                <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
+                  Track this payment
+                </Link>
+              )}
               <Link to="/explore" className="relay-btn relay-btn--secondary">
                 Explore corridor details
               </Link>

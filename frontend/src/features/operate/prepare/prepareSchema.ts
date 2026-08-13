@@ -3,13 +3,17 @@ import { z } from "zod";
 /**
  * Input validation for the Prepare Payment form.
  * Matches app/schemas.py PreparePaymentRequest constraints.
+ *
+ * The IBAN is NOT always required: USD (and other non-IBAN corridors) settle
+ * with a BIC + account number. The backend already treats a non-IBAN value in
+ * `beneficiary_iban` as a domestic account number and passes validation when a
+ * valid BIC is supplied. The "IBAN or BIC is required" rule is enforced in the
+ * form via the field's `validate` callback (cross-field rules belong in the
+ * form, not the schema — zodResolver drops schema-level `superRefine` custom
+ * issues before they reach the field).
  */
 export const preparePaymentInputSchema = z.object({
-  beneficiary_iban: z
-    .string()
-    .min(15, "IBAN must be at least 15 characters")
-    .max(34, "IBAN must be at most 34 characters")
-    .regex(/^[A-Z]{2}[0-9A-Z]+$/i, "IBAN must start with a 2-letter country code"),
+  beneficiary_iban: z.string().max(34, "IBAN or account number must be at most 34 characters"),
   beneficiary_name: z
     .string()
     .min(1, "Beneficiary name is required")

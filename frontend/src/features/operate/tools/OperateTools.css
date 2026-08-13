@@ -98,6 +98,12 @@
   background: var(--color-surface);
 }
 
+.tool-form__field select {
+  /* Give the native chevron breathing room so values don't run under it. */
+  padding-right: 2.75rem;
+  text-overflow: ellipsis;
+}
+
 .tool-form__field input.mono,
 .tool-form__field select.mono {
   font-family: var(--font-mono);

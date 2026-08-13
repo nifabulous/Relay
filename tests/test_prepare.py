@@ -463,3 +463,72 @@ class TestPrepareEndpoint:
         assert r.status_code == 200
         routing = r.json()["routing"]
         assert routing["routing_basis"] == "corridor-heuristic"
+
+
+class TestPreparePersistenceToTracking:
+    """A prepared payment returns a UETR and the UI links to tracking with
+    it — the timeline must actually be stored so tracking finds it."""
+
+    def test_prepared_payment_is_trackable(self, client):
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        uetr = r.json()["uetr"]
+        assert len(uetr) == 36
+
+        track = client.get(f"/api/track/{uetr}")
+        assert track.status_code == 200, (
+            f"Payment prepared with UETR {uetr} must be trackable, got "
+            f"{track.status_code}: {track.text[:200]}"
+        )
+        body = track.json()
+        assert body["current_status"] in ("ACCEPTED", "IN_PROGRESS", "FORWARDED", "CREDITED")
+        assert body["event_count"] > 0
+
+    def test_blocked_payment_is_not_trackable(self, client):
+        """A blocked recommendation must not create a credited timeline."""
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "Completely Wrong Name",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["recommendation"] == "STOP"
+        assert body["is_blocking"] is True
+
+        track = client.get(f"/api/track/{body['uetr']}")
+        assert track.status_code == 404
+
+    def test_review_payment_is_not_trackable(self, client, monkeypatch):
+        """A review recommendation still requires confirmation before sending."""
+        from app.services.vop import VoPResult
+
+        monkeypatch.setattr(
+            "app.services.prepare.verify_payee",
+            lambda _session, iban, name: VoPResult(
+                iban=iban,
+                submitted_name=name,
+                outcome="CLOSE_MATCH",
+                score=0.9,
+                account_holder_name="John Smith",
+                account_type="personal",
+            ),
+        )
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "Jon Smyth",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["recommendation"] == "REVIEW"
+
+        track = client.get(f"/api/track/{body['uetr']}")
+        assert track.status_code == 404

@@ -20,7 +20,13 @@ have not been verified yet: verify and PROMOTE them to the directory rather
 than letting the list grow.
 """
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_ids
+from app.db import Base
+from app.models import SSI, Bank, CorridorRule
 from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
 
 # US-located USD intermediaries whose CHIPS/ABA identifiers are not yet
@@ -38,6 +44,19 @@ UNVERIFIED_US_CLEARERS = {
     # legitimate US clearer. Verify its CHIPS/ABA and promote to
     # SETTLEMENT_DIRECTORY before removing.
     "BKCHUS33",
+    # Société Générale New York (Coris/Orabank published USD SSIs) — a
+    # legitimate US clearer; CHIPS/ABA not verifiable from a public source
+    # right now. Verify and promote to SETTLEMENT_DIRECTORY before removing.
+    "SOGEUS33",
+    # Wells Fargo Bank New York under the legacy PNBPUS33 BIC (Banorte's
+    # published USD SSI). Wells Fargo's primary BIC is WFBIUS6S; CHIPS/ABA
+    # for this legacy identifier are not verifiable from a public source.
+    # Verify and promote to SETTLEMENT_DIRECTORY before removing.
+    "PNBPUS33",
+    # American Express Bank (ComBank Ceylon's published USD SSI). CHIPS/ABA
+    # not verifiable from the source. Verify and promote to
+    # SETTLEMENT_DIRECTORY before removing.
+    "AEIBUS33",
 }
 
 
@@ -352,4 +371,504 @@ class TestUbaSubsidiarySsiCoverage:
         assert "UNAFGNGCXXX" not in bank_bics, "Guessed UBA Guinea BIC is wrong"
         assert "UNAFLRLMXXX" in bank_bics and "UBAGGNCNXXX" in bank_bics, (
             "Printed BICs must be present"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Francophone West/Central Africa SSI coverage
+# ---------------------------------------------------------------------------
+#
+# The roadmap names francophone Africa as a training audience, but the seeded
+# SSI set only covered anglophone West Africa (Nigeria, Ghana, Kenya, UBA
+# subsidiaries). These banks publish BIC-level correspondent lists (no
+# account numbers) on archived bank pages:
+#   - Coris Bank (BF)      — coris-bank.com correspondants page (2015/2017)
+#   - Bank of Africa CI    — boacoteivoire.com Correspondants page (2007)
+#   - Afriland First Bank  — afrilandfirstbank.com correspondants page (2011)
+#   - Orabank Burkina/Togo — orabank.net partners-and-correspondents (2012-2020)
+#
+# The pages print the correspondents' BICs but not the bank's own BIC; the
+# beneficiary BICs below were verified against theswiftcodes.com country
+# listings. Orabank Burkina is ORBKBFBF (a mislabeled ORBABFBF guess must
+# never appear). All intermediary BICs were cross-checked — several printed
+# BICs on the archived pages belong to OTHER banks (Natixis labeled as
+# CCBPFRPP, UBAE as UBAIITRR, BNI as CSSSCIAB, UTB as UNTBTBTGTG, BIA as
+# BILTTGT1, BFCM as CMCIFRPA) and are excluded.
+FRANCOPHONE_AFRICA_SSI_COVERAGE = [
+    ("CORIBFBFXXX", "Coris Bank International", {"USD", "EUR"}),
+    ("AFRICIABXXX", "Bank of Africa Côte d'Ivoire", {"USD", "EUR"}),
+    ("CCEICMCXXXX", "Afriland First Bank", {"USD", "EUR", "GBP"}),
+    ("ORBKBFBFXXX", "Orabank Burkina Faso", {"USD", "EUR"}),
+    ("ORBKTGTGXXX", "Orabank Togo", {"USD", "EUR"}),
+]
+
+
+class TestFrancophoneAfricaSsiCoverage:
+    def test_francophone_beneficiaries_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_francophone_beneficiaries_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"Francophone SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_mislabeled_bics_from_source_pages_are_not_used(self):
+        """The archived pages print several BICs that belong to other banks
+        (Natixis labeled CCBPFRPP, UBAE labeled UBAIITRR, BNI labeled
+        CSSSCIAB, UTB labeled UNTBTBTGTG, BIA labeled BILTTGT1, BFCM labeled
+        CMCIFRPA) and one wrong Orabank Burkina guess (ORBABFBF). None of
+        these may appear as intermediaries or beneficiaries."""
+        forbidden = {
+            "CCBPFRPP", "CCBPFRPPPAR", "UBAIITRR", "CSSSCIAB",
+            "UNTBTBTGTG", "BILTTGT1", "CMCIFRPA", "ORBABFBF",
+        }
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[0][:8])
+            used.add(record[3][:8])
+        used |= {row[0][:8] for row in BANKS}
+        offenders = sorted(forbidden & used)
+        assert not offenders, (
+            f"Mislabeled BICs from the source pages must not be seeded: {offenders}"
+        )
+
+    def test_verified_beneficiary_bics_are_used(self):
+        """The pages print only the correspondents' BICs; the bank's own BICs
+        were verified against theswiftcodes.com. Pin the verified values."""
+        bank_bics = {row[0] for row in BANKS}
+        for bic, _name, _currencies in FRANCOPHONE_AFRICA_SSI_COVERAGE:
+            assert bic in bank_bics, f"{bic} must be seeded in BANKS"
+        assert "ORBKBFBFXXX" in bank_bics, "Orabank Burkina must be ORBKBFBF, not ORBABFBF"
+
+
+# ---------------------------------------------------------------------------
+# Latin America SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Only one of the major LatAm banks publishes a full SSI table: Banorte
+# (Banco Mercantil del Norte, Mexico) prints per-currency correspondents with
+# BICs and ABA routing numbers on its transfer-instructions page (2021/2025
+# snapshots). Itaú Unibanco publishes BIC-level data only (ITAUBRSP parent,
+# ITAUUS33 New York) — no correspondents — so it stays corridor-heuristic
+# rather than inventing structures. Banco do Brasil, Bradesco, Santander MX,
+# BBVA MX, Banco de Chile and the Canadian banks publish no usable SSI.
+#
+# Discrepancy pinned: Banorte's own page and the swiftcodes registry agree
+# the head-office BIC is MENOMXMT (MENOMXMTXXX as seeded); the commonly
+# listed MNORMXMM must never appear.
+LATAM_SSI_COVERAGE = [
+    ("MENOMXMTXXX", "Banorte", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
+]
+
+
+class TestLatinAmericaSsiCoverage:
+    def test_banorte_has_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in LATAM_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_banorte_and_itau_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        assert "MENOMXMTXXX" in bank_bics, "Banorte must be seeded in BANKS"
+        assert "ITAUBRSPXXX" in bank_bics, (
+            "Itaú must be seeded in BANKS so BRL routing and Explore resolve it"
+        )
+
+    def test_banorte_bic_is_the_bank_published_value(self):
+        """Banorte's own page and the registry print MENOMXMT; the commonly
+        listed MNORMXMM is wrong and must never be used."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "MENOMXMTXXX" in bank_bics
+        assert "MNORMXMMXXX" not in bank_bics, "Common-but-wrong Banorte BIC used"
+
+    def test_itau_stays_bic_only_no_invented_ssi(self):
+        """Itaú publishes only its own BICs (no correspondents) — it must not
+        gain invented SSI records."""
+        itau_records = [r for r in SSI_RECORDS if r[0] == "ITAUBRSPXXX"]
+        assert itau_records == [], (
+            "Itaú publishes no correspondent SSIs; do not invent them"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Asia-Pacific (deep) SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Second Asia pass: Taiwan, Hong Kong and Vietnam branches of CTBC, Cathay
+# United Bank (Taiwan), and Bangkok Bank's own New York branch routing.
+# Sources: ctbcbank.com archived Nostro tables (2024 DOCX, 2025 PDF),
+# cathaybk.com.tw inward-remittance page (archived 2016), bangkokbank.com
+# New York branch pages (2025). All BIC-only (no account numbers printed
+# except CTBC VN's SSI circular, whose accounts are masked).
+#
+# Corrections pinned: Cathay United is UWCBTWTP, NOT the guessed CUBKTWTP;
+# the Wells Fargo New York BIC printed as PNBPUS3NNYC is normalized to the
+# canonical PNBPUS33XXX used elsewhere. Bangkok Bank's USD routing is via
+# its OWN New York branch (ABA 026008691) — the same self-loop pattern as
+# MUFG's existing record.
+ASIA_DEEP_SSI_COVERAGE = [
+    ("CTCBTWTPXXX", "CTBC Bank Taiwan", {"USD", "EUR", "GBP", "HKD", "JPY", "AUD", "SGD", "NZD", "CAD", "ZAR", "CNY"}),
+    ("CTCBHKHHXXX", "CTBC Bank Hong Kong", {"USD", "EUR", "JPY", "GBP", "CHF", "AUD", "CAD", "SGD", "ZAR", "NZD", "THB", "CNY"}),
+    ("CTCBVNVXXXX", "CTBC Bank Vietnam", {"USD", "EUR"}),
+    ("UWCBTWTPXXX", "Cathay United Bank", {"USD", "HKD", "GBP", "CAD", "JPY", "EUR", "SGD", "AUD", "NZD", "CNY"}),
+    ("BKKBTHBKXXX", "Bangkok Bank", {"USD"}),
+]
+
+
+class TestAsiaDeepSsiCoverage:
+    def test_asian_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in ASIA_DEEP_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_asian_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in ASIA_DEEP_SSI_COVERAGE if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"Asian SSI beneficiaries must also be seeded in BANKS so Explore "
+            f"can show their settlement instructions: {missing}"
+        )
+
+    def test_cathay_united_uses_the_bank_published_bic(self):
+        """Cathay United's own page prints UWCBTWTP; the guessed CUBKTWTP
+        must never be used."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "UWCBTWTPXXX" in bank_bics
+        assert "CUBKTWTPXXX" not in bank_bics, "Guessed Cathay United BIC used"
+
+    def test_wells_fargo_uses_the_canonical_bic(self):
+        """The printed PNBPUS3NNYC is normalized to PNBPUS33XXX (Wells Fargo
+        New York, legacy BIC family) across all records."""
+        for record in SSI_RECORDS:
+            assert record[3] != "PNBPUS3NNYC", (
+                "Normalize the printed Wells Fargo BIC to PNBPUS33XXX"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Gulf / Middle East SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Third region pass. Three Gulf banks publish usable SSIs:
+#   - Mashreq (MASHAEAD)     — full BIC-only SSI table on its own page
+#                              (mashreq.com standard-settlement-instruction,
+#                              archived 2026); USD via its own NY branch
+#                              MSHQUS33
+#   - Doha Bank (DOHBQAQA)   — 2010 "List of Nostro Accounts" (accounts
+#                              printed, masked here); USD via Citibank NY
+#   - NBK Kuwait (NBOKKWKW)  — 2021 SSI broadcast (IBANs printed, masked
+#                              here); USD via Deutsche Bank Trust / Citi /
+#                              JPMorgan NY
+# FAB, ADCB, DIB, ADIB, QNB, KFH, Al Rajhi, Riyad, SNB, Bank Muscat, NBB
+# and the Turkish HQs publish no usable SSIs — excluded.
+#
+# The seed previously carried three WRONG beneficiary BICs for these banks
+# (NRBMAEAD for Mashreq, DOHAQAQA for Doha, NBOMKWKE for NBK) that match no
+# published source; the bank-published values (MASHAEAD, DOHBQAQA,
+# NBOKKWKW) are pinned below. Mashreq's own page also prints typos
+# (U0VBSGSG, BN0RPHMM, SCBLDEFXXXX) that must never be seeded.
+GULF_SSI_COVERAGE = [
+    ("MASHAEADXXX", "Mashreq Bank", {"USD", "EUR", "GBP", "SAR", "KWD", "BHD", "TRY"}),
+    ("DOHBQAQAXXX", "Doha Bank", {"USD", "EUR", "GBP", "SAR", "AED", "BHD"}),
+    ("NBOKKWKWXXX", "National Bank of Kuwait", {"USD", "EUR", "GBP", "KWD", "QAR", "AED", "SAR"}),
+]
+
+
+class TestGulfSsiCoverage:
+    def test_gulf_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in GULF_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_gulf_banks_use_the_bank_published_bics(self):
+        """The old seed keyed these banks under BICs matching no published
+        source (NRBMAEAD, DOHAQAQA, NBOMKWKE). Pin the bank-published values
+        and forbid the wrong ones."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "MASHAEADXXX" in bank_bics, "Mashreq must be MASHAEAD"
+        assert "DOHBQAQAXXX" in bank_bics, "Doha Bank must be DOHBQAQA"
+        assert "NBOKKWKWXXX" in bank_bics, "NBK must be NBOKKWKW"
+        for wrong in ("NRBMAEADXXX", "DOHAQAQAXXX", "NBOMKWKEXXX"):
+            assert wrong not in bank_bics, f"Wrong BIC {wrong} still in BANKS"
+
+    def test_kuwait_corridor_clears_through_the_published_bic(self):
+        kwd_rules = [
+            bic for _ccy, _country, bic, _name, corridor, _conf, _rank
+            in CORRIDOR_RULES if corridor == "USD->KW"
+        ]
+        assert "NBOKKWKWXXX" in kwd_rules, f"USD->KW must clear via NBOKKWKW: {kwd_rules}"
+        assert "NBOMKWKEXXX" not in kwd_rules
+
+    def test_mashreq_source_typos_are_not_seeded(self):
+        """Mashreq's own page prints U0VBSGSG (UOB), BN0RPHMM (BDO) and
+        SCBLDEFXXXX (SCB Frankfurt) — OCR typos for real BICs. None may
+        appear as an intermediary."""
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[3])
+        for typo in ("U0VBSGSGXXX", "BN0RPHMMXXX", "SCBLDEFXXXX"):
+            assert typo not in used, f"Mashreq-page typo {typo} must not be seeded"
+
+
+# ---------------------------------------------------------------------------
+# South Asia SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Fourth region pass. Pakistan, Bangladesh and Sri Lanka publish full SSI
+# tables (BIC + account + routing IDs) on archived bank pages:
+#   - HBL (HABBPKKA)    — hbl.com Nostros_and_SSI PDF (archived 2026)
+#   - UBL (UNILPKKA)    — ubl.com.pk SSIs PDF (archived 2011)
+#   - MCB (MUCBPKKA)    — mcb.com.pk Nostro PDF (archived 2021)
+#   - Meezan (MEZNPAKA) — meezanbank.com NOSTRO PDF (archived 2019)
+#   - Agrani (AGBKBDDH) — agranibank.org List of Nostro Ac PDF (archived 2021)
+#   - ComBank Ceylon    — combank.lk correspondent-banks page (archived 2011)
+#   - DFCC (DFCCLKLX)   — dfcc.lk SSI PDF (archived 2017)
+# Turkish HQs and the other Bangladesh banks (IBBL, Sonali, Janata, BRAC,
+# DBBL, HNB) publish no usable SSIs — excluded.
+#
+# BIC corrections pinned: Habib is HABBPKKA (the old HABBPKKAAXX "AXX"
+# artifact must never return); Standard Chartered Frankfurt is normalized to
+# SCBLDEFFXXX (the South Asian PDFs print SCBLDEFX); HBL's OMR row prints the
+# transposed BSHROMRU (Sohar International is BHSOOMRU, unconfirmed) so it is
+# not seeded. Mashreq NY (MSHQUS33) and Habib American Bank (HANYUS33) carry
+# bank-published ABAs and are promoted to SETTLEMENT_DIRECTORY, not exempted.
+SOUTH_ASIA_SSI_COVERAGE = [
+    ("HABBPKKAXXX", "Habib Bank Limited", {"USD", "EUR", "GBP"}),
+    ("UNILPKKAXXX", "United Bank Limited", {"USD", "EUR", "GBP"}),
+    ("MUCBPKKAXXX", "MCB Bank", {"USD", "EUR", "GBP"}),
+    ("MEZNPAKAXXX", "Meezan Bank", {"USD", "EUR", "GBP"}),
+    ("AGBKBDDHXXX", "Agrani Bank", {"USD", "EUR"}),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", {"USD", "GBP"}),
+    ("DFCCLKLXXXX", "DFCC Bank", {"USD", "EUR"}),
+]
+
+
+class TestSouthAsiaSsiCoverage:
+    def test_south_asian_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in SOUTH_ASIA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_south_asian_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in SOUTH_ASIA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"South Asian SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_habib_uses_the_bank_published_bic(self):
+        """HBL's own PDF prints HABBPKKA; the old HABBPKKAAXX 'AXX' artifact
+        must never come back."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "HABBPKKAXXX" in bank_bics
+        assert "HABBPKKAAXX" not in bank_bics, "Legacy HABBPKKAAXX BIC used"
+
+    def test_scb_frankfurt_normalized_everywhere(self):
+        """The South Asian PDFs print Standard Chartered Frankfurt as
+        SCBLDEFX; the canonical form is SCBLDEFFXXX. No variant of the
+        typo may appear as an intermediary."""
+        for record in SSI_RECORDS:
+            assert record[3] != "SCBLDEFXXXX", (
+                "Normalize SCB Frankfurt to SCBLDEFFXXX"
+            )
+
+    def test_no_transposed_sohar_bic(self):
+        """HBL's OMR row prints BSHROMRU for Sohar International (real BIC
+        BHSOOMRU, unconfirmed) — it must not be seeded."""
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[3])
+        assert "BSHROMRUXXX" not in used, "Transposed Sohar BIC must not be seeded"
+
+
+class TestSeedRollout:
+    def test_populated_database_receives_new_rows_and_bic_corrections(self):
+        """The PR seed must upgrade an existing pre-expansion database."""
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(Bank(
+                bic="CITIUS33XXX",
+                bank_name="Citibank",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+            ))
+            session.add(Bank(
+                bic="NRBMAEADXXX",
+                bank_name="Mashreq Bank",
+                country_code="AE",
+                city="Dubai",
+                country_currency="AED",
+            ))
+            session.add(CorridorRule(
+                destination_currency="KWD",
+                destination_country="KW",
+                intermediary_bic="NBOMKWKEXXX",
+                intermediary_name="National Bank of Kuwait",
+                corridor="USD->KW",
+                confidence="high",
+                rank=2,
+            ))
+            session.add(SSI(
+                beneficiary_bic="BCEYLKLXXXX",
+                beneficiary_bank_name="Bank of Ceylon",
+                currency="EUR",
+                intermediary_bic="SCBLDEFXXXX",
+                intermediary_bank_name="Standard Chartered Frankfurt",
+                intermediary_account="ACCT-OLD",
+                beneficiary_account="ACCT-BENE",
+                charge_code="SHA",
+                value_date="spot",
+            ))
+            session.add(SSI(
+                beneficiary_bic="GTBINGLAXXX",
+                beneficiary_bank_name="Guaranty Trust Bank",
+                currency="USD",
+                intermediary_bic="CITIUS33XXX",
+                intermediary_bank_name="Citibank New York",
+                intermediary_account="ACCT-OPERATOR-OWNED",
+                beneficiary_account="ACCT-BENE",
+                charge_code="OUR",
+                value_date="same-day",
+                notes="Operator-imported SSI must survive seed rollout",
+            ))
+            session.commit()
+
+            from app.services.seed import seed_if_empty
+
+            result = seed_if_empty(session)
+
+            assert result["banks"] > 0
+            assert session.query(Bank).filter_by(bic="MASHAEADXXX").one_or_none() is not None
+            assert session.query(Bank).filter_by(bic="NRBMAEADXXX").one_or_none() is None
+            assert session.query(CorridorRule).filter_by(intermediary_bic="NBOKKWKWXXX").one_or_none() is not None
+            assert session.query(CorridorRule).filter_by(intermediary_bic="NBOMKWKEXXX").one_or_none() is None
+            corrected = session.query(SSI).filter_by(
+                beneficiary_bic="BCEYLKLXXXX",
+                currency="EUR",
+                intermediary_bic="SCBLDEFFXXX",
+            ).one_or_none()
+            assert corrected is not None
+            assert session.query(SSI).filter_by(intermediary_bic="SCBLDEFXXXX").one_or_none() is None
+            preserved = session.query(SSI).filter_by(
+                beneficiary_bic="GTBINGLAXXX",
+                currency="USD",
+                intermediary_bic="CITIUS33XXX",
+            ).one()
+            assert preserved.intermediary_account == "ACCT-OPERATOR-OWNED"
+            assert preserved.charge_code == "OUR"
+        finally:
+            session.close()
+            engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# European beneficiary SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Fifth region pass — the first banks with EUR/GBP corridors seeded as
+# BENEFICIARIES (European banks previously appeared only as intermediaries).
+# Three publish usable SSIs:
+#   - Deutsche Bank Frankfurt (DEUTDEFF) — corporates.db.com SSI PDF
+#     (effective 2025-02-03): USD via its own NY branch DEUTUS33
+#     (ABA 026003780), EUR direct via TARGET, GBP via DEUTGB2L, CHF via UBS
+#   - Nordea (NDEASESS, Sweden) — nordea.com FX-and-derivatives SSI: USD via
+#     Bank of America NY (ABA 026009593), SEK via itself, DKK via NDEADKKK,
+#     GBP via Barclays, CHF via UBS
+#   - Danske Bank (DABADKKK) — danskebank.com standard-settlement page
+#     (archived 2017): USD via BofA NY, EUR direct, GBP via HSBC, JPY via
+#     MUFG
+# BNP, Santander, BBVA, Intesa, UniCredit, UBS, SEB, ING, Rabobank publish
+# no beneficiary SSIs — excluded.
+EUROPE_SSI_COVERAGE = [
+    ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", {"USD", "EUR", "GBP", "CHF"}),
+    ("NDEASESSXXX", "Nordea Bank Sweden", {"USD", "SEK", "GBP", "CHF"}),
+    ("DABADKKKXXX", "Danske Bank", {"USD", "EUR", "GBP", "JPY"}),
+]
+
+
+class TestEuropeSsiCoverage:
+    def test_european_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in EUROPE_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_european_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in EUROPE_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"European SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_deutsche_usd_uses_its_own_ny_branch(self):
+        """DB Frankfurt's published USD SSI is its own NY branch (DEUTUS33,
+        ABA 026003780) — not a third-party clearer. Pin it."""
+        deut_usd = [
+            r[3] for r in SSI_RECORDS
+            if r[0] == "DEUTDEFFXXX" and r[2] == "USD"
+        ]
+        assert "DEUTUS33XXX" in deut_usd, (
+            f"DB Frankfurt must clear USD via its own NY branch: {deut_usd}"
         )

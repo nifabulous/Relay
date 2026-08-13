@@ -94,7 +94,7 @@ function StopIndicator({ node }: { node: PaymentRouteNode }) {
         <circle cx="12" cy="12" r="10" />
         <path d="M15 9l-6 6M9 9l6 6" />
       </svg>
-      <span>Stopped at {node.name} — payment {node.status === "failed" ? "failed" : "unavailable"}</span>
+      <span>Stopped at {node.name} — {node.status === "failed" ? "payment failed" : "status unavailable"}</span>
     </div>
   );
 }
