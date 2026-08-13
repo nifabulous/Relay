@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
@@ -8,6 +8,11 @@ import {
   BankDirectoryPage,
   SchemesPage,
 } from "./ExplorePage";
+import { SchemeTabs } from "./SchemeTabs";
+import { SchemeDetails } from "./SchemeDetails";
+import { SchemeTable } from "./SchemeTable";
+import { SCHEME_TAB_ORDER } from "./schemeCatalog";
+import { SchemeInfoSchema } from "../../api/schemas";
 import { renderRelay, queryClient } from "../../test/render";
 import { server } from "../../test/server";
 import {
@@ -373,5 +378,290 @@ describe("SchemesPage red phase", () => {
       "href",
       "https://www.frbservices.org/financial-services/wires",
     );
+  });
+});
+
+// ─── Catalogue primitives (plan task 3.1) ─────────────────────────────
+
+function renderSchemeTabs(activeId?: string) {
+  return render(
+    <SchemeTabs
+      tabs={SCHEME_TAB_ORDER}
+      label="Payment schemes"
+      activeId={activeId}
+      renderPanel={(tab) => <p>Panel for {tab.label}</p>}
+    />,
+  );
+}
+
+describe("SchemeTabs", () => {
+  it("defaults to the USD tab with roving tabindex and panel linkage", () => {
+    renderSchemeTabs();
+
+    const tablist = screen.getByRole("tablist", { name: "Payment schemes" });
+    const usd = screen.getByRole("tab", { name: "USD" });
+    const gbp = screen.getByRole("tab", { name: "GBP" });
+
+    expect(tablist).toBeVisible();
+    expect(usd).toHaveAttribute("aria-selected", "true");
+    expect(usd).toHaveAttribute("tabindex", "0");
+    expect(gbp).not.toHaveAttribute("aria-selected", "true");
+    expect(gbp).toHaveAttribute("tabindex", "-1");
+
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveAttribute("aria-labelledby", usd.id);
+    expect(usd).toHaveAttribute("aria-controls", panel.id);
+    expect(screen.getByText("Panel for USD")).toBeVisible();
+  });
+
+  it("orders tabs USD-first with International / SWIFT last", () => {
+    renderSchemeTabs();
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("id", "scheme-tab-usd");
+    expect(tabs.map((t) => t.textContent)).toEqual([
+      "USD", "GBP", "EUR", "CAD", "NGN", "KES", "INR", "AUD", "JPY", "AED",
+      "International / SWIFT",
+    ]);
+  });
+
+  it("moves focus with Arrow keys without changing the selection", async () => {
+    const user = userEvent.setup();
+    renderSchemeTabs();
+
+    await user.tab();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toHaveAttribute("id", "scheme-tab-gbp");
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toHaveAttribute("id", "scheme-tab-usd");
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("jumps focus to the first and last tab with Home and End", async () => {
+    const user = userEvent.setup();
+    renderSchemeTabs();
+
+    await user.tab();
+    await user.keyboard("{End}");
+    expect(document.activeElement).toHaveAttribute(
+      "id",
+      "scheme-tab-international",
+    );
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toHaveAttribute("id", "scheme-tab-usd");
+  });
+
+  it("activates the focused tab with Enter and Space", async () => {
+    const user = userEvent.setup();
+    renderSchemeTabs();
+
+    await user.tab();
+    await user.keyboard("{ArrowRight}"); // focus GBP; USD stays selected
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("tab", { name: "GBP" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Panel for GBP")).toBeVisible();
+
+    await user.keyboard("{ArrowRight}"); // focus EUR; GBP stays selected
+    await user.keyboard(" ");
+    expect(screen.getByRole("tab", { name: "EUR" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Panel for EUR")).toBeVisible();
+  });
+
+  it("activates a tab on click and updates panel and roving tabindex", async () => {
+    const user = userEvent.setup();
+    renderSchemeTabs();
+
+    await user.click(screen.getByRole("tab", { name: "International / SWIFT" }));
+
+    expect(
+      screen.getByRole("tab", { name: "International / SWIFT" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getByRole("tab", { name: "International / SWIFT" }),
+    ).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("tab", { name: "USD" })).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
+    expect(screen.getByText("Panel for International / SWIFT")).toBeVisible();
+  });
+
+  it("points every tab's aria-controls at the rendered panel", () => {
+    renderSchemeTabs();
+
+    const panel = screen.getByRole("tabpanel");
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(tab).toHaveAttribute("aria-controls", panel.id);
+    }
+  });
+});
+
+describe("SchemeTable", () => {
+  it("renders the six summary columns with table semantics", () => {
+    render(<SchemeTable schemes={[SchemeInfoSchema.parse(usdFedwireRailFixture)]} />);
+
+    const table = screen.getByRole("table");
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((h) => h.textContent),
+    ).toEqual(["Rail", "Speed", "Limit", "Cost", "Use case", "Operator"]);
+
+    const row = screen.getByRole("row", { name: /Fedwire/ });
+    expect(within(row).getByRole("rowheader")).toBeVisible();
+    expect(screen.getByText("Real-time (RTGS)")).toBeVisible();
+    expect(screen.getByText("$10-35")).toBeVisible();
+    expect(screen.getByText("High-value, wires")).toBeVisible();
+    expect(screen.getByText("Federal Reserve")).toBeVisible();
+  });
+
+  it("annotates every cell with its column label for the narrow-screen card layout", () => {
+    render(<SchemeTable schemes={[SchemeInfoSchema.parse(usdFedwireRailFixture)]} />);
+
+    const row = screen.getByRole("row", { name: /Fedwire/ });
+    expect(
+      within(row)
+        .getAllByRole("cell")
+        .map((cell) => cell.getAttribute("data-label")),
+    ).toEqual(["Speed", "Limit", "Cost", "Use case", "Operator"]);
+  });
+
+  it("shows the International / SWIFT scope label alongside the rail name", () => {
+    render(
+      <SchemeTable schemes={[SchemeInfoSchema.parse(swiftGpiInternationalFixture)]} />,
+    );
+
+    expect(screen.getByRole("rowheader", { name: /SWIFT gpi/ })).toBeVisible();
+    expect(screen.getByText("International / SWIFT")).toBeVisible();
+  });
+
+  it("renders nothing when the list is empty", () => {
+    const { container } = render(<SchemeTable schemes={[]} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("SchemeDetails", () => {
+  it("renders the enriched sections for a rail that carries them", () => {
+    render(<SchemeDetails scheme={SchemeInfoSchema.parse(usdFedwireRailFixture)} />);
+
+    expect(screen.getByRole("heading", { name: "Fedwire" })).toBeVisible();
+
+    const how = screen.getByRole("heading", { name: "How it works" }).closest("section");
+    expect(how).not.toBeNull();
+    expect(within(how!).getByText(/debits its Federal Reserve master account/i)).toBeVisible();
+    expect(within(how!).getByText(/Real-time gross settlement in central-bank money/i)).toBeVisible();
+
+    const limits = screen.getByRole("heading", { name: "Limits & timing" }).closest("section");
+    expect(limits).not.toBeNull();
+    expect(within(limits!).getByText("Per transaction")).toBeVisible();
+    expect(within(limits!).getByText("No practical limit")).toBeVisible();
+    expect(within(limits!).getByText("09:00-18:00 ET")).toBeVisible();
+
+    expect(screen.getByRole("heading", { name: "Settlement" })).toBeVisible();
+    expect(screen.getByText(/Federal Reserve Banks RTGS/)).toBeVisible();
+
+    expect(screen.getByRole("heading", { name: "Protections & reversibility" })).toBeVisible();
+    expect(screen.getByText(/Not reversible/)).toBeVisible();
+    expect(screen.getByText(/Final and irrevocable on credit/)).toBeVisible();
+
+    const roadmap = screen.getByRole("heading", { name: "Roadmap" }).closest("section");
+    expect(roadmap).not.toBeNull();
+    expect(within(roadmap!).getByText(/ISO 20022 migration/i)).toBeVisible();
+
+    expect(screen.getByRole("heading", { name: "Sources" })).toBeVisible();
+    const source = screen.getByRole("link", { name: /Federal Reserve Financial Services/ });
+    expect(source).toHaveAttribute(
+      "href",
+      "https://www.frbservices.org/financial-services/wires",
+    );
+  });
+
+  it("labels a reversible rail as reversible", () => {
+    render(
+      <SchemeDetails
+        scheme={SchemeInfoSchema.parse({
+          name: "Test rail",
+          speed: "s",
+          limit: "l",
+          cost: "c",
+          useCase: "u",
+          operator: "o",
+          reversible: true,
+          protections: ["Claimable while pending"],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Reversible/)).toBeVisible();
+  });
+
+  it("hides sections whose data is absent instead of rendering empty headings", () => {
+    render(
+      <SchemeDetails
+        scheme={SchemeInfoSchema.parse({
+          name: "Minimal rail",
+          speed: "s",
+          limit: "l",
+          cost: "c",
+          useCase: "u",
+          operator: "o",
+        })}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Minimal rail" })).toBeVisible();
+    for (const heading of [
+      "How it works",
+      "Limits & timing",
+      "Settlement",
+      "Protections & reversibility",
+      "Roadmap",
+      "Sources",
+      "Product variants",
+    ]) {
+      expect(screen.queryByRole("heading", { name: heading })).toBeNull();
+    }
+  });
+
+  it("renders Interac variants under the parent rail as product variants, not separate rails", () => {
+    render(<SchemeDetails scheme={SchemeInfoSchema.parse(interacETransferFixture)} />);
+
+    expect(screen.getByRole("heading", { name: "Product variants" })).toBeVisible();
+    expect(
+      screen.getByText(/product variants of the same Interac e-Transfer rail/i),
+    ).toBeVisible();
+    expect(screen.getByText(/not separate settlement rails/i)).toBeVisible();
+
+    for (const variant of ["Auto-Deposit", "Request Money", "Standard security-question claim"]) {
+      expect(screen.getByText(variant)).toBeVisible();
+      expect(screen.queryByRole("heading", { name: variant })).toBeNull();
+    }
+  });
+
+  it("renders the international scope label from the response", () => {
+    render(<SchemeDetails scheme={SchemeInfoSchema.parse(swiftGpiInternationalFixture)} />);
+
+    expect(screen.getByText("International / SWIFT")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "SWIFT gpi" })).toBeVisible();
   });
 });
