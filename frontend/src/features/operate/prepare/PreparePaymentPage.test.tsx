@@ -187,3 +187,45 @@ describe("PreparePaymentPage result cross-links", () => {
       .toHaveAttribute("href", "/app/explore");
   });
 });
+
+describe("PreparePaymentPage currency selection", () => {
+  it("renders currency as a dropdown, not a free-text input", () => {
+    renderPage();
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    expect(currency).toBeVisible();
+    expect(currency.tagName).toBe("SELECT");
+  });
+
+  it("offers the bank's published settlement currencies as clickable picks", async () => {
+    server.use(
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "MASHAEADXXX",
+          currency: "ALL",
+          instructions: [
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "USD", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-1", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "EUR", intermediary_bic: "BARCDEFFXXX", intermediary_bank_name: "Barclays Frankfurt", intermediary_account: "ACCT-3", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "GBP", intermediary_bic: "BARCGB22XXX", intermediary_bank_name: "Barclays London", intermediary_account: "ACCT-4", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+          ],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+
+    // The published currencies appear as clickable picks, USD first.
+    const picks = await screen.findAllByRole("button", { name: /^[A-Z]{3}$/ });
+    expect(picks.map((p) => p.textContent)).toEqual(["USD", "EUR", "GBP"]);
+
+    // USD is the default selection (importance-ordered first published).
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    expect(currency).toHaveValue("USD");
+
+    // Clicking a pick populates the dropdown; the user can change it after.
+    await user.click(screen.getByRole("button", { name: /^EUR$/ }));
+    expect(currency).toHaveValue("EUR");
+    await user.selectOptions(currency, "GBP");
+    expect(currency).toHaveValue("GBP");
+  });
+});

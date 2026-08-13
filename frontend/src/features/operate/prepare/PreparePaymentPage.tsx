@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useSearchParams } from "react-router-dom";
 import { preparePaymentInputSchema, type PreparePaymentInput } from "./prepareSchema";
-import { apiPost } from "../../../api/client";
+import { apiPost, apiRequest } from "../../../api/client";
 import { apiKeys } from "../../../api/queryKeys";
-import { PreparePaymentResponseSchema } from "../../../api/schemas";
+import { PreparePaymentResponseSchema, SSIResponseSchema } from "../../../api/schemas";
 import type { PreparePaymentResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import type { RecommendationState } from "../../../design-system/types";
@@ -14,8 +14,26 @@ import { Button } from "../../../design-system/Button";
 import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
+import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
+
+/**
+ * Currencies offered in the Prepare-payment dropdown beyond the ones a bank
+ * publishes. Order: bank-published currencies lead, then this list sorted
+ * alphabetically. Covers the currencies used across the seeded corridors.
+ */
+const COMMON_CURRENCIES = [
+  "AED", "AUD", "BHD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP",
+  "HKD", "IDR", "INR", "JPY", "KES", "KRW", "KWD", "LKR", "MXN", "MYR",
+  "NGN", "NOK", "NZD", "OMR", "PHP", "PKR", "QAR", "SAR", "SEK", "SGD",
+  "THB", "TRY", "TWD", "USD", "XOF", "ZAR",
+];
+
+/** True when a string looks like a BIC worth querying SSI for. */
+function isBicLike(value: string): boolean {
+  return /^[A-Z0-9]{8,11}$/.test(value);
+}
 
 export function PreparePaymentPage() {
   const [searchParams] = useSearchParams();
@@ -27,6 +45,8 @@ export function PreparePaymentPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    trigger,
     formState: { errors },
     watch,
   } = useForm<PreparePaymentInput>({
@@ -40,6 +60,34 @@ export function PreparePaymentPage() {
       strictness: "standard",
     },
   });
+
+  // Published settlement currencies for the beneficiary bank: when a BIC is
+  // present (pre-filled from ?bic= or typed), surface the currencies the bank
+  // publishes as clickable picks that populate the currency dropdown.
+  const watchedBic = watch("beneficiary_bic");
+  const bicForSsi = (watchedBic ?? "").trim().toUpperCase();
+  const ssiEnabled = isBicLike(bicForSsi);
+  const ssiQuery = useQuery({
+    queryKey: apiKeys.ssi(bicForSsi, ""),
+    queryFn: () =>
+      apiRequest(`/api/ssi?bic=${encodeURIComponent(bicForSsi)}`, undefined, SSIResponseSchema),
+    enabled: ssiEnabled,
+  });
+  const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
+    (g) => g.currency,
+  );
+  const currencyOptions = [...new Set([...publishedCurrencies, ...COMMON_CURRENCIES])];
+  const selectedCurrency = watch("currency");
+  const currencyTouched = useRef(false);
+
+  // Default the currency to the bank's first published currency (importance
+  // order, so USD leads) unless the learner has already chosen one.
+  useEffect(() => {
+    if (!currencyTouched.current && publishedCurrencies.length > 0 && publishedCurrencies[0] !== selectedCurrency) {
+      setValue("currency", publishedCurrencies[0], { shouldValidate: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publishedCurrencies, setValue]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {
@@ -131,17 +179,46 @@ export function PreparePaymentPage() {
         <div className="prepare-payment__row">
           <div className="prepare-payment__field">
             <label htmlFor="currency">Currency</label>
-            <input
+            <select
               id="currency"
-              type="text"
               className="mono"
-              placeholder="GBP"
-              {...register("currency")}
+              {...register("currency", {
+                onChange: () => { currencyTouched.current = true; },
+              })}
               aria-invalid={!!errors.currency}
               aria-describedby={errors.currency ? "currency-error" : undefined}
-            />
+            >
+              {currencyOptions.map((ccy) => (
+                <option key={ccy} value={ccy}>{ccy}</option>
+              ))}
+            </select>
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
+            )}
+            {publishedCurrencies.length > 0 && (
+              <div className="prepare-payment__currency-picks" aria-label="Published settlement currencies">
+                <span className="prepare-payment__currency-picks-label">
+                  Published for this bank:
+                </span>
+                {publishedCurrencies.map((ccy) => (
+                  <button
+                    key={ccy}
+                    type="button"
+                    className={[
+                      "prepare-payment__currency-pick",
+                      ccy === selectedCurrency && "prepare-payment__currency-pick--active",
+                    ].filter(Boolean).join(" ")}
+                    aria-pressed={ccy === selectedCurrency}
+                    onClick={() => {
+                      currencyTouched.current = true;
+                      setValue("currency", ccy, { shouldValidate: true });
+                      void trigger("currency");
+                    }}
+                  >
+                    <span className="mono">{ccy}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
