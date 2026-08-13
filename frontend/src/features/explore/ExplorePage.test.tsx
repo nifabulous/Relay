@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { http, HttpResponse } from "msw";
 import { GlossaryPage, BankDirectoryPage } from "./ExplorePage";
 import { renderRelay, queryClient } from "../../test/render";
+import { server } from "../../test/server";
 
 function renderGlossary(path = "/app/explore/glossary") {
   return render(
@@ -60,5 +62,72 @@ describe("BankDirectoryPage", () => {
 
     const link = await screen.findByRole("link", { name: /View settlement details/i });
     expect(link).toHaveAttribute("href", "/explore/banks/CITIUS33");
+  });
+
+  it("shows the bank's settlement currencies inline on the result card", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "SBININBBXXX",
+          found: true,
+          bank: {
+            bic: "SBININBBXXX",
+            bank_name: "State Bank of India",
+            country_code: "IN",
+            city: "Mumbai",
+            country_currency: "INR",
+          },
+        }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [
+            {
+              beneficiary_bic: "SBININBBXXX",
+              beneficiary_bank_name: "State Bank of India",
+              currency: "EUR",
+              intermediary_bic: "DEUTDEFFXXX",
+              intermediary_bank_name: "Deutsche Bank Frankfurt",
+              intermediary_account: "ACCT-EUR-1",
+              beneficiary_account: "ACCT-BENE",
+              charge_code: "SHA",
+              value_date: "spot",
+            },
+            {
+              beneficiary_bic: "SBININBBXXX",
+              beneficiary_bank_name: "State Bank of India",
+              currency: "USD",
+              intermediary_bic: "CITIUS33XXX",
+              intermediary_bank_name: "Citibank New York",
+              intermediary_account: "ACCT-USD-1",
+              beneficiary_account: "ACCT-BENE",
+              charge_code: "SHA",
+              value_date: "spot",
+            },
+          ],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+
+    const strip = await screen.findByLabelText("Settlement currencies");
+    // Importance order: USD leads over EUR despite both being present.
+    const chips = within(strip).getAllByText(/·/).map((n) => n.textContent);
+    expect(chips.join(" ")).toContain("USD·1");
+    expect(chips.join(" ")).toContain("EUR·1");
+    expect(strip.textContent!.indexOf("USD")).toBeLessThan(strip.textContent!.indexOf("EUR"));
   });
 });

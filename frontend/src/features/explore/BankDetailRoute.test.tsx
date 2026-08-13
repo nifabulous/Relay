@@ -139,7 +139,7 @@ function ssiRecord(currency: string, intermediaryBic: string, name: string) {
 }
 
 describe("BankDetailRoute settlement instructions", () => {
-  it("groups intermediaries under their currency and shows account details", async () => {
+  it("groups intermediaries under currency tabs and shows the active table", async () => {
     server.use(
       http.get("/api/lookup", () =>
         HttpResponse.json({ bic: "SBININBBXXX", found: true, bank: INDIA_BANK }),
@@ -163,11 +163,45 @@ describe("BankDetailRoute settlement instructions", () => {
     expect(
       await screen.findByRole("heading", { name: "Published settlement instructions" }),
     ).toBeVisible();
-    expect(screen.getByRole("heading", { name: "USD" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "EUR" })).toBeVisible();
+    // Currencies are tabs (importance order: USD leads), one table at a time.
+    const usdTab = screen.getByRole("tab", { name: /USD/ });
+    const eurTab = screen.getByRole("tab", { name: /EUR/ });
+    expect(usdTab).toHaveAttribute("aria-selected", "true");
+    expect(eurTab).toHaveAttribute("aria-selected", "false");
+    // The active (USD) table is visible with both correspondents.
     expect(screen.getByText("Bank of America New York")).toBeVisible();
     expect(screen.getByText("JP Morgan Chase NY")).toBeVisible();
     expect(screen.getByText("ACCT-BOFAUS3N")).toBeVisible();
+    // The inactive (EUR) table is not rendered at all — one table at a time.
+    expect(screen.queryByText("Deutsche Bank Frankfurt")).toBeNull();
+  });
+
+  it("switches the visible table when a currency tab is clicked", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({ bic: "SBININBBXXX", found: true, bank: INDIA_BANK }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [
+            ssiRecord("USD", "CITIUS33", "Citibank New York"),
+            ssiRecord("EUR", "DEUTDEFF", "Deutsche Bank Frankfurt"),
+          ],
+          disclaimer: "SIMULATION — illustrative placeholder accounts.",
+        }),
+      ),
+    );
+
+    renderBank("SBININBBXXX");
+
+    await screen.findByRole("tab", { name: /USD/ });
+    await userEvent.click(screen.getByRole("tab", { name: /EUR/ }));
+
+    expect(screen.getByRole("tab", { name: /EUR/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Deutsche Bank Frankfurt")).toBeVisible();
+    expect(screen.queryByText("Citibank New York")).toBeNull();
   });
 
   it("renders the simulation disclaimer alongside settlement data", async () => {
@@ -209,8 +243,8 @@ describe("BankDetailRoute settlement instructions", () => {
 
     renderBank("SBININBBXXX");
 
-    await screen.findByRole("heading", { name: "USD" });
-    expect(screen.queryByRole("heading", { name: "ALL" })).toBeNull();
+    await screen.findByRole("tab", { name: /USD/ });
+    expect(screen.queryByRole("tab", { name: /ALL/ })).toBeNull();
   });
 });
 

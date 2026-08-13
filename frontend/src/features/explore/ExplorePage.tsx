@@ -4,12 +4,13 @@ import { useState } from "react";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema, SchemesResponseSchema } from "../../api/schemas";
+import { LookupResponseSchema, SchemesResponseSchema, SSIResponseSchema } from "../../api/schemas";
 import type { LookupResponse, SchemesResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
+import { groupByCurrency } from "./ssiGrouping";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -56,6 +57,17 @@ export function BankDirectoryPage() {
     queryFn: () => apiRequest<LookupResponse>(`/api/lookup?bic=${encodeURIComponent(searchBic!)}`, undefined, LookupResponseSchema),
     enabled: searchBic !== null,
   });
+
+  // Inline settlement summary: fetch SSI in parallel with the lookup so the
+  // result card can show the bank's settlement currencies at a glance.
+  const ssi = useQuery({
+    queryKey: searchBic ? apiKeys.ssi(searchBic, "") : ["ssi", "idle"],
+    queryFn: () =>
+      apiRequest(`/api/ssi?bic=${encodeURIComponent(searchBic!)}`, undefined, SSIResponseSchema),
+    enabled: searchBic !== null,
+  });
+
+  const currencyGroups = groupByCurrency(ssi.data?.instructions ?? []);
 
   let status: AsyncStatus = "idle";
   if (searchBic === null) status = "idle";
@@ -119,6 +131,18 @@ export function BankDirectoryPage() {
                     </>
                   )}
                 </dl>
+
+                {currencyGroups.length > 0 && (
+                  <div className="bank-detail__ssi-strip" aria-label="Settlement currencies">
+                    <span className="bank-detail__ssi-strip-label">Settlement</span>
+                    {currencyGroups.map((g) => (
+                      <span className="bank-detail__ssi-strip-chip" key={g.currency}>
+                        <span className="mono">{g.currency}</span>·{g.records.length}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="bank-detail__actions">
                   <Link
                     to={`/explore/banks/${encodeURIComponent(query.data.bank.bic)}`}
