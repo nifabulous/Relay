@@ -200,7 +200,7 @@ export function CaseEntry({ caseDef, session }: CaseEntryProps) {
               Start case
             </button>
             <p className="case-entry__alternative-label">
-              In the meantime, work through a topically-related lab:
+              In the meantime, try a related lab:
             </p>
             <Link
               to={ALTERNATIVE_LAB.href}

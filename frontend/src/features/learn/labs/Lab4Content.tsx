@@ -108,7 +108,7 @@ export function Lab4Content({ moduleId, onCheckpoint }: LabContentProps) {
         onCheckpoint("route-demo");
       }
     } catch {
-      setError("Could not look up routing. Please try again.");
+      setError("Could not look up correspondent routing. Please try again.");
     } finally {
       setIsLoading(false);
     }

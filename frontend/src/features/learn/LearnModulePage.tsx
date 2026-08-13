@@ -99,7 +99,7 @@ export function LearnModulePage() {
         </Suspense>
       ) : (
         <div className="learn-content__body">
-          <p className="measure">Interactive content for this module is coming soon.</p>
+          <p className="measure">Interactive content for this module is coming soon. Check back later.</p>
         </div>
       )}
 

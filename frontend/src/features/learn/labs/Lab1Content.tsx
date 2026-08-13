@@ -164,7 +164,7 @@ export function Lab1Content({ moduleId, onCheckpoint }: LabContentProps) {
             {bankInfo ? (
               <p>Bank: <strong>{bankInfo.bank_name}</strong>, {bankInfo.country_code}{bankInfo.city ? `, ${bankInfo.city}` : ""}</p>
             ) : result.valid && result.bic ? (
-              <p className="lab-muted">Format is correct but this BIC is not in our directory database.</p>
+              <p className="lab-muted">The format is valid, but this BIC isn't in our bank directory.</p>
             ) : null}
             {result.errors.length > 1 && (
               <ul>{result.errors.slice(1).map((e, i) => <li key={i}>{e}</li>)}</ul>
