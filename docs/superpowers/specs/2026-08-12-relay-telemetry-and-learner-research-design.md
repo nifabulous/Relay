@@ -1,9 +1,8 @@
 # Relay Telemetry and Learner Research Design
 
-> **Status:** Draft for review  
-> **Date:** 2026-08-12  
+> **Status:** Draft for review
+> **Date:** 2026-08-12
 > **Scope:** Review-fix closeout, provider-neutral Relay instrumentation, and Case Desk learner research
-
 ## Goal
 
 Make the current review fix part of the maintained branch, establish a privacy-first analytics contract that can be connected to PostHog later without changing learning features, and give the team a repeatable research protocol for evaluating the five Case Desk scenarios before adding more content.
