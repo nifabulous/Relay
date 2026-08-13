@@ -47,10 +47,10 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
-    # Mashreqbank New York (Mashreq's published USD SSI routes through its
-    # own NY branch, MSHQUS33). CHIPS/ABA not verifiable from a public
-    # source. Verify and promote to SETTLEMENT_DIRECTORY before removing.
-    "MSHQUS33",
+    # American Express Bank (ComBank Ceylon's published USD SSI). CHIPS/ABA
+    # not verifiable from the source. Verify and promote to
+    # SETTLEMENT_DIRECTORY before removing.
+    "AEIBUS33",
 }
 
 
@@ -630,3 +630,84 @@ class TestGulfSsiCoverage:
             used.add(record[3])
         for typo in ("U0VBSGSGXXX", "BN0RPHMMXXX", "SCBLDEFXXXX"):
             assert typo not in used, f"Mashreq-page typo {typo} must not be seeded"
+
+
+# ---------------------------------------------------------------------------
+# South Asia SSI coverage
+# ---------------------------------------------------------------------------
+#
+# Fourth region pass. Pakistan, Bangladesh and Sri Lanka publish full SSI
+# tables (BIC + account + routing IDs) on archived bank pages:
+#   - HBL (HABBPKKA)    — hbl.com Nostros_and_SSI PDF (archived 2026)
+#   - UBL (UNILPKKA)    — ubl.com.pk SSIs PDF (archived 2011)
+#   - MCB (MUCBPKKA)    — mcb.com.pk Nostro PDF (archived 2021)
+#   - Meezan (MEZNPAKA) — meezanbank.com NOSTRO PDF (archived 2019)
+#   - Agrani (AGBKBDDH) — agranibank.org List of Nostro Ac PDF (archived 2021)
+#   - ComBank Ceylon    — combank.lk correspondent-banks page (archived 2011)
+#   - DFCC (DFCCLKLX)   — dfcc.lk SSI PDF (archived 2017)
+# Turkish HQs and the other Bangladesh banks (IBBL, Sonali, Janata, BRAC,
+# DBBL, HNB) publish no usable SSIs — excluded.
+#
+# BIC corrections pinned: Habib is HABBPKKA (the old HABBPKKAAXX "AXX"
+# artifact must never return); Standard Chartered Frankfurt is normalized to
+# SCBLDEFFXXX (the South Asian PDFs print SCBLDEFX); HBL's OMR row prints the
+# transposed BSHROMRU (Sohar International is BHSOOMRU, unconfirmed) so it is
+# not seeded. Mashreq NY (MSHQUS33) and Habib American Bank (HANYUS33) carry
+# bank-published ABAs and are promoted to SETTLEMENT_DIRECTORY, not exempted.
+SOUTH_ASIA_SSI_COVERAGE = [
+    ("HABBPKKAXXX", "Habib Bank Limited", {"USD", "EUR", "GBP"}),
+    ("UNILPKKAXXX", "United Bank Limited", {"USD", "EUR", "GBP"}),
+    ("MUCBPKKAXXX", "MCB Bank", {"USD", "EUR", "GBP"}),
+    ("MEZNPAKAXXX", "Meezan Bank", {"USD", "EUR", "GBP"}),
+    ("AGBKBDDHXXX", "Agrani Bank", {"USD", "EUR"}),
+    ("COMBLKLXXXX", "Commercial Bank of Ceylon", {"USD", "GBP"}),
+    ("DFCCLKLXXXX", "DFCC Bank", {"USD", "EUR"}),
+]
+
+
+class TestSouthAsiaSsiCoverage:
+    def test_south_asian_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in SOUTH_ASIA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_south_asian_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in SOUTH_ASIA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"South Asian SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_habib_uses_the_bank_published_bic(self):
+        """HBL's own PDF prints HABBPKKA; the old HABBPKKAAXX 'AXX' artifact
+        must never come back."""
+        bank_bics = {row[0] for row in BANKS}
+        assert "HABBPKKAXXX" in bank_bics
+        assert "HABBPKKAAXX" not in bank_bics, "Legacy HABBPKKAAXX BIC used"
+
+    def test_scb_frankfurt_normalized_everywhere(self):
+        """The South Asian PDFs print Standard Chartered Frankfurt as
+        SCBLDEFX; the canonical form is SCBLDEFFXXX. No variant of the
+        typo may appear as an intermediary."""
+        for record in SSI_RECORDS:
+            assert record[3] != "SCBLDEFXXXX", (
+                "Normalize SCB Frankfurt to SCBLDEFFXXX"
+            )
+
+    def test_no_transposed_sohar_bic(self):
+        """HBL's OMR row prints BSHROMRU for Sohar International (real BIC
+        BHSOOMRU, unconfirmed) — it must not be seeded."""
+        used = set()
+        for record in SSI_RECORDS:
+            used.add(record[3])
+        assert "BSHROMRUXXX" not in used, "Transposed Sohar BIC must not be seeded"
