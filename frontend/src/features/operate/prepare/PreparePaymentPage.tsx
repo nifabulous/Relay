@@ -476,9 +476,14 @@ export function PreparePaymentPage() {
               UETR: <span className="mono">{result.uetr}</span>
             </p>
             <div className="prepare-payment__links">
-              <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
-                Track this payment
-              </Link>
+              {/* The backend persists a simulated timeline only when the
+                  destination bank resolved (a BIC), so only link to tracking
+                  in that case — never advertise a payment it can't find. */}
+              {result.validation.bic && (
+                <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
+                  Track this payment
+                </Link>
+              )}
               <Link to="/explore" className="relay-btn relay-btn--secondary">
                 Explore corridor details
               </Link>

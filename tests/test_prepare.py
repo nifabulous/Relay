@@ -463,3 +463,28 @@ class TestPrepareEndpoint:
         assert r.status_code == 200
         routing = r.json()["routing"]
         assert routing["routing_basis"] == "corridor-heuristic"
+
+
+class TestPreparePersistenceToTracking:
+    """A prepared payment returns a UETR and the UI links to tracking with
+    it — the timeline must actually be stored so tracking finds it."""
+
+    def test_prepared_payment_is_trackable(self, client):
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        uetr = r.json()["uetr"]
+        assert len(uetr) == 36
+
+        track = client.get(f"/api/track/{uetr}")
+        assert track.status_code == 200, (
+            f"Payment prepared with UETR {uetr} must be trackable, got "
+            f"{track.status_code}: {track.text[:200]}"
+        )
+        body = track.json()
+        assert body["current_status"] in ("ACCEPTED", "IN_PROGRESS", "FORWARDED", "CREDITED")
+        assert body["event_count"] > 0
