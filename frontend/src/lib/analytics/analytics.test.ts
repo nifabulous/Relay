@@ -116,7 +116,7 @@ describe("analytics contract", () => {
 });
 
 describe("analytics runtime resilience", () => {
-  it("swallows adapter failures so instrumentation never breaks the learner flow", () => {
+  it("replaces a failing sink so the failure is contained, not repeated", () => {
     const throwingSink: AnalyticsSink = {
       capture: () => {
         throw new Error("adapter unavailable");
@@ -124,11 +124,15 @@ describe("analytics runtime resilience", () => {
     };
     setAnalyticsSink(throwingSink);
 
-    // A future provider adapter that fails mid-flush must degrade to a no-op,
-    // not crash a practice answer or a module render mid-transition.
+    // A provider adapter that fails once must not crash a practice answer or
+    // module render mid-transition, and must not be retried on every event:
+    // the failing sink is swapped for the no-op sink.
     expect(() =>
       track("practice_completed", { question_count: 5, correct_count: 4 }),
     ).not.toThrow();
+    expect(getAnalyticsSink()).not.toBe(throwingSink);
+
+    // Later events are cheap no-ops rather than repeated failures.
     expect(() => track("module_viewed", { module_id: "lab-1" })).not.toThrow();
   });
 
@@ -141,6 +145,40 @@ describe("analytics runtime resilience", () => {
     // previously throw mid-handler.
     const trackAny = track as unknown as (name: string, properties: unknown) => void;
     expect(() => trackAny("__proto__", {})).not.toThrow();
+    expect(sink.events).toEqual([]);
+  });
+
+  it("drops events whose values violate the runtime contract", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    // Widen on purpose: the type system already rejects these, but an `as any`
+    // caller must not be able to smuggle them into telemetry at runtime.
+    const trackAny = track as unknown as (name: string, properties: unknown) => void;
+
+    // Enum outside the closed union.
+    trackAny("case_phase_entered", {
+      case_id: "canada-us-supplier",
+      phase: "nonsense",
+    });
+    // Wrong primitive type for a boolean field.
+    trackAny("question_answered", {
+      surface: "practice",
+      question_id: "l1-bic-country",
+      correct: "yes",
+      attempt_index: 1,
+    });
+    // Free text in an identifier field.
+    trackAny("module_viewed", { module_id: "Full learner name" });
+    // Count below its bound.
+    trackAny("practice_started", { question_count: -1 });
+    // Attempt index below its bound.
+    trackAny("question_answered", {
+      surface: "practice",
+      question_id: "l1-bic-country",
+      correct: true,
+      attempt_index: 0,
+    });
+
     expect(sink.events).toEqual([]);
   });
 });
