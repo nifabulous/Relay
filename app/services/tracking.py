@@ -292,10 +292,10 @@ def get_payment_status(
             "current_status": STATUS_INITIATED,
             "is_terminal": False,
             "event_count": 0,
-            "sent_amount": all_events[0].amount,
+            "sent_amount": None,
             "final_amount": None,
             "total_fees": None,
-            "last_updated": None,
+            "last_updated": all_events[0].timestamp,
             "timeline": [],
         }
 

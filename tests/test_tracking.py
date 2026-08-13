@@ -745,6 +745,22 @@ class TestScheduledTimelineVisibility:
         assert status["total_fees"] is None
         assert len(status["timeline"]) == 1
 
+    def test_status_before_start_leaks_no_money_or_row(self, db_session):
+        """TRK-8: a clock read before the initiation timestamp is a graceful,
+        cash-less state — no hidden-row amount, no bare last_updated."""
+        from app.services.tracking import get_payment_status
+
+        self._make_scheduled(db_session)
+        early = get_payment_status(db_session, self.uetr, now=self.START - timedelta(seconds=1))
+        assert early["current_status"] == STATUS_INITIATED
+        assert early["is_terminal"] is False
+        assert early["event_count"] == 0
+        assert early["sent_amount"] is None
+        assert early["final_amount"] is None
+        assert early["total_fees"] is None
+        assert early["last_updated"] == self.START.isoformat().replace("+00:00", "Z")
+        assert early["timeline"] == []
+
     def test_status_never_leaks_future_statuses(self, db_session):
         """TRK-8: the status summary is computed only from visible events."""
         from app.services.tracking import get_payment_status
