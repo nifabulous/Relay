@@ -318,3 +318,13 @@ class TestInternationalSchemesEndpoint:
         assert "MT103" in roadmap, (
             "roadmap must note the MT103 retirement direction"
         )
+
+    def test_international_route_is_documented_in_openapi(self, client):
+        """The new route must appear in the generated OpenAPI schema."""
+        r = client.get("/openapi.json")
+        assert r.status_code == 200
+        paths = r.json()["paths"]
+        assert "/api/schemes/international" in paths, (
+            "OpenAPI must document GET /api/schemes/international"
+        )
+        assert "get" in paths["/api/schemes/international"]

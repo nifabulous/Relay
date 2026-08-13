@@ -1,9 +1,14 @@
-"""Payment schemes — domestic rails by currency."""
+"""Payment schemes — domestic rails by currency, plus the international / SWIFT catalogue."""
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..data.payment_schemes import get_schemes_for_currency, list_currencies_with_schemes
+from ..data.payment_schemes import (
+    get_international_schemes,
+    get_schemes_for_currency,
+    list_currencies_with_schemes,
+)
+from ..schemas import InternationalSchemesResponse
 
 router = APIRouter(prefix="/api", tags=["swift"])
 
@@ -37,3 +42,19 @@ def get_payment_schemes(
         "currencies": list_currencies_with_schemes(),
         "count": len(list_currencies_with_schemes()),
     }
+
+
+@router.get("/schemes/international", response_model=InternationalSchemesResponse)
+def get_payment_schemes_international():
+    """
+    Return the International / SWIFT catalogue entry (SWIFT gpi).
+
+    SWIFT gpi is the cross-border correspondent-payment overlay: same-day to
+    1-3 business days depending on corridor and cut-off, bank/correspondent-set
+    fees and limits, correspondent routing, UETR tracking, and MT103/pacs.008
+    references. The roadmap section notes the CBPR+ / ISO 20022 direction of
+    travel — explicitly roadmap, not current behaviour.
+
+    This is educational data — always check the operator's current rules.
+    """
+    return get_international_schemes()

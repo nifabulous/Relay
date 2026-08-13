@@ -539,11 +539,21 @@ class SchemeVariant(BaseModel):
 
 class InternationalSchemesResponse(BaseModel):
     """Typed validation boundary for the /api/schemes/international catalogue
-    entry (SWIFT gpi).
+    entry (SWIFT gpi). `response_model=` on the route means malformed
+    international data fails at the boundary instead of silently reaching the
+    UI.
 
     Uses the same fact vocabulary as the domestic rails so the frontend renders
     the international entry through the same detail component. Task 2.2 wires
     the route to this model.
+
+    Intentional divergence from the frontend Zod shape
+    (InternationalSchemesResponseSchema): the Zod shape extends SchemeInfoSchema,
+    which also carries `processingWindows`, `family` and `variants`. SWIFT gpi
+    has no product family/variant structure and no processing-window list, so
+    this model deliberately omits them — Pydantic drops unknown response fields,
+    and the UI parses their absence as null via .nullish().catch(null). Keep
+    this model to the fields the UI actually renders.
     """
     scope: str = "International / SWIFT"
     name: str

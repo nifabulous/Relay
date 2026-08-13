@@ -63,6 +63,11 @@ _ZENGIN_NET = "https://www.zengin-net.jp/en/"
 _BOJ_OUTLINE = "https://www.boj.or.jp/en/paym/outline/index.htm"
 _CBUAE_PS = "https://www.centralbank.ae/en/our-operations/payments-and-settlements/"
 _AEP_AANI = "https://aep.ae/en/services/aani/"
+_SWIFT_GPI = "https://www.swift.com/products/swift-gpi"
+_SWIFT_CBPR = (
+    "https://www.swift.com/standards/iso-20022/iso-20022-payments-financial-institutions/"
+    "iso-20022-cpbr-end-coexistence-support"
+)
 
 
 _SCHEMES = {
@@ -458,6 +463,74 @@ _SCHEMES = {
 def get_schemes_for_currency(currency: str) -> Optional[dict]:
     """Return the payment schemes for a given currency code, or None."""
     return _SCHEMES.get(currency.strip().upper())
+
+
+# ---------------------------------------------------------------------------
+# International / SWIFT catalogue entry (plan task 2.2)
+#
+# One entry describing SWIFT gpi — the cross-border correspondent-payment
+# overlay on the SWIFT network. Not a per-currency rail: it deliberately
+# lives OUTSIDE _SCHEMES so list_currencies_with_schemes() keeps returning
+# exactly the ten domestic currencies.
+#
+# Field vocabulary matches the domestic rails (sources, verifiedAsof,
+# howItWorks, features, limits, settlement, reversible, protections,
+# roadmap). The roadmap items are explicitly marked as roadmap — they
+# describe the industry's direction of travel (CBPR+/ISO 20022), not
+# current SWIFT gpi behaviour.
+# ---------------------------------------------------------------------------
+
+
+INTERNATIONAL_SCHEMES = {
+    "scope": "International / SWIFT",
+    "name": "SWIFT gpi",
+    "speed": "Same-day to 1-3 business days (corridor- and cut-off-dependent)",
+    "limit": "Bank/correspondent-set",
+    "cost": "Bank/correspondent-set",
+    "useCase": "Cross-border correspondent payments (MT103 / pacs.008)",
+    "operator": "SWIFT",
+    "howItWorks": [
+        "The originator bank routes the payment through its correspondent network, hop by hop, to the beneficiary's bank",
+        "Each hop is tracked in near real time via the SWIFT gpi tracker, and the UETR (field 121 / pacs.008) identifies the payment end to end",
+        "Finality depends on the corridor — the beneficiary bank's credit is the point of no return, and intervening stops (compliance holds, cut-offs) can add days",
+    ],
+    "features": [
+        "UETR end-to-end tracking across the chain",
+        "Fee and status transparency (well-known scheme amount, tracking events)",
+        "MT103 / pacs.008 messages carry the payment",
+    ],
+    "limits": {
+        "perTransaction": "Correspondent-set",
+        "perDay": "Correspondent-set",
+        "perMonth": "Correspondent-set",
+        "receiving": "Correspondent-set",
+        "note": "Limits and fees are set by each bank/correspondent in the chain",
+    },
+    "settlement": "Correspondent banking — nostro/vostro balances settled between banks, not a central FX rail",
+    "reversible": False,
+    "protections": [
+        "gpi tracking events give all parties a shared view of progress",
+        "Errors are returned/recalled through the correspondent chain, not reversed unilaterally",
+    ],
+    "roadmap": [
+        "CBPR+: ISO 20022 translation for cross-border payments in progress",
+        "The eventual direction of travel is MT103 usage declining under ISO 20022 migration — roadmap, not current behaviour",
+    ],
+    "sources": [
+        {"name": "SWIFT", "label": "SWIFT gpi — official", "url": _SWIFT_GPI},
+        {"name": "SWIFT", "label": "CBPR+ — ISO 20022 end of coexistence", "url": _SWIFT_CBPR},
+    ],
+    "verifiedAsof": "2026-08",  # verified August 2026
+    "disclaimer": (
+        "SIMULATION — educational data. Always check the operator's current "
+        "rules for production routing."
+    ),
+}
+
+
+def get_international_schemes() -> dict:
+    """Return the International / SWIFT catalogue entry (SWIFT gpi)."""
+    return INTERNATIONAL_SCHEMES
 
 
 def list_currencies_with_schemes():
