@@ -35,8 +35,10 @@ def test_interac_enriched_with_corrected_limits_and_roadmap():
     from app.data.payment_schemes import get_schemes_for_currency
     interac = next(s for s in get_schemes_for_currency("CAD")["schemes"] if s["name"] == "Interac e-Transfer")
     assert "Autodeposit" in " ".join(interac["features"])
-    assert interac["limits"]["perTransaction"].startswith("$3,000")
-    assert interac["limits"]["perMonth"] == "$30,000"
+    # Plan task 2.1: Interac's own docs say limits are FI-set (typically
+    # $2,000-3,000 per transaction) — a universal "$3,000/$30,000" claim was
+    # an unverified bank-specific figure, so limits are now marked FI-set.
+    assert interac["limits"]["perTransaction"].startswith("FI-set")
     assert any("RTR" in r for r in interac["roadmap"])
     assert "05:00 ET" not in " ".join(interac.get("processingWindows", []))  # Interac is not windowed
 
@@ -60,7 +62,10 @@ def test_fps_teaches_app_reimbursement():
     assert any("85,000" in p for p in fps["protections"])
 
 
-def test_other_currencies_have_no_enriched_fields():
+def test_other_currencies_are_enriched():
     from app.data.payment_schemes import get_schemes_for_currency
+    # Plan task 2.1 (SCH-6): every currency now has at least one fully
+    # enriched rail — the former summary-only catalogue is expanded.
     usd = get_schemes_for_currency("USD")["schemes"][0]
-    assert "roadmap" not in usd and "protections" not in usd
+    assert usd["roadmap"] and usd["protections"] and usd["howItWorks"]
+    assert usd["sources"]
