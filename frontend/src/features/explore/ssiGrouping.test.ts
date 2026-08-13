@@ -26,7 +26,7 @@ describe("groupByCurrency", () => {
       record("EUR", "DEUTDEFF"),
     ]);
 
-    expect(groups.map((g) => g.currency)).toEqual(["EUR", "USD"]);
+    expect(groups.map((g) => g.currency)).toEqual(["USD", "EUR"]);
     const usd = groups.find((g) => g.currency === "USD")!;
     expect(usd.records.map((r) => r.intermediary_bic)).toEqual([
       "BOFAUS3N",
@@ -35,14 +35,26 @@ describe("groupByCurrency", () => {
     ]);
   });
 
-  it("orders currencies alphabetically so the list is scannable", () => {
+  it("orders currencies by settlement importance, then alphabetically", () => {
     const groups = groupByCurrency([
       record("USD", "CITIUS33"),
       record("AED", "EBILAEAD"),
       record("GBP", "BARCGB22"),
+      record("EUR", "DEUTDEFF"),
     ]);
 
-    expect(groups.map((g) => g.currency)).toEqual(["AED", "GBP", "USD"]);
+    // USD, EUR, GBP are majors and lead; AED sorts after them alphabetically.
+    expect(groups.map((g) => g.currency)).toEqual(["USD", "EUR", "GBP", "AED"]);
+  });
+
+  it("keeps non-major currencies alphabetical when no majors are present", () => {
+    const groups = groupByCurrency([
+      record("AED", "EBILAEAD"),
+      record("BHD", "NBOBBHBM"),
+      record("CUC", "CITIUS33"),
+    ]);
+
+    expect(groups.map((g) => g.currency)).toEqual(["AED", "BHD", "CUC"]);
   });
 
   it("preserves source order of intermediaries within a currency", () => {

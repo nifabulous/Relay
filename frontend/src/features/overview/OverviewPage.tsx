@@ -124,7 +124,7 @@ export function OverviewPage() {
           <p className="overview__muted">
             {isFirstVisit
               ? "No activity yet. Start by exploring how payments move."
-              : "Your recent simulations and learning activity will appear here."}
+              : "No activity yet. Your recent simulations and learning will appear here."}
           </p>
         ) : (
           <ul className="overview__activity-list">

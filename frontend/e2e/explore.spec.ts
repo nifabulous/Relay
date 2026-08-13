@@ -33,7 +33,7 @@ test.describe("Bank detail", () => {
     await expect(
       page.getByRole("heading", { name: "Published settlement instructions" }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { name: "USD" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /USD/ })).toBeVisible();
   });
 
   test("a bank without SSI shows the heuristic route instead", async ({ page }) => {

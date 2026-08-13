@@ -13,7 +13,7 @@ export function routeSummary(
   currency?: string,
   amount?: string,
 ): string {
-  if (nodes.length === 0) return "No payment route data available.";
+  if (nodes.length === 0) return "No payment route data to show.";
 
   const originator = nodes.find((n) => n.kind === "originator");
   const beneficiary = nodes.find((n) => n.kind === "beneficiary");
@@ -39,9 +39,9 @@ export function routeSummary(
   const unavailable = nodes.find((n) => n.status === "unavailable");
 
   if (failed) {
-    parts.push(`Stopped at ${failed.name}: ${failed.kind}. Payment failed.`);
+    parts.push(`Stopped at ${failed.name}. Payment failed.`);
   } else if (unavailable) {
-    parts.push(`Status at ${unavailable.name} is unavailable.`);
+    parts.push(`Status unavailable at ${unavailable.name}.`);
   } else {
     const allPassed = nodes.every((n) => n.status === "passed");
     if (allPassed) {

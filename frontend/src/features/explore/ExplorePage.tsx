@@ -4,12 +4,14 @@ import { useState } from "react";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
-import { LookupResponseSchema, SchemesResponseSchema } from "../../api/schemas";
+import { LookupResponseSchema, SchemesResponseSchema, SSIResponseSchema } from "../../api/schemas";
 import type { LookupResponse, SchemesResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { Button } from "../../design-system/Button";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
+import { groupByCurrency } from "./ssiGrouping";
+import { SettlementInstructions } from "./SettlementInstructions";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -47,6 +49,9 @@ export function ExplorePage() {
 
 // ─── Bank Directory ──────────────────────────────────────
 
+/** Example BICs shown in the Bank Directory's pre-search guidance. */
+const EXAMPLE_BICS = ["GTBINGLAXXX", "MASHAEADXXX", "CTCBHKHHXXX"];
+
 export function BankDirectoryPage() {
   const [bic, setBic] = useState("");
   const [searchBic, setSearchBic] = useState<string | null>(null);
@@ -56,6 +61,17 @@ export function BankDirectoryPage() {
     queryFn: () => apiRequest<LookupResponse>(`/api/lookup?bic=${encodeURIComponent(searchBic!)}`, undefined, LookupResponseSchema),
     enabled: searchBic !== null,
   });
+
+  // Inline settlement summary: fetch SSI in parallel with the lookup so the
+  // result card can show the bank's settlement currencies at a glance.
+  const ssi = useQuery({
+    queryKey: searchBic ? apiKeys.ssi(searchBic, "") : ["ssi", "idle"],
+    queryFn: () =>
+      apiRequest(`/api/ssi?bic=${encodeURIComponent(searchBic!)}`, undefined, SSIResponseSchema),
+    enabled: searchBic !== null,
+  });
+
+  const currencyGroups = groupByCurrency(ssi.data?.instructions ?? []);
 
   let status: AsyncStatus = "idle";
   if (searchBic === null) status = "idle";
@@ -89,6 +105,29 @@ export function BankDirectoryPage() {
         <Button type="submit" variant="primary">Look up</Button>
       </form>
 
+      {searchBic === null && (
+        <div className="explore__empty">
+          <p className="explore__empty-title">Find a bank to see its settlement instructions</p>
+          <p className="measure explore__empty-body">
+            Enter a SWIFT BIC (8 or 11 characters, for example GTBINGLAXXX or
+            CITIUS33) to see the bank&apos;s identity and the correspondents it
+            publishes for receiving payments. Try an example:
+          </p>
+          <div className="explore__examples">
+            {EXAMPLE_BICS.map((example) => (
+              <button
+                key={example}
+                type="button"
+                className="explore__example"
+                onClick={() => { setBic(example); setSearchBic(example); }}
+              >
+                <span className="mono">{example}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {searchBic && (
         <div className="explore__bank-result">
           <AsyncRegion
@@ -119,12 +158,41 @@ export function BankDirectoryPage() {
                     </>
                   )}
                 </dl>
+
+                {/* Settlement details inline — the search result is the
+                    answer, no click-through required. */}
+                {ssi.isError && (
+                  <div className="bank-ssi__error" role="alert">
+                    <p>
+                      Published settlement instructions could not be loaded for this bank.
+                    </p>
+                    <button
+                      type="button"
+                      className="relay-btn relay-btn--secondary"
+                      onClick={() => ssi.refetch()}
+                    >
+                      Retry settlement instructions
+                    </button>
+                  </div>
+                )}
+                {ssi.isLoading && (
+                  <div className="bank-ssi__loading" role="status" aria-label="Loading settlement instructions">
+                    Loading published settlement instructions…
+                  </div>
+                )}
+                {ssi.data && !ssi.isError && (
+                  <SettlementInstructions
+                    groups={currencyGroups}
+                    disclaimer={ssi.data.disclaimer}
+                  />
+                )}
+
                 <div className="bank-detail__actions">
                   <Link
-                    to={`/explore/banks/${encodeURIComponent(query.data.bank.bic)}`}
+                    to={`/operate/prepare?bic=${encodeURIComponent(query.data.bank.bic)}`}
                     className="relay-btn relay-btn--primary"
                   >
-                    View settlement details
+                    Prepare a payment
                   </Link>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { PaymentRoute } from "../../design-system/payment-route/PaymentRoute";
 import { buildRouteNodes } from "../../design-system/payment-route/routeNodes";
 import { groupByCurrency } from "./ssiGrouping";
+import { SettlementInstructions } from "./SettlementInstructions";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import "./ExplorePage.css";
@@ -217,78 +218,10 @@ export function BankDetailRoute() {
             </div>
 
             {hasSSI && (
-              <section className="bank-ssi" aria-labelledby="bank-ssi-title">
-                <h2 id="bank-ssi-title">Published settlement instructions</h2>
-                <p className="measure bank-ssi__intro">
-                  Where this bank holds Nostro accounts, and which correspondent
-                  to pay for each currency. A currency can list more than one
-                  correspondent.
-                </p>
-
-                {currencyGroups.map((group) => (
-                  <div className="bank-ssi__group" key={group.currency}>
-                    <h3 className="bank-ssi__currency mono">{group.currency}</h3>
-                    <ul className="bank-ssi__list">
-                      {group.records.map((r, index) => (
-                        // The index disambiguates: /api/import/ssi can add rows,
-                        // so currency + intermediary BIC is not guaranteed unique
-                        // even though the seeded data has no collisions today.
-                        <li
-                          className="bank-ssi__item"
-                          key={`${group.currency}-${r.intermediary_bic}-${index}`}
-                        >
-                          <p className="bank-ssi__intermediary">
-                            {r.intermediary_bank_name ?? r.intermediary_bic}
-                          </p>
-                          <dl className="bank-ssi__fields">
-                            <dt>Intermediary BIC</dt>
-                            <dd className="mono">{r.intermediary_bic}</dd>
-                            {r.intermediary_account && (
-                              <>
-                                <dt>Nostro account</dt>
-                                <dd className="mono">{r.intermediary_account}</dd>
-                              </>
-                            )}
-                            {r.beneficiary_account && (
-                              <>
-                                <dt>Credit to</dt>
-                                <dd className="mono">{r.beneficiary_account}</dd>
-                              </>
-                            )}
-                            <dt>Charges</dt>
-                            <dd className="mono">{r.charge_code}</dd>
-                            <dt>Value date</dt>
-                            <dd>{r.value_date}</dd>
-                            {r.intermediary_settlement &&
-                              (r.intermediary_settlement.chips_uid ||
-                                r.intermediary_settlement.aba) && (
-                                <>
-                                  <dt>Settlement IDs</dt>
-                                  <dd className="mono">
-                                    {[
-                                      r.intermediary_settlement.chips_uid
-                                        ? `CHIPS ${r.intermediary_settlement.chips_uid}`
-                                        : null,
-                                      r.intermediary_settlement.aba
-                                        ? `ABA ${r.intermediary_settlement.aba}`
-                                        : null,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(" · ")}
-                                  </dd>
-                                </>
-                              )}
-                          </dl>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {ssi.data?.disclaimer && (
-                  <p className="bank-ssi__disclaimer">{ssi.data.disclaimer}</p>
-                )}
-              </section>
+              <SettlementInstructions
+                groups={currencyGroups}
+                disclaimer={ssi.data?.disclaimer}
+              />
             )}
 
             {ssi.isError && (

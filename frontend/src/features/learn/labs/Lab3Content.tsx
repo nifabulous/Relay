@@ -151,7 +151,7 @@ export function Lab3Content({ moduleId, onCheckpoint }: LabContentProps) {
         onCheckpoint("identify-fraud-risk");
       }
     } catch {
-      setError("Verification failed. Please try again.");
+      setError("We couldn't run the verification. Please try again.");
     } finally {
       setIsLoading(false);
     }

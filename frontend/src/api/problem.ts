@@ -111,6 +111,8 @@ function extractFieldErrors(detail: unknown): Record<string, string[]> {
  *
  * - FastAPI string `detail` is used directly.
  * - A `detail` array with validation entries is summarized into a single line.
+ * - A `detail` object with an `errors` array (the BIC/IBAN validators return
+ *   `{ detail: { errors: [...] } }`) is joined into a single line.
  * - Falls back to a status-appropriate message when the body is unhelpful.
  */
 function extractDetail(body: FastApiErrorBody, status: number): string {
@@ -126,6 +128,12 @@ function extractDetail(body: FastApiErrorBody, status: number): string {
       return count === 1
         ? "1 validation error"
         : `${count} validation errors`;
+    }
+
+    if (isObject(detail) && Array.isArray(detail.errors) && detail.errors.length > 0) {
+      return detail.errors
+        .filter((message): message is string => typeof message === "string")
+        .join(" ");
     }
   }
 

@@ -74,7 +74,7 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
     return {
       kind: "next_learn",
       href: `/app/learn/${moduleId}`,
-      label: "Continue next module",
+      label: "Continue to next module",
     };
   }
 

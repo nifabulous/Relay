@@ -117,6 +117,28 @@ describe("apiRequest", () => {
       }
     });
 
+    it("surfaces the backend's BIC guidance for an invalid BIC", async () => {
+      // /api/lookup returns { detail: { errors: [...] } } for a malformed BIC.
+      server.use(
+        http.get("/api/health", () =>
+          HttpResponse.json(
+            { detail: { errors: ["Enter a valid SWIFT BIC — it must be 8 or 11 characters (you entered 4)."] } },
+            { status: 400 },
+          ),
+        ),
+      );
+
+      try {
+        await apiRequest("/api/health");
+        expect.fail("Should have thrown");
+      } catch (e) {
+        const problem = e as ApiProblem;
+        expect(problem.status).toBe(400);
+        expect(problem.detail).toContain("8 or 11 characters");
+        expect(problem.retryable).toBe(false);
+      }
+    });
+
     it("handles non-JSON error responses", async () => {
       server.use(
         http.get("/api/health", () =>

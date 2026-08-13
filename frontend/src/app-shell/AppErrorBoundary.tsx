@@ -33,7 +33,7 @@ export class AppErrorBoundary extends Component<Props, State> {
         <div className="error-boundary" role="alert">
           <h1 className="error-boundary__title">Something went wrong</h1>
           <p className="error-boundary__message">
-            {this.state.error?.message ?? "An unexpected error occurred."}
+            {this.state.error?.message ?? "An unexpected error interrupted the page."}
           </p>
           <div className="error-boundary__actions">
             <Button variant="primary" onClick={this.handleReload}>

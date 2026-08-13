@@ -26,7 +26,7 @@ export function CorrespondentOptions({ options, currency, notes, routingBasis = 
           <p className="correspondent-options__note">
             {published
               ? "This is the beneficiary bank's own published correspondent list — the authoritative instruction, not a guess."
-              : "These are candidates, not a confirmed chain. The actual path may use one or more correspondents—or a different bank—depending on your bank's Nostro relationships."}
+              : "These are candidates, not a confirmed chain. Your bank may route through one or more of them, or through a different bank, depending on its Nostro relationships."}
           </p>
         </div>
         {currency && <span className="correspondent-options__currency mono">{currency}</span>}
