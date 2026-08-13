@@ -25,15 +25,22 @@ export function LearnModulePage() {
     if (lastViewedModuleIdRef.current === mod.id) return;
     lastViewedModuleIdRef.current = mod.id;
     track("module_viewed", { module_id: mod.id });
-    if (!completed.includes(mod.id)) {
+    // A locked module (visited by URL before its prerequisites) is not
+    // "started": the learner is blocked from the content, so gating here
+    // keeps module_started out of the completion-rate denominator.
+    if (isModuleUnlocked(mod.id, completed) && !completed.includes(mod.id)) {
       track("module_started", { module_id: mod.id });
     }
-  }, [mod?.id]);
+  }, [mod?.id, completed]);
 
   useEffect(() => {
     for (const id of completed) {
       if (reportedCompletedIdsRef.current.has(id)) continue;
       reportedCompletedIdsRef.current.add(id);
+      // Guard the same boundary the other events enforce: only authored
+      // curriculum ids reach telemetry. `completed` is a raw localStorage
+      // array, so a tampered or legacy entry must not flow into the payload.
+      if (!getModuleById(id)) continue;
       track("module_completed", { module_id: id });
     }
   }, [completed]);

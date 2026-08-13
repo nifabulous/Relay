@@ -88,6 +88,43 @@ describe("LearnModulePage analytics", () => {
     expect(sink.events).toEqual([]);
   });
 
+  it("tracks a viewed-but-locked module without a start", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+
+    // lab-2 requires lab-1, which is not completed, so the module is locked.
+    renderModule("lab-2");
+
+    expect(screen.getByRole("heading", { name: /locked/i })).toBeInTheDocument();
+    expect(sink.events).toEqual([
+      { name: "module_viewed", properties: { module_id: "lab-2" } },
+    ]);
+  });
+
+  it("keeps non-catalog ids out of module_completed payloads", async () => {
+    // A tampered or legacy progress entry must never flow into telemetry even
+    // when it sits in the completed list alongside a real completion; only
+    // authored curriculum ids are emitted.
+    localStorage.setItem(
+      "relay:progress",
+      JSON.stringify({ schemaVersion: 1, completedModuleIds: ["smuggled-id"] }),
+    );
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    renderModule();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Reach checkpoint" }));
+
+    await waitFor(() => {
+      expect(sink.events).toContainEqual({
+        name: "module_completed",
+        properties: { module_id: "lab-1" },
+      });
+    });
+    const payload = JSON.stringify(sink.events.map((event) => event.properties));
+    expect(payload).not.toContain("smuggled-id");
+  });
+
   it("tracks a new module when the route reuses the page", async () => {
     localStorage.setItem(
       "relay:progress",
