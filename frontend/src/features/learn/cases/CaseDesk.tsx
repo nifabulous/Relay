@@ -61,6 +61,7 @@ import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { Button } from "../../../design-system/Button";
 import { StatusChip } from "../../../design-system/StatusChip";
 import type { AsyncStatus } from "../../../design-system/types";
+import { track } from "../../../lib/analytics/analytics";
 import "./CaseDesk.css";
 
 export interface CaseDeskProps {
@@ -162,6 +163,16 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   const [explanationText, setExplanationText] = useState(session.draft.customerExpectation ?? "");
   const explanationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingExplanationRef = useRef(session.draft.customerExpectation ?? "");
+  // Free-text and rail-choice updates can dispatch on every input event. Keep
+  // telemetry coarse: mark that an accepted edit happened, then report it
+  // once when the interaction ends on blur or an accepted submission.
+  const draftEditPendingRef = useRef(false);
+
+  function reportPendingDraftEdit() {
+    if (!draftEditPendingRef.current) return;
+    draftEditPendingRef.current = false;
+    track("case_action", { case_id: caseId, action: "edit-draft" });
+  }
 
   // Always-current view of the session so async callbacks (the debounce
   // timer, the unmount cleanup) never close over a stale session snapshot.
@@ -222,6 +233,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           }
         }
       }
+      // Telemetry parity with the blur/submit handlers: an edit persisted on
+      // unmount (e.g. typing then exiting the case) is still a committed
+      // edit, so report it before the component leaves the tree.
+      reportPendingDraftEdit();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -231,6 +246,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (text !== current.draft.customerExpectation) {
       const next = caseReducer(current, { type: "edit-draft", patch: { customerExpectation: text } });
       if (next !== current) {
+        draftEditPendingRef.current = true;
         dispatch({ type: "edit-draft", patch: { customerExpectation: text } });
         persist(next);
       }
@@ -356,6 +372,9 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
   useEffect(() => {
     if (prevPhaseRef.current !== session.phase) {
       prevPhaseRef.current = session.phase;
+      if (session.phase !== "brief") {
+        track("case_phase_entered", { case_id: caseId, phase: session.phase });
+      }
       const heading = phaseHeadingRef.current;
       if (heading) {
         // tabindex=-1 lets a heading receive programmatic focus.
@@ -363,7 +382,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         heading.focus();
       }
     }
-  }, [session.phase]);
+  }, [caseId, session.phase]);
 
   // ── Focus restoration after the reference sheet closes ───────────────────
   // The ReferenceSheet is conditionally rendered, so when it closes it
@@ -433,6 +452,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (next !== session) {
       dispatch({ type: "start" });
       persist(next);
+      track("case_started", { case_id: caseId });
     }
   }
 
@@ -451,8 +471,18 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     flushDraftPersist();
     const next = caseReducer(session, { type: "restart" });
     if (next !== session) {
+      draftEditPendingRef.current = false;
       dispatch({ type: "restart" });
       persist(next);
+      track("case_action", { case_id: caseId, action: "restart" });
+      // Restart with a firstAttempt preserved begins a fresh RUN (the reducer
+      // routes to recommend and a later send can complete again). Emit
+      // case_started so each run has a matching start+completion; without it
+      // the funnel's case_completed/case_started ratio exceeds 1.0 whenever a
+      // learner restarts after a first completion.
+      if (session.firstAttempt !== null) {
+        track("case_started", { case_id: caseId });
+      }
     }
   }
 
@@ -609,10 +639,15 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
       //    deterministic, so re-running it from the same inputs yields `next`.
       if (next !== flushedSession) {
         if (flushedSession !== session) {
+          draftEditPendingRef.current = true;
+        }
+        reportPendingDraftEdit();
+        if (flushedSession !== session) {
           dispatch({ type: "edit-draft", patch: { customerExpectation: flushedText } });
         }
         dispatch({ type: "send-recommendation", outcome, submittedAt });
         persist(next);
+        track("case_action", { case_id: caseId, action: "send-recommendation" });
       }
     } finally {
       setIsSending(false);
@@ -650,6 +685,8 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (next !== session) {
       dispatch({ type: "complete-transfer", outcome });
       persist(next);
+      track("case_action", { case_id: caseId, action: "complete-transfer" });
+      track("case_completed", { case_id: caseId, outcome: outcome.quality });
     }
   }
 
@@ -676,6 +713,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     if (next !== session) {
       dispatch({ type: "request-facts", ids });
       persist(next);
+      track("case_action", { case_id: caseId, action: "request-facts" });
       // Invalidation contract (DESIGN spec §invalidation): during the
       // recommend phase, an evidence change clears the dependent working
       // draft. The reducer applies this conditionally on phase === "recommend"
@@ -731,6 +769,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
     const next = caseReducer(session, { type: "edit-draft", patch });
     if (next !== session) {
       dispatch({ type: "edit-draft", patch });
+      draftEditPendingRef.current = true;
       // Clear any pending validation error-summary (spec L213): the summary
       // is stale the moment the learner edits the draft. It re-surfaces only
       // if they re-send and the draft is still invalid.
@@ -840,6 +879,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
         dispatch({ type: "open-reference", referenceId: fact.id });
       }
       persist(next);
+      track("case_action", { case_id: caseId, action: "open-reference" });
     }
     setOpenAllReferences(true);
   }
@@ -913,7 +953,10 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
           onRequestedFactChange={handleRequestedFactChange}
           onRequestFacts={handleRequestFacts}
           onDraftPatch={handleDraftPatch}
-          onDraftFieldBlur={flushDraftPersist}
+          onDraftFieldBlur={() => {
+            flushDraftPersist();
+            reportPendingDraftEdit();
+          }}
           onOpenAllReferences={handleOpenAllReferences}
           onCloseReference={handleCloseReference}
           openAllReferences={openAllReferences}
@@ -930,6 +973,7 @@ export function CaseDesk({ caseId, enrichment }: CaseDeskProps) {
               explanationTimerRef.current = null;
             }
             flushExplanation(pendingExplanationRef.current);
+            reportPendingDraftEdit();
           }}
           onRestart={handleRestart}
           onSendRecommendation={handleSendRecommendation}

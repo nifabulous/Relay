@@ -1,18 +1,49 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { CURRICULUM, formatDuration, formatDurationAriaLabel, getModuleById, isModuleUnlocked } from "./curriculum";
 import { getLabDefinition } from "./labRegistry";
 import { useLabCompletion } from "./useLabCompletion";
 import { LabCompletionChecklist } from "./LabCompletionChecklist";
 import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
+import { track } from "../../lib/analytics/analytics";
 import "./LearnPage.css";
 
 export function LearnModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>();
   const [completed, setCompleted] = useState<string[]>(() => loadProgress().completedModuleIds);
+  const reportedCompletedIdsRef = useRef(new Set(completed));
+  const lastViewedModuleIdRef = useRef<string | undefined>(undefined);
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
+
+  useEffect(() => {
+    if (!mod) {
+      lastViewedModuleIdRef.current = undefined;
+      return;
+    }
+    if (lastViewedModuleIdRef.current === mod.id) return;
+    lastViewedModuleIdRef.current = mod.id;
+    track("module_viewed", { module_id: mod.id });
+    // A locked module (visited by URL before its prerequisites) is not
+    // "started": the learner is blocked from the content, so gating here
+    // keeps module_started out of the completion-rate denominator.
+    if (isModuleUnlocked(mod.id, completed) && !completed.includes(mod.id)) {
+      track("module_started", { module_id: mod.id });
+    }
+  }, [mod?.id, completed]);
+
+  useEffect(() => {
+    for (const id of completed) {
+      if (reportedCompletedIdsRef.current.has(id)) continue;
+      reportedCompletedIdsRef.current.add(id);
+      // Guard the same boundary the other events enforce: only authored
+      // curriculum ids reach telemetry. `completed` is a raw localStorage
+      // array, so a tampered or legacy entry must not flow into the payload.
+      if (!getModuleById(id)) continue;
+      track("module_completed", { module_id: id });
+    }
+  }, [completed]);
 
   const completeModule = useCallback((id: string) => {
     setCompleted((prev) => {
@@ -90,11 +121,18 @@ export function LearnModulePage() {
       {definition ? (
         <Suspense fallback={<div className="skeleton skeleton--line" style={{ width: "60%", height: "100px" }} />}>
           <LabContentRenderer
+            key={mod.id}
             moduleId={mod.id}
             isComplete={isComplete}
             requiredCheckpoints={definition.requiredCheckpoints}
             component={definition.component}
             onComplete={() => completeModule(mod.id)}
+            onCheckpointReached={(checkpointId) => {
+              track("checkpoint_reached", {
+                module_id: mod.id,
+                checkpoint_id: checkpointId,
+              });
+            }}
           />
         </Suspense>
       ) : (
@@ -144,14 +182,20 @@ function LabContentRenderer({
   requiredCheckpoints,
   component: LabComponent,
   onComplete,
+  onCheckpointReached,
 }: {
   moduleId: string;
   isComplete: boolean;
   requiredCheckpoints: readonly string[];
   component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
   onComplete: () => void;
+  onCheckpointReached: (id: string) => void;
 }) {
-  const { completed, markCheckpoint } = useLabCompletion(requiredCheckpoints, onComplete);
+  const { completed, markCheckpoint } = useLabCompletion(
+    requiredCheckpoints,
+    onComplete,
+    onCheckpointReached,
+  );
 
   return (
     <>

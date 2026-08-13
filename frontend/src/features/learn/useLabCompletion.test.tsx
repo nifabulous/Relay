@@ -20,11 +20,47 @@ describe("useLabCompletion", () => {
 
   it("ignores unknown checkpoint IDs", () => {
     const onComplete = vi.fn();
-    const { result } = renderHook(() => useLabCompletion(["a"], onComplete));
+    const onCheckpointReached = vi.fn();
+    const { result } = renderHook(() =>
+      useLabCompletion(["a"], onComplete, onCheckpointReached),
+    );
 
     act(() => result.current.markCheckpoint("unknown"));
     expect(onComplete).not.toHaveBeenCalled();
+    expect(onCheckpointReached).not.toHaveBeenCalled();
     expect(result.current.completed.has("unknown")).toBe(false);
+  });
+
+  it("reports an accepted checkpoint only once", () => {
+    const onComplete = vi.fn();
+    const onCheckpointReached = vi.fn();
+    const { result } = renderHook(() =>
+      useLabCompletion(["a", "b"], onComplete, onCheckpointReached),
+    );
+
+    act(() => result.current.markCheckpoint("a"));
+    act(() => result.current.markCheckpoint("a"));
+
+    expect(onCheckpointReached).toHaveBeenCalledTimes(1);
+    expect(onCheckpointReached).toHaveBeenCalledWith("a");
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("uses the latest checkpoint callback", () => {
+    const firstCallback = vi.fn();
+    const latestCallback = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ onCheckpointReached }) =>
+        useLabCompletion(["a"], vi.fn(), onCheckpointReached),
+      { initialProps: { onCheckpointReached: firstCallback } },
+    );
+
+    rerender({ onCheckpointReached: latestCallback });
+    act(() => result.current.markCheckpoint("a"));
+
+    expect(firstCallback).not.toHaveBeenCalled();
+    expect(latestCallback).toHaveBeenCalledOnce();
+    expect(latestCallback).toHaveBeenCalledWith("a");
   });
 
   it("never auto-completes with an empty requirement set", () => {

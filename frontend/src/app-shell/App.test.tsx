@@ -1,8 +1,14 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { StrictMode } from "react";
 import { AppShell } from "./AppShell";
+import {
+  createTestSink,
+  resetAnalyticsSink,
+  setAnalyticsSink,
+} from "../lib/analytics/analytics";
 
 // App.tsx uses BrowserRouter which needs a real URL matching basename="/app".
 // For the bootstrap test we verify the shell renders the Relay identity
@@ -25,6 +31,10 @@ function renderWithProviders() {
 }
 
 describe("App bootstrap", () => {
+  afterEach(() => {
+    resetAnalyticsSink();
+  });
+
   it("renders the Relay simulation identity", () => {
     const { container } = renderWithProviders();
     const brandName = container.querySelector(".app-shell__brand-name");
@@ -35,6 +45,26 @@ describe("App bootstrap", () => {
     renderWithProviders();
     const banner = screen.getByRole("alert");
     expect(banner).toHaveTextContent(/not a real payment/i);
+  });
+
+  it("tracks once through StrictMode effect replay and again after a real remount", async () => {
+    window.history.replaceState({}, "", "/app");
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    const { App } = await import("./App");
+
+    const first = render(<StrictMode><App /></StrictMode>);
+    await waitFor(() => {
+      expect(sink.events).toEqual([
+        { name: "app_viewed", properties: { surface: "relay" } },
+      ]);
+    });
+    first.unmount();
+    render(<StrictMode><App /></StrictMode>);
+
+    await waitFor(() => {
+      expect(sink.events).toHaveLength(2);
+    });
   });
 });
 

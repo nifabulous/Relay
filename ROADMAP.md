@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-12 · **Verified locally:** 657 backend + 922 frontend + 289 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-12 · **Verified locally:** 687 backend + 961 frontend + 289 chromium E2E passing (11 intentional skips; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -119,10 +119,10 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 
 The next contribution slice is content-led rather than a rebuild:
 
-1. Case Desk learner research: five scenarios are authored (CA→US, UK→DE, NG→UK, US→MX, US→NG); observe how learners use them before adding more.
+1. Run and synthesize the approved [five-case learner-research protocol](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md) across CA→US, UK→DE, NG→UK, US→MX, and US→NG before adding more cases. The provider-neutral instrumentation is shipped; provider integration remains deferred.
 2. ~~Add sanctions-screening content as the next technical track.~~ ✅ Done (module 13).
 3. ~~Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.~~ ✅ Done (modules 14 and 15).
-4. Extend practice questions (bank is at 52) and expose review outcomes through telemetry/assessment reporting.
+4. Extend practice questions (bank is at 52) after the learner research produces evidence.
 
 ### From the 20-expert review — prioritized
 
@@ -168,7 +168,7 @@ The next contribution slice is content-led rather than a rebuild:
 | Dimension | Phase 0 | Phase 1 | Phase 2 | Phase 3-4 | Current |
 |---|---|---|---|---|---|
 | Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ Maintained |
-| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 657 backend + 922 frontend + 289 chromium E2E (11 intentional skips) |
+| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 687 backend + 961 frontend + 289 chromium E2E (11 intentional skips) |
 | CI | ❌ | ✅ GitHub Actions | ✅ + Vitest | ✅ + Playwright | ✅ Full pipeline |
 | Auth | ❌ | ✅ admin_required | ✅ | ✅ | ✅ |
 | Security | ❌ Real accounts | ✅ ACCT- placeholders | ✅ | ✅ | ✅ |

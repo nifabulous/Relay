@@ -53,8 +53,13 @@ export function CaseDeskRoute() {
       {/* The Case Desk owns the brief → investigate → recommend → resolve →
           debrief flow, persistence, and focus management. The route just
           passes the matched caseId and keeps the breadcrumb + missing-case
-          handling intact. */}
-      <CaseDesk caseId={match.id} />
+          handling intact.
+
+          Keying by caseId forces a fresh mount per case: the reducer and its
+          session state are case-scoped, so navigating between two case URLs
+          without a remount would otherwise persist and attribute the prior
+          case's session to the new case. */}
+      <CaseDesk key={match.id} caseId={match.id} />
     </div>
   );
 }

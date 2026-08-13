@@ -7,10 +7,16 @@ import type { LabCheckpointId } from "./labTypes";
  * Calls `onComplete` exactly once when all required checkpoints have been
  * marked. Unknown checkpoint IDs are ignored. An empty requirement set
  * never auto-completes.
+ *
+ * `onCheckpointReached` fires once per distinct newly-accepted required
+ * checkpoint, in acceptance order. It always invokes the latest callback
+ * via a ref, so callers may pass an inline closure. Unknown checkpoint IDs
+ * are filtered out before the callback fires.
  */
 export function useLabCompletion(
   required: readonly LabCheckpointId[],
   onComplete: () => void,
+  onCheckpointReached?: (id: LabCheckpointId) => void,
 ): {
   completed: ReadonlySet<LabCheckpointId>;
   markCheckpoint: (id: LabCheckpointId) => void;
@@ -18,15 +24,29 @@ export function useLabCompletion(
   const [completed, setCompleted] = useState<Set<LabCheckpointId>>(new Set());
   const hasFired = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const onCheckpointReachedRef = useRef(onCheckpointReached);
+  const reportedCheckpointIdsRef = useRef<Set<LabCheckpointId>>(new Set());
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
+  useEffect(() => {
+    onCheckpointReachedRef.current = onCheckpointReached;
+  }, [onCheckpointReached]);
+
   // Memoize the required set so markCheckpoint is stable
   const requiredSet = useMemo(() => new Set(required), [required]);
 
   const isReady = required.length > 0 && required.every((id) => completed.has(id));
+
+  useEffect(() => {
+    for (const id of completed) {
+      if (reportedCheckpointIdsRef.current.has(id)) continue;
+      reportedCheckpointIdsRef.current.add(id);
+      onCheckpointReachedRef.current?.(id);
+    }
+  }, [completed]);
 
   useEffect(() => {
     if (isReady && !hasFired.current) {

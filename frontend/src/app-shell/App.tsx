@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
 import { OverviewPage } from "../features/overview/OverviewPage";
+import { track } from "../lib/analytics/analytics";
 
 // Route-level code splitting — Learn, Explore, and Operate are separate chunks
 const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.ExplorePage })));
@@ -34,6 +35,17 @@ const queryClient = new QueryClient({
 });
 
 export function App() {
+  const hasTrackedAppViewRef = useRef(false);
+
+  useEffect(() => {
+    // React StrictMode replays mount effects without replacing the component
+    // instance. Keep that development replay inside the same page-view
+    // boundary; a real unmount/remount creates a fresh ref and a fresh event.
+    if (hasTrackedAppViewRef.current) return;
+    hasTrackedAppViewRef.current = true;
+    track("app_viewed", { surface: "relay" });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename="/app">

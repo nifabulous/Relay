@@ -15,6 +15,7 @@ import {
 import { selectDailyQuestions, shuffled } from "./selectDaily";
 import type { PracticeQuestion } from "./questionBank";
 import { StatusChip } from "../../../design-system/StatusChip";
+import { track } from "../../../lib/analytics/analytics";
 import "../LearnPage.css";
 import "../components/LabComponents.css";
 import "./PracticePage.css";
@@ -53,6 +54,12 @@ export function PracticePage() {
     if (selectedId || !currentQuestion) return; // single attempt
     setSelectedId(optionId);
     const option = currentQuestion.options.find((o) => o.id === optionId);
+    track("question_answered", {
+      surface: "practice",
+      question_id: currentQuestion.id,
+      correct: option?.correct ?? false,
+      attempt_index: 1,
+    });
     setOutcomes((prev) => [
       ...prev,
       { questionId: currentQuestion.id, correct: option?.correct ?? false },
@@ -69,6 +76,10 @@ export function PracticePage() {
       savePracticeState(next);
       setState(next);
       const correct = outcomes.filter((o) => o.correct).length;
+      track("practice_completed", {
+        question_count: outcomes.length,
+        correct_count: correct,
+      });
       recordActivity({
         type: "tool",
         label: `Daily practice — ${correct}/${outcomes.length} correct`,
@@ -79,11 +90,12 @@ export function PracticePage() {
   }, [index, questions.length, outcomes, today]);
 
   const startDrill = useCallback(() => {
+    track("practice_started", { question_count: questions.length });
     setIndex(0);
     setOutcomes([]);
     setSelectedId(null);
     setPhase("drilling");
-  }, []);
+  }, [questions.length]);
 
   const correctCount = outcomes.filter((o) => o.correct).length;
 
