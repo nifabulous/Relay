@@ -299,7 +299,7 @@ _SCHEMES = {
              "features": ["Mobile-money ledger under CBK supervision (Safaricom is a CBK-licensed mobile money operator)", "Per-transaction cap KES 250,000; daily cap KES 500,000; wallet balance cap KES 500,000", "Tiered transaction tariffs published by Safaricom"],
              "limits": {"perTransaction": "KES 250,000", "perDay": "KES 500,000", "perMonth": "Bank-set", "receiving": "Wallet balance cap KES 500,000", "note": "Safaricom tariff sheet (updated August 2026): maximum amount per transaction KES 250,000; maximum daily transaction value KES 500,000; maximum account balance KES 500,000"},
              "settlement": "Instant wallet-ledger movement within the M-Pesa trust framework; bank legs settle through interbank clearing", "reversible": False,
-             "protections": ["CBK-regulated electronic money with reveral/claim processes via Safaricom channels", "Self-reversal within the transaction window (send confirmation to 456)"],
+             "protections": ["CBK-regulated electronic money with reversal/claim processes via Safaricom channels", "Self-reversal within the transaction window (send confirmation to 456)"],
              "roadmap": ["Limits raised to KES 500,000 (wallet and daily) in August 2023"],
              "sources": [{"name": "Safaricom", "label": "Safaricom — M-PESA charges and limits", "url": _SAFARICOM_MPESA}]},
             {"name": "EFT", "speed": "1-2 business days", "limit": "No limit", "cost": "Minimal", "useCase": "Payroll, bulk", "operator": "Kenya Bankers Assoc.",
