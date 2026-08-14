@@ -889,3 +889,76 @@ class TestScheduledTrackEndpoints:
         assert body["current_status"] == "CREDITED"
         assert body["is_terminal"] is True
         assert len(body["timeline"]) >= 6
+
+
+class TestScheduledTrackConcurrency:
+    """Concurrent learner controls must each consume a distinct event."""
+
+    def test_concurrent_advances_reveal_two_events(self, tmp_path, monkeypatch):
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+
+        from app.db import Base
+        from app.services import tracking as tracking_module
+
+        engine = create_engine(
+            f"sqlite:///{tmp_path / 'tracking-race.db'}",
+            connect_args={"check_same_thread": False},
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        SessionLocal = sessionmaker(
+            bind=engine, autoflush=False, autocommit=False, future=True
+        )
+        uetr = generate_uetr()
+        start = datetime(2026, 8, 13, 9, 0, 0, tzinfo=timezone.utc)
+
+        with SessionLocal() as session:
+            generate_timeline(
+                session=session,
+                uetr=uetr,
+                originator_bic="BOFAUS3NXXX",
+                originator_name="BofA",
+                beneficiary_bic="GTBINGLAXXX",
+                beneficiary_name="GTB",
+                intermediary_bics=["CITIUS33XXX"],
+                intermediary_names=["Citi"],
+                currency="USD",
+                amount=1000.00,
+                charge_code="OUR",
+                schedule="scheduled",
+                start_time=start,
+            )
+
+        original_hidden_events = tracking_module._hidden_events
+        first_read_barrier = threading.Barrier(2)
+        read_count = 0
+        read_count_lock = threading.Lock()
+
+        def synchronized_hidden_events(session, payment_uetr, now):
+            nonlocal read_count
+            hidden = original_hidden_events(session, payment_uetr, now)
+            with read_count_lock:
+                read_count += 1
+                should_wait = read_count <= 2
+            if should_wait:
+                first_read_barrier.wait(timeout=5)
+            return hidden
+
+        monkeypatch.setattr(
+            tracking_module, "_hidden_events", synchronized_hidden_events
+        )
+
+        def advance_once():
+            with SessionLocal() as session:
+                return tracking_module.advance_payment(session, uetr, now=start)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(lambda _: advance_once(), range(2)))
+
+        assert sorted(result["event_count"] for result in results) == [2, 3]
+        with SessionLocal() as session:
+            assert len(tracking_module.get_visible_timeline(session, uetr, now=start)) == 3

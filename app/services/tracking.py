@@ -28,7 +28,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from ..models import PaymentEvent
@@ -344,10 +344,27 @@ def advance_payment(
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
-    hidden = _hidden_events(session, uetr, now)
-    if hidden:
-        hidden[0].revealed_at = _iso(now)
-        session.commit()
+    while True:
+        hidden = _hidden_events(session, uetr, now)
+        if not hidden:
+            break
+
+        claimed = session.execute(
+            update(PaymentEvent)
+            .where(
+                PaymentEvent.id == hidden[0].id,
+                PaymentEvent.revealed_at.is_(None),
+            )
+            .values(revealed_at=_iso(now))
+        )
+        if claimed.rowcount:
+            session.commit()
+            break
+
+        # Another request claimed this row after our visibility read. Drop
+        # the stale transaction and retry so each successful skip consumes a
+        # distinct event.
+        session.rollback()
     return get_payment_status(session, uetr, now=now)
 
 

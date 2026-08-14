@@ -66,7 +66,7 @@ _AEP_AANI = "https://aep.ae/en/services/aani/"
 _SWIFT_GPI = "https://www.swift.com/products/swift-gpi"
 _SWIFT_CBPR = (
     "https://www.swift.com/standards/iso-20022/iso-20022-payments-financial-institutions/"
-    "iso-20022-cpbr-end-coexistence-support"
+    "iso-20022-cbpr-end-coexistence-support"
 )
 
 

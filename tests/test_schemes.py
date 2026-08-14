@@ -319,6 +319,12 @@ class TestInternationalSchemesEndpoint:
             "roadmap must note the MT103 retirement direction"
         )
 
+    def test_cbpr_source_url_uses_canonical_slug(self, client):
+        body = client.get("/api/schemes/international").json()
+        urls = [source["url"] for source in body["sources"]]
+        assert any("iso-20022-cbpr-end-coexistence-support" in url for url in urls)
+        assert all("cpbr" not in url for url in urls)
+
     def test_international_route_is_documented_in_openapi(self, client):
         """The new route must appear in the generated OpenAPI schema."""
         r = client.get("/openapi.json")
