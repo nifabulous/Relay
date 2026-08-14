@@ -43,6 +43,7 @@ from .routers import (
 from .routers import (
     vop as vop_router,
 )
+from .services.schema_compat import ensure_sqlite_schema
 from .services.seed import seed_if_empty
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -56,6 +57,9 @@ async def lifespan(app: FastAPI):
     is_dev = DATABASE_URL.startswith("sqlite")
     if is_dev:
         Base.metadata.create_all(bind=engine)
+        # Bring an existing dev SQLite file up to the current model without
+        # deleting it. New DBs are covered by create_all above.
+        ensure_sqlite_schema(engine)
     app.state.seed_failed = False
     try:
         with SessionLocal() as session:
@@ -164,7 +168,8 @@ def api_manifest():
             "/api/health", "/api/validate", "/api/lookup", "/api/route",
             "/api/us-bank", "/api/ssi", "/api/verify-payee",
             "/api/prepare-payment", "/api/track/create", "/api/track/{uetr}",
-            "/api/schemes", "/api/fees/simulate", "/api/screen",
+            "/api/track/{uetr}/skip", "/api/track/{uetr}/complete",
+            "/api/schemes", "/api/schemes/international", "/api/fees/simulate", "/api/screen",
             "/api/value-date", "/api/message/stp-check",
             "/api/import/fedwire", "/api/import/fedach",
             "/api/import/ssi", "/api/progress",

@@ -4,6 +4,15 @@ Tests for the combined prepare-payment endpoint + recommendation engine.
 Two layers:
   1. Recommendation engine (pure function — every matrix cell tested)
   2. HTTP endpoint (end-to-end with real seeded data)
+
+Acceptance matrix — scheduled pacing (plan: payment-pacing-schemes-redesign
+task 0.1, implementation in plan task 1.4; RED phase — these fail today):
+
+  Requirement                                             Test
+  ------------------------------------------------------  -------------------------------------------------
+  TRK-10 Prepare creates a SCHEDULED (not instant) track  TestPreparedPaymentScheduledPacing.test_prepared_payment_tracking_starts_initiated
+  TRK-8  Future banks/statuses/amounts stay hidden        test_prepared_payment_hides_future_banks_amounts_and_statuses
+  TRK-10 Track link from prepare still resolves           test_track_link_from_prepare_resolves
 """
 
 from app.services.recommendation import (
@@ -486,8 +495,12 @@ class TestPreparePersistenceToTracking:
             f"{track.status_code}: {track.text[:200]}"
         )
         body = track.json()
-        assert body["current_status"] in ("ACCEPTED", "IN_PROGRESS", "FORWARDED", "CREDITED")
-        assert body["event_count"] > 0
+        # Prepared payments are the scheduled flow: the track link resolves
+        # to the initial event; the rest of the plan is gated by time or by
+        # the explicit skip/complete learner controls.
+        assert body["current_status"] == "INITIATED"
+        assert body["is_terminal"] is False
+        assert body["event_count"] == 1
 
     def test_blocked_payment_is_not_trackable(self, client):
         """A blocked recommendation must not create a credited timeline."""
@@ -532,3 +545,70 @@ class TestPreparePersistenceToTracking:
 
         track = client.get(f"/api/track/{body['uetr']}")
         assert track.status_code == 404
+
+
+class TestPreparedPaymentScheduledPacing:
+    """TRK-10: a prepared payment must be a *scheduled* journey, not an
+    instant one. The track link from prepare still resolves, but it reveals
+    only the initial event — the future banks, statuses and amounts of the
+    plan are hidden until their timestamps arrive or the learner advances
+    them.
+
+    RED phase: today prepare creates an instant timeline, so the tracking
+    response is terminal and full. These tests fail against that behavior
+    by design; plan task 1.4 flips them green.
+    """
+
+    def test_prepared_payment_tracking_starts_initiated(self, client):
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        uetr = r.json()["uetr"]
+
+        track = client.get(f"/api/track/{uetr}")
+        assert track.status_code == 200
+        body = track.json()
+        assert body["uetr"] == uetr
+        assert body["current_status"] == "INITIATED"
+        assert body["is_terminal"] is False
+        assert body["event_count"] == 1
+
+    def test_prepared_payment_hides_future_banks_amounts_and_statuses(self, client):
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        uetr = r.json()["uetr"]
+
+        body = client.get(f"/api/track/{uetr}").json()
+        statuses = [e["status"] for e in body["timeline"]]
+        assert statuses == ["INITIATED"]
+        assert "CREDITED" not in statuses
+        assert "REJECTED" not in statuses
+        # The originator is the payer's own institution — the only visible hop.
+        assert body["timeline"][0]["bank_bic"] == "YOURBANKXX"
+        # No future amounts may leak: final amount/fees exist only at the end.
+        assert body["final_amount"] is None
+        assert body["total_fees"] is None
+
+    def test_track_link_from_prepare_resolves(self, client):
+        """TRK-10: the existing prepare→track handoff keeps working — the
+        UETR returned by prepare must always be fetchable."""
+        r = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "GB29NWBK60161331926819",
+            "beneficiary_name": "John Smith",
+            "currency": "USD",
+            "amount": 5000,
+        })
+        assert r.status_code == 200
+        uetr = r.json()["uetr"]
+
+        track = client.get(f"/api/track/{uetr}")
+        assert track.status_code == 200

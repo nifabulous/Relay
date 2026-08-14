@@ -88,8 +88,8 @@ app/
 │   ├── imports.py       # /import/fedwire, /fedach, /ssi (auth-gated)
 │   ├── ssi.py           # /ssi
 │   ├── vop.py           # /verify-payee
-│   ├── tracking.py      # /track/create, /track/{uetr}
-│   ├── schemes.py       # /schemes
+│   ├── tracking.py      # /track/create, /track/{uetr}, /track/{uetr}/skip|complete
+│   ├── schemes.py       # /schemes, /schemes/international
 │   ├── prepare.py       # /prepare-payment
 │   ├── analytics.py     # /fees/simulate, /screen, /value-date, /message/stp-check
 │   └── progress.py      # /progress

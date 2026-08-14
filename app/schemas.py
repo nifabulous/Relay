@@ -514,3 +514,64 @@ class ProgressResponse(BaseModel):
     earned_badges: List[BadgeInfo]
     next_recommended: Optional[str]
     all_badges: List[BadgeInfo]
+
+
+# ---------------------------------------------------------------------------
+# Payment Schemes catalogue
+# ---------------------------------------------------------------------------
+
+
+class SchemeSource(BaseModel):
+    """A citable primary source for a scheme fact — the official operator or
+    regulator page recorded when the catalogue entry was built."""
+    name: str
+    label: str
+    url: str
+
+
+class SchemeVariant(BaseModel):
+    """A named product option under a scheme family (e.g. Interac e-Transfer's
+    Auto-Deposit / Request Money / security-question claim). Variants are
+    product options, not settlement rails."""
+    name: str
+    description: str
+
+
+class InternationalSchemesResponse(BaseModel):
+    """Typed validation boundary for the /api/schemes/international catalogue
+    entry (SWIFT gpi). `response_model=` on the route means malformed
+    international data fails at the boundary instead of silently reaching the
+    UI.
+
+    Uses the same fact vocabulary as the domestic rails so the frontend renders
+    the international entry through the same detail component. Task 2.2 wires
+    the route to this model.
+
+    Intentional divergence from the frontend Zod shape
+    (InternationalSchemesResponseSchema): the Zod shape extends SchemeInfoSchema,
+    which also carries `processingWindows`, `family` and `variants`. SWIFT gpi
+    has no product family/variant structure and no processing-window list, so
+    this model deliberately omits them — Pydantic drops unknown response fields,
+    and the UI parses their absence as null via .nullish().catch(null). Keep
+    this model to the fields the UI actually renders.
+    """
+    scope: str = "International / SWIFT"
+    name: str
+    speed: str
+    limit: str
+    cost: str
+    useCase: str
+    operator: str
+    howItWorks: List[str] = Field(default_factory=list)
+    features: List[str] = Field(default_factory=list)
+    limits: Optional[dict] = None
+    settlement: Optional[str] = None
+    reversible: Optional[bool] = None
+    protections: List[str] = Field(default_factory=list)
+    roadmap: List[str] = Field(default_factory=list)
+    sources: List[SchemeSource] = Field(default_factory=list)
+    verifiedAsof: Optional[str] = None
+    disclaimer: str = (
+        "SIMULATION — educational data. Always check the operator's current "
+        "rules for production routing."
+    )

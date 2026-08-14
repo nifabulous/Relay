@@ -277,6 +277,7 @@ def prepare_payment(
                 currency=currency,
                 amount=amount,
                 charge_code=ssi_instructions[0].charge_code if ssi_instructions else "SHA",
+                schedule="scheduled",
             )
 
     return PrepareResult(

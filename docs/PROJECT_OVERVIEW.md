@@ -5,7 +5,7 @@ actually work — identifiers, validation, correspondent routing, settlement, tr
 compliance, and message standards. **It is not a production payment system. No real money
 moves.** Every payment is simulated and all account numbers are `ACCT-` placeholders.
 
-_Last updated: 2026-08-10._
+_Last updated: 2026-08-13._
 
 ---
 
@@ -13,7 +13,7 @@ _Last updated: 2026-08-10._
 
 ### Backend
 - **Python 3.9+** (syntax constrained to 3.9 — `Optional[...]`, `List[...]`, not `X | None`).
-- **FastAPI** — ~22 endpoints under `/api/*`; OpenAPI docs at `/docs`.
+- **FastAPI** — ~25 endpoints under `/api/*`; OpenAPI docs at `/docs`.
 - **Pydantic v2** — request/response schemas (`app/schemas.py`).
 - **SQLAlchemy 2.0** — ORM models (`app/models.py`); **SQLite** in dev (`create_all` on startup),
   **Postgres + Alembic** in prod.
@@ -35,8 +35,8 @@ _Last updated: 2026-08-10._
   route signature). Contract in **`DESIGN.md`**; WCAG 2.2 AA, reduced-motion, mobile-first.
 
 ### Testing & tooling
-- **Backend:** pytest (612 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
-- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (836 unit/integration tests),
+- **Backend:** pytest (732 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
+- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (1,007 unit/integration tests),
   Playwright + `@axe-core/playwright` (e2e + accessibility), bundle-size gate
   (`npm run check:bundle`), `tsc --noEmit`.
 - **CI:** pytest + ruff across Python 3.9–3.12, plus a frontend job (typecheck, build, vitest, bundle budget) (`.github/workflows/ci.yml`).
@@ -49,7 +49,7 @@ _Last updated: 2026-08-10._
 
 ## 2. Features
 
-### 2.1 Backend API (22 endpoints)
+### 2.1 Backend API (25 endpoints)
 
 **Directory & validation**
 - `GET /api/health` — bank/corridor/SSI counts + status.
@@ -61,6 +61,9 @@ _Last updated: 2026-08-10._
 - `GET /api/route` — correspondent routing suggestions (curated corridor table).
 - `GET /api/ssi` — Standard Settlement Instructions (Nostro/Vostro) by BIC + currency.
 - `GET /api/schemes` — domestic payment rails per currency (now carries a `verifiedAsof` date-stamp).
+  Ten currencies are catalogued (USD, GBP, EUR, CAD, NGN, KES, INR, AUD, JPY, AED) with official
+  source references; `GET /api/schemes/international` adds the International / SWIFT (SWIFT gpi)
+  catalogue entry. Educational data — always check the operator's current rules.
 
 **Verification & compliance**
 - `POST /api/verify-payee` — Verification of Payee (name matching: MATCH / CLOSE_MATCH /
@@ -79,8 +82,13 @@ _Last updated: 2026-08-10._
 **Orchestration, tracking, progress, ops**
 - `POST /api/prepare-payment` — end-to-end orchestration: validate → VoP → route → SSI →
   recommendation (PROCEED / REVIEW / STOP), with a partial-results pattern.
-- `POST /api/track/create` (admin) / `GET /api/track/{uetr}` — UETR creation + simulated SWIFT
-  gpi tracking timeline.
+- `POST /api/track/create` (admin) — **instant** admin/demo path: creates a simulated SWIFT
+  gpi timeline with the full chain visible immediately (idempotency-key replay preserved).
+- `GET /api/track/{uetr}` — UETR tracking. Prepared payments (created through
+  `/api/prepare-payment`) are *scheduled*: only INITIATED is visible at first, further events
+  surface as their planned timestamps arrive (first hop ~50s, then ~45–90s per hop), and
+  `POST /api/track/{uetr}/skip|complete` reveals one event or the entire remaining chain.
+  All four endpoints return the same `TrackPaymentResponse` shape.
 - `GET /api/progress` — stateless learning-progress + badge calculator (client is the source of truth).
 - `POST /api/telemetry` — lightweight learning/assessment telemetry sink.
 - `POST /api/import/fedwire` · `POST /api/import/fedach` · `POST /api/import/ssi` (admin) — reference
@@ -214,10 +222,10 @@ SWIFT gpi / UETR tracking · MT103 fields & straight-through processing · the M
 # Backend
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 uvicorn app.main:app --reload            # http://127.0.0.1:8000 (docs at /docs)
-python -m pytest tests/ -q               # 612 tests
+python -m pytest tests/ -q               # 732 tests
 
 # Frontend
 cd frontend && npm install && npm run dev # http://127.0.0.1:5173/app/
-npm test -- --no-file-parallelism        # 836 tests
+npm test -- --no-file-parallelism        # 1,007 tests
 ```
 Relay app: `http://127.0.0.1:8000/app` · Legacy: `/learn`, `/ui`.

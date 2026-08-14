@@ -197,4 +197,24 @@ describe("CapstoneContent", () => {
     expect(screen.getByText(/candidates, not a confirmed chain/i)).toBeVisible();
     expect(screen.queryByRole("img", { name: /Payment from Your bank/i })).toBeNull();
   });
+
+  it("renders the shared timeline without pacing controls of its own", async () => {
+    mockAllSteps();
+    const { user } = renderCapstone();
+    await user.click(screen.getByRole("button", { name: /start.*simulation/i }));
+
+    // The UETR first appears at Step 5 (Decide) a render cycle before Step
+    // 6's /api/track/create response renders the timeline list, so awaiting
+    // the UETR text races the list under load. Await the list itself.
+    const timeline = await screen.findByRole(
+      "list",
+      { name: /payment timeline/i },
+      { timeout: 10000 },
+    );
+
+    // "Advance one event" / "Complete simulation" live on TrackingPage (task
+    // 4.1); the shared timeline embedded here renders no buttons of its own,
+    // so a lab that supplies no handlers never inherits unusable controls.
+    expect(timeline.querySelectorAll("button").length).toBe(0);
+  });
 });

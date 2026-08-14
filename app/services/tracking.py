@@ -28,7 +28,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from ..models import PaymentEvent
@@ -55,6 +55,30 @@ def _iso(dt: datetime) -> str:
     return dt.isoformat().replace("+00:00", "Z")
 
 
+def _parse_iso(value: str) -> datetime:
+    """Parse a stored ISO timestamp into an aware UTC datetime.
+
+    Stored timestamps are produced by `_iso` (which emits a trailing "Z"),
+    but legacy/naive strings may also be present, so both aware and naive
+    inputs are normalized to aware UTC before comparison.
+    """
+    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _event_is_visible(event: PaymentEvent, now: datetime) -> bool:
+    """Visibility predicate: an event is visible when it is instant, its
+    planned timestamp has arrived (at or before `now`), or it has been
+    manually revealed (revealed_at set). Scheduled future rows stay hidden."""
+    if event.schedule != "scheduled":
+        return True
+    if event.revealed_at is not None:
+        return True
+    return _parse_iso(event.timestamp) <= now
+
+
 def generate_timeline(
     session: Session,
     uetr: str,
@@ -69,6 +93,7 @@ def generate_timeline(
     charge_code: str = "SHA",
     outcome: str = "credited",
     start_time: Optional[datetime] = None,
+    schedule: str = "instant",
 ) -> List[PaymentEvent]:
     """
     Generate a simulated gpi status timeline for a payment.
@@ -81,6 +106,12 @@ def generate_timeline(
             first intermediary when there is one; with no intermediaries the
             beneficiary's own bank refuses it, since that is the only bank in
             the chain that can.
+        schedule: "instant" (default, today's behavior) or "scheduled". A
+            scheduled timeline persists the full planned chain but only
+            exposes events whose planned timestamp has arrived (or that have
+            been manually revealed via revealed_at). No reveal state is set
+            here: the INITIATED event's planned timestamp equals `start`, so
+            the visibility predicate exposes it at read time.
     """
     start = start_time or datetime.now(timezone.utc)
     events: List[PaymentEvent] = []
@@ -99,7 +130,7 @@ def generate_timeline(
         uetr=uetr, status=STATUS_INITIATED, bank_bic=originator_bic,
         bank_name=originator_name, hop=hop, timestamp=_iso(t),
         amount=f"{current_amount:.2f}", currency=currency,
-        charge_code=charge_code,
+        charge_code=charge_code, schedule=schedule,
         message=f"Payment initiated by {originator_name}",
         instructing_bic=None, instructed_bic=chain[1][0] if len(chain) > 1 else None,
     ))
@@ -113,6 +144,7 @@ def generate_timeline(
             uetr=uetr, status=STATUS_ACCEPTED, bank_bic=bic, bank_name=name,
             hop=hop, timestamp=_iso(t),
             amount=f"{current_amount:.2f}", currency=currency,
+            charge_code=charge_code, schedule=schedule,
             message=f"Accepted by {name} for processing",
             instructing_bic=chain[i - 1][0], instructed_bic=bic,
         ))
@@ -125,6 +157,7 @@ def generate_timeline(
                 uetr=uetr, status=STATUS_REJECTED, bank_bic=bic, bank_name=name,
                 hop=hop, timestamp=_iso(t),
                 amount=f"{current_amount:.2f}", currency=currency,
+                charge_code=charge_code, schedule=schedule,
                 message=f"Rejected by {name}: compliance screening failed",
                 instructing_bic=chain[i - 1][0], instructed_bic=None,
             ))
@@ -138,6 +171,7 @@ def generate_timeline(
             uetr=uetr, status=STATUS_IN_PROGRESS, bank_bic=bic, bank_name=name,
             hop=hop, timestamp=_iso(t),
             amount=f"{current_amount:.2f}", currency=currency,
+            charge_code=charge_code, schedule=schedule,
             message=f"Processing at {name}",
             instructing_bic=chain[i - 1][0], instructed_bic=bic,
         ))
@@ -153,6 +187,7 @@ def generate_timeline(
             uetr=uetr, status=STATUS_FORWARDED, bank_bic=bic, bank_name=name,
             hop=hop, timestamp=_iso(t),
             amount=f"{current_amount:.2f}", currency=currency,
+            charge_code=charge_code, schedule=schedule,
             message=f"Forwarded by {name} to next bank in chain",
             instructing_bic=bic, instructed_bic=chain[i + 1][0],
         ))
@@ -165,6 +200,7 @@ def generate_timeline(
         uetr=uetr, status=STATUS_ACCEPTED, bank_bic=ben_bic, bank_name=ben_name,
         hop=hop, timestamp=_iso(t),
         amount=f"{current_amount:.2f}", currency=currency,
+        charge_code=charge_code, schedule=schedule,
         message=f"Received by {ben_name}",
         instructing_bic=chain[-2][0], instructed_bic=ben_bic,
     ))
@@ -181,6 +217,7 @@ def generate_timeline(
             uetr=uetr, status=STATUS_REJECTED, bank_bic=ben_bic, bank_name=ben_name,
             hop=hop, timestamp=_iso(t),
             amount=f"{current_amount:.2f}", currency=currency,
+            charge_code=charge_code, schedule=schedule,
             message=f"Rejected by {ben_name}: compliance screening failed",
             instructing_bic=chain[-2][0], instructed_bic=None,
         ))
@@ -189,6 +226,7 @@ def generate_timeline(
             uetr=uetr, status=STATUS_CREDITED, bank_bic=ben_bic, bank_name=ben_name,
             hop=hop, timestamp=_iso(t),
             amount=f"{current_amount:.2f}", currency=currency,
+            charge_code=charge_code, schedule=schedule,
             message=f"Credited to beneficiary account by {ben_name}",
             instructing_bic=chain[-2][0], instructed_bic=ben_bic,
         ))
@@ -209,14 +247,57 @@ def get_timeline(session: Session, uetr: str) -> List[PaymentEvent]:
     )
 
 
-def get_payment_status(session: Session, uetr: str) -> Optional[dict]:
+def get_visible_timeline(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> List[PaymentEvent]:
+    """Retrieve the events visible at `now` (UTC), ordered by hop.
+
+    Instant events are always visible; scheduled events are visible once
+    their planned timestamp is at or before `now`, or once they have been
+    manually revealed (revealed_at set). Hidden plan rows are persisted and
+    untouched — visibility is computed at read time only. `now` defaults to
+    the current UTC time.
     """
-    Get the current status of a payment: its timeline + terminal status (if any).
-    Returns None if the UETR has no events.
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return [e for e in get_timeline(session, uetr) if _event_is_visible(e, now)]
+
+
+def get_payment_status(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> Optional[dict]:
     """
-    events = get_timeline(session, uetr)
-    if not events:
+    Get the current status of a payment: its visible timeline + terminal
+    status (if any). Only visible events contribute: a scheduled payment
+    with a single visible INITIATED event is non-terminal and exposes no
+    final amount or fees (no future status leakage). Returns None if the
+    UETR has no events.
+    """
+    all_events = get_timeline(session, uetr)
+    if not all_events:
         return None
+
+    events = get_visible_timeline(session, uetr, now=now)
+    if not events:
+        # The plan exists but no event is due yet (e.g. a clock read before
+        # the initiation timestamp). Report a non-terminal, cash-less state
+        # rather than leaking the first planned status.
+        return {
+            "uetr": uetr,
+            "current_status": STATUS_INITIATED,
+            "is_terminal": False,
+            "event_count": 0,
+            "sent_amount": None,
+            "final_amount": None,
+            "total_fees": None,
+            "last_updated": all_events[0].timestamp,
+            "timeline": [],
+        }
 
     latest = events[-1]
     sent_amount = events[0].amount
@@ -237,3 +318,76 @@ def get_payment_status(session: Session, uetr: str) -> Optional[dict]:
         "last_updated": latest.timestamp,
         "timeline": events,
     }
+
+
+def _hidden_events(
+    session: Session, uetr: str, now: datetime
+) -> List[PaymentEvent]:
+    """The plan rows not yet visible at `now`, in planned (hop) order."""
+    return [e for e in get_timeline(session, uetr) if not _event_is_visible(e, now)]
+
+
+def advance_payment(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> Optional[dict]:
+    """Reveal exactly one hidden scheduled event, in planned order.
+
+    The first event that is not yet visible at `now` (hop order) gets its
+    `revealed_at` set to `now` and the change is committed. Returns the
+    visible status summary (same shape as `get_payment_status`). If no
+    hidden event remains — the plan is fully revealed, instant, or already
+    terminal — no rows are changed and the current status is returned.
+    Returns None for an unknown UETR (no events on disk).
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    while True:
+        hidden = _hidden_events(session, uetr, now)
+        if not hidden:
+            break
+
+        claimed = session.execute(
+            update(PaymentEvent)
+            .where(
+                PaymentEvent.id == hidden[0].id,
+                PaymentEvent.revealed_at.is_(None),
+            )
+            .values(revealed_at=_iso(now))
+        )
+        if claimed.rowcount:
+            session.commit()
+            break
+
+        # Another request claimed this row after our visibility read. Drop
+        # the stale transaction and retry so each successful skip consumes a
+        # distinct event.
+        session.rollback()
+    return get_payment_status(session, uetr, now=now)
+
+
+def complete_payment(
+    session: Session,
+    uetr: str,
+    now: Optional[datetime] = None,
+) -> Optional[dict]:
+    """Reveal every remaining hidden scheduled event and commit once.
+
+    All events not yet visible at `now` get `revealed_at` set to `now`; the
+    single commit persists the whole reveal. Returns the visible status
+    summary (same shape as `get_payment_status`), which is terminal for a
+    fully revealed plan. If no hidden event remains, no rows are changed.
+    Returns None for an unknown UETR (no events on disk).
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    hidden = _hidden_events(session, uetr, now)
+    if hidden:
+        revealed = _iso(now)
+        for event in hidden:
+            event.revealed_at = revealed
+        session.commit()
+    return get_payment_status(session, uetr, now=now)

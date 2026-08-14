@@ -548,6 +548,25 @@ const SchemeLimitsSchema = z
   .partial()
   .passthrough();
 
+export const SchemeSourceSchema = z
+  .object({
+    name: z.string().catch(""),
+    label: z.string().catch(""),
+    url: z.string().catch(""),
+  })
+  .passthrough();
+
+export type SchemeSource = z.infer<typeof SchemeSourceSchema>;
+
+export const SchemeVariantSchema = z
+  .object({
+    name: z.string().catch(""),
+    description: z.string().catch(""),
+  })
+  .passthrough();
+
+export type SchemeVariant = z.infer<typeof SchemeVariantSchema>;
+
 export const SchemeInfoSchema = z
   .object({
     name: z.string().catch(""),
@@ -564,6 +583,9 @@ export const SchemeInfoSchema = z
     reversible: z.boolean().nullish().catch(null),
     protections: z.array(z.string()).nullish().catch(null),
     roadmap: z.array(z.string()).nullish().catch(null),
+    family: z.string().nullish().catch(null),
+    variants: z.array(SchemeVariantSchema).nullish().catch(null),
+    sources: z.array(SchemeSourceSchema).nullish().catch(null),
   })
   .passthrough();
 
@@ -582,3 +604,23 @@ export const SchemesResponseSchema = z
   .passthrough();
 
 export type SchemesResponse = z.infer<typeof SchemesResponseSchema>;
+
+/* ------------------------------------------------------------------ *
+ * Payment Schemes — international catalogue entry
+ * ------------------------------------------------------------------ */
+
+/**
+ * The /api/schemes/international entry (SWIFT gpi). Extends the enriched
+ * domestic rail shape so the same detail component renders it, adding the
+ * explicit "International / SWIFT" scope label, a verification date, and the
+ * SIMULATION disclaimer.
+ */
+export const InternationalSchemesResponseSchema = SchemeInfoSchema.extend({
+  scope: z.string().catch(""),
+  verifiedAsof: z.string().nullish().catch(null),
+  disclaimer: z.string().catch(""),
+});
+
+export type InternationalSchemesResponse = z.infer<
+  typeof InternationalSchemesResponseSchema
+>;

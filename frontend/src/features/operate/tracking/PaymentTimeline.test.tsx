@@ -154,3 +154,101 @@ describe("PaymentTimeline IN_PROGRESS hops", () => {
     );
   });
 });
+
+// ─── Scheduled payments (plan task 4.2) ─────────────────────────────────────
+//
+// Task 1.x made prepared payments reveal progressively: a freshly prepared
+// payment responds with a single INITIATED event, `is_terminal: false`, and no
+// final amounts — the rest of the chain is hidden until due timestamps arrive
+// or TrackingPage's skip/complete controls ask the backend to reveal events.
+// Before 4.1 the backend returned a complete terminal chain in one call, so a
+// non-terminal current status never reached this component; scheduled reveal
+// makes it the common case for prepared payments.
+//
+// These tests pin the shared component's language for that state (AC 4.2.1,
+// 4.2.2): the partial chain keeps the current visual language — every revealed
+// hop is "Passed", the overall verdict is the warning "Needs attention" (a
+// payment still moving, not an error), and nothing is labelled failed or
+// unavailable until a terminal rejection/return actually appears. The
+// component itself renders no pacing controls: those belong to TrackingPage
+// (task 4.1), so a learner lab that embeds the timeline never inherits buttons
+// whose parents supply no handlers.
+const INITIATED_EVENT = {
+  status: "INITIATED",
+  bank_bic: "BOFAUS3N",
+  bank_name: "Bank of America",
+  hop: 0,
+  timestamp: "2026-08-13T09:00:00",
+  message: "Payment initiated",
+  amount: undefined,
+  currency: undefined,
+  instructing_bic: undefined,
+  instructed_bic: undefined,
+};
+
+const scheduledPayment: TrackPaymentResponse = {
+  uetr: "scheduled-uetr-789",
+  current_status: "INITIATED",
+  is_terminal: false,
+  event_count: 1,
+  sent_amount: "5000.00",
+  final_amount: undefined,
+  total_fees: undefined,
+  last_updated: "2026-08-13T09:00:00",
+  timeline: [INITIATED_EVENT],
+  disclaimer: "SIMULATION",
+};
+
+// Every status a scheduled payment can currently wear without being finished.
+// REJECTED / RETURNED / CREDITED are terminal and covered above. Each of these
+// must keep mapping to the current visual language (AC 4.2.1): revealed hops
+// are Passed and the overall verdict stays a non-terminal warning, never a
+// failure label.
+const SCHEDULED_STATUSES = ["INITIATED", "ACCEPTED", "IN_PROGRESS", "FORWARDED"] as const;
+
+describe("PaymentTimeline scheduled payments", () => {
+  it("renders a partial timeline without a terminal label", () => {
+    render(<PaymentTimeline payment={scheduledPayment} />);
+    expect(screen.getByText("Bank of America")).toBeVisible();
+    expect(screen.queryByText(/Terminal/i)).toBeNull();
+  });
+
+  it("does not label a still-scheduled payment failed or unavailable", () => {
+    const { container } = render(<PaymentTimeline payment={scheduledPayment} />);
+    const header = container.querySelector(".tracking-result__header")!;
+    // Distinguish "still scheduled" from "failed": nothing is a failure until
+    // a terminal rejection/return is actually revealed (AC 4.2.2).
+    expect(header.querySelector('[aria-label="Failed"]')).toBeNull();
+    expect(header.querySelector('[aria-label="Unavailable"]')).toBeNull();
+    expect(header.querySelector('[aria-label="Passed"]')).toBeNull();
+    // The current visual language for a non-terminal payment is kept (AC 4.2.1).
+    expect(header.querySelector('[aria-label="Needs attention"]')).not.toBeNull();
+  });
+
+  it("maps every still-scheduled status to the current visual language", () => {
+    for (const status of SCHEDULED_STATUSES) {
+      const payment: TrackPaymentResponse = {
+        ...scheduledPayment,
+        current_status: status,
+        timeline: [{ ...INITIATED_EVENT, status }],
+      };
+      const { container, unmount } = render(<PaymentTimeline payment={payment} />);
+      const timeline = container.querySelector(".tracking-timeline")!;
+      expect(timeline.querySelectorAll('[aria-label="Passed"]').length).toBe(1);
+      expect(timeline.querySelectorAll('[aria-label="Failed"]').length).toBe(0);
+      expect(timeline.querySelectorAll('[aria-label="Unavailable"]').length).toBe(0);
+      const header = container.querySelector(".tracking-result__header")!;
+      expect(header.querySelector('[aria-label="Needs attention"]')).not.toBeNull();
+      unmount();
+    }
+  });
+
+  it("renders no pacing controls of its own", () => {
+    const { container } = render(<PaymentTimeline payment={scheduledPayment} />);
+    // "Advance one event" / "Complete simulation" live on TrackingPage (4.1);
+    // the shared timeline never renders buttons a learner embedding it has not
+    // supplied handlers for (AC 4.2.3).
+    expect(container.querySelectorAll("button").length).toBe(0);
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+});

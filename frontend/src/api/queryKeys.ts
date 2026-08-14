@@ -56,6 +56,12 @@ export const apiKeys = {
     },
   ),
 
+  // Whole-catalogue entry for the international / SWIFT rail. Scoped under
+  // ["schemes"] so apiKeys.schemes.all invalidates it alongside the domestic
+  // catalogue; "international" is not a currency code, so it can never collide
+  // with a parameterized currency key.
+  internationalSchemes: ["schemes", "international"] as const,
+
   vop: Object.assign(
     (iban: string) => ["vop", iban] as const,
     {

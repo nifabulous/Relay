@@ -108,3 +108,12 @@ class TestRelayManifest:
         assert "relay" in service.lower() or "educational" in service.lower(), (
             f"Manifest service should identify Relay, got: {service!r}"
         )
+
+    def test_manifest_lists_new_payment_routes(self, client):
+        body = client.get("/api/manifest").json()
+        endpoints = set(body["endpoints"])
+        assert {
+            "/api/track/{uetr}/skip",
+            "/api/track/{uetr}/complete",
+            "/api/schemes/international",
+        } <= endpoints
