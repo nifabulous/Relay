@@ -110,9 +110,20 @@ _BIC_RE = re.compile(
     r"\b[A-Za-z]{4}[A-Za-z]{2}[A-Za-z0-9]{2}(?:[A-Za-z0-9]{3})?\b"
 )
 
+# "BIC x" and "SWIFT code x" introduce an identifier. Bare "SWIFT" does not —
+# it is the organisation's name and appears constantly in ordinary prose, so
+# accepting it as a cue turned "Explain SWIFT messages" into "Explain SWIFT
+# [BIC]" (`messages` is 8 letters whose 5th and 6th are `AG`, a real country
+# code). That mangles the learner's own question before the model sees it.
 _BIC_CUE_RE = re.compile(
-    r"(?:\bbic|\bswift)(?:\s+(?:code|codes|address))?\s*$", re.IGNORECASE
+    r"(?:\bbic|\bswift\s+(?:code|codes|address|bic))\s*$", re.IGNORECASE
 )
+
+# English inflections. A cued token ending in one of these is prose, not a BIC:
+# no BIC in Relay's directory ends this way, and the cue is the weakest of the
+# three signals — a digit-bearing or XXX-terminated BIC is redacted with no cue
+# at all — so declining here costs no real coverage.
+_ENGLISH_INFLECTION_SUFFIXES = ("ES", "ED", "ING", "LY", "ION", "MENT", "NESS")
 
 
 def _looks_like_bic(token: str, prefix: str) -> bool:
@@ -157,6 +168,8 @@ def _looks_like_bic(token: str, prefix: str) -> bool:
         return True
     if len(token) == 11 and token.endswith("XXX"):
         return True
+    if token.endswith(_ENGLISH_INFLECTION_SUFFIXES):
+        return False
     return _BIC_CUE_RE.search(prefix) is not None
 
 

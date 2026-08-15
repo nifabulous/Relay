@@ -34,6 +34,10 @@ Thumbs.db
 # Secrets / local env
 .env
 .env.*
+# ...except the committed template, which holds only names and comments. The
+# broad `.env.*` above swallows it otherwise, and a variable list nobody can
+# see is the reason environment variables get discovered by grepping source.
+!.env.example
 
 # Frontend (Relay)
 node_modules/

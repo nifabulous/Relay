@@ -36,13 +36,13 @@ These numbers were run against the current checkout on 2026-08-15:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **871 passed** (`.venv/bin/pytest -q`) |
+| Backend tests | **1,302 passed** (`.venv/bin/pytest -q`) |
 | Frontend unit/integration tests | **1,091 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
 | Playwright E2E | **289 passed, 10 intentional skips, 1 pre-existing axe failure** — six-project Chromium matrix; the generic WebKit `mobile` project was not run because its browser binary is not installed. The axe failure is `scrollable-region-focusable` on the bank-detail SSI table scroll. |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **133,366 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
-| Backend API endpoints | **25** |
+| Backend API endpoints | **27** |
 
 The frontend suite is currently verified with the standard Vitest command above.
 
@@ -68,13 +68,13 @@ bare total. See [Testing](#testing) for the recommended commands.
 
 | Metric | Value |
 |---|---|
-| Backend tests | 871 passing |
+| Backend tests | 1,302 passing |
 | Frontend tests | 1,091 passing (serial-file mode) |
 | E2E tests (Playwright) | 289 passing on the six-project Chromium matrix (10 intentional skips; 1 pre-existing SSI-table axe failure) |
 | Eager shell bundle | 133,366 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
-| Backend API endpoints | 25 |
+| Backend API endpoints | 27 |
 
 ### Architecture
 
@@ -311,7 +311,69 @@ lesson scripts:
 | `POST` | `/api/message/translate` | MT103 → pacs.008 XML translation |
 | `POST` | `/api/message/pacs008-check` | pacs.008 structured-field validator |
 | `GET` | `/api/progress` | Learning progress + badges |
-| `POST` | `/api/telemetry` | Anonymous learning event tracking |
+| `POST` | `/api/telemetry` | Anonymous learning event tracking (also carries bounded `tutor_feedback` events) |
+| `POST` | `/api/tutor/chat` | Grounded AI tutor — **disabled by default**, answers 503 until configured |
+
+---
+
+## AI tutor
+
+A quote-grounded payments tutor that explains, hints, and quizzes, requiring
+verbatim evidence and deterministic quote-coverage checks for factual answers.
+It cannot initiate, approve, advance, or settle a payment, and it says so.
+
+**Off by default.** The base install carries no AI dependency at all. Full spec:
+[`docs/superpowers/specs/2026-08-13-relay-ai-tutor.md`](docs/superpowers/specs/2026-08-13-relay-ai-tutor.md).
+
+### Turning it on
+
+```bash
+pip install '.[ai]'
+export TUTOR_ENABLED=true
+export TUTOR_MODEL=gpt-5
+export OPENAI_API_KEY=sk-...
+```
+
+All three variables are required together — any one missing answers 503 "not
+configured", which is a deliberately different message from 503 "not enabled" so
+an operator can tell "I turned it off" from "I forgot the key".
+
+Every variable the tutor reads is listed in [`.env.example`](.env.example). In
+production (`VERCEL` set) two more are required and enforced with a 503:
+`TUTOR_RATE_LIMIT_REDIS_URL`/`_TOKEN` (in-process buckets reset on every cold
+start, so they are a limit in name only) and `TUTOR_DAILY_REQUEST_CEILING` (a
+per-caller rate limit does nothing about a thousand callers each behaving
+reasonably).
+
+### The guarantee
+
+A factual answer must include verbatim evidence from a retrieved Relay document
+and pass deterministic quote-coverage checks, or it is not delivered. A
+citation naming a source that was not retrieved is stripped; a citation quoting
+text that is not in its source is stripped; and an answer that fails the
+quote-coverage check is *replaced* with a clarification rather than merely
+flagged. This is source-backed lexical validation, not semantic entailment or a
+live operational guarantee.
+
+Identifiers are redacted at the provider boundary — unconditionally, with no
+flag that can disable it. Retrieval runs on the raw text first, because it keys
+on the very tokens redaction removes.
+
+The model can call exactly three read-only lookups (lesson, glossary, scheme).
+Every argument is checked for membership in a Relay catalogue and never
+interpolated into a query, a path, or a URL.
+
+### Evaluation
+
+```bash
+python scripts/evaluate_tutor_retrieval.py   # retrieval recall and latency
+python scripts/run_tutor_eval.py --provider fake
+python scripts/run_tutor_eval.py --provider live --output /tmp/eval.json
+```
+
+The 62-question golden set runs in ordinary CI against a fake engine — no
+provider, no key. The live evaluation is opt-in and never gates a merge: a job
+that fails during someone else's outage is not a signal about Relay.
 
 ### API examples — tracking & payment schemes
 

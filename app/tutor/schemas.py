@@ -28,7 +28,11 @@ class TutorContext(BaseModel):
 
 class TutorTurn(BaseModel):
     role: Literal["user", "assistant"]
-    content: str = Field(..., min_length=1, max_length=3000)
+    # 6000, matching TutorModelOutput.answer. The panel sends prior answers
+    # back as history, so a lower cap here made every turn after a long answer
+    # fail validation: the conversation stopped dead on a 422 the learner could
+    # neither see the cause of nor do anything about.
+    content: str = Field(..., min_length=1, max_length=6000)
 
 
 class TutorRequest(BaseModel):
