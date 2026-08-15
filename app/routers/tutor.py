@@ -28,12 +28,18 @@ No prompt is constructed here. The router validates, decides, and maps errors;
 `app/tutor/engine.py` owns what the model is told.
 """
 import asyncio
+import hashlib
 import logging
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from ..config import TutorAvailability, tutor_availability, tutor_settings
+from ..config import (
+    TutorAvailability,
+    tutor_availability,
+    tutor_provider_api_key,
+    tutor_settings,
+)
 from ..tutor.engine import (
     TutorEngine,
     TutorNotConfiguredError,
@@ -111,7 +117,10 @@ def get_tutor_engine() -> TutorEngine:
     """
     _require_available()
     settings = tutor_settings()
-    key = (settings.provider, settings.model)
+    key_fingerprint = hashlib.sha256(
+        tutor_provider_api_key(settings.provider).encode("utf-8")
+    ).hexdigest()
+    key = (settings.provider, settings.model, key_fingerprint)
     engine = _ENGINE_CACHE.get(key)
     if engine is None:
         engine = build_tutor_engine()
@@ -155,6 +164,18 @@ def _require_available() -> None:
         )
 
 
+async def _allow_limiter_async(limiter: RateLimiter, key: str) -> bool:
+    """Run synchronous limiter clients without blocking the event loop."""
+
+    return await asyncio.to_thread(limiter.allow, key)
+
+
+async def _allow_ceiling_async(ceiling: DailyRequestCeiling) -> bool:
+    """Run synchronous ceiling clients without blocking the event loop."""
+
+    return await asyncio.to_thread(ceiling.allow)
+
+
 @router.get(
     "/availability",
     summary="Whether the tutor can answer in this deployment",
@@ -181,7 +202,13 @@ def tutor_availability_probe() -> dict:
     configuration is absent on an unauthenticated GET tells an attacker whether
     a key exists, which is not something a learner ever needs to know.
     """
-    return {"available": tutor_availability() is TutorAvailability.READY}
+    return {
+        "available": (
+            tutor_availability() is TutorAvailability.READY
+            and not production_limiter_is_missing()
+            and not production_spend_ceiling_is_missing()
+        )
+    }
 
 
 @router.post(
@@ -234,7 +261,7 @@ async def tutor_chat(
             safety_notice="Relay is an educational SIMULATION. No real money moves.",
         )
 
-    if not limiter.allow(limiter_key_for(request)):
+    if not await _allow_limiter_async(limiter, limiter_key_for(request)):
         raise HTTPException(
             status_code=429,
             detail=(
@@ -243,7 +270,7 @@ async def tutor_chat(
             ),
         )
 
-    if not ceiling.allow():
+    if not await _allow_ceiling_async(ceiling):
         # A different message from the per-caller limit on purpose: waiting a
         # moment does not help here, and saying it will is worse than nothing.
         raise HTTPException(

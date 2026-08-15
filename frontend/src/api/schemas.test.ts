@@ -209,7 +209,7 @@ describe("TutorRequest schema", () => {
       TutorRequestSchema.parse({
         message: "hi",
         context,
-        history: [{ role: "user", content: "c".repeat(3001) }],
+        history: [{ role: "user", content: "c".repeat(6001) }],
       }),
     ).toThrow();
 
@@ -306,6 +306,15 @@ describe("TutorResponse schema", () => {
     expect(parsed.safety_notice ?? null).toBeNull();
     expect(parsed.citations[0].url ?? null).toBeNull();
     expect(parsed.answer).toContain("nostro");
+  });
+
+  it("rejects malformed needs_clarification values instead of coercing them", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        needs_clarification: "false",
+      }),
+    ).toThrow();
   });
 
   it("enforces Pydantic's response and citation bounds", () => {

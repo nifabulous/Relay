@@ -117,3 +117,10 @@ class TestRelayManifest:
             "/api/track/{uetr}/complete",
             "/api/schemes/international",
         } <= endpoints
+
+    def test_manifest_lists_tutor_routes(self, client):
+        endpoints = set(client.get("/api/manifest").json()["endpoints"])
+        assert {
+            "/api/tutor/availability",
+            "/api/tutor/chat",
+        } <= endpoints

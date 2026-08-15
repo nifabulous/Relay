@@ -12,6 +12,8 @@ and the application never passes it anything else.
 """
 import asyncio
 import inspect
+import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -138,6 +140,42 @@ def test_the_tools_exposed_to_a_provider_are_exactly_the_three_reads():
         "glossary_reference",
         "scheme_reference",
     }
+
+
+def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch):
+    """Tool citations from one request must be retained for that same request."""
+
+    captured_agents = []
+
+    class FakeAgent:
+        def __init__(self, model, *, output_type, system_prompt, model_settings, tools):
+            self.tools = tools
+            captured_agents.append(self)
+
+        async def run(self, user, *, instructions):
+            result = self.tools[2]("GBP", "CHAPS")[0]
+            citation = TutorCitation(
+                source_id=result["source_id"],
+                title=result["title"],
+                evidence=result["text"][:80],
+            )
+            return SimpleNamespace(
+                output=TutorModelOutput(
+                    answer="CHAPS is a sterling high-value rail.",
+                    citations=[citation],
+                )
+            )
+
+    monkeypatch.setitem(sys.modules, "pydantic_ai", SimpleNamespace(Agent=FakeAgent))
+    engine = engine_module._PydanticAITutorEngine("test:model", RelayTutorTools())
+    request = _request("What is an IBAN?")
+    documents = _documents()
+
+    response = asyncio.run(engine.answer(request, documents, RelayTutorTools()))
+
+    assert len(captured_agents) == 1
+    assert response.grounded is True
+    assert response.citations[0].source_id.startswith("relay-rail-gbp-chaps")
 
 
 def test_no_tool_exposed_to_a_provider_can_mutate_anything():

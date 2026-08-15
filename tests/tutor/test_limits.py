@@ -11,6 +11,11 @@ Two properties matter and are easy to get wrong:
 """
 import pytest
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 from app.tutor.limits import (
     InMemoryRateLimiter,
     RateLimiter,
@@ -289,8 +294,6 @@ def test_upstash_redis_is_declared_so_the_production_limiter_can_import():
     Every production call would raise ImportError, get swallowed by the
     fail-open handler, and allow. The limit would be silently absent.
     """
-    import tomllib
-
     from app.config import BASE_DIR
 
     with open(BASE_DIR / "pyproject.toml", "rb") as handle:

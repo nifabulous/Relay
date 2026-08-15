@@ -82,6 +82,39 @@ def test_a_citation_with_verbatim_evidence_survives_and_the_answer_is_grounded()
     assert response.citations[0].source_id == documents[0].document.source_id
 
 
+def test_an_unrelated_verbatim_citation_does_not_ground_the_answer():
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="Fedwire settles every transfer instantly.",
+            citations=[_verbatim_citation(documents)],
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is False
+    assert response.needs_clarification is True
+    assert "Fedwire settles" not in response.answer
+
+
+def test_a_model_cannot_keep_an_unsupported_answer_by_calling_it_a_clarification():
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="Fedwire settles every transfer instantly.",
+            citations=[],
+            needs_clarification=True,
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is False
+    assert response.needs_clarification is True
+    assert "Fedwire settles" not in response.answer
+
+
 def test_the_mode_on_the_response_is_the_requested_mode_not_the_models():
     documents = _documents()
     engine = FakeTutorEngine(

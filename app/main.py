@@ -179,5 +179,6 @@ def api_manifest():
             "/api/value-date", "/api/message/stp-check",
             "/api/import/fedwire", "/api/import/fedach",
             "/api/import/ssi", "/api/progress",
+            "/api/tutor/availability", "/api/tutor/chat",
         ],
     }

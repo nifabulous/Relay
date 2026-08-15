@@ -173,7 +173,7 @@ def test_a_verbatim_citation_of_a_retrieved_source_is_accepted(item):
     documents = retrieve_documents(request.message, context=request.context)
     document = documents[0].document
     output = TutorModelOutput(
-        answer="Grounded answer.",
+        answer=document.text[:80],
         citations=[
             TutorCitation(
                 source_id=document.source_id,
@@ -302,7 +302,7 @@ def test_the_whole_path_holds_with_a_scripted_engine(item):
     document = documents[0].document
     engine = FakeTutorEngine(
         TutorModelOutput(
-            answer="A grounded explanation.",
+            answer=document.text[:60],
             citations=[
                 TutorCitation(
                     source_id=document.source_id,

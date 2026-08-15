@@ -1,7 +1,8 @@
 """The tutor engine: where a model's output becomes an answer Relay stands behind.
 
-The engine owns one guarantee: **a factual tutor answer is supported by a Relay
-document, verbatim, or it is not delivered.** Everything else here serves that.
+The engine owns one guarantee: **a factual tutor answer must cite Relay evidence
+and pass deterministic relevance checks, or it is not delivered.** Everything
+else here serves that.
 
 Three failures this defends against, in increasing order of subtlety:
 
@@ -23,6 +24,7 @@ in production would answer payment questions with canned text while every health
 check stayed green.
 """
 import asyncio
+import re
 import time
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple, runtime_checkable
 
@@ -209,7 +211,61 @@ def validate_citations(
     required = max(1, -(-len(output.answer) // _CHARS_PER_REQUIRED_CITATION))
     enough_evidence = len(kept) >= min(required, len(documents) or 1)
 
-    return kept, bool(kept) and nothing_fabricated and enough_evidence
+    evidence = " ".join(retrieved[citation.source_id].text for citation in kept)
+    return (
+        kept,
+        bool(kept)
+        and nothing_fabricated
+        and enough_evidence
+        and _answer_has_relevant_evidence(output.answer, evidence),
+    )
+
+
+_GROUNDING_STOP_WORDS = frozenset(
+    {
+        "a", "an", "and", "are", "as", "at", "be", "by", "can", "does",
+        "for", "from", "has", "have", "how", "in", "is", "it", "its", "of",
+        "on", "or", "the", "this", "to", "was", "what", "when", "which", "with",
+    }
+)
+
+
+def _answer_has_relevant_evidence(answer: str, evidence: str) -> bool:
+    """Require every answer sentence to share meaningful terms with evidence.
+
+    Verbatim citation checks prove provenance, not relevance. This conservative
+    lexical gate rejects a citation from an unrelated document without claiming
+    to perform semantic entailment; the model is still instructed to cite each
+    claim, and unsupported answers are withheld when this gate fails.
+    """
+
+    if _normalise_whitespace(answer.lower()) in _normalise_whitespace(evidence.lower()):
+        return True
+
+    evidence_terms = {
+        token
+        for token in re.findall(r"[a-z0-9]+", evidence.lower())
+        if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
+    }
+    sentences = [part for part in re.split(r"[.!?]+", answer.lower()) if part.strip()]
+    for sentence in sentences:
+        terms = {
+            token
+            for token in re.findall(r"[a-z0-9]+", sentence)
+            if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
+        }
+        if not terms:
+            continue
+        required = 1 if len(terms) == 1 else 2
+        if len(terms & evidence_terms) < required:
+            return False
+    return True
+
+
+def _is_clarifying_question(answer: str) -> bool:
+    """Only preserve model text that is structurally a question for the learner."""
+
+    return answer.strip().endswith("?") and "\n" not in answer.strip()
 
 
 def finalise_response(
@@ -221,7 +277,9 @@ def finalise_response(
     """Validate the model's output and compose the response the server owns."""
     citations, grounded = validate_citations(output, documents)
 
-    if not grounded and not output.needs_clarification:
+    if not grounded and not (
+        output.needs_clarification and _is_clarifying_question(output.answer)
+    ):
         # A factual claim with nothing behind it is withheld, not annotated.
         output = TutorModelOutput(
             answer=_CLARIFICATION_ANSWER,
@@ -414,17 +472,11 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         # router — so failures observed by one request inform the next, which is
         # the entire point of a breaker.
         self._breaker = CircuitBreaker()
+        self._agent_type = Agent
+        self._model = model
+        self._max_output_tokens = tutor_settings().max_output_tokens
 
-        settings = tutor_settings()
-        self._agent = Agent(
-            model,
-            output_type=TutorModelOutput,
-            system_prompt="",
-            model_settings={"max_tokens": settings.max_output_tokens},
-            tools=_registry_tools(tools),
-        )
-
-    async def _call_provider(self, payload: TutorPromptPayload):
+    async def _call_provider(self, payload: TutorPromptPayload, tools: TutorToolRegistry):
         """The single line that actually leaves the process.
 
         Extracted so the retry and breaker wiring around it is testable without
@@ -433,7 +485,14 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         mistakes live: a retry that never counts toward the breaker, or a
         breaker that opens and is then ignored, both pass isolated tests.
         """
-        return await self._agent.run(payload.user, instructions=payload.system)
+        agent = self._agent_type(
+            self._model,
+            output_type=TutorModelOutput,
+            system_prompt="",
+            model_settings={"max_tokens": self._max_output_tokens},
+            tools=_registry_tools(tools),
+        )
+        return await agent.run(payload.user, instructions=payload.system)
 
     async def _produce(
         self, payload: TutorPromptPayload, tools: TutorToolRegistry
@@ -448,7 +507,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         last_error: Optional[BaseException] = None
         for attempt in range(_MAX_PROVIDER_ATTEMPTS):
             try:
-                result = await self._call_provider(payload)
+                result = await self._call_provider(payload, tools)
             except Exception as error:  # noqa: BLE001 - normalised at the boundary
                 last_error = error
                 if attempt + 1 < _MAX_PROVIDER_ATTEMPTS:

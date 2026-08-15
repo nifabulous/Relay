@@ -7,6 +7,7 @@ able to tell "I turned it off" apart from "I turned it on and forgot the key",
 because those need different fixes.
 """
 import asyncio
+import threading
 
 import pytest
 from fastapi.testclient import TestClient
@@ -447,3 +448,54 @@ def test_availability_reports_off_without_leaking_why(client, monkeypatch):
     assert body["available"] is False
     assert "key" not in str(body).lower()
     assert "model" not in str(body).lower()
+
+
+def test_availability_is_false_when_production_safety_controls_are_missing(
+    client, monkeypatch
+):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_MODEL", "test:model")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_URL", raising=False)
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_TOKEN", raising=False)
+    monkeypatch.delenv("TUTOR_DAILY_REQUEST_CEILING", raising=False)
+
+    response = client.get("/api/tutor/availability")
+
+    assert response.status_code == 200
+    assert response.json()["available"] is False
+
+
+def test_engine_cache_rebuilds_after_provider_key_rotation(monkeypatch):
+    import app.routers.tutor as tutor_router
+
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_MODEL", "test:model")
+    monkeypatch.setenv("OPENAI_API_KEY", "first-key")
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setattr(tutor_router, "build_tutor_engine", lambda: object())
+    monkeypatch.setattr(tutor_router, "_ENGINE_CACHE", {})
+
+    first = tutor_router.get_tutor_engine()
+    monkeypatch.setenv("OPENAI_API_KEY", "second-key")
+    second = tutor_router.get_tutor_engine()
+
+    assert first is not second
+
+
+def test_sync_meter_calls_run_off_the_async_request_thread():
+    from app.routers.tutor import _allow_ceiling_async, _allow_limiter_async
+
+    main_thread = threading.get_ident()
+    seen_threads = []
+
+    class Meter:
+        def allow(self, *args):
+            seen_threads.append(threading.get_ident())
+            return True
+
+    assert asyncio.run(_allow_limiter_async(Meter(), "ip:test")) is True
+    assert asyncio.run(_allow_ceiling_async(Meter())) is True
+    assert seen_threads
+    assert all(thread_id != main_thread for thread_id in seen_threads)

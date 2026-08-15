@@ -234,7 +234,7 @@ def _engine_with(responses):
 
             self._breaker = CircuitBreaker(failure_threshold=2, reset_seconds=60)
 
-        async def _call_provider(self, payload):
+        async def _call_provider(self, payload, tools):
             outcome = responses[min(self.attempts, len(responses) - 1)]
             self.attempts += 1
             if isinstance(outcome, Exception):
