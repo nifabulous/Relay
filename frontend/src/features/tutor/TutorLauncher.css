@@ -1,0 +1,31 @@
+/*
+ * TutorLauncher — tokens only.
+ *
+ * Non-modal by design: no overlay, no z-index, no scroll lock. The open panel
+ * is ordinary content in document flow, which is what lets the page behind stay
+ * readable and operable while a learner asks about it.
+ */
+
+.tutor-launcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.tutor-launcher__loading {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.tutor-launcher__close {
+  align-self: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .tutor-launcher {
+    align-items: flex-end;
+  }
+}

@@ -7,6 +7,10 @@ import { LabCompletionChecklist } from "./LabCompletionChecklist";
 import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
 import { track } from "../../lib/analytics/analytics";
+import { TutorLauncher } from "../tutor/TutorLauncher";
+import { buildLessonContext } from "../tutor/tutorContext";
+import { withLearnerSummary } from "../tutor/tutorLearnerContext";
+import { loadPracticeState } from "./practice/practiceStore";
 import "./LearnPage.css";
 
 export function LearnModulePage() {
@@ -106,6 +110,27 @@ export function LearnModulePage() {
           {isComplete && <StatusChip status="passed" />}
         </div>
         <p className="measure">{mod.subtitle}</p>
+        {/* Module identity only — never the lesson's rendered content. The
+            backend has its own card for this module, so passing the ID reaches
+            better grounding than any amount of scraped text would. */}
+        {/* Learner-aware: the tutor is told how many modules are done, which
+            are worth revisiting, and which comes next — all computed here, all
+            at module granularity. Never a question ID, a score, or a date. */}
+        <TutorLauncher
+          context={withLearnerSummary(
+            buildLessonContext({
+              moduleId: mod.id,
+              moduleTitle: mod.title,
+              topic: mod.category,
+            }),
+            {
+              completedModuleIds: loadProgress().completedModuleIds,
+              practice: loadPracticeState(),
+              currentModuleId: mod.id,
+            },
+          )}
+          label="Ask the tutor about this module"
+        />
       </div>
 
       <div className="learn-content">
