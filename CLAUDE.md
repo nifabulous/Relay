@@ -161,7 +161,7 @@ python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --run  # 1091 tests (Vitest workers capped at 4)
+cd frontend && npm test -- --run  # 1172 tests (Vitest workers capped at 4)
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed

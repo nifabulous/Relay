@@ -19,6 +19,10 @@ import {
  * stable, realistic success payload.
  */
 export const handlers = [
+  // The floating launcher probes this on mount, on every route. Default to
+  // available so interaction tests exercise the enabled pill; tests covering
+  // the disabled state override it with server.use().
+  http.get("/api/tutor/availability", () => HttpResponse.json({ available: true })),
   http.get("/api/health", () =>
     HttpResponse.json({
       status: "ok",

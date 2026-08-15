@@ -11,6 +11,7 @@ import {
 import type { RelayPreferences } from "../design-system/types";
 import { loadPreferences, savePreferences } from "../lib/persistence/storage";
 import { PreferencesMenu } from "./PreferencesMenu";
+import { FloatingTutorLauncher } from "../features/tutor/FloatingTutorLauncher";
 import "./AppShell.css";
 
 /*
@@ -230,6 +231,12 @@ export function AppShell({ children }: { children?: ReactNode }) {
           {children ?? <Outlet />}
         </main>
       </div>
+
+      {/* The tutor's single entry point, on every route. Contextual where a page
+          publishes context, global everywhere else. Kept out of the top bar
+          deliberately — that bar is already tight, and the bottom-right corner
+          is free at every width once the mobile nav is cleared. */}
+      <FloatingTutorLauncher />
 
       {/* Mobile bottom navigation */}
       <nav className="app-shell__mobile-nav" aria-label="Mobile navigation">

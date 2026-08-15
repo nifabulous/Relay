@@ -138,3 +138,32 @@ The payment route is Relay’s primary visual signature. It uses a continuous di
 ## Source specification
 
 The product journeys, application architecture, state matrix, migration strategy, and testing gates live in [Relay UI Rebuild Design](docs/superpowers/specs/2026-07-17-relay-ui-rebuild-design.md).
+
+## Floating surfaces
+
+A floating surface sits above content the system does not control and cannot
+predict. The hairline that separates an inline panel from a known canvas is not
+enough here: `--color-border` measures 1.23:1 and `--color-border-strong`
+1.51:1, which the Color section already records as a tracked gap, and over
+arbitrary scrolling content that gap stops being cosmetic.
+
+**A floating surface gets exactly one step of elevation, expressed as an effect
+rather than a mechanism.** In light mode the step is a shadow. In dark mode the
+step is a lighter surface, because a shadow works by being darker than its
+backdrop and on the dark canvas (#080b12) the shadow colour is around five
+times lighter — it reads as a smudge or as nothing. One rule, two correct
+expressions. This is not a licence for decorative shadows: the rule in Visual
+foundations still holds for every surface that is not floating.
+
+**Specify what a floating surface obscures.** An open panel covers content, and
+which content is a design decision rather than an accident of z-index:
+
+| Viewport | The panel occupies | It must never cover |
+| --- | --- | --- |
+| `≥1024px` | a right column, page content reflows beside it | the primary navigation rail, the top bar, the simulation banner |
+| `<1024px` | a bottom sheet above the fixed bottom navigation | the bottom navigation itself, the simulation banner |
+
+The simulation banner is on both never-cover lists deliberately. It is the one
+element on screen stating that none of this is real, and a panel that hides it
+while answering questions about payments removes that statement at exactly the
+moment it matters most.
