@@ -87,7 +87,10 @@ _IBAN_RE = re.compile(
     r"[A-Z0-9]{11,30}"                             # contiguous
     r"|"
     r"(?:\s[A-Z0-9]{4}){2,7}(?:\s[A-Z0-9]{1,4})?"  # grouped in fours
-    r")\b"
+    r")\b",
+    # Case-insensitive: a lower-case IBAN is what someone actually types into a
+    # chat box, and without this it reached the provider byte-for-byte.
+    re.IGNORECASE,
 )
 
 _PHONE_RE = re.compile(r"\+?\(?\d[\d\s().-]{7,17}\d")

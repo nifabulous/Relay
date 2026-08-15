@@ -299,3 +299,33 @@ describe("pre-paint theme script", () => {
     ).not.toThrow();
   });
 });
+
+// ── Codex review 2026-08-14 [P2] ─────────────────────────────────────────────
+
+describe("useResolvedTheme after an OS flip in an explicit mode", () => {
+  it("re-reads the OS preference when the user returns to system", async () => {
+    // While an explicit theme is selected, watchSystemTheme deliberately does
+    // not subscribe. The cached osPrefersDark therefore goes stale the moment
+    // the OS flips. Returning to "system" resubscribes, but a listener only
+    // fires on FUTURE changes — so without an explicit re-read the menu hint
+    // reports the pre-flip value while the CSS media query shows the truth.
+    const media = installFakeColorSchemeMedia(false); // OS starts light
+    const { renderHook, act } = await import("@testing-library/react");
+    const { useResolvedTheme, updatePreferences, reloadPreferences } = await import(
+      "../app-shell/AppShell"
+    );
+
+    localStorage.clear();
+    reloadPreferences();
+
+    const { result } = renderHook(() => useResolvedTheme());
+    act(() => updatePreferences({ theme: "dark" }));
+    expect(result.current).toBe("dark");
+
+    // OS flips to dark while we are pinned to explicit dark: nothing subscribed.
+    act(() => media.flipTo(true));
+
+    act(() => updatePreferences({ theme: "system" }));
+    expect(result.current).toBe("dark"); // the OS is dark now, not light
+  });
+});

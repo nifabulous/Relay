@@ -154,3 +154,20 @@ def test_every_identifier_in_a_crowded_string_is_redacted():
 @pytest.mark.parametrize("text", ["", "   ", "Nothing sensitive here at all."])
 def test_empty_and_unmatched_input_is_returned_unchanged(text):
     assert redact_sensitive_text(text) == text
+
+
+def test_lower_case_iban_is_redacted():
+    """Case-sensitivity meant a lower-case IBAN reached the provider byte-for-byte.
+
+    Lower case is how a person actually types an identifier into a chat box, so
+    this was the likely path, not the exotic one.
+    """
+    assert (
+        redact_sensitive_text("Send to de89370400440532013000 today.")
+        == "Send to [IBAN] today."
+    )
+
+
+def test_mixed_case_and_lower_case_grouped_iban_are_redacted():
+    assert "[IBAN]" in redact_sensitive_text("Send to De89 3704 0044 0532 0130 00 today.")
+    assert "[IBAN]" in redact_sensitive_text("iban gb33 bukb 2020 1555 5555 55 confirmed")

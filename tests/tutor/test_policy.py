@@ -189,3 +189,48 @@ def test_every_refusal_carries_a_reason_and_a_usable_learner_response():
             hint in decision.response.lower()
             for hint in ("simulation", "operator", "published", "readme", "compliance")
         )
+
+
+# ── Codex review 2026-08-14: three confirmed policy/redaction bypasses ────────
+
+
+def test_educational_lead_does_not_excuse_a_direct_instruction():
+    """An educational opener must not launder an explicit execution request.
+
+    `_EDUCATIONAL_LEAD_RE` is already anchored, so this was not a cue appearing
+    mid-sentence: "What I need is for you to execute the payment now" genuinely
+    *starts* with an educational word. The discriminator has to be whether the
+    sentence asks ABOUT an action or instructs the tutor to PERFORM one.
+    """
+    decision = evaluate_tutor_request(
+        _request("What I need is for you to execute the payment now")
+    )
+    assert decision.allowed is False
+    assert decision.reason == "payment_execution"
+
+
+@pytest.mark.parametrize(
+    "message", ["Please settle payments now", "Approve the transfers"]
+)
+def test_plural_payment_objects_are_refused(message):
+    """The object pattern matched only singular forms, so pluralising the noun
+    walked straight past the refusal."""
+    decision = evaluate_tutor_request(_request(message))
+    assert decision.allowed is False
+    assert decision.reason == "payment_execution"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "How does a correspondent bank settle a USD payment?",
+        "Please explain how payments settle",
+        "What is a wire transfer?",
+        "Explain how banks approve transfers",
+        "Can you explain how a payment is executed?",
+    ],
+)
+def test_genuine_educational_questions_still_pass(message):
+    """The guard above must not swing the other way. Each of these names a
+    payment action and a payment object and must remain allowed."""
+    assert evaluate_tutor_request(_request(message)).allowed is True

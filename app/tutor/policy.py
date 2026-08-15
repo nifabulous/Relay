@@ -54,7 +54,12 @@ _PAYMENT_EXECUTION_RESPONSE = (
 # is what the payment-execution rule keys on. "How do I ..." is deliberately
 # excluded — it asks the tutor to act, not to explain.
 _EDUCATIONAL_LEAD_RE = re.compile(
-    r"""^\s*(?:
+    r"""^\s*
+      # Optional courtesy opener. Without it "Please explain how payments settle"
+      # is not an educational lead at all, and once the object pattern learned
+      # plurals it started being refused as an execution request.
+      (?:(?:please|kindly|can\s+you|could\s+you|would\s+you|hey|hi)[\s,]+)?
+      (?:
         what|why|when|which|who|whose|where
       | how\s+(?:does|do(?!\s+(?:i|we|you)\b)|is|are|was|were|would|might|much|many|long|often)
       | explain|describe|define|compare|contrast|summari[sz]e|outline|teach|illustrate
@@ -71,8 +76,24 @@ _PAYMENT_ACTION_RE = re.compile(
 )
 
 _PAYMENT_OBJECT_RE = re.compile(
-    r"\b(?:payment|transfer|transaction|wire|remittance|instruction|mt103|pacs)\b",
+    r"\b(?:payments?|transfers?|transactions?|wires?|remittances?|instructions?"
+    r"|mt103|pacs)\b",
     re.IGNORECASE,
+)
+
+# An educational opener is a weak signal, not a licence. "What I need is for you
+# to execute the payment now" starts with a genuine educational word, so
+# anchoring the lead is not enough — the sentence still instructs the tutor to
+# act. This matches a directive aimed at the assistant, but only when no
+# explanatory verb intervenes, so "Please explain how payments settle" stays a
+# question while "Please settle payments now" does not.
+_ASSISTANT_DIRECTIVE_RE = re.compile(
+    r"""\b(?:you|please|go\s+ahead)\b
+        (?:(?!\b(?:explain|describe|define|compare|contrast|summari[sz]e|outline
+                  |teach|illustrate|show|tell|walk|quiz|understand|learn)\b)[^.?!]){0,48}?
+        \b(?:initiate|execute|approve|authori[sz]e|release|advance|settle|complete
+             |send|submit|process|book|post|make|wire|remit|pay)\b""",
+    re.IGNORECASE | re.VERBOSE,
 )
 
 _SECRET_DISCLOSURE_RESPONSE = (
@@ -182,7 +203,10 @@ def evaluate_tutor_request(request: TutorRequest) -> PolicyDecision:
             response=_COMPLIANCE_BYPASS_RESPONSE,
         )
 
-    explanatory = _EDUCATIONAL_LEAD_RE.search(message) is not None
+    explanatory = (
+        _EDUCATIONAL_LEAD_RE.search(message) is not None
+        and _ASSISTANT_DIRECTIVE_RE.search(message) is None
+    )
     if (
         not explanatory
         and _PAYMENT_ACTION_RE.search(message)

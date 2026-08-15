@@ -78,10 +78,15 @@ export function useResolvedTheme(): ResolvedTheme {
   const { theme } = usePreferences();
   const [osPrefersDark, setOsPrefersDark] = useState(prefersDarkNow);
 
-  useEffect(
-    () => watchSystemTheme(theme, (resolved) => setOsPrefersDark(resolved === "dark")),
-    [theme],
-  );
+  useEffect(() => {
+    // Re-read before subscribing. In an explicit mode watchSystemTheme does not
+    // subscribe at all, so an OS flip during that time leaves this cache stale.
+    // Resubscribing on the way back to "system" only catches FUTURE changes, so
+    // without this the menu would report the pre-flip value while the CSS media
+    // query already renders the current one.
+    setOsPrefersDark(prefersDarkNow());
+    return watchSystemTheme(theme, (resolved) => setOsPrefersDark(resolved === "dark"));
+  }, [theme]);
 
   return resolveTheme(theme, osPrefersDark);
 }
