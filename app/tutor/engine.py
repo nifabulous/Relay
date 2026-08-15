@@ -27,6 +27,7 @@ import time
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple, runtime_checkable
 
 from app.config import tutor_provider_api_key, tutor_settings
+from app.data.tutor_knowledge import TutorDocument
 
 from .prompts import (
     TutorPromptPayload,
@@ -153,6 +154,13 @@ def _normalise_whitespace(text: str) -> str:
     return " ".join(text.split())
 
 
+# One quotation cannot support an unbounded amount of payment guidance. An
+# answer this long resting on a single citation is the shape of a model padding
+# prose around one retrieved fact, which reads authoritative and is mostly
+# unsourced. Chosen to sit well above a normal cited paragraph.
+_CHARS_PER_REQUIRED_CITATION = 1200
+
+
 def validate_citations(
     output: TutorModelOutput, documents: Sequence[RetrievedDocument]
 ) -> Tuple[List[TutorCitation], bool]:
@@ -187,7 +195,21 @@ def validate_citations(
             )
         )
 
-    return kept, bool(kept)
+    # `bool(kept)` was the P0. A model emitting three citations, two invented,
+    # had the two stripped and the answer marked grounded on the strength of the
+    # third — the learner then reads an answer built from three sources, shown
+    # one, with two that do not exist. Partial fabrication is fabrication: if
+    # the model invented a source for this turn, nothing from this turn is
+    # trustworthy, and the answer is withheld rather than trimmed.
+    nothing_fabricated = len(kept) == len(output.citations)
+
+    # The evidence floor. Length is a proxy for how many claims are being made,
+    # and it is the only one available without parsing claims out of prose —
+    # which would be a second, less reliable model in the trust path.
+    required = max(1, -(-len(output.answer) // _CHARS_PER_REQUIRED_CITATION))
+    enough_evidence = len(kept) >= min(required, len(documents) or 1)
+
+    return kept, bool(kept) and nothing_fabricated and enough_evidence
 
 
 def finalise_response(
@@ -248,6 +270,39 @@ def over_budget_response(request: TutorRequest) -> TutorResponse:
     )
 
 
+class _RecordingToolRegistry:
+    """Wraps the tool registry and remembers what it handed the model.
+
+    Tools return real catalogue documents, but the validation set was only what
+    retrieval found. A model that used a tool correctly and then cited what the
+    tool gave it had that citation stripped as invented — punished for doing
+    exactly the right thing, and pushed toward answering from memory instead.
+
+    Deliberately records only what was RETURNED on this turn, not the catalogue
+    the tools could reach. Widening to the latter would degrade the guarantee to
+    "cited something that exists somewhere in Relay".
+    """
+
+    def __init__(self, inner: TutorToolRegistry) -> None:
+        self._inner = inner
+        self.returned: List[TutorDocument] = []
+
+    def _record(self, result):
+        if result is None:
+            return result
+        self.returned.extend(result if isinstance(result, list) else [result])
+        return result
+
+    def get_lesson_reference(self, module_id: str):
+        return self._record(self._inner.get_lesson_reference(module_id))
+
+    def get_glossary_reference(self, term: str):
+        return self._record(self._inner.get_glossary_reference(term))
+
+    def get_scheme_reference(self, currency: str, rail_name=None):
+        return self._record(self._inner.get_scheme_reference(currency, rail_name))
+
+
 class _ValidatingEngine:
     """Shared budget-then-validate pipeline for every concrete engine.
 
@@ -287,12 +342,22 @@ class _ValidatingEngine:
         if payload.over_budget:
             return over_budget_response(request)
 
-        output = await self._produce(payload, tools)
+        recording = _RecordingToolRegistry(tools)
+        output = await self._produce(payload, recording)
+
+        # The validation set is what was in the prompt plus what the model
+        # actually fetched while answering. Both are documents Relay chose to
+        # hand over on this turn; neither is the catalogue at large.
         kept = [
             result
             for result in documents
             if result.document.source_id in set(payload.evidence_source_ids)
         ]
+        seen = {result.document.source_id for result in kept}
+        for document in recording.returned:
+            if document.source_id not in seen:
+                seen.add(document.source_id)
+                kept.append(RetrievedDocument(document=document, score=0.0))
         return finalise_response(output, request, kept, payload)
 
 

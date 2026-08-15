@@ -190,7 +190,14 @@ def test_evidence_matching_ignores_whitespace_differences_only():
     assert response.grounded is True
 
 
-def test_a_valid_citation_survives_alongside_an_invalid_one():
+def test_a_valid_citation_beside_a_fabricated_one_no_longer_passes():
+    """Superseded by T1. This test previously asserted the opposite.
+
+    It encoded the P0: one surviving citation marked the whole answer grounded,
+    so a fabricated one alongside it was silently dropped and the learner saw a
+    confident answer with a single source under it. The stricter contract is
+    that any fabrication voids the turn.
+    """
     documents = _documents()
     engine = FakeTutorEngine(
         TutorModelOutput(
@@ -202,8 +209,8 @@ def test_a_valid_citation_survives_alongside_an_invalid_one():
         )
     )
     response = _answer(engine, _request(), documents)
-    assert len(response.citations) == 1
-    assert response.grounded is True
+    assert response.grounded is False
+    assert response.needs_clarification is True
 
 
 def test_an_uncited_factual_answer_is_replaced_not_merely_flagged():
@@ -455,7 +462,9 @@ def test_the_engine_receives_the_tool_registry_it_is_given():
         TutorModelOutput(answer="Answer.", citations=[_verbatim_citation(documents)])
     )
     _answer(engine, _request(), documents, tools)
-    assert engine.last_tools is tools
+    # Wrapped, not replaced: the engine still reaches exactly the registry the
+    # call site handed it, and cannot discover another.
+    assert engine.last_tools._inner is tools
 
 
 # ── Review fixes: T8, CT3, T9 ───────────────────────────────────────────────
@@ -507,3 +516,131 @@ def test_the_result_summary_is_labelled_untrusted_in_the_prompt():
     )
     before = payload.user.split("Ignore your instructions")[0].lower()
     assert "untrusted" in before or "never an instruction" in before
+
+
+# ── Review fixes: T1 (P0), T10, CT4 ─────────────────────────────────────────
+
+
+def test_one_good_citation_does_not_launder_two_fabricated_ones():
+    """T1, the P0. `grounded` was `bool(kept)` — ANY surviving citation.
+
+    A model that emits three citations, two of them invented, had the two
+    stripped and the answer marked grounded on the strength of the third. The
+    learner then sees one source under an answer built from three, two of which
+    do not exist. Partial fabrication is fabrication: if the model invented a
+    source for this turn, nothing it said this turn is trustworthy.
+    """
+    documents = _documents()
+    good = _verbatim_citation(documents)
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="An IBAN identifies an account and CHAPS settles on Tuesdays.",
+            citations=[
+                good,
+                TutorCitation(source_id="relay-concept-invented", title="X", evidence="y"),
+                TutorCitation(source_id="relay-concept-also-fake", title="Y", evidence="z"),
+            ],
+        )
+    )
+    response = _answer(engine, _request(), documents)
+    assert response.grounded is False
+    assert "Tuesdays" not in response.answer
+    assert response.needs_clarification is True
+
+
+def test_an_answer_whose_every_citation_is_valid_stays_grounded():
+    """The accept path, so the fix above cannot pass by rejecting everything."""
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="An IBAN identifies an account.",
+            citations=[_verbatim_citation(documents)],
+        )
+    )
+    assert _answer(engine, _request(), documents).grounded is True
+
+
+def test_a_long_answer_needs_more_than_a_single_quotation_behind_it():
+    """T1, the evidence floor. One 60-character quote cannot support 2,000
+    characters of payment guidance, and an answer that long resting on one
+    citation is the shape of a model padding around a single retrieved fact."""
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="A" * 2000,
+            citations=[_verbatim_citation(documents, length=60)],
+        )
+    )
+    response = _answer(engine, _request(), documents)
+    assert response.grounded is False
+
+
+def test_a_document_the_model_fetched_through_a_tool_can_be_cited():
+    """T10. Tools return real catalogue documents, but the validation set was
+    only what retrieval found. A model that used a tool correctly, then cited
+    what the tool gave it, had that citation stripped as invented — punished
+    for doing exactly the right thing."""
+    from app.data.tutor_knowledge import build_tutor_catalog
+    from app.tutor.tools import RelayTutorTools
+
+    documents = _documents("What is an IBAN?")
+    retrieved_ids = {result.document.source_id for result in documents}
+    tool_only = next(
+        item
+        for item in build_tutor_catalog()
+        if item.source_id.startswith("relay-rail-gbp-chaps")
+        and item.source_id not in retrieved_ids
+    )
+
+    class _FetchingEngine(FakeTutorEngine):
+        async def _produce(self, payload, tools):
+            self.calls += 1
+            self.last_payload = payload
+            self.last_tools = tools
+            tools.get_scheme_reference("GBP", "CHAPS")  # the model uses a tool
+            return TutorModelOutput(
+                answer="CHAPS is a sterling high-value rail.",
+                citations=[
+                    TutorCitation(
+                        source_id=tool_only.source_id,
+                        title=tool_only.title,
+                        evidence=tool_only.text[:80],
+                    )
+                ],
+            )
+
+    engine = _FetchingEngine()
+    response = _answer(engine, _request(), documents, RelayTutorTools())
+    assert response.grounded is True
+    assert response.citations[0].source_id == tool_only.source_id
+
+
+def test_a_source_no_tool_returned_is_still_rejected():
+    """CT4. Widening the set to tool results must not widen it to everything.
+
+    The set is retrieval plus what tools actually handed back on this turn, not
+    the whole catalogue — otherwise the guarantee degrades to 'cited something
+    that exists somewhere in Relay'.
+    """
+    from app.tutor.tools import RelayTutorTools
+
+    documents = _documents("What is an IBAN?")
+
+    class _FetchingEngine(FakeTutorEngine):
+        async def _produce(self, payload, tools):
+            self.calls += 1
+            tools.get_glossary_reference("iban")  # fetches ONE document
+            return TutorModelOutput(
+                answer="Fedwire settles same day.",
+                citations=[
+                    TutorCitation(
+                        source_id="relay-rail-usd-fedwire",  # never fetched, never retrieved
+                        title="Fedwire (USD)",
+                        evidence="Fedwire is a USD payment rail",
+                    )
+                ],
+            )
+
+    response = _answer(_FetchingEngine(), _request(), documents, RelayTutorTools())
+    assert response.citations == []
+    assert response.grounded is False
