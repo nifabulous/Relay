@@ -624,3 +624,98 @@ export const InternationalSchemesResponseSchema = SchemeInfoSchema.extend({
 export type InternationalSchemesResponse = z.infer<
   typeof InternationalSchemesResponseSchema
 >;
+
+/* ------------------------------------------------------------------ *
+ * AI Tutor
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors `app/tutor/schemas.py`.
+ *
+ * Parsing policy differs by direction, on purpose. The REQUEST is authored by
+ * Relay itself, so a bad field is a bug we want surfaced — no `.catch()`.
+ * The RESPONSE is inbound, so optional fields use the house
+ * `.nullish().catch(null)` idiom; but `answer`, `mode`, `grounded`, and
+ * `turn_id` are required and deliberately have NO `.catch()` — a response
+ * missing any of them must fail loudly rather than render a blank answer or
+ * a turn we cannot correlate feedback against.
+ */
+export const TutorModeSchema = z.enum(["chat", "explain", "hint", "quiz"]);
+
+export type TutorMode = z.infer<typeof TutorModeSchema>;
+
+export const TutorSurfaceSchema = z.enum([
+  "global",
+  "lesson",
+  "scheme",
+  "tracking",
+  "tool",
+  "case",
+]);
+
+export type TutorSurface = z.infer<typeof TutorSurfaceSchema>;
+
+export const TutorContextSchema = z
+  .object({
+    surface: TutorSurfaceSchema,
+    module_id: z.string().nullish(),
+    module_title: z.string().nullish(),
+    topic: z.string().nullish(),
+    currency: z.string().nullish(),
+    rail_name: z.string().nullish(),
+    tool_name: z.string().nullish(),
+    case_id: z.string().nullish(),
+    resource_ref: z.string().nullish(),
+    result_summary: z.string().nullish(),
+  })
+  .passthrough();
+
+export type TutorContext = z.infer<typeof TutorContextSchema>;
+
+export const TutorTurnSchema = z
+  .object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().min(1).max(3000),
+  })
+  .passthrough();
+
+export type TutorTurn = z.infer<typeof TutorTurnSchema>;
+
+export const TutorRequestSchema = z
+  .object({
+    message: z.string().min(1).max(2000),
+    mode: TutorModeSchema.default("chat"),
+    context: TutorContextSchema,
+    history: z.array(TutorTurnSchema).max(8).default([]),
+  })
+  .passthrough();
+
+export type TutorRequest = z.infer<typeof TutorRequestSchema>;
+
+export const TutorCitationSchema = z
+  .object({
+    source_id: z.string(),
+    title: z.string(),
+    url: z.string().nullish().catch(null),
+    evidence: z.string(),
+  })
+  .passthrough();
+
+export type TutorCitation = z.infer<typeof TutorCitationSchema>;
+
+export const TutorResponseSchema = z
+  .object({
+    // No `.catch()` on these four, deliberately — see the policy note above.
+    answer: z.string().min(1),
+    mode: TutorModeSchema,
+    grounded: z.boolean(),
+    turn_id: z.string().min(1),
+    // Everything else is best-effort, in the house style.
+    citations: z.array(TutorCitationSchema).catch([]),
+    follow_up: z.string().nullish().catch(null),
+    needs_clarification: z.boolean().catch(false),
+    safety_notice: z.string().nullish().catch(null),
+  })
+  .passthrough();
+
+export type TutorResponse = z.infer<typeof TutorResponseSchema>;

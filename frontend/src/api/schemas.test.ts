@@ -4,6 +4,7 @@ import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
 } from "./schemas";
+import { TutorRequestSchema, TutorResponseSchema } from "./schemas";
 import { usdFedwireRailFixture, interacETransferFixture, swiftGpiInternationalFixture } from "../features/explore/schemeFixtures";
 
 describe("SuggestedIntermediary schema", () => {
@@ -167,6 +168,119 @@ describe("SchemeInfoSchema enriched fields", () => {
       "Standard security-question claim",
     ]);
     expect(interac.variants?.every((v) => v.description.length > 0)).toBe(true);
+  });
+});
+
+describe("TutorRequest schema", () => {
+  it("parses a valid request for each tutor mode", () => {
+    for (const mode of ["chat", "explain", "hint", "quiz"] as const) {
+      const parsed = TutorRequestSchema.parse({
+        message: "How does a correspondent bank settle a USD payment?",
+        mode,
+        context: { surface: "lesson", module_id: "mod-07" },
+        history: [{ role: "user", content: "what is a nostro?" }],
+      });
+      expect(parsed.mode).toBe(mode);
+      expect(parsed.context.surface).toBe("lesson");
+      expect(parsed.history[0].role).toBe("user");
+    }
+  });
+
+  it("defaults mode to chat and history to empty, mirroring TutorRequest", () => {
+    const parsed = TutorRequestSchema.parse({
+      message: "hi",
+      context: { surface: "global" },
+    });
+    expect(parsed.mode).toBe("chat");
+    expect(parsed.history).toEqual([]);
+  });
+
+  it("enforces the same bounds as the Pydantic request", () => {
+    const context = { surface: "global" };
+    const turn = { role: "user", content: "x" };
+    const nineTurns = Array.from({ length: 9 }, () => turn);
+
+    expect(() => TutorRequestSchema.parse({ message: "", context })).toThrow();
+    expect(() => TutorRequestSchema.parse({ message: "m".repeat(2001), context })).toThrow();
+    expect(() =>
+      TutorRequestSchema.parse({ message: "hi", context, history: nineTurns }),
+    ).toThrow();
+    expect(() =>
+      TutorRequestSchema.parse({
+        message: "hi",
+        context,
+        history: [{ role: "user", content: "c".repeat(3001) }],
+      }),
+    ).toThrow();
+
+    const atLimit = TutorRequestSchema.parse({
+      message: "m".repeat(2000),
+      context,
+      history: nineTurns.slice(0, 8),
+    });
+    expect(atLimit.message).toHaveLength(2000);
+    expect(atLimit.history).toHaveLength(8);
+  });
+});
+
+const tutorResponseFixture = {
+  answer: "A nostro is the account you hold with your correspondent bank.",
+  citations: [
+    {
+      source_id: "lesson-07",
+      title: "Correspondent banking",
+      url: "https://relay.example/lesson-07",
+      evidence: "Nostro accounts are held with the correspondent.",
+    },
+  ],
+  follow_up: "Want the vostro side?",
+  needs_clarification: false,
+  mode: "explain",
+  grounded: true,
+  safety_notice: null,
+  turn_id: "3f1d5b6c-8a2e-4f7b-9c1d-2e3f4a5b6c7d",
+};
+
+describe("TutorResponse schema", () => {
+  it("parses a full response including the server-owned fields", () => {
+    const parsed = TutorResponseSchema.parse(tutorResponseFixture);
+    expect(parsed.answer).toContain("nostro");
+    expect(parsed.citations[0].source_id).toBe("lesson-07");
+    expect(parsed.mode).toBe("explain");
+    expect(parsed.grounded).toBe(true);
+    expect(parsed.turn_id).toBe("3f1d5b6c-8a2e-4f7b-9c1d-2e3f4a5b6c7d");
+    expect(parsed.needs_clarification).toBe(false);
+  });
+
+  it("rejects a response missing answer, mode, grounded, or turn_id", () => {
+    for (const field of ["answer", "mode", "grounded", "turn_id"] as const) {
+      const payload: Record<string, unknown> = { ...tutorResponseFixture };
+      delete payload[field];
+      expect(
+        () => TutorResponseSchema.parse(payload),
+        `a response missing "${field}" must not parse`,
+      ).toThrow();
+    }
+  });
+
+  it("tolerates null for follow_up, safety_notice, and citation url", () => {
+    const parsed = TutorResponseSchema.parse({
+      ...tutorResponseFixture,
+      follow_up: null,
+      safety_notice: null,
+      citations: [
+        {
+          source_id: "lesson-07",
+          title: "Correspondent banking",
+          url: null,
+          evidence: "Nostro accounts are held with the correspondent.",
+        },
+      ],
+    });
+    expect(parsed.follow_up ?? null).toBeNull();
+    expect(parsed.safety_notice ?? null).toBeNull();
+    expect(parsed.citations[0].url ?? null).toBeNull();
+    expect(parsed.answer).toContain("nostro");
   });
 });
 
