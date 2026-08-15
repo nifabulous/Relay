@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import IO
 
 API_URL = "https://api.openai.com/v1/responses"
 MODEL_PATTERN = re.compile(r"^[A-Za-z0-9._:/-]+$")
@@ -33,16 +34,63 @@ def bound_input(text: str, max_bytes: int) -> str:
     return prefix + TRUNCATION_MARKER
 
 
-def build_payload(model: str, reasoning_effort: str, prompt: str) -> dict[str, object]:
-    """Build a Responses request, omitting reasoning for ``none``."""
-    payload: dict[str, object] = {"model": model, "input": prompt}
+def build_payload(
+    model: str,
+    reasoning_effort: str,
+    instructions: str,
+    prompt: str,
+    max_output_tokens: int,
+) -> dict[str, object]:
+    """Build a Responses request.
+
+    ``instructions`` carries the trusted contract and ``input`` carries the
+    untrusted GitHub payload, so a hostile diff cannot present itself as
+    policy. ``store`` is explicitly false: the Responses API otherwise retains
+    application state for 30 days, and for a payment project retention is a
+    decision to make, not a default to inherit. Reasoning is omitted for
+    ``none``, and generation is capped server-side rather than only trimmed
+    after the fact.
+    """
+    payload: dict[str, object] = {
+        "model": model,
+        "instructions": instructions,
+        "input": prompt,
+        "store": False,
+        "max_output_tokens": max_output_tokens,
+    }
     if reasoning_effort != "none":
         payload["reasoning"] = {"effort": reasoning_effort}
     return payload
 
 
+def read_bounded_body(stream: IO[bytes], max_bytes: int) -> dict[str, object]:
+    """Read at most ``max_bytes`` of JSON, refusing anything larger."""
+    raw = stream.read(max_bytes + 1)
+    if len(raw) > max_bytes:
+        raise RuntimeError(f"OpenAI Responses body exceeded {max_bytes} bytes")
+    try:
+        body = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise RuntimeError("OpenAI Responses returned an invalid response") from None
+    if not isinstance(body, dict):
+        raise RuntimeError("OpenAI Responses returned an invalid response")
+    return body
+
+
+def enforce_output_bytes(text: str, max_bytes: int) -> str:
+    """Reject an oversized model output instead of writing it out."""
+    size = len(text.encode("utf-8"))
+    if size > max_bytes:
+        raise RuntimeError(f"OpenAI Responses output exceeded {max_bytes} bytes ({size})")
+    return text
+
+
 def extract_output(response: dict[str, object]) -> str:
     """Extract output text without echoing arbitrary response content."""
+    if response.get("status") == "incomplete":
+        details = response.get("incomplete_details")
+        reason = details.get("reason") if isinstance(details, dict) else None
+        raise RuntimeError(f"OpenAI Responses returned an incomplete response ({reason or 'unknown'})")
     direct = response.get("output_text")
     if isinstance(direct, str) and direct:
         return direct
@@ -63,8 +111,16 @@ def extract_output(response: dict[str, object]) -> str:
     return "\n".join(chunks)
 
 
-def request_response(model: str, reasoning_effort: str, prompt: str, api_key: str) -> str:
-    payload = build_payload(model, reasoning_effort, prompt)
+def request_response(
+    model: str,
+    reasoning_effort: str,
+    instructions: str,
+    prompt: str,
+    api_key: str,
+    max_output_tokens: int,
+    max_output_bytes: int,
+) -> str:
+    payload = build_payload(model, reasoning_effort, instructions, prompt, max_output_tokens)
     request = urllib.request.Request(
         API_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -76,43 +132,61 @@ def request_response(model: str, reasoning_effort: str, prompt: str, api_key: st
     )
     try:
         with urllib.request.urlopen(request, timeout=120) as response:
-            body = json.load(response)
+            # A response envelope is metadata plus the bounded output; allow
+            # headroom over the output ceiling but never an unbounded read.
+            body = read_bounded_body(response, max_output_bytes * 4)
     except urllib.error.HTTPError as error:
         raise RuntimeError(f"OpenAI Responses request failed with HTTP {error.code}") from None
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+    except (urllib.error.URLError, TimeoutError):
         raise RuntimeError("OpenAI Responses request failed") from None
-    if not isinstance(body, dict):
-        raise RuntimeError("OpenAI Responses returned an invalid response")
     result = extract_output(body)
     if not result:
         raise RuntimeError("OpenAI Responses returned no text")
-    return result
+    return enforce_output_bytes(result, max_output_bytes)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
     parser.add_argument("--reasoning-effort", required=True, choices=sorted(EFFORTS))
+    parser.add_argument("--instructions", required=True, dest="instructions_path", type=Path)
     parser.add_argument("--input", required=True, dest="input_path", type=Path)
     parser.add_argument("--output", required=True, dest="output_path", type=Path)
     parser.add_argument("--max-input-bytes", required=True, type=int)
+    parser.add_argument("--max-output-tokens", required=True, type=int)
+    parser.add_argument("--max-output-bytes", required=True, type=int)
     args = parser.parse_args(argv)
     if not MODEL_PATTERN.fullmatch(args.model):
         parser.error("--model contains unsupported characters")
     if args.max_input_bytes <= 0:
         parser.error("--max-input-bytes must be positive")
+    if args.max_output_tokens <= 0:
+        parser.error("--max-output-tokens must be positive")
+    if args.max_output_bytes <= 0:
+        parser.error("--max-output-bytes must be positive")
     return args
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv or sys.argv[1:])
+    args = parse_args(argv if argv is not None else sys.argv[1:])
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         print("OPENAI_API_KEY is required", file=sys.stderr)
         return 1
     try:
+        instructions = bound_input(
+            args.instructions_path.read_text(encoding="utf-8"), args.max_input_bytes
+        )
         prompt = bound_input(args.input_path.read_text(encoding="utf-8"), args.max_input_bytes)
-        result = request_response(args.model, args.reasoning_effort, prompt, api_key)
+        result = request_response(
+            args.model,
+            args.reasoning_effort,
+            instructions,
+            prompt,
+            api_key,
+            args.max_output_tokens,
+            args.max_output_bytes,
+        )
         args.output_path.write_text(result, encoding="utf-8")
     except (OSError, ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
