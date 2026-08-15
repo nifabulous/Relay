@@ -137,6 +137,11 @@ run_suppression_case() {
   printf '%s\n' "$(jq -n --arg login "$login" --arg marker "$marker" \
     '{login: $login, body: ($marker + "\n\nprior comment")}')" >"$STUB_DIR/comments.jsonl"
 
+  # The script's own exit status is kept separate from the suppression signal.
+  # An empty posted.log only means "suppressed" when the script succeeded;
+  # otherwise the run failed for an unrelated reason and that reason is what
+  # the developer needs to see.
+  local status=0
   env \
     PATH="$STUB_DIR:$PATH" \
     CODEX_STUB_DIR="$STUB_DIR" \
@@ -148,12 +153,42 @@ run_suppression_case() {
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
-    CODEX_MAX_OUTPUT_TOKENS=6000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
     CODEX_MAX_OUTPUT_BYTES=50000 \
     CODEX_BOT_LOGIN='github-actions[bot]' \
-    "$ROOT/$script" "$number" >/dev/null 2>&1
+    "$ROOT/$script" "$number" >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status != 0 )); then
+    printf '%s exited %d for #%s; this is not a suppression result:\n' \
+      "$script" "$status" "$number" >&2
+    cat "$STUB_DIR/run.log" >&2
+    return 2
+  fi
 
   [[ -s "$STUB_DIR/posted.log" ]]
+}
+
+# Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
+expect_posted() {
+  local message="$1"
+  shift
+  run_suppression_case "$@"
+  case $? in
+    0) ;;
+    1) fail "$message" ;;
+    *) fail "Suppression case could not be evaluated: $message" ;;
+  esac
+}
+
+expect_suppressed() {
+  local message="$1"
+  shift
+  run_suppression_case "$@"
+  case $? in
+    1) ;;
+    0) fail "$message" ;;
+    *) fail "Suppression case could not be evaluated: $message" ;;
+  esac
 }
 
 printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
@@ -162,12 +197,10 @@ jq -n '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
         headRefName: "topic", headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
 PR_MARKER='<!-- codex-pr-review:15:deadbeef -->'
 
-if ! run_suppression_case scripts/codex_review_pr.sh 15 "$PR_MARKER" "pr-author"; then
-  fail 'A non-bot comment carrying the marker suppressed the PR review.'
-fi
-if run_suppression_case scripts/codex_review_pr.sh 15 "$PR_MARKER" 'github-actions[bot]'; then
-  fail 'A bot comment carrying the marker failed to suppress a duplicate PR review.'
-fi
+expect_posted 'A non-bot comment carrying the marker suppressed the PR review.' \
+  scripts/codex_review_pr.sh 15 "$PR_MARKER" "pr-author"
+expect_suppressed 'A bot comment carrying the marker failed to suppress a duplicate PR review.' \
+  scripts/codex_review_pr.sh 15 "$PR_MARKER" 'github-actions[bot]'
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",
@@ -175,12 +208,10 @@ jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
 ISSUE_FINGERPRINT="$(jq -cn '{title: "t", body: "b"}' | PATH="$STUB_DIR:$PATH" sha256sum | cut -d' ' -f1)"
 ISSUE_MARKER="<!-- codex-issue-triage:21:${ISSUE_FINGERPRINT} -->"
 
-if ! run_suppression_case scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" "issue-author"; then
-  fail 'A non-bot comment carrying the marker suppressed the issue triage.'
-fi
-if run_suppression_case scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" 'github-actions[bot]'; then
-  fail 'A bot comment carrying the marker failed to suppress a duplicate issue triage.'
-fi
+expect_posted 'A non-bot comment carrying the marker suppressed the issue triage.' \
+  scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" "issue-author"
+expect_suppressed 'A bot comment carrying the marker failed to suppress a duplicate issue triage.' \
+  scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" 'github-actions[bot]'
 
 if (( FAILURES > 0 )); then
   printf '%d Codex automation assertions failed.\n' "$FAILURES" >&2

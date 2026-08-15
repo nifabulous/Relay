@@ -75,13 +75,27 @@ def test_bounded_body_reads_a_response_within_the_limit() -> None:
     assert codex_responses.read_bounded_body(io.BytesIO(body), 4096) == {"output_text": "ok"}
 
 
-def test_incomplete_responses_are_reported_rather_than_silently_truncated() -> None:
+def test_incomplete_response_with_text_is_posted_as_a_marked_truncated_review() -> None:
+    result = codex_responses.extract_output(
+        {
+            "status": "incomplete",
+            "incomplete_details": {"reason": "max_output_tokens"},
+            "output_text": "partial",
+        }
+    )
+
+    assert result.startswith("partial")
+    assert "TRUNCATED OUTPUT" in result
+    assert "max_output_tokens" in result
+
+
+def test_incomplete_response_with_no_text_is_fatal() -> None:
     with pytest.raises(RuntimeError, match="incomplete"):
         codex_responses.extract_output(
             {
                 "status": "incomplete",
                 "incomplete_details": {"reason": "max_output_tokens"},
-                "output_text": "partial",
+                "output_text": "",
             }
         )
 
@@ -91,25 +105,88 @@ def test_output_larger_than_the_byte_ceiling_is_rejected() -> None:
         codex_responses.enforce_output_bytes("y" * 200, 100)
 
 
+def args_for(max_output_tokens: str, max_output_bytes: str) -> list[str]:
+    return [
+        "--model",
+        "gpt-5.3-codex",
+        "--reasoning-effort",
+        "medium",
+        "--instructions",
+        "instructions.md",
+        "--input",
+        "input.md",
+        "--output",
+        "out.md",
+        "--max-input-bytes",
+        "100",
+        "--max-output-tokens",
+        max_output_tokens,
+        "--max-output-bytes",
+        max_output_bytes,
+    ]
+
+
 def test_parse_args_rejects_a_non_positive_output_token_cap() -> None:
     with pytest.raises(SystemExit):
-        codex_responses.parse_args(
+        codex_responses.parse_args(args_for("0", "100"))
+
+
+def test_parse_args_rejects_a_byte_ceiling_the_token_cap_cannot_reach() -> None:
+    with pytest.raises(SystemExit):
+        codex_responses.parse_args(args_for("6000", "50000"))
+
+
+def test_parse_args_accepts_coherent_output_ceilings() -> None:
+    args = codex_responses.parse_args(args_for("32000", "50000"))
+
+    assert args.max_output_tokens == 32000
+    assert args.max_output_bytes == 50000
+
+
+def test_input_budget_is_shared_between_instructions_and_payload(tmp_path) -> None:
+    instructions = tmp_path / "instructions.md"
+    payload = tmp_path / "input.md"
+    instructions.write_text("i" * 60, encoding="utf-8")
+    payload.write_text("p" * 500, encoding="utf-8")
+
+    sent: dict[str, object] = {}
+
+    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes):
+        sent["instructions"] = instructions_text
+        sent["prompt"] = prompt
+        return "review"
+
+    original = codex_responses.request_response
+    codex_responses.request_response = capture
+    try:
+        import os
+
+        os.environ["OPENAI_API_KEY"] = "test-key"
+        exit_code = codex_responses.main(
             [
                 "--model",
                 "gpt-5.3-codex",
                 "--reasoning-effort",
                 "medium",
                 "--instructions",
-                "instructions.md",
+                str(instructions),
                 "--input",
-                "input.md",
+                str(payload),
                 "--output",
-                "out.md",
+                str(tmp_path / "out.md"),
                 "--max-input-bytes",
                 "100",
                 "--max-output-tokens",
-                "0",
+                "32000",
                 "--max-output-bytes",
-                "100",
+                "50000",
             ]
         )
+    finally:
+        codex_responses.request_response = original
+
+    assert exit_code == 0
+    total = len(str(sent["instructions"]).encode("utf-8")) + len(
+        str(sent["prompt"]).encode("utf-8")
+    )
+    assert total <= 100

@@ -183,13 +183,37 @@ def _redact_bic(match: "re.Match[str]") -> str:
     return token
 
 
-def redact_sensitive_text(value: str) -> str:
-    """Replace sensitive identifiers in ``value`` with typed placeholders."""
+def _apply_rules(value: str, *, include_bic: bool) -> str:
+    """Apply the redaction rules in the one order that cannot split an identifier."""
     value = _SECRET_RE.sub("[SECRET]", value)
     value = _EMAIL_RE.sub("[EMAIL]", value)
     value = _UETR_RE.sub("[UETR]", value)
     value = _IBAN_RE.sub("[IBAN]", value)
-    value = _BIC_RE.sub(_redact_bic, value)
+    if include_bic:
+        value = _BIC_RE.sub(_redact_bic, value)
     value = _PHONE_RE.sub(_redact_phone, value)
     value = _ACCOUNT_RE.sub("[ACCOUNT]", value)
     return value
+
+
+def redact_sensitive_text(value: str) -> str:
+    """Replace sensitive identifiers in ``value`` with typed placeholders."""
+    return _apply_rules(value, include_bic=True)
+
+
+def redact_sensitive_text_preserving_bic(value: str) -> str:
+    """Redact everything except BIC/SWIFT codes.
+
+    This is **not** a tutor entry point and must never be reached from the
+    tutor path: the module invariant above still holds there, where a learner's
+    counterparty BIC is a fact about that learner's payment. It exists for
+    source-code review payloads, where the text is the repository's own seed
+    tables and a BIC is public directory data identifying an institution — data
+    already committed in the clear. Redacting it there protects nothing and
+    blinds the reviewer to exactly what it must compare: duplicate BICs,
+    BIC/country mismatches, malformed 11-character branch codes.
+
+    Every other identifier type is still redacted, in the same order, so a
+    grouped IBAN cannot be split by the phone rule.
+    """
+    return _apply_rules(value, include_bic=False)

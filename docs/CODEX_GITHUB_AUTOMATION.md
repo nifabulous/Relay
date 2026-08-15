@@ -11,9 +11,9 @@ In the repository settings:
 3. Optionally add `CODEX_MODEL` as a repository variable. It defaults to `gpt-5.3-codex`.
 4. Optionally add `CODEX_REASONING_EFFORT`. It defaults to `medium` and accepts `none`, `low`, `medium`, `high`, or `xhigh`.
 5. Optionally add `CODEX_MAX_ITEMS`. It defaults to `10` scheduled items per workflow run.
-6. Optionally add `CODEX_MAX_INPUT_BYTES`. It defaults to `120000` bytes per review or triage request.
-7. Optionally add `CODEX_MAX_OUTPUT_TOKENS`. It defaults to `6000` and is sent to the API as `max_output_tokens`, so it caps generation cost and latency rather than only trimming the reply afterwards.
-8. Optionally add `CODEX_MAX_OUTPUT_BYTES`. It defaults to `50000`. A response larger than this is rejected before it is written or posted.
+6. Optionally add `CODEX_MAX_INPUT_BYTES`. It defaults to `120000` bytes per review or triage request. It is one budget for the whole request: the trusted instructions are drawn first and the untrusted payload receives the remainder.
+7. Optionally add `CODEX_MAX_OUTPUT_TOKENS`. It defaults to `32000` and is sent to the API as `max_output_tokens`, so it caps generation cost and latency rather than only trimming the reply afterwards. On a reasoning model this budget covers reasoning tokens as well as the visible reply, so it must stay well above the reasoning reserve; a value that starves the reply produces an `incomplete` response instead of a review.
+8. Optionally add `CODEX_MAX_OUTPUT_BYTES`. It defaults to `50000`. A response larger than this is rejected before it is written or posted. It must be reachable within `CODEX_MAX_OUTPUT_TOKENS` (four bytes per token); an unreachable ceiling is refused at startup so raising one cap forces a decision about the other.
 9. Optionally add `CODEX_BOT_LOGIN`. It defaults to `github-actions[bot]` and is the only comment author whose duplicate-suppression marker is honoured.
 10. Create the labels `codex-review` and `codex-triage` if scheduled review is wanted.
 
@@ -54,7 +54,11 @@ Each comment carries a marker keyed to the PR head SHA or the issue title/body f
 
 ## Safety boundary
 
-Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized before submission: `scripts/codex_sanitize.py` reuses `app/tutor/redaction.py` — the repository's established redactor for IBANs (contiguous and grouped), BIC/SWIFT codes, UETRs, account numbers, emails, and phone numbers — and adds PEM key blocks, vendor API keys, and card-shaped numbers on top. Sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
+Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized before submission: `scripts/codex_sanitize.py` reuses `app/tutor/redaction.py` — the repository's established redactor for IBANs (contiguous and grouped), UETRs, account numbers, emails, and phone numbers — and adds PEM key blocks, vendor API keys, and card-shaped numbers on top.
+
+Three exemptions are deliberate, because the corpus is source diffs rather than learner prose. BIC/SWIFT codes are preserved: they are public directory data already committed to this repository, and collapsing them would hide the values a payment-domain review has to compare. Git metadata lines (`index …`, `@@ …`) and ISO-8601 date/times are preserved too: neither can carry a personal identifier, and redacting them mislabels a blob hash as an account number or a migration's `Create Date` as a phone number. The tutor path still redacts BICs unconditionally — `redact_sensitive_text` is unchanged and `redact_sensitive_text_preserving_bic` is reachable only from this code-review path.
+
+Sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
 
 ## Cost and operations
 

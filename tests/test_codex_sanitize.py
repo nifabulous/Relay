@@ -48,12 +48,30 @@ def test_redacts_grouped_ibans_that_a_person_actually_pastes() -> None:
     assert "9268" not in sanitized
 
 
-def test_redacts_bic_swift_codes() -> None:
-    sanitized = sanitize("Route via BIC DEUTDEFF and CITIUS33 and BNPAFRPPXXX.\n")
+def test_preserves_bic_swift_codes_so_seed_data_stays_reviewable() -> None:
+    source = '    ("CITIUS33", "Citibank", "US", "New York", "USD"),\n'
 
-    assert "DEUTDEFF" not in sanitized
-    assert "CITIUS33" not in sanitized
-    assert "BNPAFRPPXXX" not in sanitized
+    assert sanitize(source) == source
+    assert "BNPAFRPPXXX" in sanitize("Route via BIC BNPAFRPPXXX.\n")
+
+
+def test_preserves_git_metadata_lines() -> None:
+    source = (
+        "diff --git a/app/services/seed.py b/app/services/seed.py\n"
+        "index 72e1982..0123456789012 100644\n"
+        "@@ -1234567890123,7 +1234567890123,9 @@ def seed_banks(session):\n"
+    )
+
+    assert sanitize(source) == source
+
+
+def test_preserves_iso_8601_dates_and_timestamps() -> None:
+    source = (
+        "Create Date: 2026-08-13 12:53:15.865474\n"
+        '"createdAt": "2026-08-15T09:30:00Z"\n'
+    )
+
+    assert sanitize(source) == source
 
 
 def test_redacts_uetrs() -> None:
