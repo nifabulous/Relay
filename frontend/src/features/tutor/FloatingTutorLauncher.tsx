@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+import { apiRequest } from "../../api/client";
 import { useTutorSurfaceContext } from "./tutorSurfaceStore";
 import "./FloatingTutorLauncher.css";
 
@@ -52,6 +53,35 @@ function TutorIcon() {
 export function FloatingTutorLauncher() {
   const context = useTutorSurfaceContext();
   const [open, setOpen] = useState(false);
+  /*
+   * DT2. Three states, not two: unknown while the probe is in flight, then
+   * available or not. Rendering the pill only when available makes an absent
+   * control the signal, and an absent control teaches nothing — a learner who
+   * saw the tutor elsewhere concludes Relay is broken rather than that this
+   * deployment runs without it.
+   *
+   * The probe hits GET /api/tutor/availability, which is deliberately outside
+   * the rate limit and the daily ceiling. Asking on the metered POST would have
+   * spent a learner's quota, and the deployment's budget, on ordinary browsing.
+   */
+  const [available, setAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiRequest<{ available: boolean }>("/api/tutor/availability")
+      .then((body) => {
+        if (!cancelled) setAvailable(Boolean(body?.available));
+      })
+      // A probe that fails is not evidence the tutor is off, but it is evidence
+      // we cannot promise it works. Disable rather than offer a control that
+      // will fail on click.
+      .catch(() => {
+        if (!cancelled) setAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [restoreFocus, setRestoreFocus] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
 
@@ -84,6 +114,8 @@ export function FloatingTutorLauncher() {
         type="button"
         ref={launcherRef}
         className="tutor-fab"
+        disabled={available === false}
+        aria-describedby={available === false ? "tutor-fab-unavailable" : undefined}
         aria-expanded={open}
         aria-controls={open ? "tutor-floating-panel" : undefined}
         onClick={() => (open ? close() : setOpen(true))}
@@ -91,6 +123,17 @@ export function FloatingTutorLauncher() {
         <TutorIcon />
         <span className="tutor-fab__label">Tutor</span>
       </button>
+      {available === false && (
+        /* Rendered in the document, not a title attribute. A tooltip needs
+           hover, which touch devices do not have — so a tooltip-only
+           explanation is invisible on exactly the viewport where this pill is
+           most prominent. Visually hidden but reachable by screen reader and
+           announced as the button's description. */
+        <span id="tutor-fab-unavailable" className="tutor-fab__reason">
+          The tutor is not available in this deployment. Everything else in Relay
+          works as usual.
+        </span>
+      )}
 
       {open && (
         <div className="tutor-floating-panel" id="tutor-floating-panel">

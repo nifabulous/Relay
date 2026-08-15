@@ -438,3 +438,71 @@ describe("TutorPanel — focus on open", () => {
     expect(screen.getByRole("heading", { name: /tutor/i })).not.toHaveFocus();
   });
 });
+
+// ── Review fixes: T11, T12 ──────────────────────────────────────────────────
+
+describe("TutorPanel — conversation survival and error kinds", () => {
+  it("survives a tracking poll that only changes the visible summary", async () => {
+    /*
+     * T11. TrackingPage polls on a schedule and rebuilds its context each time.
+     * contextIdentity excludes result_summary for exactly this reason, but the
+     * panel also has to not reset on the new object identity — otherwise a
+     * learner mid-question loses the thread every few seconds, which reads as
+     * the tutor forgetting rather than as a poll.
+     */
+    const sent: Array<Record<string, unknown>> = [];
+    server.use(
+      http.post("/api/tutor/chat", async ({ request }) => {
+        sent.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json(grounded());
+      }),
+    );
+    const first = buildTrackingContext({
+      status: "In progress",
+      eventNames: ["Created"],
+      currency: "USD",
+      amount: "1.00",
+    });
+    const { rerender } = render(<TutorPanel context={first} />);
+    await ask("What does this mean?");
+    await waitFor(() => expect(sent).toHaveLength(1));
+
+    for (const events of [["Created", "Sent"], ["Created", "Sent", "Compliance review"]]) {
+      rerender(
+        <TutorPanel
+          context={buildTrackingContext({
+            status: "In progress",
+            eventNames: events,
+            currency: "USD",
+            amount: "1.00",
+          })}
+        />,
+      );
+    }
+    // The answer from before the polls is still on screen.
+    expect(screen.getByText(/a bic identifies an institution/i)).toBeVisible();
+    await ask("And now?");
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect((sent[1].history as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  it("offers a retry for a transient outage", async () => {
+    // T12. "Temporarily unavailable" and "not enabled here" both arrive as 503.
+    // Treating them alike either invites a pointless retry or hides a real one.
+    respondWith(
+      { detail: "The tutor is temporarily unavailable. Please try again shortly." },
+      503,
+    );
+    render(<TutorPanel context={LESSON} />);
+    await ask();
+    expect(await screen.findByRole("button", { name: /retry/i })).toBeVisible();
+  });
+
+  it("offers no retry when the deployment simply has no tutor", async () => {
+    respondWith({ detail: "The tutor is not enabled." }, 503);
+    render(<TutorPanel context={LESSON} />);
+    await ask();
+    expect(await screen.findByText(/not available/i)).toBeVisible();
+    expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
+  });
+});

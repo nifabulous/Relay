@@ -87,13 +87,37 @@ function describeFailure(problem: ApiProblem | null): {
 } {
   const status = problem?.status;
   if (status === 503) {
-    // "Off" is a deployment fact, not a fault. Offering a retry invites the
-    // learner to keep trying something that will never succeed.
+    /*
+     * T12. Two different situations arrive as 503 and need opposite responses.
+     *
+     * "Not enabled" / "not configured" is a deployment fact, not a fault:
+     * offering a retry invites the learner to keep trying something that can
+     * never succeed. "Temporarily unavailable" is a provider blip behind a
+     * circuit breaker, where retrying shortly is exactly the right move and
+     * hiding the button strands them.
+     *
+     * Keyed on the server's own wording, which is a fixed string the router
+     * owns rather than model output.
+     */
+    const detail = (problem?.detail ?? "").toLowerCase();
+    const permanent =
+      detail.includes("not enabled") ||
+      detail.includes("not configured") ||
+      detail.includes("requires a shared rate limit") ||
+      detail.includes("requires a daily spend ceiling");
+    if (permanent) {
+      return {
+        message:
+          "The tutor is not available in this deployment. Everything else in " +
+          "Relay works as usual.",
+        retryable: false,
+      };
+    }
     return {
       message:
-        "The tutor is not available in this deployment. Everything else in " +
-        "Relay works as usual.",
-      retryable: false,
+        "The tutor is briefly unavailable. This is a Relay-side problem, not " +
+        "your question.",
+      retryable: true,
     };
   }
   if (status === 429) {

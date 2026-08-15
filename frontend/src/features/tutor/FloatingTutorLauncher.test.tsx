@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "../../test/server";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FloatingTutorLauncher } from "./FloatingTutorLauncher";
@@ -116,5 +118,50 @@ describe("FloatingTutorLauncher", () => {
     pageControl.focus();
     expect(pageControl).toHaveFocus();
     expect(screen.getByRole("log")).toBeInTheDocument();
+  });
+});
+
+// ── Review fixes: DT2, T12 ──────────────────────────────────────────────────
+
+describe("FloatingTutorLauncher — unavailable deployment", () => {
+  it("renders the pill disabled rather than vanishing", async () => {
+    /*
+     * DT2. An absent control teaches nothing. A learner who saw the tutor on a
+     * colleague's screen, or in docs, and finds no trace of it here concludes
+     * Relay is broken rather than that this deployment runs without it.
+     */
+    server.use(
+      http.get("/api/tutor/availability", () => HttpResponse.json({ available: false })),
+    );
+    render(<FloatingTutorLauncher />);
+    const pill = await screen.findByRole("button", { name: /tutor/i });
+    expect(pill).toBeDisabled();
+  });
+
+  it("explains why on tap, not only on hover", async () => {
+    // Touch devices have no hover. A tooltip-only explanation is invisible to
+    // exactly the learners on the viewport where the pill is most prominent.
+    server.use(
+      http.get("/api/tutor/availability", () => HttpResponse.json({ available: false })),
+    );
+    render(<FloatingTutorLauncher />);
+    const pill = await screen.findByRole("button", { name: /tutor/i });
+    expect(pill).toHaveAccessibleDescription(/not available|not enabled/i);
+  });
+
+  it("asks availability once per mount, not per render", async () => {
+    // The probe is unmetered but not free; one request per page is the budget.
+    let calls = 0;
+    server.use(
+      http.get("/api/tutor/availability", () => {
+        calls += 1;
+        return HttpResponse.json({ available: true });
+      }),
+    );
+    const { rerender } = render(<FloatingTutorLauncher />);
+    await screen.findByRole("button", { name: /tutor/i });
+    rerender(<FloatingTutorLauncher />);
+    rerender(<FloatingTutorLauncher />);
+    await waitFor(() => expect(calls).toBe(1));
   });
 });

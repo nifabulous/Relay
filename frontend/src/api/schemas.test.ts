@@ -209,7 +209,7 @@ describe("TutorRequest schema", () => {
       TutorRequestSchema.parse({
         message: "hi",
         context,
-        history: [{ role: "user", content: "c".repeat(3001) }],
+        history: [{ role: "user", content: "c".repeat(6001) }],
       }),
     ).toThrow();
 

@@ -146,3 +146,58 @@
 [data-reduced-motion="true"] .tutor-floating-panel {
   animation: none;
 }
+
+/* The disabled pill stays visible and stays honest: dimmed, not hidden, with a
+   not-allowed cursor so the affordance reads as "off" rather than "broken". */
+/*
+ * CT2. Elevation is expressed as an EFFECT, not as one mechanism.
+ *
+ * A drop shadow works by being darker than what is behind it. On Relay's dark
+ * canvas (#080b12) the shadow colour #1d2433 is 5.3x LIGHTER, so it reads as a
+ * faint smudge or as nothing at all — the floating layer would fall back to the
+ * 1.51:1 hairline that DESIGN.md already records as a tracked gap, which is the
+ * discoverability problem this control exists to solve.
+ *
+ * Dark interfaces have always expressed elevation by lifting the surface rather
+ * than casting a shadow, which is why the palette already carries a lighter
+ * surface step. Same rule, correct expression per theme.
+ */
+:root:not([data-theme="dark"]) .tutor-fab,
+:root:not([data-theme="dark"]) .tutor-floating-panel {
+  box-shadow: 0 2px 8px rgba(29, 36, 51, 0.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tutor-fab,
+  :root:not([data-theme="light"]) .tutor-floating-panel {
+    box-shadow: none;
+    background: var(--color-surface-2);
+    border-color: var(--color-border-strong);
+  }
+}
+
+:root[data-theme="dark"] .tutor-fab,
+:root[data-theme="dark"] .tutor-floating-panel {
+  box-shadow: none;
+  background: var(--color-surface-2);
+  border-color: var(--color-border-strong);
+}
+
+.tutor-fab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Visually hidden, still announced. The explanation has to reach a touch user,
+   who has no hover and therefore never sees a tooltip. */
+.tutor-fab__reason {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
