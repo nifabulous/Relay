@@ -1,0 +1,113 @@
+name: Codex Issue Triage
+
+on:
+  issues:
+    types: [opened, edited, labeled, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to triage
+        required: true
+        type: string
+  schedule:
+    - cron: "47 3 * * 2,4"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: codex-issue-triage-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  triage:
+    if: vars.CODEX_REVIEW_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
+      CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT || 'medium' }}
+      CODEX_MAX_ITEMS: ${{ vars.CODEX_MAX_ITEMS || '10' }}
+      CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '120000' }}
+      CODEX_MAX_OUTPUT_TOKENS: ${{ vars.CODEX_MAX_OUTPUT_TOKENS || '32000' }}
+      CODEX_MAX_OUTPUT_BYTES: ${{ vars.CODEX_MAX_OUTPUT_BYTES || '50000' }}
+      CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_ACTION: ${{ github.event.action }}
+      EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
+      EVENT_LABEL_NAME: ${{ github.event.label.name }}
+      DISPATCH_ISSUE_NUMBER: ${{ inputs.issue_number }}
+
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Select issues
+        run: |
+          if [[ ! "$CODEX_MAX_ITEMS" =~ ^[1-9][0-9]*$ ]]; then
+            echo "CODEX_MAX_ITEMS must be a positive integer." >&2
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" == "schedule" ]]; then
+            gh issue list --repo "$GH_REPO" --state open --json number,labels \
+              --jq '[.[] | select([.labels[].name] | index("codex-triage")) | .number] | .[]' \
+              > /tmp/codex-issue-all
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            printf '%s\n' "$DISPATCH_ISSUE_NUMBER" > /tmp/codex-issue-all
+          elif [[ "$EVENT_ACTION" == "labeled" && "$EVENT_LABEL_NAME" != "codex-triage" ]]; then
+            : > /tmp/codex-issue-all
+          else
+            printf '%s\n' "$EVENT_ISSUE_NUMBER" > /tmp/codex-issue-all
+          fi
+          TOTAL=$(wc -l < /tmp/codex-issue-all | tr -d ' ')
+          head -n "$CODEX_MAX_ITEMS" /tmp/codex-issue-all > /tmp/codex-issue-numbers
+          SELECTED=$(wc -l < /tmp/codex-issue-numbers | tr -d ' ')
+          if (( TOTAL > SELECTED )); then
+            echo "Selected $SELECTED of $TOTAL issues because CODEX_MAX_ITEMS=$CODEX_MAX_ITEMS."
+          fi
+          if [[ ! -s /tmp/codex-issue-numbers ]]; then
+            echo "No issues selected for Codex triage."
+          else
+            echo "Selected issues: $(tr '\n' ' ' < /tmp/codex-issue-numbers)"
+          fi
+
+      - name: Run read-only Codex triage
+        id: run_triage
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set +e
+          selected=0
+          failed=0
+          while IFS= read -r issue_number; do
+            [[ -n "$issue_number" ]] || continue
+            selected=$((selected + 1))
+            scripts/codex_triage_issue.sh "$issue_number"
+            status=$?
+            if (( status != 0 )); then
+              failed=$((failed + 1))
+              echo "::warning::Codex triage failed for issue #$issue_number (exit $status)."
+            fi
+          done < /tmp/codex-issue-numbers
+          {
+            echo "### Codex Issue Triage"
+            echo "- Selected: $selected"
+            echo "- Failed: $failed"
+            echo "- Model: $CODEX_MODEL"
+            echo "- Reasoning effort: $CODEX_REASONING_EFFORT"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if (( failed > 0 )); then
+            exit 1
+          fi

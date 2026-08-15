@@ -1,0 +1,111 @@
+name: Codex PR Review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: string
+  schedule:
+    - cron: "17 2 * * 1-5"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: codex-pr-review-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: vars.CODEX_REVIEW_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
+      CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT || 'medium' }}
+      CODEX_MAX_ITEMS: ${{ vars.CODEX_MAX_ITEMS || '10' }}
+      CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '120000' }}
+      CODEX_MAX_OUTPUT_TOKENS: ${{ vars.CODEX_MAX_OUTPUT_TOKENS || '32000' }}
+      CODEX_MAX_OUTPUT_BYTES: ${{ vars.CODEX_MAX_OUTPUT_BYTES || '50000' }}
+      CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+      DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
+
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Select PRs
+        id: targets
+        run: |
+          if [[ ! "$CODEX_MAX_ITEMS" =~ ^[1-9][0-9]*$ ]]; then
+            echo "CODEX_MAX_ITEMS must be a positive integer." >&2
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" == "schedule" ]]; then
+            gh pr list --repo "$GH_REPO" --state open --json number,labels \
+              --jq '[.[] | select([.labels[].name] | index("codex-review")) | .number] | .[]' \
+              > /tmp/codex-pr-all
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            printf '%s\n' "$DISPATCH_PR_NUMBER" > /tmp/codex-pr-all
+          else
+            printf '%s\n' "$EVENT_PR_NUMBER" > /tmp/codex-pr-all
+          fi
+          TOTAL=$(wc -l < /tmp/codex-pr-all | tr -d ' ')
+          head -n "$CODEX_MAX_ITEMS" /tmp/codex-pr-all > /tmp/codex-pr-numbers
+          SELECTED=$(wc -l < /tmp/codex-pr-numbers | tr -d ' ')
+          if (( TOTAL > SELECTED )); then
+            echo "Selected $SELECTED of $TOTAL PRs because CODEX_MAX_ITEMS=$CODEX_MAX_ITEMS."
+          fi
+          if [[ ! -s /tmp/codex-pr-numbers ]]; then
+            echo "No PRs selected for Codex review."
+          else
+            echo "Selected PRs: $(tr '\n' ' ' < /tmp/codex-pr-numbers)"
+          fi
+
+      - name: Run read-only Codex reviews
+        id: run_reviews
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set +e
+          selected=0
+          failed=0
+          while IFS= read -r pr_number; do
+            [[ -n "$pr_number" ]] || continue
+            selected=$((selected + 1))
+            scripts/codex_review_pr.sh "$pr_number"
+            status=$?
+            if (( status != 0 )); then
+              failed=$((failed + 1))
+              echo "::warning::Codex review failed for PR #$pr_number (exit $status)."
+            fi
+          done < /tmp/codex-pr-numbers
+          {
+            echo "### Codex PR Review"
+            echo "- Selected: $selected"
+            echo "- Failed: $failed"
+            echo "- Model: $CODEX_MODEL"
+            echo "- Reasoning effort: $CODEX_REASONING_EFFORT"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if (( failed > 0 )); then
+            exit 1
+          fi
