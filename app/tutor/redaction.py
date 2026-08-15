@@ -100,7 +100,12 @@ _PHONE_RE = re.compile(r"\+?\(?\d[\d\s().-]{7,17}\d")
 # ("1,000,000") out of range.
 _ACCOUNT_RE = re.compile(r"\b\d{8,}\b")
 
-_BIC_RE = re.compile(r"\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b")
+# Case-insensitive: the cue pattern already was, so an uppercase-only token
+# pattern meant "BIC deutdeff" matched the cue and then leaked the identifier.
+# _looks_like_bic upper-cases before validating the country code.
+_BIC_RE = re.compile(
+    r"\b[A-Za-z]{4}[A-Za-z]{2}[A-Za-z0-9]{2}(?:[A-Za-z0-9]{3})?\b"
+)
 
 _BIC_CUE_RE = re.compile(
     r"(?:\bbic|\bswift)(?:\s+(?:code|codes|address))?\s*$", re.IGNORECASE
@@ -139,6 +144,10 @@ def _looks_like_bic(token: str, prefix: str) -> bool:
     account number, a person. Precision wins for BIC alone; the other
     identifier types are matched aggressively.
     """
+    # Normalise first. The pattern accepts either case because a cued lower-case
+    # BIC ("BIC deutdeff") otherwise slipped through, and every check below
+    # compares against upper-case data.
+    token = token.upper()
     if token[4:6] not in _ISO_3166_ALPHA2:
         return False
     if any(character.isdigit() for character in token):

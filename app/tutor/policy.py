@@ -110,7 +110,14 @@ _SECRET_DISCLOSURE_RE = re.compile(
     r"""\b(?:api[\s_-]?key|admin[\s_-]?key|secret[\s_-]?key|access[\s_-]?token|
              private[\s_-]?key|credentials?|passwords?|passphrase|
              environment\s+variables?|env\s+(?:var|file)|\.env|
-             system\s+prompt|connection\s+string|database\s+url)\b
+             system\s+prompt|connection\s+string|database\s+url|
+             # Bare nouns and common qualifiers: "the API token", "the signing
+             # key", "the client secret", "the connection secret".
+             (?:api|auth|access|bearer|session|signing|client|refresh|service)
+               [\s_-]?tokens?|
+             (?:signing|client|shared|master|encryption|connection|database|db)
+               [\s_-]?secrets?|
+             (?:signing|private|public|encryption|master|secret)[\s_-]?keys?)\b
       # Env-var style names. At least one underscore-terminated segment is
       # required, so a bare "key" in ordinary prose is not caught.
       | \b(?:[A-Za-z][A-Za-z0-9]*_)+(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|URL|CREDENTIAL)\b""",
@@ -127,11 +134,38 @@ _COMPLIANCE_BYPASS_RESPONSE = (
 )
 
 _COMPLIANCE_BYPASS_RE = re.compile(
-    r"""\b(?:bypass|skip|evade|circumvent|override|suppress|defeat|disable|
-             falsif(?:y|ied)|forge|fake|conceal)\b
+    r"""\b(?:bypass(?:ed|ing)?|skip(?:ped|ping)?|evade|evading|circumvent(?:ed|ing)?|
+             override|overriding|suppress(?:ed|ing)?|defeat(?:ed|ing)?|disable[ds]?|
+             falsif(?:y|ied)|forge|fake|conceal|sidestep(?:ped|ping)?|
+             avoid(?:ed|ing)?|dodge|dodging)\b
       | \bturn(?:ing)?\s+off\b
-      | \b(?:get|getting|work|working)\s+a?round\b
-      | \bopt\s+out\s+of\b""",
+      | \b(?:get|getting|got|work|working)\s+(?:a?round|past)\b
+      | \bopt\s+out\s+of\b
+      | \bnot\s+trigger\b""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# "How do controls get bypassed?" is impersonal but still asks for the method.
+# The self-directed gate alone cannot separate it from "What happens when a
+# payment is screened?", so method-seeking framing counts as a request too.
+_METHOD_SEEKING_RE = re.compile(
+    r"""\bhow\s+(?:can|do|does|did|would|could|might)\b
+      | \bhow\s+to\b
+      | \bways?\s+to\b
+      | \b(?:is|are)\s+there\s+(?:a\s+)?ways?\b
+      | \bany\s+way\s+to\b""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Widening the evasion vocabulary to include "avoid" pulls in ordinary quality
+# questions: "how does a bank avoid false positives in screening?" is about
+# doing the control *better*, not escaping it. Guard the benign objects.
+_BENIGN_EVASION_OBJECT_RE = re.compile(
+    r"""\b(?:avoid(?:ed|ing)?|reduce|reducing|prevent(?:ed|ing)?|minimi[sz]e|
+             minimi[sz]ing|cut|cutting)\s+
+        (?:the\s+|a\s+|an\s+)?
+        (?:false\s+positives?|false\s+hits?|delays?|errors?|mistakes?|
+           duplicates?|rework|friction|noise)\b""",
     re.IGNORECASE | re.VERBOSE,
 )
 
@@ -195,7 +229,12 @@ def evaluate_tutor_request(request: TutorRequest) -> PolicyDecision:
     if (
         bypass
         and _COMPLIANCE_OBJECT_RE.search(message)
-        and (_SELF_DIRECTED_RE.search(message) or bypass.start() == 0)
+        and not _BENIGN_EVASION_OBJECT_RE.search(message)
+        and (
+            _SELF_DIRECTED_RE.search(message)
+            or _METHOD_SEEKING_RE.search(message)
+            or bypass.start() == 0
+        )
     ):
         return PolicyDecision(
             allowed=False,

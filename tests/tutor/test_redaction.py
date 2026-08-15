@@ -171,3 +171,26 @@ def test_lower_case_iban_is_redacted():
 def test_mixed_case_and_lower_case_grouped_iban_are_redacted():
     assert "[IBAN]" in redact_sensitive_text("Send to De89 3704 0044 0532 0130 00 today.")
     assert "[IBAN]" in redact_sensitive_text("iban gb33 bukb 2020 1555 5555 55 confirmed")
+
+
+def test_lower_case_bic_is_redacted_when_cued():
+    """The BIC pattern was uppercase-only while its cue pattern was not, so a
+    cued lower-case BIC passed through byte-for-byte."""
+    assert redact_sensitive_text("BIC deutdeff routes to Frankfurt.") == (
+        "BIC [BIC] routes to Frankfurt."
+    )
+    assert redact_sensitive_text("SWIFT code deutdeff here.") == "SWIFT code [BIC] here."
+
+
+def test_lower_case_bic_with_digit_or_branch_code_is_redacted_without_a_cue():
+    assert redact_sensitive_text("bic sbininbbxxx") == "bic [BIC]"
+    assert redact_sensitive_text("Route via citius33 first.") == "Route via [BIC] first."
+
+
+def test_lower_case_prose_is_still_not_mistaken_for_a_bic():
+    """Case-insensitivity must not turn ordinary lower-case words into BICs."""
+    for text in (
+        "the beneficiary must be credited before settlement",
+        "required fields are credited to the beneficiary",
+    ):
+        assert redact_sensitive_text(text) == text
