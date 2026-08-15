@@ -12,7 +12,8 @@ _Last updated: 2026-08-13._
 ## 1. Technology
 
 ### Backend
-- **Python 3.9+** (syntax constrained to 3.9 — `Optional[...]`, `List[...]`, not `X | None`).
+- **Python 3.10+** (floor raised from 3.9 on 2026-08-14 for the AI stack). Existing code
+  still uses `Optional[...]` / `List[...]`; the newer `X | None` syntax is now permitted.
 - **FastAPI** — ~25 endpoints under `/api/*`; OpenAPI docs at `/docs`.
 - **Pydantic v2** — request/response schemas (`app/schemas.py`).
 - **SQLAlchemy 2.0** — ORM models (`app/models.py`); **SQLite** in dev (`create_all` on startup),
@@ -35,11 +36,11 @@ _Last updated: 2026-08-13._
   route signature). Contract in **`DESIGN.md`**; WCAG 2.2 AA, reduced-motion, mobile-first.
 
 ### Testing & tooling
-- **Backend:** pytest (732 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
-- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (1,007 unit/integration tests),
+- **Backend:** pytest (846 tests, in-memory SQLite, `StaticPool`), `ruff` (E/F/I).
+- **Frontend:** Vitest 4 + React Testing Library + MSW 2 (1,089 unit/integration tests),
   Playwright + `@axe-core/playwright` (e2e + accessibility), bundle-size gate
   (`npm run check:bundle`), `tsc --noEmit`.
-- **CI:** pytest + ruff across Python 3.9–3.12, plus a frontend job (typecheck, build, vitest, bundle budget) (`.github/workflows/ci.yml`).
+- **CI:** pytest + ruff across Python 3.10–3.12, plus a frontend job (typecheck, build, vitest, bundle budget) (`.github/workflows/ci.yml`).
 
 ### Legacy surface
 - Vanilla HTML/JS/CSS at `/learn` and `/ui` (`app/static/`) — being replaced by Relay, kept
@@ -222,10 +223,10 @@ SWIFT gpi / UETR tracking · MT103 fields & straight-through processing · the M
 # Backend
 python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 uvicorn app.main:app --reload            # http://127.0.0.1:8000 (docs at /docs)
-python -m pytest tests/ -q               # 732 tests
+python -m pytest tests/ -q               # 846 tests
 
 # Frontend
 cd frontend && npm install && npm run dev # http://127.0.0.1:5173/app/
-npm test -- --no-file-parallelism        # 1,007 tests
+npm test -- --no-file-parallelism        # 1,089 tests
 ```
 Relay app: `http://127.0.0.1:8000/app` · Legacy: `/learn`, `/ui`.

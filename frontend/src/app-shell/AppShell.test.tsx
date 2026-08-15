@@ -1,7 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { AppShell } from "./AppShell";
+import { AppShell, reloadPreferences } from "./AppShell";
+import { defaultPreferences, savePreferences } from "../lib/persistence/storage";
 
 // Render with basename="/app" to match production BrowserRouter config.
 // NAV_ITEMS use paths like "/learn" (no /app prefix) — the basename handles it.
@@ -14,6 +16,7 @@ function renderShell(path = "") {
           <Route path="learn" element={<div>Learn placeholder</div>} />
           <Route path="explore" element={<div>Explore placeholder</div>} />
           <Route path="operate" element={<div>Operate placeholder</div>} />
+          <Route path="settings" element={<div>Settings placeholder</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -122,5 +125,65 @@ describe("AppShell", () => {
   it("renders a desktop rail", () => {
     renderShell();
     expect(screen.getByLabelText("Primary navigation")).toBeInTheDocument();
+  });
+});
+
+describe("AppShell preferences", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    reloadPreferences();
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.style.colorScheme = "";
+  });
+
+  it("mounts the preferences menu in the top bar", () => {
+    renderShell();
+    const topbar = screen.getByRole("banner");
+    const trigger = within(topbar).getByRole("button", { name: /preferences/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  // DESIGN.md defines the shell as exactly four workspaces, and mobile as a
+  // four-item bottom bar. Settings is reachable only through the menu.
+  it("does not add Settings as a fifth navigation destination", () => {
+    renderShell();
+
+    expect(screen.getByLabelText("Primary navigation").querySelectorAll("a")).toHaveLength(4);
+    expect(screen.getByLabelText("Mobile navigation").querySelectorAll("a")).toHaveLength(4);
+
+    const rail = screen.getByLabelText("Primary navigation");
+    expect(within(rail).queryByRole("link", { name: /settings/i })).toBeNull();
+  });
+
+  // Nothing applied the stored theme at runtime before this: Task 7.2 shipped
+  // the resolution logic and the pre-paint script, but the React app never
+  // called it, so a change made in the menu would only survive a reload.
+  it("applies an explicit stored theme to the document root on mount", () => {
+    savePreferences({ ...defaultPreferences, theme: "dark" });
+    reloadPreferences();
+
+    renderShell();
+
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+  });
+
+  it("stamps no data-theme for the system preference", () => {
+    renderShell();
+
+    expect(document.documentElement).not.toHaveAttribute("data-theme");
+    expect(document.documentElement.style.colorScheme).toBe("light");
+  });
+
+  // The menu's "All settings" item is the ONLY way in, so this path has to work.
+  it("reaches the settings route through the menu, and closes the menu on the way", async () => {
+    const user = userEvent.setup();
+    renderShell();
+
+    await user.click(screen.getByRole("button", { name: /preferences/i }));
+    await user.click(screen.getByRole("menuitem", { name: /all settings/i }));
+
+    expect(screen.getByText("Settings placeholder")).toBeVisible();
+    expect(screen.queryByRole("menu", { name: /preferences/i })).not.toBeInTheDocument();
   });
 });

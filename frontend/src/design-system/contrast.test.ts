@@ -1,3 +1,12 @@
+/// <reference types="node" />
+// tsconfig's `types` array is deliberately narrow, so node builtins are not
+// ambient. This test reads the shipped stylesheet from disk, so it pulls the
+// node types in explicitly — the same mechanism src/vite-env.d.ts uses for
+// vite/client. (Node-only APIs; this file never ships to the browser.)
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, it, expect } from "vitest";
 
 /**
@@ -5,11 +14,15 @@ import { describe, it, expect } from "vitest";
  *
  * DESIGN.md: "All text and interactive boundaries meet WCAG 2.2 AA contrast."
  *
- * We read the raw token values and compute the contrast ratio between
- * each semantic foreground and its tinted background surface.
+ * Token values are PARSED OUT OF tokens.css rather than mirrored as a
+ * TypeScript literal. The mirror this file used to carry could silently
+ * disagree with the shipped stylesheet, and adding a second (dark) palette
+ * would have doubled that risk. Parsing means the test cannot pass against
+ * values the app does not actually ship.
  */
 
-// Relative luminance per WCAG 2.x
+// ─── Contrast maths (relative luminance per WCAG 2.x) ───────────────────────
+
 function srgbToLin(channel: number): number {
   const c = channel / 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -30,51 +43,231 @@ function contrastRatio(fg: string, bg: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// Token values — these must match tokens.css
-const TOKENS = {
-  success: "#0e5c44",        // darkened from #16825d
-  successBg: "#e8f6ef",
-  warning: "#9a5a0c",        // darkened from #c87b16
-  warningBg: "#fdf4e6",
-  danger: "#9e2b34",         // darkened from #c8424d
-  dangerBg: "#fcecef",
-  inkMuted: "#586273",       // darkened from DESIGN.md for WCAG AA
-  surface3: "#e6eaf2",
-  inkStrong: "#16233d",
-  surface: "#ffffff",
-  // Action palette — used by the `preferred` StatusChip modifier
-  // (--color-action / --color-action-surface in tokens.css). A future token
-  // tweak could silently drop this below AA, so it is guarded here alongside
-  // the other semantic pairs.
-  action: "#3157d5",
-  actionSurface: "#eef2fc",
-} as const;
+// ─── tokens.css parsing ─────────────────────────────────────────────────────
+
+// Read the stylesheet exactly as shipped. Note the indirection through
+// fileURLToPath: under the jsdom environment the global `URL` is jsdom's, and
+// readFileSync rejects it ("The URL must be of scheme file"), so the URL has to
+// be converted to a plain path first. Anchoring on import.meta.url rather than
+// process.cwd() keeps this correct regardless of where vitest is invoked from.
+const CSS = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "tokens.css"), "utf8");
+
+/**
+ * Return the body of the block whose opening selector matches `opener`,
+ * using brace matching so nested blocks (a selector inside @media) are kept.
+ * Throws when the selector is absent — an absent dark block must surface as a
+ * failure, never as a silent fallback to the light palette.
+ */
+function blockBody(css: string, opener: RegExp): string {
+  const match = opener.exec(css);
+  if (!match) throw new Error(`tokens.css: no block matching ${opener}`);
+
+  const open = css.indexOf("{", match.index);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === "{") depth++;
+    else if (css[i] === "}") {
+      depth--;
+      if (depth === 0) return css.slice(open + 1, i);
+    }
+  }
+  throw new Error(`tokens.css: unbalanced braces after ${opener}`);
+}
+
+type Tokens = Record<string, string>;
+
+function declarations(body: string): Tokens {
+  const out: Tokens = {};
+  const decl = /(--[\w-]+)\s*:\s*([^;]+);/g;
+  let m: RegExpExecArray | null;
+  while ((m = decl.exec(body)) !== null) {
+    out[m[1]] = m[2].trim();
+  }
+  return out;
+}
+
+// The complete light palette lives on the bare, column-0 `:root`. Anchoring to
+// the start of a line is what distinguishes it from the indented `:root`
+// blocks nested inside the media queries.
+const LIGHT = declarations(blockBody(CSS, /^:root\s*\{/m));
+
+// Dark, as reached by the OS preference. Guarded with :not([data-theme="light"])
+// so an explicit light choice wins over a dark OS.
+const DARK_MEDIA = declarations(
+  blockBody(
+    blockBody(CSS, /^@media \(prefers-color-scheme: dark\)\s*\{/m),
+    /:root:not\(\[data-theme="light"\]\)\s*\{/,
+  ),
+);
+
+// Dark, as reached by an explicit choice. Parsed LAZILY: if this block is
+// missing the toggle is broken, but the palette itself is still measurable, so
+// that must fail the one parity test rather than collapsing the whole file.
+function darkExplicit(): Tokens {
+  return declarations(blockBody(CSS, /^:root\[data-theme="dark"\]\s*\{/m));
+}
+
+/**
+ * How the cascade actually resolves: a dark block redefines only the tokens
+ * that change, everything else falls through to the bare `:root`. Resolving
+ * the same way means a pairing is checked against the value that really paints.
+ */
+const DARK: Tokens = { ...LIGHT, ...DARK_MEDIA };
+
+function ratio(scope: Tokens, fg: string, bg: string): number {
+  const fgHex = scope[fg];
+  const bgHex = scope[bg];
+  if (!/^#[0-9a-f]{6}$/i.test(fgHex ?? "")) throw new Error(`not a hex token: ${fg}=${fgHex}`);
+  if (!/^#[0-9a-f]{6}$/i.test(bgHex ?? "")) throw new Error(`not a hex token: ${bg}=${bgHex}`);
+  return contrastRatio(fgHex, bgHex);
+}
+
+// ─── Light palette (the shipped palette — must not move) ────────────────────
 
 describe("WCAG 2.2 AA contrast for semantic tokens", () => {
   it("success text on success-bg meets 4.5:1", () => {
-    expect(contrastRatio(TOKENS.success, TOKENS.successBg)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(LIGHT, "--color-success", "--color-success-bg")).toBeGreaterThanOrEqual(4.5);
   });
 
   it("warning text on warning-bg meets 4.5:1", () => {
-    expect(contrastRatio(TOKENS.warning, TOKENS.warningBg)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(LIGHT, "--color-warning", "--color-warning-bg")).toBeGreaterThanOrEqual(4.5);
   });
 
   it("danger text on danger-bg meets 4.5:1", () => {
-    expect(contrastRatio(TOKENS.danger, TOKENS.dangerBg)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(LIGHT, "--color-danger", "--color-danger-bg")).toBeGreaterThanOrEqual(4.5);
   });
 
   it("ink-muted on surface-3 meets 4.5:1", () => {
-    expect(contrastRatio(TOKENS.inkMuted, TOKENS.surface3)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(LIGHT, "--color-ink-muted", "--color-surface-3")).toBeGreaterThanOrEqual(4.5);
   });
 
   it("ink-strong on surface meets 7:1 (AAA)", () => {
-    expect(contrastRatio(TOKENS.inkStrong, TOKENS.surface)).toBeGreaterThanOrEqual(7);
+    expect(ratio(LIGHT, "--color-ink-strong", "--color-surface")).toBeGreaterThanOrEqual(7);
   });
 
   it("action text on action-surface meets 4.5:1 (preferred StatusChip)", () => {
     // Regression guard for the `--action` modifier used by the `preferred`
     // StatusChip. The action blue on its tinted surface is the chip's
     // foreground/background pair; ~5.43:1 today, AA requires 4.5:1.
-    expect(contrastRatio(TOKENS.action, TOKENS.actionSurface)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(LIGHT, "--color-action", "--color-action-surface")).toBeGreaterThanOrEqual(4.5);
+  });
+
+  /**
+   * The light palette is the shipped palette. Adding dark must not move it by
+   * a single byte, and "it still passes AA" is too weak a check to prove that
+   * — a value can change and still clear 4.5:1. So pin the exact hexes.
+   *
+   * If you are here because this failed: adding or changing a colour on the
+   * bare :root is a deliberate design decision, not a drive-by. Update this
+   * map only alongside that decision.
+   */
+  it("pins every light colour token to its shipped value", () => {
+    const lightColors = Object.fromEntries(
+      Object.entries(LIGHT).filter(([token]) => token.startsWith("--color-")),
+    );
+
+    expect(lightColors).toEqual({
+      "--color-action": "#3157d5",
+      "--color-action-hover": "#2848b8",
+      "--color-action-pressed": "#1f3aa0",
+      "--color-action-surface": "#eef2fc",
+      "--color-action-border": "#c3d0f5",
+      "--color-on-action": "#ffffff",
+      "--color-on-danger": "#ffffff",
+      "--color-danger-hover": "#8a2530",
+      "--color-ink-strong": "#16233d",
+      "--color-ink": "#2d3a52",
+      "--color-ink-muted": "#586273",
+      "--color-canvas": "#f6f8fc",
+      "--color-surface": "#ffffff",
+      "--color-surface-2": "#f0f3f9",
+      "--color-surface-3": "#e6eaf2",
+      "--color-border": "#dce2eb",
+      "--color-border-strong": "#c4cdd9",
+      "--color-success": "#0e5c44",
+      "--color-success-bg": "#e8f6ef",
+      "--color-success-border": "#a3d9c4",
+      "--color-warning": "#9a5a0c",
+      "--color-warning-bg": "#fdf4e6",
+      "--color-warning-border": "#f0d4a0",
+      "--color-danger": "#9e2b34",
+      "--color-danger-bg": "#fcecef",
+      "--color-danger-border": "#f0b8be",
+    });
+  });
+});
+
+// ─── Dark palette ───────────────────────────────────────────────────────────
+
+const DARK_TEXT_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ["--color-ink-strong", "--color-canvas"],
+  ["--color-ink-strong", "--color-surface"],
+  ["--color-ink-strong", "--color-surface-2"],
+  ["--color-ink-strong", "--color-surface-3"],
+  ["--color-ink", "--color-canvas"],
+  ["--color-ink", "--color-surface"],
+  ["--color-ink", "--color-surface-2"],
+  ["--color-ink", "--color-surface-3"],
+  ["--color-ink-muted", "--color-canvas"],
+  ["--color-ink-muted", "--color-surface"],
+  ["--color-ink-muted", "--color-surface-2"],
+  ["--color-ink-muted", "--color-surface-3"],
+  ["--color-action", "--color-canvas"],
+  ["--color-action", "--color-surface"],
+  ["--color-action", "--color-action-surface"],
+  ["--color-on-action", "--color-action"],
+  ["--color-success", "--color-success-bg"],
+  ["--color-warning", "--color-warning-bg"],
+  ["--color-danger", "--color-danger-bg"],
+];
+
+describe("WCAG 2.2 AA contrast for the dark palette", () => {
+  it.each(DARK_TEXT_PAIRS)("dark %s on %s meets 4.5:1", (fg, bg) => {
+    expect(ratio(DARK, fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("ink-strong on surface still meets 7:1 (AAA), as in light", () => {
+    expect(ratio(DARK, "--color-ink-strong", "--color-surface")).toBeGreaterThanOrEqual(7);
+  });
+
+  /**
+   * Elevation, not a text ratio — so AA does not apply and 1.15 is a
+   * legibility floor, not a WCAG figure.
+   *
+   * DESIGN.md bans decorative shadows, which means the ONLY thing separating a
+   * card from the page behind it is the canvas/surface luminance step. In dark
+   * palettes that step compresses badly; the supplied values landed at 1.09,
+   * which reads as a single flat sheet.
+   *
+   * Dark only. The light palette ships at 1.06 and is explicitly out of scope
+   * here — light has near-white surfaces and thin structural borders doing the
+   * separating, and changing it is forbidden.
+   */
+  it("keeps a perceptible canvas-to-surface elevation step (>= 1.15)", () => {
+    expect(ratio(DARK, "--color-canvas", "--color-surface")).toBeGreaterThanOrEqual(1.15);
+  });
+});
+
+// ─── Structural guards on the selector strategy ─────────────────────────────
+
+describe("dark palette selector structure", () => {
+  /**
+   * THE bug this two-block structure exists to prevent. A token whose only
+   * dark definition sits inside `@media (prefers-color-scheme: dark)` looks
+   * perfect to anyone developing on a dark OS — and silently keeps its LIGHT
+   * value for anyone who picks dark from the toggle on a light OS. The failure
+   * is invisible in the common case, which is exactly why it needs a test.
+   */
+  it("defines the same tokens, with the same values, in both dark blocks", () => {
+    expect(darkExplicit()).toEqual(DARK_MEDIA);
+  });
+
+  /**
+   * A dark-only token has no light value to fall back to, so it resolves to
+   * nothing in light mode and whatever it lands on renders unstyled.
+   */
+  it("never introduces a token that exists only in dark", () => {
+    const darkOnly = Object.keys(DARK_MEDIA).filter((token) => !(token in LIGHT));
+    expect(darkOnly).toEqual([]);
   });
 });

@@ -68,7 +68,11 @@
 .overview__progress-bar {
   flex: 1;
   min-width: 120px;
-  height: 6px;
+  /* Structural border, not decoration: the surface-3 track is ~1.1:1 against
+     the canvas, so at 0% complete the bar was invisible rather than empty. */
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-strong);
   background: var(--color-surface-3);
   border-radius: var(--radius-full);
   overflow: hidden;

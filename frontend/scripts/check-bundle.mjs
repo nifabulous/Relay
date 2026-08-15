@@ -22,7 +22,12 @@ const refs = [
   ...html.matchAll(/(?:src|href)="\/app\/assets\/([^"]+)"/g),
 ].map((m) => m[1]);
 
-const eager = refs.filter((r) => !r.includes("Explore") && !r.includes("Prepare") && !r.includes("Fee") && !r.includes("Screen") && !r.includes("ValueDate") && !r.includes("Stp") && !r.includes("Track") && !r.includes("Learn"));
+// Lazy route chunks, excluded by name. NOTE: this filter is belt-and-braces —
+// Vite does not emit <link>/<script> refs for dynamically imported chunks, so
+// index.html only ever lists the eager entry, its static imports and the eager
+// CSS. Nothing here currently matches. Kept, and kept complete, so the list
+// still describes intent if a preload hint is ever added.
+const eager = refs.filter((r) => !r.includes("Explore") && !r.includes("Prepare") && !r.includes("Fee") && !r.includes("Screen") && !r.includes("ValueDate") && !r.includes("Stp") && !r.includes("Track") && !r.includes("Learn") && !r.includes("Settings"));
 
 let totalGzip = 0;
 console.log("Eager shell assets:");

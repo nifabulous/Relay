@@ -181,4 +181,31 @@ describe("analytics runtime resilience", () => {
 
     expect(sink.events).toEqual([]);
   });
+
+  it("drops identifier values that are not authored slugs", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    const trackAny = track as unknown as (name: string, properties: unknown) => void;
+
+    trackAny("module_viewed", { module_id: "Alice" });
+    trackAny("case_started", { case_id: "alice@example.com" });
+    trackAny("checkpoint_reached", {
+      module_id: "lab-1",
+      checkpoint_id: "https://example.com/private-note",
+    });
+
+    expect(sink.events).toEqual([]);
+  });
+
+  it("fails closed for malformed and inherited payload objects", () => {
+    const sink = createTestSink();
+    setAnalyticsSink(sink);
+    const trackAny = track as unknown as (name: string, properties: unknown) => void;
+    const inheritedPayload = Object.create({ module_id: "lab-1" }) as object;
+
+    expect(() => trackAny("module_viewed", null)).not.toThrow();
+    expect(() => trackAny("module_viewed", inheritedPayload)).not.toThrow();
+
+    expect(sink.events).toEqual([]);
+  });
 });

@@ -10,7 +10,7 @@
  * is NOT persisted here.
  */
 
-import type { PrepareDraft, RelayPreferences } from "../../design-system/types";
+import type { PrepareDraft, RelayPreferences, RelayTheme } from "../../design-system/types";
 import type {
   LocalProfileResult,
   RawStorageSnapshot,
@@ -35,10 +35,30 @@ export const defaultPreferences: RelayPreferences = {
   reducedMotion: false,
   navigationDensity: "comfortable",
   firstRunGuidanceSeen: [],
+  theme: "system",
 };
 
+const RELAY_THEMES: readonly string[] = ["system", "light", "dark"];
+
+/**
+ * Read-boundary coercion for the theme preference.
+ *
+ * `loadVersioned` does `return parsed as T` with NO merge against defaults, so
+ * anything persisted before the theme key existed deserialises with
+ * `theme === undefined` even though the type claims RelayTheme. Bumping
+ * schemaVersion is NOT the fix: the version guard rejects non-1 payloads
+ * WHOLESALE, which would discard every existing user's reducedMotion,
+ * navigationDensity and firstRunGuidanceSeen and re-trigger first-run guidance
+ * for everyone. So schemaVersion stays 1 and the missing or unknown value is
+ * repaired here instead, leaving every sibling field untouched.
+ */
+function coerceTheme(value: unknown): RelayTheme {
+  return RELAY_THEMES.includes(value as string) ? (value as RelayTheme) : "system";
+}
+
 export function loadPreferences(): RelayPreferences {
-  return safeLoad(STORAGE_KEYS.preferences, defaultPreferences);
+  const stored = safeLoad(STORAGE_KEYS.preferences, defaultPreferences);
+  return { ...stored, theme: coerceTheme(stored.theme) };
 }
 
 export function savePreferences(prefs: RelayPreferences): void {

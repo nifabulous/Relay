@@ -36,9 +36,9 @@ These numbers were run against the current checkout on 2026-08-13:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **732 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **1,007 passing** (serial-file AND default parallel mode; the one timing flake was fixed — `cd frontend && npm test -- --run`) |
-| Playwright E2E | **335 passed, 13 skips, 2 axe failures** — full run including the WebKit `mobile` project; the 2 failures are a pre-existing `scrollable-region-focusable` finding on the bank-detail SSI table scroll (WebKit-only axe rule, now exercised because WebKit is installed) |
+| Backend tests | **846 passed** (`.venv/bin/pytest -q`) |
+| Frontend unit/integration tests | **1,089 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
+| Playwright E2E | **335 passed, 2 axe failures** (skip total needs re-measuring since the learner-state round trip was un-skipped) — full run including the WebKit `mobile` project; the 2 failures are a pre-existing `scrollable-region-focusable` finding on the bank-detail SSI table scroll (WebKit-only axe rule, now exercised because WebKit is installed) |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **128,231 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
@@ -53,7 +53,7 @@ protocol. Provider integration is deliberately deferred.
 Every E2E skip is intentional, and the total depends on how many projects you run rather than on
 anything being broken. Two tests skip by rule:
 
-- **Learner-state round trip** — skips in *every* project while the Learning backup panel is hidden.
+- **Learner-state round trip** — no longer skips. The Learning backup panel got a home at `/app/settings` on 2026-08-14, so this test now runs. The per-run skip totals below predate that and need re-measuring.
 - **Reduced-motion case journey** — skips in every project *except* `case-reduced-motion`.
 
 So a 6-project chromium run skips `6 + 5 = 11` (what the table above records, on a machine without
@@ -68,8 +68,8 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 732 passing |
-| Frontend tests | 1,007 passing (serial-file AND default parallel mode) |
+| Backend tests | 846 passing |
+| Frontend tests | 1,089 passing (serial-file mode) |
 | E2E tests (Playwright) | 335 passing on the full 7-project run (13 intentional skips; 2 pre-existing axe failures on the WebKit `mobile` projects) |
 | Eager shell bundle | 128,231 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
@@ -80,7 +80,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 ```
 swift-routing/
-  app/                        FastAPI backend (Python 3.9+)
+  app/                        FastAPI backend (Python 3.10+)
     routers/                  11 domain routers under /api/*
     services/                 Domain logic (validator, routing, vop, prepare, iso20022, ...)
     models.py                 SQLAlchemy 2.0 models
@@ -119,7 +119,7 @@ swift-routing/
 | State | TanStack Query 5 (server), React Hook Form 7 (forms) |
 | Validation | Zod 4 (frontend), Pydantic v2 (backend) |
 | Testing | pytest (backend), Vitest + RTL + MSW (frontend), Playwright (E2E) |
-| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
+| CI | GitHub Actions — pytest + ruff on Python 3.10-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 
 ---
 
@@ -453,7 +453,7 @@ count can never go stale in a third table. This one covers qualitative dimension
 | Dimension | Status |
 |---|---|
 | Version control | Git, `main` plus short-lived feature branches |
-| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
+| CI | GitHub Actions — pytest + ruff on Python 3.10-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |

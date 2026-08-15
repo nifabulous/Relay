@@ -81,12 +81,11 @@ async function clearLearningKeys(page: Parameters<typeof test>[0]["page"]) {
   }, [...LEARNING_KEYS]);
 }
 
-// Skipped while the Learning backup panel is hidden on the Overview page. The
-// download and import controls are its only UI entry point, so this round trip
-// has nothing to drive. The merge/transfer logic stays covered by
-// learnerStateMerge.test.ts, learnerStateTransfer.test.ts and
-// LearnerDataPanel.test.tsx. Un-skip when the panel is restored.
-test.describe.skip("Learner state portability", () => {
+// The Learning backup panel now has a home: the Settings route, reached from
+// the preferences menu's "All settings" item. Its download and import controls
+// are this round trip's only UI entry point, which is why the suite was skipped
+// while the panel sat commented out on Overview.
+test.describe("Learner state portability", () => {
   test("restores learning progress without overwriting drafts or preferences", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "coverage is not viewport-dependent");
 
@@ -95,7 +94,9 @@ test.describe.skip("Learner state portability", () => {
 
     await page.getByLabel("Identifier to analyze").fill("CITIUS33XXX");
     await page.getByRole("button", { name: "Analyze" }).click();
-    await expect(page.getByText(/format is valid/i)).toBeVisible({ timeout: 15_000 });
+    // Anchored: the lab also renders "The format is valid, but this BIC isn't
+    // in our bank directory", which an unanchored /format is valid/ now matches.
+    await expect(page.getByText(/^✓ Format is valid/)).toBeVisible({ timeout: 15_000 });
 
     await page.getByLabel("Your answer (country name or code)").fill("Nigeria");
     await page.getByLabel("Your answer (country name or code)").press("Enter");
@@ -107,11 +108,17 @@ test.describe.skip("Learner state portability", () => {
     await expect(page.getByText("3 of 3 complete")).toBeVisible();
 
     await page.goto("/app", { waitUntil: "networkidle" });
-    await expect(page.locator(".overview__progress-count")).toHaveText("1 / 13");
+    await expect(page.locator(".overview__progress-count")).toHaveText("1 / 16");
     await expect(page.locator(".overview__activity-list")).toContainText(MODULE_TITLE);
 
     await writeRawStorage(page, PREFERENCES_KEY, INITIAL_PREFERENCES_RAW);
     await writeRawStorage(page, DRAFT_KEY, INITIAL_DRAFT_RAW);
+
+    // The backup controls live on Settings now. Go through the preferences
+    // menu rather than the URL, so the only route into Settings is covered too.
+    await page.getByRole("button", { name: /preferences/i }).click();
+    await page.getByRole("menuitem", { name: /all settings/i }).click();
+    await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download learning backup" }).click();
@@ -123,13 +130,19 @@ test.describe.skip("Learner state portability", () => {
     await writeRawStorage(page, DRAFT_KEY, UPDATED_DRAFT_RAW);
 
     await clearLearningKeys(page);
-    await page.reload({ waitUntil: "networkidle" });
 
-    await expect(page.locator(".overview__progress-count")).toHaveText("0 / 13");
+    // Back to Overview to confirm the wipe landed. (The reload alone would stay
+    // on /app/settings, which has no progress counter.)
+    await page.goto("/app", { waitUntil: "networkidle" });
+
+    await expect(page.locator(".overview__progress-count")).toHaveText("0 / 16");
     await expect(page.locator(".overview__activity")).toContainText(/no activity yet/i);
+    // Merely loading the app must never rewrite preferences — the store
+    // persists on explicit change only.
     await expect(await readRawStorage(page, PREFERENCES_KEY)).toBe(UPDATED_PREFERENCES_RAW);
     await expect(await readRawStorage(page, DRAFT_KEY)).toBe(UPDATED_DRAFT_RAW);
 
+    await page.goto("/app/settings", { waitUntil: "networkidle" });
     await page.getByLabel("Choose learning backup file").setInputFiles(backupPath);
     await expect(page.getByRole("heading", { name: "Backup preview" })).toBeVisible();
     await expect(page.getByText("1 module completed")).toBeVisible();
@@ -140,8 +153,8 @@ test.describe.skip("Learner state portability", () => {
       "Imported 1 new module, 1 activity entry, and 0 case sessions.",
     );
 
-    await page.reload({ waitUntil: "networkidle" });
-    await expect(page.locator(".overview__progress-count")).toHaveText("1 / 13");
+    await page.goto("/app", { waitUntil: "networkidle" });
+    await expect(page.locator(".overview__progress-count")).toHaveText("1 / 16");
     await expect(page.locator(".overview__activity-list")).toContainText(MODULE_TITLE);
     await expect(await readRawStorage(page, PREFERENCES_KEY)).toBe(UPDATED_PREFERENCES_RAW);
     await expect(await readRawStorage(page, DRAFT_KEY)).toBe(UPDATED_DRAFT_RAW);
