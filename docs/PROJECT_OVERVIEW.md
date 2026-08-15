@@ -14,7 +14,7 @@ _Last updated: 2026-08-15._
 ### Backend
 - **Python 3.10+** (floor raised from 3.9 on 2026-08-14 for the AI stack). Existing code
   still uses `Optional[...]` / `List[...]`; the newer `X | None` syntax is now permitted.
-- **FastAPI** — ~25 endpoints under `/api/*`; OpenAPI docs at `/docs`.
+- **FastAPI** — 27 endpoints under `/api/*`; OpenAPI docs at `/docs`.
 - **Pydantic v2** — request/response schemas (`app/schemas.py`).
 - **SQLAlchemy 2.0** — ORM models (`app/models.py`); **SQLite** in dev (`create_all` on startup),
   **Postgres + Alembic** in prod.
@@ -50,7 +50,7 @@ _Last updated: 2026-08-15._
 
 ## 2. Features
 
-### 2.1 Backend API (25 endpoints)
+### 2.1 Backend API (27 endpoints)
 
 **Directory & validation**
 - `GET /api/health` — bank/corridor/SSI counts + status.
