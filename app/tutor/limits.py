@@ -24,6 +24,7 @@ start are a limit in name only, which is why `production_limiter_is_missing()`
 exists and the router refuses to serve rather than quietly pretending.
 """
 import os
+import threading
 import time
 from collections import deque
 from typing import Callable, Deque, Dict, Optional, Protocol, runtime_checkable
@@ -59,6 +60,7 @@ class InMemoryRateLimiter:
         self._window = window_seconds
         self._clock = clock or time.monotonic
         self._hits: Dict[str, Deque[float]] = {}
+        self._lock = threading.RLock()
 
     def allow(self, key: str) -> bool:
         # Fail closed: a misconfigured ceiling of zero means "nothing", not
@@ -66,17 +68,18 @@ class InMemoryRateLimiter:
         if self._limit <= 0:
             return False
 
-        now = self._clock()
-        cutoff = now - self._window
-        self._evict(cutoff)
+        with self._lock:
+            now = self._clock()
+            cutoff = now - self._window
+            self._evict(cutoff)
 
-        hits = self._hits.setdefault(key, deque())
-        while hits and hits[0] <= cutoff:
-            hits.popleft()
-        if len(hits) >= self._limit:
-            return False
-        hits.append(now)
-        return True
+            hits = self._hits.setdefault(key, deque())
+            while hits and hits[0] <= cutoff:
+                hits.popleft()
+            if len(hits) >= self._limit:
+                return False
+            hits.append(now)
+            return True
 
     def _evict(self, cutoff: float) -> None:
         """Drop keys with no recent activity.
@@ -94,7 +97,8 @@ class InMemoryRateLimiter:
             del self._hits[key]
 
     def tracked_keys(self) -> int:
-        return len(self._hits)
+        with self._lock:
+            return len(self._hits)
 
 
 class RedisRateLimiter:
@@ -201,6 +205,7 @@ class DailyRequestCeiling:
         self._clock = clock or time.time
         self._window_start = self._clock()
         self.used = 0
+        self._lock = threading.RLock()
 
     def allow(self) -> bool:
         # Unset means local development, where requiring a budget to run the
@@ -208,15 +213,16 @@ class DailyRequestCeiling:
         if self._limit is None:
             return True
 
-        now = self._clock()
-        if now - self._window_start >= 86_400:
-            self._window_start = now
-            self.used = 0
+        with self._lock:
+            now = self._clock()
+            if now - self._window_start >= 86_400:
+                self._window_start = now
+                self.used = 0
 
-        if self.used >= self._limit:
-            return False
-        self.used += 1
-        return True
+            if self.used >= self._limit:
+                return False
+            self.used += 1
+            return True
 
 
 def configured_daily_ceiling() -> Optional[int]:

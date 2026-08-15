@@ -5,18 +5,22 @@
 
 ## What it is
 
-A grounded payments tutor inside Relay. It explains, hints, and quizzes on
-cross-border and domestic payments, citing a Relay or official source for every
-factual claim. It cannot initiate, approve, advance, or settle a payment, and it
-says so.
+A quote-grounded payments tutor inside Relay. It explains, hints, and quizzes on
+cross-border and domestic payments, requiring verbatim evidence and deterministic
+quote-coverage checks for factual answers. It cannot initiate, approve, advance,
+or settle a payment, and it says so.
 
 **Disabled by default.** The base install carries no AI dependency at all, and
 `/api/tutor/chat` answers 503 until three things are set together.
 
 ## The one guarantee
 
-> A factual tutor answer is supported by a Relay document, verbatim, or it is
-> not delivered.
+> A factual tutor answer must include verbatim evidence from a retrieved Relay
+> document and pass deterministic quote-coverage checks, or it is not delivered.
+
+The server-owned `grounded` flag means the answer passed those quote-coverage
+checks. This is source-backed lexical validation, not semantic entailment or a
+live operational guarantee.
 
 Three failure shapes, in increasing order of subtlety:
 

@@ -157,7 +157,7 @@ def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch)
             citation = TutorCitation(
                 source_id=result["source_id"],
                 title=result["title"],
-                evidence=result["text"][:80],
+                evidence=result["text"][:160],
             )
             return SimpleNamespace(
                 output=TutorModelOutput(

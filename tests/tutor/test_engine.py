@@ -13,6 +13,7 @@ import sys
 
 import pytest
 
+from app.data.tutor_knowledge import TutorDocument
 from app.tutor.engine import (
     FakeTutorEngine,
     TutorEngine,
@@ -22,7 +23,7 @@ from app.tutor.engine import (
     estimate_tokens,
 )
 from app.tutor.prompts import build_prompt_payload
-from app.tutor.retrieval import retrieve_documents
+from app.tutor.retrieval import RetrievedDocument, retrieve_documents
 from app.tutor.schemas import (
     TutorCitation,
     TutorContext,
@@ -113,6 +114,24 @@ def test_a_model_cannot_keep_an_unsupported_answer_by_calling_it_a_clarification
     assert response.grounded is False
     assert response.needs_clarification is True
     assert "Fedwire settles" not in response.answer
+
+
+def test_a_model_cannot_keep_an_unsupported_question_by_ending_it_with_a_question_mark():
+    """Model-controlled clarification must not bypass the grounding boundary."""
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="Fedwire guarantees instant settlement for every transfer, right?",
+            citations=[],
+            needs_clarification=True,
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is False
+    assert "Fedwire guarantees" not in response.answer
+    assert response.answer != engine._output.answer
 
 
 def test_the_mode_on_the_response_is_the_requested_mode_not_the_models():
@@ -262,8 +281,8 @@ def test_an_uncited_factual_answer_is_replaced_not_merely_flagged():
     assert response.needs_clarification is True
 
 
-def test_a_clarification_needs_no_citation_and_keeps_its_text():
-    """Asking a question back is not a factual claim, so it needs no evidence."""
+def test_an_ungrounded_clarification_is_replaced_by_server_owned_text():
+    """Ungrounded model text is replaced by the server-owned clarification."""
     engine = FakeTutorEngine(
         TutorModelOutput(
             answer="Which currency are you asking about?",
@@ -272,7 +291,8 @@ def test_a_clarification_needs_no_citation_and_keeps_its_text():
         )
     )
     response = _answer(engine, _request(), _documents())
-    assert response.answer == "Which currency are you asking about?"
+    assert response.answer != "Which currency are you asking about?"
+    assert "don't have a Relay source" in response.answer
     assert response.grounded is False
 
 
@@ -284,6 +304,35 @@ def test_an_answer_with_no_retrieved_documents_becomes_a_clarification():
     assert response.grounded is False
     assert response.needs_clarification is True
     assert "definitely yes" not in response.answer
+
+
+def test_grounding_requires_most_claim_terms_to_appear_in_quoted_evidence():
+    """A citation must support the claim, not merely share two domain words."""
+    document = TutorDocument(
+        source_id="test-iban",
+        title="IBAN reference",
+        text="An IBAN identifies an account and may support transfer operations.",
+        topics=["iban"],
+        source_kind="relay",
+    )
+    documents = [RetrievedDocument(document=document, score=1.0)]
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="An IBAN guarantees instant settlement for every transfer.",
+            citations=[
+                TutorCitation(
+                    source_id=document.source_id,
+                    title=document.title,
+                    evidence=document.text,
+                )
+            ],
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is False
+    assert "guarantees instant settlement" not in response.answer
 
 
 # ── Token budget ────────────────────────────────────────────────────────────
@@ -637,7 +686,7 @@ def test_a_document_the_model_fetched_through_a_tool_can_be_cited():
                     TutorCitation(
                         source_id=tool_only.source_id,
                         title=tool_only.title,
-                        evidence=tool_only.text[:80],
+                        evidence=tool_only.text[:160],
                     )
                 ],
             )

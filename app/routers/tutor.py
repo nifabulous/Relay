@@ -120,7 +120,17 @@ def get_tutor_engine() -> TutorEngine:
     key_fingerprint = hashlib.sha256(
         tutor_provider_api_key(settings.provider).encode("utf-8")
     ).hexdigest()
-    key = (settings.provider, settings.model, key_fingerprint)
+    # The adapter freezes these values at construction time. Include every
+    # engine-owned budget in the cache key so a runtime configuration change
+    # cannot leave the old safety limits active until process restart.
+    key = (
+        settings.provider,
+        settings.model,
+        key_fingerprint,
+        settings.max_history_turns,
+        settings.max_input_tokens,
+        settings.max_output_tokens,
+    )
     engine = _ENGINE_CACHE.get(key)
     if engine is None:
         engine = build_tutor_engine()
@@ -217,15 +227,17 @@ def tutor_availability_probe() -> dict:
     summary="Ask the Relay tutor a grounded question",
     description=(
         "Answers a learner's payments question using only Relay's curated "
-        "sources, citing each one.\n\n"
+        "sources, with verbatim evidence and deterministic quote-coverage "
+        "checks for each factual answer.\n\n"
         "**SIMULATION** — Relay is an educational simulation. No real money "
         "moves. The tutor explains, quizzes, and hints; it can never initiate, "
         "approve, advance, or settle a payment, and every limit, fee, and "
         "timeline it discusses is illustrative rather than an operator's "
         "current published figure.\n\n"
-        "Every factual answer cites a Relay or official source. When no source "
-        "supports an answer, the tutor asks a clarifying question instead of "
-        "improvising a payment rule."
+        "The server-owned `grounded` flag means the answer passed those "
+        "quote-coverage checks; it is not a semantic fact checker or a live "
+        "operational guarantee. When the checks fail, the tutor asks a "
+        "clarifying question instead of improvising a payment rule."
     ),
 )
 async def tutor_chat(

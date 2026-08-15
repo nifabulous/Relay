@@ -9,6 +9,10 @@ Two properties matter and are easy to get wrong:
 * the limit is checked **before** any provider work, not after
 * the key cannot be chosen by the caller
 """
+import time
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 
 try:
@@ -93,6 +97,44 @@ def test_old_keys_are_evicted_so_the_limiter_does_not_grow_forever():
 
 def test_the_in_memory_limiter_satisfies_the_protocol():
     assert isinstance(InMemoryRateLimiter(limit=1, window_seconds=1), RateLimiter)
+
+
+def test_in_memory_limiter_keeps_its_limit_when_calls_overlap():
+    """The async router invokes this synchronous fallback from worker threads."""
+
+    class _SlowDeque(deque):
+        def __len__(self):
+            size = super().__len__()
+            time.sleep(0.002)
+            return size
+
+    limiter = InMemoryRateLimiter(limit=1, window_seconds=60, clock=_Clock())
+    limiter._hits["same"] = _SlowDeque()
+    limiter._evict = lambda cutoff: None
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        results = list(pool.map(lambda _: limiter.allow("same"), range(16)))
+
+    assert sum(results) == 1
+
+
+def test_daily_ceiling_keeps_its_limit_when_comparisons_overlap():
+    """The deployment-wide fallback must be atomic as well as the per-key one."""
+
+    class _SlowCount(int):
+        def __ge__(self, other):
+            time.sleep(0.002)
+            return super().__ge__(other)
+
+    from app.tutor.limits import DailyRequestCeiling
+
+    ceiling = DailyRequestCeiling(limit=1, clock=_Clock())
+    ceiling.used = _SlowCount(0)
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        results = list(pool.map(lambda _: ceiling.allow(), range(16)))
+
+    assert sum(results) == 1
 
 
 # ── Key resolution ──────────────────────────────────────────────────────────

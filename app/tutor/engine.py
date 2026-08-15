@@ -211,7 +211,11 @@ def validate_citations(
     required = max(1, -(-len(output.answer) // _CHARS_PER_REQUIRED_CITATION))
     enough_evidence = len(kept) >= min(required, len(documents) or 1)
 
-    evidence = " ".join(retrieved[citation.source_id].text for citation in kept)
+    # Ground against the exact text the model quoted, not the entire retrieved
+    # document. A real source can contain many unrelated facts; allowing the
+    # model to cite one harmless sentence and answer from another part of the
+    # document turns provenance into a false support signal.
+    evidence = " ".join(citation.evidence for citation in kept)
     return (
         kept,
         bool(kept)
@@ -231,12 +235,14 @@ _GROUNDING_STOP_WORDS = frozenset(
 
 
 def _answer_has_relevant_evidence(answer: str, evidence: str) -> bool:
-    """Require every answer sentence to share meaningful terms with evidence.
+    """Require every answer sentence to have substantial lexical coverage.
 
-    Verbatim citation checks prove provenance, not relevance. This conservative
-    lexical gate rejects a citation from an unrelated document without claiming
-    to perform semantic entailment; the model is still instructed to cite each
-    claim, and unsupported answers are withheld when this gate fails.
+    Verbatim citation checks prove provenance, not relevance. Requiring at least
+    half of each sentence's meaningful terms in the quoted evidence is a
+    conservative deterministic approximation: it rejects a broad unsupported
+    claim that happens to share two domain words with a source. This is still
+    lexical validation, not semantic entailment, so the prompt continues to
+    require a citation for every factual claim.
     """
 
     if _normalise_whitespace(answer.lower()) in _normalise_whitespace(evidence.lower()):
@@ -256,16 +262,10 @@ def _answer_has_relevant_evidence(answer: str, evidence: str) -> bool:
         }
         if not terms:
             continue
-        required = 1 if len(terms) == 1 else 2
+        required = max(1, (len(terms) + 1) // 2)
         if len(terms & evidence_terms) < required:
             return False
     return True
-
-
-def _is_clarifying_question(answer: str) -> bool:
-    """Only preserve model text that is structurally a question for the learner."""
-
-    return answer.strip().endswith("?") and "\n" not in answer.strip()
 
 
 def finalise_response(
@@ -277,10 +277,10 @@ def finalise_response(
     """Validate the model's output and compose the response the server owns."""
     citations, grounded = validate_citations(output, documents)
 
-    if not grounded and not (
-        output.needs_clarification and _is_clarifying_question(output.answer)
-    ):
-        # A factual claim with nothing behind it is withheld, not annotated.
+    if not grounded:
+        # Any model-authored ungrounded text is withheld, including text that
+        # calls itself a clarification. Punctuation and a model-controlled
+        # boolean are not a trust boundary; this response is server-owned.
         output = TutorModelOutput(
             answer=_CLARIFICATION_ANSWER,
             citations=[],

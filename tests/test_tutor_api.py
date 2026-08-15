@@ -484,6 +484,34 @@ def test_engine_cache_rebuilds_after_provider_key_rotation(monkeypatch):
     assert first is not second
 
 
+@pytest.mark.parametrize(
+    ("setting", "first", "second"),
+    [
+        ("TUTOR_MAX_HISTORY_TURNS", "2", "3"),
+        ("TUTOR_MAX_INPUT_TOKENS", "1000", "2000"),
+        ("TUTOR_MAX_OUTPUT_TOKENS", "400", "800"),
+    ],
+)
+def test_engine_cache_rebuilds_after_runtime_budget_change(
+    monkeypatch, setting, first, second
+):
+    import app.routers.tutor as tutor_router
+
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_MODEL", "test:model")
+    monkeypatch.setenv("OPENAI_API_KEY", "stable-key")
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setattr(tutor_router, "build_tutor_engine", lambda: object())
+    monkeypatch.setattr(tutor_router, "_ENGINE_CACHE", {})
+    monkeypatch.setenv(setting, first)
+
+    initial = tutor_router.get_tutor_engine()
+    monkeypatch.setenv(setting, second)
+    updated = tutor_router.get_tutor_engine()
+
+    assert initial is not updated
+
+
 def test_sync_meter_calls_run_off_the_async_request_thread():
     from app.routers.tutor import _allow_ceiling_async, _allow_limiter_async
 

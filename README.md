@@ -318,9 +318,9 @@ lesson scripts:
 
 ## AI tutor
 
-A grounded payments tutor that explains, hints, and quizzes, citing a Relay or
-official source for every factual claim. It cannot initiate, approve, advance,
-or settle a payment, and it says so.
+A quote-grounded payments tutor that explains, hints, and quizzes, requiring
+verbatim evidence and deterministic quote-coverage checks for factual answers.
+It cannot initiate, approve, advance, or settle a payment, and it says so.
 
 **Off by default.** The base install carries no AI dependency at all. Full spec:
 [`docs/superpowers/specs/2026-08-13-relay-ai-tutor.md`](docs/superpowers/specs/2026-08-13-relay-ai-tutor.md).
@@ -347,10 +347,13 @@ reasonably).
 
 ### The guarantee
 
-A factual answer is supported by a Relay document, **verbatim**, or it is not
-delivered. A citation naming a source that was not retrieved is stripped; a
-citation quoting text that is not in its source is stripped; and an uncited
-factual answer is *replaced* with a clarification rather than merely flagged.
+A factual answer must include verbatim evidence from a retrieved Relay document
+and pass deterministic quote-coverage checks, or it is not delivered. A
+citation naming a source that was not retrieved is stripped; a citation quoting
+text that is not in its source is stripped; and an answer that fails the
+quote-coverage check is *replaced* with a clarification rather than merely
+flagged. This is source-backed lexical validation, not semantic entailment or a
+live operational guarantee.
 
 Identifiers are redacted at the provider boundary — unconditionally, with no
 flag that can disable it. Retrieval runs on the raw text first, because it keys
