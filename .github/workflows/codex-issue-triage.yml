@@ -32,6 +32,7 @@ jobs:
       CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
       CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT || 'medium' }}
       CODEX_MAX_ITEMS: ${{ vars.CODEX_MAX_ITEMS || '10' }}
+      CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '120000' }}
       EVENT_NAME: ${{ github.event_name }}
       EVENT_ACTION: ${{ github.event.action }}
       EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -45,13 +46,10 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 1
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: "22"
-
-      - name: Install pinned Codex CLI
-        run: npm install --global @openai/codex@0.147.0
+          python-version: "3.12"
 
       - name: Select issues
         run: |
@@ -84,7 +82,6 @@ jobs:
 
       - name: Run read-only Codex triage
         id: run_triage
-        continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
