@@ -26,6 +26,21 @@ refuse_text() {
   fi
 }
 
+require_pinned_action() {
+  local file="$1"
+  local action="$2"
+  local references
+  references="$(grep -E "${action}@" "$ROOT/$file" || true)"
+  if [[ -z "$references" ]]; then
+    printf 'missing full-SHA pin for %s in %s\n' "$action" "$file" >&2
+    FAILURES=$((FAILURES + 1))
+  fi
+  if [[ -n "$references" ]] && grep -Evq "${action}@[0-9a-f]{40}([[:space:]]|$)" <<<"$references"; then
+    printf 'non-SHA pin for %s in %s\n' "$action" "$file" >&2
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+
 fail() {
   printf '%s\n' "$1" >&2
   FAILURES=$((FAILURES + 1))
@@ -70,10 +85,8 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'GITHUB_STEP_SUMMARY'
   # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.
   # A mutable tag hands all three to whoever retags it upstream.
-  require_text "$file" 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262'
-  require_text "$file" 'actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065'
-  refuse_text "$file" 'actions/checkout@v'
-  refuse_text "$file" 'actions/setup-python@v'
+  require_pinned_action "$file" 'actions/checkout'
+  require_pinned_action "$file" 'actions/setup-python'
 done
 
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
@@ -81,9 +94,8 @@ require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited,
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
 # action read the checkout and tamper with build output. Pinned for the same
 # reason, and Dependabot is what keeps every pin in the repository from rotting.
-for action in 'actions/checkout@v' 'actions/setup-python@v' 'actions/setup-node@v' \
-              'actions/upload-artifact@v'; do
-  refuse_text '.github/workflows/ci.yml' "$action"
+for action in actions/checkout actions/setup-python actions/setup-node actions/upload-artifact; do
+  require_pinned_action '.github/workflows/ci.yml' "$action"
 done
 require_text '.github/workflows/ci.yml' 'permissions:'
 require_text '.github/dependabot.yml' 'package-ecosystem: github-actions'
