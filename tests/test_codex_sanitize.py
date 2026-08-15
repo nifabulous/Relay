@@ -53,6 +53,15 @@ def test_redacts_non_bearer_authorization_schemes() -> None:
     assert "raw-credential-value" not in schemeless
 
 
+def test_redacts_all_fields_from_a_diff_prefixed_digest_header() -> None:
+    sanitized = sanitize(
+        '+Authorization: Digest username="ada", response="deadbeef"\n'
+    )
+
+    assert 'response="deadbeef"' not in sanitized
+    assert "[REDACTED]" in sanitized
+
+
 def test_redacts_cookie_headers() -> None:
     request = sanitize("Cookie: session=very-secret-session-token\n")
     response = sanitize("Set-Cookie: sid=abc123; HttpOnly; Secure\n")

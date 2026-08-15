@@ -148,6 +148,9 @@ for arg in "$@"; do
       prev="$candidate"
     done
     printf 'stub review\n' >"$out"
+    if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
+      printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
+    fi
     exit 0
   fi
 done
@@ -264,6 +267,25 @@ if [[ -s "$STUB_DIR/posted.log" ]]; then
   fail 'A review was posted under the old head SHA after the PR head moved mid-run.'
 fi
 : >"$STUB_DIR/head-override"
+env \
+  PATH="$STUB_DIR:$PATH" \
+  CODEX_STUB_DIR="$STUB_DIR" \
+  CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+  CODEX_STUB_FINAL_HEAD=cafebabe \
+  CODEX_REVIEW_ENABLED=true \
+  OPENAI_API_KEY=stub-key \
+  GH_TOKEN=stub-token \
+  GH_REPO=nifabulous/Relay \
+  CODEX_MODEL=gpt-5.3-codex \
+  CODEX_REASONING_EFFORT=medium \
+  CODEX_MAX_INPUT_BYTES=120000 \
+  CODEX_MAX_OUTPUT_TOKENS=32000 \
+  CODEX_MAX_OUTPUT_BYTES=50000 \
+  CODEX_BOT_LOGIN='github-actions[bot]' \
+  "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || fail 'Late head-moved run exited non-zero.'
+if [[ -s "$STUB_DIR/posted.log" ]]; then
+  fail 'A review was posted after the PR head moved during model generation.'
+fi
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",

@@ -143,6 +143,15 @@ python3 "$REPO_ROOT/scripts/codex_truncate.py" \
   <"$TEMP_DIR/review.md" >"$TEMP_DIR/review-truncated.md"
 mv "$TEMP_DIR/review-truncated.md" "$TEMP_DIR/review.md"
 
+# The model call can take long enough for another push to land after the first
+# head check. Do not post a stale review under the old marker; the synchronize
+# event for the new head owns that review.
+LATEST_SHA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json headRefOid --jq '.headRefOid')"
+if [[ "$LATEST_SHA" != "$HEAD_SHA" ]]; then
+  echo "PR #${PR_NUMBER} moved from ${HEAD_SHA} to ${LATEST_SHA} before comment publication; leaving it to the run for the new head."
+  exit 0
+fi
+
 {
   printf '%s\n\n' "$MARKER"
   printf '%s\n\n' '_Codex read-only review. Human verification and approval are required._'

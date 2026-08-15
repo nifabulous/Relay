@@ -45,7 +45,7 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         # scheme is kept: it is diagnostic and is not itself the secret, and an
         # unmatched optional group substitutes as empty for a scheme-less value.
         re.compile(
-            r"(?i)^(\s*authorization\s*[:=]\s*)"
+            r"(?i)^([+\- ]*\s*authorization\s*[:=]\s*)"
             r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
             r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
             r".+$"
