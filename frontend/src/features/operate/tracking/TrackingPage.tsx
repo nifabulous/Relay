@@ -10,8 +10,8 @@ import type { AsyncStatus } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { PaymentTimeline } from "./PaymentTimeline";
-import { TutorLauncher } from "../../tutor/TutorLauncher";
 import { buildTrackingContext } from "../../tutor/tutorContext";
+import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
 import "./TrackingPage.css";
 import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
@@ -131,6 +131,26 @@ export function TrackingPage() {
   const error = query.error as ApiProblem | null;
   const data = query.data;
 
+  /*
+   * Publish only what is on screen. Deliberately not the UETR: it identifies
+   * one specific transaction, the tutor explains what a timeline *means*, and
+   * the MVP performs no live lookup that would need it. Event names only — no
+   * raw response, no hidden events.
+   *
+   * Before a lookup there is nothing to explain, so the surface stays global
+   * and the tutor answers general tracking questions instead.
+   */
+  usePublishTutorContext(
+    data
+      ? buildTrackingContext({
+          status: data.current_status,
+          eventNames: data.timeline.map((entry) => entry.status),
+          currency: data.sent_amount?.split(" ").pop() ?? "",
+          amount: data.sent_amount ?? "",
+        })
+      : { surface: "tracking" },
+  );
+
   return (
     <div className="tracking-page">
       <h1>Payment Tracking</h1>
@@ -161,20 +181,6 @@ export function TrackingPage() {
           {data && (
             <>
               <PaymentTimeline payment={data} />
-              {/* Explains the timeline the learner can SEE. Deliberately not the
-                  UETR: it identifies one specific transaction, the tutor has no
-                  reason to know which payment produced this shape, and the MVP
-                  performs no live lookup that would need it. Event names only —
-                  no raw response, no hidden events. */}
-              <TutorLauncher
-                context={buildTrackingContext({
-                  status: data.current_status,
-                  eventNames: data.timeline.map((entry) => entry.status),
-                  currency: data.sent_amount?.split(" ").pop() ?? "",
-                  amount: data.sent_amount ?? "",
-                })}
-                label="Explain this timeline"
-              />
               {!data.is_terminal && (
                 <div className="tracking-page__controls" role="group" aria-label="Simulation pacing controls">
                   <Button
