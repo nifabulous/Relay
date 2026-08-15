@@ -137,3 +137,139 @@ class TestProgressEndpointWithTelemetry:
         body = r.json()
         assert body["completion_rate"] == 0.5
         assert body["drop_off_lab"] == "2"
+
+
+# ── Tutor feedback ──────────────────────────────────────────────────────────
+#
+# Feedback rides the existing telemetry contract rather than getting its own
+# endpoint. A second endpoint would be a second place for message text to be
+# accepted, and the whole point is that there is nowhere to put it.
+
+_TURN_ID = "b7a66317-f6ea-4d22-adec-b0600d67c148"
+
+
+def test_a_tutor_feedback_event_is_accepted(client):
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "up",
+                "surface": "lesson",
+            }
+        ],
+    )
+    assert response.status_code == 200
+
+
+def test_tutor_feedback_needs_no_lab_id(client):
+    """A tutor turn is not a lab. Requiring one would force the client to invent
+    a value, and an invented identifier is worse than an absent one."""
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "down",
+                "surface": "tracking",
+                "reason": "not-grounded",
+            }
+        ],
+    )
+    assert response.status_code == 200
+
+
+def test_a_lab_event_still_requires_its_lab_id(client):
+    """The existing contract must not loosen for everyone else."""
+    response = client.post(
+        "/api/telemetry",
+        json=[{"type": "lab_completed", "ts": "2026-08-15T10:00:00Z"}],
+    )
+    assert response.status_code == 422
+
+
+def test_a_free_text_feedback_reason_is_rejected(client):
+    """Free text is the one thing feedback must never carry.
+
+    An open reason field is a text box wired straight to the analytics pipeline,
+    and learners paste account details into text boxes.
+    """
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "down",
+                "surface": "lesson",
+                "reason": "it said my IBAN DE89370400440532013000 was wrong",
+            }
+        ],
+    )
+    assert response.status_code == 422
+
+
+def test_an_unknown_rating_is_rejected(client):
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "sideways",
+                "surface": "lesson",
+            }
+        ],
+    )
+    assert response.status_code == 422
+
+
+def test_an_uppercase_turn_id_is_rejected_rather_than_silently_dropped(client):
+    """The frontend analytics allowlist is `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+
+    An uppercased UUID would pass Pydantic and then be dropped silently client
+    side, so the feedback would simply never arrive and nobody would know.
+    Rejecting it here makes the mismatch visible.
+    """
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID.upper(),
+                "rating": "up",
+                "surface": "lesson",
+            }
+        ],
+    )
+    assert response.status_code == 422
+
+
+def test_feedback_events_do_not_disturb_learning_metrics(client):
+    """Metrics are computed from lab events; feedback must be inert."""
+    events = [
+        {"type": "lab_started", "lab_id": "lab-1", "ts": "2026-08-15T10:00:00Z"},
+        {"type": "lab_completed", "lab_id": "lab-1", "ts": "2026-08-15T10:05:00Z"},
+    ]
+    baseline = client.post("/api/telemetry", json=events).json()
+    with_feedback = client.post(
+        "/api/telemetry",
+        json=events
+        + [
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:06:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "up",
+                "surface": "lesson",
+            }
+        ],
+    ).json()
+    assert baseline == with_feedback
