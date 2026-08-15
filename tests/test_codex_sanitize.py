@@ -62,6 +62,15 @@ def test_redacts_all_fields_from_a_diff_prefixed_digest_header() -> None:
     assert "[REDACTED]" in sanitized
 
 
+def test_redacts_all_fields_from_a_proxy_authorization_digest_header() -> None:
+    sanitized = sanitize(
+        'Proxy-Authorization: Digest username="ada", response="deadbeef"\n'
+    )
+
+    assert 'response="deadbeef"' not in sanitized
+    assert "[REDACTED]" in sanitized
+
+
 def test_redacts_cookie_headers() -> None:
     request = sanitize("Cookie: session=very-secret-session-token\n")
     response = sanitize("Set-Cookie: sid=abc123; HttpOnly; Secure\n")
@@ -69,6 +78,24 @@ def test_redacts_cookie_headers() -> None:
     assert "very-secret-session-token" not in request
     assert "abc123" not in response
     assert "[REDACTED_COOKIE]" in request
+
+
+def test_redacts_quoted_cookie_values_without_leaving_the_value_behind() -> None:
+    sanitized = sanitize('Cookie: sid="abc123secretvalue"; Path=/\n')
+
+    assert "abc123secretvalue" not in sanitized
+    assert sanitized == "Cookie: [REDACTED_COOKIE]\n"
+
+
+def test_sanitizes_sensitive_values_in_hunk_header_context() -> None:
+    sanitized = sanitize(
+        '@@ -12,6 +12,9 @@ def connect(password="hunter2", '
+        'iban="GB29NWBK60161331926819"):\n'
+    )
+
+    assert 'password="hunter2"' not in sanitized
+    assert "GB29NWBK60161331926819" not in sanitized
+    assert sanitized.startswith("@@ -12,6 +12,9 @@ ")
 
 
 def test_redacts_quoted_secret_assignments_containing_spaces() -> None:

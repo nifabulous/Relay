@@ -45,7 +45,7 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         # scheme is kept: it is diagnostic and is not itself the secret, and an
         # unmatched optional group substitutes as empty for a scheme-less value.
         re.compile(
-            r"(?i)^([+\- ]*\s*authorization\s*[:=]\s*)"
+            r"(?i)^([+\- ]*\s*(?:proxy-)?authorization\s*[:=]\s*)"
             r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
             r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
             r".+$"
@@ -56,7 +56,7 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         # The same header appearing inline, e.g. in a shell invocation. Bounded
         # to a single token here, since the surrounding line is code.
         re.compile(
-            r"(?i)(authorization\s*[:=]\s*)"
+            r"(?i)((?:proxy-)?authorization\s*[:=]\s*)"
             r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
             r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
             r"[^\s\r\n]+"
@@ -64,11 +64,19 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         r"\1\2[REDACTED]",
     ),
     (
-        # A cookie header is a bearer credential in all but name, and its value
-        # runs on past the session token (Set-Cookie packs the value and its
-        # flags into one field). Bounded by a quote or brace so an inline
-        # occurrence in code does not swallow the rest of the expression.
-        re.compile(r"(?i)\b((?:set-)?cookie\s*[:=]\s*)[^\r\n\"'}]+"),
+        # A cookie header is a bearer credential in all but name. Header-shaped
+        # lines, including diff-prefixed lines, consume the complete value so
+        # quoted RFC 6265 cookies cannot leave their contents behind.
+        re.compile(r"(?i)^([+\- ]*\s*(?:set-)?cookie\s*[:=]\s*).+$"),
+        r"\1[REDACTED_COOKIE]",
+    ),
+    (
+        # The same cookie assignment appearing inline in code. Prefer a quoted
+        # value when present; otherwise stop at the next shell/code separator.
+        re.compile(
+            r"(?i)\b((?:set-)?cookie\s*[:=]\s*)"
+            r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s\r\n\"'}]+)"
+        ),
         r"\1[REDACTED_COOKIE]",
     ),
     (
@@ -102,9 +110,12 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
 _CARD_RE = re.compile(r"(?<![\d-])(?:\d[ -]?){12,18}\d(?![\d-])")
 
 
-# Diff structure, not content: `index <sha>..<sha>` and `@@ -a,b +c,d @@`. Their
-# digit runs are addresses in the diff, never identifiers.
-_GIT_METADATA_RE = re.compile(r"^(?:index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?|@@ .*)$")
+# Diff structure, not content: `index <sha>..<sha>` and the numeric prefix of
+# `@@ -a,b +c,d @@`. Their digit runs are addresses in the diff, never
+# identifiers. Hunk context after the closing `@@` is source code and must be
+# redacted normally.
+_GIT_METADATA_RE = re.compile(r"^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$")
+_HUNK_HEADER_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@")
 
 # Masked before redaction and restored after, so no numeric rule can claim a
 # date or timestamp. The placeholder carries at most two digits, which is short
@@ -125,6 +136,12 @@ def _sanitize_line(line: str) -> str:
     if _GIT_METADATA_RE.fullmatch(line.rstrip("\r\n")):
         return line
 
+    hunk_prefix = ""
+    hunk_match = _HUNK_HEADER_RE.match(line)
+    if hunk_match:
+        hunk_prefix = hunk_match.group(0)
+        line = line[len(hunk_prefix) :]
+
     timestamps: list[str] = []
 
     def _mask(match: "re.Match[str]") -> str:
@@ -138,7 +155,7 @@ def _sanitize_line(line: str) -> str:
     masked = _CARD_RE.sub(_redact_card, masked)
     for index, timestamp in enumerate(timestamps):
         masked = masked.replace(f"[DATETIME_{index}]", timestamp)
-    return masked
+    return hunk_prefix + masked
 
 
 def sanitize(text: str) -> str:
