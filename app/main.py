@@ -41,6 +41,9 @@ from .routers import (
     tracking as tracking_router,
 )
 from .routers import (
+    tutor as tutor_router,
+)
+from .routers import (
     vop as vop_router,
 )
 from .services.schema_compat import ensure_sqlite_schema
@@ -96,6 +99,9 @@ app.include_router(prepare_router.router)
 app.include_router(analytics_router.router)
 app.include_router(progress_router.router)
 app.include_router(telemetry_router.router)
+# Registered after the existing learner-facing routes: the tutor is an
+# explanation layer over them, and nothing above depends on it.
+app.include_router(tutor_router.router)
 
 # Serve admin UI static assets (CSS/JS)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

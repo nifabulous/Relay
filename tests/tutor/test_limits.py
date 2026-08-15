@@ -1,0 +1,180 @@
+"""Rate limiting for the tutor: the only thing between a loop and a provider bill.
+
+Every other guard in the tutor protects the learner. This one protects the
+deployment: the tutor is the single endpoint in Relay that costs real money per
+call, so an unbounded client is a billing incident rather than a slow page.
+
+Two properties matter and are easy to get wrong:
+
+* the limit is checked **before** any provider work, not after
+* the key cannot be chosen by the caller
+"""
+import pytest
+
+from app.tutor.limits import (
+    InMemoryRateLimiter,
+    RateLimiter,
+    limiter_key_for,
+    production_limiter_is_missing,
+)
+
+
+class _Clock:
+    """A hand-cranked clock. Real sleeps would make this suite slow and flaky."""
+
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self) -> float:
+        return self.now
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds
+
+
+# ── In-memory limiter ───────────────────────────────────────────────────────
+
+
+def test_requests_under_the_limit_are_allowed():
+    limiter = InMemoryRateLimiter(limit=3, window_seconds=60, clock=_Clock())
+    assert [limiter.allow("a") for _ in range(3)] == [True, True, True]
+
+
+def test_the_request_over_the_limit_is_refused():
+    limiter = InMemoryRateLimiter(limit=2, window_seconds=60, clock=_Clock())
+    limiter.allow("a")
+    limiter.allow("a")
+    assert limiter.allow("a") is False
+
+
+def test_the_window_rolls_forward_rather_than_resetting_on_a_fixed_boundary():
+    """A fixed window lets a caller send 2x the limit across a boundary.
+
+    Rolling means the oldest request ages out one at a time, which is what makes
+    the ceiling actually hold.
+    """
+    clock = _Clock()
+    limiter = InMemoryRateLimiter(limit=2, window_seconds=60, clock=clock)
+    limiter.allow("a")
+    clock.advance(59)
+    limiter.allow("a")
+    assert limiter.allow("a") is False
+
+    clock.advance(2)  # the first request is now outside the window
+    assert limiter.allow("a") is True
+
+
+def test_keys_are_independent():
+    limiter = InMemoryRateLimiter(limit=1, window_seconds=60, clock=_Clock())
+    assert limiter.allow("a") is True
+    assert limiter.allow("b") is True
+    assert limiter.allow("a") is False
+
+
+def test_old_keys_are_evicted_so_the_limiter_does_not_grow_forever():
+    """An in-process limiter keyed by address is a memory leak with a schedule.
+
+    Without eviction, one entry per distinct caller accumulates for the life of
+    the worker.
+    """
+    clock = _Clock()
+    limiter = InMemoryRateLimiter(limit=5, window_seconds=60, clock=clock)
+    for index in range(500):
+        limiter.allow(f"key-{index}")
+    clock.advance(120)
+    limiter.allow("fresh")
+    assert limiter.tracked_keys() <= 2
+
+
+def test_the_in_memory_limiter_satisfies_the_protocol():
+    assert isinstance(InMemoryRateLimiter(limit=1, window_seconds=1), RateLimiter)
+
+
+# ── Key resolution ──────────────────────────────────────────────────────────
+
+
+class _Request:
+    def __init__(self, client_host="203.0.113.7", headers=None):
+        self.client = type("Client", (), {"host": client_host})()
+        self.headers = headers or {}
+
+
+def test_the_key_comes_from_the_socket_address_by_default():
+    assert limiter_key_for(_Request(client_host="203.0.113.7")) == "ip:203.0.113.7"
+
+
+def test_a_client_supplied_forwarded_header_is_ignored_by_default():
+    """`X-Forwarded-For` is caller-controlled unless a proxy is known to rewrite it.
+
+    Trusting it by default means any client can mint a fresh limit bucket per
+    request by changing one header — which is not a partial limit, it is no
+    limit at all.
+    """
+    request = _Request(
+        client_host="203.0.113.7", headers={"x-forwarded-for": "198.51.100.1"}
+    )
+    assert limiter_key_for(request) == "ip:203.0.113.7"
+
+
+def test_a_trusted_proxy_hop_count_selects_the_right_entry(monkeypatch):
+    """With one trusted proxy, the client address is the last entry.
+
+    Taking the *first* entry is the classic mistake: that end of the list is
+    exactly the part a caller can prepend to.
+    """
+    monkeypatch.setenv("TUTOR_TRUSTED_PROXY_HOPS", "1")
+    request = _Request(
+        client_host="10.0.0.1",
+        headers={"x-forwarded-for": "198.51.100.1, 203.0.113.7"},
+    )
+    assert limiter_key_for(request) == "ip:203.0.113.7"
+
+
+def test_more_trusted_hops_than_entries_falls_back_to_the_socket(monkeypatch):
+    monkeypatch.setenv("TUTOR_TRUSTED_PROXY_HOPS", "4")
+    request = _Request(client_host="10.0.0.1", headers={"x-forwarded-for": "198.51.100.1"})
+    assert limiter_key_for(request) == "ip:10.0.0.1"
+
+
+def test_a_missing_client_still_produces_a_usable_key():
+    request = _Request()
+    request.client = None
+    assert limiter_key_for(request) == "ip:unknown"
+
+
+# ── Production safeguard ────────────────────────────────────────────────────
+
+
+def test_an_in_process_limiter_is_flagged_as_insufficient_in_production(monkeypatch):
+    """In-process buckets reset on every cold start and are per-instance.
+
+    On a platform that runs many short-lived instances, that is a limit in name
+    only — which is why enabling the tutor there without the shared limiter is
+    refused rather than quietly permitted.
+    """
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_URL", raising=False)
+    assert production_limiter_is_missing() is True
+
+
+def test_a_configured_shared_limiter_satisfies_the_production_safeguard(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_URL", "https://redis.example")
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_TOKEN", "token")
+    assert production_limiter_is_missing() is False
+
+
+def test_local_development_needs_no_shared_limiter(monkeypatch):
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_URL", raising=False)
+    assert production_limiter_is_missing() is False
+
+
+@pytest.mark.parametrize("limit", [0, -5])
+def test_a_non_positive_limit_refuses_everything_rather_than_allowing_everything(limit):
+    """Fail closed. A misconfigured ceiling of zero must not mean "no ceiling"."""
+    limiter = InMemoryRateLimiter(limit=limit, window_seconds=60, clock=_Clock())
+    assert limiter.allow("a") is False
