@@ -4,29 +4,27 @@
     {
       "name": "swift-routing",
       "runtimeExecutable": ".venv/bin/uvicorn",
-      "runtimeArgs": ["app.main:app", "--port", "8000"],
+      "runtimeArgs": [
+        "app.main:app",
+        "--port",
+        "8000"
+      ],
       "port": 8000
     },
     {
       "name": "relay-frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5175", "--strictPort"],
-      "port": 5175
-    },
-    {
-      "name": "relay-dark-worktree",
-      "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        ".claude/worktrees/agent-a2bdf1a6206d214b4/frontend",
+        "frontend",
         "run",
         "dev",
         "--",
         "--port",
-        "5176",
+        "5175",
         "--strictPort"
       ],
-      "port": 5176
+      "port": 5175
     }
   ]
 }
