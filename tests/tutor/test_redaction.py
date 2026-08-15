@@ -194,3 +194,38 @@ def test_lower_case_prose_is_still_not_mistaken_for_a_bic():
         "required fields are credited to the beneficiary",
     ):
         assert redact_sensitive_text(text) == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Explain SWIFT messages",
+        "How do SWIFT messages work?",
+        "Compare SWIFT messages and ISO 20022",
+        "What does SWIFT charges mean on a statement?",
+    ],
+)
+def test_bare_swift_before_an_ordinary_word_is_not_an_identifier_cue(text):
+    """"SWIFT" alone is an organisation name, not an identifier label.
+
+    Treating it as a cue made "Explain SWIFT messages" come back as "Explain
+    SWIFT [BIC]": `messages` is eight letters whose fifth and sixth are `AG`,
+    a real ISO country code. The learner's own question was being mangled
+    before the model ever saw it, and the answer would then explain a bank
+    identifier nobody asked about.
+
+    "BIC ..." and "SWIFT code ..." stay cues — those phrases introduce an
+    identifier rather than naming the organisation.
+    """
+    assert redact_sensitive_text(text) == text
+
+
+def test_a_cued_token_with_an_english_inflection_is_not_a_bic():
+    """Plurals and participles are where prose collides with the BIC shape.
+
+    No BIC in Relay's directory ends in one, and the cue is the weakest of the
+    three signals: a digit-bearing or XXX-terminated BIC is still redacted
+    without any cue at all, so tightening here costs nothing real.
+    """
+    for text in ("The BIC checking process", "SWIFT code changes are rare"):
+        assert redact_sensitive_text(text) == text

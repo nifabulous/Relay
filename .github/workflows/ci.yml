@@ -78,3 +78,47 @@ jobs:
       - name: Bundle budget
         run: npm run check:bundle
         working-directory: frontend
+
+  # Opt-in only. The deterministic half of the tutor contract already runs in
+  # `test` above, with no provider and no key; this job is the half that needs a
+  # model. It is gated on a repository variable rather than merely on the secret
+  # existing, so turning it on is a deliberate act and a leaked-then-revoked key
+  # cannot silently start (or stop) gating merges.
+  #
+  # It must never become required. A job that fails when a provider has an
+  # outage, a quota lapse, or a model deprecation stops being a signal about
+  # Relay and becomes noise about someone else's infrastructure.
+  tutor-live-eval:
+    runs-on: ubuntu-latest
+    if: vars.RUN_TUTOR_LIVE_EVAL == 'true'
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install with the AI extra
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,ai,eval]"
+
+      - name: Run the tutor golden set against a live provider
+        env:
+          TUTOR_ENABLED: "true"
+          TUTOR_PROVIDER: openai
+          TUTOR_MODEL: ${{ vars.TUTOR_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/run_tutor_eval.py --provider live --output tutor-eval.json
+
+      # Aggregate scores and question IDs only — the script writes no prompts,
+      # answers, or transcripts, so this artifact is safe to keep.
+      - name: Upload evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tutor-eval
+          path: tutor-eval.json
