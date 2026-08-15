@@ -71,6 +71,29 @@ def test_redacts_all_fields_from_a_proxy_authorization_digest_header() -> None:
     assert "[REDACTED]" in sanitized
 
 
+def test_redacts_prefixed_authorization_headers() -> None:
+    proxy = sanitize('Proxy-Authorization: Digest username="ada", response="deadbeef"\n')
+    vendor = sanitize('X-Authorization: Digest username="ada", response="deadbeef"\n')
+    nested = sanitize('+X-Amz-Authorization: Digest username="a", response="deadbeef"\n')
+
+    assert "deadbeef" not in proxy
+    assert "deadbeef" not in vendor
+    assert "deadbeef" not in nested
+
+
+def test_redacts_the_authentication_header_variant() -> None:
+    sanitized = sanitize("Authentication: Bearer tok-abcdefghijkl\n")
+
+    assert "tok-abcdefghijkl" not in sanitized
+    assert "Bearer" in sanitized
+
+
+def test_does_not_redact_a_www_authenticate_challenge() -> None:
+    source = 'WWW-Authenticate: Digest realm="relay", qop="auth"\n'
+
+    assert sanitize(source) == source
+
+
 def test_redacts_cookie_headers() -> None:
     request = sanitize("Cookie: session=very-secret-session-token\n")
     response = sanitize("Set-Cookie: sid=abc123; HttpOnly; Secure\n")
@@ -96,6 +119,13 @@ def test_sanitizes_sensitive_values_in_hunk_header_context() -> None:
     assert 'password="hunter2"' not in sanitized
     assert "GB29NWBK60161331926819" not in sanitized
     assert sanitized.startswith("@@ -12,6 +12,9 @@ ")
+
+
+def test_redacts_an_inline_cookie_whose_value_is_quoted() -> None:
+    sanitized = sanitize('curl -H "Cookie: sid=\\"abc123secretvalue\\"" https://x\n')
+
+    assert "abc123secretvalue" not in sanitized
+    assert "[REDACTED_COOKIE]" in sanitized
 
 
 def test_redacts_quoted_secret_assignments_containing_spaces() -> None:
@@ -174,6 +204,26 @@ def test_redacts_card_like_numbers_including_grouped_forms() -> None:
     assert "4111111111111111" not in contiguous
     assert "1111" not in grouped
     assert "1111" not in hyphenated
+
+
+def test_a_long_hyphenated_line_does_not_blow_up_the_sanitizer() -> None:
+    """A minified bundle or lockfile entry is one very long hyphenated line.
+
+    With unbounded segment repetition in the credential-assignment rules this
+    took 4.7s for a single line, which a hostile PR could stack to burn the
+    workflow's 15-minute timeout. Bounded, it is ~0.5s. The 3s ceiling sits
+    above the bounded cost with room for a loaded runner and well below the
+    unbounded one.
+    """
+    import time
+
+    line = "-".join(f"seg{index}" for index in range(4000)) + "\n"
+
+    started = time.perf_counter()
+    sanitize(line)
+    elapsed = time.perf_counter() - started
+
+    assert elapsed < 3.0, f"sanitizing one long hyphenated line took {elapsed:.1f}s"
 
 
 def test_preserves_normal_source_and_is_idempotent() -> None:

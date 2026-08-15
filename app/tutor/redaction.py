@@ -61,7 +61,10 @@ _SECRET_RE = re.compile(
     # is built from separator-terminated segments so the credential word has to
     # be a whole segment: this matches ADMIN_API_KEY and X-Admin-Key but not
     # the "key" buried inside "Turnkey:".
-    | \b(?:[A-Za-z][A-Za-z0-9]*[_-])*
+    # Bounded rather than `*`. An unbounded repetition is quadratic on a long
+    # hyphenated or underscored run and costs seconds on a single such line;
+    # eight segments is well past any real credential name.
+    | \b(?:[A-Za-z][A-Za-z0-9]*[_-]){0,8}
       (?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|PWD|CREDENTIAL)
       \s*[:=]\s*
       \"?[A-Za-z0-9._~+/-]{8,}\"?

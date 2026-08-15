@@ -33,6 +33,24 @@ from app.tutor.redaction import redact_sensitive_text_preserving_bic  # noqa: E4
 
 # Applied before the shared redactor. None of these can match a payment
 # identifier, so running them first cannot split one.
+# Vendor-prefixed header names: Proxy-Authorization, X-Authorization,
+# X-Amz-Authorization. Enumerating prefixes one at a time lost ground every
+# round — each fix closed one spelling and left its neighbour — so the prefix is
+# matched structurally instead. Bounded repetition rather than `*`: four
+# segments covers every real header and keeps backtracking linear on a long
+# hyphenated line that never reaches the header name.
+_HEADER_PREFIX = r"(?:[A-Za-z][A-Za-z0-9]*-){0,4}"
+
+# `Authentication` is not a standard request header but is used in the wild and
+# is a frequent misspelling of the real one. `WWW-Authenticate` is deliberately
+# excluded: it is a server challenge, not a credential.
+_AUTH_HEADER = rf"{_HEADER_PREFIX}auth(?:orization|entication)"
+
+_AUTH_SCHEMES = (
+    r"(?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
+    r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)"
+)
+
 SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (
         re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL),
@@ -44,38 +62,31 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         # spreads its credential across a comma-separated parameter list. The
         # scheme is kept: it is diagnostic and is not itself the secret, and an
         # unmatched optional group substitutes as empty for a scheme-less value.
-        re.compile(
-            r"(?i)^([+\- ]*\s*(?:proxy-)?authorization\s*[:=]\s*)"
-            r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
-            r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
-            r".+$"
-        ),
+        re.compile(rf"(?i)^([+\- ]*\s*{_AUTH_HEADER}\s*[:=]\s*)({_AUTH_SCHEMES}\s+)?.+$"),
         r"\1\2[REDACTED]",
     ),
     (
         # The same header appearing inline, e.g. in a shell invocation. Bounded
         # to a single token here, since the surrounding line is code.
-        re.compile(
-            r"(?i)((?:proxy-)?authorization\s*[:=]\s*)"
-            r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
-            r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
-            r"[^\s\r\n]+"
-        ),
+        re.compile(rf"(?i)\b({_AUTH_HEADER}\s*[:=]\s*)({_AUTH_SCHEMES}\s+)?[^\s\r\n]+"),
         r"\1\2[REDACTED]",
     ),
     (
         # A cookie header is a bearer credential in all but name. Header-shaped
         # lines, including diff-prefixed lines, consume the complete value so
         # quoted RFC 6265 cookies cannot leave their contents behind.
-        re.compile(r"(?i)^([+\- ]*\s*(?:set-)?cookie\s*[:=]\s*).+$"),
+        re.compile(rf"(?i)^([+\- ]*\s*{_HEADER_PREFIX}cookie\s*[:=]\s*).+$"),
         r"\1[REDACTED_COOKIE]",
     ),
     (
-        # The same cookie assignment appearing inline in code. Prefer a quoted
-        # value when present; otherwise stop at the next shell/code separator.
+        # The same cookie assignment appearing inline in code. A cookie is
+        # `name="value"`, so the quote sits *inside* the value rather than at
+        # its start: matching a quoted run only as a leading alternative stopped
+        # at the opening quote and left the secret behind it. Bare characters
+        # and quoted runs therefore alternate freely across the whole value.
         re.compile(
-            r"(?i)\b((?:set-)?cookie\s*[:=]\s*)"
-            r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s\r\n\"'}]+)"
+            rf"(?i)\b({_HEADER_PREFIX}cookie\s*[:=]\s*)"
+            r"(?:[^\s\r\n\"'}]|\"[^\"\r\n]*\"|'[^'\r\n]*')+"
         ),
         r"\1[REDACTED_COOKIE]",
     ),
@@ -92,7 +103,11 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         # to the first space: a passphrase is the case where the value contains
         # spaces, and the unquoted rule below stops at the first one.
         re.compile(
-            r"(?i)\b(?:[A-Za-z][A-Za-z0-9]*[_-])*"
+            # Bounded, not `*`: an unbounded segment repetition costs seconds on
+            # a single long hyphenated line (a minified bundle or lockfile entry
+            # in a diff), which a hostile PR could use to burn the job timeout.
+            # Eight segments is far more than any real credential name.
+            r"(?i)\b(?:[A-Za-z][A-Za-z0-9]*[_-]){0,8}"
             r"(?:api[_-]?key|secret|token|password|passwd|pwd|credential)"
             r"\s*[:=]\s*(['\"])(?:(?!\1).)*\1"
         ),
