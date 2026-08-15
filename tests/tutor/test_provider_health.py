@@ -198,3 +198,83 @@ def test_a_malformed_ceiling_counts_as_missing_rather_than_unlimited(
     monkeypatch.setenv("TUTOR_ENABLED", "true")
     monkeypatch.setenv("TUTOR_DAILY_REQUEST_CEILING", raw)
     assert production_spend_ceiling_is_missing() is True
+
+
+# ── Review fix: T13 — the engine's use of retry and breaker ─────────────────
+#
+# The breaker and the retry were tested in isolation, which proves the
+# mechanisms and not the wiring. These drive the real adapter with a fake
+# provider, because the wiring is where the interesting mistakes live: a retry
+# that does not count toward the breaker, or a breaker that opens and is then
+# ignored, both pass isolated tests.
+
+import asyncio
+
+import pytest
+
+from app.tutor.engine import TutorProviderError, _PydanticAITutorEngine
+from app.tutor.retrieval import retrieve_documents
+from app.tutor.schemas import TutorContext, TutorModelOutput, TutorRequest
+from app.tutor.tools import RelayTutorTools
+
+
+def _engine_with(responses):
+    """A real _PydanticAITutorEngine with its provider call swapped for a script.
+
+    Subclassed rather than mocked so everything around the provider call — the
+    breaker, the retry, the budget, the validation — is the production path.
+    """
+
+    class _Scripted(_PydanticAITutorEngine):
+        def __init__(self):
+            self.attempts = 0
+            self._max_input_tokens = 14000
+            self._max_history_turns = 8
+            from app.tutor.engine import CircuitBreaker
+
+            self._breaker = CircuitBreaker(failure_threshold=2, reset_seconds=60)
+
+        async def _call_provider(self, payload):
+            outcome = responses[min(self.attempts, len(responses) - 1)]
+            self.attempts += 1
+            if isinstance(outcome, Exception):
+                raise outcome
+            return type("Result", (), {"output": outcome})()
+
+    return _Scripted()
+
+
+def _run(engine):
+    request = TutorRequest(message="What is an IBAN?", context=TutorContext(surface="global"))
+    documents = retrieve_documents(request.message, context=request.context)
+    return asyncio.run(engine.answer(request, documents, RelayTutorTools()))
+
+
+def test_a_single_transient_failure_is_retried_and_succeeds():
+    good = TutorModelOutput(answer="An IBAN identifies an account.", citations=[])
+    engine = _engine_with([TutorProviderError("blip"), good])
+    _run(engine)
+    assert engine.attempts == 2, "one retry should have rescued the blip"
+
+
+def test_the_retry_is_bounded_to_one_extra_attempt():
+    """A third attempt mostly triples the latency of an outage the learner is
+    already waiting through, and triples the spend on a call that will fail."""
+    engine = _engine_with([TutorProviderError("down")])
+    with pytest.raises(TutorProviderError):
+        _run(engine)
+    assert engine.attempts == 2
+
+
+def test_repeated_failures_open_the_breaker_and_stop_calling_the_provider():
+    """The point of the breaker: once it is open, the provider is not called at
+    all, so an outage stops costing money and stops making learners wait."""
+    engine = _engine_with([TutorProviderError("down")])
+    for _ in range(2):
+        with pytest.raises(TutorProviderError):
+            _run(engine)
+    attempts_before = engine.attempts
+
+    with pytest.raises(TutorProviderError):
+        _run(engine)
+    assert engine.attempts == attempts_before, "an open breaker must not call the provider"

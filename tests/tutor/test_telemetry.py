@@ -202,3 +202,50 @@ def test_a_generated_turn_id_is_lowercase():
         )
         assert response.turn_id == response.turn_id.lower()
         assert "_" not in response.turn_id
+
+
+# ── Review fix: T14 ─────────────────────────────────────────────────────────
+
+
+def test_feedback_is_recorded_rather_than_acknowledged_and_dropped():
+    """T14. The panel said 'Thanks — noted.' and the router discarded the event.
+
+    Telling a learner their rating was noted while dropping it is worse than
+    not asking: it spends their goodwill and returns nothing. Either persist it
+    or stop claiming to.
+    """
+    from app.tutor.telemetry import TutorTelemetry
+
+    sink = _RecordingSink()
+    telemetry = TutorTelemetry(sink=sink)
+    event = telemetry.record_feedback(
+        turn_id="b7a66317-f6ea-4d22-adec-b0600d67c148",
+        rating="down",
+        surface="lesson",
+        reason="not-grounded",
+    )
+    assert sink.events == [event]
+    assert event.rating == "down"
+    assert event.turn_id == "b7a66317-f6ea-4d22-adec-b0600d67c148"
+
+
+def test_recorded_feedback_carries_no_free_text():
+    """The reason is a closed enum; there is nowhere for a message to ride."""
+    from app.tutor.telemetry import TutorTelemetry
+
+    event = TutorTelemetry(sink=_RecordingSink()).record_feedback(
+        turn_id="b7a66317-f6ea-4d22-adec-b0600d67c148",
+        rating="up",
+        surface="lesson",
+    )
+    forbidden = {"message", "answer", "question", "text", "comment", "note"}
+    assert not (forbidden & set(event.as_dict()))
+
+
+def test_a_failing_feedback_sink_never_breaks_the_request():
+    from app.tutor.telemetry import TutorTelemetry
+
+    telemetry = TutorTelemetry(sink=_RecordingSink(explode=True))
+    assert telemetry.record_feedback(
+        turn_id="b7a66317-f6ea-4d22-adec-b0600d67c148", rating="up", surface="lesson"
+    ) is not None

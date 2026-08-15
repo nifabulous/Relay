@@ -5,6 +5,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field, model_validator
 
 from ..services.telemetry import compute_metrics
+from ..tutor.telemetry import build_tutor_telemetry
+
+_TUTOR_TELEMETRY = build_tutor_telemetry()
 
 router = APIRouter(prefix="/api", tags=["swift"])
 
@@ -74,6 +77,17 @@ def submit_telemetry(events: List[TelemetryEvent]):
     Returns derived learning-loop metrics: completion rate, drop-off point,
     average time-on-task, exercise success rate.
     """
+    # Feedback is recorded before the metrics split. It was previously validated
+    # and then discarded, while the panel told the learner it had been noted.
+    for event in events:
+        if event.type == _TUTOR_FEEDBACK:
+            _TUTOR_TELEMETRY.record_feedback(
+                turn_id=event.turn_id or "",
+                rating=event.rating or "",
+                surface=event.surface or "",
+                reason=event.reason,
+            )
+
     # Only lab events reach the metrics service. Feedback events are accepted
     # and validated here, then deliberately dropped: the learning-loop metrics
     # are about lab progression, and a tutor rating is not a step in it.

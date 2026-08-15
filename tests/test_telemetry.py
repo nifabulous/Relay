@@ -273,3 +273,35 @@ def test_feedback_events_do_not_disturb_learning_metrics(client):
         ],
     ).json()
     assert baseline == with_feedback
+
+
+def test_a_submitted_rating_reaches_the_tutor_telemetry_recorder(client, monkeypatch):
+    """T14, end to end. The event was validated, then dropped on the floor.
+
+    The panel says 'Thanks — noted.' Something has to actually note it, or that
+    sentence is a lie told to every learner who bothers to rate an answer.
+    """
+    recorded = []
+    from app.tutor import telemetry as telemetry_module
+
+    monkeypatch.setattr(
+        telemetry_module.TutorTelemetry,
+        "record_feedback",
+        lambda self, **kwargs: recorded.append(kwargs) or kwargs,
+    )
+    response = client.post(
+        "/api/telemetry",
+        json=[
+            {
+                "type": "tutor_feedback",
+                "ts": "2026-08-15T10:00:00Z",
+                "turn_id": _TURN_ID,
+                "rating": "down",
+                "surface": "lesson",
+                "reason": "not-grounded",
+            }
+        ],
+    )
+    assert response.status_code == 200
+    assert recorded and recorded[0]["turn_id"] == _TURN_ID
+    assert recorded[0]["rating"] == "down"

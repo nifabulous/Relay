@@ -424,6 +424,17 @@ class _PydanticAITutorEngine(_ValidatingEngine):
             tools=_registry_tools(tools),
         )
 
+    async def _call_provider(self, payload: TutorPromptPayload):
+        """The single line that actually leaves the process.
+
+        Extracted so the retry and breaker wiring around it is testable without
+        a provider. Testing the breaker and the retry in isolation proves the
+        mechanisms and not the wiring, and the wiring is where the interesting
+        mistakes live: a retry that never counts toward the breaker, or a
+        breaker that opens and is then ignored, both pass isolated tests.
+        """
+        return await self._agent.run(payload.user, instructions=payload.system)
+
     async def _produce(
         self, payload: TutorPromptPayload, tools: TutorToolRegistry
     ) -> TutorModelOutput:
@@ -437,7 +448,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         last_error: Optional[BaseException] = None
         for attempt in range(_MAX_PROVIDER_ATTEMPTS):
             try:
-                result = await self._agent.run(payload.user, instructions=payload.system)
+                result = await self._call_provider(payload)
             except Exception as error:  # noqa: BLE001 - normalised at the boundary
                 last_error = error
                 if attempt + 1 < _MAX_PROVIDER_ATTEMPTS:

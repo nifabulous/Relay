@@ -24,6 +24,7 @@ can do.
 Tracking is deliberately absent. The MVP explains a *summary* the frontend
 already displays; it never looks a payment up by identifier.
 """
+from functools import lru_cache
 from typing import Dict, List, Optional, Protocol, runtime_checkable
 
 from app.data.payment_schemes import list_currencies_with_schemes
@@ -90,10 +91,14 @@ def _normalise(value: object) -> str:
     return " ".join(value.strip().lower().split())
 
 
+# The catalogue is static, so these three rebuilt the same dicts on every tool
+# call — one full walk of 73 documents per lookup, inside the request budget.
+@lru_cache(maxsize=1)
 def _catalog_by_id() -> Dict[str, TutorDocument]:
     return {document.source_id: document for document in build_tutor_catalog()}
 
 
+@lru_cache(maxsize=1)
 def _known_module_ids() -> set:
     return {
         module_id
@@ -103,6 +108,7 @@ def _known_module_ids() -> set:
     }
 
 
+@lru_cache(maxsize=1)
 def _concept_index() -> Dict[str, str]:
     """Every accepted spelling of a concept, mapped to its card.
 

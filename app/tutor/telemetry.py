@@ -63,7 +63,25 @@ class TutorRunEvent:
         return asdict(self)
 
 
-TutorTelemetrySink = Callable[[TutorRunEvent], None]
+@dataclass(frozen=True)
+class TutorFeedbackEvent:
+    """A learner's rating of one turn. Four bounded fields, no free text.
+
+    Same privacy contract as TutorRunEvent and for the same reason: the field
+    list IS the contract, so carrying a comment would mean adding a field —
+    visible in a diff — rather than a filter someone forgot to apply.
+    """
+
+    turn_id: str
+    rating: str
+    surface: str
+    reason: Optional[str] = None
+
+    def as_dict(self) -> Dict[str, object]:
+        return asdict(self)
+
+
+TutorTelemetrySink = Callable[[object], None]
 
 
 def _no_op_sink(event: TutorRunEvent) -> None:
@@ -137,6 +155,32 @@ class TutorTelemetry:
         return event
 
 
+    def record_feedback(
+        self,
+        *,
+        turn_id: str,
+        rating: str,
+        surface: str,
+        reason: Optional[str] = None,
+    ) -> TutorFeedbackEvent:
+        """Record a rating. Returns the event, and never raises.
+
+        The panel told the learner 'Thanks — noted.' while the router discarded
+        the event. Acknowledging feedback and dropping it is worse than not
+        asking: it spends the learner's goodwill and returns nothing, and the
+        one signal that would tell us whether answers are any good never
+        existed.
+        """
+        event = TutorFeedbackEvent(
+            turn_id=turn_id, rating=str(rating), surface=str(surface), reason=reason
+        )
+        try:
+            self._sink(event)
+        except Exception:  # noqa: BLE001 - observability must not break a request
+            logger.warning("tutor feedback sink failed", exc_info=False)
+        return event
+
+
 def _build_langfuse_sink() -> Optional[TutorTelemetrySink]:
     """A Langfuse sink, or None if the optional extra or its keys are absent.
 
@@ -155,8 +199,9 @@ def _build_langfuse_sink() -> Optional[TutorTelemetrySink]:
         logger.warning("langfuse could not be initialised; tutor tracing is off")
         return None
 
-    def sink(event: TutorRunEvent) -> None:
-        client.create_event(name="tutor_run", metadata=event.as_dict())
+    def sink(event) -> None:
+        name = "tutor_feedback" if isinstance(event, TutorFeedbackEvent) else "tutor_run"
+        client.create_event(name=name, metadata=event.as_dict())
 
     return sink
 
