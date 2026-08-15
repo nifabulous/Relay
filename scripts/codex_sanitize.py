@@ -132,11 +132,39 @@ _CARD_RE = re.compile(r"(?<![\d-])(?:\d[ -]?){12,18}\d(?![\d-])")
 _GIT_METADATA_RE = re.compile(r"^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$")
 _HUNK_HEADER_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@")
 
-# Masked before redaction and restored after, so no numeric rule can claim a
-# date or timestamp. The placeholder carries at most two digits, which is short
-# of every numeric rule's floor.
+# Runs masked before redaction and restored after, so no numeric rule can claim
+# them. The placeholder carries at most two digits, which is short of every
+# numeric rule's floor, so it cannot be re-matched.
 _ISO_8601_RE = re.compile(
     r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?"
+)
+
+# Standard references. `ISO 20022 2019` is nine digits with a separator, which
+# is exactly the phone rule's shape, so a payments repo's most-discussed
+# standard read as a phone number in every review. The digit count is bounded by
+# the pattern itself, so nothing longer than a standard number can hide here.
+_STANDARD_REFERENCE_RE = re.compile(r"\bISO[ /-]?\d{3,5}(?:[:-]\d{2,4})?\b", re.IGNORECASE)
+
+# SVG coordinate lists: a run like `points="20 6 9 17 4 12"` is geometry, but it
+# is also nine digits with separators. Only the purely numeric attributes are
+# considered — `d` paths interleave letters and are not worth the looser match.
+_SVG_COORDINATES_RE = re.compile(r"\b(?:points|viewBox)\s*=\s*\"[0-9 .,+-]*\"")
+
+# A coordinate list is many short groups. The exemption is gated on that shape
+# rather than on the attribute name, so an account number parked inside a
+# `points=` attribute is still redacted rather than waved through.
+_LONG_DIGIT_RUN_RE = re.compile(r"\d{8,}")
+
+
+def _is_coordinate_list(match: "re.Match[str]") -> bool:
+    return _LONG_DIGIT_RUN_RE.search(match.group(0)) is None
+
+
+# (pattern, predicate) — a predicate of None exempts every match.
+_EXEMPT_RULES = (
+    (_ISO_8601_RE, None),
+    (_STANDARD_REFERENCE_RE, None),
+    (_SVG_COORDINATES_RE, _is_coordinate_list),
 )
 
 
@@ -157,19 +185,26 @@ def _sanitize_line(line: str) -> str:
         hunk_prefix = hunk_match.group(0)
         line = line[len(hunk_prefix) :]
 
-    timestamps: list[str] = []
+    exempt: list[str] = []
 
-    def _mask(match: "re.Match[str]") -> str:
-        timestamps.append(match.group(0))
-        return f"[DATETIME_{len(timestamps) - 1}]"
+    def _mask_with(predicate):
+        def _mask(match: "re.Match[str]") -> str:
+            if predicate is not None and not predicate(match):
+                return match.group(0)
+            exempt.append(match.group(0))
+            return f"[LITERAL_{len(exempt) - 1}]"
 
-    masked = _ISO_8601_RE.sub(_mask, line)
+        return _mask
+
+    masked = line
+    for pattern, predicate in _EXEMPT_RULES:
+        masked = pattern.sub(_mask_with(predicate), masked)
     for pattern, replacement in SECRET_PATTERNS[1:]:
         masked = pattern.sub(replacement, masked)
     masked = redact_sensitive_text_preserving_bic(masked)
     masked = _CARD_RE.sub(_redact_card, masked)
-    for index, timestamp in enumerate(timestamps):
-        masked = masked.replace(f"[DATETIME_{index}]", timestamp)
+    for index, literal in enumerate(exempt):
+        masked = masked.replace(f"[LITERAL_{index}]", literal)
     return hunk_prefix + masked
 
 

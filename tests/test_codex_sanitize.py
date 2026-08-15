@@ -182,6 +182,45 @@ def test_preserves_iso_8601_dates_and_timestamps() -> None:
     assert sanitize(source) == source
 
 
+def test_preserves_standard_references_such_as_iso_20022() -> None:
+    source = '"roadmap": ["2023 rulebook migration to ISO 20022 2019 version complete"]\n'
+
+    assert sanitize(source) == source
+    assert sanitize("Built on ISO 8583 and ISO 20022:2013.\n") == (
+        "Built on ISO 8583 and ISO 20022:2013.\n"
+    )
+
+
+def test_preserves_svg_coordinate_lists() -> None:
+    source = '      <polyline points="20 6 9 17 4 12" />\n'
+
+    assert sanitize(source) == source
+    assert sanitize('<svg viewBox="0 0 24 24 16 16">\n') == '<svg viewBox="0 0 24 24 16 16">\n'
+
+
+def test_a_coordinate_attribute_cannot_smuggle_an_identifier_through() -> None:
+    """The exemption is shape-gated, not attribute-gated.
+
+    A coordinate list is many short groups. A long unbroken digit run in the
+    same attribute is an account number wearing a costume, and still redacts.
+    """
+    sanitized = sanitize('<polyline points="100200300400 6 9 17" />\n')
+
+    assert "100200300400" not in sanitized
+
+
+def test_standard_reference_exemption_is_idempotent() -> None:
+    source = (
+        'ISO 20022 2019 migration, <polyline points="20 6 9 17 4 12" />, '
+        "call +234 801 234 5678\n"
+    )
+
+    once = sanitize(source)
+
+    assert "+234 801 234 5678" not in once
+    assert sanitize(once) == once
+
+
 def test_redacts_uetrs() -> None:
     sanitized = sanitize("UETR 97ed4827-7b6f-4491-a06f-b548d5a7512d failed.\n")
 
