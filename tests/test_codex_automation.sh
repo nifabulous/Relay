@@ -81,7 +81,8 @@ require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited,
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
 # action read the checkout and tamper with build output. Pinned for the same
 # reason, and Dependabot is what keeps every pin in the repository from rotting.
-for action in 'actions/checkout@v' 'actions/setup-python@v' 'actions/setup-node@v'; do
+for action in 'actions/checkout@v' 'actions/setup-python@v' 'actions/setup-node@v' \
+              'actions/upload-artifact@v'; do
   refuse_text '.github/workflows/ci.yml' "$action"
 done
 require_text '.github/workflows/ci.yml' 'permissions:'
