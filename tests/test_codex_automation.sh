@@ -26,19 +26,68 @@ refuse_text() {
   fi
 }
 
-require_pinned_action() {
+# Every `uses:` in a workflow, not a list of names to look for. An allowlist
+# only guards the actions someone remembered to enumerate, so the first action
+# added under a new name lands unpinned with CI still green.
+action_references() {
+  grep -hE '^[[:space:]]*(-[[:space:]]*)?uses:' "$@" || true
+}
+
+require_every_action_pinned() {
   local file="$1"
-  local action="$2"
-  local references
-  references="$(grep -E "${action}@" "$ROOT/$file" || true)"
-  if [[ -z "$references" ]]; then
-    printf 'missing full-SHA pin for %s in %s\n' "$action" "$file" >&2
-    FAILURES=$((FAILURES + 1))
-  fi
-  if [[ -n "$references" ]] && grep -Evq "${action}@[0-9a-f]{40}([[:space:]]|$)" <<<"$references"; then
-    printf 'non-SHA pin for %s in %s\n' "$action" "$file" >&2
-    FAILURES=$((FAILURES + 1))
-  fi
+  local line ref
+  while IFS= read -r line; do
+    ref="${line#*uses:}"
+    ref="${ref%%#*}"
+    ref="${ref//[[:space:]]/}"
+    ref="${ref//\"/}"
+    ref="${ref//\'/}"
+    # A local composite action or reusable workflow ships with this repository
+    # and carries no upstream ref to pin.
+    [[ -z "$ref" || "$ref" == ./* ]] && continue
+    if [[ ! "$ref" =~ @[0-9a-f]{40}$ ]]; then
+      printf 'unpinned action %s in %s\n' "$ref" "$file" >&2
+      FAILURES=$((FAILURES + 1))
+    fi
+  done < <(action_references "$ROOT/$file")
+}
+
+# A 40-hex run is only a shape. Nothing about it says the commit is the release
+# its trailing comment claims, so the comment stays an unverified annotation
+# unless something resolves it. Network-gated: a definitive mismatch fails, an
+# unreachable API skips, so an offline developer run stays deterministic.
+verify_pins_match_comments() {
+  local file="$1"
+  local line ref tag action sha object kind resolved
+  while IFS= read -r line; do
+    [[ "$line" =~ uses:[[:space:]]*[\"\']?([^[:space:]\"\'#]+)[\"\']?[[:space:]]*#[[:space:]]*(v[^[:space:]]+) ]] || continue
+    ref="${BASH_REMATCH[1]}"
+    tag="${BASH_REMATCH[2]}"
+    action="${ref%@*}"
+    sha="${ref#*@}"
+    [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || continue
+    # Only owner/repo actions resolve through the repository tag API.
+    [[ "$action" == */* && "$action" != */*/* ]] || continue
+    object="$(gh api "repos/${action}/git/ref/tags/${tag}" --jq '.object.type + " " + .object.sha' 2>/dev/null)"
+    if [[ -z "$object" ]]; then
+      printf 'note: %s@%s did not resolve upstream; pin left unverified\n' "$action" "$tag" >&2
+      continue
+    fi
+    kind="${object%% *}"
+    resolved="${object##* }"
+    if [[ "$kind" == tag ]]; then
+      resolved="$(gh api "repos/${action}/git/tags/${resolved}" --jq '.object.sha' 2>/dev/null)"
+    fi
+    if [[ -z "$resolved" ]]; then
+      printf 'note: %s@%s did not dereference; pin left unverified\n' "$action" "$tag" >&2
+      continue
+    fi
+    if [[ "$resolved" != "$sha" ]]; then
+      printf 'pin mismatch in %s: %s is pinned to %s but %s is %s\n' \
+        "$file" "$action" "$sha" "$tag" "$resolved" >&2
+      FAILURES=$((FAILURES + 1))
+    fi
+  done < <(action_references "$ROOT/$file")
 }
 
 fail() {
@@ -84,9 +133,11 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_BOT_LOGIN:'
   require_text "$file" 'GITHUB_STEP_SUMMARY'
   # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.
-  # A mutable tag hands all three to whoever retags it upstream.
-  require_pinned_action "$file" 'actions/checkout'
-  require_pinned_action "$file" 'actions/setup-python'
+  # A mutable tag hands all three to whoever retags it upstream. Pinning itself
+  # is asserted over every workflow below; these two keep the steps from being
+  # dropped, which the generic sweep cannot notice.
+  require_text "$file" 'actions/checkout@'
+  require_text "$file" 'actions/setup-python@'
 done
 
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
@@ -94,9 +145,22 @@ require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited,
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
 # action read the checkout and tamper with build output. Pinned for the same
 # reason, and Dependabot is what keeps every pin in the repository from rotting.
-for action in actions/checkout actions/setup-python actions/setup-node actions/upload-artifact; do
-  require_pinned_action '.github/workflows/ci.yml' "$action"
+# Every workflow is swept, so a new file or a new action is covered on arrival.
+WORKFLOW_COUNT=0
+for workflow in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
+  [[ -e "$workflow" ]] || continue
+  WORKFLOW_COUNT=$((WORKFLOW_COUNT + 1))
+  require_every_action_pinned ".github/workflows/$(basename "$workflow")"
+  if [[ "${CODEX_VERIFY_ACTION_PINS:-}" == "1" ]]; then
+    verify_pins_match_comments ".github/workflows/$(basename "$workflow")"
+  fi
 done
+if (( WORKFLOW_COUNT == 0 )); then
+  fail 'No workflow files were swept for action pins.'
+fi
+if [[ "${CODEX_VERIFY_ACTION_PINS:-}" != "1" ]]; then
+  printf 'note: set CODEX_VERIFY_ACTION_PINS=1 to resolve each pin against its version comment\n' >&2
+fi
 require_text '.github/workflows/ci.yml' 'permissions:'
 require_text '.github/dependabot.yml' 'package-ecosystem: github-actions'
 

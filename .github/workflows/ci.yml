@@ -68,6 +68,13 @@ jobs:
           bash -n scripts/codex_triage_issue.sh
 
       - name: Codex automation assertions
+        # CODEX_VERIFY_ACTION_PINS resolves every pinned SHA against the release
+        # named in its trailing comment, so a well-formed but wrong SHA cannot
+        # ride in behind a plausible annotation. An unreachable API leaves the
+        # pin unverified rather than failing the run.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODEX_VERIFY_ACTION_PINS: "1"
         run: bash tests/test_codex_automation.sh
 
   frontend:
