@@ -16,6 +16,8 @@ import { SchemeTabs } from "./SchemeTabs";
 import { SchemeDetails } from "./SchemeDetails";
 import { SchemeTable } from "./SchemeTable";
 import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
+import { TutorLauncher } from "../tutor/TutorLauncher";
+import { buildSchemeContext } from "../tutor/tutorContext";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -299,6 +301,21 @@ export function SchemesPage() {
                 {domesticSchemes.map((scheme) => (
                   <SchemeDetails key={scheme.name} scheme={scheme} />
                 ))}
+                {/* One launcher per currency rather than per rail: the backend
+                    holds a document for every rail here, so the currency alone
+                    already reaches all of them, and a button beside each rail
+                    would repeat the same affordance four times down the page. */}
+                {domesticSchemes.length > 0 && (
+                  <TutorLauncher
+                    context={buildSchemeContext({
+                      currency: String(tab.lookupCode ?? ""),
+                      summary: `Rails shown: ${domesticSchemes
+                        .map((scheme) => scheme.name)
+                        .join(", ")}.`,
+                    })}
+                    label={`Explain ${tab.label} rails`}
+                  />
+                )}
               </>
             )}
           </AsyncRegion>

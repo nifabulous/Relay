@@ -307,9 +307,14 @@ export function isModuleUnlocked(moduleId: string, completedIds: string[]): bool
  */
 export function getNextModule(completedIds: string[]): CurriculumModule | null {
   for (const mod of CURRICULUM) {
-    if (!completedIds.includes(mod.id)) {
-      return mod;
-    }
+    if (completedIds.includes(mod.id)) continue;
+    // The unlock check the docstring above has always promised, and did not
+    // previously perform. CURRICULUM happens to be in prerequisite order, so
+    // the two agreed in practice — but the tutor now recommends a next module
+    // to learners, and recommending a locked one sends them somewhere they
+    // cannot go, which reads as the tutor not knowing what Relay does.
+    if (!isModuleUnlocked(mod.id, completedIds)) continue;
+    return mod;
   }
   return null;
 }
