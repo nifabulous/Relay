@@ -1,6 +1,90 @@
-import { type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import {
+  applyTheme,
+  prefersDarkNow,
+  resolveTheme,
+  watchSystemTheme,
+  type ResolvedTheme,
+} from "../design-system/theme";
+import type { RelayPreferences } from "../design-system/types";
+import { loadPreferences, savePreferences } from "../lib/persistence/storage";
+import { PreferencesMenu } from "./PreferencesMenu";
 import "./AppShell.css";
+
+/*
+ * ── Preferences store ─────────────────────────────────────────────────────
+ *
+ * Module-level, not React context, so the quick menu in the top bar and the
+ * settings route read and write the SAME object. Two surfaces editing one
+ * preference is the main risk of shipping both, and a copy in either component
+ * is how they would drift. useSyncExternalStore means a write from either one
+ * re-renders the other in the same tick, with no reload.
+ *
+ * Nothing here writes on load. Preferences are persisted ONLY on an explicit
+ * user change, so merely opening the app never rewrites the stored JSON.
+ */
+
+let currentPreferences: RelayPreferences | null = null;
+const preferenceListeners = new Set<() => void>();
+
+function getPreferencesSnapshot(): RelayPreferences {
+  currentPreferences ??= loadPreferences();
+  return currentPreferences;
+}
+
+function subscribeToPreferences(onStoreChange: () => void): () => void {
+  preferenceListeners.add(onStoreChange);
+  return () => {
+    preferenceListeners.delete(onStoreChange);
+  };
+}
+
+function emitPreferenceChange(): void {
+  for (const listener of preferenceListeners) listener();
+}
+
+/** The live preferences. Re-renders on any write from any surface. */
+export function usePreferences(): RelayPreferences {
+  return useSyncExternalStore(
+    subscribeToPreferences,
+    getPreferencesSnapshot,
+    getPreferencesSnapshot,
+  );
+}
+
+/** Persist a preference change and notify every subscribed surface. */
+export function updatePreferences(patch: Partial<RelayPreferences>): void {
+  currentPreferences = { ...getPreferencesSnapshot(), ...patch };
+  savePreferences(currentPreferences);
+  emitPreferenceChange();
+}
+
+/**
+ * Drop the cached snapshot so the next read comes from storage again. Needed
+ * whenever storage is written from outside this module — tests that clear
+ * localStorage, and any future import path that touches preferences.
+ */
+export function reloadPreferences(): void {
+  currentPreferences = null;
+  emitPreferenceChange();
+}
+
+/**
+ * What the current preference actually resolves to right now. In "system" mode
+ * this tracks the OS live; in an explicit mode the OS is ignored.
+ */
+export function useResolvedTheme(): ResolvedTheme {
+  const { theme } = usePreferences();
+  const [osPrefersDark, setOsPrefersDark] = useState(prefersDarkNow);
+
+  useEffect(
+    () => watchSystemTheme(theme, (resolved) => setOsPrefersDark(resolved === "dark")),
+    [theme],
+  );
+
+  return resolveTheme(theme, osPrefersDark);
+}
 
 interface NavItem {
   to: string;
@@ -63,6 +147,22 @@ function NavIcon({ name }: { name: string }) {
 }
 
 export function AppShell({ children }: { children?: ReactNode }) {
+  const { theme } = usePreferences();
+
+  /*
+   * Apply the stored theme at runtime. The pre-paint script in index.html
+   * handles first paint, but nothing kept the DOM in step afterwards — without
+   * this, a change made in the menu would only take effect on the next reload.
+   *
+   * The returned unsubscribe also keeps "system" live: the palette itself
+   * follows the CSS media query natively, but the inline color-scheme (native
+   * scrollbars and form controls) has to be re-applied when the OS flips.
+   */
+  useEffect(() => {
+    applyTheme(theme, prefersDarkNow());
+    return watchSystemTheme(theme, () => applyTheme(theme, prefersDarkNow()));
+  }, [theme]);
+
   return (
     <div className="app-shell">
       {/* Simulation banner — persistent, unmissable but not garish */}
@@ -76,6 +176,9 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <span className="app-shell__brand-name">Relay</span>
           <span className="app-shell__brand-sub">Educational payment simulation</span>
         </div>
+
+        {/* The only entry point to preferences and, through it, to Settings. */}
+        <PreferencesMenu />
       </header>
 
       <div className="app-shell__body">

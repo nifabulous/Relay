@@ -37,6 +37,60 @@ describe("preferences", () => {
     localStorage.setItem("relay:preferences", JSON.stringify({ schemaVersion: 99 }));
     expect(loadPreferences()).toEqual(defaultPreferences);
   });
+
+  it("defaults theme to system", () => {
+    expect(loadPreferences().theme).toBe("system");
+  });
+
+  // The single most important preference test. `loadVersioned` does
+  // `return parsed as T` with NO merge against defaults, so a preferences
+  // object written by a build that predates the theme key deserialises with
+  // `theme === undefined` while TypeScript insists it is a RelayTheme.
+  // Coercing at the read boundary must NOT disturb the fields that are there.
+  it("loads a pre-theme preferences object as system, keeping the other fields intact", () => {
+    localStorage.setItem(
+      "relay:preferences",
+      JSON.stringify({
+        schemaVersion: 1,
+        reducedMotion: true,
+        navigationDensity: "compact",
+        firstRunGuidanceSeen: ["overview", "operate"],
+      }),
+    );
+
+    const loaded = loadPreferences();
+
+    expect(loaded.theme).toBe("system");
+    expect(loaded.reducedMotion).toBe(true);
+    expect(loaded.navigationDensity).toBe("compact");
+    expect(loaded.firstRunGuidanceSeen).toEqual(["overview", "operate"]);
+  });
+
+  it("coerces an unrecognised or non-string persisted theme to system", () => {
+    localStorage.setItem(
+      "relay:preferences",
+      JSON.stringify({ ...defaultPreferences, theme: "midnight-neon" }),
+    );
+    expect(loadPreferences().theme).toBe("system");
+
+    localStorage.setItem("relay:preferences", JSON.stringify({ ...defaultPreferences, theme: 7 }));
+    expect(loadPreferences().theme).toBe("system");
+  });
+
+  // Guards the coercion above from over-reaching: an explicit choice is a
+  // recognised value and must survive the read boundary unchanged. "light"
+  // matters as much as "dark" — it is the value that must stay distinct from
+  // "system" so the OS listener leaves it alone.
+  it("round-trips an explicit theme choice in both directions", () => {
+    savePreferences({ ...defaultPreferences, theme: "dark" });
+    expect(loadPreferences().theme).toBe("dark");
+
+    savePreferences({ ...defaultPreferences, theme: "light" });
+    expect(loadPreferences().theme).toBe("light");
+
+    savePreferences({ ...defaultPreferences, theme: "system" });
+    expect(loadPreferences().theme).toBe("system");
+  });
 });
 
 describe("progress", () => {

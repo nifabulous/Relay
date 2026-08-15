@@ -1,0 +1,112 @@
+/*
+ * Settings route — the durable home for preferences.
+ *
+ * Tokens only, no new hex values. Thin structural borders, no decorative
+ * shadows, no colored card edges (DESIGN.md).
+ */
+
+.settings {
+  max-width: var(--content-max);
+  padding: var(--space-5);
+}
+
+.settings__breadcrumb {
+  margin-bottom: var(--space-4);
+}
+
+.settings__breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-action);
+}
+
+.settings__heading {
+  margin-bottom: var(--space-6);
+}
+
+.settings__section {
+  padding-top: var(--space-5);
+  margin-bottom: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.settings__section-title {
+  margin-bottom: var(--space-3);
+}
+
+.settings__section-intro {
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.settings__fieldset {
+  margin-bottom: var(--space-5);
+  padding: 0;
+  border: none;
+}
+
+.settings__legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.settings__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  /* 44px minimum row height, matching the bottom nav's touch target. */
+  min-height: 44px;
+  padding: var(--space-3) 0;
+}
+
+.settings__option-control {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  /* Align the control with the first line of its label rather than the block. */
+  margin-top: 2px;
+  accent-color: var(--color-action);
+}
+
+.settings__option-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settings__option-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  cursor: pointer;
+}
+
+.settings__option-hint {
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.settings__option-description {
+  max-width: var(--reading-measure);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-normal);
+}
+
+@media (max-width: 767px) {
+  .settings {
+    padding: var(--space-4);
+    /* Clear the fixed bottom nav. */
+    padding-bottom: calc(var(--nav-height-mobile) + var(--space-6));
+  }
+}

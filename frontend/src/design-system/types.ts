@@ -72,11 +72,21 @@ export interface PrepareDraft {
   strictness: "lenient" | "standard" | "strict";
 }
 
+/**
+ * Theme preference. Three states, not a boolean: "system" must stay
+ * distinguishable from an explicit "light", because only "system" follows the
+ * OS. Collapsing to a boolean would make "explicitly light" and "OS happens to
+ * be light" indistinguishable, and the OS-change listener would then flip a
+ * user who deliberately chose light.
+ */
+export type RelayTheme = "system" | "light" | "dark";
+
 export interface RelayPreferences {
   schemaVersion: 1;
   reducedMotion: boolean;
   navigationDensity: "comfortable" | "compact";
   firstRunGuidanceSeen: string[];
+  theme: RelayTheme;
 }
 
 export interface PaymentRouteNode {

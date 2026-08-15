@@ -4,6 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Relay — Educational payment simulation</title>
+    <!--
+      Pre-paint theme. Must run BEFORE first paint, so it is inline and
+      synchronous — the module bundle has not loaded yet and cannot be imported
+      here. That makes this a deliberate duplicate of the resolution in
+      src/design-system/theme.ts and the read in src/lib/persistence/storage.ts:
+      keep the storage key, the schemaVersion guard and the accepted theme
+      values in step with them. theme.test.ts executes this exact script and
+      asserts it agrees with applyTheme(), so drift fails the suite.
+
+      Without it, a dark-mode user gets a white flash on every single load.
+    -->
+    <script>
+      (function () {
+        var theme = "system";
+
+        // Reading storage is fallible (denied in private mode, corrupt JSON).
+        // Isolate it: a failed READ must still leave the OS preference to be
+        // applied below, or a dark-OS user with corrupt storage gets a white
+        // flash on every load.
+        try {
+          var raw = localStorage.getItem("relay:preferences");
+          var parsed = raw ? JSON.parse(raw) : null;
+          // loadVersioned rejects any non-1 schemaVersion WHOLESALE, and only
+          // an explicit light/dark overrides the OS.
+          if (
+            parsed &&
+            parsed.schemaVersion === 1 &&
+            (parsed.theme === "light" || parsed.theme === "dark")
+          ) {
+            theme = parsed.theme;
+          }
+        } catch (e) {
+          /* keep the "system" default */
+        }
+
+        var dark =
+          theme === "dark" ||
+          (theme === "system" &&
+            typeof matchMedia === "function" &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
+
+        // "system" stamps NOTHING: the dark palette is guarded as
+        // :root:not([data-theme="light"]), so an absent attribute is what lets
+        // the OS drive.
+        if (theme !== "system") {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

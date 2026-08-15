@@ -92,6 +92,111 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/*
+ * ── Dark palette ──────────────────────────────────────────
+ *
+ * The complete LIGHT palette lives on the bare :root above and is the shipped
+ * default; nothing below edits it. Dark redefines only the tokens that change,
+ * everything else falls through.
+ *
+ * Two blocks, deliberately duplicated:
+ *   1. @media (prefers-color-scheme: dark) — the OS preference, guarded with
+ *      :not([data-theme="light"]) so an explicit LIGHT choice beats a dark OS.
+ *   2. :root[data-theme="dark"]           — an explicit DARK choice, so it
+ *      beats a light OS.
+ * A token defined in only ONE of them breaks the toggle in one direction.
+ * contrast.test.ts asserts the two blocks stay identical.
+ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-action: #7b9bf0;
+    --color-action-hover: #94aef5;
+    --color-action-pressed: #a8bef8;
+    --color-action-surface: #1c2740;
+    --color-action-border: #3a4d7a;
+    --color-on-action: #0f1420;
+    --color-on-danger: #2c1418;
+    --color-danger-hover: #f59aa4;
+
+    --color-ink-strong: #e8ebf0;
+    --color-ink: #d2d8e2;
+    --color-ink-muted: #98a3b5;
+
+    /* Darkened from the measured #0f1420 so the canvas-to-surface elevation
+       step clears 1.15 (was 1.09 — imperceptible). Shadows are banned, so this
+       step is the only thing separating a card from the page. */
+    --color-canvas: #080b12;
+    --color-surface: #161d2b;
+    --color-surface-2: #1e2635;
+    --color-surface-3: #273040;
+
+    /* REVIEWED, DO NOT "FIX": these borders sit below the 3:1 that WCAG asks
+       of meaningful non-text UI, and that is deliberate. They are STRUCTURAL
+       dividers, not the sole carrier of any state or meaning — status is always
+       text + icon + colour, never a border alone.
+       Measured against canvas: light ships 1.23 and 1.51; dark lands 1.72 and
+       2.48, so dark is already the heavier of the two. Raising dark alone to
+       clear 3:1 would make the two themes read as different products. If the
+       3:1 bar is ever adopted, BOTH palettes move together. */
+    --color-border: #2f3a4d;
+    --color-border-strong: #445266;
+
+    --color-success: #4ec99a;
+    --color-success-bg: #10261f;
+    --color-success-border: #2f6d55;
+
+    --color-warning: #e0a54a;
+    --color-warning-bg: #2a1f0e;
+    --color-warning-border: #7a5a22;
+
+    --color-danger: #f0808c;
+    --color-danger-bg: #2c1418;
+    --color-danger-border: #7d3740;
+  }
+}
+
+/*
+ * Explicit dark choice. Must mirror the media block above EXACTLY — this is
+ * what makes the toggle win over a light OS. Keep the two in lockstep.
+ */
+:root[data-theme="dark"] {
+  --color-action: #7b9bf0;
+  --color-action-hover: #94aef5;
+  --color-action-pressed: #a8bef8;
+  --color-action-surface: #1c2740;
+  --color-action-border: #3a4d7a;
+  --color-on-action: #0f1420;
+  --color-on-danger: #2c1418;
+  --color-danger-hover: #f59aa4;
+
+  --color-ink-strong: #e8ebf0;
+  --color-ink: #d2d8e2;
+  --color-ink-muted: #98a3b5;
+
+  /* Darkened from the measured #0f1420 — see the media block above. */
+  --color-canvas: #080b12;
+  --color-surface: #161d2b;
+  --color-surface-2: #1e2635;
+  --color-surface-3: #273040;
+
+  /* Sub-3:1 is reviewed and intentional — see the media block above. */
+  --color-border: #2f3a4d;
+  --color-border-strong: #445266;
+
+  --color-success: #4ec99a;
+  --color-success-bg: #10261f;
+  --color-success-border: #2f6d55;
+
+  --color-warning: #e0a54a;
+  --color-warning-bg: #2a1f0e;
+  --color-warning-border: #7a5a22;
+
+  --color-danger: #f0808c;
+  --color-danger-bg: #2c1418;
+  --color-danger-border: #7d3740;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0.01ms;

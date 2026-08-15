@@ -35,6 +35,12 @@ body {
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Theme crossfade. The two properties are named explicitly: `transition: all`
+     would animate layout-affecting properties on every swap and silently pick
+     up anything added to body later. --duration-fast is 120ms, and tokens.css
+     already collapses it to 0.01ms under prefers-reduced-motion. */
+  transition: background-color var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
 }
 
 /* Headings — hierarchy through weight + size, not color */
@@ -124,5 +130,11 @@ a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited
   .skeleton {
     animation: none;
     background: var(--color-surface-2);
+  }
+
+  /* The theme swap becomes instant. Zeroed durations already make it
+     imperceptible; this states the intent outright, matching PaymentRoute.css. */
+  body {
+    transition: none;
   }
 }

@@ -141,9 +141,9 @@ export function OverviewPage() {
         )}
       </section>
 
-      {/* Learning backup panel hidden for now. LearnerDataPanel and its tests
-          are intact — restore by re-adding the import and:
-          <LearnerDataPanel profilePersistence={learningState.persistence} /> */}
+      {/* The Learning backup panel now lives on the Settings route
+          (features/settings/SettingsPage.tsx), alongside the storage-boundary
+          explanation that makes an export control legible. */}
 
       {healthQuery.data && (
         <section className="overview__status">
