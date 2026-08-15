@@ -5,6 +5,7 @@ import {
   prefersDarkNow,
   resolveTheme,
   watchSystemTheme,
+  applyPreferenceFlags,
   type ResolvedTheme,
 } from "../design-system/theme";
 import type { RelayPreferences } from "../design-system/types";
@@ -152,7 +153,18 @@ function NavIcon({ name }: { name: string }) {
 }
 
 export function AppShell({ children }: { children?: ReactNode }) {
-  const { theme } = usePreferences();
+  const preferences = usePreferences();
+  const { theme } = preferences;
+
+  /*
+   * Reduce motion and compact navigation shipped persisted-but-unconsumed: the
+   * Settings copy promised they removed animation and tightened the rail, and
+   * nothing read either value. Stamping them on the root element is what makes
+   * the promise true, with the behaviour living in global.css.
+   */
+  useEffect(() => {
+    applyPreferenceFlags(preferences);
+  }, [preferences.reducedMotion, preferences.navigationDensity]);
 
   /*
    * Apply the stored theme at runtime. The pre-paint script in index.html

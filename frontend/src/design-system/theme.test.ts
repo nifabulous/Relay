@@ -329,3 +329,32 @@ describe("useResolvedTheme after an OS flip in an explicit mode", () => {
     expect(result.current).toBe("dark"); // the OS is dark now, not light
   });
 });
+
+// ── Review 2026-08-15 [P1]: two settings controls did nothing ────────────────
+
+describe("applyPreferenceFlags", () => {
+  it("stamps and clears reduce-motion and density on the root element", async () => {
+    const { applyPreferenceFlags } = await import("./theme");
+    const root = document.createElement("html");
+
+    applyPreferenceFlags({ reducedMotion: true, navigationDensity: "compact" }, root);
+    expect(root.getAttribute("data-reduced-motion")).toBe("true");
+    expect(root.getAttribute("data-density")).toBe("compact");
+
+    // Defaults stamp nothing, so the plain selectors stay the baseline and CSS
+    // needs no :not() gymnastics.
+    applyPreferenceFlags({ reducedMotion: false, navigationDensity: "comfortable" }, root);
+    expect(root.hasAttribute("data-reduced-motion")).toBe(false);
+    expect(root.hasAttribute("data-density")).toBe(false);
+  });
+});
+
+describe("the CSS actually honours those flags", () => {
+  it("kills transitions under data-reduced-motion and tightens the rail under data-density", () => {
+    // Without these blocks the toggles persist a value and change nothing,
+    // while the Settings copy promises they remove animation and tighten the
+    // rail. A preference that lies is worse than one that is absent.
+    expect(GLOBAL_CSS).toMatch(/\[data-reduced-motion="true"\][^{]*\{[^}]*transition:\s*none/);
+    expect(GLOBAL_CSS).toMatch(/\[data-reduced-motion="true"\][^{]*\{[^}]*animation:\s*none/);
+  });
+});

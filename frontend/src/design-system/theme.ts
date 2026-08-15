@@ -81,3 +81,31 @@ export function watchSystemTheme(
   media.addEventListener("change", handler);
   return () => media.removeEventListener("change", handler);
 }
+
+/**
+ * Stamp the non-theme preferences onto the root element so CSS can act on them.
+ *
+ * These two shipped persisted-but-unconsumed: the Settings copy promised they
+ * removed animation and tightened the rail, and neither happened. A preference
+ * that lies is worse than one that is simply absent, so the attribute is the
+ * contract and `global.css` holds the behaviour.
+ *
+ * Defaults deliberately stamp NOTHING. That keeps the plain selectors as the
+ * baseline, so no rule needs a `:not()` guard to describe normal behaviour.
+ */
+export function applyPreferenceFlags(
+  preferences: { reducedMotion: boolean; navigationDensity: "comfortable" | "compact" },
+  root: HTMLElement = document.documentElement,
+): void {
+  if (preferences.reducedMotion) {
+    root.setAttribute("data-reduced-motion", "true");
+  } else {
+    root.removeAttribute("data-reduced-motion");
+  }
+
+  if (preferences.navigationDensity === "compact") {
+    root.setAttribute("data-density", "compact");
+  } else {
+    root.removeAttribute("data-density");
+  }
+}

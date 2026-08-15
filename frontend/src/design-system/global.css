@@ -138,3 +138,29 @@ a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited
     transition: none;
   }
 }
+
+/* ── Preference-driven behaviour ──────────────────────────────────────────────
+   The in-app "Reduce motion" toggle, distinct from the OS-level
+   prefers-reduced-motion query above. Both must work: a learner may want Relay
+   still while leaving the rest of their system animated. Mirrors the OS block
+   rather than extending it, because the two are independent signals. */
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Compact navigation: tighten the rail so more fits on screen. Only the
+   vertical rhythm changes — the 44px touch target on the mobile bar is an
+   accessibility floor and is deliberately not compacted. */
+[data-density="compact"] .app-shell__nav-link {
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+}
+
+[data-density="compact"] .app-shell__rail {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
