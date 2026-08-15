@@ -66,10 +66,17 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         r"\1\2[REDACTED]",
     ),
     (
-        # The same header appearing inline, e.g. in a shell invocation. Bounded
-        # to a single token here, since the surrounding line is code.
-        re.compile(rf"(?i)\b({_AUTH_HEADER}\s*[:=]\s*)({_AUTH_SCHEMES}\s+)?[^\s\r\n]+"),
-        r"\1\2[REDACTED]",
+        # The same header appearing inline, e.g. in a shell invocation. There
+        # is no reliable scheme allow-list for custom authentication schemes,
+        # and Digest credentials span multiple whitespace-delimited fields, so
+        # consume the remainder of the line rather than leaving a later token
+        # behind. Preserve a terminal quote when it is the surrounding shell
+        # or JSON delimiter.
+        re.compile(
+            rf"(?i)(?<!^)(?<![+\- ])\b({_AUTH_HEADER}\s*[:=]\s*)"
+            r"(?:[^\r\n]*?([\"'])(?=\s|$)|[^\r\n]*)"
+        ),
+        r"\1[REDACTED]\2",
     ),
     (
         # A cookie header is a bearer credential in all but name. Header-shaped
@@ -79,16 +86,17 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         r"\1[REDACTED_COOKIE]",
     ),
     (
-        # The same cookie assignment appearing inline in code. A cookie is
-        # `name="value"`, so the quote sits *inside* the value rather than at
-        # its start: matching a quoted run only as a leading alternative stopped
-        # at the opening quote and left the secret behind it. Bare characters
-        # and quoted runs therefore alternate freely across the whole value.
+        # The same cookie assignment appearing inline in code. Cookie headers
+        # may contain multiple semicolon-separated pairs, so stopping at the
+        # first whitespace leaves later bearer values exposed. Consume the
+        # remainder of an embedded line; standalone and diff-prefixed headers
+        # are already handled by the whole-line rule above. Preserve a terminal
+        # quote when it closes the surrounding shell or JSON string.
         re.compile(
-            rf"(?i)\b({_HEADER_PREFIX}cookie\s*[:=]\s*)"
-            r"(?:[^\s\r\n\"'}]|\"[^\"\r\n]*\"|'[^'\r\n]*')+"
+            rf"(?i)(?<!^)(?<![+\- ])\b({_HEADER_PREFIX}cookie\s*[:=]\s*)"
+            r"(?:[^\r\n]*?([\"'])(?=\s|$)|[^\r\n]*)"
         ),
-        r"\1[REDACTED_COOKIE]",
+        r"\1[REDACTED_COOKIE]\2",
     ),
     (
         re.compile(r"\b(?:sk|rk|pk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{12,}\b"),
@@ -154,6 +162,7 @@ _SVG_COORDINATES_RE = re.compile(r"\b(?:points|viewBox)\s*=\s*\"[0-9 .,+-]*\"")
 # rather than on the attribute name, so an account number parked inside a
 # `points=` attribute is still redacted rather than waved through.
 _LONG_DIGIT_RUN_RE = re.compile(r"\d{8,}")
+_GROUPED_IDENTIFIER_RE = re.compile(r"(?<![\d-])(?:\d{4}[ -])+\d{1,4}(?![\d-])")
 
 
 def _is_coordinate_list(match: "re.Match[str]") -> bool:
@@ -175,6 +184,12 @@ def _redact_card(match: "re.Match[str]") -> str:
     return match.group(0)
 
 
+def _sanitize_exempt_literal(literal: str) -> str:
+    """Keep geometry exemptions from bypassing grouped payment redaction."""
+    literal = _CARD_RE.sub(_redact_card, literal)
+    return _GROUPED_IDENTIFIER_RE.sub("[ACCOUNT]", literal)
+
+
 def _sanitize_line(line: str) -> str:
     if _GIT_METADATA_RE.fullmatch(line.rstrip("\r\n")):
         return line
@@ -191,7 +206,7 @@ def _sanitize_line(line: str) -> str:
         def _mask(match: "re.Match[str]") -> str:
             if predicate is not None and not predicate(match):
                 return match.group(0)
-            exempt.append(match.group(0))
+            exempt.append(_sanitize_exempt_literal(match.group(0)))
             return f"[LITERAL_{len(exempt) - 1}]"
 
         return _mask

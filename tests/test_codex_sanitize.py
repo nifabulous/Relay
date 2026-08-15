@@ -53,6 +53,16 @@ def test_redacts_non_bearer_authorization_schemes() -> None:
     assert "raw-credential-value" not in schemeless
 
 
+def test_redacts_the_complete_inline_authorization_value() -> None:
+    custom = sanitize('x=Authorization: CustomScheme super-secret-value; y=1\n')
+    digest = sanitize(
+        'curl -H "Authorization: Digest username=ada, response=deadbeef" https://x\n'
+    )
+
+    assert "super-secret-value" not in custom
+    assert "deadbeef" not in digest
+
+
 def test_redacts_all_fields_from_a_diff_prefixed_digest_header() -> None:
     sanitized = sanitize(
         '+Authorization: Digest username="ada", response="deadbeef"\n'
@@ -126,6 +136,15 @@ def test_redacts_an_inline_cookie_whose_value_is_quoted() -> None:
 
     assert "abc123secretvalue" not in sanitized
     assert "[REDACTED_COOKIE]" in sanitized
+
+
+def test_redacts_all_inline_cookie_pairs() -> None:
+    sanitized = sanitize(
+        'curl -H "Cookie: sid=abc123; refresh=super-secret-refresh" https://x\n'
+    )
+
+    assert "abc123" not in sanitized
+    assert "super-secret-refresh" not in sanitized
 
 
 def test_redacts_quoted_secret_assignments_containing_spaces() -> None:
@@ -207,6 +226,14 @@ def test_a_coordinate_attribute_cannot_smuggle_an_identifier_through() -> None:
     sanitized = sanitize('<polyline points="100200300400 6 9 17" />\n')
 
     assert "100200300400" not in sanitized
+
+
+def test_a_coordinate_attribute_cannot_smuggle_grouped_payment_identifiers() -> None:
+    card = sanitize('<polyline points="4111 1111 1111 1111" />\n')
+    account = sanitize('<polyline points="1234 5678" />\n')
+
+    assert "4111 1111 1111 1111" not in card
+    assert "1234 5678" not in account
 
 
 def test_standard_reference_exemption_is_idempotent() -> None:
