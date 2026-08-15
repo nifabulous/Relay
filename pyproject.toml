@@ -16,6 +16,29 @@ dependencies = [
 postgres = ["psycopg2-binary>=2.9"]
 dev = ["pytest>=8.0", "httpx>=0.27", "pytest-cov>=4.0", "ruff>=0.4", "alembic>=1.13"]
 
+# The AI tutor's provider adapter. Deliberately NOT a base dependency: the app
+# must import, boot, and serve every existing route with none of this installed
+# and TUTOR_ENABLED=false. Only the Vercel function build installs `.[ai]`.
+# Major-pinned because pydantic-ai's 1.x -> 2.x bump changed the agent API.
+ai = [
+    "pydantic-ai>=2.0,<3",
+    "openai>=3.0,<4",
+]
+
+# Tracing is separate from `ai` so a deployment can run the tutor without
+# shipping an observability client it has no keys for.
+tracing = ["langfuse>=4.0,<5"]
+
+# Evaluation is separate from BOTH, and production installs neither. Ragas
+# pulls a large LLM-framework tree and must never be reachable from the request
+# path; keeping it in its own extra makes an accidental runtime import
+# impossible rather than merely discouraged.
+eval = ["ragas>=0.4,<1"]
+
+# Optional PII enhancement layered on top of the deterministic redactor in
+# app/tutor/redaction.py, which stays unconditional and dependency-free.
+pii = ["presidio-analyzer>=2.2", "presidio-anonymizer>=2.2"]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
