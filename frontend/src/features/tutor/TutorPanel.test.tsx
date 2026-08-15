@@ -311,6 +311,35 @@ describe("TutorPanel — conversation history", () => {
     expect(sent[1].history).toHaveLength(0);
   });
 
+  it("does not append an old answer after the learner changes context mid-request", async () => {
+    let releaseRequest!: () => void;
+    const requestReleased = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    server.use(
+      http.post("/api/tutor/chat", async () => {
+        await requestReleased;
+        return HttpResponse.json(
+          grounded({ answer: "Answer from the old lesson." }),
+        );
+      }),
+    );
+
+    const { rerender } = render(<TutorPanel context={LESSON} />);
+    await ask("What does the old lesson mean?");
+    expect(await screen.findByText(/thinking/i)).toBeVisible();
+
+    rerender(
+      <TutorPanel
+        context={buildLessonContext({ moduleId: "lab-7", moduleTitle: "Which Rail?" })}
+      />,
+    );
+    releaseRequest();
+
+    await waitFor(() => expect(screen.getByText(/which rail/i)).toBeVisible());
+    expect(screen.queryByText(/answer from the old lesson/i)).not.toBeInTheDocument();
+  });
+
   it("keeps the conversation when only a tracking summary updates", async () => {
     const sent: Array<Record<string, unknown>> = [];
     server.use(
@@ -381,6 +410,25 @@ describe("TutorPanel — feedback", () => {
     await screen.findByText(/a bic identifies an institution/i);
     await user.click(screen.getByRole("button", { name: /not helpful/i }));
     expect(await screen.findByText(/thanks/i)).toBeVisible();
+  });
+
+  it("does not claim feedback was recorded when telemetry fails", async () => {
+    let telemetryCalls = 0;
+    respondWith(grounded());
+    server.use(
+      http.post("/api/telemetry", () => {
+        telemetryCalls += 1;
+        return HttpResponse.json({ detail: "telemetry unavailable" }, { status: 500 });
+      }),
+    );
+    render(<TutorPanel context={LESSON} />);
+    const user = await ask();
+    await screen.findByText(/a bic identifies an institution/i);
+
+    await user.click(screen.getByRole("button", { name: /^helpful$/i }));
+    await waitFor(() => expect(telemetryCalls).toBe(1));
+    expect(screen.queryByText(/thanks/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^helpful$/i })).toBeVisible();
   });
 });
 

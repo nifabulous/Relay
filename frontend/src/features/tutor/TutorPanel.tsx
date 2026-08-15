@@ -152,6 +152,9 @@ export function TutorPanel({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const identity = contextIdentity(context);
   const previousIdentity = useRef(identity);
+  const identityRef = useRef(identity);
+  const requestController = useRef<AbortController | null>(null);
+  identityRef.current = identity;
 
   useEffect(() => {
     if (autoFocusHeading) headingRef.current?.focus();
@@ -172,13 +175,23 @@ export function TutorPanel({
    */
   useEffect(() => {
     if (previousIdentity.current !== identity) {
+      requestController.current?.abort();
+      requestController.current = null;
       previousIdentity.current = identity;
       setExchanges([]);
       setPhase("idle");
       setProblem(null);
       setFeedbackGiven(null);
+      setLastAttempt(null);
     }
   }, [identity]);
+
+  useEffect(() => {
+    return () => {
+      requestController.current?.abort();
+      requestController.current = null;
+    };
+  }, []);
 
   function historyFrom(current: Exchange[]): TutorTurn[] {
     const turns: TutorTurn[] = [];
@@ -192,6 +205,11 @@ export function TutorPanel({
   }
 
   async function send(message: string, mode: TutorMode) {
+    requestController.current?.abort();
+    const controller = new AbortController();
+    requestController.current = controller;
+    const requestIdentity = identity;
+
     setPhase("thinking");
     setProblem(null);
     setFeedbackGiven(null);
@@ -209,17 +227,26 @@ export function TutorPanel({
         "/api/tutor/chat",
         body,
         TutorResponseSchema,
+        { signal: controller.signal },
       );
+      if (controller.signal.aborted || identityRef.current !== requestIdentity) return;
       setExchanges((current) => [...current, { question: message, response }]);
       setPhase("answered");
       setQuestion("");
     } catch (error) {
+      if (controller.signal.aborted || identityRef.current !== requestIdentity) return;
       setProblem(error as ApiProblem);
       setPhase("failed");
+    } finally {
+      if (requestController.current === controller) {
+        requestController.current = null;
+        if (!controller.signal.aborted && identityRef.current === requestIdentity) {
+          // Focus returns to the field either way. Leaving it on the button
+          // strands a keyboard user on a control that has finished its job.
+          inputRef.current?.focus();
+        }
+      }
     }
-    // Focus returns to the field either way. Leaving it on the button strands a
-    // keyboard user on a control that has finished its job.
-    inputRef.current?.focus();
   }
 
   function onSubmit(event: FormEvent) {
@@ -239,7 +266,7 @@ export function TutorPanel({
   }
 
   async function sendFeedback(rating: "up" | "down", turnId: string) {
-    setFeedbackGiven(rating);
+    const feedbackIdentity = identity;
     /*
      * Four bounded fields, no message text. This rides the existing telemetry
      * contract rather than a dedicated endpoint, because a second endpoint
@@ -255,6 +282,7 @@ export function TutorPanel({
           surface: context.surface,
         },
       ]);
+      if (identityRef.current === feedbackIdentity) setFeedbackGiven(rating);
     } catch {
       // Feedback is a nicety. Failing to record it must not interrupt a
       // learner who is mid-lesson.

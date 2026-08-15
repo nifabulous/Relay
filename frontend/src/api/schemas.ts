@@ -711,7 +711,7 @@ export const TutorResponseSchema = z
     turn_id: z.string().min(1),
     citations: z.array(TutorCitationSchema).max(8),
     follow_up: z.string().max(500).nullish(),
-    needs_clarification: z.boolean().catch(false),
+    needs_clarification: z.boolean(),
     safety_notice: z.string().max(500).nullish(),
   })
   .passthrough();
