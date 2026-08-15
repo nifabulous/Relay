@@ -10,7 +10,7 @@ Relay is a hands-on, browser-based simulator that teaches how cross-border payme
 
 ## Current status
 
-**Status as of 2026-08-13:** Relay is a working educational learning prototype. The platform,
+**Status as of 2026-08-15:** Relay is a working educational learning prototype. The platform,
 backend APIs, Relay frontend, a 16-entry curriculum (15 learning modules plus a capstone), a daily-practice retention loop,
 and five Case Desk scenarios are implemented. The three curriculum tracks the prior review named as gaps
 — sanctions screening, exceptions/returns, and an ops workflow (STP repair + Nostro reconciliation) —
@@ -32,15 +32,15 @@ The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-13:
+These numbers were run against the current checkout on 2026-08-15:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **846 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **1,089 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
-| Playwright E2E | **335 passed, 2 axe failures** (skip total needs re-measuring since the learner-state round trip was un-skipped) — full run including the WebKit `mobile` project; the 2 failures are a pre-existing `scrollable-region-focusable` finding on the bank-detail SSI table scroll (WebKit-only axe rule, now exercised because WebKit is installed) |
+| Backend tests | **871 passed** (`.venv/bin/pytest -q`) |
+| Frontend unit/integration tests | **1,091 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
+| Playwright E2E | **289 passed, 10 intentional skips, 1 pre-existing axe failure** — six-project Chromium matrix; the generic WebKit `mobile` project was not run because its browser binary is not installed. The axe failure is `scrollable-region-focusable` on the bank-detail SSI table scroll. |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **128,231 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **133,366 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
 | Backend API endpoints | **25** |
 
@@ -53,12 +53,12 @@ protocol. Provider integration is deliberately deferred.
 Every E2E skip is intentional, and the total depends on how many projects you run rather than on
 anything being broken. Two tests skip by rule:
 
-- **Learner-state round trip** — no longer skips. The Learning backup panel got a home at `/app/settings` on 2026-08-14, so this test now runs. The per-run skip totals below predate that and need re-measuring.
+- **Learner-state round trip** — runs in the `desktop` project. The five case-viewport projects skip it because coverage is not viewport-dependent.
 - **Reduced-motion case journey** — skips in every project *except* `case-reduced-motion`.
 
-So a 6-project chromium run skips `6 + 5 = 11` (what the table above records, on a machine without
-WebKit), and a full 7-project run including the WebKit `mobile` project skips `7 + 6 = 13`. Both are
-correct; quote the rule, not a bare total. See [Testing](#testing) for the recommended commands.
+So the six-project Chromium matrix skips `5 + 5 = 10`. A full seven-project run adds the WebKit
+`mobile` project, which requires the WebKit browser binary. Quote the rule and matrix used, not a
+bare total. See [Testing](#testing) for the recommended commands.
 
 ---
 
@@ -68,10 +68,10 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 | Metric | Value |
 |---|---|
-| Backend tests | 846 passing |
-| Frontend tests | 1,089 passing (serial-file mode) |
-| E2E tests (Playwright) | 335 passing on the full 7-project run (13 intentional skips; 2 pre-existing axe failures on the WebKit `mobile` projects) |
-| Eager shell bundle | 128,231 bytes gzip (budget: 204,800 bytes) |
+| Backend tests | 871 passing |
+| Frontend tests | 1,091 passing (serial-file mode) |
+| E2E tests (Playwright) | 289 passing on the six-project Chromium matrix (10 intentional skips; 1 pre-existing SSI-table axe failure) |
+| Eager shell bundle | 133,366 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
 | Backend API endpoints | 25 |

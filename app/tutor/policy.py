@@ -113,9 +113,9 @@ _SECRET_DISCLOSURE_RE = re.compile(
              system\s+prompt|connection\s+string|database\s+url|
              # Bare nouns and common qualifiers: "the API token", "the signing
              # key", "the client secret", "the connection secret".
-             (?:api|auth|access|bearer|session|signing|client|refresh|service)
+             (?:api|auth|access|bearer|session|signing|client|refresh|service|private)
                [\s_-]?tokens?|
-             (?:signing|client|shared|master|encryption|connection|database|db)
+             (?:auth|private|signing|client|shared|master|encryption|connection|database|db)
                [\s_-]?secrets?|
              (?:signing|private|public|encryption|master|secret)[\s_-]?keys?)\b
       # Env-var style names. At least one underscore-terminated segment is
@@ -154,6 +154,25 @@ _METHOD_SEEKING_RE = re.compile(
       | \bways?\s+to\b
       | \b(?:is|are)\s+there\s+(?:a\s+)?ways?\b
       | \bany\s+way\s+to\b""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Direct requests do not always contain a first-person pronoun or the exact
+# "ways to" shape above. Keep the request signal narrow so explanatory prose
+# such as "Please explain what happens when screening is skipped" remains
+# answerable, while polite imperatives and modal possibility questions are not
+# allowed to launder an evasion request.
+_EXPLICIT_BYPASS_REQUEST_RE = re.compile(
+    r"""^\s*(?:please|kindly)\s+
+          (?:bypass(?:ed|ing)?|skip(?:ped|ping)?|evade|circumvent(?:ed|ing)?|
+             override|suppress(?:ed|ing)?|sidestep(?:ped|ping)?|avoid(?:ed|ing)?|
+             dodge|turn\s+off|opt\s+out)\b
+      | \b(?:what|which)\s+(?:ways?|methods?|steps?)\b[^.?!]{0,80}
+          \b(?:bypass|skip|evade|circumvent|override|suppress|sidestep|avoid|dodge)\b
+      | \b(?:can|could|would)\s+[^.?!]{0,80}
+          \b(?:bypass(?:ed|ing)?|skip(?:ped|ping)?|evade|circumvent(?:ed|ing)?|
+             override|suppress(?:ed|ing)?|sidestep(?:ped|ping)?|avoid(?:ed|ing)?|
+             dodge)\b""",
     re.IGNORECASE | re.VERBOSE,
 )
 
@@ -233,6 +252,7 @@ def evaluate_tutor_request(request: TutorRequest) -> PolicyDecision:
         and (
             _SELF_DIRECTED_RE.search(message)
             or _METHOD_SEEKING_RE.search(message)
+            or _EXPLICIT_BYPASS_REQUEST_RE.search(message)
             or bypass.start() == 0
         )
     ):

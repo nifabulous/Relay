@@ -634,11 +634,9 @@ export type InternationalSchemesResponse = z.infer<
  *
  * Parsing policy differs by direction, on purpose. The REQUEST is authored by
  * Relay itself, so a bad field is a bug we want surfaced — no `.catch()`.
- * The RESPONSE is inbound, so optional fields use the house
- * `.nullish().catch(null)` idiom; but `answer`, `mode`, `grounded`, and
- * `turn_id` are required and deliberately have NO `.catch()` — a response
- * missing any of them must fail loudly rather than render a blank answer or
- * a turn we cannot correlate feedback against.
+ * The RESPONSE is inbound, but its optional fields still enforce the same
+ * bounds as Pydantic. A malformed or oversized value must fail loudly rather
+ * than be silently coerced into a different response shape.
  */
 export const TutorModeSchema = z.enum(["chat", "explain", "hint", "quiz"]);
 
@@ -658,15 +656,15 @@ export type TutorSurface = z.infer<typeof TutorSurfaceSchema>;
 export const TutorContextSchema = z
   .object({
     surface: TutorSurfaceSchema,
-    module_id: z.string().nullish(),
-    module_title: z.string().nullish(),
-    topic: z.string().nullish(),
-    currency: z.string().nullish(),
-    rail_name: z.string().nullish(),
-    tool_name: z.string().nullish(),
-    case_id: z.string().nullish(),
-    resource_ref: z.string().nullish(),
-    result_summary: z.string().nullish(),
+    module_id: z.string().max(100).nullish(),
+    module_title: z.string().max(200).nullish(),
+    topic: z.string().max(120).nullish(),
+    currency: z.string().max(20).nullish(),
+    rail_name: z.string().max(120).nullish(),
+    tool_name: z.string().max(120).nullish(),
+    case_id: z.string().max(120).nullish(),
+    resource_ref: z.string().max(160).nullish(),
+    result_summary: z.string().max(4000).nullish(),
   })
   .passthrough();
 
@@ -694,10 +692,10 @@ export type TutorRequest = z.infer<typeof TutorRequestSchema>;
 
 export const TutorCitationSchema = z
   .object({
-    source_id: z.string(),
-    title: z.string(),
-    url: z.string().nullish().catch(null),
-    evidence: z.string(),
+    source_id: z.string().min(1).max(160),
+    title: z.string().min(1).max(240),
+    url: z.string().max(500).nullish(),
+    evidence: z.string().min(1).max(500),
   })
   .passthrough();
 
@@ -705,16 +703,14 @@ export type TutorCitation = z.infer<typeof TutorCitationSchema>;
 
 export const TutorResponseSchema = z
   .object({
-    // No `.catch()` on these four, deliberately — see the policy note above.
-    answer: z.string().min(1),
+    answer: z.string().min(1).max(6000),
     mode: TutorModeSchema,
     grounded: z.boolean(),
     turn_id: z.string().min(1),
-    // Everything else is best-effort, in the house style.
-    citations: z.array(TutorCitationSchema).catch([]),
-    follow_up: z.string().nullish().catch(null),
+    citations: z.array(TutorCitationSchema).max(8),
+    follow_up: z.string().max(500).nullish(),
     needs_clarification: z.boolean().catch(false),
-    safety_notice: z.string().nullish().catch(null),
+    safety_notice: z.string().max(500).nullish(),
   })
   .passthrough();
 

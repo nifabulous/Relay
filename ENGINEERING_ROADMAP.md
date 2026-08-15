@@ -2,7 +2,7 @@
 
 > Post-review engineering health roadmap. Derived from a 10-panel cross-functional review (23 reviewers) and a 3-reviewer superpowers plan audit. The original baseline is preserved below; the current verification and shipped learning work are called out separately.
 
-**Last updated:** 2026-08-12 · **Current verification:** 770 backend + 1086 frontend + chromium E2E passing (skip total needs re-verification: the learner-state round trip was un-skipped 2026-08-14) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-15 · **Current verification:** 871 backend + 1091 frontend + 289 Chromium E2E passing (10 intentional skips; 1 pre-existing SSI-table axe failure; WebKit project requires its browser binary) · **Current curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 

@@ -42,13 +42,11 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  /* Desktop is a pointer surface, so the 44px touch minimum does not apply here
-     (the nav rail links are 37px for the same reason). A 44px control in a 52px
-     topbar leaves only 4px above and below, which reads as crowded. 36px gives a
-     full 8px step on either side. The touch minimum is restored at <1024px below,
-     where this trigger IS a touch target. */
-  min-height: 36px;
-  min-width: 36px;
+  /* The preferences control is a real interactive target at every viewport.
+     Keep the 44px minimum used by the app's accessibility contract, including
+     desktop where it sits in the topbar. */
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-2) var(--space-3);
   background: transparent;
   border: 1px solid var(--color-border);
@@ -288,13 +286,6 @@
 
 /* Tablet: hide rail, show bottom nav at < 1024px */
 @media (max-width: 1023px) {
-  /* Below 1024px the trigger is a touch target, so the 44px minimum applies
-     again, matching the bottom nav. */
-  .app-shell__prefs-trigger {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
   .app-shell__rail {
     display: none;
   }

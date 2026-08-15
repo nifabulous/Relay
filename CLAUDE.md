@@ -130,12 +130,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (836 tests)
+python -m pytest tests/ -q              # full suite (871 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --run  # 1086 tests (Vitest workers capped at 4)
+cd frontend && npm test -- --run  # 1091 tests (Vitest workers capped at 4)
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
@@ -178,9 +178,8 @@ ruff check . --fix  # auto-fix import order etc.
 - The frontend's default parallel Vitest run is load-sensitive for the preferred-tier Case Desk
   scenario; use `--no-file-parallelism` for the verified full suite.
 - Every E2E skip is intentional and the total scales with the project count, so quote the rule
-  rather than a number. The reduced-motion case journey skips in every project *except*
-  `case-reduced-motion`. The learner-state round trip **no longer skips** — it was un-skipped on
-  2026-08-14 when the Learning backup panel got a home at `/app/settings`. The per-run skip totals
-  (previously 11 for a 6-project chromium run, 13 for a full 7-project run) are therefore stale and
-  need re-measuring; do not quote the old figures.
+  rather than a number. The learner-state round trip runs in `desktop` and skips in the five case
+  viewport projects because coverage is not viewport-dependent. The reduced-motion case journey
+  skips in every project except `case-reduced-motion`. The six-project Chromium matrix therefore
+  has 10 intentional skips; the generic `mobile` project requires the WebKit browser binary.
 - `fed_importer.py` has no remote default URL — you must set `FEDWIRE_URL`/`FEDACH_URL` env vars to import Fedwire/FedACH data.
