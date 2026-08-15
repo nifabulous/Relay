@@ -46,6 +46,27 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/ -q
 
+  # The Codex automation scripts are shell, so pytest cannot reach them. This
+  # job is what makes the marker-suppression regression test a real gate.
+  codex-automation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Shell syntax
+        run: |
+          bash -n scripts/codex_review_pr.sh
+          bash -n scripts/codex_triage_issue.sh
+
+      - name: Codex automation assertions
+        run: bash tests/test_codex_automation.sh
+
   frontend:
     runs-on: ubuntu-latest
 

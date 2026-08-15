@@ -12,9 +12,12 @@ In the repository settings:
 4. Optionally add `CODEX_REASONING_EFFORT`. It defaults to `medium` and accepts `none`, `low`, `medium`, `high`, or `xhigh`.
 5. Optionally add `CODEX_MAX_ITEMS`. It defaults to `10` scheduled items per workflow run.
 6. Optionally add `CODEX_MAX_INPUT_BYTES`. It defaults to `120000` bytes per review or triage request.
-7. Create the labels `codex-review` and `codex-triage` if scheduled review is wanted.
+7. Optionally add `CODEX_MAX_OUTPUT_TOKENS`. It defaults to `6000` and is sent to the API as `max_output_tokens`, so it caps generation cost and latency rather than only trimming the reply afterwards.
+8. Optionally add `CODEX_MAX_OUTPUT_BYTES`. It defaults to `50000`. A response larger than this is rejected before it is written or posted.
+9. Optionally add `CODEX_BOT_LOGIN`. It defaults to `github-actions[bot]` and is the only comment author whose duplicate-suppression marker is honoured.
+10. Create the labels `codex-review` and `codex-triage` if scheduled review is wanted.
 
-`CODEX_MODEL`, `CODEX_REASONING_EFFORT`, and `CODEX_MAX_INPUT_BYTES` are configuration, not secrets. Use `none` when selecting a model that does not support reasoning effort; this omits the reasoning parameter from the API request. Higher effort improves difficult payment/security reviews but increases latency and cost; `low` is better for high-volume scheduled triage.
+`CODEX_MODEL`, `CODEX_REASONING_EFFORT`, `CODEX_MAX_INPUT_BYTES`, `CODEX_MAX_OUTPUT_TOKENS`, `CODEX_MAX_OUTPUT_BYTES`, and `CODEX_BOT_LOGIN` are configuration, not secrets. Use `none` when selecting a model that does not support reasoning effort; this omits the reasoning parameter from the API request. Higher effort improves difficult payment/security reviews but increases latency and cost; `low` is better for high-volume scheduled triage.
 
 The workflows are disabled at the job level until the variable is enabled. The API key is scoped only to the API worker step and is never given to a model-controlled shell, repository tool, or agent. It is never intentionally placed in the repository, PR diff, issue comment, frontend bundle, or application telemetry.
 
@@ -30,9 +33,28 @@ Scheduled runs review only open PRs with the `codex-review` label. To rerun manu
 
 `.github/workflows/codex-issue-triage.yml` triages newly opened, edited, and reopened issues, issues labeled `codex-triage`, manual runs, and twice-weekly scheduled issues carrying that label. Codex posts a marked comment with classification, evidence, likely code areas, a reproduction/test plan, and the next recommended action. Title and body changes produce a new triage fingerprint.
 
+## Trust boundary in the request
+
+The request is split across two API channels rather than one string:
+
+- `instructions` carries only repository-controlled text: the review or triage contract, `.github/codex/review-policy.md`, and (for triage) the `git ls-files` index.
+- `input` carries PR and issue content, each artifact enclosed in a `<<<UNTRUSTED_DATA label>>> … <<<END_UNTRUSTED_DATA label>>>` block. `scripts/codex_untrusted.py` defangs every delimiter-shaped run in the payload first, so content cannot close its own block and pose as policy. The contract tells the model to treat an in-block instruction attempt as a finding to report, not an instruction to follow.
+
+This contains review-integrity manipulation; it does not eliminate it. The worker still has no repository, shell, network, or tool access, so a successful injection can at worst distort the advisory comment a human then reads.
+
+## Data retention
+
+`scripts/codex_responses.py` sends `"store": false`. Without it the Responses API retains application state — the request and response — for 30 days by default, which is not a default a payment project should inherit silently. See [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data).
+
+`store: false` does not remove all retention. OpenAI separately retains data for abuse monitoring under its own policy and schedule, independent of this flag. If that residual retention is unacceptable for this repository, the control is an organization-level zero-data-retention agreement with OpenAI, not a request parameter.
+
+## Duplicate suppression
+
+Each comment carries a marker keyed to the PR head SHA or the issue title/body fingerprint. The marker is honoured **only** when the comment author is `CODEX_BOT_LOGIN`. A body-only match would let a PR author paste the marker and silence review of their own head commit; a GitHub login cannot be forged the way comment text can. `tests/test_codex_automation.sh` runs both directions against stubbed `gh` calls: a marker from a non-bot login must not suppress, and a marker from the bot login must.
+
 ## Safety boundary
 
-Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized for common secrets and personal identifiers before submission, but sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
+Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized before submission: `scripts/codex_sanitize.py` reuses `app/tutor/redaction.py` — the repository's established redactor for IBANs (contiguous and grouped), BIC/SWIFT codes, UETRs, account numbers, emails, and phone numbers — and adds PEM key blocks, vendor API keys, and card-shaped numbers on top. Sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
 
 ## Cost and operations
 
@@ -46,6 +68,7 @@ bash -n scripts/codex_triage_issue.sh
 bash tests/test_codex_automation.sh
 .venv/bin/pytest -q tests/test_codex_sanitize.py
 .venv/bin/pytest -q tests/test_codex_responses.py
+.venv/bin/pytest -q tests/test_codex_untrusted.py
 ```
 
 The normal repository CI remains the merge gate: Ruff, pytest, frontend typecheck/build/tests, and bundle checks. Codex findings supplement those checks; they do not replace them.
