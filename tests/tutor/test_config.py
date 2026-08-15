@@ -169,7 +169,13 @@ def test_importing_configuration_does_not_import_a_provider_sdk(clean_tutor_env)
 # and importable with no AI dependency at all.
 
 def _pyproject() -> dict:
-    import tomllib
+    # `tomllib` is 3.11+. The project floor is 3.10, so the backport carries
+    # that one version rather than the packaging assertions silently skipping
+    # there — a skipped dependency-isolation test still reports green.
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python 3.10
+        import tomli as tomllib
 
     from app.config import BASE_DIR
 
