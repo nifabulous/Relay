@@ -2,7 +2,7 @@
 
 > **What this is:** The unified project roadmap tracking what's built, what's reviewed, and what remains.
 
-**Last updated:** 2026-08-12 · **Verified locally:** 770 backend + 1086 frontend + chromium E2E passing (skip total needs re-verification: the learner-state round trip was un-skipped 2026-08-14; WebKit project runs on machines with WebKit) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
+**Last updated:** 2026-08-15 · **Verified locally:** 871 backend + 1091 frontend + 289 Chromium E2E passing (10 intentional skips; 1 pre-existing SSI-table axe failure; WebKit project requires its browser binary) · **Curriculum:** 16 entries (15 modules + capstone) · **Case Desk:** 5 scenarios
 
 ---
 
@@ -168,7 +168,7 @@ The next contribution slice is content-led rather than a rebuild:
 | Dimension | Phase 0 | Phase 1 | Phase 2 | Phase 3-4 | Current |
 |---|---|---|---|---|---|
 | Version control | ❌ | ✅ Git | ✅ Maintained | ✅ | ✅ Maintained |
-| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 770 backend + 1086 frontend + chromium E2E (skip total needs re-verification) |
+| Tests | ✅ 522 | ✅ 570+ | ✅ 689 | ✅ 850+ | ✅ 871 backend + 1091 frontend + 289 Chromium E2E (10 intentional skips; 1 pre-existing SSI-table axe failure) |
 | CI | ❌ | ✅ GitHub Actions | ✅ + Vitest | ✅ + Playwright | ✅ Full pipeline |
 | Auth | ❌ | ✅ admin_required | ✅ | ✅ | ✅ |
 | Security | ❌ Real accounts | ✅ ACCT- placeholders | ✅ | ✅ | ✅ |

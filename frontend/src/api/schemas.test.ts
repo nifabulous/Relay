@@ -221,6 +221,31 @@ describe("TutorRequest schema", () => {
     expect(atLimit.message).toHaveLength(2000);
     expect(atLimit.history).toHaveLength(8);
   });
+
+  it("enforces Pydantic's context field bounds", () => {
+    const limits: Record<string, number> = {
+      module_id: 100,
+      module_title: 200,
+      topic: 120,
+      currency: 20,
+      rail_name: 120,
+      tool_name: 120,
+      case_id: 120,
+      resource_ref: 160,
+      result_summary: 4000,
+    };
+
+    for (const [field, limit] of Object.entries(limits)) {
+      expect(
+        () =>
+          TutorRequestSchema.parse({
+            message: "hi",
+            context: { surface: "lesson", [field]: "x".repeat(limit + 1) },
+          }),
+        `${field} must be capped at ${limit} characters`,
+      ).toThrow();
+    }
+  });
 });
 
 const tutorResponseFixture = {
@@ -281,6 +306,39 @@ describe("TutorResponse schema", () => {
     expect(parsed.safety_notice ?? null).toBeNull();
     expect(parsed.citations[0].url ?? null).toBeNull();
     expect(parsed.answer).toContain("nostro");
+  });
+
+  it("enforces Pydantic's response and citation bounds", () => {
+    for (const [field, limit] of [
+      ["answer", 6000],
+      ["follow_up", 500],
+      ["safety_notice", 500],
+    ] as const) {
+      expect(
+        () => TutorResponseSchema.parse({ ...tutorResponseFixture, [field]: "x".repeat(limit + 1) }),
+        `${field} must be capped at ${limit} characters`,
+      ).toThrow();
+    }
+
+    for (const [field, limit] of [
+      ["source_id", 160],
+      ["title", 240],
+      ["url", 500],
+      ["evidence", 500],
+    ] as const) {
+      const citation = { ...tutorResponseFixture.citations[0], [field]: "x".repeat(limit + 1) };
+      expect(
+        () => TutorResponseSchema.parse({ ...tutorResponseFixture, citations: [citation] }),
+        `citation ${field} must be capped at ${limit} characters`,
+      ).toThrow();
+    }
+
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        citations: [{ ...tutorResponseFixture.citations[0], source_id: "" }],
+      }),
+    ).toThrow();
   });
 });
 
