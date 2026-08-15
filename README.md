@@ -80,7 +80,7 @@ correct; quote the rule, not a bare total. See [Testing](#testing) for the recom
 
 ```
 swift-routing/
-  app/                        FastAPI backend (Python 3.9+)
+  app/                        FastAPI backend (Python 3.10+)
     routers/                  11 domain routers under /api/*
     services/                 Domain logic (validator, routing, vop, prepare, iso20022, ...)
     models.py                 SQLAlchemy 2.0 models
@@ -119,7 +119,7 @@ swift-routing/
 | State | TanStack Query 5 (server), React Hook Form 7 (forms) |
 | Validation | Zod 4 (frontend), Pydantic v2 (backend) |
 | Testing | pytest (backend), Vitest + RTL + MSW (frontend), Playwright (E2E) |
-| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
+| CI | GitHub Actions — pytest + ruff on Python 3.10-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 
 ---
 
@@ -453,7 +453,7 @@ count can never go stale in a third table. This one covers qualitative dimension
 | Dimension | Status |
 |---|---|
 | Version control | Git, `main` plus short-lived feature branches |
-| CI | GitHub Actions — pytest + ruff on Python 3.9-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
+| CI | GitHub Actions — pytest + ruff on Python 3.10-3.12, plus a frontend job (typecheck, build, vitest, bundle budget) |
 | Auth | `admin_required` on mutating endpoints |
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |

@@ -18,19 +18,39 @@ The product descriptor is **Educational payment simulation**. Recommendation and
 
 ### Color tokens
 
+`frontend/src/design-system/tokens.css` is the authoritative source. The table below
+lists the core tokens; `tokens.css` additionally defines hover/pressed/surface/border
+variants and the `-bg`/`-border` companions for each semantic color. Change values
+there, then mirror them here.
+
 | Token | Value | Use |
 |---|---|---|
 | `--color-action` | `#3157D5` | Primary actions, selected navigation, links, progress |
 | `--color-ink-strong` | `#16233D` | Strong emphasis and primary text |
+| `--color-ink` | `#2D3A52` | Body text |
 | `--color-canvas` | `#F6F8FC` | Application background |
 | `--color-surface` | `#FFFFFF` | Navigation, panels, data regions |
 | `--color-border` | `#DCE2EB` | Structural boundaries |
-| `--color-ink-muted` | `#68748A` | Secondary text after contrast verification |
-| `--color-success` | `#16825D` | Passed and proceed states |
-| `--color-warning` | `#C87B16` | Needs-attention and review states |
-| `--color-danger` | `#C8424D` | Failed, stop, and destructive states |
+| `--color-border-strong` | `#C4CDD9` | Boundaries that must stay perceivable on canvas |
+| `--color-ink-muted` | `#586273` | Secondary text |
+| `--color-success` | `#0E5C44` | Passed and proceed states |
+| `--color-warning` | `#9A5A0C` | Needs-attention and review states |
+| `--color-danger` | `#9E2B34` | Failed, stop, and destructive states |
 
-Use semantic colors only with an explicit label and icon. All text and interactive boundaries meet WCAG 2.2 AA contrast.
+The four semantic values above are deliberately darker than the original palette
+(`#68748A`, `#16825D`, `#C87B16`, `#C8424D`), which did not clear WCAG 2.2 AA against
+their own `-bg` surfaces. `tokens.css` records the measured ratio for each. Do not
+revert them to the lighter originals.
+
+Use semantic colors only with an explicit label and icon.
+
+**Contrast status, measured 2026-08-14.** All *text* pairings meet WCAG 2.2 AA, most with
+room to spare. *Boundaries* do not: `--color-border` measures 1.23:1 and
+`--color-border-strong` 1.51:1 against the canvas, against the 3:1 that WCAG 1.4.11 asks
+for a border that identifies a control. This is a known, tracked gap, not an oversight —
+raising borders to 3:1 would make them visibly heavier than the hairline this system is
+built on. Do not restate this as blanket AA compliance. When dark mode lands, its borders
+match this same perceptual weight so the two themes stay one product.
 
 ### Typography
 

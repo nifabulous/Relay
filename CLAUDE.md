@@ -130,12 +130,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (687 tests)
+python -m pytest tests/ -q              # full suite (836 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --run  # 961 tests (Vitest workers capped at 4)
+cd frontend && npm test -- --run  # 1086 tests (Vitest workers capped at 4)
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
@@ -155,7 +155,10 @@ ruff check . --fix  # auto-fix import order etc.
 
 ## Development conventions
 
-- **Python 3.9+** (uses `Optional[str]`, not `str | None`). Check syntax compat.
+- **Python 3.10+** (floor raised from 3.9 on 2026-08-14 so the AI stack can install;
+  `pydantic-ai`, `openai>=3`, `langfuse`, `presidio` and `pgvector` all require 3.10+).
+  Existing code still uses `Optional[str]` / `List[str]`; ruff's UP rules stay off so
+  there is no mass rewrite. New code may use `X | None` freely.
 - **TDD**: write the failing test first, watch it fail, write minimal code to pass. No production code without a failing test.
 - **One commit per item**: each fix/feature gets its own commit with a clear message.
 - **Commit message format**: `type(scope): description (item-number)` — e.g. `fix(validation): reject negative amounts (1.3)`.
@@ -168,15 +171,16 @@ ruff check . --fix  # auto-fix import order etc.
 - `IMPLEMENTATION_PLAN.md` — the full remediation plan (Tiers 0-3), with file:line citations, acceptance criteria, and sequencing rules. Track progress here.
 - `ROADMAP.md` — the original product roadmap for the learning-lab curriculum (Phase 1-6).
 - `ENGINEERING_ROADMAP.md` — the engineering health roadmap (post-review).
-- `.github/workflows/ci.yml` — CI: pytest + ruff on Python 3.9-3.12.
+- `.github/workflows/ci.yml` — CI: pytest + ruff on Python 3.10-3.12.
 
 ## Known issues
 
 - The frontend's default parallel Vitest run is load-sensitive for the preferred-tier Case Desk
   scenario; use `--no-file-parallelism` for the verified full suite.
 - Every E2E skip is intentional and the total scales with the project count, so quote the rule
-  rather than a number. The learner-state round trip skips in *every* project (the Learning backup
-  panel is hidden); the reduced-motion case journey skips in every project *except*
-  `case-reduced-motion`. A 6-project chromium run skips 11; a full 7-project run including the
-  WebKit `mobile` project skips 13.
+  rather than a number. The reduced-motion case journey skips in every project *except*
+  `case-reduced-motion`. The learner-state round trip **no longer skips** — it was un-skipped on
+  2026-08-14 when the Learning backup panel got a home at `/app/settings`. The per-run skip totals
+  (previously 11 for a 6-project chromium run, 13 for a full 7-project run) are therefore stale and
+  need re-measuring; do not quote the old figures.
 - `fed_importer.py` has no remote default URL — you must set `FEDWIRE_URL`/`FEDACH_URL` env vars to import Fedwire/FedACH data.
