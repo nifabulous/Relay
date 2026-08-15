@@ -39,8 +39,37 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         "[REDACTED_PRIVATE_KEY]",
     ),
     (
-        re.compile(r"(?i)(authorization\s*[:=]\s*bearer\s+)[^\s\r\n]+"),
-        r"\1[REDACTED]",
+        # A whole-line Authorization header, whatever the scheme. The value is
+        # taken to end of line rather than to the first space because Digest
+        # spreads its credential across a comma-separated parameter list. The
+        # scheme is kept: it is diagnostic and is not itself the secret, and an
+        # unmatched optional group substitutes as empty for a scheme-less value.
+        re.compile(
+            r"(?i)^(\s*authorization\s*[:=]\s*)"
+            r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
+            r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
+            r".+$"
+        ),
+        r"\1\2[REDACTED]",
+    ),
+    (
+        # The same header appearing inline, e.g. in a shell invocation. Bounded
+        # to a single token here, since the surrounding line is code.
+        re.compile(
+            r"(?i)(authorization\s*[:=]\s*)"
+            r"((?:bearer|basic|token|digest|negotiate|oauth|hoba|mutual|apikey|"
+            r"scram-sha-1|scram-sha-256|aws4-hmac-sha256)\s+)?"
+            r"[^\s\r\n]+"
+        ),
+        r"\1\2[REDACTED]",
+    ),
+    (
+        # A cookie header is a bearer credential in all but name, and its value
+        # runs on past the session token (Set-Cookie packs the value and its
+        # flags into one field). Bounded by a quote or brace so an inline
+        # occurrence in code does not swallow the rest of the expression.
+        re.compile(r"(?i)\b((?:set-)?cookie\s*[:=]\s*)[^\r\n\"'}]+"),
+        r"\1[REDACTED_COOKIE]",
     ),
     (
         re.compile(r"\b(?:sk|rk|pk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{12,}\b"),
@@ -49,6 +78,17 @@ SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (
         re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
         "[REDACTED_CLOUD_KEY]",
+    ),
+    (
+        # Quoted assignments first, and matched to the closing quote rather than
+        # to the first space: a passphrase is the case where the value contains
+        # spaces, and the unquoted rule below stops at the first one.
+        re.compile(
+            r"(?i)\b(?:[A-Za-z][A-Za-z0-9]*[_-])*"
+            r"(?:api[_-]?key|secret|token|password|passwd|pwd|credential)"
+            r"\s*[:=]\s*(['\"])(?:(?!\1).)*\1"
+        ),
+        "[REDACTED_SECRET_ASSIGNMENT]",
     ),
     (
         re.compile(r"(?i)(?:api[_-]?key|secret|token|password|passwd)\s*[:=]\s*(['\"]?)[^\s,'\"}]+\1"),

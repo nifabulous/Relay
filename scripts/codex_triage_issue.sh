@@ -128,11 +128,11 @@ mv "$TEMP_DIR/triage-sanitized.md" "$TEMP_DIR/triage.md"
 # Backstop only: codex_responses.py already rejects an oversized model output.
 # Sanitization runs after that check and can lengthen text, so the ceiling is
 # re-applied here against the same configured bound rather than a literal.
-if [[ "$(wc -c <"$TEMP_DIR/triage.md")" -gt "$CODEX_MAX_OUTPUT_BYTES" ]]; then
-  head -c "$CODEX_MAX_OUTPUT_BYTES" "$TEMP_DIR/triage.md" >"$TEMP_DIR/triage-truncated.md"
-  printf '\n\n[Triage truncated at %s bytes.]\n' "$CODEX_MAX_OUTPUT_BYTES" >>"$TEMP_DIR/triage-truncated.md"
-  mv "$TEMP_DIR/triage-truncated.md" "$TEMP_DIR/triage.md"
-fi
+python3 "$REPO_ROOT/scripts/codex_truncate.py" \
+  --max-bytes "$CODEX_MAX_OUTPUT_BYTES" \
+  --marker $'\n\n[Triage truncated at {limit} bytes.]\n' \
+  <"$TEMP_DIR/triage.md" >"$TEMP_DIR/triage-truncated.md"
+mv "$TEMP_DIR/triage-truncated.md" "$TEMP_DIR/triage.md"
 
 {
   printf '%s\n\n' "$MARKER"

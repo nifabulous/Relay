@@ -72,6 +72,16 @@ fi
 printf '%s\n' "$METADATA" | python3 "$REPO_ROOT/scripts/codex_sanitize.py" >"$TEMP_DIR/metadata.json"
 gh pr diff "$PR_NUMBER" --repo "$GH_REPO" | python3 "$REPO_ROOT/scripts/codex_sanitize.py" >"$TEMP_DIR/pr.diff"
 
+# `gh pr diff` always returns the *current* head, so a push landing between the
+# metadata read and the diff read would produce a review of SHA B posted under a
+# marker claiming SHA A. Re-read the head and abort if it moved: the push that
+# moved it triggers its own run, so nothing is lost by stopping here.
+CURRENT_SHA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json headRefOid --jq '.headRefOid')"
+if [[ "$CURRENT_SHA" != "$HEAD_SHA" ]]; then
+  echo "PR #${PR_NUMBER} moved from ${HEAD_SHA} to ${CURRENT_SHA} during the run; leaving it to the run for the new head."
+  exit 0
+fi
+
 # The trusted contract travels in the API `instructions` channel; PR-controlled
 # text travels in `input` inside a delimited block it cannot close.
 cat >"$TEMP_DIR/prompt.txt" <<'EOF'
@@ -127,11 +137,11 @@ mv "$TEMP_DIR/review-sanitized.md" "$TEMP_DIR/review.md"
 # Backstop only: codex_responses.py already rejects an oversized model output.
 # Sanitization runs after that check and can lengthen text, so the ceiling is
 # re-applied here against the same configured bound rather than a literal.
-if [[ "$(wc -c <"$TEMP_DIR/review.md")" -gt "$CODEX_MAX_OUTPUT_BYTES" ]]; then
-  head -c "$CODEX_MAX_OUTPUT_BYTES" "$TEMP_DIR/review.md" >"$TEMP_DIR/review-truncated.md"
-  printf '\n\n[Review truncated at %s bytes.]\n' "$CODEX_MAX_OUTPUT_BYTES" >>"$TEMP_DIR/review-truncated.md"
-  mv "$TEMP_DIR/review-truncated.md" "$TEMP_DIR/review.md"
-fi
+python3 "$REPO_ROOT/scripts/codex_truncate.py" \
+  --max-bytes "$CODEX_MAX_OUTPUT_BYTES" \
+  --marker $'\n\n[Review truncated at {limit} bytes.]\n' \
+  <"$TEMP_DIR/review.md" >"$TEMP_DIR/review-truncated.md"
+mv "$TEMP_DIR/review-truncated.md" "$TEMP_DIR/review.md"
 
 {
   printf '%s\n\n' "$MARKER"

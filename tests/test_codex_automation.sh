@@ -42,9 +42,14 @@ for file in scripts/codex_review_pr.sh scripts/codex_triage_issue.sh; do
   require_text "$file" 'codex_untrusted.py'
   require_text "$file" 'CODEX_BOT_LOGIN'
   require_text "$file" 'comments.jsonl'
+  require_text "$file" 'codex_truncate.py'
   # The marker check must be author-scoped, never a bare body match.
   refuse_text "$file" "--jq '.[].body'"
+  # Byte-wise truncation can split a multi-byte character.
+  refuse_text "$file" 'head -c'
 done
+
+require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
@@ -63,6 +68,12 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_MAX_OUTPUT_BYTES:'
   require_text "$file" 'CODEX_BOT_LOGIN:'
   require_text "$file" 'GITHUB_STEP_SUMMARY'
+  # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.
+  # A mutable tag hands all three to whoever retags it upstream.
+  require_text "$file" 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262'
+  require_text "$file" 'actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065'
+  refuse_text "$file" 'actions/checkout@v'
+  refuse_text "$file" 'actions/setup-python@v'
 done
 
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
@@ -86,10 +97,35 @@ trap 'rm -rf "$STUB_DIR"' EXIT
 cat >"$STUB_DIR/gh" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
+
+# gh applies --jq to its own output; the stub has to do the same, or a caller
+# asking for a single field gets the whole document back.
+apply_jq() {
+  local expression=""
+  local previous=""
+  for argument in "$@"; do
+    [[ "$previous" == "--jq" ]] && expression="$argument"
+    previous="$argument"
+  done
+  if [[ -n "$expression" ]]; then
+    jq -r "$expression"
+  else
+    cat
+  fi
+}
+
 case "${1:-}" in
   pr|issue)
     case "${2:-}" in
-      view) cat "$CODEX_STUB_DIR/metadata.json" ;;
+      view)
+        # head-override simulates a push landing mid-run: the re-read of
+        # headRefOid returns a different SHA than the initial metadata read.
+        if [[ -s "$CODEX_STUB_DIR/head-override" && "$*" == *--jq* ]]; then
+          cat "$CODEX_STUB_DIR/head-override"
+        else
+          apply_jq "$@" <"$CODEX_STUB_DIR/metadata.json"
+        fi
+        ;;
       diff) cat "$CODEX_STUB_DIR/pr.diff" ;;
       comment) printf 'posted\n' >>"$CODEX_STUB_DIR/posted.log" ;;
       *) exit 1 ;;
@@ -134,6 +170,7 @@ run_suppression_case() {
   local login="$4"
 
   : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
   printf '%s\n' "$(jq -n --arg login "$login" --arg marker "$marker" \
     '{login: $login, body: ($marker + "\n\nprior comment")}')" >"$STUB_DIR/comments.jsonl"
 
@@ -201,6 +238,32 @@ expect_posted 'A non-bot comment carrying the marker suppressed the PR review.' 
   scripts/codex_review_pr.sh 15 "$PR_MARKER" "pr-author"
 expect_suppressed 'A bot comment carrying the marker failed to suppress a duplicate PR review.' \
   scripts/codex_review_pr.sh 15 "$PR_MARKER" 'github-actions[bot]'
+
+# A push landing mid-run must not produce a review of the new head posted under
+# a marker naming the old one.
+: >"$STUB_DIR/posted.log"
+printf '%s\n' "$(jq -n --arg marker "$PR_MARKER" '{login: "pr-author", body: $marker}')" \
+  >"$STUB_DIR/comments.jsonl"
+printf 'cafebabe\n' >"$STUB_DIR/head-override"
+env \
+  PATH="$STUB_DIR:$PATH" \
+  CODEX_STUB_DIR="$STUB_DIR" \
+  CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+  CODEX_REVIEW_ENABLED=true \
+  OPENAI_API_KEY=stub-key \
+  GH_TOKEN=stub-token \
+  GH_REPO=nifabulous/Relay \
+  CODEX_MODEL=gpt-5.3-codex \
+  CODEX_REASONING_EFFORT=medium \
+  CODEX_MAX_INPUT_BYTES=120000 \
+  CODEX_MAX_OUTPUT_TOKENS=32000 \
+  CODEX_MAX_OUTPUT_BYTES=50000 \
+  CODEX_BOT_LOGIN='github-actions[bot]' \
+  "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || fail 'Head-moved run exited non-zero.'
+if [[ -s "$STUB_DIR/posted.log" ]]; then
+  fail 'A review was posted under the old head SHA after the PR head moved mid-run.'
+fi
+: >"$STUB_DIR/head-override"
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",

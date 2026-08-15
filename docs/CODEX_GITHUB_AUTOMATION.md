@@ -27,7 +27,7 @@ The workflows are disabled at the job level until the variable is enabled. The A
 
 `.github/workflows/codex-pr-review.yml` runs on PR open, update, reopen, ready-for-review, manual dispatch, and weekday schedule. PR events use `pull_request_target`, check out only the trusted default branch, and fetch a sanitized PR diff through the GitHub API. Codex runs read-only with the configured model and reasoning effort, then posts one marked review comment per PR head commit.
 
-Scheduled runs review only open PRs with the `codex-review` label. To rerun manually, use the workflow’s **Run workflow** button and provide the PR number. The request contains the sanitized metadata, diff, policy, and is bounded by `CODEX_MAX_INPUT_BYTES`; it does not permit the model to inspect the checkout.
+Scheduled runs review only open PRs with the `codex-review` label. To rerun manually, use the workflow’s **Run workflow** button and provide the PR number. The head SHA is re-read after the diff is fetched and the run aborts if it moved, so a review can never be posted under a marker naming a commit it did not review; the push that moved the head triggers its own run. The request contains the sanitized metadata, diff, policy, and is bounded by `CODEX_MAX_INPUT_BYTES`; it does not permit the model to inspect the checkout.
 
 ### Issues
 
@@ -42,6 +42,10 @@ The request is split across two API channels rather than one string:
 
 This contains review-integrity manipulation; it does not eliminate it. The worker still has no repository, shell, network, or tool access, so a successful injection can at worst distort the advisory comment a human then reads.
 
+## Supply chain
+
+Both Codex workflows hold `issues: write`, `pull-requests: write` and `OPENAI_API_KEY`, so every action they use is pinned to a full commit SHA rather than a mutable tag. A retagged or compromised `@v4` would otherwise hand an attacker a write-capable GitHub token and the OpenAI secret. `tests/test_codex_automation.sh` fails if either workflow reverts to a tag. Update the pins through Dependabot or an equivalent reviewed process — the trailing comment on each `uses:` line records the version the SHA corresponds to.
+
 ## Data retention
 
 `scripts/codex_responses.py` sends `"store": false`. Without it the Responses API retains application state — the request and response — for 30 days by default, which is not a default a payment project should inherit silently. See [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data).
@@ -54,11 +58,13 @@ Each comment carries a marker keyed to the PR head SHA or the issue title/body f
 
 ## Safety boundary
 
-Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized before submission: `scripts/codex_sanitize.py` reuses `app/tutor/redaction.py` — the repository's established redactor for IBANs (contiguous and grouped), UETRs, account numbers, emails, and phone numbers — and adds PEM key blocks, vendor API keys, and card-shaped numbers on top.
+Codex does not modify code, push branches, merge pull requests, or deploy. A review comment is not an approval. PR and issue content is sanitized before submission: `scripts/codex_sanitize.py` reuses `app/tutor/redaction.py` — the repository's established redactor for IBANs (contiguous and grouped), UETRs, account numbers, emails, and phone numbers — and adds the credential classes a GitHub payload carries: PEM key blocks, vendor API keys, `Authorization` headers under any scheme (Bearer, Basic, Token, Digest and the rest, taken to end of line because Digest spreads its credential across a parameter list), `Cookie` and `Set-Cookie` values, quoted secret assignments whose value contains spaces, and card-shaped numbers.
 
 Three exemptions are deliberate, because the corpus is source diffs rather than learner prose. BIC/SWIFT codes are preserved: they are public directory data already committed to this repository, and collapsing them would hide the values a payment-domain review has to compare. Git metadata lines (`index …`, `@@ …`) and ISO-8601 date/times are preserved too: neither can carry a personal identifier, and redacting them mislabels a blob hash as an account number or a migration's `Create Date` as a phone number. The tutor path still redacts BICs unconditionally — `redact_sensitive_text` is unchanged and `redact_sensitive_text_preserving_bic` is reachable only from this code-review path.
 
-Sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
+Sanitization is defense in depth, not a guarantee; do not paste sensitive data into GitHub.
+
+The comment is trimmed to `CODEX_MAX_OUTPUT_BYTES` by `scripts/codex_truncate.py`, which cuts on a character boundary. A byte-wise cut can split a multi-byte code point and produce a comment the GitHub API rejects or mangles. For a fix, ask Codex in a reviewed task to implement the change, or create a separate explicitly approved fix workflow later. Keep payment, sanctions, authentication, migrations, tutor policy, and sensitive-data changes human-controlled.
 
 ## Cost and operations
 
@@ -73,6 +79,7 @@ bash tests/test_codex_automation.sh
 .venv/bin/pytest -q tests/test_codex_sanitize.py
 .venv/bin/pytest -q tests/test_codex_responses.py
 .venv/bin/pytest -q tests/test_codex_untrusted.py
+.venv/bin/pytest -q tests/test_codex_truncate.py
 ```
 
 The normal repository CI remains the merge gate: Ruff, pytest, frontend typecheck/build/tests, and bundle checks. Codex findings supplement those checks; they do not replace them.

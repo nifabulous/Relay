@@ -40,6 +40,48 @@ def test_redacts_secrets_payment_identifiers_and_personal_contact_data() -> None
     assert "[REDACTED]" in sanitized
 
 
+def test_redacts_non_bearer_authorization_schemes() -> None:
+    basic = sanitize("Authorization: Basic dXNlcjpwYXNz\n")
+    token = sanitize("Authorization: Token abcdef123456\n")
+    digest = sanitize('Authorization: Digest username="ada", response="deadbeef"\n')
+    schemeless = sanitize("authorization: raw-credential-value\n")
+
+    assert "dXNlcjpwYXNz" not in basic
+    assert "Basic" in basic
+    assert "abcdef123456" not in token
+    assert "deadbeef" not in digest
+    assert "raw-credential-value" not in schemeless
+
+
+def test_redacts_cookie_headers() -> None:
+    request = sanitize("Cookie: session=very-secret-session-token\n")
+    response = sanitize("Set-Cookie: sid=abc123; HttpOnly; Secure\n")
+
+    assert "very-secret-session-token" not in request
+    assert "abc123" not in response
+    assert "[REDACTED_COOKIE]" in request
+
+
+def test_redacts_quoted_secret_assignments_containing_spaces() -> None:
+    passphrase = sanitize('PASSWORD="correct horse battery staple"\n')
+    single = sanitize("ADMIN_API_KEY = 'two words here'\n")
+
+    assert "correct horse battery staple" not in passphrase
+    assert "two words here" not in single
+
+
+def test_credential_redaction_is_idempotent() -> None:
+    source = (
+        "Authorization: Basic dXNlcjpwYXNz\n"
+        "Cookie: session=very-secret-session-token\n"
+        'PASSWORD="correct horse battery staple"\n'
+    )
+
+    once = sanitize(source)
+
+    assert sanitize(once) == once
+
+
 def test_redacts_grouped_ibans_that_a_person_actually_pastes() -> None:
     sanitized = sanitize("Debit GB29 NWBK 6016 1331 9268 19 today.\n")
 
