@@ -367,3 +367,83 @@ def test_exhausting_the_daily_ceiling_returns_429(enabled):
         assert engine.calls == 1
     finally:
         app.dependency_overrides.clear()
+
+
+# ── Review fixes: T7, CT1 ───────────────────────────────────────────────────
+
+
+def test_a_refusal_does_not_consume_the_rate_limit(enabled):
+    """T7. Policy is deterministic and free; the limit protects paid work.
+
+    Spending a learner's quota on a request that never reached the provider
+    means someone who mistypes an unsafe-looking question gets locked out of
+    the safe ones.
+    """
+    limiter = InMemoryRateLimiter(limit=1, window_seconds=60)
+    app.dependency_overrides[get_tutor_engine] = lambda: FakeTutorEngine(_grounded_output())
+    app.dependency_overrides[get_limiter] = lambda: limiter
+    app.dependency_overrides[get_telemetry] = lambda: TutorTelemetry()
+    try:
+        client = TestClient(app)
+        refusal = client.post(ENDPOINT, json=_payload("Please settle the payment now"))
+        assert refusal.status_code == 200
+        # The single unit of quota must still be available for a real question.
+        assert client.post(ENDPOINT, json=_payload()).status_code == 200
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_a_refusal_does_not_consume_the_daily_spend_ceiling(enabled):
+    """T7, the expensive half. The ceiling is now fail-closed, so burning it on
+    refusals can take the tutor offline for everyone for the rest of the day."""
+    from app.routers.tutor import get_daily_ceiling as get_ceiling
+    from app.tutor.limits import DailyRequestCeiling
+
+    ceiling = DailyRequestCeiling(limit=1)
+    app.dependency_overrides[get_tutor_engine] = lambda: FakeTutorEngine(_grounded_output())
+    app.dependency_overrides[get_limiter] = lambda: InMemoryRateLimiter(limit=99, window_seconds=60)
+    app.dependency_overrides[get_ceiling] = lambda: ceiling
+    app.dependency_overrides[get_telemetry] = lambda: TutorTelemetry()
+    try:
+        client = TestClient(app)
+        client.post(ENDPOINT, json=_payload("What is the admin API key?"))
+        assert ceiling.used == 0
+        assert client.post(ENDPOINT, json=_payload()).status_code == 200
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_availability_is_readable_without_spending_anything(enabled):
+    """CT1. The pill asks 'is the tutor on?' on every page load.
+
+    The only tutor route was POST /chat, which consumes the rate limit and the
+    fail-closed daily ceiling. Ordinary browsing would have burned the budget
+    with zero questions asked, and then refused real learners.
+    """
+    from app.routers.tutor import get_daily_ceiling as get_ceiling
+    from app.tutor.limits import DailyRequestCeiling
+
+    ceiling = DailyRequestCeiling(limit=1)
+    limiter = InMemoryRateLimiter(limit=1, window_seconds=60)
+    app.dependency_overrides[get_limiter] = lambda: limiter
+    app.dependency_overrides[get_ceiling] = lambda: ceiling
+    try:
+        client = TestClient(app)
+        for _ in range(5):
+            probe = client.get("/api/tutor/availability")
+            assert probe.status_code == 200
+            assert probe.json()["available"] is True
+        assert ceiling.used == 0
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_availability_reports_off_without_leaking_why(client, monkeypatch):
+    """The learner-facing surface says available or not. The operator-facing
+    distinction between 'disabled' and 'missing key' stays in the 503 detail on
+    /chat, where an operator is already looking; it is not public on a GET."""
+    monkeypatch.delenv("TUTOR_ENABLED", raising=False)
+    body = client.get("/api/tutor/availability").json()
+    assert body["available"] is False
+    assert "key" not in str(body).lower()
+    assert "model" not in str(body).lower()

@@ -32,6 +32,11 @@ dev = [
 ai = [
     "pydantic-ai>=2.0,<3",
     "openai>=3.0,<4",
+    # RedisRateLimiter and RedisDailyCeiling import this. Without it declared,
+    # every production call raised ImportError, the fail-open handler swallowed
+    # it, and the request was allowed: a rate limit that was silently absent on
+    # exactly the deployments that need one.
+    "upstash-redis>=1.0,<2",
 ]
 
 # Tracing is separate from `ai` so a deployment can run the tutor without

@@ -28,7 +28,7 @@ import time
 from collections import deque
 from typing import Callable, Deque, Dict, Optional, Protocol, runtime_checkable
 
-from app.config import tutor_settings
+from app.config import is_multi_instance_deployment, tutor_settings
 
 # Deliberately conservative. A learner asking questions in a lesson does not
 # approach this; a script does immediately.
@@ -140,9 +140,16 @@ class RedisRateLimiter:
 
 
 def _trusted_proxy_hops() -> int:
+    """How many proxies sit in front, defaulting from the platform.
+
+    Requiring an operator to set this by hand meant the default deploy read the
+    socket peer, which on a managed platform is the platform's own proxy. Every
+    learner then shared one rate-limit bucket and the first twenty questions
+    from anyone locked out everyone else. An explicit value still wins.
+    """
     raw = os.getenv("TUTOR_TRUSTED_PROXY_HOPS")
     if not raw:
-        return 0
+        return 1 if is_multi_instance_deployment() else 0
     try:
         hops = int(raw.strip())
     except (TypeError, ValueError):
@@ -232,22 +239,84 @@ def production_spend_ceiling_is_missing() -> bool:
     """True when the tutor is enabled in production with no spend ceiling."""
     if not tutor_settings().enabled:
         return False
-    if not os.getenv("VERCEL"):
+    if not is_multi_instance_deployment():
         return False
     return configured_daily_ceiling() is None
 
 
-def build_daily_ceiling() -> DailyRequestCeiling:
-    return DailyRequestCeiling(limit=configured_daily_ceiling())
+class RedisDailyCeiling:
+    """The deployment-wide daily ceiling, shared across instances.
+
+    **Fails closed, unlike the rate limiter.** The two guards protect different
+    things and therefore fail in opposite directions. The limiter protects
+    latency: losing it for a minute costs a slow page, so availability wins. The
+    ceiling protects the bill: losing it costs money with no bound, and that is
+    the one failure nobody notices until it arrives on an invoice.
+
+    An in-process ceiling on a platform of many short-lived instances is really
+    `instances x limit`, resetting on every cold start, which is not a ceiling.
+    """
+
+    def __init__(self, limit, url: str = "", token: str = "", client=None) -> None:
+        self._limit = limit
+        self._url = url
+        self._token = token
+        self._client = client
+
+    def _connect(self):
+        if self._client is None:
+            from upstash_redis import Redis  # noqa: PLC0415
+
+            self._client = Redis(url=self._url, token=self._token)
+        return self._client
+
+    def allow(self) -> bool:
+        if self._limit is None:
+            return True
+        if self._limit <= 0:
+            return False
+        try:
+            client = self._connect()
+            # One key per UTC day: it expires itself, so nothing has to sweep.
+            key = f"tutor:spend:{time.strftime('%Y-%m-%d', time.gmtime())}"
+            count = int(client.incr(key))
+            if count == 1:
+                client.expire(key, 172_800)
+            return count <= self._limit
+        except Exception:  # noqa: BLE001 - see the class docstring
+            return False
+
+
+def build_daily_ceiling():
+    """The shared ceiling when Redis is configured, otherwise the in-process one.
+
+    Mirrors `build_rate_limiter`, but the fallback means something different
+    here. A per-instance rate limit is a weakened limit; a per-instance *spend
+    ceiling* is not a ceiling at all, because the real bound becomes
+    `instances x limit` and nothing tracks how many instances there were.
+    """
+    settings = tutor_settings()
+    limit = configured_daily_ceiling()
+    if settings.rate_limit_redis_url and settings.rate_limit_redis_token:
+        return RedisDailyCeiling(
+            limit=limit,
+            url=settings.rate_limit_redis_url,
+            token=settings.rate_limit_redis_token,
+        )
+    return DailyRequestCeiling(limit=limit)
 
 
 def production_limiter_is_missing() -> bool:
     """True when the tutor is enabled on a multi-instance platform with no shared limiter."""
     if not tutor_settings().enabled:
         return False
-    if not os.getenv("VERCEL"):
+    if not is_multi_instance_deployment():
         return False
-    return not tutor_settings().rate_limit_redis_url
+    settings = tutor_settings()
+    # Both halves. A URL with no token cannot authenticate, so the limiter would
+    # build, fail every call, and fail open — advertising a limit that never
+    # applies, which is worse than admitting there is none.
+    return not (settings.rate_limit_redis_url and settings.rate_limit_redis_token)
 
 
 def build_rate_limiter() -> RateLimiter:

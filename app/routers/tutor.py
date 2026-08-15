@@ -155,6 +155,35 @@ def _require_available() -> None:
         )
 
 
+@router.get(
+    "/availability",
+    summary="Whether the tutor can answer in this deployment",
+    description=(
+        "A cheap, unmetered read so a persistent tutor control can render its "
+        "correct state on any page without spending anything.\n\n"
+        "**SIMULATION** — Relay is an educational simulation. This endpoint "
+        "reports only whether the tutor is reachable, never why it is not."
+    ),
+)
+def tutor_availability_probe() -> dict:
+    """Deliberately outside both meters, and deliberately uninformative.
+
+    A persistent launcher has to know whether the tutor is on in order to render
+    correctly, and it has to ask on every page. The only tutor route used to be
+    the metered POST, so an enabled deployment would have burned rate limit and
+    daily ceiling on ordinary browsing — and, with the ceiling now failing
+    closed, could take the tutor offline for real learners before anyone asked a
+    question.
+
+    It reports a single boolean. The operator-facing distinction between
+    "disabled" and "enabled but missing a key" stays in the 503 detail on
+    `/chat`, where an operator is already looking. Publishing which half of the
+    configuration is absent on an unauthenticated GET tells an attacker whether
+    a key exists, which is not something a learner ever needs to know.
+    """
+    return {"available": tutor_availability() is TutorAvailability.READY}
+
+
 @router.post(
     "/chat",
     response_model=TutorResponse,
@@ -182,6 +211,29 @@ async def tutor_chat(
 ) -> TutorResponse:
     # Availability was already decided in `get_tutor_engine`, which resolves
     # before this body — see the note there.
+    #
+    # Policy runs FIRST, before either meter. It is deterministic, model-free,
+    # and costs nothing, while both meters exist to protect paid work. Charging
+    # a learner's quota for a request that never reaches the provider means
+    # someone who phrases one question badly loses their allowance for the good
+    # ones — and since the daily ceiling now fails closed, a burst of refusals
+    # could take the tutor offline for everybody for the rest of the day.
+    decision = evaluate_tutor_request(payload)
+    if not decision.allowed:
+        # A refusal is a successful, useful answer — not a client error. A 4xx
+        # would make the frontend render an error state for something the tutor
+        # handled correctly and has a good explanation for.
+        return TutorResponse.from_model_output(
+            TutorModelOutput(
+                answer=decision.response or "I can't help with that.",
+                citations=[],
+                needs_clarification=False,
+            ),
+            mode=payload.mode,
+            grounded=False,
+            safety_notice="Relay is an educational SIMULATION. No real money moves.",
+        )
+
     if not limiter.allow(limiter_key_for(request)):
         raise HTTPException(
             status_code=429,
@@ -201,22 +253,6 @@ async def tutor_chat(
                 "Everything else in Relay still works; the tutor will be "
                 "available again tomorrow."
             ),
-        )
-
-    decision = evaluate_tutor_request(payload)
-    if not decision.allowed:
-        # A refusal is a successful, useful answer — not a client error. A 4xx
-        # would make the frontend render an error state for something the tutor
-        # handled correctly and has a good explanation for.
-        return TutorResponse.from_model_output(
-            TutorModelOutput(
-                answer=decision.response or "I can't help with that.",
-                citations=[],
-                needs_clarification=False,
-            ),
-            mode=payload.mode,
-            grounded=False,
-            safety_notice="Relay is an educational SIMULATION. No real money moves.",
         )
 
     settings = tutor_settings()

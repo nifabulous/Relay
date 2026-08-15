@@ -178,3 +178,121 @@ def test_a_non_positive_limit_refuses_everything_rather_than_allowing_everything
     """Fail closed. A misconfigured ceiling of zero must not mean "no ceiling"."""
     limiter = InMemoryRateLimiter(limit=limit, window_seconds=60, clock=_Clock())
     assert limiter.allow("a") is False
+
+
+# ── Review fixes: T15, T3, T5, T6, T4 ───────────────────────────────────────
+
+
+def test_one_predicate_answers_whether_this_is_a_multi_instance_deployment(monkeypatch):
+    """T15. Three call sites were each re-deriving "are we in production?" from
+    `os.getenv("VERCEL")`. Three copies of a platform assumption drift the moment
+    the platform changes, and the drift is silent."""
+    from app.config import is_multi_instance_deployment
+
+    monkeypatch.delenv("VERCEL", raising=False)
+    assert is_multi_instance_deployment() is False
+    monkeypatch.setenv("VERCEL", "1")
+    assert is_multi_instance_deployment() is True
+
+
+def test_the_production_gate_requires_the_redis_token_not_just_the_url(monkeypatch):
+    """T3. A URL with no token cannot authenticate, so the limiter would build,
+    fail every call, and fail open — advertising a limit that never applies."""
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_URL", "https://redis.example")
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_TOKEN", raising=False)
+    assert production_limiter_is_missing() is True
+
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_TOKEN", "tok")
+    assert production_limiter_is_missing() is False
+
+
+def test_the_ceiling_fails_closed_when_its_backend_errors():
+    """T5. The limiter protects latency; the ceiling protects the bill.
+
+    A limiter that fails open costs a slow minute. A ceiling that fails open
+    costs money with no bound, which is the one failure nobody notices until it
+    appears on an invoice.
+    """
+    from app.tutor.limits import RedisDailyCeiling
+
+    class _Broken:
+        def incr(self, key):
+            raise RuntimeError("redis down")
+
+    ceiling = RedisDailyCeiling(limit=100, client=_Broken())
+    assert ceiling.allow() is False
+
+
+def test_the_limiter_keeps_failing_open_when_its_backend_errors():
+    """T5, the other half. Availability beats strictness for the rate limit."""
+    from app.tutor.limits import RedisRateLimiter
+
+    limiter = RedisRateLimiter(url="https://x", token="y", limit=5)
+
+    class _Broken:
+        def incr(self, key):
+            raise RuntimeError("redis down")
+
+    limiter._client = _Broken()
+    assert limiter.allow("k") is True
+
+
+def test_proxy_hops_default_to_one_on_a_known_platform(monkeypatch):
+    """T6. Requiring an operator to hand-set TUTOR_TRUSTED_PROXY_HOPS on Vercel
+    means the default deploy silently rate-limits every learner as one bucket,
+    because the socket peer is the platform's proxy."""
+    from app.tutor.limits import _trusted_proxy_hops
+
+    monkeypatch.delenv("TUTOR_TRUSTED_PROXY_HOPS", raising=False)
+    monkeypatch.setenv("VERCEL", "1")
+    assert _trusted_proxy_hops() == 1
+
+    monkeypatch.delenv("VERCEL", raising=False)
+    assert _trusted_proxy_hops() == 0
+
+
+def test_an_explicit_hop_count_still_overrides_the_platform_default(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("TUTOR_TRUSTED_PROXY_HOPS", "2")
+    from app.tutor.limits import _trusted_proxy_hops
+
+    assert _trusted_proxy_hops() == 2
+
+
+def test_the_daily_ceiling_is_shared_across_instances_when_redis_is_configured(
+    monkeypatch,
+):
+    """T4. An in-process daily ceiling on a platform that runs many short-lived
+    instances is per-instance and resets on every cold start, so the deployment
+    ceiling is really `instances x limit` with no upper bound."""
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_URL", "https://redis.example")
+    monkeypatch.setenv("TUTOR_RATE_LIMIT_REDIS_TOKEN", "tok")
+    monkeypatch.setenv("TUTOR_DAILY_REQUEST_CEILING", "500")
+    from app.tutor.limits import RedisDailyCeiling, build_daily_ceiling
+
+    assert isinstance(build_daily_ceiling(), RedisDailyCeiling)
+
+
+def test_an_unconfigured_daily_ceiling_stays_in_process(monkeypatch):
+    monkeypatch.delenv("TUTOR_RATE_LIMIT_REDIS_URL", raising=False)
+    monkeypatch.setenv("TUTOR_DAILY_REQUEST_CEILING", "500")
+    from app.tutor.limits import DailyRequestCeiling, build_daily_ceiling
+
+    assert isinstance(build_daily_ceiling(), DailyRequestCeiling)
+
+
+def test_upstash_redis_is_declared_so_the_production_limiter_can_import():
+    """T2. RedisRateLimiter imports `upstash_redis`, which appeared in no extra.
+
+    Every production call would raise ImportError, get swallowed by the
+    fail-open handler, and allow. The limit would be silently absent.
+    """
+    import tomllib
+
+    from app.config import BASE_DIR
+
+    with open(BASE_DIR / "pyproject.toml", "rb") as handle:
+        extras = tomllib.load(handle)["project"]["optional-dependencies"]
+    assert "upstash-redis" in " ".join(extras["ai"]).lower()

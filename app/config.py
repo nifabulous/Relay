@@ -118,6 +118,20 @@ class TutorAvailability(str, Enum):
     READY = "ready"
 
 
+def is_multi_instance_deployment() -> bool:
+    """Whether this process is one of many short-lived instances.
+
+    Three call sites were each re-deriving this from `os.getenv("VERCEL")`.
+    Three copies of a platform assumption drift the moment the platform
+    changes, and they drift silently: a rename would leave the tutor believing
+    it was on a single long-lived worker and quietly accepting an in-process
+    rate limit that resets on every cold start.
+
+    Extend this predicate, not its callers, when a second platform appears.
+    """
+    return bool(os.getenv("VERCEL"))
+
+
 def tutor_settings() -> TutorSettings:
     """Read the current tutor configuration from the environment."""
     return TutorSettings(
