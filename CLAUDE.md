@@ -6,7 +6,7 @@
 
 An **educational payment simulation** for learning how cross-border payments work. Two halves:
 
-1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 22 API endpoints under `/api/*`.
+1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 27 API endpoints under `/api/*`.
 2. **Relay frontend** (`frontend/`) — React 19 + TypeScript 7 + Vite 8 application with four workspaces: Overview, Learn, Explore, Operate. Served at `/app`.
 3. **Legacy frontend** (`app/static/`) — vanilla HTML/JS/CSS at `/learn` and `/ui`. Being replaced by Relay. Still available until parity is reached.
 
@@ -42,7 +42,33 @@ app/
   models.py         SQLAlchemy 2.0 models
   schemas.py        Pydantic v2 request/response schemas
   auth.py           API key authentication (X-Admin-Key header)
+  tutor/            AI tutor — OFF by default, no AI dependency in the base install
+  data/tutor_*.py   concept cards, lesson cards, and the citable source catalogue
 ```
+
+### AI tutor (`app/tutor/`)
+
+Disabled by default; `/api/tutor/chat` answers 503 until `TUTOR_ENABLED`,
+`TUTOR_MODEL`, and the provider key are all set. Spec:
+`docs/superpowers/specs/2026-08-13-relay-ai-tutor.md`.
+
+Rules that are easy to break by accident:
+
+- **Provider types are named in `engine.py` only, imported lazily inside a
+  function.** A test greps the whole `app/` package for `pydantic_ai`. An eager
+  or stray import takes down every route in the base install, tutor or not.
+- **Redaction is unconditional and runs at the provider boundary, never before
+  retrieval.** Retrieval keys on the identifiers redaction removes.
+- **Grounding is enforced, not requested.** A citation must name a document
+  retrieved *for that turn* and quote it verbatim. An uncited factual answer is
+  replaced, not flagged.
+- **The tool registry is three reads.** Adding a fourth method widens what the
+  model can reach; a test pins the set.
+- **`turn_id` must stay lowercase** — the frontend analytics allowlist rejects
+  uppercase, so feedback would vanish silently rather than error.
+- **One question fixture** (`tests/tutor/retrieval_questions.json`) serves the
+  retrieval benchmark, the golden set, and the live evaluator. Refusal items are
+  excluded from retrieval grading — they never reach retrieval.
 
 ### Frontend (`frontend/`)
 ```
@@ -130,12 +156,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (871 tests)
+python -m pytest tests/ -q              # full suite (1302 tests)
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --run  # 1091 tests (Vitest workers capped at 4)
+cd frontend && npm test -- --run  # 1162 tests (Vitest workers capped at 4)
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
