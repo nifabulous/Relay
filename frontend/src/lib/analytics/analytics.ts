@@ -137,6 +137,8 @@ const analyticsValueChecks = {
   };
 };
 
+const authoredIdentifierPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 function isValueValid(check: ValueCheck, value: unknown): boolean {
   switch (check.kind) {
     case "string":
@@ -144,12 +146,7 @@ function isValueValid(check: ValueCheck, value: unknown): boolean {
       // question-7). Rejecting whitespace and control characters keeps free
       // text or newline-injected values out of telemetry even when a caller
       // bypasses the types with a cast.
-      return (
-        typeof value === "string" &&
-        value.length > 0 &&
-        !/\s/.test(value) &&
-        !/[\u0000-\u001F\u007F]/.test(value)
-      );
+      return typeof value === "string" && authoredIdentifierPattern.test(value);
     case "boolean":
       return typeof value === "boolean";
     case "number":
@@ -195,10 +192,12 @@ export function track(
     ? (analyticsValueChecks[name] as Record<string, ValueCheck>)
     : undefined;
   if (keys === undefined || checks === undefined) return;
+  if (properties === null || typeof properties !== "object") return;
 
   const source = properties as Record<string, unknown>;
   const projected: Record<string, unknown> = {};
   for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) return;
     const value = source[key];
     const check = checks[key];
     // Drop the whole event when a value violates its contract, so telemetry
