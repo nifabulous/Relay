@@ -1,0 +1,18 @@
+version: 2
+
+# The Codex workflows pin every action to a full commit SHA because they hold
+# issues:write, pull-requests:write and OPENAI_API_KEY. A pin does not expire,
+# so without this file those pins would silently rot and a security release
+# upstream would never reach the repository. Dependabot opens a PR that moves
+# the SHA and updates the trailing version comment, keeping the pin auditable.
+updates:
+  - package-ecosystem: github-actions
+    # "/" covers every workflow under .github/workflows, not just the root.
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(actions)"
+    labels:
+      - dependencies

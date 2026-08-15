@@ -44,7 +44,9 @@ This contains review-integrity manipulation; it does not eliminate it. The worke
 
 ## Supply chain
 
-Both Codex workflows hold `issues: write`, `pull-requests: write` and `OPENAI_API_KEY`, so every action they use is pinned to a full commit SHA rather than a mutable tag. A retagged or compromised `@v4` would otherwise hand an attacker a write-capable GitHub token and the OpenAI secret. `tests/test_codex_automation.sh` fails if either workflow reverts to a tag. Update the pins through Dependabot or an equivalent reviewed process — the trailing comment on each `uses:` line records the version the SHA corresponds to.
+Both Codex workflows hold `issues: write`, `pull-requests: write` and `OPENAI_API_KEY`, so every action they use is pinned to a full commit SHA rather than a mutable tag. A retagged or compromised `@v4` would otherwise hand an attacker a write-capable GitHub token and the OpenAI secret. `ci.yml` is pinned the same way: it is unprivileged and declares `permissions: contents: read`, but a compromised action there could still read the checkout and tamper with build output. `tests/test_codex_automation.sh` fails if any of the three workflows reverts to a tag.
+
+A pin does not expire, so `.github/dependabot.yml` runs the `github-actions` ecosystem weekly: without it the pins rot and an upstream security release never reaches the repository. Dependabot opens a PR moving the SHA and updating the trailing version comment on each `uses:` line, which is what keeps the pin auditable.
 
 ## Data retention
 

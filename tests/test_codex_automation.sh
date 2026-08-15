@@ -78,6 +78,15 @@ done
 
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
 
+# ci.yml is unprivileged, but a mutable tag there still lets a compromised
+# action read the checkout and tamper with build output. Pinned for the same
+# reason, and Dependabot is what keeps every pin in the repository from rotting.
+for action in 'actions/checkout@v' 'actions/setup-python@v' 'actions/setup-node@v'; do
+  refuse_text '.github/workflows/ci.yml' "$action"
+done
+require_text '.github/workflows/ci.yml' 'permissions:'
+require_text '.github/dependabot.yml' 'package-ecosystem: github-actions'
+
 if grep -Fq 'printf '\''%s\n'\'' "$METADATA" >"$TEMP_DIR/metadata.json"' "$ROOT/scripts/codex_review_pr.sh"; then
   fail 'PR script still writes unsanitized metadata.'
 fi
