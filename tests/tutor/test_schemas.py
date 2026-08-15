@@ -66,14 +66,14 @@ def test_history_accepts_only_user_and_assistant_roles():
         )
 
 
-def test_turn_content_is_bounded_between_1_and_3000_characters():
+def test_turn_content_is_bounded_between_1_and_6000_characters():
     at_limit = TutorRequest(
         message="hello",
         context={"surface": "global"},
-        history=[{"role": "user", "content": "c" * 3000}],
+        history=[{"role": "user", "content": "c" * 6000}],
     )
-    assert len(at_limit.history[0].content) == 3000
-    for bad in ("", "c" * 3001):
+    assert len(at_limit.history[0].content) == 6000
+    for bad in ("", "c" * 6001):
         with pytest.raises(ValidationError):
             TutorRequest(
                 message="hello",

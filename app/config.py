@@ -142,7 +142,7 @@ def tutor_settings() -> TutorSettings:
         max_history_turns=_env_positive_int(
             "TUTOR_MAX_HISTORY_TURNS", 8, maximum=_TUTOR_MAX_HISTORY_TURNS_CEILING
         ),
-        max_input_tokens=_env_positive_int("TUTOR_MAX_INPUT_TOKENS", 6000),
+        max_input_tokens=_env_positive_int("TUTOR_MAX_INPUT_TOKENS", 14000),
         max_output_tokens=_env_positive_int("TUTOR_MAX_OUTPUT_TOKENS", 1200),
         rate_limit_redis_url=(os.getenv("TUTOR_RATE_LIMIT_REDIS_URL") or "").strip(),
         rate_limit_redis_token=(os.getenv("TUTOR_RATE_LIMIT_REDIS_TOKEN") or "").strip(),

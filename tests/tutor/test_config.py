@@ -45,7 +45,7 @@ def test_defaults_are_off_and_safe(clean_tutor_env):
     assert settings.model == ""
     assert settings.max_retrieved_docs == 6
     assert settings.max_history_turns == 8
-    assert settings.max_input_tokens == 6000
+    assert settings.max_input_tokens == 14000
     assert settings.max_output_tokens == 1200
     assert settings.rate_limit_redis_url == ""
     assert settings.rate_limit_redis_token == ""

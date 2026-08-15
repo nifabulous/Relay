@@ -673,7 +673,9 @@ export type TutorContext = z.infer<typeof TutorContextSchema>;
 export const TutorTurnSchema = z
   .object({
     role: z.enum(["user", "assistant"]),
-    content: z.string().min(1).max(3000),
+    // 6000, mirroring TutorTurn.content. A lower cap here would make the
+    // panel reject its own prior answers before they ever reached the API.
+    content: z.string().min(1).max(6000),
   })
   .passthrough();
 
