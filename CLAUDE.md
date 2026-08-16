@@ -192,6 +192,30 @@ ruff check . --fix  # auto-fix import order etc.
 - **SIMULATION disclaimers** must appear on the API title, every payment-shaped response, and the UI banners. Don't remove them.
 - **The `esc()` function** lives in `learn-utils.js`. Never copy it into a lab file — use `LearnUtils.esc` or `var esc = LearnUtils.esc`.
 
+## Pull request completion protocol
+
+This repository uses a review-until-merge loop for every pushed change:
+
+1. Before pushing, verify the current branch's PR is still open. If its PR is
+   already merged or closed, branch from the latest `origin/main` and open a
+   new PR instead of pushing more commits to the completed PR's branch.
+2. After every push, identify the current PR and poll its checks, review
+   threads, inline comments, and top-level comments. Do not treat an old green
+   check or an old bot review as current until it covers the pushed head SHA.
+3. Fix every unresolved actionable comment, including bot comments. Add or
+   update regression tests, rerun the relevant validation, commit the fixes,
+   and push them to the same PR branch.
+4. Poll again after each push and repeat step 3 until there are no unresolved
+   actionable comments, all required checks pass on the exact head SHA, and
+   the PR is mergeable.
+5. Once those conditions are met, merge the PR and verify that GitHub reports
+   it as merged. If mergeability is blocked by a human decision or a required
+   deployment approval, stop and report the blocker rather than bypassing it.
+
+Use thread-aware GitHub reads when review state matters. Preserve unrelated
+working-tree changes, never stage secrets, and never push a branch whose PR has
+already been merged without first creating the follow-up PR.
+
 ## Important files
 
 - `IMPLEMENTATION_PLAN.md` — the full remediation plan (Tiers 0-3), with file:line citations, acceptance criteria, and sequencing rules. Track progress here.
