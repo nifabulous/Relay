@@ -650,3 +650,51 @@ def test_unknown_status_is_rejected():
     bad["banks"][0]["records"][0]["status"] = "current-ish"
     problems = autopilot.validate_results(bad, MANIFEST)
     assert any("status" in p for p in problems), problems
+
+
+# ── A verifier must be a name, and only "published" may carry one ────────────
+def test_published_with_a_verified_by_passes():
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "published"
+    rec["banks"][0]["records"][0]["verified_by"] = "ops:ada"
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert problems == [], problems
+
+
+def test_published_without_a_verified_by_is_rejected():
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "published"
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("verified_by" in p for p in problems), problems
+
+
+def test_a_json_null_verifier_is_treated_as_absent():
+    """str(None) is 'None', a non-empty string: a JSON null used to pass as a
+    named verifier on a published record, and block a non-published one."""
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "published"
+    rec["banks"][0]["records"][0]["verified_by"] = None
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("verified_by" in p for p in problems), problems
+
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "archived"
+    rec["banks"][0]["records"][0]["verified_by"] = None
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert not any("verified_by" in p for p in problems), problems
+
+
+def test_a_non_string_verifier_is_rejected():
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "published"
+    rec["banks"][0]["records"][0]["verified_by"] = 42
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("verified_by" in p for p in problems), problems
+
+
+def test_a_verifier_on_a_non_published_row_is_rejected():
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "archived"
+    rec["banks"][0]["records"][0]["verified_by"] = "ops:ada"
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("verified_by is only meaningful" in p for p in problems), problems

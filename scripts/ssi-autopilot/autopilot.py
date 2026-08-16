@@ -201,7 +201,12 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             # so it has to say who established that. Without this the fold
             # would be silently downgraded at seed time and the research
             # result would not survive.
-            verified_by = str(rec.get("verified_by", "")).strip()
+            #
+            # str(None) is "None", a non-empty string: a JSON null would
+            # masquerade as a named verifier on a published record, and reject
+            # a non-published one for carrying an attribution it does not have.
+            raw_verified_by = rec.get("verified_by")
+            verified_by = raw_verified_by.strip() if isinstance(raw_verified_by, str) else ""
             if status == "published" and not verified_by:
                 problems.append(
                     f"{ben_bic}/{ccy}: status 'published' requires verified_by, "
