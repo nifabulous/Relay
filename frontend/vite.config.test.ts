@@ -33,7 +33,7 @@ describe("Vite Sentry source-map lifecycle", () => {
     vi.stubEnv("SENTRY_AUTH_TOKEN", "sntrys_test");
     vi.stubEnv("SENTRY_ORG", "relay");
     vi.stubEnv("SENTRY_PROJECT", "relay-frontend");
-    vi.stubEnv("VITE_SENTRY_RELEASE", "vercel-3a4d130");
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "abc123def456");
     vi.doMock("@sentry/vite-plugin", () => ({
       sentryVitePlugin: (options: { release?: { name?: string } }) => [{
         name: "fake-sentry-vite-plugin",
@@ -59,7 +59,8 @@ describe("Vite Sentry source-map lifecycle", () => {
       await plugin.writeBundle?.();
     }
 
-    expect(uploadedReleases).toEqual(["vercel-3a4d130"]);
+    expect(uploadedReleases).toEqual(["abc123def456"]);
+    expect(config.define?.["import.meta.env.VITE_SENTRY_RELEASE"]).toBe(JSON.stringify("abc123def456"));
     await expect(access(mapPath)).rejects.toThrow();
 
     await writeFile(mapPath, "map that must be rejected");

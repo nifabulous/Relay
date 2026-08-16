@@ -179,7 +179,7 @@ Vite variables at build time:
 | --- | --- | --- |
 | `VITE_SENTRY_DSN` | Frontend project DSN | Optional. The browser SDK stays disabled when this is unset. The DSN is safe to expose in a browser bundle. |
 | `VITE_SENTRY_ENVIRONMENT` | `production` or `preview` | Optional environment label; set separately for Vercel Production and Preview. |
-| `VITE_SENTRY_RELEASE` | deployment/release identifier | Optional. The same value is used by the browser SDK and source-map upload; when unset, both use the build commit when available. |
+| `VITE_SENTRY_RELEASE` | deployment/release identifier | Optional. The same value is used by the browser SDK and source-map upload; when unset, Vercel/CI commit metadata is used when available. |
 | `VITE_SENTRY_TRACES_SAMPLE_RATE` | `0.1` | Optional rate from `0` to `1`; keep low in production to control volume. |
 
 For private frontend source maps, set these build-time Vercel variables as

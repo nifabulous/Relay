@@ -49,7 +49,10 @@ export default defineConfig(({ mode }) => {
   const canUploadSourceMaps = Boolean(
     env.SENTRY_AUTH_TOKEN?.trim() && env.SENTRY_ORG?.trim() && env.SENTRY_PROJECT?.trim(),
   );
-  const release = resolveSentryRelease(env.VITE_SENTRY_RELEASE);
+  const release = resolveSentryRelease(
+    env.VITE_SENTRY_RELEASE,
+    env.VERCEL_GIT_COMMIT_SHA || env.GITHUB_SHA || env.CI_COMMIT_SHA,
+  );
 
   return {
     base: "/app/",
@@ -61,7 +64,7 @@ export default defineConfig(({ mode }) => {
             project: env.SENTRY_PROJECT,
             authToken: env.SENTRY_AUTH_TOKEN,
             telemetry: false,
-            release: release ? { name: release } : undefined,
+            release: release ? { name: release } : { inject: false },
             // A source-map upload failure must fail the deployment rather
             // than publish a build that cannot be debugged safely.
             errorHandler: (error) => {
@@ -74,6 +77,11 @@ export default defineConfig(({ mode }) => {
         : []),
       assertNoPublicSourceMaps(),
     ],
+    // Make the build-derived release visible to the browser SDK as the same
+    // value used by the source-map uploader. An unset release stays unset.
+    define: {
+      "import.meta.env.VITE_SENTRY_RELEASE": JSON.stringify(release ?? ""),
+    },
     build: {
       outDir: PUBLIC_OUTPUT_DIR,
       emptyOutDir: true,
