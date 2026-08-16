@@ -50,10 +50,12 @@ COMMIT_PATTERN = re.compile(r"^feat\(ssi\): seed [a-z-]+ SSIs? \(([^)]+)\)")
 # ── BIC helpers ──────────────────────────────────────────────────────────────
 _ACCT_MASK = re.compile(r"^ACCT-\d{4,10}$")          # masked placeholder
 
-# How an instruction was obtained, not how old it is. "published" was read from
-# the bank's live page, "archived" from a point-in-time snapshot that may no
-# longer be current, "illustrative" from nothing at all.
-SSI_STATUSES = {"published", "archived", "illustrative"}
+# What is known about the source, not how old it is. "published" means someone
+# verified the bank still publishes it today; "unverified" means a bank document
+# was read without re-checking currency; "archived" means a point-in-time
+# snapshot; "illustrative" means no bank source. Absence of archive evidence is
+# not evidence a page is live — that inference mislabelled 406 seeded rows.
+SSI_STATUSES = {"published", "unverified", "archived", "illustrative"}
 _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 
 

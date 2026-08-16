@@ -97,8 +97,17 @@ class ImportResponse(BaseModel):
 
 # The three provenance values, shared by the response schema and the model's
 # CHECK constraint so they cannot drift apart.
-SSI_STATUSES = ("published", "archived", "illustrative")
-SSIStatus = Literal["published", "archived", "illustrative"]
+# Ordered by how much each claims. Nothing in the seed data establishes that a
+# source was live when it was read, so "published" is reserved rather than
+# assigned: it means someone verified the bank still publishes this today.
+# "unverified" is the honest default for a row that cites a bank document
+# nobody has re-checked — inferring currency from the absence of archive
+# evidence is what mislabelled 406 rows.
+SSI_STATUSES = ("published", "unverified", "archived", "illustrative")
+SSIStatus = Literal["published", "unverified", "archived", "illustrative"]
+
+# Statuses that assert a bank document was actually read.
+SOURCED_SSI_STATUSES = ("published", "unverified", "archived")
 
 
 class SSIRecord(BaseModel):
@@ -112,8 +121,9 @@ class SSIRecord(BaseModel):
     charge_code: str = "SHA"
     value_date: str = "spot"
     notes: Optional[str] = None
-    # Provenance: "published" (bank's live page), "archived" (point-in-time
-    # snapshot, may no longer be current), or "illustrative" (not sourced).
+    # Provenance: "published" (verified live today), "unverified" (a bank
+    # document was read, currency not re-checked), "archived" (point-in-time
+    # snapshot), "illustrative" (not sourced from a bank at all).
     # Constrained here as well as in the database: /api/import/ssi and any
     # direct writer reach this column without passing the autopilot validator.
     as_of: Optional[str] = None

@@ -18,6 +18,11 @@ describe("SsiProvenance", () => {
     expect(screen.getByText(/Illustrative/)).toBeInTheDocument();
   });
 
+  it("flags an instruction whose currency was never re-checked", () => {
+    render(<SsiProvenance status="unverified" />);
+    expect(screen.getByText(/Unverified/)).toBeInTheDocument();
+  });
+
   it("stays silent for a published instruction", () => {
     const { container } = render(<SsiProvenance status="published" asOf="2026-01-01" />);
     expect(container).toBeEmptyDOMElement();
@@ -25,6 +30,11 @@ describe("SsiProvenance", () => {
 
   it("stays silent when the backend sends no status at all", () => {
     const { container } = render(<SsiProvenance />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("does not badge an unknown status it cannot explain", () => {
+    const { container } = render(<SsiProvenance status="something-new" />);
     expect(container).toBeEmptyDOMElement();
   });
 });

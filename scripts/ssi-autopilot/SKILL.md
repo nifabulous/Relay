@@ -48,11 +48,20 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    the results must already be masked `ACCT-` placeholders (transcribe any real
    digits to the region's masked block).
 
-   `status` is `published` when you read the instruction on the bank's live
-   page, `archived` when you read it from a snapshot (web.archive.org or any
-   other point-in-time copy). It records how you obtained the data, never how
-   old it is — do not infer it from `as_of`. An archived 2026 page is still
-   `archived`; a live page restating 2019 figures is still `published`.
+   `status` records what you actually know about the source, never how old it
+   is — do not infer it from `as_of`:
+
+   - `archived` — you read it from a snapshot (web.archive.org or any other
+     point-in-time copy). An archived 2026 page is still `archived`.
+   - `unverified` — you read a bank document, but you did not confirm the bank
+     still publishes it. This is the normal outcome of desk research and is
+     the correct default.
+   - `published` — you confirmed the bank publishes it *today*. This is a
+     stronger claim than "I found it on their website"; use it only when you
+     actually checked currency. No seeded row currently earns it.
+
+   Absence of archive evidence is not evidence a page is live. Defaulting to
+   `published` on that reasoning mislabelled 406 seeded rows.
 
 4. **Validate** — `python scripts/ssi-autopilot/autopilot.py validate <results.json>`.
    It rejects: real account numbers, unmasked accounts, invalid BICs,

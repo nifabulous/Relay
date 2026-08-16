@@ -159,11 +159,11 @@ export const SSIRecordSchema = z
     charge_code: z.string().catch(""),
     value_date: z.string().catch(""),
     notes: safeOptionalString,
-    // Provenance: how the instruction was obtained. Defaults to "published" on
-    // a response from an older backend, which is the pre-provenance meaning of
-    // an unlabelled row — a wrong "archived" badge would be worse than none.
+    // Provenance. An older backend sends no status; that is precisely the
+    // "we do not know" case, so it falls back to "unverified" rather than
+    // "published" — the fallback must not assert currency either.
     as_of: safeOptionalString,
-    status: z.string().catch("published"),
+    status: z.string().catch("unverified"),
     intermediary_settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();

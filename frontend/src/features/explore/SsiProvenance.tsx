@@ -1,12 +1,16 @@
 /**
  * Provenance badge for a settlement instruction.
  *
- * `status` says how the instruction was obtained, never how old it is:
- * "published" was read from the bank's live page, "archived" from a
- * point-in-time snapshot that may since have changed, "illustrative" from
- * nothing at all. Only "archived" and "illustrative" are surfaced — a
- * published instruction is the unremarkable case and a badge on every row
- * would train people to ignore all of them.
+ * `status` says what is known about the source, never how old it is.
+ * "published" means someone verified the bank still publishes it and is the
+ * only unbadged case; "unverified" means a bank document was read but its
+ * currency was never re-checked; "archived" means a point-in-time snapshot;
+ * "illustrative" means no bank source at all.
+ *
+ * "unverified" is badged deliberately, even though it is the common case
+ * today. The alternative was to call these rows published, which asserts a
+ * currency nobody checked — on payment instructions that is the wrong
+ * direction to be wrong in.
  */
 
 interface SsiProvenanceProps {
@@ -15,6 +19,12 @@ interface SsiProvenanceProps {
 }
 
 const LABELS: Record<string, { short: string; title: string }> = {
+  unverified: {
+    short: "Unverified",
+    title:
+      "Read from a bank document, but nobody has confirmed the bank still " +
+      "publishes it. Check with the bank before use.",
+  },
   archived: {
     short: "Archived",
     title:

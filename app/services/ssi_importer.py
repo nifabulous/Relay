@@ -42,7 +42,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import SSI
-from ..schemas import SSI_STATUSES
+from ..schemas import SOURCED_SSI_STATUSES, SSI_STATUSES
 
 VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
 VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
@@ -137,6 +137,12 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
         )
     else:
         normalized["status"] = status
+
+    # A claim of provenance the row cannot back is downgraded, not accepted.
+    # Rejecting the whole row would break imports that simply omit the column;
+    # storing it as-is would let an upload manufacture authority.
+    if normalized.get("status") in SOURCED_SSI_STATUSES and not normalized.get("notes"):
+        normalized["status"] = "illustrative"
 
     charge = (raw.get("charge_code") or "SHA").strip().upper()
     if charge not in VALID_CHARGE_CODES:

@@ -113,9 +113,12 @@ class SSI(Base):
       - beneficiary_account: the credit-to account at the beneficiary bank.
       - charge_code: OUR (sender pays all fees), SHA (shared), BEN (beneficiary pays).
       - value_date: settlement timing (same-day / spot / T+n).
-      - status: whether the instruction came from the bank's live page
-        ("published"), an archived snapshot ("archived"), or neither
-        ("illustrative"). An archived instruction may no longer be current.
+      - status: what is actually known about the source. "published" means
+        someone verified the bank still publishes it; "unverified" means a bank
+        document was read but its currency was never re-checked; "archived"
+        means a point-in-time snapshot; "illustrative" means no bank source.
+        Only "published" asserts currency, and nothing in the seed data earns
+        it — absence of archive evidence is not evidence a page is live.
 
     NOTE: account numbers in the seed data are ILLUSTRATIVE placeholders.
     Real SSI data is bank-specific, changes over time, and must be sourced
@@ -136,10 +139,9 @@ class SSI(Base):
     charge_code = Column(String(3), default="SHA")  # OUR / SHA / BEN
     value_date = Column(String(10), default="spot")  # same-day / spot / T+n
     notes = Column(String(500))
-    # Provenance. `status` records HOW the instruction was obtained, not how old
-    # it is: "published" read from the bank's live page, "archived" read from a
-    # point-in-time snapshot, "illustrative" not sourced from a bank at all.
-    # There is no age threshold anywhere — the distinction is evidential.
+    # Provenance. `status` records what is known about the source, never how
+    # old it is; there is no age threshold anywhere. A sourced status must be
+    # backed by a citation in `notes`, which the CHECK below enforces.
     # Deliberately nullable, and deliberately NOT required for "archived":
     # 181 of the archived rows cite only a year ("2021 archive"). A constraint
     # demanding a full date would be satisfied by inventing a day and month,
@@ -157,8 +159,15 @@ class SSI(Base):
         # and any direct session.add() land here too. Constrain the value where
         # it is stored, not only where it is generated.
         CheckConstraint(
-            "status IN ('published', 'archived', 'illustrative')",
+            "status IN ('published', 'unverified', 'archived', 'illustrative')",
             name="ck_ssi_status",
+        ),
+        # A status that claims a bank document was read must carry the citation
+        # backing it. Without this, /api/import/ssi or a direct session.add()
+        # can store an authoritative-looking row with no provenance at all.
+        CheckConstraint(
+            "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
+            name="ck_ssi_sourced_status_has_notes",
         ),
     )
 

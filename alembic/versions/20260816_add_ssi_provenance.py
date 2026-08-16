@@ -4,9 +4,13 @@
 "published" read from the bank's live page, "archived" read from a
 point-in-time snapshot, "illustrative" not sourced from a bank at all.
 
-Existing rows default to "illustrative" rather than "published": nothing has
-confirmed their provenance, and claiming otherwise would be the overclaim the
-column exists to prevent. seed.py restates the real value on the next seed.
+Existing rows default to "illustrative": nothing has confirmed their
+provenance, and claiming otherwise would be the overclaim the column exists to
+prevent. seed.py restates the real value on the next seed.
+
+"published" asserts a source verified live today and is deliberately not
+assigned by the seed; "unverified" is what a read-but-unrechecked bank
+document earns.
 
 Revision ID: 20260816_ssi_prov
 """
@@ -39,7 +43,11 @@ def upgrade() -> None:
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint(
             "ck_ssi_status",
-            "status IN ('published', 'archived', 'illustrative')",
+            "status IN ('published', 'unverified', 'archived', 'illustrative')",
+        )
+        batch.create_check_constraint(
+            "ck_ssi_sourced_status_has_notes",
+            "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
         )
 
 
@@ -48,6 +56,7 @@ def downgrade() -> None:
     # to go in the same rebuild as the column it references — dropping the
     # column alone carries the constraint into a table that no longer has it.
     with op.batch_alter_table("ssi") as batch:
+        batch.drop_constraint("ck_ssi_sourced_status_has_notes", type_="check")
         batch.drop_constraint("ck_ssi_status", type_="check")
         batch.drop_column("status")
         batch.drop_column("as_of")
