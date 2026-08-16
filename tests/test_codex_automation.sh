@@ -121,6 +121,7 @@ require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEA
 require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
 require_text 'scripts/verify_before_push.sh' 'SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT='
 require_text 'scripts/verify_before_push.sh' 'FINAL_HEAD_SHA="$(git rev-parse --verify HEAD)"'
+require_text 'scripts/verify_before_push.sh' './node_modules/.bin/tsc --noEmit'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
@@ -409,6 +410,45 @@ check_override_beyond_job_deadline_is_refused() {
   fi
 }
 
+# A PR review must never be posted for a partial diff. Exercise the wrapper
+# with a real Responses worker and an oversized sanitized payload; the worker
+# must fail before opening a network request or reaching gh pr comment.
+check_oversized_review_input_is_refused() {
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+  printf '%*s' 20000 '' | tr ' ' x >"$STUB_DIR/pr.diff"
+
+  local status=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_STUB_PASSTHROUGH=1 \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=20000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status == 0 )); then
+    fail 'Oversized PR input was accepted as a complete review.'
+  elif ! grep -q 'complete review input' "$STUB_DIR/run.log"; then
+    fail 'Oversized PR input failed for the wrong reason.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'Oversized PR input reached comment publication.'
+  fi
+}
+
 # Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
 expect_posted() {
   local message="$1"
@@ -490,6 +530,8 @@ env \
 if [[ -s "$STUB_DIR/posted.log" ]]; then
   fail 'A review was posted after the PR head moved during model generation.'
 fi
+
+check_oversized_review_input_is_refused
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",

@@ -26,12 +26,12 @@ echo "commit: $HEAD_SHA"
 echo "range: $BASE_SHA..$HEAD_SHA"
 echo "branch: $(git branch --show-current)"
 
-echo "[1/9] Checking committed-range and working-tree whitespace errors"
+echo "[1/10] Checking committed-range and working-tree whitespace errors"
 git diff --check "$BASE_SHA" "$HEAD_SHA"
 git diff --check
 git diff --cached --check
 
-echo "[2/9] Checking Python lint"
+echo "[2/10] Checking Python lint"
 if [[ -x "$REPO_ROOT/.venv/bin/ruff" ]]; then
   "$REPO_ROOT/.venv/bin/ruff" check .
 elif command -v ruff >/dev/null 2>&1; then
@@ -51,25 +51,28 @@ if [[ ! -x "$REPO_ROOT/frontend/node_modules/.bin/vite" ]]; then
   exit 1
 fi
 
-echo "[3/9] Typechecking and building the production frontend"
+echo "[3/10] Typechecking the frontend"
+(cd "$REPO_ROOT/frontend" && ./node_modules/.bin/tsc --noEmit)
+
+echo "[4/10] Building the production frontend with Sentry upload disabled"
 env SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT= \
   npm --prefix frontend run build
 
-echo "[4/9] Running the full backend test suite in an isolated SQLite database"
+echo "[5/10] Running the full backend test suite in an isolated SQLite database"
 TEST_DB_DIR="$(mktemp -d /tmp/relay-prepush-db.XXXXXX)"
 trap 'rm -rf -- "$TEST_DB_DIR"' EXIT
 TEST_DATABASE_URL="sqlite:////${TEST_DB_DIR#/}/swift_routing.db"
 DATABASE_URL="$TEST_DATABASE_URL" "$PYTHON" -m pytest tests/ -q
 
-echo "[5/9] Running the full frontend suite"
+echo "[6/10] Running the full frontend suite"
 npm --prefix frontend test -- --run --no-file-parallelism
 
-echo "[6/9] Checking the bundle budget"
+echo "[7/10] Checking the bundle budget"
 npm --prefix frontend run check:bundle
 
 PUBLIC_ASSETS="$REPO_ROOT/app/static/relay/assets"
 if [[ -d "$PUBLIC_ASSETS" ]]; then
-  echo "[7/9] Inspecting public build artifacts"
+  echo "[8/10] Inspecting public build artifacts"
   if find "$PUBLIC_ASSETS" -type f -name '*.map' -print -quit | grep -q .; then
     echo "public source maps found in $PUBLIC_ASSETS" >&2
     exit 1
@@ -89,11 +92,11 @@ if [[ "$FINAL_HEAD_SHA" != "$HEAD_SHA" ]]; then
   exit 1
 fi
 
-echo "[8/9] Showing the final scope for human review"
+echo "[9/10] Showing the final scope for human review"
 git status --short
 git diff --stat
 git diff --cached --stat
 
-echo "[9/9] Final base/head identity is $BASE_SHA..$FINAL_HEAD_SHA"
+echo "[10/10] Final base/head identity is $BASE_SHA..$FINAL_HEAD_SHA"
 
 echo "Pre-push verification passed for $BASE_SHA..$FINAL_HEAD_SHA. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
