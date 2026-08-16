@@ -876,16 +876,25 @@ class TestPublishedCannotBeSelfAsserted:
             ))
         db_session_clean.rollback()
 
-    def test_database_accepts_published_with_a_date(self, db_session_clean):
+    def test_a_published_row_persists_when_it_names_a_verifier(self, db_session_clean):
+        """This test previously omitted verified_by, so the listener downgraded
+        the row and the commit succeeded — it passed while proving nothing
+        about a published record surviving."""
+        from datetime import date
+
         from app.models import SSI
 
-        db_session_clean.add(SSI(
+        row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
-            as_of=__import__("datetime").date.today().isoformat(),
-        ))
+            as_of=date.today().isoformat(), verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
         db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "published", "the row did not persist as published"
+        assert row.verified_by == "ops:ada"
 
 
 class TestProvenanceInvariantsHoldForAnyOrmWrite:
@@ -1287,3 +1296,64 @@ class TestOnlyTheVerificationPathCanPublish:
                 intermediary_bic="CITIUS33XXX", status="published",
                 as_of="2020-01-01",
             )
+
+
+class TestAVerifierMustBeAName:
+    """"   " passes a truthiness test and a `!= ''` check while attributing
+    nothing. An unattributable published row is the thing being prevented."""
+
+    def test_the_schema_rejects_a_whitespace_verifier(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+                as_of="2020-01-01", verified_by="   ",
+            )
+
+    def test_a_whitespace_verifier_downgrades_an_orm_write(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: x", as_of=date.today().isoformat(), verified_by="   ",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified"
+        assert row.verified_by is None
+
+    def test_raw_sql_cannot_publish_with_a_whitespace_verifier(self, db_session_clean):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', '   ')"
+            ))
+        db_session_clean.rollback()
+
+    def test_a_padded_verifier_is_stored_trimmed(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: x", as_of=date.today().isoformat(),
+            verified_by="  ops:ada  ",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.verified_by == "ops:ada"

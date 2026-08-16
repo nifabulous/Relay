@@ -89,7 +89,7 @@ def upgrade() -> None:
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint(
             "ck_ssi_published_names_a_verifier",
-            "status != 'published' OR (verified_by IS NOT NULL AND verified_by != '')",
+            "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
         )
 
     statements = SSI_AS_OF_SQLITE if bind.dialect.name == "sqlite" else SSI_AS_OF_POSTGRES

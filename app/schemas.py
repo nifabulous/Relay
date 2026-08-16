@@ -158,6 +158,15 @@ class SSIRecord(BaseModel):
             raise ValueError(f"as_of {value} is in the future; a source cannot have been read yet")
         return value
 
+    @field_validator("verified_by")
+    @classmethod
+    def _verifier_is_a_name(cls, value: Optional[str]) -> Optional[str]:
+        # "   " satisfies a truthiness test but attributes nothing.
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
     @model_validator(mode="after")
     def _published_carries_its_verification_date(self) -> "SSIRecord":
         # "published" means verified live; the date of that check is the

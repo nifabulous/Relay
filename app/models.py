@@ -212,9 +212,11 @@ class SSI(Base):
         ),
         # "published" is the only status asserting present-tense currency, so
         # it must name who established it. Generic writers do not set this and
-        # therefore cannot produce the claim.
+        # therefore cannot produce the claim. TRIM, because "   " is not a
+        # name and an unattributable published row is the thing being
+        # prevented; TRIM is standard SQL on both engines.
         CheckConstraint(
-            "status != 'published' OR (verified_by IS NOT NULL AND verified_by != '')",
+            "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
             name="ck_ssi_published_names_a_verifier",
         ),
     )
@@ -353,6 +355,11 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
             raise ValueError(
                 f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
             )
+    # A verifier made only of spaces is not a name. Normalise before the
+    # truthiness test below decides whether one was supplied at all.
+    if target.verified_by is not None:
+        target.verified_by = target.verified_by.strip() or None
+
     if target.status == "published":
         # Downgraded, not rejected. A generic caller setting "published" is
         # usually copying a field forward, not asserting it verified the bank
