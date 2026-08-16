@@ -323,3 +323,70 @@ def test_timeout_one_second_below_the_floor_is_rejected(capsys):
     with pytest.raises(SystemExit):
         _parse("639")
     assert "--request-timeout" in capsys.readouterr().err
+
+
+# ── The request timeout must also fit inside the job's wall clock ────────────
+def _parse_with_job(timeout: str, job: str, tokens: str = "32000"):
+    return codex_responses.parse_args([
+        "--model", "gpt-5.3-codex", "--reasoning-effort", "medium",
+        "--instructions", "i.md", "--input", "in.md", "--output", "out.md",
+        "--max-input-bytes", "120000", "--max-output-tokens", tokens,
+        "--max-output-bytes", "50000", "--request-timeout", timeout,
+        "--job-timeout", job,
+    ])
+
+
+def test_request_timeout_above_the_job_deadline_is_rejected(capsys):
+    """A configured override the job cannot outlive recreates the exact
+    'no review posted' failure this change exists to prevent."""
+    with pytest.raises(SystemExit):
+        _parse_with_job("1800", "1200")
+    assert "--job-timeout" in capsys.readouterr().err
+
+
+def test_request_timeout_leaving_no_posting_headroom_is_rejected(capsys):
+    # Equal to the job deadline: the request would consume the whole job and
+    # leave nothing to sanitize and post the comment.
+    with pytest.raises(SystemExit):
+        _parse_with_job("1200", "1200")
+    assert "--job-timeout" in capsys.readouterr().err
+
+
+def test_request_timeout_exactly_at_the_headroom_boundary_is_accepted():
+    fits = 1200 - codex_responses.POSTING_HEADROOM_SECONDS
+    assert _parse_with_job(str(fits), "1200").request_timeout == fits
+
+
+def test_request_timeout_one_second_over_the_headroom_boundary_is_rejected(capsys):
+    over = 1200 - codex_responses.POSTING_HEADROOM_SECONDS + 1
+    with pytest.raises(SystemExit):
+        _parse_with_job(str(over), "1200")
+    assert "--job-timeout" in capsys.readouterr().err
+
+
+def test_job_timeout_is_optional_so_local_runs_still_work():
+    assert _parse("900").request_timeout == 900
+
+
+def test_socket_timeout_while_reading_the_body_is_reported_as_a_timeout(monkeypatch):
+    """urlopen can connect and then stall mid-body; the inactivity timeout
+    fires during read(), not at connect."""
+    class StallingResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self, *args):
+            raise TimeoutError("timed out")
+
+    monkeypatch.setattr(
+        codex_responses.urllib.request, "urlopen",
+        lambda request, **kwargs: StallingResponse())
+    with pytest.raises(RuntimeError) as exc:
+        codex_responses.request_response(
+            model="gpt-5.3-codex", reasoning_effort="medium", instructions="i",
+            prompt="p", api_key="k", max_output_tokens=32000,
+            max_output_bytes=50000, request_timeout=600)
+    assert "timed out" in str(exc.value).lower()

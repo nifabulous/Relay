@@ -40,6 +40,10 @@ jobs:
       CODEX_MAX_OUTPUT_TOKENS: ${{ vars.CODEX_MAX_OUTPUT_TOKENS || '32000' }}
       CODEX_MAX_OUTPUT_BYTES: ${{ vars.CODEX_MAX_OUTPUT_BYTES || '50000' }}
       CODEX_REQUEST_TIMEOUT: ${{ vars.CODEX_REQUEST_TIMEOUT || '900' }}
+      # Must equal timeout-minutes below, in seconds. The worker validates
+      # the configured request timeout against it, so an override that the
+      # job cannot outlive fails fast instead of being killed mid-request.
+      CODEX_JOB_TIMEOUT_SECONDS: '1200'
       CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
       EVENT_NAME: ${{ github.event_name }}
       EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}

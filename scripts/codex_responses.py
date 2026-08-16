@@ -31,6 +31,12 @@ BYTES_PER_TOKEN = 4
 SECONDS_PER_1K_TOKENS = 20
 DEFAULT_REQUEST_TIMEOUT = 900
 
+# The socket timeout is bounded above as well as below. GitHub kills the job at
+# its timeout-minutes regardless of what the request is doing, so a request
+# allowed to run to the job deadline leaves nothing to sanitize and post the
+# comment — the same "no review posted" outcome, reached from the other side.
+POSTING_HEADROOM_SECONDS = 180
+
 
 def bound_input(text: str, max_bytes: int) -> str:
     """Return UTF-8 text no larger than max_bytes, marking truncation."""
@@ -204,6 +210,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--request-timeout", type=int, default=DEFAULT_REQUEST_TIMEOUT,
         help="socket timeout in seconds; must cover the max-output-tokens budget",
     )
+    parser.add_argument(
+        "--job-timeout", type=int, default=None,
+        help=(
+            "wall-clock seconds the surrounding CI job allows; the request "
+            "timeout must leave posting headroom inside it"
+        ),
+    )
     args = parser.parse_args(argv)
     if not MODEL_PATTERN.fullmatch(args.model):
         parser.error("--model contains unsupported characters")
@@ -233,6 +246,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             f"--max-output-tokens {args.max_output_tokens} "
             f"(need at least {required}s)"
         )
+    # Bounded above by the job's wall clock, not just below by the token
+    # budget. A configured override the job cannot outlive is the same failure
+    # as too short a timeout: the review never gets posted.
+    if args.job_timeout is not None:
+        if args.job_timeout <= 0:
+            parser.error("--job-timeout must be positive")
+        ceiling = args.job_timeout - POSTING_HEADROOM_SECONDS
+        if args.request_timeout > ceiling:
+            parser.error(
+                f"--request-timeout {args.request_timeout}s leaves no room inside "
+                f"--job-timeout {args.job_timeout}s "
+                f"(must be at most {ceiling}s, reserving "
+                f"{POSTING_HEADROOM_SECONDS}s to post the comment)"
+            )
     return args
 
 
