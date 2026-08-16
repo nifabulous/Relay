@@ -133,6 +133,9 @@ class SSIRecord(BaseModel):
     # direct writer reach this column without passing the autopilot validator.
     as_of: Optional[str] = None
     status: SSIStatus = "illustrative"
+    # Set only by the verification path; a response carrying "published"
+    # without it would be unattributable.
+    verified_by: Optional[str] = None
 
     @field_validator("as_of")
     @classmethod
@@ -161,6 +164,8 @@ class SSIRecord(BaseModel):
         # evidence. Without it the status is an unfalsifiable claim.
         if self.status == "published" and not self.as_of:
             raise ValueError("status 'published' requires as_of, the date currency was verified")
+        if self.status == "published" and not self.verified_by:
+            raise ValueError("status 'published' requires verified_by, who confirmed it")
         return self
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).

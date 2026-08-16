@@ -1,5 +1,14 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint, event
+from sqlalchemy import (
+    DDL,
+    CheckConstraint,
+    Column,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    event,
+)
 
 from .db import Base
 
@@ -149,6 +158,11 @@ class SSI(Base):
     # date is known it is stored; when only a year is known the citation in
     # `notes` carries it and this stays null.
     as_of = Column(String(10))                       # source date, when stated
+    # Who confirmed the bank still publishes this, for status "published"
+    # only. It is the difference between a claim and an audit trail: a caller
+    # that cannot name a verifier is not making a verified claim, and the
+    # listener downgrades it rather than storing one.
+    verified_by = Column(String(120))
     status = Column(String(12), nullable=False, default="illustrative")
 
     __table_args__ = (
@@ -195,6 +209,13 @@ class SSI(Base):
         CheckConstraint(
             "status != 'published' OR (as_of IS NOT NULL AND as_of != '')",
             name="ck_ssi_published_has_verification_date",
+        ),
+        # "published" is the only status asserting present-tense currency, so
+        # it must name who established it. Generic writers do not set this and
+        # therefore cannot produce the claim.
+        CheckConstraint(
+            "status != 'published' OR (verified_by IS NOT NULL AND verified_by != '')",
+            name="ck_ssi_published_names_a_verifier",
         ),
     )
 
@@ -332,11 +353,97 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
             raise ValueError(
                 f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
             )
-    if target.status == "published" and not target.as_of:
-        raise ValueError(
-            "SSI.status 'published' requires as_of, the date currency was verified"
-        )
+    if target.status == "published":
+        # Downgraded, not rejected. A generic caller setting "published" is
+        # usually copying a field forward, not asserting it verified the bank
+        # today; failing the write would break that caller for no gain, while
+        # storing the claim would be a lie. record_verified_publication() is
+        # the one path that supplies a verifier.
+        if not target.verified_by:
+            target.status = "unverified"
+        elif not target.as_of:
+            raise ValueError(
+                "SSI.status 'published' requires as_of, the date currency was verified"
+            )
 
 
 event.listen(SSI, "before_insert", _validate_ssi_provenance)
 event.listen(SSI, "before_update", _validate_ssi_provenance)
+
+
+def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) -> "SSI":
+    """Promote a row to "published" — the only supported way to do it.
+
+    Every other path downgrades the status, so this function is what separates
+    "someone typed published" from "someone checked the bank's page and said
+    so". It records who did the checking and when; both are required.
+    """
+    from datetime import date as _date
+
+    if not verified_by or not verified_by.strip():
+        raise ValueError("record_verified_publication requires a verifier")
+    parsed = _date.fromisoformat(verified_on)
+    if parsed.isoformat() != verified_on:
+        raise ValueError(f"verified_on must be written as YYYY-MM-DD, got {verified_on!r}")
+    if parsed > _date.today():
+        raise ValueError(f"verified_on {verified_on} is in the future")
+    row.status = "published"
+    row.verified_by = verified_by.strip()
+    row.as_of = verified_on
+    return row
+
+
+# ── as_of enforcement that survives Core, bulk and raw SQL ──────────────────
+# A CHECK cannot host these rules: SQLite calls date('now') non-deterministic
+# and Postgres requires CHECK functions to be IMMUTABLE. A trigger may, on both.
+#
+# Defined here rather than only in the migration so create_all() installs them
+# too — the test suite builds its schema that way, so a migration-only trigger
+# is a rule no test ever exercises. The migration imports these same strings;
+# a test pins the two together.
+SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YYYY-MM-DD"
+
+# date() yields NULL for nonsense and silently normalises an impossible date
+# (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
+_SQLITE_AS_OF_CONDITION = (
+    "NEW.as_of IS NOT NULL AND ("
+    "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
+    "OR NEW.as_of > date('now'))"
+)
+SSI_AS_OF_SQLITE = [
+    f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+    f"""CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+]
+SSI_AS_OF_POSTGRES = [
+    f"""CREATE OR REPLACE FUNCTION ssi_as_of_is_real_and_past() RETURNS trigger AS $$
+        BEGIN
+          IF NEW.as_of IS NOT NULL THEN
+            IF NEW.as_of !~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$' THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END IF;
+            BEGIN
+              IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
+                 OR NEW.as_of::date > CURRENT_DATE THEN
+                RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+              END IF;
+            EXCEPTION WHEN others THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END;
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql""",
+    """CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+    """CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+]
+
+for _statement in SSI_AS_OF_SQLITE:
+    event.listen(SSI.__table__, "after_create", DDL(_statement).execute_if(dialect="sqlite"))
+for _statement in SSI_AS_OF_POSTGRES:
+    event.listen(SSI.__table__, "after_create", DDL(_statement).execute_if(dialect="postgresql"))
