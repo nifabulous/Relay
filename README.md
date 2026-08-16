@@ -193,7 +193,9 @@ PY
 ```
 
 The integration removes HTTP request bodies, query strings, cookies, headers,
-and exception text before sending events. Do not add a public debug route that
+URLs, logging payloads, breadcrumbs, exception text, exception locals, and
+transaction/span payloads before sending events. If tracing is enabled, only
+timing and non-content span fields remain. Do not add a public debug route that
 deliberately raises an exception to a deployed app.
 
 Note the four slashes in the SQLite URL: `sqlite://` plus the absolute path

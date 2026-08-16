@@ -3,17 +3,32 @@
 import logging
 import os
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urlsplit
 
 import sentry_sdk
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _REDACTED_EXCEPTION_VALUE = "[REDACTED_EXCEPTION_VALUE]"
+_REDACTED_TRANSACTION = "[REDACTED_TRANSACTION]"
+_TUTOR_CHAT_ROUTE = "/api/tutor/chat"
 _EXPECTED_HTTP_EXCEPTION_PREFIXES = (
     "The tutor is not enabled.",
     "The tutor provider is not configured.",
     "The tutor requires a shared rate limit",
     "The tutor requires a daily spend ceiling",
+)
+_SAFE_SPAN_KEYS = frozenset(
+    {
+        "op",
+        "origin",
+        "parent_span_id",
+        "span_id",
+        "start_timestamp",
+        "status",
+        "timestamp",
+        "trace_id",
+    }
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +51,38 @@ def _sample_rate() -> float:
     return value if 0.0 <= value <= 1.0 else 0.0
 
 
-def _is_expected_http_exception(event: dict[str, Any]) -> bool:
+def _exception_from_hint(hint: dict[str, Any]) -> BaseException | None:
+    exc_info = hint.get("exc_info")
+    if not isinstance(exc_info, tuple) or len(exc_info) < 2:
+        return None
+    exception = exc_info[1]
+    return exception if isinstance(exception, BaseException) else None
+
+
+def _is_tutor_chat_route(event: dict[str, Any]) -> bool:
+    if event.get("transaction") == _TUTOR_CHAT_ROUTE:
+        return True
+
+    request = event.get("request")
+    if not isinstance(request, dict):
+        return False
+    url = request.get("url")
+    return isinstance(url, str) and urlsplit(url).path == _TUTOR_CHAT_ROUTE
+
+
+def _is_expected_http_exception(event: dict[str, Any], hint: dict[str, Any]) -> bool:
+    exception = _exception_from_hint(hint)
+    if not isinstance(exception, StarletteHTTPException):
+        return False
+    if exception.status_code != 503 or not _is_tutor_chat_route(event):
+        return False
+
+    detail = exception.detail
+    if not isinstance(detail, str) or not detail.startswith(
+        _EXPECTED_HTTP_EXCEPTION_PREFIXES
+    ):
+        return False
+
     exception = event.get("exception")
     if not isinstance(exception, dict):
         return False
@@ -65,13 +111,7 @@ def _scrub_request(event: dict[str, Any]) -> None:
     request.pop("cookies", None)
     request.pop("headers", None)
     request.pop("env", None)
-
-    url = request.get("url")
-    if isinstance(url, str):
-        parsed = urlsplit(url)
-        request["url"] = urlunsplit(
-            (parsed.scheme, parsed.netloc, parsed.path, "", "")
-        )
+    request.pop("url", None)
 
 
 def _scrub_exception_values(event: dict[str, Any]) -> None:
@@ -85,30 +125,72 @@ def _scrub_exception_values(event: dict[str, Any]) -> None:
     for value in values:
         if isinstance(value, dict) and "value" in value:
             value["value"] = _REDACTED_EXCEPTION_VALUE
+        if not isinstance(value, dict):
+            continue
+        stacktrace = value.get("stacktrace")
+        if not isinstance(stacktrace, dict):
+            continue
+        frames = stacktrace.get("frames")
+        if not isinstance(frames, list):
+            continue
+        for frame in frames:
+            if isinstance(frame, dict):
+                frame.pop("vars", None)
+
+
+def _scrub_logging_fields(event: dict[str, Any]) -> None:
+    # Log records can carry the original format arguments in logentry.params,
+    # rendered text in breadcrumbs, and arbitrary values in logging extra.
+    for field in ("breadcrumbs", "extra", "fingerprint", "logentry", "tags"):
+        event.pop(field, None)
+
+
+def _scrub_spans(event: dict[str, Any]) -> None:
+    spans = event.get("spans")
+    if not isinstance(spans, list):
+        return
+    for span in spans:
+        if not isinstance(span, dict):
+            continue
+        safe_span = {
+            key: span[key] for key in _SAFE_SPAN_KEYS if key in span
+        }
+        span.clear()
+        span.update(safe_span)
+
+
+def _scrub_event(event: dict[str, Any]) -> None:
+    _scrub_request(event)
+    _scrub_exception_values(event)
+    _scrub_logging_fields(event)
+    if isinstance(event.get("message"), str):
+        event["message"] = _REDACTED_EXCEPTION_VALUE
 
 
 def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """Drop expected tutor availability errors and scrub user-provided data."""
-    del hint
-    if _is_expected_http_exception(event):
+    if _is_expected_http_exception(event, hint):
         return None
 
-    _scrub_request(event)
-    _scrub_exception_values(event)
-    if isinstance(event.get("message"), str):
-        event["message"] = _REDACTED_EXCEPTION_VALUE
-    logentry = event.get("logentry")
-    if isinstance(logentry, dict) and isinstance(logentry.get("message"), str):
-        logentry["message"] = _REDACTED_EXCEPTION_VALUE
+    _scrub_event(event)
     return event
+
+
+def _before_breadcrumb(crumb: dict[str, Any], hint: dict[str, Any]) -> None:
+    """Do not retain logging, HTTP, or custom breadcrumbs."""
+    del crumb, hint
+    return None
 
 
 def _before_send_transaction(
     event: dict[str, Any], hint: dict[str, Any]
 ) -> dict[str, Any]:
-    """Remove request input from performance transactions before sending."""
+    """Keep performance timing while removing names and span payloads."""
     del hint
-    _scrub_request(event)
+    _scrub_event(event)
+    _scrub_spans(event)
+    if "transaction" in event:
+        event["transaction"] = _REDACTED_TRANSACTION
     return event
 
 
@@ -127,6 +209,7 @@ def init_sentry() -> bool:
         "include_local_variables": False,
         "before_send": _before_send,
         "before_send_transaction": _before_send_transaction,
+        "before_breadcrumb": _before_breadcrumb,
     }
     environment = (os.getenv("SENTRY_ENVIRONMENT") or "").strip()
     if environment:
