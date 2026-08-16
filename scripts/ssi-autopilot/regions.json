@@ -85,28 +85,26 @@
       "label": "Nordics + Poland",
       "countries": ["SE", "NO", "PL"],
       "masked_block": 91001100,
+      "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) — NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) — SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
       "banks": [
-        {"bic8": "ESSESESS", "name": "SEB", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
-        {"bic8": "SWEDSESS", "name": "Swedbank", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
-        {"bic8": "HANDSESS", "name": "Handelsbanken", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
-        {"bic8": "DNBANOKK", "name": "DNB", "country": "NO", "currencies": ["USD", "EUR", "NOK"]},
-        {"bic8": "BREXPLPW", "name": "mBank", "country": "PL", "currencies": ["USD", "EUR", "PLN"]},
-        {"bic8": "BPKOPLPW", "name": "PKO Bank Polski", "country": "PL", "currencies": ["USD", "EUR", "PLN"]}
+        {"bic8": "BREXPLPW", "name": "mBank", "country": "PL", "currencies": ["USD", "EUR", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "TRY", "ZAR"]},
+        {"bic8": "BPKOPLPW", "name": "PKO Bank Polski", "country": "PL", "currencies": ["USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"]}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["SBAKNOBB"]
     },
     {
       "name": "southern-africa",
       "label": "Southern Africa",
       "countries": ["ZA"],
       "masked_block": 91001200,
+      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
       "banks": [
         {"bic8": "NEDSZAJJ", "name": "Nedbank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
         {"bic8": "SBZAZAJJ", "name": "Standard Bank of South Africa", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
         {"bic8": "ABSAZAJJ", "name": "Absa Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
-        {"bic8": "FIRNZAJJ", "name": "First National Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]}
+        {"bic8": "FIRNZAJJ", "name": "FirstRand Bank (FNB)", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["SBICZAJJ", "SBICUS44"]
     },
     {
       "name": "north-east-africa",
