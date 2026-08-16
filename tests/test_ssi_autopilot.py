@@ -692,6 +692,23 @@ def test_a_non_string_verifier_is_rejected():
     assert any("verified_by" in p for p in problems), problems
 
 
+def test_a_non_string_verifier_is_rejected_on_any_status():
+    """A numeric verifier on a non-published row used to pass — the value was
+    silently discarded, and the seed later crashed with an AttributeError
+    instead of a controlled validation error."""
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "archived"
+    rec["banks"][0]["records"][0]["verified_by"] = 42
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("must be a string" in p for p in problems), problems
+
+    rec = sample_results()
+    rec["banks"][0]["records"][0]["status"] = "unverified"
+    rec["banks"][0]["records"][0]["verified_by"] = ["ops:ada"]
+    problems = autopilot.validate_results(rec, MANIFEST)
+    assert any("must be a string" in p for p in problems), problems
+
+
 def test_a_verifier_on_a_non_published_row_is_rejected():
     rec = sample_results()
     rec["banks"][0]["records"][0]["status"] = "archived"

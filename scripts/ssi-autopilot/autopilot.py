@@ -205,8 +205,18 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             # str(None) is "None", a non-empty string: a JSON null would
             # masquerade as a named verifier on a published record, and reject
             # a non-published one for carrying an attribution it does not have.
+            # A non-string value is not a name either, whatever status it rides
+            # on — silently discarding it would let a 42 pass here and crash
+            # the seed with an AttributeError instead of a validation error.
             raw_verified_by = rec.get("verified_by")
-            verified_by = raw_verified_by.strip() if isinstance(raw_verified_by, str) else ""
+            if raw_verified_by is not None and not isinstance(raw_verified_by, str):
+                problems.append(
+                    f"{ben_bic}/{ccy}: verified_by must be a string, "
+                    f"got {type(raw_verified_by).__name__}"
+                )
+                verified_by = ""
+            else:
+                verified_by = raw_verified_by.strip() if raw_verified_by else ""
             if status == "published" and not verified_by:
                 problems.append(
                     f"{ben_bic}/{ccy}: status 'published' requires verified_by, "
