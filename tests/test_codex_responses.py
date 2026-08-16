@@ -110,6 +110,18 @@ def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkey
     ) == "ok"
 
 
+def test_response_envelope_limit_accepts_exact_size_and_rejects_one_byte_over() -> None:
+    limit = codex_responses.response_body_limit(32_000, 50_000)
+    payload = b'{"output_text":"ok"}'
+    exact = payload + (b" " * (limit - len(payload)))
+
+    assert codex_responses.read_bounded_body(io.BytesIO(exact), limit) == {
+        "output_text": "ok"
+    }
+    with pytest.raises(RuntimeError, match="exceeded"):
+        codex_responses.read_bounded_body(io.BytesIO(exact + b" "), limit)
+
+
 def test_incomplete_response_with_text_is_posted_as_a_marked_truncated_review() -> None:
     result = codex_responses.extract_output(
         {
