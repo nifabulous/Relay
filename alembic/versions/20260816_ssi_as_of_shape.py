@@ -28,6 +28,8 @@ Revision ID: 20260816_ssi_asofshape
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260816_ssi_asofshape"
@@ -41,6 +43,29 @@ SHAPE = "as_of IS NULL OR as_of LIKE '____-__-__'"
 
 
 def upgrade() -> None:
+    # Preflight. The constraint applies to every row, and the schema this
+    # replaces accepted any non-empty as_of, so a populated database can be
+    # holding values that violate it. Without this the batch rebuild fails
+    # part-way through the deploy with a bare IntegrityError naming no rows.
+    #
+    # Reported rather than repaired: nulling a malformed as_of would be a
+    # silent edit to payment provenance during a migration. The operator gets
+    # the count and the exact statements to inspect and fix.
+    bind = op.get_bind()
+    offenders = bind.execute(
+        sa.text(f"SELECT COUNT(*) FROM ssi WHERE NOT ({SHAPE})")
+    ).scalar_one()
+    if offenders:
+        raise RuntimeError(
+            f"{offenders} ssi row(s) have an as_of that is not YYYY-MM-DD, so "
+            f"the new constraint cannot be applied.\n"
+            f"Inspect:  SELECT id, beneficiary_bic, currency, as_of FROM ssi "
+            f"WHERE NOT ({SHAPE});\n"
+            f"If those dates carry no usable value, clear them:\n"
+            f"          UPDATE ssi SET as_of = NULL WHERE NOT ({SHAPE});\n"
+            f"then re-run this migration."
+        )
+
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint(CONSTRAINT, SHAPE)
 
