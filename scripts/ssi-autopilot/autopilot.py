@@ -31,23 +31,20 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_FILE = REPO_ROOT / "app" / "services" / "seed.py"
 TEST_FILE = REPO_ROOT / "tests" / "test_data_consistency.py"
+PRIVACY_TEST_FILE = REPO_ROOT / "tests" / "test_ssi.py"
 REGIONS_FILE = Path(__file__).resolve().parent / "regions.json"
 STATE_FILE = REPO_ROOT / ".ssi-autopilot-state.json"
 STATE_KEY = "ssi-autopilot"
 
 COMMIT_PATTERN = re.compile(r"^feat\(ssi\): seed [a-z-]+ SSIs? \(([^)]+)\)")
 
-_SSI_REAL_NOTE = "Sourced from bank-published SSI page. Verify current values before use."
-
 # ── BIC helpers ──────────────────────────────────────────────────────────────
-_BIC8 = re.compile(r"^[A-Z0-9]{8}$")
 _ACCT_MASK = re.compile(r"^ACCT-\d{4,10}$")          # masked placeholder
 _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 
@@ -63,10 +60,15 @@ def bic_is_valid(bic: str) -> bool:
         return False
     try:  # schwifty is a project dep; use it when importable
         from schwifty import BIC as _BIC
+    except ImportError:
+        return True  # structural check already passed; nothing better available
 
-        return _BIC(b).is_valid
+    # Anything schwifty raises here is a rejection, not an absence. Catching it
+    # as "valid" would admit BICs naming countries that do not exist.
+    try:
+        return bool(_BIC(b).is_valid)
     except Exception:
-        return True  # structural check already passed
+        return False
 
 
 def country_from_bic(bic: str) -> str:
@@ -109,7 +111,12 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
 
     banks = {b["bic8"]: b for b in region["banks"]}
     countries = set(region["countries"])
-    forbidden = {b.upper() for b in region.get("forbidden_bics", [])}
+    # Held in both widths so a forbidden BIC is caught however either side
+    # spells it — manifest entry and research result may differ.
+    forbidden = set()
+    for entry in region.get("forbidden_bics", []):
+        forbidden.add(entry.upper())
+        forbidden.add(entry.upper()[:8])
     defaults = manifest["defaults"]
     seen: set[tuple[str, str, str]] = set()
     block = region["masked_block"]
@@ -118,14 +125,17 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
     for bank in results.get("banks", []):
         ben_bic = str(bank.get("bic", "")).upper()
         ben_name = bank.get("name", "")
-        # Flag forbidden BICs regardless of manifest membership — a mislabeled
-        # source BIC must never be seedable even if the manifest was updated.
-        if ben_bic in forbidden:
+        # Banks publish 8- and 11-character BICs interchangeably; the manifest
+        # keys on the 8-character institution prefix. Compare on that prefix so
+        # a branch-qualified BIC resolves to its entry instead of reading as
+        # absent — and so it cannot slip past the forbidden list either.
+        ben_bic8 = ben_bic[:8]
+        if ben_bic in forbidden or ben_bic8 in forbidden:
             problems.append(f"{ben_bic}: BIC is on the region's forbidden list (mislabeled/typo)")
-        if ben_bic not in banks:
+        if ben_bic8 not in banks:
             problems.append(f"{ben_name or ben_bic}: BIC {ben_bic} not in manifest for region {region_name}")
             continue
-        expected = banks[ben_bic]
+        expected = banks[ben_bic8]
         if not expected.get("seedable", True):
             problems.append(
                 f"{ben_bic}: bank is marked NOT SEEDABLE in the manifest — "
@@ -135,7 +145,6 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
         for rec in bank.get("records", []):
             ccy = str(rec.get("currency", "")).upper()
             int_bic = str(rec.get("int_bic", "")).upper()
-            int_name = rec.get("correspondent", "")
             int_acct = str(rec.get("nostro", "")).strip()
             ben_acct = str(rec.get("with_an", "")).strip()
             charge = str(rec.get("charge_code", "")).upper()
@@ -171,7 +180,11 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                     continue
                 if not _ACCT_MASK.match(value):
                     problems.append(f"{ben_bic}/{ccy}: {label} {value!r} is not an ACCT- masked placeholder")
-                acct_num = int(value.split("-")[1]) if "-" in value else 0
+                    # The block check below parses the suffix as an integer.
+                    # A value that failed the mask has already been rejected,
+                    # and parsing it would raise instead of reporting.
+                    continue
+                acct_num = int(value.split("-")[1])
                 if not (block <= acct_num <= max_acct):
                     problems.append(
                         f"{ben_bic}/{ccy}: {label} {value} outside region block {block}-{max_acct}"
@@ -228,7 +241,7 @@ def scaffold_coverage_class(region: dict) -> str:
         "            have = seeded.get(bic, set())",
         "            missing = currencies - have",
         "            assert not missing, (",
-        f'                f"{{name}} ({{bic}}) is missing seeded SSI records for: {{sorted(missing)}}"',
+        '                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"',
         "            )",
         "",
         f"    def test_{name.replace('-', '_')}_banks_are_in_the_bank_directory(self):",
@@ -278,7 +291,6 @@ def cmd_validate(args: argparse.Namespace) -> None:
         for p in problems:
             print(f"  ✗ {p}")
         raise SystemExit(f"validation failed: {len(problems)} problem(s)")
-    region = get_region(manifest, results["region"])
     n = sum(len(b.get("records", [])) for b in results.get("banks", []))
     print(f"  ✓ {results['region']}: {n} records valid")
 
@@ -288,10 +300,34 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
     region = get_region(manifest, args.region)
     text = scaffold_coverage_class(region)
     existing = TEST_FILE.read_text()
-    marker = "# ---- autopilot-generated coverage tests ----"
-    if marker in existing:
-        existing = existing.split(marker)[0]
-    existing = existing.rstrip() + "\n\n\n" + marker + "\n" + text
+    # One marker pair per region. A single shared marker made this destructive:
+    # truncating at it deleted every previously scaffolded region, so seeding a
+    # second region silently dropped the first region's coverage test.
+    begin = f"# ---- autopilot-generated coverage tests: {args.region} ----"
+    end = f"# ---- end autopilot-generated coverage tests: {args.region} ----"
+    block = begin + "\n" + text.rstrip() + "\n" + end
+
+    # Several regions share a name with a hand-written coverage class already in
+    # the file. Appending a second definition is silent: Python keeps the last
+    # one, so the hand-written assertions stop running without any error.
+    class_name = "".join(part.title() for part in args.region.split("-")) + "SsiCoverage"
+    outside = existing
+    if begin in outside and end in outside:
+        head, _, rest = outside.partition(begin)
+        _, _, tail = rest.partition(end)
+        outside = head + tail
+    if re.search(rf"^class Test{class_name}:", outside, re.MULTILINE):
+        raise SystemExit(
+            f"refusing to scaffold {args.region}: Test{class_name} is already "
+            f"defined in {TEST_FILE.name} outside the autopilot block. "
+            f"Appending would shadow it. Remove or rename the existing class first."
+        )
+    if begin in existing and end in existing:
+        head, _, rest = existing.partition(begin)
+        _, _, tail = rest.partition(end)
+        existing = head.rstrip() + "\n\n\n" + block + "\n" + tail.lstrip("\n")
+    else:
+        existing = existing.rstrip() + "\n\n\n" + block + "\n"
     TEST_FILE.write_text(existing)
     class_name = "".join(part.title() for part in args.region.split("-")) + "SsiCoverage"
     print(f"  ✓ scaffolded {class_name} into {TEST_FILE.name}")
@@ -335,7 +371,7 @@ def cmd_commit(args: argparse.Namespace) -> None:
     results = json.loads(Path(args.results).read_text())
     problems = validate_results(results, manifest)
     if problems:
-        raise SystemExit(f"validation failed — refusing to commit:\n" + "\n".join(f"  ✗ {p}" for p in problems))
+        raise SystemExit("validation failed — refusing to commit:\n" + "\n".join(f"  ✗ {p}" for p in problems))
     region = get_region(manifest, results["region"])
     label = args.label or region["label"]
     source_hint = args.source or "bank-published SSI pages"
@@ -350,7 +386,17 @@ def cmd_commit(args: argparse.Namespace) -> None:
         return
     cmd_verify(args)
     cmd_scaffold(argparse.Namespace(region=results["region"]))
-    run_pytest([str(TEST_FILE)])
+    # TestAllSSIAccountsArePlaceholders lives in tests/test_ssi.py, and it is
+    # the canonical check that no real account number reaches seed.py. Gating
+    # only on the generated coverage file cannot see that class at all.
+    run_pytest([str(TEST_FILE), str(PRIVACY_TEST_FILE)])
+    # Claimed in the PR body, so it has to actually run: whitespace errors in a
+    # generated block are exactly what this catches.
+    whitespace = subprocess.run(
+        ["git", "diff", "--check"], capture_output=True, text=True, cwd=REPO_ROOT
+    )
+    if whitespace.returncode != 0:
+        raise SystemExit(f"git diff --check failed:\n{whitespace.stdout}{whitespace.stderr}")
 
     git("add", str(SEED_FILE), str(TEST_FILE))
     msg = f"feat(ssi): seed {results['region']} SSIs ({source_hint})"
@@ -370,10 +416,28 @@ def cmd_maybe_pr(args: argparse.Namespace) -> None:
         return
     regions = state["regions_since_pr"]
     branch = git("branch", "--show-current")
+    # `git branch --show-current` reports whatever the checkout happens to be
+    # on, and this command pushes it. An unattended loop started from the wrong
+    # checkout would push that branch and open a PR from it, so the branch has
+    # to be the one the state file has been counting commits against.
+    expected_branch = state.get("branch")
+    if branch in ("main", "master"):
+        raise SystemExit(
+            f"refusing to push protected branch {branch!r}: "
+            f"the autopilot expects to be on {expected_branch!r}"
+        )
+    if expected_branch and branch != expected_branch:
+        raise SystemExit(
+            f"refusing to push branch {branch!r}: the state file has been "
+            f"counting commits against {expected_branch!r}. Check out that "
+            f"branch, or update .ssi-autopilot-state.json deliberately."
+        )
+    if not branch:
+        raise SystemExit("refusing to push from a detached HEAD: no branch to open a PR from")
     title = f"feat(ssi): {len(regions)} region settlement data wave"
     body = "\n".join(
         [
-            f"## What changed",
+            "## What changed",
             "",
             f"- Seeded published Standard Settlement Instructions for: {', '.join(regions)}.",
             "- Accounts remain masked as ACCT- placeholders; no real account numbers.",

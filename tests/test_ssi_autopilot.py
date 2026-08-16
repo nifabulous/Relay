@@ -190,3 +190,213 @@ def test_verify_catches_duplicate_banks(tmp_path, monkeypatch):
         assert "duplicate BIC CITIUS33XXX" in result.stdout + result.stderr
     finally:
         seed.write_text(original)
+
+
+# ── Validator: malformed input must not crash the run ────────────────────────
+def test_non_numeric_account_suffix_is_reported_not_raised():
+    """A masked-looking account with a non-numeric suffix is a validation
+    problem, not a traceback. The mask check already flags it; the block check
+    must not then try to int() the suffix."""
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["nostro"] = "ACCT-NOTANUMBER"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("not an ACCT- masked placeholder" in p for p in problems)
+    assert not any("outside region block" in p for p in problems)
+
+
+def test_empty_account_suffix_is_reported_not_raised():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["with_an"] = "ACCT-"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("not an ACCT- masked placeholder" in p for p in problems)
+
+
+# ── BIC validity: schwifty must not be inverted ──────────────────────────────
+def test_bic_with_an_invalid_country_code_is_rejected():
+    """"AAAAAA11" satisfies the shape regex but names country "AA", which does
+    not exist. schwifty raises InvalidCountryCode for it; treating any schwifty
+    exception as "valid" inverts the check and admits the BIC."""
+    assert autopilot.bic_is_valid("AAAAAA11") is False
+    assert autopilot.bic_is_valid("ZZZZZZ00") is False
+
+
+def test_bic_validity_falls_back_to_structure_when_schwifty_is_absent(monkeypatch):
+    """The fallback exists for an install without schwifty, so it must trigger
+    on ImportError only."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_schwifty(name, *args, **kwargs):
+        if name == "schwifty":
+            raise ImportError("no schwifty")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_schwifty)
+    assert autopilot.bic_is_valid("CITIUS33") is True
+    assert autopilot.bic_is_valid("NOTABIC12345") is False
+
+
+# ── BIC width: manifest holds bic8, sources publish bic11 ────────────────────
+def test_eleven_character_beneficiary_bic_matches_its_manifest_bic8():
+    """Banks publish 11-character BICs. The manifest keys on 8, so an 11-char
+    beneficiary BIC must resolve to its bic8 entry rather than read as absent."""
+    ok = sample_results()
+    ok["banks"][0]["bic"] = "BOPIPHMMXXX"
+    problems = autopilot.validate_results(ok, MANIFEST)
+    assert not any("not in manifest" in p for p in problems), problems
+
+
+def test_eleven_character_bic_still_honours_the_forbidden_list():
+    """Widening the lookup must not open a bypass: the branch-qualified form of
+    a forbidden BIC is still forbidden."""
+    manifest = json.loads(json.dumps(MANIFEST))
+    for region in manifest["regions"]:
+        if region["name"] == "southeast-asia":
+            region.setdefault("forbidden_bics", []).append("BOPIPHMM")
+    bad = sample_results()
+    bad["banks"][0]["bic"] = "BOPIPHMMXXX"
+    problems = autopilot.validate_results(bad, manifest)
+    assert any("forbidden list" in p for p in problems), problems
+
+
+# ── Scaffolding: regions must not overwrite each other ───────────────────────
+def test_scaffolding_a_second_region_keeps_the_first(tmp_path, monkeypatch):
+    """cmd_scaffold truncates at its marker. With one shared marker, writing
+    region B deletes region A's coverage class."""
+    import argparse
+
+    target = tmp_path / "test_data_consistency.py"
+    target.write_text("from app.services.seed import BANKS, SSI_RECORDS  # noqa: F401\n")
+    monkeypatch.setattr(autopilot, "TEST_FILE", target)
+
+    autopilot.cmd_scaffold(argparse.Namespace(region="southeast-asia"))
+    autopilot.cmd_scaffold(argparse.Namespace(region="latin-america"))
+
+    text = target.read_text()
+    assert "SoutheastAsiaSsiCoverage" in text, "first region was wiped by the second"
+    assert "LatinAmericaSsiCoverage" in text
+
+
+def test_rescaffolding_the_same_region_does_not_duplicate_it(tmp_path, monkeypatch):
+    import argparse
+
+    target = tmp_path / "test_data_consistency.py"
+    target.write_text("from app.services.seed import BANKS, SSI_RECORDS  # noqa: F401\n")
+    monkeypatch.setattr(autopilot, "TEST_FILE", target)
+
+    autopilot.cmd_scaffold(argparse.Namespace(region="southeast-asia"))
+    autopilot.cmd_scaffold(argparse.Namespace(region="southeast-asia"))
+
+    assert target.read_text().count("class TestSoutheastAsiaSsiCoverage") == 1
+
+
+def test_scaffolded_output_is_importable_python(tmp_path, monkeypatch):
+    import argparse
+
+    target = tmp_path / "test_data_consistency.py"
+    target.write_text("from app.services.seed import BANKS, SSI_RECORDS  # noqa: F401\n")
+    monkeypatch.setattr(autopilot, "TEST_FILE", target)
+    autopilot.cmd_scaffold(argparse.Namespace(region="southeast-asia"))
+    autopilot.cmd_scaffold(argparse.Namespace(region="latin-america"))
+
+    import ast as _ast
+
+    _ast.parse(target.read_text())
+
+
+# ── Commit gate must cover the canonical privacy test ────────────────────────
+def test_commit_gate_runs_the_placeholder_privacy_test():
+    """TestAllSSIAccountsArePlaceholders lives in tests/test_ssi.py. A gate that
+    only runs the generated coverage file cannot see a real account number
+    reaching seed.py."""
+    src = (
+        Path(__file__).resolve().parents[1]
+        / "scripts" / "ssi-autopilot" / "autopilot.py"
+    ).read_text()
+    assert "test_ssi.py" in src, "commit gate does not run the SSI privacy test"
+
+
+# ── maybe-pr must not push an unexpected branch ──────────────────────────────
+def _guarded_maybe_pr(monkeypatch, current_branch: str):
+    """Run cmd_maybe_pr with every outbound effect mocked.
+
+    `git` and `subprocess.run` both raise, so a guard that fails to stop the run
+    surfaces as that explicit error rather than as a real push or a real
+    `gh pr create`.
+    """
+    import argparse
+
+    monkeypatch.setattr(autopilot, "read_state", lambda: {
+        "branch": "feat/ssi-autopilot", "commits_since_pr": 5,
+        "regions_since_pr": ["china"], "last_pr": None,
+    })
+
+    def fake_git(*args, **kwargs):
+        if args[:1] == ("branch",):
+            return current_branch
+        raise AssertionError(f"cmd_maybe_pr ran git {' '.join(args)} despite the guard")
+
+    def no_subprocess(*args, **kwargs):
+        raise AssertionError("cmd_maybe_pr shelled out despite the guard")
+
+    monkeypatch.setattr(autopilot, "git", fake_git)
+    monkeypatch.setattr(autopilot.subprocess, "run", no_subprocess)
+    autopilot.cmd_maybe_pr(argparse.Namespace(every=3, dry_run=False))
+
+
+def test_maybe_pr_refuses_to_push_the_default_branch(monkeypatch):
+    """`git branch --show-current` is whatever the checkout happens to be on. A
+    loop run from main would push main and open a PR from it."""
+    with pytest.raises(SystemExit) as exc:
+        _guarded_maybe_pr(monkeypatch, "main")
+    assert "branch" in str(exc.value).lower()
+
+
+def test_maybe_pr_refuses_a_branch_that_is_not_the_state_branch(monkeypatch):
+    with pytest.raises(SystemExit) as exc:
+        _guarded_maybe_pr(monkeypatch, "some-other-branch")
+    assert "branch" in str(exc.value).lower()
+
+
+def test_pr_body_only_claims_checks_the_gate_actually_runs():
+    src = (
+        Path(__file__).resolve().parents[1]
+        / "scripts" / "ssi-autopilot" / "autopilot.py"
+    ).read_text()
+    if "git diff --check" in src and "--check" not in src.split("def cmd_commit")[1].split("def cmd_maybe_pr")[0]:
+        raise AssertionError("PR body claims `git diff --check` but the gate never runs it")
+
+
+def test_scaffold_refuses_to_shadow_a_hand_written_class(tmp_path, monkeypatch):
+    """A generated class name can collide with a hand-written one already in the
+    file. Python keeps the last definition, so the hand-written assertions stop
+    running without any error."""
+    import argparse
+
+    target = tmp_path / "test_data_consistency.py"
+    target.write_text(
+        "from app.services.seed import BANKS, SSI_RECORDS  # noqa: F401\n"
+        "\n\n"
+        "class TestLatinAmericaSsiCoverage:\n"
+        "    def test_hand_written_expectation(self):\n"
+        "        assert True\n"
+    )
+    monkeypatch.setattr(autopilot, "TEST_FILE", target)
+
+    with pytest.raises(SystemExit) as exc:
+        autopilot.cmd_scaffold(argparse.Namespace(region="latin-america"))
+    assert "TestLatinAmericaSsiCoverage" in str(exc.value)
+    assert "test_hand_written_expectation" in target.read_text()
+
+
+def test_real_test_file_has_no_duplicate_coverage_classes():
+    """Whatever the autopilot has scaffolded so far, no class may be defined
+    twice in the committed file."""
+    import re
+    from collections import Counter
+
+    text = (Path(__file__).resolve().parents[1] / "tests" / "test_data_consistency.py").read_text()
+    counts = Counter(re.findall(r"^class (\w+):", text, re.M))
+    dupes = {name: n for name, n in counts.items() if n > 1}
+    assert not dupes, f"duplicate class definitions shadow earlier ones: {dupes}"

@@ -874,7 +874,7 @@ class TestEuropeSsiCoverage:
         )
 
 
-# ---- autopilot-generated coverage tests ----
+# ---- autopilot-generated coverage tests: southeast-asia ----
 SOUTHEAST_ASIA_SSI_COVERAGE = [
     ("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"}),
 ]
@@ -902,3 +902,4 @@ class TestSoutheastAsiaSsiCoverage:
             f"southeast-asia SSI beneficiaries must also be seeded in BANKS so "
             f"Explore can show their settlement instructions: {missing}"
         )
+# ---- end autopilot-generated coverage tests: southeast-asia ----
