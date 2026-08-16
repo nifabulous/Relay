@@ -122,9 +122,11 @@ require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
 require_text 'scripts/verify_before_push.sh' 'SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT='
 require_text 'scripts/verify_before_push.sh' 'FINAL_HEAD_SHA="$(git rev-parse --verify HEAD)"'
 require_text 'scripts/verify_before_push.sh' './node_modules/.bin/tsc --noEmit'
-require_text 'scripts/verify_before_push.sh' "rg -q --hidden --glob '!*.map'"
-require_text 'scripts/verify_before_push.sh' 'case "$RG_STATUS" in'
+require_text 'scripts/verify_before_push.sh' 'grep -R -E -l'
+require_text 'scripts/verify_before_push.sh' 'case "$GREP_STATUS" in'
 require_text 'scripts/verify_before_push.sh' 'required artifact scanner is unavailable'
+require_text 'scripts/verify_before_push.sh' 'INITIAL_STATUS="$(git status --porcelain=v1)"'
+require_text 'scripts/verify_before_push.sh' 'working tree changed during verification'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'

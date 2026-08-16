@@ -19,6 +19,7 @@ if ! BASE_SHA="$(git rev-parse --verify "${BASE_REF}^{commit}")"; then
   exit 1
 fi
 HEAD_SHA="$(git rev-parse --verify HEAD)"
+INITIAL_STATUS="$(git status --porcelain=v1)"
 
 echo "== Relay pre-push verification =="
 echo "base: $BASE_REF ($BASE_SHA)"
@@ -70,10 +71,10 @@ npm --prefix frontend test -- --run --no-file-parallelism
 echo "[7/10] Checking the bundle budget"
 npm --prefix frontend run check:bundle
 
-PUBLIC_ASSETS="$REPO_ROOT/app/static/relay/assets"
-if [[ -d "$PUBLIC_ASSETS" ]]; then
+PUBLIC_OUTPUT_DIR="$REPO_ROOT/app/static/relay"
+if [[ -d "$PUBLIC_OUTPUT_DIR" ]]; then
   echo "[8/10] Inspecting public build artifacts"
-  for required_tool in find rg; do
+  for required_tool in find grep; do
     if ! command -v "$required_tool" >/dev/null 2>&1; then
       echo "required artifact scanner is unavailable: $required_tool" >&2
       exit 1
@@ -81,20 +82,21 @@ if [[ -d "$PUBLIC_ASSETS" ]]; then
   done
 
   MAP_SCAN_OUTPUT=""
-  if ! MAP_SCAN_OUTPUT="$(find "$PUBLIC_ASSETS" -type f -name '*.map' -print -quit 2>/dev/null)"; then
+  if ! MAP_SCAN_OUTPUT="$(find "$PUBLIC_OUTPUT_DIR" -type f -name '*.map' -print -quit 2>/dev/null)"; then
     echo "source-map artifact scan failed" >&2
     exit 1
   fi
   if [[ -n "$MAP_SCAN_OUTPUT" ]]; then
-    echo "public source maps found in $PUBLIC_ASSETS" >&2
+    echo "public source maps found in $PUBLIC_OUTPUT_DIR" >&2
     exit 1
   fi
 
-  RG_STATUS=0
-  rg -q --hidden --glob '!*.map' 'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_ASSETS" || RG_STATUS=$?
-  case "$RG_STATUS" in
+  GREP_STATUS=0
+  grep -R -E -l --binary-files=without-match --exclude='*.map' \
+    'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_OUTPUT_DIR" >/dev/null || GREP_STATUS=$?
+  case "$GREP_STATUS" in
     0)
-      echo "Sentry credential material found in public assets" >&2
+      echo "Sentry credential material found in public output" >&2
       exit 1
       ;;
     1)
@@ -109,17 +111,32 @@ else
   exit 1
 fi
 
+echo "[9/10] Rechecking the final source tree and artifact boundary"
+git diff --check "$BASE_SHA" "$HEAD_SHA"
+git diff --check
+git diff --cached --check
+
+FINAL_STATUS="$(git status --porcelain=v1)"
+if [[ "$FINAL_STATUS" != "$INITIAL_STATUS" ]]; then
+  echo "working tree changed during verification" >&2
+  echo "initial status:" >&2
+  printf '%s\n' "$INITIAL_STATUS" >&2
+  echo "final status:" >&2
+  printf '%s\n' "$FINAL_STATUS" >&2
+  exit 1
+fi
+
 FINAL_HEAD_SHA="$(git rev-parse --verify HEAD)"
 if [[ "$FINAL_HEAD_SHA" != "$HEAD_SHA" ]]; then
   echo "HEAD changed during verification: started at $HEAD_SHA, now at $FINAL_HEAD_SHA" >&2
   exit 1
 fi
 
-echo "[9/10] Showing the final scope for human review"
+echo "[10/10] Showing the final scope for human review"
 git status --short
 git diff --stat
 git diff --cached --stat
 
-echo "[10/10] Final base/head identity is $BASE_SHA..$FINAL_HEAD_SHA"
+echo "Final base/head identity is $BASE_SHA..$FINAL_HEAD_SHA"
 
 echo "Pre-push verification passed for $BASE_SHA..$FINAL_HEAD_SHA. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
