@@ -872,3 +872,34 @@ class TestEuropeSsiCoverage:
         assert "DEUTUS33XXX" in deut_usd, (
             f"DB Frankfurt must clear USD via its own NY branch: {deut_usd}"
         )
+
+
+# ---- autopilot-generated coverage tests ----
+NORDICS_POLAND_SSI_COVERAGE = [
+    ("BREXPLPWXXX", "mBank", {"USD", "EUR", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "TRY", "ZAR"}),
+    ("BPKOPLPWXXX", "PKO Bank Polski", {"USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"}),
+]
+
+
+class TestNordicsPolandSsiCoverage:
+    def test_nordics_poland_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in NORDICS_POLAND_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_nordics_poland_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in NORDICS_POLAND_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"nordics-poland SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
