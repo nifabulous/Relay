@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
+import { wrapReactRouterRouting } from "@sentry/react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
@@ -28,6 +29,8 @@ const PracticePage = lazy(() => import("../features/learn/practice/PracticePage"
 // preferences menu's "All settings" item. See DESIGN.md's four-workspace shell.
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage").then(m => ({ default: m.SettingsPage })));
 
+const SentryRoutes = wrapReactRouterRouting(Routes);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -53,7 +56,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename="/app">
         <AppErrorBoundary>
-          <Routes>
+          <SentryRoutes>
             <Route element={<AppShell />}>
               <Route index element={<OverviewPage />} />
               <Route path="learn" element={<Suspense fallback={null}><LearnIndexPage /></Suspense>} />
@@ -86,7 +89,7 @@ export function App() {
                   it; a page makes it reportable. See NotFoundPage. */}
               <Route path="*" element={<NotFoundPage />} />
             </Route>
-          </Routes>
+          </SentryRoutes>
         </AppErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
