@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -60,5 +60,9 @@ describe("Vite Sentry source-map lifecycle", () => {
     }
 
     expect(uploadedReleases).toEqual(["vercel-3a4d130"]);
+    await expect(access(mapPath)).rejects.toThrow();
+
+    await writeFile(mapPath, "map that must be rejected");
+    await expect(assertionPlugin?.writeBundle?.()).rejects.toThrow("Public source maps remain");
   });
 });
