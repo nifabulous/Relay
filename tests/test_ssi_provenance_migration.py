@@ -140,3 +140,79 @@ def test_a_malformed_published_row_gets_remediation_that_actually_works(tmp_path
     connection.close()
 
     assert _alembic(db, "upgrade", "head").returncode == 0
+
+
+AS_OF_SHAPE = "20260816_ssi_asofshape"
+
+
+def _seed_published_without_a_verifier(db: Path) -> None:
+    """A row the previous schema allowed: published, dated, unattributed."""
+    assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+    )
+    connection.commit()
+    connection.close()
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_upgrade_refuses_a_published_row_with_no_verifier(tmp_path):
+    db = tmp_path / "unattributed.db"
+    _seed_published_without_a_verifier(db)
+
+    result = _alembic(db, "upgrade", "head")
+
+    assert result.returncode != 0, "the migration accepted a row it cannot constrain"
+    assert "no verifier" in result.stderr, result.stderr[-400:]
+
+    connection = sqlite3.connect(db)
+    tables = [r[0] for r in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")]
+    connection.close()
+    assert "_alembic_tmp_ssi" not in tables, (
+        "an aborted batch rebuild stranded its temp table, which blocks every retry"
+    )
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+@pytest.mark.parametrize(
+    "repair, expected",
+    [
+        ("UPDATE ssi SET status = 'unverified', verified_by = NULL",
+         ("unverified", None)),
+        ("UPDATE ssi SET verified_by = 'ops:ada'", ("published", "ops:ada")),
+    ],
+    ids=["downgrade", "name-the-verifier"],
+)
+def test_both_prescribed_repairs_complete_the_upgrade(tmp_path, repair, expected):
+    """The migration prints two remediations. Both are executed here, because a
+    remediation nobody runs is a guess — an earlier one named a column that did
+    not exist yet, and the retry after another died on a duplicate column."""
+    db = tmp_path / "repaired.db"
+    _seed_published_without_a_verifier(db)
+    assert _alembic(db, "upgrade", "head").returncode != 0
+
+    connection = sqlite3.connect(db)
+    connection.execute(repair)
+    connection.commit()
+    connection.close()
+
+    result = _alembic(db, "upgrade", "head")
+    assert result.returncode == 0, result.stderr[-400:]
+
+    connection = sqlite3.connect(db)
+    row = list(connection.execute("SELECT status, verified_by FROM ssi"))[0]
+    ddl = list(connection.execute("SELECT sql FROM sqlite_master WHERE name='ssi'"))[0][0]
+    connection.close()
+    assert row == expected
+    assert "ck_ssi_published_names_a_verifier" in ddl

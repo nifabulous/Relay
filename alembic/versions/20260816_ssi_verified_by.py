@@ -92,6 +92,12 @@ _POSTGRES_DROP = [
 ]
 
 
+def _has_column(bind, name: str) -> bool:
+    return name in {
+        column["name"] for column in sa.inspect(bind).get_columns("ssi")
+    }
+
+
 def _is_a_real_past_date(value: str) -> bool:
     # UTC, matching the triggers this migration installs and the ORM
     # validators. date.today() is local, and near a timezone boundary it would
@@ -135,7 +141,51 @@ def upgrade() -> None:
             f"then re-run this migration."
         )
 
-    op.add_column("ssi", sa.Column("verified_by", sa.String(length=120), nullable=True))
+    # The nullable column goes on first, so the preflight below can talk about
+    # verified_by and its prescribed repairs can reference it. Ordering the
+    # other way meant the remediation named a column that did not exist yet.
+    #
+    # Guarded, because the preflight aborts *after* this: a first attempt that
+    # stops there leaves the column in place without stamping the revision, so
+    # the operator's re-run would otherwise die on "duplicate column name"
+    # instead of proceeding.
+    if not _has_column(bind, "verified_by"):
+        op.add_column(
+            "ssi", sa.Column("verified_by", sa.String(length=120), nullable=True)
+        )
+
+    # The verifier constraint applies to every existing row, and the schema it
+    # replaces allowed "published" with only a date. A legacy row created that
+    # way fails the batch rebuild half way through the deploy — and on SQLite
+    # the aborted run strands _alembic_tmp_ssi, so every later attempt fails
+    # until someone drops it by hand. Same shape as the as_of preflight above;
+    # it needed its own.
+    unattributed = list(
+        bind.execute(
+            sa.text(
+                "SELECT id, beneficiary_bic, currency FROM ssi "
+                "WHERE status = 'published' "
+                "AND (verified_by IS NULL OR TRIM(verified_by) = '')"
+            )
+        )
+    )
+    if unattributed:
+        ids = ", ".join(str(row[0]) for row in unattributed[:20])
+        raise RuntimeError(
+            f"{len(unattributed)} ssi row(s) are status='published' with no "
+            f"verifier, which the constraint added here forbids "
+            f"(e.g. id={unattributed[0][0]} {unattributed[0][1]}/"
+            f"{unattributed[0][2]}).\n"
+            f"Inspect:  SELECT id, beneficiary_bic, currency, as_of FROM ssi "
+            f"WHERE id IN ({ids});\n"
+            f"Name who verified them, if that is known:\n"
+            f"    UPDATE ssi SET verified_by = '<who>' WHERE id IN ({ids});\n"
+            f"or record that currency was never confirmed:\n"
+            f"    UPDATE ssi SET status = 'unverified', verified_by = NULL "
+            f"WHERE id IN ({ids});\n"
+            f"then re-run this migration."
+        )
+
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint(
             "ck_ssi_published_names_a_verifier",
