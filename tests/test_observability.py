@@ -200,6 +200,28 @@ def test_expected_tutor_exception_chained_into_unexpected_error_is_retained():
     assert _before_send(event, {"exc_info": (type(error), error, None)}) is event
 
 
+def test_expected_tutor_exception_with_unexpected_cause_is_retained():
+    error = HTTPException(
+        status_code=503,
+        detail="The tutor requires a shared rate limit in this environment.",
+    )
+    error.__cause__ = RuntimeError("unexpected provider failure")
+    event = {
+        "transaction": "/api/tutor/chat",
+        "exception": {
+            "values": [
+                {
+                    "type": "HTTPException",
+                    "value": "The tutor requires a shared rate limit in this environment.",
+                },
+                {"type": "RuntimeError", "value": "unexpected provider failure"},
+            ]
+        },
+    }
+
+    assert _before_send(event, {"exc_info": (type(error), error, None)}) is event
+
+
 def test_formatted_log_event_has_no_logging_payload_after_scrubbing():
     captured = []
 
@@ -297,6 +319,7 @@ def test_fastapi_error_event_is_scrubbed_before_capture():
     assert captured[0]["request"]["method"] == "POST"
     assert set(captured[0]["request"]) == {"method"}
     assert captured[0]["exception"]["values"][-1]["value"] == "[REDACTED_EXCEPTION_VALUE]"
+    assert "vars" not in repr(captured[0]["exception"])
 
 
 def test_fastapi_transaction_is_scrubbed_before_capture():
@@ -331,6 +354,28 @@ def test_fastapi_transaction_is_scrubbed_before_capture():
     assert captured[0]["transaction"] == "[REDACTED_TRANSACTION]"
 
 
+def test_error_scrubber_removes_dynamic_transaction_and_span_payloads():
+    event = {
+        "transaction": "/api/tutor/user-secret",
+        "exception": {"values": [{"type": "RuntimeError", "value": "boom"}]},
+        "spans": [
+            {
+                "op": "http.client",
+                "description": "https://provider.example/user-secret",
+                "data": {"token": "span-secret"},
+                "span_id": "abc123",
+            }
+        ],
+    }
+
+    scrubbed = _before_send(event, {})
+
+    assert scrubbed is event
+    assert scrubbed["transaction"] == "[REDACTED_TRANSACTION]"
+    assert scrubbed["spans"] == [{"op": "http.client", "span_id": "abc123"}]
+    assert "secret" not in repr(scrubbed)
+
+
 def test_transaction_scrubber_removes_names_and_nested_span_payloads():
     event = {
         "transaction": "/api/tutor/chat/user-secret?token=query-secret",
@@ -357,3 +402,24 @@ def test_transaction_scrubber_removes_names_and_nested_span_payloads():
     assert scrubbed["transaction"] == "[REDACTED_TRANSACTION]"
     assert scrubbed["spans"] == [{"op": "http.client", "span_id": "abc123"}]
     assert "secret" not in repr(scrubbed)
+
+
+def test_init_sentry_registers_callbacks_with_the_real_sdk(monkeypatch):
+    monkeypatch.setenv("SENTRY_DSN", "https://public@example.ingest.sentry.io/1")
+    monkeypatch.setenv("SENTRY_TRACES_SAMPLE_RATE", "0")
+    global_scope = sentry_sdk.get_global_scope()
+    previous_client = global_scope.client
+
+    try:
+        assert init_sentry() is True
+        client = global_scope.client
+        assert client is not None
+        assert client.options["dsn"] == "https://public@example.ingest.sentry.io/1"
+        assert client.options["before_send"] is _before_send
+        assert client.options["before_send_transaction"] is _before_send_transaction
+        assert client.options["before_breadcrumb"] is _before_breadcrumb
+    finally:
+        current_client = global_scope.client
+        if current_client is not previous_client and current_client is not None:
+            current_client.close()
+        global_scope.set_client(previous_client)

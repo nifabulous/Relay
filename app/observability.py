@@ -82,20 +82,22 @@ def _is_expected_http_exception(event: dict[str, Any], hint: dict[str, Any]) -> 
         _EXPECTED_HTTP_EXCEPTION_PREFIXES
     ):
         return False
-
-    exception = event.get("exception")
-    if not isinstance(exception, dict):
-        return False
-    values = exception.get("values")
-    if not isinstance(values, list):
+    if exception.__cause__ is not None or exception.__context__ is not None:
         return False
 
-    return any(
+    event_exception = event.get("exception")
+    if not isinstance(event_exception, dict):
+        return False
+    values = event_exception.get("values")
+    if not isinstance(values, list) or len(values) != 1:
+        return False
+
+    value = values[0]
+    return (
         isinstance(value, dict)
         and value.get("type") == "HTTPException"
         and isinstance(value.get("value"), str)
         and value["value"].startswith(_EXPECTED_HTTP_EXCEPTION_PREFIXES)
-        for value in values
     )
 
 
@@ -163,6 +165,9 @@ def _scrub_event(event: dict[str, Any]) -> None:
     _scrub_request(event)
     _scrub_exception_values(event)
     _scrub_logging_fields(event)
+    _scrub_spans(event)
+    if "transaction" in event:
+        event["transaction"] = _REDACTED_TRANSACTION
     if isinstance(event.get("message"), str):
         event["message"] = _REDACTED_EXCEPTION_VALUE
 
@@ -188,9 +193,6 @@ def _before_send_transaction(
     """Keep performance timing while removing names and span payloads."""
     del hint
     _scrub_event(event)
-    _scrub_spans(event)
-    if "transaction" in event:
-        event["transaction"] = _REDACTED_TRANSACTION
     return event
 
 
