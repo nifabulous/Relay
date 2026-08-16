@@ -1376,6 +1376,27 @@ class TestAVerifierMustBeAName:
             ))
         db_session_clean.rollback()
 
+    @pytest.mark.parametrize("verifier", ["\t", "\n", "\r", " \t \r\n "])
+    def test_raw_sql_cannot_publish_with_a_tab_or_newline_verifier(
+        self, db_session_clean, verifier
+    ):
+        """Default TRIM() removes only spaces on both engines, so a tab- or
+        newline-only verifier used to satisfy the published CHECK while
+        Python's str.strip() called it empty — the database and the
+        application disagreeing about what a name is. The constraint names
+        its charset now."""
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', :v)"
+            ), {"v": verifier})
+        db_session_clean.rollback()
+
     def test_a_padded_verifier_is_stored_trimmed(self, db_session_clean):
         from datetime import datetime, timezone
 
@@ -1554,7 +1575,7 @@ class TestTheMigrationOwnsItsOwnSql:
 
         wanted = {
             "_MESSAGE", "SSI_AS_OF_MESSAGE", "_SQLITE_AS_OF_CONDITION",
-            "SSI_AS_OF_SQLITE", "SSI_AS_OF_POSTGRES",
+            "SSI_AS_OF_SQLITE", "SSI_AS_OF_POSTGRES", "VERIFIER_IS_A_NAME",
         }
         tree = ast.parse(self._migration_source())
         assignments = [
@@ -1572,6 +1593,9 @@ class TestTheMigrationOwnsItsOwnSql:
         )
         assert namespace["SSI_AS_OF_POSTGRES"] == models.SSI_AS_OF_POSTGRES, (
             "the migration's Postgres triggers have drifted from the model's"
+        )
+        assert namespace["VERIFIER_IS_A_NAME"] == models.VERIFIER_IS_A_NAME, (
+            "the migration's verifier constraint has drifted from the model's"
         )
 
 

@@ -110,6 +110,17 @@ class FedACHBank(Base):
     __table_args__ = (Index("ix_fedach_rtn", "routing_number"),)
 
 
+# A verifier is a name, and a name has at least one character that is not
+# whitespace. Default TRIM() removes only spaces on both engines, so the set
+# is spelled out: space, tab, CR, LF. ltrim/rtrim with an explicit charset is
+# the one trimmed comparison both engines share. The migration copies this
+# verbatim — a test pins the two together so they cannot drift.
+VERIFIER_IS_A_NAME = (
+    "status != 'published' OR (verified_by IS NOT NULL AND "
+    "ltrim(rtrim(verified_by, ' \t\n\r'), ' \t\n\r') != '')"
+)
+
+
 class SSI(Base):
     """
     A Standard Settlement Instruction — how to settle a payment in a given
@@ -212,13 +223,16 @@ class SSI(Base):
         ),
         # "published" is the only status asserting present-tense currency, so
         # it must name who established it. Generic writers do not set this and
-        # therefore cannot produce the claim. TRIM, because "   " is not a
-        # name and an unattributable published row is the thing being
-        # prevented; TRIM is standard SQL on both engines.
-        CheckConstraint(
-            "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
-            name="ck_ssi_published_names_a_verifier",
-        ),
+        # therefore cannot produce the claim.
+        #
+        # The whitespace check has to name its set. Default TRIM() removes
+        # only spaces on both engines, so a tab- or newline-only verifier
+        # would pass "TRIM(verified_by) != ''" while Python's str.strip()
+        # calls it empty — the database and the application disagreeing about
+        # what a name is. ltrim/rtrim with an explicit charset is the one
+        # trimmed comparison both engines share; the set is space, tab, CR,
+        # LF, and a value of only those is not a name.
+        CheckConstraint(VERIFIER_IS_A_NAME, name="ck_ssi_published_names_a_verifier"),
         # The reverse also holds: a verifier names who confirmed the bank
         # still publishes, which no other status claims, so it may only ride
         # on "published". Without this a raw SQL writer could leave an

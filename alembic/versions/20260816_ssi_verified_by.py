@@ -31,6 +31,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 DIALECT_SPECIFIC_SQL = True
 
+# A verifier is a name, and a name has at least one character that is not
+# whitespace. Default TRIM() removes only spaces on both engines, so the set
+# is spelled out: space, tab, CR, LF. ltrim/rtrim with an explicit charset is
+# the one trimmed comparison both engines share. Copied from app/models.py,
+# not imported — see the trigger constants below — and a test pins the two
+# together so they cannot drift.
+VERIFIER_IS_A_NAME = (
+    "status != 'published' OR (verified_by IS NOT NULL AND "
+    "ltrim(rtrim(verified_by, ' \t\n\r'), ' \t\n\r') != '')"
+)
+
 # Copied, not imported. A migration has to keep doing what it did the day it
 # was written: importing app.models would mean a later edit there silently
 # changed how an old database upgrades. The duplication that creates is real —
@@ -185,8 +196,7 @@ def upgrade() -> None:
 
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint(
-            "ck_ssi_published_names_a_verifier",
-            "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
+            "ck_ssi_published_names_a_verifier", VERIFIER_IS_A_NAME
         )
         # The reverse, enforced for the same reason: a verifier names who
         # confirmed the bank still publishes, which no other status claims,
