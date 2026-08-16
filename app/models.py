@@ -169,6 +169,19 @@ class SSI(Base):
             "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
             name="ck_ssi_sourced_status_has_notes",
         ),
+        # as_of must at least be ISO-shaped to the database itself. Mapper
+        # events cover ORM writes but not Core inserts, bulk operations or raw
+        # SQL, so this is the only rule those paths still obey.
+        #
+        # Shape is all a CHECK can promise: "not in the future" is rejected by
+        # SQLite ("non-deterministic use of date()") and by Postgres (CHECK
+        # functions must be IMMUTABLE). That rule lives in the listener and the
+        # Pydantic validators; see the migration for the full reasoning.
+        CheckConstraint(
+            "as_of IS NULL OR "
+            "as_of GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'",
+            name="ck_ssi_as_of_is_a_past_iso_date",
+        ),
         # "published" asserts someone verified currency; as_of is the date of
         # that check. Enforced here as well as in the schema because a direct
         # ORM write never passes through Pydantic.
@@ -268,9 +281,14 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
 
     The Pydantic validators only see request bodies. seed.py, the SSI importer
     and any other caller construct SSI objects directly, so the same rules have
-    to hold here. The CHECK constraints remain the backstop for raw SQL, but
-    SQL cannot portably express "is an ISO date" or "is not in the future"
-    across SQLite and Postgres, so that judgement lives here.
+    to hold here.
+
+    The CHECK constraints are a partial backstop, not a full one: they catch a
+    missing status, a missing citation, a missing verification date and a
+    malformed as_of, because a CHECK can express those. They cannot catch a
+    future date — SQLite refuses date('now') as non-deterministic and Postgres
+    requires CHECK functions to be IMMUTABLE — so recency is enforced only
+    here, and a Core insert, a bulk operation or raw SQL can still store one.
 
     This constrains the *data*, not the caller: nothing at this layer can tell
     research from any other writer. Keeping "published" honest against a caller

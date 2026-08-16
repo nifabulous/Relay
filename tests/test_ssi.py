@@ -880,7 +880,8 @@ class TestPublishedCannotBeSelfAsserted:
         db_session_clean.add(SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: https://bank.example/ssi.", as_of="2026-08-16",
+            notes="Source: https://bank.example/ssi.",
+            as_of=__import__("datetime").date.today().isoformat(),
         ))
         db_session_clean.commit()
 
@@ -950,3 +951,77 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
     def test_a_valid_past_verification_date_still_writes(self, db_session_clean):
         db_session_clean.add(self._row())
         db_session_clean.commit()
+
+
+class TestProvenanceSurvivesTheBypassPaths:
+    """Mapper events do not fire for Core inserts, bulk operations or raw SQL.
+    Whatever the database itself refuses is the only guarantee that survives
+    those paths, so it has to refuse a malformed or future date on its own."""
+
+    @staticmethod
+    def _insert(session, **overrides):
+        from sqlalchemy import text
+
+        row = dict(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
+        )
+        row.update(overrides)
+        session.execute(
+            text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of) VALUES (:beneficiary_bic, :currency, "
+                ":intermediary_bic, :status, :notes, :as_of)"
+            ),
+            row,
+        )
+
+    def test_raw_sql_can_still_store_a_future_date_and_that_is_the_known_limit(
+        self, db_session_clean
+    ):
+        """Documented, not aspirational. Neither engine can express "not in the
+        future" as a CHECK: SQLite rejects date('now') as non-deterministic and
+        Postgres requires CHECK functions to be IMMUTABLE. A trigger is the only
+        database-level option, and anyone able to run this INSERT can drop a
+        trigger too. Recency is enforced in the ORM listener and the schema."""
+        self._insert(db_session_clean, as_of="2999-01-01")
+        db_session_clean.commit()
+
+    def test_raw_sql_cannot_store_a_malformed_verification_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="garbage")
+        db_session_clean.rollback()
+
+    def test_raw_sql_cannot_store_a_whitespace_verification_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="   ")
+        db_session_clean.rollback()
+
+    def test_raw_sql_still_stores_a_valid_past_date(self, db_session_clean):
+        self._insert(db_session_clean, as_of="2020-01-01")
+        db_session_clean.commit()
+
+    def test_a_bulk_save_cannot_store_a_malformed_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        # bulk_save_objects skips the mapper events entirely, so the shape
+        # constraint is the only thing left between it and the table.
+        # bulk_save_objects flushes immediately, so the error surfaces there
+        # rather than at commit.
+        with pytest.raises(IntegrityError):
+            db_session_clean.bulk_save_objects([SSI(
+                beneficiary_bic="AAAAGB2LXXX", currency="EUR",
+                intermediary_bic="CITIUS33XXX", status="published",
+                notes="Source: x", as_of="garbage",
+            )])
+        db_session_clean.rollback()
