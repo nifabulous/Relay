@@ -42,7 +42,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import SSI
-from ..schemas import SOURCED_SSI_STATUSES, SSI_STATUSES
+from ..schemas import SELF_ASSERTABLE_SSI_STATUSES, SOURCED_SSI_STATUSES, SSI_STATUSES
 
 VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
 VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
@@ -137,6 +137,13 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
         )
     else:
         normalized["status"] = status
+
+    # An upload has not verified that a bank still publishes anything, so it
+    # cannot assert "published" whatever it sends. Downgraded to the strongest
+    # status it can actually evidence rather than rejected, so an import that
+    # simply copies the field back still succeeds.
+    if normalized.get("status") not in SELF_ASSERTABLE_SSI_STATUSES:
+        normalized["status"] = "unverified"
 
     # A claim of provenance the row cannot back is downgraded, not accepted.
     # Rejecting the whole row would break imports that simply omit the column;

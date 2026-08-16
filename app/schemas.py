@@ -1,8 +1,8 @@
 """Pydantic v2 request/response schemas."""
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .services.validator import validate_currency_code
 
@@ -109,6 +109,11 @@ SSIStatus = Literal["published", "unverified", "archived", "illustrative"]
 # Statuses that assert a bank document was actually read.
 SOURCED_SSI_STATUSES = ("published", "unverified", "archived")
 
+# "published" claims someone confirmed the bank still publishes this. A client
+# or a CSV upload has not done that, so it is never accepted from untrusted
+# input — it is downgraded to what the writer can actually evidence.
+SELF_ASSERTABLE_SSI_STATUSES = ("unverified", "archived", "illustrative")
+
 
 class SSIRecord(BaseModel):
     beneficiary_bic: str
@@ -128,17 +133,58 @@ class SSIRecord(BaseModel):
     # direct writer reach this column without passing the autopilot validator.
     as_of: Optional[str] = None
     status: SSIStatus = "illustrative"
+    # Set only by the verification path; a response carrying "published"
+    # without it would be unattributable.
+    verified_by: Optional[str] = None
 
     @field_validator("as_of")
     @classmethod
-    def _as_of_is_an_iso_date(cls, value: Optional[str]) -> Optional[str]:
+    def _as_of_is_a_past_iso_date(cls, value: Optional[str]) -> Optional[str]:
         if value is None or value == "":
             return None
+        # date.fromisoformat also accepts compact ("20240215") and week
+        # ("2024-W07-3") forms on modern Python. Both parse here and then fail
+        # the database's dashed-shape constraint, turning a field error into an
+        # IntegrityError at flush. Require the one form both layers accept.
         try:
-            date.fromisoformat(value)
+            parsed = date.fromisoformat(value)
         except ValueError:
             raise ValueError(f"as_of must be an ISO date (YYYY-MM-DD), got {value!r}") from None
+        if parsed.isoformat() != value:
+            raise ValueError(
+                f"as_of must be written as YYYY-MM-DD, got {value!r}"
+            )
+        # UTC, matching the database triggers. as_of is a calendar date, and
+        # one clock for both layers is what keeps them from disagreeing.
+        if parsed > datetime.now(timezone.utc).date():
+            raise ValueError(f"as_of {value} is in the future; a source cannot have been read yet")
         return value
+
+    @field_validator("verified_by")
+    @classmethod
+    def _verifier_is_a_name(cls, value: Optional[str]) -> Optional[str]:
+        # "   " satisfies a truthiness test but attributes nothing.
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+    @model_validator(mode="after")
+    def _published_carries_its_verification_date(self) -> "SSIRecord":
+        # "published" means verified live; the date of that check is the
+        # evidence. Without it the status is an unfalsifiable claim.
+        if self.status == "published" and not self.as_of:
+            raise ValueError("status 'published' requires as_of, the date currency was verified")
+        if self.status == "published" and not self.verified_by:
+            raise ValueError("status 'published' requires verified_by, who confirmed it")
+        # The reverse is also a lie: a verifier names who confirmed the bank
+        # still publishes, which no other status claims. A response carrying
+        # one would attribute a currency claim the row is not making.
+        if self.status != "published" and self.verified_by:
+            raise ValueError(
+                f"verified_by is only meaningful for status 'published', got status {self.status!r}"
+            )
+        return self
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
     intermediary_settlement: Optional[SettlementIds] = None

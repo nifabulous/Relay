@@ -58,7 +58,26 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
      the correct default.
    - `published` — you confirmed the bank publishes it *today*. This is a
      stronger claim than "I found it on their website"; use it only when you
-     actually checked currency. No seeded row currently earns it.
+     actually checked currency, and `as_of` must be the date you checked. No
+     seeded row currently earns it.
+
+     A `published` record must also carry `verified_by` — who did the
+     checking, e.g. `ops:ada` — alongside `as_of`. A row claiming `published`
+     without one is stored as `unverified` instead, because an unattributable
+     claim of currency is worse than no claim. `record_verified_publication()`
+     in `app/models.py` sets all three together and validates them.
+
+     Research is the only path *intended* to assert `published`, and the
+     import boundary enforces that: `/api/import/ssi` has verified nothing, so
+     a `published` value from an upload is downgraded to `unverified`.
+
+     What is enforced everywhere is the data, not the caller: any write, ORM
+     or SQL, must give `published` an `as_of` that is a real ISO date and not
+     in the future. Nothing stops code that already has a database session
+     from writing a well-formed `published` row — a caller with database
+     access cannot be constrained by the database. Treat `published` as a
+     claim a human should be able to trace to a verification, not as a
+     guarantee the storage layer can make on its own.
 
    Absence of archive evidence is not evidence a page is live. Defaulting to
    `published` on that reasoning mislabelled 406 seeded rows.
@@ -78,7 +97,10 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    source justifies local-currency settlement.
 
    An SSI row is a 12-tuple: the ten existing fields, then `as_of` and
-   `status`, both copied verbatim from the validated record:
+   `status`, both copied verbatim from the validated record. A row claiming
+   `published` takes a 13th field, `verified_by` — without it the seed stores
+   the row as `unverified`, because an unattributable claim of currency is
+   worse than no claim:
 
    ```python
    ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
@@ -86,6 +108,15 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
     "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
     "Source: <url> (as of 2007-12-13). " + _SSI_REAL_NOTE,
     "2007-12-13", "archived"),
+   ```
+
+   ```python
+   # published needs the 13th field; the other statuses must not carry one
+   ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
+    "CITIUS33XXX", "Citibank N.A.",
+    "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
+    "Source: <url> (as of 2026-08-16). " + _SSI_REAL_NOTE,
+    "2026-08-16", "published", "ops:ada"),
    ```
 
    `commit` re-reads these rows and compares them field by field against the

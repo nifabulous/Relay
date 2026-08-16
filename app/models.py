@@ -1,5 +1,14 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    DDL,
+    CheckConstraint,
+    Column,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    event,
+)
 
 from .db import Base
 
@@ -101,6 +110,20 @@ class FedACHBank(Base):
     __table_args__ = (Index("ix_fedach_rtn", "routing_number"),)
 
 
+# A verifier is a name, and a name has at least one character that is not
+# whitespace. Default TRIM() removes only spaces on both engines, so the set
+# is spelled out: space, tab, CR, LF, and the non-breaking space — Python's
+# str.strip() removes NBSP, and the database has to agree with Python or a
+# raw-SQL write of a published row can carry a verifier the application
+# calls empty. ltrim/rtrim with an explicit charset is the one trimmed
+# comparison both engines share. The migration copies this verbatim — a test
+# pins the two together so they cannot drift.
+VERIFIER_IS_A_NAME = (
+    "status != 'published' OR (verified_by IS NOT NULL AND "
+    "ltrim(rtrim(verified_by, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')"
+)
+
+
 class SSI(Base):
     """
     A Standard Settlement Instruction — how to settle a payment in a given
@@ -149,6 +172,11 @@ class SSI(Base):
     # date is known it is stored; when only a year is known the citation in
     # `notes` carries it and this stays null.
     as_of = Column(String(10))                       # source date, when stated
+    # Who confirmed the bank still publishes this, for status "published"
+    # only. It is the difference between a claim and an audit trail: a caller
+    # that cannot name a verifier is not making a verified claim, and the
+    # listener downgrades it rather than storing one.
+    verified_by = Column(String(120))
     status = Column(String(12), nullable=False, default="illustrative")
 
     __table_args__ = (
@@ -168,6 +196,53 @@ class SSI(Base):
         CheckConstraint(
             "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
             name="ck_ssi_sourced_status_has_notes",
+        ),
+        # as_of must at least be ISO-shaped to the database itself. Mapper
+        # events cover ORM writes but not Core inserts, bulk operations or raw
+        # SQL, so this is the only rule those paths still obey.
+        #
+        # LIKE with `_` is the strictest test both engines share. An earlier
+        # version used SQLite's GLOB with digit classes, which create_all
+        # emitted verbatim on Postgres, where GLOB is not an operator — the
+        # tests never caught it because they build the schema on SQLite. The
+        # migration uses this identical expression so the two cannot diverge
+        # again.
+        #
+        # What this cannot promise: digits rather than letters, a real calendar
+        # date ("2024-02-30" passes), and recency. SQLite refuses date('now')
+        # in a CHECK as non-deterministic and Postgres requires CHECK functions
+        # to be IMMUTABLE, so the bound is not expressible in either. Those
+        # rules live in the listener below and in the Pydantic validators.
+        CheckConstraint(
+            "as_of IS NULL OR as_of LIKE '____-__-__'",
+            name="ck_ssi_as_of_is_a_past_iso_date",
+        ),
+        # "published" asserts someone verified currency; as_of is the date of
+        # that check. Enforced here as well as in the schema because a direct
+        # ORM write never passes through Pydantic.
+        CheckConstraint(
+            "status != 'published' OR (as_of IS NOT NULL AND as_of != '')",
+            name="ck_ssi_published_has_verification_date",
+        ),
+        # "published" is the only status asserting present-tense currency, so
+        # it must name who established it. Generic writers do not set this and
+        # therefore cannot produce the claim.
+        #
+        # The whitespace check has to name its set. Default TRIM() removes
+        # only spaces on both engines, so a tab- or newline-only verifier
+        # would pass "TRIM(verified_by) != ''" while Python's str.strip()
+        # calls it empty — the database and the application disagreeing about
+        # what a name is. ltrim/rtrim with an explicit charset is the one
+        # trimmed comparison both engines share; the set is space, tab, CR,
+        # LF, and a value of only those is not a name.
+        CheckConstraint(VERIFIER_IS_A_NAME, name="ck_ssi_published_names_a_verifier"),
+        # The reverse also holds: a verifier names who confirmed the bank
+        # still publishes, which no other status claims, so it may only ride
+        # on "published". Without this a raw SQL writer could leave an
+        # attribution attached to a row the API reports as unverified.
+        CheckConstraint(
+            "status = 'published' OR verified_by IS NULL",
+            name="ck_ssi_verifier_is_only_for_published",
         ),
     )
 
@@ -254,3 +329,183 @@ class IdempotencyKey(Base):
     key = Column(String(200), nullable=False, unique=True, index=True)
     uetr = Column(String(36), nullable=False, index=True)
     endpoint = Column(String(50), nullable=False)  # track/create | prepare-payment
+
+
+def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
+    """Hold the provenance invariants for every ORM write.
+
+    The Pydantic validators only see request bodies. seed.py, the SSI importer
+    and any other caller construct SSI objects directly, so the same rules have
+    to hold here.
+
+    The CHECK constraints are a partial backstop, not a full one: they catch a
+    missing status, a missing citation, a missing verification date and a
+    malformed as_of, because a CHECK can express those. They cannot catch a
+    future date — SQLite refuses date('now') as non-deterministic and Postgres
+    requires CHECK functions to be IMMUTABLE — so recency is enforced only
+    here, and a Core insert, a bulk operation or raw SQL can still store one.
+
+    This constrains the *data*, not the caller: nothing at this layer can tell
+    research from any other writer. Keeping "published" honest against a caller
+    with database access is not something the database can do for you.
+    """
+    from datetime import datetime as _datetime
+    from datetime import timezone as _timezone
+
+    from .schemas import SSI_STATUSES
+
+    # A Column default is applied when the INSERT is compiled, which is after
+    # this hook runs, so an unset status arrives here as None. Apply it now
+    # rather than rejecting a row that would have defaulted correctly.
+    if target.status is None:
+        target.status = "illustrative"
+
+    if target.status not in SSI_STATUSES:
+        raise ValueError(
+            f"SSI.status {target.status!r} must be one of {sorted(SSI_STATUSES)}"
+        )
+    if target.as_of:
+        try:
+            parsed = _datetime.fromisoformat(target.as_of).date()
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"SSI.as_of {target.as_of!r} must be an ISO date (YYYY-MM-DD)"
+            ) from None
+        # fromisoformat also takes compact and week forms, which the shape
+        # CHECK rejects; accepting them here would defer the failure to flush.
+        if parsed.isoformat() != target.as_of:
+            raise ValueError(
+                f"SSI.as_of {target.as_of!r} must be written as YYYY-MM-DD"
+            )
+        if parsed > _datetime.now(_timezone.utc).date():
+            raise ValueError(
+                f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
+            )
+    # A verifier made only of spaces is not a name. Normalise before the
+    # truthiness test below decides whether one was supplied at all.
+    if target.verified_by is not None:
+        target.verified_by = target.verified_by.strip() or None
+
+    if target.status == "published":
+        # Downgraded, not rejected. A caller setting "published" without a
+        # verifier is usually copying a field forward rather than asserting it
+        # checked the bank today; failing the write would break that caller for
+        # no gain, while storing an unattributable claim would be a lie.
+        #
+        # What this enforces is attribution, not authorisation. A caller that
+        # does name a verifier is taken at its word, because nothing at this
+        # layer can tell research from any other writer — an audit trail records
+        # who claimed something, and preventing a false claim needs an
+        # authenticated identity that only the service layer has.
+        if not target.verified_by:
+            target.status = "unverified"
+        elif not target.as_of:
+            raise ValueError(
+                "SSI.status 'published' requires as_of, the date currency was verified"
+            )
+    elif target.verified_by:
+        # A verifier names who confirmed the bank still publishes; no other
+        # status claims that, so an attribution riding on one is misleading
+        # the API's consumers. Cleared rather than refused, so a caller that
+        # copies the field forward on an unrelated status edit still succeeds
+        # — same philosophy as the downgrade above. The CHECK backstops this
+        # for Core, bulk and raw SQL, which skip this listener.
+        target.verified_by = None
+
+event.listen(SSI, "before_insert", _validate_ssi_provenance)
+event.listen(SSI, "before_update", _validate_ssi_provenance)
+
+
+def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) -> "SSI":
+    """Promote a row to "published", validating what the claim requires.
+
+    This is the intended way to publish, not an enforced one: it checks that a
+    verifier is named and that the date is a real, non-future day, so a caller
+    using it cannot record an incoherent claim. A caller that sets the fields
+    by hand is not stopped — see _validate_ssi_provenance for why that is an
+    attribution model rather than an authorisation one.
+    """
+    from datetime import date as _date
+    from datetime import datetime as _datetime
+    from datetime import timezone as _timezone
+
+    if not verified_by or not verified_by.strip():
+        raise ValueError("record_verified_publication requires a verifier")
+    parsed = _date.fromisoformat(verified_on)
+    if parsed.isoformat() != verified_on:
+        raise ValueError(f"verified_on must be written as YYYY-MM-DD, got {verified_on!r}")
+    if parsed > _datetime.now(_timezone.utc).date():
+        raise ValueError(f"verified_on {verified_on} is in the future")
+    row.status = "published"
+    row.verified_by = verified_by.strip()
+    row.as_of = verified_on
+    return row
+
+
+# ── as_of enforcement that survives Core, bulk and raw SQL ──────────────────
+# A CHECK cannot host these rules: SQLite calls date('now') non-deterministic
+# and Postgres requires CHECK functions to be IMMUTABLE. A trigger may, on both.
+#
+# Defined here rather than only in the migration so create_all() installs them
+# too — the test suite builds its schema that way, so a migration-only trigger
+# is a rule no test ever exercises. The migration imports these same strings;
+# a test pins the two together.
+SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YYYY-MM-DD"
+
+# date() yields NULL for nonsense and silently normalises an impossible date
+# (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
+#
+# Year 0000 needs its own clause: SQLite round-trips '0000-01-01' happily while
+# datetime.date rejects it as out of range, which would leave a row the
+# database accepted and the application could never validate or update again.
+#
+# as_of is a UTC calendar date, and that is the whole timezone policy. Both
+# layers ask the same clock: SQLite's date('now') is UTC, the Postgres branch
+# converts explicitly because CURRENT_DATE there follows the session TimeZone
+# and would drift from the policy near midnight, and the Python validators use
+# datetime.now(timezone.utc).date(). An earlier version gave
+# the trigger a day of slack to paper over a local-vs-UTC mismatch, which left
+# the database accepting a date Python rejected — two rules instead of one.
+_SQLITE_AS_OF_CONDITION = (
+    "NEW.as_of IS NOT NULL AND ("
+    "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
+    "OR NEW.as_of < '0001-01-01' OR NEW.as_of > date('now'))"
+)
+SSI_AS_OF_SQLITE = [
+    f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+    f"""CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+]
+SSI_AS_OF_POSTGRES = [
+    f"""CREATE OR REPLACE FUNCTION ssi_as_of_is_real_and_past() RETURNS trigger AS $$
+        BEGIN
+          IF NEW.as_of IS NOT NULL THEN
+            IF NEW.as_of !~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$' THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END IF;
+            BEGIN
+              IF NEW.as_of < '0001-01-01'
+                 OR to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
+                 OR NEW.as_of::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date) THEN
+                RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+              END IF;
+            EXCEPTION WHEN others THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END;
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql""",
+    """CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+    """CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+]
+
+for _statement in SSI_AS_OF_SQLITE:
+    event.listen(SSI.__table__, "after_create", DDL(_statement).execute_if(dialect="sqlite"))
+for _statement in SSI_AS_OF_POSTGRES:
+    event.listen(SSI.__table__, "after_create", DDL(_statement).execute_if(dialect="postgresql"))

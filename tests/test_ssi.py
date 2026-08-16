@@ -7,7 +7,25 @@ Covers:
   - Health endpoint reports SSI count
   - SSI records carry the account numbers that /route lacks
 """
+# The provenance validators compare against the UTC date
+# (datetime.now(timezone.utc).date()); a test building "today" from the local
+# date.today() can be a day off from production around a midnight boundary,
+# failing or passing for timezone configuration rather than behaviour.
+from datetime import datetime, timedelta, timezone
+
 import pytest
+
+
+def _utc_today() -> str:
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def _utc_yesterday() -> str:
+    return (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+
+
+def _utc_tomorrow() -> str:
+    return (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
 
 # ===========================================================================
 # HTTP endpoint tests
@@ -659,17 +677,18 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
         assert record.status == "archived"
 
     def test_database_rejects_an_unknown_status(self, db_session_clean):
+        """Raw SQL, deliberately: the ORM listener would catch this first, so
+        going around it is what proves the CHECK constraint is a real backstop
+        rather than decoration."""
         import pytest
+        from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
 
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="totally-fine",
-        ))
         with pytest.raises(IntegrityError):
-            db_session_clean.commit()
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x')"
+            ))
         db_session_clean.rollback()
 
 
@@ -742,16 +761,14 @@ class TestProvenanceCannotBeForgedByAWriter:
 
     def test_database_rejects_a_sourced_status_with_no_citation(self, db_session_clean):
         import pytest
+        from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
 
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes=None,
-        ))
         with pytest.raises(IntegrityError):
-            db_session_clean.commit()
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified')"
+            ))
         db_session_clean.rollback()
 
     def test_database_allows_an_illustrative_row_with_no_citation(self, db_session_clean):
@@ -762,3 +779,962 @@ class TestProvenanceCannotBeForgedByAWriter:
             intermediary_bic="CITIUS33XXX", status="illustrative", notes=None,
         ))
         db_session_clean.commit()
+
+
+class TestPublishedCannotBeSelfAsserted:
+    """"published" means someone verified the bank still publishes this today.
+    A CSV upload or a direct ORM write has not done that, so neither may claim
+    it — and the claim needs the verification date that backs it."""
+
+    def test_an_import_cannot_claim_published(self):
+        from app.services.ssi_importer import validate_ssi_row
+
+        normalized, errors = validate_ssi_row({
+            "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX", "status": "published",
+            "notes": "Source: https://bank.example/ssi.",
+        })
+        assert errors == []
+        assert normalized["status"] == "unverified", (
+            "an import self-asserted verified-live provenance"
+        )
+
+    def test_an_import_keeps_the_statuses_it_can_actually_evidence(self):
+        from app.services.ssi_importer import validate_ssi_row
+
+        for claimed in ("unverified", "archived"):
+            normalized, errors = validate_ssi_row({
+                "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+                "intermediary_bic": "CITIUS33XXX", "status": claimed,
+                "notes": "Source: https://bank.example/ssi.",
+            })
+            assert errors == [], (claimed, errors)
+            assert normalized["status"] == claimed
+
+    def test_published_without_a_verification_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+            )
+
+    def test_published_with_a_verification_date_is_accepted(self):
+        # Computed, not hardcoded. A literal "today" passes forever once that
+        # date is past, but fails on a machine whose clock is set earlier —
+        # a real if narrow way for the suite to break for the wrong reason.
+
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            as_of=_utc_yesterday(),
+            verified_by="ops:ada",
+        )
+        assert record.status == "published"
+
+    def test_published_verified_today_is_accepted(self):
+
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            as_of=_utc_today(),
+            verified_by="ops:ada",
+        )
+        assert record.status == "published"
+
+    def test_published_verified_tomorrow_is_rejected(self):
+
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+                as_of=_utc_tomorrow(),
+            )
+
+    def test_a_future_verification_date_is_rejected(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2999-01-01",
+            )
+
+    def test_database_rejects_published_without_a_date(self, db_session_clean):
+        """Raw SQL again — the CHECK has to hold even when nothing Python-side
+        is in the way."""
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x')"
+            ))
+        db_session_clean.rollback()
+
+    def test_a_published_row_persists_when_it_names_a_verifier(self, db_session_clean):
+        """This test previously omitted verified_by, so the listener downgraded
+        the row and the commit succeeded — it passed while proving nothing
+        about a published record surviving."""
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: https://bank.example/ssi.",
+        )
+        record_verified_publication(row, verified_by="ops:ada",
+                                    verified_on=_utc_today())
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "published", "the row did not persist as published"
+        assert row.verified_by == "ops:ada"
+
+
+class TestProvenanceInvariantsHoldForAnyOrmWrite:
+    """The schema validators only run on Pydantic input. seed.py, the importer
+    and any other caller build SSI objects directly, so the invariants have to
+    hold at the ORM boundary too — with the CHECK constraints as the backstop
+    for raw SQL."""
+
+    @staticmethod
+    def _row(**overrides):
+        from app.models import SSI
+
+        fields = dict(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=_utc_today(),
+            verified_by="ops:ada",
+        )
+        fields.update(overrides)
+        return SSI(**fields)
+
+    def test_a_future_verification_date_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(as_of="2999-01-01"))
+        with pytest.raises(ValueError, match="future"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_malformed_verification_date_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(as_of="16/08/2026"))
+        with pytest.raises(ValueError, match="ISO date"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_published_without_a_date_is_refused_when_a_verifier_is_named(
+        self, db_session_clean
+    ):
+        """A row with no verifier is downgraded rather than refused, so naming
+        one is what makes the missing date an error rather than an ordinary
+        generic write."""
+        import pytest
+
+        row = self._row(as_of=None, verified_by="ops:ada")
+        db_session_clean.add(row)
+        with pytest.raises(ValueError, match="as_of"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_published_without_a_verifier_is_downgraded_not_refused(self, db_session_clean):
+        row = self._row(verified_by=None)
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified"
+
+    def test_an_unknown_status_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(status="totally-current"))
+        with pytest.raises(ValueError, match="status"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_future_date_is_refused_on_an_update_too(self, db_session_clean):
+        import pytest
+
+        row = self._row()
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        row.as_of = "2999-01-01"
+        with pytest.raises(ValueError, match="future"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_valid_past_verification_date_still_writes(self, db_session_clean):
+        db_session_clean.add(self._row())
+        db_session_clean.commit()
+
+
+class TestProvenanceSurvivesTheBypassPaths:
+    """Mapper events do not fire for Core inserts, bulk operations or raw SQL.
+    Whatever the database itself refuses is the only guarantee that survives
+    those paths, so it has to refuse a malformed or future date on its own."""
+
+    @staticmethod
+    def _insert(session, **overrides):
+        from sqlalchemy import text
+
+        row = dict(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
+            verified_by="research",
+        )
+        row.update(overrides)
+        session.execute(
+            text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES (:beneficiary_bic, "
+                ":currency, :intermediary_bic, :status, :notes, :as_of, "
+                ":verified_by)"
+            ),
+            row,
+        )
+
+    def test_raw_sql_cannot_store_a_future_date(self, db_session_clean):
+        """This used to be an accepted limit. A CHECK genuinely cannot express
+        it — SQLite calls date('now') non-deterministic and Postgres wants an
+        IMMUTABLE function — but a trigger can, on both engines."""
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="2999-01-01")
+        db_session_clean.rollback()
+
+    def test_raw_sql_cannot_store_an_impossible_calendar_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="2024-02-30")
+        db_session_clean.rollback()
+
+    def test_a_leap_day_in_a_leap_year_is_still_a_real_date(self, db_session_clean):
+        self._insert(db_session_clean, as_of="2024-02-29")
+        db_session_clean.commit()
+
+    def test_raw_sql_cannot_update_a_row_to_a_future_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        self._insert(db_session_clean, as_of="2020-01-01")
+        db_session_clean.commit()
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(
+                text("UPDATE ssi SET as_of = '2999-01-01' WHERE beneficiary_bic = 'AAAAGB2LXXX'")
+            )
+        db_session_clean.rollback()
+
+    def test_raw_sql_cannot_store_a_malformed_verification_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="garbage")
+        db_session_clean.rollback()
+
+    def test_raw_sql_cannot_store_a_whitespace_verification_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="   ")
+        db_session_clean.rollback()
+
+    def test_raw_sql_cannot_store_a_year_zero_date(self, db_session_clean):
+        """SQLite round-trips '0000-01-01' happily; datetime.date calls year 0
+        out of range. Without an explicit clause the database would accept a
+        row the application could never validate or update again."""
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="0000-01-01")
+        db_session_clean.rollback()
+
+    def test_the_earliest_date_python_supports_is_still_allowed(self, db_session_clean):
+        self._insert(db_session_clean, as_of="0001-01-01")
+        db_session_clean.commit()
+
+    def test_raw_sql_still_stores_a_valid_past_date(self, db_session_clean):
+        self._insert(db_session_clean, as_of="2020-01-01")
+        db_session_clean.commit()
+
+    def test_a_bulk_save_cannot_store_a_malformed_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        # bulk_save_objects skips the mapper events entirely, so the shape
+        # constraint is the only thing left between it and the table.
+        # bulk_save_objects flushes immediately, so the error surfaces there
+        # rather than at commit.
+        with pytest.raises(IntegrityError):
+            db_session_clean.bulk_save_objects([SSI(
+                beneficiary_bic="AAAAGB2LXXX", currency="EUR",
+                intermediary_bic="CITIUS33XXX", status="published",
+                notes="Source: x", as_of="garbage",
+            )])
+        db_session_clean.rollback()
+
+
+class TestSchemaIsPortable:
+    """The suite builds every schema on SQLite, so a SQLite-only expression in
+    a constraint passes here and fails on the production engine. An earlier
+    revision emitted SQLite's GLOB verbatim on Postgres, where it is not an
+    operator."""
+
+    def test_no_table_emits_a_sqlite_only_operator_on_postgres(self):
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        from app.db import Base
+
+        offenders = []
+        for table in Base.metadata.sorted_tables:
+            ddl = str(CreateTable(table).compile(dialect=postgresql.dialect()))
+            for operator in (" GLOB ", "date('now'", "datetime('now'"):
+                if operator in ddl:
+                    offenders.append((table.name, operator.strip()))
+        assert not offenders, f"SQLite-only SQL emitted for Postgres: {offenders}"
+
+    def test_no_migration_uses_sql_that_only_behaves_on_sqlite(self):
+        """The DDL check above reads Base.metadata, so it cannot see SQL written
+        inside a migration — which is how a CAST of a text column reached the
+        tree. SQLite casts 'ab' to 0 silently; Postgres raises and takes the
+        deploy down with it."""
+        import re
+        from pathlib import Path
+
+        versions = Path(__file__).resolve().parents[1] / "alembic" / "versions"
+        risky = {
+            "CAST(": "casting a text column is dialect-dependent; judge it in Python",
+            " GLOB ": "GLOB is not an operator on Postgres",
+            "date('now'": "non-deterministic in a CHECK, and dialect-specific",
+            "strftime(": "SQLite-only",
+        }
+        offenders = []
+        for migration in versions.glob("*.py"):
+            body = migration.read_text()
+            # Comments explain these hazards on purpose; only code counts.
+            code = "\n".join(
+                line for line in body.splitlines()
+                if not line.strip().startswith("#")
+            )
+            code = re.sub(r'""".*?"""', "", code, flags=re.S)
+            # A migration may use dialect-specific SQL when it declares so and
+            # supplies both branches — a trigger body has no portable form.
+            # What stays forbidden is SQLite-only SQL presented as portable.
+            if "DIALECT_SPECIFIC_SQL = True" in code:
+                # Naming a constant SSI_AS_OF_POSTGRES satisfies a substring
+                # test while upgrade() still runs only the SQLite statements.
+                # Requiring `dialect.name` means the migration has to actually
+                # choose at runtime, which is the thing the declaration claims.
+                assert "dialect.name" in code, (
+                    f"{migration.name} declares dialect-specific SQL but never "
+                    f"inspects dialect.name, so it cannot be branching"
+                )
+                assert "sqlite" in code and "postgres" in code.lower(), (
+                    f"{migration.name} declares dialect-specific SQL but does "
+                    f"not name both engines"
+                )
+                continue
+            for token, why in risky.items():
+                if token in code:
+                    offenders.append((migration.name, token, why))
+        assert not offenders, f"dialect-risky SQL in a migration: {offenders}"
+
+    def test_the_model_and_the_migration_agree_on_the_as_of_shape(self):
+        """They are separate declarations of one rule; drift between them is
+        how the Postgres bug got in."""
+        import re
+        from pathlib import Path
+
+        from app.models import SSI
+
+        migration = (
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260816_ssi_as_of_shape.py"
+        ).read_text()
+        declared = re.search(r'SHAPE = "(.+?)"', migration).group(1)
+
+        constraint = next(
+            c for c in SSI.__table__.constraints
+            if getattr(c, "name", "") == "ck_ssi_as_of_is_a_past_iso_date"
+        )
+        assert str(constraint.sqltext) == declared
+
+
+class TestValidationAgreesWithTheDatabase:
+    """date.fromisoformat accepts more than the dashed form on modern Python —
+    compact dates and week dates parse fine but fail the LIKE constraint. That
+    turns a field-level validation error into an IntegrityError at flush."""
+
+    def test_a_compact_iso_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="20240215",
+            )
+
+    def test_an_iso_week_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2024-W07-3",
+            )
+
+    def test_a_compact_iso_date_is_rejected_at_the_orm_boundary(self, db_session_clean):
+        import pytest
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: x", as_of="20240215",
+        ))
+        with pytest.raises(ValueError, match="YYYY-MM-DD"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_the_dashed_form_still_works_everywhere(self, db_session_clean):
+        from app.models import SSI
+        from app.schemas import SSIRecord
+
+        assert SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            as_of="2024-02-15",
+        ).as_of == "2024-02-15"
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: x", as_of="2024-02-15",
+        ))
+        db_session_clean.commit()
+
+
+class TestOnlyTheVerificationPathCanPublish:
+    """"published" asserts the bank publishes this *today*. A caller that
+    cannot name who established that is not making that claim, whatever it
+    puts in the status field."""
+
+    @staticmethod
+    def _row(**overrides):
+
+        from app.models import SSI
+
+        fields = dict(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=_utc_today(),
+        )
+        fields.update(overrides)
+        return SSI(**fields)
+
+    def test_a_generic_orm_write_claiming_published_is_downgraded(self, db_session_clean):
+        row = self._row()
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified", "a generic writer manufactured a published row"
+
+    def test_the_verification_path_produces_a_published_row(self, db_session_clean):
+
+        from app.models import record_verified_publication
+
+        row = self._row(status="unverified")
+        record_verified_publication(row, verified_by="ops:ada", verified_on=_utc_today())
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "published"
+        assert row.verified_by == "ops:ada"
+
+    def test_the_verification_path_refuses_an_anonymous_verifier(self):
+
+        import pytest
+
+        from app.models import record_verified_publication
+
+        with pytest.raises(ValueError, match="verifier"):
+            record_verified_publication(self._row(), verified_by="  ", verified_on=_utc_today())
+
+    def test_the_verification_path_refuses_a_future_check(self):
+
+        import pytest
+
+        from app.models import record_verified_publication
+
+        with pytest.raises(ValueError, match="future"):
+            record_verified_publication(
+                self._row(), verified_by="ops:ada",
+                verified_on=_utc_tomorrow(),
+            )
+
+    def test_raw_sql_cannot_publish_without_naming_a_verifier(self, db_session_clean):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of) VALUES ('AAAAGB2LXXX', 'USD', "
+                "'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+            ))
+        db_session_clean.rollback()
+
+    def test_the_response_schema_refuses_an_unattributed_published_record(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+                as_of="2020-01-01",
+            )
+
+
+class TestAVerifierMustBeAName:
+    """"   " passes a truthiness test and a `!= ''` check while attributing
+    nothing. An unattributable published row is the thing being prevented."""
+
+    def test_the_schema_rejects_a_whitespace_verifier(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+                as_of="2020-01-01", verified_by="   ",
+            )
+
+    def test_a_whitespace_verifier_downgrades_an_orm_write(self, db_session_clean):
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: x", as_of=_utc_today(), verified_by="   ",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified"
+        assert row.verified_by is None
+
+    def test_raw_sql_cannot_publish_with_a_whitespace_verifier(self, db_session_clean):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', '   ')"
+            ))
+        db_session_clean.rollback()
+
+    @pytest.mark.parametrize("verifier", ["\t", "\n", "\r", " \t \r\n ", "\u00a0", "\u00a0\u00a0"])
+    def test_raw_sql_cannot_publish_with_a_whitespace_only_verifier(
+        self, db_session_clean, verifier
+    ):
+        """Default TRIM() removes only spaces on both engines, so a tab-,
+        newline-, or non-breaking-space-only verifier used to satisfy the
+        published CHECK while Python's str.strip() called it empty — the
+        database and the application disagreeing about what a name is. The
+        constraint names its charset now."""
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', :v)"
+            ), {"v": verifier})
+        db_session_clean.rollback()
+
+    def test_a_padded_verifier_is_stored_trimmed(self, db_session_clean):
+        from datetime import datetime, timezone
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        )
+        record_verified_publication(
+            row, verified_by="  ops:ada  ",
+            verified_on=datetime.now(timezone.utc).date().isoformat(),
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.verified_by == "ops:ada"
+
+
+class TestAVerifierOnlyRidesOnPublished:
+    """A verifier names who confirmed the bank still publishes; no other status
+    claims that, so an attribution attached to one is the API lying about the
+    row. Enforced in Pydantic, the ORM listener, and a CHECK for the bypass
+    paths."""
+
+    def test_the_schema_rejects_a_verifier_on_a_non_published_row(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        for status in ("unverified", "archived", "illustrative"):
+            with pytest.raises(ValidationError, match="only meaningful"):
+                SSIRecord(
+                    beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                    intermediary_bic="CITIUS33XXX", status=status,
+                    notes="Source: https://bank.example/ssi.",
+                    verified_by="ops:ada",
+                )
+
+    def test_an_orm_write_clears_a_verifier_on_a_non_published_row(
+        self, db_session_clean
+    ):
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
+            verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.verified_by is None, (
+            "an attribution survived on a row that makes no currency claim"
+        )
+
+    def test_a_downgrade_clears_the_verifier_it_or_phans(self, db_session_clean):
+        """The write that loses "published" loses the attribution with it, or
+        the API keeps showing a verifier for a row that no longer verifies."""
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: https://bank.example/ssi.",
+        )
+        row.status = "published"
+        row.verified_by = "ops:ada"
+        row.as_of = _utc_today()
+        # Simulate an ordinary edit that loses the claim: the listener must
+        # clear the orphaned verifier instead of leaving it attached.
+        row.status = "archived"
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "archived"
+        assert row.verified_by is None
+
+    def test_raw_sql_cannot_attach_a_verifier_to_a_non_published_row(
+        self, db_session_clean
+    ):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'archived', 'Source: x', '2020-01-01', 'ops:ada')"
+            ))
+        db_session_clean.rollback()
+
+class TestAVerifiedRowSurvivesOrdinaryEditing:
+    """The promotion marker is transient, so it is absent on every row loaded
+    back from the database. Checking it on any update meant that fixing a typo
+    in `notes` silently downgraded a verified row and orphaned its verifier —
+    the exact state the column exists to protect."""
+
+    @staticmethod
+    def _publish(session):
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: https://bank.example/ssi.",
+        )
+        record_verified_publication(row, verified_by="ops:ada",
+                                    verified_on=_utc_today())
+        session.add(row)
+        session.commit()
+        return row
+
+    def test_editing_an_unrelated_field_preserves_published(self, db_session_clean):
+        from app.models import SSI
+
+        self._publish(db_session_clean)
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        assert reloaded.status == "published"
+        reloaded.notes = "Source: https://bank.example/ssi. (typo fixed)"
+        db_session_clean.commit()
+        db_session_clean.refresh(reloaded)
+        assert reloaded.status == "published", "an unrelated edit destroyed the verification"
+        assert reloaded.verified_by == "ops:ada"
+    def test_re_verification_through_the_promotion_path_still_works(self, db_session_clean):
+
+        from app.models import SSI, record_verified_publication
+
+        self._publish(db_session_clean)
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        record_verified_publication(reloaded, verified_by="ops:grace",
+                                    verified_on=_utc_today())
+        db_session_clean.commit()
+        db_session_clean.refresh(reloaded)
+        assert reloaded.status == "published"
+        assert reloaded.verified_by == "ops:grace"
+class TestTheMigrationOwnsItsOwnSql:
+    """A migration must keep doing what it did the day it was written, so it
+    copies the trigger SQL rather than importing today's. The copy is what
+    makes drift possible, so this pins the two together — immutability without
+    the divergence that duplication usually brings."""
+
+    @staticmethod
+    def _migration_source():
+        from pathlib import Path
+
+        return (
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260816_ssi_verified_by.py"
+        ).read_text()
+
+    def test_the_migration_does_not_import_live_model_sql(self):
+        source = self._migration_source()
+        assert "from app.models import" not in source, (
+            "the migration imports application SQL; a later model edit would "
+            "silently change how an old database upgrades"
+        )
+
+    def test_the_migration_trigger_sql_matches_the_model(self):
+        """Compares values, not text: the constants are f-strings, so only
+        evaluating them proves the two definitions agree."""
+        import ast
+
+        from app import models
+
+        wanted = {
+            "_MESSAGE", "SSI_AS_OF_MESSAGE", "_SQLITE_AS_OF_CONDITION",
+            "SSI_AS_OF_SQLITE", "SSI_AS_OF_POSTGRES", "VERIFIER_IS_A_NAME",
+        }
+        tree = ast.parse(self._migration_source())
+        assignments = [
+            node for node in tree.body
+            if isinstance(node, ast.Assign)
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id in wanted
+        ]
+        namespace: dict = {}
+        exec(compile(ast.Module(body=assignments, type_ignores=[]),  # noqa: S102
+                     "<migration-constants>", "exec"), namespace)
+
+        assert namespace["SSI_AS_OF_SQLITE"] == models.SSI_AS_OF_SQLITE, (
+            "the migration's SQLite triggers have drifted from the model's"
+        )
+        assert namespace["SSI_AS_OF_POSTGRES"] == models.SSI_AS_OF_POSTGRES, (
+            "the migration's Postgres triggers have drifted from the model's"
+        )
+        assert namespace["VERIFIER_IS_A_NAME"] == models.VERIFIER_IS_A_NAME, (
+            "the migration's verifier constraint has drifted from the model's"
+        )
+
+
+class TestPublishedIsAttributionNotAuthorisation:
+    """The contract this settled on, stated as a test so it cannot drift back
+    by accident.
+
+    An earlier revision tried to make "published" unforgeable with a transient
+    promotion marker. That marker did not survive a reload, so an ordinary edit
+    to an unrelated field silently downgraded a verified row — it destroyed the
+    state it existed to protect. The marker was removed deliberately.
+
+    What holds now: a published row must name a verifier and a date, so every
+    claim is attributable to whoever wrote it. Preventing a *false* claim needs
+    an authenticated identity, which no database layer has; that belongs to the
+    service layer.
+    """
+
+    @staticmethod
+    def _utc_today():
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).date().isoformat()
+
+    def test_a_named_verifier_is_taken_at_its_word(self, db_session_clean):
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=self._utc_today(), verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "published"
+        assert row.verified_by == "ops:ada"
+
+    def test_an_unattributed_claim_is_still_refused(self, db_session_clean):
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: x", as_of=self._utc_today(),
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified", "an unattributable claim was stored"
+
+    def test_no_promotion_marker_machinery_remains(self):
+        """The mechanism was removed, not disabled. A half-present marker is
+        how the silent downgrade happened."""
+        from pathlib import Path
+
+        source = (
+            Path(__file__).resolve().parents[1] / "app" / "models.py"
+        ).read_text()
+        assert "_PROMOTION_MARKER" not in source
+        assert "_provenance_is_being_assigned" not in source
+
+    def test_the_listener_is_registered_for_both_insert_and_update(self):
+        """Removing the marker meant editing the block these calls sat in, and
+        an earlier attempt deleted them outright — every ORM invariant silently
+        stopped running while the suite still passed 187 tests."""
+        from sqlalchemy import event
+
+        from app.models import SSI, _validate_ssi_provenance
+
+        assert event.contains(SSI, "before_insert", _validate_ssi_provenance)
+        assert event.contains(SSI, "before_update", _validate_ssi_provenance)
+
+
+class TestResearchCanActuallyPublishThroughTheSeed:
+    """SKILL.md tells research a published record must name a verifier, but the
+    seed tuple had no field for one — so a researcher following the file wrote
+    "published" and the seed silently stored "unverified". Documentation
+    promising what the format could not express."""
+
+    def test_the_seed_tuple_carries_a_verifier(self):
+        import inspect
+
+        from app.services import seed
+
+        source = inspect.getsource(seed.seed_if_empty)
+        assert "verified_by=verified_by" in source, (
+            "seed writes provenance but drops the verifier"
+        )
+
+    def test_a_thirteen_field_row_persists_as_published(self, db_session_clean):
+        from app.models import SSI
+
+        # exactly what seed.py builds from a 13-field tuple
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX",
+            notes="Source: https://bank.example/ssi.",
+            as_of="2020-01-01", status="published", verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "published"
+        assert row.verified_by == "ops:ada"
+
+    def test_a_twelve_field_published_row_is_still_downgraded(self, db_session_clean):
+        """The format is permissive, the invariant is not: omitting the verifier
+        does not sneak a published row through, it just loses the claim."""
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", notes="Source: x",
+            as_of="2020-01-01", status="published",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified"
+
+    def test_the_verifier_arity_is_accepted_by_the_seed_verifier(self):
+        """cmd_verify pins tuple widths; 13 has to be legal or the fold fails
+        structural verification before it reaches the database."""
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts" / "ssi-autopilot" / "autopilot.py"
+        )
+        source = script.read_text()
+        assert "(10, 12, 13)" in source, "a 13-field SSI row would fail verify"
+        result = subprocess.run(
+            [sys.executable, str(script), "verify"], capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stdout + result.stderr

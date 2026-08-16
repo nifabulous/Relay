@@ -3885,12 +3885,14 @@ def seed_if_empty(session) -> dict:
             inserted["corridor_rules"] += 1
 
     for row in SSI_RECORDS:
-        # 12-field rows carry provenance; the trailing pair stays optional so a
-        # hand-written 10-field row still loads as unsourced.
+        # 12-field rows carry provenance; a 13th names the verifier, which
+        # "published" requires. All three stay optional so a hand-written
+        # 10-field row still loads as unsourced.
         (ben_bic, ben_name, ccy, int_bic, int_name,
          int_acct, ben_acct, charge, vdate, notes, *provenance) = row
         as_of = provenance[0] if provenance else None
         status = provenance[1] if len(provenance) > 1 else "illustrative"
+        verified_by = provenance[2] if len(provenance) > 2 else None
         existing = session.query(SSI).filter(
             SSI.beneficiary_bic == ben_bic,
             SSI.currency == ccy,
@@ -3911,6 +3913,7 @@ def seed_if_empty(session) -> dict:
                     notes=notes,
                     as_of=as_of,
                     status=status,
+                    verified_by=verified_by,
                 )
             )
             inserted["ssi"] += 1
@@ -3919,7 +3922,9 @@ def seed_if_empty(session) -> dict:
             # insert-only, so a database created before these columns existed
             # would keep the migration's "illustrative" default forever and
             # under-claim every sourced row it already holds.
-            if (existing.as_of, existing.status) != (as_of, status):
+            if (existing.as_of, existing.status, existing.verified_by) != (
+                as_of, status, verified_by
+            ):
                 # A sourced status and its citation move together: a row stored
                 # before these columns existed can have no notes at all, and
                 # setting a sourced status on it would assert provenance the
@@ -3929,6 +3934,7 @@ def seed_if_empty(session) -> dict:
                     existing.notes = notes
                 existing.as_of = as_of
                 existing.status = status
+                existing.verified_by = verified_by
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )

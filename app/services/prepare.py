@@ -226,6 +226,7 @@ def prepare_payment(
             notes=r.notes,
             as_of=r.as_of,
             status=r.status,
+            verified_by=r.verified_by,
         )
         for r in ssi_rows
     ]
