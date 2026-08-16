@@ -242,6 +242,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             "headroom to spare"
         ),
     )
+    parser.add_argument(
+        "--require-complete-input",
+        action="store_true",
+        help="fail instead of truncating the trusted or untrusted input",
+    )
     args = parser.parse_args(argv)
     if not MODEL_PATTERN.fullmatch(args.model):
         parser.error("--model contains unsupported characters")
@@ -303,15 +308,24 @@ def main(argv: list[str] | None = None) -> int:
         # One budget for the request, not one per channel: the trusted
         # instructions are drawn first and the untrusted payload gets whatever
         # is left, so --max-input-bytes bounds what is actually sent.
-        instructions = bound_input(
-            args.instructions_path.read_text(encoding="utf-8"), args.max_input_bytes
-        )
+        instructions_text = args.instructions_path.read_text(encoding="utf-8")
+        instructions = bound_input(instructions_text, args.max_input_bytes)
+        if args.require_complete_input and instructions != instructions_text:
+            raise RuntimeError(
+                "--max-input-bytes is too small for the complete trusted instructions"
+            )
         remaining = args.max_input_bytes - len(instructions.encode("utf-8"))
         if remaining <= 0:
             raise RuntimeError(
                 "--max-input-bytes leaves no room for the request payload after instructions"
             )
-        prompt = bound_input(args.input_path.read_text(encoding="utf-8"), remaining)
+        prompt_text = args.input_path.read_text(encoding="utf-8")
+        prompt = bound_input(prompt_text, remaining)
+        if args.require_complete_input and prompt != prompt_text:
+            raise RuntimeError(
+                "--max-input-bytes is too small for the complete review input; "
+                "raise the budget or split the change"
+            )
         result = request_response(
             args.model,
             args.reasoning_effort,

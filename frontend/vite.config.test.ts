@@ -103,6 +103,8 @@ describe("Vite Sentry source-map lifecycle", () => {
     await mkdir(join(mapPath, ".."), { recursive: true });
     await writeFile(mapPath, "private source map");
     process.chdir(frontendRoot);
+    // afterEach calls vi.unstubAllEnvs(), so this cannot leak into later tests.
+    vi.stubEnv("SENTRY_AUTH_TOKEN", "");
 
     vi.doUnmock("@sentry/vite-plugin");
     vi.doUnmock("vite");
@@ -110,7 +112,6 @@ describe("Vite Sentry source-map lifecycle", () => {
     const [plugin] = sentryVitePlugin({
       org: "relay",
       project: "relay-frontend",
-      authToken: "sntrys_test",
       telemetry: false,
       release: {
         name: "abc123def456",
@@ -119,8 +120,8 @@ describe("Vite Sentry source-map lifecycle", () => {
         finalize: false,
         setCommits: false,
       },
-      // Disable only the network upload for this test. The pinned plugin's
-      // real writeBundle and deletion implementation still run on the output.
+      // Explicitly disable upload so an inherited developer token can never
+      // make this test contact Sentry; the real deletion hook still runs.
       sourcemaps: {
         disable: "disable-upload",
         filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"],

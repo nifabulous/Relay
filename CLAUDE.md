@@ -156,12 +156,12 @@ app/
 ## Testing
 
 ```bash
-python -m pytest tests/ -q              # full suite (1302 tests)
+python -m pytest tests/ -q              # full backend suite
 python -m pytest tests/test_api.py -v   # specific file
 python -m pytest tests/ --cov=app       # coverage (~92%)
 
 # Frontend unit/integration tests
-cd frontend && npm test -- --run  # 1091 tests (Vitest workers capped at 4)
+cd frontend && npm test -- --run --no-file-parallelism  # full frontend suite
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
@@ -191,6 +191,52 @@ ruff check . --fix  # auto-fix import order etc.
 - **SSI account numbers** must always be `ACCT-` placeholders. Test `TestAllSSIAccountsArePlaceholders` enforces this. Never add real account numbers.
 - **SIMULATION disclaimers** must appear on the API title, every payment-shaped response, and the UI banners. Don't remove them.
 - **The `esc()` function** lives in `learn-utils.js`. Never copy it into a lab file — use `LearnUtils.esc` or `var esc = LearnUtils.esc`.
+
+## Agent reliability protocol
+
+The agent's first implementation, local test run, and automated review are all
+evidence—not proof. Before any commit or externally visible write, the agent
+must complete these gates and report the actual commands/results:
+
+1. **Lock the contract.** Write down the requested behavior, invariants,
+   affected surfaces, failure modes, acceptance criteria, and explicit
+   out-of-scope items. If any requirement is unclear, stop and ask instead of
+   implementing a partial interpretation.
+2. **Use TDD for behavior changes.** Add a focused regression test, confirm it
+   fails for the old behavior when practical, implement the smallest fix, then
+   run that test and the surrounding suite.
+3. **Review the complete change, not just the last edit.** Inspect the full
+   `origin/main...HEAD` diff, every changed file, affected callers/configuration,
+   generated output, deployment settings, and data/privacy boundaries. Do not
+   stop after finding the first issue.
+4. **Run two separate review passes before commit.** First perform a
+   correctness pass (happy path, error path, state transitions, compatibility,
+   migrations). Then perform an adversarial pass (security, privacy, secrets,
+   prompt injection, authorization, malformed input, retries, concurrency,
+   dependency/runtime behavior, and misleading tests). The second pass must be
+   done with the diff treated as if another engineer wrote it.
+5. **Test the real boundary.** Do not let a mock replace the behavior under
+   test. Fakes must enforce limits and record arguments; mocked plugins must be
+   paired with a pinned-package or integration test; build/deploy tests must
+   inspect final artifacts for source maps, credentials, and public references.
+   Verify third-party APIs against installed types/runtime before changing code.
+6. **Verify in layers.** Run focused tests, the full relevant suite, typecheck,
+   lint, production build, bundle/artifact checks, and (when applicable) a
+   browser/API smoke test. A test that was not run is not a passing check.
+7. **Audit the final diff after tests.** Re-read the staged diff from top to
+   bottom, check `git diff --check`, confirm only intended files are staged,
+   inspect the commit's parent/base, and look for accidental generated files,
+   secrets, broad rewrites, or one-line “fixes” that bypass the real path.
+8. **Use exact evidence.** Never claim “fixed,” “all tests pass,” or “ready to
+   merge” from memory or from an older head. Record the current commit SHA,
+   commands, results, skipped checks, and remaining human verification.
+
+The local gate for this protocol is `scripts/verify_before_push.sh origin/main`.
+Pass the exact base ref or SHA for the change; the gate refuses to run if it
+cannot resolve that base and checks the committed base-to-HEAD range in
+addition to staged/unstaged changes. It is a convenience and a fail-closed
+checklist, not authorization to push, merge, deploy, or change repository
+settings. External writes still require the user's explicit direction.
 
 ## Maintainer pull request completion checklist
 
