@@ -189,6 +189,7 @@ if [[ "${CODEX_VERIFY_ACTION_PINS:-}" != "1" ]]; then
   printf 'note: set CODEX_VERIFY_ACTION_PINS=1 to resolve each pin against its version comment\n' >&2
 fi
 require_text '.github/workflows/ci.yml' 'permissions:'
+require_text '.github/workflows/ci.yml' 'scripts/verify_before_push.sh origin/main'
 require_text '.github/dependabot.yml' 'package-ecosystem: github-actions'
 
 if grep -Fq 'printf '\''%s\n'\'' "$METADATA" >"$TEMP_DIR/metadata.json"' "$ROOT/scripts/codex_review_pr.sh"; then
