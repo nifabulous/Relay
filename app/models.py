@@ -169,6 +169,13 @@ class SSI(Base):
             "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
             name="ck_ssi_sourced_status_has_notes",
         ),
+        # "published" asserts someone verified currency; as_of is the date of
+        # that check. Enforced here as well as in the schema because a direct
+        # ORM write never passes through Pydantic.
+        CheckConstraint(
+            "status != 'published' OR (as_of IS NOT NULL AND as_of != '')",
+            name="ck_ssi_published_has_verification_date",
+        ),
     )
 
 

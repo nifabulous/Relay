@@ -762,3 +762,94 @@ class TestProvenanceCannotBeForgedByAWriter:
             intermediary_bic="CITIUS33XXX", status="illustrative", notes=None,
         ))
         db_session_clean.commit()
+
+
+class TestPublishedCannotBeSelfAsserted:
+    """"published" means someone verified the bank still publishes this today.
+    A CSV upload or a direct ORM write has not done that, so neither may claim
+    it — and the claim needs the verification date that backs it."""
+
+    def test_an_import_cannot_claim_published(self):
+        from app.services.ssi_importer import validate_ssi_row
+
+        normalized, errors = validate_ssi_row({
+            "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX", "status": "published",
+            "notes": "Source: https://bank.example/ssi.",
+        })
+        assert errors == []
+        assert normalized["status"] == "unverified", (
+            "an import self-asserted verified-live provenance"
+        )
+
+    def test_an_import_keeps_the_statuses_it_can_actually_evidence(self):
+        from app.services.ssi_importer import validate_ssi_row
+
+        for claimed in ("unverified", "archived"):
+            normalized, errors = validate_ssi_row({
+                "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+                "intermediary_bic": "CITIUS33XXX", "status": claimed,
+                "notes": "Source: https://bank.example/ssi.",
+            })
+            assert errors == [], (claimed, errors)
+            assert normalized["status"] == claimed
+
+    def test_published_without_a_verification_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+            )
+
+    def test_published_with_a_verification_date_is_accepted(self):
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            as_of="2026-08-16",
+        )
+        assert record.status == "published"
+
+    def test_a_future_verification_date_is_rejected(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2999-01-01",
+            )
+
+    def test_database_rejects_published_without_a_date(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.", as_of=None,
+        ))
+        with pytest.raises(IntegrityError):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_database_accepts_published_with_a_date(self, db_session_clean):
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.", as_of="2026-08-16",
+        ))
+        db_session_clean.commit()

@@ -2,7 +2,7 @@
 from datetime import date
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .services.validator import validate_currency_code
 
@@ -109,6 +109,11 @@ SSIStatus = Literal["published", "unverified", "archived", "illustrative"]
 # Statuses that assert a bank document was actually read.
 SOURCED_SSI_STATUSES = ("published", "unverified", "archived")
 
+# "published" claims someone confirmed the bank still publishes this. A client
+# or a CSV upload has not done that, so it is never accepted from untrusted
+# input — it is downgraded to what the writer can actually evidence.
+SELF_ASSERTABLE_SSI_STATUSES = ("unverified", "archived", "illustrative")
+
 
 class SSIRecord(BaseModel):
     beneficiary_bic: str
@@ -131,14 +136,24 @@ class SSIRecord(BaseModel):
 
     @field_validator("as_of")
     @classmethod
-    def _as_of_is_an_iso_date(cls, value: Optional[str]) -> Optional[str]:
+    def _as_of_is_a_past_iso_date(cls, value: Optional[str]) -> Optional[str]:
         if value is None or value == "":
             return None
         try:
-            date.fromisoformat(value)
+            parsed = date.fromisoformat(value)
         except ValueError:
             raise ValueError(f"as_of must be an ISO date (YYYY-MM-DD), got {value!r}") from None
+        if parsed > date.today():
+            raise ValueError(f"as_of {value} is in the future; a source cannot have been read yet")
         return value
+
+    @model_validator(mode="after")
+    def _published_carries_its_verification_date(self) -> "SSIRecord":
+        # "published" means verified live; the date of that check is the
+        # evidence. Without it the status is an unfalsifiable claim.
+        if self.status == "published" and not self.as_of:
+            raise ValueError("status 'published' requires as_of, the date currency was verified")
+        return self
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
     intermediary_settlement: Optional[SettlementIds] = None
