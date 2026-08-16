@@ -139,10 +139,18 @@ class SSIRecord(BaseModel):
     def _as_of_is_a_past_iso_date(cls, value: Optional[str]) -> Optional[str]:
         if value is None or value == "":
             return None
+        # date.fromisoformat also accepts compact ("20240215") and week
+        # ("2024-W07-3") forms on modern Python. Both parse here and then fail
+        # the database's dashed-shape constraint, turning a field error into an
+        # IntegrityError at flush. Require the one form both layers accept.
         try:
             parsed = date.fromisoformat(value)
         except ValueError:
             raise ValueError(f"as_of must be an ISO date (YYYY-MM-DD), got {value!r}") from None
+        if parsed.isoformat() != value:
+            raise ValueError(
+                f"as_of must be written as YYYY-MM-DD, got {value!r}"
+            )
         if parsed > date.today():
             raise ValueError(f"as_of {value} is in the future; a source cannot have been read yet")
         return value

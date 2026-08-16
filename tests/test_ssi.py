@@ -1066,3 +1066,65 @@ class TestSchemaIsPortable:
             if getattr(c, "name", "") == "ck_ssi_as_of_is_a_past_iso_date"
         )
         assert str(constraint.sqltext) == declared
+
+
+class TestValidationAgreesWithTheDatabase:
+    """date.fromisoformat accepts more than the dashed form on modern Python —
+    compact dates and week dates parse fine but fail the LIKE constraint. That
+    turns a field-level validation error into an IntegrityError at flush."""
+
+    def test_a_compact_iso_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="20240215",
+            )
+
+    def test_an_iso_week_date_is_rejected_by_the_schema(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2024-W07-3",
+            )
+
+    def test_a_compact_iso_date_is_rejected_at_the_orm_boundary(self, db_session_clean):
+        import pytest
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: x", as_of="20240215",
+        ))
+        with pytest.raises(ValueError, match="YYYY-MM-DD"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_the_dashed_form_still_works_everywhere(self, db_session_clean):
+        from app.models import SSI
+        from app.schemas import SSIRecord
+
+        assert SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            as_of="2024-02-15",
+        ).as_of == "2024-02-15"
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: x", as_of="2024-02-15",
+        ))
+        db_session_clean.commit()

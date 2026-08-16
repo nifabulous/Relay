@@ -322,6 +322,12 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
             raise ValueError(
                 f"SSI.as_of {target.as_of!r} must be an ISO date (YYYY-MM-DD)"
             ) from None
+        # fromisoformat also takes compact and week forms, which the shape
+        # CHECK rejects; accepting them here would defer the failure to flush.
+        if parsed.isoformat() != target.as_of:
+            raise ValueError(
+                f"SSI.as_of {target.as_of!r} must be written as YYYY-MM-DD"
+            )
         if parsed > _date.today():
             raise ValueError(
                 f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
