@@ -44,14 +44,22 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
 3. **Capture results** as a JSON file matching the validator schema, one per
    region: `{"region": "<name>", "banks": [{"bic": "<8char>", "name": "...",
    "records": [{"currency", "correspondent", "int_bic", "nostro", "with_an",
-   "charge_code", "value_date", "source", "as_of"}]}]}`. Accounts in the
-   results must already be masked `ACCT-` placeholders (transcribe any real
+   "charge_code", "value_date", "source", "as_of", "status"}]}]}`. Accounts in
+   the results must already be masked `ACCT-` placeholders (transcribe any real
    digits to the region's masked block).
+
+   `status` is `published` when you read the instruction on the bank's live
+   page, `archived` when you read it from a snapshot (web.archive.org or any
+   other point-in-time copy). It records how you obtained the data, never how
+   old it is — do not infer it from `as_of`. An archived 2026 page is still
+   `archived`; a live page restating 2019 figures is still `published`.
 
 4. **Validate** — `python scripts/ssi-autopilot/autopilot.py validate <results.json>`.
    It rejects: real account numbers, unmasked accounts, invalid BICs,
-   out-of-region currencies, missing sources, missing as-of dates, duplicate
-   (ben_bic, ccy, int_bic), and forbidden/mislabeled BICs. Fix the results and
+   out-of-region currencies, missing sources, missing/invalid as-of dates,
+   missing or unknown `status`, missing correspondent names, value dates outside
+   the manifest allowlist, empty payloads, duplicate (ben_bic, ccy, int_bic),
+   and forbidden/mislabeled BICs. Fix the results and
    re-run until clean. NOT SEEDABLE banks stay out of the results entirely.
 
 5. **Fold** — append the validated records to `SSI_RECORDS` in
@@ -60,9 +68,28 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    with `"Source: <url>. " + _SSI_REAL_NOTE`. Add corridor rules only when the
    source justifies local-currency settlement.
 
+   An SSI row is a 12-tuple: the ten existing fields, then `as_of` and
+   `status`, both copied verbatim from the validated record:
+
+   ```python
+   ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
+    "CITIUS33XXX", "Citibank N.A.",
+    "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
+    "Source: <url> (as of 2007-12-13). " + _SSI_REAL_NOTE,
+    "2007-12-13", "archived"),
+   ```
+
+   `commit` re-reads these rows and compares them field by field against the
+   JSON you validated. A row that was never validated, a validated record that
+   was never folded, and an account or status that drifted between the two all
+   stop the commit. Do not hand-edit a row after validating it — change the
+   results and re-run `validate`.
+
 6. **Commit** — `python scripts/ssi-autopilot/autopilot.py commit <results.json>
    --source "<bank names>"`. This scaffolds the coverage test, runs pytest on
-   `tests/test_data_consistency.py` (fail → no commit), commits with
+   `tests/test_data_consistency.py`, `tests/test_ssi.py` and
+   `tests/test_ssi_autopilot.py` (fail → no commit), verifies the fold matches
+   the validated results, commits with
    `feat(ssi): seed <region> SSIs (<source>)`, and bumps the counter.
 
 7. **After each region**, re-run `autopilot.py status`. When

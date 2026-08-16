@@ -49,6 +49,11 @@ COMMIT_PATTERN = re.compile(r"^feat\(ssi\): seed [a-z-]+ SSIs? \(([^)]+)\)")
 
 # ── BIC helpers ──────────────────────────────────────────────────────────────
 _ACCT_MASK = re.compile(r"^ACCT-\d{4,10}$")          # masked placeholder
+
+# How an instruction was obtained, not how old it is. "published" was read from
+# the bank's live page, "archived" from a point-in-time snapshot that may no
+# longer be current, "illustrative" from nothing at all.
+SSI_STATUSES = {"published", "archived", "illustrative"}
 _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 
 
@@ -181,6 +186,16 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             if not correspondent:
                 problems.append(f"{ben_bic}/{ccy}: missing correspondent name")
 
+            # Provenance is stated by the researcher who read the page, never
+            # inferred from the date. An age threshold would be a guess; whether
+            # the page was live or an archived snapshot is an observation.
+            status = str(rec.get("status", "")).strip().lower()
+            if status not in SSI_STATUSES:
+                problems.append(
+                    f"{ben_bic}/{ccy}: status {status!r} must be one of "
+                    f"{sorted(SSI_STATUSES)}"
+                )
+
             # value_dates is a manifest allowlist that was never consulted.
             if value_date not in defaults["value_dates"]:
                 problems.append(
@@ -258,6 +273,117 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 problems.append(f"{ben_bic}/{ccy}/{int_bic}: duplicate record")
             seen.add(dup_key)
 
+    return problems
+
+
+# ── Fold verification ────────────────────────────────────────────────────────
+def _ssi_rows(source: str) -> list[tuple]:
+    """Extract SSI_RECORDS as comparable tuples of source text."""
+    tree = ast.parse(source)
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)):
+            continue
+        if node.targets[0].id != "SSI_RECORDS":
+            continue
+        rows = []
+        for element in node.value.elts:
+            if not isinstance(element, ast.Tuple):
+                continue
+            rows.append(tuple(
+                (ast.get_source_segment(source, field) or "").strip()
+                for field in element.elts
+            ))
+        return rows
+    return []
+
+
+def _literal(text: str) -> str:
+    """Best-effort unquote of a source segment; non-literals pass through."""
+    try:
+        value = ast.literal_eval(text)
+    except (ValueError, SyntaxError):
+        return text
+    return value if isinstance(value, str) else text
+
+
+def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str]:
+    """Bind the committed seed rows to the results that were validated.
+
+    ``validate`` gates a JSON file, but the fold into seed.py is done by hand,
+    so nothing previously proved the rows being committed were the rows that
+    passed. Everything this fold *added* must correspond to a validated record,
+    and every validated record must appear. Pre-existing rows are history and
+    are not re-checked.
+    """
+    problems: list[str] = []
+    head = set(_ssi_rows(head_source))
+    added = [row for row in _ssi_rows(folded_source) if row not in head]
+
+    expected: dict[tuple[str, str, str], dict] = {}
+    for bank in results.get("banks", []):
+        ben_bic = str(bank.get("bic", "")).upper()
+        ben_bic11 = ben_bic if len(ben_bic) == 11 else ben_bic[:8] + "XXX"
+        for rec in bank.get("records", []):
+            int_bic = str(rec.get("int_bic", "")).upper()
+            int_bic11 = int_bic if len(int_bic) == 11 else int_bic[:8] + "XXX"
+            key = (ben_bic11, str(rec.get("currency", "")).upper(), int_bic11)
+            expected[key] = {"bank": bank, "record": rec}
+
+    seen: set[tuple[str, str, str]] = set()
+    for row in added:
+        if len(row) < 12:
+            problems.append(
+                f"folded row {row[0] if row else '?'} has {len(row)} fields; "
+                f"a sourced row carries 12 (as_of and status included)"
+            )
+            continue
+        key = (_literal(row[0]), _literal(row[2]), _literal(row[3]))
+        if key not in expected:
+            problems.append(
+                f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the "
+                f"validated results — every committed row must have passed validation"
+            )
+            continue
+        seen.add(key)
+        rec = expected[key]["record"]
+        bank = expected[key]["bank"]
+        for index, (label, want) in enumerate([
+            ("beneficiary name", bank.get("name", "")),
+            ("correspondent", rec.get("correspondent", "")),
+            ("nostro", rec.get("nostro", "")),
+            ("with_an", rec.get("with_an", "")),
+            ("charge code", str(rec.get("charge_code", "")).upper()),
+            ("value date", rec.get("value_date", "")),
+        ]):
+            field = [1, 4, 5, 6, 7, 8][index]
+            got = _literal(row[field])
+            if got != want:
+                problems.append(
+                    f"{key[0]}/{key[1]}: folded {label} {got!r} does not match "
+                    f"the validated {want!r}"
+                )
+        if _literal(row[10]) != rec.get("as_of", ""):
+            problems.append(
+                f"{key[0]}/{key[1]}: folded as_of {_literal(row[10])!r} does not "
+                f"match the validated {rec.get('as_of', '')!r}"
+            )
+        if _literal(row[11]) != str(rec.get("status", "")).lower():
+            problems.append(
+                f"{key[0]}/{key[1]}: folded status {_literal(row[11])!r} does not "
+                f"match the validated {str(rec.get('status', '')).lower()!r}"
+            )
+        source = str(rec.get("source", ""))
+        if source and source not in row[9]:
+            problems.append(
+                f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}"
+            )
+
+    head_keys = {(_literal(r[0]), _literal(r[2]), _literal(r[3])) for r in head if len(r) >= 4}
+    for key in expected:
+        if key not in seen and key not in head_keys:
+            problems.append(
+                f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py"
+            )
     return problems
 
 
@@ -401,10 +527,15 @@ def cmd_verify(_args: argparse.Namespace) -> None:
         if name not in ("BANKS", "SSI_RECORDS"):
             continue
         elts = node.value.elts
-        expected = 5 if name == "BANKS" else 10
+        # SSI rows carry an optional provenance pair, so both widths are legal.
+        expected = (5,) if name == "BANKS" else (10, 12)
         for i, e in enumerate(elts):
-            if not isinstance(e, ast.Tuple) or len(e.elts) != expected:
-                problems.append(f"{name}[{i}]: expected a {expected}-tuple, got {type(e).__name__}")
+            if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
+                got = len(e.elts) if isinstance(e, ast.Tuple) else type(e).__name__
+                problems.append(
+                    f"{name}[{i}]: expected a tuple of "
+                    f"{' or '.join(str(x) for x in expected)} fields, got {got}"
+                )
         if name == "BANKS":
             bics = [e.elts[0].value for e in elts if isinstance(e, ast.Tuple) and e.elts]
             seen: dict[str, int] = {}
@@ -437,6 +568,21 @@ def cmd_commit(args: argparse.Namespace) -> None:
         print(f"  (dry-run) would scaffold {TEST_FILE.name}, gate on pytest, and commit: {msg}")
         return
     cmd_verify(args)
+
+    # Bind the fold to the validation. Everything above gates a JSON file; this
+    # is what proves the rows about to be committed are the rows that passed.
+    fold_problems = verify_fold(
+        results,
+        git("show", f"HEAD:{SEED_FILE.relative_to(REPO_ROOT)}"),
+        SEED_FILE.read_text(),
+    )
+    if fold_problems:
+        raise SystemExit(
+            "the fold does not match the validated results — refusing to commit:\n"
+            + "\n".join(f"  ✗ {p}" for p in fold_problems)
+        )
+    print(f"  ✓ fold matches the validated results ({len(fold_problems) == 0 and 'all rows' or ''})".rstrip())
+
     cmd_scaffold(argparse.Namespace(region=results["region"]))
     # TestAllSSIAccountsArePlaceholders lives in tests/test_ssi.py, and it is
     # the canonical check that no real account number reaches seed.py. Gating

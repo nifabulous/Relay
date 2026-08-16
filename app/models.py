@@ -113,6 +113,9 @@ class SSI(Base):
       - beneficiary_account: the credit-to account at the beneficiary bank.
       - charge_code: OUR (sender pays all fees), SHA (shared), BEN (beneficiary pays).
       - value_date: settlement timing (same-day / spot / T+n).
+      - status: whether the instruction came from the bank's live page
+        ("published"), an archived snapshot ("archived"), or neither
+        ("illustrative"). An archived instruction may no longer be current.
 
     NOTE: account numbers in the seed data are ILLUSTRATIVE placeholders.
     Real SSI data is bank-specific, changes over time, and must be sourced
@@ -133,6 +136,12 @@ class SSI(Base):
     charge_code = Column(String(3), default="SHA")  # OUR / SHA / BEN
     value_date = Column(String(10), default="spot")  # same-day / spot / T+n
     notes = Column(String(500))
+    # Provenance. `status` records HOW the instruction was obtained, not how old
+    # it is: "published" read from the bank's live page, "archived" read from a
+    # point-in-time snapshot, "illustrative" not sourced from a bank at all.
+    # There is no age threshold anywhere — the distinction is evidential.
+    as_of = Column(String(10))                       # source date, when stated
+    status = Column(String(12), nullable=False, default="illustrative")
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),

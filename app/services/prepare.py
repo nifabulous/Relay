@@ -224,6 +224,8 @@ def prepare_payment(
             charge_code=r.charge_code,
             value_date=r.value_date,
             notes=r.notes,
+            as_of=r.as_of,
+            status=r.status,
         )
         for r in ssi_rows
     ]

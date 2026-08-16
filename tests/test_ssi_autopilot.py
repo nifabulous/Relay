@@ -30,6 +30,7 @@ def sample_results(region_name="southeast-asia", **overrides):
                         "value_date": "spot",
                         "source": "https://www.bpi.com.ph/correspondent-banks",
                         "as_of": "2007-12-13",
+                        "status": "archived",
                     }
                 ],
             }
@@ -506,6 +507,7 @@ def test_commit_refuses_when_unrelated_paths_are_already_staged(monkeypatch, tmp
     monkeypatch.setattr(autopilot, "cmd_verify", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "cmd_scaffold", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "run_pytest", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "verify_fold", lambda *a, **k: [])
 
     results = tmp_path / "r.json"
     results.write_text(json.dumps(sample_results()))
@@ -532,6 +534,7 @@ def test_commit_limits_the_commit_to_its_own_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(autopilot, "cmd_verify", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "cmd_scaffold", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "run_pytest", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "verify_fold", lambda *a, **k: [])
     monkeypatch.setattr(autopilot, "write_state", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "read_state", lambda: {
         "branch": "feat/ssi-autopilot", "commits_since_pr": 0,
@@ -555,3 +558,95 @@ def test_commit_gate_runs_the_autopilot_test_file():
         / "scripts" / "ssi-autopilot" / "autopilot.py"
     ).read_text()
     assert "test_ssi_autopilot.py" in src, "gate does not run the autopilot's own tests"
+
+
+# ── The fold must match what was validated ───────────────────────────────────
+SEED_HEAD = '''
+SSI_RECORDS = [
+    ("AAAAGB2LXXX", "Old Bank", "USD",
+     "CITIUS33XXX", "Citibank N.A.",
+     "ACCT-91000001", "ACCT-91000002", "SHA", "spot",
+     "Source: https://old.example (as of 2020-01-01). " + _SSI_REAL_NOTE,
+     "2020-01-01", "published"),
+]
+'''
+
+def _folded(*rows: str) -> str:
+    return "SSI_RECORDS = [\n" + "\n".join(rows) + "\n]\n"
+
+
+BPI_ROW = '''    ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
+     "CITIUS33XXX", "Citibank N.A.",
+     "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
+     "Source: https://www.bpi.com.ph/correspondent-banks (as of 2007-12-13). " + _SSI_REAL_NOTE,
+     "2007-12-13", "archived"),'''
+
+
+def test_fold_matching_the_validated_results_passes():
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(BPI_ROW))
+    assert problems == [], problems
+
+
+def test_a_row_that_was_never_validated_is_rejected():
+    """The gate validated a JSON file; nothing proved the rows committed next
+    to it were the ones that passed."""
+    smuggled = '''    ("BOPIPHMMXXX", "Bank of the Philippine Islands", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank",
+     "ACCT-91000703", "ACCT-91000704", "SHA", "spot",
+     "Source: https://www.bpi.com.ph/correspondent-banks (as of 2007-12-13). " + _SSI_REAL_NOTE,
+     "2007-12-13", "archived"),'''
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(BPI_ROW, smuggled))
+    assert any("not in the validated results" in p for p in problems), problems
+
+
+def test_a_validated_record_that_was_never_folded_is_rejected():
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded())
+    assert any("was validated but not folded" in p for p in problems), problems
+
+
+def test_a_folded_row_whose_account_was_altered_is_rejected():
+    """The classic drift: validated JSON says one account, the hand-edited
+    tuple says another."""
+    altered = BPI_ROW.replace("ACCT-91000701", "ACCT-91000799")
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(altered))
+    assert problems, "an altered account slipped through"
+
+
+def test_a_folded_row_whose_status_disagrees_with_the_research_is_rejected():
+    flipped = BPI_ROW.replace('"archived"', '"published"')
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flipped))
+    assert any("status" in p for p in problems), problems
+
+
+def test_untouched_pre_existing_rows_are_not_re_validated():
+    """Only what this fold added is in scope; the rest of the file is history."""
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    head_row = SEED_HEAD.split("SSI_RECORDS = [")[1].rsplit("]", 1)[0].strip()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded("    " + head_row, BPI_ROW))
+    assert problems == [], problems
+
+
+# ── Provenance is required of the research, not inferred ─────────────────────
+def test_missing_status_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0].pop("status", None)
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("status" in p for p in problems), problems
+
+
+def test_unknown_status_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["status"] = "current-ish"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("status" in p for p in problems), problems

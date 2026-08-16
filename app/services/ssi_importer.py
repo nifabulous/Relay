@@ -43,6 +43,7 @@ from sqlalchemy.orm import Session
 
 from ..models import SSI
 
+VALID_SSI_STATUSES = {"published", "archived", "illustrative"}
 VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
 VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
 
@@ -124,6 +125,18 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
     normalized["intermediary_account"] = (raw.get("intermediary_account") or "").strip() or None
     normalized["beneficiary_account"] = (raw.get("beneficiary_account") or "").strip() or None
     normalized["notes"] = (raw.get("notes") or "").strip() or None
+    normalized["as_of"] = (raw.get("as_of") or "").strip() or None
+
+    # An import states its own provenance or is treated as unsourced. Defaulting
+    # to "published" would let a CSV upload claim a bank published something it
+    # never did, which is exactly what this column exists to prevent.
+    status = (raw.get("status") or "illustrative").strip().lower()
+    if status not in VALID_SSI_STATUSES:
+        errors.append(
+            f"Invalid status: {status!r} (must be one of {sorted(VALID_SSI_STATUSES)})"
+        )
+    else:
+        normalized["status"] = status
 
     charge = (raw.get("charge_code") or "SHA").strip().upper()
     if charge not in VALID_CHARGE_CODES:
@@ -262,6 +275,9 @@ def load_ssi_rows(session: Session, rows: List[dict]) -> SSIImportResult:
                 existing.intermediary_bank_name = normalized["intermediary_bank_name"]
             if normalized.get("notes"):
                 existing.notes = normalized["notes"]
+            if normalized.get("as_of"):
+                existing.as_of = normalized["as_of"]
+            existing.status = normalized["status"]
             result.updated += 1
         else:
             session.add(SSI(**normalized))

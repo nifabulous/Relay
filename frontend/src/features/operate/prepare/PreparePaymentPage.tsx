@@ -17,6 +17,7 @@ import { CorrespondentOptions } from "../../../design-system/correspondent-optio
 import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
+import { SsiProvenance } from "../../explore/SsiProvenance";
 
 /**
  * Currencies offered in the Prepare-payment dropdown beyond the ones a bank
@@ -440,6 +441,7 @@ export function PreparePaymentPage() {
                       <th>Nostro Account</th>
                       <th>Charge</th>
                       <th>Value Date</th>
+                      <th>Source</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -450,6 +452,9 @@ export function PreparePaymentPage() {
                         <td className="mono">{inst.intermediary_account ?? "—"}</td>
                         <td>{inst.charge_code}</td>
                         <td>{inst.value_date}</td>
+                        <td>
+                          <SsiProvenance status={inst.status} asOf={inst.as_of} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

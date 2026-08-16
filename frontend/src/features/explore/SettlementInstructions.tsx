@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { SSIRecord } from "../../api/schemas";
 import type { CurrencyGroup } from "./ssiGrouping";
+import { SsiProvenance } from "./SsiProvenance";
 
 /**
  * One currency's settlement instructions as a table, styled like the app's
@@ -19,6 +20,7 @@ function SsiTable({ records }: { records: SSIRecord[] }) {
             <th>Charges</th>
             <th>Value date</th>
             <th>Settlement IDs</th>
+            <th>Source</th>
           </tr>
         </thead>
         <tbody>
@@ -45,6 +47,9 @@ function SsiTable({ records }: { records: SSIRecord[] }) {
                 <td className="mono">{r.charge_code}</td>
                 <td>{r.value_date}</td>
                 <td className="mono">{settlementIds ?? "—"}</td>
+                <td>
+                  <SsiProvenance status={r.status} asOf={r.as_of} />
+                </td>
               </tr>
             );
           })}

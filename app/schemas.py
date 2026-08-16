@@ -105,6 +105,10 @@ class SSIRecord(BaseModel):
     charge_code: str = "SHA"
     value_date: str = "spot"
     notes: Optional[str] = None
+    # Provenance: "published" (bank's live page), "archived" (point-in-time
+    # snapshot, may no longer be current), or "illustrative" (not sourced).
+    as_of: Optional[str] = None
+    status: str = "illustrative"
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
     intermediary_settlement: Optional[SettlementIds] = None
