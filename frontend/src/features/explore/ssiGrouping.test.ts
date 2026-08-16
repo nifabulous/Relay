@@ -14,6 +14,8 @@ function record(currency: string, intermediaryBic: string): SSIRecord {
     charge_code: "SHA",
     value_date: "spot",
     notes: undefined,
+    as_of: undefined,
+    status: "published",
   };
 }
 

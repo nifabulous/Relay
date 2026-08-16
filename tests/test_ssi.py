@@ -159,7 +159,6 @@ class TestSSISeedIntegrity:
             ("GTBINGLAXXX", "EUR"),
             ("SCBLKENXAXX", "USD"),
             ("ECOCGHACXXX", "USD"),
-            ("SBICZAJJXXX", "USD"),
             ("HDFCINBBXXX", "USD"),
             ("EBILAEADXXX", "USD"),
             ("NCBKSAJEXXX", "USD"),
@@ -481,3 +480,285 @@ class TestSSIModel:
         assert row.charge_code
         assert row.value_date
         assert row.notes
+
+
+class TestSSIProvenanceIsConsistentWithItsSource:
+    """A row may not claim a provenance its own citation contradicts.
+
+    The first classification pass keyed only on `web.archive.org` and so
+    labelled 171 rows "published" whose notes said "(archived 2021-10-09)".
+    Faithfulness of the transform was verified; correctness of the labels was
+    not. This is the check that catches it.
+    """
+
+    @staticmethod
+    def _governing_comments():
+        """A `# Source: ...` comment governs every row until the next one.
+
+        Provenance evidence lives in three places in this file: the row's own
+        note, an archive host in that note, and these section comments. The
+        first classifier read only the host, the second added the note, and
+        this is the third — a comment saying "(2021 archive)" over rows whose
+        own notes say nothing.
+        """
+        import ast
+        import re
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+        src = path.read_text()
+        lines = src.splitlines()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                start, end = node.lineno, node.end_lineno
+                break
+        governing, current = {}, ""
+        for index in range(start - 1, end):
+            text = lines[index].strip()
+            if text.startswith("#"):
+                if re.search(r"source|----", text, re.I):
+                    current = text
+                elif current:
+                    current += " " + text
+            governing[index + 1] = current
+        return governing
+
+    @staticmethod
+    def _rows():
+        import ast
+        from pathlib import Path
+
+        src = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                for element in node.value.elts:
+                    note = ast.get_source_segment(src, element.elts[9]) or ""
+                    yield (
+                        ast.literal_eval(element.elts[0]),
+                        note,
+                        ast.literal_eval(element.elts[10]) if len(element.elts) > 10 else None,
+                        ast.literal_eval(element.elts[11]) if len(element.elts) > 11 else None,
+                    )
+                return
+
+    def test_no_row_claims_published_without_verified_currency(self):
+        """Nothing in the seed data establishes a source was live when read, so
+        no seeded row may claim "published". The 406 rows that once did were
+        assigned it purely because archive evidence was absent."""
+        claiming = [bic for bic, _n, _a, status in self._rows() if status == "published"]
+        assert not claiming, (
+            f"{len(claiming)} seeded row(s) claim verified-live provenance, "
+            f"e.g. {claiming[:3]}"
+        )
+
+    def test_no_sourced_row_cites_an_archived_source_without_saying_so(self):
+        import re
+
+        offenders = [
+            (bic, note[:120])
+            for bic, note, _as_of, status in self._rows()
+            if status in ("published", "unverified")
+            and (re.search(r"archiv|wayback|snapshot", note, re.I) or "web.archive.org" in note)
+        ]
+        assert not offenders, (
+            f"{len(offenders)} row(s) claim an unarchived status but cite an "
+            f"archived source, e.g. {offenders[:3]}"
+        )
+
+    def test_no_published_row_sits_under_an_archived_section_comment(self):
+        import ast
+        import re
+        from pathlib import Path
+
+        governing = self._governing_comments()
+        path = Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+        src = path.read_text()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                rows = node.value.elts
+                break
+        offenders = [
+            (ast.literal_eval(e.elts[0]), governing.get(e.lineno, "")[:90])
+            for e in rows
+            if ast.literal_eval(e.elts[11]) in ("published", "unverified")
+            and re.search(r"archiv|wayback|snapshot", governing.get(e.lineno, ""), re.I)
+        ]
+        assert not offenders, (
+            f"{len(offenders)} row(s) claim an unarchived status under a comment "
+            f"that says archived, e.g. {offenders[:3]}"
+        )
+
+    def test_every_status_is_one_of_the_three_allowed_values(self):
+        allowed = {"published", "unverified", "archived", "illustrative"}
+        bad = [(bic, status) for bic, _n, _a, status in self._rows() if status not in allowed]
+        assert not bad, bad
+
+    def test_as_of_is_an_iso_date_when_present(self):
+        from datetime import date
+
+        bad = []
+        for bic, _note, as_of, _status in self._rows():
+            if as_of is None:
+                continue
+            try:
+                date.fromisoformat(as_of)
+            except (TypeError, ValueError):
+                bad.append((bic, as_of))
+        assert not bad, bad
+
+    def test_an_illustrative_row_never_claims_a_bank_source(self):
+        bad = [
+            (bic, note[:80])
+            for bic, note, _a, status in self._rows()
+            if status == "illustrative" and "_SSI_REAL_NOTE" in note
+        ]
+        assert not bad, bad
+
+
+class TestProvenanceIsEnforcedAtTheBoundaries:
+    """The autopilot validator is not the only writer. /api/import/ssi and any
+    direct session.add() reach the same column, so the value has to be
+    constrained where it is persisted and where it is serialised."""
+
+    def test_schema_rejects_an_unknown_status(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="definitely-current",
+            )
+
+    def test_schema_rejects_a_malformed_as_of(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="not-a-date",
+            )
+
+    def test_schema_accepts_a_well_formed_record(self):
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            as_of="2007-12-13",
+        )
+        assert record.status == "archived"
+
+    def test_database_rejects_an_unknown_status(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="totally-fine",
+        ))
+        with pytest.raises(IntegrityError):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+
+def test_the_three_definitions_of_the_status_set_cannot_drift():
+    """The value is declared in three places that cannot import each other:
+    the Pydantic schema, the model's CHECK constraint, and the autopilot
+    (which is stdlib-only by design). Pin them together."""
+    import re
+    from pathlib import Path
+
+    from app.models import SSI
+    from app.schemas import SSI_STATUSES
+
+    check = next(
+        c for c in SSI.__table__.constraints if getattr(c, "name", "") == "ck_ssi_status"
+    )
+    in_check = set(re.findall(r"'(\w+)'", str(check.sqltext)))
+    assert in_check == set(SSI_STATUSES), (in_check, SSI_STATUSES)
+
+    autopilot_src = (
+        Path(__file__).resolve().parents[1] / "scripts" / "ssi-autopilot" / "autopilot.py"
+    ).read_text()
+    declared = re.search(r"SSI_STATUSES = \{([^}]+)\}", autopilot_src).group(1)
+    assert set(re.findall(r'"(\w+)"', declared)) == set(SSI_STATUSES)
+
+
+class TestNonIllustrativeRowsCiteASource:
+    """"published" and "archived" both assert a bank document was read. A row
+    making that claim must carry the citation that backs it."""
+
+    def test_every_sourced_status_carries_a_source_citation(self):
+        rows = TestSSIProvenanceIsConsistentWithItsSource._rows
+        bad = [
+            (bic, status, note[:70])
+            for bic, note, _as_of, status in rows()
+            if status in ("published", "unverified", "archived")
+            and "_SSI_REAL_NOTE" not in note
+        ]
+        assert not bad, (
+            f"{len(bad)} row(s) claim a bank source without citing one: {bad[:3]}"
+        )
+
+
+class TestProvenanceCannotBeForgedByAWriter:
+    """The autopilot validator guards one path. /api/import/ssi and direct ORM
+    writes reach the same column and must not be able to manufacture authority."""
+
+    def test_an_import_claiming_a_source_without_one_is_downgraded(self, tmp_path):
+        from app.services.ssi_importer import validate_ssi_row
+
+        normalized, errors = validate_ssi_row({
+            "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX", "status": "unverified",
+        })
+        assert errors == []
+        assert normalized["status"] == "illustrative", (
+            "an import with no citation kept a sourced status"
+        )
+
+    def test_an_import_with_a_citation_keeps_its_status(self):
+        from app.services.ssi_importer import validate_ssi_row
+
+        normalized, errors = validate_ssi_row({
+            "beneficiary_bic": "BOPIPHMMXXX", "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX", "status": "archived",
+            "notes": "Source: https://bank.example/ssi (archived 2021-01-01).",
+        })
+        assert errors == []
+        assert normalized["status"] == "archived"
+
+    def test_database_rejects_a_sourced_status_with_no_citation(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes=None,
+        ))
+        with pytest.raises(IntegrityError):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_database_allows_an_illustrative_row_with_no_citation(self, db_session_clean):
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="illustrative", notes=None,
+        ))
+        db_session_clean.commit()

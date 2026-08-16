@@ -59,6 +59,8 @@ def get_ssi(
             charge_code=r.charge_code,
             value_date=r.value_date,
             notes=r.notes,
+            as_of=r.as_of,
+            status=r.status,
             intermediary_settlement=_settlement_for(r.intermediary_bic),
         )
         for r in rows

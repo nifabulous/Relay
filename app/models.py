@@ -1,5 +1,5 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import Column, Index, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint
 
 from .db import Base
 
@@ -113,6 +113,12 @@ class SSI(Base):
       - beneficiary_account: the credit-to account at the beneficiary bank.
       - charge_code: OUR (sender pays all fees), SHA (shared), BEN (beneficiary pays).
       - value_date: settlement timing (same-day / spot / T+n).
+      - status: what is actually known about the source. "published" means
+        someone verified the bank still publishes it; "unverified" means a bank
+        document was read but its currency was never re-checked; "archived"
+        means a point-in-time snapshot; "illustrative" means no bank source.
+        Only "published" asserts currency, and nothing in the seed data earns
+        it — absence of archive evidence is not evidence a page is live.
 
     NOTE: account numbers in the seed data are ILLUSTRATIVE placeholders.
     Real SSI data is bank-specific, changes over time, and must be sourced
@@ -133,11 +139,36 @@ class SSI(Base):
     charge_code = Column(String(3), default="SHA")  # OUR / SHA / BEN
     value_date = Column(String(10), default="spot")  # same-day / spot / T+n
     notes = Column(String(500))
+    # Provenance. `status` records what is known about the source, never how
+    # old it is; there is no age threshold anywhere. A sourced status must be
+    # backed by a citation in `notes`, which the CHECK below enforces.
+    # Deliberately nullable, and deliberately NOT required for "archived":
+    # 181 of the archived rows cite only a year ("2021 archive"). A constraint
+    # demanding a full date would be satisfied by inventing a day and month,
+    # which is the fabrication this column exists to prevent. When the exact
+    # date is known it is stored; when only a year is known the citation in
+    # `notes` carries it and this stays null.
+    as_of = Column(String(10))                       # source date, when stated
+    status = Column(String(12), nullable=False, default="illustrative")
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),
         UniqueConstraint("beneficiary_bic", "currency", "intermediary_bic",
                          name="uq_ssi_composite"),
+        # The validator in the autopilot is not the only writer: /api/import/ssi
+        # and any direct session.add() land here too. Constrain the value where
+        # it is stored, not only where it is generated.
+        CheckConstraint(
+            "status IN ('published', 'unverified', 'archived', 'illustrative')",
+            name="ck_ssi_status",
+        ),
+        # A status that claims a bank document was read must carry the citation
+        # backing it. Without this, /api/import/ssi or a direct session.add()
+        # can store an authoritative-looking row with no provenance at all.
+        CheckConstraint(
+            "status = 'illustrative' OR (notes IS NOT NULL AND notes != '')",
+            name="ck_ssi_sourced_status_has_notes",
+        ),
     )
 
 

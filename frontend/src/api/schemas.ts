@@ -159,6 +159,11 @@ export const SSIRecordSchema = z
     charge_code: z.string().catch(""),
     value_date: z.string().catch(""),
     notes: safeOptionalString,
+    // Provenance. An older backend sends no status; that is precisely the
+    // "we do not know" case, so it falls back to "unverified" rather than
+    // "published" — the fallback must not assert currency either.
+    as_of: safeOptionalString,
+    status: z.string().catch("unverified"),
     intermediary_settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();

@@ -42,6 +42,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import SSI
+from ..schemas import SOURCED_SSI_STATUSES, SSI_STATUSES
 
 VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
 VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
@@ -124,6 +125,24 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
     normalized["intermediary_account"] = (raw.get("intermediary_account") or "").strip() or None
     normalized["beneficiary_account"] = (raw.get("beneficiary_account") or "").strip() or None
     normalized["notes"] = (raw.get("notes") or "").strip() or None
+    normalized["as_of"] = (raw.get("as_of") or "").strip() or None
+
+    # An import states its own provenance or is treated as unsourced. Defaulting
+    # to "published" would let a CSV upload claim a bank published something it
+    # never did, which is exactly what this column exists to prevent.
+    status = (raw.get("status") or "illustrative").strip().lower()
+    if status not in SSI_STATUSES:
+        errors.append(
+            f"Invalid status: {status!r} (must be one of {sorted(SSI_STATUSES)})"
+        )
+    else:
+        normalized["status"] = status
+
+    # A claim of provenance the row cannot back is downgraded, not accepted.
+    # Rejecting the whole row would break imports that simply omit the column;
+    # storing it as-is would let an upload manufacture authority.
+    if normalized.get("status") in SOURCED_SSI_STATUSES and not normalized.get("notes"):
+        normalized["status"] = "illustrative"
 
     charge = (raw.get("charge_code") or "SHA").strip().upper()
     if charge not in VALID_CHARGE_CODES:
@@ -262,6 +281,9 @@ def load_ssi_rows(session: Session, rows: List[dict]) -> SSIImportResult:
                 existing.intermediary_bank_name = normalized["intermediary_bank_name"]
             if normalized.get("notes"):
                 existing.notes = normalized["notes"]
+            if normalized.get("as_of"):
+                existing.as_of = normalized["as_of"]
+            existing.status = normalized["status"]
             result.updated += 1
         else:
             session.add(SSI(**normalized))

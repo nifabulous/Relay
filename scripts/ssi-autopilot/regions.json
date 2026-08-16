@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "note": "Region manifest for the SSI autopilot. Each region lists the beneficiary banks to research, their verified BICs (from theswiftcodes country listings), the currencies to require coverage for, and the masked ACCT- block reserved for its seeded records. forbidden_bics are mislabeled/OCR-typo BICs the research flagged that must never appear in seed data.",
+  "defaults": {
+    "charge_codes": ["SHA", "OUR", "BEN"],
+    "value_dates": ["spot", "1d", "2d", "3d", "T+1", "T+2"],
+    "min_records_per_bank": 1
+  },
+  "regions": [
+    {
+      "name": "oceania",
+      "label": "Oceania",
+      "countries": ["AU", "NZ"],
+      "masked_block": 91001400,
+      "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists — NOT SEEDABLE.",
+      "banks": [
+        {"bic8": "CTBAAU2S", "name": "Commonwealth Bank of Australia", "country": "AU", "currencies": ["USD", "EUR", "GBP", "NZD", "CAD", "JPY", "ZAR", "SGD", "HKD", "CHF", "NOK", "SEK", "DKK", "FJD", "XPF"]},
+        {"bic8": "ANZBAU3M", "name": "ANZ", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "WPACAU2S", "name": "Westpac", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "NATAAU33", "name": "National Australia Bank", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "ANZBNZ22", "name": "ANZ Bank New Zealand", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false},
+        {"bic8": "BKNZNZ22", "name": "Bank of New Zealand", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false},
+        {"bic8": "ASBBNZ2A", "name": "ASB Bank", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false}
+      ],
+      "forbidden_bics": ["NATAU3P"]
+    },
+    {
+      "name": "china",
+      "label": "China (CMB seedable; ICBC, CCB, ABC, BoCom NOT)",
+      "countries": ["CN"],
+      "masked_block": 91001500,
+      "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists — NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
+      "banks": [
+        {"bic8": "CMBCCNBS", "name": "China Merchants Bank", "country": "CN", "currencies": ["USD", "HKD", "EUR", "GBP", "JPY", "AUD", "SGD", "CAD", "CHF"]},
+        {"bic8": "ICBKCNBJ", "name": "Industrial and Commercial Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "PCBCCNBJ", "name": "China Construction Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "ABOCCNBJ", "name": "Agricultural Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "COMMCNSH", "name": "Bank of Communications", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false}
+      ],
+      "forbidden_bics": ["PNBPUS3NNYC", "BBRUBEBB"]
+    },
+    {
+      "name": "latin-america",
+      "label": "Latin America (Bradesco seedable; Brazil/Andean NOT)",
+      "countries": ["BR", "CL", "CO", "PE"],
+      "masked_block": 91000800,
+      "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil, Itaú, Banco de Chile (names-only 2013 list, no BICs/accounts), Santander Chile, Bancolombia, and BCP publish no beneficiary SSI lists — NOT SEEDABLE.",
+      "banks": [
+        {"bic8": "BBDEBRSP", "name": "Banco Bradesco", "country": "BR", "currencies": ["USD", "EUR", "CAD", "AUD", "NZD", "DKK", "NOK", "SEK", "CHF", "JPY", "MXN", "GBP", "ZAR", "CNY"]},
+        {"bic8": "BSCHBRSP", "name": "Banco Santander (Brasil)", "country": "BR", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "ITAUBRSP", "name": "Itaú Unibanco", "country": "BR", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BCHICLRM", "name": "Banco de Chile", "country": "CL", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BSCHCLRM", "name": "Banco Santander Chile", "country": "CL", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "COLOCOBM", "name": "Bancolombia", "country": "CO", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BCPLPEPL", "name": "Banco de Crédito del Perú", "country": "PE", "currencies": ["USD", "EUR"], "seedable": false}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "korea",
+      "label": "South Korea",
+      "countries": ["KR"],
+      "masked_block": 91000900,
+      "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) — SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
+      "banks": [
+        {"bic8": "CZNBKRSE", "name": "KB Kookmin Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "SHBKKRSE", "name": "Shinhan Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "KOEXKRSE", "name": "Hana Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "HVBKKRSE", "name": "Woori Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false}
+      ],
+      "forbidden_bics": ["KOCBKRSE", "KBKOKRSE", "CITICHZZ"]
+    },
+    {
+      "name": "turkey-israel",
+      "label": "Turkey + Israel",
+      "countries": ["TR", "IL"],
+      "masked_block": 91001000,
+      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "banks": [
+        {"bic8": "AKBKTRIS", "name": "Akbank T.A.S.", "country": "TR", "currencies": ["USD", "EUR", "GBP", "CHF", "AUD", "JPY", "SEK", "NOK", "DKK", "SAR"]},
+        {"bic8": "YAPITRIS", "name": "Yapı ve Kredi Bankası", "country": "TR", "currencies": ["USD", "EUR", "GBP", "CHF", "AUD", "CAD", "JPY", "SEK", "NOK", "DKK"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "nordics-poland",
+      "label": "Nordics + Poland",
+      "countries": ["SE", "NO", "PL"],
+      "masked_block": 91001100,
+      "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) — NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) — SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
+      "banks": [
+        {"bic8": "BREXPLPW", "name": "mBank", "country": "PL", "currencies": ["USD", "EUR", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "TRY", "ZAR"]},
+        {"bic8": "BPKOPLPW", "name": "PKO Bank Polski", "country": "PL", "currencies": ["USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"]}
+      ],
+      "forbidden_bics": ["SBAKNOBB"]
+    },
+    {
+      "name": "southern-africa",
+      "label": "Southern Africa",
+      "countries": ["ZA"],
+      "masked_block": 91001200,
+      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
+      "banks": [
+        {"bic8": "NEDSZAJJ", "name": "Nedbank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "SBZAZAJJ", "name": "Standard Bank of South Africa", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "ABSAZAJJ", "name": "Absa Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "FIRNZAJJ", "name": "FirstRand Bank (FNB)", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]}
+      ],
+      "forbidden_bics": ["SBICZAJJ", "SBICUS44"]
+    },
+    {
+      "name": "north-east-africa",
+      "label": "North + East Africa (Morocco, Egypt, Kenya, Nigeria)",
+      "countries": ["MA", "EG", "KE", "NG"],
+      "masked_block": 91001300,
+      "note": "2026-08-16 research: five of the expected BICs were wrong — Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
+      "banks": [
+        {"bic8": "FBNINGLA", "name": "First Bank of Nigeria", "country": "NG", "currencies": ["USD", "GBP", "EUR"]},
+        {"bic8": "ZEIBNGLA", "name": "Zenith Bank", "country": "NG", "currencies": ["USD", "GBP", "EUR"]},
+        {"bic8": "BCMAMAMC", "name": "Attijariwafa Bank", "country": "MA", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BMCEMAMC", "name": "BMCE Bank of Africa", "country": "MA", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "CIBEEGCX", "name": "Commercial International Bank (Egypt)", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "NBEGEGCX", "name": "National Bank of Egypt", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "QNBAEGCX", "name": "QNB AlAhli", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "KCBLKENX", "name": "KCB Bank (Kenya)", "country": "KE", "currencies": ["USD", "EUR", "KES"], "seedable": false}
+      ],
+      "forbidden_bics": ["CMAOMAMR", "BMCEMAMA", "COMEGCAX", "QNBAAEGX", "KCBKEN22", "ZENINGLA", "SBICZAJJ", "SBICUS44"]
+    },
+    {
+      "name": "southeast-asia",
+      "label": "Southeast Asia (BPI verified seedable)",
+      "countries": ["PH", "ID", "TH"],
+      "masked_block": 91000700,
+      "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, Metrobank, and SCB publish nothing — NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM).",
+      "banks": [
+        {"bic8": "BOPIPHMM", "name": "Bank of the Philippine Islands", "country": "PH", "currencies": ["USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"]}
+      ],
+      "forbidden_bics": ["BPIPPHMM", "BEIIIDJA", "CENAIDJJ"]
+    }
+  ]
+}

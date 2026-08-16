@@ -203,3 +203,17 @@
     --duration-normal: 0.01ms;
   }
 }
+
+/* Settlement-instruction provenance. Text carries the meaning (DESIGN.md:
+   never colour alone); the tint only reinforces it. */
+.ssi-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: var(--color-text-warning, #8a5a00);
+}
+.ssi-provenance--illustrative {
+  color: var(--color-text-secondary, #5c5c5c);
+}
