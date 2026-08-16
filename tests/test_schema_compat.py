@@ -28,6 +28,16 @@ CREATE TABLE payment_events (
 )
 """
 
+LEGACY_SSI_DDL = """
+CREATE TABLE ssi (
+    id INTEGER PRIMARY KEY,
+    beneficiary_bic VARCHAR(11) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    intermediary_bic VARCHAR(11) NOT NULL,
+    notes VARCHAR(500)
+)
+"""
+
 
 def _raw_engine():
     return create_engine(
@@ -59,6 +69,47 @@ def _legacy_engine_with_event():
             },
         )
     return engine
+
+
+def test_legacy_ssi_gains_provenance_columns_without_data_loss():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_DDL))
+        conn.execute(text(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+            "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+        ))
+
+    ensure_sqlite_schema(engine)
+
+    with engine.connect() as conn:
+        row = conn.execute(text(
+            "SELECT beneficiary_bic, currency, intermediary_bic, notes, as_of, "
+            "verified_by, status FROM ssi"
+        )).mappings().one()
+    assert row["beneficiary_bic"] == "CITIUS33XXX"
+    assert row["notes"] == "legacy row"
+    assert row["as_of"] is None
+    assert row["verified_by"] is None
+    assert row["status"] == "illustrative"
+
+
+def test_legacy_schema_repair_is_idempotent():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_DDL))
+
+    ensure_sqlite_schema(engine)
+    columns_after_first = {
+        column["name"] for column in inspect(engine).get_columns("ssi")
+    }
+
+    ensure_sqlite_schema(engine)
+    columns_after_second = {
+        column["name"] for column in inspect(engine).get_columns("ssi")
+    }
+
+    assert columns_after_second == columns_after_first
 
 
 class TestLegacyTableGainsColumnsWithoutDataLoss:
@@ -125,11 +176,16 @@ class TestCurrentSchemaIsANoop:
             c["name"] for c in inspect(engine).get_columns("payment_events")
         }
         ensure_sqlite_schema(engine)
-        columns_after = {
+        columns_after_first = {
+            c["name"] for c in inspect(engine).get_columns("payment_events")
+        }
+        ensure_sqlite_schema(engine)
+        columns_after_second = {
             c["name"] for c in inspect(engine).get_columns("payment_events")
         }
 
-        assert columns_after == columns_before
+        assert columns_after_first == columns_before
+        assert columns_after_second == columns_after_first
         with engine.connect() as conn:
             row = conn.execute(
                 text(
