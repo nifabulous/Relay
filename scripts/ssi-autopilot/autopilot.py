@@ -197,6 +197,21 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                     f"{ben_bic}/{ccy}: status {status!r} must be one of "
                     f"{sorted(SSI_STATUSES)}"
                 )
+            # "published" is the one status asserting present-tense currency,
+            # so it has to say who established that. Without this the fold
+            # would be silently downgraded at seed time and the research
+            # result would not survive.
+            verified_by = str(rec.get("verified_by", "")).strip()
+            if status == "published" and not verified_by:
+                problems.append(
+                    f"{ben_bic}/{ccy}: status 'published' requires verified_by, "
+                    f"who confirmed the bank still publishes it"
+                )
+            if status != "published" and verified_by:
+                problems.append(
+                    f"{ben_bic}/{ccy}: verified_by is only meaningful for "
+                    f"status 'published', got status {status!r}"
+                )
 
             # value_dates is a manifest allowlist that was never consulted.
             if value_date not in defaults["value_dates"]:
@@ -529,8 +544,9 @@ def cmd_verify(_args: argparse.Namespace) -> None:
         if name not in ("BANKS", "SSI_RECORDS"):
             continue
         elts = node.value.elts
-        # SSI rows carry an optional provenance pair, so both widths are legal.
-        expected = (5,) if name == "BANKS" else (10, 12)
+        # SSI rows carry optional provenance: 12 adds as_of and status, 13
+        # adds the verifier that "published" requires.
+        expected = (5,) if name == "BANKS" else (10, 12, 13)
         for i, e in enumerate(elts):
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
                 got = len(e.elts) if isinstance(e, ast.Tuple) else type(e).__name__

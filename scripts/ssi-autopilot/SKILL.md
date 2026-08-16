@@ -97,7 +97,10 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    source justifies local-currency settlement.
 
    An SSI row is a 12-tuple: the ten existing fields, then `as_of` and
-   `status`, both copied verbatim from the validated record:
+   `status`, both copied verbatim from the validated record. A row claiming
+   `published` takes a 13th field, `verified_by` — without it the seed stores
+   the row as `unverified`, because an unattributable claim of currency is
+   worse than no claim:
 
    ```python
    ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
@@ -105,6 +108,15 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
     "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
     "Source: <url> (as of 2007-12-13). " + _SSI_REAL_NOTE,
     "2007-12-13", "archived"),
+   ```
+
+   ```python
+   # published needs the 13th field; the other statuses must not carry one
+   ("BOPIPHMMXXX", "Bank of the Philippine Islands", "USD",
+    "CITIUS33XXX", "Citibank N.A.",
+    "ACCT-91000701", "ACCT-91000702", "SHA", "spot",
+    "Source: <url> (as of 2026-08-16). " + _SSI_REAL_NOTE,
+    "2026-08-16", "published", "ops:ada"),
    ```
 
    `commit` re-reads these rows and compares them field by field against the

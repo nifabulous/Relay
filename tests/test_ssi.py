@@ -1563,3 +1563,68 @@ class TestPublishedIsAttributionNotAuthorisation:
 
         assert event.contains(SSI, "before_insert", _validate_ssi_provenance)
         assert event.contains(SSI, "before_update", _validate_ssi_provenance)
+
+
+class TestResearchCanActuallyPublishThroughTheSeed:
+    """SKILL.md tells research a published record must name a verifier, but the
+    seed tuple had no field for one — so a researcher following the file wrote
+    "published" and the seed silently stored "unverified". Documentation
+    promising what the format could not express."""
+
+    def test_the_seed_tuple_carries_a_verifier(self):
+        import inspect
+
+        from app.services import seed
+
+        source = inspect.getsource(seed.seed_if_empty)
+        assert "verified_by=verified_by" in source, (
+            "seed writes provenance but drops the verifier"
+        )
+
+    def test_a_thirteen_field_row_persists_as_published(self, db_session_clean):
+        from app.models import SSI
+
+        # exactly what seed.py builds from a 13-field tuple
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX",
+            notes="Source: https://bank.example/ssi.",
+            as_of="2020-01-01", status="published", verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "published"
+        assert row.verified_by == "ops:ada"
+
+    def test_a_twelve_field_published_row_is_still_downgraded(self, db_session_clean):
+        """The format is permissive, the invariant is not: omitting the verifier
+        does not sneak a published row through, it just loses the claim."""
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", notes="Source: x",
+            as_of="2020-01-01", status="published",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified"
+
+    def test_the_verifier_arity_is_accepted_by_the_seed_verifier(self):
+        """cmd_verify pins tuple widths; 13 has to be legal or the fold fails
+        structural verification before it reaches the database."""
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts" / "ssi-autopilot" / "autopilot.py"
+        )
+        source = script.read_text()
+        assert "(10, 12, 13)" in source, "a 13-field SSI row would fail verify"
+        result = subprocess.run(
+            [sys.executable, str(script), "verify"], capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
