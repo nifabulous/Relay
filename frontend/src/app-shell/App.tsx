@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { wrapReactRouterRouting } from "@sentry/react";
+import { withSentryReactRouterV7Routing } from "@sentry/react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
@@ -29,7 +29,7 @@ const PracticePage = lazy(() => import("../features/learn/practice/PracticePage"
 // preferences menu's "All settings" item. See DESIGN.md's four-workspace shell.
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage").then(m => ({ default: m.SettingsPage })));
 
-const SentryRoutes = wrapReactRouterRouting(Routes);
+const SentryRoutes = withSentryReactRouterV7Routing(Routes);
 
 const queryClient = new QueryClient({
   defaultOptions: {
