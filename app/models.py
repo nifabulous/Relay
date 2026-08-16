@@ -173,13 +173,20 @@ class SSI(Base):
         # events cover ORM writes but not Core inserts, bulk operations or raw
         # SQL, so this is the only rule those paths still obey.
         #
-        # Shape is all a CHECK can promise: "not in the future" is rejected by
-        # SQLite ("non-deterministic use of date()") and by Postgres (CHECK
-        # functions must be IMMUTABLE). That rule lives in the listener and the
-        # Pydantic validators; see the migration for the full reasoning.
+        # LIKE with `_` is the strictest test both engines share. An earlier
+        # version used SQLite's GLOB with digit classes, which create_all
+        # emitted verbatim on Postgres, where GLOB is not an operator — the
+        # tests never caught it because they build the schema on SQLite. The
+        # migration uses this identical expression so the two cannot diverge
+        # again.
+        #
+        # What this cannot promise: digits rather than letters, a real calendar
+        # date ("2024-02-30" passes), and recency. SQLite refuses date('now')
+        # in a CHECK as non-deterministic and Postgres requires CHECK functions
+        # to be IMMUTABLE, so the bound is not expressible in either. Those
+        # rules live in the listener below and in the Pydantic validators.
         CheckConstraint(
-            "as_of IS NULL OR "
-            "as_of GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'",
+            "as_of IS NULL OR as_of LIKE '____-__-__'",
             name="ck_ssi_as_of_is_a_past_iso_date",
         ),
         # "published" asserts someone verified currency; as_of is the date of

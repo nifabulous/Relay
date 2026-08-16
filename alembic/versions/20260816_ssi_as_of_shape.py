@@ -14,8 +14,14 @@ easily as write a row, so the recency rule stays in the ORM listener and the
 Pydantic validators. Malformed and whitespace values are caught here, which is
 what a CHECK can actually promise.
 
-The expression is dialect-specific because a date-shape test is not portable:
-SQLite has GLOB, Postgres has POSIX regex.
+The expression uses LIKE with `_`, the strictest shape test both engines share.
+A dialect-specific version (GLOB / POSIX regex) was stricter but diverged from
+the model, which emitted the SQLite form on Postgres where GLOB is not an
+operator. One portable expression in both places cannot drift.
+
+It follows that the constraint accepts letters in the digit positions and
+impossible calendar dates such as 2024-02-30; `date.fromisoformat` in the ORM
+listener and the Pydantic validators are what reject those.
 
 Revision ID: 20260816_ssi_asofshape
 """
@@ -31,17 +37,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 CONSTRAINT = "ck_ssi_as_of_is_a_past_iso_date"
 
-SQLITE = "as_of IS NULL OR as_of GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'"
-POSTGRES = "as_of IS NULL OR as_of ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'"
-
-
-def _expression() -> str:
-    return SQLITE if op.get_bind().dialect.name == "sqlite" else POSTGRES
+SHAPE = "as_of IS NULL OR as_of LIKE '____-__-__'"
 
 
 def upgrade() -> None:
     with op.batch_alter_table("ssi") as batch:
-        batch.create_check_constraint(CONSTRAINT, _expression())
+        batch.create_check_constraint(CONSTRAINT, SHAPE)
 
 
 def downgrade() -> None:

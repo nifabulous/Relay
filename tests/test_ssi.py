@@ -1025,3 +1025,44 @@ class TestProvenanceSurvivesTheBypassPaths:
                 notes="Source: x", as_of="garbage",
             )])
         db_session_clean.rollback()
+
+
+class TestSchemaIsPortable:
+    """The suite builds every schema on SQLite, so a SQLite-only expression in
+    a constraint passes here and fails on the production engine. An earlier
+    revision emitted SQLite's GLOB verbatim on Postgres, where it is not an
+    operator."""
+
+    def test_no_table_emits_a_sqlite_only_operator_on_postgres(self):
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        from app.db import Base
+
+        offenders = []
+        for table in Base.metadata.sorted_tables:
+            ddl = str(CreateTable(table).compile(dialect=postgresql.dialect()))
+            for operator in (" GLOB ", "date('now'", "datetime('now'"):
+                if operator in ddl:
+                    offenders.append((table.name, operator.strip()))
+        assert not offenders, f"SQLite-only SQL emitted for Postgres: {offenders}"
+
+    def test_the_model_and_the_migration_agree_on_the_as_of_shape(self):
+        """They are separate declarations of one rule; drift between them is
+        how the Postgres bug got in."""
+        import re
+        from pathlib import Path
+
+        from app.models import SSI
+
+        migration = (
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260816_ssi_as_of_shape.py"
+        ).read_text()
+        declared = re.search(r'SHAPE = "(.+?)"', migration).group(1)
+
+        constraint = next(
+            c for c in SSI.__table__.constraints
+            if getattr(c, "name", "") == "ck_ssi_as_of_is_a_past_iso_date"
+        )
+        assert str(constraint.sqltext) == declared
