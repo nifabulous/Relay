@@ -192,31 +192,31 @@ ruff check . --fix  # auto-fix import order etc.
 - **SIMULATION disclaimers** must appear on the API title, every payment-shaped response, and the UI banners. Don't remove them.
 - **The `esc()` function** lives in `learn-utils.js`. Never copy it into a lab file — use `LearnUtils.esc` or `var esc = LearnUtils.esc`.
 
-## Pull request completion protocol
+## Maintainer pull request completion checklist
 
-This repository uses a review-until-merge loop for every pushed change:
+This is a human-operated checklist, not an instruction or authorization for
+Codex, CI, hooks, or any other automation. It grants no permission to write to
+Git, GitHub, deployments, or environments. Automated reviewers remain
+read-only unless a human separately authorizes a specific write operation.
 
-1. Before pushing, verify the current branch's PR is still open. If its PR is
-   already merged or closed, branch from the latest `origin/main` and open a
-   new PR instead of pushing more commits to the completed PR's branch.
-2. After every push, identify the current PR and poll its checks, review
-   threads, inline comments, and top-level comments. Do not treat an old green
-   check or an old bot review as current until it covers the pushed head SHA.
-3. Fix every unresolved actionable comment, including bot comments. Add or
-   update regression tests and rerun the relevant validation. Commit and push
-   fixes only when the user has explicitly authorized write actions for the
-   task; otherwise report the proposed fixes without mutating GitHub.
-4. Poll again after each push and repeat step 3 until there are no unresolved
-   actionable comments, all required checks pass on the exact head SHA, and
-   the PR is mergeable.
-5. Once those conditions are met, report the PR as ready. Merge only when the
-   user has explicitly authorized merging for that task, then verify that
-   GitHub reports it as merged. Never bypass a required human decision or
-   deployment approval.
+For every pushed change, the maintainer should:
+
+1. Confirm the branch's PR is still open before pushing. If it is already
+   merged or closed, branch from the latest `origin/main` and open a follow-up
+   PR instead of pushing to the completed PR's branch.
+2. After the push, inspect checks, review threads, inline comments, and
+   top-level comments for the exact pushed head SHA. Do not treat an old green
+   check or old review as current.
+3. Resolve every actionable comment, add or update regression tests, and rerun
+   relevant validation before the next push.
+4. Repeat the inspection after each push until there are no unresolved
+   actionable comments, all required checks pass on the exact head SHA, and the
+   PR is mergeable.
+5. Merge only after an explicit human decision, then verify that GitHub reports
+   the PR as merged. Never bypass a required human or deployment approval.
 
 Use thread-aware GitHub reads when review state matters. Preserve unrelated
-working-tree changes, never stage secrets, and never push a branch whose PR has
-already been merged without first creating the follow-up PR.
+working-tree changes and never stage secrets.
 
 ## Important files
 

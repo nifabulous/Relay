@@ -81,6 +81,7 @@ def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkey
     """Reasoning responses include metadata outside the visible output cap."""
 
     body = json.dumps({"reasoning": "r" * 210_000, "output_text": "ok"}).encode("utf-8")
+    read_limits: list[int] = []
 
     class Response:
         def __enter__(self):
@@ -90,7 +91,8 @@ def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkey
             return False
 
         def read(self, limit):
-            return body
+            read_limits.append(limit)
+            return body[:limit]
 
     monkeypatch.setattr(
         codex_responses.urllib.request,
@@ -108,6 +110,7 @@ def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkey
         max_output_bytes=50_000,
         request_timeout=600,
     ) == "ok"
+    assert read_limits == [codex_responses.response_body_limit(32_000, 50_000) + 1]
 
 
 def test_response_envelope_limit_accepts_exact_size_and_rejects_one_byte_over() -> None:

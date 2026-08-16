@@ -93,4 +93,47 @@ describe("Vite Sentry source-map lifecycle", () => {
     await writeFile(mapPath, "map that must be rejected");
     await expect(assertionPlugin?.writeBundle?.()).rejects.toThrow("Public source maps remain");
   });
+
+  it("uses the pinned Sentry plugin's real deletion hook", async () => {
+    temporaryRoot = await mkdtemp(join(tmpdir(), "relay-vite-real-plugin-"));
+    const frontendRoot = join(temporaryRoot, "frontend");
+    const outputRoot = join(temporaryRoot, "app", "static", "relay");
+    const mapPath = join(outputRoot, "assets", "index.js.map");
+    await mkdir(frontendRoot, { recursive: true });
+    await mkdir(join(mapPath, ".."), { recursive: true });
+    await writeFile(mapPath, "private source map");
+    process.chdir(frontendRoot);
+
+    vi.doUnmock("@sentry/vite-plugin");
+    vi.doUnmock("vite");
+    const { sentryVitePlugin } = await import("@sentry/vite-plugin");
+    const [plugin] = sentryVitePlugin({
+      org: "relay",
+      project: "relay-frontend",
+      authToken: "sntrys_test",
+      telemetry: false,
+      release: {
+        name: "abc123def456",
+        inject: false,
+        create: false,
+        finalize: false,
+        setCommits: false,
+      },
+      // Disable only the network upload for this test. The pinned plugin's
+      // real writeBundle and deletion implementation still run on the output.
+      sourcemaps: {
+        disable: "disable-upload",
+        filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"],
+      },
+      errorHandler: (error) => {
+        throw error;
+      },
+    });
+
+    expect(plugin.name).toBe("sentry-vite-plugin");
+    expect(plugin.enforce).toBe("pre");
+    await plugin.writeBundle?.({ dir: outputRoot }, {});
+
+    await expect(access(mapPath)).rejects.toThrow();
+  });
 });
