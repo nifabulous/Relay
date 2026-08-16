@@ -102,6 +102,7 @@ for file in scripts/codex_review_pr.sh scripts/codex_triage_issue.sh; do
   require_text "$file" 'CODEX_MAX_INPUT_BYTES'
   require_text "$file" '--max-output-tokens "$CODEX_MAX_OUTPUT_TOKENS"'
   require_text "$file" '--max-output-bytes "$CODEX_MAX_OUTPUT_BYTES"'
+  require_text "$file" '--request-timeout "$CODEX_REQUEST_TIMEOUT"'
   require_text "$file" 'codex_sanitize.py'
   require_text "$file" 'codex_untrusted.py'
   require_text "$file" 'CODEX_BOT_LOGIN'
@@ -123,6 +124,8 @@ require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
 require_text 'scripts/codex_triage_issue.sh' '--instructions "$TEMP_DIR/triage-instructions.md"'
 require_text 'scripts/codex_responses.py' 'https://api.openai.com/v1/responses'
 require_text 'scripts/codex_responses.py' '"store": False'
+# A hardcoded socket timeout aborted a 32000-token generation mid-call.
+refuse_text 'scripts/codex_responses.py' 'timeout=120'
 
 for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-triage.yml; do
   require_text "$file" 'CODEX_MODEL:'
@@ -130,6 +133,7 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_MAX_ITEMS:'
   require_text "$file" 'CODEX_MAX_OUTPUT_TOKENS:'
   require_text "$file" 'CODEX_MAX_OUTPUT_BYTES:'
+  require_text "$file" 'CODEX_REQUEST_TIMEOUT:'
   require_text "$file" 'CODEX_BOT_LOGIN:'
   require_text "$file" 'GITHUB_STEP_SUMMARY'
   # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.

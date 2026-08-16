@@ -23,6 +23,14 @@ OUTPUT_TRUNCATION_MARKER = "\n\n[TRUNCATED OUTPUT: the model hit max_output_toke
 # ceiling the token cap can never reach, so the two controls stay coherent.
 BYTES_PER_TOKEN = 4
 
+# The socket timeout and the token cap are one decision, not two. A reasoning
+# model emits tokens slowly enough that a large budget legitimately outlives a
+# short timeout, and aborting mid-generation loses the whole review rather than
+# degrading it. This floor is deliberately conservative: at roughly 50 output
+# tokens per second, 32000 tokens needs ~640s of headroom.
+SECONDS_PER_1K_TOKENS = 20
+DEFAULT_REQUEST_TIMEOUT = 900
+
 
 def bound_input(text: str, max_bytes: int) -> str:
     """Return UTF-8 text no larger than max_bytes, marking truncation."""
@@ -140,6 +148,7 @@ def request_response(
     api_key: str,
     max_output_tokens: int,
     max_output_bytes: int,
+    request_timeout: int = DEFAULT_REQUEST_TIMEOUT,
 ) -> str:
     payload = build_payload(model, reasoning_effort, instructions, prompt, max_output_tokens)
     request = urllib.request.Request(
@@ -152,14 +161,29 @@ def request_response(
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with urllib.request.urlopen(request, timeout=request_timeout) as response:
             # A response envelope is metadata plus the bounded output; allow
             # headroom over the output ceiling but never an unbounded read.
             body = read_bounded_body(response, max_output_bytes * 4)
     except urllib.error.HTTPError as error:
         raise RuntimeError(f"OpenAI Responses request failed with HTTP {error.code}") from None
-    except (urllib.error.URLError, TimeoutError):
-        raise RuntimeError("OpenAI Responses request failed") from None
+    except TimeoutError:
+        # Distinguished from a connection failure: the CI log for a timeout
+        # read only "request failed", which cannot be acted on.
+        raise RuntimeError(
+            f"OpenAI Responses request timed out after {request_timeout}s "
+            f"(max_output_tokens={max_output_tokens}); raise --request-timeout "
+            f"or lower --max-output-tokens"
+        ) from None
+    except urllib.error.URLError as error:
+        reason = getattr(error, "reason", error)
+        if isinstance(reason, TimeoutError) or "timed out" in str(reason).lower():
+            raise RuntimeError(
+                f"OpenAI Responses request timed out after {request_timeout}s "
+                f"(max_output_tokens={max_output_tokens}); raise --request-timeout "
+                f"or lower --max-output-tokens"
+            ) from None
+        raise RuntimeError(f"OpenAI Responses request failed to connect: {reason}") from None
     result = extract_output(body)
     if not result:
         raise RuntimeError("OpenAI Responses returned no text")
@@ -176,6 +200,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-input-bytes", required=True, type=int)
     parser.add_argument("--max-output-tokens", required=True, type=int)
     parser.add_argument("--max-output-bytes", required=True, type=int)
+    parser.add_argument(
+        "--request-timeout", type=int, default=DEFAULT_REQUEST_TIMEOUT,
+        help="socket timeout in seconds; must cover the max-output-tokens budget",
+    )
     args = parser.parse_args(argv)
     if not MODEL_PATTERN.fullmatch(args.model):
         parser.error("--model contains unsupported characters")
@@ -192,6 +220,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         parser.error(
             "--max-output-bytes is unreachable at this --max-output-tokens "
             f"(ceiling must be at most {args.max_output_tokens * BYTES_PER_TOKEN})"
+        )
+    if args.request_timeout <= 0:
+        parser.error("--request-timeout must be positive")
+    # Raising the token cap without raising the timeout only moves the failure
+    # from an "incomplete" response to an aborted request. Tie them together so
+    # changing one forces a decision about the other.
+    required = (args.max_output_tokens * SECONDS_PER_1K_TOKENS) // 1000
+    if args.request_timeout < required:
+        parser.error(
+            f"--request-timeout {args.request_timeout}s is too short for "
+            f"--max-output-tokens {args.max_output_tokens} "
+            f"(need at least {required}s)"
         )
     return args
 
@@ -223,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
             api_key,
             args.max_output_tokens,
             args.max_output_bytes,
+            args.request_timeout,
         )
         args.output_path.write_text(result, encoding="utf-8")
     except (OSError, ValueError, RuntimeError) as error:

@@ -151,7 +151,7 @@ def test_input_budget_is_shared_between_instructions_and_payload(tmp_path) -> No
 
     sent: dict[str, object] = {}
 
-    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes):
+    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None):
         sent["instructions"] = instructions_text
         sent["prompt"] = prompt
         return "review"
@@ -190,3 +190,66 @@ def test_input_budget_is_shared_between_instructions_and_payload(tmp_path) -> No
         str(sent["prompt"]).encode("utf-8")
     )
     assert total <= 100
+
+
+# ── Request timeout must fit the output budget ───────────────────────────────
+def test_request_timeout_is_configurable_and_defaults_above_the_socket_floor():
+    """A 32000-token reasoning generation routinely runs past 120s. The old
+    hardcoded socket timeout aborted the request mid-generation, and the job
+    failed with no review posted."""
+    args = codex_responses.parse_args([
+        "--model", "gpt-5.3-codex",
+        "--reasoning-effort", "medium",
+        "--instructions", "i.md",
+        "--input", "in.md",
+        "--output", "out.md",
+        "--max-input-bytes", "120000",
+        "--max-output-tokens", "32000",
+        "--max-output-bytes", "50000",
+    ])
+    assert args.request_timeout >= 600, (
+        f"default timeout {args.request_timeout}s is too small for a "
+        "32000-token reasoning budget"
+    )
+
+
+def test_request_timeout_must_cover_the_token_budget(capsys):
+    """The timeout and the token cap are one decision: raising the cap without
+    raising the timeout just moves the failure from 'incomplete' to 'timeout'."""
+    with pytest.raises(SystemExit):
+        codex_responses.parse_args([
+            "--model", "gpt-5.3-codex",
+            "--reasoning-effort", "medium",
+            "--instructions", "i.md",
+            "--input", "in.md",
+            "--output", "out.md",
+            "--max-input-bytes", "120000",
+            "--max-output-tokens", "32000",
+            "--max-output-bytes", "50000",
+            "--request-timeout", "60",
+        ])
+    # argparse writes the reason to stderr and exits 2, so the message is there.
+    assert "--request-timeout" in capsys.readouterr().err
+
+
+def test_timeout_and_connection_failures_are_distinguishable(monkeypatch):
+    """The CI log said only 'OpenAI Responses request failed', which does not
+    say whether the request timed out or never connected."""
+    def fake_urlopen(*args, **kwargs):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(codex_responses.urllib.request, "urlopen", fake_urlopen)
+    with pytest.raises(RuntimeError) as exc:
+        codex_responses.request_response(
+            model="gpt-5.3-codex",
+            reasoning_effort="medium",
+            instructions="i",
+            prompt="p",
+            api_key="k",
+            max_output_tokens=32000,
+            max_output_bytes=50000,
+            request_timeout=600,
+        )
+    message = str(exc.value)
+    assert "timed out" in message.lower()
+    assert "600" in message, "the message should name the timeout that fired"
