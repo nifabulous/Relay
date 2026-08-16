@@ -145,6 +145,76 @@ def test_a_malformed_published_row_gets_remediation_that_actually_works(tmp_path
 AS_OF_SHAPE = "20260816_ssi_asofshape"
 
 
+def _seed_published_at_prov_without_a_date(db: Path) -> None:
+    """A row the prov schema accepted: status='published' with no as_of at
+    all (as_of was nullable and nothing required it). The pubdate migration's
+    constraint would fail on this row, so its preflight must catch it first."""
+    assert _alembic(db, "upgrade", "20260816_ssi_prov").returncode == 0
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', NULL)"
+    )
+    connection.commit()
+    connection.close()
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_pubdate_preflight_refuses_a_published_row_without_a_date(tmp_path):
+    db = tmp_path / "undated.db"
+    _seed_published_at_prov_without_a_date(db)
+
+    result = _alembic(db, "upgrade", "head")
+
+    assert result.returncode != 0, "the migration accepted a row it cannot constrain"
+    assert "without a verification date" in result.stderr, result.stderr[-400:]
+
+    connection = sqlite3.connect(db)
+    tables = [r[0] for r in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")]
+    version = list(connection.execute("SELECT version_num FROM alembic_version"))[0][0]
+    connection.close()
+    assert "_alembic_tmp_ssi" not in tables, (
+        "an aborted batch rebuild stranded its temp table, which blocks every retry"
+    )
+    assert version == "20260816_ssi_prov", "the preflight changed the schema before deciding the data fits"
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_pubdate_preflight_repair_completes_the_upgrade(tmp_path):
+    """The remediation the preflight prescribes — downgrade to unverified —
+    must be valid against the pre-migration schema and actually unblock the
+    deploy, exactly as printed."""
+    db = tmp_path / "undated-repaired.db"
+    _seed_published_at_prov_without_a_date(db)
+    assert _alembic(db, "upgrade", "head").returncode != 0
+
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "UPDATE ssi SET status = 'unverified' "
+        "WHERE status = 'published' AND (as_of IS NULL OR as_of = '')"
+    )
+    connection.commit()
+    connection.close()
+
+    result = _alembic(db, "upgrade", "head")
+    assert result.returncode == 0, result.stderr[-400:]
+
+    connection = sqlite3.connect(db)
+    ddl = list(connection.execute(
+        "SELECT sql FROM sqlite_master WHERE name='ssi'"))[0][0]
+    connection.close()
+    assert "ck_ssi_published_has_verification_date" in ddl
+
+
 def _seed_published_without_a_verifier(db: Path) -> None:
     """A row the previous schema allowed: published, dated, unattributed."""
     assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
