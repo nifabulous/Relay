@@ -875,30 +875,31 @@ class TestEuropeSsiCoverage:
 
 
 # ---- autopilot-generated coverage tests ----
-OCEANIA_SSI_COVERAGE = [
-    ("CTBAAU2SXXX", "Commonwealth Bank of Australia", {"USD", "EUR", "GBP", "NZD", "CAD", "JPY", "ZAR", "SGD", "HKD", "CHF", "NOK", "SEK", "DKK", "FJD", "XPF"}),
+NORTH_EAST_AFRICA_SSI_COVERAGE = [
+    ("FBNINGLAXXX", "First Bank of Nigeria", {"USD", "GBP", "EUR"}),
+    ("ZEIBNGLAXXX", "Zenith Bank", {"USD", "GBP", "EUR"}),
 ]
 
 
-class TestOceaniaSsiCoverage:
-    def test_oceania_banks_have_seeded_ssi_records(self):
+class TestNorthEastAfricaSsiCoverage:
+    def test_north_east_africa_banks_have_seeded_ssi_records(self):
         seeded = {}
         for record in SSI_RECORDS:
             seeded.setdefault(record[0], set()).add(record[2])
-        for bic, name, currencies in OCEANIA_SSI_COVERAGE:
+        for bic, name, currencies in NORTH_EAST_AFRICA_SSI_COVERAGE:
             have = seeded.get(bic, set())
             missing = currencies - have
             assert not missing, (
                 f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
             )
 
-    def test_oceania_banks_are_in_the_bank_directory(self):
+    def test_north_east_africa_banks_are_in_the_bank_directory(self):
         bank_bics = {row[0] for row in BANKS}
         missing = [
-            bic for bic, _name, _currencies in OCEANIA_SSI_COVERAGE
+            bic for bic, _name, _currencies in NORTH_EAST_AFRICA_SSI_COVERAGE
             if bic not in bank_bics
         ]
         assert not missing, (
-            f"oceania SSI beneficiaries must also be seeded in BANKS so "
+            f"north-east-africa SSI beneficiaries must also be seeded in BANKS so "
             f"Explore can show their settlement instructions: {missing}"
         )
