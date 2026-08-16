@@ -103,7 +103,7 @@ for file in scripts/codex_review_pr.sh scripts/codex_triage_issue.sh; do
   require_text "$file" '--max-output-tokens "$CODEX_MAX_OUTPUT_TOKENS"'
   require_text "$file" '--max-output-bytes "$CODEX_MAX_OUTPUT_BYTES"'
   require_text "$file" '--request-timeout "$CODEX_REQUEST_TIMEOUT"'
-  require_text "$file" '--job-timeout "$CODEX_JOB_TIMEOUT_SECONDS"'
+  require_text "$file" '--job-deadline "$CODEX_JOB_DEADLINE_EPOCH"'
   require_text "$file" 'codex_sanitize.py'
   require_text "$file" 'codex_untrusted.py'
   require_text "$file" 'CODEX_BOT_LOGIN'
@@ -136,6 +136,9 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_MAX_OUTPUT_BYTES:'
   require_text "$file" 'CODEX_REQUEST_TIMEOUT:'
   require_text "$file" 'CODEX_JOB_TIMEOUT_SECONDS:'
+  # Stamped before checkout, or the elapsed setup time it exists to measure is
+  # itself excluded from the measurement.
+  require_text "$file" 'CODEX_JOB_DEADLINE_EPOCH='
   # timeout-minutes is what GitHub enforces; CODEX_JOB_TIMEOUT_SECONDS is what
   # the worker validates against. If they drift, the worker approves a request
   # timeout the job will not survive.
@@ -355,8 +358,8 @@ check_timeout_propagates() {
     fail "$script did not pass --request-timeout $timeout to codex_responses.py"
     cat "$STUB_DIR/responses-argv.log" >&2
   fi
-  if ! grep -Fq -- "--job-timeout" "$STUB_DIR/responses-argv.log"; then
-    fail "$script did not pass --job-timeout to codex_responses.py"
+  if ! grep -Fq -- "--job-deadline" "$STUB_DIR/responses-argv.log"; then
+    fail "$script did not pass --job-deadline to codex_responses.py"
     cat "$STUB_DIR/responses-argv.log" >&2
   fi
 }
@@ -392,7 +395,7 @@ check_override_beyond_job_deadline_is_refused() {
 
   if (( status == 0 )); then
     fail "$script accepted CODEX_REQUEST_TIMEOUT=1800 inside a 1200s job"
-  elif ! grep -q 'leaves no room inside' "$STUB_DIR/run.log"; then
+  elif ! grep -q 'does not fit the' "$STUB_DIR/run.log"; then
     fail "$script failed for the wrong reason on an over-long request timeout"
     cat "$STUB_DIR/run.log" >&2
   fi

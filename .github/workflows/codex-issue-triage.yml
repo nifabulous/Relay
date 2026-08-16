@@ -51,6 +51,11 @@ jobs:
       DISPATCH_ISSUE_NUMBER: ${{ inputs.issue_number }}
 
     steps:
+      # Stamped before checkout so the worker's remaining-budget check counts
+      # every second the job has actually spent, not a guessed setup constant.
+      - name: Stamp the job deadline
+        run: echo "CODEX_JOB_DEADLINE_EPOCH=$(( $(date +%s) + CODEX_JOB_TIMEOUT_SECONDS ))" >>"$GITHUB_ENV"
+
       - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

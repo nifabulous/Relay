@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -35,6 +36,11 @@ DEFAULT_REQUEST_TIMEOUT = 900
 # its timeout-minutes regardless of what the request is doing, so a request
 # allowed to run to the job deadline leaves nothing to sanitize and post the
 # comment — the same "no review posted" outcome, reached from the other side.
+#
+# The budget is measured rather than assumed: the caller passes an absolute
+# deadline stamped at job start, and what checkout, setup and sanitization
+# actually cost is whatever has already elapsed by the time this runs. A static
+# "setup headroom" constant would be one more guess to get wrong.
 POSTING_HEADROOM_SECONDS = 180
 
 
@@ -211,10 +217,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="socket timeout in seconds; must cover the max-output-tokens budget",
     )
     parser.add_argument(
-        "--job-timeout", type=int, default=None,
+        "--job-deadline", type=int, default=None,
         help=(
-            "wall-clock seconds the surrounding CI job allows; the request "
-            "timeout must leave posting headroom inside it"
+            "epoch second at which the surrounding CI job is killed; the "
+            "request timeout must fit in what is left of it, with posting "
+            "headroom to spare"
         ),
     )
     args = parser.parse_args(argv)
@@ -246,17 +253,22 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             f"--max-output-tokens {args.max_output_tokens} "
             f"(need at least {required}s)"
         )
-    # Bounded above by the job's wall clock, not just below by the token
-    # budget. A configured override the job cannot outlive is the same failure
-    # as too short a timeout: the review never gets posted.
-    if args.job_timeout is not None:
-        if args.job_timeout <= 0:
-            parser.error("--job-timeout must be positive")
-        ceiling = args.job_timeout - POSTING_HEADROOM_SECONDS
+    # Bounded above by what is actually left of the job, not just below by the
+    # token budget. The deadline is stamped at job start, so everything spent
+    # on checkout, setup and sanitization is already priced in here.
+    if args.job_deadline is not None:
+        remaining = int(args.job_deadline - time.time())
+        ceiling = remaining - POSTING_HEADROOM_SECONDS
+        if ceiling <= 0:
+            parser.error(
+                f"--job-deadline leaves {remaining}s, which is not enough to "
+                f"run a request and still have {POSTING_HEADROOM_SECONDS}s to "
+                f"post the comment"
+            )
         if args.request_timeout > ceiling:
             parser.error(
-                f"--request-timeout {args.request_timeout}s leaves no room inside "
-                f"--job-timeout {args.job_timeout}s "
+                f"--request-timeout {args.request_timeout}s does not fit the "
+                f"{remaining}s left before --job-deadline "
                 f"(must be at most {ceiling}s, reserving "
                 f"{POSTING_HEADROOM_SECONDS}s to post the comment)"
             )

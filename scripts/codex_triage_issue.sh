@@ -29,9 +29,12 @@ GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 # Must cover the generation the token cap allows; the script rejects a
 # timeout too short for CODEX_MAX_OUTPUT_TOKENS rather than aborting mid-call.
 : "${CODEX_REQUEST_TIMEOUT:=900}"
-# The job's wall clock. The worker refuses a request timeout that would
-# consume it, since GitHub kills the job whatever the request is doing.
+# The job's wall clock. The workflow stamps CODEX_JOB_DEADLINE_EPOCH at job
+# start so the worker measures what checkout, setup and sanitization actually
+# cost rather than reserving a guess for them. A local run has no job, so the
+# deadline is stamped from here instead.
 : "${CODEX_JOB_TIMEOUT_SECONDS:=1200}"
+: "${CODEX_JOB_DEADLINE_EPOCH:=$(( $(date +%s) + CODEX_JOB_TIMEOUT_SECONDS ))}"
 CODEX_BOT_LOGIN="${CODEX_BOT_LOGIN:-github-actions[bot]}"
 
 if [[ ! "$CODEX_MODEL" =~ ^[A-Za-z0-9._:/-]+$ ]]; then
@@ -123,7 +126,7 @@ python3 "$REPO_ROOT/scripts/codex_responses.py" \
   --max-output-tokens "$CODEX_MAX_OUTPUT_TOKENS" \
   --max-output-bytes "$CODEX_MAX_OUTPUT_BYTES" \
   --request-timeout "$CODEX_REQUEST_TIMEOUT" \
-  --job-timeout "$CODEX_JOB_TIMEOUT_SECONDS"
+  --job-deadline "$CODEX_JOB_DEADLINE_EPOCH"
 
 if [[ ! -s "$TEMP_DIR/triage.md" ]]; then
   echo "Codex returned an empty triage for issue #${ISSUE_NUMBER}." >&2

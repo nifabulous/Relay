@@ -325,49 +325,6 @@ def test_timeout_one_second_below_the_floor_is_rejected(capsys):
     assert "--request-timeout" in capsys.readouterr().err
 
 
-# ── The request timeout must also fit inside the job's wall clock ────────────
-def _parse_with_job(timeout: str, job: str, tokens: str = "32000"):
-    return codex_responses.parse_args([
-        "--model", "gpt-5.3-codex", "--reasoning-effort", "medium",
-        "--instructions", "i.md", "--input", "in.md", "--output", "out.md",
-        "--max-input-bytes", "120000", "--max-output-tokens", tokens,
-        "--max-output-bytes", "50000", "--request-timeout", timeout,
-        "--job-timeout", job,
-    ])
-
-
-def test_request_timeout_above_the_job_deadline_is_rejected(capsys):
-    """A configured override the job cannot outlive recreates the exact
-    'no review posted' failure this change exists to prevent."""
-    with pytest.raises(SystemExit):
-        _parse_with_job("1800", "1200")
-    assert "--job-timeout" in capsys.readouterr().err
-
-
-def test_request_timeout_leaving_no_posting_headroom_is_rejected(capsys):
-    # Equal to the job deadline: the request would consume the whole job and
-    # leave nothing to sanitize and post the comment.
-    with pytest.raises(SystemExit):
-        _parse_with_job("1200", "1200")
-    assert "--job-timeout" in capsys.readouterr().err
-
-
-def test_request_timeout_exactly_at_the_headroom_boundary_is_accepted():
-    fits = 1200 - codex_responses.POSTING_HEADROOM_SECONDS
-    assert _parse_with_job(str(fits), "1200").request_timeout == fits
-
-
-def test_request_timeout_one_second_over_the_headroom_boundary_is_rejected(capsys):
-    over = 1200 - codex_responses.POSTING_HEADROOM_SECONDS + 1
-    with pytest.raises(SystemExit):
-        _parse_with_job(str(over), "1200")
-    assert "--job-timeout" in capsys.readouterr().err
-
-
-def test_job_timeout_is_optional_so_local_runs_still_work():
-    assert _parse("900").request_timeout == 900
-
-
 def test_socket_timeout_while_reading_the_body_is_reported_as_a_timeout(monkeypatch):
     """urlopen can connect and then stall mid-body; the inactivity timeout
     fires during read(), not at connect."""
@@ -390,3 +347,58 @@ def test_socket_timeout_while_reading_the_body_is_reported_as_a_timeout(monkeypa
             prompt="p", api_key="k", max_output_tokens=32000,
             max_output_bytes=50000, request_timeout=600)
     assert "timed out" in str(exc.value).lower()
+
+
+# ── The budget left is measured, not assumed ─────────────────────────────────
+def _parse_with_deadline(timeout: str, deadline_in: int, monkeypatch, tokens: str = "32000"):
+    """deadline_in: seconds from 'now' until the job is killed."""
+    monkeypatch.setattr(codex_responses.time, "time", lambda: 1_000_000.0)
+    return codex_responses.parse_args([
+        "--model", "gpt-5.3-codex", "--reasoning-effort", "medium",
+        "--instructions", "i.md", "--input", "in.md", "--output", "out.md",
+        "--max-input-bytes", "120000", "--max-output-tokens", tokens,
+        "--max-output-bytes", "50000", "--request-timeout", timeout,
+        "--job-deadline", str(int(1_000_000 + deadline_in)),
+    ])
+
+
+def test_time_already_spent_before_the_worker_starts_is_counted(monkeypatch, capsys):
+    """The job clock starts at checkout, not when the worker runs. A ceiling of
+    job_timeout - posting_headroom ignores every second setup consumed."""
+    # 1200s job, but 400s already burned on checkout/setup/sanitize.
+    with pytest.raises(SystemExit):
+        _parse_with_deadline("1020", 800, monkeypatch)
+    assert "--job-deadline" in capsys.readouterr().err
+
+
+def test_request_timeout_within_the_measured_remaining_budget_is_accepted(monkeypatch):
+    fits = 1000 - codex_responses.POSTING_HEADROOM_SECONDS
+    assert _parse_with_deadline(str(fits), 1000, monkeypatch).request_timeout == fits
+
+
+def test_request_timeout_one_second_over_the_measured_budget_is_rejected(monkeypatch, capsys):
+    over = 1000 - codex_responses.POSTING_HEADROOM_SECONDS + 1
+    with pytest.raises(SystemExit):
+        _parse_with_deadline(str(over), 1000, monkeypatch)
+    assert "--job-deadline" in capsys.readouterr().err
+
+
+def test_a_window_too_small_for_the_token_budget_has_no_valid_timeout(monkeypatch, capsys):
+    """With 800s left, the 640s token floor and the 180s posting reserve cannot
+    both be met. Neither bound is wrong; the configuration is impossible, and
+    saying so beats silently picking one."""
+    with pytest.raises(SystemExit):
+        _parse_with_deadline("620", 800, monkeypatch)
+    error = capsys.readouterr().err
+    assert "too short for --max-output-tokens" in error
+
+
+def test_a_job_already_past_its_posting_window_is_refused(monkeypatch, capsys):
+    """Setup overran so badly there is no time to post at all."""
+    with pytest.raises(SystemExit):
+        _parse_with_deadline("60", 100, monkeypatch)
+    assert "--job-deadline" in capsys.readouterr().err
+
+
+def test_job_deadline_is_optional_so_local_runs_still_work():
+    assert _parse("900").request_timeout == 900
