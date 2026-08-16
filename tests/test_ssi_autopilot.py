@@ -141,7 +141,7 @@ def test_scaffold_contains_expected_pieces():
     region = autopilot.get_region(MANIFEST, "southeast-asia")
     text = autopilot.scaffold_coverage_class(region)
     assert "SOUTHEAST_ASIA_SSI_COVERAGE = [" in text
-    assert '("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR"}),' in text
+    assert '("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"}),' in text
     assert "class TestSoutheastAsiaSsiCoverage:" in text
     assert "test_southeast_asia_banks_have_seeded_ssi_records" in text
 
