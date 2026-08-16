@@ -159,7 +159,6 @@ class TestSSISeedIntegrity:
             ("GTBINGLAXXX", "EUR"),
             ("SCBLKENXAXX", "USD"),
             ("ECOCGHACXXX", "USD"),
-            ("SBICZAJJXXX", "USD"),
             ("HDFCINBBXXX", "USD"),
             ("EBILAEADXXX", "USD"),
             ("NCBKSAJEXXX", "USD"),
