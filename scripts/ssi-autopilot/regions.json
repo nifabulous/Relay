@@ -41,17 +41,18 @@
     },
     {
       "name": "latin-america",
-      "label": "Latin America (Brazil, Chile, Colombia, Peru)",
+      "label": "Latin America (Bradesco seedable; Brazil/Andean NOT)",
       "countries": ["BR", "CL", "CO", "PE"],
       "masked_block": 91000800,
+      "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil, Itaú, Banco de Chile (names-only 2013 list, no BICs/accounts), Santander Chile, Bancolombia, and BCP publish no beneficiary SSI lists — NOT SEEDABLE.",
       "banks": [
-        {"bic8": "BBDEBRSP", "name": "Banco Bradesco", "country": "BR", "currencies": ["USD", "EUR"]},
-        {"bic8": "BSCHBRSP", "name": "Banco Santander (Brasil)", "country": "BR", "currencies": ["USD", "EUR"]},
-        {"bic8": "ITAUBRSP", "name": "Itaú Unibanco", "country": "BR", "currencies": ["USD", "EUR"]},
-        {"bic8": "BCHICLRM", "name": "Banco de Chile", "country": "CL", "currencies": ["USD", "EUR"]},
-        {"bic8": "BSCHCLRM", "name": "Banco Santander Chile", "country": "CL", "currencies": ["USD", "EUR"]},
-        {"bic8": "COLOCOBM", "name": "Bancolombia", "country": "CO", "currencies": ["USD", "EUR"]},
-        {"bic8": "BCPLPEPL", "name": "Banco de Crédito del Perú", "country": "PE", "currencies": ["USD", "EUR"]}
+        {"bic8": "BBDEBRSP", "name": "Banco Bradesco", "country": "BR", "currencies": ["USD", "EUR", "CAD", "AUD", "NZD", "DKK", "NOK", "SEK", "CHF", "JPY", "MXN", "GBP", "ZAR", "CNY"]},
+        {"bic8": "BSCHBRSP", "name": "Banco Santander (Brasil)", "country": "BR", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "ITAUBRSP", "name": "Itaú Unibanco", "country": "BR", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BCHICLRM", "name": "Banco de Chile", "country": "CL", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BSCHCLRM", "name": "Banco Santander Chile", "country": "CL", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "COLOCOBM", "name": "Bancolombia", "country": "CO", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BCPLPEPL", "name": "Banco de Crédito del Perú", "country": "PE", "currencies": ["USD", "EUR"], "seedable": false}
       ],
       "forbidden_bics": []
     },
@@ -130,8 +131,9 @@
       "label": "Southeast Asia (BPI verified seedable)",
       "countries": ["PH", "ID", "TH"],
       "masked_block": 91000700,
+      "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, Metrobank, and SCB publish nothing — NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM).",
       "banks": [
-        {"bic8": "BOPIPHMM", "name": "Bank of the Philippine Islands", "country": "PH", "currencies": ["USD", "EUR"]}
+        {"bic8": "BOPIPHMM", "name": "Bank of the Philippine Islands", "country": "PH", "currencies": ["USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"]}
       ],
       "forbidden_bics": ["BPIPPHMM", "BEIIIDJA", "CENAIDJJ"]
     }
