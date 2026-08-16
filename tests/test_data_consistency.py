@@ -875,30 +875,30 @@ class TestEuropeSsiCoverage:
 
 
 # ---- autopilot-generated coverage tests ----
-CHINA_SSI_COVERAGE = [
-    ("CMBCCNBSXXX", "China Merchants Bank", {"USD", "HKD", "EUR", "GBP", "JPY", "AUD", "SGD", "CAD", "CHF"}),
+LATIN_AMERICA_SSI_COVERAGE = [
+    ("BBDEBRSPXXX", "Banco Bradesco", {"USD", "EUR", "CAD", "AUD", "NZD", "DKK", "NOK", "SEK", "CHF", "JPY", "MXN", "GBP", "ZAR", "CNY"}),
 ]
 
 
-class TestChinaSsiCoverage:
-    def test_china_banks_have_seeded_ssi_records(self):
+class TestLatinAmericaSsiCoverage:
+    def test_latin_america_banks_have_seeded_ssi_records(self):
         seeded = {}
         for record in SSI_RECORDS:
             seeded.setdefault(record[0], set()).add(record[2])
-        for bic, name, currencies in CHINA_SSI_COVERAGE:
+        for bic, name, currencies in LATIN_AMERICA_SSI_COVERAGE:
             have = seeded.get(bic, set())
             missing = currencies - have
             assert not missing, (
                 f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
             )
 
-    def test_china_banks_are_in_the_bank_directory(self):
+    def test_latin_america_banks_are_in_the_bank_directory(self):
         bank_bics = {row[0] for row in BANKS}
         missing = [
-            bic for bic, _name, _currencies in CHINA_SSI_COVERAGE
+            bic for bic, _name, _currencies in LATIN_AMERICA_SSI_COVERAGE
             if bic not in bank_bics
         ]
         assert not missing, (
-            f"china SSI beneficiaries must also be seeded in BANKS so "
+            f"latin-america SSI beneficiaries must also be seeded in BANKS so "
             f"Explore can show their settlement instructions: {missing}"
         )
