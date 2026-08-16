@@ -141,49 +141,46 @@ def upgrade() -> None:
             f"then re-run this migration."
         )
 
-    # The nullable column goes on first, so the preflight below can talk about
-    # verified_by and its prescribed repairs can reference it. Ordering the
-    # other way meant the remediation named a column that did not exist yet.
+    # This preflight runs before any schema change, and its remediation is
+    # written against the schema the operator still has.
     #
-    # Guarded, because the preflight aborts *after* this: a first attempt that
-    # stops there leaves the column in place without stamping the revision, so
-    # the operator's re-run would otherwise die on "duplicate column name"
-    # instead of proceeding.
-    if not _has_column(bind, "verified_by"):
-        op.add_column(
-            "ssi", sa.Column("verified_by", sa.String(length=120), nullable=True)
-        )
-
-    # The verifier constraint applies to every existing row, and the schema it
-    # replaces allowed "published" with only a date. A legacy row created that
-    # way fails the batch rebuild half way through the deploy — and on SQLite
-    # the aborted run strands _alembic_tmp_ssi, so every later attempt fails
-    # until someone drops it by hand. Same shape as the as_of preflight above;
-    # it needed its own.
+    # An earlier version added the column first so the message could name
+    # verified_by. That works on SQLite, where the column survives the abort,
+    # and fails on PostgreSQL, where DDL is transactional and the failed
+    # migration rolls the column back — leaving the operator with repair
+    # instructions naming a column that no longer exists. Hence: no schema
+    # change until the data is known to fit, and no remediation that depends
+    # on one.
     unattributed = list(
         bind.execute(
             sa.text(
                 "SELECT id, beneficiary_bic, currency FROM ssi "
-                "WHERE status = 'published' "
-                "AND (verified_by IS NULL OR TRIM(verified_by) = '')"
+                "WHERE status = 'published'"
             )
         )
     )
     if unattributed:
         ids = ", ".join(str(row[0]) for row in unattributed[:20])
         raise RuntimeError(
-            f"{len(unattributed)} ssi row(s) are status='published' with no "
-            f"verifier, which the constraint added here forbids "
+            f"{len(unattributed)} ssi row(s) are status='published' from before "
+            f"provenance required a named verifier "
             f"(e.g. id={unattributed[0][0]} {unattributed[0][1]}/"
             f"{unattributed[0][2]}).\n"
             f"Inspect:  SELECT id, beneficiary_bic, currency, as_of FROM ssi "
             f"WHERE id IN ({ids});\n"
-            f"Name who verified them, if that is known:\n"
-            f"    UPDATE ssi SET verified_by = '<who>' WHERE id IN ({ids});\n"
-            f"or record that currency was never confirmed:\n"
-            f"    UPDATE ssi SET status = 'unverified', verified_by = NULL "
-            f"WHERE id IN ({ids});\n"
-            f"then re-run this migration."
+            f"Record that currency was never confirmed:\n"
+            f"    UPDATE ssi SET status = 'unverified' WHERE id IN ({ids});\n"
+            f"then re-run this migration. To publish them again afterwards, use "
+            f"record_verified_publication(), which names the verifier and the "
+            f"date it was checked.\n"
+            f"(This statement is deliberately valid against the current schema: "
+            f"verified_by does not exist yet, and on PostgreSQL a failed "
+            f"migration rolls back any column it added.)"
+        )
+
+    if not _has_column(bind, "verified_by"):
+        op.add_column(
+            "ssi", sa.Column("verified_by", sa.String(length=120), nullable=True)
         )
 
     with op.batch_alter_table("ssi") as batch:

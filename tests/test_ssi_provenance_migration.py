@@ -169,7 +169,7 @@ def test_upgrade_refuses_a_published_row_with_no_verifier(tmp_path):
     result = _alembic(db, "upgrade", "head")
 
     assert result.returncode != 0, "the migration accepted a row it cannot constrain"
-    assert "no verifier" in result.stderr, result.stderr[-400:]
+    assert "named verifier" in result.stderr, result.stderr[-400:]
 
     connection = sqlite3.connect(db)
     tables = [r[0] for r in connection.execute(
@@ -185,19 +185,13 @@ def test_upgrade_refuses_a_published_row_with_no_verifier(tmp_path):
                    capture_output=True).returncode != 0,
     reason="alembic CLI unavailable",
 )
-@pytest.mark.parametrize(
-    "repair, expected",
-    [
-        ("UPDATE ssi SET status = 'unverified', verified_by = NULL",
-         ("unverified", None)),
-        ("UPDATE ssi SET verified_by = 'ops:ada'", ("published", "ops:ada")),
-    ],
-    ids=["downgrade", "name-the-verifier"],
-)
-def test_both_prescribed_repairs_complete_the_upgrade(tmp_path, repair, expected):
-    """The migration prints two remediations. Both are executed here, because a
-    remediation nobody runs is a guess — an earlier one named a column that did
-    not exist yet, and the retry after another died on a duplicate column."""
+def test_the_prescribed_repair_completes_the_upgrade(tmp_path):
+    """The remediation is executed here, not just read. Earlier versions named a
+    column that did not exist yet, died on a duplicate column when retried, and
+    then named verified_by — which works on SQLite, where the column survives
+    the abort, but not on PostgreSQL, where transactional DDL rolls it back.
+    The repair below is deliberately valid against the pre-migration schema."""
+    repair, expected = "UPDATE ssi SET status = 'unverified'", ("unverified", None)
     db = tmp_path / "repaired.db"
     _seed_published_without_a_verifier(db)
     assert _alembic(db, "upgrade", "head").returncode != 0
@@ -216,3 +210,25 @@ def test_both_prescribed_repairs_complete_the_upgrade(tmp_path, repair, expected
     connection.close()
     assert row == expected
     assert "ck_ssi_published_names_a_verifier" in ddl
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_the_abort_changes_no_schema(tmp_path):
+    """PostgreSQL rolls back DDL in a failed migration and SQLite does not, so
+    the only remediation that works on both is one needing no new column. The
+    migration must therefore not have added one before it aborts."""
+    db = tmp_path / "untouched.db"
+    _seed_published_without_a_verifier(db)
+
+    assert _alembic(db, "upgrade", "head").returncode != 0
+
+    connection = sqlite3.connect(db)
+    columns = [row[1] for row in connection.execute("PRAGMA table_info(ssi)")]
+    connection.close()
+    assert "verified_by" not in columns, (
+        "the migration changed the schema before deciding the data fits"
+    )
