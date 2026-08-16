@@ -103,6 +103,7 @@ describe("Vite Sentry source-map lifecycle", () => {
     await mkdir(join(mapPath, ".."), { recursive: true });
     await writeFile(mapPath, "private source map");
     process.chdir(frontendRoot);
+    // afterEach calls vi.unstubAllEnvs(), so this cannot leak into later tests.
     vi.stubEnv("SENTRY_AUTH_TOKEN", "");
 
     vi.doUnmock("@sentry/vite-plugin");

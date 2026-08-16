@@ -73,14 +73,37 @@ npm --prefix frontend run check:bundle
 PUBLIC_ASSETS="$REPO_ROOT/app/static/relay/assets"
 if [[ -d "$PUBLIC_ASSETS" ]]; then
   echo "[8/10] Inspecting public build artifacts"
-  if find "$PUBLIC_ASSETS" -type f -name '*.map' -print -quit | grep -q .; then
+  for required_tool in find rg; do
+    if ! command -v "$required_tool" >/dev/null 2>&1; then
+      echo "required artifact scanner is unavailable: $required_tool" >&2
+      exit 1
+    fi
+  done
+
+  MAP_SCAN_OUTPUT=""
+  if ! MAP_SCAN_OUTPUT="$(find "$PUBLIC_ASSETS" -type f -name '*.map' -print -quit 2>/dev/null)"; then
+    echo "source-map artifact scan failed" >&2
+    exit 1
+  fi
+  if [[ -n "$MAP_SCAN_OUTPUT" ]]; then
     echo "public source maps found in $PUBLIC_ASSETS" >&2
     exit 1
   fi
-  if rg -q --hidden --glob '!*.map' 'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_ASSETS"; then
-    echo "Sentry credential material found in public assets" >&2
-    exit 1
-  fi
+
+  RG_STATUS=0
+  rg -q --hidden --glob '!*.map' 'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_ASSETS" || RG_STATUS=$?
+  case "$RG_STATUS" in
+    0)
+      echo "Sentry credential material found in public assets" >&2
+      exit 1
+      ;;
+    1)
+      ;;
+    *)
+      echo "credential artifact scan failed" >&2
+      exit 1
+      ;;
+  esac
 else
   echo "public frontend output is missing after build" >&2
   exit 1

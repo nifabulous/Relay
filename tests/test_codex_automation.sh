@@ -123,7 +123,8 @@ require_text 'scripts/verify_before_push.sh' 'SENTRY_AUTH_TOKEN= SENTRY_ORG= SEN
 require_text 'scripts/verify_before_push.sh' 'FINAL_HEAD_SHA="$(git rev-parse --verify HEAD)"'
 require_text 'scripts/verify_before_push.sh' './node_modules/.bin/tsc --noEmit'
 require_text 'scripts/verify_before_push.sh' "rg -q --hidden --glob '!*.map'"
-refuse_text 'scripts/verify_before_push.sh' "rg -n --hidden --glob '!*.map'"
+require_text 'scripts/verify_before_push.sh' 'case "$RG_STATUS" in'
+require_text 'scripts/verify_before_push.sh' 'required artifact scanner is unavailable'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
