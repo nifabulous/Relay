@@ -480,3 +480,150 @@ class TestSSIModel:
         assert row.charge_code
         assert row.value_date
         assert row.notes
+
+
+class TestSSIProvenanceIsConsistentWithItsSource:
+    """A row may not claim a provenance its own citation contradicts.
+
+    The first classification pass keyed only on `web.archive.org` and so
+    labelled 171 rows "published" whose notes said "(archived 2021-10-09)".
+    Faithfulness of the transform was verified; correctness of the labels was
+    not. This is the check that catches it.
+    """
+
+    @staticmethod
+    def _rows():
+        import ast
+        from pathlib import Path
+
+        src = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                for element in node.value.elts:
+                    note = ast.get_source_segment(src, element.elts[9]) or ""
+                    yield (
+                        ast.literal_eval(element.elts[0]),
+                        note,
+                        ast.literal_eval(element.elts[10]) if len(element.elts) > 10 else None,
+                        ast.literal_eval(element.elts[11]) if len(element.elts) > 11 else None,
+                    )
+                return
+
+    def test_no_published_row_cites_an_archived_source(self):
+        import re
+
+        offenders = [
+            (bic, note[:120])
+            for bic, note, _as_of, status in self._rows()
+            if status == "published"
+            and (re.search(r"archiv", note, re.I) or "web.archive.org" in note)
+        ]
+        assert not offenders, (
+            f"{len(offenders)} row(s) claim 'published' but cite an archived "
+            f"source, e.g. {offenders[:3]}"
+        )
+
+    def test_every_status_is_one_of_the_three_allowed_values(self):
+        allowed = {"published", "archived", "illustrative"}
+        bad = [(bic, status) for bic, _n, _a, status in self._rows() if status not in allowed]
+        assert not bad, bad
+
+    def test_as_of_is_an_iso_date_when_present(self):
+        from datetime import date
+
+        bad = []
+        for bic, _note, as_of, _status in self._rows():
+            if as_of is None:
+                continue
+            try:
+                date.fromisoformat(as_of)
+            except (TypeError, ValueError):
+                bad.append((bic, as_of))
+        assert not bad, bad
+
+    def test_an_illustrative_row_never_claims_a_bank_source(self):
+        bad = [
+            (bic, note[:80])
+            for bic, note, _a, status in self._rows()
+            if status == "illustrative" and "_SSI_REAL_NOTE" in note
+        ]
+        assert not bad, bad
+
+
+class TestProvenanceIsEnforcedAtTheBoundaries:
+    """The autopilot validator is not the only writer. /api/import/ssi and any
+    direct session.add() reach the same column, so the value has to be
+    constrained where it is persisted and where it is serialised."""
+
+    def test_schema_rejects_an_unknown_status(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="definitely-current",
+            )
+
+    def test_schema_rejects_a_malformed_as_of(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="not-a-date",
+            )
+
+    def test_schema_accepts_a_well_formed_record(self):
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            as_of="2007-12-13",
+        )
+        assert record.status == "archived"
+
+    def test_database_rejects_an_unknown_status(self, db_session_clean):
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="totally-fine",
+        ))
+        with pytest.raises(IntegrityError):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+
+def test_the_three_definitions_of_the_status_set_cannot_drift():
+    """The value is declared in three places that cannot import each other:
+    the Pydantic schema, the model's CHECK constraint, and the autopilot
+    (which is stdlib-only by design). Pin them together."""
+    import re
+    from pathlib import Path
+
+    from app.models import SSI
+    from app.schemas import SSI_STATUSES
+
+    check = next(
+        c for c in SSI.__table__.constraints if getattr(c, "name", "") == "ck_ssi_status"
+    )
+    in_check = set(re.findall(r"'(\w+)'", str(check.sqltext)))
+    assert in_check == set(SSI_STATUSES), (in_check, SSI_STATUSES)
+
+    autopilot_src = (
+        Path(__file__).resolve().parents[1] / "scripts" / "ssi-autopilot" / "autopilot.py"
+    ).read_text()
+    declared = re.search(r"SSI_STATUSES = \{([^}]+)\}", autopilot_src).group(1)
+    assert set(re.findall(r'"(\w+)"', declared)) == set(SSI_STATUSES)

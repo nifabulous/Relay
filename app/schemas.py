@@ -1,5 +1,6 @@
 """Pydantic v2 request/response schemas."""
-from typing import List, Optional
+from datetime import date
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -94,6 +95,12 @@ class ImportResponse(BaseModel):
     message: str
 
 
+# The three provenance values, shared by the response schema and the model's
+# CHECK constraint so they cannot drift apart.
+SSI_STATUSES = ("published", "archived", "illustrative")
+SSIStatus = Literal["published", "archived", "illustrative"]
+
+
 class SSIRecord(BaseModel):
     beneficiary_bic: str
     beneficiary_bank_name: Optional[str] = None
@@ -107,8 +114,21 @@ class SSIRecord(BaseModel):
     notes: Optional[str] = None
     # Provenance: "published" (bank's live page), "archived" (point-in-time
     # snapshot, may no longer be current), or "illustrative" (not sourced).
+    # Constrained here as well as in the database: /api/import/ssi and any
+    # direct writer reach this column without passing the autopilot validator.
     as_of: Optional[str] = None
-    status: str = "illustrative"
+    status: SSIStatus = "illustrative"
+
+    @field_validator("as_of")
+    @classmethod
+    def _as_of_is_an_iso_date(cls, value: Optional[str]) -> Optional[str]:
+        if value is None or value == "":
+            return None
+        try:
+            date.fromisoformat(value)
+        except ValueError:
+            raise ValueError(f"as_of must be an ISO date (YYYY-MM-DD), got {value!r}") from None
+        return value
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
     intermediary_settlement: Optional[SettlementIds] = None

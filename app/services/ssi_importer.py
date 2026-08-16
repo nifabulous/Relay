@@ -42,8 +42,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import SSI
+from ..schemas import SSI_STATUSES
 
-VALID_SSI_STATUSES = {"published", "archived", "illustrative"}
 VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
 VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
 
@@ -131,9 +131,9 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
     # to "published" would let a CSV upload claim a bank published something it
     # never did, which is exactly what this column exists to prevent.
     status = (raw.get("status") or "illustrative").strip().lower()
-    if status not in VALID_SSI_STATUSES:
+    if status not in SSI_STATUSES:
         errors.append(
-            f"Invalid status: {status!r} (must be one of {sorted(VALID_SSI_STATUSES)})"
+            f"Invalid status: {status!r} (must be one of {sorted(SSI_STATUSES)})"
         )
     else:
         normalized["status"] = status

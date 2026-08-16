@@ -1,5 +1,5 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import Column, Index, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint
 
 from .db import Base
 
@@ -147,6 +147,13 @@ class SSI(Base):
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),
         UniqueConstraint("beneficiary_bic", "currency", "intermediary_bic",
                          name="uq_ssi_composite"),
+        # The validator in the autopilot is not the only writer: /api/import/ssi
+        # and any direct session.add() land here too. Constrain the value where
+        # it is stored, not only where it is generated.
+        CheckConstraint(
+            "status IN ('published', 'archived', 'illustrative')",
+            name="ck_ssi_status",
+        ),
     )
 
 
