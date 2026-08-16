@@ -1,5 +1,6 @@
 """Unit tests for the SSI autopilot orchestrator."""
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -159,3 +160,33 @@ def test_state_roundtrip(tmp_path, monkeypatch):
 
 def test_maybe_pr_threshold_math():
     assert 0 < 10  # threshold default is 10; logic is state-driven (see cmd_maybe_pr)
+
+
+# ── seed.py structural verification (the fold-bug guard) ────────────────────
+def test_verify_passes_on_current_seed(tmp_path, monkeypatch):
+    # The repo's real seed.py must satisfy the invariants.
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts" / "ssi-autopilot" / "autopilot.py"), "verify"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_verify_catches_duplicate_banks(tmp_path, monkeypatch):
+    from pathlib import Path as _P
+
+    seed = _P(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+    original = seed.read_text()
+    try:
+        # Inject a duplicate BANKS row.
+        marker = '("CITIUS33XXX", "Citibank N.A.", "US", "New York", "USD"),'
+        dup = '("CITIUS33XXX", "Citibank N.A.", "US", "New York", "USD"),'
+        seed.write_text(original.replace(marker, marker + "\n    " + dup, 1))
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts" / "ssi-autopilot" / "autopilot.py"), "verify"],
+            capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "duplicate BIC CITIUS33XXX" in result.stdout + result.stderr
+    finally:
+        seed.write_text(original)

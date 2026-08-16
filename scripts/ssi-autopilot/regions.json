@@ -70,13 +70,10 @@
       "label": "Turkey + Israel",
       "countries": ["TR", "IL"],
       "masked_block": 91001000,
+      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
       "banks": [
-        {"bic8": "AKBKTRIS", "name": "Akbank", "country": "TR", "currencies": ["USD", "EUR"]},
-        {"bic8": "YAPITRIS", "name": "Yapı ve Kredi Bankası", "country": "TR", "currencies": ["USD", "EUR"]},
-        {"bic8": "ISBKTRIS", "name": "Türkiye İş Bankası", "country": "TR", "currencies": ["USD", "EUR"]},
-        {"bic8": "LUMIILIT", "name": "Bank Leumi", "country": "IL", "currencies": ["USD", "EUR"]},
-        {"bic8": "POALILIT", "name": "Bank Hapoalim", "country": "IL", "currencies": ["USD", "EUR"]},
-        {"bic8": "IDBLILIT", "name": "Israel Discount Bank", "country": "IL", "currencies": ["USD", "EUR"]}
+        {"bic8": "AKBKTRIS", "name": "Akbank T.A.S.", "country": "TR", "currencies": ["USD", "EUR", "GBP", "CHF", "AUD", "JPY", "SEK", "NOK", "DKK", "SAR"]},
+        {"bic8": "YAPITRIS", "name": "Yapı ve Kredi Bankası", "country": "TR", "currencies": ["USD", "EUR", "GBP", "CHF", "AUD", "CAD", "JPY", "SEK", "NOK", "DKK"]}
       ],
       "forbidden_bics": []
     },

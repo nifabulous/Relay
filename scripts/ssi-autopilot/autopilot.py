@@ -26,6 +26,7 @@ Stdlib only — no third-party dependencies.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -285,6 +286,39 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
     print(f"  ✓ scaffolded {class_name} into {TEST_FILE.name}")
 
 
+def cmd_verify(_args: argparse.Namespace) -> None:
+    """
+    Structural invariants on seed.py — run before committing ANY fold so a
+    broken fold (wrong tuple arity, duplicate BANKS rows) is caught here
+    instead of by a DB constraint at seed time.
+    """
+    problems: list[str] = []
+    src = SEED_FILE.read_text()
+    tree = ast.parse(src)
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)):
+            continue
+        name = node.targets[0].id
+        if name not in ("BANKS", "SSI_RECORDS"):
+            continue
+        elts = node.value.elts
+        expected = 5 if name == "BANKS" else 10
+        for i, e in enumerate(elts):
+            if not isinstance(e, ast.Tuple) or len(e.elts) != expected:
+                problems.append(f"{name}[{i}]: expected a {expected}-tuple, got {type(e).__name__}")
+        if name == "BANKS":
+            bics = [e.elts[0].value for e in elts if isinstance(e, ast.Tuple) and e.elts]
+            seen: dict[str, int] = {}
+            for bic in bics:
+                seen[bic] = seen.get(bic, 0) + 1
+            for bic, count in seen.items():
+                if count > 1:
+                    problems.append(f"BANKS: duplicate BIC {bic} ({count}x)")
+    if problems:
+        raise SystemExit("seed.py invariants failed:\n" + "\n".join(f"  ✗ {p}" for p in problems))
+    print("  ✓ seed.py invariants OK (BANKS/SSI_RECORDS arity, no duplicate BICs)")
+
+
 def cmd_commit(args: argparse.Namespace) -> None:
     manifest = load_manifest()
     results = json.loads(Path(args.results).read_text())
@@ -295,13 +329,15 @@ def cmd_commit(args: argparse.Namespace) -> None:
     label = args.label or region["label"]
     source_hint = args.source or "bank-published SSI pages"
 
-    # Gate: the region's coverage test must pass. The model is expected to
-    # have appended the validated records to seed.py BEFORE running commit;
-    # the scaffold is idempotent (everything after the marker is rewritten).
+    # Gate: seed.py structural invariants + the region's coverage test must
+    # pass. The model is expected to have appended the validated records to
+    # seed.py BEFORE running commit; the scaffold is idempotent (everything
+    # after the marker is rewritten).
     if args.dry_run:
         msg = f"feat(ssi): seed {results['region']} SSIs ({source_hint})"
         print(f"  (dry-run) would scaffold {TEST_FILE.name}, gate on pytest, and commit: {msg}")
         return
+    cmd_verify(args)
     cmd_scaffold(argparse.Namespace(region=results["region"]))
     run_pytest([str(TEST_FILE)])
 
@@ -379,6 +415,9 @@ def main() -> None:
     p = sub.add_parser("scaffold", help="scaffold region coverage test")
     p.add_argument("region", help="region name from manifest")
     p.set_defaults(func=cmd_scaffold)
+
+    p = sub.add_parser("verify", help="check seed.py structural invariants")
+    p.set_defaults(func=cmd_verify)
 
     p = sub.add_parser("commit", help="validate, gate-test, and commit a region")
     p.add_argument("results", help="path to results JSON")
