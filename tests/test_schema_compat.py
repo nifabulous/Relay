@@ -195,3 +195,78 @@ class TestCurrentSchemaIsANoop:
             ).mappings().one()
         assert row["schedule"] == "scheduled"
         assert row["revealed_at"] == "2026-08-13T09:00:10+00:00"
+
+    def test_current_ssi_schema_unchanged_and_provenance_intact(self):
+        from sqlalchemy.orm import sessionmaker
+
+        from app.models import SSI
+
+        engine = _raw_engine()
+        Base.metadata.create_all(bind=engine)
+
+        SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+        with SessionLocal() as session:
+            session.add(SSI(
+                beneficiary_bic="CITIUS33XXX",
+                beneficiary_bank_name="Citibank N.A.",
+                currency="USD",
+                intermediary_bic="CHASUS33XXX",
+                intermediary_bank_name="JPMorgan Chase Bank",
+                intermediary_account="ACCT-USD-0001",
+                beneficiary_account="ACCT-USD-0002",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: https://bank.example/ssi (as of 2026-08-16).",
+                as_of="2026-08-16",
+                verified_by="Treasury Operations",
+                status="published",
+            ))
+            session.commit()
+
+        expected_columns = {
+            "id",
+            "beneficiary_bic",
+            "beneficiary_bank_name",
+            "currency",
+            "intermediary_bic",
+            "intermediary_bank_name",
+            "intermediary_account",
+            "beneficiary_account",
+            "charge_code",
+            "value_date",
+            "notes",
+            "as_of",
+            "verified_by",
+            "status",
+        }
+        columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        assert set(columns_before) == expected_columns
+        assert columns_before["as_of"]["type"].length == 10
+        assert columns_before["as_of"]["nullable"] is True
+        assert columns_before["verified_by"]["type"].length == 120
+        assert columns_before["verified_by"]["nullable"] is True
+        assert columns_before["status"]["type"].length == 12
+        assert columns_before["status"]["nullable"] is False
+
+        def read_ssi_row():
+            with engine.connect() as conn:
+                return conn.execute(
+                    text(
+                        "SELECT beneficiary_bic, currency, intermediary_bic, "
+                        "intermediary_account, beneficiary_account, charge_code, "
+                        "value_date, notes, as_of, verified_by, status FROM ssi"
+                    )
+                ).mappings().one()
+
+        row_before = read_ssi_row()
+        ensure_sqlite_schema(engine)
+        columns_after_first = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        row_after_first = read_ssi_row()
+        ensure_sqlite_schema(engine)
+        columns_after_second = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        row_after_second = read_ssi_row()
+
+        assert set(columns_after_first) == expected_columns
+        assert set(columns_after_second) == set(columns_after_first)
+        assert row_after_first == row_before
+        assert row_after_second == row_after_first
