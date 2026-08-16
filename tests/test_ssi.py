@@ -1423,3 +1423,90 @@ class TestAPlausibleVerifierIsNotVerification:
         db_session_clean.commit()
         db_session_clean.refresh(row)
         assert row.status == "published"
+
+
+class TestAVerifiedRowSurvivesOrdinaryEditing:
+    """The promotion marker is transient, so it is absent on every row loaded
+    back from the database. Checking it on any update meant that fixing a typo
+    in `notes` silently downgraded a verified row and orphaned its verifier —
+    the exact state the column exists to protect."""
+
+    @staticmethod
+    def _publish(session):
+        from datetime import date
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: https://bank.example/ssi.",
+        )
+        record_verified_publication(row, verified_by="ops:ada",
+                                    verified_on=date.today().isoformat())
+        session.add(row)
+        session.commit()
+        return row
+
+    def test_editing_an_unrelated_field_preserves_published(self, db_session_clean):
+        from app.models import SSI
+
+        self._publish(db_session_clean)
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        assert reloaded.status == "published"
+        reloaded.notes = "Source: https://bank.example/ssi. (typo fixed)"
+        db_session_clean.commit()
+        db_session_clean.refresh(reloaded)
+        assert reloaded.status == "published", "an unrelated edit destroyed the verification"
+        assert reloaded.verified_by == "ops:ada"
+
+    def test_a_reloaded_row_cannot_be_re_attributed_by_hand(self, db_session_clean):
+        from app.models import SSI
+
+        self._publish(db_session_clean)
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        reloaded.verified_by = "impostor"
+        db_session_clean.commit()
+        db_session_clean.refresh(reloaded)
+        assert reloaded.status == "unverified", (
+            "the audit trail was rewritten without a fresh verification"
+        )
+
+    def test_a_reloaded_unverified_row_cannot_be_promoted_by_hand(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI
+
+        db_session_clean.add(SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        ))
+        db_session_clean.commit()
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        reloaded.status = "published"
+        reloaded.verified_by = "impostor"
+        reloaded.as_of = date.today().isoformat()
+        db_session_clean.commit()
+        assert reloaded.status == "unverified"
+
+    def test_re_verification_through_the_promotion_path_still_works(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI, record_verified_publication
+
+        self._publish(db_session_clean)
+        db_session_clean.expunge_all()
+
+        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
+        record_verified_publication(reloaded, verified_by="ops:grace",
+                                    verified_on=date.today().isoformat())
+        db_session_clean.commit()
+        db_session_clean.refresh(reloaded)
+        assert reloaded.status == "published"
+        assert reloaded.verified_by == "ops:grace"

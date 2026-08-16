@@ -306,6 +306,30 @@ class IdempotencyKey(Base):
     endpoint = Column(String(50), nullable=False)  # track/create | prepare-payment
 
 
+def _provenance_is_being_assigned(target: "SSI") -> bool:
+    """True when this flush writes the provenance, not merely carries it.
+
+    An INSERT always does. An UPDATE only does when something touched status
+    or verified_by; a row loaded and edited elsewhere reports no change, and
+    its existing provenance must be left alone — checking unconditionally is
+    what made an unrelated edit silently downgrade a verified row.
+
+    verified_by counts as well as status: rewriting the attribution on an
+    already-published row is a fresh claim about who verified it, and is
+    exactly the audit trail this column exists to keep.
+    """
+    from sqlalchemy import inspect as _inspect
+
+    try:
+        state = _inspect(target)
+        return (
+            state.attrs.status.history.has_changes()
+            or state.attrs.verified_by.history.has_changes()
+        )
+    except Exception:  # detached or not yet instrumented: treat as an assignment
+        return True
+
+
 def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     """Hold the provenance invariants for every ORM write.
 
@@ -360,7 +384,11 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     if target.verified_by is not None:
         target.verified_by = target.verified_by.strip() or None
 
-    if target.status == "published":
+    # Only when the status is actually being set to "published" in this flush.
+    # The marker is transient, so it is absent on every row loaded back from
+    # the database; checking it unconditionally meant that editing an unrelated
+    # field on a verified row silently downgraded it and orphaned verified_by.
+    if target.status == "published" and _provenance_is_being_assigned(target):
         # Downgraded, not rejected. A generic caller setting "published" is
         # usually copying a field forward, not asserting it verified the bank
         # today; failing the write would break that caller for no gain, while
