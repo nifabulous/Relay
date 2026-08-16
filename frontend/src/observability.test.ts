@@ -1,13 +1,25 @@
+import * as Sentry from "@sentry/react";
 import type { ErrorEvent, SpanJSON, StackFrame, TransactionEvent } from "@sentry/core";
+import type { EventHint } from "@sentry/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@sentry/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@sentry/react")>()),
+  init: vi.fn(),
+}));
+
 import {
   buildFrontendSentryOptions,
+  initFrontendSentry,
   sanitizeErrorEvent,
   sanitizeSpan,
   sanitizeTransactionEvent,
 } from "./observability";
 
-afterEach(() => {
+afterEach(async () => {
+  await Sentry.close();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
 
@@ -38,6 +50,65 @@ describe("frontend Sentry observability", () => {
       stackFrameVariables: false,
     });
     expect(options?.beforeBreadcrumb?.({ category: "fetch" })).toBeNull();
+  });
+
+  it("installs callbacks through Sentry.init and sanitizes SDK-shaped events", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
+    const init = vi.mocked(Sentry.init);
+    init.mockReset().mockImplementation(() => undefined);
+
+    expect(initFrontendSentry()).toBe(true);
+
+    const options = init.mock.calls[0]?.[0];
+    expect(options).toBeDefined();
+    expect(options?.beforeSend).toBeTypeOf("function");
+    expect(options?.beforeSendTransaction).toBeTypeOf("function");
+    expect(options?.beforeSendSpan).toBeTypeOf("function");
+
+    const error = options?.beforeSend?.(
+      {
+        message: "IBAN GB29NWBK60161331926819",
+        request: { url: "https://relay.example/app?token=secret" },
+        user: { id: "customer-123" },
+        breadcrumbs: [{ category: "console", message: "secret" }],
+        exception: { values: [{ type: "Error", value: "secret" }] },
+      } as ErrorEvent,
+      {} as EventHint,
+    ) as ErrorEvent | null | undefined;
+    const transaction = options?.beforeSendTransaction?.(
+      {
+        type: "transaction",
+        transaction: "GET /api/lookup?iban=secret",
+        request: { url: "https://relay.example/api/lookup?iban=secret" },
+        user: { id: "customer-123" },
+        spans: [{
+          trace_id: "trace",
+          span_id: "span",
+          start_timestamp: 1,
+          data: { "http.query": "secret", "http.status_code": 200 },
+          description: "GET /api/lookup?iban=secret",
+        }],
+      } as TransactionEvent,
+      {} as EventHint,
+    ) as TransactionEvent | null | undefined;
+    const span = options?.beforeSendSpan?.({
+      trace_id: "trace",
+      span_id: "span",
+      start_timestamp: 1,
+      data: { "http.query": "secret", "http.status_code": 200 },
+      description: "GET /api/lookup?iban=secret",
+    });
+
+    expect(error?.message).toBe("[REDACTED_ERROR]");
+    expect(error?.request).toBeUndefined();
+    expect(error?.user).toBeUndefined();
+    expect(error?.breadcrumbs).toBeUndefined();
+    expect(transaction?.transaction).toBe("GET /api/lookup");
+    expect(transaction?.request).toBeUndefined();
+    expect(transaction?.user).toBeUndefined();
+    expect(transaction?.spans?.[0]?.data).toEqual({ "http.status_code": 200 });
+    expect(span?.description).toBe("GET /api/lookup");
+    expect(span?.data).toEqual({ "http.status_code": 200 });
   });
 
   it("removes request, identity, breadcrumbs, and exception payload data", () => {

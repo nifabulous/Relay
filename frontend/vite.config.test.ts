@@ -8,6 +8,14 @@ type TestPlugin = {
   writeBundle?: () => void | Promise<void>;
 };
 
+type SentryPluginOptions = {
+  org?: string;
+  project?: string;
+  authToken?: string;
+  release?: { name?: string; inject?: boolean };
+  sourcemaps?: { filesToDeleteAfterUpload?: string[] };
+};
+
 const originalCwd = process.cwd();
 let temporaryRoot: string | undefined;
 
@@ -22,6 +30,7 @@ afterEach(async () => {
 describe("Vite Sentry source-map lifecycle", () => {
   it("deletes uploaded maps before the public-map assertion runs", async () => {
     const uploadedReleases: string[] = [];
+    let pluginOptions: SentryPluginOptions | undefined;
     temporaryRoot = await mkdtemp(join(tmpdir(), "relay-vite-config-"));
     const frontendRoot = join(temporaryRoot, "frontend");
     const mapPath = join(temporaryRoot, "app", "static", "relay", "assets", "index.js.map");
@@ -35,13 +44,16 @@ describe("Vite Sentry source-map lifecycle", () => {
     vi.stubEnv("SENTRY_PROJECT", "relay-frontend");
     vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "abc123def456");
     vi.doMock("@sentry/vite-plugin", () => ({
-      sentryVitePlugin: (options: { release?: { name?: string } }) => [{
-        name: "fake-sentry-vite-plugin",
-        async writeBundle() {
-          uploadedReleases.push(options.release?.name ?? "auto");
-          await rm(mapPath);
-        },
-      }],
+      sentryVitePlugin: (options: SentryPluginOptions) => {
+        pluginOptions = options;
+        return [{
+          name: "fake-sentry-vite-plugin",
+          async writeBundle() {
+            uploadedReleases.push(options.release?.name ?? "auto");
+            await rm(mapPath);
+          },
+        }];
+      },
     }));
 
     const { default: createConfig } = await import("./vite.config");
@@ -60,6 +72,13 @@ describe("Vite Sentry source-map lifecycle", () => {
     }
 
     expect(uploadedReleases).toEqual(["abc123def456"]);
+    expect(pluginOptions).toMatchObject({
+      org: "relay",
+      project: "relay-frontend",
+      authToken: "sntrys_test",
+      release: { name: "abc123def456" },
+      sourcemaps: { filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"] },
+    });
     expect(config.define?.["import.meta.env.VITE_SENTRY_RELEASE"]).toBe(JSON.stringify("abc123def456"));
     await expect(access(mapPath)).rejects.toThrow();
 
