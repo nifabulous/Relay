@@ -492,6 +492,39 @@ class TestSSIProvenanceIsConsistentWithItsSource:
     """
 
     @staticmethod
+    def _governing_comments():
+        """A `# Source: ...` comment governs every row until the next one.
+
+        Provenance evidence lives in three places in this file: the row's own
+        note, an archive host in that note, and these section comments. The
+        first classifier read only the host, the second added the note, and
+        this is the third — a comment saying "(2021 archive)" over rows whose
+        own notes say nothing.
+        """
+        import ast
+        import re
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+        src = path.read_text()
+        lines = src.splitlines()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                start, end = node.lineno, node.end_lineno
+                break
+        governing, current = {}, ""
+        for index in range(start - 1, end):
+            text = lines[index].strip()
+            if text.startswith("#"):
+                if re.search(r"source|----", text, re.I):
+                    current = text
+                elif current:
+                    current += " " + text
+            governing[index + 1] = current
+        return governing
+
+    @staticmethod
     def _rows():
         import ast
         from pathlib import Path
@@ -522,6 +555,30 @@ class TestSSIProvenanceIsConsistentWithItsSource:
         assert not offenders, (
             f"{len(offenders)} row(s) claim 'published' but cite an archived "
             f"source, e.g. {offenders[:3]}"
+        )
+
+    def test_no_published_row_sits_under_an_archived_section_comment(self):
+        import ast
+        import re
+        from pathlib import Path
+
+        governing = self._governing_comments()
+        path = Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+        src = path.read_text()
+        tree = ast.parse(src)
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+                rows = node.value.elts
+                break
+        offenders = [
+            (ast.literal_eval(e.elts[0]), governing.get(e.lineno, "")[:90])
+            for e in rows
+            if ast.literal_eval(e.elts[11]) == "published"
+            and re.search(r"archiv", governing.get(e.lineno, ""), re.I)
+        ]
+        assert not offenders, (
+            f"{len(offenders)} row(s) claim 'published' under a section comment "
+            f"that says archived, e.g. {offenders[:3]}"
         )
 
     def test_every_status_is_one_of_the_three_allowed_values(self):
@@ -627,3 +684,19 @@ def test_the_three_definitions_of_the_status_set_cannot_drift():
     ).read_text()
     declared = re.search(r"SSI_STATUSES = \{([^}]+)\}", autopilot_src).group(1)
     assert set(re.findall(r'"(\w+)"', declared)) == set(SSI_STATUSES)
+
+
+class TestNonIllustrativeRowsCiteASource:
+    """"published" and "archived" both assert a bank document was read. A row
+    making that claim must carry the citation that backs it."""
+
+    def test_every_sourced_status_carries_a_source_citation(self):
+        rows = TestSSIProvenanceIsConsistentWithItsSource._rows
+        bad = [
+            (bic, status, note[:70])
+            for bic, note, _as_of, status in rows()
+            if status in ("published", "archived") and "_SSI_REAL_NOTE" not in note
+        ]
+        assert not bad, (
+            f"{len(bad)} row(s) claim a bank source without citing one: {bad[:3]}"
+        )

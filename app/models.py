@@ -140,6 +140,12 @@ class SSI(Base):
     # it is: "published" read from the bank's live page, "archived" read from a
     # point-in-time snapshot, "illustrative" not sourced from a bank at all.
     # There is no age threshold anywhere — the distinction is evidential.
+    # Deliberately nullable, and deliberately NOT required for "archived":
+    # 181 of the archived rows cite only a year ("2021 archive"). A constraint
+    # demanding a full date would be satisfied by inventing a day and month,
+    # which is the fabrication this column exists to prevent. When the exact
+    # date is known it is stored; when only a year is known the citation in
+    # `notes` carries it and this stays null.
     as_of = Column(String(10))                       # source date, when stated
     status = Column(String(12), nullable=False, default="illustrative")
 
