@@ -78,10 +78,14 @@ def test_invalid_intermediary_bic_rejected():
 
 
 def test_beneficiary_bic_not_in_manifest_rejected():
+    # A structurally valid, real-country BIC that simply is not a southeast-asia
+    # manifest bank. The previous fixture ("ZZZZZPHM") names country "ZP", which
+    # the BIC validator now rejects before the manifest lookup is reached, so it
+    # no longer exercises this path.
     bad = sample_results()
-    bad["banks"][0]["bic"] = "ZZZZZPHM"
+    bad["banks"][0]["bic"] = "DEUTDEFF"
     problems = autopilot.validate_results(bad, MANIFEST)
-    assert any("not in manifest" in p for p in problems)
+    assert any("not in manifest" in p for p in problems), problems
 
 
 def test_wrong_beneficiary_country_rejected():
@@ -111,7 +115,7 @@ def test_missing_source_rejected():
     bad = sample_results()
     bad["banks"][0]["records"][0]["source"] = ""
     problems = autopilot.validate_results(bad, MANIFEST)
-    assert any("missing bank-published source URL" in p for p in problems)
+    assert any("source" in p and "bank-published" in p for p in problems), problems
 
 
 def test_missing_as_of_rejected():
@@ -400,3 +404,154 @@ def test_real_test_file_has_no_duplicate_coverage_classes():
     counts = Counter(re.findall(r"^class (\w+):", text, re.M))
     dupes = {name: n for name, n in counts.items() if n > 1}
     assert not dupes, f"duplicate class definitions shadow earlier ones: {dupes}"
+
+
+# ── Beneficiary BIC must be validated, not just prefix-matched ───────────────
+def test_malformed_beneficiary_bic_with_a_valid_manifest_prefix_is_rejected():
+    """Manifest lookup compares the 8-char prefix, so a malformed 11-char BIC
+    whose first 8 characters match an entry would otherwise be accepted."""
+    bad = sample_results()
+    bad["banks"][0]["bic"] = "BOPIPHMM!!!"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("invalid beneficiary BIC" in p for p in problems), problems
+
+
+def test_beneficiary_bic_of_wrong_length_is_rejected():
+    for candidate in ("BOPIPHM", "BOPIPHMMXX", "BOPIPHMMXXXX"):
+        bad = sample_results()
+        bad["banks"][0]["bic"] = candidate
+        problems = autopilot.validate_results(bad, MANIFEST)
+        assert problems, f"{candidate} was accepted"
+
+
+def test_valid_eight_and_eleven_character_beneficiary_bics_still_pass():
+    for candidate in ("BOPIPHMM", "BOPIPHMMXXX"):
+        ok = sample_results()
+        ok["banks"][0]["bic"] = candidate
+        assert autopilot.validate_results(ok, MANIFEST) == [], candidate
+
+
+# ── Empty and incomplete payloads must not report as valid ───────────────────
+def test_empty_bank_list_is_rejected():
+    problems = autopilot.validate_results({"region": "southeast-asia", "banks": []}, MANIFEST)
+    assert problems, "an empty payload reported as valid"
+
+
+def test_bank_with_no_records_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"] = []
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("min_records_per_bank" in p or "no records" in p for p in problems), problems
+
+
+def test_missing_correspondent_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["correspondent"] = ""
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("correspondent" in p for p in problems), problems
+
+
+def test_value_date_outside_the_manifest_allowlist_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["value_date"] = "whenever"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("value date" in p.lower() for p in problems), problems
+
+
+def test_missing_value_date_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0].pop("value_date")
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("value date" in p.lower() for p in problems), problems
+
+
+# ── Source and date provenance ───────────────────────────────────────────────
+def test_source_that_is_not_a_real_url_is_rejected():
+    for candidate in ("http", "httpsomething", "http://", "https://"):
+        bad = sample_results()
+        bad["banks"][0]["records"][0]["source"] = candidate
+        problems = autopilot.validate_results(bad, MANIFEST)
+        assert any("source" in p for p in problems), f"{candidate!r} accepted"
+
+
+def test_as_of_must_be_an_iso_date():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["as_of"] = "not-a-date"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("as_of" in p for p in problems), problems
+
+
+def test_as_of_in_the_future_is_rejected():
+    bad = sample_results()
+    bad["banks"][0]["records"][0]["as_of"] = "2999-01-01"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("as_of" in p for p in problems), problems
+
+
+# ── Commit must not carry unrelated staged paths ─────────────────────────────
+def test_commit_refuses_when_unrelated_paths_are_already_staged(monkeypatch, tmp_path):
+    """`git add a b` followed by a bare `git commit` commits the whole index,
+    so anything an operator had staged rides along and maybe-pr publishes it."""
+    import argparse
+
+    calls = []
+
+    def fake_git(*args, **kwargs):
+        calls.append(args)
+        if args[:3] == ("diff", "--cached", "--name-only"):
+            return "app/services/seed.py\n.env.local"
+        return ""
+
+    monkeypatch.setattr(autopilot, "git", fake_git)
+    monkeypatch.setattr(autopilot, "cmd_verify", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "cmd_scaffold", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "run_pytest", lambda *a, **k: None)
+
+    results = tmp_path / "r.json"
+    results.write_text(json.dumps(sample_results()))
+
+    with pytest.raises(SystemExit) as exc:
+        autopilot.cmd_commit(argparse.Namespace(
+            results=str(results), label=None, source=None, dry_run=False))
+    assert ".env.local" in str(exc.value)
+    assert not any(a[:1] == ("commit",) for a in calls), "committed despite a dirty index"
+
+
+def test_commit_limits_the_commit_to_its_own_paths(monkeypatch, tmp_path):
+    import argparse
+
+    calls = []
+
+    def fake_git(*args, **kwargs):
+        calls.append(args)
+        if args[:3] == ("diff", "--cached", "--name-only"):
+            return ""
+        return ""
+
+    monkeypatch.setattr(autopilot, "git", fake_git)
+    monkeypatch.setattr(autopilot, "cmd_verify", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "cmd_scaffold", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "run_pytest", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "write_state", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "read_state", lambda: {
+        "branch": "feat/ssi-autopilot", "commits_since_pr": 0,
+        "regions_since_pr": [], "last_pr": None})
+    monkeypatch.setattr(autopilot.subprocess, "run", lambda *a, **k: type(
+        "R", (), {"returncode": 0, "stdout": "", "stderr": ""})())
+
+    results = tmp_path / "r.json"
+    results.write_text(json.dumps(sample_results()))
+    autopilot.cmd_commit(argparse.Namespace(
+        results=str(results), label=None, source=None, dry_run=False))
+
+    commit = next(a for a in calls if a[:1] == ("commit",))
+    assert "--only" in commit, f"commit was not path-limited: {commit}"
+
+
+# ── The gate must run the autopilot's own tests ──────────────────────────────
+def test_commit_gate_runs_the_autopilot_test_file():
+    src = (
+        Path(__file__).resolve().parents[1]
+        / "scripts" / "ssi-autopilot" / "autopilot.py"
+    ).read_text()
+    assert "test_ssi_autopilot.py" in src, "gate does not run the autopilot's own tests"

@@ -31,13 +31,16 @@ import json
 import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_FILE = REPO_ROOT / "app" / "services" / "seed.py"
 TEST_FILE = REPO_ROOT / "tests" / "test_data_consistency.py"
 PRIVACY_TEST_FILE = REPO_ROOT / "tests" / "test_ssi.py"
+AUTOPILOT_TEST_FILE = REPO_ROOT / "tests" / "test_ssi_autopilot.py"
 REGIONS_FILE = Path(__file__).resolve().parent / "regions.json"
 STATE_FILE = REPO_ROOT / ".ssi-autopilot-state.json"
 STATE_KEY = "ssi-autopilot"
@@ -122,9 +125,21 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
     block = region["masked_block"]
     max_acct = block + 99
 
-    for bank in results.get("banks", []):
+    result_banks = results.get("banks", [])
+    if not result_banks:
+        problems.append(
+            f"{region_name}: no banks in results — an empty payload is not a valid region"
+        )
+
+    for bank in result_banks:
         ben_bic = str(bank.get("bic", "")).upper()
         ben_name = bank.get("name", "")
+        # The manifest is keyed on the 8-character prefix, so prefix matching
+        # alone would accept any malformed suffix riding on a known institution
+        # ("BOPIPHMM!!!"). Validate the BIC as published before slicing it.
+        if not bic_is_valid(ben_bic):
+            problems.append(f"{ben_name or ben_bic}: invalid beneficiary BIC {ben_bic!r}")
+            continue
         # Banks publish 8- and 11-character BICs interchangeably; the manifest
         # keys on the 8-character institution prefix. Compare on that prefix so
         # a branch-qualified BIC resolves to its entry instead of reading as
@@ -142,14 +157,35 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 f"research found no published SSI list; drop its records"
             )
 
-        for rec in bank.get("records", []):
+        records = bank.get("records", [])
+        # The manifest carries a floor and it was never read; a bank with no
+        # records otherwise passed as "valid" and printed "0 records valid".
+        minimum = defaults.get("min_records_per_bank", 1)
+        if len(records) < minimum:
+            problems.append(
+                f"{ben_bic}: {len(records)} record(s), below min_records_per_bank ({minimum})"
+            )
+
+        for rec in records:
             ccy = str(rec.get("currency", "")).upper()
             int_bic = str(rec.get("int_bic", "")).upper()
+            correspondent = str(rec.get("correspondent", "")).strip()
             int_acct = str(rec.get("nostro", "")).strip()
             ben_acct = str(rec.get("with_an", "")).strip()
             charge = str(rec.get("charge_code", "")).upper()
+            value_date = str(rec.get("value_date", "")).strip()
             source = str(rec.get("source", "")).strip()
             as_of = str(rec.get("as_of", "")).strip()
+
+            # The correspondent name is what a learner reads next to the BIC.
+            if not correspondent:
+                problems.append(f"{ben_bic}/{ccy}: missing correspondent name")
+
+            # value_dates is a manifest allowlist that was never consulted.
+            if value_date not in defaults["value_dates"]:
+                problems.append(
+                    f"{ben_bic}/{ccy}: value date {value_date!r} not in {defaults['value_dates']}"
+                )
 
             # Currency
             if not _CURRENCIES.match(ccy):
@@ -194,11 +230,27 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             if charge not in defaults["charge_codes"]:
                 problems.append(f"{ben_bic}/{ccy}: charge code {charge!r} not in {defaults['charge_codes']}")
 
-            # Source citation
-            if not source.startswith("http"):
-                problems.append(f"{ben_bic}/{ccy}: missing bank-published source URL")
+            # Source citation. `startswith("http")` also accepted the bare
+            # string "http" and "httpsomething", so a citation could be a
+            # placeholder that reads like a URL.
+            parsed = urlparse(source)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                problems.append(
+                    f"{ben_bic}/{ccy}: source {source!r} is not an http(s) URL "
+                    f"(must cite a bank-published page)"
+                )
+
+            # as_of was only required to be non-empty, so "not-a-date" passed.
             if not as_of:
                 problems.append(f"{ben_bic}/{ccy}: missing as_of date")
+            else:
+                try:
+                    parsed_date = date.fromisoformat(as_of)
+                except ValueError:
+                    problems.append(f"{ben_bic}/{ccy}: as_of {as_of!r} is not an ISO date")
+                else:
+                    if parsed_date > date.today():
+                        problems.append(f"{ben_bic}/{ccy}: as_of {as_of} is in the future")
 
             # Duplicate (ben_bic, ccy, int_bic)
             dup_key = (ben_bic, ccy, int_bic)
@@ -389,7 +441,7 @@ def cmd_commit(args: argparse.Namespace) -> None:
     # TestAllSSIAccountsArePlaceholders lives in tests/test_ssi.py, and it is
     # the canonical check that no real account number reaches seed.py. Gating
     # only on the generated coverage file cannot see that class at all.
-    run_pytest([str(TEST_FILE), str(PRIVACY_TEST_FILE)])
+    run_pytest([str(TEST_FILE), str(PRIVACY_TEST_FILE), str(AUTOPILOT_TEST_FILE)])
     # Claimed in the PR body, so it has to actually run: whitespace errors in a
     # generated block are exactly what this catches.
     whitespace = subprocess.run(
@@ -398,9 +450,25 @@ def cmd_commit(args: argparse.Namespace) -> None:
     if whitespace.returncode != 0:
         raise SystemExit(f"git diff --check failed:\n{whitespace.stdout}{whitespace.stderr}")
 
-    git("add", str(SEED_FILE), str(TEST_FILE))
+    # `git add a b` followed by a bare `git commit` commits the whole index,
+    # not just the paths added. Anything an operator had staged rides along and
+    # maybe-pr then publishes it. Refuse a dirty index, and commit by path.
+    own_paths = [
+        str(path.relative_to(REPO_ROOT)) for path in (SEED_FILE, TEST_FILE)
+    ]
+    staged = [p for p in git("diff", "--cached", "--name-only").splitlines() if p.strip()]
+    unexpected = sorted(set(staged) - set(own_paths))
+    if unexpected:
+        raise SystemExit(
+            "refusing to commit with unrelated paths staged: "
+            + ", ".join(unexpected)
+            + "\nUnstage them first — a bare commit would include them and "
+            "maybe-pr would push them."
+        )
+
+    git("add", *own_paths)
     msg = f"feat(ssi): seed {results['region']} SSIs ({source_hint})"
-    git("commit", "-m", msg, "-m", f"Beneficiary: {label}.")
+    git("commit", "--only", *own_paths, "-m", msg, "-m", f"Beneficiary: {label}.")
     state = read_state()
     state["commits_since_pr"] += 1
     state["regions_since_pr"].append(results["region"])
