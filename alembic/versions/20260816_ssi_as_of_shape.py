@@ -26,6 +26,7 @@ listener and the Pydantic validators are what reject those.
 Revision ID: 20260816_ssi_asofshape
 """
 
+from datetime import date
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -40,6 +41,14 @@ depends_on: Union[str, Sequence[str], None] = None
 CONSTRAINT = "ck_ssi_as_of_is_a_past_iso_date"
 
 SHAPE = "as_of IS NULL OR as_of LIKE '____-__-__'"
+
+
+def _is_a_real_date(value: str) -> bool:
+    """True only for a dashed YYYY-MM-DD that names a day on the calendar."""
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except (TypeError, ValueError):
+        return False
 
 
 def upgrade() -> None:
@@ -95,15 +104,23 @@ def upgrade() -> None:
     # Shape is all this constraint enforces, so these do not block the upgrade
     # — but they are semantically wrong and the operator should know they are
     # there while the data is in front of them.
-    suspect = bind.execute(sa.text(
-        "SELECT COUNT(*) FROM ssi WHERE as_of IS NOT NULL AND ("
-        "CAST(substr(as_of, 6, 2) AS INTEGER) NOT BETWEEN 1 AND 12 OR "
-        "CAST(substr(as_of, 9, 2) AS INTEGER) NOT BETWEEN 1 AND 31)"
-    )).scalar_one()
+    #
+    # Judged in Python, not SQL. The obvious query casts the month and day
+    # substrings to integers, which SQLite silently turns into 0 and Postgres
+    # rejects outright — so a legacy value like "2024-ab-15", which this
+    # constraint actually permits, would crash the upgrade on the production
+    # engine while passing every test here.
+    suspect = [
+        value
+        for (value,) in bind.execute(
+            sa.text("SELECT as_of FROM ssi WHERE as_of IS NOT NULL")
+        )
+        if not _is_a_real_date(value)
+    ]
     if suspect:
         print(
-            f"  warning: {suspect} ssi row(s) have an as_of that is shaped like "
-            f"a date but is not one (impossible month or day). The shape "
+            f"  warning: {len(suspect)} ssi row(s) have an as_of that is shaped "
+            f"like a date but is not one (e.g. {suspect[0]!r}). The shape "
             f"constraint permits them; the ORM validators do not."
         )
 

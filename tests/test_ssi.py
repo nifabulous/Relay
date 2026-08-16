@@ -1047,6 +1047,36 @@ class TestSchemaIsPortable:
                     offenders.append((table.name, operator.strip()))
         assert not offenders, f"SQLite-only SQL emitted for Postgres: {offenders}"
 
+    def test_no_migration_uses_sql_that_only_behaves_on_sqlite(self):
+        """The DDL check above reads Base.metadata, so it cannot see SQL written
+        inside a migration — which is how a CAST of a text column reached the
+        tree. SQLite casts 'ab' to 0 silently; Postgres raises and takes the
+        deploy down with it."""
+        import re
+        from pathlib import Path
+
+        versions = Path(__file__).resolve().parents[1] / "alembic" / "versions"
+        risky = {
+            "CAST(": "casting a text column is dialect-dependent; judge it in Python",
+            " GLOB ": "GLOB is not an operator on Postgres",
+            "date('now'": "non-deterministic in a CHECK, and dialect-specific",
+            "strftime(": "SQLite-only",
+            "||": "string concatenation differs; avoid in portable migrations",
+        }
+        offenders = []
+        for migration in versions.glob("*.py"):
+            body = migration.read_text()
+            # Comments explain these hazards on purpose; only code counts.
+            code = "\n".join(
+                line for line in body.splitlines()
+                if not line.strip().startswith("#")
+            )
+            code = re.sub(r'""".*?"""', "", code, flags=re.S)
+            for token, why in risky.items():
+                if token in code:
+                    offenders.append((migration.name, token, why))
+        assert not offenders, f"dialect-risky SQL in a migration: {offenders}"
+
     def test_the_model_and_the_migration_agree_on_the_as_of_shape(self):
         """They are separate declarations of one rule; drift between them is
         how the Postgres bug got in."""
