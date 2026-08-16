@@ -1,5 +1,5 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, it, expect, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, beforeEach, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
@@ -9,6 +9,8 @@ import {
   resetAnalyticsSink,
   setAnalyticsSink,
 } from "../lib/analytics/analytics";
+
+vi.mock("../features/explore/ExplorePage", () => new Promise<never>(() => {}));
 
 // App.tsx uses BrowserRouter which needs a real URL matching basename="/app".
 // For the bootstrap test we verify the shell renders the Relay identity
@@ -109,6 +111,17 @@ describe("App routing — case desk route resolves against the real App tree", (
     // change that routes to the wrong lazy chunk is caught. (This replaced an
     // earlier assertion for the Task-3 placeholder copy, which Task 4 removed.)
     expect(screen.getByText(/Maple Ridge Outfitters/i)).toBeInTheDocument();
+  });
+});
+
+describe("App routing — named lazy loading state", () => {
+  it("renders the Explore loader while the real Explore route chunk is suspended", async () => {
+    window.history.replaceState({}, "", "/app/explore");
+
+    const { App } = await import("./App");
+    render(<App />);
+
+    expect(screen.getByRole("status", { name: "Loading Explore" })).toBeVisible();
   });
 });
 

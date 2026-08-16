@@ -5,6 +5,7 @@ import { withSentryReactRouterV7Routing } from "@sentry/react";
 import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
+import { PageLoader } from "./PageLoader";
 import { OverviewPage } from "../features/overview/OverviewPage";
 import { track } from "../lib/analytics/analytics";
 
@@ -59,29 +60,29 @@ export function App() {
           <SentryRoutes>
             <Route element={<AppShell />}>
               <Route index element={<OverviewPage />} />
-              <Route path="learn" element={<Suspense fallback={null}><LearnIndexPage /></Suspense>} />
+              <Route path="learn" element={<Suspense fallback={<PageLoader destination="Learn" />}><LearnIndexPage /></Suspense>} />
             {/* MUST precede learn/:moduleId so 'cases' is never captured as a
                 module id. React Router v6 ranks static segments above dynamic
                 ones, but the explicit ordering is a regression guard. */}
-            <Route path="learn/cases/:caseId" element={<Suspense fallback={null}><CaseDeskRoute /></Suspense>} />
+            <Route path="learn/cases/:caseId" element={<Suspense fallback={<PageLoader destination="Learn" />}><CaseDeskRoute /></Suspense>} />
             {/* Static segment must precede learn/:moduleId so 'practice' is
                 never captured as a module id. */}
-            <Route path="learn/practice" element={<Suspense fallback={null}><PracticePage /></Suspense>} />
-            <Route path="learn/:moduleId" element={<Suspense fallback={null}><LearnModulePage /></Suspense>} />
-              <Route path="explore" element={<Suspense fallback={null}><ExplorePage /></Suspense>} />
-              <Route path="explore/banks" element={<Suspense fallback={null}><BankDirectoryPage /></Suspense>} />
-              <Route path="explore/banks/:bic" element={<Suspense fallback={null}><BankDetailRoute /></Suspense>} />
-              <Route path="explore/schemes" element={<Suspense fallback={null}><SchemesPage /></Suspense>} />
-              <Route path="explore/glossary" element={<Suspense fallback={null}><GlossaryPage /></Suspense>} />
-            <Route path="operate" element={<Suspense fallback={null}><PreparePaymentPage /></Suspense>} />
-            <Route path="operate/prepare" element={<Suspense fallback={null}><PreparePaymentPage /></Suspense>} />
-            <Route path="operate/tools" element={<Suspense fallback={null}><ToolIndexPage /></Suspense>} />
-            <Route path="operate/fees" element={<Suspense fallback={null}><FeePage /></Suspense>} />
-            <Route path="operate/screening" element={<Suspense fallback={null}><ScreeningPage /></Suspense>} />
-            <Route path="operate/value-date" element={<Suspense fallback={null}><ValueDatePage /></Suspense>} />
-            <Route path="operate/stp" element={<Suspense fallback={null}><StpPage /></Suspense>} />
-            <Route path="operate/tracking" element={<Suspense fallback={null}><TrackingPage /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={null}><SettingsPage /></Suspense>} />
+            <Route path="learn/practice" element={<Suspense fallback={<PageLoader destination="Learn" />}><PracticePage /></Suspense>} />
+            <Route path="learn/:moduleId" element={<Suspense fallback={<PageLoader destination="Learn" />}><LearnModulePage /></Suspense>} />
+              <Route path="explore" element={<Suspense fallback={<PageLoader destination="Explore" />}><ExplorePage /></Suspense>} />
+              <Route path="explore/banks" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDirectoryPage /></Suspense>} />
+              <Route path="explore/banks/:bic" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDetailRoute /></Suspense>} />
+              <Route path="explore/schemes" element={<Suspense fallback={<PageLoader destination="Payment Schemes" />}><SchemesPage /></Suspense>} />
+              <Route path="explore/glossary" element={<Suspense fallback={<PageLoader destination="Glossary" />}><GlossaryPage /></Suspense>} />
+            <Route path="operate" element={<Suspense fallback={<PageLoader destination="Operate" />}><PreparePaymentPage /></Suspense>} />
+            <Route path="operate/prepare" element={<Suspense fallback={<PageLoader destination="Operate" />}><PreparePaymentPage /></Suspense>} />
+            <Route path="operate/tools" element={<Suspense fallback={<PageLoader destination="Operate" />}><ToolIndexPage /></Suspense>} />
+            <Route path="operate/fees" element={<Suspense fallback={<PageLoader destination="Operate" />}><FeePage /></Suspense>} />
+            <Route path="operate/screening" element={<Suspense fallback={<PageLoader destination="Operate" />}><ScreeningPage /></Suspense>} />
+            <Route path="operate/value-date" element={<Suspense fallback={<PageLoader destination="Operate" />}><ValueDatePage /></Suspense>} />
+            <Route path="operate/stp" element={<Suspense fallback={<PageLoader destination="Operate" />}><StpPage /></Suspense>} />
+            <Route path="operate/tracking" element={<Suspense fallback={<PageLoader destination="Tracking" />}><TrackingPage /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<PageLoader destination="Settings" />}><SettingsPage /></Suspense>} />
               {/* Terminal, not a redirect. `Navigate to=""` used to sit here and
                   was a no-op — it rendered, navigated nowhere, and left the
                   outlet empty for every unmatched URL. A redirect to Overview
