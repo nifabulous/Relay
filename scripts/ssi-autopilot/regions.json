@@ -26,17 +26,18 @@
     },
     {
       "name": "china",
-      "label": "China (ICBC, CCB, ABC, CMB, BoCom)",
+      "label": "China (CMB seedable; ICBC, CCB, ABC, BoCom NOT)",
       "countries": ["CN"],
       "masked_block": 91001500,
+      "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists — NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
       "banks": [
-        {"bic8": "ICBKCNBJ", "name": "Industrial and Commercial Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
-        {"bic8": "PCBCCNBJ", "name": "China Construction Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
-        {"bic8": "ABOCCNBJ", "name": "Agricultural Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
-        {"bic8": "CMBCCNBS", "name": "China Merchants Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
-        {"bic8": "COMMCNSH", "name": "Bank of Communications", "country": "CN", "currencies": ["USD", "EUR", "CNY"]}
+        {"bic8": "CMBCCNBS", "name": "China Merchants Bank", "country": "CN", "currencies": ["USD", "HKD", "EUR", "GBP", "JPY", "AUD", "SGD", "CAD", "CHF"]},
+        {"bic8": "ICBKCNBJ", "name": "Industrial and Commercial Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "PCBCCNBJ", "name": "China Construction Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "ABOCCNBJ", "name": "Agricultural Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false},
+        {"bic8": "COMMCNSH", "name": "Bank of Communications", "country": "CN", "currencies": ["USD", "EUR", "CNY"], "seedable": false}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["PNBPUS3NNYC", "BBRUBEBB"]
     },
     {
       "name": "latin-america",
@@ -59,13 +60,14 @@
       "label": "South Korea",
       "countries": ["KR"],
       "masked_block": 91000900,
+      "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) — SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
       "banks": [
-        {"bic8": "CZNBKRSE", "name": "KB Kookmin Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
-        {"bic8": "SHBKKRSE", "name": "Shinhan Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
-        {"bic8": "KOEXKRSE", "name": "Hana Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
-        {"bic8": "HVBKKRSE", "name": "Woori Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]}
+        {"bic8": "CZNBKRSE", "name": "KB Kookmin Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "SHBKKRSE", "name": "Shinhan Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "KOEXKRSE", "name": "Hana Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false},
+        {"bic8": "HVBKKRSE", "name": "Woori Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"], "seedable": false}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["KOCBKRSE", "KBKOKRSE", "CITICHZZ"]
     },
     {
       "name": "turkey-israel",
