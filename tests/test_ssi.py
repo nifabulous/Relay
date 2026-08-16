@@ -1349,19 +1349,42 @@ class TestAVerifierMustBeAName:
         db_session_clean.rollback()
 
     def test_a_padded_verifier_is_stored_trimmed(self, db_session_clean):
-        from datetime import date
+        from datetime import datetime, timezone
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        )
+        record_verified_publication(
+            row, verified_by="  ops:ada  ",
+            verified_on=datetime.now(timezone.utc).date().isoformat(),
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.verified_by == "ops:ada"
+
+    def test_a_rejected_publication_does_not_keep_its_claimed_verifier(
+        self, db_session_clean
+    ):
+        """The API returns verified_by. An unverified row naming someone is
+        worse than one naming nobody."""
+        from datetime import datetime, timezone
 
         from app.models import SSI
 
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: x", as_of=date.today().isoformat(),
-            verified_by="  ops:ada  ",
+            notes="Source: x",
+            as_of=datetime.now(timezone.utc).date().isoformat(),
+            verified_by="someone-who-did-not-check",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
-        assert row.verified_by == "ops:ada"
+        assert row.status == "unverified"
+        assert row.verified_by is None, "a rejected claim kept its attribution"
 
 
 class TestAPlausibleVerifierIsNotVerification:
@@ -1510,3 +1533,50 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
         db_session_clean.refresh(reloaded)
         assert reloaded.status == "published"
         assert reloaded.verified_by == "ops:grace"
+
+
+class TestOnePromotionAuthorisesOneWrite:
+    """The promotion marker is consumed at the flush that uses it. Left set, a
+    single verification would authorise every later edit on the same instance."""
+
+    @staticmethod
+    def _utc_today():
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).date().isoformat()
+
+    def test_the_marker_does_not_authorise_a_later_re_attribution(self, db_session_clean):
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        )
+        record_verified_publication(row, verified_by="ops:ada", verified_on=self._utc_today())
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "published"
+
+        # Same instance, no fresh verification.
+        row.verified_by = "impostor"
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "unverified", "one promotion authorised a second write"
+
+    def test_changing_only_the_date_also_needs_re_verification(self, db_session_clean):
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        )
+        record_verified_publication(row, verified_by="ops:ada", verified_on="2020-01-01")
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "published"
+
+        # Freshening the date is a claim about when someone checked.
+        row.as_of = self._utc_today()
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "unverified", "the freshness claim was moved without re-verifying"

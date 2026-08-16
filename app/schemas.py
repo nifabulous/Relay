@@ -1,5 +1,5 @@
 """Pydantic v2 request/response schemas."""
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -154,7 +154,9 @@ class SSIRecord(BaseModel):
             raise ValueError(
                 f"as_of must be written as YYYY-MM-DD, got {value!r}"
             )
-        if parsed > date.today():
+        # UTC, matching the database triggers. as_of is a calendar date, and
+        # one clock for both layers is what keeps them from disagreeing.
+        if parsed > datetime.now(timezone.utc).date():
             raise ValueError(f"as_of {value} is in the future; a source cannot have been read yet")
         return value
 

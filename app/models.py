@@ -314,9 +314,9 @@ def _provenance_is_being_assigned(target: "SSI") -> bool:
     its existing provenance must be left alone — checking unconditionally is
     what made an unrelated edit silently downgrade a verified row.
 
-    verified_by counts as well as status: rewriting the attribution on an
-    already-published row is a fresh claim about who verified it, and is
-    exactly the audit trail this column exists to keep.
+    verified_by and as_of count as well as status: rewriting the attribution
+    or the date on an already-published row is a fresh claim about who checked
+    and when, which is exactly the audit trail these columns exist to keep.
     """
     from sqlalchemy import inspect as _inspect
 
@@ -325,6 +325,7 @@ def _provenance_is_being_assigned(target: "SSI") -> bool:
         return (
             state.attrs.status.history.has_changes()
             or state.attrs.verified_by.history.has_changes()
+            or state.attrs.as_of.history.has_changes()
         )
     except Exception:  # detached or not yet instrumented: treat as an assignment
         return True
@@ -348,7 +349,8 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     research from any other writer. Keeping "published" honest against a caller
     with database access is not something the database can do for you.
     """
-    from datetime import date as _date
+    from datetime import datetime as _datetime
+    from datetime import timezone as _timezone
 
     from .schemas import SSI_STATUSES
 
@@ -364,7 +366,7 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
         )
     if target.as_of:
         try:
-            parsed = _date.fromisoformat(target.as_of)
+            parsed = _datetime.fromisoformat(target.as_of).date()
         except (TypeError, ValueError):
             raise ValueError(
                 f"SSI.as_of {target.as_of!r} must be an ISO date (YYYY-MM-DD)"
@@ -375,7 +377,7 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
             raise ValueError(
                 f"SSI.as_of {target.as_of!r} must be written as YYYY-MM-DD"
             )
-        if parsed > _date.today():
+        if parsed > _datetime.now(_timezone.utc).date():
             raise ValueError(
                 f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
             )
@@ -398,8 +400,18 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
         # caller that fills in a plausible-looking verifier has still not done
         # any verifying. Only record_verified_publication() sets the marker,
         # so it is the only way a row reaches the database as published.
-        if not getattr(target, _PROMOTION_MARKER, False) or not target.verified_by:
+        # Consumed here, not merely read. Left set, it would authorise every
+        # later write on the same instance — one verification standing in for
+        # any number of subsequent edits to the attribution or the date.
+        promoted = getattr(target, _PROMOTION_MARKER, False)
+        if promoted:
+            delattr(target, _PROMOTION_MARKER)
+        if not promoted or not target.verified_by:
             target.status = "unverified"
+            # A rejected claim must not leave its claimed verifier behind: the
+            # API returns this field, and an unverified row naming someone is
+            # worse than one naming nobody.
+            target.verified_by = None
         elif not target.as_of:
             raise ValueError(
                 "SSI.status 'published' requires as_of, the date currency was verified"
@@ -424,13 +436,15 @@ def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) 
     so". It records who did the checking and when; both are required.
     """
     from datetime import date as _date
+    from datetime import datetime as _datetime
+    from datetime import timezone as _timezone
 
     if not verified_by or not verified_by.strip():
         raise ValueError("record_verified_publication requires a verifier")
     parsed = _date.fromisoformat(verified_on)
     if parsed.isoformat() != verified_on:
         raise ValueError(f"verified_on must be written as YYYY-MM-DD, got {verified_on!r}")
-    if parsed > _date.today():
+    if parsed > _datetime.now(_timezone.utc).date():
         raise ValueError(f"verified_on {verified_on} is in the future")
     row.status = "published"
     row.verified_by = verified_by.strip()
@@ -452,15 +466,15 @@ SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YY
 # date() yields NULL for nonsense and silently normalises an impossible date
 # (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
 #
-# The upper bound carries a day of slack because these functions are UTC while
-# the Python validators use the local date. Without it, a caller at UTC+13
-# writing "today" near midnight is accepted by Python and refused here — a
-# legitimate write failing on geography. Python stays the strict layer; this
-# one only has to stop 2999.
+# as_of is a UTC calendar date, and that is the whole timezone policy. Both
+# layers ask the same clock: these functions are UTC, and the Python
+# validators use datetime.now(timezone.utc).date(). An earlier version gave
+# the trigger a day of slack to paper over a local-vs-UTC mismatch, which left
+# the database accepting a date Python rejected — two rules instead of one.
 _SQLITE_AS_OF_CONDITION = (
     "NEW.as_of IS NOT NULL AND ("
     "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
-    "OR NEW.as_of > date('now', '+1 day'))"
+    "OR NEW.as_of > date('now'))"
 )
 SSI_AS_OF_SQLITE = [
     f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
@@ -479,7 +493,7 @@ SSI_AS_OF_POSTGRES = [
             END IF;
             BEGIN
               IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
-                 OR NEW.as_of::date > CURRENT_DATE + 1 THEN
+                 OR NEW.as_of::date > CURRENT_DATE THEN
                 RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
               END IF;
             EXCEPTION WHEN others THEN
