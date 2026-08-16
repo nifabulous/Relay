@@ -77,7 +77,7 @@ if [[ -d "$PUBLIC_ASSETS" ]]; then
     echo "public source maps found in $PUBLIC_ASSETS" >&2
     exit 1
   fi
-  if rg -n --hidden --glob '!*.map' 'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_ASSETS"; then
+  if rg -q --hidden --glob '!*.map' 'SENTRY_AUTH_TOKEN|sntrys_[A-Za-z0-9._-]+' "$PUBLIC_ASSETS"; then
     echo "Sentry credential material found in public assets" >&2
     exit 1
   fi
