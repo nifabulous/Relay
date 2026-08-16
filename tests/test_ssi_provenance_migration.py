@@ -27,13 +27,13 @@ def _alembic(db: Path, *args: str) -> subprocess.CompletedProcess:
     )
 
 
-def _seed_at_previous_revision(db: Path, as_of: str) -> None:
+def _seed_at_previous_revision(db: Path, as_of: str, status: str = "archived") -> None:
     assert _alembic(db, "upgrade", PREVIOUS).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
         "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'archived', 'Source: x', ?)",
-        (as_of,),
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', ?, 'Source: x', ?)",
+        (status, as_of),
     )
     connection.commit()
     connection.close()
@@ -106,3 +106,37 @@ def test_upgrade_leaves_a_valid_populated_database_alone(tmp_path):
     preserved = list(connection.execute("SELECT as_of FROM ssi"))[0][0]
     connection.close()
     assert preserved == "2021-10-09"
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_a_malformed_published_row_gets_remediation_that_actually_works(tmp_path):
+    """The obvious repair — null the as_of — is a dead end for these rows: the
+    earlier constraint requires a published row to carry a date, so the UPDATE
+    itself fails and the operator is stuck following the instructions."""
+    db = tmp_path / "published.db"
+    _seed_at_previous_revision(db, "garbage", status="published")
+
+    result = _alembic(db, "upgrade", "head")
+    assert result.returncode != 0
+    assert "clearing as_of alone will fail" in result.stderr, result.stderr
+
+    # The plain repair must indeed fail, or the warning would be noise.
+    connection = sqlite3.connect(db)
+    shape = "NOT (as_of IS NULL OR as_of LIKE '____-__-__')"
+    with pytest.raises(sqlite3.IntegrityError):
+        connection.execute(f"UPDATE ssi SET as_of = NULL WHERE {shape}")
+    connection.rollback()
+
+    # The remediation the migration actually prescribes must work.
+    connection.execute(
+        f"UPDATE ssi SET status = 'unverified', as_of = NULL "
+        f"WHERE {shape} AND status = 'published'"
+    )
+    connection.commit()
+    connection.close()
+
+    assert _alembic(db, "upgrade", "head").returncode == 0

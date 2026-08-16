@@ -46,24 +46,65 @@ def upgrade() -> None:
     # Preflight. The constraint applies to every row, and the schema this
     # replaces accepted any non-empty as_of, so a populated database can be
     # holding values that violate it. Without this the batch rebuild fails
-    # part-way through the deploy with a bare IntegrityError naming no rows.
+    # part-way through the deploy with a bare IntegrityError naming no rows —
+    # and on SQLite it strands _alembic_tmp_ssi, blocking every later attempt.
     #
-    # Reported rather than repaired: nulling a malformed as_of would be a
-    # silent edit to payment provenance during a migration. The operator gets
-    # the count and the exact statements to inspect and fix.
+    # Reported rather than repaired: clearing an as_of is a silent edit to
+    # payment provenance, and that is the operator's decision, not a
+    # migration's.
     bind = op.get_bind()
-    offenders = bind.execute(
-        sa.text(f"SELECT COUNT(*) FROM ssi WHERE NOT ({SHAPE})")
+    bad_shape = f"NOT ({SHAPE})"
+
+    published = bind.execute(
+        sa.text(f"SELECT COUNT(*) FROM ssi WHERE {bad_shape} AND status = 'published'")
     ).scalar_one()
-    if offenders:
-        raise RuntimeError(
-            f"{offenders} ssi row(s) have an as_of that is not YYYY-MM-DD, so "
-            f"the new constraint cannot be applied.\n"
-            f"Inspect:  SELECT id, beneficiary_bic, currency, as_of FROM ssi "
-            f"WHERE NOT ({SHAPE});\n"
-            f"If those dates carry no usable value, clear them:\n"
-            f"          UPDATE ssi SET as_of = NULL WHERE NOT ({SHAPE});\n"
-            f"then re-run this migration."
+    other = bind.execute(
+        sa.text(f"SELECT COUNT(*) FROM ssi WHERE {bad_shape} AND status != 'published'")
+    ).scalar_one()
+
+    if published or other:
+        lines = [
+            f"{published + other} ssi row(s) have an as_of that is not "
+            f"YYYY-MM-DD, so the new constraint cannot be applied.",
+            f"Inspect:  SELECT id, beneficiary_bic, currency, status, as_of "
+            f"FROM ssi WHERE {bad_shape};",
+        ]
+        if other:
+            lines.append(
+                f"  {other} row(s) may simply have the value cleared:\n"
+                f"    UPDATE ssi SET as_of = NULL "
+                f"WHERE {bad_shape} AND status != 'published';"
+            )
+        if published:
+            # Nulling these would violate ck_ssi_published_has_verification_date,
+            # so the obvious repair is a dead end for them. They need either a
+            # real verification date or an explicit downgrade.
+            lines.append(
+                f"  {published} row(s) are status='published', which requires a "
+                f"date, so clearing as_of alone will fail. Either supply the "
+                f"date verification actually happened:\n"
+                f"    UPDATE ssi SET as_of = '<YYYY-MM-DD>' "
+                f"WHERE {bad_shape} AND status = 'published';\n"
+                f"  or record that currency was never confirmed:\n"
+                f"    UPDATE ssi SET status = 'unverified', as_of = NULL "
+                f"WHERE {bad_shape} AND status = 'published';"
+            )
+        lines.append("then re-run this migration.")
+        raise RuntimeError("\n".join(lines))
+
+    # Shape is all this constraint enforces, so these do not block the upgrade
+    # — but they are semantically wrong and the operator should know they are
+    # there while the data is in front of them.
+    suspect = bind.execute(sa.text(
+        "SELECT COUNT(*) FROM ssi WHERE as_of IS NOT NULL AND ("
+        "CAST(substr(as_of, 6, 2) AS INTEGER) NOT BETWEEN 1 AND 12 OR "
+        "CAST(substr(as_of, 9, 2) AS INTEGER) NOT BETWEEN 1 AND 31)"
+    )).scalar_one()
+    if suspect:
+        print(
+            f"  warning: {suspect} ssi row(s) have an as_of that is shaped like "
+            f"a date but is not one (impossible month or day). The shape "
+            f"constraint permits them; the ORM validators do not."
         )
 
     with op.batch_alter_table("ssi") as batch:
