@@ -76,6 +76,10 @@ describe("frontend Sentry observability", () => {
       transaction: "GET /api/lookup?bic=DEUTDEFF&account=123",
       request: { url: "https://relay.example/api/lookup?bic=DEUTDEFF" },
       user: { id: "customer-123" },
+      contexts: {
+        trace: { trace_id: "trace", span_id: "span", data: { iban: "secret" } },
+        app: { app_name: "Relay", data: { account: "secret" } },
+      },
       spans: [{
         trace_id: "trace",
         span_id: "span",
@@ -83,7 +87,8 @@ describe("frontend Sentry observability", () => {
         timestamp: 2,
         data: { "http.method": "GET", "http.status_code": 200, "http.query": "secret" },
         description: "GET https://relay.example/api/lookup?bic=DEUTDEFF",
-      }],
+        tags: { iban: "secret" },
+      } as SpanJSON & { tags: Record<string, string> }],
     };
 
     const sanitized = sanitizeTransactionEvent(event);
@@ -91,14 +96,41 @@ describe("frontend Sentry observability", () => {
     expect(sanitized.transaction).toBe("GET /api/lookup");
     expect(sanitized.request).toBeUndefined();
     expect(sanitized.user).toBeUndefined();
+    expect(sanitized.contexts).toEqual({
+      trace: { trace_id: "trace", span_id: "span" },
+      app: { app_name: "Relay" },
+    });
     expect(sanitized.spans?.[0]?.description).toBe("GET /api/lookup");
     expect(sanitized.spans?.[0]?.data).toEqual({
       "http.method": "GET",
       "http.status_code": 200,
     });
+    expect((sanitized.spans?.[0] as SpanJSON & { tags?: unknown })?.tags).toBeUndefined();
   });
 
-  it("sanitizes child spans without dropping them", () => {
+  it("canonicalizes dynamic and encoded route segments", () => {
+    const descriptions = [
+      ["GET /app/explore/banks/DEUTDEFFXXX", "GET /app/explore/banks/:bic"],
+      ["GET /app/learn/cases/case%2Fsecret", "GET /app/learn/cases/:caseId"],
+      ["GET /api/track/0123456789abcdef0123456789abcdef/complete", "GET /api/track/:uetr/complete"],
+      ["GET /api/unknown/7", "GET /api/[REDACTED_PATH]"],
+    ] as const;
+
+    for (const [description, expected] of descriptions) {
+      const span: SpanJSON = {
+        trace_id: "trace",
+        span_id: "span",
+        start_timestamp: 1,
+        timestamp: 2,
+        data: {},
+        description,
+      };
+
+      expect(sanitizeSpan(span).description).toBe(expected);
+    }
+  });
+
+  it("sanitizes child spans without dropping safe timing metadata", () => {
     const span: SpanJSON = {
       trace_id: "trace",
       span_id: "span",
@@ -110,8 +142,19 @@ describe("frontend Sentry observability", () => {
 
     const sanitized = sanitizeSpan(span);
 
-    expect(sanitized).toBe(span);
+    expect(sanitized).not.toBe(span);
     expect(sanitized.description).toBe("POST /api/verify-payee");
     expect(sanitized.data).toEqual({ "http.method": "POST" });
+  });
+
+  it("never propagates tracing headers to an arbitrary external API", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
+
+    const targets = buildFrontendSentryOptions()?.tracePropagationTargets ?? [];
+    const relativeApiTarget = targets.find((target) => target instanceof RegExp);
+
+    expect(relativeApiTarget).toBeInstanceOf(RegExp);
+    expect((relativeApiTarget as RegExp).test("/api/health")).toBe(true);
+    expect((relativeApiTarget as RegExp).test("https://attacker.example/api/health")).toBe(false);
   });
 });

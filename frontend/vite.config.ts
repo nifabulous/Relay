@@ -1,7 +1,44 @@
 /// <reference types="vitest" />
+import { readdir } from "node:fs/promises";
+import { resolve } from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+
+const PUBLIC_OUTPUT_DIR = "../app/static/relay";
+
+async function listSourceMaps(directory: string): Promise<string[]> {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return [];
+    throw error;
+  }
+
+  const nestedFiles = await Promise.all(
+    entries.map((entry) => {
+      const entryPath = resolve(directory, entry.name);
+      if (entry.isDirectory()) return listSourceMaps(entryPath);
+      return entry.name.endsWith(".map") ? Promise.resolve([entryPath]) : Promise.resolve([]);
+    }),
+  );
+
+  return nestedFiles.flat();
+}
+
+function assertNoPublicSourceMaps() {
+  return {
+    name: "relay-assert-no-public-source-maps",
+    apply: "build" as const,
+    async writeBundle() {
+      const mapFiles = await listSourceMaps(resolve(process.cwd(), PUBLIC_OUTPUT_DIR));
+      if (mapFiles.length > 0) {
+        throw new Error(`Public source maps remain after the Sentry upload step: ${mapFiles.join(", ")}`);
+      }
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   // Vercel supplies these as build-time secrets. Loading all prefixes here
@@ -23,15 +60,21 @@ export default defineConfig(({ mode }) => {
               project: env.SENTRY_PROJECT,
               authToken: env.SENTRY_AUTH_TOKEN,
               telemetry: false,
+              // A source-map upload failure must fail the deployment rather
+              // than publish a build that cannot be debugged safely.
+              errorHandler: (error) => {
+                throw error;
+              },
               sourcemaps: {
-                filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"],
+                filesToDeleteAfterUpload: [`${PUBLIC_OUTPUT_DIR}/**/*.map`],
               },
             }),
           ]
         : []),
+      assertNoPublicSourceMaps(),
     ],
     build: {
-      outDir: "../app/static/relay",
+      outDir: PUBLIC_OUTPUT_DIR,
       emptyOutDir: true,
       // Maps are uploaded privately, then removed from the public output.
       sourcemap: canUploadSourceMaps ? "hidden" : false,

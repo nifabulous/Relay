@@ -16,12 +16,112 @@ const SAFE_SPAN_DATA_KEYS = new Set([
   "http.status_code",
   "http.response.status_code",
 ]);
-const SAFE_CONTEXT_KEYS = new Set(["app", "browser", "device", "os", "runtime", "trace"]);
+const SAFE_CONTEXT_FIELDS: Record<string, readonly string[]> = {
+  app: ["app_name", "app_version", "app_build", "app_start_time"],
+  browser: ["name", "version", "type"],
+  device: ["family", "model", "brand", "type", "architecture"],
+  os: ["name", "version", "build", "kernel_version", "type"],
+  runtime: ["name", "version", "type", "build"],
+  trace: ["trace_id", "span_id", "op", "status", "origin"],
+};
+const STATIC_RELAY_PATHS = new Set([
+  "/",
+  "/app",
+  "/app/learn",
+  "/app/learn/practice",
+  "/app/explore",
+  "/app/explore/banks",
+  "/app/explore/schemes",
+  "/app/explore/glossary",
+  "/app/operate",
+  "/app/operate/prepare",
+  "/app/operate/tools",
+  "/app/operate/fees",
+  "/app/operate/screening",
+  "/app/operate/value-date",
+  "/app/operate/stp",
+  "/app/operate/tracking",
+  "/app/settings",
+  "/api/health",
+  "/api/validate",
+  "/api/lookup",
+  "/api/route",
+  "/api/us-bank",
+  "/api/ssi",
+  "/api/verify-payee",
+  "/api/track/create",
+  "/api/schemes",
+  "/api/schemes/international",
+  "/api/prepare-payment",
+  "/api/fees/simulate",
+  "/api/screen",
+  "/api/value-date",
+  "/api/message/translate",
+  "/api/message/pacs008-check",
+  "/api/message/stp-check",
+  "/api/progress",
+  "/api/tutor/chat",
+  "/api/import/fedwire",
+  "/api/import/fedach",
+  "/api/import/ssi",
+]);
 
 function sampleRate(rawValue: string | undefined, fallback: number): number {
   if (!rawValue?.trim()) return fallback;
   const parsed = Number(rawValue);
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : fallback;
+}
+
+function decodePathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return "[invalid]";
+  }
+}
+
+function canonicalizeRelayPath(pathname: string): string {
+  const segments = pathname.split("/").map(decodePathSegment);
+  const routeSegments = segments.slice(1).filter(Boolean);
+  const normalizedPath = routeSegments.length > 0 ? `/${routeSegments.join("/")}` : "/";
+
+  if (STATIC_RELAY_PATHS.has(normalizedPath)) return normalizedPath;
+
+  if (
+    routeSegments.length === 4 &&
+    routeSegments[0] === "app" &&
+    routeSegments[1] === "explore" &&
+    routeSegments[2] === "banks"
+  ) {
+    return "/app/explore/banks/:bic";
+  }
+
+  if (
+    routeSegments.length === 4 &&
+    routeSegments[0] === "app" &&
+    routeSegments[1] === "learn" &&
+    routeSegments[2] === "cases"
+  ) {
+    return "/app/learn/cases/:caseId";
+  }
+
+  if (routeSegments.length === 3 && routeSegments[0] === "app" && routeSegments[1] === "learn") {
+    return "/app/learn/:moduleId";
+  }
+
+  if (
+    (routeSegments.length === 3 || routeSegments.length === 4) &&
+    routeSegments[0] === "api" &&
+    routeSegments[1] === "track"
+  ) {
+    return routeSegments.length === 4 && ["skip", "complete"].includes(routeSegments[3])
+      ? `/api/track/:uetr/${routeSegments[3]}`
+      : "/api/track/:uetr";
+  }
+
+  if (routeSegments[0] === "api") return "/api/[REDACTED_PATH]";
+  if (routeSegments[0] === "app") return "/app/[REDACTED_PATH]";
+  return "/[REDACTED_PATH]";
 }
 
 function sanitizePathLike(value: string | undefined): string | undefined {
@@ -39,11 +139,7 @@ function sanitizePathLike(value: string | undefined): string | undefined {
     pathname = target.split(/[?#]/, 1)[0] ?? "/";
   }
 
-  // Keep useful endpoint names while masking identifier-like path segments.
-  pathname = pathname.replace(
-    /\/(?:[A-Z]{4}[A-Z0-9]{2}[A-Z0-9]{3}|[0-9a-f]{8,}(?:-[0-9a-f-]{4,}){0,4}|[A-Za-z0-9_-]{16,})(?=\/|$)/g,
-    "/:param",
-  );
+  pathname = canonicalizeRelayPath(pathname);
 
   return method ? `${method} ${pathname}` : pathname;
 }
@@ -51,9 +147,31 @@ function sanitizePathLike(value: string | undefined): string | undefined {
 function sanitizeContexts(contexts: ErrorEvent["contexts"]): ErrorEvent["contexts"] {
   if (!contexts) return undefined;
 
-  return Object.fromEntries(
-    Object.entries(contexts).filter(([key]) => SAFE_CONTEXT_KEYS.has(key)),
-  );
+  const sanitizedContexts: Record<string, Record<string, string | number | boolean>> = {};
+
+  for (const [contextName, contextValue] of Object.entries(contexts)) {
+    const allowedFields = SAFE_CONTEXT_FIELDS[contextName];
+    if (!allowedFields || !contextValue || typeof contextValue !== "object" || Array.isArray(contextValue)) {
+      continue;
+    }
+
+    const source = contextValue as Record<string, unknown>;
+    const safeFields: Record<string, string | number | boolean> = {};
+    for (const field of allowedFields) {
+      const value = source[field];
+      if (
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        (typeof value === "number" && Number.isFinite(value))
+      ) {
+        safeFields[field] = value;
+      }
+    }
+
+    if (Object.keys(safeFields).length > 0) sanitizedContexts[contextName] = safeFields;
+  }
+
+  return Object.keys(sanitizedContexts).length > 0 ? sanitizedContexts : undefined;
 }
 
 function sanitizeExceptionValues(event: ErrorEvent): ErrorEvent["exception"] {
@@ -95,15 +213,31 @@ export function sanitizeErrorEvent(event: ErrorEvent): ErrorEvent {
 
 /** Keep only a small allowlist of non-sensitive HTTP status metadata. */
 export function sanitizeSpan(span: SpanJSON): SpanJSON {
-  span.description = sanitizePathLike(span.description);
-  span.data = Object.fromEntries(
+  const safeData = Object.fromEntries(
     Object.entries(span.data ?? {}).filter(([key, value]) => {
       if (!SAFE_SPAN_DATA_KEYS.has(key)) return false;
       if (key === "http.method") return typeof value === "string" && /^[A-Z]{3,10}$/.test(value);
       return typeof value === "number" && Number.isFinite(value);
     }),
   );
-  return span;
+
+  const sanitized: SpanJSON = {
+    trace_id: span.trace_id,
+    span_id: span.span_id,
+    start_timestamp: span.start_timestamp,
+    data: safeData,
+    description: sanitizePathLike(span.description),
+  };
+
+  if (span.timestamp !== undefined) sanitized.timestamp = span.timestamp;
+  if (span.parent_span_id !== undefined) sanitized.parent_span_id = span.parent_span_id;
+  if (span.status !== undefined && /^[a-z0-9_.-]{1,64}$/i.test(span.status)) sanitized.status = span.status;
+  if (span.op !== undefined && /^[a-z0-9_.-]{1,64}$/i.test(span.op)) sanitized.op = span.op;
+  if (span.origin !== undefined) sanitized.origin = span.origin;
+  if (span.is_segment !== undefined) sanitized.is_segment = span.is_segment;
+  if (span.segment_id !== undefined) sanitized.segment_id = span.segment_id;
+
+  return sanitized;
 }
 
 /** Remove request data from transactions while preserving route and status shape. */
@@ -145,7 +279,9 @@ export function buildFrontendSentryOptions(): BrowserOptions | null {
       }),
     ],
     tracesSampleRate: sampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE, defaultTraceRate),
-    tracePropagationTargets: [/^\/api\//, /^https?:\/\/[^/]+\/api\//, "localhost"],
+    // Relay uses relative same-origin API requests. Never propagate tracing
+    // headers to arbitrary absolute URLs or third-party hosts.
+    tracePropagationTargets: [/^\/api\//],
     dataCollection: {
       userInfo: false,
       cookies: false,

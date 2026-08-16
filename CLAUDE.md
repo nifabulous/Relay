@@ -203,14 +203,16 @@ This repository uses a review-until-merge loop for every pushed change:
    threads, inline comments, and top-level comments. Do not treat an old green
    check or an old bot review as current until it covers the pushed head SHA.
 3. Fix every unresolved actionable comment, including bot comments. Add or
-   update regression tests, rerun the relevant validation, commit the fixes,
-   and push them to the same PR branch.
+   update regression tests and rerun the relevant validation. Commit and push
+   fixes only when the user has explicitly authorized write actions for the
+   task; otherwise report the proposed fixes without mutating GitHub.
 4. Poll again after each push and repeat step 3 until there are no unresolved
    actionable comments, all required checks pass on the exact head SHA, and
    the PR is mergeable.
-5. Once those conditions are met, merge the PR and verify that GitHub reports
-   it as merged. If mergeability is blocked by a human decision or a required
-   deployment approval, stop and report the blocker rather than bypassing it.
+5. Once those conditions are met, report the PR as ready. Merge only when the
+   user has explicitly authorized merging for that task, then verify that
+   GitHub reports it as merged. Never bypass a required human decision or
+   deployment approval.
 
 Use thread-aware GitHub reads when review state matters. Preserve unrelated
 working-tree changes, never stage secrets, and never push a branch whose PR has
