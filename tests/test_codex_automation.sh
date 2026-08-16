@@ -117,6 +117,8 @@ done
 
 require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
 require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
+require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
+require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'

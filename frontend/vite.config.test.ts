@@ -103,6 +103,7 @@ describe("Vite Sentry source-map lifecycle", () => {
     await mkdir(join(mapPath, ".."), { recursive: true });
     await writeFile(mapPath, "private source map");
     process.chdir(frontendRoot);
+    vi.stubEnv("SENTRY_AUTH_TOKEN", "");
 
     vi.doUnmock("@sentry/vite-plugin");
     vi.doUnmock("vite");
@@ -118,11 +119,10 @@ describe("Vite Sentry source-map lifecycle", () => {
         finalize: false,
         setCommits: false,
       },
-      // The documented boolean keeps source-map handling enabled. Without an
-      // auth token the pinned plugin skips its network upload, while its real
-      // writeBundle and deletion implementation still run on the output.
+      // Explicitly disable upload so an inherited developer token can never
+      // make this test contact Sentry; the real deletion hook still runs.
       sourcemaps: {
-        disable: false,
+        disable: "disable-upload",
         filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"],
       },
       errorHandler: (error) => {

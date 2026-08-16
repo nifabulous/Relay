@@ -231,10 +231,12 @@ must complete these gates and report the actual commands/results:
    merge” from memory or from an older head. Record the current commit SHA,
    commands, results, skipped checks, and remaining human verification.
 
-The local gate for this protocol is `scripts/verify_before_push.sh`. It is a
-convenience and a fail-closed checklist, not authorization to push, merge,
-deploy, or change repository settings. External writes still require the
-user's explicit direction.
+The local gate for this protocol is `scripts/verify_before_push.sh origin/main`.
+Pass the exact base ref or SHA for the change; the gate refuses to run if it
+cannot resolve that base and checks the committed base-to-HEAD range in
+addition to staged/unstaged changes. It is a convenience and a fail-closed
+checklist, not authorization to push, merge, deploy, or change repository
+settings. External writes still require the user's explicit direction.
 
 ## Maintainer pull request completion checklist
 

@@ -23,7 +23,8 @@
 Commands and results:
 
 ```text
-# Paste exact commands and concise results here.
+scripts/verify_before_push.sh origin/main
+# Paste exact results and any additional commands here.
 ```
 
 ## Review notes

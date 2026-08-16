@@ -5,18 +5,33 @@ set -euo pipefail
 # maintainer asks for review or performs an externally visible write. This
 # script never stages, commits, pushes, merges, deploys, or changes GitHub.
 
+if [[ $# -ne 1 ]]; then
+  echo "usage: $0 <base-ref-or-sha>" >&2
+  exit 2
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+BASE_REF="$1"
+if ! BASE_SHA="$(git rev-parse --verify "${BASE_REF}^{commit}")"; then
+  echo "unable to resolve verification base: $BASE_REF" >&2
+  exit 1
+fi
+HEAD_SHA="$(git rev-parse --verify HEAD)"
+
 echo "== Relay pre-push verification =="
-echo "commit: $(git rev-parse HEAD)"
+echo "base: $BASE_REF ($BASE_SHA)"
+echo "commit: $HEAD_SHA"
+echo "range: $BASE_SHA..$HEAD_SHA"
 echo "branch: $(git branch --show-current)"
 
-echo "[1/8] Checking whitespace errors"
+echo "[1/9] Checking committed-range and working-tree whitespace errors"
+git diff --check "$BASE_SHA" "$HEAD_SHA"
 git diff --check
 git diff --cached --check
 
-echo "[2/8] Checking Python lint"
+echo "[2/9] Checking Python lint"
 if [[ -x "$REPO_ROOT/.venv/bin/ruff" ]]; then
   "$REPO_ROOT/.venv/bin/ruff" check .
 elif command -v ruff >/dev/null 2>&1; then
@@ -36,24 +51,24 @@ if [[ ! -x "$REPO_ROOT/frontend/node_modules/.bin/vite" ]]; then
   exit 1
 fi
 
-echo "[3/8] Typechecking and building the production frontend"
+echo "[3/9] Typechecking and building the production frontend"
 npm --prefix frontend run build
 
-echo "[4/8] Running the full backend test suite in an isolated SQLite database"
+echo "[4/9] Running the full backend test suite in an isolated SQLite database"
 TEST_DB_DIR="$(mktemp -d /tmp/relay-prepush-db.XXXXXX)"
 trap 'rm -rf -- "$TEST_DB_DIR"' EXIT
 TEST_DATABASE_URL="sqlite:////${TEST_DB_DIR#/}/swift_routing.db"
 DATABASE_URL="$TEST_DATABASE_URL" "$PYTHON" -m pytest tests/ -q
 
-echo "[5/8] Running the full frontend suite"
+echo "[5/9] Running the full frontend suite"
 npm --prefix frontend test -- --run --no-file-parallelism
 
-echo "[6/8] Checking the bundle budget"
+echo "[6/9] Checking the bundle budget"
 npm --prefix frontend run check:bundle
 
 PUBLIC_ASSETS="$REPO_ROOT/app/static/relay/assets"
 if [[ -d "$PUBLIC_ASSETS" ]]; then
-  echo "[7/8] Inspecting public build artifacts"
+  echo "[7/9] Inspecting public build artifacts"
   if find "$PUBLIC_ASSETS" -type f -name '*.map' -print -quit | grep -q .; then
     echo "public source maps found in $PUBLIC_ASSETS" >&2
     exit 1
@@ -67,9 +82,11 @@ else
   exit 1
 fi
 
-echo "[8/8] Showing the final scope for human review"
+echo "[8/9] Showing the final scope for human review"
 git status --short
 git diff --stat
 git diff --cached --stat
 
-echo "Pre-push verification passed. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
+echo "[9/9] Final base/head identity is $BASE_SHA..$HEAD_SHA"
+
+echo "Pre-push verification passed for $BASE_SHA..$HEAD_SHA. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
