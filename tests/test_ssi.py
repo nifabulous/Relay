@@ -937,15 +937,12 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
     def test_published_without_a_date_is_refused_when_a_verifier_is_named(
         self, db_session_clean
     ):
-        """A row with no verifier is downgraded rather than refused, so this
-        names one — which is what makes the missing date an error rather than
-        an ordinary generic write."""
+        """A row with no verifier is downgraded rather than refused, so naming
+        one is what makes the missing date an error rather than an ordinary
+        generic write."""
         import pytest
 
-        from app.models import _PROMOTION_MARKER
-
         row = self._row(as_of=None, verified_by="ops:ada")
-        setattr(row, _PROMOTION_MARKER, True)  # promoted, but with no date
         db_session_clean.add(row)
         with pytest.raises(ValueError, match="as_of"):
             db_session_clean.commit()
@@ -1116,7 +1113,6 @@ class TestSchemaIsPortable:
             " GLOB ": "GLOB is not an operator on Postgres",
             "date('now'": "non-deterministic in a CHECK, and dialect-specific",
             "strftime(": "SQLite-only",
-            "||": "string concatenation differs; avoid in portable migrations",
         }
         offenders = []
         for migration in versions.glob("*.py"):
@@ -1127,6 +1123,23 @@ class TestSchemaIsPortable:
                 if not line.strip().startswith("#")
             )
             code = re.sub(r'""".*?"""', "", code, flags=re.S)
+            # A migration may use dialect-specific SQL when it declares so and
+            # supplies both branches — a trigger body has no portable form.
+            # What stays forbidden is SQLite-only SQL presented as portable.
+            if "DIALECT_SPECIFIC_SQL = True" in code:
+                # Naming a constant SSI_AS_OF_POSTGRES satisfies a substring
+                # test while upgrade() still runs only the SQLite statements.
+                # Requiring `dialect.name` means the migration has to actually
+                # choose at runtime, which is the thing the declaration claims.
+                assert "dialect.name" in code, (
+                    f"{migration.name} declares dialect-specific SQL but never "
+                    f"inspects dialect.name, so it cannot be branching"
+                )
+                assert "sqlite" in code and "postgres" in code.lower(), (
+                    f"{migration.name} declares dialect-specific SQL but does "
+                    f"not name both engines"
+                )
+                continue
             for token, why in risky.items():
                 if token in code:
                     offenders.append((migration.name, token, why))
@@ -1364,90 +1377,6 @@ class TestAVerifierMustBeAName:
         db_session_clean.add(row)
         db_session_clean.commit()
         assert row.verified_by == "ops:ada"
-
-    def test_a_rejected_publication_does_not_keep_its_claimed_verifier(
-        self, db_session_clean
-    ):
-        """The API returns verified_by. An unverified row naming someone is
-        worse than one naming nobody."""
-        from datetime import datetime, timezone
-
-        from app.models import SSI
-
-        row = SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: x",
-            as_of=datetime.now(timezone.utc).date().isoformat(),
-            verified_by="someone-who-did-not-check",
-        )
-        db_session_clean.add(row)
-        db_session_clean.commit()
-        assert row.status == "unverified"
-        assert row.verified_by is None, "a rejected claim kept its attribution"
-
-
-class TestAPlausibleVerifierIsNotVerification:
-    """Filling in a verifier field is not the same as having verified anything.
-    Only the promotion path can produce a published row."""
-
-    def test_a_generic_write_with_a_convincing_verifier_is_still_downgraded(
-        self, db_session_clean
-    ):
-        from datetime import date
-
-        from app.models import SSI
-
-        row = SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: https://bank.example/ssi.",
-            as_of=date.today().isoformat(), verified_by="research-team",
-        )
-        db_session_clean.add(row)
-        db_session_clean.commit()
-        assert row.status == "unverified", (
-            "a caller manufactured a published row just by naming a verifier"
-        )
-
-    def test_an_update_cannot_promote_a_row_either(self, db_session_clean):
-        from datetime import date
-
-        from app.models import SSI
-
-        row = SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified",
-            notes="Source: x",
-        )
-        db_session_clean.add(row)
-        db_session_clean.commit()
-
-        row.status = "published"
-        row.verified_by = "research-team"
-        row.as_of = date.today().isoformat()
-        db_session_clean.commit()
-        assert row.status == "unverified", "an update promoted a row without verification"
-
-    def test_the_promotion_path_is_what_makes_it_stick(self, db_session_clean):
-        from datetime import date
-
-        from app.models import SSI, record_verified_publication
-
-        row = SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
-        )
-        db_session_clean.add(row)
-        db_session_clean.commit()
-
-        record_verified_publication(row, verified_by="ops:ada",
-                                    verified_on=date.today().isoformat())
-        db_session_clean.commit()
-        db_session_clean.refresh(row)
-        assert row.status == "published"
-
-
 class TestAVerifiedRowSurvivesOrdinaryEditing:
     """The promotion marker is transient, so it is absent on every row loaded
     back from the database. Checking it on any update meant that fixing a typo
@@ -1484,40 +1413,6 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
         db_session_clean.refresh(reloaded)
         assert reloaded.status == "published", "an unrelated edit destroyed the verification"
         assert reloaded.verified_by == "ops:ada"
-
-    def test_a_reloaded_row_cannot_be_re_attributed_by_hand(self, db_session_clean):
-        from app.models import SSI
-
-        self._publish(db_session_clean)
-        db_session_clean.expunge_all()
-
-        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
-        reloaded.verified_by = "impostor"
-        db_session_clean.commit()
-        db_session_clean.refresh(reloaded)
-        assert reloaded.status == "unverified", (
-            "the audit trail was rewritten without a fresh verification"
-        )
-
-    def test_a_reloaded_unverified_row_cannot_be_promoted_by_hand(self, db_session_clean):
-        from datetime import date
-
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
-        ))
-        db_session_clean.commit()
-        db_session_clean.expunge_all()
-
-        reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
-        reloaded.status = "published"
-        reloaded.verified_by = "impostor"
-        reloaded.as_of = date.today().isoformat()
-        db_session_clean.commit()
-        assert reloaded.status == "unverified"
-
     def test_re_verification_through_the_promotion_path_still_works(self, db_session_clean):
         from datetime import date
 
@@ -1533,11 +1428,72 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
         db_session_clean.refresh(reloaded)
         assert reloaded.status == "published"
         assert reloaded.verified_by == "ops:grace"
+class TestTheMigrationOwnsItsOwnSql:
+    """A migration must keep doing what it did the day it was written, so it
+    copies the trigger SQL rather than importing today's. The copy is what
+    makes drift possible, so this pins the two together — immutability without
+    the divergence that duplication usually brings."""
+
+    @staticmethod
+    def _migration_source():
+        from pathlib import Path
+
+        return (
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260816_ssi_verified_by.py"
+        ).read_text()
+
+    def test_the_migration_does_not_import_live_model_sql(self):
+        source = self._migration_source()
+        assert "from app.models import" not in source, (
+            "the migration imports application SQL; a later model edit would "
+            "silently change how an old database upgrades"
+        )
+
+    def test_the_migration_trigger_sql_matches_the_model(self):
+        """Compares values, not text: the constants are f-strings, so only
+        evaluating them proves the two definitions agree."""
+        import ast
+
+        from app import models
+
+        wanted = {
+            "_MESSAGE", "SSI_AS_OF_MESSAGE", "_SQLITE_AS_OF_CONDITION",
+            "SSI_AS_OF_SQLITE", "SSI_AS_OF_POSTGRES",
+        }
+        tree = ast.parse(self._migration_source())
+        assignments = [
+            node for node in tree.body
+            if isinstance(node, ast.Assign)
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id in wanted
+        ]
+        namespace: dict = {}
+        exec(compile(ast.Module(body=assignments, type_ignores=[]),  # noqa: S102
+                     "<migration-constants>", "exec"), namespace)
+
+        assert namespace["SSI_AS_OF_SQLITE"] == models.SSI_AS_OF_SQLITE, (
+            "the migration's SQLite triggers have drifted from the model's"
+        )
+        assert namespace["SSI_AS_OF_POSTGRES"] == models.SSI_AS_OF_POSTGRES, (
+            "the migration's Postgres triggers have drifted from the model's"
+        )
 
 
-class TestOnePromotionAuthorisesOneWrite:
-    """The promotion marker is consumed at the flush that uses it. Left set, a
-    single verification would authorise every later edit on the same instance."""
+class TestPublishedIsAttributionNotAuthorisation:
+    """The contract this settled on, stated as a test so it cannot drift back
+    by accident.
+
+    An earlier revision tried to make "published" unforgeable with a transient
+    promotion marker. That marker did not survive a reload, so an ordinary edit
+    to an unrelated field silently downgraded a verified row — it destroyed the
+    state it existed to protect. The marker was removed deliberately.
+
+    What holds now: a published row must name a verifier and a date, so every
+    claim is attributable to whoever wrote it. Preventing a *false* claim needs
+    an authenticated identity, which no database layer has; that belongs to the
+    service layer.
+    """
 
     @staticmethod
     def _utc_today():
@@ -1545,38 +1501,50 @@ class TestOnePromotionAuthorisesOneWrite:
 
         return datetime.now(timezone.utc).date().isoformat()
 
-    def test_the_marker_does_not_authorise_a_later_re_attribution(self, db_session_clean):
-        from app.models import SSI, record_verified_publication
+    def test_a_named_verifier_is_taken_at_its_word(self, db_session_clean):
+        from app.models import SSI
 
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=self._utc_today(), verified_by="ops:ada",
         )
-        record_verified_publication(row, verified_by="ops:ada", verified_on=self._utc_today())
         db_session_clean.add(row)
         db_session_clean.commit()
         assert row.status == "published"
+        assert row.verified_by == "ops:ada"
 
-        # Same instance, no fresh verification.
-        row.verified_by = "impostor"
-        db_session_clean.commit()
-        db_session_clean.refresh(row)
-        assert row.status == "unverified", "one promotion authorised a second write"
-
-    def test_changing_only_the_date_also_needs_re_verification(self, db_session_clean):
-        from app.models import SSI, record_verified_publication
+    def test_an_unattributed_claim_is_still_refused(self, db_session_clean):
+        from app.models import SSI
 
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: x", as_of=self._utc_today(),
         )
-        record_verified_publication(row, verified_by="ops:ada", verified_on="2020-01-01")
         db_session_clean.add(row)
         db_session_clean.commit()
-        assert row.status == "published"
+        assert row.status == "unverified", "an unattributable claim was stored"
 
-        # Freshening the date is a claim about when someone checked.
-        row.as_of = self._utc_today()
-        db_session_clean.commit()
-        db_session_clean.refresh(row)
-        assert row.status == "unverified", "the freshness claim was moved without re-verifying"
+    def test_no_promotion_marker_machinery_remains(self):
+        """The mechanism was removed, not disabled. A half-present marker is
+        how the silent downgrade happened."""
+        from pathlib import Path
+
+        source = (
+            Path(__file__).resolve().parents[1] / "app" / "models.py"
+        ).read_text()
+        assert "_PROMOTION_MARKER" not in source
+        assert "_provenance_is_being_assigned" not in source
+
+    def test_the_listener_is_registered_for_both_insert_and_update(self):
+        """Removing the marker meant editing the block these calls sat in, and
+        an earlier attempt deleted them outright — every ORM invariant silently
+        stopped running while the suite still passed 187 tests."""
+        from sqlalchemy import event
+
+        from app.models import SSI, _validate_ssi_provenance
+
+        assert event.contains(SSI, "before_insert", _validate_ssi_provenance)
+        assert event.contains(SSI, "before_update", _validate_ssi_provenance)

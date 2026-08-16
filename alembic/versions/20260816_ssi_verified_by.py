@@ -31,9 +31,54 @@ depends_on: Union[str, Sequence[str], None] = None
 
 DIALECT_SPECIFIC_SQL = True
 
-# Imported rather than restated: the same trigger text defined twice is how
-# the model and the migration drifted apart once already in this branch.
-from app.models import SSI_AS_OF_POSTGRES, SSI_AS_OF_SQLITE  # noqa: E402
+# Copied, not imported. A migration has to keep doing what it did the day it
+# was written: importing app.models would mean a later edit there silently
+# changed how an old database upgrades. The duplication that creates is real —
+# it is how the model and the migration drifted apart earlier in this branch —
+# so a test pins these strings to the model's, which catches drift without
+# making history mutable.
+_MESSAGE = "as_of must be a real calendar date, in the past, written YYYY-MM-DD"
+SSI_AS_OF_MESSAGE = _MESSAGE
+
+_SQLITE_AS_OF_CONDITION = (
+    "NEW.as_of IS NOT NULL AND ("
+    "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
+    "OR NEW.as_of > date('now'))"
+)
+
+SSI_AS_OF_SQLITE = [
+    f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+    f"""CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+        WHEN {_SQLITE_AS_OF_CONDITION}
+        BEGIN SELECT RAISE(ABORT, '{SSI_AS_OF_MESSAGE}'); END""",
+]
+
+SSI_AS_OF_POSTGRES = [
+    f"""CREATE OR REPLACE FUNCTION ssi_as_of_is_real_and_past() RETURNS trigger AS $$
+        BEGIN
+          IF NEW.as_of IS NOT NULL THEN
+            IF NEW.as_of !~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$' THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END IF;
+            BEGIN
+              IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
+                 OR NEW.as_of::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date) THEN
+                RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+              END IF;
+            EXCEPTION WHEN others THEN
+              RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
+            END;
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql""",
+    """CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+    """CREATE TRIGGER ssi_as_of_update BEFORE UPDATE ON ssi
+       FOR EACH ROW EXECUTE FUNCTION ssi_as_of_is_real_and_past()""",
+]
 
 _SQLITE_DROP = [
     "DROP TRIGGER IF EXISTS ssi_as_of_insert",

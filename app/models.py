@@ -306,31 +306,6 @@ class IdempotencyKey(Base):
     endpoint = Column(String(50), nullable=False)  # track/create | prepare-payment
 
 
-def _provenance_is_being_assigned(target: "SSI") -> bool:
-    """True when this flush writes the provenance, not merely carries it.
-
-    An INSERT always does. An UPDATE only does when something touched status
-    or verified_by; a row loaded and edited elsewhere reports no change, and
-    its existing provenance must be left alone — checking unconditionally is
-    what made an unrelated edit silently downgrade a verified row.
-
-    verified_by and as_of count as well as status: rewriting the attribution
-    or the date on an already-published row is a fresh claim about who checked
-    and when, which is exactly the audit trail these columns exist to keep.
-    """
-    from sqlalchemy import inspect as _inspect
-
-    try:
-        state = _inspect(target)
-        return (
-            state.attrs.status.history.has_changes()
-            or state.attrs.verified_by.history.has_changes()
-            or state.attrs.as_of.history.has_changes()
-        )
-    except Exception:  # detached or not yet instrumented: treat as an assignment
-        return True
-
-
 def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     """Hold the provenance invariants for every ORM write.
 
@@ -386,54 +361,36 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     if target.verified_by is not None:
         target.verified_by = target.verified_by.strip() or None
 
-    # Only when the status is actually being set to "published" in this flush.
-    # The marker is transient, so it is absent on every row loaded back from
-    # the database; checking it unconditionally meant that editing an unrelated
-    # field on a verified row silently downgraded it and orphaned verified_by.
-    if target.status == "published" and _provenance_is_being_assigned(target):
-        # Downgraded, not rejected. A generic caller setting "published" is
-        # usually copying a field forward, not asserting it verified the bank
-        # today; failing the write would break that caller for no gain, while
-        # storing the claim would be a lie.
+    if target.status == "published":
+        # Downgraded, not rejected. A caller setting "published" without a
+        # verifier is usually copying a field forward rather than asserting it
+        # checked the bank today; failing the write would break that caller for
+        # no gain, while storing an unattributable claim would be a lie.
         #
-        # The test is the promotion marker, not the presence of verified_by: a
-        # caller that fills in a plausible-looking verifier has still not done
-        # any verifying. Only record_verified_publication() sets the marker,
-        # so it is the only way a row reaches the database as published.
-        # Consumed here, not merely read. Left set, it would authorise every
-        # later write on the same instance — one verification standing in for
-        # any number of subsequent edits to the attribution or the date.
-        promoted = getattr(target, _PROMOTION_MARKER, False)
-        if promoted:
-            delattr(target, _PROMOTION_MARKER)
-        if not promoted or not target.verified_by:
+        # What this enforces is attribution, not authorisation. A caller that
+        # does name a verifier is taken at its word, because nothing at this
+        # layer can tell research from any other writer — an audit trail records
+        # who claimed something, and preventing a false claim needs an
+        # authenticated identity that only the service layer has.
+        if not target.verified_by:
             target.status = "unverified"
-            # A rejected claim must not leave its claimed verifier behind: the
-            # API returns this field, and an unverified row naming someone is
-            # worse than one naming nobody.
-            target.verified_by = None
         elif not target.as_of:
             raise ValueError(
                 "SSI.status 'published' requires as_of, the date currency was verified"
             )
 
-
 event.listen(SSI, "before_insert", _validate_ssi_provenance)
 event.listen(SSI, "before_update", _validate_ssi_provenance)
 
 
-# Set only by record_verified_publication(). A transient instance attribute,
-# not a column: it records how this write was made, which is not a property of
-# the row and has no business being stored.
-_PROMOTION_MARKER = "_ssi_promoted_by_verification"
-
-
 def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) -> "SSI":
-    """Promote a row to "published" — the only supported way to do it.
+    """Promote a row to "published", validating what the claim requires.
 
-    Every other path downgrades the status, so this function is what separates
-    "someone typed published" from "someone checked the bank's page and said
-    so". It records who did the checking and when; both are required.
+    This is the intended way to publish, not an enforced one: it checks that a
+    verifier is named and that the date is a real, non-future day, so a caller
+    using it cannot record an incoherent claim. A caller that sets the fields
+    by hand is not stopped — see _validate_ssi_provenance for why that is an
+    attribution model rather than an authorisation one.
     """
     from datetime import date as _date
     from datetime import datetime as _datetime
@@ -449,7 +406,6 @@ def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) 
     row.status = "published"
     row.verified_by = verified_by.strip()
     row.as_of = verified_on
-    setattr(row, _PROMOTION_MARKER, True)
     return row
 
 
@@ -467,8 +423,10 @@ SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YY
 # (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
 #
 # as_of is a UTC calendar date, and that is the whole timezone policy. Both
-# layers ask the same clock: these functions are UTC, and the Python
-# validators use datetime.now(timezone.utc).date(). An earlier version gave
+# layers ask the same clock: SQLite's date('now') is UTC, the Postgres branch
+# converts explicitly because CURRENT_DATE there follows the session TimeZone
+# and would drift from the policy near midnight, and the Python validators use
+# datetime.now(timezone.utc).date(). An earlier version gave
 # the trigger a day of slack to paper over a local-vs-UTC mismatch, which left
 # the database accepting a date Python rejected — two rules instead of one.
 _SQLITE_AS_OF_CONDITION = (
@@ -493,7 +451,7 @@ SSI_AS_OF_POSTGRES = [
             END IF;
             BEGIN
               IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
-                 OR NEW.as_of::date > CURRENT_DATE THEN
+                 OR NEW.as_of::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date) THEN
                 RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
               END IF;
             EXCEPTION WHEN others THEN
