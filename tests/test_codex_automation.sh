@@ -134,6 +134,16 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_MAX_OUTPUT_TOKENS:'
   require_text "$file" 'CODEX_MAX_OUTPUT_BYTES:'
   require_text "$file" 'CODEX_REQUEST_TIMEOUT:'
+  # The job must outlive the request, with room to post the comment after it.
+  job_seconds="$(grep -E '^ *timeout-minutes:' "$ROOT/$file" | head -1 | grep -oE '[0-9]+')"
+  request_seconds="$(grep -oE "CODEX_REQUEST_TIMEOUT \\|\\| '[0-9]+'" "$ROOT/$file" | grep -oE "[0-9]+" | head -1)"
+  if [[ -n "$job_seconds" && -n "$request_seconds" ]]; then
+    if (( job_seconds * 60 <= request_seconds )); then
+      fail "$file: timeout-minutes $job_seconds ($((job_seconds * 60))s) does not exceed CODEX_REQUEST_TIMEOUT ${request_seconds}s"
+    fi
+  else
+    fail "$file: could not read timeout-minutes / CODEX_REQUEST_TIMEOUT to compare them"
+  fi
   require_text "$file" 'CODEX_BOT_LOGIN:'
   require_text "$file" 'GITHUB_STEP_SUMMARY'
   # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.
@@ -237,6 +247,7 @@ for arg in "$@"; do
       [[ "$prev" == "--output" ]] && out="$candidate"
       prev="$candidate"
     done
+    printf '%s\n' "$*" >"$CODEX_STUB_DIR/responses-argv.log"
     printf 'stub review\n' >"$out"
     if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
       printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
@@ -298,6 +309,47 @@ run_suppression_case() {
   [[ -s "$STUB_DIR/posted.log" ]]
 }
 
+# ---------------------------------------------------------------------------
+# The timeout must reach the Python worker, not merely appear in the script.
+# Textual wiring passes even if the value never leaves the shell.
+# ---------------------------------------------------------------------------
+check_timeout_propagates() {
+  local script="$1" number="$2" timeout="$3"
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/responses-argv.log"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  local status=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_REQUEST_TIMEOUT="$timeout" \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/$script" "$number" >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status != 0 )); then
+    fail "$script exited $status while checking timeout propagation"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if ! grep -Fq -- "--request-timeout $timeout" "$STUB_DIR/responses-argv.log"; then
+    fail "$script did not pass --request-timeout $timeout to codex_responses.py"
+    cat "$STUB_DIR/responses-argv.log" >&2
+  fi
+}
+
 # Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
 expect_posted() {
   local message="$1"
@@ -326,6 +378,8 @@ printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
 jq -n '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
         headRefName: "topic", headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
 PR_MARKER='<!-- codex-pr-review:15:deadbeef -->'
+
+check_timeout_propagates scripts/codex_review_pr.sh 15 1234
 
 expect_posted 'A non-bot comment carrying the marker suppressed the PR review.' \
   scripts/codex_review_pr.sh 15 "$PR_MARKER" "pr-author"
@@ -382,6 +436,8 @@ jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         updatedAt: "2026-08-15T00:00:00Z"}' >"$STUB_DIR/metadata.json"
 ISSUE_FINGERPRINT="$(jq -cn '{title: "t", body: "b"}' | PATH="$STUB_DIR:$PATH" sha256sum | cut -d' ' -f1)"
 ISSUE_MARKER="<!-- codex-issue-triage:21:${ISSUE_FINGERPRINT} -->"
+
+check_timeout_propagates scripts/codex_triage_issue.sh 21 4321
 
 expect_posted 'A non-bot comment carrying the marker suppressed the issue triage.' \
   scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" "issue-author"

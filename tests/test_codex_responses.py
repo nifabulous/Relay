@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import socket
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -232,24 +234,92 @@ def test_request_timeout_must_cover_the_token_budget(capsys):
     assert "--request-timeout" in capsys.readouterr().err
 
 
+def _raising_urlopen(seen, error):
+    def fake_urlopen(request, **kwargs):
+        seen.update(kwargs)
+        raise error
+    return fake_urlopen
+
+
+def test_socket_timeout_is_actually_passed_to_urlopen(monkeypatch):
+    """The message alone proves nothing: a hardcoded `timeout=120` still
+    produces the right text. Assert the value urlopen was really called with."""
+    seen: dict = {}
+    monkeypatch.setattr(
+        codex_responses.urllib.request, "urlopen",
+        _raising_urlopen(seen, TimeoutError("timed out")))
+    with pytest.raises(RuntimeError):
+        codex_responses.request_response(
+            model="gpt-5.3-codex", reasoning_effort="medium", instructions="i",
+            prompt="p", api_key="k", max_output_tokens=32000,
+            max_output_bytes=50000, request_timeout=600)
+    assert seen.get("timeout") == 600, f"urlopen got timeout={seen.get('timeout')!r}"
+
+
 def test_timeout_and_connection_failures_are_distinguishable(monkeypatch):
     """The CI log said only 'OpenAI Responses request failed', which does not
     say whether the request timed out or never connected."""
-    def fake_urlopen(*args, **kwargs):
-        raise TimeoutError("timed out")
-
-    monkeypatch.setattr(codex_responses.urllib.request, "urlopen", fake_urlopen)
+    seen: dict = {}
+    monkeypatch.setattr(
+        codex_responses.urllib.request, "urlopen",
+        _raising_urlopen(seen, TimeoutError("timed out")))
     with pytest.raises(RuntimeError) as exc:
         codex_responses.request_response(
-            model="gpt-5.3-codex",
-            reasoning_effort="medium",
-            instructions="i",
-            prompt="p",
-            api_key="k",
-            max_output_tokens=32000,
-            max_output_bytes=50000,
-            request_timeout=600,
-        )
+            model="gpt-5.3-codex", reasoning_effort="medium", instructions="i",
+            prompt="p", api_key="k", max_output_tokens=32000,
+            max_output_bytes=50000, request_timeout=600)
     message = str(exc.value)
     assert "timed out" in message.lower()
     assert "600" in message, "the message should name the timeout that fired"
+
+
+def test_urlerror_wrapping_a_socket_timeout_is_reported_as_a_timeout(monkeypatch):
+    """urllib raises URLError(socket.timeout) rather than a bare TimeoutError on
+    some paths; that is still a timeout, not a connection failure."""
+    seen: dict = {}
+    monkeypatch.setattr(
+        codex_responses.urllib.request, "urlopen",
+        _raising_urlopen(seen, urllib.error.URLError(socket.timeout("timed out"))))
+    with pytest.raises(RuntimeError) as exc:
+        codex_responses.request_response(
+            model="gpt-5.3-codex", reasoning_effort="medium", instructions="i",
+            prompt="p", api_key="k", max_output_tokens=32000,
+            max_output_bytes=50000, request_timeout=600)
+    assert "timed out" in str(exc.value).lower()
+    assert seen.get("timeout") == 600
+
+
+def test_non_timeout_connection_failure_is_not_reported_as_a_timeout(monkeypatch):
+    seen: dict = {}
+    monkeypatch.setattr(
+        codex_responses.urllib.request, "urlopen",
+        _raising_urlopen(seen, urllib.error.URLError("Name or service not known")))
+    with pytest.raises(RuntimeError) as exc:
+        codex_responses.request_response(
+            model="gpt-5.3-codex", reasoning_effort="medium", instructions="i",
+            prompt="p", api_key="k", max_output_tokens=32000,
+            max_output_bytes=50000, request_timeout=600)
+    message = str(exc.value)
+    assert "timed out" not in message.lower(), message
+    assert "failed to connect" in message
+
+
+# ── Coherence boundary ───────────────────────────────────────────────────────
+def _parse(timeout: str, tokens: str = "32000"):
+    return codex_responses.parse_args([
+        "--model", "gpt-5.3-codex", "--reasoning-effort", "medium",
+        "--instructions", "i.md", "--input", "in.md", "--output", "out.md",
+        "--max-input-bytes", "120000", "--max-output-tokens", tokens,
+        "--max-output-bytes", "50000", "--request-timeout", timeout,
+    ])
+
+
+def test_timeout_exactly_at_the_required_floor_is_accepted():
+    # 32000 tokens * 20s / 1000 = 640s
+    assert _parse("640").request_timeout == 640
+
+
+def test_timeout_one_second_below_the_floor_is_rejected(capsys):
+    with pytest.raises(SystemExit):
+        _parse("639")
+    assert "--request-timeout" in capsys.readouterr().err

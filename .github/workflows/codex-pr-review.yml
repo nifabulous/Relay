@@ -25,7 +25,10 @@ jobs:
   review:
     if: vars.CODEX_REVIEW_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Must exceed CODEX_REQUEST_TIMEOUT with room to sanitize and post the
+    # comment afterwards. At parity the job is killed at the instant the
+    # request gives up, so a slow generation loses the review either way.
+    timeout-minutes: 20
     env:
       CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
