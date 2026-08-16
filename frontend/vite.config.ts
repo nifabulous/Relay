@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { resolveSentryRelease } from "./src/sentryRelease.ts";
 
 const PUBLIC_OUTPUT_DIR = "../app/static/relay";
 
@@ -48,6 +49,7 @@ export default defineConfig(({ mode }) => {
   const canUploadSourceMaps = Boolean(
     env.SENTRY_AUTH_TOKEN?.trim() && env.SENTRY_ORG?.trim() && env.SENTRY_PROJECT?.trim(),
   );
+  const release = resolveSentryRelease(env.VITE_SENTRY_RELEASE);
 
   return {
     base: "/app/",
@@ -59,6 +61,7 @@ export default defineConfig(({ mode }) => {
             project: env.SENTRY_PROJECT,
             authToken: env.SENTRY_AUTH_TOKEN,
             telemetry: false,
+            release: release ? { name: release } : undefined,
             // A source-map upload failure must fail the deployment rather
             // than publish a build that cannot be debugged safely.
             errorHandler: (error) => {

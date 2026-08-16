@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import type { ErrorEvent, Exception, SpanJSON, StackFrame, TransactionEvent } from "@sentry/core";
 import type { BrowserOptions } from "@sentry/react";
+import { resolveSentryRelease } from "./sentryRelease";
 
 const REDACTED_ERROR = "[REDACTED_ERROR]";
 const REDACTED_ROUTE = "[REDACTED_ROUTE]";
@@ -326,7 +327,7 @@ export function buildFrontendSentryOptions(): BrowserOptions | null {
 
   const environment = import.meta.env.VITE_SENTRY_ENVIRONMENT?.trim() || import.meta.env.MODE;
   const defaultTraceRate = environment === "development" ? 1 : 0.1;
-  const release = import.meta.env.VITE_SENTRY_RELEASE?.trim();
+  const release = resolveSentryRelease(import.meta.env.VITE_SENTRY_RELEASE);
 
   return {
     dsn,
