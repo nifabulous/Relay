@@ -42,7 +42,15 @@ describe("Vite Sentry source-map lifecycle", () => {
     vi.stubEnv("SENTRY_AUTH_TOKEN", "sntrys_test");
     vi.stubEnv("SENTRY_ORG", "relay");
     vi.stubEnv("SENTRY_PROJECT", "relay-frontend");
-    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "abc123def456");
+    vi.doMock("vite", async (importOriginal) => ({
+      ...(await importOriginal<typeof import("vite")>()),
+      loadEnv: () => ({
+        SENTRY_AUTH_TOKEN: "sntrys_test",
+        SENTRY_ORG: "relay",
+        SENTRY_PROJECT: "relay-frontend",
+        VERCEL_GIT_COMMIT_SHA: "abc123def456",
+      }),
+    }));
     vi.doMock("@sentry/vite-plugin", () => ({
       sentryVitePlugin: (options: SentryPluginOptions) => {
         pluginOptions = options;
