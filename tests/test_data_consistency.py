@@ -903,3 +903,34 @@ class TestNorthEastAfricaSsiCoverage:
             f"north-east-africa SSI beneficiaries must also be seeded in BANKS so "
             f"Explore can show their settlement instructions: {missing}"
         )
+
+
+class TestCorrectedAfricanAndSaBics:
+    """Pin the BIC corrections from the 2026-08-16 research wave so the wrong
+    BICs never quietly come back. ZENINGLA is not a real Zenith BIC (ZEIBNGLA
+    is); SBICZAJJ/SBICUS44 are uncorroborated for Standard Bank (SBZAZAJJ is
+    the head-office BIC)."""
+
+    def test_zenith_is_keyed_under_zeibngla(self):
+        zenith_banks = [row[0] for row in BANKS if "Zenith" in row[1]]
+        assert zenith_banks == ["ZEIBNGLAXXX"], (
+            f"Zenith must be keyed under ZEIBNGLAXXX, not ZENINGLA: {zenith_banks}"
+        )
+        for record in SSI_RECORDS:
+            assert record[0] != "ZENINGLAXXX", (
+                "SSI record still keyed under the non-existent ZENINGLA BIC"
+            )
+
+    def test_standard_bank_uses_sbzazajj_not_sbiczajj(self):
+        for record in SSI_RECORDS:
+            assert not (record[0] == "SBICZAJJXXX" or record[3] == "SBICUS44XXX"), (
+                "SBICZAJJ/SBICUS44 are uncorroborated Standard Bank BICs; use "
+                "SBZAZAJJXXX"
+            )
+        standard_banks = [
+            row[0] for row in BANKS
+            if "Standard Bank" in row[1] and row[2] == "ZA"
+        ]
+        assert "SBZAZAJJXXX" in standard_banks, (
+            f"Standard Bank SA must be in BANKS under SBZAZAJJXXX: {standard_banks}"
+        )
