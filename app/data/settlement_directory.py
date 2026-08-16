@@ -72,7 +72,12 @@ SETTLEMENT_DIRECTORY = {
         "chips_uid": "",
         "aba": "026007362",
     },
-    "DEUTUS33": {
+        "CMBCUS33": {
+        "bank_name": "China Merchants Bank Co., Ltd. (New York)",
+        "chips_uid": "1455",
+        "aba": "026014559",
+    },
+"DEUTUS33": {
         "bank_name": "Deutsche Bank AG New York",
         "chips_uid": "",
         "aba": "026003780",
