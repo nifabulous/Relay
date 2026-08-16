@@ -659,17 +659,18 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
         assert record.status == "archived"
 
     def test_database_rejects_an_unknown_status(self, db_session_clean):
+        """Raw SQL, deliberately: the ORM listener would catch this first, so
+        going around it is what proves the CHECK constraint is a real backstop
+        rather than decoration."""
         import pytest
+        from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
 
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="totally-fine",
-        ))
         with pytest.raises(IntegrityError):
-            db_session_clean.commit()
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x')"
+            ))
         db_session_clean.rollback()
 
 
@@ -742,16 +743,14 @@ class TestProvenanceCannotBeForgedByAWriter:
 
     def test_database_rejects_a_sourced_status_with_no_citation(self, db_session_clean):
         import pytest
+        from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
 
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="unverified", notes=None,
-        ))
         with pytest.raises(IntegrityError):
-            db_session_clean.commit()
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified')"
+            ))
         db_session_clean.rollback()
 
     def test_database_allows_an_illustrative_row_with_no_citation(self, db_session_clean):
@@ -807,14 +806,46 @@ class TestPublishedCannotBeSelfAsserted:
             )
 
     def test_published_with_a_verification_date_is_accepted(self):
+        # Computed, not hardcoded. A literal "today" passes forever once that
+        # date is past, but fails on a machine whose clock is set earlier —
+        # a real if narrow way for the suite to break for the wrong reason.
+        from datetime import date, timedelta
+
         from app.schemas import SSIRecord
 
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            as_of="2026-08-16",
+            as_of=(date.today() - timedelta(days=1)).isoformat(),
         )
         assert record.status == "published"
+
+    def test_published_verified_today_is_accepted(self):
+        from datetime import date
+
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="BOPIPHMMXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            as_of=date.today().isoformat(),
+        )
+        assert record.status == "published"
+
+    def test_published_verified_tomorrow_is_rejected(self):
+        from datetime import date, timedelta
+
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="published",
+                as_of=(date.today() + timedelta(days=1)).isoformat(),
+            )
 
     def test_a_future_verification_date_is_rejected(self):
         import pytest
@@ -830,18 +861,17 @@ class TestPublishedCannotBeSelfAsserted:
             )
 
     def test_database_rejects_published_without_a_date(self, db_session_clean):
+        """Raw SQL again — the CHECK has to hold even when nothing Python-side
+        is in the way."""
         import pytest
+        from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
 
-        from app.models import SSI
-
-        db_session_clean.add(SSI(
-            beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: https://bank.example/ssi.", as_of=None,
-        ))
         with pytest.raises(IntegrityError):
-            db_session_clean.commit()
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x')"
+            ))
         db_session_clean.rollback()
 
     def test_database_accepts_published_with_a_date(self, db_session_clean):
@@ -852,4 +882,71 @@ class TestPublishedCannotBeSelfAsserted:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.", as_of="2026-08-16",
         ))
+        db_session_clean.commit()
+
+
+class TestProvenanceInvariantsHoldForAnyOrmWrite:
+    """The schema validators only run on Pydantic input. seed.py, the importer
+    and any other caller build SSI objects directly, so the invariants have to
+    hold at the ORM boundary too — with the CHECK constraints as the backstop
+    for raw SQL."""
+
+    @staticmethod
+    def _row(**overrides):
+        from app.models import SSI
+
+        fields = dict(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=__import__("datetime").date.today().isoformat(),
+        )
+        fields.update(overrides)
+        return SSI(**fields)
+
+    def test_a_future_verification_date_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(as_of="2999-01-01"))
+        with pytest.raises(ValueError, match="future"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_malformed_verification_date_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(as_of="16/08/2026"))
+        with pytest.raises(ValueError, match="ISO date"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_published_without_a_date_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(as_of=None))
+        with pytest.raises(ValueError, match="as_of"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_an_unknown_status_is_refused_on_a_direct_write(self, db_session_clean):
+        import pytest
+
+        db_session_clean.add(self._row(status="totally-current"))
+        with pytest.raises(ValueError, match="status"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_future_date_is_refused_on_an_update_too(self, db_session_clean):
+        import pytest
+
+        row = self._row()
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        row.as_of = "2999-01-01"
+        with pytest.raises(ValueError, match="future"):
+            db_session_clean.commit()
+        db_session_clean.rollback()
+
+    def test_a_valid_past_verification_date_still_writes(self, db_session_clean):
+        db_session_clean.add(self._row())
         db_session_clean.commit()

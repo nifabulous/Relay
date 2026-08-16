@@ -61,10 +61,17 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
      actually checked currency, and `as_of` must be the date you checked. No
      seeded row currently earns it.
 
-     Research is the only path that may assert `published`. `/api/import/ssi`
-     and direct database writes cannot: an upload has verified nothing, so a
-     `published` value from either is downgraded to `unverified`, and the
-     database refuses a `published` row with no `as_of`.
+     Research is the only path *intended* to assert `published`, and the
+     import boundary enforces that: `/api/import/ssi` has verified nothing, so
+     a `published` value from an upload is downgraded to `unverified`.
+
+     What is enforced everywhere is the data, not the caller: any write, ORM
+     or SQL, must give `published` an `as_of` that is a real ISO date and not
+     in the future. Nothing stops code that already has a database session
+     from writing a well-formed `published` row — a caller with database
+     access cannot be constrained by the database. Treat `published` as a
+     claim a human should be able to trace to a verification, not as a
+     guarantee the storage layer can make on its own.
 
    Absence of archive evidence is not evidence a page is live. Defaulting to
    `published` on that reasoning mislabelled 406 seeded rows.

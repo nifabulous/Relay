@@ -1,5 +1,5 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
-from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, Index, Integer, String, UniqueConstraint, event
 
 from .db import Base
 
@@ -261,3 +261,51 @@ class IdempotencyKey(Base):
     key = Column(String(200), nullable=False, unique=True, index=True)
     uetr = Column(String(36), nullable=False, index=True)
     endpoint = Column(String(50), nullable=False)  # track/create | prepare-payment
+
+
+def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
+    """Hold the provenance invariants for every ORM write.
+
+    The Pydantic validators only see request bodies. seed.py, the SSI importer
+    and any other caller construct SSI objects directly, so the same rules have
+    to hold here. The CHECK constraints remain the backstop for raw SQL, but
+    SQL cannot portably express "is an ISO date" or "is not in the future"
+    across SQLite and Postgres, so that judgement lives here.
+
+    This constrains the *data*, not the caller: nothing at this layer can tell
+    research from any other writer. Keeping "published" honest against a caller
+    with database access is not something the database can do for you.
+    """
+    from datetime import date as _date
+
+    from .schemas import SSI_STATUSES
+
+    # A Column default is applied when the INSERT is compiled, which is after
+    # this hook runs, so an unset status arrives here as None. Apply it now
+    # rather than rejecting a row that would have defaulted correctly.
+    if target.status is None:
+        target.status = "illustrative"
+
+    if target.status not in SSI_STATUSES:
+        raise ValueError(
+            f"SSI.status {target.status!r} must be one of {sorted(SSI_STATUSES)}"
+        )
+    if target.as_of:
+        try:
+            parsed = _date.fromisoformat(target.as_of)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"SSI.as_of {target.as_of!r} must be an ISO date (YYYY-MM-DD)"
+            ) from None
+        if parsed > _date.today():
+            raise ValueError(
+                f"SSI.as_of {target.as_of} is in the future; a source cannot have been read yet"
+            )
+    if target.status == "published" and not target.as_of:
+        raise ValueError(
+            "SSI.status 'published' requires as_of, the date currency was verified"
+        )
+
+
+event.listen(SSI, "before_insert", _validate_ssi_provenance)
+event.listen(SSI, "before_update", _validate_ssi_provenance)
