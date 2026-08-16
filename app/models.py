@@ -422,6 +422,10 @@ SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YY
 # date() yields NULL for nonsense and silently normalises an impossible date
 # (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
 #
+# Year 0000 needs its own clause: SQLite round-trips '0000-01-01' happily while
+# datetime.date rejects it as out of range, which would leave a row the
+# database accepted and the application could never validate or update again.
+#
 # as_of is a UTC calendar date, and that is the whole timezone policy. Both
 # layers ask the same clock: SQLite's date('now') is UTC, the Postgres branch
 # converts explicitly because CURRENT_DATE there follows the session TimeZone
@@ -432,7 +436,7 @@ SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YY
 _SQLITE_AS_OF_CONDITION = (
     "NEW.as_of IS NOT NULL AND ("
     "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
-    "OR NEW.as_of > date('now'))"
+    "OR NEW.as_of < '0001-01-01' OR NEW.as_of > date('now'))"
 )
 SSI_AS_OF_SQLITE = [
     f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
@@ -450,7 +454,8 @@ SSI_AS_OF_POSTGRES = [
               RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
             END IF;
             BEGIN
-              IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
+              IF NEW.as_of < '0001-01-01'
+                 OR to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
                  OR NEW.as_of::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date) THEN
                 RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
               END IF;

@@ -43,7 +43,7 @@ SSI_AS_OF_MESSAGE = _MESSAGE
 _SQLITE_AS_OF_CONDITION = (
     "NEW.as_of IS NOT NULL AND ("
     "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
-    "OR NEW.as_of > date('now'))"
+    "OR NEW.as_of < '0001-01-01' OR NEW.as_of > date('now'))"
 )
 
 SSI_AS_OF_SQLITE = [
@@ -63,7 +63,8 @@ SSI_AS_OF_POSTGRES = [
               RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
             END IF;
             BEGIN
-              IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
+              IF NEW.as_of < '0001-01-01'
+                 OR to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
                  OR NEW.as_of::date > ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date) THEN
                 RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
               END IF;
@@ -92,13 +93,17 @@ _POSTGRES_DROP = [
 
 
 def _is_a_real_past_date(value: str) -> bool:
-    from datetime import date
+    # UTC, matching the triggers this migration installs and the ORM
+    # validators. date.today() is local, and near a timezone boundary it would
+    # either block a deploy over a value the trigger accepts or wave through
+    # one the trigger will not.
+    from datetime import date, datetime, timezone
 
     try:
         parsed = date.fromisoformat(value)
     except (TypeError, ValueError):
         return False
-    return parsed.isoformat() == value and parsed <= date.today()
+    return parsed.isoformat() == value and parsed <= datetime.now(timezone.utc).date()
 
 
 def upgrade() -> None:

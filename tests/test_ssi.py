@@ -1056,6 +1056,21 @@ class TestProvenanceSurvivesTheBypassPaths:
             self._insert(db_session_clean, as_of="   ")
         db_session_clean.rollback()
 
+    def test_raw_sql_cannot_store_a_year_zero_date(self, db_session_clean):
+        """SQLite round-trips '0000-01-01' happily; datetime.date calls year 0
+        out of range. Without an explicit clause the database would accept a
+        row the application could never validate or update again."""
+        import pytest
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            self._insert(db_session_clean, as_of="0000-01-01")
+        db_session_clean.rollback()
+
+    def test_the_earliest_date_python_supports_is_still_allowed(self, db_session_clean):
+        self._insert(db_session_clean, as_of="0001-01-01")
+        db_session_clean.commit()
+
     def test_raw_sql_still_stores_a_valid_past_date(self, db_session_clean):
         self._insert(db_session_clean, as_of="2020-01-01")
         db_session_clean.commit()

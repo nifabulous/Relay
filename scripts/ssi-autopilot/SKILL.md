@@ -61,6 +61,12 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
      actually checked currency, and `as_of` must be the date you checked. No
      seeded row currently earns it.
 
+     A `published` record must also carry `verified_by` — who did the
+     checking, e.g. `ops:ada` — alongside `as_of`. A row claiming `published`
+     without one is stored as `unverified` instead, because an unattributable
+     claim of currency is worse than no claim. `record_verified_publication()`
+     in `app/models.py` sets all three together and validates them.
+
      Research is the only path *intended* to assert `published`, and the
      import boundary enforces that: `/api/import/ssi` has verified nothing, so
      a `published` value from an upload is downgraded to `unverified`.
