@@ -247,6 +247,19 @@ class TestCurrentSchemaIsANoop:
         assert columns_before["verified_by"]["nullable"] is True
         assert columns_before["status"]["type"].length == 12
         assert columns_before["status"]["nullable"] is False
+        expected_provenance_metadata = {
+            "as_of": (10, True),
+            "verified_by": (120, True),
+            "status": (12, False),
+        }
+
+        def provenance_metadata(columns):
+            return {
+                name: (columns[name]["type"].length, columns[name]["nullable"])
+                for name in expected_provenance_metadata
+            }
+
+        assert provenance_metadata(columns_before) == expected_provenance_metadata
 
         def read_ssi_row():
             with engine.connect() as conn:
@@ -268,5 +281,7 @@ class TestCurrentSchemaIsANoop:
 
         assert set(columns_after_first) == expected_columns
         assert set(columns_after_second) == set(columns_after_first)
+        assert provenance_metadata(columns_after_first) == expected_provenance_metadata
+        assert provenance_metadata(columns_after_second) == expected_provenance_metadata
         assert row_after_first == row_before
         assert row_after_second == row_after_first
