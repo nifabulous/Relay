@@ -25,7 +25,10 @@ jobs:
   review:
     if: vars.CODEX_REVIEW_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Must exceed CODEX_REQUEST_TIMEOUT with room to sanitize and post the
+    # comment afterwards. At parity the job is killed at the instant the
+    # request gives up, so a slow generation loses the review either way.
+    timeout-minutes: 20
     env:
       CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,12 +39,22 @@ jobs:
       CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '120000' }}
       CODEX_MAX_OUTPUT_TOKENS: ${{ vars.CODEX_MAX_OUTPUT_TOKENS || '32000' }}
       CODEX_MAX_OUTPUT_BYTES: ${{ vars.CODEX_MAX_OUTPUT_BYTES || '50000' }}
+      CODEX_REQUEST_TIMEOUT: ${{ vars.CODEX_REQUEST_TIMEOUT || '900' }}
+      # Must equal timeout-minutes below, in seconds. The worker validates
+      # the configured request timeout against it, so an override that the
+      # job cannot outlive fails fast instead of being killed mid-request.
+      CODEX_JOB_TIMEOUT_SECONDS: '1200'
       CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
       EVENT_NAME: ${{ github.event_name }}
       EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
       DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
 
     steps:
+      # Stamped before checkout so the worker's remaining-budget check counts
+      # every second the job has actually spent, not a guessed setup constant.
+      - name: Stamp the job deadline
+        run: echo "CODEX_JOB_DEADLINE_EPOCH=$(( $(date +%s) + CODEX_JOB_TIMEOUT_SECONDS ))" >>"$GITHUB_ENV"
+
       - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

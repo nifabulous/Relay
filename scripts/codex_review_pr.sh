@@ -26,6 +26,15 @@ GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 : "${CODEX_MAX_INPUT_BYTES:?CODEX_MAX_INPUT_BYTES is required}"
 : "${CODEX_MAX_OUTPUT_TOKENS:?CODEX_MAX_OUTPUT_TOKENS is required}"
 : "${CODEX_MAX_OUTPUT_BYTES:?CODEX_MAX_OUTPUT_BYTES is required}"
+# Must cover the generation the token cap allows; the script rejects a
+# timeout too short for CODEX_MAX_OUTPUT_TOKENS rather than aborting mid-call.
+: "${CODEX_REQUEST_TIMEOUT:=900}"
+# The job's wall clock. The workflow stamps CODEX_JOB_DEADLINE_EPOCH at job
+# start so the worker measures what checkout, setup and sanitization actually
+# cost rather than reserving a guess for them. A local run has no job, so the
+# deadline is stamped from here instead.
+: "${CODEX_JOB_TIMEOUT_SECONDS:=1200}"
+: "${CODEX_JOB_DEADLINE_EPOCH:=$(( $(date +%s) + CODEX_JOB_TIMEOUT_SECONDS ))}"
 CODEX_BOT_LOGIN="${CODEX_BOT_LOGIN:-github-actions[bot]}"
 
 if [[ ! "$CODEX_MODEL" =~ ^[A-Za-z0-9._:/-]+$ ]]; then
@@ -41,7 +50,7 @@ case "$CODEX_REASONING_EFFORT" in
     ;;
 esac
 
-for bound in CODEX_MAX_INPUT_BYTES CODEX_MAX_OUTPUT_TOKENS CODEX_MAX_OUTPUT_BYTES; do
+for bound in CODEX_MAX_INPUT_BYTES CODEX_MAX_OUTPUT_TOKENS CODEX_MAX_OUTPUT_BYTES CODEX_REQUEST_TIMEOUT CODEX_JOB_TIMEOUT_SECONDS; do
   if [[ ! "${!bound}" =~ ^[1-9][0-9]*$ ]]; then
     echo "$bound must be a positive integer." >&2
     exit 2
@@ -124,7 +133,9 @@ python3 "$REPO_ROOT/scripts/codex_responses.py" \
   --output "$TEMP_DIR/review.md" \
   --max-input-bytes "$CODEX_MAX_INPUT_BYTES" \
   --max-output-tokens "$CODEX_MAX_OUTPUT_TOKENS" \
-  --max-output-bytes "$CODEX_MAX_OUTPUT_BYTES"
+  --max-output-bytes "$CODEX_MAX_OUTPUT_BYTES" \
+  --request-timeout "$CODEX_REQUEST_TIMEOUT" \
+  --job-deadline "$CODEX_JOB_DEADLINE_EPOCH"
 
 if [[ ! -s "$TEMP_DIR/review.md" ]]; then
   echo "Codex returned an empty review for PR #${PR_NUMBER}." >&2

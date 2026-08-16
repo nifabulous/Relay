@@ -102,6 +102,8 @@ for file in scripts/codex_review_pr.sh scripts/codex_triage_issue.sh; do
   require_text "$file" 'CODEX_MAX_INPUT_BYTES'
   require_text "$file" '--max-output-tokens "$CODEX_MAX_OUTPUT_TOKENS"'
   require_text "$file" '--max-output-bytes "$CODEX_MAX_OUTPUT_BYTES"'
+  require_text "$file" '--request-timeout "$CODEX_REQUEST_TIMEOUT"'
+  require_text "$file" '--job-deadline "$CODEX_JOB_DEADLINE_EPOCH"'
   require_text "$file" 'codex_sanitize.py'
   require_text "$file" 'codex_untrusted.py'
   require_text "$file" 'CODEX_BOT_LOGIN'
@@ -123,6 +125,8 @@ require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
 require_text 'scripts/codex_triage_issue.sh' '--instructions "$TEMP_DIR/triage-instructions.md"'
 require_text 'scripts/codex_responses.py' 'https://api.openai.com/v1/responses'
 require_text 'scripts/codex_responses.py' '"store": False'
+# A hardcoded socket timeout aborted a 32000-token generation mid-call.
+refuse_text 'scripts/codex_responses.py' 'timeout=120'
 
 for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-triage.yml; do
   require_text "$file" 'CODEX_MODEL:'
@@ -130,6 +134,21 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'CODEX_MAX_ITEMS:'
   require_text "$file" 'CODEX_MAX_OUTPUT_TOKENS:'
   require_text "$file" 'CODEX_MAX_OUTPUT_BYTES:'
+  require_text "$file" 'CODEX_REQUEST_TIMEOUT:'
+  require_text "$file" 'CODEX_JOB_TIMEOUT_SECONDS:'
+  # Stamped before checkout, or the elapsed setup time it exists to measure is
+  # itself excluded from the measurement.
+  require_text "$file" 'CODEX_JOB_DEADLINE_EPOCH='
+  # timeout-minutes is what GitHub enforces; CODEX_JOB_TIMEOUT_SECONDS is what
+  # the worker validates against. If they drift, the worker approves a request
+  # timeout the job will not survive.
+  job_minutes="$(grep -E '^ *timeout-minutes:' "$ROOT/$file" | head -1 | grep -oE '[0-9]+')"
+  declared="$(grep -E "^ *CODEX_JOB_TIMEOUT_SECONDS:" "$ROOT/$file" | grep -oE "[0-9]+" | head -1)"
+  if [[ -z "$job_minutes" || -z "$declared" ]]; then
+    fail "$file: could not read timeout-minutes / CODEX_JOB_TIMEOUT_SECONDS"
+  elif (( job_minutes * 60 != declared )); then
+    fail "$file: timeout-minutes $job_minutes ($((job_minutes * 60))s) != CODEX_JOB_TIMEOUT_SECONDS ${declared}s"
+  fi
   require_text "$file" 'CODEX_BOT_LOGIN:'
   require_text "$file" 'GITHUB_STEP_SUMMARY'
   # These workflows hold issues:write, pull-requests:write and OPENAI_API_KEY.
@@ -227,12 +246,18 @@ cat >"$STUB_DIR/python3" <<'STUB'
 set -euo pipefail
 for arg in "$@"; do
   if [[ "$arg" == *codex_responses.py ]]; then
+    # Passthrough runs the real worker so its argument validation is what
+    # decides the outcome, rather than the stub always succeeding.
+    if [[ -n "${CODEX_STUB_PASSTHROUGH:-}" ]]; then
+      exec "$CODEX_REAL_PYTHON3" "$@"
+    fi
     out=""
     prev=""
     for candidate in "$@"; do
       [[ "$prev" == "--output" ]] && out="$candidate"
       prev="$candidate"
     done
+    printf '%s\n' "$*" >"$CODEX_STUB_DIR/responses-argv.log"
     printf 'stub review\n' >"$out"
     if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
       printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
@@ -294,6 +319,91 @@ run_suppression_case() {
   [[ -s "$STUB_DIR/posted.log" ]]
 }
 
+# ---------------------------------------------------------------------------
+# The timeout must reach the Python worker, not merely appear in the script.
+# Textual wiring passes even if the value never leaves the shell.
+# ---------------------------------------------------------------------------
+check_timeout_propagates() {
+  local script="$1" number="$2" timeout="$3"
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/responses-argv.log"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  local status=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_REQUEST_TIMEOUT="$timeout" \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/$script" "$number" >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status != 0 )); then
+    fail "$script exited $status while checking timeout propagation"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if ! grep -Fq -- "--request-timeout $timeout" "$STUB_DIR/responses-argv.log"; then
+    fail "$script did not pass --request-timeout $timeout to codex_responses.py"
+    cat "$STUB_DIR/responses-argv.log" >&2
+  fi
+  if ! grep -Fq -- "--job-deadline" "$STUB_DIR/responses-argv.log"; then
+    fail "$script did not pass --job-deadline to codex_responses.py"
+    cat "$STUB_DIR/responses-argv.log" >&2
+  fi
+}
+
+# A configured override the job cannot outlive must fail fast, not be accepted
+# and then killed mid-request by GitHub.
+check_override_beyond_job_deadline_is_refused() {
+  local script="$1" number="$2"
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  local status=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_STUB_PASSTHROUGH=1 \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_REQUEST_TIMEOUT=1800 \
+    CODEX_JOB_TIMEOUT_SECONDS=1200 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/$script" "$number" >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status == 0 )); then
+    fail "$script accepted CODEX_REQUEST_TIMEOUT=1800 inside a 1200s job"
+  elif ! grep -q 'does not fit the' "$STUB_DIR/run.log"; then
+    fail "$script failed for the wrong reason on an over-long request timeout"
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail "$script posted a comment despite an invalid timeout configuration"
+  fi
+}
+
 # Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
 expect_posted() {
   local message="$1"
@@ -322,6 +432,9 @@ printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
 jq -n '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
         headRefName: "topic", headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
 PR_MARKER='<!-- codex-pr-review:15:deadbeef -->'
+
+check_timeout_propagates scripts/codex_review_pr.sh 15 1234
+check_override_beyond_job_deadline_is_refused scripts/codex_review_pr.sh 15
 
 expect_posted 'A non-bot comment carrying the marker suppressed the PR review.' \
   scripts/codex_review_pr.sh 15 "$PR_MARKER" "pr-author"
@@ -378,6 +491,9 @@ jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         updatedAt: "2026-08-15T00:00:00Z"}' >"$STUB_DIR/metadata.json"
 ISSUE_FINGERPRINT="$(jq -cn '{title: "t", body: "b"}' | PATH="$STUB_DIR:$PATH" sha256sum | cut -d' ' -f1)"
 ISSUE_MARKER="<!-- codex-issue-triage:21:${ISSUE_FINGERPRINT} -->"
+
+check_timeout_propagates scripts/codex_triage_issue.sh 21 4321
+check_override_beyond_job_deadline_is_refused scripts/codex_triage_issue.sh 21
 
 expect_posted 'A non-bot comment carrying the marker suppressed the issue triage.' \
   scripts/codex_triage_issue.sh 21 "$ISSUE_MARKER" "issue-author"
