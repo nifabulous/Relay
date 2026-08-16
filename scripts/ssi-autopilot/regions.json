@@ -110,17 +110,18 @@
       "label": "North + East Africa (Morocco, Egypt, Kenya, Nigeria)",
       "countries": ["MA", "EG", "KE", "NG"],
       "masked_block": 91001300,
+      "note": "2026-08-16 research: five of the expected BICs were wrong — Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
       "banks": [
-        {"bic8": "CMAOMAMR", "name": "Attijariwafa Bank", "country": "MA", "currencies": ["USD", "EUR"]},
-        {"bic8": "BMCEMAMA", "name": "BMCE Bank of Africa", "country": "MA", "currencies": ["USD", "EUR"]},
-        {"bic8": "COMEGCAX", "name": "Commercial International Bank (Egypt)", "country": "EG", "currencies": ["USD", "EUR"]},
-        {"bic8": "NBEGEGCX", "name": "National Bank of Egypt", "country": "EG", "currencies": ["USD", "EUR"]},
-        {"bic8": "QNBAAEGX", "name": "QNB AlAhli", "country": "EG", "currencies": ["USD", "EUR"]},
-        {"bic8": "KCBKEN22", "name": "KCB Bank (Kenya)", "country": "KE", "currencies": ["USD", "EUR", "KES"]},
-        {"bic8": "FBNINGLA", "name": "First Bank of Nigeria", "country": "NG", "currencies": ["USD", "EUR", "NGN"]},
-        {"bic8": "ZENINGLA", "name": "Zenith Bank", "country": "NG", "currencies": ["USD", "EUR", "NGN"]}
+        {"bic8": "FBNINGLA", "name": "First Bank of Nigeria", "country": "NG", "currencies": ["USD", "GBP", "EUR"]},
+        {"bic8": "ZEIBNGLA", "name": "Zenith Bank", "country": "NG", "currencies": ["USD", "GBP", "EUR"]},
+        {"bic8": "BCMAMAMC", "name": "Attijariwafa Bank", "country": "MA", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "BMCEMAMC", "name": "BMCE Bank of Africa", "country": "MA", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "CIBEEGCX", "name": "Commercial International Bank (Egypt)", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "NBEGEGCX", "name": "National Bank of Egypt", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "QNBAEGCX", "name": "QNB AlAhli", "country": "EG", "currencies": ["USD", "EUR"], "seedable": false},
+        {"bic8": "KCBLKENX", "name": "KCB Bank (Kenya)", "country": "KE", "currencies": ["USD", "EUR", "KES"], "seedable": false}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["CMAOMAMR", "BMCEMAMA", "COMEGCAX", "QNBAAEGX", "KCBKEN22", "ZENINGLA", "SBICZAJJ", "SBICUS44"]
     },
     {
       "name": "southeast-asia",
