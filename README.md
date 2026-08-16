@@ -167,6 +167,36 @@ step and trims the function bundle.
 | --- | --- | --- |
 | `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `app/auth.py` treats the deployment as dev mode and leaves `/api/import/*` and `/api/track/create` open to anyone. |
 | `DATABASE_URL` | `sqlite:////tmp/swift_routing.db` | The project filesystem is read-only; `/tmp` is the only writable path. `app/config.py` falls back to this automatically when `VERCEL` is set, but that system variable is opt-in per project — setting `DATABASE_URL` explicitly is the reliable route. |
+| `SENTRY_DSN` | Sentry backend project DSN | Optional. Sentry error monitoring is disabled when this is unset. Store it in Vercel/GitHub environment configuration, not source control. |
+| `SENTRY_ENVIRONMENT` | `production` | Optional environment label shown in Sentry. |
+| `SENTRY_TRACES_SAMPLE_RATE` | `0` | Optional performance-trace sampling rate from `0` to `1`; keep `0` to collect errors without tracing. |
+| `SENTRY_SEND_DEFAULT_PII` | `false` | Optional. Keep false unless the privacy implications of sending request user data have been reviewed. |
+
+Sentry is initialized before the FastAPI app is constructed. To verify a local
+setup, set `SENTRY_DSN` in your shell and run this isolated smoke test:
+
+```bash
+SENTRY_DSN="$SENTRY_DSN" .venv/bin/python - <<'PY'
+import sentry_sdk
+
+from app.observability import init_sentry
+
+if not init_sentry():
+    raise SystemExit("Sentry is disabled; set SENTRY_DSN first")
+
+try:
+    raise RuntimeError("local Sentry verification")
+except RuntimeError:
+    sentry_sdk.capture_exception()
+    sentry_sdk.flush(timeout=5)
+PY
+```
+
+The integration removes HTTP request bodies, query strings, cookies, headers,
+URLs, logging payloads, breadcrumbs, exception text, exception locals, and
+transaction/span payloads before sending events. If tracing is enabled, only
+timing and non-content span fields remain. Do not add a public debug route that
+deliberately raises an exception to a deployed app.
 
 Note the four slashes in the SQLite URL: `sqlite://` plus the absolute path
 `/tmp/swift_routing.db`.

@@ -7,6 +7,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .observability import init_sentry
+
+init_sentry()
+
 logger = logging.getLogger(__name__)
 
 from .db import Base, SessionLocal, engine
