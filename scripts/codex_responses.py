@@ -24,6 +24,12 @@ OUTPUT_TRUNCATION_MARKER = "\n\n[TRUNCATED OUTPUT: the model hit max_output_toke
 # ceiling the token cap can never reach, so the two controls stay coherent.
 BYTES_PER_TOKEN = 4
 
+# A Responses API envelope can contain reasoning metadata in addition to the
+# visible output. Keep that envelope bounded without confusing the visible
+# output ceiling with the size of the wire response.
+RESPONSE_BODY_BYTES_PER_TOKEN = 8
+RESPONSE_BODY_OVERHEAD_BYTES = 64 * 1024
+
 # The socket timeout and the token cap are one decision, not two. A reasoning
 # model emits tokens slowly enough that a large budget legitimately outlives a
 # short timeout, and aborting mid-generation loses the whole review rather than
@@ -102,6 +108,15 @@ def read_bounded_body(stream: IO[bytes], max_bytes: int) -> dict[str, object]:
     return body
 
 
+def response_body_limit(max_output_tokens: int, max_output_bytes: int) -> int:
+    """Bound the full response envelope, including reasoning metadata."""
+    return (
+        max_output_bytes
+        + (max_output_tokens * RESPONSE_BODY_BYTES_PER_TOKEN)
+        + RESPONSE_BODY_OVERHEAD_BYTES
+    )
+
+
 def enforce_output_bytes(text: str, max_bytes: int) -> str:
     """Reject an oversized model output instead of writing it out."""
     size = len(text.encode("utf-8"))
@@ -174,9 +189,12 @@ def request_response(
     )
     try:
         with urllib.request.urlopen(request, timeout=request_timeout) as response:
-            # A response envelope is metadata plus the bounded output; allow
-            # headroom over the output ceiling but never an unbounded read.
-            body = read_bounded_body(response, max_output_bytes * 4)
+            # A response envelope is metadata plus the bounded output. Reasoning
+            # models may include substantial reasoning metadata, so use a
+            # token-aware envelope limit rather than a multiple of visible text.
+            body = read_bounded_body(
+                response, response_body_limit(max_output_tokens, max_output_bytes)
+            )
     except urllib.error.HTTPError as error:
         raise RuntimeError(f"OpenAI Responses request failed with HTTP {error.code}") from None
     except TimeoutError:

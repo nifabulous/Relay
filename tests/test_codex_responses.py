@@ -77,6 +77,39 @@ def test_bounded_body_reads_a_response_within_the_limit() -> None:
     assert codex_responses.read_bounded_body(io.BytesIO(body), 4096) == {"output_text": "ok"}
 
 
+def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkeypatch) -> None:
+    """Reasoning responses include metadata outside the visible output cap."""
+
+    body = json.dumps({"reasoning": "r" * 210_000, "output_text": "ok"}).encode("utf-8")
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self, limit):
+            return body
+
+    monkeypatch.setattr(
+        codex_responses.urllib.request,
+        "urlopen",
+        lambda request, **kwargs: Response(),
+    )
+
+    assert codex_responses.request_response(
+        model="gpt-5.3-codex",
+        reasoning_effort="high",
+        instructions="i",
+        prompt="p",
+        api_key="k",
+        max_output_tokens=32_000,
+        max_output_bytes=50_000,
+        request_timeout=600,
+    ) == "ok"
+
+
 def test_incomplete_response_with_text_is_posted_as_a_marked_truncated_review() -> None:
     result = codex_responses.extract_output(
         {
