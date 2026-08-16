@@ -364,9 +364,13 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
         # Downgraded, not rejected. A generic caller setting "published" is
         # usually copying a field forward, not asserting it verified the bank
         # today; failing the write would break that caller for no gain, while
-        # storing the claim would be a lie. record_verified_publication() is
-        # the one path that supplies a verifier.
-        if not target.verified_by:
+        # storing the claim would be a lie.
+        #
+        # The test is the promotion marker, not the presence of verified_by: a
+        # caller that fills in a plausible-looking verifier has still not done
+        # any verifying. Only record_verified_publication() sets the marker,
+        # so it is the only way a row reaches the database as published.
+        if not getattr(target, _PROMOTION_MARKER, False) or not target.verified_by:
             target.status = "unverified"
         elif not target.as_of:
             raise ValueError(
@@ -376,6 +380,12 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
 
 event.listen(SSI, "before_insert", _validate_ssi_provenance)
 event.listen(SSI, "before_update", _validate_ssi_provenance)
+
+
+# Set only by record_verified_publication(). A transient instance attribute,
+# not a column: it records how this write was made, which is not a property of
+# the row and has no business being stored.
+_PROMOTION_MARKER = "_ssi_promoted_by_verification"
 
 
 def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) -> "SSI":
@@ -397,6 +407,7 @@ def record_verified_publication(row: "SSI", verified_by: str, verified_on: str) 
     row.status = "published"
     row.verified_by = verified_by.strip()
     row.as_of = verified_on
+    setattr(row, _PROMOTION_MARKER, True)
     return row
 
 
@@ -412,10 +423,16 @@ SSI_AS_OF_MESSAGE = "as_of must be a real calendar date, in the past, written YY
 
 # date() yields NULL for nonsense and silently normalises an impossible date
 # (2024-02-30 -> 2024-03-01), so the round-trip comparison is what rejects it.
+#
+# The upper bound carries a day of slack because these functions are UTC while
+# the Python validators use the local date. Without it, a caller at UTC+13
+# writing "today" near midnight is accepted by Python and refused here — a
+# legitimate write failing on geography. Python stays the strict layer; this
+# one only has to stop 2999.
 _SQLITE_AS_OF_CONDITION = (
     "NEW.as_of IS NOT NULL AND ("
     "date(NEW.as_of) IS NULL OR date(NEW.as_of) != NEW.as_of "
-    "OR NEW.as_of > date('now'))"
+    "OR NEW.as_of > date('now', '+1 day'))"
 )
 SSI_AS_OF_SQLITE = [
     f"""CREATE TRIGGER ssi_as_of_insert BEFORE INSERT ON ssi
@@ -434,7 +451,7 @@ SSI_AS_OF_POSTGRES = [
             END IF;
             BEGIN
               IF to_char(NEW.as_of::date, 'YYYY-MM-DD') <> NEW.as_of
-                 OR NEW.as_of::date > CURRENT_DATE THEN
+                 OR NEW.as_of::date > CURRENT_DATE + 1 THEN
                 RAISE EXCEPTION '{SSI_AS_OF_MESSAGE}';
               END IF;
             EXCEPTION WHEN others THEN

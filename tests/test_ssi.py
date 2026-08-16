@@ -882,14 +882,15 @@ class TestPublishedCannotBeSelfAsserted:
         about a published record surviving."""
         from datetime import date
 
-        from app.models import SSI
+        from app.models import SSI, record_verified_publication
 
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
-            intermediary_bic="CITIUS33XXX", status="published",
+            intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
-            as_of=date.today().isoformat(), verified_by="ops:ada",
         )
+        record_verified_publication(row, verified_by="ops:ada",
+                                    verified_on=date.today().isoformat())
         db_session_clean.add(row)
         db_session_clean.commit()
         db_session_clean.refresh(row)
@@ -941,7 +942,11 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
         an ordinary generic write."""
         import pytest
 
-        db_session_clean.add(self._row(as_of=None, verified_by="ops:ada"))
+        from app.models import _PROMOTION_MARKER
+
+        row = self._row(as_of=None, verified_by="ops:ada")
+        setattr(row, _PROMOTION_MARKER, True)  # promoted, but with no date
+        db_session_clean.add(row)
         with pytest.raises(ValueError, match="as_of"):
             db_session_clean.commit()
         db_session_clean.rollback()
@@ -1357,3 +1362,64 @@ class TestAVerifierMustBeAName:
         db_session_clean.add(row)
         db_session_clean.commit()
         assert row.verified_by == "ops:ada"
+
+
+class TestAPlausibleVerifierIsNotVerification:
+    """Filling in a verifier field is not the same as having verified anything.
+    Only the promotion path can produce a published row."""
+
+    def test_a_generic_write_with_a_convincing_verifier_is_still_downgraded(
+        self, db_session_clean
+    ):
+        from datetime import date
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="published",
+            notes="Source: https://bank.example/ssi.",
+            as_of=date.today().isoformat(), verified_by="research-team",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        assert row.status == "unverified", (
+            "a caller manufactured a published row just by naming a verifier"
+        )
+
+    def test_an_update_cannot_promote_a_row_either(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: x",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+
+        row.status = "published"
+        row.verified_by = "research-team"
+        row.as_of = date.today().isoformat()
+        db_session_clean.commit()
+        assert row.status == "unverified", "an update promoted a row without verification"
+
+    def test_the_promotion_path_is_what_makes_it_stick(self, db_session_clean):
+        from datetime import date
+
+        from app.models import SSI, record_verified_publication
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+
+        record_verified_publication(row, verified_by="ops:ada",
+                                    verified_on=date.today().isoformat())
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "published"
