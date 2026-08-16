@@ -275,6 +275,40 @@ def test_complete_input_mode_fails_closed_instead_of_reviewing_a_partial_diff(
     assert not output.exists()
 
 
+def test_complete_input_mode_preserves_complete_multibyte_input(tmp_path, monkeypatch) -> None:
+    instructions = tmp_path / "instructions.md"
+    payload = tmp_path / "input.md"
+    output = tmp_path / "out.md"
+    instructions.write_text("✓" * 5, encoding="utf-8")
+    payload.write_text("é" * 10, encoding="utf-8")
+    sent: dict[str, str] = {}
+
+    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None):
+        sent["instructions"] = instructions_text
+        sent["prompt"] = prompt
+        return "complete review"
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(codex_responses, "request_response", capture)
+    exit_code = codex_responses.main(
+        [
+            "--model", "gpt-5.3-codex",
+            "--reasoning-effort", "medium",
+            "--instructions", str(instructions),
+            "--input", str(payload),
+            "--output", str(output),
+            "--max-input-bytes", "35",
+            "--require-complete-input",
+            "--max-output-tokens", "32000",
+            "--max-output-bytes", "50000",
+        ]
+    )
+
+    assert exit_code == 0
+    assert sent == {"instructions": "✓" * 5, "prompt": "é" * 10}
+    assert output.read_text(encoding="utf-8") == "complete review"
+
+
 # ── Request timeout must fit the output budget ───────────────────────────────
 def test_request_timeout_is_configurable_and_defaults_above_the_socket_floor():
     """A 32000-token reasoning generation routinely runs past 120s. The old

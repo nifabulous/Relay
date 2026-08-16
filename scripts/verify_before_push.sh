@@ -52,7 +52,8 @@ if [[ ! -x "$REPO_ROOT/frontend/node_modules/.bin/vite" ]]; then
 fi
 
 echo "[3/9] Typechecking and building the production frontend"
-npm --prefix frontend run build
+env SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT= \
+  npm --prefix frontend run build
 
 echo "[4/9] Running the full backend test suite in an isolated SQLite database"
 TEST_DB_DIR="$(mktemp -d /tmp/relay-prepush-db.XXXXXX)"
@@ -82,11 +83,17 @@ else
   exit 1
 fi
 
+FINAL_HEAD_SHA="$(git rev-parse --verify HEAD)"
+if [[ "$FINAL_HEAD_SHA" != "$HEAD_SHA" ]]; then
+  echo "HEAD changed during verification: started at $HEAD_SHA, now at $FINAL_HEAD_SHA" >&2
+  exit 1
+fi
+
 echo "[8/9] Showing the final scope for human review"
 git status --short
 git diff --stat
 git diff --cached --stat
 
-echo "[9/9] Final base/head identity is $BASE_SHA..$HEAD_SHA"
+echo "[9/9] Final base/head identity is $BASE_SHA..$FINAL_HEAD_SHA"
 
-echo "Pre-push verification passed for $BASE_SHA..$HEAD_SHA. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
+echo "Pre-push verification passed for $BASE_SHA..$FINAL_HEAD_SHA. A human must still inspect the diff, review current-head comments/checks, and authorize any external write."
