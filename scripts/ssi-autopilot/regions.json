@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "note": "Region manifest for the SSI autopilot. Each region lists the beneficiary banks to research, their verified BICs (from theswiftcodes country listings), the currencies to require coverage for, and the masked ACCT- block reserved for its seeded records. forbidden_bics are mislabeled/OCR-typo BICs the research flagged that must never appear in seed data.",
+  "defaults": {
+    "charge_codes": ["SHA", "OUR", "BEN"],
+    "value_dates": ["spot", "1d", "2d", "3d", "T+1", "T+2"],
+    "min_records_per_bank": 1
+  },
+  "regions": [
+    {
+      "name": "oceania",
+      "label": "Oceania",
+      "countries": ["AU", "NZ"],
+      "masked_block": 91001400,
+      "banks": [
+        {"bic8": "ANZBAU3M", "name": "ANZ", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
+        {"bic8": "WPACAU2S", "name": "Westpac", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
+        {"bic8": "CTBAAU2S", "name": "Commonwealth Bank of Australia", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
+        {"bic8": "ANZBNZ22", "name": "ANZ Bank New Zealand", "country": "NZ", "currencies": ["USD", "NZD"]},
+        {"bic8": "BKNZNZ22", "name": "Bank of New Zealand", "country": "NZ", "currencies": ["USD", "NZD"]},
+        {"bic8": "ASBBNZ2A", "name": "ASB Bank", "country": "NZ", "currencies": ["USD", "NZD"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "china",
+      "label": "China (ICBC, CCB, ABC, CMB, BoCom)",
+      "countries": ["CN"],
+      "masked_block": 91001500,
+      "banks": [
+        {"bic8": "ICBKCNBJ", "name": "Industrial and Commercial Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
+        {"bic8": "PCBCCNBJ", "name": "China Construction Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
+        {"bic8": "ABOCCNBJ", "name": "Agricultural Bank of China", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
+        {"bic8": "CMBCCNBS", "name": "China Merchants Bank", "country": "CN", "currencies": ["USD", "EUR", "CNY"]},
+        {"bic8": "COMMCNSH", "name": "Bank of Communications", "country": "CN", "currencies": ["USD", "EUR", "CNY"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "latin-america",
+      "label": "Latin America (Brazil, Chile, Colombia, Peru)",
+      "countries": ["BR", "CL", "CO", "PE"],
+      "masked_block": 91000800,
+      "banks": [
+        {"bic8": "BBDEBRSP", "name": "Banco Bradesco", "country": "BR", "currencies": ["USD", "EUR"]},
+        {"bic8": "BSCHBRSP", "name": "Banco Santander (Brasil)", "country": "BR", "currencies": ["USD", "EUR"]},
+        {"bic8": "ITAUBRSP", "name": "Itaú Unibanco", "country": "BR", "currencies": ["USD", "EUR"]},
+        {"bic8": "BCHICLRM", "name": "Banco de Chile", "country": "CL", "currencies": ["USD", "EUR"]},
+        {"bic8": "BSCHCLRM", "name": "Banco Santander Chile", "country": "CL", "currencies": ["USD", "EUR"]},
+        {"bic8": "COLOCOBM", "name": "Bancolombia", "country": "CO", "currencies": ["USD", "EUR"]},
+        {"bic8": "BCPLPEPL", "name": "Banco de Crédito del Perú", "country": "PE", "currencies": ["USD", "EUR"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "korea",
+      "label": "South Korea",
+      "countries": ["KR"],
+      "masked_block": 91000900,
+      "banks": [
+        {"bic8": "CZNBKRSE", "name": "KB Kookmin Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
+        {"bic8": "SHBKKRSE", "name": "Shinhan Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
+        {"bic8": "KOEXKRSE", "name": "Hana Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]},
+        {"bic8": "HVBKKRSE", "name": "Woori Bank", "country": "KR", "currencies": ["USD", "EUR", "KRW"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "turkey-israel",
+      "label": "Turkey + Israel",
+      "countries": ["TR", "IL"],
+      "masked_block": 91001000,
+      "banks": [
+        {"bic8": "AKBKTRIS", "name": "Akbank", "country": "TR", "currencies": ["USD", "EUR"]},
+        {"bic8": "YAPITRIS", "name": "Yapı ve Kredi Bankası", "country": "TR", "currencies": ["USD", "EUR"]},
+        {"bic8": "ISBKTRIS", "name": "Türkiye İş Bankası", "country": "TR", "currencies": ["USD", "EUR"]},
+        {"bic8": "LUMIILIT", "name": "Bank Leumi", "country": "IL", "currencies": ["USD", "EUR"]},
+        {"bic8": "POALILIT", "name": "Bank Hapoalim", "country": "IL", "currencies": ["USD", "EUR"]},
+        {"bic8": "IDBLILIT", "name": "Israel Discount Bank", "country": "IL", "currencies": ["USD", "EUR"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "nordics-poland",
+      "label": "Nordics + Poland",
+      "countries": ["SE", "NO", "PL"],
+      "masked_block": 91001100,
+      "banks": [
+        {"bic8": "ESSESESS", "name": "SEB", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
+        {"bic8": "SWEDSESS", "name": "Swedbank", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
+        {"bic8": "HANDSESS", "name": "Handelsbanken", "country": "SE", "currencies": ["USD", "EUR", "SEK"]},
+        {"bic8": "DNBANOKK", "name": "DNB", "country": "NO", "currencies": ["USD", "EUR", "NOK"]},
+        {"bic8": "BREXPLPW", "name": "mBank", "country": "PL", "currencies": ["USD", "EUR", "PLN"]},
+        {"bic8": "BPKOPLPW", "name": "PKO Bank Polski", "country": "PL", "currencies": ["USD", "EUR", "PLN"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "southern-africa",
+      "label": "Southern Africa",
+      "countries": ["ZA"],
+      "masked_block": 91001200,
+      "banks": [
+        {"bic8": "NEDSZAJJ", "name": "Nedbank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "SBZAZAJJ", "name": "Standard Bank of South Africa", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "ABSAZAJJ", "name": "Absa Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
+        {"bic8": "FIRNZAJJ", "name": "First National Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "north-east-africa",
+      "label": "North + East Africa (Morocco, Egypt, Kenya, Nigeria)",
+      "countries": ["MA", "EG", "KE", "NG"],
+      "masked_block": 91001300,
+      "banks": [
+        {"bic8": "CMAOMAMR", "name": "Attijariwafa Bank", "country": "MA", "currencies": ["USD", "EUR"]},
+        {"bic8": "BMCEMAMA", "name": "BMCE Bank of Africa", "country": "MA", "currencies": ["USD", "EUR"]},
+        {"bic8": "COMEGCAX", "name": "Commercial International Bank (Egypt)", "country": "EG", "currencies": ["USD", "EUR"]},
+        {"bic8": "NBEGEGCX", "name": "National Bank of Egypt", "country": "EG", "currencies": ["USD", "EUR"]},
+        {"bic8": "QNBAAEGX", "name": "QNB AlAhli", "country": "EG", "currencies": ["USD", "EUR"]},
+        {"bic8": "KCBKEN22", "name": "KCB Bank (Kenya)", "country": "KE", "currencies": ["USD", "EUR", "KES"]},
+        {"bic8": "FBNINGLA", "name": "First Bank of Nigeria", "country": "NG", "currencies": ["USD", "EUR", "NGN"]},
+        {"bic8": "ZENINGLA", "name": "Zenith Bank", "country": "NG", "currencies": ["USD", "EUR", "NGN"]}
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "southeast-asia",
+      "label": "Southeast Asia (BPI verified seedable)",
+      "countries": ["PH", "ID", "TH"],
+      "masked_block": 91000700,
+      "banks": [
+        {"bic8": "BOPIPHMM", "name": "Bank of the Philippine Islands", "country": "PH", "currencies": ["USD", "EUR"]}
+      ],
+      "forbidden_bics": ["BPIPPHMM", "BEIIIDJA", "CENAIDJJ"]
+    }
+  ]
+}
