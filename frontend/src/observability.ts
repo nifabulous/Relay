@@ -6,7 +6,7 @@ import {
   useLocation,
   useNavigationType,
 } from "react-router-dom";
-import type { ErrorEvent, SpanJSON, TransactionEvent } from "@sentry/core";
+import type { ErrorEvent, Exception, SpanJSON, StackFrame, TransactionEvent } from "@sentry/core";
 import type { BrowserOptions } from "@sentry/react";
 
 const REDACTED_ERROR = "[REDACTED_ERROR]";
@@ -174,30 +174,99 @@ function sanitizeContexts(contexts: ErrorEvent["contexts"]): ErrorEvent["context
   return Object.keys(sanitizedContexts).length > 0 ? sanitizedContexts : undefined;
 }
 
+function safeIdentifier(value: string | undefined, maxLength = 128): string | undefined {
+  if (!value || value.length > maxLength || !/^[A-Za-z0-9._:@/-]+$/.test(value)) return undefined;
+  return value;
+}
+
+function sanitizeAssetPath(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  let pathname: string;
+  try {
+    pathname = new URL(value, "http://relay.invalid").pathname;
+  } catch {
+    return undefined;
+  }
+
+  return /^\/(?:app\/)?assets\/[A-Za-z0-9._-]+\.m?js$/.test(pathname) ? pathname : undefined;
+}
+
+function sanitizeStackFrame(frame: StackFrame): StackFrame {
+  const sanitized: StackFrame = {};
+  const filename = sanitizeAssetPath(frame.filename);
+  const absPath = sanitizeAssetPath(frame.abs_path);
+  if (filename) sanitized.filename = filename;
+  if (absPath) sanitized.abs_path = absPath;
+  if (typeof frame.function === "string" && frame.function.length <= 200) sanitized.function = frame.function;
+  if (typeof frame.module === "string" && frame.module.length <= 200) sanitized.module = frame.module;
+  if (typeof frame.platform === "string" && frame.platform.length <= 32) sanitized.platform = frame.platform;
+  if (typeof frame.lineno === "number" && Number.isFinite(frame.lineno)) sanitized.lineno = frame.lineno;
+  if (typeof frame.colno === "number" && Number.isFinite(frame.colno)) sanitized.colno = frame.colno;
+  if (typeof frame.in_app === "boolean") sanitized.in_app = frame.in_app;
+  if (typeof frame.instruction_addr === "string") sanitized.instruction_addr = safeIdentifier(frame.instruction_addr, 64);
+  if (typeof frame.addr_mode === "string") sanitized.addr_mode = safeIdentifier(frame.addr_mode, 32);
+  if (typeof frame.debug_id === "string") sanitized.debug_id = safeIdentifier(frame.debug_id, 64);
+  return sanitized;
+}
+
+function sanitizeStacktrace(stacktrace: NonNullable<Exception["stacktrace"]>): Exception["stacktrace"] {
+  return {
+    frames: stacktrace.frames?.map(sanitizeStackFrame),
+    frames_omitted:
+      stacktrace.frames_omitted &&
+      stacktrace.frames_omitted.every((value) => Number.isInteger(value) && value >= 0)
+        ? stacktrace.frames_omitted
+        : undefined,
+  };
+}
+
 function sanitizeExceptionValues(event: ErrorEvent): ErrorEvent["exception"] {
   if (!event.exception?.values) return undefined;
 
   return {
     values: event.exception.values.map((exception) => ({
-      type: exception.type,
+      type: safeIdentifier(exception.type, 64),
       value: REDACTED_ERROR,
-      stacktrace: exception.stacktrace
-        ? {
-            ...exception.stacktrace,
-            frames: exception.stacktrace.frames?.map((frame) => {
-              const { vars: _vars, context_line: _contextLine, pre_context: _preContext, post_context: _postContext, ...safeFrame } = frame;
-              return safeFrame;
-            }),
-          }
-        : undefined,
+      stacktrace: exception.stacktrace ? sanitizeStacktrace(exception.stacktrace) : undefined,
     })),
+  };
+}
+
+function sanitizeDebugMeta(debugMeta: ErrorEvent["debug_meta"]): ErrorEvent["debug_meta"] {
+  const images = debugMeta?.images?.flatMap((image) => {
+    if (image.type !== "sourcemap") return [];
+    const codeFile = sanitizeAssetPath(image.code_file);
+    const debugId = safeIdentifier(image.debug_id, 64);
+    return codeFile && debugId ? [{ type: "sourcemap" as const, code_file: codeFile, debug_id: debugId }] : [];
+  });
+
+  return images && images.length > 0 ? { images } : undefined;
+}
+
+function sanitizeEventMetadata(event: ErrorEvent | TransactionEvent) {
+  return {
+    event_id: safeIdentifier(event.event_id, 64),
+    timestamp: typeof event.timestamp === "number" && Number.isFinite(event.timestamp) ? event.timestamp : undefined,
+    start_timestamp:
+      typeof event.start_timestamp === "number" && Number.isFinite(event.start_timestamp)
+        ? event.start_timestamp
+        : undefined,
+    level: event.level,
+    platform: event.platform === "javascript" ? event.platform : undefined,
+    logger: safeIdentifier(event.logger, 128),
+    release: safeIdentifier(event.release, 128),
+    dist: safeIdentifier(event.dist, 128),
+    environment: safeIdentifier(event.environment, 64),
+    debug_meta: sanitizeDebugMeta(event.debug_meta),
   };
 }
 
 /** Remove payloads and identity fields before an error reaches Sentry. */
 export function sanitizeErrorEvent(event: ErrorEvent): ErrorEvent {
   return {
-    ...event,
+    ...sanitizeEventMetadata(event),
+    type: undefined,
     message: event.message ? REDACTED_ERROR : undefined,
     transaction: event.transaction ? REDACTED_ROUTE : undefined,
     contexts: sanitizeContexts(event.contexts),
@@ -243,16 +312,11 @@ export function sanitizeSpan(span: SpanJSON): SpanJSON {
 /** Remove request data from transactions while preserving route and status shape. */
 export function sanitizeTransactionEvent(event: TransactionEvent): TransactionEvent {
   return {
-    ...event,
+    ...sanitizeEventMetadata(event),
+    type: "transaction",
     transaction: sanitizePathLike(event.transaction),
     contexts: sanitizeContexts(event.contexts),
-    request: undefined,
-    user: undefined,
-    breadcrumbs: undefined,
-    extra: undefined,
-    tags: undefined,
-    logentry: undefined,
-    spans: event.spans?.map((span) => sanitizeSpan({ ...span, data: { ...span.data } })),
+    spans: event.spans?.map(sanitizeSpan),
   };
 }
 

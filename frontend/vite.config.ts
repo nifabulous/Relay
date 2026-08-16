@@ -54,22 +54,20 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       ...(canUploadSourceMaps
-        ? [
-            ...sentryVitePlugin({
-              org: env.SENTRY_ORG,
-              project: env.SENTRY_PROJECT,
-              authToken: env.SENTRY_AUTH_TOKEN,
-              telemetry: false,
-              // A source-map upload failure must fail the deployment rather
-              // than publish a build that cannot be debugged safely.
-              errorHandler: (error) => {
-                throw error;
-              },
-              sourcemaps: {
-                filesToDeleteAfterUpload: [`${PUBLIC_OUTPUT_DIR}/**/*.map`],
-              },
-            }),
-          ]
+        ? sentryVitePlugin({
+            org: env.SENTRY_ORG,
+            project: env.SENTRY_PROJECT,
+            authToken: env.SENTRY_AUTH_TOKEN,
+            telemetry: false,
+            // A source-map upload failure must fail the deployment rather
+            // than publish a build that cannot be debugged safely.
+            errorHandler: (error) => {
+              throw error;
+            },
+            sourcemaps: {
+              filesToDeleteAfterUpload: [`${PUBLIC_OUTPUT_DIR}/**/*.map`],
+            },
+          })
         : []),
       assertNoPublicSourceMaps(),
     ],

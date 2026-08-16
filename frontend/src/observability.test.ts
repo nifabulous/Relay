@@ -1,4 +1,4 @@
-import type { ErrorEvent, SpanJSON, TransactionEvent } from "@sentry/core";
+import type { ErrorEvent, SpanJSON, StackFrame, TransactionEvent } from "@sentry/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildFrontendSentryOptions,
@@ -53,10 +53,12 @@ describe("frontend Sentry observability", () => {
         values: [{
           type: "Error",
           value: "secret error detail",
-          stacktrace: { frames: [{ filename: "app.js", vars: { iban: "secret" } }] },
+          stacktrace: { frames: [{ filename: "/app/assets/index.js?iban=secret", abs_path: "/secret", vars: { iban: "secret" }, data: { account: "secret" }} as StackFrame & { data: unknown }] },
         }],
       },
-    };
+      stacktrace: { value: "top-level secret" },
+      unknownSecret: "must not survive",
+    } as ErrorEvent & { stacktrace: unknown; unknownSecret: string };
 
     const sanitized = sanitizeErrorEvent(event);
 
@@ -68,12 +70,18 @@ describe("frontend Sentry observability", () => {
     expect(sanitized.extra).toBeUndefined();
     expect(sanitized.exception?.values?.[0]?.value).toBe("[REDACTED_ERROR]");
     expect(sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.vars).toBeUndefined();
+    expect(sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.filename).toBe("/app/assets/index.js");
+    expect((sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0] as { data?: unknown })?.data).toBeUndefined();
+    expect((sanitized as ErrorEvent & { stacktrace?: unknown; unknownSecret?: unknown }).stacktrace).toBeUndefined();
+    expect((sanitized as ErrorEvent & { stacktrace?: unknown; unknownSecret?: unknown }).unknownSecret).toBeUndefined();
   });
 
   it("keeps only safe route and status information in trace events", () => {
     const event: TransactionEvent = {
       type: "transaction",
       transaction: "GET /api/lookup?bic=DEUTDEFF&account=123",
+      message: "secret transaction message",
+      exception: { values: [{ value: "secret transaction exception" }] },
       request: { url: "https://relay.example/api/lookup?bic=DEUTDEFF" },
       user: { id: "customer-123" },
       contexts: {
@@ -89,11 +97,15 @@ describe("frontend Sentry observability", () => {
         description: "GET https://relay.example/api/lookup?bic=DEUTDEFF",
         tags: { iban: "secret" },
       } as SpanJSON & { tags: Record<string, string> }],
-    };
+      unknownSecret: "must not survive",
+    } as TransactionEvent & { unknownSecret: string };
 
     const sanitized = sanitizeTransactionEvent(event);
 
     expect(sanitized.transaction).toBe("GET /api/lookup");
+    expect(sanitized.message).toBeUndefined();
+    expect(sanitized.exception).toBeUndefined();
+    expect((sanitized as TransactionEvent & { unknownSecret?: unknown }).unknownSecret).toBeUndefined();
     expect(sanitized.request).toBeUndefined();
     expect(sanitized.user).toBeUndefined();
     expect(sanitized.contexts).toEqual({
