@@ -110,7 +110,6 @@ describe("Vite Sentry source-map lifecycle", () => {
     const [plugin] = sentryVitePlugin({
       org: "relay",
       project: "relay-frontend",
-      authToken: "sntrys_test",
       telemetry: false,
       release: {
         name: "abc123def456",
@@ -119,10 +118,11 @@ describe("Vite Sentry source-map lifecycle", () => {
         finalize: false,
         setCommits: false,
       },
-      // Disable only the network upload for this test. The pinned plugin's
-      // real writeBundle and deletion implementation still run on the output.
+      // The documented boolean keeps source-map handling enabled. Without an
+      // auth token the pinned plugin skips its network upload, while its real
+      // writeBundle and deletion implementation still run on the output.
       sourcemaps: {
-        disable: "disable-upload",
+        disable: false,
         filesToDeleteAfterUpload: ["../app/static/relay/**/*.map"],
       },
       errorHandler: (error) => {

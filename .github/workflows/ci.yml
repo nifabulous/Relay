@@ -66,6 +66,7 @@ jobs:
         run: |
           bash -n scripts/codex_review_pr.sh
           bash -n scripts/codex_triage_issue.sh
+          bash -n scripts/verify_before_push.sh
 
       - name: Codex automation assertions
         # CODEX_VERIFY_ACTION_PINS resolves every pinned SHA against the release

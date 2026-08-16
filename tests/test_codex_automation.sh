@@ -116,6 +116,7 @@ for file in scripts/codex_review_pr.sh scripts/codex_triage_issue.sh; do
 done
 
 require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
+require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
 
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
