@@ -283,6 +283,81 @@ def test_the_prescribed_repair_completes_the_upgrade(tmp_path):
     assert "ck_ssi_verifier_is_only_for_published" in ddl
 
 
+def _seed_published_with_a_stale_date(db: Path) -> None:
+    """A shape-valid but future as_of on a published row. The asofshape
+    constraint accepts it (LIKE only checks shape); the verified_by migration's
+    stale-date preflight must catch it before installing the triggers, which
+    would make the row impossible to update."""
+    assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2999-01-01')"
+    )
+    connection.commit()
+    connection.close()
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_a_stale_published_row_is_reported_before_the_triggers_land(tmp_path):
+    db = tmp_path / "stale.db"
+    _seed_published_with_a_stale_date(db)
+
+    result = _alembic(db, "upgrade", "head")
+
+    assert result.returncode != 0, "the migration installed triggers over a stale date"
+    assert "not a real past date" in result.stderr, result.stderr[-400:]
+    # The remediation must be executable against the schema the operator still
+    # has. Naming verified_by in the repair is exactly the dead end this
+    # migration's own later preflight exists to avoid — the column does not
+    # exist yet. (The migration's filename itself contains the string, so
+    # assert on the repair text, not the word.)
+    assert "verified_by = NULL" not in result.stderr, (
+        "the stale-date repair names a column the pre-migration schema does not have"
+    )
+
+    connection = sqlite3.connect(db)
+    tables = [r[0] for r in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")]
+    connection.close()
+    assert "_alembic_tmp_ssi" not in tables
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_the_stale_date_repair_actually_completes_the_upgrade(tmp_path):
+    db = tmp_path / "stale-repaired.db"
+    _seed_published_with_a_stale_date(db)
+    assert _alembic(db, "upgrade", "head").returncode != 0
+
+    # The repair the message prints: downgrade the published row, null the
+    # date. Deliberately no verified_by — it does not exist on this schema.
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "UPDATE ssi SET status = 'unverified', as_of = NULL "
+        "WHERE id IN (SELECT id FROM ssi WHERE status = 'published')"
+    )
+    connection.commit()
+    connection.close()
+
+    result = _alembic(db, "upgrade", "head")
+    assert result.returncode == 0, result.stderr[-400:]
+
+    connection = sqlite3.connect(db)
+    triggers = [r[0] for r in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='trigger'")]
+    connection.close()
+    assert "ssi_as_of_insert" in triggers
+    assert "ssi_as_of_update" in triggers
+
+
 @pytest.mark.skipif(
     subprocess.run([sys.executable, "-m", "alembic", "--help"],
                    capture_output=True).returncode != 0,

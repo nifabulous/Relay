@@ -112,12 +112,15 @@ class FedACHBank(Base):
 
 # A verifier is a name, and a name has at least one character that is not
 # whitespace. Default TRIM() removes only spaces on both engines, so the set
-# is spelled out: space, tab, CR, LF. ltrim/rtrim with an explicit charset is
-# the one trimmed comparison both engines share. The migration copies this
-# verbatim — a test pins the two together so they cannot drift.
+# is spelled out: space, tab, CR, LF, and the non-breaking space — Python's
+# str.strip() removes NBSP, and the database has to agree with Python or a
+# raw-SQL write of a published row can carry a verifier the application
+# calls empty. ltrim/rtrim with an explicit charset is the one trimmed
+# comparison both engines share. The migration copies this verbatim — a test
+# pins the two together so they cannot drift.
 VERIFIER_IS_A_NAME = (
     "status != 'published' OR (verified_by IS NOT NULL AND "
-    "ltrim(rtrim(verified_by, ' \t\n\r'), ' \t\n\r') != '')"
+    "ltrim(rtrim(verified_by, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')"
 )
 
 

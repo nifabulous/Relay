@@ -33,13 +33,16 @@ DIALECT_SPECIFIC_SQL = True
 
 # A verifier is a name, and a name has at least one character that is not
 # whitespace. Default TRIM() removes only spaces on both engines, so the set
-# is spelled out: space, tab, CR, LF. ltrim/rtrim with an explicit charset is
-# the one trimmed comparison both engines share. Copied from app/models.py,
-# not imported — see the trigger constants below — and a test pins the two
-# together so they cannot drift.
+# is spelled out: space, tab, CR, LF, and the non-breaking space — Python's
+# str.strip() removes NBSP, and the database has to agree with Python or a
+# raw-SQL write of a published row can carry a verifier the application
+# calls empty. ltrim/rtrim with an explicit charset is the one trimmed
+# comparison both engines share. Copied from app/models.py, not imported —
+# see the trigger constants below — and a test pins the two together so they
+# cannot drift.
 VERIFIER_IS_A_NAME = (
     "status != 'published' OR (verified_by IS NOT NULL AND "
-    "ltrim(rtrim(verified_by, ' \t\n\r'), ' \t\n\r') != '')"
+    "ltrim(rtrim(verified_by, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')"
 )
 
 # Copied, not imported. A migration has to keep doing what it did the day it
@@ -146,10 +149,16 @@ def upgrade() -> None:
             f"Clear them where the status permits it:\n"
             f"    UPDATE ssi SET as_of = NULL WHERE id IN (...) "
             f"AND status != 'published';\n"
-            f"For status='published' rows, supply the real date or downgrade:\n"
-            f"    UPDATE ssi SET status = 'unverified', as_of = NULL, "
-            f"verified_by = NULL WHERE id IN (...);\n"
+            f"For status='published' rows, supply the date the verification "
+            f"actually happened:\n"
+            f"    UPDATE ssi SET as_of = '<YYYY-MM-DD>' WHERE id IN (...);\n"
+            f"or record that currency was never confirmed:\n"
+            f"    UPDATE ssi SET status = 'unverified', as_of = NULL "
+            f"WHERE id IN (...);\n"
             f"then re-run this migration."
+            f"\n(This statement is deliberately valid against the current schema: "
+            f"verified_by does not exist yet, and on PostgreSQL a failed "
+            f"migration rolls back any column it added.)"
         )
 
     # This preflight runs before any schema change, and its remediation is

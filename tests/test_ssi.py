@@ -7,7 +7,25 @@ Covers:
   - Health endpoint reports SSI count
   - SSI records carry the account numbers that /route lacks
 """
+# The provenance validators compare against the UTC date
+# (datetime.now(timezone.utc).date()); a test building "today" from the local
+# date.today() can be a day off from production around a midnight boundary,
+# failing or passing for timezone configuration rather than behaviour.
+from datetime import datetime, timedelta, timezone
+
 import pytest
+
+
+def _utc_today() -> str:
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def _utc_yesterday() -> str:
+    return (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+
+
+def _utc_tomorrow() -> str:
+    return (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
 
 # ===========================================================================
 # HTTP endpoint tests
@@ -809,33 +827,30 @@ class TestPublishedCannotBeSelfAsserted:
         # Computed, not hardcoded. A literal "today" passes forever once that
         # date is past, but fails on a machine whose clock is set earlier —
         # a real if narrow way for the suite to break for the wrong reason.
-        from datetime import date, timedelta
 
         from app.schemas import SSIRecord
 
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            as_of=(date.today() - timedelta(days=1)).isoformat(),
+            as_of=_utc_yesterday(),
             verified_by="ops:ada",
         )
         assert record.status == "published"
 
     def test_published_verified_today_is_accepted(self):
-        from datetime import date
 
         from app.schemas import SSIRecord
 
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            as_of=date.today().isoformat(),
+            as_of=_utc_today(),
             verified_by="ops:ada",
         )
         assert record.status == "published"
 
     def test_published_verified_tomorrow_is_rejected(self):
-        from datetime import date, timedelta
 
         import pytest
         from pydantic import ValidationError
@@ -846,7 +861,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
-                as_of=(date.today() + timedelta(days=1)).isoformat(),
+                as_of=_utc_tomorrow(),
             )
 
     def test_a_future_verification_date_is_rejected(self):
@@ -880,7 +895,6 @@ class TestPublishedCannotBeSelfAsserted:
         """This test previously omitted verified_by, so the listener downgraded
         the row and the commit succeeded — it passed while proving nothing
         about a published record surviving."""
-        from datetime import date
 
         from app.models import SSI, record_verified_publication
 
@@ -890,7 +904,7 @@ class TestPublishedCannotBeSelfAsserted:
             notes="Source: https://bank.example/ssi.",
         )
         record_verified_publication(row, verified_by="ops:ada",
-                                    verified_on=date.today().isoformat())
+                                    verified_on=_utc_today())
         db_session_clean.add(row)
         db_session_clean.commit()
         db_session_clean.refresh(row)
@@ -912,7 +926,7 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
-            as_of=__import__("datetime").date.today().isoformat(),
+            as_of=_utc_today(),
             verified_by="ops:ada",
         )
         fields.update(overrides)
@@ -1250,7 +1264,6 @@ class TestOnlyTheVerificationPathCanPublish:
 
     @staticmethod
     def _row(**overrides):
-        from datetime import date
 
         from app.models import SSI
 
@@ -1258,7 +1271,7 @@ class TestOnlyTheVerificationPathCanPublish:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
-            as_of=date.today().isoformat(),
+            as_of=_utc_today(),
         )
         fields.update(overrides)
         return SSI(**fields)
@@ -1270,29 +1283,26 @@ class TestOnlyTheVerificationPathCanPublish:
         assert row.status == "unverified", "a generic writer manufactured a published row"
 
     def test_the_verification_path_produces_a_published_row(self, db_session_clean):
-        from datetime import date
 
         from app.models import record_verified_publication
 
         row = self._row(status="unverified")
-        record_verified_publication(row, verified_by="ops:ada", verified_on=date.today().isoformat())
+        record_verified_publication(row, verified_by="ops:ada", verified_on=_utc_today())
         db_session_clean.add(row)
         db_session_clean.commit()
         assert row.status == "published"
         assert row.verified_by == "ops:ada"
 
     def test_the_verification_path_refuses_an_anonymous_verifier(self):
-        from datetime import date
 
         import pytest
 
         from app.models import record_verified_publication
 
         with pytest.raises(ValueError, match="verifier"):
-            record_verified_publication(self._row(), verified_by="  ", verified_on=date.today().isoformat())
+            record_verified_publication(self._row(), verified_by="  ", verified_on=_utc_today())
 
     def test_the_verification_path_refuses_a_future_check(self):
-        from datetime import date, timedelta
 
         import pytest
 
@@ -1301,7 +1311,7 @@ class TestOnlyTheVerificationPathCanPublish:
         with pytest.raises(ValueError, match="future"):
             record_verified_publication(
                 self._row(), verified_by="ops:ada",
-                verified_on=(date.today() + timedelta(days=1)).isoformat(),
+                verified_on=_utc_tomorrow(),
             )
 
     def test_raw_sql_cannot_publish_without_naming_a_verifier(self, db_session_clean):
@@ -1349,14 +1359,13 @@ class TestAVerifierMustBeAName:
             )
 
     def test_a_whitespace_verifier_downgrades_an_orm_write(self, db_session_clean):
-        from datetime import date
 
         from app.models import SSI
 
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
-            notes="Source: x", as_of=date.today().isoformat(), verified_by="   ",
+            notes="Source: x", as_of=_utc_today(), verified_by="   ",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1376,15 +1385,15 @@ class TestAVerifierMustBeAName:
             ))
         db_session_clean.rollback()
 
-    @pytest.mark.parametrize("verifier", ["\t", "\n", "\r", " \t \r\n "])
-    def test_raw_sql_cannot_publish_with_a_tab_or_newline_verifier(
+    @pytest.mark.parametrize("verifier", ["\t", "\n", "\r", " \t \r\n ", "\u00a0", "\u00a0\u00a0"])
+    def test_raw_sql_cannot_publish_with_a_whitespace_only_verifier(
         self, db_session_clean, verifier
     ):
-        """Default TRIM() removes only spaces on both engines, so a tab- or
-        newline-only verifier used to satisfy the published CHECK while
-        Python's str.strip() called it empty — the database and the
-        application disagreeing about what a name is. The constraint names
-        its charset now."""
+        """Default TRIM() removes only spaces on both engines, so a tab-,
+        newline-, or non-breaking-space-only verifier used to satisfy the
+        published CHECK while Python's str.strip() called it empty — the
+        database and the application disagreeing about what a name is. The
+        constraint names its charset now."""
         import pytest
         from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
@@ -1457,7 +1466,6 @@ class TestAVerifierOnlyRidesOnPublished:
     def test_a_downgrade_clears_the_verifier_it_or_phans(self, db_session_clean):
         """The write that loses "published" loses the attribution with it, or
         the API keeps showing a verifier for a row that no longer verifies."""
-        from datetime import date
 
         from app.models import SSI
 
@@ -1468,7 +1476,7 @@ class TestAVerifierOnlyRidesOnPublished:
         )
         row.status = "published"
         row.verified_by = "ops:ada"
-        row.as_of = date.today().isoformat()
+        row.as_of = _utc_today()
         # Simulate an ordinary edit that loses the claim: the listener must
         # clear the orphaned verifier instead of leaving it attached.
         row.status = "archived"
@@ -1501,7 +1509,6 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
 
     @staticmethod
     def _publish(session):
-        from datetime import date
 
         from app.models import SSI, record_verified_publication
 
@@ -1511,7 +1518,7 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
             notes="Source: https://bank.example/ssi.",
         )
         record_verified_publication(row, verified_by="ops:ada",
-                                    verified_on=date.today().isoformat())
+                                    verified_on=_utc_today())
         session.add(row)
         session.commit()
         return row
@@ -1530,7 +1537,6 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
         assert reloaded.status == "published", "an unrelated edit destroyed the verification"
         assert reloaded.verified_by == "ops:ada"
     def test_re_verification_through_the_promotion_path_still_works(self, db_session_clean):
-        from datetime import date
 
         from app.models import SSI, record_verified_publication
 
@@ -1539,7 +1545,7 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
 
         reloaded = db_session_clean.query(SSI).filter(SSI.beneficiary_bic == "AAAAGB2LXXX").one()
         record_verified_publication(reloaded, verified_by="ops:grace",
-                                    verified_on=date.today().isoformat())
+                                    verified_on=_utc_today())
         db_session_clean.commit()
         db_session_clean.refresh(reloaded)
         assert reloaded.status == "published"
