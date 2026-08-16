@@ -126,6 +126,11 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             problems.append(f"{ben_name or ben_bic}: BIC {ben_bic} not in manifest for region {region_name}")
             continue
         expected = banks[ben_bic]
+        if not expected.get("seedable", True):
+            problems.append(
+                f"{ben_bic}: bank is marked NOT SEEDABLE in the manifest — "
+                f"research found no published SSI list; drop its records"
+            )
 
         for rec in bank.get("records", []):
             ccy = str(rec.get("currency", "")).upper()
@@ -193,14 +198,20 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
 
 # ── Test scaffolding ─────────────────────────────────────────────────────────
 def scaffold_coverage_class(region: dict) -> str:
-    """Generate the region coverage test class for test_data_consistency.py."""
+    """Generate the region coverage test class for test_data_consistency.py.
+
+    Only banks marked seedable (default true) are required to have seeded
+    records; research-proven NOT-SEEDABLE banks stay in the manifest for their
+    verified BICs but are excluded from the coverage assertions.
+    """
     name = region["name"]
     class_name = "".join(part.title() for part in name.split("-")) + "SsiCoverage"
     list_name = f"{name.upper().replace('-', '_')}_SSI_COVERAGE"
+    seedable = [b for b in region["banks"] if b.get("seedable", True)]
     lines = [
         f"{list_name} = [",
     ]
-    for bank in region["banks"]:
+    for bank in seedable:
         bic11 = bank["bic8"] + "XXX"
         cys = ", ".join(f'"{c}"' for c in bank["currencies"])
         lines.append(f'    ("{bic11}", "{bank["name"]}", {{{cys}}}),')

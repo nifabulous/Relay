@@ -12,15 +12,17 @@
       "label": "Oceania",
       "countries": ["AU", "NZ"],
       "masked_block": 91001400,
+      "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists — NOT SEEDABLE.",
       "banks": [
-        {"bic8": "ANZBAU3M", "name": "ANZ", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
-        {"bic8": "WPACAU2S", "name": "Westpac", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
-        {"bic8": "CTBAAU2S", "name": "Commonwealth Bank of Australia", "country": "AU", "currencies": ["USD", "EUR", "AUD"]},
-        {"bic8": "ANZBNZ22", "name": "ANZ Bank New Zealand", "country": "NZ", "currencies": ["USD", "NZD"]},
-        {"bic8": "BKNZNZ22", "name": "Bank of New Zealand", "country": "NZ", "currencies": ["USD", "NZD"]},
-        {"bic8": "ASBBNZ2A", "name": "ASB Bank", "country": "NZ", "currencies": ["USD", "NZD"]}
+        {"bic8": "CTBAAU2S", "name": "Commonwealth Bank of Australia", "country": "AU", "currencies": ["USD", "EUR", "GBP", "NZD", "CAD", "JPY", "ZAR", "SGD", "HKD", "CHF", "NOK", "SEK", "DKK", "FJD", "XPF"]},
+        {"bic8": "ANZBAU3M", "name": "ANZ", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "WPACAU2S", "name": "Westpac", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "NATAAU33", "name": "National Australia Bank", "country": "AU", "currencies": ["USD", "EUR", "AUD"], "seedable": false},
+        {"bic8": "ANZBNZ22", "name": "ANZ Bank New Zealand", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false},
+        {"bic8": "BKNZNZ22", "name": "Bank of New Zealand", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false},
+        {"bic8": "ASBBNZ2A", "name": "ASB Bank", "country": "NZ", "currencies": ["USD", "NZD"], "seedable": false}
       ],
-      "forbidden_bics": []
+      "forbidden_bics": ["NATAU3P"]
     },
     {
       "name": "china",
