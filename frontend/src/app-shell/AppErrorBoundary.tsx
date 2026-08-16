@@ -20,6 +20,8 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // React 19's createRoot onCaughtError callback reports this boundary to
+    // Sentry. Keep this hook for local diagnostics without double-reporting.
     console.error("Relay error boundary caught:", error, errorInfo);
   }
 

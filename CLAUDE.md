@@ -192,6 +192,32 @@ ruff check . --fix  # auto-fix import order etc.
 - **SIMULATION disclaimers** must appear on the API title, every payment-shaped response, and the UI banners. Don't remove them.
 - **The `esc()` function** lives in `learn-utils.js`. Never copy it into a lab file — use `LearnUtils.esc` or `var esc = LearnUtils.esc`.
 
+## Maintainer pull request completion checklist
+
+This is a human-operated checklist, not an instruction or authorization for
+Codex, CI, hooks, or any other automation. It grants no permission to write to
+Git, GitHub, deployments, or environments. Automated reviewers remain
+read-only unless a human separately authorizes a specific write operation.
+
+For every pushed change, the maintainer should:
+
+1. Confirm the branch's PR is still open before pushing. If it is already
+   merged or closed, branch from the latest `origin/main` and open a follow-up
+   PR instead of pushing to the completed PR's branch.
+2. After the push, inspect checks, review threads, inline comments, and
+   top-level comments for the exact pushed head SHA. Do not treat an old green
+   check or old review as current.
+3. Resolve every actionable comment, add or update regression tests, and rerun
+   relevant validation before the next push.
+4. Repeat the inspection after each push until there are no unresolved
+   actionable comments, all required checks pass on the exact head SHA, and the
+   PR is mergeable.
+5. Merge only after an explicit human decision, then verify that GitHub reports
+   the PR as merged. Never bypass a required human or deployment approval.
+
+Use thread-aware GitHub reads when review state matters. Preserve unrelated
+working-tree changes and never stage secrets.
+
 ## Important files
 
 - `IMPLEMENTATION_PLAN.md` — the full remediation plan (Tiers 0-3), with file:line citations, acceptance criteria, and sequencing rules. Track progress here.

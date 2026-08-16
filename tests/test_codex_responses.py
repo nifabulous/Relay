@@ -77,6 +77,54 @@ def test_bounded_body_reads_a_response_within_the_limit() -> None:
     assert codex_responses.read_bounded_body(io.BytesIO(body), 4096) == {"output_text": "ok"}
 
 
+def test_response_envelope_allows_reasoning_metadata_above_output_ceiling(monkeypatch) -> None:
+    """Reasoning responses include metadata outside the visible output cap."""
+
+    body = json.dumps({"reasoning": "r" * 210_000, "output_text": "ok"}).encode("utf-8")
+    read_limits: list[int] = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self, limit):
+            read_limits.append(limit)
+            return body[:limit]
+
+    monkeypatch.setattr(
+        codex_responses.urllib.request,
+        "urlopen",
+        lambda request, **kwargs: Response(),
+    )
+
+    assert codex_responses.request_response(
+        model="gpt-5.3-codex",
+        reasoning_effort="high",
+        instructions="i",
+        prompt="p",
+        api_key="k",
+        max_output_tokens=32_000,
+        max_output_bytes=50_000,
+        request_timeout=600,
+    ) == "ok"
+    assert read_limits == [codex_responses.response_body_limit(32_000, 50_000) + 1]
+
+
+def test_response_envelope_limit_accepts_exact_size_and_rejects_one_byte_over() -> None:
+    limit = codex_responses.response_body_limit(32_000, 50_000)
+    payload = b'{"output_text":"ok"}'
+    exact = payload + (b" " * (limit - len(payload)))
+
+    assert codex_responses.read_bounded_body(io.BytesIO(exact), limit) == {
+        "output_text": "ok"
+    }
+    with pytest.raises(RuntimeError, match="exceeded"):
+        codex_responses.read_bounded_body(io.BytesIO(exact + b" "), limit)
+
+
 def test_incomplete_response_with_text_is_posted_as_a_marked_truncated_review() -> None:
     result = codex_responses.extract_output(
         {

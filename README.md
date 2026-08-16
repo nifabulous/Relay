@@ -172,6 +172,27 @@ step and trims the function bundle.
 | `SENTRY_TRACES_SAMPLE_RATE` | `0` | Optional performance-trace sampling rate from `0` to `1`; keep `0` to collect errors without tracing. |
 | `SENTRY_SEND_DEFAULT_PII` | `false` | Optional. Keep false unless the privacy implications of sending request user data have been reviewed. |
 
+The React frontend uses its own Sentry project and only reads these public
+Vite variables at build time:
+
+| Variable | Value | Why |
+| --- | --- | --- |
+| `VITE_SENTRY_DSN` | Frontend project DSN | Optional. The browser SDK stays disabled when this is unset. The DSN is safe to expose in a browser bundle. |
+| `VITE_SENTRY_ENVIRONMENT` | `production` or `preview` | Optional environment label; set separately for Vercel Production and Preview. |
+| `VITE_SENTRY_RELEASE` | deployment/release identifier | Optional. The same value is used by the browser SDK and source-map upload; when unset, Vercel/CI commit metadata is used when available. |
+| `VITE_SENTRY_TRACES_SAMPLE_RATE` | `0.1` | Optional rate from `0` to `1`; keep low in production to control volume. |
+
+For private frontend source maps, set these build-time Vercel variables as
+well. They must not use the `VITE_` prefix: `SENTRY_ORG`, `SENTRY_PROJECT`
+(the frontend project slug), and `SENTRY_AUTH_TOKEN`. When all three are
+present, Vite uploads maps to Sentry and deletes them from the public output.
+Without them, the build still succeeds but skips source-map upload.
+
+The frontend deliberately does not enable Session Replay or browser logs yet.
+Errors and sampled route/API tracing are collected with request bodies, query
+parameters, cookies, headers, breadcrumbs, user identity, and stack-frame
+variables disabled, with an additional event scrubber before send.
+
 Sentry is initialized before the FastAPI app is constructed. To verify a local
 setup, set `SENTRY_DSN` in your shell and run this isolated smoke test:
 

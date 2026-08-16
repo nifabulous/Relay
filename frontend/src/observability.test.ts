@@ -1,0 +1,243 @@
+import * as Sentry from "@sentry/react";
+import type { ErrorEvent, SpanJSON, StackFrame, TransactionEvent } from "@sentry/core";
+import type { EventHint } from "@sentry/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@sentry/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@sentry/react")>()),
+  init: vi.fn(),
+}));
+
+import {
+  buildFrontendSentryOptions,
+  initFrontendSentry,
+  sanitizeErrorEvent,
+  sanitizeSpan,
+  sanitizeTransactionEvent,
+} from "./observability";
+
+afterEach(async () => {
+  await Sentry.close();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
+
+describe("frontend Sentry observability", () => {
+  it("does not configure the SDK when the public DSN is absent", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "");
+
+    expect(buildFrontendSentryOptions()).toBeNull();
+  });
+
+  it("configures privacy-safe error and trace collection", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
+    vi.stubEnv("VITE_SENTRY_ENVIRONMENT", "preview");
+    vi.stubEnv("VITE_SENTRY_TRACES_SAMPLE_RATE", "0.25");
+
+    const options = buildFrontendSentryOptions();
+
+    expect(options).not.toBeNull();
+    expect(options?.dsn).toContain("example.ingest.sentry.io");
+    expect(options?.environment).toBe("preview");
+    expect(options?.tracesSampleRate).toBe(0.25);
+    expect(options?.dataCollection).toMatchObject({
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      stackFrameVariables: false,
+    });
+    expect(options?.beforeBreadcrumb?.({ category: "fetch" })).toBeNull();
+  });
+
+  it("installs callbacks through Sentry.init and sanitizes SDK-shaped events", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
+    const init = vi.mocked(Sentry.init);
+    init.mockReset().mockImplementation(() => undefined);
+
+    expect(initFrontendSentry()).toBe(true);
+
+    const options = init.mock.calls[0]?.[0];
+    expect(options).toBeDefined();
+    expect(options?.beforeSend).toBeTypeOf("function");
+    expect(options?.beforeSendTransaction).toBeTypeOf("function");
+    expect(options?.beforeSendSpan).toBeTypeOf("function");
+
+    const error = options?.beforeSend?.(
+      {
+        message: "IBAN GB29NWBK60161331926819",
+        request: { url: "https://relay.example/app?token=secret" },
+        user: { id: "customer-123" },
+        breadcrumbs: [{ category: "console", message: "secret" }],
+        exception: { values: [{ type: "Error", value: "secret" }] },
+      } as ErrorEvent,
+      {} as EventHint,
+    ) as ErrorEvent | null | undefined;
+    const transaction = options?.beforeSendTransaction?.(
+      {
+        type: "transaction",
+        transaction: "GET /api/lookup?iban=secret",
+        request: { url: "https://relay.example/api/lookup?iban=secret" },
+        user: { id: "customer-123" },
+        spans: [{
+          trace_id: "trace",
+          span_id: "span",
+          start_timestamp: 1,
+          data: { "http.query": "secret", "http.status_code": 200 },
+          description: "GET /api/lookup?iban=secret",
+        }],
+      } as TransactionEvent,
+      {} as EventHint,
+    ) as TransactionEvent | null | undefined;
+    const span = options?.beforeSendSpan?.({
+      trace_id: "trace",
+      span_id: "span",
+      start_timestamp: 1,
+      data: { "http.query": "secret", "http.status_code": 200 },
+      description: "GET /api/lookup?iban=secret",
+    });
+
+    expect(error?.message).toBe("[REDACTED_ERROR]");
+    expect(error?.request).toBeUndefined();
+    expect(error?.user).toBeUndefined();
+    expect(error?.breadcrumbs).toBeUndefined();
+    expect(transaction?.transaction).toBe("GET /api/lookup");
+    expect(transaction?.request).toBeUndefined();
+    expect(transaction?.user).toBeUndefined();
+    expect(transaction?.spans?.[0]?.data).toEqual({ "http.status_code": 200 });
+    expect(span?.description).toBe("GET /api/lookup");
+    expect(span?.data).toEqual({ "http.status_code": 200 });
+  });
+
+  it("removes request, identity, breadcrumbs, and exception payload data", () => {
+    const event: ErrorEvent = {
+      type: undefined,
+      message: "payment failed for iban GB29NWBK60161331926819",
+      transaction: "/app/explore/banks/DEUTDEFF?account=123",
+      request: { url: "https://relay.example/app?token=secret" },
+      user: { id: "customer-123", email: "person@example.com" },
+      breadcrumbs: [{ category: "console", message: "secret input" }],
+      extra: { form: { iban: "GB29NWBK60161331926819" } },
+      exception: {
+        values: [{
+          type: "Error",
+          value: "secret error detail",
+          stacktrace: { frames: [{ filename: "/app/assets/index.js?iban=secret", abs_path: "/secret", vars: { iban: "secret" }, data: { account: "secret" }} as StackFrame & { data: unknown }] },
+        }],
+      },
+      stacktrace: { value: "top-level secret" },
+      unknownSecret: "must not survive",
+    } as ErrorEvent & { stacktrace: unknown; unknownSecret: string };
+
+    const sanitized = sanitizeErrorEvent(event);
+
+    expect(sanitized.message).toBe("[REDACTED_ERROR]");
+    expect(sanitized.transaction).toBe("[REDACTED_ROUTE]");
+    expect(sanitized.request).toBeUndefined();
+    expect(sanitized.user).toBeUndefined();
+    expect(sanitized.breadcrumbs).toBeUndefined();
+    expect(sanitized.extra).toBeUndefined();
+    expect(sanitized.exception?.values?.[0]?.value).toBe("[REDACTED_ERROR]");
+    expect(sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.vars).toBeUndefined();
+    expect(sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0]?.filename).toBe("/app/assets/index.js");
+    expect((sanitized.exception?.values?.[0]?.stacktrace?.frames?.[0] as { data?: unknown })?.data).toBeUndefined();
+    expect((sanitized as ErrorEvent & { stacktrace?: unknown; unknownSecret?: unknown }).stacktrace).toBeUndefined();
+    expect((sanitized as ErrorEvent & { stacktrace?: unknown; unknownSecret?: unknown }).unknownSecret).toBeUndefined();
+  });
+
+  it("keeps only safe route and status information in trace events", () => {
+    const event: TransactionEvent = {
+      type: "transaction",
+      transaction: "GET /api/lookup?bic=DEUTDEFF&account=123",
+      message: "secret transaction message",
+      exception: { values: [{ value: "secret transaction exception" }] },
+      request: { url: "https://relay.example/api/lookup?bic=DEUTDEFF" },
+      user: { id: "customer-123" },
+      contexts: {
+        trace: { trace_id: "trace", span_id: "span", data: { iban: "secret" } },
+        app: { app_name: "Relay", data: { account: "secret" } },
+      },
+      spans: [{
+        trace_id: "trace",
+        span_id: "span",
+        start_timestamp: 1,
+        timestamp: 2,
+        data: { "http.method": "GET", "http.status_code": 200, "http.query": "secret" },
+        description: "GET https://relay.example/api/lookup?bic=DEUTDEFF",
+        tags: { iban: "secret" },
+      } as SpanJSON & { tags: Record<string, string> }],
+      unknownSecret: "must not survive",
+    } as TransactionEvent & { unknownSecret: string };
+
+    const sanitized = sanitizeTransactionEvent(event);
+
+    expect(sanitized.transaction).toBe("GET /api/lookup");
+    expect(sanitized.message).toBeUndefined();
+    expect(sanitized.exception).toBeUndefined();
+    expect((sanitized as TransactionEvent & { unknownSecret?: unknown }).unknownSecret).toBeUndefined();
+    expect(sanitized.request).toBeUndefined();
+    expect(sanitized.user).toBeUndefined();
+    expect(sanitized.contexts).toEqual({
+      trace: { trace_id: "trace", span_id: "span" },
+      app: { app_name: "Relay" },
+    });
+    expect(sanitized.spans?.[0]?.description).toBe("GET /api/lookup");
+    expect(sanitized.spans?.[0]?.data).toEqual({
+      "http.method": "GET",
+      "http.status_code": 200,
+    });
+    expect((sanitized.spans?.[0] as SpanJSON & { tags?: unknown })?.tags).toBeUndefined();
+  });
+
+  it("canonicalizes dynamic and encoded route segments", () => {
+    const descriptions = [
+      ["GET /app/explore/banks/DEUTDEFFXXX", "GET /app/explore/banks/:bic"],
+      ["GET /app/learn/cases/case%2Fsecret", "GET /app/learn/cases/:caseId"],
+      ["GET /api/track/0123456789abcdef0123456789abcdef/complete", "GET /api/track/:uetr/complete"],
+      ["GET /api/unknown/7", "GET /api/[REDACTED_PATH]"],
+    ] as const;
+
+    for (const [description, expected] of descriptions) {
+      const span: SpanJSON = {
+        trace_id: "trace",
+        span_id: "span",
+        start_timestamp: 1,
+        timestamp: 2,
+        data: {},
+        description,
+      };
+
+      expect(sanitizeSpan(span).description).toBe(expected);
+    }
+  });
+
+  it("sanitizes child spans without dropping safe timing metadata", () => {
+    const span: SpanJSON = {
+      trace_id: "trace",
+      span_id: "span",
+      start_timestamp: 1,
+      timestamp: 2,
+      data: { "http.method": "POST", "http.request.body": "secret" },
+      description: "POST /api/verify-payee?iban=secret",
+    };
+
+    const sanitized = sanitizeSpan(span);
+
+    expect(sanitized).not.toBe(span);
+    expect(sanitized.description).toBe("POST /api/verify-payee");
+    expect(sanitized.data).toEqual({ "http.method": "POST" });
+  });
+
+  it("never propagates tracing headers to an arbitrary external API", () => {
+    vi.stubEnv("VITE_SENTRY_DSN", "https://public@example.ingest.sentry.io/1");
+
+    const targets = buildFrontendSentryOptions()?.tracePropagationTargets ?? [];
+    const relativeApiTarget = targets.find((target) => target instanceof RegExp);
+
+    expect(relativeApiTarget).toBeInstanceOf(RegExp);
+    expect((relativeApiTarget as RegExp).test("/api/health")).toBe(true);
+    expect((relativeApiTarget as RegExp).test("https://attacker.example/api/health")).toBe(false);
+  });
+});

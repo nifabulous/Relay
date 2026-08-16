@@ -1,5 +1,7 @@
+import "./instrument";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import { App } from "./app-shell/App";
 import { migrateLegacyProgressOnce } from "./lib/persistence/storage";
 import "./design-system/global.css";
@@ -10,7 +12,11 @@ migrateLegacyProgressOnce();
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element #root not found");
 
-createRoot(root).render(
+createRoot(root, {
+  onUncaughtError: Sentry.reactErrorHandler(),
+  onCaughtError: Sentry.reactErrorHandler(),
+  onRecoverableError: Sentry.reactErrorHandler(),
+}).render(
   <StrictMode>
     <App />
   </StrictMode>,
