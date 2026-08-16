@@ -219,6 +219,14 @@ class SSI(Base):
             "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
             name="ck_ssi_published_names_a_verifier",
         ),
+        # The reverse also holds: a verifier names who confirmed the bank
+        # still publishes, which no other status claims, so it may only ride
+        # on "published". Without this a raw SQL writer could leave an
+        # attribution attached to a row the API reports as unverified.
+        CheckConstraint(
+            "status = 'published' OR verified_by IS NULL",
+            name="ck_ssi_verifier_is_only_for_published",
+        ),
     )
 
 
@@ -378,6 +386,14 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
             raise ValueError(
                 "SSI.status 'published' requires as_of, the date currency was verified"
             )
+    elif target.verified_by:
+        # A verifier names who confirmed the bank still publishes; no other
+        # status claims that, so an attribution riding on one is misleading
+        # the API's consumers. Cleared rather than refused, so a caller that
+        # copies the field forward on an unrelated status edit still succeeds
+        # — same philosophy as the downgrade above. The CHECK backstops this
+        # for Core, bulk and raw SQL, which skip this listener.
+        target.verified_by = None
 
 event.listen(SSI, "before_insert", _validate_ssi_provenance)
 event.listen(SSI, "before_update", _validate_ssi_provenance)

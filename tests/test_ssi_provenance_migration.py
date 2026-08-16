@@ -210,6 +210,7 @@ def test_the_prescribed_repair_completes_the_upgrade(tmp_path):
     connection.close()
     assert row == expected
     assert "ck_ssi_published_names_a_verifier" in ddl
+    assert "ck_ssi_verifier_is_only_for_published" in ddl
 
 
 @pytest.mark.skipif(

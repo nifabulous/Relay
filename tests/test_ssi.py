@@ -1392,6 +1392,86 @@ class TestAVerifierMustBeAName:
         db_session_clean.add(row)
         db_session_clean.commit()
         assert row.verified_by == "ops:ada"
+
+
+class TestAVerifierOnlyRidesOnPublished:
+    """A verifier names who confirmed the bank still publishes; no other status
+    claims that, so an attribution attached to one is the API lying about the
+    row. Enforced in Pydantic, the ORM listener, and a CHECK for the bypass
+    paths."""
+
+    def test_the_schema_rejects_a_verifier_on_a_non_published_row(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        for status in ("unverified", "archived", "illustrative"):
+            with pytest.raises(ValidationError, match="only meaningful"):
+                SSIRecord(
+                    beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                    intermediary_bic="CITIUS33XXX", status=status,
+                    notes="Source: https://bank.example/ssi.",
+                    verified_by="ops:ada",
+                )
+
+    def test_an_orm_write_clears_a_verifier_on_a_non_published_row(
+        self, db_session_clean
+    ):
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="archived",
+            notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
+            verified_by="ops:ada",
+        )
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.verified_by is None, (
+            "an attribution survived on a row that makes no currency claim"
+        )
+
+    def test_a_downgrade_clears_the_verifier_it_or_phans(self, db_session_clean):
+        """The write that loses "published" loses the attribution with it, or
+        the API keeps showing a verifier for a row that no longer verifies."""
+        from datetime import date
+
+        from app.models import SSI
+
+        row = SSI(
+            beneficiary_bic="AAAAGB2LXXX", currency="USD",
+            intermediary_bic="CITIUS33XXX", status="unverified",
+            notes="Source: https://bank.example/ssi.",
+        )
+        row.status = "published"
+        row.verified_by = "ops:ada"
+        row.as_of = date.today().isoformat()
+        # Simulate an ordinary edit that loses the claim: the listener must
+        # clear the orphaned verifier instead of leaving it attached.
+        row.status = "archived"
+        db_session_clean.add(row)
+        db_session_clean.commit()
+        db_session_clean.refresh(row)
+        assert row.status == "archived"
+        assert row.verified_by is None
+
+    def test_raw_sql_cannot_attach_a_verifier_to_a_non_published_row(
+        self, db_session_clean
+    ):
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
+                "'USD', 'CITIUS33XXX', 'archived', 'Source: x', '2020-01-01', 'ops:ada')"
+            ))
+        db_session_clean.rollback()
+
 class TestAVerifiedRowSurvivesOrdinaryEditing:
     """The promotion marker is transient, so it is absent on every row loaded
     back from the database. Checking it on any update meant that fixing a typo

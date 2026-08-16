@@ -188,6 +188,15 @@ def upgrade() -> None:
             "ck_ssi_published_names_a_verifier",
             "status != 'published' OR (verified_by IS NOT NULL AND TRIM(verified_by) != '')",
         )
+        # The reverse, enforced for the same reason: a verifier names who
+        # confirmed the bank still publishes, which no other status claims,
+        # so it may only ride on "published". The column is added by this
+        # migration and starts NULL on every row, so this cannot trip on
+        # existing data — it only binds writes made after this point.
+        batch.create_check_constraint(
+            "ck_ssi_verifier_is_only_for_published",
+            "status = 'published' OR verified_by IS NULL",
+        )
 
     statements = SSI_AS_OF_SQLITE if bind.dialect.name == "sqlite" else SSI_AS_OF_POSTGRES
     for statement in statements:
@@ -200,4 +209,5 @@ def downgrade() -> None:
         op.execute(statement)
     with op.batch_alter_table("ssi") as batch:
         batch.drop_constraint("ck_ssi_published_names_a_verifier", type_="check")
+        batch.drop_constraint("ck_ssi_verifier_is_only_for_published", type_="check")
         batch.drop_column("verified_by")

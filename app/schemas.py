@@ -177,6 +177,13 @@ class SSIRecord(BaseModel):
             raise ValueError("status 'published' requires as_of, the date currency was verified")
         if self.status == "published" and not self.verified_by:
             raise ValueError("status 'published' requires verified_by, who confirmed it")
+        # The reverse is also a lie: a verifier names who confirmed the bank
+        # still publishes, which no other status claims. A response carrying
+        # one would attribute a currency claim the row is not making.
+        if self.status != "published" and self.verified_by:
+            raise ValueError(
+                f"verified_by is only meaningful for status 'published', got status {self.status!r}"
+            )
         return self
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
