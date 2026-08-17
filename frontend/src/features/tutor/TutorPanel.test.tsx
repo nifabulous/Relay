@@ -142,6 +142,25 @@ describe("TutorPanel — answering", () => {
     expect(within(sources).queryByRole("link", { name: /BIC —/i })).not.toBeInTheDocument();
   });
 
+  it("does not create a link when a citation URL uses an unsafe protocol", async () => {
+    respondWith(
+      grounded({
+        citations: [
+          {
+            source_id: "untrusted-source",
+            title: "Untrusted source",
+            url: "javascript:alert(1)",
+            evidence: "Untrusted citation URL",
+          },
+        ],
+      }),
+    );
+    render(<TutorPanel context={LESSON} />);
+    await ask();
+    expect(await screen.findByText(/didn't get through/i)).toBeVisible();
+    expect(screen.queryByRole("link", { name: /untrusted source/i })).not.toBeInTheDocument();
+  });
+
   it("shows the evidence quote beneath each source", async () => {
     respondWith(grounded());
     render(<TutorPanel context={LESSON} />);

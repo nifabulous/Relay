@@ -317,6 +317,15 @@ describe("TutorResponse schema", () => {
     expect(parsed.answer).toContain("nostro");
   });
 
+  it("rejects citation URLs outside http and https", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        citations: [{ ...tutorResponseFixture.citations[0], url: "javascript:alert(1)" }],
+      }),
+    ).toThrow();
+  });
+
   it("rejects malformed needs_clarification values instead of coercing them", () => {
     expect(() =>
       TutorResponseSchema.parse({

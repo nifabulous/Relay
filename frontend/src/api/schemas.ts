@@ -703,11 +703,26 @@ export const TutorRequestSchema = z
 
 export type TutorRequest = z.infer<typeof TutorRequestSchema>;
 
+function isSafeTutorCitationUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export const TutorCitationUrlSchema = z
+  .string()
+  .max(500)
+  .refine(isSafeTutorCitationUrl, "Citation URL must use http or https")
+  .nullish();
+
 export const TutorCitationSchema = z
   .object({
     source_id: z.string().min(1).max(160),
     title: z.string().min(1).max(240),
-    url: z.string().max(500).nullish(),
+    url: TutorCitationUrlSchema,
     evidence: z.string().min(1).max(500),
   })
   .passthrough();

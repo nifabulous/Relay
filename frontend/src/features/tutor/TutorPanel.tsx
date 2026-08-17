@@ -45,6 +45,16 @@ const MAX_HISTORY_ASSISTANT_CHARS = 6_000;
 const SIMULATION_NOTE =
   "Educational simulation — explanations only. The tutor cannot move money.";
 
+function safeCitationUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const protocol = new URL(url).protocol;
+    return protocol === "http:" || protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface TutorPanelProps {
   context: TutorContext;
   initialMode?: TutorMode;
@@ -363,10 +373,10 @@ export function TutorPanel({
                 <ul className="tutor-panel__sources" aria-label="Sources">
                   {exchange.response.citations.map((citation) => (
                     <li className="tutor-panel__source" key={citation.source_id}>
-                      {citation.url ? (
+                      {safeCitationUrl(citation.url) ? (
                         <a
                           className="tutor-panel__source-link"
-                          href={citation.url}
+                          href={safeCitationUrl(citation.url) ?? undefined}
                           target="_blank"
                           rel="noreferrer noopener"
                         >
