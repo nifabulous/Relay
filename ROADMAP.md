@@ -119,7 +119,7 @@ Quick wins shipped: touch targets (40→44px), emoji→SVG, font scale cleanup, 
 
 The next contribution slice is content-led rather than a rebuild:
 
-1. Run and synthesize the approved [five-case learner-research protocol](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md) across CA→US, UK→DE, NG→UK, US→MX, and US→NG before adding more cases. The provider-neutral instrumentation is shipped; provider integration remains deferred.
+1. Run and synthesize the approved [five-case learner-research protocol](docs/superpowers/specs/2026-08-12-relay-telemetry-and-learner-research-design.md) across CA→US, UK→DE, NG→UK, US→MX, and US→NG before adding more cases. Use the [research readout handoff](docs/superpowers/research/2026-08-17-five-case-learner-research-readout.md) to record one primary outcome and select one follow-up intervention. The provider-neutral instrumentation is shipped; provider integration remains deferred.
 2. ~~Add sanctions-screening content as the next technical track.~~ ✅ Done (module 13).
 3. ~~Add exceptions/returns and an operations workflow such as Nostro reconciliation or STP repair.~~ ✅ Done (modules 14 and 15).
 4. Extend practice questions (bank is at 52) after the learner research produces evidence.
