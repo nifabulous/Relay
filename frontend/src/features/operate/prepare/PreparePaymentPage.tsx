@@ -176,6 +176,16 @@ export function PreparePaymentPage() {
         </p>
       </div>
 
+      <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
+        <h2>What this simulation covers</h2>
+        <ul>
+          <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
+          <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
+          <li><strong>International / SWIFT:</strong> provides educational routing guidance, not payment execution.</li>
+          <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
+        </ul>
+      </aside>
+
       {/* ── Form ───────────────────────────────────── */}
       <form
         className="prepare-payment__form"

@@ -135,6 +135,7 @@ export function CaseEntry({ caseDef, session }: CaseEntryProps) {
       ]
         .filter(Boolean)
         .join(" ")}
+      role="listitem"
       aria-labelledby={titleId}
     >
       <div className="case-entry__header">

@@ -23,6 +23,16 @@ function renderPage(options: { basename?: string; initialEntries?: string[] } = 
 }
 
 describe("PreparePaymentPage form accessibility", () => {
+  it("separates accepted currency input from rail and SSI coverage", () => {
+    renderPage();
+
+    const note = screen.getByRole("note", { name: "Payment coverage" });
+    expect(note).toHaveTextContent("Currency entry validation");
+    expect(note).toHaveTextContent("Domestic rail catalogue");
+    expect(note).toHaveTextContent("International / SWIFT");
+    expect(note).toHaveTextContent(/bank-published settlement instructions/i);
+  });
+
   it("associates validation errors with fields via aria-describedby", async () => {
     const { user } = renderPage();
 
