@@ -342,6 +342,44 @@ describe("PreparePaymentPage currency selection", () => {
     await user.click(currency);
     expect(screen.getByRole("option", { name: "USD" })).toBeVisible();
   });
+
+  it("normalizes a previously published currency when the bank has no SSI coverage", async () => {
+    server.use(
+      http.get("/api/ssi", ({ request }) => {
+        const bic = new URL(request.url).searchParams.get("bic");
+        if (bic === "MASHAEADXXX") {
+          return HttpResponse.json({
+            beneficiary_bic: bic,
+            currency: "ALL",
+            instructions: [
+              { beneficiary_bic: bic, beneficiary_bank_name: "Mashreq", currency: "XAF", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-1", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            ],
+            disclaimer: "SIMULATION",
+          });
+        }
+        return HttpResponse.json({
+          beneficiary_bic: bic ?? "COBADEFFXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        });
+      }),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await waitFor(() => expect(currency).toHaveValue("XAF"));
+
+    const bic = screen.getByLabelText(/beneficiary bic/i);
+    await user.clear(bic);
+    await user.type(bic, "COBADEFFXXX");
+
+    await waitFor(() => {
+      expect(screen.getByRole("status", { name: /settlement currency coverage/i })).toHaveTextContent(/not confirmed/i);
+    });
+    expect(currency).toHaveValue("AED");
+  });
+
 });
 
 describe("PreparePaymentPage IBAN flexibility", () => {

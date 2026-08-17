@@ -236,10 +236,12 @@ export function PreparePaymentPage() {
   const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
     (g) => g.currency,
   );
-  const hasLoadedBankCurrencies = ssiEnabled && ssiQuery.data !== undefined;
-  const currencyOptions = hasLoadedBankCurrencies && publishedCurrencies.length > 0
+  const hasLoadedBankCurrencies = ssiEnabled && !ssiQuery.isError && ssiQuery.data !== undefined;
+  const hasPublishedBankCurrencies = hasLoadedBankCurrencies && publishedCurrencies.length > 0;
+  const currencyOptions = hasPublishedBankCurrencies
     ? publishedCurrencies
     : COMMON_CURRENCIES;
+  const currencyOptionsKey = currencyOptions.join("|");
   const selectedCurrency = watch("currency");
   const currencyTouched = useRef(false);
 
@@ -249,18 +251,21 @@ export function PreparePaymentPage() {
     if (result) setIsStale(true);
   }
 
-  // Default the currency to the bank's first published currency (importance
-  // order, so USD leads) unless the learner has already chosen one.
+  // Default to the bank's first published currency (importance order, so USD
+  // leads) and normalize any selected value that falls outside the final
+  // option set after an SSI coverage change or error.
   useEffect(() => {
-    if (
-      publishedCurrencies.length > 0 &&
-      (!currencyTouched.current || !publishedCurrencies.includes(selectedCurrency)) &&
-      publishedCurrencies[0] !== selectedCurrency
-    ) {
-      setValue("currency", publishedCurrencies[0], { shouldValidate: true });
-      if (result) setIsStale(true);
+    const firstOption = currencyOptions[0];
+    const shouldDefaultPublished = hasPublishedBankCurrencies &&
+      !currencyTouched.current &&
+      selectedCurrency !== firstOption;
+    const shouldNormalizeMissing = !currencyOptions.includes(selectedCurrency);
+
+    if (firstOption && (shouldDefaultPublished || shouldNormalizeMissing)) {
+      setValue("currency", firstOption, { shouldValidate: true });
+      if (result && selectedCurrency !== firstOption) setIsStale(true);
     }
-  }, [publishedCurrencies, selectedCurrency, setValue, result]);
+  }, [currencyOptionsKey, hasPublishedBankCurrencies, selectedCurrency, setValue, result]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {
