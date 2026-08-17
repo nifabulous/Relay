@@ -35,7 +35,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
 SCAN_ROOTS = [AGENTS_DIR, ROOT / "scripts", ROOT / ".github" / "workflows"]
-SCAN_SUFFIXES = {".md", ".py", ".sh", ".yml", ".yaml"}
+SCAN_SUFFIXES = {".md", ".py", ".sh", ".yml", ".yaml", ".json", ".toml", ".cfg", ".ini"}
 
 ALLOWED_TIERS = {"opus", "sonnet", "haiku", "fable"}
 REQUIRED_AGENTS = {
@@ -212,3 +212,41 @@ def test_codex_model_variable_uses_are_not_flagged():
             m.group() for m in VENDOR_MODEL_ID_RE.finditer(text) if not _inside_any(m.span(), allowed)
         ]
         assert not offenders, f"{relpath}: variable uses unexpectedly flagged as {offenders!r}"
+
+
+def test_scan_suffixes_include_config_formats():
+    """A versioned model id can hide in a config file as easily as in a
+    script or doc -- scripts/ssi-autopilot/regions.json already exists as a
+    real .json config under a scanned root, and was invisible to the drift
+    scan before this suffix set covered it. Positively assert the coverage
+    so a future trim of SCAN_SUFFIXES can't silently reopen the gap."""
+    missing = {".json", ".toml", ".cfg", ".ini"} - SCAN_SUFFIXES
+    assert not missing, f"SCAN_SUFFIXES is missing config suffixes: {sorted(missing)}"
+
+
+def test_versioned_claude_id_in_json_config_is_caught():
+    """Regression, proven by planting a real violation rather than merely
+    asserting suffix membership: a versioned Claude id hiding in a .json
+    config under a scanned root must not be invisible just because the file
+    is JSON instead of one of the original script/doc suffixes. Plants a
+    temp .json file under scripts/ (a scanned root, alongside the real
+    scripts/ssi-autopilot/regions.json), re-runs the module's own
+    suffix-filtered file walk, and proves the planted id is both collected
+    and flagged by the drift regex."""
+    planted = ROOT / "scripts" / "_test_model_pinning_drift_plant.json"
+    assert not planted.exists(), f"stale fixture file left over from a previous run: {planted}"
+    planted.write_text('{"model": "claude-opus-5-20260101"}\n')
+    try:
+        rescanned = list(_iter_scanned_files())
+        assert planted in rescanned, (
+            f"{planted.name}: a .json file under a scanned root was not "
+            "collected by _iter_scanned_files() -- SCAN_SUFFIXES is missing "
+            "'.json'"
+        )
+        match = CLAUDE_VERSIONED_RE.search(planted.read_text())
+        assert match is not None, (
+            f"{planted.name}: planted versioned Claude id "
+            "'claude-opus-5-20260101' was not detected by CLAUDE_VERSIONED_RE"
+        )
+    finally:
+        planted.unlink(missing_ok=True)

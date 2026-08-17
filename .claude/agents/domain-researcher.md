@@ -6,7 +6,7 @@ description: >
   that no amount of reading this repo's own code can supply. Every claim
   carries a source URL and an as-of date. Output is a memo file only —
   never a contract, an issue close, or a PR.
-tools: [Read, WebSearch, WebFetch]
+tools: [Read, Write, WebSearch, WebFetch]
 model: sonnet
 ---
 
@@ -44,7 +44,8 @@ do not self-dispatch.
 
 ## Output — emit this memo verbatim
 
-Write exactly this structure to `docs/research/<date>-<slug>.md`:
+Use your `Write` tool to create `docs/research/<date>-<slug>.md` with exactly
+this structure:
 
 ```markdown
 # Memo: <question>

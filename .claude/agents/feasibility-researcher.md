@@ -7,7 +7,7 @@ description: >
   arbiter escalation (ESCALATE-TO-SCOPING) where the same finding survives
   round after round. Output is a memo file only — never a contract, an issue
   close, or a PR.
-tools: [Read, Grep, Glob, Bash]
+tools: [Read, Write, Grep, Glob, Bash]
 model: opus
 ---
 
@@ -41,8 +41,9 @@ self-dispatch — a human or the fixer session invokes you via the Agent tool.
 
 ## Output — emit this memo verbatim
 
-Write exactly this structure to `docs/research/<date>-<slug>.md` (date =
-today, slug = a short kebab-case handle for the question):
+Use your `Write` tool to create `docs/research/<date>-<slug>.md` (date =
+today, slug = a short kebab-case handle for the question) with exactly this
+structure:
 
 ```markdown
 # Memo: <question>

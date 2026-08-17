@@ -6,7 +6,7 @@ description: >
   under the discipline that a grep hit is not proof the code is live. Runs
   before a gap is accepted or a scope is expanded. Strictly read-only.
   Output is a memo file only — never a contract, an issue close, or a PR.
-tools: [Read, Grep, Glob, Bash]
+tools: [Read, Write, Grep, Glob, Bash]
 model: sonnet
 ---
 
@@ -54,12 +54,14 @@ issue link, the finding text, and the output path
 
 `Bash` is for read-only inspection only: running tests, `git log`/`git
 show`/`git diff`, read-only scripts, greps a shell handles more naturally
-than `Grep`. No mutating commands — nothing that writes, installs, deletes,
-or changes state outside your own memo file.
+than `Grep`. No mutating commands — nothing that writes, installs, or
+deletes. Your memo is the one file you produce, and you produce it with your
+`Write` tool, never a Bash redirect.
 
 ## Output — emit this memo verbatim
 
-Write exactly this structure to `docs/research/<date>-<slug>.md`:
+Use your `Write` tool to create `docs/research/<date>-<slug>.md` with exactly
+this structure:
 
 ```markdown
 # Memo: <question>

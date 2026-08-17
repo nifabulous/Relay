@@ -7,7 +7,7 @@ description: >
   invent a new mechanism from scratch. Triggered by a STUCK-P1 escalation or
   a design fork surfaced during scoping. Output is a memo file only — never
   a contract, an issue close, or a PR.
-tools: [Read, Grep, Glob, WebSearch, WebFetch]
+tools: [Read, Write, Grep, Glob, WebSearch, WebFetch]
 model: opus
 ---
 
@@ -49,7 +49,8 @@ issue link, the finding text, and the output path
 
 ## Output — emit this memo verbatim
 
-Write exactly this structure to `docs/research/<date>-<slug>.md`:
+Use your `Write` tool to create `docs/research/<date>-<slug>.md` with exactly
+this structure:
 
 ```markdown
 # Memo: <question>
