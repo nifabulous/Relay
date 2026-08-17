@@ -333,6 +333,14 @@
 @media (max-width: 768px) {
   .explore__bank-form {
     flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .explore__bank-input {
+    /* A column flex container must not inherit the desktop width flex basis;
+       flex: 1 otherwise collapses this input to its text line height. */
+    flex: 0 1 auto;
+    min-height: 44px;
   }
 
   .explore__bank-form > .relay-btn {

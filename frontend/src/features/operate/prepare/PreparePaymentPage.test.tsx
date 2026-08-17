@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -251,11 +251,16 @@ describe("PreparePaymentPage result cross-links", () => {
 });
 
 describe("PreparePaymentPage currency selection", () => {
-  it("renders currency as a dropdown, not a free-text input", () => {
+  it("renders currency as a styled combobox, not a free-text input", async () => {
     renderPage();
     const currency = screen.getByRole("combobox", { name: /currency/i });
     expect(currency).toBeVisible();
-    expect(currency.tagName).toBe("SELECT");
+    expect(currency.tagName).toBe("BUTTON");
+    expect(currency).toHaveAttribute("aria-haspopup", "listbox");
+
+    const user = userEvent.setup();
+    await user.click(currency);
+    expect(screen.getByRole("listbox", { name: /currency/i })).toBeVisible();
   });
 
   it("offers the bank's published settlement currencies as clickable picks", async () => {
@@ -280,22 +285,24 @@ describe("PreparePaymentPage currency selection", () => {
     const picks = await screen.findAllByRole("button", { name: /^[A-Z]{3}$/ });
     expect(picks.map((p) => p.textContent)).toEqual(["USD", "EUR", "GBP"]);
 
-    // The dropdown is limited to the bank's published currencies; it must not
+    // The picker is limited to the bank's published currencies; it must not
     // expose the broad no-BIC fallback once a SWIFT bank is selected.
     const currency = screen.getByRole("combobox", { name: /currency/i });
-    expect(Array.from(currency.querySelectorAll("option")).map((option) => option.value)).toEqual([
-      "USD",
-      "EUR",
-      "GBP",
-    ]);
+    await user.click(currency);
+    const currencyOptions = within(screen.getByRole("listbox", { name: /currency/i }));
+    expect(
+      currencyOptions.getAllByRole("option").map((option) => option.getAttribute("data-value")),
+    ).toEqual(["USD", "EUR", "GBP"]);
 
     // USD is the default selection (importance-ordered first published).
     expect(currency).toHaveValue("USD");
 
-    // Clicking a pick populates the dropdown; the user can change it after.
+    // Clicking a published-currency pick populates the combobox; the user can
+    // change it from either affordance.
     await user.click(screen.getByRole("button", { name: /^EUR$/ }));
     expect(currency).toHaveValue("EUR");
-    await user.selectOptions(currency, "GBP");
+    await user.click(currency);
+    await user.click(screen.getByRole("option", { name: "GBP" }));
     expect(currency).toHaveValue("GBP");
   });
 });

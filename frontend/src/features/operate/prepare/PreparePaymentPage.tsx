@@ -42,6 +42,158 @@ function isBicLike(value: string): boolean {
   return /^[A-Z0-9]{8,11}$/.test(value);
 }
 
+type CurrencyPickerProps = {
+  value: string;
+  options: string[];
+  onChange: (currency: string) => void;
+  invalid: boolean;
+  describedBy?: string;
+};
+
+function CurrencyPicker({
+  value,
+  options,
+  onChange,
+  invalid,
+  describedBy,
+}: CurrencyPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeOption, setActiveOption] = useState(value);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveOption((current) => options.includes(current) ? current : options[0] ?? value);
+  }, [isOpen, options, value]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    optionRefs.current[activeOption]?.focus();
+  }, [activeOption, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  function choose(currency: string) {
+    onChange(currency);
+    setActiveOption(currency);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function moveActiveOption(direction: 1 | -1) {
+    if (options.length === 0) return;
+    const currentIndex = Math.max(options.indexOf(activeOption), 0);
+    const nextIndex = (currentIndex + direction + options.length) % options.length;
+    setActiveOption(options[nextIndex]);
+  }
+
+  function handleTriggerKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+    if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      setActiveOption(value);
+      setIsOpen(true);
+    }
+  }
+
+  function handleListboxKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        moveActiveOption(1);
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        moveActiveOption(-1);
+        break;
+      case "Home":
+        event.preventDefault();
+        if (options[0]) setActiveOption(options[0]);
+        break;
+      case "End":
+        event.preventDefault();
+        if (options.at(-1)) setActiveOption(options.at(-1)!);
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        if (activeOption) choose(activeOption);
+        break;
+      case "Escape":
+        event.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+        break;
+    }
+  }
+
+  return (
+    <div className="prepare-payment__currency-control" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        id="currency"
+        type="button"
+        className="prepare-payment__currency-trigger mono"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls="currency-options"
+        aria-labelledby="currency-label"
+        aria-invalid={invalid}
+        aria-describedby={describedBy}
+        value={value}
+        onClick={() => {
+          if (options.length === 0) return;
+          setActiveOption(value);
+          setIsOpen((open) => !open);
+        }}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span>{value || "Select currency"}</span>
+        <span className="prepare-payment__currency-chevron" aria-hidden="true" />
+      </button>
+      {isOpen && (
+        <div
+          id="currency-options"
+          className="prepare-payment__currency-menu"
+          role="listbox"
+          aria-label="Currency options"
+          onKeyDown={handleListboxKeyDown}
+        >
+          {options.map((currency) => (
+            <button
+              key={currency}
+              ref={(element) => { optionRefs.current[currency] = element; }}
+              type="button"
+              role="option"
+              className="prepare-payment__currency-option mono"
+              data-value={currency}
+              aria-selected={currency === value}
+              tabIndex={currency === activeOption ? 0 : -1}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(currency)}
+            >
+              {currency}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PreparePaymentPage() {
   const [searchParams] = useSearchParams();
   const draftBic = searchParams.get("bic") ?? "";
@@ -229,20 +381,18 @@ export function PreparePaymentPage() {
 
         <div className="prepare-payment__row">
           <div className="prepare-payment__field">
-            <label htmlFor="currency">Currency</label>
-            <select
-              id="currency"
-              className="mono"
-              {...register("currency", {
-                onChange: () => { currencyTouched.current = true; },
-              })}
-              aria-invalid={!!errors.currency}
-              aria-describedby={errors.currency ? "currency-error" : undefined}
-            >
-              {currencyOptions.map((ccy) => (
-                <option key={ccy} value={ccy}>{ccy}</option>
-              ))}
-            </select>
+            <label id="currency-label" htmlFor="currency">Currency</label>
+            <input type="hidden" {...register("currency")} value={selectedCurrency} readOnly />
+            <CurrencyPicker
+              value={selectedCurrency}
+              options={currencyOptions}
+              invalid={!!errors.currency}
+              describedBy={errors.currency ? "currency-error" : undefined}
+              onChange={(currency) => {
+                currencyTouched.current = true;
+                setValue("currency", currency, { shouldValidate: true });
+              }}
+            />
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
             )}
