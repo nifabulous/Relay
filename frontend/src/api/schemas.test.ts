@@ -254,7 +254,7 @@ const tutorResponseFixture = {
     {
       source_id: "lesson-07",
       title: "Correspondent banking",
-      url: "https://relay.example/lesson-07",
+      url: "https://www.swift.com/products/swift-gpi",
       evidence: "Nostro accounts are held with the correspondent.",
     },
   ],
@@ -322,6 +322,15 @@ describe("TutorResponse schema", () => {
       TutorResponseSchema.parse({
         ...tutorResponseFixture,
         citations: [{ ...tutorResponseFixture.citations[0], url: "javascript:alert(1)" }],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects an HTTPS citation host outside the trusted catalogue", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        citations: [{ ...tutorResponseFixture.citations[0], url: "https://attacker.example/source" }],
       }),
     ).toThrow();
   });

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { apiPost, type ApiProblem } from "../../api/client";
 import {
   TutorResponseSchema,
+  isTrustedTutorCitationUrl,
   type TutorContext,
   type TutorMode,
   type TutorRequest,
@@ -46,13 +47,7 @@ const SIMULATION_NOTE =
   "Educational simulation — explanations only. The tutor cannot move money.";
 
 function safeCitationUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const protocol = new URL(url).protocol;
-    return protocol === "http:" || protocol === "https:" ? url : null;
-  } catch {
-    return null;
-  }
+  return url && isTrustedTutorCitationUrl(url) ? url : null;
 }
 
 export interface TutorPanelProps {
