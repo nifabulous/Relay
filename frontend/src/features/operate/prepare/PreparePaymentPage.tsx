@@ -407,6 +407,20 @@ export function PreparePaymentPage() {
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
             )}
+            {ssiEnabled && ssiQuery.isError && (
+              <div
+                className="prepare-payment__currency-fallback"
+                role="status"
+                aria-label="Settlement currency coverage"
+              >
+                <p>
+                  Bank-specific settlement instructions could not be loaded. Currencies below are simulation choices and are not confirmed for this bank.
+                </p>
+                <Button type="button" variant="secondary" onClick={() => void ssiQuery.refetch()}>
+                  Retry settlement instructions
+                </Button>
+              </div>
+            )}
             {ssiEnabled && hasLoadedBankCurrencies && publishedCurrencies.length === 0 && (
               <p
                 className="prepare-payment__currency-fallback"
@@ -416,7 +430,7 @@ export function PreparePaymentPage() {
                 No published settlement currencies are on file for this bank. Choose a currency for this simulation; current bank instructions are not confirmed.
               </p>
             )}
-            {publishedCurrencies.length > 0 && (
+            {hasPublishedBankCurrencies && (
               <div className="prepare-payment__currency-picks" aria-label="Published settlement currencies">
                 <span className="prepare-payment__currency-picks-label">
                   Published for this bank:

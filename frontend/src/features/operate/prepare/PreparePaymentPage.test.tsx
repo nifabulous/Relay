@@ -380,6 +380,24 @@ describe("PreparePaymentPage currency selection", () => {
     expect(currency).toHaveValue("AED");
   });
 
+  it("explains SSI failures and offers a scoped retry", async () => {
+    let attempts = 0;
+    server.use(
+      http.get("/api/ssi", () => {
+        attempts += 1;
+        return HttpResponse.json({ detail: "SSI unavailable" }, { status: 503 });
+      }),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=COBADEFFXXX"] });
+    const status = await screen.findByRole("status", { name: /settlement currency coverage/i });
+    expect(status).toHaveTextContent(/could not be loaded/i);
+    expect(status).toHaveTextContent(/simulation choices/i);
+
+    await user.click(within(status).getByRole("button", { name: /retry/i }));
+    await waitFor(() => expect(attempts).toBe(2));
+  });
+
 });
 
 describe("PreparePaymentPage IBAN flexibility", () => {
