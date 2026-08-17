@@ -211,7 +211,7 @@
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-floating-border);
   border-radius: var(--radius-control);
   padding: var(--space-1) var(--space-3);
   min-height: 32px;
@@ -256,7 +256,7 @@
   line-height: var(--leading-normal);
   color: var(--color-ink);
   background: var(--color-canvas);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-floating-border);
   border-radius: var(--radius-control);
   padding: var(--space-2) var(--space-3);
   resize: vertical;

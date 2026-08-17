@@ -55,6 +55,10 @@ const FLOATING_CSS = readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/FloatingTutorLauncher.css"),
   "utf8",
 );
+const TUTOR_PANEL_CSS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/TutorPanel.css"),
+  "utf8",
+);
 
 /**
  * Return the body of the block whose opening selector matches `opener`,
@@ -305,6 +309,15 @@ describe("floating surface elevation", () => {
     );
     expect(FLOATING_CSS).toMatch(
       /\.tutor-floating-panel[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-floating-panel__close[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(TUTOR_PANEL_CSS).toMatch(
+      /\.tutor-panel__feedback-button[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(TUTOR_PANEL_CSS).toMatch(
+      /\.tutor-panel__input[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
     );
     expect(ratio(LIGHT, "--color-floating-border", "--color-surface")).toBeGreaterThanOrEqual(3);
     expect(ratio(DARK, "--color-floating-border", "--color-surface-2")).toBeGreaterThanOrEqual(3);
