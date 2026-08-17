@@ -68,7 +68,24 @@ RULE_AMBIGUOUS_IDENTITY = "AMBIGUOUS-IDENTITY"
 RULE_AMBIGUOUS_HISTORY = "AMBIGUOUS-HISTORY"
 RULE_ORPHAN_STATE = "ORPHAN-STATE"
 
+# The internal, normalized severity scale. Everything past the parser boundary
+# (tracked findings, rule gates, proposed gaps) speaks only these three.
 _SEVERITIES = ("P1", "P2", "P3")
+# What the trailer parser ACCEPTS on ingest: the internal scale PLUS "P0". The
+# reviewer prompt (scripts/codex_review_pr.sh) instructs "Report P0" for
+# prompt-injection attempts, so the parser must accept "P0" rather than reject
+# the whole trailer as malformed — a rejection would silently lose the round's
+# OTHER findings. "P0" is normalized to the highest blocking tier (P1) on ingest
+# (see _normalize_sev), so every existing "open P1" gate covers an
+# injection-flagged finding fail-closed, and no code path outside the parser
+# ever sees a raw "P0".
+_TRAILER_SEVERITIES = ("P0", *_SEVERITIES)
+# Monotonic severity rank (higher == more severe). A tracked identity's severity
+# is the MAX ever recorded for it across rounds (see _max_severity / _apply_round):
+# the reviewer re-emits sev every round and keeps only `id` stable, so an
+# escalation P2 -> P1 must stick while a later downgrade is ignored
+# (freeze-on-downgrade preserved by taking the max, never the latest).
+_SEV_RANK = {"P1": 3, "P2": 2, "P3": 1}
 _STATES = ("NEW", "OPEN", "RESOLVED")
 _TRAILER_OPEN = "<!-- codex-verdict:"
 _TRAILER_CLOSE = "-->"
@@ -162,6 +179,27 @@ def _norm_key(file: str, cat: str) -> Tuple[str, str]:
     return (file.strip(), cat.strip().lower())
 
 
+def _normalize_sev(sev: str) -> str:
+    """Fold an incoming trailer severity onto the arbiter's internal scale.
+    "P0" — the reviewer's prompt-injection tier — collapses to "P1", the highest
+    blocking tier, so an injection-flagged finding gates a merge exactly like a
+    P1 and is never dropped as an unknown severity. Any other value is returned
+    unchanged (validate_trailer has already bounded it to _TRAILER_SEVERITIES).
+    Applied at every point a severity enters the arbiter's own state, so a raw
+    "P0" never reaches a _Tracked record or a rule gate."""
+    return "P1" if sev == "P0" else sev
+
+
+def _max_severity(current: str, incoming: str) -> str:
+    """The more severe of two severities, P1 > P2 > P3 (see _SEV_RANK). Both
+    operands are normalized first, so the result is always one of P1/P2/P3 and a
+    raw "P0" can never leak through. Used to fold a finding's severity to the MAX
+    ever seen for its identity: an escalation sticks, a later de-escalation is
+    ignored."""
+    current, incoming = _normalize_sev(current), _normalize_sev(incoming)
+    return current if _SEV_RANK.get(current, 0) >= _SEV_RANK.get(incoming, 0) else incoming
+
+
 def _first_duplicate(items) -> Optional[str]:
     seen = set()
     for item in items:
@@ -224,7 +262,7 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
     for finding in findings:
         if not isinstance(finding, dict):
             return None, "finding-not-object"
-        if finding.get("sev") not in _SEVERITIES:
+        if finding.get("sev") not in _TRAILER_SEVERITIES:
             return None, "bad-sev"
         if finding.get("state") not in _STATES:
             return None, "bad-state"
@@ -324,7 +362,7 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                 key=key,
                 file=finding["file"],
                 cat=finding["cat"],
-                sev=finding["sev"],
+                sev=_normalize_sev(finding["sev"]),
                 first_round=idx,
                 open_round_indices=[idx],
             )
@@ -343,6 +381,17 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                 f"{state} finding id={fid!r} changed identity from {tracked.key} to {key}",
             )
         touched_keys.add(tracked.key)
+
+        # Severity is the MAX ever recorded for this identity. The reviewer
+        # re-emits sev every round (only `id` is guaranteed stable), so a
+        # finding first raised P2 and later escalated to P1 must fold UP to P1 —
+        # otherwise it stays P2, drops out of the open-P1 set, and can be waved
+        # through a soft-gate merge while the latest trailer says P1 OPEN. The
+        # fold runs BEFORE the RESOLVED-P1 -> pending-human routing below, so a
+        # P2-now-P1 that is also marked RESOLVED is routed as a P1 resolution
+        # (pending-human), never silently closed as a P2. max() also preserves
+        # the safe freeze-on-downgrade: a later P2 on a tracked P1 keeps P1.
+        tracked.sev = _max_severity(tracked.sev, finding["sev"])
 
         if state == "OPEN":
             tracked.open_round_indices.append(idx)

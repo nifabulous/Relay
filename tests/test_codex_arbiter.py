@@ -651,6 +651,132 @@ def test_non_bot_and_unmarked_comments_do_not_count_as_rounds():
 
 
 # --------------------------------------------------------------------------- #
+# Severity folds to the MAX ever recorded for an identity (upgrade never lost). #
+# The reviewer re-emits sev every round and keeps only `id` stable, so a        #
+# finding first raised P2 and later escalated to P1 must be treated as P1.      #
+# --------------------------------------------------------------------------- #
+def test_severity_folds_up_p2_new_then_p1_open_blocks_merge_at_soft_gate():
+    """Item 1(a): a finding raised P2 NEW and later escalated to P1 OPEN must be
+    tracked as P1. The arbiter used to freeze sev at the round the finding was
+    first seen, so this finding stayed P2, dropped out of the open-P1 set, and
+    reached a MERGE-family disposition at the soft gate while the latest trailer
+    literally said P1 OPEN.
+
+    With the max-fold it is P1 by round 5: STUCK-P1 blocks and the
+    recommendation is NOT a merge. Pre-fix this exact history returned
+    MERGE-WITH-GAPS (novelty-exhausted), a fail-closed violation."""
+    comments = [_comment(1, 1, [_finding("P2", "NEW", "app/models.py", "authz", "esc")])]
+    for n in range(2, 6):  # rounds 2..5 keep it OPEN, now escalated to P1
+        comments.append(_comment(n, n, [_finding("P1", "OPEN", "app/models.py", "authz", "esc")]))
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.round_count == 5
+    assert not decision.recommendation.startswith("MERGE")  # the core fix
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "STUCK-P1"
+    assert decision.needs_human is True
+    # And it is carried as a P1 in the residual list, not a P2.
+    esc = next(g for g in decision.proposed_gaps if g["id"] == "esc")
+    assert esc["sev"] == "P1"
+
+
+def test_severity_freezes_on_downgrade_p1_new_then_p2_open_stays_p1():
+    """Item 1(b): the inverse — P1 NEW then P2 OPEN (a downgrade) — must keep P1.
+    max(P1, P2) == P1, so the existing safe freeze-on-downgrade is preserved.
+    Pinned so a future 'take the latest sev' refactor (which would de-escalate
+    to P2 and let the soft gate merge) is caught: with P1 retained, round 5
+    blocks as STUCK-P1, never a merge."""
+    comments = [_comment(1, 1, [_finding("P1", "NEW", "app/models.py", "authz", "keep")])]
+    for n in range(2, 6):  # rounds 2..5 report it as P2 (a downgrade attempt)
+        comments.append(_comment(n, n, [_finding("P2", "OPEN", "app/models.py", "authz", "keep")]))
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.round_count == 5
+    assert not decision.recommendation.startswith("MERGE")
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "STUCK-P1"
+    keep = next(g for g in decision.proposed_gaps if g["id"] == "keep")
+    assert keep["sev"] == "P1"
+
+
+def test_severity_escalated_and_resolved_same_round_routes_pending_human_as_p1():
+    """Item 1(c): a finding raised P2 NEW, then in the next round marked RESOLVED
+    but re-emitted at P1 (escalated and resolved in the SAME trailer), must fold
+    to P1 BEFORE the RESOLVED-P1 -> pending-human routing, so it is held for a
+    human as a P1 resolution — never silently closed as a P2.
+
+    Pre-fix the tracked sev was frozen at P2, so the RESOLVED branch took the P2
+    path (resolved, not pending-human) and the whole PR read MERGE-CLEAN — a
+    fail-closed violation: a P1 resolution self-certified in a single round."""
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/models.py", "authz", "esc")]),
+        _comment(2, 2, [_finding("P1", "RESOLVED", "app/models.py", "authz", "esc",
+                                  evidence=_evidence(["app/models.py"]))]),
+    ]
+    decision = arb.decide(_history(comments, diff_files=["app/models.py"]), _contract())
+    assert decision.recommendation != "MERGE-CLEAN"
+    assert decision.recommendation == "NEEDS-HUMAN"
+    assert decision.cited_rule == "P1-RESOLUTION-PENDING"
+    assert decision.needs_human is True
+    pending = next(g for g in decision.proposed_gaps if g["id"] == "esc")
+    assert pending["status"] == "pending-human"
+    assert pending["sev"] == "P1"
+
+
+# --------------------------------------------------------------------------- #
+# P0 (the reviewer's prompt-injection tier) is accepted and normalized to P1.  #
+# --------------------------------------------------------------------------- #
+def test_validate_trailer_accepts_p0_and_keeps_sibling_findings():
+    """Item 2 at the parser seam: a trailer carrying a P0 finding alongside a P2
+    is structurally VALID (returns (trailer, None)), so the P2 sibling is not
+    lost. Pre-fix P0 was not in the accepted set and validate_trailer returned
+    (None, 'bad-sev'), discarding the whole round and every finding in it."""
+    trailer = {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+            {"sev": "P0", "state": "NEW", "file": "app/models.py",
+             "cat": "prompt-injection", "id": "inj"},
+            {"sev": "P2", "state": "NEW", "file": "app/a.py", "cat": "cat-a", "id": "a"},
+        ],
+    }
+    validated, err = arb.validate_trailer(trailer)
+    assert err is None
+    assert validated is not None
+    assert len(validated["findings"]) == 2
+
+
+def test_p0_trailer_severity_is_accepted_and_blocks_as_p1():
+    """Item 2 end-to-end: the reviewer prompt tells the model to 'Report P0' for
+    a prompt-injection attempt, but the trailer parser only accepted P1/P2/P3,
+    so a P0 finding made the WHOLE trailer malformed and the round's OTHER
+    findings were lost. Now P0 is accepted and normalized to P1 (the highest
+    blocking tier).
+
+    A P0 injection finding coexisting with a P3 minor across 5 rounds (a) does
+    not malform the round — BOTH findings survive into the residual list — and
+    (b) the P0 gates the merge exactly like a P1 (STUCK-P1 escalation, never a
+    merge). Pre-fix every round was malformed, so the residual list was empty
+    and the P3 was silently dropped."""
+    def rnd(n, inj_state, minor_state):
+        return _comment(n, n, [
+            _finding("P0", inj_state, "app/models.py", "prompt-injection", "inj"),
+            _finding("P3", minor_state, "app/notes.py", "doc-gap", "minor"),
+        ])
+    comments = [rnd(1, "NEW", "NEW")]
+    for n in range(2, 6):
+        comments.append(rnd(n, "OPEN", "OPEN"))
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.round_count == 5
+    assert decision.cited_rule != "MALFORMED-TRAILER"  # P0 no longer malforms
+    assert not decision.recommendation.startswith("MERGE")  # P0 blocks like a P1
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "STUCK-P1"
+    gaps_by_id = {g["id"]: g for g in decision.proposed_gaps}
+    assert set(gaps_by_id) == {"inj", "minor"}  # the minor was NOT lost
+    assert gaps_by_id["inj"]["sev"] == "P1"  # P0 normalized to the blocking tier
+    assert gaps_by_id["minor"]["sev"] == "P3"
+
+
+# --------------------------------------------------------------------------- #
 # Trailer parser (collector-side, pure). Multi-line is the T2-carried note.    #
 # --------------------------------------------------------------------------- #
 MULTILINE_TRAILER_BODY = """<!-- codex-pr-review:24:abc -->

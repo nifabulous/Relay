@@ -378,7 +378,8 @@ one):
   contract PR for the follow-up work), linking the issues. The issue ledger
   is authoritative in the meantime — a contract that lags is stale, not
   wrong.
-- A P1 gap can be *proposed* only under rule 5 escalation output, and
+- A P1 gap is *proposed* only under STUCK-P1 / HARD-CAP escalation or the
+  pending-human hold — never under a MERGE-family recommendation — and
   reaches `accepted-gap` only with an explicit human line in the contract
   (§11).
 
