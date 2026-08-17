@@ -634,6 +634,12 @@ export type InternationalSchemesResponse = z.infer<
  * AI Tutor
  * ------------------------------------------------------------------ */
 
+export const TutorAvailabilitySchema = z.object({
+  available: z.boolean(),
+});
+
+export type TutorAvailability = z.infer<typeof TutorAvailabilitySchema>;
+
 /**
  * Mirrors `app/tutor/schemas.py`.
  *
@@ -697,11 +703,66 @@ export const TutorRequestSchema = z
 
 export type TutorRequest = z.infer<typeof TutorRequestSchema>;
 
+/**
+ * Tutor citations are canonical Relay catalogue records, not arbitrary model
+ * links. Keep this client-side guard in step with the payment-rail catalogue
+ * so an unexpected response cannot turn an arbitrary HTTPS URL into an
+ * apparently official source.
+ */
+const TRUSTED_TUTOR_CITATION_HOSTS = new Set([
+  "aep.ae",
+  "auspaynet.com.au",
+  "auspayplus.com.au",
+  "bankofengland.co.uk",
+  "boj.or.jp",
+  "cbn.gov.ng",
+  "centralbank.ae",
+  "centralbank.go.ke",
+  "ecb.europa.eu",
+  "europeanpaymentscouncil.eu",
+  "frbservices.org",
+  "interac.ca",
+  "kba.co.ke",
+  "nibss-plc.com.ng",
+  "npci.org.in",
+  "payments.ca",
+  "pesalink.co.ke",
+  "rba.gov.au",
+  "rbi.org.in",
+  "safaricom.co.ke",
+  "swift.com",
+  "theclearinghouse.org",
+  "wearepay.uk",
+  "zengin-net.jp",
+]);
+
+export function isTrustedTutorCitationUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      TRUSTED_TUTOR_CITATION_HOSTS.has(parsed.hostname.toLowerCase().replace(/^www\./, ""))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isSafeTutorCitationUrl(value: string): boolean {
+  return isTrustedTutorCitationUrl(value);
+}
+
+export const TutorCitationUrlSchema = z
+  .string()
+  .max(500)
+  .refine(isSafeTutorCitationUrl, "Citation URL must use http or https")
+  .nullish();
+
 export const TutorCitationSchema = z
   .object({
     source_id: z.string().min(1).max(160),
     title: z.string().min(1).max(240),
-    url: z.string().max(500).nullish(),
+    url: TutorCitationUrlSchema,
     evidence: z.string().min(1).max(500),
   })
   .passthrough();

@@ -10,9 +10,12 @@ import type { AsyncStatus } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
 import { PaymentTimeline } from "./PaymentTimeline";
+import { buildTrackingContext } from "../../tutor/tutorContext";
+import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
 import "./TrackingPage.css";
 import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
+import { normalizeSupportedCurrency } from "../currencyCatalogue";
 
 /**
  * Scheduled pacing poll: the backend reveals timeline events on a schedule,
@@ -33,6 +36,7 @@ export function TrackingPage() {
   const paramUetr = searchParams.get("uetr") ?? "";
   const [uetr, setUetr] = useState(paramUetr);
   const [submittedUetr, setSubmittedUetr] = useState<string | null>(paramUetr || null);
+  const [lookupGeneration, setLookupGeneration] = useState(0);
   const [notice, setNotice] = useState<MutationNotice | null>(null);
 
   // `useState` reads its initializer only on mount, so seeding from the URL
@@ -50,6 +54,7 @@ export function TrackingPage() {
     setAppliedParam(paramUetr);
     setUetr(paramUetr);
     setSubmittedUetr(paramUetr || null);
+    setLookupGeneration((generation) => generation + 1);
     setNotice(null);
   }
 
@@ -129,6 +134,26 @@ export function TrackingPage() {
   const error = query.error as ApiProblem | null;
   const data = query.data;
 
+  /*
+   * Publish only what is on screen. Deliberately not the UETR: it identifies
+   * one specific transaction, the tutor explains what a timeline *means*, and
+   * the MVP performs no live lookup that would need it. Event names only — no
+   * raw response, no hidden events.
+   *
+   * Before a lookup there is nothing to explain, so the surface stays global
+   * and the tutor answers general tracking questions instead.
+   */
+  usePublishTutorContext(
+    data
+      ? buildTrackingContext({
+          status: data.current_status,
+          eventNames: data.timeline.map((entry) => entry.status),
+          currency: normalizeSupportedCurrency(data.timeline[0]?.currency),
+          lookupKey: String(lookupGeneration),
+        })
+      : { surface: "tracking" },
+  );
+
   return (
     <div className="tracking-page">
       <h1>Payment Tracking</h1>
@@ -138,7 +163,7 @@ export function TrackingPage() {
         <strong>Simulation — not a real payment.</strong> All tracking events are illustrative.
       </div>
 
-      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (uetr.trim()) { setNotice(null); setSubmittedUetr(uetr.trim()); } }}>
+      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (uetr.trim()) { setNotice(null); setLookupGeneration((generation) => generation + 1); setSubmittedUetr(uetr.trim()); } }}>
         <div className="tool-form__field">
           <label htmlFor="track-uetr">UETR</label>
           <input id="track-uetr" type="text" className="mono"

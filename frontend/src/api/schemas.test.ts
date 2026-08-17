@@ -254,7 +254,7 @@ const tutorResponseFixture = {
     {
       source_id: "lesson-07",
       title: "Correspondent banking",
-      url: "https://relay.example/lesson-07",
+      url: "https://www.swift.com/products/swift-gpi",
       evidence: "Nostro accounts are held with the correspondent.",
     },
   ],
@@ -288,6 +288,15 @@ describe("TutorResponse schema", () => {
     }
   });
 
+  it("rejects a response with a non-boolean needs_clarification value", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        needs_clarification: "false",
+      }),
+    ).toThrow();
+  });
+
   it("tolerates null for follow_up, safety_notice, and citation url", () => {
     const parsed = TutorResponseSchema.parse({
       ...tutorResponseFixture,
@@ -306,6 +315,24 @@ describe("TutorResponse schema", () => {
     expect(parsed.safety_notice ?? null).toBeNull();
     expect(parsed.citations[0].url ?? null).toBeNull();
     expect(parsed.answer).toContain("nostro");
+  });
+
+  it("rejects citation URLs outside http and https", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        citations: [{ ...tutorResponseFixture.citations[0], url: "javascript:alert(1)" }],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects an HTTPS citation host outside the trusted catalogue", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        citations: [{ ...tutorResponseFixture.citations[0], url: "https://attacker.example/source" }],
+      }),
+    ).toThrow();
   });
 
   it("rejects malformed needs_clarification values instead of coercing them", () => {

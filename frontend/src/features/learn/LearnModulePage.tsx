@@ -7,6 +7,10 @@ import { LabCompletionChecklist } from "./LabCompletionChecklist";
 import { loadProgress, saveProgress, recordActivity } from "../../lib/persistence/storage";
 import { StatusChip } from "../../design-system/StatusChip";
 import { track } from "../../lib/analytics/analytics";
+import { buildLessonContext } from "../tutor/tutorContext";
+import { withLearnerSummary } from "../tutor/tutorLearnerContext";
+import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
+import { loadPracticeState } from "./practice/practiceStore";
 import "./LearnPage.css";
 
 export function LearnModulePage() {
@@ -44,6 +48,35 @@ export function LearnModulePage() {
       track("module_completed", { module_id: id });
     }
   }, [completed]);
+
+  /*
+   * Tell the floating tutor launcher what this page is.
+   *
+   * Called here, above every early return, because it is a hook — a locked or
+   * unknown module returns early below, and a conditional hook call is a React
+   * error rather than a subtle bug. An absent module publishes the global
+   * surface, which is the correct thing for a "module not found" page anyway.
+   *
+   * Learner-aware: how many modules are done, which are worth revisiting, and
+   * which comes next. All at module granularity — never a question ID, a
+   * score, or a date.
+   */
+  usePublishTutorContext(
+    mod
+      ? withLearnerSummary(
+          buildLessonContext({
+            moduleId: mod.id,
+            moduleTitle: mod.title,
+            topic: mod.category,
+          }),
+          {
+            completedModuleIds: completed,
+            practice: loadPracticeState(),
+            currentModuleId: mod.id,
+          },
+        )
+      : { surface: "global" },
+  );
 
   const completeModule = useCallback((id: string) => {
     setCompleted((prev) => {
@@ -106,6 +139,9 @@ export function LearnModulePage() {
           {isComplete && <StatusChip status="passed" />}
         </div>
         <p className="measure">{mod.subtitle}</p>
+        {/* Module identity only — never the lesson's rendered content. The
+            backend has its own card for this module, so passing the ID reaches
+            better grounding than any amount of scraped text would. */}
       </div>
 
       <div className="learn-content">

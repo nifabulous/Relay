@@ -6,9 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../test/server";
 import { TrackingPage } from "./TrackingPage";
+import { readTutorContext } from "../../tutor/tutorSurfaceStore";
 
 /** Echo the requested UETR back, so a test can tell which payment was fetched. */
-function echoUetrHandler() {
+function echoUetrHandler(currency?: string) {
   return http.get("/api/track/:uetr", ({ params }) =>
     HttpResponse.json({
       uetr: params.uetr,
@@ -26,6 +27,7 @@ function echoUetrHandler() {
           bank_name: "GTBank",
           hop: 1,
           timestamp: "2026-01-01T00:00:00",
+          currency,
         },
       ],
       disclaimer: "SIMULATION",
@@ -105,6 +107,23 @@ describe("TrackingPage arrival", () => {
     await user.type(input, "TYPED-BY-HAND");
 
     expect(input).toHaveValue("TYPED-BY-HAND");
+  });
+
+  it("publishes the timeline currency without forwarding the sent amount", async () => {
+    server.use(echoUetrHandler("USD"));
+    const { unmount } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    await waitFor(() => expect(readTutorContext().currency).toBe("USD"));
+    expect(JSON.stringify(readTutorContext())).not.toContain("1000.00");
+    unmount();
+  });
+
+  it("does not publish an unsupported timeline currency", async () => {
+    server.use(echoUetrHandler("1000.00"));
+    const { unmount } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    await waitFor(() => expect(readTutorContext().currency ?? "").toBe(""));
+    unmount();
   });
 });
 

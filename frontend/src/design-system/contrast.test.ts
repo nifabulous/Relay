@@ -51,6 +51,14 @@ function contrastRatio(fg: string, bg: string): number {
 // be converted to a plain path first. Anchoring on import.meta.url rather than
 // process.cwd() keeps this correct regardless of where vitest is invoked from.
 const CSS = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "tokens.css"), "utf8");
+const FLOATING_CSS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/FloatingTutorLauncher.css"),
+  "utf8",
+);
+const TUTOR_PANEL_CSS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/TutorPanel.css"),
+  "utf8",
+);
 
 /**
  * Return the body of the block whose opening selector matches `opener`,
@@ -184,6 +192,7 @@ describe("WCAG 2.2 AA contrast for semantic tokens", () => {
       "--color-surface-3": "#e6eaf2",
       "--color-border": "#dce2eb",
       "--color-border-strong": "#c4cdd9",
+      "--color-floating-border": "#667085",
       "--color-success": "#0e5c44",
       "--color-success-bg": "#e8f6ef",
       "--color-success-border": "#a3d9c4",
@@ -269,5 +278,55 @@ describe("dark palette selector structure", () => {
   it("never introduces a token that exists only in dark", () => {
     const darkOnly = Object.keys(DARK_MEDIA).filter((token) => !(token in LIGHT));
     expect(darkOnly).toEqual([]);
+  });
+});
+
+// ── Review fix: CT2 ─────────────────────────────────────────────────────────
+
+describe("floating surface elevation", () => {
+  /*
+   * A drop shadow only reads as depth when it is darker than its backdrop. The
+   * approved elevation used #1d2433 against a #080b12 dark canvas, which is
+   * 5.3x lighter — it could not work, and the review that approved it was shown
+   * a light-mode board only. This pins the rule so the next elevation decision
+   * cannot repeat that: on dark, elevation lifts the surface instead.
+   */
+  it("dark elevation lifts the surface rather than casting a lighter shadow", () => {
+    const canvas = luminance("#080b12");
+    const raised = luminance("#1c2740"); // --color-surface-2, dark
+    expect(raised).toBeGreaterThan(canvas);
+  });
+
+  it("a shadow colour is only usable where it is darker than the canvas", () => {
+    const shadow = luminance("#1d2433");
+    expect(luminance("#f6f8fc")).toBeGreaterThan(shadow); // light: valid
+    expect(luminance("#080b12")).toBeLessThan(shadow); // dark: inverted
+  });
+
+  it("uses the approved high-contrast boundary on the actual floating selectors", () => {
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-fab[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-floating-panel[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-floating-panel__close[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(TUTOR_PANEL_CSS).toMatch(
+      /\.tutor-panel__feedback-button[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(TUTOR_PANEL_CSS).toMatch(
+      /\.tutor-panel__input[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(ratio(LIGHT, "--color-floating-border", "--color-surface")).toBeGreaterThanOrEqual(3);
+    expect(ratio(DARK, "--color-floating-border", "--color-surface-2")).toBeGreaterThanOrEqual(3);
+  });
+
+  it("caps the mobile tutor sheet so the page behind remains usable", () => {
+    const mobileCss = FLOATING_CSS.split("@media (min-width: 1024px)")[0];
+    expect(mobileCss).toMatch(/top:\s*auto;/);
+    expect(mobileCss).toMatch(/height:\s*min\([\s\S]*70dvh[\s\S]*var\(--sim-banner-height\)/);
+    expect(mobileCss).toMatch(/max-height:\s*calc\([\s\S]*var\(--sim-banner-height\)/);
   });
 });

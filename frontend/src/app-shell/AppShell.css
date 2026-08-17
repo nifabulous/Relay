@@ -277,6 +277,15 @@
   overflow-y: auto;
 }
 
+/* Reserve the tutor's fixed desktop column so the open panel reflows the
+   learner's content instead of covering it. The panel itself owns the right
+   380px; this reservation accounts for its right edge and the content gap. */
+@media (min-width: 1024px) {
+  .app-shell--tutor-open .app-shell__body {
+    padding-right: calc(380px + var(--space-5) + var(--space-6));
+  }
+}
+
 /* ── Mobile bottom navigation (hidden on desktop) ──────── */
 .app-shell__mobile-nav {
   display: none;

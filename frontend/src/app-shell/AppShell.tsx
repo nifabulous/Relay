@@ -11,6 +11,7 @@ import {
 import type { RelayPreferences } from "../design-system/types";
 import { loadPreferences, savePreferences } from "../lib/persistence/storage";
 import { PreferencesMenu } from "./PreferencesMenu";
+import { FloatingTutorLauncher } from "../features/tutor/FloatingTutorLauncher";
 import "./AppShell.css";
 
 /*
@@ -155,6 +156,7 @@ function NavIcon({ name }: { name: string }) {
 export function AppShell({ children }: { children?: ReactNode }) {
   const preferences = usePreferences();
   const { theme } = preferences;
+  const [tutorOpen, setTutorOpen] = useState(false);
 
   /*
    * Reduce motion and compact navigation shipped persisted-but-unconsumed: the
@@ -181,7 +183,11 @@ export function AppShell({ children }: { children?: ReactNode }) {
   }, [theme]);
 
   return (
-    <div className="app-shell">
+    <div
+      className={["app-shell", tutorOpen && "app-shell--tutor-open"]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {/* Simulation banner — persistent, unmissable but not garish */}
       <div className="sim-banner" role="alert">
         <strong>Educational payment simulation</strong> — Simulation, not a real payment. All data is illustrative.
@@ -230,6 +236,12 @@ export function AppShell({ children }: { children?: ReactNode }) {
           {children ?? <Outlet />}
         </main>
       </div>
+
+      {/* The tutor's single entry point, on every route. Contextual where a page
+          publishes context, global everywhere else. Kept out of the top bar
+          deliberately — that bar is already tight, and the bottom-right corner
+          is free at every width once the mobile nav is cleared. */}
+      <FloatingTutorLauncher onOpenChange={setTutorOpen} />
 
       {/* Mobile bottom navigation */}
       <nav className="app-shell__mobile-nav" aria-label="Mobile navigation">

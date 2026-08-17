@@ -1,0 +1,314 @@
+/*
+ * TutorPanel — tokens only, no new colour values.
+ *
+ * Placement is entirely CSS. Below 1024px the panel is inline in document flow;
+ * at 1024px and up it docks to the right. That is the same breakpoint where
+ * AppShell swaps the rail for the bottom nav, reused deliberately rather than
+ * introducing a second boundary that would disagree with it at some width.
+ *
+ * Inline mode has no overlay, no scroll lock, no focus trap, and no z-index —
+ * it is ordinary content. `main` already carries padding-bottom for the fixed
+ * bottom nav, so the panel needs no bottom-nav handling of its own.
+ */
+
+.tutor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  font-family: var(--font-ui);
+  color: var(--color-ink);
+}
+
+.tutor-panel--compact {
+  padding: var(--space-4);
+  gap: var(--space-3);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.tutor-panel__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tutor-panel__heading {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  color: var(--color-ink-strong);
+}
+
+/* Focus lands here when a launcher opens the panel. The outline is the default
+   focus treatment; the heading is not interactive, so it carries no hover. */
+.tutor-panel__heading:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.tutor-panel__disclaimer {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-ink-muted);
+}
+
+/* ── Conversation ───────────────────────────────────────────────────────── */
+
+.tutor-panel__conversation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.tutor-panel__intro,
+.tutor-panel__thinking {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--color-ink-muted);
+}
+
+.tutor-panel__truncation,
+.tutor-panel__ungrounded {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-ink-muted);
+  border-left: 2px solid var(--color-border-strong);
+  padding-left: var(--space-2);
+}
+
+.tutor-panel__exchange {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tutor-panel__question {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--color-ink-strong);
+  font-weight: 500;
+}
+
+.tutor-panel__answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tutor-panel__answer p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  max-width: var(--reading-measure);
+}
+
+.tutor-panel__follow-up {
+  color: var(--color-ink-muted);
+}
+
+.tutor-panel__clarification,
+.tutor-panel__safety {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.tutor-panel__clarification {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+}
+
+.tutor-panel__safety {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+}
+
+/* ── Sources ────────────────────────────────────────────────────────────── */
+
+/* Links, never cards — DESIGN.md reserves the card treatment for navigable
+   objects, and a citation is a reference, not a destination in the product. */
+.tutor-panel__sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.tutor-panel__source {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* An official operator source is a link out; a Relay-authored card is not,
+   because there is nowhere to send the learner. The difference is visible
+   through the link treatment itself rather than a colour-only cue. */
+.tutor-panel__source-link {
+  font-size: var(--text-xs);
+  color: var(--color-action);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tutor-panel__source-name {
+  font-size: var(--text-xs);
+  color: var(--color-ink-strong);
+}
+
+.tutor-panel__evidence {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-ink-muted);
+}
+
+/* ── Failure ────────────────────────────────────────────────────────────── */
+
+.tutor-panel__failure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+}
+
+.tutor-panel__failure p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+/* ── Feedback ───────────────────────────────────────────────────────────── */
+
+.tutor-panel__feedback {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.tutor-panel__feedback-button {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  background: transparent;
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-3);
+  min-height: 32px;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.tutor-panel__feedback-button:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+
+.tutor-panel__feedback-thanks {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+/* ── Controls ───────────────────────────────────────────────────────────── */
+
+.tutor-panel__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tutor-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tutor-panel__label {
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+.tutor-panel__input {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+}
+
+.tutor-panel__input:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 1px;
+  border-color: var(--color-action-border);
+}
+
+/* ── Docked drawer ──────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .tutor-panel {
+    position: sticky;
+    top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-4));
+    width: 380px;
+    flex-shrink: 0;
+    max-height: calc(100vh - var(--sim-banner-height) - var(--topbar-height) - var(--space-8));
+  }
+
+  .tutor-panel__conversation {
+    overflow-y: auto;
+  }
+}
+
+/*
+ * Entry animation. `transform` and `opacity` only — never `transition: all`,
+ * which would animate layout properties and cost a frame budget the panel does
+ * not have while a page is still settling.
+ */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .tutor-panel {
+    animation: tutor-panel-in 160ms var(--ease);
+  }
+
+  @keyframes tutor-panel-in {
+    from {
+      opacity: 0;
+      transform: translateX(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* The in-app reduce-motion preference mirrors the OS one rather than extending
+   it: they are independent signals, and someone may want Relay still while
+   their system stays animated. */
+[data-reduced-motion="true"] .tutor-panel {
+  animation: none;
+}

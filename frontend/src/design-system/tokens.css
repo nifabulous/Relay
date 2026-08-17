@@ -28,6 +28,7 @@
 
   --color-border: #dce2eb;
   --color-border-strong: #c4cdd9;
+  --color-floating-border: #667085;
 
   --color-success: #0e5c44;     /* darkened from #16825d → 7.16:1 on success-bg (AAA) */
   --color-success-bg: #e8f6ef;
@@ -141,6 +142,7 @@
        3:1 bar is ever adopted, BOTH palettes move together. */
     --color-border: #2f3a4d;
     --color-border-strong: #445266;
+    --color-floating-border: #6e82ad;
 
     --color-success: #4ec99a;
     --color-success-bg: #10261f;
@@ -183,6 +185,7 @@
   /* Sub-3:1 is reviewed and intentional — see the media block above. */
   --color-border: #2f3a4d;
   --color-border-strong: #445266;
+  --color-floating-border: #6e82ad;
 
   --color-success: #4ec99a;
   --color-success-bg: #10261f;

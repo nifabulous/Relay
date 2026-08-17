@@ -18,19 +18,13 @@ import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
+import { filterSupportedCurrencies, SUPPORTED_CURRENCY_CODES } from "../currencyCatalogue";
 
 /**
  * Currencies offered when Prepare Payment has no usable beneficiary BIC yet.
  * Once a BIC's SSI response is available, the dropdown is restricted to the
  * currencies that bank publishes for the selected SWIFT path.
  */
-const COMMON_CURRENCIES = [
-  "AED", "AUD", "BHD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP",
-  "HKD", "IDR", "INR", "JPY", "KES", "KRW", "KWD", "LKR", "MXN", "MYR",
-  "NGN", "NOK", "NZD", "OMR", "PHP", "PKR", "QAR", "SAR", "SEK", "SGD",
-  "THB", "TRY", "TWD", "USD", "XOF", "ZAR",
-];
-
 const TRACKABLE_RECOMMENDATIONS = new Set([
   "PROCEED",
   "PROCEED_WITH_CAUTION",
@@ -238,14 +232,14 @@ export function PreparePaymentPage() {
       apiRequest(`/api/ssi?bic=${encodeURIComponent(bicForSsi)}`, undefined, SSIResponseSchema),
     enabled: ssiEnabled,
   });
-  const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
-    (g) => g.currency,
+  const publishedCurrencies = filterSupportedCurrencies(
+    groupByCurrency(ssiQuery.data?.instructions ?? []).map((g) => g.currency),
   );
   const hasLoadedBankCurrencies = ssiEnabled && !ssiQuery.isError && ssiQuery.data !== undefined;
   const hasPublishedBankCurrencies = hasLoadedBankCurrencies && publishedCurrencies.length > 0;
   const currencyOptions = hasPublishedBankCurrencies
     ? publishedCurrencies
-    : COMMON_CURRENCIES;
+    : [...SUPPORTED_CURRENCY_CODES];
   const currencyOptionsKey = currencyOptions.join("|");
   const selectedCurrency = watch("currency");
   const currencyTouched = useRef(false);

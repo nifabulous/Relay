@@ -1,0 +1,227 @@
+/*
+ * The floating tutor pill — bottom-right, every route. Tokens only.
+ *
+ * Geometry is the whole design problem here. Below 1024px a fixed bottom nav
+ * owns the last 64px plus the device safe-area inset, so the pill has to clear
+ * both or it sits on top of navigation. At 1024px and up the rail moves to the
+ * left and the corner is free.
+ *
+ * z-index 150 is deliberate: above page content, above the mobile nav (100),
+ * and below the top bar (200) and its preferences menu (250) — those must stay
+ * on top of a floating element, not under it.
+ */
+
+.tutor-fab-cluster {
+  position: fixed;
+  right: var(--space-4);
+  /* Clears the fixed mobile nav and the device inset. */
+  bottom: calc(var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--space-3));
+  z-index: 150;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  max-width: calc(100vw - (2 * var(--space-4)));
+}
+
+.tutor-fab {
+  position: static;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* 44px minimum touch target — an accessibility floor, not a style choice. */
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-strong);
+  background: var(--color-surface);
+  /* A structural border rather than a drop shadow: DESIGN.md rules out
+     decorative shadows, and the border is what separates the pill from the
+     content scrolling beneath it in both palettes. */
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.tutor-fab:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-floating-border);
+}
+
+.tutor-fab:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.tutor-fab[aria-expanded="true"] {
+  background: var(--color-action-surface);
+  border-color: var(--color-floating-border);
+}
+
+/* ── The panel it opens ─────────────────────────────────────────────────── */
+
+.tutor-floating-panel {
+  position: fixed;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  /* Mobile: a sheet across the width, above the nav, capped so the page behind
+     stays partly visible — this is non-modal, and hiding the page entirely
+     would imply otherwise. */
+  left: var(--space-3);
+  right: var(--space-3);
+  top: auto;
+  bottom: calc(var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--space-3));
+  height: min(
+    70dvh,
+    42rem,
+    calc(
+      100dvh - var(--sim-banner-height) - var(--topbar-height) -
+      var(--nav-height-mobile) - env(safe-area-inset-bottom, 0px) - var(--space-6)
+    )
+  );
+  max-height: calc(
+    100dvh - var(--sim-banner-height) - var(--topbar-height) -
+    var(--nav-height-mobile) - env(safe-area-inset-bottom, 0px) - var(--space-6)
+  );
+  overflow-y: auto;
+
+  padding: var(--space-3);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-region);
+}
+
+.tutor-floating-panel__loading {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.tutor-floating-panel__close {
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  background: transparent;
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-3);
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.tutor-floating-panel__close:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+
+@media (min-width: 1024px) {
+  .tutor-fab-cluster {
+    /* No bottom nav at this width — the rail is on the left. */
+    bottom: var(--space-5);
+    right: var(--space-5);
+  }
+
+  .tutor-floating-panel {
+    left: auto;
+    right: var(--space-5);
+    top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-5));
+    width: 380px;
+    bottom: var(--space-5);
+    max-height: none;
+  }
+}
+
+/* Entry animates transform and opacity only — never `transition: all`, which
+   would animate layout properties while the page is still settling. */
+@media (prefers-reduced-motion: no-preference) {
+  .tutor-floating-panel {
+    animation: tutor-floating-in 160ms var(--ease);
+  }
+
+  @keyframes tutor-floating-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* The in-app preference mirrors the OS one rather than extending it: they are
+   independent signals, and someone may want Relay still while their system
+   stays animated. */
+[data-reduced-motion="true"] .tutor-floating-panel {
+  animation: none;
+}
+
+/* The disabled pill stays visible and stays honest: dimmed, not hidden, with a
+   not-allowed cursor so the affordance reads as "off" rather than "broken". */
+/*
+ * CT2. Elevation is expressed as an EFFECT, not as one mechanism.
+ *
+ * A drop shadow works by being darker than what is behind it. On Relay's dark
+ * canvas (#080b12) the shadow colour #1d2433 is 5.3x LIGHTER, so it reads as a
+ * faint smudge or as nothing at all — the floating layer would fall back to the
+ * 1.51:1 hairline that DESIGN.md already records as a tracked gap, which is the
+ * discoverability problem this control exists to solve.
+ *
+ * Dark interfaces have always expressed elevation by lifting the surface rather
+ * than casting a shadow, which is why the palette already carries a lighter
+ * surface step. Same rule, correct expression per theme.
+ */
+:root:not([data-theme="dark"]) .tutor-fab,
+:root:not([data-theme="dark"]) .tutor-floating-panel {
+  box-shadow: 0 2px 8px rgba(29, 36, 51, 0.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tutor-fab,
+  :root:not([data-theme="light"]) .tutor-floating-panel {
+    box-shadow: none;
+    background: var(--color-surface-2);
+    border-color: var(--color-floating-border);
+  }
+}
+
+:root[data-theme="dark"] .tutor-fab,
+:root[data-theme="dark"] .tutor-floating-panel {
+  box-shadow: none;
+  background: var(--color-surface-2);
+  border-color: var(--color-floating-border);
+}
+
+.tutor-fab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tutor-fab__reason {
+  max-width: min(320px, calc(100vw - (2 * var(--space-4))));
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-floating-border);
+  border-radius: var(--radius-control);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
