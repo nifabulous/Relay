@@ -148,6 +148,18 @@ require_text 'scripts/codex_review_pr.sh' '--label previous-review'
 require_text 'scripts/codex_review_pr.sh' 'codex-verdict'
 require_text 'scripts/codex_review_pr.sh' 'full accounting'
 
+# T5: the per-branch Contract (docs/contracts/<branch>.md) is read from THIS
+# checkout -- main's version by construction of the review workflow's
+# default-branch checkout -- and injected into the TRUSTED instructions
+# channel, appended after the trusted review policy. It must never be routed
+# through codex_untrusted.py, which is reserved for PR-controlled input.
+require_text 'scripts/codex_review_pr.sh' 'CONTRACT_PATH'
+require_text 'scripts/codex_review_pr.sh' 'docs/contracts/'
+require_text 'scripts/codex_review_pr.sh' '## Contract'
+require_text 'scripts/codex_review_pr.sh' 'Disambiguation:'
+require_text 'scripts/codex_review_pr.sh' 'report any divergence from the "Contract (from main)" section below as a finding'
+refuse_text 'scripts/codex_review_pr.sh' '--label contract'
+
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
 require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
 require_text 'scripts/codex_triage_issue.sh' '--instructions "$TEMP_DIR/triage-instructions.md"'
@@ -281,12 +293,21 @@ for arg in "$@"; do
       exec "$CODEX_REAL_PYTHON3" "$@"
     fi
     out=""
+    instructions=""
+    input_file=""
     prev=""
     for candidate in "$@"; do
       [[ "$prev" == "--output" ]] && out="$candidate"
+      [[ "$prev" == "--instructions" ]] && instructions="$candidate"
+      [[ "$prev" == "--input" ]] && input_file="$candidate"
       prev="$candidate"
     done
     printf '%s\n' "$*" >"$CODEX_STUB_DIR/responses-argv.log"
+    # Captured before the caller's own mktemp TEMP_DIR (distinct from
+    # CODEX_STUB_DIR) is deleted by the caller's EXIT trap, so a test can
+    # assert which channel content actually reached the API call.
+    [[ -n "$instructions" ]] && cp "$instructions" "$CODEX_STUB_DIR/captured-instructions.md"
+    [[ -n "$input_file" ]] && cp "$input_file" "$CODEX_STUB_DIR/captured-input.md"
     printf 'stub review\n' >"$out"
     if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
       printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
@@ -472,6 +493,64 @@ check_oversized_review_input_is_refused() {
   fi
 }
 
+# ---------------------------------------------------------------------------
+# T5: the per-branch Contract (docs/contracts/<branch>.md) must be read from
+# THIS checkout -- main's version by construction, never fetched from the PR
+# branch -- and must land only in the TRUSTED --instructions file, never in
+# the untrusted --input file alongside the PR diff/metadata.
+# ---------------------------------------------------------------------------
+check_contract_lands_in_trusted_channel_only() {
+  local branch="zz-codex-automation-test/contract-fixture"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  local sentinel="ZZ_T5_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
+  local status=0
+
+  mkdir -p "$(dirname "$contract_path")"
+  printf '# Contract: %s\n\nOut of scope: %s\n' "$branch" "$sentinel" >"$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -f "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status while checking contract channel placement"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+  elif ! grep -Fq -- "$sentinel" "$STUB_DIR/captured-instructions.md"; then
+    fail 'A present docs/contracts/<branch>.md did not land in the trusted instructions file.'
+  fi
+  if [[ -s "$STUB_DIR/captured-input.md" ]] && grep -Fq -- "$sentinel" "$STUB_DIR/captured-input.md"; then
+    fail 'The per-branch Contract leaked into the untrusted review-input.md channel.'
+  fi
+}
+
 # Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
 expect_posted() {
   local message="$1"
@@ -553,6 +632,8 @@ env \
 if [[ -s "$STUB_DIR/posted.log" ]]; then
   fail 'A review was posted after the PR head moved during model generation.'
 fi
+
+check_contract_lands_in_trusted_channel_only
 
 check_oversized_review_input_is_refused
 
