@@ -171,6 +171,11 @@ function CurrencyPicker({
           role="listbox"
           aria-label="Currency options"
           onKeyDown={handleListboxKeyDown}
+          onBlur={(event) => {
+            if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
+              setIsOpen(false);
+            }
+          }}
         >
           {options.map((currency) => (
             <button

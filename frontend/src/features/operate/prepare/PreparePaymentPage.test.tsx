@@ -398,6 +398,18 @@ describe("PreparePaymentPage currency selection", () => {
     await waitFor(() => expect(attempts).toBe(2));
   });
 
+  it("closes the currency listbox when focus leaves with Tab", async () => {
+    const { user } = renderPage();
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    expect(screen.getByRole("listbox", { name: /currency/i })).toBeVisible();
+
+    await user.tab();
+
+    expect(screen.queryByRole("listbox", { name: /currency/i })).toBeNull();
+    expect(screen.getByLabelText(/amount/i)).toHaveFocus();
+  });
+
 });
 
 describe("PreparePaymentPage IBAN flexibility", () => {
