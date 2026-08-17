@@ -13,3 +13,8 @@ export function normalizeSupportedCurrency(value: string | null | undefined): st
   const normalized = value?.trim().toUpperCase() ?? "";
   return SUPPORTED_CURRENCY_SET.has(normalized) ? normalized : "";
 }
+
+/** Normalize and remove API-provided currencies outside the operate catalogue. */
+export function filterSupportedCurrencies(values: readonly string[]): string[] {
+  return [...new Set(values.map(normalizeSupportedCurrency).filter(Boolean))];
+}

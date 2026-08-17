@@ -306,6 +306,30 @@ describe("PreparePaymentPage currency selection", () => {
     expect(currency).toHaveValue("GBP");
   });
 
+  it("filters unsupported currencies out of bank-published picks", async () => {
+    server.use(
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "MASHAEADXXX",
+          currency: "ALL",
+          instructions: [
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: "ZZZ", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-1", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            { beneficiary_bic: "MASHAEADXXX", beneficiary_bank_name: "Mashreq", currency: " usd ", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-3", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+          ],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await waitFor(() => expect(currency).toHaveValue("USD"));
+    await user.click(currency);
+
+    const options = within(screen.getByRole("listbox", { name: /currency/i })).getAllByRole("option");
+    expect(options.map((option) => option.getAttribute("data-value"))).toEqual(["USD"]);
+  });
+
   it("marks payment results stale when the currency picker changes", async () => {
     const { user } = renderPage();
     await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
@@ -343,7 +367,7 @@ describe("PreparePaymentPage currency selection", () => {
     expect(screen.getByRole("option", { name: "USD" })).toBeVisible();
   });
 
-  it("normalizes a previously published currency when the bank has no SSI coverage", async () => {
+  it("falls back when a bank publishes no supported currencies", async () => {
     server.use(
       http.get("/api/ssi", ({ request }) => {
         const bic = new URL(request.url).searchParams.get("bic");
@@ -368,7 +392,7 @@ describe("PreparePaymentPage currency selection", () => {
 
     const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
     const currency = screen.getByRole("combobox", { name: /currency/i });
-    await waitFor(() => expect(currency).toHaveValue("XAF"));
+    await waitFor(() => expect(currency).toHaveValue("GBP"));
 
     const bic = screen.getByLabelText(/beneficiary bic/i);
     await user.clear(bic);
@@ -377,7 +401,7 @@ describe("PreparePaymentPage currency selection", () => {
     await waitFor(() => {
       expect(screen.getByRole("status", { name: /settlement currency coverage/i })).toHaveTextContent(/not confirmed/i);
     });
-    expect(currency).toHaveValue("AED");
+    expect(currency).toHaveValue("GBP");
   });
 
   it("explains SSI failures and offers a scoped retry", async () => {

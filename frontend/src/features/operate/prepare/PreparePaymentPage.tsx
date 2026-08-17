@@ -18,7 +18,7 @@ import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
-import { SUPPORTED_CURRENCY_CODES } from "../currencyCatalogue";
+import { filterSupportedCurrencies, SUPPORTED_CURRENCY_CODES } from "../currencyCatalogue";
 
 /**
  * Currencies offered when Prepare Payment has no usable beneficiary BIC yet.
@@ -232,8 +232,8 @@ export function PreparePaymentPage() {
       apiRequest(`/api/ssi?bic=${encodeURIComponent(bicForSsi)}`, undefined, SSIResponseSchema),
     enabled: ssiEnabled,
   });
-  const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
-    (g) => g.currency,
+  const publishedCurrencies = filterSupportedCurrencies(
+    groupByCurrency(ssiQuery.data?.instructions ?? []).map((g) => g.currency),
   );
   const hasLoadedBankCurrencies = ssiEnabled && !ssiQuery.isError && ssiQuery.data !== undefined;
   const hasPublishedBankCurrencies = hasLoadedBankCurrencies && publishedCurrencies.length > 0;
