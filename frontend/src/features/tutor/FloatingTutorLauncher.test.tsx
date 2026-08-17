@@ -21,6 +21,12 @@ beforeEach(() => {
   clearTutorContext();
 });
 
+async function readyPill() {
+  const pill = await screen.findByRole("button", { name: /tutor/i });
+  await waitFor(() => expect(pill).toBeEnabled());
+  return pill;
+}
+
 describe("FloatingTutorLauncher", () => {
   it("is present with no page context at all", () => {
     render(<FloatingTutorLauncher />);
@@ -36,7 +42,7 @@ describe("FloatingTutorLauncher", () => {
 
   it("opens the panel on click", async () => {
     render(<FloatingTutorLauncher />);
-    await userEvent.setup().click(screen.getByRole("button", { name: /tutor/i }));
+    await userEvent.setup().click(await readyPill());
     expect(await screen.findByRole("log")).toBeInTheDocument();
   });
 
@@ -44,13 +50,14 @@ describe("FloatingTutorLauncher", () => {
     render(<FloatingTutorLauncher />);
     const pill = screen.getByRole("button", { name: /tutor/i });
     expect(pill).toHaveAttribute("aria-expanded", "false");
+    await waitFor(() => expect(pill).toBeEnabled());
     await userEvent.setup().click(pill);
     await waitFor(() => expect(pill).toHaveAttribute("aria-expanded", "true"));
   });
 
   it("moves focus to the panel heading when it opens", async () => {
     render(<FloatingTutorLauncher />);
-    await userEvent.setup().click(screen.getByRole("button", { name: /tutor/i }));
+    await userEvent.setup().click(await readyPill());
     const heading = await screen.findByRole("heading", { name: /tutor/i });
     await waitFor(() => expect(heading).toHaveFocus());
   });
@@ -58,7 +65,7 @@ describe("FloatingTutorLauncher", () => {
   it("restores focus to the pill when it closes", async () => {
     const user = userEvent.setup();
     render(<FloatingTutorLauncher />);
-    await user.click(screen.getByRole("button", { name: /^tutor$/i }));
+    await user.click(await readyPill());
     await screen.findByRole("log");
     await user.click(screen.getByRole("button", { name: /close tutor/i }));
     await waitFor(() =>
@@ -69,7 +76,7 @@ describe("FloatingTutorLauncher", () => {
   it("closes on Escape", async () => {
     const user = userEvent.setup();
     render(<FloatingTutorLauncher />);
-    await user.click(screen.getByRole("button", { name: /^tutor$/i }));
+    await user.click(await readyPill());
     await screen.findByRole("log");
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("log")).not.toBeInTheDocument());
@@ -78,7 +85,7 @@ describe("FloatingTutorLauncher", () => {
   it("toggles shut when the pill is pressed again", async () => {
     const user = userEvent.setup();
     render(<FloatingTutorLauncher />);
-    const pill = screen.getByRole("button", { name: /^tutor$/i });
+    const pill = await readyPill();
     await user.click(pill);
     await screen.findByRole("log");
     await user.click(pill);
@@ -87,7 +94,7 @@ describe("FloatingTutorLauncher", () => {
 
   it("uses the global surface when no page has published context", async () => {
     render(<FloatingTutorLauncher />);
-    await userEvent.setup().click(screen.getByRole("button", { name: /tutor/i }));
+    await userEvent.setup().click(await readyPill());
     // The global empty state names the domain rather than a specific module.
     expect(await screen.findByText(/cross-border payments/i)).toBeVisible();
   });
@@ -97,7 +104,7 @@ describe("FloatingTutorLauncher", () => {
       buildLessonContext({ moduleId: "lab-1", moduleTitle: "Identifiers: BICs & IBANs" }),
     );
     render(<FloatingTutorLauncher />);
-    await userEvent.setup().click(screen.getByRole("button", { name: /tutor/i }));
+    await userEvent.setup().click(await readyPill());
     expect(await screen.findByText(/identifiers: bics & ibans/i)).toBeVisible();
   });
 
@@ -111,7 +118,7 @@ describe("FloatingTutorLauncher", () => {
         <FloatingTutorLauncher />
       </div>,
     );
-    await user.click(screen.getByRole("button", { name: /^tutor$/i }));
+    await user.click(await readyPill());
     await screen.findByRole("log");
 
     const pageControl = screen.getByRole("button", { name: /page control/i });
@@ -174,5 +181,35 @@ describe("FloatingTutorLauncher — unavailable deployment", () => {
     );
     render(<FloatingTutorLauncher />);
     expect(await screen.findByRole("button", { name: /tutor/i })).toBeDisabled();
+  });
+
+  it("does not open while availability is still being checked", async () => {
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(http.get("/api/tutor/availability", async () => {
+      await pending;
+      return HttpResponse.json({ available: true });
+    }));
+
+    render(<FloatingTutorLauncher />);
+    const pill = screen.getByRole("button", { name: /tutor/i });
+    expect(pill).toBeDisabled();
+    await userEvent.setup().click(pill);
+    expect(screen.queryByRole("log")).not.toBeInTheDocument();
+
+    release();
+    await waitFor(() => expect(pill).toBeEnabled());
+  });
+
+  it("distinguishes a failed availability probe from a disabled deployment", async () => {
+    server.use(http.get("/api/tutor/availability", () => HttpResponse.error()));
+    render(<FloatingTutorLauncher />);
+    const pill = await screen.findByRole("button", { name: /tutor/i });
+
+    await waitFor(() => expect(pill).toBeDisabled());
+    expect(screen.getByRole("status")).toHaveTextContent(/could not be confirmed/i);
+    expect(screen.getByRole("status")).not.toHaveTextContent(/not available in this deployment/i);
   });
 });

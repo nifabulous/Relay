@@ -31,6 +31,7 @@ const TutorPanel = lazy(() =>
 );
 
 const HEADING_ID = "tutor-panel-heading";
+type TutorAvailabilityState = "checking" | "available" | "unavailable" | "probe-error";
 
 export interface FloatingTutorLauncherProps {
   onOpenChange?: (open: boolean) => void;
@@ -59,34 +60,36 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
   const context = useTutorSurfaceContext();
   const [open, setOpen] = useState(false);
   /*
-   * DT2. Three states, not two: unknown while the probe is in flight, then
-   * available or not. Rendering the pill only when available makes an absent
-   * control the signal, and an absent control teaches nothing — a learner who
-   * saw the tutor elsewhere concludes Relay is broken rather than that this
-   * deployment runs without it.
+   * DT2. Four states: checking, available, unavailable, and probe-error.
+   * Rendering the pill in every state makes an absent control impossible to
+   * misread, while keeping it disabled until the probe confirms it can work.
    *
    * The probe hits GET /api/tutor/availability, which is deliberately outside
    * the rate limit and the daily ceiling. Asking on the metered POST would have
    * spent a learner's quota, and the deployment's budget, on ordinary browsing.
    */
-  const [available, setAvailable] = useState<boolean | null>(null);
+  const [availability, setAvailability] = useState<TutorAvailabilityState>("checking");
 
   useEffect(() => {
     let cancelled = false;
     apiRequest("/api/tutor/availability", undefined, TutorAvailabilitySchema)
       .then((body) => {
-        if (!cancelled) setAvailable(body.available === true);
+        if (!cancelled) {
+          setAvailability(body.available === true ? "available" : "unavailable");
+        }
       })
-      // A probe that fails is not evidence the tutor is off, but it is evidence
-      // we cannot promise it works. Disable rather than offer a control that
-      // will fail on click.
       .catch(() => {
-        if (!cancelled) setAvailable(false);
+        if (!cancelled) setAvailability("probe-error");
       });
     return () => {
       cancelled = true;
     };
   }, []);
+  const canOpen = availability === "available";
+  const unavailableMessage =
+    availability === "probe-error"
+      ? "Tutor availability could not be confirmed. Refresh to try again."
+      : "The tutor is not available in this deployment. Everything else in Relay works as usual.";
   const [restoreFocus, setRestoreFocus] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
 
@@ -114,6 +117,11 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, close]);
 
+  useEffect(() => {
+    if (canOpen || !open) return;
+    close();
+  }, [canOpen, close, open]);
+
   return (
     <>
       <div className="tutor-fab-cluster">
@@ -121,8 +129,10 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
           type="button"
           ref={launcherRef}
           className="tutor-fab"
-          disabled={available === false}
-          aria-describedby={available === false ? "tutor-fab-unavailable" : undefined}
+          disabled={!canOpen}
+          aria-describedby={
+            !canOpen && availability !== "checking" ? "tutor-fab-unavailable" : undefined
+          }
           aria-expanded={open}
           aria-controls={open ? "tutor-floating-panel" : undefined}
           onClick={() => {
@@ -130,16 +140,18 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
               close();
               return;
             }
-            setOpen(true);
-            onOpenChange?.(true);
+            if (canOpen) {
+              setOpen(true);
+              onOpenChange?.(true);
+            }
           }}
         >
           <TutorIcon />
           <span className="tutor-fab__label">Tutor</span>
         </button>
-        {available === false && (
+        {availability !== "available" && availability !== "checking" && (
           <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
-            The tutor is not available in this deployment. Everything else in Relay works as usual.
+            {unavailableMessage}
           </span>
         )}
       </div>
