@@ -38,6 +38,9 @@ import "./TutorPanel.css";
 
 /** Matches the backend's Pydantic cap. Sending more would 422. */
 const MAX_HISTORY_TURNS = 8;
+const MAX_HISTORY_CHARS = 12_000;
+const MAX_HISTORY_USER_CHARS = 2_000;
+const MAX_HISTORY_ASSISTANT_CHARS = 6_000;
 
 const SIMULATION_NOTE =
   "Educational simulation — explanations only. The tutor cannot move money.";
@@ -194,14 +197,29 @@ export function TutorPanel({
   }, []);
 
   function historyFrom(current: Exchange[]): TutorTurn[] {
-    const turns: TutorTurn[] = [];
-    for (const exchange of current) {
-      turns.push({ role: "user", content: exchange.question });
-      turns.push({ role: "assistant", content: exchange.response.answer });
+    const exchanges: Array<[TutorTurn, TutorTurn]> = [];
+    let characterCount = 0;
+    for (let index = current.length - 1; index >= 0; index -= 1) {
+      const exchange = current[index];
+      const pair: [TutorTurn, TutorTurn] = [
+        {
+          role: "user",
+          content: exchange.question.slice(0, MAX_HISTORY_USER_CHARS),
+        },
+        {
+          role: "assistant",
+          content: exchange.response.answer.slice(0, MAX_HISTORY_ASSISTANT_CHARS),
+        },
+      ];
+      const pairCharacters = pair[0].content.length + pair[1].content.length;
+      if (exchanges.length > 0 && characterCount + pairCharacters > MAX_HISTORY_CHARS) {
+        break;
+      }
+      exchanges.unshift(pair);
+      characterCount += pairCharacters;
+      if (exchanges.length * 2 >= MAX_HISTORY_TURNS) break;
     }
-    // Oldest first out: the recent turns carry the thread the learner is
-    // actually following.
-    return turns.slice(-MAX_HISTORY_TURNS);
+    return exchanges.flat();
   }
 
   async function send(message: string, mode: TutorMode) {

@@ -23,6 +23,9 @@ const MAX_RAIL_NAME = 120;
  * evidence out of the prompt to no benefit.
  */
 const MAX_SUMMARY = 600;
+// Tracking lookup generations distinguish resources inside this tab without
+// adding a transaction-shaped field to the context sent to the provider.
+const localContextIdentities = new WeakMap<object, string>();
 
 function bounded(value: string | undefined, limit: number): string | undefined {
   if (!value) return undefined;
@@ -54,6 +57,8 @@ export interface TrackingContextInput {
   status: string;
   eventNames: string[];
   currency: string;
+  /** Client-only lookup generation; never becomes an API context field. */
+  lookupKey?: string;
 }
 
 export function buildTrackingContext(input: TrackingContextInput): TutorContext {
@@ -76,11 +81,15 @@ export function buildTrackingContext(input: TrackingContextInput): TutorContext 
     `Currency: ${input.currency}. ` +
     `Visible events: ${events}.`;
 
-  return {
+  const context: TutorContext = {
     surface: "tracking",
     currency: bounded(input.currency, 20),
     result_summary: bounded(summary, MAX_SUMMARY),
   };
+  if (input.lookupKey) {
+    localContextIdentities.set(context, `tracking-lookup:${input.lookupKey}`);
+  }
+  return context;
 }
 
 export interface SchemeContextInput {
@@ -110,12 +119,15 @@ export function buildSchemeContext(input: SchemeContextInput): TutorContext {
  * it would reset the thread every few seconds — mid-question, from the
  * learner's point of view.
  *
+ * Tracking lookups add a client-only generation through `localContextIdentities`;
+ * it changes for a new lookup and remains stable while that lookup polls.
+ *
  * Erring the other way is worse, though: history that follows a learner onto an
  * unrelated page makes the model answer the previous page's question with this
  * page's evidence.
  */
 export function contextIdentity(context: TutorContext): string {
-  return [
+  const baseIdentity = [
     context.surface,
     context.module_id ?? "",
     context.currency ?? "",
@@ -123,4 +135,5 @@ export function contextIdentity(context: TutorContext): string {
     context.tool_name ?? "",
     context.case_id ?? "",
   ].join("|");
+  return localContextIdentities.get(context) ?? baseIdentity;
 }

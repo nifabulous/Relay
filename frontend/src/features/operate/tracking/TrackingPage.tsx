@@ -35,6 +35,7 @@ export function TrackingPage() {
   const paramUetr = searchParams.get("uetr") ?? "";
   const [uetr, setUetr] = useState(paramUetr);
   const [submittedUetr, setSubmittedUetr] = useState<string | null>(paramUetr || null);
+  const [lookupGeneration, setLookupGeneration] = useState(0);
   const [notice, setNotice] = useState<MutationNotice | null>(null);
 
   // `useState` reads its initializer only on mount, so seeding from the URL
@@ -52,6 +53,7 @@ export function TrackingPage() {
     setAppliedParam(paramUetr);
     setUetr(paramUetr);
     setSubmittedUetr(paramUetr || null);
+    setLookupGeneration((generation) => generation + 1);
     setNotice(null);
   }
 
@@ -146,6 +148,7 @@ export function TrackingPage() {
           status: data.current_status,
           eventNames: data.timeline.map((entry) => entry.status),
           currency: data.sent_amount?.split(" ").pop() ?? "",
+          lookupKey: String(lookupGeneration),
         })
       : { surface: "tracking" },
   );
@@ -159,7 +162,7 @@ export function TrackingPage() {
         <strong>Simulation — not a real payment.</strong> All tracking events are illustrative.
       </div>
 
-      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (uetr.trim()) { setNotice(null); setSubmittedUetr(uetr.trim()); } }}>
+      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (uetr.trim()) { setNotice(null); setLookupGeneration((generation) => generation + 1); setSubmittedUetr(uetr.trim()); } }}>
         <div className="tool-form__field">
           <label htmlFor="track-uetr">UETR</label>
           <input id="track-uetr" type="text" className="mono"

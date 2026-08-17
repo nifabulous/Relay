@@ -291,6 +291,53 @@ describe("TutorPanel — conversation history", () => {
     }
   });
 
+  it("truncates history at complete user and assistant pairs", async () => {
+    const sent: Array<Record<string, unknown>> = [];
+    server.use(
+      http.post("/api/tutor/chat", async ({ request }) => {
+        sent.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json(grounded());
+      }),
+    );
+    render(<TutorPanel context={LESSON} />);
+    for (let index = 0; index < 6; index += 1) {
+      await ask(`Question ${index}`);
+      await waitFor(() => expect(sent).toHaveLength(index + 1));
+    }
+
+    const history = sent[5].history as Array<{ role: string; content: string }>;
+    expect(history.length % 2).toBe(0);
+    expect(history[0].role).toBe("user");
+    expect(history.every((turn, index) => turn.role === (index % 2 === 0 ? "user" : "assistant"))).toBe(
+      true,
+    );
+  });
+
+  it("keeps serialized history within the client character budget", async () => {
+    const sent: Array<Record<string, unknown>> = [];
+    server.use(
+      http.post("/api/tutor/chat", async ({ request }) => {
+        sent.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json(
+          grounded({ answer: "A".repeat(6000), turn_id: `turn-${sent.length}` }),
+        );
+      }),
+    );
+    render(<TutorPanel context={LESSON} />);
+    await ask("First question");
+    await waitFor(() => expect(sent).toHaveLength(1));
+    await ask("Second question");
+    await waitFor(() => expect(sent).toHaveLength(2));
+    await ask("Third question");
+    await waitFor(() => expect(sent).toHaveLength(3));
+
+    const history = sent[2].history as Array<{ content: string }>;
+    expect(history.reduce((total, turn) => total + turn.content.length, 0)).toBeLessThanOrEqual(
+      12_000,
+    );
+    expect(history.every((turn) => turn.content.length <= 6_000)).toBe(true);
+  });
+
   it("says out loud when earlier turns stop being sent", async () => {
     // Silent truncation misrepresents what the tutor can still see, and a
     // learner who does not know reads a forgetful answer as a wrong one.

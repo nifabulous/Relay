@@ -169,4 +169,23 @@ describe("contextIdentity", () => {
     });
     expect(contextIdentity(first)).toBe(contextIdentity(second));
   });
+
+  it("changes for a new tracking lookup without putting the key in the API context", () => {
+    const first = buildTrackingContext({
+      status: "In progress",
+      eventNames: ["Created"],
+      currency: "USD",
+      lookupKey: "lookup-1",
+    });
+    const second = buildTrackingContext({
+      status: "In progress",
+      eventNames: ["Created"],
+      currency: "USD",
+      lookupKey: "lookup-2",
+    });
+
+    expect(contextIdentity(first)).not.toBe(contextIdentity(second));
+    expect(first).not.toHaveProperty("lookupKey");
+    expect(JSON.stringify(first)).not.toContain("lookup-1");
+  });
 });
