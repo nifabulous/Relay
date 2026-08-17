@@ -15,6 +15,7 @@ import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
 import "./TrackingPage.css";
 import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
+import { normalizeSupportedCurrency } from "../currencyCatalogue";
 
 /**
  * Scheduled pacing poll: the backend reveals timeline events on a schedule,
@@ -147,7 +148,7 @@ export function TrackingPage() {
       ? buildTrackingContext({
           status: data.current_status,
           eventNames: data.timeline.map((entry) => entry.status),
-          currency: data.sent_amount?.split(" ").pop() ?? "",
+          currency: normalizeSupportedCurrency(data.timeline[0]?.currency),
           lookupKey: String(lookupGeneration),
         })
       : { surface: "tracking" },
