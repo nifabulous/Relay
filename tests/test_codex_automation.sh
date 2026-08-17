@@ -157,8 +157,19 @@ require_text 'scripts/codex_review_pr.sh' 'CONTRACT_PATH'
 require_text 'scripts/codex_review_pr.sh' 'docs/contracts/'
 require_text 'scripts/codex_review_pr.sh' '## Contract'
 require_text 'scripts/codex_review_pr.sh' 'Disambiguation:'
-require_text 'scripts/codex_review_pr.sh' 'report any divergence from the "Contract (from main)" section below as a finding'
+# Wording must be robust to both the "## Contract (from main)" and plain
+# "## Contract" headings the script can emit, and must cover a PR that ADDS a
+# brand-new contract file with no main-side counterpart, not only one that
+# modifies an existing one.
+require_text 'scripts/codex_review_pr.sh' 'report any divergence from the Contract section below'
+require_text 'scripts/codex_review_pr.sh' 'adds or modifies the PR branch'
 refuse_text 'scripts/codex_review_pr.sh' '--label contract'
+# Review fix: a present-but-not-a-contract file at the resolved path (e.g.
+# docs/contracts/README.md itself, for a branch literally named "README")
+# must never be injected as a signed-off contract, and a bare `-s` check
+# (true for a directory too) must never be able to abort the script.
+require_text 'scripts/codex_review_pr.sh' '# Contract:'\''*'
+require_text 'scripts/codex_review_pr.sh' '[[ -f "$CONTRACT_FULL_PATH" && -s "$CONTRACT_FULL_PATH" ]]'
 
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
 require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
@@ -551,6 +562,126 @@ check_contract_lands_in_trusted_channel_only() {
   fi
 }
 
+# ---------------------------------------------------------------------------
+# Review fix: docs/contracts/ is a flat namespace keyed on the branch name
+# alone, so a PR branch that happens to resolve to a stray non-contract file
+# at that path (mirrors docs/contracts/README.md's own real shape: present,
+# non-empty, but headed "# Contracts" -- plural, no colon -- not
+# "# Contract:") must NOT have that file's content injected as a signed-off
+# scope contract. It must fall back to the same "no contract" text a missing
+# file produces.
+# ---------------------------------------------------------------------------
+check_non_contract_file_is_ignored() {
+  local branch="zz-codex-automation-test/not-a-contract"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  local sentinel="ZZ_T5_NOT_A_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
+  local status=0
+
+  mkdir -p "$(dirname "$contract_path")"
+  # Mirrors the real format doc's own header: "# Contracts" (plural, no
+  # colon) is not "# Contract:" and must not be treated as a per-branch
+  # contract just because a file happens to sit at this path.
+  printf '# Contracts\n\nSome unrelated body text: %s\n' "$sentinel" >"$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -f "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status while checking the non-contract fallback"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+    return
+  fi
+  if grep -Fq -- "$sentinel" "$STUB_DIR/captured-instructions.md"; then
+    fail 'A present-but-not-"# Contract:"-headed file was injected as a signed-off contract.'
+  fi
+  if ! grep -Fq -- 'No contract on main for this branch; nothing is out of scope.' "$STUB_DIR/captured-instructions.md"; then
+    fail 'A non-contract file present at the contract path did not fall back to "no contract".'
+  fi
+}
+
+# MINOR fail-safe: `-s` alone is true for a directory too. If CONTRACT_PATH
+# ever resolved to a directory, a bare `-s` guard would let the following
+# `cat` fail and abort the whole script under `set -euo pipefail` (a loud CI
+# failure with no review posted) instead of falling back to "no contract".
+check_contract_path_as_directory_is_ignored() {
+  local branch="zz-codex-automation-test/dir-not-a-file"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  local status=0
+
+  rm -rf "$contract_path"
+  mkdir -p "$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -rf "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status when the contract path resolved to a directory"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+    return
+  fi
+  if ! grep -Fq -- 'No contract on main for this branch; nothing is out of scope.' "$STUB_DIR/captured-instructions.md"; then
+    fail 'A directory at the contract path did not fall back to "no contract".'
+  fi
+}
+
 # Exit 0 = posted, 1 = suppressed, 2 = the script failed for another reason.
 expect_posted() {
   local message="$1"
@@ -634,6 +765,10 @@ if [[ -s "$STUB_DIR/posted.log" ]]; then
 fi
 
 check_contract_lands_in_trusted_channel_only
+
+check_non_contract_file_is_ignored
+
+check_contract_path_as_directory_is_ignored
 
 check_oversized_review_input_is_refused
 

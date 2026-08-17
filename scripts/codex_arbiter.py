@@ -826,6 +826,24 @@ def _parse_issue_number(create_stdout: str) -> Optional[int]:
     return int(match.group(1)) if match else None
 
 
+def _is_contract_document(text: str) -> bool:
+    """True only if `text`'s first non-blank line is the literal contract
+    template header `# Contract:` (singular, with a colon --
+    docs/contracts/README.md's own "Format" section). This is the guard that
+    keeps docs/contracts/ being a flat namespace keyed on the branch name
+    alone from becoming a trust bug: a branch literally named e.g. `README`
+    makes load_contract_text resolve `path` to docs/contracts/README.md --
+    the FORMAT DOCUMENTATION file (header `# Contracts`, plural, no colon),
+    never a signed-off per-branch contract. Blank text, or text whose first
+    non-blank line is anything else, returns False.
+    """
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped.startswith("# Contract:")
+    return False
+
+
 def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
     """Best-effort read of this branch's contract as it stands on `main`
     (docs/contracts/README.md §4.1: a contract binds only from the default
@@ -837,6 +855,11 @@ def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
     contract into the REVIEWER's *trusted instructions*; this is a narrower,
     read-only convenience for this poster's CLI wiring and does not duplicate
     that trust boundary — nothing here feeds a decide() disposition.
+
+    A resolved file only counts as a contract when _is_contract_document
+    accepts it. A present-but-wrong file (e.g. docs/contracts/README.md
+    itself, for a branch literally named `README`) degrades to None exactly
+    like a missing file -- fail safe, never raised as an error.
     """
     try:
         if branch is None:
@@ -858,7 +881,7 @@ def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
             )
         except (OSError, subprocess.SubprocessError):
             continue
-        if proc.stdout.strip():
+        if proc.stdout.strip() and _is_contract_document(proc.stdout):
             return proc.stdout
     return None
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -1304,3 +1305,91 @@ def test_load_contract_text_returns_none_for_a_branch_with_no_contract_on_main()
     the documented rollout-compatibility rule (docs/contracts/README.md),
     exercised against the real repo's real git history rather than a fake."""
     assert arb.load_contract_text("totally-nonexistent-branch-zzz-4821") is None
+
+
+# --------------------------------------------------------------------------- #
+# Review-fix: docs/contracts/ is a flat namespace keyed on the branch name    #
+# alone. A branch literally named `README` resolves load_contract_text's     #
+# `path` to docs/contracts/README.md — the FORMAT DOCUMENTATION file itself   #
+# (header `# Contracts`, plural, no colon), not a signed-off per-branch       #
+# contract. A resolved file must only be trusted as a contract when its      #
+# first non-blank line is the literal template header `# Contract:`          #
+# (singular, with a colon, per docs/contracts/README.md's own "Format"       #
+# section) — anything else, including the README, degrades to None exactly   #
+# like a missing file, never raised as an error.                             #
+# --------------------------------------------------------------------------- #
+
+def test_is_contract_document_requires_hash_contract_colon_header():
+    """Direct unit coverage of the pure predicate load_contract_text delegates
+    to. Exercised directly (no git, no subprocess) because it is the entire
+    decision the fix adds; load_contract_text itself is a thin git-plumbing
+    wrapper around it, covered separately below and by the pre-existing
+    no-contract-on-main test above."""
+    assert arb._is_contract_document("# Contract: feat/x\n\n## Goal\n") is True
+    # First NON-BLANK line is what counts, not strictly the first line.
+    assert arb._is_contract_document("\n   \n# Contract: feat/x\n") is True
+    assert arb._is_contract_document("") is False
+    assert arb._is_contract_document("   \n\n  \n") is False
+    assert arb._is_contract_document("Some other doc\n# Contract: nope\n") is False
+    # A near-miss that must NOT pass: plural, no colon.
+    assert arb._is_contract_document("# Contracts\n\nformat doc body\n") is False
+    # The real repo's real format doc, read straight off disk (not via a git
+    # ref) — ties this test to the actual exploit scenario: if this doc's
+    # header ever drifted to satisfy the guard by accident, this assertion
+    # would catch it.
+    readme_text = (REPO_ROOT / "docs" / "contracts" / "README.md").read_text()
+    assert readme_text.splitlines()[0] == "# Contracts"
+    assert arb._is_contract_document(readme_text) is False
+
+
+def _init_scratch_git_repo(tmp_path):
+    """A throwaway repo with its own `main` branch, isolated from this
+    repository's real history and from the host's global git config
+    (user.email/user.name supplied inline, commit.gpgsign disabled inline so
+    a host with global commit signing enabled cannot hang this test), so
+    load_contract_text's git-show plumbing can be exercised against
+    controlled content without anything needing to be merged to this repo's
+    own main."""
+    repo = tmp_path / "scratch-repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    return repo
+
+
+def _commit_file(repo, relative_path, content):
+    path = repo / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+    subprocess.run(
+        ["git",
+         "-c", "user.email=test@example.com", "-c", "user.name=Test",
+         "-c", "commit.gpgsign=false",
+         "commit", "-q", "-m", "test commit"],
+        cwd=repo, check=True,
+    )
+
+
+def test_load_contract_text_ignores_a_present_file_without_the_contract_header(tmp_path, monkeypatch):
+    """The IMPORTANT fix under review, exercised end-to-end through the real
+    git-plumbing wrapper: a branch name that resolves to a present, non-empty
+    file that is NOT header-stamped `# Contract:` (mirrors
+    docs/contracts/README.md's own real header, `# Contracts`) must degrade to
+    None, never return that stray doc's content."""
+    repo = _init_scratch_git_repo(tmp_path)
+    _commit_file(repo, "docs/contracts/readme-lookalike.md",
+                 "# Contracts\n\nThis is the FORMAT doc, not a contract.\n")
+    monkeypatch.setattr(arb, "_REPO_ROOT", repo)
+    assert arb.load_contract_text("readme-lookalike") is None
+
+
+def test_load_contract_text_returns_a_properly_headed_contract(tmp_path, monkeypatch):
+    """Boundary sibling of the test above: a file at the same shape of path
+    that DOES start with the real template header must still be returned in
+    full — the fix must reject the format doc without also rejecting real
+    contracts."""
+    repo = _init_scratch_git_repo(tmp_path)
+    body = "# Contract: feat/readme-lookalike\n\n## Goal\n\nExample.\n"
+    _commit_file(repo, "docs/contracts/readme-lookalike.md", body)
+    monkeypatch.setattr(arb, "_REPO_ROOT", repo)
+    assert arb.load_contract_text("readme-lookalike") == body
