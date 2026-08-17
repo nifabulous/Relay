@@ -80,6 +80,11 @@ interface Exchange {
   response: TutorResponse;
 }
 
+interface HistoryResult {
+  turns: TutorTurn[];
+  truncated: boolean;
+}
+
 type Phase = "idle" | "thinking" | "answered" | "failed";
 
 function subjectOf(context: TutorContext): string {
@@ -206,9 +211,10 @@ export function TutorPanel({
     };
   }, []);
 
-  function historyFrom(current: Exchange[]): TutorTurn[] {
+  function historyFrom(current: Exchange[]): HistoryResult {
     const exchanges: Array<[TutorTurn, TutorTurn]> = [];
     let characterCount = 0;
+    let truncated = false;
     for (let index = current.length - 1; index >= 0; index -= 1) {
       const exchange = current[index];
       const pair: [TutorTurn, TutorTurn] = [
@@ -223,13 +229,17 @@ export function TutorPanel({
       ];
       const pairCharacters = pair[0].content.length + pair[1].content.length;
       if (exchanges.length > 0 && characterCount + pairCharacters > MAX_HISTORY_CHARS) {
+        truncated = true;
         break;
       }
       exchanges.unshift(pair);
       characterCount += pairCharacters;
-      if (exchanges.length * 2 >= MAX_HISTORY_TURNS) break;
+      if (exchanges.length * 2 >= MAX_HISTORY_TURNS) {
+        truncated = index > 0;
+        break;
+      }
     }
-    return exchanges.flat();
+    return { turns: exchanges.flat(), truncated };
   }
 
   async function send(message: string, mode: TutorMode) {
@@ -247,7 +257,7 @@ export function TutorPanel({
       message,
       mode,
       context,
-      history: historyFrom(exchanges),
+      history: historyFrom(exchanges).turns,
     };
 
     try {
@@ -318,7 +328,7 @@ export function TutorPanel({
   }
 
   const subject = subjectOf(context);
-  const truncated = exchanges.length * 2 > MAX_HISTORY_TURNS;
+  const truncated = historyFrom(exchanges).truncated;
   const latest = exchanges[exchanges.length - 1];
   const failure = phase === "failed" ? describeFailure(problem) : null;
 

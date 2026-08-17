@@ -355,6 +355,8 @@ describe("TutorPanel — conversation history", () => {
       12_000,
     );
     expect(history.every((turn) => turn.content.length <= 6_000)).toBe(true);
+    expect(history).toHaveLength(2);
+    expect(screen.getByText(/earlier turns/i)).toBeVisible();
   });
 
   it("says out loud when earlier turns stop being sent", async () => {
