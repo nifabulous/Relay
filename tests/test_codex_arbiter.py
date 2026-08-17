@@ -557,6 +557,42 @@ def test_pending_human_p1_holds_needs_human_even_with_an_open_minor():
     assert pending and pending[0]["status"] == "pending-human"
 
 
+def test_pending_human_p1_and_a_second_merely_open_p1_both_appear_in_gaps():
+    """Two coexisting P1s, pinning the exact shape T4's gap-issue poster will
+    consume. P1-A resolves with in-diff evidence at round 2 and moves to
+    pending-human; P1-B stays merely OPEN for 2 rounds — below
+    contract.stuck_p1_rounds (3), so STUCK-P1 does not fire for it. The
+    pending-human hold (checked after STUCK-P1, before the merge-family rules)
+    still wins: NEEDS-HUMAN / P1-RESOLUTION-PENDING, and loop_action never
+    reaches a MERGE-* headline. proposed_gaps carries BOTH P1s in the same
+    list — P1-B as "open" (from the open-set) and P1-A as "pending-human"
+    (from the pending-human set) — proving a coexisting merely-open P1 can
+    appear in proposed_gaps outside STUCK-P1/HARD-CAP escalation, contrary to
+    a previously overbroad code comment (now corrected)."""
+    comments = [
+        _comment(1, 1, [
+            _finding("P1", "NEW", "app/models.py", "authz", "p1-a"),
+            _finding("P1", "NEW", "app/other.py", "authz-b", "p1-b"),
+        ]),
+        _comment(2, 2, [
+            _finding("P1", "RESOLVED", "app/models.py", "authz", "p1-a",
+                     evidence=_evidence(["app/models.py"])),
+            _finding("P1", "OPEN", "app/other.py", "authz-b", "p1-b"),
+        ]),
+    ]
+    decision = arb.decide(_history(comments, diff_files=["app/models.py"]), _contract())
+    assert decision.round_count == 2
+    assert decision.recommendation == "NEEDS-HUMAN"
+    assert decision.cited_rule == "P1-RESOLUTION-PENDING"
+    assert decision.loop_action == "CONTINUE"
+    assert not decision.loop_action.startswith("MERGE")
+    assert not decision.recommendation.startswith("MERGE")
+
+    gaps_by_id = {g["id"]: g for g in decision.proposed_gaps}
+    assert gaps_by_id["p1-b"]["status"] == "open"
+    assert gaps_by_id["p1-a"]["status"] == "pending-human"
+
+
 def test_p2_resolved_without_in_diff_evidence_stays_open():
     """A P2 RESOLVED whose evidence file is not in current_diff_files fails the
     bounded consistency check, so the finding stays open and cannot yield

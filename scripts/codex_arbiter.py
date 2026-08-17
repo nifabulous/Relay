@@ -497,9 +497,12 @@ def decide(history, contract: Contract) -> Decision:
     # A P1 resolution awaiting a human is never CLEAN and never mergeable: a
     # maintainer must verify it on the current head. This holds regardless of any
     # coexisting open minors — the hold fails closed to NEEDS-HUMAN *before* the
-    # merge-family rules (3-5), so an unverified P1 resolution is never surfaced
-    # as a proposed gap under a MERGE-WITH-GAPS headline. A P1 gap is therefore
-    # only ever proposed under STUCK-P1 / HARD-CAP escalation (§6.4).
+    # merge-family rules (3-5), so a pending P1 resolution is never surfaced under
+    # a mergeable (MERGE-*) headline; it always yields NEEDS-HUMAN /
+    # P1-RESOLUTION-PENDING. Do not read that as "a P1 gap is only ever proposed
+    # under STUCK-P1 / HARD-CAP escalation": a second, merely-open P1 (not yet
+    # STUCK-P1) can coexist with the pending one and is listed in proposed_gaps
+    # right here too, status "open", beside the pending entry's "pending-human".
     if pending_human:
         return _result(CONTINUE, RULE_P1_PENDING, True, round_count,
                        proposed_gaps=_proposed_gaps(open_findings, pending_human),
