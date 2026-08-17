@@ -196,6 +196,7 @@ export function TutorPanel({
       setProblem(null);
       setFeedbackGiven(null);
       setLastAttempt(null);
+      setQuestion("");
     }
   }, [identity]);
 

@@ -312,6 +312,8 @@ describe("floating surface elevation", () => {
 
   it("caps the mobile tutor sheet so the page behind remains usable", () => {
     const mobileCss = FLOATING_CSS.split("@media (min-width: 1024px)")[0];
-    expect(mobileCss).toMatch(/max-height:\s*min\(70dvh,\s*42rem\);/);
+    expect(mobileCss).toMatch(/top:\s*auto;/);
+    expect(mobileCss).toMatch(/height:\s*min\([\s\S]*70dvh[\s\S]*var\(--sim-banner-height\)/);
+    expect(mobileCss).toMatch(/max-height:\s*calc\([\s\S]*var\(--sim-banner-height\)/);
   });
 });

@@ -399,6 +399,21 @@ describe("TutorPanel — conversation history", () => {
     expect(sent[1].history).toHaveLength(0);
   });
 
+  it("clears an unsent draft when the learner moves to another module", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<TutorPanel context={LESSON} />);
+    const input = screen.getByRole("textbox", { name: /ask the tutor/i });
+    await user.type(input, "A question for lab 1");
+
+    rerender(
+      <TutorPanel
+        context={buildLessonContext({ moduleId: "lab-7", moduleTitle: "Which Rail?" })}
+      />,
+    );
+
+    await waitFor(() => expect(input).toHaveValue(""));
+  });
+
   it("does not append an old answer after the learner changes context mid-request", async () => {
     let releaseRequest!: () => void;
     const requestReleased = new Promise<void>((resolve) => {

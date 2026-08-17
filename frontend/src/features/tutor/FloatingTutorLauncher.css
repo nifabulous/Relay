@@ -80,9 +80,20 @@
      would imply otherwise. */
   left: var(--space-3);
   right: var(--space-3);
-  top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-3));
+  top: auto;
   bottom: calc(var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--space-3));
-  max-height: min(70dvh, 42rem);
+  height: min(
+    70dvh,
+    42rem,
+    calc(
+      100dvh - var(--sim-banner-height) - var(--topbar-height) -
+      var(--nav-height-mobile) - env(safe-area-inset-bottom, 0px) - var(--space-6)
+    )
+  );
+  max-height: calc(
+    100dvh - var(--sim-banner-height) - var(--topbar-height) -
+    var(--nav-height-mobile) - env(safe-area-inset-bottom, 0px) - var(--space-6)
+  );
   overflow-y: auto;
 
   padding: var(--space-3);
