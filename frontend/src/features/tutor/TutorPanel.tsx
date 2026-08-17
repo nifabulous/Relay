@@ -327,7 +327,19 @@ export function TutorPanel({
           <article className="tutor-panel__exchange" key={exchange.response.turn_id}>
             <p className="tutor-panel__question">{exchange.question}</p>
             <div className="tutor-panel__answer">
+              {exchange.response.needs_clarification && (
+                <p className="tutor-panel__clarification" role="note">
+                  <strong>Clarification needed.</strong> Confirm the relevant details before
+                  relying on this explanation.
+                </p>
+              )}
               <p>{exchange.response.answer}</p>
+
+              {exchange.response.safety_notice && (
+                <p className="tutor-panel__safety" role="alert">
+                  <strong>Safety notice.</strong> {exchange.response.safety_notice}
+                </p>
+              )}
 
               {exchange.response.citations.length > 0 && (
                 <ul className="tutor-panel__sources" aria-label="Sources">

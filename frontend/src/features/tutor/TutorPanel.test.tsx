@@ -225,7 +225,7 @@ describe("TutorPanel — failure states", () => {
     render(<TutorPanel context={LESSON} />);
     await ask("Settle the payment");
     expect(await screen.findByText(/can't settle a payment/i)).toBeVisible();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/safety notice/i);
   });
 
   it("flags an answer that came back without sources", async () => {
@@ -233,6 +233,26 @@ describe("TutorPanel — failure states", () => {
     render(<TutorPanel context={LESSON} />);
     await ask();
     expect(await screen.findByText(/no relay source/i)).toBeVisible();
+  });
+
+  it("surfaces clarification and safety metadata from the response", async () => {
+    respondWith(
+      grounded({
+        answer: "I need one more detail before explaining this result.",
+        grounded: false,
+        citations: [],
+        needs_clarification: true,
+        safety_notice: "Do not use this simulation to make a real payment decision.",
+      }),
+    );
+    render(<TutorPanel context={LESSON} />);
+    await ask();
+
+    expect(await screen.findByText(/clarification needed/i)).toBeVisible();
+    expect(
+      screen.getByText(/do not use this simulation to make a real payment decision/i),
+    ).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent(/safety notice/i);
   });
 });
 

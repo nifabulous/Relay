@@ -116,37 +116,33 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
 
   return (
     <>
-      <button
-        type="button"
-        ref={launcherRef}
-        className="tutor-fab"
-        disabled={available === false}
-        aria-describedby={available === false ? "tutor-fab-unavailable" : undefined}
-        aria-expanded={open}
-        aria-controls={open ? "tutor-floating-panel" : undefined}
-        onClick={() => {
-          if (open) {
-            close();
-            return;
-          }
-          setOpen(true);
-          onOpenChange?.(true);
-        }}
-      >
-        <TutorIcon />
-        <span className="tutor-fab__label">Tutor</span>
-      </button>
-      {available === false && (
-        /* Rendered in the document, not a title attribute. A tooltip needs
-           hover, which touch devices do not have — so a tooltip-only
-           explanation is invisible on exactly the viewport where this pill is
-           most prominent. Visually hidden but reachable by screen reader and
-           announced as the button's description. */
-        <span id="tutor-fab-unavailable" className="tutor-fab__reason">
-          The tutor is not available in this deployment. Everything else in Relay
-          works as usual.
-        </span>
-      )}
+      <div className="tutor-fab-cluster">
+        <button
+          type="button"
+          ref={launcherRef}
+          className="tutor-fab"
+          disabled={available === false}
+          aria-describedby={available === false ? "tutor-fab-unavailable" : undefined}
+          aria-expanded={open}
+          aria-controls={open ? "tutor-floating-panel" : undefined}
+          onClick={() => {
+            if (open) {
+              close();
+              return;
+            }
+            setOpen(true);
+            onOpenChange?.(true);
+          }}
+        >
+          <TutorIcon />
+          <span className="tutor-fab__label">Tutor</span>
+        </button>
+        {available === false && (
+          <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
+            The tutor is not available in this deployment. Everything else in Relay works as usual.
+          </span>
+        )}
+      </div>
 
       {open && (
         <div className="tutor-floating-panel" id="tutor-floating-panel">

@@ -4,6 +4,7 @@ import {
   publishTutorContext,
   clearTutorContext,
   readTutorContext,
+  usePublishTutorContext,
   useTutorSurfaceContext,
 } from "./tutorSurfaceStore";
 import { buildLessonContext, buildSchemeContext } from "./tutorContext";
@@ -93,5 +94,43 @@ describe("tutorSurfaceStore", () => {
       publishTutorContext({ ...lesson });
     });
     expect(renders).toBe(afterFirst);
+  });
+
+  it("keeps the published context when a polling summary changes", () => {
+    const first = buildSchemeContext({ currency: "USD", summary: "Created" });
+    const second = buildSchemeContext({ currency: "USD", summary: "Created, sent" });
+    const { rerender, unmount } = renderHook(
+      ({ context }) => usePublishTutorContext(context),
+      { initialProps: { context: first } },
+    );
+
+    expect(readTutorContext()).toEqual(first);
+    rerender({ context: second });
+
+    expect(readTutorContext()).toEqual(second);
+    unmount();
+    expect(readTutorContext()).toEqual({ surface: "global" });
+  });
+
+  it("does not let an outgoing page clear a newer page context", () => {
+    const first = buildLessonContext({ moduleId: "lab-1", moduleTitle: "First" });
+    const second = buildLessonContext({ moduleId: "lab-2", moduleTitle: "Second" });
+    const firstPage = renderHook(() => usePublishTutorContext(first));
+    const secondPage = renderHook(() => usePublishTutorContext(second));
+
+    firstPage.unmount();
+    expect(readTutorContext()).toEqual(second);
+    secondPage.unmount();
+  });
+
+  it("transfers ownership when the next page publishes the same context", () => {
+    const context = buildLessonContext({ moduleId: "lab-1", moduleTitle: "Same resource" });
+    const firstPage = renderHook(() => usePublishTutorContext(context));
+    const secondPage = renderHook(() => usePublishTutorContext(context));
+
+    firstPage.unmount();
+    expect(readTutorContext()).toEqual(context);
+    secondPage.unmount();
+    expect(readTutorContext()).toEqual({ surface: "global" });
   });
 });

@@ -32,6 +32,7 @@ there, then mirror them here.
 | `--color-surface` | `#FFFFFF` | Navigation, panels, data regions |
 | `--color-border` | `#DCE2EB` | Structural boundaries |
 | `--color-border-strong` | `#C4CDD9` | Boundaries that must stay perceivable on canvas |
+| `--color-floating-border` | `#667085` light / `#6E82AD` dark | 3:1+ boundary for floating tutor surfaces |
 | `--color-ink-muted` | `#586273` | Secondary text |
 | `--color-success` | `#0E5C44` | Passed and proceed states |
 | `--color-warning` | `#9A5A0C` | Needs-attention and review states |
@@ -45,12 +46,13 @@ revert them to the lighter originals.
 Use semantic colors only with an explicit label and icon.
 
 **Contrast status, measured 2026-08-14.** All *text* pairings meet WCAG 2.2 AA, most with
-room to spare. *Boundaries* do not: `--color-border` measures 1.23:1 and
-`--color-border-strong` 1.51:1 against the canvas, against the 3:1 that WCAG 1.4.11 asks
-for a border that identifies a control. This is a known, tracked gap, not an oversight —
-raising borders to 3:1 would make them visibly heavier than the hairline this system is
-built on. Do not restate this as blanket AA compliance. When dark mode lands, its borders
-match this same perceptual weight so the two themes stay one product.
+room to spare. The ordinary structural borders remain intentionally lighter: `--color-border`
+measures 1.23:1 and `--color-border-strong` 1.51:1 against the canvas. Floating controls are
+different: the tutor FAB and panel use `--color-floating-border`, which clears 3:1 against
+their light and dark surfaces so the always-available control remains distinguishable from
+content. Do not restate this as blanket AA compliance. When dark mode lands, its ordinary
+borders match the light theme's perceptual weight while floating surfaces use their approved
+dark boundary.
 
 ### Typography
 

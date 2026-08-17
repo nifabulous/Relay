@@ -51,6 +51,10 @@ function contrastRatio(fg: string, bg: string): number {
 // be converted to a plain path first. Anchoring on import.meta.url rather than
 // process.cwd() keeps this correct regardless of where vitest is invoked from.
 const CSS = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "tokens.css"), "utf8");
+const FLOATING_CSS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/FloatingTutorLauncher.css"),
+  "utf8",
+);
 
 /**
  * Return the body of the block whose opening selector matches `opener`,
@@ -184,6 +188,7 @@ describe("WCAG 2.2 AA contrast for semantic tokens", () => {
       "--color-surface-3": "#e6eaf2",
       "--color-border": "#dce2eb",
       "--color-border-strong": "#c4cdd9",
+      "--color-floating-border": "#667085",
       "--color-success": "#0e5c44",
       "--color-success-bg": "#e8f6ef",
       "--color-success-border": "#a3d9c4",
@@ -292,5 +297,16 @@ describe("floating surface elevation", () => {
     const shadow = luminance("#1d2433");
     expect(luminance("#f6f8fc")).toBeGreaterThan(shadow); // light: valid
     expect(luminance("#080b12")).toBeLessThan(shadow); // dark: inverted
+  });
+
+  it("uses the approved high-contrast boundary on the actual floating selectors", () => {
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-fab[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(FLOATING_CSS).toMatch(
+      /\.tutor-floating-panel[\s\S]*?border:\s*1px solid var\(--color-floating-border\)/,
+    );
+    expect(ratio(LIGHT, "--color-floating-border", "--color-surface")).toBeGreaterThanOrEqual(3);
+    expect(ratio(DARK, "--color-floating-border", "--color-surface-2")).toBeGreaterThanOrEqual(3);
   });
 });

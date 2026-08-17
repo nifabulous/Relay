@@ -147,6 +147,7 @@ describe("FloatingTutorLauncher — unavailable deployment", () => {
     render(<FloatingTutorLauncher />);
     const pill = await screen.findByRole("button", { name: /tutor/i });
     expect(pill).toHaveAccessibleDescription(/not available|not enabled/i);
+    expect(screen.getByRole("status")).toBeVisible();
   });
 
   it("asks availability once per mount, not per render", async () => {
