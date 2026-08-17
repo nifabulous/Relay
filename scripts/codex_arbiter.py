@@ -13,8 +13,9 @@ spec (§6), not by a model's judgement. Three parts with hard seams:
              I/O, no network, importable directly. Every fixture tests this.
   POSTER     ``render_comment`` / ``post_comment`` — turns a Decision into a PR
              comment, gated behind ``--post`` + operator mode. Local default is
-             read-only. Proposed-gap ISSUE creation is Task T4: ``post_gap_issues``
-             is a clearly-marked stub here, not an implementation.
+             read-only. ``post_gap_issues`` (Task T4) opens one idempotent
+             ``proposed-gap`` GitHub issue per residual finding under the same
+             gate — the durable ledger a deleted branch cannot take with it.
 
 Schemas (docs/loop/schemas.md): schema 1 is the canonical history the collector
 emits and the core consumes; schema 2 is the machine-readable trailer parsed
@@ -32,6 +33,17 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# codex_sanitize / codex_truncate are this script's siblings in scripts/, not a
+# package import — the same convention codex_sanitize.py itself uses to reach
+# app/tutor/redaction.py. The explicit path insert makes the import resolve
+# regardless of how the caller put codex_arbiter on sys.path (run directly, or
+# imported by the test suite after inserting scripts/ itself).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from codex_sanitize import sanitize as _sanitize_gap_body  # noqa: E402
+from codex_truncate import truncate_utf8 as _truncate_gap_body  # noqa: E402
 
 # --- recommendation headlines (the single value surfaced to a caller) ------- #
 MERGE_CLEAN = "MERGE-CLEAN"
@@ -646,18 +658,275 @@ def post_comment(pr, repo, body) -> None:
     )
 
 
-def post_gap_issues(decision, pr, repo, contract):
-    """T4 SEAM — NOT implemented in T3.
+# --- Gap-issue ledger (Task T4, plan §6.4) ---------------------------------- #
+# One idempotent ``proposed-gap`` issue per residual finding. WRITES to
+# GitHub — reachable only under the same operator gate as post_comment
+# (main()'s ``--post`` + ``ARBITER_OPERATOR=1`` check), never from decide().
+_PROPOSED_GAP_LABEL = "proposed-gap"
+_GAP_ISSUE_MAX_BYTES = 60_000  # mirrors codex_responses.py's output-bound style
+_GAP_ISSUE_LIST_LIMIT = 500
 
-    Creating one idempotent ``proposed-gap`` issue per gap (marker
-    ``<!-- codex-gap:<pr>:<canonical-finding-id> -->``, body sanitized through
-    codex_sanitize.py, keyed on the finding not the head SHA) is Task T4 (§6.4).
-    T3 only renders/posts the recommendation comment. This stub marks the seam.
+
+def _gap_marker(pr, gap_id: str) -> str:
+    # Keyed on the finding's canonical id, never the head SHA (plan §6.4): the
+    # same gap re-proposed at a later head must resolve to this SAME marker,
+    # so a later post_gap_issues call finds and skips it instead of opening a
+    # twin. Format matches plan §6.4 verbatim: no (file, cat) hash appended.
+    # decide() fails closed on a NEW finding whose (file, cat) collides with an
+    # already-open key, which is the guarantee this format relies on for id
+    # uniqueness within one valid decision; post_gap_issues additionally
+    # protects itself within a single run (see the existing_issues.append call
+    # below) so that even a decision violating that invariant collapses onto
+    # one issue rather than opening a duplicate.
+    return f"<!-- codex-gap:{pr}:{gap_id} -->"
+
+
+def _issue_comment_permalink(repo: str, pr, comment_id) -> str:
+    return f"https://github.com/{repo}/pull/{pr}#issuecomment-{comment_id}"
+
+
+def _poster_canonical_comments(history: dict, pr, contract: Contract) -> List[dict]:
+    """Poster-side re-derivation of which comments are canonical review rounds
+    (bot author + this PR's exact review marker) so post_gap_issues can locate
+    the comment that most recently carried a given finding — WITHOUT calling
+    decide() or its private helpers. decide() exposes no canonical-comment
+    list today, and this task must not edit the core to add one, so this is a
+    small, deliberately independent read of the same schema-1 document,
+    documented here rather than silently duplicated.
     """
-    raise NotImplementedError(
-        "post_gap_issues is Task T4 (the gap-issue ledger, §6.4). "
-        "The T3 arbiter only renders/posts the recommendation comment."
+    canon = []
+    for comment in history.get("comments", []):
+        if comment.get("author_login") != contract.bot_login:
+            continue
+        expected_marker = f"codex-pr-review:{pr}:{comment.get('head_sha')}"
+        if comment.get("marker") != expected_marker:
+            continue
+        canon.append(comment)
+    canon.sort(key=lambda c: (_parse_ts(c["created_at"]), c["comment_id"]))
+    return canon
+
+
+def _latest_comment_id_for_finding(canon: List[dict], finding_id: str) -> Optional[int]:
+    """The comment_id of the latest canonical round mentioning this finding id
+    (NEW, OPEN, or RESOLVED all count as 'carrying' it) — ``canon`` is in
+    ascending chronological order, so the last match wins. None if no
+    canonical round mentions it: a permalink is advisory context, never a
+    decision input, so the poster degrades gracefully instead of raising.
+    """
+    latest = None
+    for comment in canon:
+        trailer = comment.get("trailer")
+        findings = trailer.get("findings") if isinstance(trailer, dict) else None
+        if not isinstance(findings, list):
+            continue
+        for finding in findings:
+            if isinstance(finding, dict) and finding.get("id") == finding_id:
+                latest = comment.get("comment_id")
+    return latest
+
+
+def _gap_issue_title(gap: dict) -> str:
+    return f"[proposed-gap] {gap['sev']} {gap['cat']} - {gap['file']} ({gap['id']})"
+
+
+def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
+                           contract_text: Optional[str]) -> str:
+    """The gap issue body (plan §6.4): built from SAFE structured fields only
+    (sev, file, cat, id, status, first_round) — never the finding's free-text
+    prose, which stays in the review comment the permalink points at. The
+    marker is the FIRST line so it survives the later size-bound truncation
+    (never appended at the end, where truncation could drop it).
+    """
+    lines = [
+        _gap_marker(pr, gap["id"]),
+        f"## Proposed gap: `{gap['id']}`",
+        "",
+        "Durable ledger entry for a finding the automated PR review loop could",
+        "not resolve within this pass. Only safe, structured fields are stored",
+        "here — never diff content or finding prose.",
+        "",
+        "### Finding",
+        f"- Severity: `{gap['sev']}`",
+        f"- File: `{gap['file']}`",
+        f"- Category: `{gap['cat']}`",
+        f"- Status: `{gap.get('status', 'open')}`",
+        f"- First raised: round {gap['first_round']}",
+        "",
+        "### Full context",
+        (f"The finding text is in the review comment: {permalink}" if permalink
+         else "No canonical review comment could be resolved for this finding."),
+        "",
+        "### Contract",
+        (contract_text.strip() if contract_text and contract_text.strip()
+         else "no contract on main"),
+        "",
+        "### Closing criteria",
+        "Close when a maintainer accepts this as a documented limit or a fix "
+        "lands and the reviewer marks it RESOLVED.",
+    ]
+    return "\n".join(lines)
+
+
+def _ensure_proposed_gap_label(repo: str) -> None:
+    """Idempotently make sure the label exists. ``gh issue create --label X``
+    errors when X does not exist, but gh's error text for that case is not a
+    stable string to branch on across versions — so instead of parsing
+    stderr, this unconditionally (re)creates the label with --force, which
+    both creates it on a fresh repo and no-ops on one where it already exists.
+    Best-effort: a failure here does not abort the run; issue creation below
+    surfaces its own error if the label problem was real.
+    """
+    subprocess.run(
+        ["gh", "label", "create", _PROPOSED_GAP_LABEL, "--repo", repo,
+         "--color", "d4c5f9",
+         "--description", "Arbiter-proposed gap awaiting a maintainer's accepted-gap relabel",
+         "--force"],
+        capture_output=True, text=True, check=False,
     )
+
+
+def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
+    proc = subprocess.run(
+        ["gh", "issue", "list", "--repo", repo, "--label", _PROPOSED_GAP_LABEL,
+         "--state", "all", "--json", "number,body", "--limit", str(limit)],
+        capture_output=True, text=True, check=True,
+    )
+    return json.loads(proc.stdout)
+
+
+def _find_existing_issue(existing_issues: List[dict], marker: str) -> Optional[int]:
+    # A deterministic, local grep over already-fetched bodies — never GitHub's
+    # own search indexing, which is not guaranteed to index HTML comments
+    # (plan §6.4 / task brief).
+    for issue in existing_issues:
+        if marker in (issue.get("body") or ""):
+            return issue.get("number")
+    return None
+
+
+def _parse_issue_number(create_stdout: str) -> Optional[int]:
+    match = re.search(r"/issues/(\d+)", create_stdout)
+    return int(match.group(1)) if match else None
+
+
+def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
+    """Best-effort read of this branch's contract as it stands on `main`
+    (docs/contracts/README.md §4.1: a contract binds only from the default
+    branch, never a PR branch's own copy). Purely advisory context for the gap
+    issue's Contract section — never a decide() input, so any failure (no git
+    repo, no such branch, no contract file, origin/main not fetched) degrades
+    to None ('no contract on main'), matching the documented rollout rule,
+    rather than raising. T5 (a later, separate task) owns injecting the
+    contract into the REVIEWER's *trusted instructions*; this is a narrower,
+    read-only convenience for this poster's CLI wiring and does not duplicate
+    that trust boundary — nothing here feeds a decide() disposition.
+    """
+    try:
+        if branch is None:
+            proc = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True, text=True, check=True, cwd=_REPO_ROOT,
+            )
+            branch = proc.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if not branch or branch == "HEAD":
+        return None
+    path = f"docs/contracts/{branch.replace('/', '-')}.md"
+    for ref in ("origin/main", "main"):
+        try:
+            proc = subprocess.run(
+                ["git", "show", f"{ref}:{path}"],
+                capture_output=True, text=True, check=True, cwd=_REPO_ROOT,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if proc.stdout.strip():
+            return proc.stdout
+    return None
+
+
+def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
+                     history: dict, contract_text: Optional[str] = None,
+                     list_limit: int = _GAP_ISSUE_LIST_LIMIT) -> List[dict]:
+    """Create one idempotent ``proposed-gap`` issue per ``decision.proposed_gaps``
+    entry (plan §6.4). WRITES to GitHub: reachable only under the same
+    operator gate as post_comment. main() only ever calls this from inside its
+    own already-gated ``if args.post:`` branch; this function repeats the
+    ARBITER_OPERATOR check itself so a caller cannot reach a GitHub write by
+    skipping main()'s gate (main()'s own ``--post`` flag has no equivalent
+    process-wide signal this function could check, so ARBITER_OPERATOR is the
+    one gate condition both layers can enforce).
+
+    ``history`` is the same schema-1 document decide() consumed. It is used
+    here ONLY to resolve each finding's permalink (see
+    _poster_canonical_comments / _latest_comment_id_for_finding) — decide()
+    and its helpers are never called from here, and this function is never
+    called from decide(). ``contract_text`` is the pre-loaded contents of this
+    branch's docs/contracts/<branch>.md as read from ``main`` (see
+    load_contract_text), or None if no contract has merged yet.
+
+    Returns one result dict per gap: {"gap_id", "action" ("created" or
+    "skipped-existing"), "issue_number"}.
+    """
+    if os.environ.get("ARBITER_OPERATOR") != "1":
+        raise PermissionError(
+            "post_gap_issues requires ARBITER_OPERATOR=1 (operator mode); "
+            "refusing to create GitHub issues."
+        )
+    if not decision.proposed_gaps:
+        return []
+
+    canon = _poster_canonical_comments(history, pr, contract)
+    _ensure_proposed_gap_label(repo)
+    existing_issues = _list_existing_gap_issues(repo, list_limit)
+
+    results = []
+    for gap in decision.proposed_gaps:
+        marker = _gap_marker(pr, gap["id"])
+        existing_number = _find_existing_issue(existing_issues, marker)
+        if existing_number is not None:
+            results.append({
+                "gap_id": gap["id"],
+                "action": "skipped-existing",
+                "issue_number": existing_number,
+            })
+            continue
+
+        comment_id = _latest_comment_id_for_finding(canon, gap["id"])
+        permalink = (_issue_comment_permalink(repo, pr, comment_id)
+                     if comment_id is not None else None)
+        body = render_gap_issue_body(gap, pr, permalink, contract_text)
+        # Belt-and-suspenders (plan §6.4): the fields going in are already
+        # SAFE, but the permalink/contract lines are cheap to defend, so the
+        # FINAL assembled body is sanitized like everything else this repo
+        # posts, then size-bounded. Sanitize first, truncate second — the same
+        # order codex_review_pr.sh uses — because truncating first could cut a
+        # line-anchored redaction pattern in half and let a partial secret
+        # through.
+        body = _truncate_gap_body(_sanitize_gap_body(body), _GAP_ISSUE_MAX_BYTES)
+
+        proc = subprocess.run(
+            ["gh", "issue", "create", "--repo", repo,
+             "--title", _gap_issue_title(gap), "--body", body,
+             "--label", _PROPOSED_GAP_LABEL],
+            capture_output=True, text=True, check=True,
+        )
+        created_number = _parse_issue_number(proc.stdout)
+        results.append({
+            "gap_id": gap["id"],
+            "action": "created",
+            "issue_number": created_number,
+        })
+        # Defends the SAME run against two proposed_gaps entries that (contrary
+        # to the invariant decide() is meant to enforce) share an id: without
+        # this, the second would search the STALE existing_issues list, miss
+        # the one just created, and open a twin. Appending it here means the
+        # second collapses onto the first instead — consistent with treating
+        # `id` as the finding's canonical identity — rather than silently
+        # dropping it OR duplicating the issue.
+        existing_issues.append({"number": created_number, "body": body})
+    return results
 
 
 # --------------------------------------------------------------------------- #
@@ -720,6 +989,14 @@ def main(argv=None) -> int:
     if args.post:
         post_comment(args.pr, history["repo"], render_comment(decision, args.pr))
         print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
+        if decision.proposed_gaps:
+            contract_text = load_contract_text()
+            gap_results = post_gap_issues(decision, args.pr, history["repo"], contract,
+                                           history, contract_text=contract_text)
+            created = sum(1 for r in gap_results if r["action"] == "created")
+            existing = len(gap_results) - created
+            print(f"Gap ledger: {created} new proposed-gap issue(s) opened, "
+                  f"{existing} already tracked.")
     else:
         _emit(decision, args.pr, args.as_json)
     return 0

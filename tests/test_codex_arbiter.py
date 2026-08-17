@@ -11,6 +11,8 @@ tests pin exact rules, not just recommendations.
 from __future__ import annotations
 
 import json
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -781,11 +783,6 @@ def test_cli_post_refused_without_operator_mode(monkeypatch):
     assert rc != 0
 
 
-def test_post_gap_issues_is_a_t4_stub():
-    with pytest.raises(NotImplementedError):
-        arb.post_gap_issues(None, 1, "x/y", _contract())
-
-
 def test_arbiter_source_makes_no_model_or_http_calls():
     """The arbiter's whole value is being deterministic — it must never reach a
     model, and it must only touch the network through the `gh` CLI seam."""
@@ -799,3 +796,351 @@ def test_contract_reads_env_overrides():
     contract = arb.Contract.from_env({"CODEX_BOT_LOGIN": "custom[bot]", "ARBITER_SOFT_GATE": "7"})
     assert contract.bot_login == "custom[bot]"
     assert contract.soft_gate == 7
+
+
+# --------------------------------------------------------------------------- #
+# T4: the gap-issue ledger poster (post_gap_issues).                          #
+#                                                                              #
+# These are the only tests in this file that touch a subprocess boundary, so  #
+# safety is layered on top of the usual `gh`-on-PATH stub from                #
+# tests/test_codex_automation.sh: this machine's `gh` is a REAL, authenticated#
+# CLI (a live GitHub token), so every test here (a) uses an obviously-fake    #
+# "stub-org/stub-repo" repo string, never a real one, (b) prepends a fake     #
+# executable named literally `gh` to PATH so subprocess.run(["gh", ...])      #
+# finds the stub first, and (c) overrides GH_TOKEN/GITHUB_TOKEN to a garbage  #
+# value so that even a PATH-stubbing mistake could not reach the real API.    #
+# --------------------------------------------------------------------------- #
+STUB_REPO = "stub-org/stub-repo"
+
+_GH_STUB_SCRIPT = """#!/usr/bin/env python3
+import json
+import os
+import sys
+
+STUB_DIR = os.environ["GAP_STUB_DIR"]
+
+
+def _log(name, argv):
+    with open(os.path.join(STUB_DIR, "calls.jsonl"), "a") as fh:
+        print(json.dumps({"cmd": name, "argv": argv}), file=fh)
+
+
+def main():
+    argv = sys.argv[1:]
+
+    if argv[:2] == ["label", "create"]:
+        _log("label-create", argv)
+        return 0
+
+    if argv[:2] == ["issue", "list"]:
+        _log("issue-list", argv)
+        path = os.path.join(STUB_DIR, "issue_list.json")
+        if os.path.exists(path):
+            with open(path) as fh:
+                sys.stdout.write(fh.read())
+        else:
+            sys.stdout.write("[]")
+        return 0
+
+    if argv[:2] == ["issue", "create"]:
+        _log("issue-create", argv)
+        counter_path = os.path.join(STUB_DIR, "next_number.txt")
+        if os.path.exists(counter_path):
+            with open(counter_path) as fh:
+                number = int(fh.read().strip())
+        else:
+            number = 1000
+        with open(counter_path, "w") as fh:
+            fh.write(str(number + 1))
+        with open(os.path.join(STUB_DIR, "created.jsonl"), "a") as fh:
+            print(json.dumps({"number": number, "argv": argv}), file=fh)
+        print(f"https://github.com/stub-org/stub-repo/issues/{number}")
+        return 0
+
+    print("unstubbed gh invocation:", argv, file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+
+
+def _install_gh_stub(tmp_path, monkeypatch):
+    """A real executable named `gh` on PATH, ahead of the real one (studied
+    from tests/test_codex_automation.sh's fake-gh-on-PATH harness). Returns the
+    stub directory so a test can seed issue_list.json and read back
+    created.jsonl / calls.jsonl."""
+    stub_dir = tmp_path / "gh_stub"
+    stub_dir.mkdir()
+    gh_path = stub_dir / "gh"
+    gh_path.write_text(_GH_STUB_SCRIPT)
+    gh_path.chmod(0o755)
+    monkeypatch.setenv("GAP_STUB_DIR", str(stub_dir))
+    monkeypatch.setenv("PATH", f"{stub_dir}{os.pathsep}{os.environ.get('PATH', '')}")
+    # Defense in depth: this machine's `gh` is really authenticated. Even if
+    # PATH resolution somehow missed the stub, these invalid credentials keep
+    # any accidental call from reaching the real account.
+    monkeypatch.setenv("GH_TOKEN", "test-stub-invalid-token")
+    monkeypatch.setenv("GITHUB_TOKEN", "test-stub-invalid-token")
+    return stub_dir
+
+
+def _read_jsonl(path: Path) -> list:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def _created_body(record: dict) -> str:
+    argv = record["argv"]
+    return argv[argv.index("--body") + 1]
+
+
+def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_path, monkeypatch):
+    """Brief assertion 1 (search-before-create): no existing issue carries any
+    gap's marker, so exactly one `gh issue create` happens per gap, each body
+    containing its own marker and the `proposed-gap` label."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [
+            _finding("P2", "NEW", "app/a.py", "cat-a", "gap-a"),
+            _finding("P3", "NEW", "app/b.py", "cat-b", "gap-b"),
+        ]),
+        _comment(2, 2, [
+            _finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a"),
+            _finding("P3", "OPEN", "app/b.py", "cat-b", "gap-b"),
+        ]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+    assert {g["id"] for g in decision.proposed_gaps} == {"gap-a", "gap-b"}
+
+    (stub_dir / "issue_list.json").write_text("[]")
+
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert {r["action"] for r in results} == {"created"}
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    assert len(created) == 2
+    bodies = [_created_body(rec) for rec in created]
+
+    assert any("<!-- codex-gap:100:gap-a -->" in b for b in bodies)
+    assert any("<!-- codex-gap:100:gap-b -->" in b for b in bodies)
+    for rec in created:
+        argv = rec["argv"]
+        assert "--label" in argv
+        assert argv[argv.index("--label") + 1] == "proposed-gap"
+    # No contract_text was passed: the fallback line must render verbatim.
+    assert all("no contract on main" in b for b in bodies)
+    # gap-a's finding is OPEN as of comment_id 2 (round 2) — the latest
+    # canonical round that carries it — so the permalink must point there.
+    gap_a_body = next(b for b in bodies if "gap-a" in b)
+    assert "https://github.com/stub-org/stub-repo/pull/100#issuecomment-2" in gap_a_body
+
+
+def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monkeypatch):
+    """Brief assertion 2: an existing issue already carries the marker, so the
+    re-run creates nothing for that gap (a no-op), and reports the existing
+    issue number instead."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    assert [g["id"] for g in decision.proposed_gaps] == ["gap-a"]
+
+    marker = "<!-- codex-gap:100:gap-a -->"
+    (stub_dir / "issue_list.json").write_text(json.dumps([
+        {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text"}
+    ]))
+
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 55}]
+    assert not (stub_dir / "created.jsonl").exists()
+
+
+def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
+    """Brief assertion 3: the marker carries no head SHA, so the SAME finding
+    re-proposed at a later, different current_head_sha still resolves to the
+    SAME existing issue rather than opening a twin."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    history_round1 = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")], head_sha="a" * 40),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")], head_sha="b" * 40),
+    ], pr=100, repo=STUB_REPO)
+    decision_round1 = arb.decide(history_round1, contract)
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    first_results = arb.post_gap_issues(decision_round1, 100, STUB_REPO, contract, history_round1)
+    assert first_results == [{"gap_id": "gap-a", "action": "created", "issue_number": 1000}]
+
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    assert len(created) == 1
+    marker = "<!-- codex-gap:100:gap-a -->"
+    body = _created_body(created[0])
+    assert marker in body
+    assert re.search(r"[0-9a-fA-F]{40}", marker) is None  # no head SHA baked into the marker
+
+    # A later round, a THIRD (still different) head SHA — the finding is still
+    # open. The search step now finds the issue created above.
+    history_round2 = _history(
+        history_round1["comments"] + [
+            _comment(3, 3, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")], head_sha="c" * 40),
+        ],
+        pr=100, repo=STUB_REPO,
+    )
+    decision_round2 = arb.decide(history_round2, contract)
+    assert decision_round2.round_count == 3
+    assert history_round2["current_head_sha"] != history_round1["current_head_sha"]
+
+    (stub_dir / "issue_list.json").write_text(json.dumps([{"number": 1000, "body": body}]))
+    second_results = arb.post_gap_issues(decision_round2, 100, STUB_REPO, contract, history_round2)
+
+    assert second_results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 1000}]
+    assert len(_read_jsonl(stub_dir / "created.jsonl")) == 1  # still just the one from round 1
+
+
+def test_post_gap_issues_sanitizes_the_assembled_body(tmp_path, monkeypatch):
+    """Brief assertion 4 (part 1): belt-and-suspenders sanitization. The gap's
+    own fields are safe, so the IBAN is planted in contract_text — the one
+    piece of the body this task does not fully control the contents of."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P3", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P3", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    planted_iban = "DE89370400440532013000"
+    contract_text = f"Accepted limits:\n- legacy demo data hardcodes {planted_iban} (test fixture).\n"
+
+    arb.post_gap_issues(decision, 100, STUB_REPO, contract, history, contract_text=contract_text)
+
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    body = _created_body(created[0])
+    assert planted_iban not in body
+    assert "[IBAN]" in body
+
+
+def test_post_gap_issues_bounds_body_size_with_a_truncation_marker(tmp_path, monkeypatch):
+    """Brief assertion 4 (part 2): an oversized body (a huge contract_text) is
+    truncated to the size bound with a visible marker, not silently rejected
+    or posted over-length."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P3", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P3", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    huge_contract_text = "x" * 200_000
+
+    arb.post_gap_issues(decision, 100, STUB_REPO, contract, history, contract_text=huge_contract_text)
+
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    body = _created_body(created[0])
+    assert len(body.encode("utf-8")) <= arb._GAP_ISSUE_MAX_BYTES
+    assert "Truncated" in body
+    assert "<!-- codex-gap:100:gap-a -->" in body  # the marker survives truncation
+
+
+def test_post_gap_issues_renders_both_open_and_pending_human_statuses(tmp_path, monkeypatch):
+    """Brief assertion 5: a decision carrying both an 'open' gap and a
+    'pending-human' gap (the T3 finding-1 regression shape) renders both
+    without error, each showing its own status."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [
+            _finding("P1", "NEW", "app/models.py", "authz", "p1-pending"),
+            _finding("P1", "NEW", "app/other.py", "authz-b", "p1-open"),
+        ]),
+        _comment(2, 2, [
+            _finding("P1", "RESOLVED", "app/models.py", "authz", "p1-pending",
+                     evidence=_evidence(["app/models.py"])),
+            _finding("P1", "OPEN", "app/other.py", "authz-b", "p1-open"),
+        ]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO, diff_files=["app/models.py"])
+    decision = arb.decide(history, contract)
+    gaps_by_id = {g["id"]: g for g in decision.proposed_gaps}
+    assert gaps_by_id["p1-pending"]["status"] == "pending-human"
+    assert gaps_by_id["p1-open"]["status"] == "open"
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert {r["action"] for r in results} == {"created"}
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    bodies_by_id = {}
+    for rec in created:
+        body = _created_body(rec)
+        if "p1-pending" in body:
+            bodies_by_id["p1-pending"] = body
+        elif "p1-open" in body:
+            bodies_by_id["p1-open"] = body
+
+    assert "- Status: `pending-human`" in bodies_by_id["p1-pending"]
+    assert "- Status: `open`" in bodies_by_id["p1-open"]
+
+
+def test_post_gap_issues_refuses_without_operator_mode(monkeypatch):
+    """Brief assertion 6: read-only by default. Without ARBITER_OPERATOR=1,
+    post_gap_issues refuses outright — no `gh` invocation of any kind, proven
+    here by never installing a stub at all (a real subprocess call would fail
+    loudly rather than silently succeed)."""
+    monkeypatch.delenv("ARBITER_OPERATOR", raising=False)
+    contract = _contract()
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    assert decision.proposed_gaps  # sanity: there IS something that would post
+
+    with pytest.raises(PermissionError):
+        arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+
+def test_cli_post_gap_issues_gate_matches_post_comment_gate(monkeypatch):
+    """The CLI-level companion to the assertion above: `--post` without
+    operator mode is refused by main() before collect() ever runs, so the
+    gap-issue poster is unreachable through the CLI either — same gate,
+    checked once, in one place."""
+    monkeypatch.delenv("ARBITER_OPERATOR", raising=False)
+    rc = arb.main(["--history", str(FIXTURES / "pr24_history.json"), "--post"])
+    assert rc != 0
+
+
+def test_load_contract_text_returns_none_for_a_branch_with_no_contract_on_main():
+    """A branch name that can never have merged a contract to `main` must
+    resolve to None (rendered as 'no contract on main'), never raise — this is
+    the documented rollout-compatibility rule (docs/contracts/README.md),
+    exercised against the real repo's real git history rather than a fake."""
+    assert arb.load_contract_text("totally-nonexistent-branch-zzz-4821") is None
