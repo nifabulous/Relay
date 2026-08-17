@@ -1643,14 +1643,18 @@ Estimated current time-to-hello-world is **5–8 minutes** for an experienced co
 | Make baseline axe explicit | P5: verify before claiming completion | README records an existing SSI scroll violation. |
 | Add docs/manifest updates with gated APIs | P2: make contracts discoverable | API count/table and OpenAPI should not drift from code. |
 
+### Research-gate handoff
+
+The reliability slice is merged. The next contribution must run the five authored Case Desk scenarios and link its evidence to one selected intervention before enabling the gated T2–T9 product surfaces. The session and synthesis worksheet lives at `docs/superpowers/research/2026-08-17-five-case-learner-research-readout.md`.
+
 ## Autoplan Implementation Tasks
 
 These are review-derived amendments, not permission to implement product code in this review.
 
-- [ ] **R1 (P1, human: ~2h / CC: ~15min)** — Product sequencing — add a research-gate checklist and one-primary-outcome template to the plan/ROADMAP handoff.
+- [x] **R1 (P1, human: ~2h / CC: ~15min)** — Product sequencing — add a research-gate checklist and one-primary-outcome template to the plan/ROADMAP handoff.
   - Surfaced by: CEO premise challenge and failure-mode registry.
-  - Files: `docs/superpowers/plans/2026-08-16-relay-unified-ui-pass-implementation.md`, `ROADMAP.md` if the gate is adopted.
-  - Verify: a future implementation commit links the five-case readout and selected intervention.
+  - Files: `docs/superpowers/plans/2026-08-16-relay-unified-ui-pass-implementation.md`, `ROADMAP.md`, and `docs/superpowers/research/2026-08-17-five-case-learner-research-readout.md`.
+  - Verify: the readout remains session-empty until the five-case study is actually run; a future implementation commit must link the completed readout and selected intervention.
 - [ ] **R2 (P1, human: ~2h / CC: ~15min)** — Overview persistence — define versioned `onboardingStatus` and a real `ResumeCandidate` adapter; remove synthetic payment-draft resume.
   - Surfaced by: CEO findings 3–4; `OverviewPage.tsx`, `storage.ts`, `PreparePaymentPage.tsx`.
   - Files: `frontend/src/lib/persistence`, `frontend/src/features/overview`, focused tests.
