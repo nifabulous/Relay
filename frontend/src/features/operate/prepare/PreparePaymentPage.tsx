@@ -20,9 +20,9 @@ import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
 
 /**
- * Currencies offered in the Prepare-payment dropdown beyond the ones a bank
- * publishes. Order: bank-published currencies lead, then this list sorted
- * alphabetically. Covers the currencies used across the seeded corridors.
+ * Currencies offered when Prepare Payment has no usable beneficiary BIC yet.
+ * Once a BIC's SSI response is available, the dropdown is restricted to the
+ * currencies that bank publishes for the selected SWIFT path.
  */
 const COMMON_CURRENCIES = [
   "AED", "AUD", "BHD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP",
@@ -84,18 +84,22 @@ export function PreparePaymentPage() {
   const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
     (g) => g.currency,
   );
-  const currencyOptions = [...new Set([...publishedCurrencies, ...COMMON_CURRENCIES])];
+  const hasLoadedBankCurrencies = ssiEnabled && ssiQuery.data !== undefined;
+  const currencyOptions = hasLoadedBankCurrencies ? publishedCurrencies : COMMON_CURRENCIES;
   const selectedCurrency = watch("currency");
   const currencyTouched = useRef(false);
 
   // Default the currency to the bank's first published currency (importance
   // order, so USD leads) unless the learner has already chosen one.
   useEffect(() => {
-    if (!currencyTouched.current && publishedCurrencies.length > 0 && publishedCurrencies[0] !== selectedCurrency) {
+    if (
+      publishedCurrencies.length > 0 &&
+      (!currencyTouched.current || !publishedCurrencies.includes(selectedCurrency)) &&
+      publishedCurrencies[0] !== selectedCurrency
+    ) {
       setValue("currency", publishedCurrencies[0], { shouldValidate: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publishedCurrencies, setValue]);
+  }, [publishedCurrencies, selectedCurrency, setValue]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {

@@ -280,8 +280,16 @@ describe("PreparePaymentPage currency selection", () => {
     const picks = await screen.findAllByRole("button", { name: /^[A-Z]{3}$/ });
     expect(picks.map((p) => p.textContent)).toEqual(["USD", "EUR", "GBP"]);
 
-    // USD is the default selection (importance-ordered first published).
+    // The dropdown is limited to the bank's published currencies; it must not
+    // expose the broad no-BIC fallback once a SWIFT bank is selected.
     const currency = screen.getByRole("combobox", { name: /currency/i });
+    expect(Array.from(currency.querySelectorAll("option")).map((option) => option.value)).toEqual([
+      "USD",
+      "EUR",
+      "GBP",
+    ]);
+
+    // USD is the default selection (importance-ordered first published).
     expect(currency).toHaveValue("USD");
 
     // Clicking a pick populates the dropdown; the user can change it after.
