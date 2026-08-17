@@ -131,6 +131,23 @@ require_text 'scripts/verify_before_push.sh' 'working tree changed during verifi
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
 require_text 'scripts/codex_review_pr.sh' '--instructions "$TEMP_DIR/review-instructions.md"'
+
+# Finding memory (loop-engineering plan §5): the reviewer must read its own
+# prior review of this PR and emit a lifecycle trailer, so the arbiter (T3)
+# can count whether a finding recurs across rounds.
+require_text 'scripts/codex_review_pr.sh' 'prev-review.md'
+# prev-review-sanitized.md is written only by the codex_sanitize.py step and
+# read only by the codex_untrusted.py --label previous-review step, so its
+# presence proves the sanitize-before-wrap ordering for the prior review
+# comment (same convention as review-sanitized.md above for the model's own
+# output). The prior comment quotes PR diff content verbatim and can carry
+# secrets/IBANs; codex_untrusted.py only defangs delimiters, it does not
+# redact, so sanitizing first is a hard security requirement.
+require_text 'scripts/codex_review_pr.sh' 'prev-review-sanitized.md'
+require_text 'scripts/codex_review_pr.sh' '--label previous-review'
+require_text 'scripts/codex_review_pr.sh' 'codex-verdict'
+require_text 'scripts/codex_review_pr.sh' 'full accounting'
+
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
 require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
 require_text 'scripts/codex_triage_issue.sh' '--instructions "$TEMP_DIR/triage-instructions.md"'

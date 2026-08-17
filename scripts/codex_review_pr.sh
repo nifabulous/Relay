@@ -78,6 +78,30 @@ if jq -e -n --arg bot "$CODEX_BOT_LOGIN" --arg marker "$MARKER" \
   exit 0
 fi
 
+# Give the reviewer its own last review of this PR so it can do lifecycle
+# accounting (NEW/OPEN/RESOLVED — docs/loop/schemas.md schema 2). Match the
+# marker *prefix* (this PR, any head SHA) rather than the current-SHA
+# $MARKER: a finding raised two rounds ago must still be tracked even though
+# the SHA in its marker is stale. comments.jsonl is oldest-first (GitHub
+# pagination order, preserved by --paginate), so the last matching line is
+# the most recent qualifying review; there is no created_at field to sort by
+# and none is added.
+PREV_MARKER_PREFIX="<!-- codex-pr-review:${PR_NUMBER}:"
+PREV_REVIEW_BODY="$(jq -s -r --arg bot "$CODEX_BOT_LOGIN" --arg prefix "$PREV_MARKER_PREFIX" \
+  '[.[] | select(.login == $bot and (.body | contains($prefix)))]
+   | if length == 0 then "" else (last.body // "") end' \
+  "$TEMP_DIR/comments.jsonl")"
+
+if [[ -n "$PREV_REVIEW_BODY" ]]; then
+  printf '%s\n' "$PREV_REVIEW_BODY" >"$TEMP_DIR/prev-review.md"
+else
+  printf '(no previous review)\n' >"$TEMP_DIR/prev-review.md"
+fi
+# Sanitize before wrap: the prior comment quotes PR diff content verbatim and
+# can carry secrets/IBANs. codex_untrusted.py only defangs delimiters — it
+# does not redact — so sanitization must run first, same as metadata/diff below.
+python3 "$REPO_ROOT/scripts/codex_sanitize.py" <"$TEMP_DIR/prev-review.md" >"$TEMP_DIR/prev-review-sanitized.md"
+
 printf '%s\n' "$METADATA" | python3 "$REPO_ROOT/scripts/codex_sanitize.py" >"$TEMP_DIR/metadata.json"
 gh pr diff "$PR_NUMBER" --repo "$GH_REPO" | python3 "$REPO_ROOT/scripts/codex_sanitize.py" >"$TEMP_DIR/pr.diff"
 
@@ -123,8 +147,44 @@ omit a matrix area merely to keep the response short. Include:
 2. Findings ordered by severity (P0–P3). Each finding must include severity, file/line if available, concrete evidence, user impact, and a focused fix.
 3. Test and verification gaps.
 4. Residual risks and what a human should verify before merge.
+5. A machine-readable trailer as the very last line (shape below). This is additive: it never replaces or shortens findings 1-4 above.
 
 Do not report style preferences, duplicate existing CI checks, or speculative issues. If there are no actionable findings, say so explicitly and list the checks you were able to reason about.
+
+The user input may include a previous-review block: your own most recent
+review of this PR from an earlier round, or the placeholder text
+"(no previous review)" if this is the first round on this PR. Do a full accounting:
+every finding you have previously raised on this PR must reappear in this
+review with a lifecycle state. Silence is not resolution: a finding you
+simply stop mentioning must never read as fixed. If the block is the
+"(no previous review)" placeholder, mark every finding NEW.
+
+Mark each finding with exactly one lifecycle state:
+
+NEW        first appearance
+OPEN       previously raised, still present (with one line on whether the
+           last fix attempt changed anything)
+RESOLVED   previously raised, verified fixed in this diff (with the evidence)
+
+End the comment with exactly one trailer as its last line, an HTML comment
+with this exact shape (schema 2):
+
+<!-- codex-verdict: {"schema":2,"verdict":"BLOCK","findings":[
+  {"sev":"P1","state":"OPEN","file":"app/models.py","cat":"authorization",
+   "id":"published-self-assert"},
+  {"sev":"P2","state":"NEW","file":"alembic/versions/20260816_ssi_verified_by.py",
+   "cat":"tz-consistency","id":"utc-preflight"},
+  {"sev":"P2","state":"RESOLVED","file":"scripts/codex_sanitize.py",
+   "cat":"redaction","id":"cookie-header",
+   "evidence":{"files":["scripts/codex_sanitize.py"],
+              "verification":"tests/test_codex_sanitize.py::test_cookie_header"}}]} -->
+
+Every finding object carries sev, state, file, cat, and id. id is a stable
+kebab-case slug you keep identical across rounds for the same finding; cat is
+a short kebab-case category. A RESOLVED finding always carries an evidence
+object: {"files": [...], "verification": "..."} naming the files that fix it
+and a non-empty verification reference such as a test name. Never mark a
+finding RESOLVED without that evidence object.
 EOF
 
 {
@@ -140,6 +200,9 @@ EOF
   printf '\n'
   python3 "$REPO_ROOT/scripts/codex_untrusted.py" --label pull-request-diff \
     <"$TEMP_DIR/pr.diff"
+  printf '\n'
+  python3 "$REPO_ROOT/scripts/codex_untrusted.py" --label previous-review \
+    <"$TEMP_DIR/prev-review-sanitized.md"
 } >"$TEMP_DIR/review-input.md"
 
 python3 "$REPO_ROOT/scripts/codex_responses.py" \
