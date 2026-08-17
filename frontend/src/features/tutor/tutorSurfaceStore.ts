@@ -36,17 +36,17 @@ function emit(): void {
  * new object and drop the conversation mid-question.
  */
 export function publishTutorContext(context: TutorContext, owner?: symbol): void {
-  const ownerToken = owner ?? null;
+  const contextOwner = owner ?? null;
   if (
     current !== GLOBAL_CONTEXT &&
     contextIdentity(current) === contextIdentity(context) &&
     current.result_summary === context.result_summary &&
-    currentOwner === ownerToken
+    currentOwner === contextOwner
   ) {
     return;
   }
   current = context;
-  currentOwner = ownerToken;
+  currentOwner = contextOwner;
   emit();
 }
 
