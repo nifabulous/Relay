@@ -13,6 +13,8 @@ opposite directions:
 A bounded retry handles the first; a circuit breaker handles the second. Without
 the breaker, the retry actively makes an outage worse.
 """
+import logging
+
 import pytest
 
 from app.tutor.engine import CircuitBreaker
@@ -255,6 +257,19 @@ def test_a_single_transient_failure_is_retried_and_succeeds():
     engine = _engine_with([TutorProviderError("blip"), good])
     _run(engine)
     assert engine.attempts == 2, "one retry should have rescued the blip"
+
+
+def test_provider_failure_logs_the_source_exception_class_without_its_message(caplog):
+    class ProviderShapeError(RuntimeError):
+        pass
+
+    engine = _engine_with([ProviderShapeError("request secret should not be logged")])
+    with caplog.at_level(logging.WARNING, logger="app.tutor.engine"):
+        with pytest.raises(TutorProviderError):
+            _run(engine)
+
+    assert "tutor provider call failed: ProviderShapeError" in caplog.text
+    assert "request secret should not be logged" not in caplog.text
 
 
 def test_the_retry_is_bounded_to_one_extra_attempt():

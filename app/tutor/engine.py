@@ -24,6 +24,7 @@ in production would answer payment questions with canned text while every health
 check stayed green.
 """
 import asyncio
+import logging
 import re
 import time
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple, runtime_checkable
@@ -57,6 +58,8 @@ __all__ = [
 # breaker is the right tool for that case.
 _MAX_PROVIDER_ATTEMPTS = 2
 _RETRY_BACKOFF_SECONDS = 0.4
+
+logger = logging.getLogger(__name__)
 
 
 class TutorProviderError(RuntimeError):
@@ -513,6 +516,9 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                 if attempt + 1 < _MAX_PROVIDER_ATTEMPTS:
                     await asyncio.sleep(_RETRY_BACKOFF_SECONDS)
                     continue
+                logger.warning(
+                    "tutor provider call failed: %s", type(error).__name__
+                )
                 break
 
             output = getattr(result, "output", None)
