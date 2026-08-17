@@ -494,9 +494,13 @@ def decide(history, contract: Contract) -> Decision:
                        detail=f"P1 {stuck.id!r} open >= {contract.stuck_p1_rounds} rounds "
                               f"with fixer pushes between")
 
-    # A P1 resolution awaiting a human, with nothing else open, is not CLEAN and
-    # not mergeable: a maintainer must verify it on the current head.
-    if not open_set and pending_human:
+    # A P1 resolution awaiting a human is never CLEAN and never mergeable: a
+    # maintainer must verify it on the current head. This holds regardless of any
+    # coexisting open minors — the hold fails closed to NEEDS-HUMAN *before* the
+    # merge-family rules (3-5), so an unverified P1 resolution is never surfaced
+    # as a proposed gap under a MERGE-WITH-GAPS headline. A P1 gap is therefore
+    # only ever proposed under STUCK-P1 / HARD-CAP escalation (§6.4).
+    if pending_human:
         return _result(CONTINUE, RULE_P1_PENDING, True, round_count,
                        proposed_gaps=_proposed_gaps(open_findings, pending_human),
                        detail="P1 resolution awaits human verification")
@@ -508,7 +512,13 @@ def decide(history, contract: Contract) -> Decision:
                        detail="every open finding is a repeated minor (no new information)")
 
     # Rule 4: SOFT GATE (round >= soft_gate) — no P1s, only minors (new or not).
-    if round_count >= contract.soft_gate and not open_p1:
+    # The effective gate is clamped to the hard cap: soft_gate is env-tunable
+    # while hard_cap is fixed, so an operator setting soft_gate > hard_cap would
+    # otherwise leave the gate sitting *past* the cap. min(soft_gate, hard_cap)
+    # keeps the gate inside the loop's live range and preserves the invariant
+    # that the cap is the ceiling (pure — reads the contract, never the env).
+    soft_gate = min(contract.soft_gate, contract.hard_cap)
+    if round_count >= soft_gate and not open_p1:
         gaps = _proposed_gaps(open_findings, pending_human)
         return _result(MERGE_WITH_GAPS, RULE_SOFT_GATE, True, round_count, proposed_gaps=gaps,
                        detail=f"soft gate reached at round {round_count} with only minor findings")

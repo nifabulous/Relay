@@ -290,17 +290,44 @@ def test_dropped_open_p1_is_needs_human_never_merge_clean():
 
 def test_renamed_slug_same_file_cat_as_new_is_ambiguous_identity():
     """Rename attack: the same (file, cat) reappears as NEW under a fresh id
-    while the original is still open → ambiguous identity → needs-human, and
-    the STUCK-P1 counter is NOT reset into a fresh 1-round finding."""
-    comments = [
-        _comment(1, 1, [_finding("P1", "NEW", "app/models.py", "authz", "published-self-assert")]),
-        _comment(2, 2, [_finding("P1", "OPEN", "app/models.py", "authz", "published-self-assert")]),
-        _comment(3, 3, [_finding("P1", "NEW", "app/models.py", "authz", "published-forgeable")]),
-    ]
-    decision = arb.decide(_history(comments), _contract())
-    assert decision.needs_human is True
-    assert decision.cited_rule == "AMBIGUOUS-IDENTITY"
-    assert not decision.recommendation.startswith("MERGE")
+    while the original is still open.
+
+    The rename is refused OUTRIGHT at the fold step (AMBIGUOUS-IDENTITY →
+    needs-human) before any rule is evaluated, so the STUCK-P1 counter is never
+    consulted — a reviewer cannot rename a nearly-stuck P1 to silently restart
+    the count and dodge escalation.
+
+    Demonstrated by contrast on identical first two rounds (trailing run 2, one
+    short of the 3-round STUCK-P1 threshold): keeping the SAME id OPEN in round 3
+    tips it into STUCK-P1, whereas renaming it in round 3 does NOT reset into a
+    fresh 1-round finding that keeps looping (which would read CONTINUE) — it is
+    refused as ambiguous identity.
+    """
+    r1 = _comment(1, 1, [_finding("P1", "NEW", "app/models.py", "authz", "published-self-assert")])
+    r2 = _comment(2, 2, [_finding("P1", "OPEN", "app/models.py", "authz", "published-self-assert")])
+
+    # Control: holding the SAME id OPEN a third round tips it into STUCK-P1, so
+    # the run at round 3 is genuinely at the escalation threshold.
+    kept_open = arb.decide(
+        _history([r1, r2, _comment(3, 3, [
+            _finding("P1", "OPEN", "app/models.py", "authz", "published-self-assert")])]),
+        _contract(),
+    )
+    assert kept_open.cited_rule == "STUCK-P1"
+    assert kept_open.recommendation == "ESCALATE-TO-SCOPING"
+
+    # Rename in round 3 must NOT silently restart the count into a fresh finding
+    # (which would read CONTINUE); it is refused before any rule is consulted.
+    renamed = arb.decide(
+        _history([r1, r2, _comment(3, 3, [
+            _finding("P1", "NEW", "app/models.py", "authz", "published-forgeable")])]),
+        _contract(),
+    )
+    assert renamed.needs_human is True
+    assert renamed.cited_rule == "AMBIGUOUS-IDENTITY"
+    assert renamed.recommendation == "NEEDS-HUMAN"
+    assert renamed.recommendation != "CONTINUE"
+    assert not renamed.recommendation.startswith("MERGE")
 
 
 def test_open_state_with_unknown_id_is_orphan_needs_human():
@@ -367,6 +394,47 @@ def test_stuck_p1_beats_hard_cap():
     assert decision.cited_rule == "STUCK-P1"
 
 
+def test_interspersed_malformed_round_breaks_stuck_p1_run_conservatively():
+    """Documented conservative choice (_trailing_run): a malformed round between
+    P1 appearances breaks the STUCK-P1 *consecutive* run. A P1 open in rounds
+    1,2,[malformed 3],4,5 has a trailing run of only 2 (rounds 4,5), so STUCK-P1
+    does NOT fire at round 5 — the loop keeps going, fail-closed (the P1 stays
+    open and the hard cap remains the backstop). This pins the behavior so the
+    choice lives in the suite, not only in a code comment.
+
+    Contrast: the same P1 held OPEN across five *consecutive* rounds (no gap)
+    does fire STUCK-P1, proving the interspersed malformed round is what breaks
+    the run rather than the round count itself."""
+    def p1(state):
+        return [_finding("P1", state, "app/models.py", "authz", "p1")]
+
+    # Interspersed malformed round 3: contributes no finding states, breaking the
+    # run so the trailing run at round 5 is only length 2.
+    gapped = [
+        _comment(1, 1, p1("NEW")),
+        _comment(2, 2, p1("OPEN")),
+        _comment(3, 3, trailer=None),  # malformed — skipped, not in the P1's run
+        _comment(4, 4, p1("OPEN")),
+        _comment(5, 5, p1("OPEN")),
+    ]
+    decision = arb.decide(_history(gapped), _contract())
+    assert decision.round_count == 5  # the malformed round still counts
+    assert decision.cited_rule != "STUCK-P1"
+    assert decision.recommendation == "CONTINUE"
+
+    # Contrast: five consecutive P1-open rounds (no malformed gap) DO fire STUCK-P1.
+    consecutive = [
+        _comment(1, 1, p1("NEW")),
+        _comment(2, 2, p1("OPEN")),
+        _comment(3, 3, p1("OPEN")),
+        _comment(4, 4, p1("OPEN")),
+        _comment(5, 5, p1("OPEN")),
+    ]
+    contrast = arb.decide(_history(consecutive), _contract())
+    assert contrast.cited_rule == "STUCK-P1"
+    assert contrast.recommendation == "ESCALATE-TO-SCOPING"
+
+
 def test_exhausted_novelty_merges_with_gaps_before_the_soft_gate():
     """No P1s, every open finding a repeated minor → MERGE-WITH-GAPS via
     EXHAUSTED-NOVELTY, even at round 3 (before the soft gate)."""
@@ -392,6 +460,27 @@ def test_soft_gate_merges_with_gaps_when_a_new_minor_is_present():
     ]))
     decision = arb.decide(_history(comments), _contract())
     assert decision.round_count == 5
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+    assert decision.cited_rule == "SOFT-GATE"
+
+
+def test_soft_gate_is_clamped_to_the_hard_cap():
+    """A soft gate configured *softer* than the hard cap is clamped to the cap:
+    the effective gate is min(soft_gate, hard_cap). With soft_gate=12 and the
+    fixed hard_cap=10, a minors-only history (with a NEW minor at the latest
+    round, so EXHAUSTED-NOVELTY does not fire) reaches round 10 and merges via
+    the SOFT GATE — proving the effective gate is 10, not the raw 12. Without the
+    clamp, round 10 would fall through the (unreached) soft gate to a HARD-CAP
+    escalation, so this assertion fails on the pre-clamp code."""
+    comments = [_comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "a")])]
+    for n in range(2, 10):
+        comments.append(_comment(n, n, [_finding("P2", "OPEN", "app/a.py", "cat-a", "a")]))
+    comments.append(_comment(10, 10, [
+        _finding("P2", "OPEN", "app/a.py", "cat-a", "a"),
+        _finding("P3", "NEW", "app/b.py", "cat-b", "b"),  # new minor: novelty does not fire
+    ]))
+    decision = arb.decide(_history(comments), _contract(soft_gate=12))  # hard_cap stays 10
+    assert decision.round_count == 10
     assert decision.recommendation == "MERGE-WITH-GAPS"
     assert decision.cited_rule == "SOFT-GATE"
 
@@ -433,6 +522,39 @@ def test_p1_resolution_is_pending_human_and_blocks_merge_clean():
     assert decision.recommendation == "NEEDS-HUMAN"
     assert decision.cited_rule == "P1-RESOLUTION-PENDING"
     assert decision.needs_human is True
+
+
+def test_pending_human_p1_holds_needs_human_even_with_an_open_minor():
+    """Finding-1 regression: a P1 RESOLVED with in-diff evidence moves to
+    pending-human and leaves the open-set, but an UNRELATED minor is still open.
+
+    The pending-human hold must fire regardless of coexisting open minors:
+    P1-RESOLUTION-PENDING / NEEDS-HUMAN, never a merge-family headline. Before
+    the fix, `not open_set and pending_human` was False (the minor kept the
+    open-set non-empty), so control fell through to EXHAUSTED-NOVELTY and the
+    unverified P1 resolution was surfaced as a proposed gap under a
+    MERGE-WITH-GAPS headline — a fail-closed violation (§6.4: a P1 gap may be
+    proposed only under STUCK-P1 / HARD-CAP escalation)."""
+    comments = [
+        _comment(1, 1, [
+            _finding("P1", "NEW", "app/models.py", "authz", "p1"),
+            _finding("P2", "NEW", "app/a.py", "cat-a", "a"),
+        ]),
+        _comment(2, 2, [
+            _finding("P1", "RESOLVED", "app/models.py", "authz", "p1",
+                     evidence=_evidence(["app/models.py"])),
+            _finding("P2", "OPEN", "app/a.py", "cat-a", "a"),  # unrelated minor still open
+        ]),
+    ]
+    decision = arb.decide(_history(comments, diff_files=["app/models.py"]), _contract())
+    assert decision.recommendation == "NEEDS-HUMAN"
+    assert decision.cited_rule == "P1-RESOLUTION-PENDING"
+    assert decision.needs_human is True
+    # The pending P1 is held for a human, NOT emitted under a merge headline.
+    assert decision.recommendation != "MERGE-WITH-GAPS"
+    assert not decision.recommendation.startswith("MERGE")
+    pending = [g for g in decision.proposed_gaps if g["id"] == "p1"]
+    assert pending and pending[0]["status"] == "pending-human"
 
 
 def test_p2_resolved_without_in_diff_evidence_stays_open():
