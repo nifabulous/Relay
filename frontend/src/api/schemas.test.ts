@@ -288,6 +288,15 @@ describe("TutorResponse schema", () => {
     }
   });
 
+  it("rejects a response with a non-boolean needs_clarification value", () => {
+    expect(() =>
+      TutorResponseSchema.parse({
+        ...tutorResponseFixture,
+        needs_clarification: "false",
+      }),
+    ).toThrow();
+  });
+
   it("tolerates null for follow_up, safety_notice, and citation url", () => {
     const parsed = TutorResponseSchema.parse({
       ...tutorResponseFixture,

@@ -16,6 +16,8 @@ import { SchemeTabs } from "./SchemeTabs";
 import { SchemeDetails } from "./SchemeDetails";
 import { SchemeTable } from "./SchemeTable";
 import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
+import { buildSchemeContext } from "../tutor/tutorContext";
+import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -267,6 +269,24 @@ export function SchemesPage() {
     !isInternational && query.data
       ? (query.data as SchemesResponse).schemes
       : [];
+
+  /*
+   * The currency alone reaches every rail document the backend holds for it,
+   * so one publish per tab covers all of them — no need to name each rail.
+   * The international tab has no currency, so it stays on the scheme surface
+   * and the tutor answers from the SWIFT/correspondent documents.
+   */
+  usePublishTutorContext(
+    isInternational
+      ? { surface: "scheme" }
+      : buildSchemeContext({
+          currency: String(activeTab.lookupCode ?? ""),
+          summary:
+            domesticSchemes.length > 0
+              ? `Rails shown: ${domesticSchemes.map((scheme) => scheme.name).join(", ")}.`
+              : undefined,
+        }),
+  );
 
   return (
     <div className="explore">

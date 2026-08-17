@@ -271,3 +271,26 @@ describe("dark palette selector structure", () => {
     expect(darkOnly).toEqual([]);
   });
 });
+
+// ── Review fix: CT2 ─────────────────────────────────────────────────────────
+
+describe("floating surface elevation", () => {
+  /*
+   * A drop shadow only reads as depth when it is darker than its backdrop. The
+   * approved elevation used #1d2433 against a #080b12 dark canvas, which is
+   * 5.3x lighter — it could not work, and the review that approved it was shown
+   * a light-mode board only. This pins the rule so the next elevation decision
+   * cannot repeat that: on dark, elevation lifts the surface instead.
+   */
+  it("dark elevation lifts the surface rather than casting a lighter shadow", () => {
+    const canvas = luminance("#080b12");
+    const raised = luminance("#1c2740"); // --color-surface-2, dark
+    expect(raised).toBeGreaterThan(canvas);
+  });
+
+  it("a shadow colour is only usable where it is darker than the canvas", () => {
+    const shadow = luminance("#1d2433");
+    expect(luminance("#f6f8fc")).toBeGreaterThan(shadow); // light: valid
+    expect(luminance("#080b12")).toBeLessThan(shadow); // dark: inverted
+  });
+});
