@@ -24,6 +24,7 @@ out of each review comment. The core accepts only the schema-1 shape.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -667,18 +668,34 @@ _GAP_ISSUE_MAX_BYTES = 60_000  # mirrors codex_responses.py's output-bound style
 _GAP_ISSUE_LIST_LIMIT = 500
 
 
-def _gap_marker(pr, gap_id: str) -> str:
-    # Keyed on the finding's canonical id, never the head SHA (plan §6.4): the
-    # same gap re-proposed at a later head must resolve to this SAME marker,
-    # so a later post_gap_issues call finds and skips it instead of opening a
-    # twin. Format matches plan §6.4 verbatim: no (file, cat) hash appended.
-    # decide() fails closed on a NEW finding whose (file, cat) collides with an
-    # already-open key, which is the guarantee this format relies on for id
-    # uniqueness within one valid decision; post_gap_issues additionally
-    # protects itself within a single run (see the existing_issues.append call
-    # below) so that even a decision violating that invariant collapses onto
-    # one issue rather than opening a duplicate.
-    return f"<!-- codex-gap:{pr}:{gap_id} -->"
+def _gap_identity_hash(file: str, cat: str) -> str:
+    """First 8 hex chars of ``sha256(file + "\\n" + cat)`` — the ``(file,
+    cat)`` half of the arbiter's canonical ``(id, file, cat)`` identity
+    (§6.1). Deterministic and independent of head SHA or round index, so the
+    SAME ``(file, cat)`` always folds to the SAME 8 hex chars, across
+    rounds, heads, and re-runs."""
+    digest = hashlib.sha256(f"{file}\n{cat}".encode("utf-8")).hexdigest()
+    return digest[:8]
+
+
+def _gap_marker(pr, gap_id: str, file: str, cat: str) -> str:
+    # Keyed on the finding's full canonical IDENTITY, never the head SHA
+    # (plan §6.4): the same gap re-proposed at a later head must resolve to
+    # this SAME marker, so a later post_gap_issues call finds and skips it
+    # instead of opening a twin.
+    #
+    # `id` ALONE is not enough to key on. §6.1 is explicit that the
+    # reviewer's slug is a PROPOSAL and the arbiter's own canonical identity
+    # is the TRIPLE (id, file, cat) — decide() legitimately allows two
+    # genuinely-distinct findings to share an `id` at different (file, cat);
+    # it only refuses a (file, cat) KEY collision (AMBIGUOUS-IDENTITY), never
+    # id reuse across different keys. A marker built from `id` alone
+    # therefore collided for two such findings: the second's issue-search
+    # matched the first's just-created issue and silently skipped creating
+    # its own — a PERMANENT dropped finding, not a duplicate. Folding a
+    # short, stable hash of (file, cat) into the marker restores per-finding
+    # uniqueness while staying deterministic across rounds and heads.
+    return f"<!-- codex-gap:{pr}:{gap_id}:{_gap_identity_hash(file, cat)} -->"
 
 
 def _issue_comment_permalink(repo: str, pr, comment_id) -> str:
@@ -738,7 +755,7 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
     (never appended at the end, where truncation could drop it).
     """
     lines = [
-        _gap_marker(pr, gap["id"]),
+        _gap_marker(pr, gap["id"], gap["file"], gap["cat"]),
         f"## Proposed gap: `{gap['id']}`",
         "",
         "Durable ledger entry for a finding the automated PR review loop could",
@@ -883,7 +900,7 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
 
     results = []
     for gap in decision.proposed_gaps:
-        marker = _gap_marker(pr, gap["id"])
+        marker = _gap_marker(pr, gap["id"], gap["file"], gap["cat"])
         existing_number = _find_existing_issue(existing_issues, marker)
         if existing_number is not None:
             results.append({
@@ -899,16 +916,17 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
         body = render_gap_issue_body(gap, pr, permalink, contract_text)
         # Belt-and-suspenders (plan §6.4): the fields going in are already
         # SAFE, but the permalink/contract lines are cheap to defend, so the
-        # FINAL assembled body is sanitized like everything else this repo
-        # posts, then size-bounded. Sanitize first, truncate second — the same
-        # order codex_review_pr.sh uses — because truncating first could cut a
-        # line-anchored redaction pattern in half and let a partial secret
-        # through.
+        # FINAL assembled body AND title are sanitized like everything else
+        # this repo posts, then the body is size-bounded. Sanitize first,
+        # truncate second — the same order codex_review_pr.sh uses — because
+        # truncating first could cut a line-anchored redaction pattern in
+        # half and let a partial secret through.
         body = _truncate_gap_body(_sanitize_gap_body(body), _GAP_ISSUE_MAX_BYTES)
+        title = _sanitize_gap_body(_gap_issue_title(gap))
 
         proc = subprocess.run(
             ["gh", "issue", "create", "--repo", repo,
-             "--title", _gap_issue_title(gap), "--body", body,
+             "--title", title, "--body", body,
              "--label", _PROPOSED_GAP_LABEL],
             capture_output=True, text=True, check=True,
         )
@@ -918,13 +936,14 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
             "action": "created",
             "issue_number": created_number,
         })
-        # Defends the SAME run against two proposed_gaps entries that (contrary
-        # to the invariant decide() is meant to enforce) share an id: without
-        # this, the second would search the STALE existing_issues list, miss
-        # the one just created, and open a twin. Appending it here means the
-        # second collapses onto the first instead — consistent with treating
-        # `id` as the finding's canonical identity — rather than silently
-        # dropping it OR duplicating the issue.
+        # Defends the SAME run against two proposed_gaps entries that resolve
+        # to the SAME marker — the same canonical (id, file, cat) triple —
+        # somehow appearing twice in one decision: without this, the second
+        # would search the STALE existing_issues list, miss the one just
+        # created, and open a twin. This does NOT collapse two distinct
+        # findings that merely share an `id` at different (file, cat); those
+        # now hash to different markers (see _gap_marker) and always get
+        # their own issue.
         existing_issues.append({"number": created_number, "body": body})
     return results
 

@@ -897,6 +897,19 @@ def _created_body(record: dict) -> str:
     return argv[argv.index("--body") + 1]
 
 
+def _created_title(record: dict) -> str:
+    argv = record["argv"]
+    return argv[argv.index("--title") + 1]
+
+
+def _calls_matching(stub_dir: Path, cmd: str) -> list:
+    """argv lists recorded by the gh stub for a given logical command name
+    (``"label-create"``, ``"issue-list"``, or ``"issue-create"``) — see
+    _GH_STUB_SCRIPT's ``_log`` helper, which appends one JSON line per
+    invocation to calls.jsonl regardless of which of the three it is."""
+    return [c["argv"] for c in _read_jsonl(stub_dir / "calls.jsonl") if c["cmd"] == cmd]
+
+
 def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_path, monkeypatch):
     """Brief assertion 1 (search-before-create): no existing issue carries any
     gap's marker, so exactly one `gh issue create` happens per gap, each body
@@ -929,8 +942,8 @@ def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_pat
     assert len(created) == 2
     bodies = [_created_body(rec) for rec in created]
 
-    assert any("<!-- codex-gap:100:gap-a -->" in b for b in bodies)
-    assert any("<!-- codex-gap:100:gap-b -->" in b for b in bodies)
+    assert any(arb._gap_marker(100, "gap-a", "app/a.py", "cat-a") in b for b in bodies)
+    assert any(arb._gap_marker(100, "gap-b", "app/b.py", "cat-b") in b for b in bodies)
     for rec in created:
         argv = rec["argv"]
         assert "--label" in argv
@@ -941,6 +954,39 @@ def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_pat
     # canonical round that carries it — so the permalink must point there.
     gap_a_body = next(b for b in bodies if "gap-a" in b)
     assert "https://github.com/stub-org/stub-repo/pull/100#issuecomment-2" in gap_a_body
+
+
+def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_path, monkeypatch):
+    """Minor 4: `gh issue list` must be scoped with BOTH `--label proposed-gap`
+    AND `--state all`. A regression dropping `--state all` would silently
+    narrow the search to open issues only, so a gap issue a maintainer already
+    closed (e.g. as a documented accepted-gap) would no longer be found by
+    _find_existing_issue and post_gap_issues would spuriously re-create it.
+    Asserts on the actual argv the gh stub recorded for the issue-list call,
+    not on the search *result* — a passing search-before-create test does not
+    prove the query was scoped correctly, only that today's stub happened to
+    return the right thing."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    list_calls = _calls_matching(stub_dir, "issue-list")
+    assert len(list_calls) == 1
+    argv = list_calls[0]
+    assert "--label" in argv
+    assert argv[argv.index("--label") + 1] == "proposed-gap"
+    assert "--state" in argv
+    assert argv[argv.index("--state") + 1] == "all"
 
 
 def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monkeypatch):
@@ -959,7 +1005,7 @@ def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monk
     decision = arb.decide(history, contract)
     assert [g["id"] for g in decision.proposed_gaps] == ["gap-a"]
 
-    marker = "<!-- codex-gap:100:gap-a -->"
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
     (stub_dir / "issue_list.json").write_text(json.dumps([
         {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text"}
     ]))
@@ -990,7 +1036,7 @@ def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
 
     created = _read_jsonl(stub_dir / "created.jsonl")
     assert len(created) == 1
-    marker = "<!-- codex-gap:100:gap-a -->"
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
     body = _created_body(created[0])
     assert marker in body
     assert re.search(r"[0-9a-fA-F]{40}", marker) is None  # no head SHA baked into the marker
@@ -1041,6 +1087,37 @@ def test_post_gap_issues_sanitizes_the_assembled_body(tmp_path, monkeypatch):
     assert "[IBAN]" in body
 
 
+def test_post_gap_issues_sanitizes_the_title(tmp_path, monkeypatch):
+    """Minor 3: the issue TITLE goes through the same sanitize() call as the
+    body, not just the body. In ordinary operation the title's fields (sev,
+    cat, file, id) are safe slugs, but the stated guarantee is that the FINAL
+    assembled issue is sanitized — so this plants an IBAN in a finding's
+    `cat` (the field most directly interpolated into
+    _gap_issue_title/render_gap_issue_body) and asserts it never reaches the
+    `gh issue create --title` argv, mirroring
+    test_post_gap_issues_sanitizes_the_assembled_body's treatment of the body."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    planted_iban = "DE89370400440532013000"
+    comments = [
+        _comment(1, 1, [_finding("P3", "NEW", "app/a.py", planted_iban, "gap-a")]),
+        _comment(2, 2, [_finding("P3", "OPEN", "app/a.py", planted_iban, "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    assert decision.proposed_gaps  # sanity: there is something to post
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    title = _created_title(created[0])
+    assert planted_iban not in title
+    assert "[IBAN]" in title
+
+
 def test_post_gap_issues_bounds_body_size_with_a_truncation_marker(tmp_path, monkeypatch):
     """Brief assertion 4 (part 2): an oversized body (a huge contract_text) is
     truncated to the size bound with a visible marker, not silently rejected
@@ -1065,7 +1142,8 @@ def test_post_gap_issues_bounds_body_size_with_a_truncation_marker(tmp_path, mon
     body = _created_body(created[0])
     assert len(body.encode("utf-8")) <= arb._GAP_ISSUE_MAX_BYTES
     assert "Truncated" in body
-    assert "<!-- codex-gap:100:gap-a -->" in body  # the marker survives truncation
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
+    assert marker in body  # the marker survives truncation
 
 
 def test_post_gap_issues_renders_both_open_and_pending_human_statuses(tmp_path, monkeypatch):
@@ -1108,6 +1186,88 @@ def test_post_gap_issues_renders_both_open_and_pending_human_statuses(tmp_path, 
 
     assert "- Status: `pending-human`" in bodies_by_id["p1-pending"]
     assert "- Status: `open`" in bodies_by_id["p1-open"]
+
+
+def test_two_distinct_gaps_sharing_an_id_get_separate_issues_and_markers(tmp_path, monkeypatch):
+    """CRITICAL regression (drop-safety). The reviewer's `id` slug is NOT
+    required to be globally unique — the arbiter's canonical finding identity
+    is the TRIPLE (id, file, cat) (plan §6.1), and decide() legitimately
+    allows two genuinely-distinct findings to share an `id` at different
+    (file, cat): it only refuses a (file, cat) KEY collision
+    (AMBIGUOUS-IDENTITY), never id reuse across different keys. Before the
+    fix, `_gap_marker` built the idempotency marker from `id` ALONE, so two
+    such findings produced byte-identical markers: the second issue-create's
+    own marker was already "found" among the just-created first issue's body,
+    so it silently collapsed onto the first finding's issue and was never
+    created for its own — a PERMANENT silent drop, not a duplicate.
+
+    Driven through the real decide() -> post_gap_issues path (never a
+    hand-built gap list), under the DEFAULT contract: a 5-round history where
+    a filler finding is repeated to reach the round-5 soft gate, and two
+    brand-new findings sharing id="dup-id" at different (file, cat) appear
+    together for the first time in the final round.
+    """
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()  # DEFAULT contract: soft_gate=5, hard_cap=10
+
+    def filler(state):
+        return _finding("P2", state, "app/filler.py", "filler-cat", "filler")
+
+    comments = [_comment(1, 1, [filler("NEW")])]
+    for n in (2, 3, 4):
+        comments.append(_comment(n, n, [filler("OPEN")]))
+    comments.append(_comment(5, 5, [
+        filler("OPEN"),
+        _finding("P2", "NEW", "app/a.py", "cat-a", "dup-id"),
+        _finding("P3", "NEW", "app/b.py", "cat-b", "dup-id"),
+    ]))
+    history = _history(comments, pr=100, repo=STUB_REPO)
+
+    decision = arb.decide(history, contract)
+    assert decision.round_count == 5
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+    assert decision.cited_rule == "SOFT-GATE"
+    dup_gaps = [g for g in decision.proposed_gaps if g["id"] == "dup-id"]
+    assert len(dup_gaps) == 2, "the fixture must produce two distinct gaps sharing an id"
+    assert {(g["file"], g["cat"]) for g in dup_gaps} == {
+        ("app/a.py", "cat-a"), ("app/b.py", "cat-b"),
+    }
+
+    (stub_dir / "issue_list.json").write_text("[]")
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    # Three distinct findings (filler, dup-id@app/a.py, dup-id@app/b.py) must
+    # yield three distinct issues. Before the fix this was 2: the second
+    # dup-id finding silently collapsed onto the first's issue.
+    assert {r["action"] for r in results} == {"created"}
+    assert len(results) == 3
+    assert len({r["issue_number"] for r in results}) == 3, (
+        "two distinct findings sharing an id must not resolve to the same issue"
+    )
+    created = _read_jsonl(stub_dir / "created.jsonl")
+    assert len(created) == 3
+
+    bodies = [_created_body(rec) for rec in created]
+    body_a = next(b for b in bodies if "app/a.py" in b and "cat-a" in b)
+    body_b = next(b for b in bodies if "app/b.py" in b and "cat-b" in b)
+    assert body_a != body_b
+
+    marker_a = body_a.splitlines()[0]
+    marker_b = body_b.splitlines()[0]
+    assert marker_a != marker_b, "two distinct findings must never share a marker"
+    # Same reviewer-proposed id, different canonical (id, file, cat) identity:
+    # both markers carry the shared id prefix but resolve to different full
+    # markers (a stable hash of (file, cat) appended).
+    assert marker_a.startswith("<!-- codex-gap:100:dup-id:")
+    assert marker_b.startswith("<!-- codex-gap:100:dup-id:")
+
+    # Each finding's OWN (file, cat) is recorded in ITS OWN issue body, not the
+    # other's — proving the fix does not just rename which issue "wins".
+    assert "- File: `app/a.py`" in body_a
+    assert "- Category: `cat-a`" in body_a
+    assert "- File: `app/b.py`" in body_b
+    assert "- Category: `cat-b`" in body_b
 
 
 def test_post_gap_issues_refuses_without_operator_mode(monkeypatch):
