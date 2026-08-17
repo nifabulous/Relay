@@ -57,7 +57,6 @@ describe("buildTrackingContext", () => {
       status: "In progress",
       eventNames: ["Created", "Sent to correspondent", "Compliance review"],
       currency: "USD",
-      amount: "1,000.00",
     });
     expect(context.surface).toBe("tracking");
     expect(context.currency).toBe("USD");
@@ -73,10 +72,20 @@ describe("buildTrackingContext", () => {
       status: "In progress",
       eventNames: ["Created"],
       currency: "USD",
-      amount: "10.00",
       uetr: "97ed4827-7b6f-4491-a06f-b548d5a7512d",
     } as never);
+    expect(context).not.toHaveProperty("uetr");
     expect(JSON.stringify(context)).not.toContain("97ed4827");
+  });
+
+  it("does not send the transaction amount to the tutor", () => {
+    const context = buildTrackingContext({
+      status: "In progress",
+      eventNames: ["Created"],
+      currency: "USD",
+    });
+    expect(context.currency).toBe("USD");
+    expect(JSON.stringify(context)).not.toContain("1,000.00");
   });
 
   it("bounds a long event list so the summary cannot grow without limit", () => {
@@ -84,7 +93,6 @@ describe("buildTrackingContext", () => {
       status: "In progress",
       eventNames: Array.from({ length: 200 }, (_, index) => `Event number ${index}`),
       currency: "USD",
-      amount: "1.00",
     });
     expect(context.result_summary!.length).toBeLessThanOrEqual(600);
   });
@@ -96,7 +104,6 @@ describe("buildTrackingContext", () => {
           status: "Credited",
           eventNames: ["Created", "Credited"],
           currency: "EUR",
-          amount: "5.00",
         }),
       ),
     ).not.toThrow();
@@ -154,13 +161,11 @@ describe("contextIdentity", () => {
       status: "In progress",
       eventNames: ["Created"],
       currency: "USD",
-      amount: "1.00",
     });
     const second = buildTrackingContext({
       status: "In progress",
       eventNames: ["Created", "Sent"],
       currency: "USD",
-      amount: "1.00",
     });
     expect(contextIdentity(first)).toBe(contextIdentity(second));
   });

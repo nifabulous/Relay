@@ -32,15 +32,15 @@ The syllabus handoff is in [Syllabus handoff](#syllabus-handoff) below.
 
 ### Verified health snapshot
 
-These numbers were run against the current checkout on 2026-08-15:
+These numbers were run against the current checkout on 2026-08-17:
 
 | Metric | Result |
 |---|---|
-| Backend tests | **1,302 passed** (`.venv/bin/pytest -q`) |
-| Frontend unit/integration tests | **1,172 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
+| Backend tests | **1,596 passed** (`.venv/bin/pytest -q`) |
+| Frontend unit/integration tests | **1,224 passing** (`cd frontend && npm test -- --run --no-file-parallelism`; the default parallel run is still load-sensitive for the Case Desk preferred-tier scenario) |
 | Playwright E2E | **289 passed, 10 intentional skips, 1 pre-existing axe failure** — six-project Chromium matrix; the generic WebKit `mobile` project was not run because its browser binary is not installed. The axe failure is `scrollable-region-focusable` on the bank-detail SSI table scroll. |
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
-| Eager shell bundle | **133,366 bytes gzip** (budget: 204,800 bytes) |
+| Eager shell bundle | **167,096 bytes gzip** (budget: 204,800 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
 | Backend API endpoints | **27** |
 
@@ -68,10 +68,10 @@ bare total. See [Testing](#testing) for the recommended commands.
 
 | Metric | Value |
 |---|---|
-| Backend tests | 1,302 passing |
-| Frontend tests | 1,172 passing (serial-file mode) |
+| Backend tests | 1,596 passing |
+| Frontend tests | 1,224 passing (serial-file mode) |
 | E2E tests (Playwright) | 289 passing on the six-project Chromium matrix (10 intentional skips; 1 pre-existing SSI-table axe failure) |
-| Eager shell bundle | 133,366 bytes gzip (budget: 204,800 bytes) |
+| Eager shell bundle | 167,096 bytes gzip (budget: 204,800 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
 | Backend API endpoints | 27 |

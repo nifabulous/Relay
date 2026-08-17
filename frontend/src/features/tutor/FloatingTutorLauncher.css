@@ -70,8 +70,9 @@
      would imply otherwise. */
   left: var(--space-3);
   right: var(--space-3);
+  top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-3));
   bottom: calc(var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--space-3));
-  max-height: 70vh;
+  max-height: none;
   overflow-y: auto;
 
   padding: var(--space-3);
@@ -115,9 +116,10 @@
   .tutor-floating-panel {
     left: auto;
     right: var(--space-5);
-    bottom: calc(var(--space-5) + 44px + var(--space-3));
+    top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-5));
     width: 380px;
-    max-height: calc(100vh - var(--sim-banner-height) - var(--topbar-height) - var(--space-8));
+    bottom: var(--space-5);
+    max-height: none;
   }
 }
 

@@ -164,4 +164,14 @@ describe("FloatingTutorLauncher — unavailable deployment", () => {
     rerender(<FloatingTutorLauncher />);
     await waitFor(() => expect(calls).toBe(1));
   });
+
+  it("keeps the pill disabled when availability is not a boolean", async () => {
+    server.use(
+      http.get("/api/tutor/availability", () =>
+        HttpResponse.json({ available: "false" }),
+      ),
+    );
+    render(<FloatingTutorLauncher />);
+    expect(await screen.findByRole("button", { name: /tutor/i })).toBeDisabled();
+  });
 });

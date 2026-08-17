@@ -352,7 +352,6 @@ describe("TutorPanel — conversation history", () => {
       status: "In progress",
       eventNames: ["Created"],
       currency: "USD",
-      amount: "1.00",
     });
     const { rerender } = render(<TutorPanel context={first} />);
     await ask("What does this mean?");
@@ -364,7 +363,6 @@ describe("TutorPanel — conversation history", () => {
           status: "In progress",
           eventNames: ["Created", "Sent to correspondent"],
           currency: "USD",
-          amount: "1.00",
         })}
       />,
     );
@@ -509,7 +507,6 @@ describe("TutorPanel — conversation survival and error kinds", () => {
       status: "In progress",
       eventNames: ["Created"],
       currency: "USD",
-      amount: "1.00",
     });
     const { rerender } = render(<TutorPanel context={first} />);
     await ask("What does this mean?");
@@ -522,7 +519,6 @@ describe("TutorPanel — conversation survival and error kinds", () => {
             status: "In progress",
             eventNames: events,
             currency: "USD",
-            amount: "1.00",
           })}
         />,
       );

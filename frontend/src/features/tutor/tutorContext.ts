@@ -54,7 +54,6 @@ export interface TrackingContextInput {
   status: string;
   eventNames: string[];
   currency: string;
-  amount: string;
 }
 
 export function buildTrackingContext(input: TrackingContextInput): TutorContext {
@@ -74,7 +73,7 @@ export function buildTrackingContext(input: TrackingContextInput): TutorContext 
   const events = input.eventNames.slice(0, 12).join(", ");
   const summary =
     `Visible status: ${input.status}. ` +
-    `Amount: ${input.amount} ${input.currency}. ` +
+    `Currency: ${input.currency}. ` +
     `Visible events: ${events}.`;
 
   return {

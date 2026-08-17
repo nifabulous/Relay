@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { TutorAvailabilitySchema } from "../../api/schemas";
 import { useTutorSurfaceContext } from "./tutorSurfaceStore";
 import "./FloatingTutorLauncher.css";
 
@@ -31,6 +32,10 @@ const TutorPanel = lazy(() =>
 
 const HEADING_ID = "tutor-panel-heading";
 
+export interface FloatingTutorLauncherProps {
+  onOpenChange?: (open: boolean) => void;
+}
+
 function TutorIcon() {
   return (
     <svg
@@ -50,7 +55,7 @@ function TutorIcon() {
   );
 }
 
-export function FloatingTutorLauncher() {
+export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherProps) {
   const context = useTutorSurfaceContext();
   const [open, setOpen] = useState(false);
   /*
@@ -68,9 +73,9 @@ export function FloatingTutorLauncher() {
 
   useEffect(() => {
     let cancelled = false;
-    apiRequest<{ available: boolean }>("/api/tutor/availability")
+    apiRequest("/api/tutor/availability", undefined, TutorAvailabilitySchema)
       .then((body) => {
-        if (!cancelled) setAvailable(Boolean(body?.available));
+        if (!cancelled) setAvailable(body.available === true);
       })
       // A probe that fails is not evidence the tutor is off, but it is evidence
       // we cannot promise it works. Disable rather than offer a control that
@@ -87,11 +92,12 @@ export function FloatingTutorLauncher() {
 
   const close = useCallback(() => {
     setOpen(false);
+    onOpenChange?.(false);
     // Focus cannot be restored here: the pill is still mounted, but deferring
     // to the effect below keeps this identical to the in-page launcher's
     // behaviour and survives the pill being conditionally rendered later.
     setRestoreFocus(true);
-  }, []);
+  }, [onOpenChange]);
 
   useEffect(() => {
     if (open || !restoreFocus) return;
@@ -118,7 +124,14 @@ export function FloatingTutorLauncher() {
         aria-describedby={available === false ? "tutor-fab-unavailable" : undefined}
         aria-expanded={open}
         aria-controls={open ? "tutor-floating-panel" : undefined}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          if (open) {
+            close();
+            return;
+          }
+          setOpen(true);
+          onOpenChange?.(true);
+        }}
       >
         <TutorIcon />
         <span className="tutor-fab__label">Tutor</span>

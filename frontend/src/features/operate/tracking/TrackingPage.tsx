@@ -146,7 +146,6 @@ export function TrackingPage() {
           status: data.current_status,
           eventNames: data.timeline.map((entry) => entry.status),
           currency: data.sent_amount?.split(" ").pop() ?? "",
-          amount: data.sent_amount ?? "",
         })
       : { surface: "tracking" },
   );

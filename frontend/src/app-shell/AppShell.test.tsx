@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppShell, reloadPreferences } from "./AppShell";
@@ -125,6 +125,21 @@ describe("AppShell", () => {
   it("renders a desktop rail", () => {
     renderShell();
     expect(screen.getByLabelText("Primary navigation")).toBeInTheDocument();
+  });
+
+  it("reserves the tutor column while the panel is open", async () => {
+    const user = userEvent.setup();
+    renderShell();
+
+    const shell = document.querySelector(".app-shell");
+    expect(shell).not.toHaveClass("app-shell--tutor-open");
+
+    await user.click(screen.getByRole("button", { name: /^tutor$/i }));
+    await screen.findByRole("log");
+    expect(shell).toHaveClass("app-shell--tutor-open");
+
+    await user.click(screen.getByRole("button", { name: /close tutor/i }));
+    await waitFor(() => expect(shell).not.toHaveClass("app-shell--tutor-open"));
   });
 });
 

@@ -634,6 +634,12 @@ export type InternationalSchemesResponse = z.infer<
  * AI Tutor
  * ------------------------------------------------------------------ */
 
+export const TutorAvailabilitySchema = z.object({
+  available: z.boolean(),
+});
+
+export type TutorAvailability = z.infer<typeof TutorAvailabilitySchema>;
+
 /**
  * Mirrors `app/tutor/schemas.py`.
  *
