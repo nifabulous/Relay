@@ -24,6 +24,7 @@ Complete the consent and storage details before each session. Product-use consen
 - If a participant volunteers sensitive information, stop copying or recording that detail, ask them to rephrase without it, and delete or redact the captured fragment before continuing. Do not preserve it in the readout.
 - Keep the consent log, withdrawal contact, and any key linking a participant code to a person separate from research notes, with access limited to the research owner. Share the withdrawal process before the session. A participant may withdraw through synthesis lock; delete their raw materials and remove their code from the analysis. Explain that fully aggregate, de-identified findings completed after the lock may no longer be traceable to remove.
 - Set the deletion date before collection. Delete raw audio/video, transcripts, and working notes no later than 30 days after the final session, or sooner on withdrawal; retain only the aggregate, de-identified readout and the minimum consent record required by the team's approved policy.
+- Record post-session deletion confirmation in the approved research store, not in Git or the readout. The confirmation must contain only the participant code, deletion date, and responsible researcher.
 
 ## Case coverage
 
@@ -45,6 +46,7 @@ Product-use consent: yes / no
 Researcher notes: yes / no    Audio/video: yes / no
 Transcription: yes / no       De-identified quotation: yes / no
 Approved storage/data owner: ____    Withdrawal process shared: yes / no
+Raw-material deletion date: ____     Post-session deletion confirmed: ____
 
 Task success: pass / partial / fail
 Evidence requested or cited: ____
