@@ -217,15 +217,15 @@ def test_provider_failure_logs_only_a_safe_failure_class(tutor_client, caplog):
     caplog.clear()
     client = tutor_client(
         FakeTutorEngine(
-            failure=TutorProviderError("quota exceeded for org-secret")
+            failure=TutorProviderError("org_secret_reference")
         )
     )
     with caplog.at_level(logging.WARNING, logger="app.routers.tutor"):
         response = client.post(ENDPOINT, json=_payload())
 
     assert response.status_code == 503
-    assert "org-secret" not in caplog.text
-    assert "quota exceeded for org-secret" not in caplog.text
+    assert "org_secret_reference" not in caplog.text
+    assert "tutor engine failed: TutorProviderError" in caplog.text
 
 
 def test_a_timeout_becomes_the_same_stable_response_not_a_platform_504(tutor_client):

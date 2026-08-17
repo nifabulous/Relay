@@ -76,12 +76,29 @@ _UNAVAILABLE_DETAIL = (
     "something wrong with your question — please try again shortly."
 )
 
+_SAFE_PROVIDER_FAILURE_CLASSES = frozenset(
+    {
+        "APIConnectionError",
+        "APITimeoutError",
+        "AuthenticationError",
+        "BadRequestError",
+        "ConflictError",
+        "InternalServerError",
+        "ModelHTTPError",
+        "NotFoundError",
+        "PermissionDeniedError",
+        "RateLimitError",
+        "TimeoutError",
+        "UnprocessableEntityError",
+    }
+)
+
 
 def _safe_tutor_failure_class(error: BaseException) -> str:
     """Return a searchable failure class without exposing upstream details."""
     if isinstance(error, TutorProviderError):
         provider_class = str(error).strip()
-        if provider_class.isascii() and provider_class.isidentifier():
+        if provider_class in _SAFE_PROVIDER_FAILURE_CLASSES:
             return provider_class
         return type(error).__name__
     return type(error).__name__
