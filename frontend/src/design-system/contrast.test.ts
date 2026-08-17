@@ -309,4 +309,9 @@ describe("floating surface elevation", () => {
     expect(ratio(LIGHT, "--color-floating-border", "--color-surface")).toBeGreaterThanOrEqual(3);
     expect(ratio(DARK, "--color-floating-border", "--color-surface-2")).toBeGreaterThanOrEqual(3);
   });
+
+  it("caps the mobile tutor sheet so the page behind remains usable", () => {
+    const mobileCss = FLOATING_CSS.split("@media (min-width: 1024px)")[0];
+    expect(mobileCss).toMatch(/max-height:\s*min\(70dvh,\s*42rem\);/);
+  });
 });
