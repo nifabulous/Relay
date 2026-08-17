@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "_reconstruction": "PR #21 replay. DOCUMENTED RECONSTRUCTION, not a fetch: PR 21's real history predates the schema-2 trailer. Real trajectory: 7 rounds mixing recurring P1s with minor findings. Unlike PR 22 and PR 24, PR 21's outcome is NOT predicted here in advance. This fixture models the trajectory as faithfully as the surviving description allows (one P1 'sig-verify' in app/auth.py recurring across all 7 rounds; a P2 'fee-round' raised round 1 and resolved round 3; a P3 'doc-gap' raised round 4 onward), and the test COMPUTES the arbiter's disposition from this trace and PINS it as a locked regression. See the test's dated 'computed & locked' note for the pinned value and its derivation.",
+  "repo": "leatherback/relay",
+  "pr": 21,
+  "current_head_sha": "7777777777777777777777777777777777777777",
+  "current_diff_files": [
+    "app/services/fee_calculator.py"
+  ],
+  "comments": [
+    {
+      "comment_id": 2101,
+      "created_at": "2026-08-14T08:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "1111111111111111111111111111111111111111",
+      "marker": "codex-pr-review:21:1111111111111111111111111111111111111111",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "NEW", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P2", "state": "NEW", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "fee-rounding-drift"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2102,
+      "created_at": "2026-08-14T08:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "2222222222222222222222222222222222222222",
+      "marker": "codex-pr-review:21:2222222222222222222222222222222222222222",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P2", "state": "OPEN", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "fee-rounding-drift"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2103,
+      "created_at": "2026-08-14T09:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "3333333333333333333333333333333333333333",
+      "marker": "codex-pr-review:21:3333333333333333333333333333333333333333",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P2", "state": "RESOLVED", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "fee-rounding-drift",
+           "evidence": {"files": ["app/services/fee_calculator.py"], "verification": "tests/test_fees.py::test_fee_rounding_is_stable"}}
+        ]
+      }
+    },
+    {
+      "comment_id": 2104,
+      "created_at": "2026-08-14T09:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "4444444444444444444444444444444444444444",
+      "marker": "codex-pr-review:21:4444444444444444444444444444444444444444",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P3", "state": "NEW", "file": "docs/architecture.md", "cat": "docs", "id": "auth-flow-doc-gap"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2105,
+      "created_at": "2026-08-14T10:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "5555555555555555555555555555555555555555",
+      "marker": "codex-pr-review:21:5555555555555555555555555555555555555555",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P3", "state": "OPEN", "file": "docs/architecture.md", "cat": "docs", "id": "auth-flow-doc-gap"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2106,
+      "created_at": "2026-08-14T10:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "6666666666666666666666666666666666666666",
+      "marker": "codex-pr-review:21:6666666666666666666666666666666666666666",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P3", "state": "OPEN", "file": "docs/architecture.md", "cat": "docs", "id": "auth-flow-doc-gap"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2107,
+      "created_at": "2026-08-14T11:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "7777777777777777777777777777777777777777",
+      "marker": "codex-pr-review:21:7777777777777777777777777777777777777777",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/auth.py", "cat": "authorization", "id": "sig-verify-bypass"},
+          {"sev": "P3", "state": "OPEN", "file": "docs/architecture.md", "cat": "docs", "id": "auth-flow-doc-gap"}
+        ]
+      }
+    }
+  ]
+}
