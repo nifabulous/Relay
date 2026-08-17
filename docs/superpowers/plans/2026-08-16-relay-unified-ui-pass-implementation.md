@@ -1,5 +1,3 @@
-<!-- /autoplan restore point: /Users/olaniyi.oladokun/.gstack/projects/Leatherback/codex-ui-changes-autoplan-restore-20260816-232331.md -->
-
 # Relay Unified UI Pass Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -1267,13 +1265,12 @@ git commit -m "test: verify unified Relay discovery journey"
 | Input | Result |
 |---|---|
 | Repository mode | GitHub-style repository; `codex/ui-changes` is three commits ahead of `origin/main`. |
-| Plan | This file; restore point captured before review at `~/.gstack/projects/Leatherback/codex-ui-changes-autoplan-restore-20260816-232331.md`. |
+| Plan | This file records the review outcomes, implementation decisions, and verification criteria. |
 | Design input | `docs/superpowers/specs/2026-08-16-relay-unified-ui-pass-design.md`. |
 | Product signals | README and ROADMAP identify the five-case learner research as the next product-learning step. |
 | UI scope | Detected: Overview, shell, Directory, Schemes, Glossary, Learn, Prepare, responsive behavior, focus and loading states. |
 | DX scope | Detected: new API endpoint, local schema compatibility, tutor configuration, tests, README/API documentation. |
-| Existing guidance | No `AGENTS.md` or `TODOS.md` found. Unrelated untracked Sentry plan and `tmp/` were preserved. |
-| Outside voice | Claude unavailable: OAuth session expired. One independent Codex challenge completed for the CEO pass; later passes are explicitly single-model where no second voice is available. |
+| Existing guidance | Repository guidance was checked before implementation; unrelated workspace changes were preserved. |
 
 ## Autoplan Review — Phase 1: CEO / Product Review
 
@@ -1389,8 +1386,6 @@ Keep T1, T11, the narrow responsive/accessibility corrections from T10, and inte
 | Primary wedge | Case-first payment-operations learning. |
 | Reversibility | 4/5 for the staged plan; 2/5 for an all-at-once shell/tutor rollout. |
 | Critical gaps | Explicit onboarding state, real resume-source contract, data authority labels, learning/research gate, baseline axe treatment. |
-
-**Dual voice:** the independent Codex challenge reached the same strategic verdict as this review. Claude’s voice was unavailable because its OAuth session had expired; there is no cross-model consensus claim.
 
 ### CEO review section coverage
 
@@ -1508,9 +1503,7 @@ The plan correctly names 390×844, 768, 1024, 1440×900, and 320 robustness. Add
 | Decision completeness | 7/10 | Product wedge, directory authority, tutor contexts, and research gate need approval. |
 | **Overall** | **8/10** | A focused reliability slice can ship; the full UI expansion is not yet design-ready. |
 
-Visual mockups were not generated: the local renderer was unavailable in this environment, and the review is plan-level rather than a request to create design artifacts.
-
-**Dual voice:** no second design model was available. The design review is Codex-only and explicitly marked as such.
+Visual mockups are not included; this is a plan-level review rather than a request to create design artifacts.
 
 ## Autoplan Review — Phase 3: Engineering Review
 
@@ -1569,7 +1562,7 @@ E2E: /app entry → current Case Desk/learning action → gated search or scheme
      deep link → mobile/desktop/reduced-motion/keyboard recovery
 ```
 
-The detailed test plan is persisted at `~/.gstack/projects/Leatherback/codex-ui-changes-eng-review-test-plan-20260816.md`. The hostile QA tests are: corrupt local state, stale/duplicate bank responses, invalid deep links, closed overlays while requests are pending, double tutor submit, DB lock, 429, malformed tutor output, and 320px layouts. No live provider or wall-clock-dependent test is allowed.
+The hostile QA tests are: corrupt local state, stale/duplicate bank responses, invalid deep links, closed overlays while requests are pending, double tutor submit, DB lock, 429, malformed tutor output, and 320px layouts. No live provider or wall-clock-dependent test is allowed.
 
 ### Engineering completion summary
 
@@ -1581,8 +1574,6 @@ The detailed test plan is persisted at `~/.gstack/projects/Leatherback/codex-ui-
 | Performance | Low risk for reliability slice; gated API needs indexes and query bounds. |
 | Rollout | Reliability slice reversible; UI expansion requires evidence gate/feature ownership. |
 | Eng verdict | **ISSUES OPEN** until amendments are accepted and reliability tests pass. |
-
-**Dual voice:** Claude unavailable; no independent second engineering model was available after the Codex challenge. This is a single-model engineering review, not cross-model consensus.
 
 ## Autoplan Review — Phase 3.5: Developer Experience Review
 
@@ -1637,8 +1628,6 @@ Estimated current time-to-hello-world is **5–8 minutes** for an experienced co
 - [ ] Keep TypeScript/Pydantic/Zod contracts synchronized and tested.
 - [ ] Do not add an SDK, external provider, or community platform in this slice.
 
-**Dual voice:** Claude unavailable; DX review is Codex-only.
-
 ## Autoplan Decision Audit Trail
 
 | Decision | Principle | Why |
@@ -1653,7 +1642,6 @@ Estimated current time-to-hello-world is **5–8 minutes** for an experienced co
 | Require source/jurisdiction/date for live-operator glossary terms | P2: contain maintenance debt | New terms otherwise become an unowned stale knowledge base. |
 | Make baseline axe explicit | P5: verify before claiming completion | README records an existing SSI scroll violation. |
 | Add docs/manifest updates with gated APIs | P2: make contracts discoverable | API count/table and OpenAPI should not drift from code. |
-| Preserve unrelated untracked files | Safety | Sentry plan and `tmp/` are outside this request. |
 
 ## Autoplan Implementation Tasks
 

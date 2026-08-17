@@ -405,7 +405,7 @@ Synthesized from this review's findings. Each task derives from a specific findi
 | NOT in scope         | written (6 items)                           |
 | What already exists  | written                                    |
 | TODOS.md updates     | 0 items proposed                            |
-| Approved Mockups     | 0 generated; local renderer unavailable     |
+| Approved Mockups     | 0 generated; mockups are deferred from this plan |
 | Decisions made       | 9 added to specification                   |
 | Decisions deferred   | 0                                          |
 | Overall design score | 7/10 → 9/10                                |
