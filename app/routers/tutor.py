@@ -76,6 +76,33 @@ _UNAVAILABLE_DETAIL = (
     "something wrong with your question — please try again shortly."
 )
 
+_SAFE_PROVIDER_FAILURE_CLASSES = frozenset(
+    {
+        "APIConnectionError",
+        "APITimeoutError",
+        "AuthenticationError",
+        "BadRequestError",
+        "ConflictError",
+        "InternalServerError",
+        "ModelHTTPError",
+        "NotFoundError",
+        "PermissionDeniedError",
+        "RateLimitError",
+        "TimeoutError",
+        "UnprocessableEntityError",
+    }
+)
+
+
+def _safe_tutor_failure_class(error: BaseException) -> str:
+    """Return a searchable failure class without exposing upstream details."""
+    if isinstance(error, TutorProviderError):
+        provider_class = str(error).strip()
+        if provider_class in _SAFE_PROVIDER_FAILURE_CLASSES:
+            return provider_class
+        return type(error).__name__
+    return type(error).__name__
+
 # Module-level so a single worker shares one set of buckets across requests.
 # Rebuilding per request would reset every count and make the limit meaningless.
 _LIMITER: RateLimiter = build_rate_limiter()
@@ -336,7 +363,7 @@ async def tutor_chat(
         # One message for every upstream failure. The provider's own text
         # carries model names, quota details, and request IDs — infrastructure
         # facts a learner cannot act on and we should not publish.
-        logger.warning("tutor engine failed: %s", type(error).__name__)
+        logger.warning("tutor engine failed: %s", _safe_tutor_failure_class(error))
         raise HTTPException(status_code=503, detail=_UNAVAILABLE_DETAIL)
 
     assert response is not None  # noqa: S101 - narrowing after the error branch
