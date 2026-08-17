@@ -28,6 +28,16 @@ CREATE TABLE payment_events (
 )
 """
 
+LEGACY_SSI_DDL = """
+CREATE TABLE ssi (
+    id INTEGER PRIMARY KEY,
+    beneficiary_bic VARCHAR(11) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    intermediary_bic VARCHAR(11) NOT NULL,
+    notes VARCHAR(500)
+)
+"""
+
 
 def _raw_engine():
     return create_engine(
@@ -59,6 +69,47 @@ def _legacy_engine_with_event():
             },
         )
     return engine
+
+
+def test_legacy_ssi_gains_provenance_columns_without_data_loss():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_DDL))
+        conn.execute(text(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+            "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+        ))
+
+    ensure_sqlite_schema(engine)
+
+    with engine.connect() as conn:
+        row = conn.execute(text(
+            "SELECT beneficiary_bic, currency, intermediary_bic, notes, as_of, "
+            "verified_by, status FROM ssi"
+        )).mappings().one()
+    assert row["beneficiary_bic"] == "CITIUS33XXX"
+    assert row["notes"] == "legacy row"
+    assert row["as_of"] is None
+    assert row["verified_by"] is None
+    assert row["status"] == "illustrative"
+
+
+def test_legacy_schema_repair_is_idempotent():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_DDL))
+
+    ensure_sqlite_schema(engine)
+    columns_after_first = {
+        column["name"] for column in inspect(engine).get_columns("ssi")
+    }
+
+    ensure_sqlite_schema(engine)
+    columns_after_second = {
+        column["name"] for column in inspect(engine).get_columns("ssi")
+    }
+
+    assert columns_after_second == columns_after_first
 
 
 class TestLegacyTableGainsColumnsWithoutDataLoss:
@@ -125,11 +176,16 @@ class TestCurrentSchemaIsANoop:
             c["name"] for c in inspect(engine).get_columns("payment_events")
         }
         ensure_sqlite_schema(engine)
-        columns_after = {
+        columns_after_first = {
+            c["name"] for c in inspect(engine).get_columns("payment_events")
+        }
+        ensure_sqlite_schema(engine)
+        columns_after_second = {
             c["name"] for c in inspect(engine).get_columns("payment_events")
         }
 
-        assert columns_after == columns_before
+        assert columns_after_first == columns_before
+        assert columns_after_second == columns_after_first
         with engine.connect() as conn:
             row = conn.execute(
                 text(
@@ -139,3 +195,93 @@ class TestCurrentSchemaIsANoop:
             ).mappings().one()
         assert row["schedule"] == "scheduled"
         assert row["revealed_at"] == "2026-08-13T09:00:10+00:00"
+
+    def test_current_ssi_schema_unchanged_and_provenance_intact(self):
+        from sqlalchemy.orm import sessionmaker
+
+        from app.models import SSI
+
+        engine = _raw_engine()
+        Base.metadata.create_all(bind=engine)
+
+        SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+        with SessionLocal() as session:
+            session.add(SSI(
+                beneficiary_bic="CITIUS33XXX",
+                beneficiary_bank_name="Citibank N.A.",
+                currency="USD",
+                intermediary_bic="CHASUS33XXX",
+                intermediary_bank_name="JPMorgan Chase Bank",
+                intermediary_account="ACCT-USD-0001",
+                beneficiary_account="ACCT-USD-0002",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: https://bank.example/ssi (as of 2026-08-16).",
+                as_of="2026-08-16",
+                verified_by="Treasury Operations",
+                status="published",
+            ))
+            session.commit()
+
+        expected_columns = {
+            "id",
+            "beneficiary_bic",
+            "beneficiary_bank_name",
+            "currency",
+            "intermediary_bic",
+            "intermediary_bank_name",
+            "intermediary_account",
+            "beneficiary_account",
+            "charge_code",
+            "value_date",
+            "notes",
+            "as_of",
+            "verified_by",
+            "status",
+        }
+        columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        assert set(columns_before) == expected_columns
+        assert columns_before["as_of"]["type"].length == 10
+        assert columns_before["as_of"]["nullable"] is True
+        assert columns_before["verified_by"]["type"].length == 120
+        assert columns_before["verified_by"]["nullable"] is True
+        assert columns_before["status"]["type"].length == 12
+        assert columns_before["status"]["nullable"] is False
+        expected_provenance_metadata = {
+            "as_of": (10, True),
+            "verified_by": (120, True),
+            "status": (12, False),
+        }
+
+        def provenance_metadata(columns):
+            return {
+                name: (columns[name]["type"].length, columns[name]["nullable"])
+                for name in expected_provenance_metadata
+            }
+
+        assert provenance_metadata(columns_before) == expected_provenance_metadata
+
+        def read_ssi_row():
+            with engine.connect() as conn:
+                return conn.execute(
+                    text(
+                        "SELECT beneficiary_bic, currency, intermediary_bic, "
+                        "intermediary_account, beneficiary_account, charge_code, "
+                        "value_date, notes, as_of, verified_by, status FROM ssi"
+                    )
+                ).mappings().one()
+
+        row_before = read_ssi_row()
+        ensure_sqlite_schema(engine)
+        columns_after_first = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        row_after_first = read_ssi_row()
+        ensure_sqlite_schema(engine)
+        columns_after_second = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
+        row_after_second = read_ssi_row()
+
+        assert set(columns_after_first) == expected_columns
+        assert set(columns_after_second) == set(columns_after_first)
+        assert provenance_metadata(columns_after_first) == expected_provenance_metadata
+        assert provenance_metadata(columns_after_second) == expected_provenance_metadata
+        assert row_after_first == row_before
+        assert row_after_second == row_after_first

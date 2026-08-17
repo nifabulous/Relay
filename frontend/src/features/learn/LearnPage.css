@@ -422,29 +422,15 @@
 }
 
 .learn-case-desks__track {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
   gap: var(--space-4);
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0 var(--space-1) var(--space-2);
-  scroll-padding-inline: var(--space-4);
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
+  padding: 0 var(--space-1);
 }
 
 .learn-case-desks__track > .case-entry {
-  flex: 0 0 min(22rem, 84%);
   min-width: 0;
-  scroll-margin-inline: var(--space-4);
-  scroll-snap-align: start;
-}
-
-@media (min-width: 769px) {
-  .learn-case-desks__track > .case-entry {
-    flex-basis: min(28rem, 42%);
-  }
 }
 
 .case-entry {
@@ -561,6 +547,10 @@
 }
 
 @media (max-width: 768px) {
+  .learn-case-desks__track {
+    grid-template-columns: 1fr;
+  }
+
   .case-entry {
     padding: var(--space-4);
   }

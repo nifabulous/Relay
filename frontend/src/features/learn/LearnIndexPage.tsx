@@ -48,7 +48,11 @@ export function LearnIndexPage() {
         className="learn-case-desks"
         aria-label="Customer case desks"
       >
-        <div className="learn-case-desks__track">
+        <div
+          className="learn-case-desks__track"
+          role="list"
+          aria-label="Customer cases"
+        >
           {caseEntries.map(({ definition, session }) => (
             <CaseEntry key={definition.id} caseDef={definition} session={session} />
           ))}

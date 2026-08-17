@@ -11,6 +11,17 @@ test.describe("Prepare Payment", () => {
     await expect(page.locator("#strictness")).toBeVisible();
   });
 
+  test("keeps currency menu options at least 44px tall on narrow screens", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/app/operate/prepare");
+    await page.getByRole("combobox", { name: /currency/i }).click();
+
+    const option = page.getByRole("option", { name: "USD" });
+    await expect(option).toBeVisible();
+    await expect.poll(async () => (await option.boundingBox())?.height ?? 0)
+      .toBeGreaterThanOrEqual(44);
+  });
+
   test("shows validation errors on empty submit", async ({ page }) => {
     await page.goto("/app/operate/prepare");
     await page.locator("button", { hasText: "Run payment checks" }).click();

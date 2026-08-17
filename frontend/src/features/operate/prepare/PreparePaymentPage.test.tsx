@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +23,16 @@ function renderPage(options: { basename?: string; initialEntries?: string[] } = 
 }
 
 describe("PreparePaymentPage form accessibility", () => {
+  it("separates accepted currency input from rail and SSI coverage", () => {
+    renderPage();
+
+    const note = screen.getByRole("note", { name: "Payment coverage" });
+    expect(note).toHaveTextContent("Currency entry validation");
+    expect(note).toHaveTextContent("Domestic rail catalogue");
+    expect(note).toHaveTextContent("International / SWIFT");
+    expect(note).toHaveTextContent(/bank-published settlement instructions/i);
+  });
+
   it("associates validation errors with fields via aria-describedby", async () => {
     const { user } = renderPage();
 
@@ -241,11 +251,16 @@ describe("PreparePaymentPage result cross-links", () => {
 });
 
 describe("PreparePaymentPage currency selection", () => {
-  it("renders currency as a dropdown, not a free-text input", () => {
+  it("renders currency as a styled combobox, not a free-text input", async () => {
     renderPage();
     const currency = screen.getByRole("combobox", { name: /currency/i });
     expect(currency).toBeVisible();
-    expect(currency.tagName).toBe("SELECT");
+    expect(currency.tagName).toBe("BUTTON");
+    expect(currency).toHaveAttribute("aria-haspopup", "listbox");
+
+    const user = userEvent.setup();
+    await user.click(currency);
+    expect(screen.getByRole("listbox", { name: /currency/i })).toBeVisible();
   });
 
   it("offers the bank's published settlement currencies as clickable picks", async () => {
@@ -270,16 +285,131 @@ describe("PreparePaymentPage currency selection", () => {
     const picks = await screen.findAllByRole("button", { name: /^[A-Z]{3}$/ });
     expect(picks.map((p) => p.textContent)).toEqual(["USD", "EUR", "GBP"]);
 
-    // USD is the default selection (importance-ordered first published).
+    // The picker is limited to the bank's published currencies; it must not
+    // expose the broad no-BIC fallback once a SWIFT bank is selected.
     const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    const currencyOptions = within(screen.getByRole("listbox", { name: /currency/i }));
+    expect(
+      currencyOptions.getAllByRole("option").map((option) => option.getAttribute("data-value")),
+    ).toEqual(["USD", "EUR", "GBP"]);
+
+    // USD is the default selection (importance-ordered first published).
     expect(currency).toHaveValue("USD");
 
-    // Clicking a pick populates the dropdown; the user can change it after.
+    // Clicking a published-currency pick populates the combobox; the user can
+    // change it from either affordance.
     await user.click(screen.getByRole("button", { name: /^EUR$/ }));
     expect(currency).toHaveValue("EUR");
-    await user.selectOptions(currency, "GBP");
+    await user.click(currency);
+    await user.click(screen.getByRole("option", { name: "GBP" }));
     expect(currency).toHaveValue("GBP");
   });
+
+  it("marks payment results stale when the currency picker changes", async () => {
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByRole("heading", { name: /check results/i });
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    await user.click(screen.getByRole("option", { name: "EUR" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/results below are stale/i);
+  });
+
+  it("keeps a fallback currency picker usable when SSI has no instructions", async () => {
+    server.use(
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "COBADEFFXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=COBADEFFXXX"] });
+    expect(
+      await screen.findByRole("status", { name: /settlement currency coverage/i }),
+    ).toHaveTextContent(/not confirmed/i);
+
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    expect(screen.getByRole("option", { name: "USD" })).toBeVisible();
+  });
+
+  it("normalizes a previously published currency when the bank has no SSI coverage", async () => {
+    server.use(
+      http.get("/api/ssi", ({ request }) => {
+        const bic = new URL(request.url).searchParams.get("bic");
+        if (bic === "MASHAEADXXX") {
+          return HttpResponse.json({
+            beneficiary_bic: bic,
+            currency: "ALL",
+            instructions: [
+              { beneficiary_bic: bic, beneficiary_bank_name: "Mashreq", currency: "XAF", intermediary_bic: "MSHQUS33XXX", intermediary_bank_name: "Mashreq NY", intermediary_account: "ACCT-1", beneficiary_account: "ACCT-2", charge_code: "SHA", value_date: "spot" },
+            ],
+            disclaimer: "SIMULATION",
+          });
+        }
+        return HttpResponse.json({
+          beneficiary_bic: bic ?? "COBADEFFXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        });
+      }),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await waitFor(() => expect(currency).toHaveValue("XAF"));
+
+    const bic = screen.getByLabelText(/beneficiary bic/i);
+    await user.clear(bic);
+    await user.type(bic, "COBADEFFXXX");
+
+    await waitFor(() => {
+      expect(screen.getByRole("status", { name: /settlement currency coverage/i })).toHaveTextContent(/not confirmed/i);
+    });
+    expect(currency).toHaveValue("AED");
+  });
+
+  it("explains SSI failures and offers a scoped retry", async () => {
+    let attempts = 0;
+    server.use(
+      http.get("/api/ssi", () => {
+        attempts += 1;
+        return HttpResponse.json({ detail: "SSI unavailable" }, { status: 503 });
+      }),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=COBADEFFXXX"] });
+    const status = await screen.findByRole("status", { name: /settlement currency coverage/i });
+    expect(status).toHaveTextContent(/could not be loaded/i);
+    expect(status).toHaveTextContent(/simulation choices/i);
+
+    await user.click(within(status).getByRole("button", { name: /retry/i }));
+    await waitFor(() => expect(attempts).toBe(2));
+  });
+
+  it("closes the currency listbox when focus leaves with Tab", async () => {
+    const { user } = renderPage();
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    expect(screen.getByRole("listbox", { name: /currency/i })).toBeVisible();
+
+    await user.tab();
+
+    expect(screen.queryByRole("listbox", { name: /currency/i })).toBeNull();
+    expect(screen.getByLabelText(/amount/i)).toHaveFocus();
+  });
+
 });
 
 describe("PreparePaymentPage IBAN flexibility", () => {

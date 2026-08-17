@@ -20,9 +20,9 @@ import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
 
 /**
- * Currencies offered in the Prepare-payment dropdown beyond the ones a bank
- * publishes. Order: bank-published currencies lead, then this list sorted
- * alphabetically. Covers the currencies used across the seeded corridors.
+ * Currencies offered when Prepare Payment has no usable beneficiary BIC yet.
+ * Once a BIC's SSI response is available, the dropdown is restricted to the
+ * currencies that bank publishes for the selected SWIFT path.
  */
 const COMMON_CURRENCIES = [
   "AED", "AUD", "BHD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP",
@@ -40,6 +40,163 @@ const TRACKABLE_RECOMMENDATIONS = new Set([
 /** True when a string looks like a BIC worth querying SSI for. */
 function isBicLike(value: string): boolean {
   return /^[A-Z0-9]{8,11}$/.test(value);
+}
+
+type CurrencyPickerProps = {
+  value: string;
+  options: string[];
+  onChange: (currency: string) => void;
+  invalid: boolean;
+  describedBy?: string;
+};
+
+function CurrencyPicker({
+  value,
+  options,
+  onChange,
+  invalid,
+  describedBy,
+}: CurrencyPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeOption, setActiveOption] = useState(value);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveOption((current) => options.includes(current) ? current : options[0] ?? value);
+  }, [isOpen, options, value]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    optionRefs.current[activeOption]?.focus();
+  }, [activeOption, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  function choose(currency: string) {
+    onChange(currency);
+    setActiveOption(currency);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function moveActiveOption(direction: 1 | -1) {
+    if (options.length === 0) return;
+    const currentIndex = Math.max(options.indexOf(activeOption), 0);
+    const nextIndex = (currentIndex + direction + options.length) % options.length;
+    setActiveOption(options[nextIndex]);
+  }
+
+  function handleTriggerKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+    if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      setActiveOption(value);
+      setIsOpen(true);
+    }
+  }
+
+  function handleListboxKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        moveActiveOption(1);
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        moveActiveOption(-1);
+        break;
+      case "Home":
+        event.preventDefault();
+        if (options[0]) setActiveOption(options[0]);
+        break;
+      case "End":
+        event.preventDefault();
+        if (options.at(-1)) setActiveOption(options.at(-1)!);
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        if (activeOption) choose(activeOption);
+        break;
+      case "Escape":
+        event.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+        break;
+    }
+  }
+
+  return (
+    <div className="prepare-payment__currency-control" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        id="currency"
+        type="button"
+        className="prepare-payment__currency-trigger mono"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls="currency-options"
+        aria-labelledby="currency-label"
+        aria-invalid={invalid}
+        aria-describedby={describedBy}
+        value={value}
+        onClick={() => {
+          if (options.length === 0) return;
+          setActiveOption(value);
+          setIsOpen((open) => !open);
+        }}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span>{value || "Select currency"}</span>
+        <span className="prepare-payment__currency-chevron" aria-hidden="true" />
+      </button>
+      {isOpen && (
+        <div
+          id="currency-options"
+          className="prepare-payment__currency-menu"
+          role="listbox"
+          aria-label="Currency options"
+          onKeyDown={handleListboxKeyDown}
+          onBlur={(event) => {
+            if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
+              setIsOpen(false);
+            }
+          }}
+        >
+          {options.map((currency) => (
+            <button
+              key={currency}
+              ref={(element) => { optionRefs.current[currency] = element; }}
+              type="button"
+              role="option"
+              className="prepare-payment__currency-option mono"
+              data-value={currency}
+              aria-selected={currency === value}
+              tabIndex={currency === activeOption ? 0 : -1}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(currency)}
+            >
+              {currency}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function PreparePaymentPage() {
@@ -84,18 +241,36 @@ export function PreparePaymentPage() {
   const publishedCurrencies = groupByCurrency(ssiQuery.data?.instructions ?? []).map(
     (g) => g.currency,
   );
-  const currencyOptions = [...new Set([...publishedCurrencies, ...COMMON_CURRENCIES])];
+  const hasLoadedBankCurrencies = ssiEnabled && !ssiQuery.isError && ssiQuery.data !== undefined;
+  const hasPublishedBankCurrencies = hasLoadedBankCurrencies && publishedCurrencies.length > 0;
+  const currencyOptions = hasPublishedBankCurrencies
+    ? publishedCurrencies
+    : COMMON_CURRENCIES;
+  const currencyOptionsKey = currencyOptions.join("|");
   const selectedCurrency = watch("currency");
   const currencyTouched = useRef(false);
 
-  // Default the currency to the bank's first published currency (importance
-  // order, so USD leads) unless the learner has already chosen one.
+  function handleCurrencyChange(currency: string) {
+    currencyTouched.current = true;
+    setValue("currency", currency, { shouldValidate: true });
+    if (result) setIsStale(true);
+  }
+
+  // Default to the bank's first published currency (importance order, so USD
+  // leads) and normalize any selected value that falls outside the final
+  // option set after an SSI coverage change or error.
   useEffect(() => {
-    if (!currencyTouched.current && publishedCurrencies.length > 0 && publishedCurrencies[0] !== selectedCurrency) {
-      setValue("currency", publishedCurrencies[0], { shouldValidate: true });
+    const firstOption = currencyOptions[0];
+    const shouldDefaultPublished = hasPublishedBankCurrencies &&
+      !currencyTouched.current &&
+      selectedCurrency !== firstOption;
+    const shouldNormalizeMissing = !currencyOptions.includes(selectedCurrency);
+
+    if (firstOption && (shouldDefaultPublished || shouldNormalizeMissing)) {
+      setValue("currency", firstOption, { shouldValidate: true });
+      if (result && selectedCurrency !== firstOption) setIsStale(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publishedCurrencies, setValue]);
+  }, [currencyOptionsKey, hasPublishedBankCurrencies, selectedCurrency, setValue, result]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {
@@ -176,6 +351,16 @@ export function PreparePaymentPage() {
         </p>
       </div>
 
+      <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
+        <h2>What this simulation covers</h2>
+        <ul>
+          <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
+          <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
+          <li><strong>International / SWIFT:</strong> provides educational routing guidance, not payment execution.</li>
+          <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
+        </ul>
+      </aside>
+
       {/* ── Form ───────────────────────────────────── */}
       <form
         className="prepare-payment__form"
@@ -215,24 +400,42 @@ export function PreparePaymentPage() {
 
         <div className="prepare-payment__row">
           <div className="prepare-payment__field">
-            <label htmlFor="currency">Currency</label>
-            <select
-              id="currency"
-              className="mono"
-              {...register("currency", {
-                onChange: () => { currencyTouched.current = true; },
-              })}
-              aria-invalid={!!errors.currency}
-              aria-describedby={errors.currency ? "currency-error" : undefined}
-            >
-              {currencyOptions.map((ccy) => (
-                <option key={ccy} value={ccy}>{ccy}</option>
-              ))}
-            </select>
+            <label id="currency-label" htmlFor="currency">Currency</label>
+            <input type="hidden" {...register("currency")} value={selectedCurrency} readOnly />
+            <CurrencyPicker
+              value={selectedCurrency}
+              options={currencyOptions}
+              invalid={!!errors.currency}
+              describedBy={errors.currency ? "currency-error" : undefined}
+              onChange={handleCurrencyChange}
+            />
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
             )}
-            {publishedCurrencies.length > 0 && (
+            {ssiEnabled && ssiQuery.isError && (
+              <div
+                className="prepare-payment__currency-fallback"
+                role="status"
+                aria-label="Settlement currency coverage"
+              >
+                <p>
+                  Bank-specific settlement instructions could not be loaded. Currencies below are simulation choices and are not confirmed for this bank.
+                </p>
+                <Button type="button" variant="secondary" onClick={() => void ssiQuery.refetch()}>
+                  Retry settlement instructions
+                </Button>
+              </div>
+            )}
+            {ssiEnabled && hasLoadedBankCurrencies && publishedCurrencies.length === 0 && (
+              <p
+                className="prepare-payment__currency-fallback"
+                role="status"
+                aria-label="Settlement currency coverage"
+              >
+                No published settlement currencies are on file for this bank. Choose a currency for this simulation; current bank instructions are not confirmed.
+              </p>
+            )}
+            {hasPublishedBankCurrencies && (
               <div className="prepare-payment__currency-picks" aria-label="Published settlement currencies">
                 <span className="prepare-payment__currency-picks-label">
                   Published for this bank:
@@ -247,8 +450,7 @@ export function PreparePaymentPage() {
                     ].filter(Boolean).join(" ")}
                     aria-pressed={ccy === selectedCurrency}
                     onClick={() => {
-                      currencyTouched.current = true;
-                      setValue("currency", ccy, { shouldValidate: true });
+                      handleCurrencyChange(ccy);
                       void trigger("currency");
                     }}
                   >

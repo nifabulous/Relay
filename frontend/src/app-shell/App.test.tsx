@@ -112,6 +112,19 @@ describe("App routing — case desk route resolves against the real App tree", (
   });
 });
 
+describe("App routing — named lazy loading state", () => {
+  it("renders the real Explore route through the lazy route boundary", async () => {
+    window.history.replaceState({}, "", "/app/explore");
+
+    const { App } = await import("./App");
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Explore" })).toBeVisible();
+    });
+  });
+});
+
 // ─── Unmatched-URL recovery ────────────────────────────────────────────────
 //
 // The catch-all used to be <Navigate to="" replace />, which is a no-op in a
