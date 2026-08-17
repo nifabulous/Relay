@@ -305,6 +305,43 @@ describe("PreparePaymentPage currency selection", () => {
     await user.click(screen.getByRole("option", { name: "GBP" }));
     expect(currency).toHaveValue("GBP");
   });
+
+  it("marks payment results stale when the currency picker changes", async () => {
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByRole("heading", { name: /check results/i });
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    await user.click(screen.getByRole("option", { name: "EUR" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/results below are stale/i);
+  });
+
+  it("keeps a fallback currency picker usable when SSI has no instructions", async () => {
+    server.use(
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "COBADEFFXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=COBADEFFXXX"] });
+    expect(
+      await screen.findByRole("status", { name: /settlement currency coverage/i }),
+    ).toHaveTextContent(/not confirmed/i);
+
+    const currency = screen.getByRole("combobox", { name: /currency/i });
+    await user.click(currency);
+    expect(screen.getByRole("option", { name: "USD" })).toBeVisible();
+  });
 });
 
 describe("PreparePaymentPage IBAN flexibility", () => {

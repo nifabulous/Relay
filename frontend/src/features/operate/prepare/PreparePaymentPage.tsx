@@ -237,9 +237,17 @@ export function PreparePaymentPage() {
     (g) => g.currency,
   );
   const hasLoadedBankCurrencies = ssiEnabled && ssiQuery.data !== undefined;
-  const currencyOptions = hasLoadedBankCurrencies ? publishedCurrencies : COMMON_CURRENCIES;
+  const currencyOptions = hasLoadedBankCurrencies && publishedCurrencies.length > 0
+    ? publishedCurrencies
+    : COMMON_CURRENCIES;
   const selectedCurrency = watch("currency");
   const currencyTouched = useRef(false);
+
+  function handleCurrencyChange(currency: string) {
+    currencyTouched.current = true;
+    setValue("currency", currency, { shouldValidate: true });
+    if (result) setIsStale(true);
+  }
 
   // Default the currency to the bank's first published currency (importance
   // order, so USD leads) unless the learner has already chosen one.
@@ -250,8 +258,9 @@ export function PreparePaymentPage() {
       publishedCurrencies[0] !== selectedCurrency
     ) {
       setValue("currency", publishedCurrencies[0], { shouldValidate: true });
+      if (result) setIsStale(true);
     }
-  }, [publishedCurrencies, selectedCurrency, setValue]);
+  }, [publishedCurrencies, selectedCurrency, setValue, result]);
 
   const mutation = useMutation({
     mutationFn: async (data: PreparePaymentInput) => {
@@ -388,13 +397,19 @@ export function PreparePaymentPage() {
               options={currencyOptions}
               invalid={!!errors.currency}
               describedBy={errors.currency ? "currency-error" : undefined}
-              onChange={(currency) => {
-                currencyTouched.current = true;
-                setValue("currency", currency, { shouldValidate: true });
-              }}
+              onChange={handleCurrencyChange}
             />
             {errors.currency && (
               <span id="currency-error" className="prepare-payment__error" role="alert">{errors.currency.message}</span>
+            )}
+            {ssiEnabled && hasLoadedBankCurrencies && publishedCurrencies.length === 0 && (
+              <p
+                className="prepare-payment__currency-fallback"
+                role="status"
+                aria-label="Settlement currency coverage"
+              >
+                No published settlement currencies are on file for this bank. Choose a currency for this simulation; current bank instructions are not confirmed.
+              </p>
             )}
             {publishedCurrencies.length > 0 && (
               <div className="prepare-payment__currency-picks" aria-label="Published settlement currencies">
@@ -411,8 +426,7 @@ export function PreparePaymentPage() {
                     ].filter(Boolean).join(" ")}
                     aria-pressed={ccy === selectedCurrency}
                     onClick={() => {
-                      currencyTouched.current = true;
-                      setValue("currency", ccy, { shouldValidate: true });
+                      handleCurrencyChange(ccy);
                       void trigger("currency");
                     }}
                   >

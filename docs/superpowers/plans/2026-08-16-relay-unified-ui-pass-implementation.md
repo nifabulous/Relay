@@ -1026,7 +1026,7 @@ git commit -m "feat: expand searchable payment glossary"
 - Modify: `frontend/src/features/operate/prepare/PreparePaymentPage.test.tsx`
 
 **Interfaces:**
-- Consumes: existing case catalogue and existing broad ISO currency list.
+- Consumes: existing case catalogue, the broad ISO currency list for fallback input, and optional bank-published SSI currencies for a selected BIC.
 - Produces: document-order mobile case list and an explicit four-part support boundary for Prepare Payment.
 
 - [ ] **Step 1: Add failing semantic and copy tests**
@@ -1067,7 +1067,7 @@ Expected: FAIL on missing labelled list and Payment coverage note.
 
 If desktop keeps the horizontal track, retain visible previous/next buttons, item count, keyboard scrolling, and focus-visible styles. Do not duplicate case markup for mobile.
 
-- [ ] **Step 4: Add the Prepare scope note without narrowing accepted currencies**
+- [ ] **Step 4: Add the Prepare scope note and distinguish currency coverage from SSI-backed picker options**
 
 ```tsx
 <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
@@ -1080,6 +1080,8 @@ If desktop keeps the horizontal track, retain visible previous/next buttons, ite
   </ul>
 </aside>
 ```
+
+The payment form continues to validate supported ISO currency codes for the educational simulation. When a selected bank has published SSI records, the picker is limited to those published currencies; when SSI is empty or unavailable, keep the common fallback currencies available and explain that current bank instructions are not confirmed.
 
 - [ ] **Step 5: Run tests, build, and commit**
 
