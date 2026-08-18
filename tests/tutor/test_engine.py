@@ -19,6 +19,7 @@ from app.tutor.engine import (
     TutorEngine,
     TutorNotConfiguredError,
     TutorProviderError,
+    _qualified_model_name,
     build_tutor_engine,
     estimate_tokens,
 )
@@ -518,6 +519,11 @@ def test_building_an_engine_enabled_without_a_key_still_raises(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(TutorNotConfiguredError):
         build_tutor_engine()
+
+
+def test_bare_provider_model_names_are_qualified_for_pydantic_ai():
+    assert _qualified_model_name("openai", "gpt-5") == "openai:gpt-5"
+    assert _qualified_model_name("openai", "openai:gpt-5") == "openai:gpt-5"
 
 
 def test_a_provider_failure_surfaces_as_a_typed_error_not_a_raw_exception():
