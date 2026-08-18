@@ -76,6 +76,13 @@ class TutorNotConfiguredError(RuntimeError):
     """The tutor is disabled, or enabled without a model and key."""
 
 
+def _qualified_model_name(provider: str, model: str) -> str:
+    """Give Pydantic AI the provider-qualified model identifier it expects."""
+    if ":" in model:
+        return model
+    return f"{provider}:{model}"
+
+
 class CircuitBreaker:
     """Stops hammering a provider that is already down.
 
@@ -579,4 +586,7 @@ def build_tutor_engine(tools: Optional[TutorToolRegistry] = None) -> TutorEngine
 
     from .tools import RelayTutorTools  # noqa: PLC0415
 
-    return _PydanticAITutorEngine(settings.model, tools or RelayTutorTools())
+    return _PydanticAITutorEngine(
+        _qualified_model_name(settings.provider, settings.model),
+        tools or RelayTutorTools(),
+    )
