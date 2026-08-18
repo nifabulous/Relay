@@ -903,3 +903,35 @@ class TestSoutheastAsiaSsiCoverage:
             f"Explore can show their settlement instructions: {missing}"
         )
 # ---- end autopilot-generated coverage tests: southeast-asia ----
+
+
+# ---- autopilot-generated coverage tests: bangladesh ----
+BANGLADESH_SSI_COVERAGE = [
+    ("AGBKBDDHXXX", "Agrani Bank", {"USD", "GBP", "EUR", "JPY", "CAD", "SGD", "CHF", "SAR", "AED", "CNY"}),
+    ("EBLDBDDHXXX", "Eastern Bank PLC", {"USD", "EUR", "GBP", "JPY", "CNY", "CHF", "AUD", "SAR", "SGD", "AED"}),
+]
+
+
+class TestBangladeshSsiCoverage:
+    def test_bangladesh_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in BANGLADESH_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_bangladesh_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in BANGLADESH_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"bangladesh SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: bangladesh ----
