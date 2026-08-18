@@ -20,6 +20,7 @@ from app.tutor.engine import (
     TutorNotConfiguredError,
     TutorProviderError,
     _qualified_model_name,
+    _registry_tools,
     build_tutor_engine,
     estimate_tokens,
 )
@@ -524,6 +525,41 @@ def test_building_an_engine_enabled_without_a_key_still_raises(monkeypatch):
 def test_bare_provider_model_names_are_qualified_for_pydantic_ai():
     assert _qualified_model_name("openai", "gpt-5") == "openai:gpt-5"
     assert _qualified_model_name("openai", "openai:gpt-5") == "openai:gpt-5"
+
+
+def test_building_an_engine_passes_a_qualified_model_to_the_provider_adapter(monkeypatch):
+    monkeypatch.setenv("TUTOR_ENABLED", "true")
+    monkeypatch.setenv("TUTOR_PROVIDER", "openai")
+    monkeypatch.setenv("TUTOR_MODEL", "gpt-5")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
+    captured = {}
+
+    class CapturingEngine:
+        def __init__(self, model, tools):
+            captured["model"] = model
+            captured["tools"] = tools
+
+    monkeypatch.setattr("app.tutor.engine._PydanticAITutorEngine", CapturingEngine)
+
+    engine = build_tutor_engine()
+
+    assert isinstance(engine, CapturingEngine)
+    assert captured["model"] == "openai:gpt-5"
+
+
+def test_qualified_model_name_constructs_with_pydantic_ai(monkeypatch):
+    pydantic_ai = pytest.importorskip("pydantic_ai")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
+
+    agent = pydantic_ai.Agent(
+        _qualified_model_name("openai", "gpt-5"),
+        output_type=TutorModelOutput,
+        system_prompt="",
+        model_settings={"max_tokens": 1200},
+        tools=_registry_tools(RelayTutorTools()),
+    )
+
+    assert agent is not None
 
 
 def test_a_provider_failure_surfaces_as_a_typed_error_not_a_raw_exception():
