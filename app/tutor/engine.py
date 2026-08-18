@@ -499,7 +499,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
             self._model,
             output_type=TutorModelOutput,
             system_prompt="",
-            model_settings={"max_tokens": self._max_output_tokens},
+            model_settings=_provider_model_settings(self._model, self._max_output_tokens),
             tools=_registry_tools(tools),
         )
         return await agent.run(payload.user, instructions=payload.system)
@@ -541,6 +541,23 @@ class _PydanticAITutorEngine(_ValidatingEngine):
 
         self._breaker.record_failure()
         raise TutorProviderError(type(last_error).__name__) from last_error
+
+
+def _provider_model_settings(model: str, max_output_tokens: int) -> dict:
+    """Keep OpenAI's always-on GPT-5 reasoning inside the request budget.
+
+    The original GPT-5 family reasons at medium effort when no effort is
+    supplied. Relay's server-side request budget is intentionally short, so
+    use the provider-supported minimal setting for that family. Do not send the
+    OpenAI-only setting to other providers or to the non-reasoning GPT-5 chat
+    variant.
+    """
+    settings = {"max_tokens": max_output_tokens}
+    if model.startswith("openai:"):
+        model_name = model.removeprefix("openai:")
+        if model_name.startswith("gpt-5") and not model_name.startswith("gpt-5-chat"):
+            settings["openai_reasoning_effort"] = "minimal"
+    return settings
 
 
 def _registry_tools(tools: TutorToolRegistry) -> list:

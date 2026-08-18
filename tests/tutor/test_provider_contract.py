@@ -178,6 +178,36 @@ def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch)
     assert response.citations[0].source_id.startswith("relay-rail-gbp-chaps")
 
 
+def test_gpt5_provider_requests_use_minimal_reasoning_effort(monkeypatch):
+    """The default GPT-5 reasoning effort must fit the server request budget."""
+
+    captured = {}
+
+    class FakeAgent:
+        def __init__(self, model, *, output_type, system_prompt, model_settings, tools):
+            captured["model"] = model
+            captured["model_settings"] = model_settings
+
+        async def run(self, user, *, instructions):
+            return SimpleNamespace(output=TutorModelOutput(answer="(fake)"))
+
+    monkeypatch.setitem(sys.modules, "pydantic_ai", SimpleNamespace(Agent=FakeAgent))
+    engine = engine_module._PydanticAITutorEngine("openai:gpt-5", RelayTutorTools())
+
+    asyncio.run(engine._call_provider(engine_module.build_prompt_payload(_request(), []), RelayTutorTools()))
+
+    assert captured["model"] == "openai:gpt-5"
+    assert captured["model_settings"]["openai_reasoning_effort"] == "minimal"
+
+
+def test_non_reasoning_provider_models_do_not_receive_openai_reasoning_settings():
+    settings = engine_module._provider_model_settings("anthropic:claude-sonnet", 1200)
+    assert settings == {"max_tokens": 1200}
+
+    settings = engine_module._provider_model_settings("openai:gpt-5-chat", 1200)
+    assert settings == {"max_tokens": 1200}
+
+
 def test_no_tool_exposed_to_a_provider_can_mutate_anything():
     for tool in engine_module._registry_tools(RelayTutorTools()):
         source = inspect.getsource(tool).lower()
