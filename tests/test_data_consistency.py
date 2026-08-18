@@ -598,7 +598,12 @@ class TestAsiaDeepSsiCoverage:
 GULF_SSI_COVERAGE = [
     ("MASHAEADXXX", "Mashreq Bank", {"USD", "EUR", "GBP", "SAR", "KWD", "BHD", "TRY"}),
     ("DOHBQAQAXXX", "Doha Bank", {"USD", "EUR", "GBP", "SAR", "AED", "BHD"}),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", {"USD", "EUR", "GBP", "KWD", "QAR", "AED", "SAR"}),
+    ("NBOKKWKWXXX", "National Bank of Kuwait",
+     {"USD", "EUR", "GBP", "KWD", "QAR", "AED", "SAR", "CNY", "AUD", "BHD", "CAD",
+      "CHF", "DKK", "EGP", "HKD", "INR", "JOD", "JPY", "KRW", "LKR", "NOK", "OMR",
+      "PHP", "PKR", "SEK", "SGD"}),
+    ("EBILAEADXXX", "Emirates NBD",
+     {"USD", "EUR", "GBP", "SAR", "QAR", "KWD", "BHD", "OMR"}),
 ]
 
 

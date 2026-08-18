@@ -659,7 +659,7 @@
     "OM"
    ],
    "masked_block": 91001600,
-   "note": "2026-08-18 research pending. Candidate publishers: Emirates NBD, FAB, ADCB (UAE); Al Rajhi, Riyad Bank, SAB (Saudi); QNB (Qatar); NBK (Kuwait); AUB (Bahrain); Bank Muscat (Oman). Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: only NBK Kuwait (NBOKKWKW, SSI broadcast PDF archived 2025-07-23) and Emirates NBD (EBILAEAD, live correspondent-bank-charges PDF 05/2026, BIC-level, no accounts published) yield SSI data. FAB, ADCB, Al Rajhi, Riyad (BIC is RIBLSARI), SABB, QNB, AUB (domain dead), and Bank Muscat (BIC is BMUSOMRX) publish no SSI \u2014 NOT SEEDABLE. Wrong forms RIYBSARI/CBOMUSSR and FAB legacy FGBMAEAA forbidden.",
    "banks": [
     {
      "bic8": "EBILAEAD",
@@ -669,7 +669,11 @@
       "USD",
       "EUR",
       "GBP",
-      "AED"
+      "SAR",
+      "QAR",
+      "KWD",
+      "BHD",
+      "OMR"
      ]
     },
     {
@@ -681,7 +685,8 @@
       "EUR",
       "GBP",
       "AED"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "ADCBAEAA",
@@ -692,7 +697,8 @@
       "EUR",
       "GBP",
       "AED"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "RJHISARI",
@@ -703,10 +709,11 @@
       "EUR",
       "GBP",
       "SAR"
-     ]
+     ],
+     "seedable": false
     },
     {
-     "bic8": "RIYBSARI",
+     "bic8": "RIBLSARI",
      "name": "Riyad Bank",
      "country": "SA",
      "currencies": [
@@ -714,7 +721,8 @@
       "EUR",
       "GBP",
       "SAR"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "SABBSARI",
@@ -725,7 +733,8 @@
       "EUR",
       "GBP",
       "SAR"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "QNBAQAQA",
@@ -736,17 +745,40 @@
       "EUR",
       "GBP",
       "QAR"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "NBOKKWKW",
      "name": "National Bank of Kuwait",
      "country": "KW",
      "currencies": [
-      "USD",
+      "AED",
+      "AUD",
+      "BHD",
+      "CAD",
+      "CHF",
+      "CNY",
+      "DKK",
+      "EGP",
       "EUR",
       "GBP",
-      "KWD"
+      "HKD",
+      "INR",
+      "JOD",
+      "JPY",
+      "KRW",
+      "KWD",
+      "LKR",
+      "NOK",
+      "OMR",
+      "PHP",
+      "PKR",
+      "QAR",
+      "SAR",
+      "SEK",
+      "SGD",
+      "USD"
      ]
     },
     {
@@ -758,10 +790,11 @@
       "EUR",
       "GBP",
       "BHD"
-     ]
+     ],
+     "seedable": false
     },
     {
-     "bic8": "CBOMUSSR",
+     "bic8": "BMUSOMRX",
      "name": "Bank Muscat",
      "country": "OM",
      "currencies": [
@@ -769,10 +802,15 @@
       "EUR",
       "GBP",
       "OMR"
-     ]
+     ],
+     "seedable": false
     }
    ],
-   "forbidden_bics": []
+   "forbidden_bics": [
+    "RIYBSARI",
+    "CBOMUSSR",
+    "FGBMAEAA"
+   ]
   },
   {
    "name": "vietnam",
