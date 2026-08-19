@@ -121,6 +121,11 @@ BANKS = [
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
     ("BARBINBBXXX", "Bank of Baroda", "IN", "Mumbai", "INR"),
+    # ---- Additional SSI beneficiaries from the next data wave ----
+    ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "TH", "Bangkok", "THB"),
+    ("CAFECOBBXXX", "Banco Davivienda S.A. (Colombia)", "CO", "Bogota", "COP"),
+    ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "PE", "Lima", "PEN"),
+    ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "CL", "Santiago", "CLP"),
     # ---- Additional correspondent + destination banks (from SSI research) ----
     # Global correspondents seen in published SSIs
     ("SCBLUS33XXX", "Standard Chartered Bank New York", "US", "New York", "USD"),
@@ -659,7 +664,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — SMBC Bank International plc London
     # Source: smbcgroup.com EMEA Settlement Instructions page
-    # ======================================================    ("SMBCGB2LXXX", "SMBC Bank International plc London", "USD",
+    # ======================================================
+    ("SMBCGB2LXXX", "SMBC Bank International plc London", "USD",
      "SMBCUS33XXX", "SMBC New York",
      "ACCT-58249", "ACCT-88219", "SHA", "spot",
      "Source: SMBC EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -770,7 +776,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Bank of Maharashtra (MAHBBINP)
     # Source: bankofmaharashtra.bank.in SSI PDF
-    # ======================================================    ("MAHBBINPXXX", "Bank of Maharashtra", "USD",
+    # ======================================================
+    ("MAHBBINPXXX", "Bank of Maharashtra", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank New York",
      "ACCT-27892", "ACCT-13443", "SHA", "spot",
      "Source: Bank of Maharashtra SSI PDF. ABA 026002561. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -833,7 +840,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Deutsche Bank Prague (DEUTCZPX)
     # Source: country.db.com Czech Republic SSI PDF (dated 25/11/2025)
-    # ======================================================    ("DEUTCZPXXXX", "Deutsche Bank Prague", "EUR",
+    # ======================================================
+    ("DEUTCZPXXXX", "Deutsche Bank Prague", "EUR",
      "DEUTDEFFXXX", "Deutsche Bank AG Frankfurt",
      "ACCT-87947", "ACCT-77048", "SHA", "spot",
      "Source: DB Czech SSI PDF (25/11/2025). " + _SSI_REAL_NOTE, "2025-11-25", "unverified"),
@@ -884,7 +892,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — YES Bank (YESBINBB)
     # Source: yes.bank.in SSI PDF
-    # ======================================================    ("YESBINBBXXX", "YES Bank Ltd", "USD",
+    # ======================================================
+    ("YESBINBBXXX", "YES Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-02176", "ACCT-67637", "SHA", "spot",
      "Source: YES Bank SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -939,7 +948,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — U.S. Bank National Association (USBKUS44)
     # Source: usbank.com SSI PDF
-    # ======================================================    ("USBKUS44XXX", "U.S. Bank NA", "USD",
+    # ======================================================
+    ("USBKUS44XXX", "U.S. Bank NA", "USD",
      "USBKUS44XXX", "U.S. Bank National Association",
      "ACCT-08236", "ACCT-56014", "SHA", "spot",
      "Source: U.S. Bank SSI PDF. ABA 095000022. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -970,7 +980,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Access Bank Nigeria (ABNGNGLA)
     # Source: accessbankplc.com SwiftCode PDF
-    # ======================================================    ("ABNGNGLAXXX", "Access Bank Plc", "USD",
+    # ======================================================
+    ("ABNGNGLAXXX", "Access Bank Plc", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-31308", "ACCT-11356", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1013,7 +1024,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
     # Source: home.saxo payment instructions page
-    # ======================================================    ("SAXODK22XXX", "Saxo Bank A/S", "USD",
+    # ======================================================
+    ("SAXODK22XXX", "Saxo Bank A/S", "USD",
      "NADADKKKXXX", "Nordea Bank Danmark",
      "ACCT-19121", "ACCT-17243", "SHA", "spot",
      "Source: Saxo Bank payment instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1064,7 +1076,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — MUFG Bank (Europe) N.V. Amsterdam (BOTKNL2A)
     # Source: mufgemea.com SSI page
-    # ======================================================    ("BOTKNL2AXXX", "MUFG Bank (Europe) N.V. Amsterdam", "USD",
+    # ======================================================
+    ("BOTKNL2AXXX", "MUFG Bank (Europe) N.V. Amsterdam", "USD",
      "BOTKUS33XXX", "MUFG Bank Ltd New York",
      "ACCT-40863", "ACCT-47113", "SHA", "spot",
      "Source: MUFG EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1191,7 +1204,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — ICICI Bank UK PLC (ICICGB2L)
     # Source: icicibank.co.uk Nostro & Corresponding Bank PDF
-    # ======================================================    ("ICICGB2LXXX", "ICICI Bank UK PLC", "USD",
+    # ======================================================
+    ("ICICGB2LXXX", "ICICI Bank UK PLC", "USD",
      "CHASUS33XXX", "JPMorgan Chase NY",
      "ACCT-00207", "ACCT-82731", "SHA", "spot",
      "Source: ICICI Bank UK Nostro PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1234,7 +1248,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — HDFC Bank India (HDFCINBB)
     # Source: hdfcbank.com nostro correspondent list
-    # ======================================================    ("HDFCINBBXXX", "HDFC Bank Ltd", "USD",
+    # ======================================================
+    ("HDFCINBBXXX", "HDFC Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NY",
      "ACCT-76369", "ACCT-92540", "SHA", "spot",
      "Source: HDFC Bank correspondent list. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1261,7 +1276,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — State Bank of India (SBININBB)
     # Source: sbi.bank.in Nostro SSI PDF
-    # ======================================================    ("SBININBBXXX", "State Bank of India", "GBP",
+    # ======================================================
+    ("SBININBBXXX", "State Bank of India", "GBP",
      "NWBKGB2LXXX", "National Westminster Bank London",
      "ACCT-50240", "ACCT-85203", "SHA", "spot",
      "Source: SBI Nostro SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1340,7 +1356,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Federal Bank India (FDRLINBBIBD)
     # Source: federal.bank.in correspondent branches page
-    # ======================================================    ("FDRLINBBIBD", "Federal Bank Ltd", "USD",
+    # ======================================================
+    ("FDRLINBBIBD", "Federal Bank Ltd", "USD",
      "BOFAUS3NXXX", "Bank of America NY",
      "ACCT-61923", "ACCT-71687", "SHA", "spot",
      "Source: Federal Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1415,7 +1432,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Deutsche Bank AG Seoul (DEUTKRSX)
     # Source: corporates.db.com SSI PDF (March 2025)
-    # ======================================================    ("DEUTKRSXXXX", "Deutsche Bank AG Seoul", "USD",
+    # ======================================================
+    ("DEUTKRSXXXX", "Deutsche Bank AG Seoul", "USD",
      "BKTRUS33XXX", "Deutsche Bank Trust Company Americas NY",
      "ACCT-53167", "ACCT-08548", "SHA", "spot",
      "Source: DB Seoul SSI PDF (Mar 2025). " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1490,7 +1508,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — European Depositary Bank SA Luxembourg (EDBBEB22)
     # Source: europeandepositarybank.com SSI page
-    # ======================================================    ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
+    # ======================================================
+    ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
      "IRVTUS3NXXX", "BNY Mellon",
      "ACCT-58552", "ACCT-99813", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1517,7 +1536,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
     # Source: globalimebank.com international correspondent page
-    # ======================================================    ("GLBBNPKAXXX", "Global IME Bank Ltd", "USD",
+    # ======================================================
+    ("GLBBNPKAXXX", "Global IME Bank Ltd", "USD",
      "SCBLUS33XXX", "Standard Chartered NY",
      "ACCT-27892", "ACCT-61770", "SHA", "spot",
      "Source: Global IME Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1572,7 +1592,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Tamilnad Mercantile Bank (TMBLINDIA)
     # Source: tmb.bank.in Nostro Remittance Account page
-    # ======================================================    ("TMBLINDIXXX", "Tamilnad Mercantile Bank", "USD",
+    # ======================================================
+    ("TMBLINDIXXX", "Tamilnad Mercantile Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-41019", "ACCT-74471", "SHA", "spot",
      "Source: TMB Bank nostro remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1603,7 +1624,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
     # Source: idfcfirst.bank.in inward remittance bank details
-    # ======================================================    ("IDFBINBBXXX", "IDFC FIRST Bank", "USD",
+    # ======================================================
+    ("IDFBINBBXXX", "IDFC FIRST Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-20900", "ACCT-06856", "SHA", "spot",
      "Source: IDFC FIRST Bank inward remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1654,7 +1676,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Bank of Kigali (BKRWRWRW)
     # Source: bk.rw "Correspondent banks" page (retrieved 2026-08)
-    # ======================================================    ("BKRWRWRWXXX", "Bank of Kigali", "USD",
+    # ======================================================
+    ("BKRWRWRWXXX", "Bank of Kigali", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000001", "ACCT-0001234567", "SHA", "spot",
      "Source: Bank of Kigali correspondent-banks page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1697,7 +1720,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Equity Bank Kenya (EQBLKENA)
     # Source: equitygroupholdings.com SWIFT-transfer page (2020 archive)
-    # ======================================================    ("EQBLKENAXXX", "Equity Bank", "USD",
+    # ======================================================
+    ("EQBLKENAXXX", "Equity Bank", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-36320403", "ACCT-0007654321", "SHA", "spot",
      "Source: Equity Bank SWIFT-transfer page (2020). ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
@@ -1744,7 +1768,8 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — UBA group (UNAFNGLA + subsidiaries)
     # Source: ubagroup.com "Nigeria SWIFT Codes" PDF family (2021 archive)
-    # ======================================================    ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "USD",
+    # ======================================================
+    ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000012", "ACCT-0001234567", "SHA", "spot",
      "Source: UBA 'Nigeria SWIFT Codes' PDF. ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
@@ -1942,7 +1967,8 @@ SSI_RECORDS = [
     # =============================================================    # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
     # Source: mcb.mu correspondent-banking page (retrieved 2026-08)
     # Correspondent BICs published; account numbers not published — masked.
-    # ======================================================    ("MCBLMUMUXXX", "MCB Group", "USD",
+    # ======================================================
+    ("MCBLMUMUXXX", "MCB Group", "USD",
      "CITIUS33XXX", "Citibank N.A.",
      "ACCT-01127", "ACCT-00667", "SHA", "spot",
      "Source: MCB correspondent-banking page. " + _SSI_REAL_NOTE, None, "unverified"),
