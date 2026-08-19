@@ -1035,4 +1035,36 @@ class TestIndiaSsiCoverage:
             f"Explore can show their settlement instructions: {missing}"
         )
 # ---- end autopilot-generated coverage tests: india ----
->>>>>>> 2fc0db8 (feat(ssi): seed india SSIs (HDFC/ICICI/SBI/Axis/Kotak/BoB correspondent lists))
+
+
+# ---- autopilot-generated coverage tests: mexico-central-america ----
+MEXICO_CENTRAL_AMERICA_SSI_COVERAGE = [
+    ("MENOMXMTXXX", "Banorte (Banco Mercantil del Norte)", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
+    ("BAGEPAPAXXX", "Banco General (Panama)", {"USD", "EUR", "GBP", "MXN", "CAD", "CHF", "JPY", "AUD", "DKK", "HKD", "NOK", "SEK", "ZAR", "CNH"}),
+    ("CAGRSVSSXXX", "Banco Agricola (El Salvador)", {"USD", "EUR", "GBP", "MXN", "JPY", "CAD", "CHF"}),
+]
+
+
+class TestMexicoCentralAmericaSsiCoverage:
+    def test_mexico_central_america_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in MEXICO_CENTRAL_AMERICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_mexico_central_america_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in MEXICO_CENTRAL_AMERICA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"mexico-central-america SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: mexico-central-america ----

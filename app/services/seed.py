@@ -114,6 +114,8 @@ BANKS = [
     ("HDFCINBBXXX", "HDFC Bank", "IN", "Mumbai", "INR"),
     ("ICICINBBXXX", "ICICI Bank", "IN", "Mumbai", "INR"),
     ("SBININBBXXX", "State Bank of India", "IN", "Mumbai", "INR"),
+    ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
+    ("CAGRSVSSXXX", "Banco Agricola (El Salvador)", "SV", "San Salvador", "SVC"),
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
     ("BARBINBBXXX", "Bank of Baroda", "IN", "Mumbai", "INR"),
@@ -487,8 +489,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — sourced from bank-published pages
     # Source: emiratesnbd.com Corporate & Institutional Banking SSI page
-    # =============================================================
-    # ---- Emirates NBD (EBILAEAD) — real published SSIs ----
+    # ======================================================    # ---- Emirates NBD (EBILAEAD) — real published SSIs ----
     ("EBILAEADXXX", "Emirates NBD", "USD",
      "BOFAUS3NXXX", "Bank of America NA, New York",
      "ACCT-31713", "ACCT-64728", "SHA", "spot",
@@ -656,8 +657,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — SMBC Bank International plc London
     # Source: smbcgroup.com EMEA Settlement Instructions page
-    # =============================================================
-    ("SMBCGB2LXXX", "SMBC Bank International plc London", "USD",
+    # ======================================================    ("SMBCGB2LXXX", "SMBC Bank International plc London", "USD",
      "SMBCUS33XXX", "SMBC New York",
      "ACCT-58249", "ACCT-88219", "SHA", "spot",
      "Source: SMBC EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -768,8 +768,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Bank of Maharashtra (MAHBBINP)
     # Source: bankofmaharashtra.bank.in SSI PDF
-    # =============================================================
-    ("MAHBBINPXXX", "Bank of Maharashtra", "USD",
+    # ======================================================    ("MAHBBINPXXX", "Bank of Maharashtra", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank New York",
      "ACCT-27892", "ACCT-13443", "SHA", "spot",
      "Source: Bank of Maharashtra SSI PDF. ABA 026002561. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -832,8 +831,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Deutsche Bank Prague (DEUTCZPX)
     # Source: country.db.com Czech Republic SSI PDF (dated 25/11/2025)
-    # =============================================================
-    ("DEUTCZPXXXX", "Deutsche Bank Prague", "EUR",
+    # ======================================================    ("DEUTCZPXXXX", "Deutsche Bank Prague", "EUR",
      "DEUTDEFFXXX", "Deutsche Bank AG Frankfurt",
      "ACCT-87947", "ACCT-77048", "SHA", "spot",
      "Source: DB Czech SSI PDF (25/11/2025). " + _SSI_REAL_NOTE, "2025-11-25", "unverified"),
@@ -884,8 +882,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — YES Bank (YESBINBB)
     # Source: yes.bank.in SSI PDF
-    # =============================================================
-    ("YESBINBBXXX", "YES Bank Ltd", "USD",
+    # ======================================================    ("YESBINBBXXX", "YES Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-02176", "ACCT-67637", "SHA", "spot",
      "Source: YES Bank SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -940,8 +937,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — U.S. Bank National Association (USBKUS44)
     # Source: usbank.com SSI PDF
-    # =============================================================
-    ("USBKUS44XXX", "U.S. Bank NA", "USD",
+    # ======================================================    ("USBKUS44XXX", "U.S. Bank NA", "USD",
      "USBKUS44XXX", "U.S. Bank National Association",
      "ACCT-08236", "ACCT-56014", "SHA", "spot",
      "Source: U.S. Bank SSI PDF. ABA 095000022. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -972,8 +968,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Access Bank Nigeria (ABNGNGLA)
     # Source: accessbankplc.com SwiftCode PDF
-    # =============================================================
-    ("ABNGNGLAXXX", "Access Bank Plc", "USD",
+    # ======================================================    ("ABNGNGLAXXX", "Access Bank Plc", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-31308", "ACCT-11356", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1016,8 +1011,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
     # Source: home.saxo payment instructions page
-    # =============================================================
-    ("SAXODK22XXX", "Saxo Bank A/S", "USD",
+    # ======================================================    ("SAXODK22XXX", "Saxo Bank A/S", "USD",
      "NADADKKKXXX", "Nordea Bank Danmark",
      "ACCT-19121", "ACCT-17243", "SHA", "spot",
      "Source: Saxo Bank payment instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1068,8 +1062,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — MUFG Bank (Europe) N.V. Amsterdam (BOTKNL2A)
     # Source: mufgemea.com SSI page
-    # =============================================================
-    ("BOTKNL2AXXX", "MUFG Bank (Europe) N.V. Amsterdam", "USD",
+    # ======================================================    ("BOTKNL2AXXX", "MUFG Bank (Europe) N.V. Amsterdam", "USD",
      "BOTKUS33XXX", "MUFG Bank Ltd New York",
      "ACCT-40863", "ACCT-47113", "SHA", "spot",
      "Source: MUFG EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1196,8 +1189,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — ICICI Bank UK PLC (ICICGB2L)
     # Source: icicibank.co.uk Nostro & Corresponding Bank PDF
-    # =============================================================
-    ("ICICGB2LXXX", "ICICI Bank UK PLC", "USD",
+    # ======================================================    ("ICICGB2LXXX", "ICICI Bank UK PLC", "USD",
      "CHASUS33XXX", "JPMorgan Chase NY",
      "ACCT-00207", "ACCT-82731", "SHA", "spot",
      "Source: ICICI Bank UK Nostro PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1240,8 +1232,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — HDFC Bank India (HDFCINBB)
     # Source: hdfcbank.com nostro correspondent list
-    # =============================================================
-    ("HDFCINBBXXX", "HDFC Bank Ltd", "USD",
+    # ======================================================    ("HDFCINBBXXX", "HDFC Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NY",
      "ACCT-76369", "ACCT-92540", "SHA", "spot",
      "Source: HDFC Bank correspondent list. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1268,8 +1259,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — State Bank of India (SBININBB)
     # Source: sbi.bank.in Nostro SSI PDF
-    # =============================================================
-    ("SBININBBXXX", "State Bank of India", "GBP",
+    # ======================================================    ("SBININBBXXX", "State Bank of India", "GBP",
      "NWBKGB2LXXX", "National Westminster Bank London",
      "ACCT-50240", "ACCT-85203", "SHA", "spot",
      "Source: SBI Nostro SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1348,8 +1338,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Federal Bank India (FDRLINBBIBD)
     # Source: federal.bank.in correspondent branches page
-    # =============================================================
-    ("FDRLINBBIBD", "Federal Bank Ltd", "USD",
+    # ======================================================    ("FDRLINBBIBD", "Federal Bank Ltd", "USD",
      "BOFAUS3NXXX", "Bank of America NY",
      "ACCT-61923", "ACCT-71687", "SHA", "spot",
      "Source: Federal Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1424,8 +1413,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Deutsche Bank AG Seoul (DEUTKRSX)
     # Source: corporates.db.com SSI PDF (March 2025)
-    # =============================================================
-    ("DEUTKRSXXXX", "Deutsche Bank AG Seoul", "USD",
+    # ======================================================    ("DEUTKRSXXXX", "Deutsche Bank AG Seoul", "USD",
      "BKTRUS33XXX", "Deutsche Bank Trust Company Americas NY",
      "ACCT-53167", "ACCT-08548", "SHA", "spot",
      "Source: DB Seoul SSI PDF (Mar 2025). " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1500,8 +1488,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — European Depositary Bank SA Luxembourg (EDBBEB22)
     # Source: europeandepositarybank.com SSI page
-    # =============================================================
-    ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
+    # ======================================================    ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
      "IRVTUS3NXXX", "BNY Mellon",
      "ACCT-58552", "ACCT-99813", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1528,8 +1515,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
     # Source: globalimebank.com international correspondent page
-    # =============================================================
-    ("GLBBNPKAXXX", "Global IME Bank Ltd", "USD",
+    # ======================================================    ("GLBBNPKAXXX", "Global IME Bank Ltd", "USD",
      "SCBLUS33XXX", "Standard Chartered NY",
      "ACCT-27892", "ACCT-61770", "SHA", "spot",
      "Source: Global IME Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1584,8 +1570,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Tamilnad Mercantile Bank (TMBLINDIA)
     # Source: tmb.bank.in Nostro Remittance Account page
-    # =============================================================
-    ("TMBLINDIXXX", "Tamilnad Mercantile Bank", "USD",
+    # ======================================================    ("TMBLINDIXXX", "Tamilnad Mercantile Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-41019", "ACCT-74471", "SHA", "spot",
      "Source: TMB Bank nostro remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1616,8 +1601,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
     # Source: idfcfirst.bank.in inward remittance bank details
-    # =============================================================
-    ("IDFBINBBXXX", "IDFC FIRST Bank", "USD",
+    # ======================================================    ("IDFBINBBXXX", "IDFC FIRST Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-20900", "ACCT-06856", "SHA", "spot",
      "Source: IDFC FIRST Bank inward remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1668,8 +1652,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Bank of Kigali (BKRWRWRW)
     # Source: bk.rw "Correspondent banks" page (retrieved 2026-08)
-    # =============================================================
-    ("BKRWRWRWXXX", "Bank of Kigali", "USD",
+    # ======================================================    ("BKRWRWRWXXX", "Bank of Kigali", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000001", "ACCT-0001234567", "SHA", "spot",
      "Source: Bank of Kigali correspondent-banks page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1712,8 +1695,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — Equity Bank Kenya (EQBLKENA)
     # Source: equitygroupholdings.com SWIFT-transfer page (2020 archive)
-    # =============================================================
-    ("EQBLKENAXXX", "Equity Bank", "USD",
+    # ======================================================    ("EQBLKENAXXX", "Equity Bank", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-36320403", "ACCT-0007654321", "SHA", "spot",
      "Source: Equity Bank SWIFT-transfer page (2020). ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
@@ -1760,8 +1742,7 @@ SSI_RECORDS = [
 
     # =============================================================    # REAL SSI DATA — UBA group (UNAFNGLA + subsidiaries)
     # Source: ubagroup.com "Nigeria SWIFT Codes" PDF family (2021 archive)
-    # =============================================================
-    ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "USD",
+    # ======================================================    ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000012", "ACCT-0001234567", "SHA", "spot",
      "Source: UBA 'Nigeria SWIFT Codes' PDF. ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
@@ -1814,8 +1795,7 @@ SSI_RECORDS = [
     # Mislabeled BICs on the source pages (Natixis as CCBPFRPP, UBAE as
     # UBAIITRR, BNI as CSSSCIAB, UTB as UNTBTBTGTG, BIA as BILTTGT1, BFCM
     # as CMCIFRPA) were cross-checked and excluded.
-    # =============================================================
-    # ---- Coris Bank International (CORIBFBF) ----
+    # ======================================================    # ---- Coris Bank International (CORIBFBF) ----
     ("CORIBFBFXXX", "Coris Bank International", "EUR",
      "FIMBMTM3XXX", "FIMBank Malta",
      "ACCT-91000020", "ACCT-00677", "SHA", "spot",
@@ -1960,8 +1940,7 @@ SSI_RECORDS = [
     # =============================================================    # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
     # Source: mcb.mu correspondent-banking page (retrieved 2026-08)
     # Correspondent BICs published; account numbers not published — masked.
-    # =============================================================
-    ("MCBLMUMUXXX", "MCB Group", "USD",
+    # ======================================================    ("MCBLMUMUXXX", "MCB Group", "USD",
      "CITIUS33XXX", "Citibank N.A.",
      "ACCT-01127", "ACCT-00667", "SHA", "spot",
      "Source: MCB correspondent-banking page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -1995,8 +1974,7 @@ SSI_RECORDS = [
      "Source: MCB correspondent-banking page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # =============================================================    # ASIA-PACIFIC SSIs — sourced from bank-published pages
-    # =============================================================
-    # ---- Banco de Oro (BNORPHMM) — bdo.com.ph cross-border USD remittance ----
+    # ======================================================    # ---- Banco de Oro (BNORPHMM) — bdo.com.ph cross-border USD remittance ----
     ("BNORPHMMXXX", "Banco de Oro (BDO)", "USD",
      "IRVTUS3NXXX", "Bank of New York Mellon, New York",
      "ACCT-890063", "ACCT-000010001", "SHA", "spot",
@@ -2121,53 +2099,16 @@ SSI_RECORDS = [
     # The only major LatAm bank publishing a full SSI table: per-currency
     # correspondents with BICs and ABA routing numbers. No account numbers
     # are printed (the page says "pagadero a: cuenta del beneficiario").
-    # =============================================================
-    # ---- Banorte (MENOMXMT) — USD ----
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
-     "ACCT-91000100", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. ABA 021000021. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "CITIUS33XXX", "Citibank NA, New York",
-     "ACCT-91000101", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. ABA 021000089. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "BOFAUS6SXXX", "Bank of America, Concord CA",
-     "ACCT-91000102", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. ABA 026009593. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "SCBLUS33XXX", "Standard Chartered Bank, New York",
-     "ACCT-91000103", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. ABA 026002561. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "PNBPUS33XXX", "Wells Fargo Bank, New York",
-     "ACCT-91000104", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. ABA 026005092. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "USD",
-     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
-     "ACCT-91000105", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page (2025). ABA 021000018. " + _SSI_REAL_NOTE, None, "unverified"),
+    # ======================================================    # ---- Banorte (MENOMXMT) — USD ----
 
     # ---- Banorte (MENOMXMT) — EUR ----
-    ("MENOMXMTXXX", "Banorte", "EUR",
-     "BKBKESMMXXX", "Bankinter, Madrid",
-     "ACCT-91000106", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "EUR",
      "BARCDEFFXXX", "Barclays Bank, Frankfurt",
      "ACCT-91000107", "ACCT-00755", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "EUR",
-     "COBADEFFXXX", "Commerzbank, Frankfurt",
-     "ACCT-91000108", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "EUR",
      "BBRUBEBBXXX", "ING Belgium, Brussels",
      "ACCT-91000109", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "EUR",
-     "CHASDEFXXXX", "JPMorgan Chase, Frankfurt",
-     "ACCT-91000110", "ACCT-00755", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ---- Banorte (MENOMXMT) — CAD ----
@@ -2179,43 +2120,15 @@ SSI_RECORDS = [
      "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
      "ACCT-91000112", "ACCT-00755", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "CAD",
-     "CIBCCATTXXX", "CIBC, Toronto",
-     "ACCT-91000113", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ---- Banorte (MENOMXMT) — GBP / CHF / JPY / SEK / AUD / NOK ----
-    ("MENOMXMTXXX", "Banorte", "GBP",
-     "BARCGB22XXX", "Barclays Bank, London",
-     "ACCT-91000114", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "CHF",
      "CRESCHZZ80A", "Credit Suisse, Zurich",
      "ACCT-91000115", "ACCT-00755", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "CHF",
-     "UBSWCHZH80A", "UBS, Zurich",
-     "ACCT-91000116", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "JPY",
-     "BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi UFJ, Tokyo",
-     "ACCT-91000117", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "SEK",
-     "NDEASESSXXX", "Nordea Bank, Stockholm",
-     "ACCT-91000118", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "SEK",
      "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm",
      "ACCT-91000119", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "AUD",
-     "CHASDEFXXXX", "JPMorgan Chase, Frankfurt",
-     "ACCT-91000110", "ACCT-00755", "SHA", "spot",
-     "Source: Banorte transfer-instructions page (as printed). " + _SSI_REAL_NOTE, None, "unverified"),
-    ("MENOMXMTXXX", "Banorte", "NOK",
-     "NDEANOKKXXX", "Nordea Bank, Oslo",
-     "ACCT-91000120", "ACCT-00755", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # =============================================================    # ASIA (DEEP) — Taiwan / Hong Kong / Vietnam
@@ -2225,8 +2138,7 @@ SSI_RECORDS = [
     # New York branch routing pages (2025). BIC-only (no account numbers
     # printed except CTBC VN's circular, whose accounts are masked).
     # The printed Wells Fargo BIC PNBPUS3NNYC is normalized to PNBPUS33XXX.
-    # =============================================================
-    # ---- CTBC Bank Taiwan (CTCBTWTP) ----
+    # ======================================================    # ---- CTBC Bank Taiwan (CTCBTWTP) ----
     ("CTCBTWTPXXX", "CTBC Bank Taiwan", "USD",
      "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
      "ACCT-91000200", "ACCT-00800", "SHA", "spot",
@@ -2436,8 +2348,7 @@ SSI_RECORDS = [
     # instruction (2026), dohabank.com.qa List of Nostro Accounts (2010),
     # nbk.com SSI broadcast (2021). Mashreq is BIC-only; Doha Bank and NBK
     # print account numbers/IBANs which are masked here.
-    # =============================================================
-    # ---- Mashreq Bank (MASHAEAD) — own SSI page ----
+    # ======================================================    # ---- Mashreq Bank (MASHAEAD) — own SSI page ----
     ("MASHAEADXXX", "Mashreq Bank", "USD",
      "MSHQUS33XXX", "Mashreqbank PSC, New York",
      "ACCT-91000300", "ACCT-00855", "SHA", "spot",
@@ -2554,8 +2465,7 @@ SSI_RECORDS = [
     # (2019), agranibank.org List of Nostro Ac PDF (2021), combank.lk
     # correspondent-banks page (2011), dfcc.lk SSI PDF (2017). Accounts and
     # routing IDs are printed by these banks and masked here.
-    # =============================================================
-    # ---- Habib Bank (HABBPKKA) ----
+    # ======================================================    # ---- Habib Bank (HABBPKKA) ----
     ("HABBPKKAXXX", "Habib Bank", "USD",
      "CITIUS33XXX", "Citibank NA, New York",
      "ACCT-91000400", "ACCT-00900", "SHA", "spot",
@@ -2938,8 +2848,7 @@ SSI_RECORDS = [
     # Sources: corporates.db.com SSI PDF (DB Frankfurt, effective 2025-02-03),
     # nordea.com FX-and-derivatives SSI, danskebank.com standard-settlement
     # page (archived 2017). Accounts/IBANs printed and masked here.
-    # =============================================================
-    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
+    # ======================================================    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
     ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "USD",
      "DEUTUS33XXX", "Deutsche Bank AG, New York",
      "ACCT-91000500", "ACCT-01000", "SHA", "spot",
@@ -4510,7 +4419,262 @@ SSI_RECORDS = [
      "ACCT-91002096", "ACCT-91002084", "SHA", "spot",
      "Source: https://web.archive.org/web/20220628145154/https://www.bankofbaroda.in/business-banking/trade-fx-and-remittances/nostro-details (as of 2022-06-28). " + _SSI_REAL_NOTE,
      "2022-06-28", "archived"),
->>>>>>> 2fc0db8 (feat(ssi): seed india SSIs (HDFC/ICICI/SBI/Axis/Kotak/BoB correspondent lists))
+    # ---- Mexico + Central America (autopilot: Banorte, Banco General, Banco Agricola) ----
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "CHASUS33XXX", "JP Morgan Chase Bank, New York (ABA 021000021)",
+     "ACCT-91002300", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "CITIUS33XXX", "Citibank NA, New York (ABA 021000089)",
+     "ACCT-91002302", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "BOFAUS6SXXX", "Bank of America, Concord CA (ABA 026009593)",
+     "ACCT-91002303", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York (ABA 026002561)",
+     "ACCT-91002304", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York (ABA 026005092)",
+     "ACCT-91002305", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York (ABA 021000018)",
+     "ACCT-91002306", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "EUR",
+     "BKBKESMMXXX", "Bankinter, Madrid",
+     "ACCT-91002307", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "EUR",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt",
+     "ACCT-91002308", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "EUR",
+     "CHASDEFXXXX", "JP Morgan Chase, Frankfurt",
+     "ACCT-91002309", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "CAD",
+     "CIBCCATTXXX", "Canadian Imperial Bank of Commerce, Toronto",
+     "ACCT-91002310", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "GBP",
+     "BARCGB22XXX", "Barclays Bank, London",
+     "ACCT-91002311", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "CHF",
+     "UBSWCHZH80A", "UBS AG, Zurich",
+     "ACCT-91002312", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "JPY",
+     "BOTKJPJTXXX", "Bank of Tokyo, Tokyo",
+     "ACCT-91002313", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "SEK",
+     "NDEASESSXXX", "Nordea Bank AB, Stockholm",
+     "ACCT-91002314", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "AUD",
+     "CHASDEFXXXX", "JP Morgan Chase, Frankfurt",
+     "ACCT-91002315", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", "NOK",
+     "NDEANOKKXXX", "Nordea Bank, Oslo",
+     "ACCT-91002316", "ACCT-91002301", "SHA", "spot",
+     "Source: https://www.banorte.com/Personal/Internacional/Cobros-Internacionales/Instrucciones-para-recibir-transferencias-Internacionales.html (as of 2026-08-18). " + _SSI_REAL_NOTE,
+     "2026-08-18", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "USD",
+     "CITIUS33XXX", "Citibank N.A., New York (ABA 021000089)",
+     "ACCT-91002317", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank N.A., New York (ABA 021000021)",
+     "ACCT-91002319", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank N.A., New York",
+     "ACCT-91002320", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "MXN",
+     "BMSXMXMMXXX", "Banco Santander Mexico, Mexico D.F. (N/O Banco General, S.A., acct ACCT-91002301)",
+     "ACCT-91002321", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "EUR",
+     "CHASDEFXXXX", "JP Morgan AG, Frankfurt (BG EUR acct ACCT-91002302)",
+     "ACCT-91002322", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "EUR",
+     "BARCGB22XXX", "Barclays Bank PLC, London",
+     "ACCT-91002323", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "EUR",
+     "CAIXESBBXXX", "Caixabank S.A., Barcelona (BG EUR IBAN ACCT-91002303)",
+     "ACCT-91002324", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "EUR",
+     "CITIGB2LXXX", "Citibank N.A., London (BG EUR IBAN ACCT-91002304)",
+     "ACCT-91002325", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "GBP",
+     "CHASGB2LXXX", "JP Morgan Chase Bank N.A., London (BG GBP acct ACCT-91002305)",
+     "ACCT-91002326", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "GBP",
+     "BARCGB22XXX", "Barclays Bank PLC, London",
+     "ACCT-91002327", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "GBP",
+     "CITIGB2LXXX", "Citibank N.A., London (BG GBP IBAN ACCT-91002306)",
+     "ACCT-91002328", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "CAD",
+     "ROYCCAT2XXX", "Royal Bank of Canada, Toronto (credit via JPM London acct ACCT-91002307)",
+     "ACCT-91002329", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "CHF",
+     "UBSWCHZH80A", "UBS Switzerland AG, Zurich (credit via JPM London acct ACCT-91002309)",
+     "ACCT-91002330", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "JPY",
+     "CHASJPJTXXX", "JP Morgan Chase Bank, Tokyo (credit via JPM London acct ACCT-91002311)",
+     "ACCT-91002331", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "AUD",
+     "ANZBAU3MXXX", "ANZ Banking Group Ltd, Melbourne (credit via JPM London acct ACCT-91002313)",
+     "ACCT-91002332", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "DKK",
+     "NDEADKKKXXX", "Nordea Bank Denmark A/S, Copenhagen (credit via JPM London acct ACCT-91002315)",
+     "ACCT-91002333", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "HKD",
+     "CHASHKHHXXX", "JP Morgan Chase Bank N.A., Hong Kong (credit via JPM London acct ACCT-91002317)",
+     "ACCT-91002334", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "NOK",
+     "NDEANOKKXXX", "Nordea Bank Norge ASA, Oslo (credit via JPM London acct ACCT-91002319)",
+     "ACCT-91002335", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "SEK",
+     "HANDSESSXXX", "Svenska Handelsbanken, Stockholm (credit via JPM London acct ACCT-91002321)",
+     "ACCT-91002336", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "ZAR",
+     "SBZAZAJJXXX", "Standard Bank of South Africa, Johannesburg (credit via JPM London acct ACCT-91002323)",
+     "ACCT-91002337", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("BAGEPAPAXXX", "Banco General S.A. - Panama", "CNH",
+     "CHASHKHHXXX", "JP Morgan Chase Bank N.A., Hong Kong (credit via JPM London acct ACCT-91002325)",
+     "ACCT-91002338", "ACCT-91002318", "SHA", "spot",
+     "Source: https://www.bgeneral.com/personas/transferencias-internacionales/ (as of 2026-05-11). " + _SSI_REAL_NOTE,
+     "2026-05-11", "unverified"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "CHASUS33XXX", "JP Morgan Chase, New York (ABA 021000021)",
+     "ACCT-91002339", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "PNBPUS33XXX", "Wells Fargo Bank, New York (ABA 026005092)",
+     "ACCT-91002341", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "IRVTUS3NXXX", "Bank of New York Mellon (ABA 021000018)",
+     "ACCT-91002342", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "CITIUS33XXX", "Citibank NA (ABA 021000089)",
+     "ACCT-91002343", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "BOFAUS6SXXX", "Bank of America NA (ABA 026009593)",
+     "ACCT-91002344", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "BKTRUS33XXX", "Deutsche Bank, New York (ABA 021001033)",
+     "ACCT-91002345", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "USD",
+     "COBADEFFXXX", "Commerzbank AG",
+     "ACCT-91002346", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG, Frankfurt (nostro ACCT-91002327)",
+     "ACCT-91002347", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "EUR",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt (nostro ACCT-91002328)",
+     "ACCT-91002348", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "GBP",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt (nostro ACCT-91002329)",
+     "ACCT-91002349", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "MXN",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt (nostro ACCT-91002330)",
+     "ACCT-91002350", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "JPY",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt (nostro ACCT-91002331)",
+     "ACCT-91002351", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "CAD",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt (nostro ACCT-91002332)",
+     "ACCT-91002352", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
+    ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", "CHF",
+     "UBSWCHZHXXX", "UBS AG, Zurich (nostro ACCT-91002333)",
+     "ACCT-91002353", "ACCT-91002340", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
+     "2025-08-06", "archived"),
 ]
 
 
