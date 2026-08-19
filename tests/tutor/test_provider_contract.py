@@ -12,6 +12,7 @@ and the application never passes it anything else.
 """
 import asyncio
 import inspect
+import json
 import sys
 from types import SimpleNamespace
 
@@ -207,25 +208,32 @@ def test_gpt5_settings_reach_the_real_openai_responses_request(monkeypatch):
     """Relay's production model string must reach the Responses wire boundary."""
     pytest.importorskip("pydantic_ai")
     try:
+        import httpx
+        from openai import AsyncOpenAI
+        from pydantic_ai import ModelHTTPError
         from pydantic_ai.models.openai import OpenAIResponsesModel
         from pydantic_ai.providers.openai import OpenAIProvider
 
         captured = {}
 
-        class RecordingResponses:
-            async def create(self, **kwargs):
-                captured.update(kwargs)
-                raise RuntimeError("request captured")
+        async def record_request(request):
+            captured["url"] = str(request.url)
+            captured["body"] = json.loads(await request.aread())
+            return httpx.Response(
+                500,
+                json={"error": {"message": "request captured"}},
+                request=request,
+            )
 
-        class RecordingClient:
-            responses = RecordingResponses()
+        http_client = httpx.AsyncClient(transport=httpx.MockTransport(record_request))
+        openai_client = AsyncOpenAI(api_key="sk-test-value", http_client=http_client)
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
         monkeypatch.setenv("TUTOR_MAX_OUTPUT_TOKENS", "4000")
         monkeypatch.setattr(
             OpenAIProvider,
             "_create_openai_client",
-            lambda self, **kwargs: RecordingClient(),
+            lambda self, **kwargs: openai_client,
         )
 
         async def run_request():
@@ -244,19 +252,23 @@ def test_gpt5_settings_reach_the_real_openai_responses_request(monkeypatch):
             # instance so this test can assert the production string resolved
             # to the Responses adapter before the request is recorded.
             engine._agent_type = capture_agent
-            with pytest.raises(RuntimeError, match="request captured"):
-                await engine._call_provider(
-                    engine_module.build_prompt_payload(_request(), []),
-                    RelayTutorTools(),
-                )
+            try:
+                with pytest.raises(ModelHTTPError):
+                    await engine._call_provider(
+                        engine_module.build_prompt_payload(_request(), []),
+                        RelayTutorTools(),
+                    )
 
-            assert isinstance(created["agent"].model, OpenAIResponsesModel)
+                assert isinstance(created["agent"].model, OpenAIResponsesModel)
+            finally:
+                await http_client.aclose()
 
         asyncio.run(run_request())
 
-        assert captured["model"] == "gpt-5"
-        assert captured["max_output_tokens"] == 4000
-        assert captured["reasoning"] == {"effort": "minimal"}
+        assert captured["url"].endswith("/responses")
+        assert captured["body"]["model"] == "gpt-5"
+        assert captured["body"]["max_output_tokens"] == 4000
+        assert captured["body"]["reasoning"] == {"effort": "minimal"}
     finally:
         # The rest of the suite intentionally proves the base install can boot
         # without importing the optional provider SDK. Keep this integration

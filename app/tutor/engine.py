@@ -532,6 +532,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
 
         last_error: Optional[BaseException] = None
         for attempt in range(_MAX_PROVIDER_ATTEMPTS):
+            attempt_started = time.monotonic()
             try:
                 result = await self._call_provider(payload, tools)
             except Exception as error:  # noqa: BLE001 - normalised at the boundary
@@ -540,9 +541,11 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                     await asyncio.sleep(_RETRY_BACKOFF_SECONDS)
                     continue
                 logger.warning(
-                    "tutor provider call failed: %s cause_chain=%s",
+                    "tutor provider call failed: %s cause_chain=%s attempt=%s elapsed_ms=%s",
                     type(error).__name__,
                     _exception_chain_types(error),
+                    attempt + 1,
+                    _elapsed_ms(attempt_started),
                 )
                 break
 
@@ -555,16 +558,67 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                 raise TutorProviderError("provider returned an unusable output type")
 
             logger.info(
-                "tutor provider output: answer_chars=%s citations=%s needs_clarification=%s",
+                "tutor provider output: answer_chars=%s citations=%s needs_clarification=%s "
+                "input_tokens=%s output_tokens=%s requests=%s tool_calls=%s "
+                "finish_reason=%s elapsed_ms=%s",
                 len(output.answer),
                 len(output.citations),
                 output.needs_clarification,
+                *_provider_usage_metadata(result),
+                _elapsed_ms(attempt_started),
             )
             self._breaker.record_success()
             return output
 
         self._breaker.record_failure()
         raise TutorProviderError(type(last_error).__name__) from last_error
+
+
+def _elapsed_ms(started_at: float) -> int:
+    """Return a bounded, integer duration suitable for safe operational logs."""
+    return max(0, round((time.monotonic() - started_at) * 1000))
+
+
+_SAFE_FINISH_REASONS = frozenset({"stop", "length", "content_filter", "tool_call", "error"})
+
+
+def _provider_usage_metadata(result: object) -> Tuple[Optional[int], ...]:
+    """Extract only bounded provider usage/completion fields for diagnostics.
+
+    PydanticAI exposes run usage as a property in current releases and as a
+    callable in some older adapter shapes. Treat both forms as optional and
+    never let telemetry extraction affect a successful tutor response.
+    """
+    usage = getattr(result, "usage", None)
+    if callable(usage):
+        try:
+            usage = usage()
+        except Exception:  # noqa: BLE001 - diagnostics must never affect serving
+            usage = None
+
+    def nonnegative_int(*names: str) -> Optional[int]:
+        if usage is None:
+            return None
+        for name in names:
+            value = getattr(usage, name, None)
+            if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 10_000_000:
+                return value
+        return None
+
+    response = getattr(result, "response", None)
+    finish_reason = getattr(response, "finish_reason", None)
+    if hasattr(finish_reason, "value"):
+        finish_reason = finish_reason.value
+    if finish_reason not in _SAFE_FINISH_REASONS:
+        finish_reason = None
+
+    return (
+        nonnegative_int("input_tokens", "request_tokens"),
+        nonnegative_int("output_tokens", "response_tokens"),
+        nonnegative_int("requests"),
+        nonnegative_int("tool_calls"),
+        finish_reason,
+    )
 
 
 def _exception_chain_types(error: BaseException) -> str:

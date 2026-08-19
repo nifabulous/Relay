@@ -211,6 +211,7 @@ def test_a_malformed_ceiling_counts_as_missing_rather_than_unlimited(
 # ignored, both pass isolated tests.
 
 import asyncio
+from types import SimpleNamespace
 
 import pytest
 
@@ -241,6 +242,8 @@ def _engine_with(responses):
             self.attempts += 1
             if isinstance(outcome, Exception):
                 raise outcome
+            if hasattr(outcome, "output"):
+                return outcome
             return type("Result", (), {"output": outcome})()
 
     return _Scripted()
@@ -270,6 +273,26 @@ def test_provider_failure_logs_the_source_exception_class_without_its_message(ca
 
     assert "tutor provider call failed: ProviderShapeError" in caplog.text
     assert "request secret should not be logged" not in caplog.text
+
+
+def test_provider_success_logs_bounded_usage_and_finish_reason(caplog):
+    good = TutorModelOutput(answer="An IBAN identifies an account.", citations=[])
+    result = SimpleNamespace(
+        output=good,
+        usage=SimpleNamespace(input_tokens=123, output_tokens=45, requests=1, tool_calls=0),
+        response=SimpleNamespace(finish_reason="stop"),
+    )
+    engine = _engine_with([result])
+
+    with caplog.at_level(logging.INFO, logger="app.tutor.engine"):
+        _run(engine)
+
+    assert "input_tokens=123" in caplog.text
+    assert "output_tokens=45" in caplog.text
+    assert "requests=1" in caplog.text
+    assert "tool_calls=0" in caplog.text
+    assert "finish_reason=stop" in caplog.text
+    assert "elapsed_ms=" in caplog.text
 
 
 def test_the_retry_is_bounded_to_one_extra_attempt():

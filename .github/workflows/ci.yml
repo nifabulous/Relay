@@ -170,6 +170,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,ai]"
 
+      - name: Assert the production provider packages import
+        run: |
+          python -c "import openai, pydantic_ai; print(f'pydantic-ai={pydantic_ai.__version__} openai={openai.__version__}')"
+
       - name: Verify provider request serialization
         run: python -m pytest tests/tutor/test_provider_contract.py -q
 
