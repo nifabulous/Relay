@@ -1073,7 +1073,7 @@
     "MY"
    ],
    "masked_block": 91001900,
-   "note": "2026-08-18 research pending. Candidate publishers: Maybank, CIMB, Public Bank, Hong Leong, RHB, AmBank, Affin, Bank Islam. Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: no Malaysian bank publishes an SSI/correspondent list. Maybank (MBBEMYKL), CIMB (CIBBMYKL), Public Bank (PBBEMYKL), Hong Leong (HLBBMYKL), RHB (RHBBMYKL), AmBank (ARBKMYKL), Affin (PHBMMYKL), and Bank Islam (BIMBMYKL) publish remittance product pages and fee schedules only; remittance forms have blank intermediary fields \u2014 NOT SEEDABLE. All 8 BICs verified correct.",
    "banks": [
     {
      "bic8": "MBBEMYKL",
@@ -1087,7 +1087,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "CIBBMYKL",
@@ -1101,7 +1102,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "PBBEMYKL",
@@ -1115,7 +1117,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "HLBBMYKL",
@@ -1129,7 +1132,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "RHBBMYKL",
@@ -1143,7 +1147,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "ARBKMYKL",
@@ -1157,7 +1162,8 @@
       "JPY",
       "SGD",
       "HKD"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "PHBMMYKL",
@@ -1168,7 +1174,8 @@
       "EUR",
       "GBP",
       "MYR"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "BIMBMYKL",
@@ -1179,10 +1186,315 @@
       "EUR",
       "GBP",
       "MYR"
+     ],
+     "seedable": false
+    }
+   ],
+   "forbidden_bics": []
+  },
+  {
+   "name": "india",
+   "label": "India",
+   "countries": [
+    "IN"
+   ],
+   "masked_block": 91002000,
+   "note": "2026-08-19 research pending. Candidate publishers: HDFC, ICICI, SBI, Axis, Kotak, Bank of Baroda. Verify BICs against theswiftcodes country pages.",
+   "banks": [
+    {
+     "bic8": "HDFCINBB",
+     "name": "HDFC Bank",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY",
+      "AED",
+      "SGD",
+      "HKD"
+     ]
+    },
+    {
+     "bic8": "ICICINBB",
+     "name": "ICICI Bank",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY",
+      "AED",
+      "SGD",
+      "HKD"
+     ]
+    },
+    {
+     "bic8": "SBININBB",
+     "name": "State Bank of India",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY",
+      "AED",
+      "SGD",
+      "HKD"
+     ]
+    },
+    {
+     "bic8": "AXISINBB",
+     "name": "Axis Bank",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY",
+      "AED",
+      "SGD",
+      "HKD"
+     ]
+    },
+    {
+     "bic8": "KKBKINBB",
+     "name": "Kotak Mahindra Bank",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY"
+     ]
+    },
+    {
+     "bic8": "BARBINBB",
+     "name": "Bank of Baroda",
+     "country": "IN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "INR",
+      "JPY"
      ]
     }
    ],
    "forbidden_bics": []
+  },
+  {
+   "name": "thailand",
+   "label": "Thailand",
+   "countries": [
+    "TH"
+   ],
+   "masked_block": 91002100,
+   "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) publishes an SSI table (archived 2003-08-24, document dated 2002-08-08; 12 currencies, nostro accounts only, no with-an/charges/value-date published). Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI \u2014 NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa\u2192UFJ\u2192MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
+   "banks": [
+    {
+     "bic8": "BKKBTHBK",
+     "name": "Bangkok Bank",
+     "country": "TH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "THB",
+      "JPY",
+      "CNY",
+      "SGD",
+      "HKD"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "KASITHBK",
+     "name": "Kasikornbank",
+     "country": "TH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "THB",
+      "JPY",
+      "CNY",
+      "SGD",
+      "HKD"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "SICOTHBK",
+     "name": "Siam Commercial Bank",
+     "country": "TH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "JPY",
+      "SGD",
+      "HKD",
+      "AUD",
+      "CAD",
+      "CHF",
+      "DKK",
+      "NZD",
+      "SEK"
+     ]
+    },
+    {
+     "bic8": "KRTHTHBK",
+     "name": "Krungthai Bank",
+     "country": "TH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "THB",
+      "JPY",
+      "CNY"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "AYUDTHBK",
+     "name": "Bank of Ayudhya (Krungsri)",
+     "country": "TH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "THB",
+      "JPY"
+     ],
+     "seedable": false
+    }
+   ],
+   "forbidden_bics": []
+  },
+  {
+   "name": "andean",
+   "label": "Andean (Colombia, Peru, Chile)",
+   "countries": [
+    "CO",
+    "PE",
+    "CL"
+   ],
+   "masked_block": 91002200,
+   "note": "2026-08-19 research: Banco Davivienda (CAFECOBB, giros-via-swift page archived 2004-12-08), Interbank Peru (BINPPEPL, Bancos Corresponsales PDF archived 2016-01-23, as-of 2015-10-12), and BancoEstado Chile (BECHCLRM, corresponsales page archived 2025-06-19) publish correspondent lists (BIC + city, no account numbers). Bancolombia, BCP, BBVA Peru, Banco de Chile (BIC is BCHICLRM), and Santander Chile publish no SSI \u2014 NOT SEEDABLE. BIC corrections: Davivienda is CAFECOBB not BBOGCOBM; Banco de Chile is BCHICLRM; BancoEstado is BECHCLRM. PNBPUS3NNYC normalized to PNBPUS33; PCBCCLRMCLR (CCB Chile) dropped as unconfirmed.",
+   "banks": [
+    {
+     "bic8": "COLOCOBM",
+     "name": "Bancolombia",
+     "country": "CO",
+     "currencies": [
+      "USD",
+      "EUR",
+      "COP"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "CAFECOBB",
+     "name": "Banco Davivienda",
+     "country": "CO",
+     "currencies": [
+      "USD",
+      "EUR"
+     ]
+    },
+    {
+     "bic8": "BCPLPEPL",
+     "name": "Banco de Credito del Peru",
+     "country": "PE",
+     "currencies": [
+      "USD",
+      "EUR",
+      "PEN"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "BCONPEPL",
+     "name": "BBVA Peru",
+     "country": "PE",
+     "currencies": [
+      "USD",
+      "EUR",
+      "PEN"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "BINPPEPL",
+     "name": "Interbank (Peru)",
+     "country": "PE",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "CAD",
+      "JPY",
+      "CHF",
+      "CNY",
+      "HKD",
+      "MXN",
+      "AUD"
+     ]
+    },
+    {
+     "bic8": "BCHICLRM",
+     "name": "Banco de Chile",
+     "country": "CL",
+     "currencies": [
+      "USD",
+      "EUR",
+      "CLP"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "BSCHCLRM",
+     "name": "Banco Santander Chile",
+     "country": "CL",
+     "currencies": [
+      "USD",
+      "EUR",
+      "CLP"
+     ],
+     "seedable": false
+    },
+    {
+     "bic8": "BECHCLRM",
+     "name": "BancoEstado",
+     "country": "CL",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "AUD",
+      "CAD",
+      "CHF",
+      "DKK",
+      "SEK",
+      "NOK",
+      "HKD",
+      "MXN"
+     ]
+    }
+   ],
+   "forbidden_bics": [
+    "BBOGCOBM",
+    "CHBLCLRM",
+    "BECECLRM",
+    "CAVDCOBB"
+   ]
   }
  ]
 }
