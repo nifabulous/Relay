@@ -253,6 +253,82 @@ def test_a_timeout_becomes_the_same_stable_response_not_a_platform_504(tutor_cli
     assert "unavailable" in response.json()["detail"].lower()
 
 
+def test_a_request_that_finishes_inside_the_budget_returns_typed_json(tutor_client):
+    """The route budget must allow a slow-but-valid provider response through.
+
+    This is deliberately exercised at the HTTP boundary: a provider call that
+    completes before the request budget must not be mistaken for a platform
+    timeout or lose its response during route cleanup.
+    """
+
+    class _NearDeadline(FakeTutorEngine):
+        async def _produce(self, payload, tools):
+            await asyncio.sleep(0.04)
+            return await super()._produce(payload, tools)
+
+    client = tutor_client(_NearDeadline(_grounded_output()))
+    import app.routers.tutor as tutor_router
+
+    original = tutor_router.TUTOR_TIMEOUT_SECONDS
+    tutor_router.TUTOR_TIMEOUT_SECONDS = 0.08
+    try:
+        response = client.post(ENDPOINT, json=_payload())
+    finally:
+        tutor_router.TUTOR_TIMEOUT_SECONDS = original
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["grounded"] is True
+
+
+def test_a_slow_retry_is_cancelled_before_the_platform_deadline(tutor_client):
+    """The timeout encloses retries, not just the first provider attempt.
+
+    A retry that continues after the route budget would hand control to
+    Vercel's platform deadline and return an HTML error instead of Relay's
+    stable JSON 503. The fake records the second attempt and observes the
+    cancellation so this tests the complete request boundary.
+    """
+
+    class _RetryingSlow:
+        def __init__(self):
+            self.attempts = 0
+            self.cancelled = False
+
+        async def answer(self, request, documents, tools):
+            for attempt in range(2):
+                self.attempts += 1
+                if attempt == 0:
+                    try:
+                        await asyncio.sleep(0.005)
+                        raise TutorProviderError("transient provider failure")
+                    except TutorProviderError:
+                        pass
+                    continue
+                try:
+                    await asyncio.sleep(5)
+                except asyncio.CancelledError:
+                    self.cancelled = True
+                    raise
+
+    engine = _RetryingSlow()
+    client = tutor_client(engine)
+    import app.routers.tutor as tutor_router
+
+    original = tutor_router.TUTOR_TIMEOUT_SECONDS
+    tutor_router.TUTOR_TIMEOUT_SECONDS = 0.05
+    try:
+        response = client.post(ENDPOINT, json=_payload())
+    finally:
+        tutor_router.TUTOR_TIMEOUT_SECONDS = original
+
+    assert response.status_code == 503
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["detail"].startswith("The tutor is temporarily unavailable")
+    assert engine.attempts == 2
+    assert engine.cancelled is True
+
+
 def test_an_unexpected_engine_exception_does_not_leak_its_text(tutor_client):
     client = tutor_client(
         FakeTutorEngine(failure=RuntimeError("connection to db-prod-7 refused"))

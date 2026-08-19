@@ -251,6 +251,37 @@ def test_the_vercel_function_build_installs_the_ai_extra():
     assert ".[ai]" in vercel["installCommand"]
 
 
+def test_the_vercel_build_and_function_budget_match_the_tutor_contract():
+    """The release configuration must preserve JSON headroom for the tutor.
+
+    Vercel's function deadline is configuration, not an assumption encoded in
+    a comment. Keep the build path and the request budget tied to the same
+    checked artifact so a deployment change cannot silently reintroduce an
+    opaque platform timeout.
+    """
+    import json
+
+    from app.config import BASE_DIR
+    from app.routers.tutor import TUTOR_TIMEOUT_SECONDS
+
+    with open(BASE_DIR / "vercel.json") as handle:
+        vercel = json.load(handle)
+
+    assert vercel["installCommand"] == "cd frontend && npm ci && cd .. && pip install '.[ai]'"
+    assert vercel["buildCommand"] == "cd frontend && npm run build"
+    max_duration = vercel["functions"]["app/main.py"]["maxDuration"]
+    assert isinstance(max_duration, int)
+    assert max_duration == 30
+    assert TUTOR_TIMEOUT_SECONDS <= max_duration - 5
+
+
+def test_the_ai_extra_versions_are_locked_for_the_deployed_adapter():
+    """Vercel and the provider-contract job must resolve the same SDK pair."""
+    ai = _pyproject()["project"]["optional-dependencies"]["ai"]
+    assert "pydantic-ai==2.31.1" in ai
+    assert "openai==3.3.0" in ai
+
+
 def test_env_example_documents_every_tutor_variable():
     """`.env.example` is the only discoverable list of what the app reads."""
     from app.config import BASE_DIR
