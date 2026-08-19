@@ -5270,8 +5270,19 @@ def seed_if_empty(session) -> dict:
         verified_by = provenance[2] if len(provenance) > 2 else None
         # A 4th provenance element marks a BIC-only row: the source publishes
         # correspondent availability but no accounts, charge codes, or value
-        # dates. Kept in provenance so a hand-written row stays bic_only=0.
-        bic_only = bool(provenance[3]) if len(provenance) > 3 else False
+        # dates. It must be a Python boolean — bool("False") is True, which
+        # would quietly turn an ordinary row into a BIC-only one (clearing its
+        # settlement fields and suppressing routing on it). A hand-edited
+        # tuple with anything else fails loudly here instead of flipping shape.
+        if len(provenance) > 3:
+            if not isinstance(provenance[3], bool):
+                raise ValueError(
+                    f"SSI row {ben_bic}/{ccy}/{int_bic}: bic_only must be a "
+                    f"Python boolean, got {provenance[3]!r}"
+                )
+            bic_only = provenance[3]
+        else:
+            bic_only = False
         existing = session.query(SSI).filter(
             SSI.beneficiary_bic == ben_bic,
             SSI.currency == ccy,

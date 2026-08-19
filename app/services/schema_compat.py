@@ -51,12 +51,13 @@ def _ssi_trigger_sql(engine) -> list[tuple[str, str]]:
         ]
 
 
-def _recreate_triggers(engine, triggers: list[tuple[str, str]]) -> None:
-    """Re-create triggers captured before a rebuild, in capture order."""
-    with engine.begin() as conn:
-        for name, sql in triggers:
-            conn.execute(text(f"DROP TRIGGER IF EXISTS {name}"))
-            conn.execute(text(sql))
+def _recreate_triggers(conn, triggers: list[tuple[str, str]]) -> None:
+    """Re-create triggers captured before a rebuild, in capture order, on the
+    given connection — the caller decides the transaction boundaries so the
+    whole swap (table drop/rename plus trigger restore) is one atomic unit."""
+    for name, sql in triggers:
+        conn.execute(text(f"DROP TRIGGER IF EXISTS {name}"))
+        conn.execute(text(sql))
 
 
 def _ensure_ssi_bic_only_check(engine, inspector) -> None:
@@ -66,9 +67,23 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
     a dev database that predates bic_only can enforce the invariant is a
     table rebuild: create a new table from the current model schema (columns
     plus every constraint), copy the columns the legacy table actually holds,
-    drop the old table, and rename. The rebuild drops the as_of triggers
-    20260816_ssi_verifiedby attached, so they are captured beforehand and
-    re-created afterwards.
+    drop the old table, and rename.
+
+    Two safety properties are deliberate:
+
+      * A legacy table carrying columns the current model does not know is
+        REFUSED, not rebuilt. The compatibility path promises the dev file
+        "never loses data", and dropping unknown columns on startup would
+        break that promise silently; failing with the column names lets the
+        operator decide (drop them, or recreate the dev database) instead.
+        This is checked before any DDL runs.
+
+      * The whole swap — dropping the canonical-named indexes, creating the
+        rebuild table, copying the rows, dropping the old table, renaming,
+        and restoring the as_of triggers 20260816_ssi_verifiedby attached —
+        runs inside ONE transaction. A failure anywhere (e.g. a row that
+        violates the new unique constraint) rolls everything back and leaves
+        the original table intact rather than stranding a half-built state.
     """
     existing_checks = {
         c["name"] for c in inspector.get_check_constraints("ssi")
@@ -76,6 +91,7 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
     if _BIC_ONLY_CHECK_NAME in existing_checks:
         return
 
+    existing_columns = [c["name"] for c in inspector.get_columns("ssi")]
     triggers = _ssi_trigger_sql(engine)
     meta = MetaData()
     rebuild = SSI.__table__.to_metadata(
@@ -89,28 +105,53 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
     # while they exist).
     for index in rebuild.indexes:
         index.name = index.name.replace("ssi__bic_only_rebuild", "ssi")
-    common = [
-        column["name"] for column in inspector.get_columns("ssi")
-        if column["name"] in rebuild.c
-    ]
-    column_list = ", ".join(f'"{name}"' for name in common)
-    with engine.begin() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
-        for index in rebuild.indexes:
-            conn.execute(
-                text(f'DROP INDEX IF EXISTS "{index.name}"')
-            )
-    rebuild.create(engine)
-    with engine.begin() as conn:
-        conn.execute(
-            text(
-                f"INSERT INTO ssi__bic_only_rebuild ({column_list}) "
-                f"SELECT {column_list} FROM ssi"
-            )
+    unknown = sorted(set(existing_columns) - set(rebuild.c.keys()))
+    if unknown:
+        raise ValueError(
+            "Refusing to rebuild legacy ssi table: columns not in the current "
+            f"model would be dropped: {unknown}. Drop them, or recreate the "
+            "dev database, instead of letting the compatibility path discard "
+            "data on startup."
         )
-        conn.execute(text("DROP TABLE ssi"))
-        conn.execute(text("ALTER TABLE ssi__bic_only_rebuild RENAME TO ssi"))
-    _recreate_triggers(engine, triggers)
+    common = [name for name in existing_columns if name in rebuild.c]
+    column_list = ", ".join(f'"{name}"' for name in common)
+
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
+            for index in rebuild.indexes:
+                conn.execute(
+                    text(f'DROP INDEX IF EXISTS "{index.name}"')
+                )
+            rebuild.create(bind=conn)
+            conn.execute(
+                text(
+                    f"INSERT INTO ssi__bic_only_rebuild ({column_list}) "
+                    f"SELECT {column_list} FROM ssi"
+                )
+            )
+            # The copy above is the only step that can fail on data
+            # (e.g. a duplicate-key row). Every statement after it is DDL and
+            # runs only once the data has copied successfully, so a failure
+            # never drops the canonical table beneath live data.
+            conn.execute(text("DROP TABLE ssi"))
+            conn.execute(text("ALTER TABLE ssi__bic_only_rebuild RENAME TO ssi"))
+            _recreate_triggers(conn, triggers)
+    except Exception:
+        # SQLite's sqlite3 driver auto-commits DDL, so engine.begin()'s
+        # transaction rollback does not remove the staging table. Drop the
+        # leftover ssi__bic_only_rebuild so the dev DB never observes a
+        # half-built state; the canonical ``ssi`` table is untouched because
+        # the only data-destructive step (DROP TABLE ssi) runs AFTER the row
+        # copy that raised. On PostgreSQL the whole block is transactional and
+        # this cleanup is a no-op there.
+        with engine.begin() as cleanup:
+            cleanup.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
+        logger.warning(
+            "Rolled back partial ssi rebuild; original ssi table preserved"
+        )
+        raise
+    logger.info("Rebuilt legacy ssi table with the bic_only CHECK")
     logger.info("Rebuilt legacy ssi table with the bic_only CHECK")
 
 

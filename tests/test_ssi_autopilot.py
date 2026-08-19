@@ -276,6 +276,42 @@ def test_bic_only_flag_is_taken_from_the_final_field_only():
     problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flagged))
     assert any("carries bic_only but the validated record does not" in p for p in problems), problems
 
+def test_fold_verifier_rejects_a_string_bic_only_flag():
+    """A 14-field row whose final field is the string "False" (not the boolean
+    literal) must be rejected by verify_fold: seed_if_empty now raises on any
+    non-boolean flag, so a fold the verifier accepted would crash at seed time
+    (and, before the strict check, silently flipped an ordinary row into a
+    BIC-only one)."""
+    ambiguous = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", None, \"False\"),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(ambiguous))
+    assert any("must be the boolean literal True or False" in p for p in problems), problems
+
+
+def test_cmd_verify_rejects_a_string_bic_only_flag(tmp_path, monkeypatch):
+    """The AST verifier gates folds before commit; a 14-field tuple whose
+    bic_only slot is the string "False" must fail there, matching the strict
+    isinstance(bool) check seed_if_empty enforces at seed time."""
+    import argparse
+
+    fake = tmp_path / "seed.py"
+    fake.write_text(
+        "SSI_RECORDS = [\n"
+        '    ("ZZBANKXYXXX", "Some Bank", "USD", "CITIUS33XXX", "Citibank",\n'
+        '     None, None, None, None, "Source: x", "2026-01-01", "unverified",\n'
+        '     None, "False"),\n'
+        "]\n"
+    )
+    monkeypatch.setattr(autopilot, "SEED_FILE", fake)
+    with pytest.raises(SystemExit) as exc:
+        autopilot.cmd_verify(argparse.Namespace())
+    assert "14th (bic_only) field" in str(exc.value)
+
+
 
 # ── Test scaffolding ─────────────────────────────────────────────────────────
 def test_scaffold_contains_expected_pieces():

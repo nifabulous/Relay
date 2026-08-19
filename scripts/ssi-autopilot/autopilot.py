@@ -423,8 +423,17 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         # A bic_only fold must actually carry the flag (as provenance[3]);
         # an ordinary fold must not. The flag lives only in the 14th field of
         # a 14-field tuple; anything else — a provenance field, a verifier
-        # name spelled "True" — must not be mistaken for it.
+        # name spelled "True" — must not be mistaken for it. The 14th field
+        # itself must be the boolean literal True or False: the seed reads it
+        # with an isinstance-bool check, so a string "False" would be a
+        # runtime error there while this verifier accepted the row as
+        # ordinary. Reject it here instead.
         row_bic_only = len(row) == 14 and row[13] == "True"
+        if len(row) == 14 and row[13] not in ("True", "False"):
+            problems.append(
+                f"{key[0]}/{key[1]}: the 14th field of a 14-field row must be "
+                f"the boolean literal True or False, got {row[13]!r}"
+            )
         rec_bic_only = rec.get("bic_only") is True
         if rec_bic_only and not row_bic_only:
             problems.append(
@@ -726,6 +735,22 @@ def cmd_verify(_args: argparse.Namespace) -> None:
             for bic, count in seen.items():
                 if count > 1:
                     problems.append(f"BANKS: duplicate BIC {bic} ({count}x)")
+        if name == "SSI_RECORDS":
+            # The 14th field of a 14-field tuple is the bic_only flag and must
+            # be the boolean literal True or False. seed_if_empty checks
+            # isinstance(x, bool) and raises on anything else, so a string
+            # "False" would be a runtime error there; the AST verifier is the
+            # place to catch it before the fold is committed.
+            for i, e in enumerate(elts):
+                if not (isinstance(e, ast.Tuple) and len(e.elts) == 14):
+                    continue
+                flag = e.elts[13]
+                if not (isinstance(flag, ast.Constant) and isinstance(flag.value, bool)):
+                    problems.append(
+                        f"{name}[{i}]: the 14th (bic_only) field of a 14-field "
+                        f"tuple must be the boolean literal True or False, got "
+                        f"{ast.dump(flag)}"
+                    )
     if problems:
         raise SystemExit("seed.py invariants failed:\n" + "\n".join(f"  ✗ {p}" for p in problems))
     print("  ✓ seed.py invariants OK (BANKS/SSI_RECORDS arity, no duplicate BICs)")

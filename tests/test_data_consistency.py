@@ -1024,6 +1024,40 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_seed_rejects_a_non_boolean_bic_only_flag(self, monkeypatch):
+        """The bic_only provenance flag is read with isinstance(x, bool): a
+        hand-edited 14-field tuple whose flag is the string "False" must fail
+        loudly at seed time. bool("False") is True, which would quietly turn an
+        ordinary row into a BIC-only one — clearing its settlement fields and
+        suppressing routing on it."""
+        import pytest
+
+        from app.services.seed import SSI_RECORDS, seed_if_empty
+
+        malformed = (
+            "ZZBANKXYXXX", "Some Bank", "USD", "CITIUS33XXX", "Citibank",
+            None, None, None, None, "Source: x", "2026-01-01", "unverified",
+            None, "False",
+        )
+        monkeypatch.setattr(
+            "app.services.seed.SSI_RECORDS",
+            list(SSI_RECORDS) + [malformed],
+        )
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            with pytest.raises(ValueError, match="Python boolean"):
+                seed_if_empty(session)
+        finally:
+            session.close()
+            engine.dispose()
 
 # ---------------------------------------------------------------------------
 # European beneficiary SSI coverage

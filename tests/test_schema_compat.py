@@ -4,6 +4,7 @@ Builds raw engines on in-memory SQLite (StaticPool, same convention as
 tests/conftest.py) so a "legacy" payment_events table can be simulated
 independently of the current ORM model.
 """
+import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.pool import StaticPool
@@ -326,3 +327,64 @@ class TestCurrentSchemaIsANoop:
                     "'Source: https://bank.example/charges (as of 2026-05-01).', "
                     "1, 'ACCT-91001629')"
                 ))
+    def test_legacy_rebuild_refuses_to_drop_unknown_columns(self):
+        """A legacy ssi table carrying columns the current model does not know
+        must be refused, not silently rebuilt: the rebuild copies only model
+        columns and then DROPs the old table, which would permanently discard
+        the extra column from a dev database the helper promises never to lose
+        data from. The refusal must happen before any DDL runs."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text("ALTER TABLE ssi ADD COLUMN operator_tag VARCHAR(40)"))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "notes, operator_tag) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy', 'keep-me')"
+            ))
+
+        with pytest.raises(ValueError, match="operator_tag"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(engine).get_columns("ssi")}
+            assert "operator_tag" in columns
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, operator_tag FROM ssi"
+            )).mappings().one()
+            assert row["operator_tag"] == "keep-me"
+
+    def test_legacy_rebuild_failure_rolls_back_the_whole_swap(self):
+        """Index drop + rebuild + row copy + table swap + trigger restore run
+        in ONE transaction. A row that violates the rebuild's unique composite
+        key must abort everything and leave the original table (name, data,
+        and no half-built ssi__bic_only_rebuild) untouched."""
+        from sqlalchemy.exc import IntegrityError
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'a')"
+            ))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'b')"
+            ))
+
+        with pytest.raises(IntegrityError):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            tables = [r[0] for r in conn.execute(text(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ))]
+            assert "ssi" in tables
+            assert "ssi__bic_only_rebuild" not in tables
+            notes = conn.execute(
+                text("SELECT notes FROM ssi ORDER BY notes")
+            ).scalars().all()
+            assert notes == ["a", "b"]
+        checks = {c["name"] for c in inspect(engine).get_check_constraints("ssi")}
+        assert "ck_ssi_bic_only_has_no_accounts" not in checks
