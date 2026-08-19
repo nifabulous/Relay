@@ -62,6 +62,11 @@ SETTLEMENT_DIRECTORY = {
         "chips_uid": "0959",
         "aba": "026009593",
     },
+    "BOFAUS3M": {
+        "bank_name": "Bank of America N.A. (Miami)",
+        "chips_uid": "0959",
+        "aba": "026009593",
+    },
     "MSHQUS33": {
         "bank_name": "Mashreqbank PSC New York",
         "chips_uid": "0174",
