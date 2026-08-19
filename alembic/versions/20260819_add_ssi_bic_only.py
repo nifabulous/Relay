@@ -12,9 +12,9 @@ rows out of settlement selection.
 
 A mirror CHECK holds the other side of the invariant: an ordinary row IS a
 settlement instruction (routing selects exactly these rows), so it must
-carry a charge code and a value date. Legacy rows written under the
-pre-bic_only Python defaults get "SHA"/"spot" backfilled before the CHECK
-lands — the values those rows carried when they were written.
+carry a charge code and a value date. Legacy rows missing either term are
+refused before any schema change; a database operator must repair them from
+source data instead of the migration inventing settlement terms.
 
 Revision ID: 20260819_ssi_bic_only
 Revises: 20260816_ssi_verifiedby
@@ -89,7 +89,32 @@ def _reinstall_as_of_triggers(bind) -> None:
         op.execute(statement)
 
 
+def _ordinary_rows_missing_settlement_terms(bind) -> list[int]:
+    """Return legacy ordinary SSI ids that cannot satisfy the new CHECK."""
+    columns = {column["name"] for column in sa.inspect(bind).get_columns("ssi")}
+    missing_terms = (
+        "(charge_code IS NULL OR charge_code = '' OR "
+        "value_date IS NULL OR value_date = '')"
+    )
+    predicate = f"NOT bic_only AND {missing_terms}" if "bic_only" in columns else missing_terms
+    return [
+        row[0]
+        for row in bind.execute(
+            sa.text(f"SELECT id FROM ssi WHERE {predicate} ORDER BY id")
+        ).fetchall()
+    ]
+
+
 def upgrade() -> None:
+    bind = op.get_bind()
+    missing_terms = _ordinary_rows_missing_settlement_terms(bind)
+    if missing_terms:
+        raise RuntimeError(
+            "Refusing to add bic_only: ordinary SSI rows have missing settlement "
+            "terms (charge_code/value_date); repair row id(s) from source data "
+            f"before upgrading: {missing_terms}"
+        )
+
     # Existing rows are all ordinary SSI: they carry accounts, charge codes
     # and value dates, so server_default false keeps them legal under the
     # CHECK. The literal is the text "false", not the integer 0 — PostgreSQL
@@ -101,20 +126,6 @@ def upgrade() -> None:
             "ssi",
             sa.Column("bic_only", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         )
-    # Backfill before ck_ssi_ordinary_has_settlement_terms lands: a row
-    # written by a non-ORM path (Core insert, raw SQL) could predate the
-    # Python-side defaults this column pair used to carry. "SHA"/"spot" are
-    # exactly the defaults those rows were written under, so this restores
-    # what they carried when written rather than inventing terms — and it
-    # keeps ALTER TABLE from aborting on NULLs the new CHECK would reject.
-    op.execute(
-        "UPDATE ssi SET charge_code = 'SHA' "
-        "WHERE NOT bic_only AND (charge_code IS NULL OR charge_code = '')"
-    )
-    op.execute(
-        "UPDATE ssi SET value_date = 'spot' "
-        "WHERE NOT bic_only AND (value_date IS NULL OR value_date = '')"
-    )
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint("ck_ssi_bic_only_has_no_accounts", BIC_ONLY_HAS_NO_ACCOUNTS)
         batch.create_check_constraint(

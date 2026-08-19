@@ -36,6 +36,18 @@ CREATE TABLE ssi (
     beneficiary_bic VARCHAR(11) NOT NULL,
     currency VARCHAR(3) NOT NULL,
     intermediary_bic VARCHAR(11) NOT NULL,
+    charge_code VARCHAR(3) NOT NULL DEFAULT 'SHA',
+    value_date VARCHAR(10) NOT NULL DEFAULT 'spot',
+    notes VARCHAR(500)
+)
+"""
+
+LEGACY_SSI_WITHOUT_SETTLEMENT_TERMS_DDL = """
+CREATE TABLE ssi (
+    id INTEGER PRIMARY KEY,
+    beneficiary_bic VARCHAR(11) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    intermediary_bic VARCHAR(11) NOT NULL,
     notes VARCHAR(500)
 )
 """
@@ -94,6 +106,26 @@ def test_legacy_ssi_gains_provenance_columns_without_data_loss():
     assert row["as_of"] is None
     assert row["verified_by"] is None
     assert row["status"] == "illustrative"
+
+
+def test_legacy_ssi_with_missing_terms_is_refused_before_schema_changes():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_WITHOUT_SETTLEMENT_TERMS_DDL))
+        conn.execute(text(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+            "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+        ))
+
+    with pytest.raises(ValueError, match="missing settlement terms"):
+        ensure_sqlite_schema(engine)
+
+    with engine.connect() as conn:
+        columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+        assert columns == {
+            "id", "beneficiary_bic", "currency", "intermediary_bic", "notes",
+        }
+        assert conn.execute(text("SELECT notes FROM ssi")).scalar_one() == "legacy row"
 
 
 def test_legacy_schema_repair_is_idempotent():
@@ -395,13 +427,75 @@ class TestCurrentSchemaIsANoop:
             columns = {c["name"] for c in inspect(engine).get_columns("ssi")}
             assert columns == {
                 "id", "beneficiary_bic", "currency", "intermediary_bic",
-                "notes", "operator_tag",
+                "charge_code", "value_date", "notes", "operator_tag",
             }
             assert "operator_tag" in columns
             row = conn.execute(text(
                 "SELECT beneficiary_bic, operator_tag FROM ssi"
             )).mappings().one()
             assert row["operator_tag"] == "keep-me"
+
+    def test_legacy_constraints_are_checked_before_the_rebuild(self):
+        """Operator-owned checks and foreign keys must not disappear when the
+        compatibility path recreates the table."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(
+                "CREATE TABLE legacy_correspondents (bic VARCHAR(11) PRIMARY KEY)"
+            ))
+            conn.execute(text(
+                "INSERT INTO legacy_correspondents (bic) VALUES ('CHASUS33XXX')"
+            ))
+            conn.execute(text(
+                """
+                CREATE TABLE ssi (
+                    id INTEGER PRIMARY KEY,
+                    beneficiary_bic VARCHAR(11) NOT NULL,
+                    currency VARCHAR(3) NOT NULL,
+                    intermediary_bic VARCHAR(11) NOT NULL,
+                    charge_code VARCHAR(3),
+                    value_date VARCHAR(10),
+                    notes VARCHAR(500),
+                    CONSTRAINT legacy_ssi_bic_check
+                        CHECK (beneficiary_bic <> 'BLOCKED'),
+                    CONSTRAINT legacy_ssi_intermediary_fk
+                        FOREIGN KEY (intermediary_bic)
+                        REFERENCES legacy_correspondents(bic)
+                )
+                """
+            ))
+            conn.execute(text(
+                """
+                INSERT INTO ssi (
+                    beneficiary_bic, currency, intermediary_bic,
+                    charge_code, value_date, notes
+                ) VALUES (
+                    'CITIUS33XXX', 'USD', 'CHASUS33XXX',
+                    'SHA', 'spot', 'legacy row'
+                )
+                """
+            ))
+
+        with pytest.raises(ValueError, match="legacy_ssi_bic_check|legacy_ssi_intermediary_fk"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+            assert columns == {
+                "id", "beneficiary_bic", "currency", "intermediary_bic",
+                "charge_code", "value_date", "notes",
+            }
+            checks = {
+                check["name"] for check in inspect(engine).get_check_constraints("ssi")
+            }
+            assert "legacy_ssi_bic_check" in checks
+            foreign_keys = inspect(engine).get_foreign_keys("ssi")
+            assert any(
+                foreign_key["referred_table"] == "legacy_correspondents"
+                and foreign_key["constrained_columns"] == ["intermediary_bic"]
+                and foreign_key["referred_columns"] == ["bic"]
+                for foreign_key in foreign_keys
+            )
 
     def test_legacy_rebuild_preserves_custom_indexes(self):
         """A successful compatibility rebuild must not remove operator-owned

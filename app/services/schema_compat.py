@@ -36,12 +36,12 @@ _TABLE_PATCHES = {
         ("as_of VARCHAR(10)", "as_of"),
         ("verified_by VARCHAR(120)", "verified_by"),
         ("status VARCHAR(12) NOT NULL DEFAULT 'illustrative'", "status"),
-        # An ssi table old enough to predate these columns never carried
-        # charge/value data; the defaults are the ones the model documented
-        # for ordinary rows at the time, so the gained columns match what a
-        # seeded database would hold.
-        ("charge_code VARCHAR(3) DEFAULT 'SHA'", "charge_code"),
-        ("value_date VARCHAR(10) DEFAULT 'spot'", "value_date"),
+        # These columns are nullable because an old table may have rows whose
+        # settlement terms were never established. The compatibility path
+        # refuses such populated rows before rebuilding; it must not invent
+        # SHA/spot values just to satisfy the current CHECK.
+        ("charge_code VARCHAR(3)", "charge_code"),
+        ("value_date VARCHAR(10)", "value_date"),
         # bic_only rows carry no accounts, charge code, or value date. The
         # CHECK itself cannot be added with ALTER TABLE in SQLite (it would
         # require a table rebuild); _ensure_ssi_bic_only_check performs that
@@ -125,6 +125,106 @@ def _table_exists(conn, name: str) -> bool:
     )
 
 
+def _normalise_constraint_sql(sql: object) -> str:
+    return "".join(str(sql if sql is not None else "").split()).lower()
+
+
+def _model_check_constraints() -> dict[str, str]:
+    return {
+        constraint.name: _normalise_constraint_sql(constraint.sqltext)
+        for constraint in SSI.__table__.constraints
+        if constraint.name and getattr(constraint, "sqltext", None) is not None
+    }
+
+
+def _foreign_key_signature(foreign_key: dict) -> tuple:
+    return (
+        foreign_key.get("name"),
+        tuple(foreign_key.get("constrained_columns") or ()),
+        foreign_key.get("referred_table"),
+        tuple(foreign_key.get("referred_columns") or ()),
+        foreign_key.get("onupdate"),
+        foreign_key.get("ondelete"),
+        foreign_key.get("deferrable"),
+        foreign_key.get("initially"),
+    )
+
+
+def _model_foreign_key_signatures() -> set[tuple]:
+    signatures = set()
+    for constraint in SSI.__table__.foreign_key_constraints:
+        elements = list(constraint.elements)
+        signatures.add((
+            constraint.name,
+            tuple(element.parent.name for element in elements),
+            elements[0].column.table.name,
+            tuple(element.column.name for element in elements),
+            constraint.onupdate,
+            constraint.ondelete,
+            constraint.deferrable,
+            constraint.initially,
+        ))
+    return signatures
+
+
+def _refuse_unknown_ssi_constraints(inspector) -> None:
+    """Refuse a rebuild that would silently drop legacy integrity rules."""
+    expected_checks = _model_check_constraints()
+    unknown_checks = []
+    for check in inspector.get_check_constraints("ssi"):
+        name = check.get("name")
+        if expected_checks.get(name) != _normalise_constraint_sql(check.get("sqltext")):
+            unknown_checks.append(name or check.get("sqltext") or "<unnamed CHECK>")
+
+    expected_foreign_keys = _model_foreign_key_signatures()
+    unknown_foreign_keys = [
+        foreign_key.get("name") or _foreign_key_signature(foreign_key)
+        for foreign_key in inspector.get_foreign_keys("ssi")
+        if _foreign_key_signature(foreign_key) not in expected_foreign_keys
+    ]
+
+    details = []
+    if unknown_checks:
+        details.append(f"CHECK constraints {unknown_checks}")
+    if unknown_foreign_keys:
+        details.append(f"foreign keys {unknown_foreign_keys}")
+    if details:
+        raise ValueError(
+            "Refusing to rebuild legacy ssi table: constraints not in the "
+            "current model would be dropped: " + "; ".join(details)
+        )
+
+
+def _ordinary_ssi_rows_missing_settlement_terms(engine, existing_columns: set[str]) -> list[int]:
+    """Return ids that would fail the ordinary-row settlement CHECK."""
+    if "charge_code" not in existing_columns or "value_date" not in existing_columns:
+        terms = "1 = 1"
+    else:
+        terms = (
+            "(charge_code IS NULL OR charge_code = '' OR "
+            "value_date IS NULL OR value_date = '')"
+        )
+    if "bic_only" in existing_columns:
+        terms = f"NOT bic_only AND ({terms})"
+    with engine.connect() as conn:
+        return [
+            row[0]
+            for row in conn.execute(
+                text(f"SELECT id FROM ssi WHERE {terms} ORDER BY id")
+            ).fetchall()
+        ]
+
+
+def _refuse_missing_settlement_terms(engine, existing_columns: set[str]) -> None:
+    missing = _ordinary_ssi_rows_missing_settlement_terms(engine, existing_columns)
+    if missing:
+        raise ValueError(
+            "Refusing to rebuild legacy ssi table: ordinary SSI rows have "
+            "missing settlement terms (charge_code/value_date); repair row "
+            f"id(s) from source data before startup: {missing}"
+        )
+
+
 def _ensure_ssi_bic_only_check(engine, inspector) -> None:
     """Install the model's ssi CHECK constraints on a legacy SQLite ssi table.
 
@@ -163,6 +263,8 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
         return
 
     existing_columns = [c["name"] for c in inspector.get_columns("ssi")]
+    _refuse_missing_settlement_terms(engine, set(existing_columns))
+    _refuse_unknown_ssi_constraints(inspector)
     triggers = _ssi_trigger_sql(engine)
     indexes = _ssi_index_sql(engine)
     meta = MetaData()
@@ -199,24 +301,6 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
                         f"{_quote_sqlite_identifier(index.name)}"
                     )
                 )
-            # The same backfill the Alembic migration performs, for the same
-            # reason: an ordinary row written by a non-ORM path can predate
-            # the charge/value defaults, and the rebuilt table's
-            # ck_ssi_ordinary_has_settlement_terms would reject the copy.
-            # "SHA"/"spot" are the defaults those rows were written under.
-            # Both columns exist by now — _TABLE_PATCHES adds them first.
-            conn.execute(
-                text(
-                    "UPDATE ssi SET charge_code = 'SHA' "
-                    "WHERE NOT bic_only AND (charge_code IS NULL OR charge_code = '')"
-                )
-            )
-            conn.execute(
-                text(
-                    "UPDATE ssi SET value_date = 'spot' "
-                    "WHERE NOT bic_only AND (value_date IS NULL OR value_date = '')"
-                )
-            )
             rebuild.create(bind=conn)
             conn.execute(
                 text(
@@ -286,6 +370,8 @@ def ensure_sqlite_schema(engine) -> None:
                 "dev database, instead of letting the compatibility path discard "
                 "data on startup."
             )
+        _refuse_missing_settlement_terms(engine, existing_columns)
+        _refuse_unknown_ssi_constraints(inspector)
     for table_name, patches in _TABLE_PATCHES.items():
         if not inspector.has_table(table_name):
             continue

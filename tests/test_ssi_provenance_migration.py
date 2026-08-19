@@ -50,8 +50,9 @@ def _seed_at_previous_revision(db: Path, as_of: str, status: str = "archived") -
     assert _alembic(db, "upgrade", PREVIOUS).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', ?, 'Source: x', ?)",
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', ?, 'Source: x', ?, 'SHA', 'spot')",
         (status, as_of),
     )
     connection.commit()
@@ -96,6 +97,7 @@ def test_upgrade_succeeds_once_the_malformed_value_is_cleared(tmp_path):
     connection = sqlite3.connect(db)
     connection.execute(
         "UPDATE ssi SET as_of = NULL "
+        ", charge_code = 'SHA', value_date = 'spot' "
         "WHERE NOT (as_of IS NULL OR as_of LIKE '____-__-__')"
     )
     connection.commit()
@@ -171,8 +173,10 @@ def _seed_published_at_prov_without_a_date(db: Path) -> None:
     assert _alembic(db, "upgrade", "20260816_ssi_prov").returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', NULL)"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', NULL, "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -239,8 +243,10 @@ def _seed_published_without_a_verifier(db: Path) -> None:
     assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -310,8 +316,10 @@ def _seed_published_with_a_stale_date(db: Path) -> None:
     assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2999-01-01')"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2999-01-01', "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -424,35 +432,32 @@ class TestBicOnlyMigration:
         connection.commit()
         connection.close()
 
-    def test_upgrade_backfills_ordinary_terms_and_enforces_the_mirror_check(self, tmp_path):
+    def test_upgrade_refuses_ordinary_rows_with_missing_settlement_terms(self, tmp_path):
         db = tmp_path / "ordinary_terms.db"
         _seed_at_previous_revision(db, "2021-10-09")
 
         connection = sqlite3.connect(db)
         connection.execute(
-            "UPDATE ssi SET charge_code = '', value_date = ''"
+            "UPDATE ssi SET charge_code = NULL, value_date = NULL"
         )
         connection.commit()
         connection.close()
 
-        assert _alembic(db, "upgrade", "head").returncode == 0
+        result = _alembic(db, "upgrade", "head")
+        assert result.returncode != 0
+        assert "missing settlement terms" in result.stderr
 
         connection = sqlite3.connect(db)
         row = list(connection.execute(
             "SELECT charge_code, value_date FROM ssi"
         ))[0]
-        assert row == ("SHA", "spot")
-        ddl = connection.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='ssi'"
+        assert row == (None, None)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" not in columns
+        version = connection.execute(
+            "SELECT version_num FROM alembic_version"
         ).fetchone()[0]
-        assert "ck_ssi_ordinary_has_settlement_terms" in ddl
-        with pytest.raises(sqlite3.IntegrityError):
-            connection.execute(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, bic_only, charge_code, value_date) VALUES "
-                "('ORDINARYBAD', 'USD', 'CITIUS33XXX', 'illustrative', NULL, "
-                "0, NULL, NULL)"
-            )
+        assert version == self.PREVIOUS
         connection.close()
 
     def test_model_and_migration_mirror_constraint_text(self):
