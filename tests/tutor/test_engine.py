@@ -200,12 +200,12 @@ def test_a_citation_naming_an_unretrieved_source_is_removed():
     assert response.grounded is False
 
 
-def test_a_real_source_with_bad_model_evidence_gets_a_server_owned_quote():
-    """A malformed quote is replaced when its source ID was retrieved.
+def test_a_real_source_with_bad_model_evidence_fails_closed():
+    """A malformed quote cannot be repaired into a grounded answer.
 
-    The source ID is real, but the evidence was written by the model. Relay
-    must never show that evidence; it can still use its strict answer-coverage
-    check and attach an exact excerpt from the retrieved catalogue instead.
+    The source ID is real, but the evidence was written by the model. Without
+    claim-level entailment, Relay cannot prove that a catalogue excerpt supports
+    the answer, so the safe result is the server-owned clarification.
     """
     documents = _documents()
     document = documents[0].document
@@ -222,10 +222,9 @@ def test_a_real_source_with_bad_model_evidence_gets_a_server_owned_quote():
         )
     )
     response = _answer(engine, _request(), documents)
-    assert response.grounded is True
-    assert response.citations
-    assert response.citations[0].evidence != "This sentence appears nowhere in the source document."
-    assert response.citations[0].evidence in document.text
+    assert response.grounded is False
+    assert response.citations == []
+    assert response.needs_clarification is True
 
 
 def test_evidence_matching_ignores_whitespace_differences_only():
@@ -287,22 +286,59 @@ def test_an_uncited_factual_answer_is_replaced_not_merely_flagged():
     assert response.needs_clarification is True
 
 
-def test_a_retrieved_answer_gets_server_owned_citations_when_model_omits_them():
-    """Model citation formatting is optional; Relay's trust check is not."""
+def test_an_uncited_answer_fails_closed_even_when_catalogue_terms_match():
+    """Lexical overlap cannot distinguish a contradiction from a paraphrase."""
     documents = _documents()
     engine = FakeTutorEngine(
         TutorModelOutput(
-            answer="An IBAN, defined by ISO 13616, identifies a specific account.",
+            answer="An IBAN does not identify a specific account in a specific country.",
             citations=[],
         )
     )
 
     response = _answer(engine, _request(), documents)
 
-    assert response.grounded is True
-    assert response.citations
-    assert response.citations[0].source_id == "relay-concept-iban"
-    assert response.citations[0].evidence in documents[0].document.text
+    assert response.grounded is False
+    assert response.citations == []
+    assert response.needs_clarification is True
+
+
+def test_an_uncited_answer_cannot_combine_terms_from_multiple_documents():
+    """Terms borrowed from separate sources do not prove one supported claim."""
+    documents = [
+        RetrievedDocument(
+            document=TutorDocument(
+                source_id="test-account",
+                title="Account reference",
+                text="An account has a fixed reference.",
+                topics=["account"],
+                source_kind="relay",
+            ),
+            score=1.0,
+        ),
+        RetrievedDocument(
+            document=TutorDocument(
+                source_id="test-settlement",
+                title="Settlement reference",
+                text="Settlement completes the same day.",
+                topics=["settlement"],
+                source_kind="relay",
+            ),
+            score=1.0,
+        ),
+    ]
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="An account has a fixed reference and settlement completes the same day.",
+            citations=[],
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is False
+    assert response.citations == []
+    assert response.needs_clarification is True
 
 
 def test_an_ungrounded_clarification_is_replaced_by_server_owned_text():

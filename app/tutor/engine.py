@@ -171,7 +171,6 @@ def _normalise_whitespace(text: str) -> str:
 # prose around one retrieved fact, which reads authoritative and is mostly
 # unsourced. Chosen to sit well above a normal cited paragraph.
 _CHARS_PER_REQUIRED_CITATION = 1200
-_MAX_SERVER_CITATION_CHARS = 500
 
 
 def validate_citations(
@@ -236,74 +235,6 @@ def validate_citations(
     )
 
 
-def _best_server_evidence_excerpt(answer: str, text: str) -> str:
-    """Choose a verbatim, bounded source window that best covers the answer."""
-    if len(text) <= _MAX_SERVER_CITATION_CHARS:
-        return text
-
-    answer_terms = {
-        token
-        for token in re.findall(r"[a-z0-9]+", answer.lower())
-        if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-    }
-    last_start = len(text) - _MAX_SERVER_CITATION_CHARS
-    starts = set(range(0, last_start + 1, 100)) | {last_start}
-    best_start = max(
-        starts,
-        key=lambda start: len(
-            answer_terms
-            & {
-                token
-                for token in re.findall(
-                    r"[a-z0-9]+",
-                    text[start : start + _MAX_SERVER_CITATION_CHARS].lower(),
-                )
-                if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-            }
-        ),
-    )
-    return text[best_start : best_start + _MAX_SERVER_CITATION_CHARS]
-
-
-def _derive_server_citations(
-    answer: str, documents: Sequence[RetrievedDocument]
-) -> List[TutorCitation]:
-    """Build citations from Relay documents when the model omitted them.
-
-    Source IDs, titles, URLs, and evidence all come from the catalogue. The
-    model contributes only the answer, which is still subjected to the normal
-    lexical coverage check after these citations are attached.
-    """
-    if not _answer_has_strict_catalogue_coverage(answer, documents):
-        return []
-
-    answer_terms = {
-        token
-        for token in re.findall(r"[a-z0-9]+", answer.lower())
-        if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-    }
-    citations: List[TutorCitation] = []
-    for result in documents:
-        document = result.document
-        evidence = _best_server_evidence_excerpt(answer, document.text)
-        evidence_terms = {
-            token
-            for token in re.findall(r"[a-z0-9]+", evidence.lower())
-            if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-        }
-        if not answer_terms & evidence_terms:
-            continue
-        citations.append(
-            TutorCitation(
-                source_id=document.source_id,
-                title=document.title,
-                url=document.source_url,
-                evidence=evidence,
-            )
-        )
-    return citations[:8]
-
-
 _GROUNDING_STOP_WORDS = frozenset(
     {
         "a", "an", "and", "are", "as", "at", "be", "by", "can", "does",
@@ -347,36 +278,6 @@ def _answer_has_relevant_evidence(answer: str, evidence: str) -> bool:
     return True
 
 
-def _answer_has_strict_catalogue_coverage(
-    answer: str, documents: Sequence[RetrievedDocument]
-) -> bool:
-    """Require omitted-citation answers to stay close to the full catalogue.
-
-    This stricter gate is only for server-generated citations. A model that
-    omits citations has not shown which source supports each claim, so a broad
-    50% lexical overlap would let an unrelated sentence borrow a few terms from
-    a nearby document. Requiring 80% coverage per sentence keeps the fallback
-    useful for ordinary paraphrases while rejecting unsupported specifics such
-    as dates, times, and fees.
-    """
-    catalogue_terms = {
-        token
-        for token in re.findall(
-            r"[a-z0-9]+", " ".join(result.document.text for result in documents).lower()
-        )
-        if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-    }
-    for sentence in re.split(r"[.!?]+", answer.lower()):
-        terms = {
-            token
-            for token in re.findall(r"[a-z0-9]+", sentence)
-            if len(token) > 2 and token not in _GROUNDING_STOP_WORDS
-        }
-        if terms and len(terms & catalogue_terms) * 5 < len(terms) * 4:
-            return False
-    return bool(catalogue_terms)
-
-
 def finalise_response(
     output: TutorModelOutput,
     request: TutorRequest,
@@ -385,31 +286,6 @@ def finalise_response(
 ) -> TutorResponse:
     """Validate the model's output and compose the response the server owns."""
     citations, grounded = validate_citations(output, documents)
-    # A known source with malformed evidence is a citation-format failure, so
-    # Relay can replace the quote from its own catalogue. An unknown source ID
-    # is provenance fabrication and must keep the turn fail-closed.
-    retrieved_source_ids = {result.document.source_id for result in documents}
-    all_model_sources_retrieved = all(
-        citation.source_id in retrieved_source_ids for citation in output.citations
-    )
-    can_replace_model_citations = (
-        not output.needs_clarification
-        and (
-            not output.citations
-            or all_model_sources_retrieved
-        )
-    )
-    validation_output = output
-    if not grounded and can_replace_model_citations:
-        derived = _derive_server_citations(output.answer, documents)
-        if derived:
-            validation_output = TutorModelOutput(
-                answer=output.answer,
-                citations=derived,
-                follow_up=output.follow_up,
-                needs_clarification=output.needs_clarification,
-            )
-            citations, grounded = validate_citations(validation_output, documents)
 
     if not grounded:
         # Any model-authored ungrounded text is withheld, including text that
@@ -679,10 +555,9 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                 raise TutorProviderError("provider returned an unusable output type")
 
             logger.info(
-                "tutor provider output: answer_chars=%s citations=%s citation_ids=%s needs_clarification=%s",
+                "tutor provider output: answer_chars=%s citations=%s needs_clarification=%s",
                 len(output.answer),
                 len(output.citations),
-                [citation.source_id for citation in output.citations[:8]],
                 output.needs_clarification,
             )
             self._breaker.record_success()
