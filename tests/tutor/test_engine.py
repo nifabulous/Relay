@@ -10,6 +10,7 @@ is worse than an obvious refusal, because a learner has no way to tell.
 """
 import asyncio
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -19,6 +20,7 @@ from app.tutor.engine import (
     TutorEngine,
     TutorNotConfiguredError,
     TutorProviderError,
+    _PydanticAITutorEngine,
     _qualified_model_name,
     _registry_tools,
     build_tutor_engine,
@@ -198,12 +200,12 @@ def test_a_citation_naming_an_unretrieved_source_is_removed():
     assert response.grounded is False
 
 
-def test_a_citation_quoting_evidence_that_is_not_in_the_document_is_removed():
-    """Paraphrased evidence is the subtle failure.
+def test_a_real_source_with_bad_model_evidence_gets_a_server_owned_quote():
+    """A malformed quote is replaced when its source ID was retrieved.
 
-    The source ID is real, the quote reads like the document, and nothing about
-    the response looks wrong — but the sentence the learner is shown as proof
-    was written by the model.
+    The source ID is real, but the evidence was written by the model. Relay
+    must never show that evidence; it can still use its strict answer-coverage
+    check and attach an exact excerpt from the retrieved catalogue instead.
     """
     documents = _documents()
     document = documents[0].document
@@ -220,8 +222,10 @@ def test_a_citation_quoting_evidence_that_is_not_in_the_document_is_removed():
         )
     )
     response = _answer(engine, _request(), documents)
-    assert response.citations == []
-    assert response.grounded is False
+    assert response.grounded is True
+    assert response.citations
+    assert response.citations[0].evidence != "This sentence appears nowhere in the source document."
+    assert response.citations[0].evidence in document.text
 
 
 def test_evidence_matching_ignores_whitespace_differences_only():
@@ -281,6 +285,24 @@ def test_an_uncited_factual_answer_is_replaced_not_merely_flagged():
     assert response.grounded is False
     assert "CHAPS settles at midnight" not in response.answer
     assert response.needs_clarification is True
+
+
+def test_a_retrieved_answer_gets_server_owned_citations_when_model_omits_them():
+    """Model citation formatting is optional; Relay's trust check is not."""
+    documents = _documents()
+    engine = FakeTutorEngine(
+        TutorModelOutput(
+            answer="An IBAN, defined by ISO 13616, identifies a specific account.",
+            citations=[],
+        )
+    )
+
+    response = _answer(engine, _request(), documents)
+
+    assert response.grounded is True
+    assert response.citations
+    assert response.citations[0].source_id == "relay-concept-iban"
+    assert response.citations[0].evidence in documents[0].document.text
 
 
 def test_an_ungrounded_clarification_is_replaced_by_server_owned_text():
@@ -560,6 +582,43 @@ def test_qualified_model_name_constructs_with_pydantic_ai(monkeypatch):
     )
 
     assert agent is not None
+
+
+def test_provider_skips_redundant_tools_when_retrieval_supplied_evidence(monkeypatch):
+    """The normal path should be one grounded generation, not a tool loop.
+
+    Retrieval has already selected and placed the citable Relay documents in
+    the prompt. Exposing the same catalogue through tools adds another model
+    turn and can consume the output budget before the structured citation is
+    emitted. Tools remain useful when retrieval is empty; this test locks the
+    cheaper, deterministic path for ordinary questions.
+    """
+    captured = {}
+
+    class CapturingAgent:
+        def __init__(self, *args, **kwargs):
+            captured["tools"] = kwargs["tools"]
+
+        async def run(self, *args, **kwargs):
+            return SimpleNamespace(output=TutorModelOutput(answer="ok"))
+
+    engine = object.__new__(_PydanticAITutorEngine)
+    engine._model = "openai:gpt-4.1-mini"
+    engine._max_output_tokens = 1200
+    engine._agent_type = CapturingAgent
+    payload = build_prompt_payload(_request(), _documents())
+
+    asyncio.run(engine._call_provider(payload, RelayTutorTools()))
+
+    assert payload.evidence_source_ids
+    assert captured["tools"] == []
+
+    empty_payload = build_prompt_payload(
+        _request("blorptastic quuxflarn"), []
+    )
+    asyncio.run(engine._call_provider(empty_payload, RelayTutorTools()))
+    assert empty_payload.evidence_source_ids == []
+    assert len(captured["tools"]) == 3
 
 
 def test_a_provider_failure_surfaces_as_a_typed_error_not_a_raw_exception():

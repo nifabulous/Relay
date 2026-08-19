@@ -143,7 +143,7 @@ def test_the_tools_exposed_to_a_provider_are_exactly_the_three_reads():
 
 
 def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch):
-    """Tool citations from one request must be retained for that same request."""
+    """Tool citations from one no-hit request must be retained for that request."""
 
     captured_agents = []
 
@@ -169,7 +169,10 @@ def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch)
     monkeypatch.setitem(sys.modules, "pydantic_ai", SimpleNamespace(Agent=FakeAgent))
     engine = engine_module._PydanticAITutorEngine("test:model", RelayTutorTools())
     request = _request("What is an IBAN?")
-    documents = _documents()
+    # With retrieved evidence, the adapter deliberately skips redundant tools.
+    # An empty retrieval is the path where a typed tool lookup is expected to
+    # add the citable document to this request's validation set.
+    documents = []
 
     response = asyncio.run(engine.answer(request, documents, RelayTutorTools()))
 

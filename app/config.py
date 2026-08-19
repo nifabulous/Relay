@@ -143,7 +143,10 @@ def tutor_settings() -> TutorSettings:
             "TUTOR_MAX_HISTORY_TURNS", 8, maximum=_TUTOR_MAX_HISTORY_TURNS_CEILING
         ),
         max_input_tokens=_env_positive_int("TUTOR_MAX_INPUT_TOKENS", 14000),
-        max_output_tokens=_env_positive_int("TUTOR_MAX_OUTPUT_TOKENS", 1200),
+        # Structured output with source-backed citations needs room for the
+        # model's answer and its validation retry. 1200 let OpenAI accept the
+        # request but commonly ended before a usable tutor response existed.
+        max_output_tokens=_env_positive_int("TUTOR_MAX_OUTPUT_TOKENS", 4000),
         rate_limit_redis_url=(os.getenv("TUTOR_RATE_LIMIT_REDIS_URL") or "").strip(),
         rate_limit_redis_token=(os.getenv("TUTOR_RATE_LIMIT_REDIS_TOKEN") or "").strip(),
         tracing_enabled=_env_flag("TUTOR_TRACING_ENABLED"),
