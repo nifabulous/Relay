@@ -763,6 +763,53 @@ class TestSouthAsiaSsiCoverage:
 
 
 class TestSeedRollout:
+    def test_ordinary_row_restated_to_bic_only_sheds_accounts(self):
+        """A legacy ordinary row whose seed tuple is now bic_only must lose
+        its account/charge/value fields on re-seed, or it would violate
+        ck_ssi_bic_only_has_no_accounts at flush."""
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic="SICOTHBKXXX",
+                beneficiary_bank_name="Siam Commercial Bank (SCB)",
+                currency="USD",
+                intermediary_bic="MRMDUS33XXX",
+                intermediary_bank_name="HSBC Bank U.S.A., New York",
+                intermediary_account="ACCT-LEGACY",
+                beneficiary_account="ACCT-LEGACY-BENE",
+                charge_code="SHA",
+                value_date="spot",
+            ))
+            session.commit()
+
+            from app.services.seed import seed_if_empty
+
+            result = seed_if_empty(session)
+            session.expunge_all()
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic="SICOTHBKXXX",
+                currency="USD",
+                intermediary_bic="MRMDUS33XXX",
+            ).one()
+            assert row.bic_only is True
+            assert row.intermediary_account is None
+            assert row.beneficiary_account is None
+            assert row.charge_code is None
+            assert row.value_date is None
+            assert result["ssi_provenance_updated"] >= 1
+        finally:
+            session.close()
+            engine.dispose()
+
     def test_populated_database_receives_new_rows_and_bic_corrections(self):
         """The PR seed must upgrade an existing pre-expansion database."""
         engine = create_engine(

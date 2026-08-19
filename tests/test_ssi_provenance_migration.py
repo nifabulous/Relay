@@ -10,6 +10,7 @@ from __future__ import annotations
 import sqlite3
 import subprocess
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -476,3 +477,30 @@ class TestBicOnlyMigration:
             _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_POSTGRES
             == _PREVIOUS_MIGRATION.SSI_AS_OF_POSTGRES
         )
+
+    def test_reinstall_is_sqlite_only(self):
+        """PostgreSQL alters the table in place, so the as_of triggers survive
+        this migration and re-running their CREATE TRIGGER statements would
+        fail because the triggers already exist. The reinstall must execute
+        nothing off-SQLite — and exactly the SQLite statements on SQLite."""
+        executed: list[str] = []
+        monkeypatch_fake_op = types.SimpleNamespace(
+            execute=lambda statement: executed.append(statement)
+        )
+        _BIC_ONLY_MIGRATION.op = monkeypatch_fake_op
+        try:
+            postgres_bind = types.SimpleNamespace(
+                dialect=types.SimpleNamespace(name="postgresql")
+            )
+            _BIC_ONLY_MIGRATION._reinstall_as_of_triggers(postgres_bind)
+            assert executed == []
+
+            sqlite_bind = types.SimpleNamespace(
+                dialect=types.SimpleNamespace(name="sqlite")
+            )
+            _BIC_ONLY_MIGRATION._reinstall_as_of_triggers(sqlite_bind)
+            assert executed == list(
+                _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_SQLITE
+            )
+        finally:
+            _BIC_ONLY_MIGRATION.op = None

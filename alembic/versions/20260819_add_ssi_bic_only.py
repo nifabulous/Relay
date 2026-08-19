@@ -57,13 +57,15 @@ def _reinstall_as_of_triggers(bind) -> None:
     DROP TABLE destroys the triggers attached to it. The as_of triggers
     installed by 20260816_ssi_verifiedby therefore do not survive this
     migration's batch_alter_table — recreate them, verbatim, afterwards.
-    (PostgreSQL keeps them, but reinstalling is harmless there.)"""
+
+    Other dialects (notably PostgreSQL) alter the table in place, so the
+    triggers survive this migration and re-running their CREATE TRIGGER
+    statements would fail because the triggers already exist. Reinstall
+    only where the batch actually destroyed them."""
+    if bind.dialect.name != "sqlite":
+        return
     previous = _load_previous_migration()
-    statements = (
-        previous.SSI_AS_OF_SQLITE if bind.dialect.name == "sqlite"
-        else previous.SSI_AS_OF_POSTGRES
-    )
-    for statement in statements:
+    for statement in previous.SSI_AS_OF_SQLITE:
         op.execute(statement)
 
 

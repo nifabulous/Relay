@@ -2,16 +2,22 @@
 
 New databases are still created by ``Base.metadata.create_all``. For an
 existing dev SQLite file, this helper brings compatibility tables up to the
-current model with plain ``ALTER TABLE`` — it never drops or rewrites data,
-and it only adds columns that are missing. Production uses Alembic
+current model — it only adds what is missing, and it never loses data.
+Columns are added with plain ``ALTER TABLE``; the one constraint that SQLite
+cannot add that way (the bic_only CHECK) is installed with a table rebuild
+that preserves every column and row. Production uses Alembic
 (``alembic upgrade head``); this path exists solely so the dev file does not
-need to be deleted to gain the current columns.
+need to be deleted to gain the current schema.
 """
 import logging
 
-from sqlalchemy import inspect, text
+from sqlalchemy import MetaData, inspect, text
+
+from app.models import SSI
 
 logger = logging.getLogger(__name__)
+
+_BIC_ONLY_CHECK_NAME = "ck_ssi_bic_only_has_no_accounts"
 
 _TABLE_PATCHES = {
     "payment_events": (
@@ -23,23 +29,97 @@ _TABLE_PATCHES = {
         ("verified_by VARCHAR(120)", "verified_by"),
         ("status VARCHAR(12) NOT NULL DEFAULT 'illustrative'", "status"),
         # bic_only rows carry no accounts, charge code, or value date. The
-        # CHECK constraint cannot be added with ALTER TABLE in SQLite (it
-        # would require a table rebuild), so it is enforced on fresh DBs only;
-        # the seed never inserts a violating row, and the default keeps every
-        # legacy row an ordinary settlement instruction.
+        # CHECK itself cannot be added with ALTER TABLE in SQLite (it would
+        # require a table rebuild); _ensure_ssi_bic_only_check performs that
+        # rebuild after the columns land.
         ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
     ),
 }
 
 
-def ensure_sqlite_schema(engine) -> None:
-    """Add missing compatibility columns to an existing SQLite DB.
+def _ssi_trigger_sql(engine) -> list[tuple[str, str]]:
+    """Capture the as_of triggers attached to the ssi table, verbatim."""
+    with engine.connect() as conn:
+        return [
+            (name, sql)
+            for name, sql in conn.execute(
+                text(
+                    "SELECT name, sql FROM sqlite_master "
+                    "WHERE type='trigger' AND tbl_name='ssi'"
+                )
+            )
+        ]
 
-    Additive-only: inspects the current table and issues ``ALTER TABLE``
-    solely for columns the table lacks. Existing rows are preserved; the
-    defaults backfill legacy rows where the current model requires a value.
-    If a table does not exist yet, ``create_all`` owns that case — this is a
-    no-op.
+
+def _recreate_triggers(engine, triggers: list[tuple[str, str]]) -> None:
+    """Re-create triggers captured before a rebuild, in capture order."""
+    with engine.begin() as conn:
+        for name, sql in triggers:
+            conn.execute(text(f"DROP TRIGGER IF EXISTS {name}"))
+            conn.execute(text(sql))
+
+
+def _ensure_ssi_bic_only_check(engine, inspector) -> None:
+    """Install ck_ssi_bic_only_has_no_accounts on a legacy SQLite ssi table.
+
+    SQLite cannot ADD a CHECK constraint to an existing table, so the only way
+    a dev database that predates bic_only can enforce the invariant is a
+    table rebuild: create a new table from the current model schema (columns
+    plus every constraint), copy the columns the legacy table actually holds,
+    drop the old table, and rename. The rebuild drops the as_of triggers
+    20260816_ssi_verifiedby attached, so they are captured beforehand and
+    re-created afterwards.
+    """
+    existing_checks = {
+        c["name"] for c in inspector.get_check_constraints("ssi")
+    }
+    if _BIC_ONLY_CHECK_NAME in existing_checks:
+        return
+
+    triggers = _ssi_trigger_sql(engine)
+    meta = MetaData()
+    rebuild = SSI.__table__.to_metadata(
+        meta, name="ssi__bic_only_rebuild"
+    )
+    # to_metadata re-derives auto-named indexes (index=True columns) from the
+    # new table name; after RENAME TO ssi they would stay ix_ssi__bic_only_*
+    # forever. Restore the canonical names so the dev DB matches a fresh
+    # create_all, then drop the old table's same-named indexes (SQLite index
+    # names are database-global, so the rebuilt table could not be created
+    # while they exist).
+    for index in rebuild.indexes:
+        index.name = index.name.replace("ssi__bic_only_rebuild", "ssi")
+    common = [
+        column["name"] for column in inspector.get_columns("ssi")
+        if column["name"] in rebuild.c
+    ]
+    column_list = ", ".join(f'"{name}"' for name in common)
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
+        for index in rebuild.indexes:
+            conn.execute(
+                text(f'DROP INDEX IF EXISTS "{index.name}"')
+            )
+    rebuild.create(engine)
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                f"INSERT INTO ssi__bic_only_rebuild ({column_list}) "
+                f"SELECT {column_list} FROM ssi"
+            )
+        )
+        conn.execute(text("DROP TABLE ssi"))
+        conn.execute(text("ALTER TABLE ssi__bic_only_rebuild RENAME TO ssi"))
+    _recreate_triggers(engine, triggers)
+    logger.info("Rebuilt legacy ssi table with the bic_only CHECK")
+
+
+def ensure_sqlite_schema(engine) -> None:
+    """Bring an existing SQLite DB up to the current schema.
+
+    Additive-only for columns: inspects the current table and issues
+    ``ALTER TABLE`` solely for columns the table lacks. The bic_only CHECK is
+    the one structural exception — see _ensure_ssi_bic_only_check.
     """
     inspector = inspect(engine)
     for table_name, patches in _TABLE_PATCHES.items():
@@ -53,3 +133,6 @@ def ensure_sqlite_schema(engine) -> None:
                     continue
                 conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {ddl}"))
                 logger.info("Added %s.%s to legacy SQLite DB", table_name, name)
+
+    if inspector.has_table("ssi"):
+        _ensure_ssi_bic_only_check(engine, inspect(engine))

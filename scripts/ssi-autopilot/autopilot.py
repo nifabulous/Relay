@@ -421,10 +421,10 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         rec = expected[key]["record"]
         bank = expected[key]["bank"]
         # A bic_only fold must actually carry the flag (as provenance[3]);
-        # an ordinary fold must not. The provenance slots are literals in
-        # the source, so the flag is present exactly when "True" appears
-        # among them; a verifier name would never be spelled that way.
-        row_bic_only = any(field == "True" for field in row[12:])
+        # an ordinary fold must not. The flag lives only in the 14th field of
+        # a 14-field tuple; anything else — a provenance field, a verifier
+        # name spelled "True" — must not be mistaken for it.
+        row_bic_only = len(row) == 14 and row[13] == "True"
         rec_bic_only = rec.get("bic_only") is True
         if rec_bic_only and not row_bic_only:
             problems.append(

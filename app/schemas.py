@@ -176,6 +176,18 @@ class SSIRecord(BaseModel):
 
     @model_validator(mode="after")
     def _published_carries_its_verification_date(self) -> "SSIRecord":
+        # Empty strings mean "absent" everywhere in this model — the same
+        # shape the database stores for missing values. Normalize before any
+        # validation or persistence so a bic_only record with charge_code=""
+        # is a field-level shape error, not a flush-time IntegrityError.
+        for field in (
+            "intermediary_account",
+            "beneficiary_account",
+            "charge_code",
+            "value_date",
+        ):
+            if getattr(self, field) == "":
+                setattr(self, field, None)
         # "published" means verified live; the date of that check is the
         # evidence. Without it the status is an unfalsifiable claim.
         if self.status == "published" and not self.as_of:
@@ -194,7 +206,7 @@ class SSIRecord(BaseModel):
         # ck_ssi_bic_only_has_no_accounts CHECK so /api/import/ssi rejects the
         # shape with a field error instead of a flush-time IntegrityError.
         if self.bic_only and any(
-            value not in (None, "") for value in (
+            value is not None for value in (
                 self.intermediary_account,
                 self.beneficiary_account,
                 self.charge_code,

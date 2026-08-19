@@ -720,6 +720,24 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
         )
         assert record.bic_only is True
 
+    def test_schema_normalizes_empty_strings_to_absent(self):
+        """Empty strings mean "absent" everywhere in this model — an empty
+        charge_code or value_date on a bic_only record must be a valid
+        persisted shape (NULL), not a flush-time IntegrityError."""
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="EBILAEADXXX", currency="USD",
+            intermediary_bic="EBILAEADXXX", status="unverified",
+            as_of="2026-05-01", bic_only=True,
+            intermediary_account="", beneficiary_account="",
+            charge_code="", value_date="",
+        )
+        assert record.intermediary_account is None
+        assert record.beneficiary_account is None
+        assert record.charge_code is None
+        assert record.value_date is None
+
     def test_schema_rejects_bic_only_record_with_accounts(self):
         import pytest
         from pydantic import ValidationError

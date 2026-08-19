@@ -288,3 +288,40 @@ class TestCurrentSchemaIsANoop:
         assert provenance_metadata(columns_after_second) == expected_provenance_metadata
         assert row_after_first == row_before
         assert row_after_second == row_after_first
+
+    def test_legacy_ssi_rebuild_enforces_the_bic_only_check(self):
+        """The rebuild is not just cosmetic: a legacy table that gains the
+        CHECK must reject a violating direct insert afterwards — raw SQL,
+        deliberately, because the ORM would normalize first."""
+        import pytest
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy row')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            checks = {
+                c["name"] for c in inspect(engine).get_check_constraints("ssi")
+            }
+            assert "ck_ssi_bic_only_has_no_accounts" in checks
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, bic_only, status FROM ssi"
+            )).mappings().one()
+        assert row["bic_only"] == 0
+        assert row["status"] == "illustrative"
+
+        with pytest.raises(Exception):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "status, notes, bic_only, intermediary_account) "
+                    "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', "
+                    "'Source: https://bank.example/charges (as of 2026-05-01).', "
+                    "1, 'ACCT-91001629')"
+                ))

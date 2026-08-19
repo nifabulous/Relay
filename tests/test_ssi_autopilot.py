@@ -250,6 +250,33 @@ def test_ordinary_fold_carrying_the_flag_is_rejected():
     assert any("carries bic_only but the validated record does not" in p for p in problems), problems
 
 
+def test_an_ordinary_row_with_a_verifier_spelled_true_is_not_misread_as_bic_only():
+    """The bic_only flag lives only in the 14th field of a 14-field tuple. A
+    bogus 13th provenance slot reading the string "True" must not be mistaken
+    for it — only the final field decides the flag."""
+    ambiguous = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", \"True\", \"False\"),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(ambiguous))
+    assert not any("carries bic_only" in p for p in problems), problems
+
+
+def test_bic_only_flag_is_taken_from_the_final_field_only():
+    """A 14-field row whose 13th field is "False" but whose final field is
+    "True" is bic_only; the check must read the last field, not scan the tail."""
+    flagged = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", False, True),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flagged))
+    assert any("carries bic_only but the validated record does not" in p for p in problems), problems
+
+
 # ── Test scaffolding ─────────────────────────────────────────────────────────
 def test_scaffold_contains_expected_pieces():
     region = autopilot.get_region(MANIFEST, "southeast-asia")
