@@ -22,7 +22,7 @@ it dresses an ungrounded answer in a citation.
 import math
 import re
 from functools import lru_cache
-from typing import Dict, List, Set
+from typing import Dict, List, Sequence, Set
 
 from pydantic import BaseModel
 
@@ -328,3 +328,15 @@ def retrieve_documents(
     # evidence the model receives.
     scored.sort(key=lambda result: (-result.score, result.document.source_id))
     return scored[:limit]
+
+
+def has_usable_evidence(documents: Sequence[RetrievedDocument]) -> bool:
+    """Return whether retrieval supplied a meaningful lexical hit.
+
+    Context anchors can intentionally produce a non-empty result even when the
+    learner's words do not match the catalogue. Those anchors are useful prompt
+    context, but they are not strong enough to suppress the typed catalogue
+    tools. The same lexical floor used to admit ordinary retrieval results is
+    the explicit boundary for the provider optimization.
+    """
+    return any(result.score >= _MIN_LEXICAL_SCORE for result in documents)

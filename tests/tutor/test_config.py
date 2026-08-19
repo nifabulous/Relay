@@ -4,6 +4,7 @@ The governing invariant for this module is that **the base install boots and
 serves every existing route with no AI provider package and no provider key**.
 Every test here defends some part of that.
 """
+import subprocess
 import sys
 
 import pytest
@@ -156,10 +157,30 @@ def test_the_provider_key_is_not_a_field_on_the_settings_object(clean_tutor_env)
 
 
 def test_importing_configuration_does_not_import_a_provider_sdk(clean_tutor_env):
-    """The base install has no `pydantic_ai`; importing it would crash boot."""
-    tutor_settings()
-    tutor_availability()
-    assert "pydantic_ai" not in sys.modules
+    """Configuration stays provider-free even when the AI extra is installed.
+
+    The full suite may have already imported PydanticAI through Sentry's
+    optional auto-integration. A fresh interpreter tests the invariant at the
+    module boundary instead of depending on test ordering.
+    """
+    del clean_tutor_env
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys; "
+                "from app.config import tutor_settings, tutor_availability; "
+                "tutor_settings(); tutor_availability(); "
+                "assert not any(name == 'pydantic_ai' or "
+                "name.startswith('pydantic_ai.') for name in sys.modules)"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 # ── Dependency isolation ────────────────────────────────────────────────────

@@ -203,6 +203,51 @@ def test_gpt5_provider_requests_use_minimal_reasoning_effort(monkeypatch):
     assert captured["model_settings"]["openai_reasoning_effort"] == "minimal"
 
 
+def test_gpt5_settings_reach_the_real_openai_responses_request():
+    """The installed SDK must serialize Relay's settings at the wire boundary."""
+    pytest.importorskip("pydantic_ai")
+    try:
+        from pydantic_ai import Agent
+        from pydantic_ai.models.openai import OpenAIResponsesModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        captured = {}
+
+        class RecordingResponses:
+            async def create(self, **kwargs):
+                captured.update(kwargs)
+                raise RuntimeError("request captured")
+
+        class RecordingClient:
+            responses = RecordingResponses()
+
+        async def run_request():
+            model = OpenAIResponsesModel(
+                "gpt-5",
+                provider=OpenAIProvider(openai_client=RecordingClient()),
+            )
+            agent = Agent(
+                model,
+                output_type=str,
+                model_settings=engine_module._provider_model_settings("openai:gpt-5", 4000),
+            )
+            with pytest.raises(RuntimeError, match="request captured"):
+                await agent.run("What is an IBAN?")
+
+        asyncio.run(run_request())
+
+        assert captured["model"] == "gpt-5"
+        assert captured["max_output_tokens"] == 4000
+        assert captured["reasoning"] == {"effort": "minimal"}
+    finally:
+        # The rest of the suite intentionally proves the base install can boot
+        # without importing the optional provider SDK. Keep this integration
+        # test from changing that process-wide import invariant.
+        for module_name in list(sys.modules):
+            if module_name == "pydantic_ai" or module_name.startswith("pydantic_ai."):
+                sys.modules.pop(module_name, None)
+
+
 def test_non_reasoning_provider_models_do_not_receive_openai_reasoning_settings():
     settings = engine_module._provider_model_settings("anthropic:claude-sonnet", 1200)
     assert settings == {"max_tokens": 1200}

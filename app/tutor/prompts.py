@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Sequence
 
 from .redaction import redact_sensitive_text
-from .retrieval import RetrievedDocument
+from .retrieval import RetrievedDocument, has_usable_evidence
 from .schemas import TutorMode, TutorRequest
 
 # Roughly four characters per token for English prose. Deliberately a heuristic
@@ -95,6 +95,7 @@ class TutorPromptPayload:
     system: str
     user: str
     evidence_source_ids: List[str] = field(default_factory=list)
+    usable_evidence: bool = False
     history_turns_used: int = 0
     truncated_history: bool = False
     truncated_evidence: bool = False
@@ -198,6 +199,7 @@ def build_prompt_payload(
             system=system,
             user=minimal,
             evidence_source_ids=[],
+            usable_evidence=False,
             history_turns_used=0,
             truncated_history=truncated_history,
             truncated_evidence=bool(documents),
@@ -223,6 +225,7 @@ def build_prompt_payload(
         system=system,
         user=_assemble(request, documents, history_turns),
         evidence_source_ids=[result.document.source_id for result in documents],
+        usable_evidence=has_usable_evidence(documents),
         history_turns_used=history_turns,
         truncated_history=truncated_history,
         truncated_evidence=truncated_evidence,

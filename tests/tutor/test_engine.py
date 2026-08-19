@@ -9,6 +9,7 @@ paraphrased rather than copied, produces an answer that *looks* grounded. That
 is worse than an obvious refusal, because a learner has no way to tell.
 """
 import asyncio
+import subprocess
 import sys
 from types import SimpleNamespace
 
@@ -558,9 +559,27 @@ def test_assistant_history_is_labelled_as_untrusted_prior_text():
 
 
 def test_importing_the_engine_does_not_import_a_provider_sdk():
-    """The base install has no `pydantic_ai`. An eager import at module scope
-    would take down every existing route, tutor or not."""
-    assert "pydantic_ai" not in sys.modules
+    """Engine import stays provider-free in a clean interpreter.
+
+    Sentry can auto-discover PydanticAI when the optional production extra is
+    installed, so a process-global assertion would make this test depend on
+    which earlier test happened to initialize observability.
+    """
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import app.tutor.engine, sys; "
+                "assert not any(name == 'pydantic_ai' or "
+                "name.startswith('pydantic_ai.') for name in sys.modules)"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_building_an_engine_without_configuration_raises_not_silently_fakes(monkeypatch):
@@ -608,16 +627,20 @@ def test_building_an_engine_passes_a_qualified_model_to_the_provider_adapter(mon
 def test_qualified_model_name_constructs_with_pydantic_ai(monkeypatch):
     pydantic_ai = pytest.importorskip("pydantic_ai")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
+    try:
+        agent = pydantic_ai.Agent(
+            _qualified_model_name("openai", "gpt-5"),
+            output_type=TutorModelOutput,
+            system_prompt="",
+            model_settings={"max_tokens": 1200},
+            tools=_registry_tools(RelayTutorTools()),
+        )
 
-    agent = pydantic_ai.Agent(
-        _qualified_model_name("openai", "gpt-5"),
-        output_type=TutorModelOutput,
-        system_prompt="",
-        model_settings={"max_tokens": 1200},
-        tools=_registry_tools(RelayTutorTools()),
-    )
-
-    assert agent is not None
+        assert agent is not None
+    finally:
+        for module_name in list(sys.modules):
+            if module_name == "pydantic_ai" or module_name.startswith("pydantic_ai."):
+                sys.modules.pop(module_name, None)
 
 
 def test_provider_skips_redundant_tools_when_retrieval_supplied_evidence(monkeypatch):
@@ -647,6 +670,7 @@ def test_provider_skips_redundant_tools_when_retrieval_supplied_evidence(monkeyp
     asyncio.run(engine._call_provider(payload, RelayTutorTools()))
 
     assert payload.evidence_source_ids
+    assert payload.usable_evidence is True
     assert captured["tools"] == []
 
     empty_payload = build_prompt_payload(
@@ -654,6 +678,40 @@ def test_provider_skips_redundant_tools_when_retrieval_supplied_evidence(monkeyp
     )
     asyncio.run(engine._call_provider(empty_payload, RelayTutorTools()))
     assert empty_payload.evidence_source_ids == []
+    assert empty_payload.usable_evidence is False
+    assert len(captured["tools"]) == 3
+
+
+def test_provider_keeps_tools_when_retrieval_hit_is_weak(monkeypatch):
+    """A non-empty but low-confidence hit must retain catalogue lookup."""
+    captured = {}
+
+    class CapturingAgent:
+        def __init__(self, *args, **kwargs):
+            captured["tools"] = kwargs["tools"]
+
+        async def run(self, *args, **kwargs):
+            return SimpleNamespace(output=TutorModelOutput(answer="ok"))
+
+    engine = object.__new__(_PydanticAITutorEngine)
+    engine._model = "openai:gpt-4.1-mini"
+    engine._max_output_tokens = 1200
+    engine._agent_type = CapturingAgent
+    weak_document = TutorDocument(
+        source_id="test-weak-hit",
+        title="Weak hit",
+        text="A vaguely related payment note.",
+        topics=["payment"],
+        source_kind="relay",
+    )
+    payload = build_prompt_payload(
+        _request(), [RetrievedDocument(document=weak_document, score=1.0)]
+    )
+
+    asyncio.run(engine._call_provider(payload, RelayTutorTools()))
+
+    assert payload.evidence_source_ids
+    assert payload.usable_evidence is False
     assert len(captured["tools"]) == 3
 
 

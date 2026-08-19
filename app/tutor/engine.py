@@ -508,7 +508,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         # which is exactly the shape that exhausted the old 1200-token budget.
         # Keep tools for an empty retrieval: a typed lesson/scheme context can
         # still resolve a catalogue reference the lexical query missed.
-        provider_tools = _registry_tools(tools) if not payload.evidence_source_ids else []
+        provider_tools = _registry_tools(tools) if not payload.usable_evidence else []
         agent = self._agent_type(
             self._model,
             output_type=TutorModelOutput,
