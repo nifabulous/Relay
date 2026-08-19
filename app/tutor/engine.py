@@ -616,9 +616,11 @@ def _provider_usage_metadata(
     response = safe_getattr(result, "response")
     finish_reason = safe_getattr(response, "finish_reason")
     finish_value = safe_getattr(finish_reason, "value", finish_reason)
-    finish_reason = finish_value
-    if finish_reason not in _SAFE_FINISH_REASONS:
-        finish_reason = None
+    finish_reason = (
+        finish_value
+        if isinstance(finish_value, str) and finish_value in _SAFE_FINISH_REASONS
+        else None
+    )
 
     return (
         nonnegative_int("input_tokens", "request_tokens"),

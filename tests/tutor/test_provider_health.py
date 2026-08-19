@@ -293,6 +293,8 @@ def test_provider_success_logs_bounded_usage_and_finish_reason(caplog):
     assert "tool_calls=0" in caplog.text
     assert "finish_reason=stop" in caplog.text
     assert "elapsed_ms=" in caplog.text
+    assert good.answer not in caplog.text
+    assert "source-secret" not in caplog.text
 
 
 def test_diagnostics_access_failures_do_not_break_a_valid_provider_response():
@@ -310,6 +312,21 @@ def test_diagnostics_access_failures_do_not_break_a_valid_provider_response():
             raise RuntimeError("response metadata unavailable")
 
     engine = _engine_with([_DiagnosticsUnavailable()])
+    response = _run(engine)
+
+    assert response.turn_id
+    assert response.grounded is False
+
+
+def test_unhashable_finish_reason_does_not_break_a_valid_provider_response():
+    good = TutorModelOutput(answer="An IBAN identifies an account.", citations=[])
+    result = SimpleNamespace(
+        output=good,
+        usage=None,
+        response=SimpleNamespace(finish_reason={"reason": "stop"}),
+    )
+    engine = _engine_with([result])
+
     response = _run(engine)
 
     assert response.turn_id

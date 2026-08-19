@@ -282,6 +282,24 @@ def test_the_ai_extra_versions_are_locked_for_the_deployed_adapter():
     assert "openai==3.3.0" in ai
 
 
+def test_the_release_asset_checker_handles_local_and_external_references(tmp_path):
+    from scripts.verify_tutor_release import _resolve_public_asset
+
+    relay_root = tmp_path / "relay"
+    relay_assets = relay_root / "assets"
+    relay_assets.mkdir(parents=True)
+    asset = relay_assets / "index.js"
+    asset.write_text("ok")
+
+    assert _resolve_public_asset("/app/assets/index.js?x=1#hash", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("/assets/index.js", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("assets/index.js", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("https://cdn.example.test/widget.js", relay_root, relay_assets) is None
+
+    with pytest.raises(RuntimeError, match="missing asset"):
+        _resolve_public_asset("/assets/missing.js", relay_root, relay_assets)
+
+
 def test_env_example_documents_every_tutor_variable():
     """`.env.example` is the only discoverable list of what the app reads."""
     from app.config import BASE_DIR

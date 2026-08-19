@@ -12,6 +12,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +29,31 @@ def _pyproject() -> dict:
 
 def _fail(message: str) -> None:
     raise RuntimeError(message)
+
+
+def _resolve_public_asset(reference: str, relay_root: Path, relay_assets: Path):
+    """Resolve a same-origin asset reference, or return None for externals."""
+    parsed = urlsplit(reference)
+    if parsed.scheme in {"http", "https", "data"} or parsed.netloc:
+        return None
+    if not parsed.path:
+        return None
+
+    path = unquote(parsed.path)
+    if path.startswith("/app/assets/"):
+        asset = (relay_assets / path.removeprefix("/app/assets/")).resolve()
+    elif path.startswith("/assets/"):
+        asset = (relay_assets / path.removeprefix("/assets/")).resolve()
+    elif path.startswith("/"):
+        _fail(f"unrecognized local asset reference: {reference}")
+    else:
+        asset = (relay_root / path).resolve()
+
+    if relay_root not in asset.parents:
+        _fail(f"local asset escapes the Relay artifact: {reference}")
+    if not asset.is_file():
+        _fail(f"built Relay index references a missing asset: {reference}")
+    return asset
 
 
 def main() -> int:
@@ -68,14 +94,7 @@ def main() -> int:
         _fail("the Vercel frontend build did not produce app/static/relay")
     index = relay_index.read_text()
     for reference in re.findall(r'(?:src|href)="([^"]+)"', index):
-        if reference.startswith("/app/assets/"):
-            asset = relay_assets / reference.removeprefix("/app/assets/")
-        elif reference.startswith("assets/"):
-            asset = relay_root / reference
-        else:
-            continue
-        if not asset.is_file():
-            _fail(f"built Relay index references a missing asset: {reference}")
+        _resolve_public_asset(reference, relay_root, relay_assets)
     if list(relay_root.rglob("*.map")):
         _fail("the final Relay artifact contains source maps")
 
