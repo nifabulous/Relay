@@ -32,7 +32,7 @@
 - Local and ordinary CI installs use the base dependency set with `TUTOR_ENABLED=false`; importing the app must not require provider packages.
 - The Vercel deployment profile installs the optional AI extra during the Python function build via `vercel.json` and `pip install '.[ai]'`. A missing provider key still leaves the tutor unavailable; it never silently falls back to a fake provider in production.
 - Vercel production uses an external Redis-compatible rate-limit adapter because in-process buckets reset across instances and cold starts. The adapter receives `TUTOR_RATE_LIMIT_REDIS_URL` and `TUTOR_RATE_LIMIT_REDIS_TOKEN`; local tests inject an in-memory fake.
-- The tutor engine timeout is 20 seconds, below the current 30-second Vercel function limit. The route returns a stable provider-unavailable response before the platform timeout.
+- The tutor engine timeout is 25 seconds, below the current 30-second Vercel function limit. The route returns a stable provider-unavailable response before the platform timeout.
 - Live tracking lookup, case tutoring, and durable vector indexing are not enabled by this deployment profile. Tracking is summary-only and pgvector requires a separate durable Postgres deployment decision.
 
 ---
@@ -376,7 +376,7 @@ def build_tutor_engine() -> TutorEngine: ...
 - Create: `tests/tutor/test_limits.py`
 
 - [ ] Add `POST /api/tutor/chat` with `response_model=TutorResponse`.
-- [ ] Flow: validate request → policy decision → retrieve locally from raw request text → redact and bound history/context for the model boundary → construct a read-only tool registry → run engine under a 20-second timeout → validate citations → emit redacted telemetry → return response.
+- [ ] Flow: validate request → policy decision → retrieve locally from raw request text → redact and bound history/context for the model boundary → construct a read-only tool registry → run engine under a 25-second timeout → validate citations → emit redacted telemetry → return response.
 - [ ] Enforce a configurable per-IP/session limit before provider work. Use an injectable limiter so tests are deterministic; the in-process limiter is a local/single-worker fallback and the deployment edge must enforce the limit for multi-worker production.
 - [ ] Use the external Redis-compatible limiter in production, with an in-memory implementation only for local/tests. Derive the limiter key from the authenticated learner ID when available, otherwise from a trusted proxy address. Do not trust an arbitrary client-supplied `X-Forwarded-For` value.
 - [ ] Return 503 when disabled/unconfigured or when production safeguards are missing, 422 for schema violations, 429 when the configured limit is exceeded, and 200 for policy refusals represented as a safe `TutorResponse`.
@@ -811,7 +811,7 @@ retrieval/evaluation fixture is used; provider imports are lazy; Vercel installs
   - Surfaced by: Architecture issue 4 — line 338 orders redact before retrieve, so the BIC or UETR a learner asks about is a placeholder by the time retrieval runs; line 208 unit-tests raw text and diverges from runtime.
   - Files: `app/routers/tutor.py`, `app/tutor/retrieval.py`, `tests/test_tutor_api.py`
   - Verify: `pytest -q tests/test_tutor_api.py tests/tutor/test_retrieval.py`
-- [x] **T7 (closed)** — Deployment constraints are now explicit above: Vercel uses the 20-second engine timeout, an external Redis-compatible limiter, and a separate durable-Postgres decision for pgvector.
+- [x] **T7 (closed)** — Deployment constraints are now explicit above: Vercel uses the 25-second engine timeout, an external Redis-compatible limiter, and a separate durable-Postgres decision for pgvector.
 - [x] ~~**T8 (P2)** — add the Tutor chunk to the eager-asset exclusion~~ **WITHDRAWN 2026-08-14: this finding was wrong.**
   - Originally surfaced by Code quality 2.1 as "`check-bundle.mjs:26` filters by a hardcoded chunk-name denylist, and no task edits the script." Measured against a real build, that premise is false.
   - `check-bundle.mjs` reads asset refs only from the built `index.html`, and Vite never emits refs there for dynamically imported chunks. A real build produces **46 chunks on disk** but exactly **3 refs in `index.html`** (eager entry JS, jsx-runtime, eager CSS). The `Settings` chunk appears **0 times**.
@@ -899,5 +899,5 @@ The amended plan is cleared for implementation with these decisions locked:
 
 **VERDICT: READY FOR IMPLEMENTATION.** Execute the phases in order, keeping Phase 7
 independent from the tutor workstream. Do not enable the tutor in production until the
-provider key, external rate limiter, 20-second timeout, spend ceiling, and Vercel build
+provider key, external rate limiter, 25-second timeout, spend ceiling, and Vercel build
 profile have all been verified in staging.

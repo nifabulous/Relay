@@ -12,6 +12,7 @@ and the application never passes it anything else.
 """
 import asyncio
 import inspect
+import json
 import sys
 from types import SimpleNamespace
 
@@ -143,7 +144,7 @@ def test_the_tools_exposed_to_a_provider_are_exactly_the_three_reads():
 
 
 def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch):
-    """Tool citations from one request must be retained for that same request."""
+    """Tool citations from one no-hit request must be retained for that request."""
 
     captured_agents = []
 
@@ -169,13 +170,120 @@ def test_provider_tools_are_bound_to_the_request_recording_registry(monkeypatch)
     monkeypatch.setitem(sys.modules, "pydantic_ai", SimpleNamespace(Agent=FakeAgent))
     engine = engine_module._PydanticAITutorEngine("test:model", RelayTutorTools())
     request = _request("What is an IBAN?")
-    documents = _documents()
+    # With retrieved evidence, the adapter deliberately skips redundant tools.
+    # An empty retrieval is the path where a typed tool lookup is expected to
+    # add the citable document to this request's validation set.
+    documents = []
 
     response = asyncio.run(engine.answer(request, documents, RelayTutorTools()))
 
     assert len(captured_agents) == 1
     assert response.grounded is True
     assert response.citations[0].source_id.startswith("relay-rail-gbp-chaps")
+
+
+def test_gpt5_provider_requests_use_minimal_reasoning_effort(monkeypatch):
+    """The default GPT-5 reasoning effort must fit the server request budget."""
+
+    captured = {}
+
+    class FakeAgent:
+        def __init__(self, model, *, output_type, system_prompt, model_settings, tools):
+            captured["model"] = model
+            captured["model_settings"] = model_settings
+
+        async def run(self, user, *, instructions):
+            return SimpleNamespace(output=TutorModelOutput(answer="(fake)"))
+
+    monkeypatch.setitem(sys.modules, "pydantic_ai", SimpleNamespace(Agent=FakeAgent))
+    engine = engine_module._PydanticAITutorEngine("openai:gpt-5", RelayTutorTools())
+
+    asyncio.run(engine._call_provider(engine_module.build_prompt_payload(_request(), []), RelayTutorTools()))
+
+    assert captured["model"] == "openai:gpt-5"
+    assert captured["model_settings"]["openai_reasoning_effort"] == "minimal"
+
+
+def test_gpt5_settings_reach_the_real_openai_responses_request(monkeypatch):
+    """Relay's production model string must reach the Responses wire boundary."""
+    pytest.importorskip("pydantic_ai")
+    try:
+        import httpx
+        from openai import AsyncOpenAI
+        from pydantic_ai import ModelHTTPError
+        from pydantic_ai.models.openai import OpenAIResponsesModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        captured = {}
+
+        async def record_request(request):
+            captured["url"] = str(request.url)
+            captured["body"] = json.loads(await request.aread())
+            return httpx.Response(
+                500,
+                json={"error": {"message": "request captured"}},
+                request=request,
+            )
+
+        http_client = httpx.AsyncClient(transport=httpx.MockTransport(record_request))
+        openai_client = AsyncOpenAI(api_key="sk-test-value", http_client=http_client)
+
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
+        monkeypatch.setenv("TUTOR_MAX_OUTPUT_TOKENS", "4000")
+        monkeypatch.setattr(
+            OpenAIProvider,
+            "_create_openai_client",
+            lambda self, **kwargs: openai_client,
+        )
+
+        async def run_request():
+            engine = engine_module._PydanticAITutorEngine(
+                "openai:gpt-5", RelayTutorTools()
+            )
+            created = {}
+            real_agent = engine._agent_type
+
+            def capture_agent(*args, **kwargs):
+                agent = real_agent(*args, **kwargs)
+                created["agent"] = agent
+                return agent
+
+            # Keep the real Agent and its model inference; only retain the
+            # instance so this test can assert the production string resolved
+            # to the Responses adapter before the request is recorded.
+            engine._agent_type = capture_agent
+            try:
+                with pytest.raises(ModelHTTPError):
+                    await engine._call_provider(
+                        engine_module.build_prompt_payload(_request(), []),
+                        RelayTutorTools(),
+                    )
+
+                assert isinstance(created["agent"].model, OpenAIResponsesModel)
+            finally:
+                await http_client.aclose()
+
+        asyncio.run(run_request())
+
+        assert captured["url"].endswith("/responses")
+        assert captured["body"]["model"] == "gpt-5"
+        assert captured["body"]["max_output_tokens"] == 4000
+        assert captured["body"]["reasoning"] == {"effort": "minimal"}
+    finally:
+        # The rest of the suite intentionally proves the base install can boot
+        # without importing the optional provider SDK. Keep this integration
+        # test from changing that process-wide import invariant.
+        for module_name in list(sys.modules):
+            if module_name == "pydantic_ai" or module_name.startswith("pydantic_ai."):
+                sys.modules.pop(module_name, None)
+
+
+def test_non_reasoning_provider_models_do_not_receive_openai_reasoning_settings():
+    settings = engine_module._provider_model_settings("anthropic:claude-sonnet", 1200)
+    assert settings == {"max_tokens": 1200}
+
+    settings = engine_module._provider_model_settings("openai:gpt-5-chat", 1200)
+    assert settings == {"max_tokens": 1200}
 
 
 def test_no_tool_exposed_to_a_provider_can_mutate_anything():

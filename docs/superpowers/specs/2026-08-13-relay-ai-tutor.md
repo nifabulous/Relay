@@ -47,7 +47,7 @@ All three are required together; any one missing yields 503 "not configured".
 
 Tuning: `TUTOR_PROVIDER` (`openai`), `TUTOR_MAX_RETRIEVED_DOCS` (6),
 `TUTOR_MAX_HISTORY_TURNS` (8), `TUTOR_MAX_INPUT_TOKENS` (6000),
-`TUTOR_MAX_OUTPUT_TOKENS` (1200), `TUTOR_TRACING_ENABLED` (false).
+`TUTOR_MAX_OUTPUT_TOKENS` (4000), `TUTOR_TRACING_ENABLED` (false).
 
 Production-only, enforced with a 503 when the platform is detected:
 `TUTOR_RATE_LIMIT_REDIS_URL` + `_TOKEN`, and `TUTOR_DAILY_REQUEST_CEILING`.
@@ -80,7 +80,7 @@ pip install '.[eval]'    # Ragas, never on the request path
 6. **Redaction and bounding** — in the prompt builder, the last point where the
    text is still ours. History sheds before evidence: history is conversational
    convenience, evidence is what makes the answer citable at all.
-7. **Engine under a 20s timeout** — below the platform's 30s function limit, so
+7. **Engine under a 25s timeout** — below the platform's 30s function limit, so
    the learner gets our JSON rather than the platform's HTML error page.
 8. **Redacted telemetry** — source IDs, latency, grounded flag, error *class*.
    Never text.

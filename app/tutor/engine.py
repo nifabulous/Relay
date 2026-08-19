@@ -495,14 +495,30 @@ class _PydanticAITutorEngine(_ValidatingEngine):
         mistakes live: a retry that never counts toward the breaker, or a
         breaker that opens and is then ignored, both pass isolated tests.
         """
+        model_settings = _provider_model_settings(self._model, self._max_output_tokens)
+        logger.info(
+            "tutor provider call starting: model=%s max_tokens=%s reasoning_effort=%s",
+            self._model,
+            model_settings.get("max_tokens"),
+            model_settings.get("openai_reasoning_effort", "default"),
+        )
+        # Retrieval has already placed the citable Relay documents in the
+        # prompt. Supplying the same catalogue as tools on that path invites a
+        # redundant tool turn before the model emits its structured citation,
+        # which is exactly the shape that exhausted the old 1200-token budget.
+        # Keep tools for an empty retrieval: a typed lesson/scheme context can
+        # still resolve a catalogue reference the lexical query missed.
+        provider_tools = _registry_tools(tools) if not payload.usable_evidence else []
         agent = self._agent_type(
             self._model,
             output_type=TutorModelOutput,
             system_prompt="",
-            model_settings={"max_tokens": self._max_output_tokens},
-            tools=_registry_tools(tools),
+            model_settings=model_settings,
+            tools=provider_tools,
         )
-        return await agent.run(payload.user, instructions=payload.system)
+        result = await agent.run(payload.user, instructions=payload.system)
+        logger.info("tutor provider call completed: model=%s", self._model)
+        return result
 
     async def _produce(
         self, payload: TutorPromptPayload, tools: TutorToolRegistry
@@ -516,6 +532,7 @@ class _PydanticAITutorEngine(_ValidatingEngine):
 
         last_error: Optional[BaseException] = None
         for attempt in range(_MAX_PROVIDER_ATTEMPTS):
+            attempt_started = time.monotonic()
             try:
                 result = await self._call_provider(payload, tools)
             except Exception as error:  # noqa: BLE001 - normalised at the boundary
@@ -524,7 +541,11 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                     await asyncio.sleep(_RETRY_BACKOFF_SECONDS)
                     continue
                 logger.warning(
-                    "tutor provider call failed: %s", type(error).__name__
+                    "tutor provider call failed: %s cause_chain=%s attempt=%s elapsed_ms=%s",
+                    type(error).__name__,
+                    _exception_chain_types(error),
+                    attempt + 1,
+                    _elapsed_ms(attempt_started),
                 )
                 break
 
@@ -536,11 +557,107 @@ class _PydanticAITutorEngine(_ValidatingEngine):
                 self._breaker.record_failure()
                 raise TutorProviderError("provider returned an unusable output type")
 
+            logger.info(
+                "tutor provider output: answer_chars=%s citations=%s needs_clarification=%s "
+                "input_tokens=%s output_tokens=%s requests=%s tool_calls=%s "
+                "finish_reason=%s elapsed_ms=%s",
+                len(output.answer),
+                len(output.citations),
+                output.needs_clarification,
+                *_provider_usage_metadata(result),
+                _elapsed_ms(attempt_started),
+            )
             self._breaker.record_success()
             return output
 
         self._breaker.record_failure()
         raise TutorProviderError(type(last_error).__name__) from last_error
+
+
+def _elapsed_ms(started_at: float) -> int:
+    """Return a bounded, integer duration suitable for safe operational logs."""
+    return max(0, round((time.monotonic() - started_at) * 1000))
+
+
+_SAFE_FINISH_REASONS = frozenset({"stop", "length", "content_filter", "tool_call", "error"})
+
+
+def _provider_usage_metadata(
+    result: object,
+) -> Tuple[Optional[int], Optional[int], Optional[int], Optional[int], Optional[str]]:
+    """Extract only bounded provider usage/completion fields for diagnostics.
+
+    PydanticAI exposes run usage as a property in current releases and as a
+    callable in some older adapter shapes. Treat both forms as optional and
+    never let telemetry extraction affect a successful tutor response.
+    """
+    def safe_getattr(value: object, name: str, default=None):
+        try:
+            return getattr(value, name, default)
+        except Exception:  # noqa: BLE001 - diagnostics must never affect serving
+            return default
+
+    usage = safe_getattr(result, "usage")
+    if callable(usage):
+        try:
+            usage = usage()
+        except Exception:  # noqa: BLE001 - diagnostics must never affect serving
+            usage = None
+
+    def nonnegative_int(*names: str) -> Optional[int]:
+        if usage is None:
+            return None
+        for name in names:
+            value = safe_getattr(usage, name)
+            if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 10_000_000:
+                return value
+        return None
+
+    response = safe_getattr(result, "response")
+    finish_reason = safe_getattr(response, "finish_reason")
+    finish_value = safe_getattr(finish_reason, "value", finish_reason)
+    finish_reason = (
+        finish_value
+        if isinstance(finish_value, str) and finish_value in _SAFE_FINISH_REASONS
+        else None
+    )
+
+    return (
+        nonnegative_int("input_tokens", "request_tokens"),
+        nonnegative_int("output_tokens", "response_tokens"),
+        nonnegative_int("requests"),
+        nonnegative_int("tool_calls"),
+        finish_reason,
+    )
+
+
+def _exception_chain_types(error: BaseException) -> str:
+    """Return exception class names without copying provider/model content."""
+    types = []
+    current: Optional[BaseException] = error
+    seen = set()
+    while current is not None and id(current) not in seen and len(types) < 4:
+        seen.add(id(current))
+        types.append(type(current).__name__)
+        current = current.__cause__ or current.__context__
+    return "->".join(types)
+
+
+def _provider_model_settings(model: str, max_output_tokens: int) -> dict:
+    """Keep OpenAI's always-on GPT-5 reasoning inside the request budget.
+
+    The original GPT-5 family reasons at medium effort when no effort is
+    supplied. Relay's server-side request budget is intentionally short, so
+    use the provider-supported minimal setting for that family. Do not send the
+    OpenAI-only setting to other providers or to the non-reasoning GPT-5 chat
+    variant.
+    """
+    settings = {"max_tokens": max_output_tokens}
+    if model.startswith("openai:"):
+        model_name = model.removeprefix("openai:")
+        if model_name.startswith("gpt-5") and not model_name.startswith("gpt-5-chat"):
+            settings["openai_reasoning_effort"] = "minimal"
+    return settings
 
 
 def _registry_tools(tools: TutorToolRegistry) -> list:

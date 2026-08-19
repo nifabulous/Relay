@@ -29,10 +29,11 @@ dev = [
 # The AI tutor's provider adapter. Deliberately NOT a base dependency: the app
 # must import, boot, and serve every existing route with none of this installed
 # and TUTOR_ENABLED=false. Only the Vercel function build installs `.[ai]`.
-# Major-pinned because pydantic-ai's 1.x -> 2.x bump changed the agent API.
+# Exact-pinned because pydantic-ai's adapter API and OpenAI request mapping are
+# part of the production tutor contract and must match the wire-contract test.
 ai = [
-    "pydantic-ai>=2.0,<3",
-    "openai>=3.0,<4",
+    "pydantic-ai==2.31.1",
+    "openai==3.3.0",
     # RedisRateLimiter and RedisDailyCeiling import this. Without it declared,
     # every production call raised ImportError, the fail-open handler swallowed
     # it, and the request was allowed: a rate limit that was silently absent on

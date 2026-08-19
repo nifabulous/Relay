@@ -69,7 +69,7 @@ router = APIRouter(prefix="/api/tutor", tags=["tutor"])
 # Below the platform's 30-second function limit on purpose. If the platform
 # times out first the learner gets an HTML error page from an endpoint whose
 # entire contract is typed JSON, and the frontend has nothing to parse.
-TUTOR_TIMEOUT_SECONDS = 20.0
+TUTOR_TIMEOUT_SECONDS = 25.0
 
 _UNAVAILABLE_DETAIL = (
     "The tutor is temporarily unavailable. This is a Relay-side problem, not "

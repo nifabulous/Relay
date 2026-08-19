@@ -150,6 +150,70 @@ jobs:
       - name: Run the complete local verification gate
         run: scripts/verify_before_push.sh origin/main
 
+  # The normal matrix intentionally uses the base install, so the optional
+  # provider package is not imported there. This job installs the exact AI
+  # extra used by Vercel and exercises the real OpenAI Responses request
+  # serialization with a transport-level recorder and no network call.
+  tutor-provider-contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the exact AI extra
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev,ai]"
+
+      - name: Assert the production provider packages import
+        run: |
+          python -c "import openai, pydantic_ai; print(f'pydantic-ai={pydantic_ai.__version__} openai={openai.__version__}')"
+
+      - name: Verify provider request serialization
+        run: python -m pytest tests/tutor/test_provider_contract.py -q
+
+  # Mirror Vercel's non-editable package install and frontend build, then
+  # inspect the built artifact plus the resolved provider distributions. This
+  # is the release gate for the timeout headroom assumed by /api/tutor/chat.
+  tutor-release-contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install the Vercel Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[ai]"
+
+      - name: Install the Vercel frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build the Vercel frontend artifact
+        run: npm run build
+        working-directory: frontend
+
+      - name: Verify the final tutor release contract
+        run: python scripts/verify_tutor_release.py
+
   # Opt-in only. The deterministic half of the tutor contract already runs in
   # `test` above, with no provider and no key; this job is the half that needs a
   # model. It is gated on a repository variable rather than merely on the secret

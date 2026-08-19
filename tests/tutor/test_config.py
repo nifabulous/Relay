@@ -4,6 +4,7 @@ The governing invariant for this module is that **the base install boots and
 serves every existing route with no AI provider package and no provider key**.
 Every test here defends some part of that.
 """
+import subprocess
 import sys
 
 import pytest
@@ -46,7 +47,7 @@ def test_defaults_are_off_and_safe(clean_tutor_env):
     assert settings.max_retrieved_docs == 6
     assert settings.max_history_turns == 8
     assert settings.max_input_tokens == 14000
-    assert settings.max_output_tokens == 1200
+    assert settings.max_output_tokens == 4000
     assert settings.rate_limit_redis_url == ""
     assert settings.rate_limit_redis_token == ""
     assert settings.tracing_enabled is False
@@ -156,10 +157,30 @@ def test_the_provider_key_is_not_a_field_on_the_settings_object(clean_tutor_env)
 
 
 def test_importing_configuration_does_not_import_a_provider_sdk(clean_tutor_env):
-    """The base install has no `pydantic_ai`; importing it would crash boot."""
-    tutor_settings()
-    tutor_availability()
-    assert "pydantic_ai" not in sys.modules
+    """Configuration stays provider-free even when the AI extra is installed.
+
+    The full suite may have already imported PydanticAI through Sentry's
+    optional auto-integration. A fresh interpreter tests the invariant at the
+    module boundary instead of depending on test ordering.
+    """
+    del clean_tutor_env
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys; "
+                "from app.config import tutor_settings, tutor_availability; "
+                "tutor_settings(); tutor_availability(); "
+                "assert not any(name == 'pydantic_ai' or "
+                "name.startswith('pydantic_ai.') for name in sys.modules)"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 # ── Dependency isolation ────────────────────────────────────────────────────
@@ -228,6 +249,55 @@ def test_the_vercel_function_build_installs_the_ai_extra():
     with open(BASE_DIR / "vercel.json") as handle:
         vercel = json.load(handle)
     assert ".[ai]" in vercel["installCommand"]
+
+
+def test_the_vercel_build_and_function_budget_match_the_tutor_contract():
+    """The release configuration must preserve JSON headroom for the tutor.
+
+    Vercel's function deadline is configuration, not an assumption encoded in
+    a comment. Keep the build path and the request budget tied to the same
+    checked artifact so a deployment change cannot silently reintroduce an
+    opaque platform timeout.
+    """
+    import json
+
+    from app.config import BASE_DIR
+    from app.routers.tutor import TUTOR_TIMEOUT_SECONDS
+
+    with open(BASE_DIR / "vercel.json") as handle:
+        vercel = json.load(handle)
+
+    assert vercel["installCommand"] == "cd frontend && npm ci && cd .. && pip install '.[ai]'"
+    assert vercel["buildCommand"] == "cd frontend && npm run build"
+    max_duration = vercel["functions"]["app/main.py"]["maxDuration"]
+    assert isinstance(max_duration, int)
+    assert max_duration == 30
+    assert TUTOR_TIMEOUT_SECONDS <= max_duration - 5
+
+
+def test_the_ai_extra_versions_are_locked_for_the_deployed_adapter():
+    """Vercel and the provider-contract job must resolve the same SDK pair."""
+    ai = _pyproject()["project"]["optional-dependencies"]["ai"]
+    assert "pydantic-ai==2.31.1" in ai
+    assert "openai==3.3.0" in ai
+
+
+def test_the_release_asset_checker_handles_local_and_external_references(tmp_path):
+    from scripts.verify_tutor_release import _resolve_public_asset
+
+    relay_root = tmp_path / "relay"
+    relay_assets = relay_root / "assets"
+    relay_assets.mkdir(parents=True)
+    asset = relay_assets / "index.js"
+    asset.write_text("ok")
+
+    assert _resolve_public_asset("/app/assets/index.js?x=1#hash", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("/assets/index.js", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("assets/index.js", relay_root, relay_assets) == asset
+    assert _resolve_public_asset("https://cdn.example.test/widget.js", relay_root, relay_assets) is None
+
+    with pytest.raises(RuntimeError, match="missing asset"):
+        _resolve_public_asset("/assets/missing.js", relay_root, relay_assets)
 
 
 def test_env_example_documents_every_tutor_variable():
