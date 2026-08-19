@@ -17,6 +17,23 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 PREVIOUS = "20260816_ssi_pubdate"
 
+import importlib.util  # noqa: E402
+
+_BIC_ONLY_SPEC = importlib.util.spec_from_file_location(
+    "20260819_add_ssi_bic_only",
+    REPO / "alembic" / "versions" / "20260819_add_ssi_bic_only.py",
+)
+_BIC_ONLY_MIGRATION = importlib.util.module_from_spec(_BIC_ONLY_SPEC)
+_BIC_ONLY_SPEC.loader.exec_module(_BIC_ONLY_MIGRATION)
+BIC_ONLY_HAS_NO_ACCOUNTS = _BIC_ONLY_MIGRATION.BIC_ONLY_HAS_NO_ACCOUNTS
+
+_PREVIOUS_SPEC = importlib.util.spec_from_file_location(
+    "20260816_ssi_verified_by",
+    REPO / "alembic" / "versions" / "20260816_ssi_verified_by.py",
+)
+_PREVIOUS_MIGRATION = importlib.util.module_from_spec(_PREVIOUS_SPEC)
+_PREVIOUS_SPEC.loader.exec_module(_PREVIOUS_MIGRATION)
+
 
 def _alembic(db: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -378,3 +395,84 @@ def test_the_abort_changes_no_schema(tmp_path):
     assert "verified_by" not in columns, (
         "the migration changed the schema before deciding the data fits"
     )
+
+
+# ===========================================================================
+# bic_only — rows that assert correspondent availability, not instructions
+# ===========================================================================
+
+
+class TestBicOnlyMigration:
+    PREVIOUS = "20260816_ssi_verifiedby"
+
+    def test_upgrade_adds_column_and_constraint(self, tmp_path):
+        db = tmp_path / "bic_only.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" in columns
+
+        connection.execute(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+            "bic_only, intermediary_account, beneficiary_account, charge_code, value_date) "
+            "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', 'Source: x', 1, "
+            "NULL, NULL, NULL, NULL)"
+        )
+        connection.commit()
+        connection.close()
+
+    def test_bic_only_row_with_accounts_is_rejected(self, tmp_path):
+        db = tmp_path / "bic_only_bad.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+                "bic_only, intermediary_account) "
+                "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', 'Source: x', 1, "
+                "'ACCT-91000701')"
+            )
+        connection.close()
+
+    def test_downgrade_removes_column_and_constraint(self, tmp_path):
+        db = tmp_path / "bic_only_down.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+        assert _alembic(db, "downgrade", self.PREVIOUS).returncode == 0
+
+        connection = sqlite3.connect(db)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" not in columns
+        # The batch recreate on the way down destroys the as_of triggers
+        # 20260816_ssi_verifiedby owns; that revision's state must exist
+        # when the downgrade ends.
+        triggers = [r[0] for r in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger'")]
+        assert "ssi_as_of_insert" in triggers
+        assert "ssi_as_of_update" in triggers
+        connection.close()
+
+    def test_model_and_migration_constraints_do_not_drift(self):
+        from app.models import SSI
+
+        model_sql = {
+            str(c.sqltext)
+            for c in SSI.__table__.constraints
+            if c.name == "ck_ssi_bic_only_has_no_accounts"
+        }
+        assert model_sql == {BIC_ONLY_HAS_NO_ACCOUNTS}
+
+    def test_batch_recreate_reinstalls_the_previous_triggers(self):
+        """SQLite batch_alter_table recreates the table and DROP TABLE
+        destroys its triggers, so this migration must reinstall the as_of
+        triggers 20260816_ssi_verifiedby created — verbatim, not a drift of
+        them."""
+        assert (
+            _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_SQLITE
+            == _PREVIOUS_MIGRATION.SSI_AS_OF_SQLITE
+        )
+        assert (
+            _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_POSTGRES
+            == _PREVIOUS_MIGRATION.SSI_AS_OF_POSTGRES
+        )

@@ -62,6 +62,7 @@ def get_ssi(
             as_of=r.as_of,
             status=r.status,
             verified_by=r.verified_by,
+            bic_only=r.bic_only,
             intermediary_settlement=_settlement_for(r.intermediary_bic),
         )
         for r in rows

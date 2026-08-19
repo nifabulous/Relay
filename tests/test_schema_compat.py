@@ -238,6 +238,7 @@ class TestCurrentSchemaIsANoop:
             "as_of",
             "verified_by",
             "status",
+            "bic_only",
         }
         columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
         assert set(columns_before) == expected_columns
@@ -247,6 +248,8 @@ class TestCurrentSchemaIsANoop:
         assert columns_before["verified_by"]["nullable"] is True
         assert columns_before["status"]["type"].length == 12
         assert columns_before["status"]["nullable"] is False
+        assert columns_before["bic_only"]["type"].python_type is bool
+        assert columns_before["bic_only"]["nullable"] is False
         expected_provenance_metadata = {
             "as_of": (10, True),
             "verified_by": (120, True),

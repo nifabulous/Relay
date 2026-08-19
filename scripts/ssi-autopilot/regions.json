@@ -195,15 +195,12 @@
   },
   {
    "name": "latin-america",
-   "label": "Latin America (Bradesco seedable; Brazil/Andean NOT)",
+   "label": "Latin America (Brazil; Bradesco seedable)",
    "countries": [
-    "BR",
-    "CL",
-    "CO",
-    "PE"
+    "BR"
    ],
    "masked_block": 91000800,
-   "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil, Ita\u00fa, Banco de Chile (names-only 2013 list, no BICs/accounts), Santander Chile, Bancolombia, and BCP publish no beneficiary SSI lists \u2014 NOT SEEDABLE.",
+   "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil and Ita\u00fa publish no beneficiary SSI lists \u2014 NOT SEEDABLE. 2026-08-19: Chile (BCHICLRM, BSCHCLRM, BECHCLRM), Colombia (COLOCOBM, CAFECOBB) and Peru (BCPLPEPL, BCONPEPL, BINPPEPL) moved to the andean region; this region now owns Brazil only.",
    "banks": [
     {
      "bic8": "BBDEBRSP",
@@ -240,46 +237,6 @@
      "bic8": "ITAUBRSP",
      "name": "Ita\u00fa Unibanco",
      "country": "BR",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BCHICLRM",
-     "name": "Banco de Chile",
-     "country": "CL",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BSCHCLRM",
-     "name": "Banco Santander Chile",
-     "country": "CL",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "COLOCOBM",
-     "name": "Bancolombia",
-     "country": "CO",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BCPLPEPL",
-     "name": "Banco de Cr\u00e9dito del Per\u00fa",
-     "country": "PE",
      "currencies": [
       "USD",
       "EUR"
@@ -618,11 +575,10 @@
    "label": "Southeast Asia (BPI verified seedable)",
    "countries": [
     "PH",
-    "ID",
-    "TH"
+    "ID"
    ],
    "masked_block": 91000700,
-   "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, Metrobank, and SCB publish nothing \u2014 NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM).",
+   "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, and Metrobank publish nothing \u2014 NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM). 2026-08-19: Thailand (BKKBTHBK, KASITHBK, SICOTHBK, KRTHTHBK, AYUDTHBK) moved to the thailand region (SCB's archived SSI table is seedable there); this region now owns the Philippines and Indonesia only.",
    "banks": [
     {
      "bic8": "BOPIPHMM",
@@ -1199,7 +1155,57 @@
     "IN"
    ],
    "masked_block": 91002000,
-   "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) \u2014 INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped.",
+   "legacy_accounts": [
+    "ACCT-76369",
+    "ACCT-92540",
+    "ACCT-81303",
+    "ACCT-11287",
+    "ACCT-72579",
+    "ACCT-53522",
+    "ACCT-47525",
+    "ACCT-85558",
+    "ACCT-15341",
+    "ACCT-36362",
+    "ACCT-77359",
+    "ACCT-96995",
+    "ACCT-50240",
+    "ACCT-85203",
+    "ACCT-96181",
+    "ACCT-26403",
+    "ACCT-51968",
+    "ACCT-87329",
+    "ACCT-69958",
+    "ACCT-85107",
+    "ACCT-38765",
+    "ACCT-52667",
+    "ACCT-56597",
+    "ACCT-64063",
+    "ACCT-91959",
+    "ACCT-19225",
+    "ACCT-70868",
+    "ACCT-25636",
+    "ACCT-72219",
+    "ACCT-97173",
+    "ACCT-18267",
+    "ACCT-08664",
+    "ACCT-31894",
+    "ACCT-04040",
+    "ACCT-14136",
+    "ACCT-30624",
+    "ACCT-10959",
+    "ACCT-93194",
+    "ACCT-94791",
+    "ACCT-62164",
+    "ACCT-98503",
+    "ACCT-65817",
+    "ACCT-96184",
+    "ACCT-00221",
+    "ACCT-52806",
+    "ACCT-62402",
+    "ACCT-61923",
+    "ACCT-71687"
+   ],
+   "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) \u2014 INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped. legacy_accounts: pre-block-era (pre-91002000) HDFC/SBI rows whose masked placeholders predate the autopilot block scheme; a new fold record can never join this set without an explicit manifest edit.",
    "banks": [
     {
      "bic8": "HDFCINBB",

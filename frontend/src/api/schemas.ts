@@ -156,8 +156,12 @@ export const SSIRecordSchema = z
     intermediary_bank_name: safeOptionalString,
     intermediary_account: safeOptionalString,
     beneficiary_account: safeOptionalString,
-    charge_code: z.string().catch(""),
-    value_date: z.string().catch(""),
+    charge_code: safeOptionalString,
+    value_date: safeOptionalString,
+    // A BIC-only row names the correspondents a bank settles through but
+    // carries no accounts, charge codes, or value dates — it is
+    // informational, never a selectable settlement instruction.
+    bic_only: z.boolean().catch(false),
     notes: safeOptionalString,
     // Provenance. An older backend sends no status; that is precisely the
     // "we do not know" case, so it falls back to "unverified" rather than

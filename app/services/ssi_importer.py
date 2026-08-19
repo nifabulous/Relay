@@ -278,6 +278,10 @@ def load_ssi_rows(session: Session, rows: List[dict]) -> SSIImportResult:
 
         if existing:
             # Update mutable fields
+            # An imported record carries accounts, charge, and value date —
+            # it supersedes any bic_only (availability-only) row, which by
+            # definition stores none of those.
+            existing.bic_only = False
             existing.intermediary_account = normalized["intermediary_account"]
             existing.beneficiary_account = normalized["beneficiary_account"]
             existing.charge_code = normalized["charge_code"]

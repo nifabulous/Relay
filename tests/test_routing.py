@@ -436,6 +436,44 @@ class TestSuggestFromSSI:
         suggestions = suggest_from_ssi(db_session, "ABNGNGLA001", "USD", "NG")
         assert len(suggestions) >= 3
 
+    def test_bic_only_rows_are_never_routed_on(self, db_session):
+        """ENBD's charges-PDF rows name correspondents but carry no accounts,
+        charge codes, or value dates. Routing on them would select a
+        correspondent without a settlement instruction — they must be
+        invisible to suggest_from_ssi. A bank with ONLY bic_only rows must
+        fall through to the corridor path, not emit bogus suggestions."""
+        from app.models import SSI
+        from app.models import SSI as SSIModel
+        from app.services.routing import suggest_from_ssi
+
+        bic_only = db_session.query(SSI).filter(
+            SSI.beneficiary_bic == "EBILAEADXXX",
+            SSI.currency == "USD",
+        ).all()
+        assert bic_only and all(r.bic_only for r in bic_only)
+        assert suggest_from_ssi(db_session, "EBILAEADXXX", "USD", "AE") == []
+
+        # A real instruction next to a BIC-only row wins: only the selectable
+        # one is suggested.
+        db_session.add(SSIModel(
+            beneficiary_bic="EBILAEADXXX",
+            beneficiary_bank_name="Emirates NBD",
+            currency="USD",
+            intermediary_bic="BKTRUS33XXX",
+            intermediary_bank_name="BTMU, New York",
+            intermediary_account="ACCT-91001699",
+            beneficiary_account="ACCT-91001698",
+            charge_code="SHA",
+            value_date="spot",
+            notes="Source: test. ",
+            status="illustrative",
+        ))
+        db_session.commit()
+        suggestions = suggest_from_ssi(db_session, "EBILAEADXXX", "USD", "AE")
+        bics = [s.bic for s in suggestions]
+        assert "BKTRUS33XXX" in bics
+        assert len(bics) == 1, "bic_only rows leaked into the suggestions"
+
 
 class TestSuggestRoute:
     def test_ssi_wins_over_corridor_for_access_bank(self, db_session):

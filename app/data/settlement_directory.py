@@ -67,15 +67,10 @@ SETTLEMENT_DIRECTORY = {
         "chips_uid": "0959",
         "aba": "026009593",
     },
-    "BARBUS33": {
-        "bank_name": "Bank of Baroda, New York",
-        "chips_uid": "0959",
-        "aba": "026009593",
-    },
     "SBCAUS6L": {
         "bank_name": "State Bank of India, Los Angeles",
-        "chips_uid": "0959",
-        "aba": "026009593",
+        "chips_uid": "0914",
+        "aba": "",
     },
     "MSHQUS33": {
         "bank_name": "Mashreqbank PSC New York",

@@ -22,6 +22,12 @@ _TABLE_PATCHES = {
         ("as_of VARCHAR(10)", "as_of"),
         ("verified_by VARCHAR(120)", "verified_by"),
         ("status VARCHAR(12) NOT NULL DEFAULT 'illustrative'", "status"),
+        # bic_only rows carry no accounts, charge code, or value date. The
+        # CHECK constraint cannot be added with ALTER TABLE in SQLite (it
+        # would require a table rebuild), so it is enforced on fresh DBs only;
+        # the seed never inserts a violating row, and the default keeps every
+        # legacy row an ordinary settlement instruction.
+        ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
     ),
 }
 

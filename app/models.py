@@ -1,6 +1,7 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
 from sqlalchemy import (
     DDL,
+    Boolean,
     CheckConstraint,
     Column,
     Index,
@@ -159,8 +160,13 @@ class SSI(Base):
     intermediary_bank_name = Column(String(200))
     intermediary_account = Column(String(34))  # Nostro account at intermediary
     beneficiary_account = Column(String(34))   # credit-to account
-    charge_code = Column(String(3), default="SHA")  # OUR / SHA / BEN
-    value_date = Column(String(10), default="spot")  # same-day / spot / T+n
+    # No Python-side default here, on purpose: SQLAlchemy applies a
+    # Column(default=...) even when the attribute is explicitly None, which
+    # would rewrite a bic_only row's absent charge/value date into "SHA"/
+    # "spot" and trip ck_ssi_bic_only_has_no_accounts. Callers that want
+    # defaults supply them (the importer and seed always do).
+    charge_code = Column(String(3))  # OUR / SHA / BEN
+    value_date = Column(String(10))  # same-day / spot / T+n
     notes = Column(String(500))
     # Provenance. `status` records what is known about the source, never how
     # old it is; there is no age threshold anywhere. A sourced status must be
@@ -178,6 +184,13 @@ class SSI(Base):
     # listener downgrades it rather than storing one.
     verified_by = Column(String(120))
     status = Column(String(12), nullable=False, default="illustrative")
+    # BIC-only rows assert *correspondent availability* only: the source (a
+    # correspondent-bank-charges list, a names-only directory) says which
+    # banks a beneficiary settles through but publishes no account numbers,
+    # charge codes, or value dates for them. Such a row must not present any
+    # of the fields it never established, routing must not select it as a
+    # settlement instruction, and the frontend must not render it as one.
+    bic_only = Column(Boolean, nullable=False, default=False, server_default="0")
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),
@@ -243,6 +256,16 @@ class SSI(Base):
         CheckConstraint(
             "status = 'published' OR verified_by IS NULL",
             name="ck_ssi_verifier_is_only_for_published",
+        ),
+        # BIC-only rows carry no account numbers, charge codes, or value
+        # dates — none of those were published. Enforced in the schema so a
+        # direct ORM/Core write cannot slip fabricated fields in next to a
+        # "BIC-level only" claim.
+        CheckConstraint(
+            "bic_only = 0 OR (intermediary_account IS NULL AND "
+            "beneficiary_account IS NULL AND charge_code IS NULL AND "
+            "value_date IS NULL)",
+            name="ck_ssi_bic_only_has_no_accounts",
         ),
     )
 

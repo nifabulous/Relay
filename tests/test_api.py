@@ -336,13 +336,12 @@ def test_route_usd_to_uae(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "AED"
-    # SSI-first: Emirates NBD publishes its USD correspondents (BofA, Citi,
-    # SCB New York) — the published list replaces the corridor guess.
-    assert body["source"] == "published-ssi"
+    # Emirates NBD publishes a BIC-level correspondent list with no account
+    # numbers (bic_only), so it cannot be routed on as a settlement
+    # instruction — the curated corridor table supplies the route instead.
+    assert body["source"] == "curated-corridor-table"
     bics = [s["bic"] for s in body["suggested_intermediaries"]]
-    assert "BOFAUS3NXXX" in bics
-    assert "CITIUS33XXX" in bics
-    assert "SCBLUS33XXX" in bics
+    assert bics, "the corridor table must still suggest correspondents"
 
 
 def test_route_usd_to_saudi(client):

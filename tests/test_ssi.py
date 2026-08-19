@@ -63,10 +63,24 @@ class TestSSIEndpoint:
             assert rec["charge_code"] in ("OUR", "SHA", "BEN")
 
     def test_ssi_carries_value_date(self, client):
-        r = client.get("/api/ssi", params={"bic": "EBILAEADXXX", "currency": "USD"})
+        r = client.get("/api/ssi", params={"bic": "GTBINGLAXXX", "currency": "USD"})
         body = r.json()
         assert len(body["instructions"]) >= 1
         assert body["instructions"][0]["value_date"] == "spot"
+
+    def test_bic_only_rows_serialize_without_accounts(self, client):
+        """ENBD's correspondent-charges PDF is a BIC-level list: the API must
+        say so and must not fabricate accounts, charge codes, or value dates."""
+        r = client.get("/api/ssi", params={"bic": "EBILAEADXXX", "currency": "USD"})
+        assert r.status_code == 200
+        body = r.json()
+        assert len(body["instructions"]) >= 1
+        for rec in body["instructions"]:
+            assert rec["bic_only"] is True
+            assert rec["intermediary_account"] is None
+            assert rec["beneficiary_account"] is None
+            assert rec["charge_code"] is None
+            assert rec["value_date"] is None
 
     def test_ssi_filter_by_currency(self, client):
         r = client.get("/api/ssi", params={"bic": "GTBINGLAXXX", "currency": "EUR"})
@@ -117,6 +131,8 @@ class TestSSISeedIntegrity:
 
         valid = {"OUR", "SHA", "BEN"}
         for row in SSI_RECORDS:
+            if len(row) > 13 and row[13] is True:
+                continue
             charge = row[7]
             assert charge in valid, f"Invalid charge code: {charge} in {row}"
 
@@ -133,6 +149,8 @@ class TestSSISeedIntegrity:
         from app.services.seed import SSI_RECORDS
 
         for row in SSI_RECORDS:
+            if len(row) > 13 and row[13] is True:
+                continue
             assert row[5].startswith("ACCT-"), (
                 f"intermediary_account {row[5]} is not an ACCT- placeholder"
             )
@@ -327,7 +345,7 @@ class TestAllSSIAccountsArePlaceholders:
         offenders = [
             (row[0], row[2], row[3], row[5])
             for row in SSI_RECORDS
-            if not pattern.match(row[5])
+            if row[5] is not None and not pattern.match(row[5])
         ]
         assert not offenders, (
             f"{len(offenders)} SSI rows have non-placeholder intermediary_account "
@@ -343,12 +361,28 @@ class TestAllSSIAccountsArePlaceholders:
         offenders = [
             (row[0], row[2], row[3], row[6])
             for row in SSI_RECORDS
-            if not pattern.match(row[6])
+            if row[6] is not None and not pattern.match(row[6])
         ]
         assert not offenders, (
             f"{len(offenders)} SSI rows have non-placeholder beneficiary_account "
             f"(must match ^ACCT-\\d+$). First 5: {offenders[:5]}"
         )
+
+    def test_bic_only_rows_carry_no_accounts_charge_or_value_date(self):
+        """A BIC-only row names correspondents but publishes no accounts,
+        charge codes, or value dates — the fields an ordinary instruction is
+        built from. None of them may be fabricated (the pre-fix ENBD rows
+        carried invented ACCT- placeholders, OUR, and spot)."""
+        from app.services.seed import SSI_RECORDS
+
+        bic_only = [row for row in SSI_RECORDS if len(row) > 13 and row[13] is True]
+        assert bic_only, "expected bic_only rows in the seed"
+        for row in bic_only:
+            assert row[5] is None and row[6] is None, f"{row[0]}/{row[2]}: bic_only row has accounts"
+            assert row[7] is None, f"{row[0]}/{row[2]}: bic_only row has a charge code"
+            assert row[8] is None, f"{row[0]}/{row[2]}: bic_only row has a value date"
+            assert row[12] is None, f"{row[0]}/{row[2]}: bic_only row names a verifier"
+            assert len(row) == 14, f"{row[0]}/{row[2]}: expected 14 fields, got {len(row)}"
 
     def test_no_real_ibans_in_notes(self):
         """
@@ -417,10 +451,10 @@ class TestSSIModel:
         Verify the Emirates NBD SSI records are loaded.
 
         The bank/correspondent *relationships* are real (sourced from the
-        published SSI page), but all account numbers are now ACCT- placeholders
-        — no real account numbers ship in the source (safety invariant, see
-        TestAllSSIAccountsArePlaceholders). The 'Source:' citation in notes
-        documents where the relationship came from.
+        published correspondent-bank-charges PDF), but that source publishes
+        no account numbers, charge codes, or value dates — every row is
+        BIC-only. The 'Source:' citation in notes documents where the
+        relationship came from.
         """
         from sqlalchemy import select
 
@@ -432,16 +466,16 @@ class TestSSIModel:
                 SSI.currency == "USD",
             )
         ).scalars().all()
-        # ENBD USD has at least 4 correspondents from the published SSI page
+        # ENBD USD has at least 4 correspondents from the published PDF
         assert len(rows) >= 4
-        # ALL account numbers must be placeholders now
+        # The PDF is a BIC-level list: correspondent names only, and the
+        # fabricated account/charge/value-date fields must not exist.
         for row in rows:
-            assert row.intermediary_account.startswith("ACCT-"), (
-                f"intermediary_account must be ACCT- placeholder, got {row.intermediary_account}"
-            )
-            assert row.beneficiary_account.startswith("ACCT-"), (
-                f"beneficiary_account must be ACCT- placeholder, got {row.beneficiary_account}"
-            )
+            assert row.bic_only, "ENBD charges-PDF rows must be BIC-only"
+            assert row.intermediary_account is None
+            assert row.beneficiary_account is None
+            assert row.charge_code is None
+            assert row.value_date is None
 
     def test_enbd_multi_currency_coverage(self, db_session_clean):
         """Emirates NBD should have SSI across many currencies."""
@@ -675,6 +709,46 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             as_of="2007-12-13",
         )
         assert record.status == "archived"
+
+    def test_schema_accepts_a_well_formed_bic_only_record(self):
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="EBILAEADXXX", currency="USD",
+            intermediary_bic="EBILAEADXXX", status="unverified",
+            as_of="2026-05-01", bic_only=True,
+        )
+        assert record.bic_only is True
+
+    def test_schema_rejects_bic_only_record_with_accounts(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="EBILAEADXXX", currency="USD",
+                intermediary_bic="EBILAEADXXX", status="unverified",
+                as_of="2026-05-01", bic_only=True,
+                intermediary_account="ACCT-91001629",
+            )
+
+    def test_database_rejects_bic_only_row_with_accounts(self, db_session_clean):
+        """Raw SQL, deliberately: the ORM would have caught it earlier; the
+        CHECK constraint is the backstop for Core inserts and direct writers."""
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only, intermediary_account) "
+                "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', "
+                "'Source: x', 1, 'ACCT-91001629')"
+            ))
+        db_session_clean.rollback()
 
     def test_database_rejects_an_unknown_status(self, db_session_clean):
         """Raw SQL, deliberately: the ORM listener would catch this first, so
@@ -1733,7 +1807,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             / "scripts" / "ssi-autopilot" / "autopilot.py"
         )
         source = script.read_text()
-        assert "(10, 12, 13)" in source, "a 13-field SSI row would fail verify"
+        assert "(10, 12, 13, 14)" in source, "a 14-field bic_only row would fail verify"
         result = subprocess.run(
             [sys.executable, str(script), "verify"], capture_output=True, text=True
         )

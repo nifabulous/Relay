@@ -123,8 +123,8 @@ class SSIRecord(BaseModel):
     intermediary_bank_name: Optional[str] = None
     intermediary_account: Optional[str] = None
     beneficiary_account: Optional[str] = None
-    charge_code: str = "SHA"
-    value_date: str = "spot"
+    charge_code: Optional[str] = None
+    value_date: Optional[str] = None
     notes: Optional[str] = None
     # Provenance: "published" (verified live today), "unverified" (a bank
     # document was read, currency not re-checked), "archived" (point-in-time
@@ -136,6 +136,11 @@ class SSIRecord(BaseModel):
     # Set only by the verification path; a response carrying "published"
     # without it would be unattributable.
     verified_by: Optional[str] = None
+    # A BIC-only row names the correspondents a bank settles through but
+    # carries no accounts, charge codes, or value dates — the source (a
+    # correspondent-bank-charges list) published none. It is informational,
+    # never a selectable settlement instruction.
+    bic_only: bool = False
 
     @field_validator("as_of")
     @classmethod
@@ -183,6 +188,22 @@ class SSIRecord(BaseModel):
         if self.status != "published" and self.verified_by:
             raise ValueError(
                 f"verified_by is only meaningful for status 'published', got status {self.status!r}"
+            )
+        # A bic_only row asserts correspondent availability, not instructions:
+        # it must not carry the fields the source never published. Mirrors the
+        # ck_ssi_bic_only_has_no_accounts CHECK so /api/import/ssi rejects the
+        # shape with a field error instead of a flush-time IntegrityError.
+        if self.bic_only and any(
+            value not in (None, "") for value in (
+                self.intermediary_account,
+                self.beneficiary_account,
+                self.charge_code,
+                self.value_date,
+            )
+        ):
+            raise ValueError(
+                "a bic_only record must not carry accounts, charge codes, or "
+                "value dates — the source published none"
             )
         return self
     # The correspondent's settlement-system addresses, when it is a direct

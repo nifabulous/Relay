@@ -168,6 +168,12 @@ def suggest_from_ssi(
             select(SSI).where(
                 SSI.beneficiary_bic == cand,
                 SSI.currency == settlement_currency,
+                # BIC-only rows name correspondents but carry no account
+                # numbers, charge codes, or value dates — routing on them
+                # would send funds without a settlement instruction. They are
+                # informational ("this bank settles through X") and must not
+                # be selected as the path.
+                SSI.bic_only.is_(False),
             )
         ).scalars().all()
         if rows:

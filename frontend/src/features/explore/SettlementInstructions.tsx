@@ -40,12 +40,19 @@ function SsiTable({ records }: { records: SSIRecord[] }) {
               // currency + intermediary BIC is not guaranteed unique even
               // though the seeded data has no collisions today.
               <tr key={`${r.intermediary_bic}-${index}`}>
-                <td>{r.intermediary_bank_name ?? r.intermediary_bic}</td>
+                <td>
+                  {r.intermediary_bank_name ?? r.intermediary_bic}
+                  {r.bic_only && (
+                    <span className="bank-ssi__bic-only-badge" title="Availability only — the bank publishes no account numbers for this row">
+                      availability only
+                    </span>
+                  )}
+                </td>
                 <td className="mono">{r.intermediary_bic}</td>
                 <td className="mono">{r.intermediary_account ?? "—"}</td>
                 <td className="mono">{r.beneficiary_account ?? "—"}</td>
-                <td className="mono">{r.charge_code}</td>
-                <td>{r.value_date}</td>
+                <td className="mono">{r.charge_code ?? "—"}</td>
+                <td>{r.value_date ?? "—"}</td>
                 <td className="mono">{settlementIds ?? "—"}</td>
                 <td>
                   <SsiProvenance status={r.status} asOf={r.as_of} />
@@ -142,6 +149,15 @@ export function SettlementInstructions({
       </p>
 
       <SsiTabs groups={groups} />
+
+      {groups.some((g) => g.records.some((r) => r.bic_only)) && (
+        <p className="bank-ssi__disclaimer">
+          Rows marked “availability only” name the correspondents this
+          institution settles through but carry no account numbers — the bank
+          publishes none for them. They are informational, not instructions
+          funds can be routed on.
+        </p>
+      )}
 
       {disclaimer && <p className="bank-ssi__disclaimer">{disclaimer}</p>}
     </section>

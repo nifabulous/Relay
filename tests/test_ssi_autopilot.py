@@ -55,6 +55,28 @@ def test_all_manifest_regions_have_expected_shape():
             assert bank["currencies"], f"{region['name']}/{bank['bic8']}"
 
 
+def test_every_bank_and_country_belongs_to_exactly_one_region():
+    """Regions are ownership partitions. A bank (or country) claimed by two
+    regions contradicts both: two researchers would seed the same BIC with
+    different masks/blocks, and the country-from-BIC validator check would
+    accept a record for a region that did not research it (the pre-fix
+    overlap: latin-america vs andean shared CL/CO/PE and four BICs;
+    southeast-asia vs thailand shared TH)."""
+    bic_owner = {}
+    country_owner = {}
+    for region in MANIFEST["regions"]:
+        for bank in region["banks"]:
+            bic_owner.setdefault(bank["bic8"], []).append(region["name"])
+        for country in region["countries"]:
+            country_owner.setdefault(country, []).append(region["name"])
+    dup_bics = {bic: owners for bic, owners in bic_owner.items() if len(owners) > 1}
+    dup_countries = {
+        country: owners for country, owners in country_owner.items() if len(owners) > 1
+    }
+    assert not dup_bics, f"BICs owned by multiple regions: {dup_bics}"
+    assert not dup_countries, f"countries owned by multiple regions: {dup_countries}"
+
+
 # ── Validator: privacy (the hard rule) ───────────────────────────────────────
 def test_unmasked_account_rejected():
     bad = sample_results()
@@ -141,14 +163,102 @@ def test_duplicate_record_rejected():
     assert any("duplicate record" in p for p in problems)
 
 
+# ── Validator: bic_only records (availability, not instructions) ─────────────
+def gulf_bic_only_results(**overrides):
+    results = {
+        "region": "gulf",
+        "banks": [
+            {
+                "bic": "EBILAEAD",
+                "name": "Emirates NBD",
+                "records": [
+                    {
+                        "currency": "USD",
+                        "correspondent": "Emirates NBD",
+                        "int_bic": "EBILAEADXXX",
+                        "source": "https://www.emiratesnbd.com/en/correspondent-bank-charges",
+                        "as_of": "2026-05-01",
+                        "status": "unverified",
+                        "bic_only": True,
+                    }
+                ],
+            }
+        ],
+    }
+    results.update(overrides)
+    return results
+
+
+def test_bic_only_record_without_accounts_charge_or_value_date_passes():
+    assert autopilot.validate_results(gulf_bic_only_results(), MANIFEST) == []
+
+
+def test_bic_only_record_with_an_account_is_rejected():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["nostro"] = "ACCT-91001601"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and "nostro" in p for p in problems), problems
+
+
+def test_bic_only_record_with_a_value_date_is_rejected():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["value_date"] = "spot"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and "value_date" in p for p in problems), problems
+
+
+def test_bic_only_must_be_a_real_boolean():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["bic_only"] = "false"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must be a boolean" in p for p in problems), problems
+
+
+# ── The fold must match what was validated (bic_only) ────────────────────────
+EBILAEAD_BIC_ONLY_ROW = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
+     "EBILAEADXXX", "Emirates NBD",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01). " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),'''
+
+
+def test_bic_only_fold_matching_the_validated_results_passes():
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(EBILAEAD_BIC_ONLY_ROW))
+    assert problems == [], problems
+
+
+def test_bic_only_fold_missing_the_flag_is_rejected():
+    no_flag = EBILAEAD_BIC_ONLY_ROW.replace(", None, True),", "),")
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(no_flag))
+    assert any("missing the bic_only flag" in p for p in problems), problems
+
+
+def test_bic_only_fold_with_a_smuggled_account_is_rejected():
+    smuggled = EBILAEAD_BIC_ONLY_ROW.replace("None, None, None, None", '"ACCT-91001601", None, None, None')
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(smuggled))
+    assert any("must store None" in p and "nostro" in p for p in problems), problems
+
+
+def test_ordinary_fold_carrying_the_flag_is_rejected():
+    flagged = BPI_ROW.replace(",\n     \"2007-12-13\", \"archived\"),", ",\n     \"2007-12-13\", \"archived\", None, True),")
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flagged))
+    assert any("carries bic_only but the validated record does not" in p for p in problems), problems
+
+
 # ── Test scaffolding ─────────────────────────────────────────────────────────
 def test_scaffold_contains_expected_pieces():
     region = autopilot.get_region(MANIFEST, "southeast-asia")
-    text = autopilot.scaffold_coverage_class(region)
+    text = autopilot.scaffold_coverage_class(region, MANIFEST)
     assert "SOUTHEAST_ASIA_SSI_COVERAGE = [" in text
     assert '("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"}),' in text
     assert "class TestSoutheastAsiaSsiCoverage:" in text
     assert "test_southeast_asia_banks_have_seeded_ssi_records" in text
+    assert "test_southeast_asia_seeded_records_are_semantically_valid" in text
 
 
 # ── Commit counter / PR threshold ────────────────────────────────────────────
