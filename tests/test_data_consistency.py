@@ -810,6 +810,110 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_reseed_replaces_a_stale_machine_source_citation(self):
+        """A sourced seed update must not leave its old citation attached."""
+        from app.services.seed import SSI_RECORDS, seed_if_empty
+
+        target = next(
+            row for row in SSI_RECORDS
+            if len(row) > 13 and row[0] == "EBILAEADXXX" and row[2] == "USD"
+        )
+        (ben_bic, ben_name, ccy, int_bic, int_name, _int_acct, _ben_acct,
+         _charge, _vdate, source_notes, source_as_of, source_status,
+         _verified_by, target_bic_only) = target
+        assert target_bic_only is True
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name=ben_name,
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name=int_name,
+                intermediary_account="ACCT-OLD",
+                beneficiary_account="ACCT-OLD-BENE",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: superseded correspondent list.",
+                as_of="2020-01-01",
+                status=source_status,
+                bic_only=False,
+            ))
+            session.commit()
+
+            seed_if_empty(session)
+            session.expunge_all()
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
+            ).one()
+            assert row.bic_only is True
+            assert row.notes == source_notes
+            assert row.as_of == source_as_of
+            assert row.status == source_status
+        finally:
+            session.close()
+            engine.dispose()
+
+    def test_reseed_replaces_a_changed_machine_citation_with_same_provenance(self):
+        """A source URL can change without changing date, status, or shape."""
+        from app.services.seed import SSI_RECORDS, seed_if_empty
+
+        target = next(
+            row for row in SSI_RECORDS
+            if len(row) <= 13 and row[0] == "ZEIBNGLAXXX"
+            and row[2] == "USD" and row[3] == "CITIUS33XXX"
+        )
+        (ben_bic, ben_name, ccy, int_bic, int_name, _int_acct, _ben_acct,
+         _charge, _vdate, source_notes, source_as_of, source_status,
+         *provenance_tail) = target
+        source_verified = provenance_tail[0] if provenance_tail else None
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name=ben_name,
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name=int_name,
+                intermediary_account="ACCT-OLD",
+                beneficiary_account="ACCT-OLD-BENE",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: superseded page.",
+                as_of=source_as_of,
+                status=source_status,
+                verified_by=source_verified,
+            ))
+            session.commit()
+
+            seed_if_empty(session)
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
+            ).one()
+            assert row.notes == source_notes
+        finally:
+            session.close()
+            engine.dispose()
+
     def test_populated_database_receives_new_rows_and_bic_corrections(self):
         """The PR seed must upgrade an existing pre-expansion database."""
         engine = create_engine(

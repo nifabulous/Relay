@@ -278,6 +278,22 @@ class SSI(Base):
             "value_date IS NULL)",
             name="ck_ssi_bic_only_has_no_accounts",
         ),
+        # The mirror image of the constraint above: an ordinary row IS a
+        # settlement instruction, and routing selects exactly these rows, so
+        # it must carry the charge terms and settlement timing an instruction
+        # needs. The seed and the importer always supply them; this catches a
+        # direct ORM/Core write that would otherwise create a routable row
+        # with no charge code or value date.
+        #
+        # The leading test is `bic_only`, the boolean itself: `bic_only = 1`
+        # is `boolean = integer` on PostgreSQL (no operator, CREATE TABLE
+        # aborts), while a bare boolean column is a valid operand of OR on
+        # both engines.
+        CheckConstraint(
+            "bic_only OR (charge_code IS NOT NULL AND charge_code != '' AND "
+            "value_date IS NOT NULL AND value_date != '')",
+            name="ck_ssi_ordinary_has_settlement_terms",
+        ),
     )
 
 

@@ -160,8 +160,12 @@ export const SSIRecordSchema = z
     value_date: safeOptionalString,
     // A BIC-only row names the correspondents a bank settles through but
     // carries no accounts, charge codes, or value dates — it is
-    // informational, never a selectable settlement instruction.
-    bic_only: z.boolean().catch(false),
+    // informational, never a selectable settlement instruction. A missing
+    // field (older backend) defaults to ordinary, but a malformed value is
+    // REJECTED, not coerced: `catch(false)` would silently re-badge a
+    // BIC-only record as an ordinary settlement instruction, which is
+    // exactly the failure this flag exists to prevent.
+    bic_only: z.boolean().default(false),
     notes: safeOptionalString,
     // Provenance. An older backend sends no status; that is precisely the
     // "we do not know" case, so it falls back to "unverified" rather than

@@ -3,9 +3,10 @@
 New databases are still created by ``Base.metadata.create_all``. For an
 existing dev SQLite file, this helper brings compatibility tables up to the
 current model — it only adds what is missing, and it never loses data.
-Columns are added with plain ``ALTER TABLE``; the one constraint that SQLite
-cannot add that way (the bic_only CHECK) is installed with a table rebuild
-that preserves every column and row. Production uses Alembic
+Columns are added with plain ``ALTER TABLE``; the constraints SQLite cannot
+add that way (the bic_only CHECKs) are installed with a table rebuild that
+preserves every column and row — and puts the original table back, by name,
+if any step of the swap fails. Production uses Alembic
 (``alembic upgrade head``); this path exists solely so the dev file does not
 need to be deleted to gain the current schema.
 """
@@ -17,7 +18,14 @@ from app.models import SSI
 
 logger = logging.getLogger(__name__)
 
-_BIC_ONLY_CHECK_NAME = "ck_ssi_bic_only_has_no_accounts"
+# The rebuild installs every CHECK the current model carries, so a legacy
+# table is only "done" when all of them are present. Testing a single name
+# would let a dev database rebuilt by an older revision of this code skip
+# the rebuild and keep running without a constraint the model now asserts.
+_REQUIRED_SSI_CHECKS = frozenset({
+    "ck_ssi_bic_only_has_no_accounts",
+    "ck_ssi_ordinary_has_settlement_terms",
+})
 
 _TABLE_PATCHES = {
     "payment_events": (
@@ -28,6 +36,12 @@ _TABLE_PATCHES = {
         ("as_of VARCHAR(10)", "as_of"),
         ("verified_by VARCHAR(120)", "verified_by"),
         ("status VARCHAR(12) NOT NULL DEFAULT 'illustrative'", "status"),
+        # An ssi table old enough to predate these columns never carried
+        # charge/value data; the defaults are the ones the model documented
+        # for ordinary rows at the time, so the gained columns match what a
+        # seeded database would hold.
+        ("charge_code VARCHAR(3) DEFAULT 'SHA'", "charge_code"),
+        ("value_date VARCHAR(10) DEFAULT 'spot'", "value_date"),
         # bic_only rows carry no accounts, charge code, or value date. The
         # CHECK itself cannot be added with ALTER TABLE in SQLite (it would
         # require a table rebuild); _ensure_ssi_bic_only_check performs that
@@ -35,6 +49,11 @@ _TABLE_PATCHES = {
         ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
     ),
 }
+
+
+def _quote_sqlite_identifier(name: str) -> str:
+    """Quote a SQLite identifier, including legacy names containing quotes."""
+    return '"' + name.replace('"', '""') + '"'
 
 
 def _ssi_trigger_sql(engine) -> list[tuple[str, str]]:
@@ -51,25 +70,71 @@ def _ssi_trigger_sql(engine) -> list[tuple[str, str]]:
         ]
 
 
+def _ssi_index_sql(engine) -> list[tuple[str, str]]:
+    """Capture the named indexes attached to the ssi table, verbatim.
+
+    sqlite_master carries NULL sql for the implicit indexes a UNIQUE
+    constraint creates, so ``sql IS NOT NULL`` selects exactly the CREATE
+    INDEX statements someone chose to name — the ones the rebuild drops for
+    name availability, and has to put back on the original table if it
+    fails."""
+    with engine.connect() as conn:
+        return [
+            (name, sql)
+            for name, sql in conn.execute(
+                text(
+                    "SELECT name, sql FROM sqlite_master "
+                    "WHERE type='index' AND tbl_name='ssi' AND sql IS NOT NULL"
+                )
+            )
+        ]
+
+
 def _recreate_triggers(conn, triggers: list[tuple[str, str]]) -> None:
     """Re-create triggers captured before a rebuild, in capture order, on the
-    given connection — the caller decides the transaction boundaries so the
-    whole swap (table drop/rename plus trigger restore) is one atomic unit."""
+    given connection. DROP IF EXISTS first makes it idempotent: the recovery
+    path runs it against a table whose triggers may be intact, renamed
+    along, or half-recreated, and must end with exactly the captured set
+    either way."""
     for name, sql in triggers:
-        conn.execute(text(f"DROP TRIGGER IF EXISTS {name}"))
+        conn.execute(
+            text(f"DROP TRIGGER IF EXISTS {_quote_sqlite_identifier(name)}")
+        )
         conn.execute(text(sql))
 
 
-def _ensure_ssi_bic_only_check(engine, inspector) -> None:
-    """Install ck_ssi_bic_only_has_no_accounts on a legacy SQLite ssi table.
+def _recreate_indexes(conn, indexes: list[tuple[str, str]]) -> None:
+    """Re-create the captured named indexes on the ssi table, in capture
+    order. Idempotent for the same reason as _recreate_triggers."""
+    for name, sql in indexes:
+        conn.execute(
+            text(f"DROP INDEX IF EXISTS {_quote_sqlite_identifier(name)}")
+        )
+        conn.execute(text(sql))
 
-    SQLite cannot ADD a CHECK constraint to an existing table, so the only way
-    a dev database that predates bic_only can enforce the invariant is a
+
+def _table_exists(conn, name: str) -> bool:
+    return bool(
+        conn.execute(
+            text(
+                "SELECT name FROM sqlite_master "
+                "WHERE type='table' AND name = :name"
+            ),
+            {"name": name},
+        ).scalar()
+    )
+
+
+def _ensure_ssi_bic_only_check(engine, inspector) -> None:
+    """Install the model's ssi CHECK constraints on a legacy SQLite ssi table.
+
+    SQLite cannot ADD a CHECK constraint to an existing table, so the only
+    way a dev database that predates them can enforce the invariants is a
     table rebuild: create a new table from the current model schema (columns
     plus every constraint), copy the columns the legacy table actually holds,
-    drop the old table, and rename.
+    and swap it in.
 
-    Two safety properties are deliberate:
+    Three safety properties are deliberate:
 
       * A legacy table carrying columns the current model does not know is
         REFUSED, not rebuilt. The compatibility path promises the dev file
@@ -78,21 +143,28 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
         operator decide (drop them, or recreate the dev database) instead.
         This is checked before any DDL runs.
 
-      * The whole swap — dropping the canonical-named indexes, creating the
-        rebuild table, copying the rows, dropping the old table, renaming,
-        and restoring the as_of triggers 20260816_ssi_verifiedby attached —
-        runs inside ONE transaction. A failure anywhere (e.g. a row that
-        violates the new unique constraint) rolls everything back and leaves
-        the original table intact rather than stranding a half-built state.
+      * The canonical table is never dropped. It is renamed aside and kept
+        as a restorable backup until the replacement is fully in place —
+        rows copied, renamed to ``ssi``, and the as_of triggers
+        20260816_ssi_verifiedby attached re-created. SQLite's driver
+        auto-commits DDL, so no transaction can make the swap atomic; the
+        backup is what makes it recoverable instead. Any failure after the
+        copy puts the original back by name, with its triggers and its
+        named indexes, so startup fails on a database that is whole rather
+        than one whose ssi table — or its triggers — are gone.
+
+      * Row data moves exactly once, into the staging table, before anything
+        destructive happens; a failure there leaves the original untouched.
     """
     existing_checks = {
         c["name"] for c in inspector.get_check_constraints("ssi")
     }
-    if _BIC_ONLY_CHECK_NAME in existing_checks:
+    if _REQUIRED_SSI_CHECKS <= existing_checks:
         return
 
     existing_columns = [c["name"] for c in inspector.get_columns("ssi")]
     triggers = _ssi_trigger_sql(engine)
+    indexes = _ssi_index_sql(engine)
     meta = MetaData()
     rebuild = SSI.__table__.to_metadata(
         meta, name="ssi__bic_only_rebuild"
@@ -102,7 +174,8 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
     # forever. Restore the canonical names so the dev DB matches a fresh
     # create_all, then drop the old table's same-named indexes (SQLite index
     # names are database-global, so the rebuilt table could not be created
-    # while they exist).
+    # while they exist) — keeping their SQL, because a failed rebuild has to
+    # put them back on the original table.
     for index in rebuild.indexes:
         index.name = index.name.replace("ssi__bic_only_rebuild", "ssi")
     unknown = sorted(set(existing_columns) - set(rebuild.c.keys()))
@@ -121,8 +194,29 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
             conn.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
             for index in rebuild.indexes:
                 conn.execute(
-                    text(f'DROP INDEX IF EXISTS "{index.name}"')
+                    text(
+                        "DROP INDEX IF EXISTS "
+                        f"{_quote_sqlite_identifier(index.name)}"
+                    )
                 )
+            # The same backfill the Alembic migration performs, for the same
+            # reason: an ordinary row written by a non-ORM path can predate
+            # the charge/value defaults, and the rebuilt table's
+            # ck_ssi_ordinary_has_settlement_terms would reject the copy.
+            # "SHA"/"spot" are the defaults those rows were written under.
+            # Both columns exist by now — _TABLE_PATCHES adds them first.
+            conn.execute(
+                text(
+                    "UPDATE ssi SET charge_code = 'SHA' "
+                    "WHERE NOT bic_only AND (charge_code IS NULL OR charge_code = '')"
+                )
+            )
+            conn.execute(
+                text(
+                    "UPDATE ssi SET value_date = 'spot' "
+                    "WHERE NOT bic_only AND (value_date IS NULL OR value_date = '')"
+                )
+            )
             rebuild.create(bind=conn)
             conn.execute(
                 text(
@@ -130,39 +224,68 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
                     f"SELECT {column_list} FROM ssi"
                 )
             )
-            # The copy above is the only step that can fail on data
-            # (e.g. a duplicate-key row). Every statement after it is DDL and
-            # runs only once the data has copied successfully, so a failure
-            # never drops the canonical table beneath live data.
-            conn.execute(text("DROP TABLE ssi"))
+            # The swap, through a backup that can be put back by name. Every
+            # statement from here on is DDL that the driver auto-commits, so
+            # a failure between statements cannot be rolled back — only
+            # restored from. The backup is dropped last, after the
+            # replacement table is fully in place and its triggers restored.
+            conn.execute(text("ALTER TABLE ssi RENAME TO ssi__bic_only_backup"))
             conn.execute(text("ALTER TABLE ssi__bic_only_rebuild RENAME TO ssi"))
             _recreate_triggers(conn, triggers)
+            model_index_names = {index.name for index in rebuild.indexes}
+            _recreate_indexes(
+                conn,
+                [
+                    (name, sql)
+                    for name, sql in indexes
+                    if name not in model_index_names
+                ],
+            )
+            conn.execute(text("DROP TABLE ssi__bic_only_backup"))
     except Exception:
-        # SQLite's sqlite3 driver auto-commits DDL, so engine.begin()'s
-        # transaction rollback does not remove the staging table. Drop the
-        # leftover ssi__bic_only_rebuild so the dev DB never observes a
-        # half-built state; the canonical ``ssi`` table is untouched because
-        # the only data-destructive step (DROP TABLE ssi) runs AFTER the row
-        # copy that raised. On PostgreSQL the whole block is transactional and
-        # this cleanup is a no-op there.
+        # Put the original back. The staging table goes first; if the backup
+        # exists, the canonical name was moved away from the original, so
+        # whatever holds it now is the half-built replacement and is
+        # discarded. Triggers and named indexes are re-created from the
+        # verbatim captures — the swap may have dropped or renamed them — so
+        # the restored table is the original in full, not merely its rows.
         with engine.begin() as cleanup:
             cleanup.execute(text("DROP TABLE IF EXISTS ssi__bic_only_rebuild"))
+            if _table_exists(cleanup, "ssi__bic_only_backup"):
+                cleanup.execute(text("DROP TABLE IF EXISTS ssi"))
+                cleanup.execute(
+                    text("ALTER TABLE ssi__bic_only_backup RENAME TO ssi")
+                )
+            _recreate_triggers(cleanup, triggers)
+            _recreate_indexes(cleanup, indexes)
         logger.warning(
-            "Rolled back partial ssi rebuild; original ssi table preserved"
+            "Rolled back partial ssi rebuild; original ssi table restored"
         )
         raise
-    logger.info("Rebuilt legacy ssi table with the bic_only CHECK")
-    logger.info("Rebuilt legacy ssi table with the bic_only CHECK")
+    logger.info("Rebuilt legacy ssi table with the model's CHECK constraints")
 
 
 def ensure_sqlite_schema(engine) -> None:
     """Bring an existing SQLite DB up to the current schema.
 
     Additive-only for columns: inspects the current table and issues
-    ``ALTER TABLE`` solely for columns the table lacks. The bic_only CHECK is
-    the one structural exception — see _ensure_ssi_bic_only_check.
+    ``ALTER TABLE`` solely for columns the table lacks. The ssi CHECK
+    constraints are the one structural exception — see
+    _ensure_ssi_bic_only_check.
     """
     inspector = inspect(engine)
+    if inspector.has_table("ssi"):
+        existing_columns = {
+            column["name"] for column in inspector.get_columns("ssi")
+        }
+        unknown = sorted(existing_columns - set(SSI.__table__.c.keys()))
+        if unknown:
+            raise ValueError(
+                "Refusing to rebuild legacy ssi table: columns not in the current "
+                f"model would be dropped: {unknown}. Drop them, or recreate the "
+                "dev database, instead of letting the compatibility path discard "
+                "data on startup."
+            )
     for table_name, patches in _TABLE_PATCHES.items():
         if not inspector.has_table(table_name):
             continue

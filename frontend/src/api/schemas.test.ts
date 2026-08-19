@@ -1,11 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
+import { SSIRecordSchema, SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
 import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
 } from "./schemas";
 import { TutorRequestSchema, TutorResponseSchema } from "./schemas";
 import { usdFedwireRailFixture, interacETransferFixture, swiftGpiInternationalFixture } from "../features/explore/schemeFixtures";
+
+describe("SSIRecord bic_only schema", () => {
+  it("rejects malformed bic_only values instead of defaulting to ordinary", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "EBILAEADXXX",
+      currency: "USD",
+      intermediary_bic: "BOFAUS3NXXX",
+      bic_only: "False",
+    })).toThrow();
+  });
+
+  it("defaults a missing bic_only field to ordinary for older backends", () => {
+    expect(SSIRecordSchema.parse({
+      beneficiary_bic: "GTBINGLAXXX",
+      currency: "USD",
+      intermediary_bic: "CITIUS33XXX",
+    }).bic_only).toBe(false);
+  });
+});
 
 describe("SuggestedIntermediary schema", () => {
   it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {

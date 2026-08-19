@@ -327,6 +327,51 @@ class TestCurrentSchemaIsANoop:
                     "'Source: https://bank.example/charges (as of 2026-05-01).', "
                     "1, 'ACCT-91001629')"
                 ))
+
+    def test_legacy_rebuild_failure_after_swap_restores_the_original_table(
+        self, monkeypatch
+    ):
+        """A failure after the old table is renamed must not strand the DB."""
+        from app.services import schema_compat
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'keep this row')"
+            ))
+
+        original_recreate_triggers = schema_compat._recreate_triggers
+        calls = 0
+
+        def fail_once(conn, triggers):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise RuntimeError("simulated trigger restore failure")
+            return original_recreate_triggers(conn, triggers)
+
+        monkeypatch.setattr(schema_compat, "_recreate_triggers", fail_once)
+        with pytest.raises(RuntimeError, match="simulated trigger restore failure"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            tables = {
+                row[0] for row in conn.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ))
+            }
+            assert "ssi" in tables
+            assert "ssi__bic_only_backup" not in tables
+            assert "ssi__bic_only_rebuild" not in tables
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, notes FROM ssi"
+            )).mappings().one()
+        assert row == {
+            "beneficiary_bic": "CITIUS33XXX",
+            "notes": "keep this row",
+        }
     def test_legacy_rebuild_refuses_to_drop_unknown_columns(self):
         """A legacy ssi table carrying columns the current model does not know
         must be refused, not silently rebuilt: the rebuild copies only model
@@ -348,11 +393,63 @@ class TestCurrentSchemaIsANoop:
 
         with engine.connect() as conn:
             columns = {c["name"] for c in inspect(engine).get_columns("ssi")}
+            assert columns == {
+                "id", "beneficiary_bic", "currency", "intermediary_bic",
+                "notes", "operator_tag",
+            }
             assert "operator_tag" in columns
             row = conn.execute(text(
                 "SELECT beneficiary_bic, operator_tag FROM ssi"
             )).mappings().one()
             assert row["operator_tag"] == "keep-me"
+
+    def test_legacy_rebuild_preserves_custom_indexes(self):
+        """A successful compatibility rebuild must not remove operator-owned
+        indexes, especially a unique one that protects data integrity."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "CREATE UNIQUE INDEX legacy_ssi_notes_uq ON ssi(notes)"
+            ))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        assert "legacy_ssi_notes_uq" in {
+            index["name"] for index in inspect(engine).get_indexes("ssi")
+        }
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "notes, status, charge_code, value_date) VALUES "
+                    "('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'legacy', "
+                    "'illustrative', 'SHA', 'spot')"
+                ))
+
+    def test_legacy_rebuild_quotes_custom_trigger_names(self):
+        """SQLite permits trigger names that require identifier quoting."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                'CREATE TRIGGER "audit trigger" AFTER INSERT ON ssi '
+                'BEGIN SELECT 1; END'
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            trigger_names = {
+                row[0] for row in conn.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='trigger'"
+                ))
+            }
+        assert "audit trigger" in trigger_names
 
     def test_legacy_rebuild_failure_rolls_back_the_whole_swap(self):
         """Index drop + rebuild + row copy + table swap + trigger restore run

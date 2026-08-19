@@ -27,6 +27,7 @@ _BIC_ONLY_SPEC = importlib.util.spec_from_file_location(
 _BIC_ONLY_MIGRATION = importlib.util.module_from_spec(_BIC_ONLY_SPEC)
 _BIC_ONLY_SPEC.loader.exec_module(_BIC_ONLY_MIGRATION)
 BIC_ONLY_HAS_NO_ACCOUNTS = _BIC_ONLY_MIGRATION.BIC_ONLY_HAS_NO_ACCOUNTS
+ORDINARY_HAS_SETTLEMENT_TERMS = _BIC_ONLY_MIGRATION.ORDINARY_HAS_SETTLEMENT_TERMS
 
 _PREVIOUS_SPEC = importlib.util.spec_from_file_location(
     "20260816_ssi_verified_by",
@@ -422,6 +423,47 @@ class TestBicOnlyMigration:
         )
         connection.commit()
         connection.close()
+
+    def test_upgrade_backfills_ordinary_terms_and_enforces_the_mirror_check(self, tmp_path):
+        db = tmp_path / "ordinary_terms.db"
+        _seed_at_previous_revision(db, "2021-10-09")
+
+        connection = sqlite3.connect(db)
+        connection.execute(
+            "UPDATE ssi SET charge_code = '', value_date = ''"
+        )
+        connection.commit()
+        connection.close()
+
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        row = list(connection.execute(
+            "SELECT charge_code, value_date FROM ssi"
+        ))[0]
+        assert row == ("SHA", "spot")
+        ddl = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='ssi'"
+        ).fetchone()[0]
+        assert "ck_ssi_ordinary_has_settlement_terms" in ddl
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only, charge_code, value_date) VALUES "
+                "('ORDINARYBAD', 'USD', 'CITIUS33XXX', 'illustrative', NULL, "
+                "0, NULL, NULL)"
+            )
+        connection.close()
+
+    def test_model_and_migration_mirror_constraint_text(self):
+        from app.models import SSI
+
+        model_sql = {
+            str(c.sqltext)
+            for c in SSI.__table__.constraints
+            if c.name == "ck_ssi_ordinary_has_settlement_terms"
+        }
+        assert model_sql == {ORDINARY_HAS_SETTLEMENT_TERMS}
 
     def test_bic_only_row_with_accounts_is_rejected(self, tmp_path):
         db = tmp_path / "bic_only_bad.db"

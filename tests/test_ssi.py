@@ -685,6 +685,7 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="definitely-current",
+                charge_code="SHA", value_date="spot",
             )
 
     def test_schema_rejects_a_malformed_as_of(self):
@@ -697,6 +698,7 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="not-a-date",
             )
 
@@ -706,9 +708,22 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
+            charge_code="SHA", value_date="spot",
             as_of="2007-12-13",
         )
         assert record.status == "archived"
+
+    def test_schema_rejects_an_ordinary_record_without_settlement_terms(self):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError, match="ordinary.*requires"):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2007-12-13",
+            )
 
     def test_schema_accepts_a_well_formed_bic_only_record(self):
         from app.schemas import SSIRecord
@@ -768,6 +783,37 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             ))
         db_session_clean.rollback()
 
+    def test_database_rejects_an_ordinary_row_without_settlement_terms(
+        self, db_session_clean
+    ):
+        """A raw writer cannot create a routable ordinary row with no terms."""
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'illustrative', NULL, 0)"
+            ))
+        db_session_clean.rollback()
+
+    def test_database_rejects_an_ordinary_row_with_empty_settlement_terms(
+        self, db_session_clean
+    ):
+        """Empty strings are the same missing terms the API normalizes away."""
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'illustrative', NULL, "
+                "0, '', '')"
+            ))
+        db_session_clean.rollback()
+
     def test_database_rejects_an_unknown_status(self, db_session_clean):
         """Raw SQL, deliberately: the ORM listener would catch this first, so
         going around it is what proves the CHECK constraint is a real backstop
@@ -778,8 +824,10 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "notes, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x', "
+                "'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -858,8 +906,9 @@ class TestProvenanceCannotBeForgedByAWriter:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -869,6 +918,7 @@ class TestProvenanceCannotBeForgedByAWriter:
         db_session_clean.add(SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="illustrative", notes=None,
+            charge_code="SHA", value_date="spot",
         ))
         db_session_clean.commit()
 
@@ -913,6 +963,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
             )
 
     def test_published_with_a_verification_date_is_accepted(self):
@@ -925,6 +976,7 @@ class TestPublishedCannotBeSelfAsserted:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
+            charge_code="SHA", value_date="spot",
             as_of=_utc_yesterday(),
             verified_by="ops:ada",
         )
@@ -937,6 +989,7 @@ class TestPublishedCannotBeSelfAsserted:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
+            charge_code="SHA", value_date="spot",
             as_of=_utc_today(),
             verified_by="ops:ada",
         )
@@ -953,6 +1006,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of=_utc_tomorrow(),
             )
 
@@ -966,6 +1020,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="2999-01-01",
             )
 
@@ -978,8 +1033,10 @@ class TestPublishedCannotBeSelfAsserted:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "notes, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', "
+                "'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -994,6 +1051,7 @@ class TestPublishedCannotBeSelfAsserted:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(row, verified_by="ops:ada",
                                     verified_on=_utc_today())
@@ -1020,6 +1078,7 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
             notes="Source: https://bank.example/ssi.",
             as_of=_utc_today(),
             verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         fields.update(overrides)
         return SSI(**fields)
@@ -1098,14 +1157,15 @@ class TestProvenanceSurvivesTheBypassPaths:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
             verified_by="research",
+            charge_code="SHA", value_date="spot",
         )
         row.update(overrides)
         session.execute(
             text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES (:beneficiary_bic, "
-                ":currency, :intermediary_bic, :status, :notes, :as_of, "
-                ":verified_by)"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES (:beneficiary_bic, :currency, :intermediary_bic, :status, "
+                ":notes, :as_of, :verified_by, :charge_code, :value_date)"
             ),
             row,
         )
@@ -1196,6 +1256,7 @@ class TestProvenanceSurvivesTheBypassPaths:
                 beneficiary_bic="AAAAGB2LXXX", currency="EUR",
                 intermediary_bic="CITIUS33XXX", status="published",
                 notes="Source: x", as_of="garbage",
+                charge_code="SHA", value_date="spot",
             )])
         db_session_clean.rollback()
 
@@ -1354,6 +1415,7 @@ class TestValidationAgreesWithTheDatabase:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="20240215",
             )
 
@@ -1367,6 +1429,7 @@ class TestValidationAgreesWithTheDatabase:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="2024-W07-3",
             )
 
@@ -1379,6 +1442,7 @@ class TestValidationAgreesWithTheDatabase:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: x", as_of="20240215",
+            charge_code="SHA", value_date="spot",
         ))
         with pytest.raises(ValueError, match="YYYY-MM-DD"):
             db_session_clean.commit()
@@ -1391,12 +1455,14 @@ class TestValidationAgreesWithTheDatabase:
         assert SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
+            charge_code="SHA", value_date="spot",
             as_of="2024-02-15",
         ).as_of == "2024-02-15"
         db_session_clean.add(SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: x", as_of="2024-02-15",
+            charge_code="SHA", value_date="spot",
         ))
         db_session_clean.commit()
 
@@ -1416,6 +1482,7 @@ class TestOnlyTheVerificationPathCanPublish:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
             as_of=_utc_today(),
+            charge_code="SHA", value_date="spot",
         )
         fields.update(overrides)
         return SSI(**fields)
@@ -1466,8 +1533,9 @@ class TestOnlyTheVerificationPathCanPublish:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of) VALUES ('AAAAGB2LXXX', 'USD', "
-                "'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+                "status, notes, as_of, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', "
+                "'2020-01-01', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1481,6 +1549,7 @@ class TestOnlyTheVerificationPathCanPublish:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of="2020-01-01",
             )
 
@@ -1499,6 +1568,7 @@ class TestAVerifierMustBeAName:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of="2020-01-01", verified_by="   ",
             )
 
@@ -1510,6 +1580,7 @@ class TestAVerifierMustBeAName:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: x", as_of=_utc_today(), verified_by="   ",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1524,8 +1595,9 @@ class TestAVerifierMustBeAName:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', '   ')"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', "
+                "'Source: x', '2020-01-01', '   ', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1545,8 +1617,9 @@ class TestAVerifierMustBeAName:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', :v)"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', "
+                "'Source: x', '2020-01-01', :v, 'SHA', 'spot')"
             ), {"v": verifier})
         db_session_clean.rollback()
 
@@ -1558,6 +1631,7 @@ class TestAVerifierMustBeAName:
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(
             row, verified_by="  ops:ada  ",
@@ -1585,6 +1659,7 @@ class TestAVerifierOnlyRidesOnPublished:
                 SSIRecord(
                     beneficiary_bic="BOPIPHMMXXX", currency="USD",
                     intermediary_bic="CITIUS33XXX", status=status,
+                    charge_code="SHA", value_date="spot",
                     notes="Source: https://bank.example/ssi.",
                     verified_by="ops:ada",
                 )
@@ -1599,6 +1674,7 @@ class TestAVerifierOnlyRidesOnPublished:
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
             verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1617,6 +1693,7 @@ class TestAVerifierOnlyRidesOnPublished:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         row.status = "published"
         row.verified_by = "ops:ada"
@@ -1640,8 +1717,9 @@ class TestAVerifierOnlyRidesOnPublished:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'archived', 'Source: x', '2020-01-01', 'ops:ada')"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'archived', "
+                "'Source: x', '2020-01-01', 'ops:ada', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1660,6 +1738,7 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(row, verified_by="ops:ada",
                                     verified_on=_utc_today())
@@ -1778,6 +1857,7 @@ class TestPublishedIsAttributionNotAuthorisation:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
             as_of=self._utc_today(), verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1791,6 +1871,7 @@ class TestPublishedIsAttributionNotAuthorisation:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: x", as_of=self._utc_today(),
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1844,6 +1925,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             intermediary_bic="CITIUS33XXX",
             notes="Source: https://bank.example/ssi.",
             as_of="2020-01-01", status="published", verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1860,6 +1942,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", notes="Source: x",
             as_of="2020-01-01", status="published",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()

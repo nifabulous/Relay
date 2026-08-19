@@ -5315,10 +5315,11 @@ def seed_if_empty(session) -> dict:
             #     fields. The seed's accounts are literally "Illustrative
             #     placeholder — replace with the beneficiary's real numbers",
             #     so restating them would clobber a correct, operator-imported
-            #     account with a placeholder. Only provenance (as_of, status,
-            #     verified_by) is restated, so a populated database that
-            #     predates a source update shows the new citation on the rows
-            #     someone has since corrected.
+            #     account with a placeholder. Provenance (as_of, status,
+            #     verified_by, and the citation backing a sourced status)
+            #     restates, so a populated database that predates a source
+            #     update shows the new provenance on the rows someone has
+            #     since corrected.
             #
             #   * Ordinary -> bic_only: the row shed its fabricated account/
             #     charge/value fields (they were placeholders, the flag says
@@ -5329,40 +5330,63 @@ def seed_if_empty(session) -> dict:
             #     are populated here. Without this the row would become
             #     routable — routing excludes bic_only rows — while still
             #     holding none of the fields an instruction needs.
-            if (existing.as_of, existing.status, existing.verified_by, existing.bic_only) != (
-                as_of, status, verified_by, bic_only
-            ):
-                # A sourced status and its citation move together: a row stored
-                # before these columns existed can have no notes at all, and
-                # setting a sourced status on it would assert provenance the
-                # row cannot show. Backfill the citation from the same tuple
-                # rather than clobbering a note someone has since edited.
-                if status != "illustrative" and not existing.notes:
-                    existing.notes = notes
+            provenance_changed = (
+                existing.as_of,
+                existing.status,
+                existing.verified_by,
+                existing.bic_only,
+            ) != (as_of, status, verified_by, bic_only)
+            # A machine citation is source-controlled too. Refresh it even
+            # when the provenance tuple is unchanged, but never overwrite an
+            # operator's free-form note.
+            citation_changed = (
+                status != "illustrative"
+                and existing.notes != notes
+                and (
+                    not existing.notes
+                    or existing.notes.lstrip().startswith("Source:")
+                    or existing.bic_only
+                )
+            )
+            if provenance_changed or citation_changed:
                 was_bic_only = existing.bic_only
-                existing.as_of = as_of
-                existing.status = status
-                existing.verified_by = verified_by
-                existing.bic_only = bic_only
-                if bic_only:
-                    # Becoming bic_only must shed the account/charge/value
-                    # fields the row used to carry; leaving them behind would
-                    # violate ck_ssi_bic_only_has_no_accounts at flush.
-                    existing.intermediary_account = None
-                    existing.beneficiary_account = None
-                    existing.charge_code = None
-                    existing.value_date = None
-                elif was_bic_only:
-                    # Leaving bic_only: repopulate every source-controlled
-                    # field from the tuple so the now-routable row is a real
-                    # instruction rather than a routable-but-empty shell.
-                    existing.beneficiary_bank_name = ben_name
-                    existing.intermediary_bank_name = int_name
+                # A sourced status and its citation move together — the
+                # citation in notes is what a sourced status asserts
+                # (ck_ssi_sourced_status_has_notes). Restating as_of/status
+                # while keeping the prior source's citation would present a
+                # current date on a superseded source, worst for a row that
+                # becomes bic_only, whose old citation described
+                # account-bearing instructions the source never published.
+                # A row becoming *illustrative* asserts no source at all, so
+                # its notes are operator free text and are left alone.
+                if citation_changed:
                     existing.notes = notes
-                    existing.intermediary_account = int_acct
-                    existing.beneficiary_account = ben_acct
-                    existing.charge_code = charge
-                    existing.value_date = vdate
+                if provenance_changed:
+                    existing.as_of = as_of
+                    existing.status = status
+                    existing.verified_by = verified_by
+                    existing.bic_only = bic_only
+                    if bic_only:
+                        # Becoming bic_only must shed the account/charge/value
+                        # fields the row used to carry; leaving them behind would
+                        # violate ck_ssi_bic_only_has_no_accounts at flush.
+                        existing.intermediary_account = None
+                        existing.beneficiary_account = None
+                        existing.charge_code = None
+                        existing.value_date = None
+                    elif was_bic_only:
+                        # Leaving bic_only: repopulate every source-controlled
+                        # field from the tuple so the now-routable row is a real
+                        # instruction rather than a routable-but-empty shell.
+                        # (notes is not touched here: the citation rule above
+                        # restated it for a sourced status, and an illustrative
+                        # row's notes are the operator's.)
+                        existing.beneficiary_bank_name = ben_name
+                        existing.intermediary_bank_name = int_name
+                        existing.intermediary_account = int_acct
+                        existing.beneficiary_account = ben_acct
+                        existing.charge_code = charge
+                        existing.value_date = vdate
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )

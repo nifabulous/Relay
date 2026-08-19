@@ -217,6 +217,26 @@ class SSIRecord(BaseModel):
                 "a bic_only record must not carry accounts, charge codes, or "
                 "value dates — the source published none"
             )
+        # The mirror image: an ordinary record IS a settlement instruction,
+        # and one without charge terms or settlement timing instructs
+        # nothing. Routing selects exactly these rows, so a record that is
+        # ordinary but lacks them must be rejected here — not presented as a
+        # selectable instruction. Mirrors ck_ssi_ordinary_has_settlement_terms;
+        # the seed and the importer supply "SHA"/"spot" when a writer omits
+        # them, so only a malformed writer ever trips this.
+        if not self.bic_only and (
+            self.charge_code is None or self.value_date is None
+        ):
+            missing = ", ".join(
+                name for name, value in (
+                    ("charge_code", self.charge_code),
+                    ("value_date", self.value_date),
+                ) if value is None
+            )
+            raise ValueError(
+                f"an ordinary (non-bic_only) record requires charge_code and "
+                f"value_date — missing {missing}"
+            )
         return self
     # The correspondent's settlement-system addresses, when it is a direct
     # USD clearer we track (CHIPS participant number + ABA routing number).
