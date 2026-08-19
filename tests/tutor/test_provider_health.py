@@ -295,6 +295,27 @@ def test_provider_success_logs_bounded_usage_and_finish_reason(caplog):
     assert "elapsed_ms=" in caplog.text
 
 
+def test_diagnostics_access_failures_do_not_break_a_valid_provider_response():
+    good = TutorModelOutput(answer="An IBAN identifies an account.", citations=[])
+
+    class _DiagnosticsUnavailable:
+        output = good
+
+        @property
+        def usage(self):
+            raise RuntimeError("usage metadata unavailable")
+
+        @property
+        def response(self):
+            raise RuntimeError("response metadata unavailable")
+
+    engine = _engine_with([_DiagnosticsUnavailable()])
+    response = _run(engine)
+
+    assert response.turn_id
+    assert response.grounded is False
+
+
 def test_the_retry_is_bounded_to_one_extra_attempt():
     """A third attempt mostly triples the latency of an outage the learner is
     already waiting through, and triples the spend on a call that will fail."""

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -61,10 +62,21 @@ def main() -> int:
             _fail(f"{distribution} is not pinned to {expected} in the ai extra")
 
     relay_index = ROOT / "app" / "static" / "relay" / "index.html"
+    relay_root = relay_index.parent
     relay_assets = ROOT / "app" / "static" / "relay" / "assets"
     if not relay_index.is_file() or not relay_assets.is_dir():
         _fail("the Vercel frontend build did not produce app/static/relay")
-    if list((ROOT / "app" / "static" / "relay").rglob("*.map")):
+    index = relay_index.read_text()
+    for reference in re.findall(r'(?:src|href)="([^"]+)"', index):
+        if reference.startswith("/app/assets/"):
+            asset = relay_assets / reference.removeprefix("/app/assets/")
+        elif reference.startswith("assets/"):
+            asset = relay_root / reference
+        else:
+            continue
+        if not asset.is_file():
+            _fail(f"built Relay index references a missing asset: {reference}")
+    if list(relay_root.rglob("*.map")):
         _fail("the final Relay artifact contains source maps")
 
     print(

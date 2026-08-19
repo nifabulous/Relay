@@ -582,14 +582,22 @@ def _elapsed_ms(started_at: float) -> int:
 _SAFE_FINISH_REASONS = frozenset({"stop", "length", "content_filter", "tool_call", "error"})
 
 
-def _provider_usage_metadata(result: object) -> Tuple[Optional[int], ...]:
+def _provider_usage_metadata(
+    result: object,
+) -> Tuple[Optional[int], Optional[int], Optional[int], Optional[int], Optional[str]]:
     """Extract only bounded provider usage/completion fields for diagnostics.
 
     PydanticAI exposes run usage as a property in current releases and as a
     callable in some older adapter shapes. Treat both forms as optional and
     never let telemetry extraction affect a successful tutor response.
     """
-    usage = getattr(result, "usage", None)
+    def safe_getattr(value: object, name: str, default=None):
+        try:
+            return getattr(value, name, default)
+        except Exception:  # noqa: BLE001 - diagnostics must never affect serving
+            return default
+
+    usage = safe_getattr(result, "usage")
     if callable(usage):
         try:
             usage = usage()
@@ -600,15 +608,15 @@ def _provider_usage_metadata(result: object) -> Tuple[Optional[int], ...]:
         if usage is None:
             return None
         for name in names:
-            value = getattr(usage, name, None)
+            value = safe_getattr(usage, name)
             if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 10_000_000:
                 return value
         return None
 
-    response = getattr(result, "response", None)
-    finish_reason = getattr(response, "finish_reason", None)
-    if hasattr(finish_reason, "value"):
-        finish_reason = finish_reason.value
+    response = safe_getattr(result, "response")
+    finish_reason = safe_getattr(response, "finish_reason")
+    finish_value = safe_getattr(finish_reason, "value", finish_reason)
+    finish_reason = finish_value
     if finish_reason not in _SAFE_FINISH_REASONS:
         finish_reason = None
 
