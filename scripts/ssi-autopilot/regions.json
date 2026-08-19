@@ -1501,17 +1501,22 @@
     "SV"
    ],
    "masked_block": 91002300,
-   "note": "2026-08-19 research pending. Candidate publishers: Banorte, BBVA Mexico, Santander Mexico, HSBC Mexico (MX); Banrural, BAC Credomatic, Banco Industrial (GT); BAC, Banco Nacional (CR); Banco General, BAC Panama (PA); Banco Agricola (SV). Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: Banorte (MENOMXMT, live 2026-08-18), Banco General Panama (BAGEPAPA, live 2026-05-11), and Banco Agricola El Salvador (CAGRSVSS, archived 2025-08-06) publish correspondent lists. BBVA Mexico, Santander Mexico (BMSXMXMM), HSBC Mexico, Banrural (BRRLGTGC), BAC Credomatic GT, and Banco Nacional CR publish no SSI \u2014 NOT SEEDABLE. Corrected BICs: Banorte MENOMXMT (not BNMXMXMM), Santander BMSXMXMM, Banrural BRRLGTGC, Banco General BAGEPAPA, Banco Agricola CAGRSVSS; wrong forms forbidden.",
    "banks": [
     {
-     "bic8": "BNMXMXMM",
-     "name": "Banorte",
+     "bic8": "MENOMXMT",
+     "name": "Banorte (Banco Mercantil del Norte)",
      "country": "MX",
      "currencies": [
       "USD",
       "EUR",
+      "CAD",
       "GBP",
-      "MXN"
+      "CHF",
+      "JPY",
+      "SEK",
+      "AUD",
+      "NOK"
      ]
     },
     {
@@ -1523,10 +1528,11 @@
       "EUR",
       "GBP",
       "MXN"
-     ]
+     ],
+     "seedable": false
     },
     {
-     "bic8": "BMEXMXMM",
+     "bic8": "BMSXMXMM",
      "name": "Santander Mexico",
      "country": "MX",
      "currencies": [
@@ -1534,7 +1540,8 @@
       "EUR",
       "GBP",
       "MXN"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "BIMEMXMM",
@@ -1545,17 +1552,19 @@
       "EUR",
       "GBP",
       "MXN"
-     ]
+     ],
+     "seedable": false
     },
     {
-     "bic8": "CUNIGTGT",
+     "bic8": "BRRLGTGC",
      "name": "Banrural",
      "country": "GT",
      "currencies": [
       "USD",
       "EUR",
       "GTQ"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "BACCGTGT",
@@ -1564,7 +1573,8 @@
      "currencies": [
       "USD",
       "GTQ"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "BNCRCRSJ",
@@ -1573,28 +1583,52 @@
      "currencies": [
       "USD",
       "CRC"
-     ]
+     ],
+     "seedable": false
     },
     {
-     "bic8": "BAGEGPAP",
+     "bic8": "BAGEPAPA",
      "name": "Banco General (Panama)",
      "country": "PA",
      "currencies": [
       "USD",
-      "PAB"
+      "EUR",
+      "GBP",
+      "MXN",
+      "CAD",
+      "CHF",
+      "JPY",
+      "AUD",
+      "DKK",
+      "HKD",
+      "NOK",
+      "SEK",
+      "ZAR",
+      "CNH"
      ]
     },
     {
-     "bic8": "BAGRESSV",
+     "bic8": "CAGRSVSS",
      "name": "Banco Agricola (El Salvador)",
      "country": "SV",
      "currencies": [
       "USD",
-      "SVC"
+      "EUR",
+      "GBP",
+      "MXN",
+      "JPY",
+      "CAD",
+      "CHF"
      ]
     }
    ],
-   "forbidden_bics": []
+   "forbidden_bics": [
+    "BNMXMXMM",
+    "BMEXMXMM",
+    "CUNIGTGT",
+    "BAGEGPAP",
+    "BAGRESSV"
+   ]
   },
   {
    "name": "eastern-europe",
@@ -1605,10 +1639,10 @@
     "CZ"
    ],
    "masked_block": 91002400,
-   "note": "2026-08-19 research pending. Candidate publishers: BCR, Banca Transilvania, BRD (RO); OTP, Erste Hungary, K&H (HU); Komercni banka, CSOB, Ceska sporitelna (CZ). Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none \u2014 NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
    "banks": [
     {
-     "bic8": "RZBRROBU",
+     "bic8": "RNCBROBU",
      "name": "BCR (Banca Comerciala Romana)",
      "country": "RO",
      "currencies": [
@@ -1616,7 +1650,8 @@
       "EUR",
       "GBP",
       "RON"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "BTRLRO22",
@@ -1626,7 +1661,17 @@
       "USD",
       "EUR",
       "GBP",
-      "RON"
+      "RON",
+      "HUF",
+      "AUD",
+      "CAD",
+      "CHF",
+      "DKK",
+      "JPY",
+      "NOK",
+      "PLN",
+      "SEK",
+      "TRY"
      ]
     },
     {
@@ -1638,7 +1683,8 @@
       "EUR",
       "GBP",
       "RON"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "OTPVHUHB",
@@ -1649,7 +1695,8 @@
       "EUR",
       "GBP",
       "HUF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "GIBAHUHB",
@@ -1660,7 +1707,8 @@
       "EUR",
       "GBP",
       "HUF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "OKHBHUHB",
@@ -1671,7 +1719,8 @@
       "EUR",
       "GBP",
       "HUF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "KOMBCZPP",
@@ -1682,7 +1731,8 @@
       "EUR",
       "GBP",
       "CZK"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "CEKOCZPP",
@@ -1693,7 +1743,8 @@
       "EUR",
       "GBP",
       "CZK"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "GIBACZPX",
@@ -1704,10 +1755,13 @@
       "EUR",
       "GBP",
       "CZK"
-     ]
+     ],
+     "seedable": false
     }
    ],
-   "forbidden_bics": []
+   "forbidden_bics": [
+    "RZBRROBU"
+   ]
   },
   {
    "name": "west-africa",
@@ -1718,7 +1772,7 @@
     "CI"
    ],
    "masked_block": 91002500,
-   "note": "2026-08-19 research pending. Candidate publishers: GCB Bank, Ecobank Ghana, Stanbic Ghana (GH); Ecobank Senegal, Societe Generale Senegal (SN); SGBCI, Ecobank CI (CI). Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: only GCB Bank (GHCBGHAC) publishes a correspondent list (2024 Annual Report \"Agents and Correspondent Banks\" section, archived 2025-04-17). Currency mapping inferred from regional grouping in the report; no account numbers published. BHFBDEFF (BHF Bank) and GHIBGB2L (Ghana International Bank) not confirmable on theswiftcodes \u2014 excluded as unverified. Ecobank GH/SN/CI, Stanbic GH, Societe Generale SN, and SGBCI publish no SSI \u2014 NOT SEEDABLE.",
    "banks": [
     {
      "bic8": "GHCBGHAC",
@@ -1726,9 +1780,7 @@
      "country": "GH",
      "currencies": [
       "USD",
-      "EUR",
-      "GBP",
-      "GHS"
+      "EUR"
      ]
     },
     {
@@ -1740,7 +1792,8 @@
       "EUR",
       "GBP",
       "GHS"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "SBICGHAC",
@@ -1751,7 +1804,8 @@
       "EUR",
       "GBP",
       "GHS"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "ECOCSNDA",
@@ -1761,7 +1815,8 @@
       "USD",
       "EUR",
       "XOF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "SGSNSNDA",
@@ -1771,7 +1826,8 @@
       "USD",
       "EUR",
       "XOF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "SGCICIAB",
@@ -1781,7 +1837,8 @@
       "USD",
       "EUR",
       "XOF"
-     ]
+     ],
+     "seedable": false
     },
     {
      "bic8": "ECOCCIAB",
@@ -1791,7 +1848,8 @@
       "USD",
       "EUR",
       "XOF"
-     ]
+     ],
+     "seedable": false
     }
    ],
    "forbidden_bics": [
