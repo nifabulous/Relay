@@ -1199,7 +1199,7 @@
     "IN"
    ],
    "masked_block": 91002000,
-   "note": "2026-08-19 research pending. Candidate publishers: HDFC, ICICI, SBI, Axis, Kotak, Bank of Baroda. Verify BICs against theswiftcodes country pages.",
+   "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) \u2014 INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped.",
    "banks": [
     {
      "bic8": "HDFCINBB",
@@ -1209,7 +1209,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY",
       "AED",
       "SGD",
@@ -1224,7 +1223,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY",
       "AED",
       "SGD",
@@ -1239,7 +1237,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY",
       "AED",
       "SGD",
@@ -1254,7 +1251,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY",
       "AED",
       "SGD",
@@ -1269,7 +1265,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY"
      ]
     },
@@ -1281,7 +1276,6 @@
       "USD",
       "EUR",
       "GBP",
-      "INR",
       "JPY"
      ]
     }
@@ -1494,6 +1488,315 @@
     "CHBLCLRM",
     "BECECLRM",
     "CAVDCOBB"
+   ]
+  },
+  {
+   "name": "mexico-central-america",
+   "label": "Mexico + Central America",
+   "countries": [
+    "MX",
+    "GT",
+    "CR",
+    "PA",
+    "SV"
+   ],
+   "masked_block": 91002300,
+   "note": "2026-08-19 research pending. Candidate publishers: Banorte, BBVA Mexico, Santander Mexico, HSBC Mexico (MX); Banrural, BAC Credomatic, Banco Industrial (GT); BAC, Banco Nacional (CR); Banco General, BAC Panama (PA); Banco Agricola (SV). Verify BICs against theswiftcodes country pages.",
+   "banks": [
+    {
+     "bic8": "BNMXMXMM",
+     "name": "Banorte",
+     "country": "MX",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "MXN"
+     ]
+    },
+    {
+     "bic8": "BCMRMXMM",
+     "name": "BBVA Mexico",
+     "country": "MX",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "MXN"
+     ]
+    },
+    {
+     "bic8": "BMEXMXMM",
+     "name": "Santander Mexico",
+     "country": "MX",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "MXN"
+     ]
+    },
+    {
+     "bic8": "BIMEMXMM",
+     "name": "HSBC Mexico",
+     "country": "MX",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "MXN"
+     ]
+    },
+    {
+     "bic8": "CUNIGTGT",
+     "name": "Banrural",
+     "country": "GT",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GTQ"
+     ]
+    },
+    {
+     "bic8": "BACCGTGT",
+     "name": "BAC Credomatic Guatemala",
+     "country": "GT",
+     "currencies": [
+      "USD",
+      "GTQ"
+     ]
+    },
+    {
+     "bic8": "BNCRCRSJ",
+     "name": "Banco Nacional de Costa Rica",
+     "country": "CR",
+     "currencies": [
+      "USD",
+      "CRC"
+     ]
+    },
+    {
+     "bic8": "BAGEGPAP",
+     "name": "Banco General (Panama)",
+     "country": "PA",
+     "currencies": [
+      "USD",
+      "PAB"
+     ]
+    },
+    {
+     "bic8": "BAGRESSV",
+     "name": "Banco Agricola (El Salvador)",
+     "country": "SV",
+     "currencies": [
+      "USD",
+      "SVC"
+     ]
+    }
+   ],
+   "forbidden_bics": []
+  },
+  {
+   "name": "eastern-europe",
+   "label": "Eastern Europe (Romania, Hungary, Czechia)",
+   "countries": [
+    "RO",
+    "HU",
+    "CZ"
+   ],
+   "masked_block": 91002400,
+   "note": "2026-08-19 research pending. Candidate publishers: BCR, Banca Transilvania, BRD (RO); OTP, Erste Hungary, K&H (HU); Komercni banka, CSOB, Ceska sporitelna (CZ). Verify BICs against theswiftcodes country pages.",
+   "banks": [
+    {
+     "bic8": "RZBRROBU",
+     "name": "BCR (Banca Comerciala Romana)",
+     "country": "RO",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "RON"
+     ]
+    },
+    {
+     "bic8": "BTRLRO22",
+     "name": "Banca Transilvania",
+     "country": "RO",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "RON"
+     ]
+    },
+    {
+     "bic8": "BRDEROBU",
+     "name": "BRD Groupe Societe Generale",
+     "country": "RO",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "RON"
+     ]
+    },
+    {
+     "bic8": "OTPVHUHB",
+     "name": "OTP Bank (Hungary)",
+     "country": "HU",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "HUF"
+     ]
+    },
+    {
+     "bic8": "GIBAHUHB",
+     "name": "Erste Bank Hungary",
+     "country": "HU",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "HUF"
+     ]
+    },
+    {
+     "bic8": "OKHBHUHB",
+     "name": "K&H Bank (Hungary)",
+     "country": "HU",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "HUF"
+     ]
+    },
+    {
+     "bic8": "KOMBCZPP",
+     "name": "Komercni banka (Czechia)",
+     "country": "CZ",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "CZK"
+     ]
+    },
+    {
+     "bic8": "CEKOCZPP",
+     "name": "CSOB (Czechia)",
+     "country": "CZ",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "CZK"
+     ]
+    },
+    {
+     "bic8": "GIBACZPX",
+     "name": "Ceska sporitelna (Czechia)",
+     "country": "CZ",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "CZK"
+     ]
+    }
+   ],
+   "forbidden_bics": []
+  },
+  {
+   "name": "west-africa",
+   "label": "West Africa (Ghana, Senegal, Cote d'Ivoire)",
+   "countries": [
+    "GH",
+    "SN",
+    "CI"
+   ],
+   "masked_block": 91002500,
+   "note": "2026-08-19 research pending. Candidate publishers: GCB Bank, Ecobank Ghana, Stanbic Ghana (GH); Ecobank Senegal, Societe Generale Senegal (SN); SGBCI, Ecobank CI (CI). Verify BICs against theswiftcodes country pages.",
+   "banks": [
+    {
+     "bic8": "GHCBGHAC",
+     "name": "GCB Bank (Ghana)",
+     "country": "GH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "GHS"
+     ]
+    },
+    {
+     "bic8": "ECOCGHAC",
+     "name": "Ecobank Ghana",
+     "country": "GH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "GHS"
+     ]
+    },
+    {
+     "bic8": "SBICGHAC",
+     "name": "Stanbic Bank Ghana",
+     "country": "GH",
+     "currencies": [
+      "USD",
+      "EUR",
+      "GBP",
+      "GHS"
+     ]
+    },
+    {
+     "bic8": "ECOCSNDA",
+     "name": "Ecobank Senegal",
+     "country": "SN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "XOF"
+     ]
+    },
+    {
+     "bic8": "SGSNSNDA",
+     "name": "Societe Generale Senegal",
+     "country": "SN",
+     "currencies": [
+      "USD",
+      "EUR",
+      "XOF"
+     ]
+    },
+    {
+     "bic8": "SGCICIAB",
+     "name": "SGBCI (Cote d'Ivoire)",
+     "country": "CI",
+     "currencies": [
+      "USD",
+      "EUR",
+      "XOF"
+     ]
+    },
+    {
+     "bic8": "ECOCCIAB",
+     "name": "Ecobank Cote d'Ivoire",
+     "country": "CI",
+     "currencies": [
+      "USD",
+      "EUR",
+      "XOF"
+     ]
+    }
+   ],
+   "forbidden_bics": [
+    "GHOCGHAC",
+    "ECOCIAB"
    ]
   }
  ]
