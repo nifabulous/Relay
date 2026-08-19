@@ -74,6 +74,8 @@ SETTLEMENT_DIRECTORY = {
     },
     "BOFAUS3M": {
         "bank_name": "Bank of America N.A., Miami",
+    "BOFAUS3M": {
+        "bank_name": "Bank of America N.A. (Miami)",
         "chips_uid": "0959",
         "aba": "026009593",
     },
