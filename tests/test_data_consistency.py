@@ -935,3 +935,104 @@ class TestBangladeshSsiCoverage:
             f"Explore can show their settlement instructions: {missing}"
         )
 # ---- end autopilot-generated coverage tests: bangladesh ----
+
+
+# ---- autopilot-generated coverage tests: thailand ----
+THAILAND_SSI_COVERAGE = [
+    ("SICOTHBKXXX", "Siam Commercial Bank", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "AUD", "CAD", "CHF", "DKK", "NZD", "SEK"}),
+]
+
+
+class TestThailandSsiCoverage:
+    def test_thailand_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in THAILAND_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_thailand_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in THAILAND_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"thailand SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: thailand ----
+
+
+# ---- autopilot-generated coverage tests: andean ----
+ANDEAN_SSI_COVERAGE = [
+    ("CAFECOBBXXX", "Banco Davivienda", {"USD", "EUR"}),
+    ("BINPPEPLXXX", "Interbank (Peru)", {"USD", "EUR", "GBP", "CAD", "JPY", "CHF", "CNY", "HKD", "MXN", "AUD"}),
+    ("BECHCLRMXXX", "BancoEstado", {"USD", "EUR", "GBP", "AUD", "CAD", "CHF", "DKK", "SEK", "NOK", "HKD", "MXN"}),
+]
+
+
+class TestAndeanSsiCoverage:
+    def test_andean_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in ANDEAN_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_andean_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in ANDEAN_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"andean SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: andean ----
+
+
+# ---- autopilot-generated coverage tests: india ----
+INDIA_SSI_COVERAGE = [
+    ("HDFCINBBXXX", "HDFC Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
+    ("ICICINBBXXX", "ICICI Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
+    ("SBININBBXXX", "State Bank of India", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
+    ("AXISINBBXXX", "Axis Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
+    ("KKBKINBBXXX", "Kotak Mahindra Bank", {"USD", "EUR", "GBP", "JPY"}),
+    ("BARBINBBXXX", "Bank of Baroda", {"USD", "EUR", "GBP", "JPY"}),
+]
+
+
+class TestIndiaSsiCoverage:
+    def test_india_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in INDIA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_india_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in INDIA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"india SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: india ----
+>>>>>>> 2fc0db8 (feat(ssi): seed india SSIs (HDFC/ICICI/SBI/Axis/Kotak/BoB correspondent lists))
