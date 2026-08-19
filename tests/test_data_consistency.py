@@ -1073,3 +1073,34 @@ class TestMexicoCentralAmericaSsiCoverage:
             f"Explore can show their settlement instructions: {missing}"
         )
 # ---- end autopilot-generated coverage tests: mexico-central-america ----
+
+
+# ---- autopilot-generated coverage tests: west-africa ----
+WEST_AFRICA_SSI_COVERAGE = [
+    ("GHCBGHACXXX", "GCB Bank (Ghana)", {"USD", "EUR"}),
+]
+
+
+class TestWestAfricaSsiCoverage:
+    def test_west_africa_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in WEST_AFRICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_west_africa_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in WEST_AFRICA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"west-africa SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+# ---- end autopilot-generated coverage tests: west-africa ----

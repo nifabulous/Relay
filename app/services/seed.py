@@ -120,6 +120,7 @@ BANKS = [
     ("SBININBBXXX", "State Bank of India", "IN", "Mumbai", "INR"),
     ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
     ("CAGRSVSSXXX", "Banco Agricola (El Salvador)", "SV", "San Salvador", "SVC"),
+    ("GHCBGHACXXX", "GCB Bank (Ghana)", "GH", "Accra", "GHS"),
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
     ("BARBINBBXXX", "Bank of Baroda", "IN", "Mumbai", "INR"),
@@ -4940,6 +4941,17 @@ SSI_RECORDS = [
      "ACCT-91002353", "ACCT-91002340", "SHA", "spot",
      "Source: https://web.archive.org/web/20250806050428/https://www.bancoagricola.com/multimedia/render/v2instrucciones-transferencias-internacionale (as of 2025-08-06). " + _SSI_REAL_NOTE,
      "2025-08-06", "archived"),
+    # ---- West Africa (autopilot: GCB Bank 2024 annual report) ----
+    ("GHCBGHACXXX", "GCB Bank PLC", "USD",
+     "CITIUS33XXX", "Citibank N.A., New York",
+     "ACCT-91002501", "ACCT-91002503", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31). " + _SSI_REAL_NOTE,
+     "2024-12-31", "archived"),
+    ("GHCBGHACXXX", "GCB Bank PLC", "EUR",
+     "COBADEFFXXX", "Commerzbank AG, Frankfurt am Main",
+     "ACCT-91002502", "ACCT-91002504", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31). " + _SSI_REAL_NOTE,
+     "2024-12-31", "archived"),
 ]
 
 
