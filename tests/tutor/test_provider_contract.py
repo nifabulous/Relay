@@ -203,11 +203,10 @@ def test_gpt5_provider_requests_use_minimal_reasoning_effort(monkeypatch):
     assert captured["model_settings"]["openai_reasoning_effort"] == "minimal"
 
 
-def test_gpt5_settings_reach_the_real_openai_responses_request():
-    """The installed SDK must serialize Relay's settings at the wire boundary."""
+def test_gpt5_settings_reach_the_real_openai_responses_request(monkeypatch):
+    """Relay's production model string must reach the Responses wire boundary."""
     pytest.importorskip("pydantic_ai")
     try:
-        from pydantic_ai import Agent
         from pydantic_ai.models.openai import OpenAIResponsesModel
         from pydantic_ai.providers.openai import OpenAIProvider
 
@@ -221,18 +220,37 @@ def test_gpt5_settings_reach_the_real_openai_responses_request():
         class RecordingClient:
             responses = RecordingResponses()
 
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value")
+        monkeypatch.setenv("TUTOR_MAX_OUTPUT_TOKENS", "4000")
+        monkeypatch.setattr(
+            OpenAIProvider,
+            "_create_openai_client",
+            lambda self, **kwargs: RecordingClient(),
+        )
+
         async def run_request():
-            model = OpenAIResponsesModel(
-                "gpt-5",
-                provider=OpenAIProvider(openai_client=RecordingClient()),
+            engine = engine_module._PydanticAITutorEngine(
+                "openai:gpt-5", RelayTutorTools()
             )
-            agent = Agent(
-                model,
-                output_type=str,
-                model_settings=engine_module._provider_model_settings("openai:gpt-5", 4000),
-            )
+            created = {}
+            real_agent = engine._agent_type
+
+            def capture_agent(*args, **kwargs):
+                agent = real_agent(*args, **kwargs)
+                created["agent"] = agent
+                return agent
+
+            # Keep the real Agent and its model inference; only retain the
+            # instance so this test can assert the production string resolved
+            # to the Responses adapter before the request is recorded.
+            engine._agent_type = capture_agent
             with pytest.raises(RuntimeError, match="request captured"):
-                await agent.run("What is an IBAN?")
+                await engine._call_provider(
+                    engine_module.build_prompt_payload(_request(), []),
+                    RelayTutorTools(),
+                )
+
+            assert isinstance(created["agent"].model, OpenAIResponsesModel)
 
         asyncio.run(run_request())
 
