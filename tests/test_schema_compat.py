@@ -5,6 +5,7 @@ tests/conftest.py) so a "legacy" payment_events table can be simulated
 independently of the current ORM model.
 """
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
@@ -316,7 +317,7 @@ class TestCurrentSchemaIsANoop:
         assert row["bic_only"] == 0
         assert row["status"] == "illustrative"
 
-        with pytest.raises(Exception):
+        with pytest.raises(IntegrityError):
             with engine.begin() as conn:
                 conn.execute(text(
                     "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "

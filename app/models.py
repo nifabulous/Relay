@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     event,
+    text,
 )
 
 from .db import Base
@@ -190,7 +191,11 @@ class SSI(Base):
     # charge codes, or value dates for them. Such a row must not present any
     # of the fields it never established, routing must not select it as a
     # settlement instruction, and the frontend must not render it as one.
-    bic_only = Column(Boolean, nullable=False, default=False, server_default="0")
+    # server_default is dialect-neutral text on purpose: `"0"` here compiles
+    # to DEFAULT 0 on PostgreSQL, where an integer literal is not a Boolean
+    # expression and the CREATE TABLE would fail. "false" is valid on both
+    # engines (SQLite accepts FALSE as an alias for the integer 0).
+    bic_only = Column(Boolean, nullable=False, default=False, server_default=text("false"))
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),
@@ -261,8 +266,14 @@ class SSI(Base):
         # dates — none of those were published. Enforced in the schema so a
         # direct ORM/Core write cannot slip fabricated fields in next to a
         # "BIC-level only" claim.
+        #
+        # The leading test is `NOT bic_only`, NOT `bic_only = 0`: PostgreSQL
+        # has no implicit integer-to-boolean coercion, so `bic_only = 0`
+        # compiles to `boolean = integer`, which has no operator and aborts
+        # CREATE TABLE/ALTER TABLE on the production engine. NOT works on
+        # both engines.
         CheckConstraint(
-            "bic_only = 0 OR (intermediary_account IS NULL AND "
+            "NOT bic_only OR (intermediary_account IS NULL AND "
             "beneficiary_account IS NULL AND charge_code IS NULL AND "
             "value_date IS NULL)",
             name="ck_ssi_bic_only_has_no_accounts",

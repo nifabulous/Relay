@@ -897,6 +897,133 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_bic_only_row_becoming_ordinary_is_repopulated(self):
+        """A previously availability-only row that the seed now defines as an
+        ordinary instruction must GAIN its account/charge/value fields, not
+        just flip the flag. Routing excludes bic_only rows; a row flipped back
+        to ordinary only becomes selectable once it actually carries the
+        instruction fields."""
+        from app.services.seed import seed_if_empty
+
+        target = next(r for r in SSI_RECORDS
+                      if len(r) <= 13 and r[0] == "ZEIBNGLAXXX"
+                      and r[2] == "USD" and r[3] == "CITIUS33XXX")
+        (ben_bic, ben_name, ccy, int_bic, int_name, int_acct, ben_acct,
+         charge, vdate, notes, *provenance) = target
+        as_of = provenance[0] if provenance else None
+        status = provenance[1] if len(provenance) > 1 else "illustrative"
+        target_bic_only = bool(provenance[3]) if len(provenance) > 3 else False
+        assert not target_bic_only
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name="BIC-only legacy row",
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name="BIC-only legacy intermediary",
+                bic_only=True,
+                status="unverified",
+                as_of="2020-08-15",
+                notes="availability-only legacy row, no accounts published",
+            ))
+            session.commit()
+
+            result = seed_if_empty(session)
+            session.expunge_all()
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
+            ).one()
+            assert row.bic_only is False
+            assert row.intermediary_account == int_acct
+            assert row.beneficiary_account == ben_acct
+            assert row.charge_code == charge
+            assert row.value_date == vdate
+            assert row.beneficiary_bank_name == target[1]
+            assert row.intermediary_bank_name == int_name
+            assert row.notes == notes
+            assert row.as_of == as_of
+            assert row.status == status
+            assert result["ssi_provenance_updated"] >= 1
+        finally:
+            session.close()
+            engine.dispose()
+
+    def test_reseed_preserves_operator_owned_ordinary_fields(self):
+        """Ordinary rows are operator-authoritative: the seed restates
+        provenance (as_of/status/verified_by) but must NOT clobber an
+        operator-corrected account/charge/date with an illustrative
+        placeholder. This is the complete-row assertion the re-seed defect
+        review asked for — the row after a re-seed that changes provenance is
+        checked field by field, not just counted."""
+        from app.services.seed import seed_if_empty
+
+        target = next(r for r in SSI_RECORDS
+                      if len(r) <= 13 and r[0] == "ZEIBNGLAXXX"
+                      and r[2] == "USD" and r[3] == "CITIUS33XXX")
+        (ben_bic, _ben_name, ccy, int_bic, _int_name, _int_acct, _ben_acct,
+         _charge, _vdate, _notes, *provenance) = target
+        source_as_of = provenance[0]
+        source_status = provenance[1] if len(provenance) > 1 else "illustrative"
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name="Operator-corrected Zenith",
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name="Operator-corrected Citibank",
+                intermediary_account="ACCT-OP-INT",
+                beneficiary_account="ACCT-OP-BENE",
+                charge_code="OUR",
+                value_date="same-day",
+                notes="Operator-corrected SSI must survive the roll-forward",
+                as_of="2020-08-15",
+                status="unverified",
+            ))
+            session.commit()
+
+            result = seed_if_empty(session)
+            session.expunge_all()
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
+            ).one()
+            # Provenance restates…
+            assert row.as_of == source_as_of
+            assert row.status == source_status
+            # …but the operator's settlement fields survive untouched.
+            assert row.intermediary_account == "ACCT-OP-INT"
+            assert row.beneficiary_account == "ACCT-OP-BENE"
+            assert row.charge_code == "OUR"
+            assert row.value_date == "same-day"
+            assert row.beneficiary_bank_name == "Operator-corrected Zenith"
+            assert row.intermediary_bank_name == "Operator-corrected Citibank"
+            assert row.notes == "Operator-corrected SSI must survive the roll-forward"
+            assert result["ssi_provenance_updated"] >= 1
+        finally:
+            session.close()
+            engine.dispose()
+
 
 # ---------------------------------------------------------------------------
 # European beneficiary SSI coverage

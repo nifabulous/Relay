@@ -30,8 +30,13 @@ depends_on: Union[str, Sequence[str], None] = None
 # Copied from app/models.py, not imported: a migration must keep doing what
 # it did the day it was written. The constraint is also spelled out in the
 # model's __table_args__; a test pins the two strings together.
+#
+# The leading test is `NOT bic_only`, NOT `bic_only = 0`: PostgreSQL has no
+# implicit integer-to-boolean coercion, so the former compiles to
+# `boolean = integer` (no such operator — the upgrade aborts). NOT is valid
+# on both engines.
 BIC_ONLY_HAS_NO_ACCOUNTS = (
-    "bic_only = 0 OR (intermediary_account IS NULL AND "
+    "NOT bic_only OR (intermediary_account IS NULL AND "
     "beneficiary_account IS NULL AND charge_code IS NULL AND "
     "value_date IS NULL)"
 )
@@ -71,13 +76,15 @@ def _reinstall_as_of_triggers(bind) -> None:
 
 def upgrade() -> None:
     # Existing rows are all ordinary SSI: they carry accounts, charge codes
-    # and value dates, so server_default 0 keeps them legal under the CHECK.
+    # and value dates, so server_default false keeps them legal under the
+    # CHECK. The literal is the text "false", not the integer 0 — PostgreSQL
+    # rejects `DEFAULT 0` on a Boolean column at DDL time.
     if not {
         column["name"] for column in sa.inspect(op.get_bind()).get_columns("ssi")
     }.intersection({"bic_only"}):
         op.add_column(
             "ssi",
-            sa.Column("bic_only", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+            sa.Column("bic_only", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         )
     with op.batch_alter_table("ssi") as batch:
         batch.create_check_constraint("ck_ssi_bic_only_has_no_accounts", BIC_ONLY_HAS_NO_ACCOUNTS)

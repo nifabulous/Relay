@@ -1219,6 +1219,58 @@ class TestSchemaIsPortable:
                 if operator in ddl:
                     offenders.append((table.name, operator.strip()))
         assert not offenders, f"SQLite-only SQL emitted for Postgres: {offenders}"
+    def test_boolean_default_and_bic_only_check_compile_for_postgres(self):
+        """The suite builds schema on SQLite, where `bic_only = 0` (integer
+        affinity) and `DEFAULT 0` work — even though PostgreSQL rejects both:
+        there is no `boolean = integer` operator, and a Boolean column will
+        not take an integer default. Compile the real model DDL for the
+        production dialect and prove it is valid."""
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        from app.models import SSI
+
+        ddl = str(CreateTable(SSI.__table__).compile(dialect=postgresql.dialect()))
+        assert "bic_only BOOLEAN DEFAULT false NOT NULL" in ddl, ddl
+        assert "NOT bic_only OR" in ddl, ddl
+        assert "bic_only = 0" not in ddl, "integer literal against boolean breaks Postgres"
+
+    def test_migration_boolean_ddl_is_postgres_valid(self):
+        """The bic_only migration re-declares the column and its CHECK for
+        existing databases outside Base.metadata, so the DDL check above cannot
+        see it. Replay the exact migration declarations through the Postgres
+        compiler and prove they are valid there, not just on SQLite."""
+        import importlib.util
+        from pathlib import Path
+
+        from sqlalchemy import Boolean, CheckConstraint, Column, MetaData, Table, text
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        spec = importlib.util.spec_from_file_location(
+            "20260819_add_ssi_bic_only",
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260819_add_ssi_bic_only.py",
+        )
+        migration = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(migration)
+
+        assert migration.BIC_ONLY_HAS_NO_ACCOUNTS.startswith("NOT bic_only OR")
+
+        replay = Table(
+            "ssi", MetaData(),
+            Column("bic_only", Boolean(), nullable=False, server_default=text("false")),
+            CheckConstraint(
+                migration.BIC_ONLY_HAS_NO_ACCOUNTS,
+                name="ck_ssi_bic_only_has_no_accounts",
+            ),
+        )
+        ddl = str(CreateTable(replay).compile(dialect=postgresql.dialect()))
+        assert "DEFAULT false" in ddl, ddl
+        assert "NOT bic_only OR" in ddl, ddl
+        assert "bic_only = 0" not in ddl, ddl
+
+
 
     def test_no_migration_uses_sql_that_only_behaves_on_sqlite(self):
         """The DDL check above reads Base.metadata, so it cannot see SQL written

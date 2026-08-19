@@ -5298,10 +5298,26 @@ def seed_if_empty(session) -> dict:
             )
             inserted["ssi"] += 1
         else:
-            # Provenance is restated on every seed. Seeding is otherwise
-            # insert-only, so a database created before these columns existed
-            # would keep the migration's "illustrative" default forever and
-            # under-claim every sourced row it already holds.
+            # Reconciliation policy for an existing key, decided explicitly:
+            #
+            #   * Ordinary -> ordinary: the row keeps its OWNER's settlement
+            #     fields. The seed's accounts are literally "Illustrative
+            #     placeholder — replace with the beneficiary's real numbers",
+            #     so restating them would clobber a correct, operator-imported
+            #     account with a placeholder. Only provenance (as_of, status,
+            #     verified_by) is restated, so a populated database that
+            #     predates a source update shows the new citation on the rows
+            #     someone has since corrected.
+            #
+            #   * Ordinary -> bic_only: the row shed its fabricated account/
+            #     charge/value fields (they were placeholders, the flag says
+            #     the source never published them).
+            #
+            #   * bic_only -> ordinary: the seed tuple is the row's ONLY source
+            #     of settlement fields (a bic_only row stored none), so they
+            #     are populated here. Without this the row would become
+            #     routable — routing excludes bic_only rows — while still
+            #     holding none of the fields an instruction needs.
             if (existing.as_of, existing.status, existing.verified_by, existing.bic_only) != (
                 as_of, status, verified_by, bic_only
             ):
@@ -5312,18 +5328,30 @@ def seed_if_empty(session) -> dict:
                 # rather than clobbering a note someone has since edited.
                 if status != "illustrative" and not existing.notes:
                     existing.notes = notes
+                was_bic_only = existing.bic_only
                 existing.as_of = as_of
                 existing.status = status
                 existing.verified_by = verified_by
                 existing.bic_only = bic_only
                 if bic_only:
-                    # A row becoming bic_only must shed the account/charge/
-                    # value fields it used to carry; leaving them behind would
+                    # Becoming bic_only must shed the account/charge/value
+                    # fields the row used to carry; leaving them behind would
                     # violate ck_ssi_bic_only_has_no_accounts at flush.
                     existing.intermediary_account = None
                     existing.beneficiary_account = None
                     existing.charge_code = None
                     existing.value_date = None
+                elif was_bic_only:
+                    # Leaving bic_only: repopulate every source-controlled
+                    # field from the tuple so the now-routable row is a real
+                    # instruction rather than a routable-but-empty shell.
+                    existing.beneficiary_bank_name = ben_name
+                    existing.intermediary_bank_name = int_name
+                    existing.notes = notes
+                    existing.intermediary_account = int_acct
+                    existing.beneficiary_account = ben_acct
+                    existing.charge_code = charge
+                    existing.value_date = vdate
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )
