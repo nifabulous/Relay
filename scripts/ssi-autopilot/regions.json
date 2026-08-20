@@ -101,10 +101,10 @@
       "masked_block": 91001200,
       "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
       "banks": [
-        {"bic8": "NEDSZAJJ", "name": "Nedbank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
-        {"bic8": "SBZAZAJJ", "name": "Standard Bank of South Africa", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
-        {"bic8": "ABSAZAJJ", "name": "Absa Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]},
-        {"bic8": "FIRNZAJJ", "name": "FirstRand Bank (FNB)", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"]}
+        {"bic8": "NEDSZAJJ", "name": "Nedbank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"], "seedable": false},
+        {"bic8": "SBZAZAJJ", "name": "Standard Bank of South Africa", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"], "seedable": false},
+        {"bic8": "ABSAZAJJ", "name": "Absa Bank", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"], "seedable": false},
+        {"bic8": "FIRNZAJJ", "name": "FirstRand Bank (FNB)", "country": "ZA", "currencies": ["USD", "EUR", "ZAR"], "seedable": false}
       ],
       "forbidden_bics": ["SBICZAJJ", "SBICUS44"]
     },

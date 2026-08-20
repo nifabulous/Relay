@@ -27,13 +27,20 @@ from __future__ import annotations
 
 import argparse
 import ast
+import copy
+import fcntl
+import hashlib
+import ipaddress
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -44,6 +51,8 @@ AUTOPILOT_TEST_FILE = REPO_ROOT / "tests" / "test_ssi_autopilot.py"
 REGIONS_FILE = Path(__file__).resolve().parent / "regions.json"
 STATE_FILE = REPO_ROOT / ".ssi-autopilot-state.json"
 STATE_KEY = "ssi-autopilot"
+# Compatibility name for callers/tests; locking uses _manifest_lock_path().
+MANIFEST_LOCK_FILE = REGIONS_FILE.with_suffix(".json.lock")
 
 COMMIT_PATTERN = re.compile(r"^feat\(ssi\): seed [a-z-]+ SSIs? \(([^)]+)\)")
 
@@ -98,9 +107,495 @@ def get_region(manifest: dict, name: str) -> dict:
     raise SystemExit(f"unknown region: {name}")
 
 
+_ADMISSION_REGION_KEYS = {"name", "label", "countries", "masked_block", "note", "forbidden_bics", "banks"}
+_ADMISSION_BANK_KEYS = {"bic8", "name", "country", "currencies", "seedable", "records", "source_domains"}
+_ADMISSION_RECORD_KEYS = {
+    "currency", "correspondent", "int_bic", "nostro", "with_an",
+    "charge_code", "value_date", "source", "as_of", "status", "verified_by",
+}
+
+
+def _require_mapping(value: object, path: str) -> dict:
+    if not isinstance(value, dict):
+        raise ValueError(f"{path}: expected an object")
+    return value
+
+
+def _require_sequence(value: object, path: str) -> list:
+    if not isinstance(value, list):
+        raise ValueError(f"{path}: expected a list")
+    return value
+
+
+def _canonical_json(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _record_sort_key(record: dict) -> tuple[str, ...]:
+    return tuple(str(record.get(key, "")) for key in (
+        "currency", "int_bic", "correspondent", "nostro", "with_an",
+        "charge_code", "value_date", "source", "as_of", "status", "verified_by",
+    ))
+
+
+def record_digest(records: list[dict]) -> str:
+    ordered = sorted((dict(record) for record in records), key=_record_sort_key)
+    return hashlib.sha256(_canonical_json(ordered).encode("utf-8")).hexdigest()
+
+
+def _normalize_record(record: dict, path: str) -> dict:
+    record = _require_mapping(record, path)
+    unknown = set(record) - _ADMISSION_RECORD_KEYS
+    if unknown:
+        raise ValueError(f"{path}: unknown fields: {', '.join(sorted(unknown))}")
+    required = _ADMISSION_RECORD_KEYS - {"verified_by"}
+    missing = required - set(record)
+    if missing:
+        raise ValueError(f"{path}: missing fields: {', '.join(sorted(missing))}")
+    normalized = dict(record)
+    for key in ("currency", "int_bic", "charge_code"):
+        if not isinstance(normalized[key], str):
+            raise ValueError(f"{path}.{key}: expected a string")
+        normalized[key] = normalized[key].strip().upper()
+    if not isinstance(normalized["status"], str):
+        raise ValueError(f"{path}.status: expected a string")
+    normalized["status"] = normalized["status"].strip().lower()
+    for key in ("correspondent", "nostro", "with_an", "value_date", "source", "as_of"):
+        if not isinstance(normalized[key], str):
+            raise ValueError(f"{path}.{key}: expected a string")
+        normalized[key] = normalized[key].strip()
+    if "verified_by" in normalized:
+        if not isinstance(normalized["verified_by"], str):
+            raise ValueError(f"{path}.verified_by: expected a string")
+        normalized["verified_by"] = normalized["verified_by"].strip()
+    return normalized
+
+
+def _normalize_source_domain(value: object, path: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{path}: expected a non-empty domain string")
+    domain = value.strip().lower().rstrip(".")
+    if "://" in domain or "/" in domain or "@" in domain:
+        raise ValueError(f"{path}: expected a hostname, not a URL")
+    try:
+        ipaddress.ip_address(domain)
+    except ValueError:
+        pass
+    else:
+        raise ValueError(f"{path}: IP-only source domains are not allowed")
+    if domain in {"example.com", "example.org", "example.net", "localhost"}:
+        raise ValueError(f"{path}: placeholder source domain is not allowed")
+    if not re.fullmatch(r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}", domain):
+        raise ValueError(f"{path}: invalid source domain")
+    return domain
+
+
+def _source_host(source: str) -> str | None:
+    parsed = urlparse(source)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return None
+    host = parsed.hostname.lower().rstrip(".")
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return host
+    return None
+
+
+def _archived_original_host(source: str) -> str | None:
+    parsed = urlparse(source)
+    if parsed.hostname not in {"web.archive.org", "wayback.archive-it.org", "arquivo.pt"}:
+        return None
+    query = parse_qs(parsed.query)
+    candidates = query.get("url", [])
+    # Wayback URLs commonly encode the original URL in the path.
+    path_match = re.search(r"/(?:https?:/{1,2})([^/]+)", unquote(parsed.path), re.I)
+    if path_match:
+        candidates.append("https://" + path_match.group(1))
+    for candidate in candidates:
+        host = _source_host(candidate)
+        if host:
+            return host
+    return None
+
+
+def _bank_owned_source(source: str, bank: dict) -> bool:
+    """Return whether a citation points to the admitted bank's own domain."""
+    host = _source_host(source)
+    archive_original = _archived_original_host(source)
+    if archive_original:
+        host = archive_original
+    if not host:
+        return False
+    domains = bank.get("source_domains", [])
+    return any(host == domain or host.endswith("." + domain) for domain in domains)
+
+
+def _canonical_bic8(value: object, path: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{path}: expected a BIC string")
+    bic = value.strip().upper()
+    if not bic_is_valid(bic):
+        raise ValueError(f"{path}: invalid BIC")
+    return bic[:8]
+
+
+def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
+    bank = _require_mapping(bank, path)
+    unknown = set(bank) - _ADMISSION_BANK_KEYS
+    if unknown:
+        raise ValueError(f"{path}: unknown fields: {', '.join(sorted(unknown))}")
+    required = {"bic8", "name", "country", "currencies", "records"}
+    missing = required - set(bank)
+    if missing:
+        raise ValueError(f"{path}: missing fields: {', '.join(sorted(missing))}")
+    bic = bank["bic8"]
+    if not isinstance(bic, str) or len(bic) != 8 or not bic_is_valid(bic):
+        raise ValueError(f"{path}.bic8: expected a valid canonical 8-character BIC")
+    bic = bic.upper()
+    name = bank["name"]
+    country = bank["country"]
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError(f"{path}.name: expected a non-empty string")
+    if not isinstance(country, str) or not re.fullmatch(r"[A-Z]{2}", country.upper()):
+        raise ValueError(f"{path}.country: expected a two-letter country code")
+    country = country.upper()
+    if country not in region["countries"]:
+        raise ValueError(f"{path}.country: {country} is outside region countries")
+    currencies = _require_sequence(bank["currencies"], f"{path}.currencies")
+    if not currencies:
+        raise ValueError(f"{path}.currencies: expected a non-empty list")
+    if any(not isinstance(c, str) for c in currencies):
+        raise ValueError(f"{path}.currencies: expected string currency codes")
+    currencies = [c.upper() for c in currencies]
+    if len(set(currencies)) != len(currencies) or any(not _CURRENCIES.fullmatch(c) for c in currencies):
+        raise ValueError(f"{path}.currencies: expected unique three-letter currency codes")
+    records = _require_sequence(bank["records"], f"{path}.records")
+    normalized_records = [_normalize_record(r, f"{path}.records[{i}]") for i, r in enumerate(records)]
+    seedable = bank.get("seedable", True)
+    if not isinstance(seedable, bool):
+        raise ValueError(f"{path}.seedable: expected a boolean")
+    raw_domains = bank.get("source_domains", [])
+    domains = _require_sequence(raw_domains, f"{path}.source_domains")
+    domains = [_normalize_source_domain(domain, f"{path}.source_domains[{i}]") for i, domain in enumerate(domains)]
+    if len(set(domains)) != len(domains):
+        raise ValueError(f"{path}.source_domains: expected unique domains")
+    if seedable and not domains:
+        raise ValueError(f"{path}.source_domains: seedable bank requires source domains")
+    if seedable and not normalized_records:
+        raise ValueError(f"{path}: seedable bank requires SSI records")
+    if not seedable and normalized_records:
+        raise ValueError(f"{path}: non-seedable bank cannot carry SSI records")
+    if seedable and set(r["currency"] for r in normalized_records) != set(currencies):
+        raise ValueError(f"{path}: records must cover every declared currency")
+    normalized_records.sort(key=_record_sort_key)
+    return {
+        "bic8": bic, "name": name.strip(), "country": country,
+        "currencies": sorted(currencies), "seedable": seedable,
+        "source_domains": sorted(domains),
+        "records": normalized_records,
+    }
+
+
+def _region_blocks_overlap(left: int, right: int) -> bool:
+    return left <= right + 99 and right <= left + 99
+
+
+def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
+    payload = _require_mapping(payload, "candidate input")
+    if set(payload) != {"regions"}:
+        raise ValueError("candidate input must be an object containing only a regions list")
+    payload_regions = _require_sequence(payload["regions"], "candidate input.regions")
+    if not payload_regions:
+        raise ValueError("candidate input regions must not be empty")
+    existing_by_name = {r["name"]: r for r in manifest["regions"]}
+    existing_bics = {b["bic8"].upper()[:8]: r["name"] for r in manifest["regions"] for b in r["banks"]}
+    forbidden_global = {b.upper()[:8] for r in manifest["regions"] for b in r.get("forbidden_bics", [])}
+    # Collect candidate forbidden prefixes before validating banks so conflicts
+    # are global across the whole envelope, not dependent on input order.
+    candidate_forbidden: set[str] = set()
+    for index, raw in enumerate(payload_regions):
+        path = f"regions[{index}]"
+        if not isinstance(raw, dict):
+            continue
+        forbidden = raw.get("forbidden_bics", [])
+        if not isinstance(forbidden, list):
+            continue
+        if any(not isinstance(b, str) for b in forbidden):
+            raise ValueError(f"{path}.forbidden_bics: expected strings")
+        candidate_forbidden.update(b.upper()[:8] for b in forbidden)
+    forbidden_global |= candidate_forbidden
+    candidate_names: set[str] = set()
+    candidate_bics: dict[str, str] = {}
+    candidate_blocks: dict[int, str] = {}
+    normalized_regions = []
+    for index, raw in enumerate(payload_regions):
+        path = f"regions[{index}]"
+        if not isinstance(raw, dict):
+            raise ValueError(f"{path}: region must be an object")
+        unknown = set(raw) - _ADMISSION_REGION_KEYS
+        if unknown:
+            raise ValueError(f"{path}: unknown fields: {', '.join(sorted(unknown))}")
+        for key in ("name", "banks"):
+            if key not in raw:
+                raise ValueError(f"{path}: missing field {key}")
+        name = raw["name"]
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
+            raise ValueError(f"{path}.name: expected a lowercase kebab-case name")
+        if name in candidate_names:
+            raise ValueError(f"{path}.name: duplicate region")
+        candidate_names.add(name)
+        old = existing_by_name.get(name)
+        if old:
+            for key in ("label", "countries", "masked_block", "note"):
+                if key in raw and raw[key] != old[key]:
+                    raise ValueError(f"{path}.{key}: existing region metadata is immutable")
+            supplied_forbidden = set(raw.get("forbidden_bics", old.get("forbidden_bics", [])))
+            existing_forbidden = set(old.get("forbidden_bics", []))
+            if not existing_forbidden.issubset(supplied_forbidden):
+                raise ValueError(f"{path}.forbidden_bics: existing forbidden BICs cannot be removed")
+            region = copy.deepcopy(old)
+            region["forbidden_bics"] = sorted(supplied_forbidden)
+        else:
+            required = {"label", "countries", "masked_block", "note", "banks"}
+            missing = required - set(raw)
+            if missing:
+                raise ValueError(f"{path}: new region missing fields: {', '.join(sorted(missing))}")
+            region = {k: copy.deepcopy(raw[k]) for k in ("name", "label", "countries", "masked_block", "note")}
+            region["forbidden_bics"] = copy.deepcopy(raw.get("forbidden_bics", []))
+            region["banks"] = []
+        for key in ("label", "note"):
+            if not isinstance(region.get(key), str):
+                raise ValueError(f"{path}.{key}: expected a string")
+        countries = _require_sequence(region.get("countries"), f"{path}.countries")
+        if not countries or any(not isinstance(c, str) or not re.fullmatch(r"[A-Z]{2}", c) for c in countries):
+            raise ValueError(f"{path}.countries: expected non-empty two-letter country codes")
+        region["countries"] = [c.upper() for c in countries]
+        forbidden = _require_sequence(region.get("forbidden_bics", []), f"{path}.forbidden_bics")
+        if any(not isinstance(b, str) for b in forbidden):
+            raise ValueError(f"{path}.forbidden_bics: expected strings")
+        region["forbidden_bics"] = list(forbidden)
+        block = region.get("masked_block")
+        if not isinstance(block, int) or block < 10000000 or block % 100 != 0:
+            raise ValueError(f"{path}.masked_block: expected an integer aligned to a 100-account block")
+        for other in manifest["regions"]:
+            if other["name"] != name and _region_blocks_overlap(block, other["masked_block"]):
+                raise ValueError(f"{path}.masked_block: overlaps existing region {other['name']}")
+        for other_block, other_name in candidate_blocks.items():
+            if other_name != name and _region_blocks_overlap(block, other_block):
+                raise ValueError(f"{path}.masked_block: overlaps candidate region {other_name}")
+        candidate_blocks[block] = name
+        existing_region_banks = _require_sequence(region.get("banks"), f"{path}.banks")
+        candidate_region_banks = _require_sequence(raw["banks"], f"{path}.banks")
+        banks = {b["bic8"]: b for b in existing_region_banks}
+        for bank_index, raw_bank in enumerate(candidate_region_banks):
+            bank_path = f"{path}.banks[{bank_index}]"
+            bank = _normalize_bank(raw_bank, region, bank_path)
+            bic = bank["bic8"]
+            owner = existing_bics.get(bic)
+            if owner and owner != name:
+                raise ValueError(f"{bank_path}.bic8: already owned by region {owner}")
+            if owner and owner == name and bic not in banks:
+                raise ValueError(f"{bank_path}.bic8: duplicate canonical candidate BIC")
+            if bic in candidate_bics:
+                raise ValueError(f"{bank_path}.bic8: duplicate candidate BIC (already in {candidate_bics[bic]})")
+            candidate_bics[bic] = name
+            if bic in forbidden_global or bic in {x.upper()[:8] for x in region.get("forbidden_bics", [])}:
+                raise ValueError(f"{bank_path}.bic8: conflicts with a forbidden BIC")
+            prior = banks.get(bic)
+            metadata = {k: bank[k] for k in ("bic8", "name", "country", "currencies", "seedable", "source_domains")}
+            if prior:
+                prior_meta = {k: prior.get(k, True) if k == "seedable" else prior[k] for k in metadata}
+                if prior_meta != metadata:
+                    raise ValueError(f"{bank_path}: existing bank metadata is immutable")
+                prior_records = prior.get("admitted_records", [])
+                if prior_records and record_digest(prior_records) != record_digest(bank["records"]):
+                    raise ValueError(f"{bank_path}: admitted record digest mismatch")
+            bank["admitted_records"] = bank.pop("records")
+            bank["admitted_record_digest"] = record_digest(bank["admitted_records"])
+            banks[bic] = bank
+        region["banks"] = list(banks.values())
+        candidate_results = {
+            "region": name,
+            "banks": [
+                {"bic": bank["bic8"], "name": bank["name"], "records": bank["admitted_records"]}
+                for bank in region["banks"]
+                if bank.get("seedable", True) and bank.get("admitted_records")
+            ],
+        }
+        if not candidate_results["banks"]:
+            normalized_regions.append(region)
+            continue
+        prospective = copy.deepcopy(manifest)
+        prospective_region = copy.deepcopy(region)
+        prospective_region["banks"] = [
+            {k: v for k, v in bank.items() if k not in {"admitted_records", "admitted_record_digest"}}
+            for bank in region["banks"]
+        ]
+        if name in existing_by_name:
+            prospective["regions"] = [
+                prospective_region if item["name"] == name else item
+                for item in prospective["regions"]
+            ]
+        else:
+            prospective["regions"].append(prospective_region)
+        problems = validate_results(candidate_results, prospective)
+        if problems:
+            raise ValueError(f"{path}: candidate SSI validation failed: {'; '.join(problems)}")
+        for admitted_bank in region["banks"]:
+            if not admitted_bank.get("seedable", True):
+                continue
+            for record in admitted_bank.get("admitted_records", []):
+                if record.get("status") == "illustrative":
+                    raise ValueError(f"{path}.banks[{admitted_bank['bic8']}]: illustrative records cannot be seedable")
+                if not _bank_owned_source(record["source"], admitted_bank):
+                    raise ValueError(
+                        f"{path}.banks[{admitted_bank['bic8']}]: source is not bank-owned: {record['source']}"
+                    )
+        normalized_regions.append(region)
+    return normalized_regions
+
+
+def _manifest_lock_path() -> Path:
+    """Return a stable lock outside the repository for this manifest."""
+    resolved = REGIONS_FILE.resolve()
+    digest = hashlib.sha256(str(resolved).encode("utf-8")).hexdigest()[:24]
+    return Path(tempfile.gettempdir()) / f"ssi-autopilot-{digest}.lock"
+
+
+@contextmanager
+def _manifest_lock():
+    # Never unlink this file: another process may already be waiting on the
+    # same inode, and unlinking would allow two writers to enter concurrently.
+    lock_path = _manifest_lock_path()
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def _write_manifest_atomic(manifest: dict) -> None:
+    mode = REGIONS_FILE.stat().st_mode & 0o777 if REGIONS_FILE.exists() else 0o644
+    directory = REGIONS_FILE.parent
+    fd, temp_name = tempfile.mkstemp(prefix=f".{REGIONS_FILE.name}.", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            output.write(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+            output.flush()
+            os.fsync(output.fileno())
+        os.chmod(temp_name, mode)
+        os.replace(temp_name, REGIONS_FILE)
+        dir_fd = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+    finally:
+        if os.path.exists(temp_name):
+            os.unlink(temp_name)
+
+
+def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
+    with _manifest_lock():
+        manifest = load_manifest()
+        normalized = _validate_admission_envelope(payload, manifest)
+        proposed = copy.deepcopy(manifest)
+        existing = {r["name"]: r for r in proposed["regions"]}
+        for region in normalized:
+            if region["name"] in existing:
+                target = existing[region["name"]]
+                target["banks"] = region["banks"]
+                target["forbidden_bics"] = sorted(set(region.get("forbidden_bics", [])))
+            else:
+                proposed["regions"].append(region)
+        added_banks = added_records = unchanged_banks = unchanged_records = 0
+        candidate_bics = {
+            bank.get("bic8") for raw_region in payload.get("regions", [])
+            for bank in raw_region.get("banks", []) if isinstance(raw_region, dict) and isinstance(bank, dict)
+        }
+        for region in normalized:
+            before_region = next((r for r in manifest["regions"] if r["name"] == region["name"]), None)
+            before_banks = {b["bic8"]: b for b in (before_region or {}).get("banks", [])}
+            for bank in region["banks"]:
+                if bank["bic8"] not in candidate_bics:
+                    continue
+                prior = before_banks.get(bank["bic8"])
+                if prior is None:
+                    added_banks += 1
+                    added_records += len(bank.get("admitted_records", []))
+                else:
+                    unchanged_banks += 1
+                    prior_records = prior.get("admitted_records", [])
+                    for record in bank.get("admitted_records", []):
+                        if record in prior_records:
+                            unchanged_records += 1
+                        else:
+                            added_records += 1
+        summary = {
+            "regions": sorted(r["name"] for r in normalized),
+            "added_banks": added_banks,
+            "added_records": added_records,
+            "unchanged_banks": unchanged_banks,
+            "unchanged_records": unchanged_records,
+        }
+        if not dry_run:
+            _write_manifest_atomic(proposed)
+        return summary
+
+
 # ── Validation ───────────────────────────────────────────────────────────────
 class ValidationError(Exception):
     pass
+
+
+def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
+    problems: list[str] = []
+    try:
+        region = get_region(manifest, results.get("region", ""))
+    except SystemExit:
+        return problems
+    admitted = {
+        bank["bic8"]: bank
+        for bank in region.get("banks", [])
+        if "admitted_record_digest" in bank
+    }
+    supplied: dict[str, dict] = {}
+    for index, raw_bank in enumerate(results.get("banks", [])):
+        try:
+            bic = _canonical_bic8(raw_bank.get("bic"), f"banks[{index}].bic")
+        except (AttributeError, ValueError) as exc:
+            problems.append(str(exc))
+            continue
+        if bic in supplied:
+            problems.append(f"{results['region']}/{bic}: duplicate supplied bank")
+            continue
+        supplied[bic] = raw_bank
+    for bic, bank in admitted.items():
+        expected = bank.get("admitted_records", [])
+        actual_bank = supplied.get(bic)
+        if actual_bank is None:
+            problems.append(f"{results['region']}/{bic}: admitted records missing from results")
+            continue
+        actual_name = actual_bank.get("name")
+        if not isinstance(actual_name, str):
+            problems.append(f"{results['region']}/{bic}: result bank name must be a string")
+        elif " ".join(actual_name.split()) != " ".join(bank.get("name", "").split()):
+            problems.append(f"{results['region']}/{bic}: result bank name does not match admitted name")
+        actual = actual_bank.get("records", [])
+        normalized = []
+        try:
+            normalized = [_normalize_record(record, f"{bic}.records[{i}]") for i, record in enumerate(actual)]
+        except ValueError as exc:
+            problems.append(str(exc))
+            continue
+        if record_digest(normalized) != bank["admitted_record_digest"]:
+            problems.append(f"{results['region']}/{bic}: results do not match the admitted record digest")
+        if normalized != expected:
+            problems.append(f"{results['region']}/{bic}: normalized records differ from admitted records")
+    return problems
 
 
 def validate_results(results: dict, manifest: dict) -> list[str]:
@@ -329,93 +824,134 @@ def _ssi_rows(source: str) -> list[tuple]:
     return []
 
 
-def _literal(text: str) -> str:
-    """Best-effort unquote of a source segment; non-literals pass through."""
+def _literal(text: str):
+    """Evaluate a tuple field while retaining source expressions as text."""
     try:
-        value = ast.literal_eval(text)
+        return ast.literal_eval(text)
     except (ValueError, SyntaxError):
         return text
-    return value if isinstance(value, str) else text
+
+
+def _canonical_bic11(value: object, path: str) -> str:
+    """Return the single 11-character identity used by fold keys."""
+    if not isinstance(value, str):
+        raise ValueError(f"{path}: expected a BIC string")
+    bic = value.strip().upper()
+    if len(bic) == 8:
+        bic += "XXX"
+    if not bic_is_valid(bic):
+        raise ValueError(f"{path}: invalid BIC {value!r}")
+    return bic
+
+
+def _fold_row_shape(row: tuple[str, ...]) -> dict:
+    """Parse supported SSI tuple layouts into named, position-safe fields."""
+    if not isinstance(row, tuple) or len(row) not in (12, 13, 14):
+        got = len(row) if isinstance(row, tuple) else type(row).__name__
+        raise ValueError(f"SSI row has unsupported tuple arity {got}; expected 12, 13, or 14 fields")
+    values = [_literal(field) for field in row]
+    fields = dict(zip(
+        ("beneficiary_bic", "beneficiary_name", "currency", "intermediary_bic",
+         "correspondent", "nostro", "with_an", "charge_code", "value_date",
+         "notes", "as_of", "status", "verified_by", "bic_only"), values
+    ))
+    fields["beneficiary_bic"] = _canonical_bic11(fields["beneficiary_bic"], "folded beneficiary BIC")
+    fields["intermediary_bic"] = _canonical_bic11(fields["intermediary_bic"], "folded intermediary BIC")
+    fields["currency"] = fields["currency"].strip().upper() if isinstance(fields["currency"], str) else fields["currency"]
+    fields["status"] = fields["status"].strip().lower() if isinstance(fields["status"], str) else fields["status"]
+    if len(row) == 12:
+        fields["verified_by"] = None
+        fields["bic_only"] = False
+    elif len(row) == 13:
+        fields["verified_by"] = fields["verified_by"]
+        fields["bic_only"] = False
+    else:
+        if not isinstance(fields["bic_only"], bool):
+            raise ValueError("folded 14-field row bic_only must be a boolean")
+    return fields
 
 
 def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str]:
-    """Bind the committed seed rows to the results that were validated.
-
-    ``validate`` gates a JSON file, but the fold into seed.py is done by hand,
-    so nothing previously proved the rows being committed were the rows that
-    passed. Everything this fold *added* must correspond to a validated record,
-    and every validated record must appear. Pre-existing rows are history and
-    are not re-checked.
-    """
+    """Verify only newly-added seed rows against validated result records."""
     problems: list[str] = []
-    head = set(_ssi_rows(head_source))
-    added = [row for row in _ssi_rows(folded_source) if row not in head]
+    raw_head = _ssi_rows(head_source)
+    raw_folded = _ssi_rows(folded_source)
+    head_raw_set = set(raw_head)
+    head_rows: dict[tuple[str, str, str], dict] = {}
+    folded_shapes: list[dict] = []
+    # Existing rows are history: malformed legacy rows remain out of scope.
+    for row in raw_head:
+        try:
+            shape = _fold_row_shape(row)
+        except ValueError:
+            continue
+        head_rows[(shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"])] = shape
+    for index, row in enumerate(raw_folded):
+        if row in head_raw_set:
+            continue
+        try:
+            folded_shapes.append(_fold_row_shape(row))
+        except ValueError as exc:
+            problems.append(f"folded SSI_RECORDS[{index}]: {exc}")
 
     expected: dict[tuple[str, str, str], dict] = {}
-    for bank in results.get("banks", []):
-        ben_bic = str(bank.get("bic", "")).upper()
-        ben_bic11 = ben_bic if len(ben_bic) == 11 else ben_bic[:8] + "XXX"
-        for rec in bank.get("records", []):
-            int_bic = str(rec.get("int_bic", "")).upper()
-            int_bic11 = int_bic if len(int_bic) == 11 else int_bic[:8] + "XXX"
-            key = (ben_bic11, str(rec.get("currency", "")).upper(), int_bic11)
+    for bank_index, bank in enumerate(results.get("banks", [])):
+        try:
+            ben_bic = _canonical_bic11(bank.get("bic"), f"results.banks[{bank_index}].bic")
+        except (AttributeError, ValueError) as exc:
+            problems.append(str(exc))
+            continue
+        for rec_index, rec in enumerate(bank.get("records", [])):
+            try:
+                int_bic = _canonical_bic11(rec.get("int_bic"), f"results.banks[{bank_index}].records[{rec_index}].int_bic")
+            except (AttributeError, ValueError) as exc:
+                problems.append(str(exc))
+                continue
+            key = (ben_bic, str(rec.get("currency", "")).strip().upper(), int_bic)
+            if key in expected:
+                problems.append(f"duplicate canonical expected fold key {key}: records collide rather than overwrite")
+                continue
             expected[key] = {"bank": bank, "record": rec}
 
+    added = [shape for shape in folded_shapes
+             if (shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"]) not in head_rows]
     seen: set[tuple[str, str, str]] = set()
-    for row in added:
-        if len(row) < 12:
-            problems.append(
-                f"folded row {row[0] if row else '?'} has {len(row)} fields; "
-                f"a sourced row carries 12 (as_of and status included)"
-            )
-            continue
-        key = (_literal(row[0]), _literal(row[2]), _literal(row[3]))
+    for shape in added:
+        key = (shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"])
         if key not in expected:
-            problems.append(
-                f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the "
-                f"validated results — every committed row must have passed validation"
-            )
+            problems.append(f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the validated results")
+            continue
+        if key in seen:
+            problems.append(f"{key[0]}/{key[1]}/{key[2]}: duplicate folded canonical key")
             continue
         seen.add(key)
-        rec = expected[key]["record"]
-        bank = expected[key]["bank"]
-        for index, (label, want) in enumerate([
-            ("beneficiary name", bank.get("name", "")),
-            ("correspondent", rec.get("correspondent", "")),
-            ("nostro", rec.get("nostro", "")),
-            ("with_an", rec.get("with_an", "")),
-            ("charge code", str(rec.get("charge_code", "")).upper()),
-            ("value date", rec.get("value_date", "")),
-        ]):
-            field = [1, 4, 5, 6, 7, 8][index]
-            got = _literal(row[field])
+        bank, rec = expected[key]["bank"], expected[key]["record"]
+        expected_fields = {
+            "beneficiary_name": bank.get("name", ""),
+            "currency": str(rec.get("currency", "")).upper(),
+            "correspondent": rec.get("correspondent", ""),
+            "nostro": rec.get("nostro"), "with_an": rec.get("with_an"),
+            "charge_code": str(rec.get("charge_code", "")).upper(),
+            "value_date": rec.get("value_date"), "as_of": rec.get("as_of"),
+            "status": str(rec.get("status", "")).lower(),
+            "verified_by": rec.get("verified_by"),
+            "bic_only": rec.get("bic_only") is True,
+        }
+        for field, want in expected_fields.items():
+            got = shape.get(field)
             if got != want:
-                problems.append(
-                    f"{key[0]}/{key[1]}: folded {label} {got!r} does not match "
-                    f"the validated {want!r}"
-                )
-        if _literal(row[10]) != rec.get("as_of", ""):
-            problems.append(
-                f"{key[0]}/{key[1]}: folded as_of {_literal(row[10])!r} does not "
-                f"match the validated {rec.get('as_of', '')!r}"
-            )
-        if _literal(row[11]) != str(rec.get("status", "")).lower():
-            problems.append(
-                f"{key[0]}/{key[1]}: folded status {_literal(row[11])!r} does not "
-                f"match the validated {str(rec.get('status', '')).lower()!r}"
-            )
+                problems.append(f"{key[0]}/{key[1]}: folded {field} {got!r} does not match validated {want!r}")
         source = str(rec.get("source", ""))
-        if source and source not in row[9]:
-            problems.append(
-                f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}"
-            )
+        if source and source not in str(shape.get("notes", "")):
+            problems.append(f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}")
+        if shape["status"] == "published" and not shape.get("verified_by"):
+            problems.append(f"{key[0]}/{key[1]}: published folded row is missing verified_by")
+        if shape["status"] != "published" and shape.get("verified_by"):
+            problems.append(f"{key[0]}/{key[1]}: non-published folded row carries verified_by")
 
-    head_keys = {(_literal(r[0]), _literal(r[2]), _literal(r[3])) for r in head if len(r) >= 4}
     for key in expected:
-        if key not in seen and key not in head_keys:
-            problems.append(
-                f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py"
-            )
+        if key not in seen and key not in head_rows:
+            problems.append(f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py")
     return problems
 
 
@@ -493,10 +1029,29 @@ def run_pytest(paths: list[str]) -> None:
         raise SystemExit(f"pytest failed:\n{result.stdout}\n{result.stderr}")
 
 
+def cmd_admit(args: argparse.Namespace) -> None:
+    input_path = Path(args.candidates)
+    try:
+        payload = json.loads(input_path.read_text())
+        summary = admit_candidates(payload, dry_run=args.dry_run)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        raise SystemExit(f"admission failed for {input_path}: {exc}") from exc
+    action = "would admit" if args.dry_run else "admitted"
+    suffix = " (dry-run; manifest not written)" if args.dry_run else ""
+    print(
+        f"  ✓ {action} {summary['added_banks']} added bank(s), "
+        f"{summary['added_records']} added record(s), "
+        f"{summary['unchanged_banks']} unchanged bank(s), "
+        f"{summary['unchanged_records']} unchanged record(s) in "
+        f"{', '.join(summary['regions'])}{suffix}"
+    )
+
+
 def cmd_validate(args: argparse.Namespace) -> None:
     manifest = load_manifest()
     results = json.loads(Path(args.results).read_text())
     problems = validate_results(results, manifest)
+    problems.extend(validate_admitted_results(results, manifest))
     if problems:
         for p in problems:
             print(f"  ✗ {p}")
@@ -586,6 +1141,7 @@ def cmd_commit(args: argparse.Namespace) -> None:
     manifest = load_manifest()
     results = json.loads(Path(args.results).read_text())
     problems = validate_results(results, manifest)
+    problems.extend(validate_admitted_results(results, manifest))
     if problems:
         raise SystemExit("validation failed — refusing to commit:\n" + "\n".join(f"  ✗ {p}" for p in problems))
     region = get_region(manifest, results["region"])
@@ -633,7 +1189,9 @@ def cmd_commit(args: argparse.Namespace) -> None:
     # not just the paths added. Anything an operator had staged rides along and
     # maybe-pr then publishes it. Refuse a dirty index, and commit by path.
     own_paths = [
-        str(path.relative_to(REPO_ROOT)) for path in (SEED_FILE, TEST_FILE)
+        str(path.relative_to(REPO_ROOT))
+        for path in (SEED_FILE, TEST_FILE, REGIONS_FILE)
+        if path.exists() or path in (SEED_FILE, TEST_FILE, REGIONS_FILE)
     ]
     staged = [p for p in git("diff", "--cached", "--name-only").splitlines() if p.strip()]
     unexpected = sorted(set(staged) - set(own_paths))
@@ -729,6 +1287,11 @@ def cmd_status(_args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="SSI autopilot orchestrator")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("admit", help="admit broadly discovered banks into the region manifest")
+    p.add_argument("candidates", help="path to candidate discovery JSON")
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(func=cmd_admit)
 
     p = sub.add_parser("validate", help="validate research results JSON")
     p.add_argument("results", help="path to results JSON")

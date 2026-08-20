@@ -22,12 +22,14 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
 
 ## The loop (repeat per region)
 
-1. **Pick the next region** from `scripts/ssi-autopilot/regions.json` that has
-   no seed records yet (check `autopilot.py status`, then confirm against
-   `app/services/seed.py`). Prefer regions the manifest lists first.
+1. **Choose a geography, not only a manifest bank.** Start with regions in
+   `scripts/ssi-autopilot/regions.json`, but research agents may search any bank
+   in the assigned geography. Existing manifest banks are a coverage baseline,
+   not a discovery allowlist. New banks and new regions must go through
+   `autopilot.py admit` before their SSI records can be validated or folded.
 
-2. **Research** — dispatch general-purpose research agents, one per region (up
-   to 3 concurrently), with this standing protocol (paste verbatim into each
+2. **Research** — dispatch general-purpose research agents, one per geography
+   (up to 3 concurrently), with this standing protocol (paste verbatim into each
    agent prompt):
    - Only bank-published sources (bank's own site or PDFs; Internet Archive
      CDX fallback: `http://web.archive.org/cdx/search/cdx?url=<domain>/*&output=text&fl=timestamp,original,mimetype&filter=mimetype:application/pdf&collapse=urlkey`).
@@ -41,12 +43,36 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
      report NOT SEEDABLE.
    - Use the region's masked ACCT- block from the manifest as the account range.
 
-3. **Capture results** as a JSON file matching the validator schema, one per
-   region: `{"region": "<name>", "banks": [{"bic": "<8char>", "name": "...",
+3. **Capture candidate discoveries** as a JSON file for admission. New banks
+   use canonical `bic8`, exact name/country, declared currencies, and records;
+   new regions also provide label, countries, note, forbidden BICs, and a unique
+   masked block. A seedable bank must provide a record for every declared
+   currency. A bank with no usable bank-published SSI list may be recorded only
+   as `seedable: false` with no records. Run:
+   `python scripts/ssi-autopilot/autopilot.py admit <candidates.json>`.
+   Seedable candidates must also provide `source_domains`, a list of the
+   beneficiary bank's owned hostnames (not URLs). Every admitted record must
+   cite one of those domains; placeholder hosts (`example.com`, `localhost`),
+   IP-only hosts, and third-party citations are rejected. Internet Archive
+   citations are accepted only when their embedded original host is in the
+   allowlist. The command validates the prospective manifest, stores normalized masked
+   records and a deterministic record digest, and atomically updates only
+   `regions.json`. Use `--dry-run` to review without writing. Accounts in the
+   candidates must already be masked `ACCT-` placeholders. Candidate input is
+   strictly an object containing only a `regions` list; documented field types
+   are enforced and unknown fields or null/container substitutions are rejected.
+   The manifest is authoritative for existing identity and immutable metadata;
+   preserve `version` and any admission schema marker. Banks own evidence:
+   seedable banks declare allowed hostnames, and archives are accepted only when
+   their original host is allowlisted. Canonical 8-character BICs own banks and
+   digests sort records by the canonical record key, making ordering stable.
+
+   After admission, produce per-region results in the normal validator shape:
+   `{"region": "<name>", "banks": [{"bic": "<8char>", "name": "...",
    "records": [{"currency", "correspondent", "int_bic", "nostro", "with_an",
-   "charge_code", "value_date", "source", "as_of", "status"}]}]}`. Accounts in
-   the results must already be masked `ACCT-` placeholders (transcribe any real
-   digits to the region's masked block).
+   "charge_code", "value_date", "source", "as_of", "status"}]}`. The
+   validator rejects results whose normalized records do not match the admitted
+   digest.
 
    `status` records what you actually know about the source, never how old it
    is — do not infer it from `as_of`:
@@ -82,7 +108,10 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    Absence of archive evidence is not evidence a page is live. Defaulting to
    `published` on that reasoning mislabelled 406 seeded rows.
 
-4. **Validate** — `python scripts/ssi-autopilot/autopilot.py validate <results.json>`.
+4. **Validate** — `python scripts/ssi-autopilot/autopilot.py validate <results.json>`. Admission is
+   metadata and evidence registration only; it never edits `seed.py` or makes a
+   bank routable. The results must match the admitted normalized record digest.
+
    It rejects: real account numbers, unmasked accounts, invalid BICs,
    out-of-region currencies, missing sources, missing/invalid as-of dates,
    missing or unknown `status`, missing correspondent names, value dates outside
@@ -95,6 +124,17 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    bic11, name, country, city, currency). Sourced records carry a note ending
    with `"Source: <url>. " + _SSI_REAL_NOTE`. Add corridor rules only when the
    source justifies local-currency settlement.
+
+   Fold verification parses named SSI fields and accepts only the seed tuple
+   shapes supported by the current seed contract: 12 fields (the ten base
+   fields plus `as_of` and `status`), 13 fields (plus `verified_by`), or 14
+   fields (plus boolean `bic_only`). Beneficiary and intermediary keys are
+   canonical 11-character BICs; duplicate canonical keys are rejected rather
+   than overwritten. Every persisted field, including `verified_by` and
+   `bic_only`, is compared with the validated record. Published rows require a
+   verifier and non-published rows must not carry one. Supported fold tuple shapes
+   are 12, 13 (published `verified_by`), and 14 fields (boolean `bic_only`);
+   unsupported shapes fail safely and optional fields are parsed by named shape.
 
    An SSI row is a 12-tuple: the ten existing fields, then `as_of` and
    `status`, both copied verbatim from the validated record. A row claiming
@@ -130,7 +170,14 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    `tests/test_data_consistency.py`, `tests/test_ssi.py` and
    `tests/test_ssi_autopilot.py` (fail → no commit), verifies the fold matches
    the validated results, commits with
-   `feat(ssi): seed <region> SSIs (<source>)`, and bumps the counter.
+   `feat(ssi): seed <region> SSIs (<source>)`, and bumps the counter. Commit
+   ownership is limited to generated fold paths plus
+   `scripts/ssi-autopilot/regions.json`; unrelated staged paths are refused.
+   Admission uses a stable external lock across read/validate/merge/write and
+   atomic replacement with mode preservation. Summaries distinguish deterministic
+   `added_banks`/`added_records` from `unchanged_banks`/`unchanged_records`.
+   Identical re-admission is a zero-addition, byte-identical no-op; omitted banks
+   are preserved, never removed.
 
 7. **After each region**, re-run `autopilot.py status`. When
    `commits_since_pr >= N` (default 10), run
@@ -150,6 +197,7 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
 - **One commit per region**, `type(scope): description`.
 - The validator is authoritative: a region whose results fail validation is
   never committed.
+- This work makes no commit, push, or PR; those remain explicit operator actions.
 
 ## Troubleshooting
 

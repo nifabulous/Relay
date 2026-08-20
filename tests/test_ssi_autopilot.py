@@ -715,3 +715,113 @@ def test_a_verifier_on_a_non_published_row_is_rejected():
     rec["banks"][0]["records"][0]["verified_by"] = "ops:ada"
     problems = autopilot.validate_results(rec, MANIFEST)
     assert any("verified_by is only meaningful" in p for p in problems), problems
+
+
+def admission_bank(bic="TESTPHMM"):
+    return {"bic8": bic, "name": "Test Philippine Bank", "country": "PH", "currencies": ["USD"], "seedable": True, "source_domains": ["testphilippinebank.com"], "records": [{"currency":"USD","correspondent":"Citibank N.A.","int_bic":"CITIUS33XXX","nostro":"ACCT-91000750","with_an":"ACCT-91000751","charge_code":"SHA","value_date":"spot","source":"https://testphilippinebank.com/ssi","as_of":"2026-08-19","status":"unverified"}]}
+
+
+def test_task5_summary_idempotence_and_byte_identity(tmp_path, monkeypatch):
+    path=tmp_path/"regions.json"; path.write_bytes(json.dumps(MANIFEST,indent=2).encode()+b"\n"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
+    payload={"regions":[{"name":"southeast-asia","banks":[admission_bank()]}]}
+    first=autopilot.admit_candidates(payload); before=path.read_bytes(); second=autopilot.admit_candidates(payload)
+    assert first["added_banks"]==1 and first["added_records"]==1
+    assert second["added_banks"]==0 and second["added_records"]==0
+    assert second["unchanged_banks"]==1 and second["unchanged_records"]==1
+    assert path.read_bytes()==before
+
+
+def test_task5_dry_run_and_failure_leave_no_tracked_artifacts(tmp_path, monkeypatch):
+    path=tmp_path/"regions.json"; path.write_bytes(json.dumps(MANIFEST,indent=2).encode()+b"\n"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
+    payload={"regions":[{"name":"southeast-asia","banks":[admission_bank()]}]}
+    autopilot.admit_candidates(payload,dry_run=True)
+    with pytest.raises(ValueError): autopilot.admit_candidates({"regions":[{"name":"southeast-asia","banks":"bad"}]})
+    assert not (tmp_path/"regions.json.lock").exists() and not list(tmp_path.glob(".regions.json.*"))
+
+
+def test_task5_lock_path_is_stable_outside_repo(tmp_path, monkeypatch):
+    path=tmp_path/"regions.json"; path.write_text("{}"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
+    assert autopilot._manifest_lock_path()==autopilot._manifest_lock_path()
+    assert autopilot._manifest_lock_path().parent != tmp_path
+
+
+def test_task5_commit_owns_manifest(monkeypatch, tmp_path):
+    import argparse
+    calls=[]
+    monkeypatch.setattr(autopilot,"git",lambda *a,**k:(calls.append(a) or ""))
+    for n,v in (("cmd_verify",lambda *a,**k:None),("cmd_scaffold",lambda *a,**k:None),("run_pytest",lambda *a,**k:None),("verify_fold",lambda *a,**k:[]),("write_state",lambda *a,**k:None),("read_state",lambda:{"commits_since_pr":0,"regions_since_pr":[],"last_pr":None})): monkeypatch.setattr(autopilot,n,v)
+    monkeypatch.setattr(autopilot.subprocess,"run",lambda *a,**k:type("R",(),{"returncode":0,"stdout":"","stderr":""})())
+    result=tmp_path/"r.json"; result.write_text(json.dumps(sample_results()))
+    autopilot.cmd_commit(argparse.Namespace(results=str(result),label=None,source=None,dry_run=False))
+    commit=next(a for a in calls if a[:1]==("commit",))
+    assert "scripts/ssi-autopilot/regions.json" in commit
+
+
+def _new_region_payload():
+    bank = admission_bank(bic="NEWPPHMM")
+    bank["name"] = "New Philippine Bank"
+    bank["records"][0]["nostro"] = "ACCT-92000001"
+    bank["records"][0]["with_an"] = "ACCT-92000002"
+    return {"regions": [{
+        "name": "new-region-lifecycle",
+        "label": "New Region Lifecycle",
+        "countries": ["PH"],
+        "masked_block": 92000000,
+        "note": "Lifecycle test region",
+        "forbidden_bics": [],
+        "banks": [bank],
+    }]}
+
+
+def test_new_region_lifecycle_persists_reloads_and_validates(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    payload = _new_region_payload()
+    summary = autopilot.admit_candidates(payload)
+    assert summary["regions"] == ["new-region-lifecycle"]
+    assert summary["added_banks"] == 1 and summary["added_records"] == 1
+    reloaded = autopilot.load_manifest()
+    region = autopilot.get_region(reloaded, "new-region-lifecycle")
+    bank = region["banks"][0]
+    assert bank["bic8"] == "NEWPPHMM"
+    assert bank["admitted_record_digest"] == autopilot.record_digest(bank["admitted_records"])
+    results = {"region": "new-region-lifecycle", "banks": [{
+        "bic": "NEWPPHMMXXX", "name": bank["name"], "records": bank["admitted_records"]
+    }]}
+    assert autopilot.validate_admitted_results(results, reloaded) == []
+    assert [b["bic8"] for b in region["banks"]] == sorted(b["bic8"] for b in region["banks"])
+
+
+def test_new_region_readmission_is_byte_identical_and_omission_preserves_banks(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    payload = _new_region_payload()
+    first = autopilot.admit_candidates(payload)
+    before = path.read_bytes()
+    second = autopilot.admit_candidates(payload)
+    assert second["added_banks"] == second["added_records"] == 0
+    assert second["unchanged_banks"] == second["unchanged_records"] == 1
+    assert path.read_bytes() == before
+    omission = {"regions": [{k: v for k, v in payload["regions"][0].items() if k != "banks"} | {"banks": []}]}
+    third = autopilot.admit_candidates(omission)
+    assert third["added_banks"] == third["added_records"] == 0
+    assert autopilot.get_region(autopilot.load_manifest(), "new-region-lifecycle")["banks"]
+
+
+def test_new_region_ordering_and_digest_are_deterministic(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    payload = _new_region_payload()
+    record = payload["regions"][0]["banks"][0]["records"][0]
+    payload["regions"][0]["banks"][0]["records"].append(dict(record, currency="EUR", source="https://testphilippinebank.com/eur", nostro="ACCT-92000003", with_an="ACCT-92000004"))
+    payload["regions"][0]["banks"][0]["currencies"] = ["EUR", "USD"]
+    reversed_payload = json.loads(json.dumps(payload))
+    reversed_payload["regions"][0]["banks"][0]["records"].reverse()
+    assert autopilot.record_digest(payload["regions"][0]["banks"][0]["records"]) == autopilot.record_digest(reversed_payload["regions"][0]["banks"][0]["records"])
+    autopilot.admit_candidates(reversed_payload)
+    bank = autopilot.get_region(autopilot.load_manifest(), "new-region-lifecycle")["banks"][0]
+    assert bank["admitted_record_digest"] == autopilot.record_digest(bank["admitted_records"])
+    assert [r["currency"] for r in bank["admitted_records"]] == ["EUR", "USD"]
