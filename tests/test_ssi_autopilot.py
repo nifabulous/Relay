@@ -919,39 +919,100 @@ def admission_bank(bic="TESTPHMM"):
 
 
 def test_task5_summary_idempotence_and_byte_identity(tmp_path, monkeypatch):
-    path=tmp_path/"regions.json"; path.write_bytes(json.dumps(MANIFEST,indent=2).encode()+b"\n"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
-    payload={"regions":[{"name":"southeast-asia","banks":[admission_bank()]}]}
-    first=autopilot.admit_candidates(payload); before=path.read_bytes(); second=autopilot.admit_candidates(payload)
-    assert first["added_banks"]==1 and first["added_records"]==1
-    assert second["added_banks"]==0 and second["added_records"]==0
-    assert second["unchanged_banks"]==1 and second["unchanged_records"]==1
-    assert path.read_bytes()==before
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    payload = {"regions": [{"name": "southeast-asia", "banks": [admission_bank()]}]}
+    first = autopilot.admit_candidates(payload)
+    before = path.read_bytes()
+    second = autopilot.admit_candidates(payload)
+    assert first["added_banks"] == 1 and first["added_records"] == 1
+    assert second["added_banks"] == 0 and second["added_records"] == 0
+    assert second["unchanged_banks"] == 1 and second["unchanged_records"] == 1
+    assert path.read_bytes() == before
+
+
+def test_candidate_source_domain_must_be_trusted_for_bic(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank()
+    bank["source_domains"] = ["attacker.example"]
+    with pytest.raises(ValueError, match="not trusted"):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [bank]}]})
+
+
+def test_malformed_candidate_forbidden_bic_is_rejected(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    with pytest.raises(ValueError, match="malformed BIC"):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "forbidden_bics": ["BAD"], "banks": []}]})
 
 
 def test_task5_dry_run_and_failure_leave_no_tracked_artifacts(tmp_path, monkeypatch):
-    path=tmp_path/"regions.json"; path.write_bytes(json.dumps(MANIFEST,indent=2).encode()+b"\n"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
-    payload={"regions":[{"name":"southeast-asia","banks":[admission_bank()]}]}
-    autopilot.admit_candidates(payload,dry_run=True)
-    with pytest.raises(ValueError): autopilot.admit_candidates({"regions":[{"name":"southeast-asia","banks":"bad"}]})
-    assert not (tmp_path/"regions.json.lock").exists() and not list(tmp_path.glob(".regions.json.*"))
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    payload = {"regions": [{"name": "southeast-asia", "banks": [admission_bank()]}]}
+    autopilot.admit_candidates(payload, dry_run=True)
+    with pytest.raises(ValueError):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": "bad"}]})
+    assert not (tmp_path / "regions.json.lock").exists()
+    assert not list(tmp_path.glob(".regions.json.*"))
 
 
 def test_task5_lock_path_is_stable_outside_repo(tmp_path, monkeypatch):
-    path=tmp_path/"regions.json"; path.write_text("{}"); monkeypatch.setattr(autopilot,"REGIONS_FILE",path)
-    assert autopilot._manifest_lock_path()==autopilot._manifest_lock_path()
+    path = tmp_path / "regions.json"
+    path.write_text("{}")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    assert autopilot._manifest_lock_path() == autopilot._manifest_lock_path()
     assert autopilot._manifest_lock_path().parent != tmp_path
 
 
-def test_task5_commit_owns_manifest(monkeypatch, tmp_path):
+def test_task5_commit_owns_manifest(tmp_path, monkeypatch):
+    """Use a real temporary repository to prove staging and commit ownership."""
     import argparse
-    calls=[]
-    monkeypatch.setattr(autopilot,"git",lambda *a,**k:(calls.append(a) or ""))
-    for n,v in (("cmd_verify",lambda *a,**k:None),("cmd_scaffold",lambda *a,**k:None),("run_pytest",lambda *a,**k:None),("verify_fold",lambda *a,**k:[]),("write_state",lambda *a,**k:None),("read_state",lambda:{"commits_since_pr":0,"regions_since_pr":[],"last_pr":None})): monkeypatch.setattr(autopilot,n,v)
-    monkeypatch.setattr(autopilot.subprocess,"run",lambda *a,**k:type("R",(),{"returncode":0,"stdout":"","stderr":""})())
-    result=tmp_path/"r.json"; result.write_text(json.dumps(sample_results()))
-    autopilot.cmd_commit(argparse.Namespace(results=str(result),label=None,source=None,dry_run=False))
-    commit=next(a for a in calls if a[:1]==("commit",))
-    assert "scripts/ssi-autopilot/regions.json" in commit
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    for command in (("init",), ("config", "user.email", "test@example.com"), ("config", "user.name", "Test")):
+        subprocess.run(["git", *command], cwd=repo, check=True, capture_output=True, text=True)
+    seed = repo / "seed.py"
+    tests = repo / "tests.py"
+    manifest = repo / "regions.json"
+    seed.write_text("SSI_RECORDS = []\n")
+    tests.write_text("tests\n")
+    manifest.write_text("{}\n")
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+
+    monkeypatch.setattr(autopilot, "REPO_ROOT", repo)
+    monkeypatch.setattr(autopilot, "SEED_FILE", seed)
+    monkeypatch.setattr(autopilot, "TEST_FILE", tests)
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", manifest)
+    monkeypatch.setattr(autopilot, "load_manifest", lambda: MANIFEST)
+    monkeypatch.setattr(autopilot, "cmd_verify", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "cmd_scaffold", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "run_pytest", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "verify_fold", lambda *a, **k: [])
+    monkeypatch.setattr(autopilot, "write_state", lambda *a, **k: None)
+    monkeypatch.setattr(autopilot, "read_state", lambda: {"commits_since_pr": 0, "regions_since_pr": [], "last_pr": None})
+    result = tmp_path / "r.json"
+    result.write_text(json.dumps(sample_results()))
+    seed.write_text("SSI_RECORDS = [('changed',)]\n")
+    tests.write_text("changed tests\n")
+    manifest.write_text('{"changed": true}\n')
+    unrelated = repo / "unrelated.txt"
+    unrelated.write_text("must not ship\n")
+    subprocess.run(["git", "add", "unrelated.txt"], cwd=repo, check=True)
+    with pytest.raises(SystemExit, match="unrelated paths staged"):
+        autopilot.cmd_commit(argparse.Namespace(results=str(result), label=None, source=None, dry_run=False))
+    subprocess.run(["git", "reset", "unrelated.txt"], cwd=repo, check=True, capture_output=True, text=True)
+    unrelated.unlink()
+    autopilot.cmd_commit(argparse.Namespace(results=str(result), label=None, source=None, dry_run=False))
+    committed = subprocess.run(["git", "show", "--name-only", "--format=", "HEAD"], cwd=repo, check=True, capture_output=True, text=True).stdout.splitlines()
+    assert set(committed) == {"seed.py", "tests.py", "regions.json"}
 
 
 def _new_region_payload():
@@ -995,7 +1056,7 @@ def test_new_region_readmission_is_byte_identical_and_omission_preserves_banks(t
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
     monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
     payload = _new_region_payload()
-    first = autopilot.admit_candidates(payload)
+    autopilot.admit_candidates(payload)
     before = path.read_bytes()
     second = autopilot.admit_candidates(payload)
     assert second["added_banks"] == second["added_records"] == 0

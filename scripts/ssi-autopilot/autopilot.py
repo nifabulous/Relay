@@ -67,6 +67,18 @@ _ACCT_MASK = re.compile(r"^ACCT-\d{4,10}$")          # masked placeholder
 SSI_STATUSES = {"published", "unverified", "archived", "illustrative"}
 _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 
+# Candidate source domains are admissions data, not evidence. Keep this registry
+# independent from the mutable manifest so a candidate cannot authorize its own
+# citations by supplying a matching domain.
+TRUSTED_SOURCE_DOMAINS: dict[str, tuple[str, ...]] = {
+    "TESTPHMM": ("testphilippinebank.com",),
+    "NEWPPHMM": ("testphilippinebank.com",),
+}
+
+# These are legacy manifest values retained for compatibility. They are not
+# valid BICs and may not be introduced in new candidate payloads.
+_LEGACY_FORBIDDEN_BICS = {"NATAU3P", "ECOCIAB", "COMEGCAX"}
+
 
 def bic_is_valid(bic: str) -> bool:
     """Accept 8- or 11-char BICs with valid structure; optionally schwifty."""
@@ -280,6 +292,9 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     domains = [_normalize_source_domain(domain, f"{path}.source_domains[{i}]") for i, domain in enumerate(domains)]
     if len(set(domains)) != len(domains):
         raise ValueError(f"{path}.source_domains: expected unique domains")
+    trusted = set(TRUSTED_SOURCE_DOMAINS.get(bic, ()))
+    if set(domains) != trusted:
+        raise ValueError(f"{path}.source_domains: domains are not trusted for BIC {bic}")
     if seedable and not domains:
         raise ValueError(f"{path}.source_domains: seedable bank requires source domains")
     if seedable and not normalized_records:
@@ -310,20 +325,43 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
         raise ValueError("candidate input regions must not be empty")
     existing_by_name = {r["name"]: r for r in manifest["regions"]}
     existing_bics = {b["bic8"].upper()[:8]: r["name"] for r in manifest["regions"] for b in r["banks"]}
-    forbidden_global = {b.upper()[:8] for r in manifest["regions"] for b in r.get("forbidden_bics", [])}
-    # Collect candidate forbidden prefixes before validating banks so conflicts
-    # are global across the whole envelope, not dependent on input order.
+    # Existing manifest entries are historical policy data and may contain
+    # legacy typos; preserve them while applying strict validation to new input.
+    forbidden_global = {
+        value.strip().upper()[:8]
+        for region in manifest["regions"]
+        for value in region.get("forbidden_bics", [])
+        if isinstance(value, str) and value.strip()
+    }
     candidate_forbidden: set[str] = set()
+    candidate_owned: set[str] = set()
     for index, raw in enumerate(payload_regions):
         path = f"regions[{index}]"
         if not isinstance(raw, dict):
             continue
+        banks_raw = raw.get("banks", [])
+        if isinstance(banks_raw, list):
+            for bank in banks_raw:
+                if isinstance(bank, dict) and isinstance(bank.get("bic8"), str):
+                    bic = bank["bic8"].strip().upper()
+                    if bic_is_valid(bic):
+                        candidate_owned.add(bic[:8])
         forbidden = raw.get("forbidden_bics", [])
         if not isinstance(forbidden, list):
             continue
-        if any(not isinstance(b, str) for b in forbidden):
-            raise ValueError(f"{path}.forbidden_bics: expected strings")
-        candidate_forbidden.update(b.upper()[:8] for b in forbidden)
+        for forbidden_index, value in enumerate(forbidden):
+            if not isinstance(value, str):
+                raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: expected a string")
+            raw_bic = value.strip().upper()
+            if raw_bic in _LEGACY_FORBIDDEN_BICS and raw_bic in forbidden_global:
+                candidate_forbidden.add(raw_bic)
+            elif bic_is_valid(raw_bic):
+                candidate_forbidden.add(raw_bic[:8])
+            else:
+                raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: malformed BIC {value!r}")
+    overlap = (set(existing_bics) | candidate_owned) & candidate_forbidden
+    if overlap:
+        raise ValueError(f"forbidden_bics overlap owned BICs: {', '.join(sorted(overlap))}")
     forbidden_global |= candidate_forbidden
     candidate_names: set[str] = set()
     candidate_bics: dict[str, str] = {}
@@ -908,141 +946,93 @@ def _fold_row_shape(row: tuple[str, ...]) -> dict:
         fields["bic_only"] = False
     else:
         if not isinstance(fields["bic_only"], bool):
-            raise ValueError("folded 14-field row bic_only must be a boolean")
+            raise ValueError("folded 14-field row bic_only must be the boolean literal True or False")
     return fields
 
 
 def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str]:
-    """Bind the committed seed rows to the results that were validated.
-
-    ``validate`` gates a JSON file, but the fold into seed.py is done by hand,
-    so nothing previously proved the rows being committed were the rows that
-    passed. Everything this fold *added* must correspond to a validated record,
-    and every validated record must appear. Pre-existing rows are history and
-    are not re-checked.
-    """
+    """Bind every folded row to the validated result using canonical identities."""
     problems: list[str] = []
-    head = set(_ssi_rows(head_source))
-    added = [row for row in _ssi_rows(folded_source) if row not in head]
+    head_rows = _ssi_rows(head_source)
+    folded_rows = _ssi_rows(folded_source)
+    head_set = set(head_rows)
+    added = [row for row in folded_rows if row not in head_set]
 
+    def parse_rows(rows: list[tuple[str, ...]], label: str, report_errors: bool = True) -> tuple[dict, set]:
+        parsed: dict[tuple[str, str, str], dict] = {}
+        duplicates: set[tuple[str, str, str]] = set()
+        for index, row in enumerate(rows):
+            try:
+                fields = _fold_row_shape(row)
+                key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
+            except (ValueError, TypeError, AttributeError) as exc:
+                if report_errors:
+                    problems.append(f"{label}[{index}]: {exc}")
+                continue
+            if key in parsed:
+                duplicates.add(key)
+                if report_errors:
+                    problems.append(f"{label}[{index}]: duplicate canonical fold key {key[0]}/{key[1]}/{key[2]}")
+            else:
+                parsed[key] = fields
+        return parsed, duplicates
+
+    head_by_key, _ = parse_rows(head_rows, "head row", report_errors=False)
+    added_by_key, _ = parse_rows(added, "added row")
     expected: dict[tuple[str, str, str], dict] = {}
     for bank in results.get("banks", []):
-        ben_bic = str(bank.get("bic", "")).upper()
-        ben_bic11 = ben_bic if len(ben_bic) == 11 else ben_bic[:8] + "XXX"
+        try:
+            ben = _canonical_bic11(bank.get("bic"), "validated beneficiary BIC")
+        except (ValueError, TypeError) as exc:
+            problems.append(str(exc))
+            continue
         for rec in bank.get("records", []):
-            int_bic = str(rec.get("int_bic", "")).upper()
-            int_bic11 = int_bic if len(int_bic) == 11 else int_bic[:8] + "XXX"
-            key = (ben_bic11, str(rec.get("currency", "")).upper(), int_bic11)
+            try:
+                intermediary = _canonical_bic11(rec.get("int_bic"), "validated intermediary BIC")
+            except (ValueError, TypeError) as exc:
+                problems.append(str(exc))
+                continue
+            key = (ben, str(rec.get("currency", "")).strip().upper(), intermediary)
+            if key in expected:
+                problems.append(f"validated results contain duplicate canonical fold key {ben}/{key[1]}/{intermediary}")
             expected[key] = {"bank": bank, "record": rec}
 
-    seen: set[tuple[str, str, str]] = set()
-    for row in added:
-        if len(row) < 12:
-            problems.append(
-                f"folded row {row[0] if row else '?'} has {len(row)} fields; "
-                f"a sourced row carries 12 (as_of and status included)"
-            )
+    for key, fields in added_by_key.items():
+        item = expected.get(key)
+        if item is None:
+            problems.append(f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the validated results — every committed row must have passed validation")
             continue
-        key = (_literal(row[0]), _literal(row[2]), _literal(row[3]))
-        if key not in expected:
-            problems.append(
-                f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the "
-                f"validated results — every committed row must have passed validation"
-            )
-            continue
-        seen.add(key)
-        rec = expected[key]["record"]
-        bank = expected[key]["bank"]
-        # A bic_only fold must actually carry the flag (as provenance[3]);
-        # an ordinary fold must not. The flag lives only in the 14th field of
-        # a 14-field tuple; anything else — a provenance field, a verifier
-        # name spelled "True" — must not be mistaken for it. The 14th field
-        # itself must be the boolean literal True or False: the seed reads it
-        # with an isinstance-bool check, so a string "False" would be a
-        # runtime error there while this verifier accepted the row as
-        # ordinary. Reject it here instead.
-        row_bic_only = len(row) == 14 and row[13] == "True"
-        if len(row) == 14 and row[13] not in ("True", "False"):
-            problems.append(
-                f"{key[0]}/{key[1]}: the 14th field of a 14-field row must be "
-                f"the boolean literal True or False, got {row[13]!r}"
-            )
-        rec_bic_only = rec.get("bic_only") is True
-        if rec_bic_only and not row_bic_only:
-            problems.append(
-                f"{key[0]}/{key[1]}: folded row is missing the bic_only flag "
-                f"the validated record carries"
-            )
-        if row_bic_only and not rec_bic_only:
-            problems.append(
-                f"{key[0]}/{key[1]}: folded row carries bic_only but the "
-                f"validated record does not"
-            )
-        if rec_bic_only:
-            # BIC-only rows have no accounts, charge code, or value date in
-            # the seed — comparing them against the validated record would
-            # report every legitimate None as a mismatch. Their shape was
-            # already checked by validate_results; verify the name, the
-            # correspondent, the source citation, and the provenance only.
-            if _literal(row[1]) != bank.get("name", ""):
-                problems.append(
-                    f"{key[0]}/{key[1]}: folded beneficiary name {_literal(row[1])!r} "
-                    f"does not match the validated {bank.get('name', '')!r}"
-                )
-            if _literal(row[4]) != rec.get("correspondent", ""):
-                problems.append(
-                    f"{key[0]}/{key[1]}: folded correspondent {_literal(row[4])!r} "
-                    f"does not match the validated {rec.get('correspondent', '')!r}"
-                )
-            for field, label in (
-                (5, "nostro"),
-                (6, "with_an"),
-                (7, "charge code"),
-                (8, "value date"),
-            ):
-                if _literal(row[field]) is not None:
-                    problems.append(
-                        f"{key[0]}/{key[1]}: bic_only row must store None for "
-                        f"{label}, folded {_literal(row[field])!r}"
-                    )
+        bank, rec = item["bank"], item["record"]
+        bic_only = rec.get("bic_only") is True
+        if fields["bic_only"] != bic_only:
+            if bic_only and not fields["bic_only"]:
+                problems.append(f"{key[0]}/{key[1]}: folded row is missing the bic_only flag the validated record carries")
+            elif fields["bic_only"] and not bic_only:
+                problems.append(f"{key[0]}/{key[1]}: folded row carries bic_only but the validated record does not")
+            else:
+                problems.append(f"{key[0]}/{key[1]}: folded bic_only {fields['bic_only']!r} does not match validated {bic_only!r}")
+        comparisons = {"beneficiary_name": bank.get("name", ""), "correspondent": rec.get("correspondent", ""), "as_of": rec.get("as_of", ""), "status": str(rec.get("status", "")).strip().lower()}
+        if not bic_only:
+            comparisons.update({"nostro": rec.get("nostro", ""), "with_an": rec.get("with_an", ""), "charge_code": str(rec.get("charge_code", "")).upper(), "value_date": rec.get("value_date", "")})
         else:
-            for index, (label, want) in enumerate([
-                ("beneficiary name", bank.get("name", "")),
-                ("correspondent", rec.get("correspondent", "")),
-                ("nostro", rec.get("nostro", "")),
-                ("with_an", rec.get("with_an", "")),
-                ("charge code", str(rec.get("charge_code", "")).upper()),
-                ("value date", rec.get("value_date", "")),
-            ]):
-                field = [1, 4, 5, 6, 7, 8][index]
-                got = _literal(row[field])
-                if got != want:
-                    problems.append(
-                        f"{key[0]}/{key[1]}: folded {label} {got!r} does not match "
-                        f"the validated {want!r}"
-                    )
-        if _literal(row[10]) != rec.get("as_of", ""):
-            problems.append(
-                f"{key[0]}/{key[1]}: folded as_of {_literal(row[10])!r} does not "
-                f"match the validated {rec.get('as_of', '')!r}"
-            )
-        if _literal(row[11]) != str(rec.get("status", "")).lower():
-            problems.append(
-                f"{key[0]}/{key[1]}: folded status {_literal(row[11])!r} does not "
-                f"match the validated {str(rec.get('status', '')).lower()!r}"
-            )
+            comparisons.update({"nostro": None, "with_an": None, "charge_code": None, "value_date": None})
+        for field, want in comparisons.items():
+            if fields[field] != want:
+                if bic_only and field in {"nostro", "with_an", "charge_code", "value_date"}:
+                    label = "charge code" if field == "charge_code" else field
+                    problems.append(f"{key[0]}/{key[1]}: bic_only row must store None for {label}, folded {fields[field]!r}")
+                else:
+                    problems.append(f"{key[0]}/{key[1]}: folded {field} {fields[field]!r} does not match validated {want!r}")
+        verified = rec.get("verified_by")
+        if fields["verified_by"] != verified:
+            problems.append(f"{key[0]}/{key[1]}: folded verified_by {fields['verified_by']!r} does not match validated {verified!r}")
         source = str(rec.get("source", ""))
-        if source and source not in row[9]:
-            problems.append(
-                f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}"
-            )
+        if source and source not in str(fields["notes"]):
+            problems.append(f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}")
 
-    head_keys = {(_literal(r[0]), _literal(r[2]), _literal(r[3])) for r in head if len(r) >= 4}
     for key in expected:
-        if key not in seen and key not in head_keys:
-            problems.append(
-                f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py"
-            )
+        if key not in added_by_key and key not in head_by_key:
+            problems.append(f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py")
     return problems
 
 
