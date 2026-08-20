@@ -763,10 +763,9 @@ class TestSouthAsiaSsiCoverage:
 
 
 class TestSeedRollout:
-    def test_ordinary_row_restated_to_bic_only_sheds_accounts(self):
-        """A legacy ordinary row whose seed tuple is now bic_only must lose
-        its account/charge/value fields on re-seed, or it would violate
-        ck_ssi_bic_only_has_no_accounts at flush."""
+    def test_operator_owned_ordinary_row_is_preserved_on_bic_only_conflict(self):
+        """An unknown-owner legacy row is preserved when the source changes
+        shape; clearing its settlement data would be destructive."""
         engine = create_engine(
             "sqlite://",
             connect_args={"check_same_thread": False},
@@ -800,18 +799,19 @@ class TestSeedRollout:
                 currency="USD",
                 intermediary_bic="MRMDUS33XXX",
             ).one()
-            assert row.bic_only is True
-            assert row.intermediary_account is None
-            assert row.beneficiary_account is None
-            assert row.charge_code is None
-            assert row.value_date is None
-            assert result["ssi_provenance_updated"] >= 1
+            assert row.bic_only is False
+            assert row.intermediary_account == "ACCT-LEGACY"
+            assert row.beneficiary_account == "ACCT-LEGACY-BENE"
+            assert row.charge_code == "SHA"
+            assert row.value_date == "spot"
+            assert result.get("ssi_provenance_updated", 0) == 0
         finally:
             session.close()
             engine.dispose()
 
-    def test_reseed_replaces_a_stale_machine_source_citation(self):
-        """A sourced seed update must not leave its old citation attached."""
+    def test_reseed_preserves_an_unknown_owner_on_bic_only_conflict(self):
+        """Without a fingerprint, a shape-changing source update is a
+        conflict, not permission to rewrite the existing settlement row."""
         from app.services.seed import SSI_RECORDS, seed_if_empty
 
         target = next(
@@ -855,10 +855,12 @@ class TestSeedRollout:
             row = session.query(SSI).filter_by(
                 beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
             ).one()
-            assert row.bic_only is True
-            assert row.notes == source_notes
-            assert row.as_of == source_as_of
+            assert row.bic_only is False
+            assert row.notes == "Source: superseded correspondent list."
+            assert row.as_of == "2020-01-01"
             assert row.status == source_status
+            assert row.intermediary_account == "ACCT-OLD"
+            assert row.beneficiary_account == "ACCT-OLD-BENE"
         finally:
             session.close()
             engine.dispose()

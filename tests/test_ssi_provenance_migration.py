@@ -499,6 +499,13 @@ class TestBicOnlyMigration:
             "SELECT name FROM sqlite_master WHERE type='trigger'")]
         assert "ssi_as_of_insert" in triggers
         assert "ssi_as_of_update" in triggers
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, charge_code, value_date) VALUES "
+                "('AAAAUS33XXX', 'USD', 'CITIUS33XXX', 'illustrative', "
+                "'Source: test', 'not-a-date', 'SHA', 'spot')"
+            )
         connection.close()
 
     def test_downgrade_refuses_while_bic_only_rows_exist(self, tmp_path):

@@ -5429,6 +5429,20 @@ def seed_if_empty(session) -> dict:
                 and existing.verified_by == verified_by
                 and existing.bic_only == bic_only
             )
+            # A source shape change is destructive for an ordinary row. A
+            # fingerprint mismatch means an operator may have supplied real
+            # settlement data after the last seed, so preserve the whole row
+            # and require an explicit human resolution instead of clearing
+            # accounts and terms to satisfy the new bic_only shape.
+            if not existing.bic_only and bic_only and not prior_snapshot_unchanged:
+                logger.warning(
+                    "Preserving operator-modified SSI during ordinary-to-"
+                    "bic_only seed transition: %s/%s/%s; manual review required",
+                    existing.beneficiary_bic,
+                    existing.currency,
+                    existing.intermediary_bic,
+                )
+                continue
             # Reconciliation policy for an existing key, decided explicitly:
             #
             #   * Ordinary -> ordinary: the row keeps its OWNER's settlement
