@@ -10,7 +10,6 @@ major corridors; treat confidence levels as advisory.
 import hashlib
 import json
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -464,12 +463,6 @@ _SSI_REAL_NOTE = (
 )
 
 
-def _is_seed_owned_ssi(row: SSI) -> bool:
-    """Return whether the row carries the seeder's machine-source marker."""
-    notes = (row.notes or "").strip()
-    return notes.startswith("Source:") and notes.endswith(_SSI_REAL_NOTE) and "\n" not in notes
-
-
 def _seed_fingerprint(row: SSI) -> str:
     """Hash the complete persisted SSI snapshot owned by the seeder."""
     values = (
@@ -490,18 +483,6 @@ def _seed_fingerprint(row: SSI) -> str:
     )
     payload = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _legacy_seed_row_is_unmodified(row: SSI) -> bool:
-    """Recognize pre-fingerprint seed rows without deleting corrections."""
-    if not _is_seed_owned_ssi(row):
-        return False
-    if row.bic_only:
-        return True
-    return row.charge_code == "SHA" and row.value_date == "spot" and all(
-        isinstance(account, str) and re.fullmatch(r"ACCT-\d+", account)
-        for account in (row.intermediary_account, row.beneficiary_account)
-    )
 
 
 def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
@@ -5305,9 +5286,10 @@ def _apply_seed_bic_aliases(session) -> None:
 def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> int:
     """Delete source-owned SSIs that no longer belong to the curated set.
 
-    Operator-created or corrected rows are deliberately left alone. New seed
-    rows carry a snapshot fingerprint; pre-fingerprint rows are retired only
-    when they still have the exact machine citation and placeholder shape.
+    Operator-created or corrected rows are deliberately left alone. Rows
+    without a fingerprint are legacy/unreviewed and are never deleted; only a
+    non-null fingerprint that still matches the complete persisted snapshot
+    authorizes retirement.
     The flush keeps this reconciliation in the same transaction as the
     upserts and the final commit in ``seed_if_empty`` makes the rollout
     atomic.
@@ -5320,8 +5302,7 @@ def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> 
             row.seed_fingerprint is not None
             and row.seed_fingerprint == _seed_fingerprint(row)
         )
-        legacy_untouched = row.seed_fingerprint is None and _legacy_seed_row_is_unmodified(row)
-        if key not in source_keys and (untouched or legacy_untouched):
+        if key not in source_keys and untouched:
             session.delete(row)
             retired += 1
     if retired:
@@ -5434,8 +5415,19 @@ def seed_if_empty(session) -> dict:
                 prior_fingerprint is not None
                 and prior_fingerprint == _seed_fingerprint(existing)
             )
-            legacy_snapshot_unchanged = (
-                prior_fingerprint is None and _legacy_seed_row_is_unmodified(existing)
+            legacy_snapshot_unchanged = prior_fingerprint is None and (
+                existing.beneficiary_bank_name == ben_name
+                and existing.currency == ccy
+                and existing.intermediary_bank_name == int_name
+                and existing.intermediary_account == int_acct
+                and existing.beneficiary_account == ben_acct
+                and existing.charge_code == charge
+                and existing.value_date == vdate
+                and existing.notes == notes
+                and existing.as_of == as_of
+                and existing.status == status
+                and existing.verified_by == verified_by
+                and existing.bic_only == bic_only
             )
             # Reconciliation policy for an existing key, decided explicitly:
             #

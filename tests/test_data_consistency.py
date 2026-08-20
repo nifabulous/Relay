@@ -1002,7 +1002,7 @@ class TestSeedRollout:
             engine.dispose()
 
     def test_reseed_removes_stale_seed_owned_rows(self, monkeypatch):
-        """Rows removed from the curated source set must stop being routable."""
+        """Only fingerprinted, untouched rows removed from the source set retire."""
         import app.services.seed as seed_module
 
         current = next(
@@ -1023,6 +1023,10 @@ class TestSeedRollout:
             and row[2] == "EUR"
             and row[3] == "BBRUBEBBXXX"
         )
+        legacy_bic_only = next(
+            row for row in seed_module.SSI_RECORDS
+            if len(row) > 13 and row[13] is True
+        )
         monkeypatch.setattr(seed_module, "SSI_RECORDS", (current,))
 
         engine = create_engine(
@@ -1035,7 +1039,7 @@ class TestSeedRollout:
         Base.metadata.create_all(bind=engine)
         session = Session()
         try:
-            session.add(SSI(
+            removed_row = SSI(
                 beneficiary_bic=removed[0],
                 beneficiary_bank_name=removed[1],
                 currency=removed[2],
@@ -1048,7 +1052,12 @@ class TestSeedRollout:
                 notes=removed[9],
                 as_of=removed[10],
                 status=removed[11],
-            ))
+                bic_only=False,
+            )
+            # This represents a row written by the fingerprinted seeder on a
+            # prior run; legacy rows without this snapshot are preserved.
+            removed_row.seed_fingerprint = seed_module._seed_fingerprint(removed_row)
+            session.add(removed_row)
             session.add(SSI(
                 beneficiary_bic=operator_corrected[0],
                 beneficiary_bank_name=operator_corrected[1],
@@ -1062,6 +1071,17 @@ class TestSeedRollout:
                 notes=operator_corrected[9],
                 as_of=operator_corrected[10],
                 status=operator_corrected[11],
+            ))
+            session.add(SSI(
+                beneficiary_bic=legacy_bic_only[0],
+                beneficiary_bank_name=legacy_bic_only[1],
+                currency=legacy_bic_only[2],
+                intermediary_bic=legacy_bic_only[3],
+                intermediary_bank_name=legacy_bic_only[4],
+                notes=legacy_bic_only[9],
+                as_of=legacy_bic_only[10],
+                status=legacy_bic_only[11],
+                bic_only=True,
             ))
             session.commit()
 
@@ -1079,6 +1099,11 @@ class TestSeedRollout:
                 intermediary_bic=operator_corrected[3],
             ).one()
             assert preserved.beneficiary_account == "REAL-OPERATOR-ACCOUNT"
+            assert session.query(SSI).filter_by(
+                beneficiary_bic=legacy_bic_only[0],
+                currency=legacy_bic_only[2],
+                intermediary_bic=legacy_bic_only[3],
+            ).one().bic_only is True
         finally:
             session.close()
             engine.dispose()
