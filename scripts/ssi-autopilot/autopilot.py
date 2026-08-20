@@ -157,7 +157,10 @@ def _record_sort_key(record: dict) -> tuple[str, ...]:
 
 
 def record_digest(records: list[dict]) -> str:
-    ordered = sorted((dict(record) for record in records), key=_record_sort_key)
+    ordered = sorted(
+        (dict(record) for record in records),
+        key=lambda record: (_record_sort_key(record), _canonical_json(record)),
+    )
     return hashlib.sha256(_canonical_json(ordered).encode("utf-8")).hexdigest()
 
 
@@ -329,12 +332,16 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
     if identity is None:
         raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
+    if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
+        raise ValueError(f"{path}.bic8: test identity is not admissible in the production manifest")
     if _canonical_name(name) != _canonical_name(str(identity["name"])):
         raise ValueError(f"{path}.name: does not match the operator-approved identity for BIC {bic}")
     if country != identity["country"]:
         raise ValueError(f"{path}.country: does not match the operator-approved identity for BIC {bic}")
     trusted = set(identity["domains"])
-    if set(domains) != trusted:
+    if seedable and set(domains) != trusted:
+        raise ValueError(f"{path}.source_domains: domains are not trusted for BIC {bic}")
+    if not seedable and domains and set(domains) != trusted:
         raise ValueError(f"{path}.source_domains: domains are not trusted for BIC {bic}")
     if seedable and not domains:
         raise ValueError(f"{path}.source_domains: seedable bank requires source domains")
@@ -665,6 +672,11 @@ class ValidationError(Exception):
 
 def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
     problems: list[str] = []
+    if not isinstance(results, dict):
+        return ["results: expected an object"]
+    result_banks = results.get("banks", [])
+    if not isinstance(result_banks, list):
+        return ["results.banks: expected a list"]
     try:
         region = get_region(manifest, results.get("region", ""))
     except SystemExit:
@@ -675,7 +687,10 @@ def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
         if "admitted_record_digest" in bank
     }
     supplied: dict[str, dict] = {}
-    for index, raw_bank in enumerate(results.get("banks", [])):
+    for index, raw_bank in enumerate(result_banks):
+        if not isinstance(raw_bank, dict):
+            problems.append(f"results.banks[{index}]: expected an object")
+            continue
         try:
             bic = _canonical_bic8(raw_bank.get("bic"), f"banks[{index}].bic")
         except (AttributeError, ValueError) as exc:
@@ -1119,19 +1134,12 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         source = str(rec.get("source", ""))
         note_text = str(fields["notes"])
         as_of = str(rec.get("as_of", ""))
-        expected_prefix = f"Source: {source} (as of {as_of}). "
-        if source and source not in note_text:
-            problems.append(f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}")
-        if source and not note_text.lstrip('"').startswith(expected_prefix):
-            problems.append(f"{key[0]}/{key[1]}: folded notes do not match the canonical source prefix")
-        if source and not any(
-            marker in note_text
-            for marker in (
-                "Sourced from bank-published SSI page. Verify current values before use.",
-                "_SSI_REAL_NOTE",
-            )
-        ):
-            problems.append(f"{key[0]}/{key[1]}: folded notes do not contain the required provenance note")
+        expected_notes = (
+            f"Source: {source} (as of {as_of}). "
+            "Sourced from bank-published SSI page. Verify current values before use."
+        )
+        if source and note_text.strip('"') != expected_notes:
+            problems.append(f"{key[0]}/{key[1]}: folded notes do not exactly match the canonical citation")
 
     for key in expected:
         if key not in added_by_key and key not in head_by_key:

@@ -255,7 +255,7 @@ EBILAEAD_BIC_ONLY_ROW = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
 def test_fold_notes_tampering_is_rejected():
     tampered = EBILAEAD_BIC_ONLY_ROW.replace("_SSI_REAL_NOTE", '"Tampered provenance."')
     problems = autopilot.verify_fold(gulf_bic_only_results(), SEED_HEAD, _folded(tampered))
-    assert any("required provenance note" in problem for problem in problems)
+    assert any("exactly match the canonical citation" in problem for problem in problems)
 
 
 def test_bic_only_fold_matching_the_validated_results_passes():
@@ -982,6 +982,13 @@ def test_legacy_bank_without_source_domains_can_be_readmitted(tmp_path, monkeypa
     assert summary["unchanged_banks"] == 1
 
 
+def test_test_identity_is_rejected_by_production_admission(monkeypatch):
+    production = autopilot.Path(autopilot.__file__).resolve().parent / "regions.json"
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", production)
+    with pytest.raises(ValueError, match="test identity"):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [admission_bank()]}]})
+
+
 def test_test_identity_is_not_trusted_in_production_configuration(monkeypatch):
     production = autopilot.Path(autopilot.__file__).resolve().parent / "regions.json"
     monkeypatch.setattr(autopilot, "REGIONS_FILE", production)
@@ -1005,6 +1012,31 @@ def test_forbidden_bic_cannot_overlap_existing_owner(tmp_path, monkeypatch):
     monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
     with pytest.raises(ValueError, match="overlap owned BICs"):
         autopilot.admit_candidates({"regions": [{"name": "new-region", "label": "New", "countries": ["PH"], "masked_block": 92000100, "note": "x", "forbidden_bics": ["TESTPHMM"], "banks": []}]})
+
+
+def test_non_seedable_bank_without_domains_is_admissible(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank(bic="NEWPPHMM")
+    bank["name"] = "New Philippine Bank"
+    bank["seedable"] = False
+    bank["records"] = []
+    bank.pop("source_domains")
+    payload = {"regions": [{"name": "new-region", "label": "New", "countries": ["PH"], "masked_block": 92000100, "note": "x", "banks": [bank]}]}
+    assert autopilot.admit_candidates(payload)["added_banks"] == 1
+
+
+def test_malformed_admitted_results_containers_are_controlled():
+    assert autopilot.validate_admitted_results(None, MANIFEST) == ["results: expected an object"]
+    assert autopilot.validate_admitted_results({"region": "x", "banks": None}, MANIFEST) == ["results.banks: expected a list"]
+    assert autopilot.validate_admitted_results({"region": "southeast-asia", "banks": [None]}, MANIFEST) == ["results.banks[0]: expected an object"]
+
+
+def test_bic_only_changes_digest_order_independently():
+    first = {"currency": "USD", "int_bic": "CITIUS33XXX", "bic_only": False}
+    second = dict(first, bic_only=True)
+    assert autopilot.record_digest([first, second]) == autopilot.record_digest([second, first])
 
 
 def test_malformed_admitted_records_are_rejected_without_traceback():
