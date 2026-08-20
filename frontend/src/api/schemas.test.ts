@@ -1,11 +1,60 @@
 import { describe, it, expect } from "vitest";
-import { SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
+import { SSIRecordSchema, SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
 import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
 } from "./schemas";
 import { TutorRequestSchema, TutorResponseSchema } from "./schemas";
 import { usdFedwireRailFixture, interacETransferFixture, swiftGpiInternationalFixture } from "../features/explore/schemeFixtures";
+
+describe("SSIRecord bic_only schema", () => {
+  it("rejects malformed bic_only values instead of defaulting to ordinary", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "EBILAEADXXX",
+      currency: "USD",
+      intermediary_bic: "BOFAUS3NXXX",
+      bic_only: "False",
+    })).toThrow();
+  });
+
+  it("defaults a missing bic_only field to ordinary for older backends", () => {
+    expect(SSIRecordSchema.parse({
+      beneficiary_bic: "GTBINGLAXXX",
+      currency: "USD",
+      intermediary_bic: "CITIUS33XXX",
+      charge_code: "SHA",
+      value_date: "spot",
+    }).bic_only).toBe(false);
+  });
+
+  it("rejects an ordinary record without settlement terms", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "GTBINGLAXXX",
+      currency: "USD",
+      intermediary_bic: "CITIUS33XXX",
+    })).toThrow();
+  });
+
+  it("rejects settlement fields on a BIC-only record", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "EBILAEADXXX",
+      currency: "USD",
+      intermediary_bic: "BOFAUS3NXXX",
+      bic_only: true,
+      charge_code: "SHA",
+    })).toThrow();
+  });
+
+  it("treats whitespace-only settlement terms as missing", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "GTBINGLAXXX",
+      currency: "USD",
+      intermediary_bic: "CITIUS33XXX",
+      charge_code: "   ",
+      value_date: "\t",
+    })).toThrow();
+  });
+});
 
 describe("SuggestedIntermediary schema", () => {
   it("parses bank as a string (matches Pydantic IntermediarySuggestion.bank: str)", () => {

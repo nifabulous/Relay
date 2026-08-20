@@ -227,6 +227,7 @@ def prepare_payment(
             as_of=r.as_of,
             status=r.status,
             verified_by=r.verified_by,
+            bic_only=r.bic_only,
         )
         for r in ssi_rows
     ]

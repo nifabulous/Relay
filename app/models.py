@@ -1,6 +1,7 @@
 """SQLAlchemy models for the bank directory and the corridor routing table."""
 from sqlalchemy import (
     DDL,
+    Boolean,
     CheckConstraint,
     Column,
     Index,
@@ -8,6 +9,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     event,
+    text,
 )
 
 from .db import Base
@@ -159,8 +161,13 @@ class SSI(Base):
     intermediary_bank_name = Column(String(200))
     intermediary_account = Column(String(34))  # Nostro account at intermediary
     beneficiary_account = Column(String(34))   # credit-to account
-    charge_code = Column(String(3), default="SHA")  # OUR / SHA / BEN
-    value_date = Column(String(10), default="spot")  # same-day / spot / T+n
+    # No Python-side default here, on purpose: SQLAlchemy applies a
+    # Column(default=...) even when the attribute is explicitly None, which
+    # would rewrite a bic_only row's absent charge/value date into "SHA"/
+    # "spot" and trip ck_ssi_bic_only_has_no_accounts. Callers that want
+    # defaults supply them (the importer and seed always do).
+    charge_code = Column(String(3))  # OUR / SHA / BEN
+    value_date = Column(String(10))  # same-day / spot / T+n
     notes = Column(String(500))
     # Provenance. `status` records what is known about the source, never how
     # old it is; there is no age threshold anywhere. A sourced status must be
@@ -178,6 +185,22 @@ class SSI(Base):
     # listener downgrades it rather than storing one.
     verified_by = Column(String(120))
     status = Column(String(12), nullable=False, default="illustrative")
+    # BIC-only rows assert *correspondent availability* only: the source (a
+    # correspondent-bank-charges list, a names-only directory) says which
+    # banks a beneficiary settles through but publishes no account numbers,
+    # charge codes, or value dates for them. Such a row must not present any
+    # of the fields it never established, routing must not select it as a
+    # settlement instruction, and the frontend must not render it as one.
+    # server_default is dialect-neutral text on purpose: `"0"` here compiles
+    # to DEFAULT 0 on PostgreSQL, where an integer literal is not a Boolean
+    # expression and the CREATE TABLE would fail. "false" is valid on both
+    # engines (SQLite accepts FALSE as an alias for the integer 0).
+    bic_only = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Snapshot of the row as last written by the curated seeder. It lets a
+    # later source reconciliation distinguish an untouched machine row from
+    # one an operator has corrected, without treating free-form notes as an
+    # ownership flag.
+    seed_fingerprint = Column(String(64))
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),
@@ -243,6 +266,40 @@ class SSI(Base):
         CheckConstraint(
             "status = 'published' OR verified_by IS NULL",
             name="ck_ssi_verifier_is_only_for_published",
+        ),
+        # BIC-only rows carry no account numbers, charge codes, or value
+        # dates — none of those were published. Enforced in the schema so a
+        # direct ORM/Core write cannot slip fabricated fields in next to a
+        # "BIC-level only" claim.
+        #
+        # The leading test is `NOT bic_only`, NOT `bic_only = 0`: PostgreSQL
+        # has no implicit integer-to-boolean coercion, so `bic_only = 0`
+        # compiles to `boolean = integer`, which has no operator and aborts
+        # CREATE TABLE/ALTER TABLE on the production engine. NOT works on
+        # both engines.
+        CheckConstraint(
+            "NOT bic_only OR (intermediary_account IS NULL AND "
+            "beneficiary_account IS NULL AND charge_code IS NULL AND "
+            "value_date IS NULL)",
+            name="ck_ssi_bic_only_has_no_accounts",
+        ),
+        # The mirror image of the constraint above: an ordinary row IS a
+        # settlement instruction, and routing selects exactly these rows, so
+        # it must carry the charge terms and settlement timing an instruction
+        # needs. The seed and the importer always supply them; this catches a
+        # direct ORM/Core write that would otherwise create a routable row
+        # with no charge code or value date.
+        #
+        # The leading test is `bic_only`, the boolean itself: `bic_only = 1`
+        # is `boolean = integer` on PostgreSQL (no operator, CREATE TABLE
+        # aborts), while a bare boolean column is a valid operand of OR on
+        # both engines.
+        CheckConstraint(
+            "bic_only OR (charge_code IS NOT NULL AND "
+            "ltrim(rtrim(charge_code, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '' AND "
+            "value_date IS NOT NULL AND "
+            "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')",
+            name="ck_ssi_ordinary_has_settlement_terms",
         ),
     )
 
@@ -353,12 +410,31 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     from datetime import timezone as _timezone
 
     from .schemas import SSI_STATUSES
+    from .ssi_terms import (
+        VALID_CHARGE_CODES,
+        VALID_VALUE_DATES,
+        normalize_charge_code,
+        normalize_value_date,
+    )
 
     # A Column default is applied when the INSERT is compiled, which is after
     # this hook runs, so an unset status arrives here as None. Apply it now
     # rather than rejecting a row that would have defaulted correctly.
     if target.status is None:
         target.status = "illustrative"
+
+    target.charge_code = normalize_charge_code(target.charge_code)
+    if target.charge_code is not None and target.charge_code not in VALID_CHARGE_CODES:
+        raise ValueError(
+            f"SSI.charge_code {target.charge_code!r} must be one of "
+            f"{sorted(VALID_CHARGE_CODES)}"
+        )
+    target.value_date = normalize_value_date(target.value_date)
+    if target.value_date is not None and target.value_date not in VALID_VALUE_DATES:
+        raise ValueError(
+            f"SSI.value_date {target.value_date!r} must be one of "
+            f"{sorted(VALID_VALUE_DATES)}"
+        )
 
     if target.status not in SSI_STATUSES:
         raise ValueError(

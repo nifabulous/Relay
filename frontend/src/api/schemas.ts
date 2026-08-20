@@ -20,7 +20,10 @@ import { z } from "zod";
 const optionalString = z
   .string()
   .nullish()
-  .transform((v) => (v == null ? undefined : v));
+  .transform((v) => {
+    const trimmed = v?.trim();
+    return trimmed || undefined;
+  });
 
 /** A string field that may be null/missing and should never throw. */
 const safeOptionalString = optionalString.catch(undefined);
@@ -147,7 +150,7 @@ export type RouteResponse = z.infer<typeof RouteResponseSchema>;
  * SSI
  * ------------------------------------------------------------------ */
 
-export const SSIRecordSchema = z
+const SSIRecordShapeSchema = z
   .object({
     beneficiary_bic: z.string().catch(""),
     beneficiary_bank_name: safeOptionalString,
@@ -156,8 +159,16 @@ export const SSIRecordSchema = z
     intermediary_bank_name: safeOptionalString,
     intermediary_account: safeOptionalString,
     beneficiary_account: safeOptionalString,
-    charge_code: z.string().catch(""),
-    value_date: z.string().catch(""),
+    charge_code: safeOptionalString,
+    value_date: safeOptionalString,
+    // A BIC-only row names the correspondents a bank settles through but
+    // carries no accounts, charge codes, or value dates — it is
+    // informational, never a selectable settlement instruction. A missing
+    // field (older backend) defaults to ordinary, but a malformed value is
+    // REJECTED, not coerced: `catch(false)` would silently re-badge a
+    // BIC-only record as an ordinary settlement instruction, which is
+    // exactly the failure this flag exists to prevent.
+    bic_only: z.boolean().default(false),
     notes: safeOptionalString,
     // Provenance. An older backend sends no status; that is precisely the
     // "we do not know" case, so it falls back to "unverified" rather than
@@ -167,6 +178,38 @@ export const SSIRecordSchema = z
     intermediary_settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();
+
+export const SSIRecordSchema = SSIRecordShapeSchema.superRefine((record, ctx) => {
+  const settlementFields = [
+    ["intermediary_account", record.intermediary_account],
+    ["beneficiary_account", record.beneficiary_account],
+    ["charge_code", record.charge_code],
+    ["value_date", record.value_date],
+  ] as const;
+
+  if (record.bic_only) {
+    for (const [field, value] of settlementFields) {
+      if (value != null && value !== "") {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: "BIC-only records cannot contain settlement fields",
+        });
+      }
+    }
+    return;
+  }
+
+  for (const field of ["charge_code", "value_date"] as const) {
+    if (!record[field]) {
+      ctx.addIssue({
+        code: "custom",
+        path: [field],
+        message: "Ordinary settlement instructions require this field",
+      });
+    }
+  }
+});
 
 export type SSIRecord = z.infer<typeof SSIRecordSchema>;
 
