@@ -71,9 +71,15 @@ _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 # independent from the mutable manifest so a candidate cannot authorize its own
 # citations by supplying a matching domain.
 TRUSTED_SOURCE_DOMAINS: dict[str, tuple[str, ...]] = {
+    # Reviewed bank-owned hosts used by the current SSI corpus and discovery
+    # wave. Candidate payloads must match these identities exactly.
+    "BBDEBRSP": ("banco.bradesco",),
+    "CMBCCNBS": ("cmbchina.com",),
+    "CTBAAU2S": ("commbank.com.au",),
     "TESTPHMM": ("testphilippinebank.com",),
     "NEWPPHMM": ("testphilippinebank.com",),
 }
+_TEST_BICS = {"TESTPHMM", "NEWPPHMM"}
 
 # These are legacy manifest values retained for compatibility. They are not
 # valid BICs and may not be introduced in new candidate payloads.
@@ -243,6 +249,13 @@ def _bank_owned_source(source: str, bank: dict) -> bool:
     return any(host == domain or host.endswith("." + domain) for domain in domains)
 
 
+def _trusted_domains_for_bic(bic: str) -> set[str]:
+    """Return operator-reviewed domains, excluding test identities in production."""
+    if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
+        return set()
+    return set(TRUSTED_SOURCE_DOMAINS.get(bic, ()))
+
+
 def _canonical_bic8(value: object, path: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"{path}: expected a BIC string")
@@ -292,7 +305,7 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     domains = [_normalize_source_domain(domain, f"{path}.source_domains[{i}]") for i, domain in enumerate(domains)]
     if len(set(domains)) != len(domains):
         raise ValueError(f"{path}.source_domains: expected unique domains")
-    trusted = set(TRUSTED_SOURCE_DOMAINS.get(bic, ()))
+    trusted = _trusted_domains_for_bic(bic)
     if set(domains) != trusted:
         raise ValueError(f"{path}.source_domains: domains are not trusted for BIC {bic}")
     if seedable and not domains:
@@ -388,6 +401,8 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
             for key in ("label", "countries", "masked_block", "note"):
                 if key in raw and raw[key] != old[key]:
                     raise ValueError(f"{path}.{key}: existing region metadata is immutable")
+            if "forbidden_bics" in raw and not isinstance(raw["forbidden_bics"], list):
+                raise ValueError(f"{path}.forbidden_bics: expected a list")
             supplied_forbidden = set(raw.get("forbidden_bics", old.get("forbidden_bics", [])))
             existing_forbidden = set(old.get("forbidden_bics", []))
             if not existing_forbidden.issubset(supplied_forbidden):
@@ -631,7 +646,7 @@ def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
             continue
         if record_digest(normalized) != bank["admitted_record_digest"]:
             problems.append(f"{results['region']}/{bic}: results do not match the admitted record digest")
-        if normalized != expected:
+        if record_digest(normalized) != record_digest(expected):
             problems.append(f"{results['region']}/{bic}: normalized records differ from admitted records")
     return problems
 

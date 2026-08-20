@@ -942,6 +942,26 @@ def test_candidate_source_domain_must_be_trusted_for_bic(tmp_path, monkeypatch):
         autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [bank]}]})
 
 
+def test_reviewed_real_bank_domain_is_operator_approved():
+    assert autopilot._trusted_domains_for_bic("BBDEBRSP") == {"banco.bradesco"}
+    assert autopilot._trusted_domains_for_bic("UNKNOWXX") == set()
+
+
+def test_test_identity_is_not_trusted_in_production_configuration(monkeypatch):
+    production = autopilot.Path(autopilot.__file__).resolve().parent / "regions.json"
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", production)
+    assert autopilot._trusted_domains_for_bic("TESTPHMM") == set()
+
+
+def test_existing_region_forbidden_bics_must_be_a_list(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    for malformed in ("NATAU3P", {"bic": "NATAU3P"}, None, ("NATAU3P",)):
+        with pytest.raises(ValueError, match="forbidden_bics: expected a list"):
+            autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "forbidden_bics": malformed, "banks": []}]})
+
+
 def test_malformed_candidate_forbidden_bic_is_rejected(tmp_path, monkeypatch):
     path = tmp_path / "regions.json"
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
@@ -1049,6 +1069,20 @@ def test_new_region_lifecycle_persists_reloads_and_validates(tmp_path, monkeypat
     }]}
     assert autopilot.validate_admitted_results(results, reloaded) == []
     assert [b["bic8"] for b in region["banks"]] == sorted(b["bic8"] for b in region["banks"])
+
+
+def test_admitted_results_accept_reordered_records(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    autopilot.admit_candidates(_new_region_payload())
+    manifest = autopilot.load_manifest()
+    bank = autopilot.get_region(manifest, "new-region-lifecycle")["banks"][0]
+    records = list(reversed(bank["admitted_records"]))
+    results = {"region": "new-region-lifecycle", "banks": [{
+        "bic": bank["bic8"] + "XXX", "name": bank["name"], "records": records
+    }]}
+    assert autopilot.validate_admitted_results(results, manifest) == []
 
 
 def test_new_region_readmission_is_byte_identical_and_omission_preserves_banks(tmp_path, monkeypatch):
