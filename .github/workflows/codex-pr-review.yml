@@ -36,7 +36,11 @@ jobs:
       CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
       CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT || 'medium' }}
       CODEX_MAX_ITEMS: ${{ vars.CODEX_MAX_ITEMS || '10' }}
-      CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '120000' }}
+      # The review input includes the complete sanitized PR diff plus the
+      # trusted review contract. Keep the fallback large enough for the
+      # repository's generated/data-heavy PRs; repository variables may tune
+      # it higher when needed.
+      CODEX_MAX_INPUT_BYTES: ${{ vars.CODEX_MAX_INPUT_BYTES || '600000' }}
       CODEX_MAX_OUTPUT_TOKENS: ${{ vars.CODEX_MAX_OUTPUT_TOKENS || '32000' }}
       CODEX_MAX_OUTPUT_BYTES: ${{ vars.CODEX_MAX_OUTPUT_BYTES || '50000' }}
       CODEX_REQUEST_TIMEOUT: ${{ vars.CODEX_REQUEST_TIMEOUT || '900' }}
