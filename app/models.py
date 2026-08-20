@@ -410,12 +410,31 @@ def _validate_ssi_provenance(mapper, connection, target: "SSI") -> None:
     from datetime import timezone as _timezone
 
     from .schemas import SSI_STATUSES
+    from .ssi_terms import (
+        VALID_CHARGE_CODES,
+        VALID_VALUE_DATES,
+        normalize_charge_code,
+        normalize_value_date,
+    )
 
     # A Column default is applied when the INSERT is compiled, which is after
     # this hook runs, so an unset status arrives here as None. Apply it now
     # rather than rejecting a row that would have defaulted correctly.
     if target.status is None:
         target.status = "illustrative"
+
+    target.charge_code = normalize_charge_code(target.charge_code)
+    if target.charge_code is not None and target.charge_code not in VALID_CHARGE_CODES:
+        raise ValueError(
+            f"SSI.charge_code {target.charge_code!r} must be one of "
+            f"{sorted(VALID_CHARGE_CODES)}"
+        )
+    target.value_date = normalize_value_date(target.value_date)
+    if target.value_date is not None and target.value_date not in VALID_VALUE_DATES:
+        raise ValueError(
+            f"SSI.value_date {target.value_date!r} must be one of "
+            f"{sorted(VALID_VALUE_DATES)}"
+        )
 
     if target.status not in SSI_STATUSES:
         raise ValueError(

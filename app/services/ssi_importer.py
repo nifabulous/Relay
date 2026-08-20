@@ -43,9 +43,12 @@ from sqlalchemy.orm import Session
 
 from ..models import SSI
 from ..schemas import SELF_ASSERTABLE_SSI_STATUSES, SOURCED_SSI_STATUSES, SSI_STATUSES
-
-VALID_CHARGE_CODES = {"OUR", "SHA", "BEN"}
-VALID_VALUE_DATES = {"same-day", "spot", "T+1", "T+2", "T+3"}
+from ..ssi_terms import (
+    VALID_CHARGE_CODES,
+    VALID_VALUE_DATES,
+    normalize_charge_code,
+    normalize_value_date,
+)
 
 
 @dataclass
@@ -151,21 +154,18 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
     if normalized.get("status") in SOURCED_SSI_STATUSES and not normalized.get("notes"):
         normalized["status"] = "illustrative"
 
-    charge = (raw.get("charge_code") or "SHA").strip().upper()
+    charge = normalize_charge_code(raw.get("charge_code") or "SHA")
     if charge not in VALID_CHARGE_CODES:
         errors.append(f"Invalid charge_code: {charge!r} (must be OUR/SHA/BEN)")
     else:
         normalized["charge_code"] = charge
 
-    vdate = (raw.get("value_date") or "spot").strip()
-    # Normalize: lowercase everything except the T+n pattern (keep T uppercase)
-    vdate_lower = vdate.lower()
-    if vdate_lower.startswith("t+"):
-        vdate_normalized = "T+" + vdate_lower[2:]  # preserve "T+1", "T+2", etc.
-    else:
-        vdate_normalized = vdate_lower
+    vdate_raw = raw.get("value_date") or "spot"
+    vdate_normalized = normalize_value_date(vdate_raw)
     if vdate_normalized not in VALID_VALUE_DATES:
-        errors.append(f"Invalid value_date: {vdate!r} (must be one of {VALID_VALUE_DATES})")
+        errors.append(
+            f"Invalid value_date: {vdate_raw!r} (must be one of {VALID_VALUE_DATES})"
+        )
     else:
         normalized["value_date"] = vdate_normalized
 

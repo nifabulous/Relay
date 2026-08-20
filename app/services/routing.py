@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from ..data.settlement_directory import get_settlement_ids
 from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
 from ..schemas import BankInfo, IntermediarySuggestion, SettlementIds
+from ..ssi_terms import VALID_CHARGE_CODES, VALID_VALUE_DATES
 from .validator import detect_type, validate_bic, validate_iban
 
 
@@ -193,8 +194,8 @@ def _is_routable_ssi(row: SSI) -> bool:
         and _has_usable_text(row.notes)
         and _is_usable_ssi_account(row.intermediary_account)
         and _is_usable_ssi_account(row.beneficiary_account)
-        and _has_usable_text(row.charge_code)
-        and _has_usable_text(row.value_date)
+        and row.charge_code in VALID_CHARGE_CODES
+        and row.value_date in VALID_VALUE_DATES
     )
 
 

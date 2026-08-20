@@ -737,6 +737,26 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
                 charge_code="   ", value_date="\t",
             )
 
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [("charge_code", "INVALID"), ("value_date", "when-convenient")],
+    )
+    def test_schema_rejects_unsupported_settlement_terms(self, field, value):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        payload = {
+            "beneficiary_bic": "BOPIPHMMXXX",
+            "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX",
+            "charge_code": "SHA",
+            "value_date": "spot",
+            field: value,
+        }
+        with pytest.raises(ValidationError):
+            SSIRecord(**payload)
+
     def test_schema_accepts_a_well_formed_bic_only_record(self):
         from app.schemas import SSIRecord
 

@@ -16,6 +16,7 @@ import pytest
 from app.models import SSI
 from app.schemas import BankInfo
 from app.services.routing import (
+    _is_routable_ssi,
     _is_usable_ssi_account,
     _normalize_bic_input,
     infer_destination_currency,
@@ -54,6 +55,25 @@ def test_masked_ssi_accounts_are_not_usable(value):
 @pytest.mark.parametrize("value", ["123456789", "GB29NWBK60161331926819"])
 def test_concrete_ssi_accounts_are_usable(value):
     assert _is_usable_ssi_account(value)
+
+
+@pytest.mark.parametrize("field, value", [("charge_code", "INVALID"), ("value_date", "when-convenient")])
+def test_unsupported_settlement_terms_are_not_routable(field, value):
+    row = SSI(
+        beneficiary_bic="TESTUS33XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: test.",
+        as_of="2026-08-19",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    setattr(row, field, value)
+    assert not _is_routable_ssi(row)
 
 # ===========================================================================
 # _normalize_bic_input

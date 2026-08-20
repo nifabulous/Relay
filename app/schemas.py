@@ -5,6 +5,12 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .services.validator import validate_currency_code
+from .ssi_terms import (
+    VALID_CHARGE_CODES,
+    VALID_VALUE_DATES,
+    normalize_charge_code,
+    normalize_value_date,
+)
 
 # ---------- responses ----------
 
@@ -141,6 +147,26 @@ class SSIRecord(BaseModel):
     # correspondent-bank-charges list) published none. It is informational,
     # never a selectable settlement instruction.
     bic_only: bool = False
+
+    @field_validator("charge_code")
+    @classmethod
+    def _charge_code_is_supported(cls, value: Optional[str]) -> Optional[str]:
+        normalized = normalize_charge_code(value)
+        if normalized is not None and normalized not in VALID_CHARGE_CODES:
+            raise ValueError(
+                f"charge_code {value!r} must be one of {sorted(VALID_CHARGE_CODES)}"
+            )
+        return normalized
+
+    @field_validator("value_date")
+    @classmethod
+    def _value_date_is_supported(cls, value: Optional[str]) -> Optional[str]:
+        normalized = normalize_value_date(value)
+        if normalized is not None and normalized not in VALID_VALUE_DATES:
+            raise ValueError(
+                f"value_date {value!r} must be one of {sorted(VALID_VALUE_DATES)}"
+            )
+        return normalized
 
     @field_validator("as_of")
     @classmethod
