@@ -947,6 +947,19 @@ def test_reviewed_real_bank_domain_is_operator_approved():
     assert autopilot._trusted_domains_for_bic("UNKNOWXX") == set()
 
 
+def test_legacy_bank_without_source_domains_can_be_readmitted(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    manifest = json.loads(json.dumps(MANIFEST))
+    region = next(item for item in manifest["regions"] if item["name"] == "southeast-asia")
+    legacy = admission_bank()
+    legacy.pop("source_domains")
+    region["banks"].append(legacy)
+    path.write_bytes(json.dumps(manifest, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    summary = autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [admission_bank()]}]})
+    assert summary["unchanged_banks"] == 1
+
+
 def test_test_identity_is_not_trusted_in_production_configuration(monkeypatch):
     production = autopilot.Path(autopilot.__file__).resolve().parent / "regions.json"
     monkeypatch.setattr(autopilot, "REGIONS_FILE", production)
@@ -960,6 +973,23 @@ def test_existing_region_forbidden_bics_must_be_a_list(tmp_path, monkeypatch):
     for malformed in ("NATAU3P", {"bic": "NATAU3P"}, None, ("NATAU3P",)):
         with pytest.raises(ValueError, match="forbidden_bics: expected a list"):
             autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "forbidden_bics": malformed, "banks": []}]})
+
+
+def test_forbidden_bic_cannot_overlap_existing_owner(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    manifest = json.loads(json.dumps(MANIFEST))
+    manifest["regions"][0]["banks"].append({"bic8": "TESTPHMM", "name": "Test", "country": "PH", "currencies": ["USD"]})
+    path.write_bytes(json.dumps(manifest, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    with pytest.raises(ValueError, match="overlap owned BICs"):
+        autopilot.admit_candidates({"regions": [{"name": "new-region", "label": "New", "countries": ["PH"], "masked_block": 92000100, "note": "x", "forbidden_bics": ["TESTPHMM"], "banks": []}]})
+
+
+def test_malformed_admitted_records_are_rejected_without_traceback():
+    manifest = json.loads(json.dumps(MANIFEST))
+    manifest["regions"][0]["banks"] = [{"bic8": "TESTPHMM", "name": "Test", "admitted_records": [], "admitted_record_digest": autopilot.record_digest([])}]
+    problems = autopilot.validate_admitted_results({"region": manifest["regions"][0]["name"], "banks": [{"bic": "TESTPHMM", "name": "Test", "records": None}]}, manifest)
+    assert any("records must be a list" in problem for problem in problems)
 
 
 def test_malformed_candidate_forbidden_bic_is_rejected(tmp_path, monkeypatch):
@@ -1083,6 +1113,23 @@ def test_admitted_results_accept_reordered_records(tmp_path, monkeypatch):
         "bic": bank["bic8"] + "XXX", "name": bank["name"], "records": records
     }]}
     assert autopilot.validate_admitted_results(results, manifest) == []
+
+
+def test_equivalent_new_region_input_order_is_canonical(tmp_path, monkeypatch):
+    first_path = tmp_path / "first.json"
+    second_path = tmp_path / "second.json"
+    initial = json.dumps(MANIFEST, indent=2).encode() + b"\n"
+    first_path.write_bytes(initial)
+    second_path.write_bytes(initial)
+    first_payload = _new_region_payload()
+    second_payload = json.loads(json.dumps(first_payload))
+    second_payload["regions"].reverse()
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", first_path)
+    autopilot.admit_candidates(first_payload)
+    first_bytes = first_path.read_bytes()
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", second_path)
+    autopilot.admit_candidates(second_payload)
+    assert second_path.read_bytes() == first_bytes
 
 
 def test_new_region_readmission_is_byte_identical_and_omission_preserves_banks(tmp_path, monkeypatch):

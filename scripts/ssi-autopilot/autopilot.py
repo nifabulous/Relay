@@ -425,9 +425,24 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
             raise ValueError(f"{path}.countries: expected non-empty two-letter country codes")
         region["countries"] = [c.upper() for c in countries]
         forbidden = _require_sequence(region.get("forbidden_bics", []), f"{path}.forbidden_bics")
-        if any(not isinstance(b, str) for b in forbidden):
-            raise ValueError(f"{path}.forbidden_bics: expected strings")
-        region["forbidden_bics"] = list(forbidden)
+        normalized_forbidden = []
+        for forbidden_index, value in enumerate(forbidden):
+            if not isinstance(value, str):
+                raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: expected a string")
+            canonical = value.strip().upper()
+            if canonical in _LEGACY_FORBIDDEN_BICS and canonical in forbidden_global:
+                normalized_forbidden.append(canonical)
+            elif bic_is_valid(canonical):
+                normalized_forbidden.append(canonical[:8])
+            else:
+                raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: malformed BIC {value!r}")
+        if len(set(normalized_forbidden)) != len(normalized_forbidden):
+            raise ValueError(f"{path}.forbidden_bics: duplicate BIC")
+        region["forbidden_bics"] = sorted(normalized_forbidden)
+        owned_in_region = {bank["bic8"] for bank in region.get("banks", [])}
+        overlap = (set(existing_bics) | candidate_owned | owned_in_region) & set(region["forbidden_bics"])
+        if overlap:
+            raise ValueError(f"{path}.forbidden_bics overlap owned BICs: {', '.join(sorted(overlap))}")
         block = region.get("masked_block")
         if not isinstance(block, int) or block < 10000000 or block % 100 != 0:
             raise ValueError(f"{path}.masked_block: expected an integer aligned to a 100-account block")
@@ -458,7 +473,14 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
             prior = banks.get(bic)
             metadata = {k: bank[k] for k in ("bic8", "name", "country", "currencies", "seedable", "source_domains")}
             if prior:
-                prior_meta = {k: prior.get(k, True) if k == "seedable" else prior[k] for k in metadata}
+                prior_meta = {
+                    "bic8": prior["bic8"],
+                    "name": prior["name"],
+                    "country": prior["country"],
+                    "currencies": prior["currencies"],
+                    "seedable": prior.get("seedable", True),
+                    "source_domains": prior.get("source_domains", metadata["source_domains"]),
+                }
                 if prior_meta != metadata:
                     raise ValueError(f"{bank_path}: existing bank metadata is immutable")
                 prior_records = prior.get("admitted_records", [])
@@ -467,7 +489,11 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
             bank["admitted_records"] = bank.pop("records")
             bank["admitted_record_digest"] = record_digest(bank["admitted_records"])
             banks[bic] = bank
-        region["banks"] = list(banks.values())
+        existing_order = [bank["bic8"] for bank in existing_region_banks]
+        region["banks"] = [banks[bic] for bic in existing_order if bic in banks]
+        region["banks"].extend(
+            banks[bic] for bic in sorted(set(banks) - set(existing_order))
+        )
         candidate_results = {
             "region": name,
             "banks": [
@@ -557,13 +583,15 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
         normalized = _validate_admission_envelope(payload, manifest)
         proposed = copy.deepcopy(manifest)
         existing = {r["name"]: r for r in proposed["regions"]}
+        new_regions = []
         for region in normalized:
             if region["name"] in existing:
                 target = existing[region["name"]]
                 target["banks"] = region["banks"]
                 target["forbidden_bics"] = sorted(set(region.get("forbidden_bics", [])))
             else:
-                proposed["regions"].append(region)
+                new_regions.append(region)
+        proposed["regions"].extend(sorted(new_regions, key=lambda region: region["name"]))
         added_banks = added_records = unchanged_banks = unchanged_records = 0
         candidate_bics = {
             bank.get("bic8") for raw_region in payload.get("regions", [])
@@ -595,7 +623,10 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
             "unchanged_records": unchanged_records,
         }
         if not dry_run:
-            _write_manifest_atomic(proposed)
+            current_bytes = REGIONS_FILE.read_bytes()
+            proposed_bytes = (json.dumps(proposed, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+            if proposed_bytes != current_bytes:
+                _write_manifest_atomic(proposed)
         return summary
 
 
@@ -638,6 +669,9 @@ def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
         elif " ".join(actual_name.split()) != " ".join(bank.get("name", "").split()):
             problems.append(f"{results['region']}/{bic}: result bank name does not match admitted name")
         actual = actual_bank.get("records", [])
+        if not isinstance(actual, list):
+            problems.append(f"{results['region']}/{bic}: result records must be a list")
+            continue
         normalized = []
         try:
             normalized = [_normalize_record(record, f"{bic}.records[{i}]") for i, record in enumerate(actual)]
@@ -1039,6 +1073,10 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
                 else:
                     problems.append(f"{key[0]}/{key[1]}: folded {field} {fields[field]!r} does not match validated {want!r}")
         verified = rec.get("verified_by")
+        if fields["status"] == "published" and not fields["verified_by"]:
+            problems.append(f"{key[0]}/{key[1]}: published folded row requires verified_by")
+        if fields["status"] != "published" and fields["verified_by"]:
+            problems.append(f"{key[0]}/{key[1]}: folded verified_by is only valid for published rows")
         if fields["verified_by"] != verified:
             problems.append(f"{key[0]}/{key[1]}: folded verified_by {fields['verified_by']!r} does not match validated {verified!r}")
         source = str(rec.get("source", ""))
