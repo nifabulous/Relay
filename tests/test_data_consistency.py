@@ -865,6 +865,64 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_legacy_seed_placeholders_can_transition_to_bic_only(self):
+        """Known pre-fingerprint seed placeholders may be safely reshaped;
+        rows with any operator signal take the preservation path above."""
+        import app.services.seed as seed_module
+
+        target = next(
+            row for row in seed_module.SSI_RECORDS
+            if len(row) > 13 and row[0] == "EBILAEADXXX" and row[2] == "USD"
+        )
+        (ben_bic, ben_name, ccy, int_bic, int_name, _int_acct, _ben_acct,
+         _charge, _vdate, _notes, source_as_of, source_status,
+         _verified_by, target_bic_only) = target
+        assert target_bic_only is True
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name=ben_name,
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name=int_name,
+                intermediary_account="ACCT-LEGACY",
+                beneficiary_account="ACCT-LEGACY-BENE",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: legacy seed. " + seed_module._SSI_REAL_NOTE,
+                as_of="2020-01-01",
+                status=source_status,
+                bic_only=False,
+            ))
+            session.commit()
+
+            seed_module.seed_if_empty(session)
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic,
+                currency=ccy,
+                intermediary_bic=int_bic,
+            ).one()
+            assert row.bic_only is True
+            assert row.intermediary_account is None
+            assert row.beneficiary_account is None
+            assert row.charge_code is None
+            assert row.value_date is None
+            assert row.as_of == source_as_of
+        finally:
+            session.close()
+            engine.dispose()
+
     def test_reseed_replaces_a_changed_machine_citation_with_same_provenance(self):
         """A source URL can change without changing date, status, or shape."""
         from app.services.seed import SSI_RECORDS, seed_if_empty

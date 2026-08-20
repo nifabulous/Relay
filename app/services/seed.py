@@ -5310,6 +5310,37 @@ def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> 
     return retired
 
 
+def _legacy_seed_row_is_unmodified(existing: SSI, beneficiary_name: str,
+                                   intermediary_name: str) -> bool:
+    """Recognize only the old seeder's unmistakable placeholder shape.
+
+    Pre-fingerprint rows cannot prove ownership from a snapshot. The narrow
+    legacy exception is limited to rows whose names still match the current
+    source, both accounts are the repository's ``ACCT-*`` masks, the terms
+    are the seed defaults, and the notes carry a seed-owned placeholder/source
+    marker without an operator note. Anything else is preserved for review.
+    """
+    return (
+        existing.seed_fingerprint is None
+        and existing.beneficiary_bank_name == beneficiary_name
+        and existing.intermediary_bank_name == intermediary_name
+        and existing.intermediary_account is not None
+        and existing.intermediary_account.startswith("ACCT-")
+        and existing.beneficiary_account is not None
+        and existing.beneficiary_account.startswith("ACCT-")
+        and existing.charge_code in {"OUR", "SHA", "BEN"}
+        and existing.value_date in {"spot", "1d", "2d", "3d", "T+1", "T+2"}
+        and existing.status != "published"
+        and existing.verified_by is None
+        and existing.notes is not None
+        and "Operator note:" not in existing.notes
+        and (
+            "Illustrative placeholder" in existing.notes
+            or _SSI_REAL_NOTE in existing.notes
+        )
+    )
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {
@@ -5434,7 +5465,15 @@ def seed_if_empty(session) -> dict:
             # settlement data after the last seed, so preserve the whole row
             # and require an explicit human resolution instead of clearing
             # accounts and terms to satisfy the new bic_only shape.
-            if not existing.bic_only and bic_only and not prior_snapshot_unchanged:
+            legacy_seed_owned = _legacy_seed_row_is_unmodified(
+                existing, ben_name, int_name
+            )
+            if (
+                not existing.bic_only
+                and bic_only
+                and not prior_snapshot_unchanged
+                and not legacy_seed_owned
+            ):
                 logger.warning(
                     "Preserving operator-modified SSI during ordinary-to-"
                     "bic_only seed transition: %s/%s/%s; manual review required",
