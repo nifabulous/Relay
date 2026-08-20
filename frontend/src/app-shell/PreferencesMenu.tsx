@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
+import { RelayPopover } from "../design-system/behavior/RelayPopover";
 import type { RelayTheme } from "../design-system/types";
 import { usePreferences, useResolvedTheme, updatePreferences } from "./AppShell";
 
@@ -44,7 +45,6 @@ export function PreferencesMenu() {
   const [open, setOpen] = useState(false);
   const triggerId = useId();
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -53,37 +53,11 @@ export function PreferencesMenu() {
 
   const close = useCallback(() => setOpen(false), []);
 
-  /** Close and hand focus back, so Escape never strands a keyboard user. */
-  const closeAndRestoreFocus = useCallback(() => {
-    setOpen(false);
-    triggerRef.current?.focus();
-  }, []);
-
-  // Focus the first item on open. Without this the menu is announced but a
-  // keyboard user is still parked on the trigger.
-  useEffect(() => {
-    if (!open) return;
+  // Focus the first item after the portalled popup is mounted. Without this a
+  // keyboard user opens the menu but remains parked on the trigger.
+  const focusFirstMenuItem = useCallback(() => {
     menuRef.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
-  }, [open]);
-
-  // Outside click / focus loss dismisses. Pointerdown rather than click so the
-  // menu is gone before the underlying control reacts.
-  useEffect(() => {
-    if (!open) return;
-
-    function onPointerDown(event: PointerEvent | MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("mousedown", onPointerDown, true);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("mousedown", onPointerDown, true);
-    };
-  }, [open]);
+  }, []);
 
   /** Roving arrow-key movement across whatever items are currently rendered. */
   function moveFocus(delta: number) {
@@ -97,11 +71,6 @@ export function PreferencesMenu() {
   }
 
   function onMenuKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeAndRestoreFocus();
-      return;
-    }
     if (event.key === "ArrowDown") {
       event.preventDefault();
       moveFocus(1);
@@ -114,27 +83,38 @@ export function PreferencesMenu() {
   }
 
   return (
-    <div className="app-shell__prefs" ref={containerRef}>
-      <button
-        type="button"
-        id={triggerId}
-        ref={triggerRef}
-        className="app-shell__prefs-trigger"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen((wasOpen) => !wasOpen)}
+    <div className="app-shell__prefs">
+      <RelayPopover
+        open={open}
+        onOpenChange={setOpen}
+        onOpenChangeComplete={(nextOpen) => {
+          if (nextOpen) focusFirstMenuItem();
+        }}
+        trigger={
+          <button
+            type="button"
+            id={triggerId}
+            ref={triggerRef}
+            className="app-shell__prefs-trigger"
+            aria-expanded={open}
+            aria-haspopup="menu"
+          >
+            Preferences
+          </button>
+        }
+        popupId="app-shell-preferences-menu"
+        titleId={triggerId}
+        popupRole="menu"
+        className="app-shell__prefs-menu"
+        positionerClassName="app-shell__prefs-positioner"
+        side="bottom"
+        align="end"
+        sideOffset={8}
+        popupRef={menuRef}
+        initialFocus={false}
+        finalFocus={triggerRef}
+        onPopupKeyDown={onMenuKeyDown}
       >
-        Preferences
-      </button>
-
-      {open && (
-        <div
-          className="app-shell__prefs-menu"
-          role="menu"
-          aria-labelledby={triggerId}
-          ref={menuRef}
-          onKeyDown={onMenuKeyDown}
-        >
           <p className="app-shell__prefs-group-label">Appearance</p>
 
           {APPEARANCE_OPTIONS.map((option) => {
@@ -191,8 +171,7 @@ export function PreferencesMenu() {
               →
             </span>
           </Link>
-        </div>
-      )}
+      </RelayPopover>
     </div>
   );
 }
