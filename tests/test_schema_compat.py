@@ -169,6 +169,15 @@ class TestLegacyTableGainsColumnsWithoutDataLoss:
         assert row["schedule"] == "instant"
         assert row["revealed_at"] is None
 
+    def test_payment_events_never_get_ssi_specific_columns(self):
+        engine = _legacy_engine_with_event()
+
+        ensure_sqlite_schema(engine)
+
+        columns = {column["name"] for column in inspect(engine).get_columns("payment_events")}
+        assert {"schedule", "revealed_at"}.issubset(columns)
+        assert {"bic_only", "value_date"}.isdisjoint(columns)
+
     def test_columns_are_added_with_expected_types(self):
         engine = _legacy_engine_with_event()
 

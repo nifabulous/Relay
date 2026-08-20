@@ -1001,6 +1001,62 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_reseed_removes_stale_seed_owned_rows(self, monkeypatch):
+        """Rows removed from the curated source set must stop being routable."""
+        import app.services.seed as seed_module
+
+        current = next(
+            row for row in seed_module.SSI_RECORDS
+            if row[0] == "ZEIBNGLAXXX"
+            and row[2] == "USD"
+            and row[3] == "CITIUS33XXX"
+        )
+        removed = next(
+            row for row in seed_module.SSI_RECORDS
+            if row[0] == "SBININBBXXX"
+            and row[2] == "EUR"
+            and row[3] == "NDEAFIHHXXX"
+        )
+        monkeypatch.setattr(seed_module, "SSI_RECORDS", (current,))
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Session = sessionmaker(bind=engine, future=True)
+        Base.metadata.create_all(bind=engine)
+        session = Session()
+        try:
+            session.add(SSI(
+                beneficiary_bic=removed[0],
+                beneficiary_bank_name=removed[1],
+                currency=removed[2],
+                intermediary_bic=removed[3],
+                intermediary_bank_name=removed[4],
+                intermediary_account=removed[5],
+                beneficiary_account=removed[6],
+                charge_code=removed[7],
+                value_date=removed[8],
+                notes=removed[9],
+                as_of=removed[10],
+                status=removed[11],
+            ))
+            session.commit()
+
+            result = seed_module.seed_if_empty(session)
+
+            assert result["ssi_retired"] == 1
+            assert session.query(SSI).filter_by(
+                beneficiary_bic=removed[0],
+                currency=removed[2],
+                intermediary_bic=removed[3],
+            ).one_or_none() is None
+        finally:
+            session.close()
+            engine.dispose()
+
     def test_bic_only_row_becoming_ordinary_is_repopulated(self):
         """A previously availability-only row that the seed now defines as an
         ordinary instruction must GAIN its account/charge/value fields, not
@@ -1055,7 +1111,9 @@ class TestSeedRollout:
             assert row.value_date == vdate
             assert row.beneficiary_bank_name == target[1]
             assert row.intermediary_bank_name == int_name
-            assert row.notes == notes
+            assert row.notes.startswith("Source:")
+            assert notes in row.notes
+            assert "availability-only legacy row, no accounts published" in row.notes
             assert row.as_of == as_of
             assert row.status == status
             assert result["ssi_provenance_updated"] >= 1
@@ -1076,7 +1134,7 @@ class TestSeedRollout:
                       if len(r) <= 13 and r[0] == "ZEIBNGLAXXX"
                       and r[2] == "USD" and r[3] == "CITIUS33XXX")
         (ben_bic, _ben_name, ccy, int_bic, _int_name, _int_acct, _ben_acct,
-         _charge, _vdate, _notes, *provenance) = target
+         _charge, _vdate, source_notes, *provenance) = target
         source_as_of = provenance[0]
         source_status = provenance[1] if len(provenance) > 1 else "illustrative"
 
@@ -1122,8 +1180,18 @@ class TestSeedRollout:
             assert row.value_date == "same-day"
             assert row.beneficiary_bank_name == "Operator-corrected Zenith"
             assert row.intermediary_bank_name == "Operator-corrected Citibank"
-            assert row.notes == "Operator-corrected SSI must survive the roll-forward"
+            assert row.notes.startswith("Source:")
+            assert "Operator-corrected SSI must survive the roll-forward" in row.notes
+            assert source_notes in row.notes
             assert result["ssi_provenance_updated"] >= 1
+
+            first_notes = row.notes
+            seed_if_empty(session)
+            assert session.query(SSI).filter_by(
+                beneficiary_bic=ben_bic,
+                currency=ccy,
+                intermediary_bic=int_bic,
+            ).one().notes == first_notes
         finally:
             session.close()
             engine.dispose()

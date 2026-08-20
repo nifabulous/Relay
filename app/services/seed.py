@@ -460,6 +460,43 @@ _SSI_REAL_NOTE = (
     "Sourced from bank-published SSI page. Verify current values before use."
 )
 
+
+def _is_seed_owned_ssi(row: SSI) -> bool:
+    """Return whether the row carries the seeder's machine-source marker."""
+    notes = (row.notes or "").lstrip()
+    return notes.startswith("Source:") and _SSI_REAL_NOTE in notes
+
+
+def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
+    """Keep operator notes while ensuring a sourced status retains its citation.
+
+    Seed citations are source-controlled. Operator notes are not, so a source
+    refresh replaces only the first (machine) line when one is already
+    present, and otherwise puts the new citation before the operator note.
+    """
+    if not source_notes:
+        raise ValueError("A sourced SSI row must include its source citation")
+
+    def bounded(notes: str) -> str:
+        if len(notes) > 500:
+            raise ValueError(
+                "SSI source citation and operator note exceed the 500-character notes limit"
+            )
+        return notes
+
+    existing = (existing_notes or "").strip()
+    if not existing:
+        return bounded(source_notes)
+    if existing == source_notes or existing.startswith(f"{source_notes}\n"):
+        return bounded(existing)
+    if existing.lstrip().startswith("Source:"):
+        operator_suffix = existing.split("\n", 1)[1] if "\n" in existing else ""
+        merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+        return bounded(merged)
+
+    merged = f"{source_notes}\n{existing}"
+    return bounded(merged)
+
 SSI_RECORDS = [
     # ---- Nigeria ----
     ("GTBINGLAXXX", "Guaranty Trust Bank", "USD",
@@ -5217,11 +5254,40 @@ def _apply_seed_bic_aliases(session) -> None:
     session.flush()
 
 
+def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> int:
+    """Delete source-owned SSIs that no longer belong to the curated set.
+
+    Operator-created rows are deliberately left alone: the machine-source
+    marker is the seeder's citation suffix, not merely the word ``Source:``.
+    The flush keeps this reconciliation in the same transaction as the
+    upserts and the final commit in ``seed_if_empty`` makes the rollout
+    atomic.
+    """
+    retired = 0
+    candidates = session.query(SSI).filter(SSI.notes.isnot(None)).all()
+    for row in candidates:
+        key = (row.beneficiary_bic, row.currency, row.intermediary_bic)
+        if key not in source_keys and _is_seed_owned_ssi(row):
+            session.delete(row)
+            retired += 1
+    if retired:
+        session.flush()
+    return retired
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
-    inserted = {"banks": 0, "corridor_rules": 0, "ssi": 0, "accounts": 0}
+    inserted = {
+        "banks": 0,
+        "corridor_rules": 0,
+        "ssi": 0,
+        "ssi_retired": 0,
+        "accounts": 0,
+    }
 
     _apply_seed_bic_aliases(session)
+    source_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    inserted["ssi_retired"] = _retire_stale_seed_ssis(session, source_keys)
 
     for bic, name, cc, city, cur in BANKS:
         existing = session.query(Bank).filter(Bank.bic == bic).one_or_none()
@@ -5336,18 +5402,16 @@ def seed_if_empty(session) -> dict:
                 existing.verified_by,
                 existing.bic_only,
             ) != (as_of, status, verified_by, bic_only)
-            # A machine citation is source-controlled too. Refresh it even
-            # when the provenance tuple is unchanged, but never overwrite an
-            # operator's free-form note.
-            citation_changed = (
-                status != "illustrative"
-                and existing.notes != notes
-                and (
-                    not existing.notes
-                    or existing.notes.lstrip().startswith("Source:")
-                    or existing.bic_only
-                )
+            # A sourced status and its citation are source-controlled. Refresh
+            # the citation even when provenance is unchanged, while retaining
+            # an operator note as a second line instead of leaving the row
+            # sourced by a note that contains no citation.
+            next_notes = (
+                _merge_seed_citation(existing.notes, notes)
+                if status != "illustrative"
+                else existing.notes
             )
+            citation_changed = next_notes != existing.notes
             if provenance_changed or citation_changed:
                 was_bic_only = existing.bic_only
                 # A sourced status and its citation move together — the
@@ -5360,7 +5424,7 @@ def seed_if_empty(session) -> dict:
                 # A row becoming *illustrative* asserts no source at all, so
                 # its notes are operator free text and are left alone.
                 if citation_changed:
-                    existing.notes = notes
+                    existing.notes = next_notes
                 if provenance_changed:
                     existing.as_of = as_of
                     existing.status = status
