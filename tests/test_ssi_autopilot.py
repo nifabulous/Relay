@@ -944,6 +944,18 @@ def test_task5_summary_idempotence_and_byte_identity(tmp_path, monkeypatch):
     assert path.read_bytes() == before
 
 
+def test_admission_persists_canonical_approved_bank_name(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank()
+    bank["name"] = "  test   philippine   bank "
+    summary = autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [bank]}]})
+    admitted = autopilot.get_region(autopilot.load_manifest(), "southeast-asia")["banks"][-1]
+    assert summary["added_banks"] == 1
+    assert admitted["name"] == "Test Philippine Bank"
+
+
 def test_candidate_identity_name_must_match_approved_bic(tmp_path, monkeypatch):
     path = tmp_path / "regions.json"
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")

@@ -335,7 +335,8 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
         raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
     if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
         raise ValueError(f"{path}.bic8: test identity is not admissible in the production manifest")
-    if _canonical_name(name) != _canonical_name(str(identity["name"])):
+    canonical_name = str(identity["name"])
+    if _canonical_name(name) != _canonical_name(canonical_name):
         raise ValueError(f"{path}.name: does not match the operator-approved identity for BIC {bic}")
     if country != identity["country"]:
         raise ValueError(f"{path}.country: does not match the operator-approved identity for BIC {bic}")
@@ -354,7 +355,7 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
         raise ValueError(f"{path}: records must cover every declared currency")
     normalized_records.sort(key=_record_sort_key)
     return {
-        "bic8": bic, "name": name.strip(), "country": country,
+        "bic8": bic, "name": canonical_name, "country": country,
         "currencies": sorted(currencies), "seedable": seedable,
         "source_domains": sorted(domains),
         "records": normalized_records,
