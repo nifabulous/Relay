@@ -700,6 +700,7 @@ def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
         bank["bic8"]: bank
         for bank in region.get("banks", [])
         if "admitted_record_digest" in bank
+        and (bank.get("seedable", True) or bank.get("admitted_records"))
     }
     supplied: dict[str, dict] = {}
     for index, raw_bank in enumerate(result_banks):
@@ -1111,6 +1112,7 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
             key = (ben, str(rec.get("currency", "")).strip().upper(), intermediary)
             if key in expected:
                 problems.append(f"validated results contain duplicate canonical fold key {ben}/{key[1]}/{intermediary}")
+                continue
             expected[key] = {"bank": bank, "record": rec}
 
     for key, fields in added_by_key.items():

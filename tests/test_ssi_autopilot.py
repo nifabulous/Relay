@@ -1026,6 +1026,21 @@ def test_forbidden_bic_cannot_overlap_existing_owner(tmp_path, monkeypatch):
         autopilot.admit_candidates({"regions": [{"name": "new-region", "label": "New", "countries": ["PH"], "masked_block": 92000100, "note": "x", "forbidden_bics": ["TESTPHMM"], "banks": []}]})
 
 
+def test_non_seedable_admission_can_validate_when_omitted_from_results(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank(bic="NEWPPHMM")
+    bank["name"] = "New Philippine Bank"
+    bank["seedable"] = False
+    bank["records"] = []
+    bank.pop("source_domains")
+    payload = {"regions": [{"name": "new-region", "label": "New", "countries": ["PH"], "masked_block": 92000100, "note": "x", "banks": [bank]}]}
+    autopilot.admit_candidates(payload)
+    manifest = autopilot.load_manifest()
+    assert autopilot.validate_admitted_results({"region": "new-region", "banks": []}, manifest) == []
+
+
 def test_non_seedable_bank_without_domains_is_admissible(tmp_path, monkeypatch):
     path = tmp_path / "regions.json"
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
@@ -1043,6 +1058,14 @@ def test_malformed_admitted_results_containers_are_controlled():
     assert autopilot.validate_admitted_results(None, MANIFEST) == ["results: expected an object"]
     assert autopilot.validate_admitted_results({"region": "x", "banks": None}, MANIFEST) == ["results.banks: expected a list"]
     assert autopilot.validate_admitted_results({"region": "southeast-asia", "banks": [None]}, MANIFEST) == ["results.banks[0]: expected an object"]
+
+
+def test_duplicate_expected_fold_key_reports_collision_without_replacing_first():
+    results = sample_results()
+    duplicate = dict(results["banks"][0]["records"][0], correspondent="Different")
+    results["banks"][0]["records"].append(duplicate)
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(BPI_ROW))
+    assert any("duplicate canonical fold key" in problem for problem in problems)
 
 
 def test_bic_only_changes_digest_order_independently():
