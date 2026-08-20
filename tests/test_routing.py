@@ -28,7 +28,14 @@ from app.services.routing import (
 
 
 def _approve_ssi_rows(session, beneficiary_bic, currency):
-    """Turn selected fixture rows into an explicitly routable SSI."""
+    """Turn selected fixture rows into an explicitly routable SSI.
+
+    The account values below are deliberately *concrete* synthetic identifiers,
+    not ``ACCT-``/bracketed redaction tokens: ``_is_usable_ssi_account`` rejects
+    the latter, so a masked value here would make every routing assertion in
+    this module vacuous. ``test_masked_ssi_accounts_are_not_usable`` covers the
+    rejection side.
+    """
     rows = session.query(SSI).filter(
         SSI.beneficiary_bic == beneficiary_bic,
         SSI.currency == currency,
