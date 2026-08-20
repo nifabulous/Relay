@@ -798,6 +798,24 @@ def test_fold_matching_the_validated_results_passes():
     assert problems == [], problems
 
 
+def test_fold_row_shape_enforces_verified_by_status_invariant():
+    archived = tuple(repr(value) for value in (
+        "BOPIPHMMXXX", "Bank", "USD", "CITIUS33XXX", "Citibank N.A.",
+        "ACCT-91000701", "ACCT-91000702", "SHA", "spot", "notes",
+        "2007-12-13", "archived", "reviewer",
+    ))
+    with pytest.raises(ValueError, match="only valid for published"):
+        autopilot._fold_row_shape(archived)
+
+    published = tuple(repr(value) for value in (
+        "BOPIPHMMXXX", "Bank", "USD", "CITIUS33XXX", "Citibank N.A.",
+        "ACCT-91000701", "ACCT-91000702", "SHA", "spot", "notes",
+        "2007-12-13", "published",
+    ))
+    with pytest.raises(ValueError, match="requires verified_by"):
+        autopilot._fold_row_shape(published)
+
+
 def test_a_row_that_was_never_validated_is_rejected():
     """The gate validated a JSON file; nothing proved the rows committed next
     to it were the ones that passed."""

@@ -1040,7 +1040,7 @@ def _canonical_bic11(value: object, path: str) -> str:
     return bic
 
 
-def _fold_row_shape(row: tuple[str, ...]) -> dict:
+def _fold_row_shape(row: tuple[str, ...], *, enforce_invariants: bool = True) -> dict:
     """Parse supported SSI tuple layouts into named, position-safe fields."""
     if not isinstance(row, tuple) or len(row) not in (12, 13, 14):
         got = len(row) if isinstance(row, tuple) else type(row).__name__
@@ -1059,11 +1059,18 @@ def _fold_row_shape(row: tuple[str, ...]) -> dict:
         fields["verified_by"] = None
         fields["bic_only"] = False
     elif len(row) == 13:
-        fields["verified_by"] = fields["verified_by"]
         fields["bic_only"] = False
     else:
         if not isinstance(fields["bic_only"], bool):
             raise ValueError("folded 14-field row bic_only must be the boolean literal True or False")
+    if enforce_invariants:
+        verified_by = fields["verified_by"]
+        if verified_by is not None and not isinstance(verified_by, str):
+            raise ValueError("folded verified_by must be a string or None")
+        if fields["status"] == "published" and not verified_by:
+            raise ValueError("published folded row requires verified_by")
+        if fields["status"] != "published" and verified_by:
+            raise ValueError("folded verified_by is only valid for published rows")
     return fields
 
 
@@ -1080,7 +1087,7 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         duplicates: set[tuple[str, str, str]] = set()
         for index, row in enumerate(rows):
             try:
-                fields = _fold_row_shape(row)
+                fields = _fold_row_shape(row, enforce_invariants=False)
                 key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
             except (ValueError, TypeError, AttributeError) as exc:
                 if report_errors:
