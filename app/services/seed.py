@@ -466,6 +466,12 @@ _ENBD_BIC_ONLY_SOURCE = (
     "https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-"
     "charges/accounts/correspondent_bank_charges_for_international_transfers.pdf"
 )
+_LEGACY_BIC_ONLY_ACCOUNT_BLOCKS = (
+    "ACCT-910016",
+    "ACCT-910021",
+    "ACCT-910022",
+    "ACCT-910025",
+)
 
 
 def _seed_fingerprint(row: SSI) -> str:
@@ -524,9 +530,14 @@ def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
             operator_suffix = existing[marker_end:].strip(" ;")
             merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
             return bounded(merged)
-        operator_suffix = existing.split("\n", 1)[1] if "\n" in existing else ""
-        merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
-        return bounded(merged)
+        if "\n" in existing:
+            operator_suffix = existing.split("\n", 1)[1]
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
+        # A one-line Source: note without a documented delimiter is
+        # ambiguous. Preserve it verbatim instead of guessing that the text
+        # after the citation is disposable operator context.
+        return bounded(f"{source_notes}\n{existing}")
 
     merged = f"{source_notes}\n{existing}"
     return bounded(merged)
@@ -5319,25 +5330,27 @@ def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     """Recognize only the old seeder's unmistakable placeholder shape.
 
     Pre-fingerprint rows cannot prove ownership from a snapshot. The narrow
-    exception is limited to the known ENBD correspondent-list source, the
-    legacy reserved account block, the legacy seed terms, and the source
-    date/status. Names are deliberately not part of ownership: source refreshes
-    may normalize bank names while the row is still the untouched machine row.
-    Anything else is preserved for review.
+    exception is limited to a source citation plus the repository's known
+    legacy reserved account blocks, seed terms, and source-owned marker. Names
+    are deliberately not part of ownership: source refreshes may normalize bank
+    names while the row is still the untouched machine row. Anything else is
+    preserved for review.
     """
     return (
         existing.seed_fingerprint is None
         and existing.notes is not None
-        and existing.notes.startswith(f"Source: {_ENBD_BIC_ONLY_SOURCE}")
-        and existing.as_of == "2026-05-01"
-        and existing.status == "unverified"
+        and existing.notes.startswith("Source:")
         and existing.verified_by is None
         and existing.intermediary_account is not None
-        and existing.intermediary_account.startswith("ACCT-910016")
         and existing.beneficiary_account is not None
-        and existing.beneficiary_account == "ACCT-91001630"
-        and existing.charge_code == "OUR"
-        and existing.value_date == "spot"
+        and any(
+            existing.intermediary_account.startswith(prefix)
+            and existing.beneficiary_account.startswith(prefix)
+            for prefix in _LEGACY_BIC_ONLY_ACCOUNT_BLOCKS
+        )
+        and existing.charge_code in {"OUR", "SHA", "BEN"}
+        and existing.value_date in {"spot", "1d", "2d", "3d", "T+1", "T+2"}
+        and existing.status != "published"
         and "Operator note:" not in existing.notes
         and _SSI_REAL_NOTE in existing.notes
     )

@@ -930,6 +930,32 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_legacy_archived_sha_placeholders_are_recognized(self):
+        import app.services.seed as seed_module
+
+        row = SSI(
+            beneficiary_bic="SICOTHBKXXX",
+            beneficiary_bank_name="Siam Commercial Bank (SCB)",
+            currency="USD",
+            intermediary_bic="MRMDUS33XXX",
+            intermediary_bank_name="HSBC Bank U.S.A., New York",
+            intermediary_account="ACCT-91002101",
+            beneficiary_account="ACCT-91002113",
+            charge_code="SHA",
+            value_date="spot",
+            notes=(
+                "Source: https://web.archive.org/web/20030824172043id_/"
+                "http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm "
+                "(as of 2002-08-08). " + seed_module._SSI_REAL_NOTE
+            ),
+            as_of="2002-08-08",
+            status="archived",
+            bic_only=False,
+        )
+        assert seed_module._legacy_seed_row_is_unmodified(row) is True
+        row.intermediary_account = "ACCT-OPERATOR-OWNED"
+        assert seed_module._legacy_seed_row_is_unmodified(row) is False
+
     def test_reseed_replaces_a_changed_machine_citation_with_same_provenance(self):
         """A source URL can change without changing date, status, or shape."""
         from app.services.seed import SSI_RECORDS, seed_if_empty
@@ -976,7 +1002,8 @@ class TestSeedRollout:
             row = session.query(SSI).filter_by(
                 beneficiary_bic=ben_bic, currency=ccy, intermediary_bic=int_bic
             ).one()
-            assert row.notes == source_notes
+            assert source_notes in row.notes
+            assert "Source: superseded page." in row.notes
         finally:
             session.close()
             engine.dispose()
@@ -1415,6 +1442,16 @@ class TestSeedRollout:
         )
         assert target[9] in merged
         assert "use approved account" in merged
+
+    def test_ambiguous_single_line_source_note_is_preserved(self):
+        from app.services.seed import _merge_seed_citation
+
+        merged = _merge_seed_citation(
+            "Source: old page; retain approved account",
+            "Source: new page",
+        )
+        assert "Source: new page" in merged
+        assert "Source: old page; retain approved account" in merged
 
     def test_seed_rejects_a_non_boolean_bic_only_flag(self, monkeypatch):
         """The bic_only provenance flag is read with isinstance(x, bool): a
