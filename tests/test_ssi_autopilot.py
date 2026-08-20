@@ -45,6 +45,22 @@ def test_valid_results_pass():
     assert autopilot.validate_results(sample_results(), MANIFEST) == []
 
 
+def test_manifest_value_dates_use_application_vocabulary():
+    from app.ssi_terms import VALID_VALUE_DATES, normalize_value_date
+
+    normalized = {
+        normalize_value_date(value) for value in MANIFEST["defaults"]["value_dates"]
+    }
+    assert normalized <= VALID_VALUE_DATES
+
+
+@pytest.mark.parametrize("legacy, canonical", [("1d", "T+1"), ("2d", "T+2"), ("3d", "T+3")])
+def test_legacy_value_date_aliases_normalize(legacy, canonical):
+    from app.ssi_terms import normalize_value_date
+
+    assert normalize_value_date(legacy) == canonical
+
+
 def test_all_manifest_regions_have_expected_shape():
     for region in MANIFEST["regions"]:
         assert region["name"]

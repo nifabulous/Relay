@@ -6,6 +6,7 @@ from typing import Optional
 
 VALID_CHARGE_CODES = frozenset({"OUR", "SHA", "BEN"})
 VALID_VALUE_DATES = frozenset({"same-day", "spot", "T+1", "T+2", "T+3"})
+_VALUE_DATE_ALIASES = {"1d": "T+1", "2d": "T+2", "3d": "T+3"}
 
 
 def normalize_charge_code(value: Optional[str]) -> Optional[str]:
@@ -22,4 +23,6 @@ def normalize_value_date(value: Optional[str]) -> Optional[str]:
     if not stripped:
         return None
     lowered = stripped.lower()
+    if lowered in _VALUE_DATE_ALIASES:
+        return _VALUE_DATE_ALIASES[lowered]
     return "T+" + lowered[2:] if lowered.startswith("t+") else lowered
