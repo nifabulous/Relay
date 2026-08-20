@@ -147,7 +147,7 @@ export type RouteResponse = z.infer<typeof RouteResponseSchema>;
  * SSI
  * ------------------------------------------------------------------ */
 
-export const SSIRecordSchema = z
+const SSIRecordShapeSchema = z
   .object({
     beneficiary_bic: z.string().catch(""),
     beneficiary_bank_name: safeOptionalString,
@@ -175,6 +175,38 @@ export const SSIRecordSchema = z
     intermediary_settlement: SettlementIdsSchema.nullish().catch(null),
   })
   .passthrough();
+
+export const SSIRecordSchema = SSIRecordShapeSchema.superRefine((record, ctx) => {
+  const settlementFields = [
+    ["intermediary_account", record.intermediary_account],
+    ["beneficiary_account", record.beneficiary_account],
+    ["charge_code", record.charge_code],
+    ["value_date", record.value_date],
+  ] as const;
+
+  if (record.bic_only) {
+    for (const [field, value] of settlementFields) {
+      if (value != null && value !== "") {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: "BIC-only records cannot contain settlement fields",
+        });
+      }
+    }
+    return;
+  }
+
+  for (const field of ["charge_code", "value_date"] as const) {
+    if (!record[field]) {
+      ctx.addIssue({
+        code: "custom",
+        path: [field],
+        message: "Ordinary settlement instructions require this field",
+      });
+    }
+  }
+});
 
 export type SSIRecord = z.infer<typeof SSIRecordSchema>;
 

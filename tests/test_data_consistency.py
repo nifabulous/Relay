@@ -1017,6 +1017,12 @@ class TestSeedRollout:
             and row[2] == "EUR"
             and row[3] == "NDEAFIHHXXX"
         )
+        operator_corrected = next(
+            row for row in seed_module.SSI_RECORDS
+            if row[0] == "SBININBBXXX"
+            and row[2] == "EUR"
+            and row[3] == "BBRUBEBBXXX"
+        )
         monkeypatch.setattr(seed_module, "SSI_RECORDS", (current,))
 
         engine = create_engine(
@@ -1043,6 +1049,20 @@ class TestSeedRollout:
                 as_of=removed[10],
                 status=removed[11],
             ))
+            session.add(SSI(
+                beneficiary_bic=operator_corrected[0],
+                beneficiary_bank_name=operator_corrected[1],
+                currency=operator_corrected[2],
+                intermediary_bic=operator_corrected[3],
+                intermediary_bank_name=operator_corrected[4],
+                intermediary_account=operator_corrected[5],
+                beneficiary_account="REAL-OPERATOR-ACCOUNT",
+                charge_code=operator_corrected[7],
+                value_date=operator_corrected[8],
+                notes=operator_corrected[9],
+                as_of=operator_corrected[10],
+                status=operator_corrected[11],
+            ))
             session.commit()
 
             result = seed_module.seed_if_empty(session)
@@ -1053,6 +1073,57 @@ class TestSeedRollout:
                 currency=removed[2],
                 intermediary_bic=removed[3],
             ).one_or_none() is None
+            preserved = session.query(SSI).filter_by(
+                beneficiary_bic=operator_corrected[0],
+                currency=operator_corrected[2],
+                intermediary_bic=operator_corrected[3],
+            ).one()
+            assert preserved.beneficiary_account == "REAL-OPERATOR-ACCOUNT"
+        finally:
+            session.close()
+            engine.dispose()
+
+    def test_fingerprinted_seed_row_survives_a_later_operator_correction(self, monkeypatch):
+        import app.services.seed as seed_module
+
+        current = next(
+            row for row in seed_module.SSI_RECORDS
+            if row[0] == "ZEIBNGLAXXX"
+            and row[2] == "USD"
+            and row[3] == "CITIUS33XXX"
+        )
+        monkeypatch.setattr(seed_module, "SSI_RECORDS", (current,))
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            seed_module.seed_if_empty(session)
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=current[0],
+                currency=current[2],
+                intermediary_bic=current[3],
+            ).one()
+            assert row.seed_fingerprint
+            row.beneficiary_account = "REAL-OPERATOR-ACCOUNT"
+            session.commit()
+
+            monkeypatch.setattr(seed_module, "SSI_RECORDS", ())
+            result = seed_module.seed_if_empty(session)
+
+            assert result["ssi_retired"] == 0
+            preserved = session.query(SSI).filter_by(
+                beneficiary_bic=current[0],
+                currency=current[2],
+                intermediary_bic=current[3],
+            ).one()
+            assert preserved.beneficiary_account == "REAL-OPERATOR-ACCOUNT"
         finally:
             session.close()
             engine.dispose()
@@ -1195,6 +1266,17 @@ class TestSeedRollout:
         finally:
             session.close()
             engine.dispose()
+
+    def test_single_line_source_note_can_carry_an_operator_note(self):
+        from app.services.seed import SSI_RECORDS, _merge_seed_citation
+
+        target = next(r for r in SSI_RECORDS if r[0] == "ZEIBNGLAXXX" and r[2] == "USD")
+        merged = _merge_seed_citation(
+            "Source: old page; Operator note: use approved account",
+            target[9],
+        )
+        assert target[9] in merged
+        assert "use approved account" in merged
 
     def test_seed_rejects_a_non_boolean_bic_only_flag(self, monkeypatch):
         """The bic_only provenance flag is read with isinstance(x, bool): a

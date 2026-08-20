@@ -501,6 +501,29 @@ class TestBicOnlyMigration:
         assert "ssi_as_of_update" in triggers
         connection.close()
 
+    def test_downgrade_refuses_while_bic_only_rows_exist(self, tmp_path):
+        db = tmp_path / "bic_only_down_refused.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        connection.execute(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+            "notes, bic_only) VALUES ('EBILAEADXXX', 'USD', 'BOFAUS3NXXX', "
+            "'unverified', 'Source: x', 1)"
+        )
+        connection.commit()
+        connection.close()
+
+        result = _alembic(db, "downgrade", self.PREVIOUS)
+        assert result.returncode != 0
+        assert "Refusing to remove bic_only" in result.stderr
+
+        connection = sqlite3.connect(db)
+        assert "bic_only" in {
+            row[1] for row in connection.execute("PRAGMA table_info(ssi)")
+        }
+        connection.close()
+
     def test_model_and_migration_constraints_do_not_drift(self):
         from app.models import SSI
 

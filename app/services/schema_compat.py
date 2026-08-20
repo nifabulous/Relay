@@ -47,6 +47,7 @@ _TABLE_PATCHES = {
         # require a table rebuild); _ensure_ssi_bic_only_check performs that
         # rebuild after the columns land.
         ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
+        ("seed_fingerprint VARCHAR(64)", "seed_fingerprint"),
     ),
 }
 

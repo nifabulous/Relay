@@ -135,6 +135,18 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+    columns = {column["name"] for column in sa.inspect(bind).get_columns("ssi")}
+    if "bic_only" in columns:
+        bic_only_count = bind.execute(
+            sa.text("SELECT COUNT(*) FROM ssi WHERE bic_only")
+        ).scalar_one()
+        if bic_only_count:
+            raise RuntimeError(
+                "Refusing to remove bic_only while "
+                f"{bic_only_count} BIC-only SSI row(s) remain; remediate or "
+                "remove those rows before downgrading"
+            )
     with op.batch_alter_table("ssi") as batch:
         batch.drop_constraint("ck_ssi_ordinary_has_settlement_terms", type_="check")
         batch.drop_constraint("ck_ssi_bic_only_has_no_accounts", type_="check")

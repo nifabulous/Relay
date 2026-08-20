@@ -196,6 +196,11 @@ class SSI(Base):
     # expression and the CREATE TABLE would fail. "false" is valid on both
     # engines (SQLite accepts FALSE as an alias for the integer 0).
     bic_only = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Snapshot of the row as last written by the curated seeder. It lets a
+    # later source reconciliation distinguish an untouched machine row from
+    # one an operator has corrected, without treating free-form notes as an
+    # ownership flag.
+    seed_fingerprint = Column(String(64))
 
     __table_args__ = (
         Index("ix_ssi_bic_ccy", "beneficiary_bic", "currency"),

@@ -106,6 +106,8 @@ def test_legacy_ssi_gains_provenance_columns_without_data_loss():
     assert row["as_of"] is None
     assert row["verified_by"] is None
     assert row["status"] == "illustrative"
+    columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+    assert {"as_of", "verified_by", "status", "bic_only", "seed_fingerprint"} <= columns
 
 
 def test_legacy_ssi_with_missing_terms_is_refused_before_schema_changes():
@@ -282,6 +284,7 @@ class TestCurrentSchemaIsANoop:
             "verified_by",
             "status",
             "bic_only",
+            "seed_fingerprint",
         }
         columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
         assert set(columns_before) == expected_columns

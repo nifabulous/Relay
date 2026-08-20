@@ -7,7 +7,10 @@ The corridor rules below reflect commonly known correspondent patterns for
 major corridors; treat confidence levels as advisory.
 """
 
+import hashlib
+import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -463,8 +466,42 @@ _SSI_REAL_NOTE = (
 
 def _is_seed_owned_ssi(row: SSI) -> bool:
     """Return whether the row carries the seeder's machine-source marker."""
-    notes = (row.notes or "").lstrip()
-    return notes.startswith("Source:") and _SSI_REAL_NOTE in notes
+    notes = (row.notes or "").strip()
+    return notes.startswith("Source:") and notes.endswith(_SSI_REAL_NOTE) and "\n" not in notes
+
+
+def _seed_fingerprint(row: SSI) -> str:
+    """Hash the complete persisted SSI snapshot owned by the seeder."""
+    values = (
+        row.beneficiary_bic,
+        row.beneficiary_bank_name,
+        row.currency,
+        row.intermediary_bic,
+        row.intermediary_bank_name,
+        row.intermediary_account,
+        row.beneficiary_account,
+        row.charge_code,
+        row.value_date,
+        row.notes,
+        row.as_of,
+        row.status,
+        row.verified_by,
+        row.bic_only,
+    )
+    payload = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _legacy_seed_row_is_unmodified(row: SSI) -> bool:
+    """Recognize pre-fingerprint seed rows without deleting corrections."""
+    if not _is_seed_owned_ssi(row):
+        return False
+    if row.bic_only:
+        return True
+    return row.charge_code == "SHA" and row.value_date == "spot" and all(
+        isinstance(account, str) and re.fullmatch(r"ACCT-\d+", account)
+        for account in (row.intermediary_account, row.beneficiary_account)
+    )
 
 
 def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
@@ -490,6 +527,17 @@ def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
     if existing == source_notes or existing.startswith(f"{source_notes}\n"):
         return bounded(existing)
     if existing.lstrip().startswith("Source:"):
+        operator_delimiter = "; Operator note:"
+        if operator_delimiter in existing:
+            operator_suffix = existing.split(operator_delimiter, 1)[1].strip()
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
+        marker_end = existing.find(_SSI_REAL_NOTE)
+        if marker_end >= 0:
+            marker_end += len(_SSI_REAL_NOTE)
+            operator_suffix = existing[marker_end:].strip(" ;")
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
         operator_suffix = existing.split("\n", 1)[1] if "\n" in existing else ""
         merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
         return bounded(merged)
@@ -5257,8 +5305,9 @@ def _apply_seed_bic_aliases(session) -> None:
 def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> int:
     """Delete source-owned SSIs that no longer belong to the curated set.
 
-    Operator-created rows are deliberately left alone: the machine-source
-    marker is the seeder's citation suffix, not merely the word ``Source:``.
+    Operator-created or corrected rows are deliberately left alone. New seed
+    rows carry a snapshot fingerprint; pre-fingerprint rows are retired only
+    when they still have the exact machine citation and placeholder shape.
     The flush keeps this reconciliation in the same transaction as the
     upserts and the final commit in ``seed_if_empty`` makes the rollout
     atomic.
@@ -5267,7 +5316,12 @@ def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> 
     candidates = session.query(SSI).filter(SSI.notes.isnot(None)).all()
     for row in candidates:
         key = (row.beneficiary_bic, row.currency, row.intermediary_bic)
-        if key not in source_keys and _is_seed_owned_ssi(row):
+        untouched = (
+            row.seed_fingerprint is not None
+            and row.seed_fingerprint == _seed_fingerprint(row)
+        )
+        legacy_untouched = row.seed_fingerprint is None and _legacy_seed_row_is_unmodified(row)
+        if key not in source_keys and (untouched or legacy_untouched):
             session.delete(row)
             retired += 1
     if retired:
@@ -5355,26 +5409,34 @@ def seed_if_empty(session) -> dict:
             SSI.intermediary_bic == int_bic,
         ).one_or_none()
         if existing is None:
-            session.add(
-                SSI(
-                    beneficiary_bic=ben_bic,
-                    beneficiary_bank_name=ben_name,
-                    currency=ccy,
-                    intermediary_bic=int_bic,
-                    intermediary_bank_name=int_name,
-                    intermediary_account=int_acct,
-                    beneficiary_account=ben_acct,
-                    charge_code=charge,
-                    value_date=vdate,
-                    notes=notes,
-                    as_of=as_of,
-                    status=status,
-                    verified_by=verified_by,
-                    bic_only=bic_only,
-                )
+            seeded = SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name=ben_name,
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name=int_name,
+                intermediary_account=int_acct,
+                beneficiary_account=ben_acct,
+                charge_code=charge,
+                value_date=vdate,
+                notes=notes,
+                as_of=as_of,
+                status=status,
+                verified_by=verified_by,
+                bic_only=bic_only,
             )
+            seeded.seed_fingerprint = _seed_fingerprint(seeded)
+            session.add(seeded)
             inserted["ssi"] += 1
         else:
+            prior_fingerprint = existing.seed_fingerprint
+            prior_snapshot_unchanged = (
+                prior_fingerprint is not None
+                and prior_fingerprint == _seed_fingerprint(existing)
+            )
+            legacy_snapshot_unchanged = (
+                prior_fingerprint is None and _legacy_seed_row_is_unmodified(existing)
+            )
             # Reconciliation policy for an existing key, decided explicitly:
             #
             #   * Ordinary -> ordinary: the row keeps its OWNER's settlement
@@ -5454,6 +5516,8 @@ def seed_if_empty(session) -> dict:
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )
+            if prior_snapshot_unchanged or legacy_snapshot_unchanged:
+                existing.seed_fingerprint = _seed_fingerprint(existing)
 
     # Account fixtures did not change in this PR; retain their historical
     # empty-table behavior while the directory/rules/SSI data rolls forward.
