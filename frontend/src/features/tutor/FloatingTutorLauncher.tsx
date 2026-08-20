@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { TutorAvailabilitySchema } from "../../api/schemas";
+import { RelayDialog } from "../../design-system/behavior/RelayDialog";
 import { useTutorSurfaceContext } from "./tutorSurfaceStore";
 import "./FloatingTutorLauncher.css";
 
@@ -90,74 +91,58 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
     availability === "probe-error"
       ? "Tutor availability could not be confirmed. Refresh to try again."
       : "The tutor is not available in this deployment. Everything else in Relay works as usual.";
-  const [restoreFocus, setRestoreFocus] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
 
-  const close = useCallback(() => {
-    setOpen(false);
-    onOpenChange?.(false);
-    // Focus cannot be restored here: the pill is still mounted, but deferring
-    // to the effect below keeps this identical to the in-page launcher's
-    // behaviour and survives the pill being conditionally rendered later.
-    setRestoreFocus(true);
-  }, [onOpenChange]);
-
-  useEffect(() => {
-    if (open || !restoreFocus) return;
-    launcherRef.current?.focus();
-    setRestoreFocus(false);
-  }, [open, restoreFocus]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") close();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, close]);
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      setOpen(nextOpen);
+      onOpenChange?.(nextOpen);
+    },
+    [onOpenChange],
+  );
 
   useEffect(() => {
     if (canOpen || !open) return;
-    close();
-  }, [canOpen, close, open]);
+    handleOpenChange(false);
+  }, [canOpen, handleOpenChange, open]);
+
+  const trigger = (
+    <button
+      type="button"
+      ref={launcherRef}
+      className="tutor-fab"
+      disabled={!canOpen}
+      aria-describedby={
+        !canOpen && availability !== "checking" ? "tutor-fab-unavailable" : undefined
+      }
+      aria-expanded={open}
+      aria-controls={open ? "tutor-floating-panel" : undefined}
+    >
+      <TutorIcon />
+      <span className="tutor-fab__label">Tutor</span>
+    </button>
+  );
+
+  const closeControl = (
+    <button type="button" className="tutor-floating-panel__close">
+      Close tutor
+    </button>
+  );
 
   return (
     <>
       <div className="tutor-fab-cluster">
-        <button
-          type="button"
-          ref={launcherRef}
-          className="tutor-fab"
-          disabled={!canOpen}
-          aria-describedby={
-            !canOpen && availability !== "checking" ? "tutor-fab-unavailable" : undefined
-          }
-          aria-expanded={open}
-          aria-controls={open ? "tutor-floating-panel" : undefined}
-          onClick={() => {
-            if (open) {
-              close();
-              return;
-            }
-            if (canOpen) {
-              setOpen(true);
-              onOpenChange?.(true);
-            }
-          }}
+        <RelayDialog
+          open={open}
+          onOpenChange={handleOpenChange}
+          trigger={trigger}
+          closeControl={closeControl}
+          titleId={HEADING_ID}
+          ariaLabel="Tutor"
+          popupId="tutor-floating-panel"
+          className="tutor-floating-panel"
+          finalFocus={launcherRef}
         >
-          <TutorIcon />
-          <span className="tutor-fab__label">Tutor</span>
-        </button>
-        {availability !== "available" && availability !== "checking" && (
-          <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
-            {unavailableMessage}
-          </span>
-        )}
-      </div>
-
-      {open && (
-        <div className="tutor-floating-panel" id="tutor-floating-panel">
           <Suspense
             fallback={
               <p className="tutor-floating-panel__loading" role="status">
@@ -171,11 +156,13 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
                 tab, where rAF is not serviced. */}
             <TutorPanel context={context} headingId={HEADING_ID} autoFocusHeading compact />
           </Suspense>
-          <button type="button" className="tutor-floating-panel__close" onClick={close}>
-            Close tutor
-          </button>
-        </div>
-      )}
+        </RelayDialog>
+        {availability !== "available" && availability !== "checking" && (
+          <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
+            {unavailableMessage}
+          </span>
+        )}
+      </div>
     </>
   );
 }
