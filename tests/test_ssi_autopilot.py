@@ -209,6 +209,12 @@ def test_bic_only_record_without_accounts_charge_or_value_date_passes():
     assert autopilot.validate_results(gulf_bic_only_results(), MANIFEST) == []
 
 
+def test_admission_record_normalizer_accepts_strict_bic_only_boolean():
+    record = gulf_bic_only_results()["banks"][0]["records"][0]
+    normalized = autopilot._normalize_record(record, "record")
+    assert normalized["bic_only"] is True
+
+
 def test_bic_only_record_with_an_account_is_rejected():
     bad = gulf_bic_only_results()
     bad["banks"][0]["records"][0]["nostro"] = "ACCT-91001601"
@@ -244,6 +250,12 @@ EBILAEAD_BIC_ONLY_ROW = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
      None, None, None, None,
      "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01). " + _SSI_REAL_NOTE,
      "2026-05-01", "unverified", None, True),'''
+
+
+def test_fold_notes_tampering_is_rejected():
+    tampered = EBILAEAD_BIC_ONLY_ROW.replace("_SSI_REAL_NOTE", '"Tampered provenance."')
+    problems = autopilot.verify_fold(gulf_bic_only_results(), SEED_HEAD, _folded(tampered))
+    assert any("required provenance note" in problem for problem in problems)
 
 
 def test_bic_only_fold_matching_the_validated_results_passes():
@@ -930,6 +942,16 @@ def test_task5_summary_idempotence_and_byte_identity(tmp_path, monkeypatch):
     assert second["added_banks"] == 0 and second["added_records"] == 0
     assert second["unchanged_banks"] == 1 and second["unchanged_records"] == 1
     assert path.read_bytes() == before
+
+
+def test_candidate_identity_name_must_match_approved_bic(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank()
+    bank["name"] = "Unrelated Bank"
+    with pytest.raises(ValueError, match="operator-approved identity"):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [bank]}]})
 
 
 def test_candidate_source_domain_must_be_trusted_for_bic(tmp_path, monkeypatch):

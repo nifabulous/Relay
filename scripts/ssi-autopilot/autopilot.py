@@ -70,14 +70,14 @@ _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 # Candidate source domains are admissions data, not evidence. Keep this registry
 # independent from the mutable manifest so a candidate cannot authorize its own
 # citations by supplying a matching domain.
-TRUSTED_SOURCE_DOMAINS: dict[str, tuple[str, ...]] = {
-    # Reviewed bank-owned hosts used by the current SSI corpus and discovery
-    # wave. Candidate payloads must match these identities exactly.
-    "BBDEBRSP": ("banco.bradesco",),
-    "CMBCCNBS": ("cmbchina.com",),
-    "CTBAAU2S": ("commbank.com.au",),
-    "TESTPHMM": ("testphilippinebank.com",),
-    "NEWPPHMM": ("testphilippinebank.com",),
+TRUSTED_SOURCE_IDENTITIES: dict[str, dict[str, object]] = {
+    # Operator-reviewed identities. Candidate payloads must match these values;
+    # the candidate cannot establish the bank/domain relationship itself.
+    "BBDEBRSP": {"name": "Banco Bradesco", "country": "BR", "domains": ("banco.bradesco",)},
+    "CMBCCNBS": {"name": "China Merchants Bank", "country": "CN", "domains": ("cmbchina.com",)},
+    "CTBAAU2S": {"name": "Commonwealth Bank of Australia", "country": "AU", "domains": ("commbank.com.au",)},
+    "TESTPHMM": {"name": "Test Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
+    "NEWPPHMM": {"name": "New Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
 }
 _TEST_BICS = {"TESTPHMM", "NEWPPHMM"}
 
@@ -129,7 +129,7 @@ _ADMISSION_REGION_KEYS = {"name", "label", "countries", "masked_block", "note", 
 _ADMISSION_BANK_KEYS = {"bic8", "name", "country", "currencies", "seedable", "records", "source_domains"}
 _ADMISSION_RECORD_KEYS = {
     "currency", "correspondent", "int_bic", "nostro", "with_an",
-    "charge_code", "value_date", "source", "as_of", "status", "verified_by",
+    "charge_code", "value_date", "source", "as_of", "status", "verified_by", "bic_only",
 }
 
 
@@ -161,24 +161,41 @@ def record_digest(records: list[dict]) -> str:
     return hashlib.sha256(_canonical_json(ordered).encode("utf-8")).hexdigest()
 
 
+def _canonical_name(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
 def _normalize_record(record: dict, path: str) -> dict:
     record = _require_mapping(record, path)
     unknown = set(record) - _ADMISSION_RECORD_KEYS
     if unknown:
         raise ValueError(f"{path}: unknown fields: {', '.join(sorted(unknown))}")
-    required = _ADMISSION_RECORD_KEYS - {"verified_by"}
+    normalized = dict(record)
+    bic_only = normalized.get("bic_only", False)
+    required = _ADMISSION_RECORD_KEYS - {"verified_by", "bic_only"}
+    if bic_only is True:
+        required -= {"nostro", "with_an", "charge_code", "value_date"}
     missing = required - set(record)
     if missing:
         raise ValueError(f"{path}: missing fields: {', '.join(sorted(missing))}")
-    normalized = dict(record)
+    if not isinstance(bic_only, bool):
+        raise ValueError(f"{path}.bic_only: expected a boolean")
+    for key in ("nostro", "with_an", "charge_code", "value_date"):
+        if bic_only is True and key not in normalized:
+            normalized[key] = None
     for key in ("currency", "int_bic", "charge_code"):
+        if bic_only is True and key == "charge_code" and normalized[key] is None:
+            continue
         if not isinstance(normalized[key], str):
             raise ValueError(f"{path}.{key}: expected a string")
         normalized[key] = normalized[key].strip().upper()
     if not isinstance(normalized["status"], str):
         raise ValueError(f"{path}.status: expected a string")
     normalized["status"] = normalized["status"].strip().lower()
+    nullable_for_bic_only = {"nostro", "with_an", "charge_code", "value_date"}
     for key in ("correspondent", "nostro", "with_an", "value_date", "source", "as_of"):
+        if normalized.get("bic_only") and key in nullable_for_bic_only and normalized[key] is None:
+            continue
         if not isinstance(normalized[key], str):
             raise ValueError(f"{path}.{key}: expected a string")
         normalized[key] = normalized[key].strip()
@@ -186,6 +203,9 @@ def _normalize_record(record: dict, path: str) -> dict:
         if not isinstance(normalized["verified_by"], str):
             raise ValueError(f"{path}.verified_by: expected a string")
         normalized["verified_by"] = normalized["verified_by"].strip()
+    if "bic_only" in normalized and not isinstance(normalized["bic_only"], bool):
+        raise ValueError(f"{path}.bic_only: expected a boolean")
+    normalized.setdefault("bic_only", False)
     return normalized
 
 
@@ -253,7 +273,8 @@ def _trusted_domains_for_bic(bic: str) -> set[str]:
     """Return operator-reviewed domains, excluding test identities in production."""
     if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
         return set()
-    return set(TRUSTED_SOURCE_DOMAINS.get(bic, ()))
+    identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
+    return set(identity["domains"]) if identity else set()
 
 
 def _canonical_bic8(value: object, path: str) -> str:
@@ -305,7 +326,14 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     domains = [_normalize_source_domain(domain, f"{path}.source_domains[{i}]") for i, domain in enumerate(domains)]
     if len(set(domains)) != len(domains):
         raise ValueError(f"{path}.source_domains: expected unique domains")
-    trusted = _trusted_domains_for_bic(bic)
+    identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
+    if identity is None:
+        raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
+    if _canonical_name(name) != _canonical_name(str(identity["name"])):
+        raise ValueError(f"{path}.name: does not match the operator-approved identity for BIC {bic}")
+    if country != identity["country"]:
+        raise ValueError(f"{path}.country: does not match the operator-approved identity for BIC {bic}")
+    trusted = set(identity["domains"])
     if set(domains) != trusted:
         raise ValueError(f"{path}.source_domains: domains are not trusted for BIC {bic}")
     if seedable and not domains:
@@ -953,10 +981,19 @@ def _ssi_rows(source: str) -> list[tuple]:
 
 
 def _literal(text: str):
-    """Evaluate a tuple field while retaining source expressions as text."""
+    """Evaluate tuple fields and the seed module's canonical note constant."""
     try:
         return ast.literal_eval(text)
     except (ValueError, SyntaxError):
+        if "_SSI_REAL_NOTE" in text:
+            prefix = text.split("+", 1)[0].strip()
+            try:
+                value = ast.literal_eval(prefix)
+            except (ValueError, SyntaxError):
+                pass
+            else:
+                if isinstance(value, str) and value.startswith("Source:"):
+                    return value + "Sourced from bank-published SSI page. Verify current values before use."
         return text
 
 
@@ -1080,8 +1117,21 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         if fields["verified_by"] != verified:
             problems.append(f"{key[0]}/{key[1]}: folded verified_by {fields['verified_by']!r} does not match validated {verified!r}")
         source = str(rec.get("source", ""))
-        if source and source not in str(fields["notes"]):
+        note_text = str(fields["notes"])
+        as_of = str(rec.get("as_of", ""))
+        expected_prefix = f"Source: {source} (as of {as_of}). "
+        if source and source not in note_text:
             problems.append(f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}")
+        if source and not note_text.lstrip('"').startswith(expected_prefix):
+            problems.append(f"{key[0]}/{key[1]}: folded notes do not match the canonical source prefix")
+        if source and not any(
+            marker in note_text
+            for marker in (
+                "Sourced from bank-published SSI page. Verify current values before use.",
+                "_SSI_REAL_NOTE",
+            )
+        ):
+            problems.append(f"{key[0]}/{key[1]}: folded notes do not contain the required provenance note")
 
     for key in expected:
         if key not in added_by_key and key not in head_by_key:
