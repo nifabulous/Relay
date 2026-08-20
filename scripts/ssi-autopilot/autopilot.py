@@ -70,16 +70,15 @@ _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 # Candidate source domains are admissions data, not evidence. Keep this registry
 # independent from the mutable manifest so a candidate cannot authorize its own
 # citations by supplying a matching domain.
-TRUSTED_SOURCE_IDENTITIES: dict[str, dict[str, object]] = {
-    # Operator-reviewed identities. Candidate payloads must match these values;
-    # the candidate cannot establish the bank/domain relationship itself.
-    "BBDEBRSP": {"name": "Banco Bradesco", "country": "BR", "domains": ("banco.bradesco",)},
-    "CMBCCNBS": {"name": "China Merchants Bank", "country": "CN", "domains": ("cmbchina.com",)},
-    "CTBAAU2S": {"name": "Commonwealth Bank of Australia", "country": "AU", "domains": ("commbank.com.au",)},
+TRUSTED_IDENTITIES_FILE = Path(__file__).resolve().parent / "trusted_identities.json"
+TRUSTED_SOURCE_IDENTITIES: dict[str, dict[str, object]] = json.loads(
+    TRUSTED_IDENTITIES_FILE.read_text(encoding="utf-8")
+)
+_TEST_BICS = {"TESTPHMM", "NEWPPHMM"}
+_TEST_IDENTITIES = {
     "TESTPHMM": {"name": "Test Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
     "NEWPPHMM": {"name": "New Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
 }
-_TEST_BICS = {"TESTPHMM", "NEWPPHMM"}
 
 # These are legacy manifest values retained for compatibility. They are not
 # valid BICs and may not be introduced in new candidate payloads.
@@ -330,6 +329,8 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     if len(set(domains)) != len(domains):
         raise ValueError(f"{path}.source_domains: expected unique domains")
     identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
+    if identity is None and REGIONS_FILE.resolve() != (Path(__file__).resolve().parent / "regions.json"):
+        identity = _TEST_IDENTITIES.get(bic)
     if identity is None:
         raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
     if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
@@ -438,7 +439,14 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
                     raise ValueError(f"{path}.{key}: existing region metadata is immutable")
             if "forbidden_bics" in raw and not isinstance(raw["forbidden_bics"], list):
                 raise ValueError(f"{path}.forbidden_bics: expected a list")
-            supplied_forbidden = set(raw.get("forbidden_bics", old.get("forbidden_bics", [])))
+            raw_forbidden = raw.get("forbidden_bics", old.get("forbidden_bics", []))
+            if not isinstance(raw_forbidden, list):
+                raise ValueError(f"{path}.forbidden_bics: expected a list")
+            supplied_forbidden = set()
+            for forbidden_index, value in enumerate(raw_forbidden):
+                if not isinstance(value, str):
+                    raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: expected a string")
+                supplied_forbidden.add(value.strip().upper())
             existing_forbidden = set(old.get("forbidden_bics", []))
             if not existing_forbidden.issubset(supplied_forbidden):
                 raise ValueError(f"{path}.forbidden_bics: existing forbidden BICs cannot be removed")
@@ -629,8 +637,12 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
         proposed["regions"].extend(sorted(new_regions, key=lambda region: region["name"]))
         added_banks = added_records = unchanged_banks = unchanged_records = 0
         candidate_bics = {
-            bank.get("bic8") for raw_region in payload.get("regions", [])
-            for bank in raw_region.get("banks", []) if isinstance(raw_region, dict) and isinstance(bank, dict)
+            bank["bic8"].strip().upper()[:8]
+            for raw_region in payload.get("regions", [])
+            for bank in raw_region.get("banks", [])
+            if isinstance(raw_region, dict)
+            and isinstance(bank, dict)
+            and isinstance(bank.get("bic8"), str)
         }
         for region in normalized:
             before_region = next((r for r in manifest["regions"] if r["name"] == region["name"]), None)
@@ -680,7 +692,9 @@ def validate_admitted_results(results: dict, manifest: dict) -> list[str]:
     try:
         region = get_region(manifest, results.get("region", ""))
     except SystemExit:
+        problems.append(f"unknown region: {results.get('region', '')!r}")
         return problems
+
     admitted = {
         bank["bic8"]: bank
         for bank in region.get("banks", [])

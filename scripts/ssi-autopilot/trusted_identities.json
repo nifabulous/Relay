@@ -1,0 +1,17 @@
+{
+  "BBDEBRSP": {
+    "name": "Banco Bradesco",
+    "country": "BR",
+    "domains": ["banco.bradesco"]
+  },
+  "CMBCCNBS": {
+    "name": "China Merchants Bank",
+    "country": "CN",
+    "domains": ["cmbchina.com"]
+  },
+  "CTBAAU2S": {
+    "name": "Commonwealth Bank of Australia",
+    "country": "AU",
+    "domains": ["commbank.com.au"]
+  }
+}

@@ -985,7 +985,7 @@ def test_legacy_bank_without_source_domains_can_be_readmitted(tmp_path, monkeypa
 def test_test_identity_is_rejected_by_production_admission(monkeypatch):
     production = autopilot.Path(autopilot.__file__).resolve().parent / "regions.json"
     monkeypatch.setattr(autopilot, "REGIONS_FILE", production)
-    with pytest.raises(ValueError, match="test identity"):
+    with pytest.raises(ValueError, match="not operator-approved"):
         autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [admission_bank()]}]})
 
 
@@ -1044,6 +1044,28 @@ def test_malformed_admitted_records_are_rejected_without_traceback():
     manifest["regions"][0]["banks"] = [{"bic8": "TESTPHMM", "name": "Test", "admitted_records": [], "admitted_record_digest": autopilot.record_digest([])}]
     problems = autopilot.validate_admitted_results({"region": manifest["regions"][0]["name"], "banks": [{"bic": "TESTPHMM", "name": "Test", "records": None}]}, manifest)
     assert any("records must be a list" in problem for problem in problems)
+
+
+def test_nested_forbidden_bic_is_rejected_as_controlled_error(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    with pytest.raises(ValueError, match=r"forbidden_bics\[0\]: expected a string"):
+        autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "forbidden_bics": [["NATAU3P"]], "banks": []}]})
+
+
+def test_lowercase_candidate_bic_is_counted(tmp_path, monkeypatch):
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    bank = admission_bank(bic="testphmm")
+    summary = autopilot.admit_candidates({"regions": [{"name": "southeast-asia", "banks": [bank]}]})
+    assert summary["added_banks"] == 1
+
+
+def test_unknown_region_admitted_results_fail_closed():
+    problems = autopilot.validate_admitted_results({"region": "not-a-region", "banks": []}, MANIFEST)
+    assert problems == ["unknown region: 'not-a-region'"]
 
 
 def test_malformed_candidate_forbidden_bic_is_rejected(tmp_path, monkeypatch):
