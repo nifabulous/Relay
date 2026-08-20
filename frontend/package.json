@@ -9,9 +9,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "check:base-ui-boundary": "node scripts/check-base-ui-boundary.mjs",
     "check:bundle": "node scripts/check-bundle.mjs"
   },
   "dependencies": {
+    "@base-ui/react": "1.7.0",
     "@hookform/resolvers": "5.7.1",
     "@sentry/react": "10.70.0",
     "@tanstack/react-query": "5.101.4",

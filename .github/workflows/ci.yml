@@ -111,6 +111,10 @@ jobs:
         run: npm run check:bundle
         working-directory: frontend
 
+      - name: Base UI import boundary
+        run: npm run check:base-ui-boundary
+        working-directory: frontend
+
   # Exercise the same fail-closed gate developers run before asking for
   # review. This deliberately runs in a clean environment so DB isolation,
   # artifact scanning, Sentry credential clearing, and final HEAD validation

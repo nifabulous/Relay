@@ -73,6 +73,21 @@ describe("FloatingTutorLauncher", () => {
     );
   });
 
+  it("focuses the heading again when the already-loaded panel reopens", async () => {
+    const user = userEvent.setup();
+    render(<FloatingTutorLauncher />);
+    const pill = await readyPill();
+
+    await user.click(pill);
+    await screen.findByRole("heading", { name: /tutor/i });
+    await user.click(screen.getByRole("button", { name: /close tutor/i }));
+    await waitFor(() => expect(pill).toHaveFocus());
+
+    await user.click(pill);
+    const heading = await screen.findByRole("heading", { name: /tutor/i });
+    await waitFor(() => expect(heading).toHaveFocus());
+  });
+
   it("closes on Escape", async () => {
     const user = userEvent.setup();
     render(<FloatingTutorLauncher />);
