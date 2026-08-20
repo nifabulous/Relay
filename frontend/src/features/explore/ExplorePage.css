@@ -502,6 +502,21 @@
   font-size: var(--text-sm);
 }
 
+/* BIC-only rows: correspondent availability, not a settlement instruction.
+   The badge keeps the row in the table (the correspondent IS real) while
+   making clear there is nothing to route on. */
+.bank-ssi__bic-only-badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .bank-route {
   margin-top: var(--space-6);
 }

@@ -7,6 +7,8 @@ The corridor rules below reflect commonly known correspondent patterns for
 major corridors; treat confidence levels as advisory.
 """
 
+import hashlib
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -92,6 +94,10 @@ BANKS = [
     ("MEZNPAKAXXX", "Meezan Bank", "PK", "Karachi", "PKR"),
     ("AGBKBDDHXXX", "Agrani Bank", "BD", "Dhaka", "BDT"),
     ("EBLDBDDHXXX", "Eastern Bank PLC", "BD", "Dhaka", "BDT"),
+    ("SICOTHBKXXX", "Siam Commercial Bank", "TH", "Bangkok", "THB"),
+    ("CAFECOBBXXX", "Banco Davivienda", "CO", "Bogota", "COP"),
+    ("BINPPEPLXXX", "Interbank (Banco Internacional del Peru)", "PE", "Lima", "PEN"),
+    ("BECHCLRMXXX", "BancoEstado", "CL", "Santiago", "CLP"),
     ("COMBLKLXXXX", "Commercial Bank of Ceylon", "LK", "Colombo", "LKR"),
     ("DFCCLKLXXXX", "DFCC Bank", "LK", "Colombo", "LKR"),
     # ---- Middle East (destinations) ----
@@ -121,11 +127,6 @@ BANKS = [
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
     ("BARBINBBXXX", "Bank of Baroda", "IN", "Mumbai", "INR"),
-    # ---- Additional SSI beneficiaries from the next data wave ----
-    ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "TH", "Bangkok", "THB"),
-    ("CAFECOBBXXX", "Banco Davivienda S.A. (Colombia)", "CO", "Bogota", "COP"),
-    ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "PE", "Lima", "PEN"),
-    ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "CL", "Santiago", "CLP"),
     # ---- Additional correspondent + destination banks (from SSI research) ----
     # Global correspondents seen in published SSIs
     ("SCBLUS33XXX", "Standard Chartered Bank New York", "US", "New York", "USD"),
@@ -461,6 +462,86 @@ _SSI_REAL_NOTE = (
     "Sourced from bank-published SSI page. Verify current values before use."
 )
 
+_ENBD_BIC_ONLY_SOURCE = (
+    "https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-"
+    "charges/accounts/correspondent_bank_charges_for_international_transfers.pdf"
+)
+_LEGACY_BIC_ONLY_ACCOUNT_BLOCKS = (
+    "ACCT-910016",
+    "ACCT-910021",
+    "ACCT-910022",
+    "ACCT-910025",
+)
+
+
+def _seed_fingerprint(row: SSI) -> str:
+    """Hash the complete persisted SSI snapshot owned by the seeder."""
+    values = (
+        row.beneficiary_bic,
+        row.beneficiary_bank_name,
+        row.currency,
+        row.intermediary_bic,
+        row.intermediary_bank_name,
+        row.intermediary_account,
+        row.beneficiary_account,
+        row.charge_code,
+        row.value_date,
+        row.notes,
+        row.as_of,
+        row.status,
+        row.verified_by,
+        row.bic_only,
+    )
+    payload = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
+    """Keep operator notes while ensuring a sourced status retains its citation.
+
+    Seed citations are source-controlled. Operator notes are not, so a source
+    refresh replaces only the first (machine) line when one is already
+    present, and otherwise puts the new citation before the operator note.
+    """
+    if not source_notes:
+        raise ValueError("A sourced SSI row must include its source citation")
+
+    def bounded(notes: str) -> str:
+        if len(notes) > 500:
+            raise ValueError(
+                "SSI source citation and operator note exceed the 500-character notes limit"
+            )
+        return notes
+
+    existing = (existing_notes or "").strip()
+    if not existing:
+        return bounded(source_notes)
+    if existing == source_notes or existing.startswith(f"{source_notes}\n"):
+        return bounded(existing)
+    if existing.lstrip().startswith("Source:"):
+        operator_delimiter = "; Operator note:"
+        if operator_delimiter in existing:
+            operator_suffix = existing.split(operator_delimiter, 1)[1].strip()
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
+        marker_end = existing.find(_SSI_REAL_NOTE)
+        if marker_end >= 0:
+            marker_end += len(_SSI_REAL_NOTE)
+            operator_suffix = existing[marker_end:].strip(" ;")
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
+        if "\n" in existing:
+            operator_suffix = existing.split("\n", 1)[1]
+            merged = f"{source_notes}\n{operator_suffix}" if operator_suffix else source_notes
+            return bounded(merged)
+        # A one-line Source: note without a documented delimiter is
+        # ambiguous. Preserve it verbatim instead of guessing that the text
+        # after the citation is disposable operator context.
+        return bounded(f"{source_notes}\n{existing}")
+
+    merged = f"{source_notes}\n{existing}"
+    return bounded(merged)
+
 SSI_RECORDS = [
     # ---- Nigeria ----
     ("GTBINGLAXXX", "Guaranty Trust Bank", "USD",
@@ -494,37 +575,11 @@ SSI_RECORDS = [
      "BOTKJPJTXXX", "MUFG (NY branch)",
      "ACCT-56735", "ACCT-7700889900", "SHA", "spot", _SSI_NOTE, None, "illustrative"),
 
-    # =============================================================    # REAL SSI DATA — sourced from bank-published pages
+    # ====================================================================
+    # REAL SSI DATA — sourced from bank-published pages
     # Source: emiratesnbd.com Corporate & Institutional Banking SSI page
-    # ======================================================    # ---- Emirates NBD (EBILAEAD) — real published SSIs ----
-    ("EBILAEADXXX", "Emirates NBD", "USD",
-     "BOFAUS3NXXX", "Bank of America NA, New York",
-     "ACCT-31713", "ACCT-64728", "SHA", "spot",
-     "Source: Emirates NBD SSI page. ABA 026009593. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "USD",
-     "CITIUS33XXX", "Citibank NA, New York",
-     "ACCT-73814", "ACCT-64728", "SHA", "spot",
-     "Source: Emirates NBD SSI page. ABA 021000089. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "USD",
-     "SCBLUS33XXX", "Standard Chartered Bank, New York",
-     "ACCT-61160", "ACCT-64728", "SHA", "spot",
-     "Source: Emirates NBD SSI page. ABA 026002561. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "USD",
-     "IRVTUS3NXXX", "Bank of New York Mellon, New York",
-     "ACCT-69468", "ACCT-64728", "SHA", "spot",
-     "Source: Emirates NBD SSI page. ABA 021000018. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "EUR",
-     "CITIIE2XXXX", "Citibank Europe Plc, Ireland",
-     "ACCT-90112", "ACCT-33821", "SHA", "spot",
-     "Source: Emirates NBD SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "EUR",
-     "BBRUBEBBXXX", "ING Belgium SA/NV, Brussels",
-     "ACCT-44961", "ACCT-33821", "SHA", "spot",
-     "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "EUR",
-     "CCFRFRPPXXX", "HSBC France",
-     "ACCT-25398", "ACCT-33821", "SHA", "spot",
-     "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
+    # ====================================================================
+
     ("EBILAEADXXX", "Emirates NBD", "GBP",
      "BARCGB22XXX", "Barclays Bank PLC, London",
      "ACCT-80880", "ACCT-79158", "SHA", "spot",
@@ -565,26 +620,10 @@ SSI_RECORDS = [
      "HDFCINBBXXX", "HDFC Bank Ltd, Mumbai",
      "ACCT-31315", "ACCT-15677", "SHA", "spot",
      "Source: Emirates NBD SSI page. IFSC: HDFC0000060. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "SAR",
-     "EBILSARIXXX", "Emirates NBD Bank PJSC, Saudi",
-     "ACCT-12294", "ACCT-24179", "SHA", "spot",
-     "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "QAR",
-     "QNBAQAQAXXX", "Qatar National Bank SAQ, Doha",
-     "ACCT-36769", "ACCT-14024", "SHA", "spot",
-     "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "KWD",
-     "NBOKKWKWXXX", "National Bank of Kuwait SAKP",
-     "ACCT-27227", "ACCT-64750", "SHA", "spot",
-     "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
     ("EBILAEADXXX", "Emirates NBD", "BHD",
      "NBOFBHBMXXX", "National Bank of Bahrain BSC, Manama",
      "ACCT-91921", "ACCT-88400", "SHA", "spot",
      "Source: Emirates NBD SSI page. IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EBILAEADXXX", "Emirates NBD", "OMR",
-     "BMUSOMRXXXX", "BankMuscat SAOG, Seeb",
-     "ACCT-35727", "ACCT-34429", "SHA", "spot",
-     "Source: Emirates NBD SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("EBILAEADXXX", "Emirates NBD", "JOD",
      "ARABJOAXXXX", "Arab Bank plc, Amman",
      "ACCT-70365", "ACCT-69773", "SHA", "spot",
@@ -662,9 +701,11 @@ SSI_RECORDS = [
      "ACCT-73814", "ACCT-81281", "SHA", "spot",
      "Source: Bank Danamon SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — SMBC Bank International plc London
+    # ====================================================================
+    # REAL SSI DATA — SMBC Bank International plc London
     # Source: smbcgroup.com EMEA Settlement Instructions page
-    # ======================================================
+    # ====================================================================
+
     ("SMBCGB2LXXX", "SMBC Bank International plc London", "USD",
      "SMBCUS33XXX", "SMBC New York",
      "ACCT-58249", "ACCT-88219", "SHA", "spot",
@@ -774,9 +815,11 @@ SSI_RECORDS = [
      "ACCT-86479", "ACCT-57964", "SHA", "spot",
      "Source: SMBC EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Bank of Maharashtra (MAHBBINP)
+    # ====================================================================
+    # REAL SSI DATA — Bank of Maharashtra (MAHBBINP)
     # Source: bankofmaharashtra.bank.in SSI PDF
-    # ======================================================
+    # ====================================================================
+
     ("MAHBBINPXXX", "Bank of Maharashtra", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank New York",
      "ACCT-27892", "ACCT-13443", "SHA", "spot",
@@ -838,9 +881,11 @@ SSI_RECORDS = [
      "ACCT-04849", "ACCT-56065", "SHA", "spot",
      "Source: Bank of Maharashtra SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Deutsche Bank Prague (DEUTCZPX)
+    # ====================================================================
+    # REAL SSI DATA — Deutsche Bank Prague (DEUTCZPX)
     # Source: country.db.com Czech Republic SSI PDF (dated 25/11/2025)
-    # ======================================================
+    # ====================================================================
+
     ("DEUTCZPXXXX", "Deutsche Bank Prague", "EUR",
      "DEUTDEFFXXX", "Deutsche Bank AG Frankfurt",
      "ACCT-87947", "ACCT-77048", "SHA", "spot",
@@ -890,9 +935,11 @@ SSI_RECORDS = [
      "ACCT-25709", "ACCT-10886", "SHA", "spot",
      "Source: DB Czech SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — YES Bank (YESBINBB)
+    # ====================================================================
+    # REAL SSI DATA — YES Bank (YESBINBB)
     # Source: yes.bank.in SSI PDF
-    # ======================================================
+    # ====================================================================
+
     ("YESBINBBXXX", "YES Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-02176", "ACCT-67637", "SHA", "spot",
@@ -946,9 +993,11 @@ SSI_RECORDS = [
      "ACCT-37806", "ACCT-55433", "SHA", "spot",
      "Source: YES Bank SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — U.S. Bank National Association (USBKUS44)
+    # ====================================================================
+    # REAL SSI DATA — U.S. Bank National Association (USBKUS44)
     # Source: usbank.com SSI PDF
-    # ======================================================
+    # ====================================================================
+
     ("USBKUS44XXX", "U.S. Bank NA", "USD",
      "USBKUS44XXX", "U.S. Bank National Association",
      "ACCT-08236", "ACCT-56014", "SHA", "spot",
@@ -978,9 +1027,11 @@ SSI_RECORDS = [
      "ACCT-41545", "ACCT-71799", "SHA", "spot",
      "Source: U.S. Bank SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Access Bank Nigeria (ABNGNGLA)
+    # ====================================================================
+    # REAL SSI DATA — Access Bank Nigeria (ABNGNGLA)
     # Source: accessbankplc.com SwiftCode PDF
-    # ======================================================
+    # ====================================================================
+
     ("ABNGNGLAXXX", "Access Bank Plc", "USD",
      "CITIUS33XXX", "Citibank NA New York",
      "ACCT-31308", "ACCT-11356", "SHA", "spot",
@@ -1022,9 +1073,11 @@ SSI_RECORDS = [
      "ACCT-17512", "ACCT-29214", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
+    # ====================================================================
+    # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
     # Source: home.saxo payment instructions page
-    # ======================================================
+    # ====================================================================
+
     ("SAXODK22XXX", "Saxo Bank A/S", "USD",
      "NADADKKKXXX", "Nordea Bank Danmark",
      "ACCT-19121", "ACCT-17243", "SHA", "spot",
@@ -1074,9 +1127,11 @@ SSI_RECORDS = [
      "ACCT-52623", "ACCT-61728", "SHA", "spot",
      "Source: Saxo Bank payment instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — MUFG Bank (Europe) N.V. Amsterdam (BOTKNL2A)
+    # ====================================================================
+    # REAL SSI DATA — MUFG Bank (Europe) N.V. Amsterdam (BOTKNL2A)
     # Source: mufgemea.com SSI page
-    # ======================================================
+    # ====================================================================
+
     ("BOTKNL2AXXX", "MUFG Bank (Europe) N.V. Amsterdam", "USD",
      "BOTKUS33XXX", "MUFG Bank Ltd New York",
      "ACCT-40863", "ACCT-47113", "SHA", "spot",
@@ -1202,9 +1257,11 @@ SSI_RECORDS = [
      "ACCT-42328", "ACCT-30755", "SHA", "spot",
      "Source: MUFG EMEA SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — ICICI Bank UK PLC (ICICGB2L)
+    # ====================================================================
+    # REAL SSI DATA — ICICI Bank UK PLC (ICICGB2L)
     # Source: icicibank.co.uk Nostro & Corresponding Bank PDF
-    # ======================================================
+    # ====================================================================
+
     ("ICICGB2LXXX", "ICICI Bank UK PLC", "USD",
      "CHASUS33XXX", "JPMorgan Chase NY",
      "ACCT-00207", "ACCT-82731", "SHA", "spot",
@@ -1246,9 +1303,11 @@ SSI_RECORDS = [
      "ACCT-05119", "ACCT-24021", "SHA", "spot",
      "Source: ICICI Bank UK Nostro PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — HDFC Bank India (HDFCINBB)
+    # ====================================================================
+    # REAL SSI DATA — HDFC Bank India (HDFCINBB)
     # Source: hdfcbank.com nostro correspondent list
-    # ======================================================
+    # ====================================================================
+
     ("HDFCINBBXXX", "HDFC Bank Ltd", "USD",
      "CITIUS33XXX", "Citibank NY",
      "ACCT-76369", "ACCT-92540", "SHA", "spot",
@@ -1274,9 +1333,11 @@ SSI_RECORDS = [
      "ACCT-77359", "ACCT-96995", "SHA", "spot",
      "Source: HDFC Bank correspondent list. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — State Bank of India (SBININBB)
+    # ====================================================================
+    # REAL SSI DATA — State Bank of India (SBININBB)
     # Source: sbi.bank.in Nostro SSI PDF
-    # ======================================================
+    # ====================================================================
+
     ("SBININBBXXX", "State Bank of India", "GBP",
      "NWBKGB2LXXX", "National Westminster Bank London",
      "ACCT-50240", "ACCT-85203", "SHA", "spot",
@@ -1354,9 +1415,11 @@ SSI_RECORDS = [
      "ACCT-52806", "ACCT-62402", "SHA", "spot",
      "Source: SBI Nostro SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Federal Bank India (FDRLINBBIBD)
+    # ====================================================================
+    # REAL SSI DATA — Federal Bank India (FDRLINBBIBD)
     # Source: federal.bank.in correspondent branches page
-    # ======================================================
+    # ====================================================================
+
     ("FDRLINBBIBD", "Federal Bank Ltd", "USD",
      "BOFAUS3NXXX", "Bank of America NY",
      "ACCT-61923", "ACCT-71687", "SHA", "spot",
@@ -1430,9 +1493,11 @@ SSI_RECORDS = [
      "ACCT-82838", "ACCT-94995", "SHA", "spot",
      "Source: Federal Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Deutsche Bank AG Seoul (DEUTKRSX)
+    # ====================================================================
+    # REAL SSI DATA — Deutsche Bank AG Seoul (DEUTKRSX)
     # Source: corporates.db.com SSI PDF (March 2025)
-    # ======================================================
+    # ====================================================================
+
     ("DEUTKRSXXXX", "Deutsche Bank AG Seoul", "USD",
      "BKTRUS33XXX", "Deutsche Bank Trust Company Americas NY",
      "ACCT-53167", "ACCT-08548", "SHA", "spot",
@@ -1506,9 +1571,11 @@ SSI_RECORDS = [
      "ACCT-17553", "ACCT-28421", "SHA", "spot",
      "Source: DB Seoul SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — European Depositary Bank SA Luxembourg (EDBBEB22)
+    # ====================================================================
+    # REAL SSI DATA — European Depositary Bank SA Luxembourg (EDBBEB22)
     # Source: europeandepositarybank.com SSI page
-    # ======================================================
+    # ====================================================================
+
     ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
      "IRVTUS3NXXX", "BNY Mellon",
      "ACCT-58552", "ACCT-99813", "SHA", "spot",
@@ -1534,9 +1601,11 @@ SSI_RECORDS = [
      "ACCT-58552", "ACCT-21513", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
+    # ====================================================================
+    # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
     # Source: globalimebank.com international correspondent page
-    # ======================================================
+    # ====================================================================
+
     ("GLBBNPKAXXX", "Global IME Bank Ltd", "USD",
      "SCBLUS33XXX", "Standard Chartered NY",
      "ACCT-27892", "ACCT-61770", "SHA", "spot",
@@ -1590,9 +1659,11 @@ SSI_RECORDS = [
      "ACCT-27899", "ACCT-79312", "SHA", "spot",
      "Source: Global IME Bank correspondent page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Tamilnad Mercantile Bank (TMBLINDIA)
+    # ====================================================================
+    # REAL SSI DATA — Tamilnad Mercantile Bank (TMBLINDIA)
     # Source: tmb.bank.in Nostro Remittance Account page
-    # ======================================================
+    # ====================================================================
+
     ("TMBLINDIXXX", "Tamilnad Mercantile Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-41019", "ACCT-74471", "SHA", "spot",
@@ -1622,9 +1693,11 @@ SSI_RECORDS = [
      "ACCT-37438", "ACCT-66163", "SHA", "spot",
      "Source: TMB Bank nostro remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
+    # ====================================================================
+    # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
     # Source: idfcfirst.bank.in inward remittance bank details
-    # ======================================================
+    # ====================================================================
+
     ("IDFBINBBXXX", "IDFC FIRST Bank", "USD",
      "CHASUS33XXX", "JP Morgan Chase NY",
      "ACCT-20900", "ACCT-06856", "SHA", "spot",
@@ -1674,9 +1747,11 @@ SSI_RECORDS = [
      "ACCT-52623", "ACCT-26310", "SHA", "spot",
      "Source: IDFC FIRST Bank inward remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Bank of Kigali (BKRWRWRW)
+    # ====================================================================
+    # REAL SSI DATA — Bank of Kigali (BKRWRWRW)
     # Source: bk.rw "Correspondent banks" page (retrieved 2026-08)
-    # ======================================================
+    # ====================================================================
+
     ("BKRWRWRWXXX", "Bank of Kigali", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000001", "ACCT-0001234567", "SHA", "spot",
@@ -1718,9 +1793,11 @@ SSI_RECORDS = [
      "ACCT-02639", "ACCT-00667", "SHA", "spot",
      "Source: Bank of Kigali correspondent-banks page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # REAL SSI DATA — Equity Bank Kenya (EQBLKENA)
+    # ====================================================================
+    # REAL SSI DATA — Equity Bank Kenya (EQBLKENA)
     # Source: equitygroupholdings.com SWIFT-transfer page (2020 archive)
-    # ======================================================
+    # ====================================================================
+
     ("EQBLKENAXXX", "Equity Bank", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-36320403", "ACCT-0007654321", "SHA", "spot",
@@ -1766,9 +1843,11 @@ SSI_RECORDS = [
      "ACCT-18500817461704", "ACCT-01028", "SHA", "spot",
      "Source: Equity Bank SWIFT-transfer page (2020). IBAN: <placeholder>. " + _SSI_REAL_NOTE, None, "archived"),
 
-    # =============================================================    # REAL SSI DATA — UBA group (UNAFNGLA + subsidiaries)
+    # ====================================================================
+    # REAL SSI DATA — UBA group (UNAFNGLA + subsidiaries)
     # Source: ubagroup.com "Nigeria SWIFT Codes" PDF family (2021 archive)
-    # ======================================================
+    # ====================================================================
+
     ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "USD",
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000012", "ACCT-0001234567", "SHA", "spot",
@@ -1814,7 +1893,8 @@ SSI_RECORDS = [
      "ACCT-91000015", "ACCT-00576", "SHA", "spot",
      "Source: UBA Guinea SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
 
-    # =============================================================    # FRANCOPHONE WEST/CENTRAL AFRICA — BIC-level correspondent lists
+    # ====================================================================
+    # FRANCOPHONE WEST/CENTRAL AFRICA — BIC-level correspondent lists
     # Sources (archived bank pages): coris-bank.com correspondants page
     # (2015/2017), boacoteivoire.com Correspondants page (2007),
     # afrilandfirstbank.com correspondants page (2011), orabank.net
@@ -1822,7 +1902,9 @@ SSI_RECORDS = [
     # Mislabeled BICs on the source pages (Natixis as CCBPFRPP, UBAE as
     # UBAIITRR, BNI as CSSSCIAB, UTB as UNTBTBTGTG, BIA as BILTTGT1, BFCM
     # as CMCIFRPA) were cross-checked and excluded.
-    # ======================================================    # ---- Coris Bank International (CORIBFBF) ----
+    # ====================================================================
+
+    # ---- Coris Bank International (CORIBFBF) ----
     ("CORIBFBFXXX", "Coris Bank International", "EUR",
      "FIMBMTM3XXX", "FIMBank Malta",
      "ACCT-91000020", "ACCT-00677", "SHA", "spot",
@@ -1964,10 +2046,12 @@ SSI_RECORDS = [
      "ACCT-91000049", "ACCT-00744", "SHA", "spot",
      "Source: Orabank partners-and-correspondents page (archived 2020). " + _SSI_REAL_NOTE, None, "archived"),
 
-    # =============================================================    # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
+    # ====================================================================
+    # BIC-LEVEL DATA — MCB Group (MCBLMUMU)
     # Source: mcb.mu correspondent-banking page (retrieved 2026-08)
     # Correspondent BICs published; account numbers not published — masked.
-    # ======================================================
+    # ====================================================================
+
     ("MCBLMUMUXXX", "MCB Group", "USD",
      "CITIUS33XXX", "Citibank N.A.",
      "ACCT-01127", "ACCT-00667", "SHA", "spot",
@@ -2001,8 +2085,11 @@ SSI_RECORDS = [
      "ACCT-08895", "ACCT-01028", "SHA", "spot",
      "Source: MCB correspondent-banking page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # ASIA-PACIFIC SSIs — sourced from bank-published pages
-    # ======================================================    # ---- Banco de Oro (BNORPHMM) — bdo.com.ph cross-border USD remittance ----
+    # ====================================================================
+    # ASIA-PACIFIC SSIs — sourced from bank-published pages
+    # ====================================================================
+
+    # ---- Banco de Oro (BNORPHMM) — bdo.com.ph cross-border USD remittance ----
     ("BNORPHMMXXX", "Banco de Oro (BDO)", "USD",
      "IRVTUS3NXXX", "Bank of New York Mellon, New York",
      "ACCT-890063", "ACCT-000010001", "SHA", "spot",
@@ -2122,51 +2209,57 @@ SSI_RECORDS = [
      "ACCT-91000021", "ACCT-000040004", "SHA", "spot",
      "Source: OCBC cross-border payments page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # LATIN AMERICA — Banorte (Banco Mercantil del Norte)
+    # ====================================================================
+    # LATIN AMERICA — Banorte (Banco Mercantil del Norte)
     # Source: banorte.com transfer-instructions page (archived 2021/2025).
     # The only major LatAm bank publishing a full SSI table: per-currency
     # correspondents with BICs and ABA routing numbers. No account numbers
     # are printed (the page says "pagadero a: cuenta del beneficiario").
-    # ======================================================    # ---- Banorte (MENOMXMT) — USD ----
+    # ====================================================================
+
+    # ---- Banorte (MENOMXMT) — USD ----
 
     # ---- Banorte (MENOMXMT) — EUR ----
     ("MENOMXMTXXX", "Banorte", "EUR",
      "BARCDEFFXXX", "Barclays Bank, Frankfurt",
-     "ACCT-91000107", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002354", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "EUR",
      "BBRUBEBBXXX", "ING Belgium, Brussels",
-     "ACCT-91000109", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002355", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ---- Banorte (MENOMXMT) — CAD ----
     ("MENOMXMTXXX", "Banorte", "CAD",
      "BOFMCAM2XXX", "Bank of Montreal, Montreal",
-     "ACCT-91000111", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002356", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "CAD",
      "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
-     "ACCT-91000112", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002357", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ---- Banorte (MENOMXMT) — GBP / CHF / JPY / SEK / AUD / NOK ----
     ("MENOMXMTXXX", "Banorte", "CHF",
      "CRESCHZZ80A", "Credit Suisse, Zurich",
-     "ACCT-91000115", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002358", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
     ("MENOMXMTXXX", "Banorte", "SEK",
      "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm",
-     "ACCT-91000119", "ACCT-00755", "SHA", "spot",
+     "ACCT-91002359", "ACCT-91002360", "SHA", "spot",
      "Source: Banorte transfer-instructions page. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # ASIA (DEEP) — Taiwan / Hong Kong / Vietnam
+    # ====================================================================
+    # ASIA (DEEP) — Taiwan / Hong Kong / Vietnam
     # Sources (archived): ctbcbank.com Nostro tables (2024 DOCX for Taiwan
     # HQ, 2025 PDF for the HK branch, 2019 SSI circular for Vietnam),
     # cathaybk.com.tw inward-remittance page (2016), bangkokbank.com
     # New York branch routing pages (2025). BIC-only (no account numbers
     # printed except CTBC VN's circular, whose accounts are masked).
     # The printed Wells Fargo BIC PNBPUS3NNYC is normalized to PNBPUS33XXX.
-    # ======================================================    # ---- CTBC Bank Taiwan (CTCBTWTP) ----
+    # ====================================================================
+
+    # ---- CTBC Bank Taiwan (CTCBTWTP) ----
     ("CTCBTWTPXXX", "CTBC Bank Taiwan", "USD",
      "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
      "ACCT-91000200", "ACCT-00800", "SHA", "spot",
@@ -2371,12 +2464,15 @@ SSI_RECORDS = [
      "ACCT-91000247", "ACCT-00844", "SHA", "spot",
      "Source: Bangkok Bank New York branch routing page. ABA 026008691. " + _SSI_REAL_NOTE, None, "unverified"),
 
-    # =============================================================    # GULF / MIDDLE EAST
+    # ====================================================================
+    # GULF / MIDDLE EAST
     # Sources (archived bank pages): mashreq.com standard-settlement-
     # instruction (2026), dohabank.com.qa List of Nostro Accounts (2010),
     # nbk.com SSI broadcast (2021). Mashreq is BIC-only; Doha Bank and NBK
     # print account numbers/IBANs which are masked here.
-    # ======================================================    # ---- Mashreq Bank (MASHAEAD) — own SSI page ----
+    # ====================================================================
+
+    # ---- Mashreq Bank (MASHAEAD) — own SSI page ----
     ("MASHAEADXXX", "Mashreq Bank", "USD",
      "MSHQUS33XXX", "Mashreqbank PSC, New York",
      "ACCT-91000300", "ACCT-00855", "SHA", "spot",
@@ -2449,51 +2545,273 @@ SSI_RECORDS = [
      "ACCT-91000316", "ACCT-00866", "SHA", "spot",
      "Source: Doha Bank List of Nostro Accounts (archived 2010). " + _SSI_REAL_NOTE, None, "archived"),
 
-    # ---- National Bank of Kuwait (NBOKKWKW) — 2021 SSI broadcast ----
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
-     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
-     "ACCT-91000317", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
-     "CITIUS33XXX", "Citibank N.A., New York",
-     "ACCT-91000318", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "USD",
-     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
-     "ACCT-91000319", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "EUR",
-     "DEUTDEFFXXX", "Deutsche Bank, Frankfurt",
-     "ACCT-91000320", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "GBP",
-     "MIDLGB22XXX", "HSBC Bank, London",
-     "ACCT-91000321", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "KWD",
-     "CBKUKWKWXXX", "Central Bank of Kuwait",
-     "ACCT-91000322", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "QAR",
-     "QNBAQAQAXXX", "Qatar National Bank, Doha",
-     "ACCT-91000323", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "AED",
+    # ---- National Bank of Kuwait (NBOKKWKW) — 2025 SSI broadcast ----
+    # ---- Emirates NBD (EBILAEAD) — correspondent charges PDF (BIC-level) ----
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "AED",
      "NBOKAEADXXX", "National Bank of Kuwait, Dubai",
-     "ACCT-91000324", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-    ("NBOKKWKWXXX", "National Bank of Kuwait", "SAR",
+     "ACCT-91001600", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "AUD",
+     "ANZBAU3MXXX", "Australia and New Zealand Banking Group Limited, Melbourne",
+     "ACCT-91001602", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "BHD",
+     "NBOKBHBMFCB", "National Bank of Kuwait, Manama (FCB)",
+     "ACCT-91001603", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "CAD",
+     "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
+     "ACCT-91001604", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "CHF",
+     "ZKBKCHZZXXX", "Zurcher Kantonalbank, Zurich",
+     "ACCT-91001605", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "CNY",
+     "SCBLHKHHXXX", "Standard Chartered Bank (Hong Kong) Limited",
+     "ACCT-91001628", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "DKK",
+     "DABADKKKXXX", "Danske Bank A/S, Copenhagen",
+     "ACCT-91001606", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "EGP",
+     "WABAEGCXXXX", "National Bank of Kuwait (Egypt) SAE, Cairo",
+     "ACCT-91001607", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG, Frankfurt",
+     "ACCT-91001608", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "GBP",
+     "MIDLGB22XXX", "HSBC Bank PLC, London",
+     "ACCT-91001609", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "HKD",
+     "HSBCHKHHXXX", "Hong Kong Shanghai Banking Corporation, Hong Kong",
+     "ACCT-91001610", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "INR",
+     "HDFCINBBXXX", "HDFC Bank, Mumbai",
+     "ACCT-91001611", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "JOD",
+     "AJIBJOAXXXX", "Arab Jordan Investment Bank, Amman",
+     "ACCT-91001612", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank Limited, Tokyo",
+     "ACCT-91001613", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "KRW",
+     "KOEXKRSEXXX", "KEB Hana Bank, Seoul",
+     "ACCT-91001624", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "KWD",
+     "CBKUKWKWXXX", "Central Bank of Kuwait (domestic KWD settlement)",
+     "ACCT-91001653", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "LKR",
+     "BCEYLKLXXXX", "Bank of Ceylon, Colombo",
+     "ACCT-91001614", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "NOK",
+     "DNBANOKKXXX", "DnB Bank ASA, Oslo",
+     "ACCT-91001615", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "OMR",
+     "BMUSOMRXXXX", "BankMuscat SAOG, Muscat",
+     "ACCT-91001616", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "PHP",
+     "PNBMPHMMXXX", "Philippine National Bank, Manila",
+     "ACCT-91001617", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "PKR",
+     "UNILPKKAXXX", "United Bank Limited, Karachi",
+     "ACCT-91001618", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "QAR",
+     "QNBAQAQAXXX", "Qatar National Bank Q.P.S.C., Doha (Main)",
+     "ACCT-91001619", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "QAR",
+     "BRWAQAQAXXX", "Dukhan Bank, Doha",
+     "ACCT-91001620", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "SAR",
      "NBOKSAJEXXX", "National Bank of Kuwait, Jeddah",
-     "ACCT-91000325", "ACCT-00877", "SHA", "spot",
-     "Source: NBK SSI broadcast 2021 (archived 2022). " + _SSI_REAL_NOTE, None, "archived"),
-
-    # =============================================================    # SOUTH ASIA — Pakistan / Bangladesh / Sri Lanka
+     "ACCT-91001621", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "SEK",
+     "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm",
+     "ACCT-91001622", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "SGD",
+     "SCBLSG22XXX", "Standard Chartered Bank (Singapore) Limited",
+     "ACCT-91001623", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company, New York (Main)",
+     "ACCT-91001625", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "USD",
+     "CITIUS33XXX", "Citibank N.A., New York",
+     "ACCT-91001626", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", "USD",
+     "CHASUS33XXX", "JP Morgan Chase Bank, New York",
+     "ACCT-91001627", "ACCT-91001601", "SHA", "spot",
+     "Source: https://web.archive.org/web/20250723222922/https://www.nbk.com/dam/jcr:28ed5553-79e5-4fa4-93ce-639f132fad8f/SSI%20-%20NBK.pdf (as of 2025-07-23). " + _SSI_REAL_NOTE,
+     "2025-07-23", "archived"),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "BOFAUS3NXXX", "Bank of America National Association, Charlotte NC (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "CITIUS33XXX", "Citibank NA, New York (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "SCBLUS33XXX", "Standard Chartered Bank, New York (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank NA, New York (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "USD",
+     "MRMDUS33XXX", "HSBC Bank USA NA, New York (USA)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "EUR",
+     "BARCDEFFXXX", "Barclays Bank Ireland Plc Frankfurt Branch (Germany)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "EUR",
+     "BBRUBEBBXXX", "ING Belgium SA/NV, Brussels",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "EUR",
+     "CITIIE2XXXX", "Citibank Europe Plc, Dublin (Ireland)",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "EUR",
+     "CCFRFRPPXXX", "HSBC France, Paris",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "EUR",
+     "SOGEFRPPXXX", "Societe Generale, Paris",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "GBP",
+     "EBILGB2LXXX", "Emirates NBD Bank PJSC London Branch",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "SAR",
+     "EBILSARIXXX", "Emirates NBD Bank PJSC, Riyadh",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "SAR",
+     "NCBKSAJEXXX", "The Saudi National Bank, Jeddah",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "QAR",
+     "DOHBQAQAXXX", "Doha Bank, Doha",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "QAR",
+     "QNBAQAQAXXX", "Qatar National Bank (Q.P.S.C.), Doha",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "KWD",
+     "NBOKKWKWXXX", "National Bank of Kuwait SAKP, Kuwait City",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "BHD",
+     "AUBBBHBMXXX", "Ahli United Bank BSC, Manama",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "BHD",
+     "BBKUBHBMXXX", "Bank of Bahrain and Kuwait, Manama",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "BHD",
+     "NBOBBHBMXXX", "National Bank of Bahrain BSC, Manama",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "OMR",
+     "BMUSOMRXXXX", "Bank Muscat SAOG, Seeb",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", "OMR",
+     "BDOFOMRUXXX", "Bank Dhofar SAOG, Muscat",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-charges/accounts/correspondent_bank_charges_for_international_transfers.pdf (as of 2026-05-01). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),
+    # ====================================================================
+    # SOUTH ASIA — Pakistan / Bangladesh / Sri Lanka
     # Sources (archived): hbl.com Nostros_and_SSI PDF (2026), ubl.com.pk SSIs
     # PDF (2011), mcb.com.pk Nostro PDF (2021), meezanbank.com NOSTRO PDF
     # (2019), agranibank.org List of Nostro Ac PDF (2021), combank.lk
     # correspondent-banks page (2011), dfcc.lk SSI PDF (2017). Accounts and
     # routing IDs are printed by these banks and masked here.
-    # ======================================================    # ---- Habib Bank (HABBPKKA) ----
+    # ====================================================================
+
+    # ---- Habib Bank (HABBPKKA) ----
     ("HABBPKKAXXX", "Habib Bank", "USD",
      "CITIUS33XXX", "Citibank NA, New York",
      "ACCT-91000400", "ACCT-00900", "SHA", "spot",
@@ -2872,11 +3190,14 @@ SSI_RECORDS = [
      "ACCT-91000449", "ACCT-00906", "SHA", "spot",
      "Source: DFCC SSI PDF (archived 2017; printed SCBLDEFX). " + _SSI_REAL_NOTE, None, "archived"),
 
-    # =============================================================    # EUROPE — first beneficiary SSIs for European banks
+    # ====================================================================
+    # EUROPE — first beneficiary SSIs for European banks
     # Sources: corporates.db.com SSI PDF (DB Frankfurt, effective 2025-02-03),
     # nordea.com FX-and-derivatives SSI, danskebank.com standard-settlement
     # page (archived 2017). Accounts/IBANs printed and masked here.
-    # ======================================================    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
+    # ====================================================================
+
+    # ---- Deutsche Bank Frankfurt (DEUTDEFF) ----
     ("DEUTDEFFXXX", "Deutsche Bank Frankfurt", "USD",
      "DEUTUS33XXX", "Deutsche Bank AG, New York",
      "ACCT-91000500", "ACCT-01000", "SHA", "spot",
@@ -3672,330 +3993,330 @@ SSI_RECORDS = [
     # ---- Thailand (autopilot: Siam Commercial Bank 2002 SSI) ----
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "USD",
      "MRMDUS33XXX", "HSBC Bank U.S.A., New York (formerly Marine Midland Bank)",
-     "ACCT-91002101", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "EUR",
      "BYLADEMMXXX", "Bayerische Landesbank Girozentrale, Munich",
-     "ACCT-91002102", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "GBP",
      "MIDLGB22XXX", "HSBC Bank Plc., London (formerly Midland Bank)",
-     "ACCT-91002103", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "JPY",
      "SANWJPJTXXX", "UFJ Bank Ltd., Tokyo (formerly Sanwa Bank)",
-     "ACCT-91002104", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "SGD",
      "UOVBSGSGXXX", "United Overseas Bank, Singapore",
-     "ACCT-91002105", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "HKD",
      "HSBCHKHHXXX", "Hongkong & Shanghai Banking Corp. Ltd., Hong Kong",
-     "ACCT-91002106", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "AUD",
      "ANZBAU3MXXX", "Australia and New Zealand Banking Group Ltd., Sydney",
-     "ACCT-91002107", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "CAD",
      "NOSCCATTXXX", "Bank of Nova Scotia, Toronto",
-     "ACCT-91002108", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "CHF",
      "UBSWCHZZXXX", "UBS AG, Zurich",
-     "ACCT-91002109", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "DKK",
      "DABADKKKXXX", "Danske Bank, Copenhagen",
-     "ACCT-91002110", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "NZD",
      "BKNZNZ22XXX", "Bank of New Zealand, Wellington",
-     "ACCT-91002111", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     ("SICOTHBKXXX", "Siam Commercial Bank (SCB)", "SEK",
      "ESSESESSXXX", "SEB Merchant Bank (Skandinaviska Enskilda Banken), Stockholm",
-     "ACCT-91002112", "ACCT-91002113", "SHA", "spot",
-     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08). " + _SSI_REAL_NOTE,
-     "2002-08-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20030824172043id_/http://www.scb.co.th:80/datahtml/gl_settlementbank_main.htm (as of 2002-08-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2002-08-08", "archived", None, True),
     # ---- Andean (autopilot: Davivienda 2004, Interbank 2015, BancoEstado 2025) ----
     ("CAFECOBBXXX", "Banco Davivienda S.A. (Colombia)", "USD",
      "CITIUS33XXX", "Citibank N.A., New York (ABA 021000089)",
-     "ACCT-91002200", "ACCT-91002201", "SHA", "spot",
-     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08). " + _SSI_REAL_NOTE,
-     "2004-12-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2004-12-08", "archived", None, True),
     ("CAFECOBBXXX", "Banco Davivienda S.A. (Colombia)", "USD",
      "PNBPUS33XXX", "Wachovia Bank N.A., New York (ABA 026005092)",
-     "ACCT-91002202", "ACCT-91002201", "SHA", "spot",
-     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08). " + _SSI_REAL_NOTE,
-     "2004-12-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2004-12-08", "archived", None, True),
     ("CAFECOBBXXX", "Banco Davivienda S.A. (Colombia)", "EUR",
      "COBADEFFXXX", "Commerzbank AG, Frankfurt",
-     "ACCT-91002203", "ACCT-91002201", "SHA", "spot",
-     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08). " + _SSI_REAL_NOTE,
-     "2004-12-08", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20041208131449/http://www.davivienda.com:80/svirtual/svwinfgen.nsf/paginas/Giros%20Via%20Swift (as of 2004-12-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2004-12-08", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "BOFAUS3MXXX", "Bank of America Merrill Lynch, Miami",
-     "ACCT-91002204", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "IRVTUS3NXXX", "Bank of New York Mellon, New York",
-     "ACCT-91002206", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "CHASUS33XXX", "JP Morgan Chase Bank, New York",
-     "ACCT-91002207", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "CITIUS33XXX", "Citibank N.A., New York",
-     "ACCT-91002208", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank, New York",
-     "ACCT-91002209", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "PNBPUS33XXX", "Wells Fargo Bank, New York",
-     "ACCT-91002210", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "IBNKPAPAXXX", "Inteligo Bank, Panama",
-     "ACCT-91002211", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "MRMDUS33XXX", "HSBC Bank, New York",
-     "ACCT-91002212", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
-     "ACCT-91002213", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "USD",
      "BRASJPJTXXX", "Banco do Brasil, Tokyo (USD via Tokyo)",
-     "ACCT-91002214", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "GBP",
      "BARCGB22XXX", "Barclays Bank, London",
-     "ACCT-91002215", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "EUR",
      "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt",
-     "ACCT-91002216", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "EUR",
      "BBRUBEBB010", "ING Bank, Brussels",
-     "ACCT-91002217", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "EUR",
      "COBADEFFXXX", "Commerzbank AG, Frankfurt",
-     "ACCT-91002218", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CAD",
      "CIBCCATTXXX", "Canadian Imperial Bank of Commerce, Toronto",
-     "ACCT-91002219", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "JPY",
      "SMBCJPJTXXX", "Sumitomo Mitsui Banking Corporation, Tokyo",
-     "ACCT-91002220", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CHF",
      "UBSWCHZHXXX", "UBS, Zurich",
-     "ACCT-91002221", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CNY",
      "ICBKCNBJSZN", "Industrial and Commercial Bank of China, Shenzhen",
-     "ACCT-91002222", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CNY",
      "BKCHCNBJS00", "Bank of China, Shanghai",
-     "ACCT-91002223", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CNY",
      "SCBLCNSXSHA", "Standard Chartered Bank, Shanghai",
-     "ACCT-91002224", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "CNY",
      "ABOCCNBJ090", "Agricultural Bank of China, Shanghai",
-     "ACCT-91002225", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "HKD",
      "SCBLHKHHXXX", "Standard Chartered Bank, Hong Kong",
-     "ACCT-91002226", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "MXN",
      "BOFAMXMMXXX", "Bank of America Merrill Lynch, Mexico City",
-     "ACCT-91002227", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BINPPEPLXXX", "Banco Internacional del Peru (Interbank)", "AUD",
      "HKBAAU2SSYD", "HSBC Bank, Sydney",
-     "ACCT-91002228", "ACCT-91002205", "SHA", "spot",
-     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12). " + _SSI_REAL_NOTE,
-     "2015-10-12", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20160123011316/http://www.interbank.com.pe/documents/10180/10322138/Bancos%20Corresponsales_12102015.pdf (as of 2015-10-12) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2015-10-12", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "BOFAUS3NXXX", "Bank of America N.A.",
-     "ACCT-91002229", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "CITIUS33XXX", "Citibank N.A.",
-     "ACCT-91002231", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "MRMDUS33XXX", "HSBC Bank USA, N.A.",
-     "ACCT-91002232", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "CHASUS33XXX", "JP Morgan Chase Bank N.A.",
-     "ACCT-91002233", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank",
-     "ACCT-91002234", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "IRVTUS3NXXX", "Bank of New York Mellon",
-     "ACCT-91002235", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "USD",
      "PNBPUS33XXX", "Wells Fargo Bank N.A.",
-     "ACCT-91002236", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "BYLADEMMXXX", "BayernLB",
-     "ACCT-91002237", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "COBADEFFXXX", "Commerzbank AG",
-     "ACCT-91002238", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "DEUTDEFFXXX", "Deutsche Bank AG",
-     "ACCT-91002239", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "BBRUBEBBXXX", "ING Belgium SA/NV",
-     "ACCT-91002240", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "BBVAESMMXXX", "Banco Bilbao Vizcaya Argentaria S.A.",
-     "ACCT-91002241", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "BSCHESMMXXX", "Banco Santander S.A.",
-     "ACCT-91002242", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "CAIXESBBXXX", "CaixaBank S.A.",
-     "ACCT-91002243", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "EUR",
      "BNPAFRPPXXX", "BNP Paribas S.A.",
-     "ACCT-91002244", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "GBP",
      "BARCGB22XXX", "Barclays Bank plc",
-     "ACCT-91002245", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "GBP",
      "MIDLGB22XXX", "HSBC Bank plc",
-     "ACCT-91002246", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "AUD",
      "CTBAAU2SXXX", "Commonwealth Bank of Australia",
-     "ACCT-91002247", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "CAD",
      "BOFMCAM2XXX", "Bank of Montreal",
-     "ACCT-91002248", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "CAD",
      "TDOMCATTTOR", "Toronto Dominion Bank",
-     "ACCT-91002249", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "CHF",
      "UBSWCHZHXXX", "UBS Switzerland AG",
-     "ACCT-91002250", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "DKK",
      "CHASGB2LXXX", "JPMorgan Chase Bank N.A., London branch",
-     "ACCT-91002251", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "SEK",
      "CHASGB2LXXX", "JPMorgan Chase Bank N.A., London branch",
-     "ACCT-91002252", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "NOK",
      "DNBANOKKXXX", "DnB Bank ASA",
-     "ACCT-91002253", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "HKD",
      "BOFAHKHXXXX", "Bank of America N.A., Hong Kong",
-     "ACCT-91002254", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     ("BECHCLRMXXX", "Banco del Estado de Chile (BancoEstado)", "MXN",
      "BCMRMXMMCOR", "BBVA Bancomer S.A.",
-     "ACCT-91002255", "ACCT-91002230", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19). " + _SSI_REAL_NOTE,
-     "2025-06-19", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250619193839/https://www.bancoestado.cl/content/bancoestado-public/cl/es/home/home/productos-/chilenos-en-el-exterior/bancos-corresponsales---bancoestado-personas.html (as of 2025-06-19) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2025-06-19", "archived", None, True),
     # ---- India (autopilot: HDFC, ICICI, SBI, Axis, Kotak, Bank of Baroda) ----
     ("HDFCINBBXXX", "HDFC Bank", "USD",
      "CHASUS33XXX", "J P Morgan Chase Bank, N.A., New York",
@@ -4706,14 +5027,14 @@ SSI_RECORDS = [
     # ---- West Africa (autopilot: GCB Bank 2024 annual report) ----
     ("GHCBGHACXXX", "GCB Bank PLC", "USD",
      "CITIUS33XXX", "Citibank N.A., New York",
-     "ACCT-91002501", "ACCT-91002503", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31). " + _SSI_REAL_NOTE,
-     "2024-12-31", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2024-12-31", "archived", None, True),
     ("GHCBGHACXXX", "GCB Bank PLC", "EUR",
      "COBADEFFXXX", "Commerzbank AG, Frankfurt am Main",
-     "ACCT-91002502", "ACCT-91002504", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31). " + _SSI_REAL_NOTE,
-     "2024-12-31", "archived"),
+     None, None, None, None,
+     "Source: https://web.archive.org/web/20250417212859/https://gcbbank.com.gh/downloads/reports/437-2024-annual-report/file (as of 2024-12-31) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2024-12-31", "archived", None, True),
     # ---- Eastern Europe (autopilot: Banca Transilvania 2013 correspondent list) ----
     ("BTRLRO22XXX", "Banca Transilvania", "AUD",
      "CTBAAU2SXXX", "Commonwealth Bank of Australia, Sydney",
@@ -4978,11 +5299,76 @@ def _apply_seed_bic_aliases(session) -> None:
     session.flush()
 
 
+def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> int:
+    """Delete source-owned SSIs that no longer belong to the curated set.
+
+    Operator-created or corrected rows are deliberately left alone. Rows
+    without a fingerprint are legacy/unreviewed and are never deleted; only a
+    non-null fingerprint that still matches the complete persisted snapshot
+    authorizes retirement.
+    The flush keeps this reconciliation in the same transaction as the
+    upserts and the final commit in ``seed_if_empty`` makes the rollout
+    atomic.
+    """
+    retired = 0
+    candidates = session.query(SSI).filter(SSI.notes.isnot(None)).all()
+    for row in candidates:
+        key = (row.beneficiary_bic, row.currency, row.intermediary_bic)
+        untouched = (
+            row.seed_fingerprint is not None
+            and row.seed_fingerprint == _seed_fingerprint(row)
+        )
+        if key not in source_keys and untouched:
+            session.delete(row)
+            retired += 1
+    if retired:
+        session.flush()
+    return retired
+
+
+def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
+    """Recognize only the old seeder's unmistakable placeholder shape.
+
+    Pre-fingerprint rows cannot prove ownership from a snapshot. The narrow
+    exception is limited to a source citation plus the repository's known
+    legacy reserved account blocks, seed terms, and source-owned marker. Names
+    are deliberately not part of ownership: source refreshes may normalize bank
+    names while the row is still the untouched machine row. Anything else is
+    preserved for review.
+    """
+    return (
+        existing.seed_fingerprint is None
+        and existing.notes is not None
+        and existing.notes.startswith("Source:")
+        and existing.verified_by is None
+        and existing.intermediary_account is not None
+        and existing.beneficiary_account is not None
+        and any(
+            existing.intermediary_account.startswith(prefix)
+            and existing.beneficiary_account.startswith(prefix)
+            for prefix in _LEGACY_BIC_ONLY_ACCOUNT_BLOCKS
+        )
+        and existing.charge_code in {"OUR", "SHA", "BEN"}
+        and existing.value_date in {"spot", "1d", "2d", "3d", "T+1", "T+2"}
+        and existing.status != "published"
+        and "Operator note:" not in existing.notes
+        and _SSI_REAL_NOTE in existing.notes
+    )
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
-    inserted = {"banks": 0, "corridor_rules": 0, "ssi": 0, "accounts": 0}
+    inserted = {
+        "banks": 0,
+        "corridor_rules": 0,
+        "ssi": 0,
+        "ssi_retired": 0,
+        "accounts": 0,
+    }
 
     _apply_seed_bic_aliases(session)
+    source_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    inserted["ssi_retired"] = _retire_stale_seed_ssis(session, source_keys)
 
     for bic, name, cc, city, cur in BANKS:
         existing = session.query(Bank).filter(Bank.bic == bic).one_or_none()
@@ -5029,51 +5415,174 @@ def seed_if_empty(session) -> dict:
         as_of = provenance[0] if provenance else None
         status = provenance[1] if len(provenance) > 1 else "illustrative"
         verified_by = provenance[2] if len(provenance) > 2 else None
+        # A 4th provenance element marks a BIC-only row: the source publishes
+        # correspondent availability but no accounts, charge codes, or value
+        # dates. It must be a Python boolean — bool("False") is True, which
+        # would quietly turn an ordinary row into a BIC-only one (clearing its
+        # settlement fields and suppressing routing on it). A hand-edited
+        # tuple with anything else fails loudly here instead of flipping shape.
+        if len(provenance) > 3:
+            if not isinstance(provenance[3], bool):
+                raise ValueError(
+                    f"SSI row {ben_bic}/{ccy}/{int_bic}: bic_only must be a "
+                    f"Python boolean, got {provenance[3]!r}"
+                )
+            bic_only = provenance[3]
+        else:
+            bic_only = False
         existing = session.query(SSI).filter(
             SSI.beneficiary_bic == ben_bic,
             SSI.currency == ccy,
             SSI.intermediary_bic == int_bic,
         ).one_or_none()
         if existing is None:
-            session.add(
-                SSI(
-                    beneficiary_bic=ben_bic,
-                    beneficiary_bank_name=ben_name,
-                    currency=ccy,
-                    intermediary_bic=int_bic,
-                    intermediary_bank_name=int_name,
-                    intermediary_account=int_acct,
-                    beneficiary_account=ben_acct,
-                    charge_code=charge,
-                    value_date=vdate,
-                    notes=notes,
-                    as_of=as_of,
-                    status=status,
-                    verified_by=verified_by,
-                )
+            seeded = SSI(
+                beneficiary_bic=ben_bic,
+                beneficiary_bank_name=ben_name,
+                currency=ccy,
+                intermediary_bic=int_bic,
+                intermediary_bank_name=int_name,
+                intermediary_account=int_acct,
+                beneficiary_account=ben_acct,
+                charge_code=charge,
+                value_date=vdate,
+                notes=notes,
+                as_of=as_of,
+                status=status,
+                verified_by=verified_by,
+                bic_only=bic_only,
             )
+            seeded.seed_fingerprint = _seed_fingerprint(seeded)
+            session.add(seeded)
             inserted["ssi"] += 1
         else:
-            # Provenance is restated on every seed. Seeding is otherwise
-            # insert-only, so a database created before these columns existed
-            # would keep the migration's "illustrative" default forever and
-            # under-claim every sourced row it already holds.
-            if (existing.as_of, existing.status, existing.verified_by) != (
-                as_of, status, verified_by
+            prior_fingerprint = existing.seed_fingerprint
+            prior_snapshot_unchanged = (
+                prior_fingerprint is not None
+                and prior_fingerprint == _seed_fingerprint(existing)
+            )
+            legacy_snapshot_unchanged = prior_fingerprint is None and (
+                existing.beneficiary_bank_name == ben_name
+                and existing.currency == ccy
+                and existing.intermediary_bank_name == int_name
+                and existing.intermediary_account == int_acct
+                and existing.beneficiary_account == ben_acct
+                and existing.charge_code == charge
+                and existing.value_date == vdate
+                and existing.notes == notes
+                and existing.as_of == as_of
+                and existing.status == status
+                and existing.verified_by == verified_by
+                and existing.bic_only == bic_only
+            )
+            # A source shape change is destructive for an ordinary row. A
+            # fingerprint mismatch means an operator may have supplied real
+            # settlement data after the last seed, so preserve the whole row
+            # and require an explicit human resolution instead of clearing
+            # accounts and terms to satisfy the new bic_only shape.
+            legacy_seed_owned = _legacy_seed_row_is_unmodified(existing)
+            if (
+                not existing.bic_only
+                and bic_only
+                and not prior_snapshot_unchanged
+                and not legacy_seed_owned
             ):
-                # A sourced status and its citation move together: a row stored
-                # before these columns existed can have no notes at all, and
-                # setting a sourced status on it would assert provenance the
-                # row cannot show. Backfill the citation from the same tuple
-                # rather than clobbering a note someone has since edited.
-                if status != "illustrative" and not existing.notes:
-                    existing.notes = notes
-                existing.as_of = as_of
-                existing.status = status
-                existing.verified_by = verified_by
+                logger.warning(
+                    "Preserving operator-modified SSI during ordinary-to-"
+                    "bic_only seed transition: %s/%s/%s; manual review required",
+                    existing.beneficiary_bic,
+                    existing.currency,
+                    existing.intermediary_bic,
+                )
+                continue
+            # Reconciliation policy for an existing key, decided explicitly:
+            #
+            #   * Ordinary -> ordinary: the row keeps its OWNER's settlement
+            #     fields. The seed's accounts are literally "Illustrative
+            #     placeholder — replace with the beneficiary's real numbers",
+            #     so restating them would clobber a correct, operator-imported
+            #     account with a placeholder. Provenance (as_of, status,
+            #     verified_by, and the citation backing a sourced status)
+            #     restates, so a populated database that predates a source
+            #     update shows the new provenance on the rows someone has
+            #     since corrected.
+            #
+            #   * Ordinary -> bic_only: the row shed its fabricated account/
+            #     charge/value fields (they were placeholders, the flag says
+            #     the source never published them).
+            #
+            #   * bic_only -> ordinary: the seed tuple is the row's ONLY source
+            #     of settlement fields (a bic_only row stored none), so they
+            #     are populated here. Without this the row would become
+            #     routable — routing excludes bic_only rows — while still
+            #     holding none of the fields an instruction needs.
+            provenance_changed = (
+                existing.as_of,
+                existing.status,
+                existing.verified_by,
+                existing.bic_only,
+            ) != (as_of, status, verified_by, bic_only)
+            # A sourced status and its citation are source-controlled. Refresh
+            # the citation even when provenance is unchanged, while retaining
+            # an operator note as a second line instead of leaving the row
+            # sourced by a note that contains no citation.
+            next_notes = (
+                _merge_seed_citation(existing.notes, notes)
+                if status != "illustrative"
+                else existing.notes
+            )
+            citation_changed = next_notes != existing.notes
+            if provenance_changed or citation_changed:
+                was_bic_only = existing.bic_only
+                # A sourced status and its citation move together — the
+                # citation in notes is what a sourced status asserts
+                # (ck_ssi_sourced_status_has_notes). Restating as_of/status
+                # while keeping the prior source's citation would present a
+                # current date on a superseded source, worst for a row that
+                # becomes bic_only, whose old citation described
+                # account-bearing instructions the source never published.
+                # A row becoming *illustrative* asserts no source at all, so
+                # its notes are operator free text and are left alone.
+                if citation_changed:
+                    existing.notes = next_notes
+                if provenance_changed:
+                    existing.as_of = as_of
+                    existing.status = status
+                    existing.verified_by = verified_by
+                    existing.bic_only = bic_only
+                    if bic_only:
+                        # Becoming bic_only must shed the account/charge/value
+                        # fields the row used to carry; leaving them behind would
+                        # violate ck_ssi_bic_only_has_no_accounts at flush.
+                        existing.intermediary_account = None
+                        existing.beneficiary_account = None
+                        existing.charge_code = None
+                        existing.value_date = None
+                    elif was_bic_only:
+                        # Leaving bic_only: repopulate every source-controlled
+                        # field from the tuple so the now-routable row is a real
+                        # instruction rather than a routable-but-empty shell.
+                        # (notes is not touched here: the citation rule above
+                        # restated it for a sourced status, and an illustrative
+                        # row's notes are the operator's.)
+                        existing.beneficiary_bank_name = ben_name
+                        existing.intermediary_bank_name = int_name
+                        existing.intermediary_account = int_acct
+                        existing.beneficiary_account = ben_acct
+                        existing.charge_code = charge
+                        existing.value_date = vdate
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )
+            # These flags describe ownership before this source refresh. A
+            # machine-only citation change therefore still refreshes the
+            # fingerprint after the new citation is applied; an operator edit
+            # leaves the mismatch in place so stale retirement cannot delete it.
+            machine_owned_snapshot = (
+                prior_snapshot_unchanged or legacy_snapshot_unchanged
+            )
+            if machine_owned_snapshot:
+                existing.seed_fingerprint = _seed_fingerprint(existing)
 
     # Account fixtures did not change in this PR; retain their historical
     # empty-table behavior while the directory/rules/SSI data rolls forward.

@@ -13,8 +13,11 @@ complementing the HTTP-level tests in test_api.py.
 """
 import pytest
 
+from app.models import SSI
 from app.schemas import BankInfo
 from app.services.routing import (
+    _is_routable_ssi,
+    _is_usable_ssi_account,
     _normalize_bic_input,
     infer_destination_currency,
     is_us_routing_number,
@@ -22,6 +25,62 @@ from app.services.routing import (
     lookup_us_bank,
     suggest_intermediaries,
 )
+
+
+def _approve_ssi_rows(session, beneficiary_bic, currency):
+    """Turn selected fixture rows into an explicitly routable SSI.
+
+    The account values below are deliberately *concrete* synthetic identifiers,
+    not ``ACCT-``/bracketed redaction tokens: ``_is_usable_ssi_account`` rejects
+    the latter, so a masked value here would make every routing assertion in
+    this module vacuous. ``test_masked_ssi_accounts_are_not_usable`` covers the
+    rejection side.
+    """
+    rows = session.query(SSI).filter(
+        SSI.beneficiary_bic == beneficiary_bic,
+        SSI.currency == currency,
+    ).all()
+    assert rows
+    for row in rows:
+        row.status = "published"
+        row.as_of = "2026-08-19"
+        row.verified_by = "Treasury Operations"
+        row.intermediary_account = "021000089"
+        row.beneficiary_account = "NG1234567890"
+    session.commit()
+    return rows
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["[ACCOUNT]", "ACCOUNT", "ACCT-1234", "MASKED-1234", "XXXX1234", "1234****"],
+)
+def test_masked_ssi_accounts_are_not_usable(value):
+    assert not _is_usable_ssi_account(value)
+
+
+@pytest.mark.parametrize("value", ["123456789", "GB29NWBK60161331926819"])
+def test_concrete_ssi_accounts_are_usable(value):
+    assert _is_usable_ssi_account(value)
+
+
+@pytest.mark.parametrize("field, value", [("charge_code", "INVALID"), ("value_date", "when-convenient")])
+def test_unsupported_settlement_terms_are_not_routable(field, value):
+    row = SSI(
+        beneficiary_bic="TESTUS33XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: test.",
+        as_of="2026-08-19",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    setattr(row, field, value)
+    assert not _is_routable_ssi(row)
 
 # ===========================================================================
 # _normalize_bic_input
@@ -401,20 +460,18 @@ class TestLookupUSBank:
 
 
 class TestSuggestFromSSI:
-    def test_access_bank_usd_returns_published_correspondents(self, db_session):
+    def test_unverified_seed_ssi_is_not_routable(self, db_session_clean):
         from app.services.routing import suggest_from_ssi
-        suggestions = suggest_from_ssi(db_session, "ABNGNGLAXXX", "USD", "NG")
-        bics = [s.bic for s in suggestions]
-        assert "CITIUS33XXX" in bics
-        assert "SCBLUS33XXX" in bics
-        assert "BKTRUS33XXX" in bics
-        for s in suggestions:
-            assert s.basis == "published-ssi"
-            assert s.confidence == "high"
+        assert suggest_from_ssi(
+            db_session_clean, "ABNGNGLAXXX", "USD", "NG"
+        ) == []
 
-    def test_published_correspondents_carry_settlement_ids(self, db_session):
+    def test_published_correspondents_carry_settlement_ids(self, db_session_clean):
         from app.services.routing import suggest_from_ssi
-        suggestions = suggest_from_ssi(db_session, "ABNGNGLAXXX", "USD", "NG")
+        _approve_ssi_rows(db_session_clean, "ABNGNGLAXXX", "USD")
+        suggestions = suggest_from_ssi(
+            db_session_clean, "ABNGNGLAXXX", "USD", "NG"
+        )
         by_bic = {s.bic: s for s in suggestions}
         citi = by_bic["CITIUS33XXX"]
         assert citi.settlement is not None
@@ -430,18 +487,137 @@ class TestSuggestFromSSI:
         # A bank with no seeded SSI records
         assert suggest_from_ssi(db_session, "ZZZZXX99XXX", "USD", "XX") == []
 
-    def test_ssi_lookup_matches_8char_prefix(self, db_session):
+    def test_ssi_lookup_matches_8char_prefix(self, db_session_clean):
         from app.services.routing import suggest_from_ssi
+        _approve_ssi_rows(db_session_clean, "ABNGNGLAXXX", "USD")
         # Branch BIC should still find the head-office SSI rows
-        suggestions = suggest_from_ssi(db_session, "ABNGNGLA001", "USD", "NG")
+        suggestions = suggest_from_ssi(
+            db_session_clean, "ABNGNGLA001", "USD", "NG"
+        )
         assert len(suggestions) >= 3
+
+    def test_archived_unverified_and_masked_rows_are_never_routed_on(
+        self, db_session_clean
+    ):
+        from app.services.routing import suggest_from_ssi
+
+        rows = [
+            SSI(
+                beneficiary_bic="TESTUS33XXX",
+                beneficiary_bank_name="Test Bank",
+                currency="USD",
+                intermediary_bic="CITIUS33XXX",
+                intermediary_bank_name="Citibank N.A.",
+                intermediary_account="123456789",
+                beneficiary_account="987654321",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: test.",
+                as_of="2026-08-19",
+                verified_by="Treasury Operations",
+                status="archived",
+            ),
+            SSI(
+                beneficiary_bic="TESTUS33XXX",
+                beneficiary_bank_name="Test Bank",
+                currency="USD",
+                intermediary_bic="SCBLUS33XXX",
+                intermediary_bank_name="Standard Chartered",
+                intermediary_account="123456789",
+                beneficiary_account="987654321",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: test.",
+                as_of="2026-08-19",
+                verified_by="Treasury Operations",
+                status="unverified",
+            ),
+            SSI(
+                beneficiary_bic="TESTUS33XXX",
+                beneficiary_bank_name="Test Bank",
+                currency="USD",
+                intermediary_bic="BKTRUS33XXX",
+                intermediary_bank_name="Deutsche Bank Trust",
+                intermediary_account="MASKED-1234",
+                beneficiary_account="987654321",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: test.",
+                as_of="2026-08-19",
+                verified_by="Treasury Operations",
+                status="published",
+            ),
+            SSI(
+                beneficiary_bic="TESTUS33XXX",
+                beneficiary_bank_name="Test Bank",
+                currency="USD",
+                intermediary_bic="MRMDUS33XXX",
+                intermediary_bank_name="HSBC Bank USA",
+                intermediary_account="123456789",
+                beneficiary_account="987654321",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: test.",
+                as_of="2026-08-19",
+                verified_by="Treasury Operations",
+                status="published",
+            ),
+        ]
+        db_session_clean.add_all(rows)
+        db_session_clean.commit()
+
+        suggestions = suggest_from_ssi(
+            db_session_clean, "TESTUS33XXX", "USD", "US"
+        )
+        assert [suggestion.bic for suggestion in suggestions] == ["MRMDUS33XXX"]
+
+    def test_bic_only_rows_are_never_routed_on(self, db_session_clean):
+        """ENBD's charges-PDF rows name correspondents but carry no accounts,
+        charge codes, or value dates. Routing on them would select a
+        correspondent without a settlement instruction — they must be
+        invisible to suggest_from_ssi. A bank with ONLY bic_only rows must
+        fall through to the corridor path, not emit bogus suggestions."""
+        from app.services.routing import suggest_from_ssi
+
+        bic_only = db_session_clean.query(SSI).filter(
+            SSI.beneficiary_bic == "EBILAEADXXX",
+            SSI.currency == "USD",
+        ).all()
+        assert bic_only and all(r.bic_only for r in bic_only)
+        assert suggest_from_ssi(db_session_clean, "EBILAEADXXX", "USD", "AE") == []
+
+        # A real instruction next to a BIC-only row wins: only the selectable
+        # one is suggested.
+        db_session_clean.add(SSI(
+            beneficiary_bic="EBILAEADXXX",
+            beneficiary_bank_name="Emirates NBD",
+            currency="USD",
+            intermediary_bic="BKTRUS33XXX",
+            intermediary_bank_name="BTMU, New York",
+            intermediary_account="123456789",
+            beneficiary_account="987654321",
+            charge_code="SHA",
+            value_date="spot",
+            notes="Source: test. ",
+            as_of="2026-08-19",
+            verified_by="Treasury Operations",
+            status="published",
+        ))
+        db_session_clean.commit()
+        suggestions = suggest_from_ssi(
+            db_session_clean, "EBILAEADXXX", "USD", "AE"
+        )
+        bics = [s.bic for s in suggestions]
+        assert "BKTRUS33XXX" in bics
+        assert len(bics) == 1, "bic_only rows leaked into the suggestions"
 
 
 class TestSuggestRoute:
-    def test_ssi_wins_over_corridor_for_access_bank(self, db_session):
+    def test_verified_ssi_wins_over_corridor(self, db_session_clean):
         from app.services.routing import suggest_route
+        _approve_ssi_rows(db_session_clean, "ABNGNGLAXXX", "USD")
         suggestions, basis = suggest_route(
-            db_session,
+            db_session_clean,
             beneficiary_bic_11="ABNGNGLAXXX",
             settlement_currency="USD",
             destination_currency="NGN",
@@ -450,7 +626,7 @@ class TestSuggestRoute:
         assert basis == "published-ssi"
         bics = [s.bic for s in suggestions]
         # The corridor table's BofA guess must NOT appear — the bank's
-        # published list doesn't include it.
+        # The approved list doesn't include it.
         assert "BOFAUS3NXXX" not in bics
         assert "BKTRUS33XXX" in bics
 
@@ -501,16 +677,15 @@ class TestSettlementDirectory:
 
 
 class TestRouteEndpointSSIFirst:
-    def test_route_access_bank_usd_uses_published_ssi(self, client):
+    def test_route_access_bank_does_not_use_unverified_ssi(self, client):
         r = client.get("/api/route", params={"bic": "ABNGNGLA", "currency": "USD"})
         assert r.status_code == 200
         body = r.json()
-        assert body["source"] == "published-ssi"
+        assert body["source"] == "curated-corridor-table"
         bics = [s["bic"] for s in body["suggested_intermediaries"]]
         assert "CITIUS33XXX" in bics
-        assert "BKTRUS33XXX" in bics
-        assert "BOFAUS3NXXX" not in bics
-        assert "published" in body["notes"].lower()
+        assert all(s["basis"] == "corridor-heuristic" for s in body["suggested_intermediaries"])
+        assert "heuristic" in body["notes"].lower()
 
     def test_route_endpoint_settlement_ids_serialized(self, client):
         r = client.get("/api/route", params={"bic": "ABNGNGLA", "currency": "USD"})

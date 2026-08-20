@@ -10,12 +10,31 @@ from __future__ import annotations
 import sqlite3
 import subprocess
 import sys
+import types
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 PREVIOUS = "20260816_ssi_pubdate"
+
+import importlib.util  # noqa: E402
+
+_BIC_ONLY_SPEC = importlib.util.spec_from_file_location(
+    "20260819_add_ssi_bic_only",
+    REPO / "alembic" / "versions" / "20260819_add_ssi_bic_only.py",
+)
+_BIC_ONLY_MIGRATION = importlib.util.module_from_spec(_BIC_ONLY_SPEC)
+_BIC_ONLY_SPEC.loader.exec_module(_BIC_ONLY_MIGRATION)
+BIC_ONLY_HAS_NO_ACCOUNTS = _BIC_ONLY_MIGRATION.BIC_ONLY_HAS_NO_ACCOUNTS
+ORDINARY_HAS_SETTLEMENT_TERMS = _BIC_ONLY_MIGRATION.ORDINARY_HAS_SETTLEMENT_TERMS
+
+_PREVIOUS_SPEC = importlib.util.spec_from_file_location(
+    "20260816_ssi_verified_by",
+    REPO / "alembic" / "versions" / "20260816_ssi_verified_by.py",
+)
+_PREVIOUS_MIGRATION = importlib.util.module_from_spec(_PREVIOUS_SPEC)
+_PREVIOUS_SPEC.loader.exec_module(_PREVIOUS_MIGRATION)
 
 
 def _alembic(db: Path, *args: str) -> subprocess.CompletedProcess:
@@ -31,8 +50,9 @@ def _seed_at_previous_revision(db: Path, as_of: str, status: str = "archived") -
     assert _alembic(db, "upgrade", PREVIOUS).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', ?, 'Source: x', ?)",
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', ?, 'Source: x', ?, 'SHA', 'spot')",
         (status, as_of),
     )
     connection.commit()
@@ -77,6 +97,7 @@ def test_upgrade_succeeds_once_the_malformed_value_is_cleared(tmp_path):
     connection = sqlite3.connect(db)
     connection.execute(
         "UPDATE ssi SET as_of = NULL "
+        ", charge_code = 'SHA', value_date = 'spot' "
         "WHERE NOT (as_of IS NULL OR as_of LIKE '____-__-__')"
     )
     connection.commit()
@@ -152,8 +173,10 @@ def _seed_published_at_prov_without_a_date(db: Path) -> None:
     assert _alembic(db, "upgrade", "20260816_ssi_prov").returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', NULL)"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', NULL, "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -220,8 +243,10 @@ def _seed_published_without_a_verifier(db: Path) -> None:
     assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -291,8 +316,10 @@ def _seed_published_with_a_stale_date(db: Path) -> None:
     assert _alembic(db, "upgrade", AS_OF_SHAPE).returncode == 0
     connection = sqlite3.connect(db)
     connection.execute(
-        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of) "
-        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2999-01-01')"
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, as_of, "
+        "charge_code, value_date) "
+        "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', '2999-01-01', "
+        "'SHA', 'spot')"
     )
     connection.commit()
     connection.close()
@@ -378,3 +405,179 @@ def test_the_abort_changes_no_schema(tmp_path):
     assert "verified_by" not in columns, (
         "the migration changed the schema before deciding the data fits"
     )
+
+
+# ===========================================================================
+# bic_only — rows that assert correspondent availability, not instructions
+# ===========================================================================
+
+
+class TestBicOnlyMigration:
+    PREVIOUS = "20260816_ssi_verifiedby"
+
+    def test_upgrade_adds_column_and_constraint(self, tmp_path):
+        db = tmp_path / "bic_only.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" in columns
+
+        connection.execute(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+            "bic_only, intermediary_account, beneficiary_account, charge_code, value_date) "
+            "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', 'Source: x', 1, "
+            "NULL, NULL, NULL, NULL)"
+        )
+        connection.commit()
+        connection.close()
+
+    def test_upgrade_refuses_ordinary_rows_with_missing_settlement_terms(self, tmp_path):
+        db = tmp_path / "ordinary_terms.db"
+        _seed_at_previous_revision(db, "2021-10-09")
+
+        connection = sqlite3.connect(db)
+        connection.execute(
+            "UPDATE ssi SET charge_code = NULL, value_date = NULL"
+        )
+        connection.commit()
+        connection.close()
+
+        result = _alembic(db, "upgrade", "head")
+        assert result.returncode != 0
+        assert "missing settlement terms" in result.stderr
+
+        connection = sqlite3.connect(db)
+        row = list(connection.execute(
+            "SELECT charge_code, value_date FROM ssi"
+        ))[0]
+        assert row == (None, None)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" not in columns
+        version = connection.execute(
+            "SELECT version_num FROM alembic_version"
+        ).fetchone()[0]
+        assert version == self.PREVIOUS
+        connection.close()
+
+    def test_model_and_migration_mirror_constraint_text(self):
+        from app.models import SSI
+
+        model_sql = {
+            str(c.sqltext)
+            for c in SSI.__table__.constraints
+            if c.name == "ck_ssi_ordinary_has_settlement_terms"
+        }
+        assert model_sql == {ORDINARY_HAS_SETTLEMENT_TERMS}
+
+    def test_bic_only_row_with_accounts_is_rejected(self, tmp_path):
+        db = tmp_path / "bic_only_bad.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+                "bic_only, intermediary_account) "
+                "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', 'Source: x', 1, "
+                "'ACCT-91000701')"
+            )
+        connection.close()
+
+    def test_downgrade_removes_column_and_constraint(self, tmp_path):
+        db = tmp_path / "bic_only_down.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+        assert _alembic(db, "downgrade", self.PREVIOUS).returncode == 0
+
+        connection = sqlite3.connect(db)
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+        assert "bic_only" not in columns
+        # The batch recreate on the way down destroys the as_of triggers
+        # 20260816_ssi_verifiedby owns; that revision's state must exist
+        # when the downgrade ends.
+        triggers = [r[0] for r in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger'")]
+        assert "ssi_as_of_insert" in triggers
+        assert "ssi_as_of_update" in triggers
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, as_of, charge_code, value_date) VALUES "
+                "('AAAAUS33XXX', 'USD', 'CITIUS33XXX', 'illustrative', "
+                "'Source: test', 'not-a-date', 'SHA', 'spot')"
+            )
+        connection.close()
+
+    def test_downgrade_refuses_while_bic_only_rows_exist(self, tmp_path):
+        db = tmp_path / "bic_only_down_refused.db"
+        assert _alembic(db, "upgrade", "head").returncode == 0
+
+        connection = sqlite3.connect(db)
+        connection.execute(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+            "notes, bic_only) VALUES ('EBILAEADXXX', 'USD', 'BOFAUS3NXXX', "
+            "'unverified', 'Source: x', 1)"
+        )
+        connection.commit()
+        connection.close()
+
+        result = _alembic(db, "downgrade", self.PREVIOUS)
+        assert result.returncode != 0
+        assert "Refusing to remove bic_only" in result.stderr
+
+        connection = sqlite3.connect(db)
+        assert "bic_only" in {
+            row[1] for row in connection.execute("PRAGMA table_info(ssi)")
+        }
+        connection.close()
+
+    def test_model_and_migration_constraints_do_not_drift(self):
+        from app.models import SSI
+
+        model_sql = {
+            str(c.sqltext)
+            for c in SSI.__table__.constraints
+            if c.name == "ck_ssi_bic_only_has_no_accounts"
+        }
+        assert model_sql == {BIC_ONLY_HAS_NO_ACCOUNTS}
+
+    def test_batch_recreate_reinstalls_the_previous_triggers(self):
+        """SQLite batch_alter_table recreates the table and DROP TABLE
+        destroys its triggers, so this migration must reinstall the as_of
+        triggers 20260816_ssi_verifiedby created — verbatim, not a drift of
+        them."""
+        assert (
+            _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_SQLITE
+            == _PREVIOUS_MIGRATION.SSI_AS_OF_SQLITE
+        )
+        assert (
+            _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_POSTGRES
+            == _PREVIOUS_MIGRATION.SSI_AS_OF_POSTGRES
+        )
+
+    def test_reinstall_is_sqlite_only(self):
+        """PostgreSQL alters the table in place, so the as_of triggers survive
+        this migration and re-running their CREATE TRIGGER statements would
+        fail because the triggers already exist. The reinstall must execute
+        nothing off-SQLite — and exactly the SQLite statements on SQLite."""
+        executed: list[str] = []
+        monkeypatch_fake_op = types.SimpleNamespace(
+            execute=lambda statement: executed.append(statement)
+        )
+        _BIC_ONLY_MIGRATION.op = monkeypatch_fake_op
+        try:
+            postgres_bind = types.SimpleNamespace(
+                dialect=types.SimpleNamespace(name="postgresql")
+            )
+            _BIC_ONLY_MIGRATION._reinstall_as_of_triggers(postgres_bind)
+            assert executed == []
+
+            sqlite_bind = types.SimpleNamespace(
+                dialect=types.SimpleNamespace(name="sqlite")
+            )
+            _BIC_ONLY_MIGRATION._reinstall_as_of_triggers(sqlite_bind)
+            assert executed == list(
+                _BIC_ONLY_MIGRATION._load_previous_migration().SSI_AS_OF_SQLITE
+            )
+        finally:
+            _BIC_ONLY_MIGRATION.op = None

@@ -281,11 +281,13 @@ def test_route_usd_to_japan(client):
     assert body["valid"] is True
     assert body["currency"] == "JPY"  # inferred from JP
     assert len(body["suggested_intermediaries"]) >= 1
-    # SSI-first: MUFG has a published USD instruction (its own NY branch),
-    # so the authoritative list wins over the corridor heuristic.
-    assert body["source"] == "published-ssi"
-    assert body["suggested_intermediaries"][0]["bic"] == "BOTKJPJTXXX"
-    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
+    # The seeded MUFG row is an unverified historical/illustrative record, so
+    # it is informational and must not become an executable route.
+    assert body["source"] == "curated-corridor-table"
+    assert all(
+        suggestion["basis"] == "corridor-heuristic"
+        for suggestion in body["suggested_intermediaries"]
+    )
 
 
 def test_route_usd_to_china(client):
@@ -302,12 +304,16 @@ def test_route_usd_to_hong_kong(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "HKD"
-    # SSI-first: HSBC Hong Kong publishes USD settlement via its own NY
-    # affiliate (HSBC Bank USA, MRMDUS33) — authoritative over the corridor
-    # heuristic, which would have guessed the self-loop.
-    assert body["source"] == "published-ssi"
-    assert body["suggested_intermediaries"][0]["bic"] == "MRMDUS33XXX"
-    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
+    # The seeded HSBC row is an unverified historical/illustrative record and
+    # remains informational rather than selecting its NY affiliate.
+    assert body["source"] == "curated-corridor-table"
+    assert "MRMDUS33XXX" not in {
+        suggestion["bic"] for suggestion in body["suggested_intermediaries"]
+    }
+    assert all(
+        suggestion["basis"] == "corridor-heuristic"
+        for suggestion in body["suggested_intermediaries"]
+    )
 
 
 def test_route_usd_to_singapore(client):
@@ -336,13 +342,24 @@ def test_route_usd_to_uae(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "AED"
-    # SSI-first: Emirates NBD publishes its USD correspondents (BofA, Citi,
-    # SCB New York) — the published list replaces the corridor guess.
-    assert body["source"] == "published-ssi"
-    bics = [s["bic"] for s in body["suggested_intermediaries"]]
-    assert "BOFAUS3NXXX" in bics
-    assert "CITIUS33XXX" in bics
-    assert "SCBLUS33XXX" in bics
+    # Emirates NBD publishes a BIC-level correspondent list with no account
+    # numbers (bic_only), so it cannot be routed on as a settlement
+    # instruction — the curated corridor table supplies the route instead.
+    assert body["source"] == "curated-corridor-table"
+    suggestions = body["suggested_intermediaries"]
+    bics = [s["bic"] for s in suggestions]
+    # The exact approved USD->AE corridor, in rank order. Anything else — an
+    # arbitrary or incorrect suggestion — is a regression in the fallback
+    # this corridor relies on, so the whole list is pinned, not just its
+    # existence.
+    assert bics == ["CITIUS33XXX", "EBILAEADXXX", "SCBLUS33XXX"]
+    for s in suggestions:
+        assert s["basis"] == "corridor-heuristic"
+        assert s["corridor"] == "USD->AE"
+    # The direct SSI-path regression lives in test_routing.py. This endpoint
+    # test pins the fallback source and complete approved list separately, so
+    # a BIC-only row cannot silently change the HTTP result without changing
+    # this exact contract.
 
 
 def test_route_usd_to_saudi(client):

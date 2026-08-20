@@ -17,6 +17,7 @@ function record(overrides: Partial<SSIRecord> = {}): SSIRecord {
     notes: undefined,
     as_of: undefined,
     status: "published",
+    bic_only: false,
     ...overrides,
   } as SSIRecord;
 }
@@ -42,5 +43,25 @@ describe("SettlementInstructions provenance", () => {
     );
     expect(screen.queryByText(/Archived/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Illustrative/)).not.toBeInTheDocument();
+  });
+
+  it("does not show settlement IDs for availability-only rows", () => {
+    render(
+      <SettlementInstructions
+        groups={[{
+          currency: "USD",
+          records: [record({
+            bic_only: true,
+            intermediary_account: undefined,
+            beneficiary_account: undefined,
+            charge_code: undefined,
+            value_date: undefined,
+            intermediary_settlement: { chips_uid: "0008", aba: "021000089" },
+          })],
+        }]}
+      />,
+    );
+    expect(screen.queryByText(/CHIPS 0008/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ABA 021000089/)).not.toBeInTheDocument();
   });
 });

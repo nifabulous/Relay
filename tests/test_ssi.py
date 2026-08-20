@@ -63,10 +63,24 @@ class TestSSIEndpoint:
             assert rec["charge_code"] in ("OUR", "SHA", "BEN")
 
     def test_ssi_carries_value_date(self, client):
-        r = client.get("/api/ssi", params={"bic": "EBILAEADXXX", "currency": "USD"})
+        r = client.get("/api/ssi", params={"bic": "GTBINGLAXXX", "currency": "USD"})
         body = r.json()
         assert len(body["instructions"]) >= 1
         assert body["instructions"][0]["value_date"] == "spot"
+
+    def test_bic_only_rows_serialize_without_accounts(self, client):
+        """ENBD's correspondent-charges PDF is a BIC-level list: the API must
+        say so and must not fabricate accounts, charge codes, or value dates."""
+        r = client.get("/api/ssi", params={"bic": "EBILAEADXXX", "currency": "USD"})
+        assert r.status_code == 200
+        body = r.json()
+        assert len(body["instructions"]) >= 1
+        for rec in body["instructions"]:
+            assert rec["bic_only"] is True
+            assert rec["intermediary_account"] is None
+            assert rec["beneficiary_account"] is None
+            assert rec["charge_code"] is None
+            assert rec["value_date"] is None
 
     def test_ssi_filter_by_currency(self, client):
         r = client.get("/api/ssi", params={"bic": "GTBINGLAXXX", "currency": "EUR"})
@@ -117,6 +131,8 @@ class TestSSISeedIntegrity:
 
         valid = {"OUR", "SHA", "BEN"}
         for row in SSI_RECORDS:
+            if len(row) > 13 and row[13] is True:
+                continue
             charge = row[7]
             assert charge in valid, f"Invalid charge code: {charge} in {row}"
 
@@ -133,6 +149,8 @@ class TestSSISeedIntegrity:
         from app.services.seed import SSI_RECORDS
 
         for row in SSI_RECORDS:
+            if len(row) > 13 and row[13] is True:
+                continue
             assert row[5].startswith("ACCT-"), (
                 f"intermediary_account {row[5]} is not an ACCT- placeholder"
             )
@@ -327,7 +345,7 @@ class TestAllSSIAccountsArePlaceholders:
         offenders = [
             (row[0], row[2], row[3], row[5])
             for row in SSI_RECORDS
-            if not pattern.match(row[5])
+            if row[5] is not None and not pattern.match(row[5])
         ]
         assert not offenders, (
             f"{len(offenders)} SSI rows have non-placeholder intermediary_account "
@@ -343,12 +361,28 @@ class TestAllSSIAccountsArePlaceholders:
         offenders = [
             (row[0], row[2], row[3], row[6])
             for row in SSI_RECORDS
-            if not pattern.match(row[6])
+            if row[6] is not None and not pattern.match(row[6])
         ]
         assert not offenders, (
             f"{len(offenders)} SSI rows have non-placeholder beneficiary_account "
             f"(must match ^ACCT-\\d+$). First 5: {offenders[:5]}"
         )
+
+    def test_bic_only_rows_carry_no_accounts_charge_or_value_date(self):
+        """A BIC-only row names correspondents but publishes no accounts,
+        charge codes, or value dates — the fields an ordinary instruction is
+        built from. None of them may be fabricated (the pre-fix ENBD rows
+        carried invented ACCT- placeholders, OUR, and spot)."""
+        from app.services.seed import SSI_RECORDS
+
+        bic_only = [row for row in SSI_RECORDS if len(row) > 13 and row[13] is True]
+        assert bic_only, "expected bic_only rows in the seed"
+        for row in bic_only:
+            assert row[5] is None and row[6] is None, f"{row[0]}/{row[2]}: bic_only row has accounts"
+            assert row[7] is None, f"{row[0]}/{row[2]}: bic_only row has a charge code"
+            assert row[8] is None, f"{row[0]}/{row[2]}: bic_only row has a value date"
+            assert row[12] is None, f"{row[0]}/{row[2]}: bic_only row names a verifier"
+            assert len(row) == 14, f"{row[0]}/{row[2]}: expected 14 fields, got {len(row)}"
 
     def test_no_real_ibans_in_notes(self):
         """
@@ -417,10 +451,10 @@ class TestSSIModel:
         Verify the Emirates NBD SSI records are loaded.
 
         The bank/correspondent *relationships* are real (sourced from the
-        published SSI page), but all account numbers are now ACCT- placeholders
-        — no real account numbers ship in the source (safety invariant, see
-        TestAllSSIAccountsArePlaceholders). The 'Source:' citation in notes
-        documents where the relationship came from.
+        published correspondent-bank-charges PDF), but that source publishes
+        no account numbers, charge codes, or value dates — every row is
+        BIC-only. The 'Source:' citation in notes documents where the
+        relationship came from.
         """
         from sqlalchemy import select
 
@@ -432,16 +466,16 @@ class TestSSIModel:
                 SSI.currency == "USD",
             )
         ).scalars().all()
-        # ENBD USD has at least 4 correspondents from the published SSI page
+        # ENBD USD has at least 4 correspondents from the published PDF
         assert len(rows) >= 4
-        # ALL account numbers must be placeholders now
+        # The PDF is a BIC-level list: correspondent names only, and the
+        # fabricated account/charge/value-date fields must not exist.
         for row in rows:
-            assert row.intermediary_account.startswith("ACCT-"), (
-                f"intermediary_account must be ACCT- placeholder, got {row.intermediary_account}"
-            )
-            assert row.beneficiary_account.startswith("ACCT-"), (
-                f"beneficiary_account must be ACCT- placeholder, got {row.beneficiary_account}"
-            )
+            assert row.bic_only, "ENBD charges-PDF rows must be BIC-only"
+            assert row.intermediary_account is None
+            assert row.beneficiary_account is None
+            assert row.charge_code is None
+            assert row.value_date is None
 
     def test_enbd_multi_currency_coverage(self, db_session_clean):
         """Emirates NBD should have SSI across many currencies."""
@@ -651,6 +685,7 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="definitely-current",
+                charge_code="SHA", value_date="spot",
             )
 
     def test_schema_rejects_a_malformed_as_of(self):
@@ -663,6 +698,7 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="not-a-date",
             )
 
@@ -672,9 +708,143 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
+            charge_code="SHA", value_date="spot",
             as_of="2007-12-13",
         )
         assert record.status == "archived"
+
+    def test_schema_rejects_an_ordinary_record_without_settlement_terms(self):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError, match="ordinary.*requires"):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX", status="archived",
+                as_of="2007-12-13",
+            )
+
+    def test_schema_rejects_whitespace_only_settlement_terms(self):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError, match="ordinary.*requires"):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX",
+                charge_code="   ", value_date="\t",
+            )
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [("charge_code", "INVALID"), ("value_date", "when-convenient")],
+    )
+    def test_schema_rejects_unsupported_settlement_terms(self, field, value):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        payload = {
+            "beneficiary_bic": "BOPIPHMMXXX",
+            "currency": "USD",
+            "intermediary_bic": "CITIUS33XXX",
+            "charge_code": "SHA",
+            "value_date": "spot",
+            field: value,
+        }
+        with pytest.raises(ValidationError):
+            SSIRecord(**payload)
+
+    def test_schema_accepts_a_well_formed_bic_only_record(self):
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="EBILAEADXXX", currency="USD",
+            intermediary_bic="EBILAEADXXX", status="unverified",
+            as_of="2026-05-01", bic_only=True,
+        )
+        assert record.bic_only is True
+
+    def test_schema_normalizes_empty_strings_to_absent(self):
+        """Empty strings mean "absent" everywhere in this model — an empty
+        charge_code or value_date on a bic_only record must be a valid
+        persisted shape (NULL), not a flush-time IntegrityError."""
+        from app.schemas import SSIRecord
+
+        record = SSIRecord(
+            beneficiary_bic="EBILAEADXXX", currency="USD",
+            intermediary_bic="EBILAEADXXX", status="unverified",
+            as_of="2026-05-01", bic_only=True,
+            intermediary_account="", beneficiary_account="",
+            charge_code="", value_date="",
+        )
+        assert record.intermediary_account is None
+        assert record.beneficiary_account is None
+        assert record.charge_code is None
+        assert record.value_date is None
+
+    def test_schema_rejects_bic_only_record_with_accounts(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError):
+            SSIRecord(
+                beneficiary_bic="EBILAEADXXX", currency="USD",
+                intermediary_bic="EBILAEADXXX", status="unverified",
+                as_of="2026-05-01", bic_only=True,
+                intermediary_account="ACCT-91001629",
+            )
+
+    def test_database_rejects_bic_only_row_with_accounts(self, db_session_clean):
+        """Raw SQL, deliberately: the ORM would have caught it earlier; the
+        CHECK constraint is the backstop for Core inserts and direct writers."""
+        import pytest
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only, intermediary_account) "
+                "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', "
+                "'Source: x', 1, 'ACCT-91001629')"
+            ))
+        db_session_clean.rollback()
+
+    def test_database_rejects_an_ordinary_row_without_settlement_terms(
+        self, db_session_clean
+    ):
+        """A raw writer cannot create a routable ordinary row with no terms."""
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'illustrative', NULL, 0)"
+            ))
+        db_session_clean.rollback()
+
+    def test_database_rejects_an_ordinary_row_with_empty_settlement_terms(
+        self, db_session_clean
+    ):
+        """Empty strings are the same missing terms the API normalizes away."""
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        with pytest.raises(IntegrityError):
+            db_session_clean.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "status, notes, bic_only, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'illustrative', NULL, "
+                "0, '', '')"
+            ))
+        db_session_clean.rollback()
 
     def test_database_rejects_an_unknown_status(self, db_session_clean):
         """Raw SQL, deliberately: the ORM listener would catch this first, so
@@ -686,8 +856,10 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "notes, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'totally-fine', 'Source: x', "
+                "'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -766,8 +938,9 @@ class TestProvenanceCannotBeForgedByAWriter:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'unverified', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -777,6 +950,7 @@ class TestProvenanceCannotBeForgedByAWriter:
         db_session_clean.add(SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="illustrative", notes=None,
+            charge_code="SHA", value_date="spot",
         ))
         db_session_clean.commit()
 
@@ -821,6 +995,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
             )
 
     def test_published_with_a_verification_date_is_accepted(self):
@@ -833,6 +1008,7 @@ class TestPublishedCannotBeSelfAsserted:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
+            charge_code="SHA", value_date="spot",
             as_of=_utc_yesterday(),
             verified_by="ops:ada",
         )
@@ -845,6 +1021,7 @@ class TestPublishedCannotBeSelfAsserted:
         record = SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
+            charge_code="SHA", value_date="spot",
             as_of=_utc_today(),
             verified_by="ops:ada",
         )
@@ -861,6 +1038,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of=_utc_tomorrow(),
             )
 
@@ -874,6 +1052,7 @@ class TestPublishedCannotBeSelfAsserted:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="2999-01-01",
             )
 
@@ -886,8 +1065,10 @@ class TestPublishedCannotBeSelfAsserted:
 
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
-                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes) "
-                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x')"
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, "
+                "notes, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', "
+                "'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -902,6 +1083,7 @@ class TestPublishedCannotBeSelfAsserted:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(row, verified_by="ops:ada",
                                     verified_on=_utc_today())
@@ -928,6 +1110,7 @@ class TestProvenanceInvariantsHoldForAnyOrmWrite:
             notes="Source: https://bank.example/ssi.",
             as_of=_utc_today(),
             verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         fields.update(overrides)
         return SSI(**fields)
@@ -1006,14 +1189,15 @@ class TestProvenanceSurvivesTheBypassPaths:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
             verified_by="research",
+            charge_code="SHA", value_date="spot",
         )
         row.update(overrides)
         session.execute(
             text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES (:beneficiary_bic, "
-                ":currency, :intermediary_bic, :status, :notes, :as_of, "
-                ":verified_by)"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES (:beneficiary_bic, :currency, :intermediary_bic, :status, "
+                ":notes, :as_of, :verified_by, :charge_code, :value_date)"
             ),
             row,
         )
@@ -1104,6 +1288,7 @@ class TestProvenanceSurvivesTheBypassPaths:
                 beneficiary_bic="AAAAGB2LXXX", currency="EUR",
                 intermediary_bic="CITIUS33XXX", status="published",
                 notes="Source: x", as_of="garbage",
+                charge_code="SHA", value_date="spot",
             )])
         db_session_clean.rollback()
 
@@ -1127,6 +1312,58 @@ class TestSchemaIsPortable:
                 if operator in ddl:
                     offenders.append((table.name, operator.strip()))
         assert not offenders, f"SQLite-only SQL emitted for Postgres: {offenders}"
+    def test_boolean_default_and_bic_only_check_compile_for_postgres(self):
+        """The suite builds schema on SQLite, where `bic_only = 0` (integer
+        affinity) and `DEFAULT 0` work — even though PostgreSQL rejects both:
+        there is no `boolean = integer` operator, and a Boolean column will
+        not take an integer default. Compile the real model DDL for the
+        production dialect and prove it is valid."""
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        from app.models import SSI
+
+        ddl = str(CreateTable(SSI.__table__).compile(dialect=postgresql.dialect()))
+        assert "bic_only BOOLEAN DEFAULT false NOT NULL" in ddl, ddl
+        assert "NOT bic_only OR" in ddl, ddl
+        assert "bic_only = 0" not in ddl, "integer literal against boolean breaks Postgres"
+
+    def test_migration_boolean_ddl_is_postgres_valid(self):
+        """The bic_only migration re-declares the column and its CHECK for
+        existing databases outside Base.metadata, so the DDL check above cannot
+        see it. Replay the exact migration declarations through the Postgres
+        compiler and prove they are valid there, not just on SQLite."""
+        import importlib.util
+        from pathlib import Path
+
+        from sqlalchemy import Boolean, CheckConstraint, Column, MetaData, Table, text
+        from sqlalchemy.dialects import postgresql
+        from sqlalchemy.schema import CreateTable
+
+        spec = importlib.util.spec_from_file_location(
+            "20260819_add_ssi_bic_only",
+            Path(__file__).resolve().parents[1]
+            / "alembic" / "versions" / "20260819_add_ssi_bic_only.py",
+        )
+        migration = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(migration)
+
+        assert migration.BIC_ONLY_HAS_NO_ACCOUNTS.startswith("NOT bic_only OR")
+
+        replay = Table(
+            "ssi", MetaData(),
+            Column("bic_only", Boolean(), nullable=False, server_default=text("false")),
+            CheckConstraint(
+                migration.BIC_ONLY_HAS_NO_ACCOUNTS,
+                name="ck_ssi_bic_only_has_no_accounts",
+            ),
+        )
+        ddl = str(CreateTable(replay).compile(dialect=postgresql.dialect()))
+        assert "DEFAULT false" in ddl, ddl
+        assert "NOT bic_only OR" in ddl, ddl
+        assert "bic_only = 0" not in ddl, ddl
+
+
 
     def test_no_migration_uses_sql_that_only_behaves_on_sqlite(self):
         """The DDL check above reads Base.metadata, so it cannot see SQL written
@@ -1210,6 +1447,7 @@ class TestValidationAgreesWithTheDatabase:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="20240215",
             )
 
@@ -1223,6 +1461,7 @@ class TestValidationAgreesWithTheDatabase:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="archived",
+                charge_code="SHA", value_date="spot",
                 as_of="2024-W07-3",
             )
 
@@ -1235,6 +1474,7 @@ class TestValidationAgreesWithTheDatabase:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: x", as_of="20240215",
+            charge_code="SHA", value_date="spot",
         ))
         with pytest.raises(ValueError, match="YYYY-MM-DD"):
             db_session_clean.commit()
@@ -1247,12 +1487,14 @@ class TestValidationAgreesWithTheDatabase:
         assert SSIRecord(
             beneficiary_bic="BOPIPHMMXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
+            charge_code="SHA", value_date="spot",
             as_of="2024-02-15",
         ).as_of == "2024-02-15"
         db_session_clean.add(SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: x", as_of="2024-02-15",
+            charge_code="SHA", value_date="spot",
         ))
         db_session_clean.commit()
 
@@ -1272,6 +1514,7 @@ class TestOnlyTheVerificationPathCanPublish:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
             as_of=_utc_today(),
+            charge_code="SHA", value_date="spot",
         )
         fields.update(overrides)
         return SSI(**fields)
@@ -1322,8 +1565,9 @@ class TestOnlyTheVerificationPathCanPublish:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of) VALUES ('AAAAGB2LXXX', 'USD', "
-                "'CITIUS33XXX', 'published', 'Source: x', '2020-01-01')"
+                "status, notes, as_of, charge_code, value_date) VALUES "
+                "('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', 'Source: x', "
+                "'2020-01-01', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1337,6 +1581,7 @@ class TestOnlyTheVerificationPathCanPublish:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of="2020-01-01",
             )
 
@@ -1355,6 +1600,7 @@ class TestAVerifierMustBeAName:
             SSIRecord(
                 beneficiary_bic="BOPIPHMMXXX", currency="USD",
                 intermediary_bic="CITIUS33XXX", status="published",
+                charge_code="SHA", value_date="spot",
                 as_of="2020-01-01", verified_by="   ",
             )
 
@@ -1366,6 +1612,7 @@ class TestAVerifierMustBeAName:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: x", as_of=_utc_today(), verified_by="   ",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1380,8 +1627,9 @@ class TestAVerifierMustBeAName:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', '   ')"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', "
+                "'Source: x', '2020-01-01', '   ', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1401,8 +1649,9 @@ class TestAVerifierMustBeAName:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'published', 'Source: x', '2020-01-01', :v)"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'published', "
+                "'Source: x', '2020-01-01', :v, 'SHA', 'spot')"
             ), {"v": verifier})
         db_session_clean.rollback()
 
@@ -1414,6 +1663,7 @@ class TestAVerifierMustBeAName:
         row = SSI(
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified", notes="Source: x",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(
             row, verified_by="  ops:ada  ",
@@ -1441,6 +1691,7 @@ class TestAVerifierOnlyRidesOnPublished:
                 SSIRecord(
                     beneficiary_bic="BOPIPHMMXXX", currency="USD",
                     intermediary_bic="CITIUS33XXX", status=status,
+                    charge_code="SHA", value_date="spot",
                     notes="Source: https://bank.example/ssi.",
                     verified_by="ops:ada",
                 )
@@ -1455,6 +1706,7 @@ class TestAVerifierOnlyRidesOnPublished:
             intermediary_bic="CITIUS33XXX", status="archived",
             notes="Source: https://bank.example/ssi.", as_of="2020-01-01",
             verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1473,6 +1725,7 @@ class TestAVerifierOnlyRidesOnPublished:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         row.status = "published"
         row.verified_by = "ops:ada"
@@ -1496,8 +1749,9 @@ class TestAVerifierOnlyRidesOnPublished:
         with pytest.raises(IntegrityError):
             db_session_clean.execute(text(
                 "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
-                "status, notes, as_of, verified_by) VALUES ('AAAAGB2LXXX', "
-                "'USD', 'CITIUS33XXX', 'archived', 'Source: x', '2020-01-01', 'ops:ada')"
+                "status, notes, as_of, verified_by, charge_code, value_date) "
+                "VALUES ('AAAAGB2LXXX', 'USD', 'CITIUS33XXX', 'archived', "
+                "'Source: x', '2020-01-01', 'ops:ada', 'SHA', 'spot')"
             ))
         db_session_clean.rollback()
 
@@ -1516,6 +1770,7 @@ class TestAVerifiedRowSurvivesOrdinaryEditing:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="unverified",
             notes="Source: https://bank.example/ssi.",
+            charge_code="SHA", value_date="spot",
         )
         record_verified_publication(row, verified_by="ops:ada",
                                     verified_on=_utc_today())
@@ -1634,6 +1889,7 @@ class TestPublishedIsAttributionNotAuthorisation:
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: https://bank.example/ssi.",
             as_of=self._utc_today(), verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1647,6 +1903,7 @@ class TestPublishedIsAttributionNotAuthorisation:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", status="published",
             notes="Source: x", as_of=self._utc_today(),
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1700,6 +1957,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             intermediary_bic="CITIUS33XXX",
             notes="Source: https://bank.example/ssi.",
             as_of="2020-01-01", status="published", verified_by="ops:ada",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1716,6 +1974,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             beneficiary_bic="AAAAGB2LXXX", currency="USD",
             intermediary_bic="CITIUS33XXX", notes="Source: x",
             as_of="2020-01-01", status="published",
+            charge_code="SHA", value_date="spot",
         )
         db_session_clean.add(row)
         db_session_clean.commit()
@@ -1733,7 +1992,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             / "scripts" / "ssi-autopilot" / "autopilot.py"
         )
         source = script.read_text()
-        assert "(10, 12, 13)" in source, "a 13-field SSI row would fail verify"
+        assert "(10, 12, 13, 14)" in source, "a 14-field bic_only row would fail verify"
         result = subprocess.run(
             [sys.executable, str(script), "verify"], capture_output=True, text=True
         )

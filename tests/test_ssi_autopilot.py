@@ -45,6 +45,22 @@ def test_valid_results_pass():
     assert autopilot.validate_results(sample_results(), MANIFEST) == []
 
 
+def test_manifest_value_dates_use_application_vocabulary():
+    from app.ssi_terms import VALID_VALUE_DATES, normalize_value_date
+
+    normalized = {
+        normalize_value_date(value) for value in MANIFEST["defaults"]["value_dates"]
+    }
+    assert normalized <= VALID_VALUE_DATES
+
+
+@pytest.mark.parametrize("legacy, canonical", [("1d", "T+1"), ("2d", "T+2"), ("3d", "T+3")])
+def test_legacy_value_date_aliases_normalize(legacy, canonical):
+    from app.ssi_terms import normalize_value_date
+
+    assert normalize_value_date(legacy) == canonical
+
+
 def test_all_manifest_regions_have_expected_shape():
     for region in MANIFEST["regions"]:
         assert region["name"]
@@ -53,6 +69,28 @@ def test_all_manifest_regions_have_expected_shape():
         for bank in region["banks"]:
             assert len(bank["bic8"]) == 8, f"{region['name']}/{bank['bic8']}"
             assert bank["currencies"], f"{region['name']}/{bank['bic8']}"
+
+
+def test_every_bank_and_country_belongs_to_exactly_one_region():
+    """Regions are ownership partitions. A bank (or country) claimed by two
+    regions contradicts both: two researchers would seed the same BIC with
+    different masks/blocks, and the country-from-BIC validator check would
+    accept a record for a region that did not research it (the pre-fix
+    overlap: latin-america vs andean shared CL/CO/PE and four BICs;
+    southeast-asia vs thailand shared TH)."""
+    bic_owner = {}
+    country_owner = {}
+    for region in MANIFEST["regions"]:
+        for bank in region["banks"]:
+            bic_owner.setdefault(bank["bic8"], []).append(region["name"])
+        for country in region["countries"]:
+            country_owner.setdefault(country, []).append(region["name"])
+    dup_bics = {bic: owners for bic, owners in bic_owner.items() if len(owners) > 1}
+    dup_countries = {
+        country: owners for country, owners in country_owner.items() if len(owners) > 1
+    }
+    assert not dup_bics, f"BICs owned by multiple regions: {dup_bics}"
+    assert not dup_countries, f"countries owned by multiple regions: {dup_countries}"
 
 
 # ── Validator: privacy (the hard rule) ───────────────────────────────────────
@@ -141,14 +179,173 @@ def test_duplicate_record_rejected():
     assert any("duplicate record" in p for p in problems)
 
 
+# ── Validator: bic_only records (availability, not instructions) ─────────────
+def gulf_bic_only_results(**overrides):
+    results = {
+        "region": "gulf",
+        "banks": [
+            {
+                "bic": "EBILAEAD",
+                "name": "Emirates NBD",
+                "records": [
+                    {
+                        "currency": "USD",
+                        "correspondent": "Emirates NBD",
+                        "int_bic": "EBILAEADXXX",
+                        "source": "https://www.emiratesnbd.com/en/correspondent-bank-charges",
+                        "as_of": "2026-05-01",
+                        "status": "unverified",
+                        "bic_only": True,
+                    }
+                ],
+            }
+        ],
+    }
+    results.update(overrides)
+    return results
+
+
+def test_bic_only_record_without_accounts_charge_or_value_date_passes():
+    assert autopilot.validate_results(gulf_bic_only_results(), MANIFEST) == []
+
+
+def test_bic_only_record_with_an_account_is_rejected():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["nostro"] = "ACCT-91001601"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and "nostro" in p for p in problems), problems
+
+
+def test_bic_only_record_with_a_value_date_is_rejected():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["value_date"] = "spot"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and "value_date" in p for p in problems), problems
+
+
+@pytest.mark.parametrize("field", ["nostro", "with_an", "charge_code", "value_date"])
+def test_bic_only_record_with_whitespace_field_is_rejected(field):
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0][field] = " \t"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and field in p for p in problems), problems
+
+
+def test_bic_only_must_be_a_real_boolean():
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0]["bic_only"] = "false"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must be a boolean" in p for p in problems), problems
+
+
+# ── The fold must match what was validated (bic_only) ────────────────────────
+EBILAEAD_BIC_ONLY_ROW = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
+     "EBILAEADXXX", "Emirates NBD",
+     None, None, None, None,
+     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01). " + _SSI_REAL_NOTE,
+     "2026-05-01", "unverified", None, True),'''
+
+
+def test_bic_only_fold_matching_the_validated_results_passes():
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(EBILAEAD_BIC_ONLY_ROW))
+    assert problems == [], problems
+
+
+def test_bic_only_fold_missing_the_flag_is_rejected():
+    no_flag = EBILAEAD_BIC_ONLY_ROW.replace(", None, True),", "),")
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(no_flag))
+    assert any("missing the bic_only flag" in p for p in problems), problems
+
+
+def test_bic_only_fold_with_a_smuggled_account_is_rejected():
+    smuggled = EBILAEAD_BIC_ONLY_ROW.replace("None, None, None, None", '"ACCT-91001601", None, None, None')
+    results = gulf_bic_only_results()
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(smuggled))
+    assert any("must store None" in p and "nostro" in p for p in problems), problems
+
+
+def test_ordinary_fold_carrying_the_flag_is_rejected():
+    flagged = BPI_ROW.replace(",\n     \"2007-12-13\", \"archived\"),", ",\n     \"2007-12-13\", \"archived\", None, True),")
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flagged))
+    assert any("carries bic_only but the validated record does not" in p for p in problems), problems
+
+
+def test_an_ordinary_row_with_a_verifier_spelled_true_is_not_misread_as_bic_only():
+    """The bic_only flag lives only in the 14th field of a 14-field tuple. A
+    bogus 13th provenance slot reading the string "True" must not be mistaken
+    for it — only the final field decides the flag."""
+    ambiguous = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", \"True\", \"False\"),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(ambiguous))
+    assert not any("carries bic_only" in p for p in problems), problems
+
+
+def test_bic_only_flag_is_taken_from_the_final_field_only():
+    """A 14-field row whose 13th field is "False" but whose final field is
+    "True" is bic_only; the check must read the last field, not scan the tail."""
+    flagged = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", False, True),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(flagged))
+    assert any("carries bic_only but the validated record does not" in p for p in problems), problems
+
+def test_fold_verifier_rejects_a_string_bic_only_flag():
+    """A 14-field row whose final field is the string "False" (not the boolean
+    literal) must be rejected by verify_fold: seed_if_empty now raises on any
+    non-boolean flag, so a fold the verifier accepted would crash at seed time
+    (and, before the strict check, silently flipped an ordinary row into a
+    BIC-only one)."""
+    ambiguous = BPI_ROW.replace(
+        ",\n     \"2007-12-13\", \"archived\"),",
+        ",\n     \"2007-12-13\", \"archived\", None, \"False\"),",
+    )
+    results = sample_results()
+    results["banks"][0]["records"][0]["status"] = "archived"
+    problems = autopilot.verify_fold(results, SEED_HEAD, _folded(ambiguous))
+    assert any("must be the boolean literal True or False" in p for p in problems), problems
+
+
+def test_cmd_verify_rejects_a_string_bic_only_flag(tmp_path, monkeypatch):
+    """The AST verifier gates folds before commit; a 14-field tuple whose
+    bic_only slot is the string "False" must fail there, matching the strict
+    isinstance(bool) check seed_if_empty enforces at seed time."""
+    import argparse
+
+    fake = tmp_path / "seed.py"
+    fake.write_text(
+        "SSI_RECORDS = [\n"
+        '    ("ZZBANKXYXXX", "Some Bank", "USD", "CITIUS33XXX", "Citibank",\n'
+        '     None, None, None, None, "Source: x", "2026-01-01", "unverified",\n'
+        '     None, "False"),\n'
+        "]\n"
+    )
+    monkeypatch.setattr(autopilot, "SEED_FILE", fake)
+    with pytest.raises(SystemExit) as exc:
+        autopilot.cmd_verify(argparse.Namespace())
+    assert "14th (bic_only) field" in str(exc.value)
+
+
+
 # ── Test scaffolding ─────────────────────────────────────────────────────────
 def test_scaffold_contains_expected_pieces():
     region = autopilot.get_region(MANIFEST, "southeast-asia")
-    text = autopilot.scaffold_coverage_class(region)
+    text = autopilot.scaffold_coverage_class(region, MANIFEST)
     assert "SOUTHEAST_ASIA_SSI_COVERAGE = [" in text
     assert '("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"}),' in text
     assert "class TestSoutheastAsiaSsiCoverage:" in text
     assert "test_southeast_asia_banks_have_seeded_ssi_records" in text
+    assert "test_southeast_asia_seeded_records_are_semantically_valid" in text
 
 
 # ── Commit counter / PR threshold ────────────────────────────────────────────

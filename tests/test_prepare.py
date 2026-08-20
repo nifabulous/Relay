@@ -432,13 +432,11 @@ class TestPrepareEndpoint:
         assert body["vop"]["outcome"] == "MATCH"
         # Should have routing suggestions for the NG corridor
         assert len(body["routing"]["suggested_intermediaries"]) >= 1
-    def test_published_ssi_routing_is_labelled_as_published(self, client):
-        """A bank with published SSIs must not have them reported as heuristic.
+    def test_unverified_ssi_routing_is_not_labelled_as_published(self, client):
+        """An unverified SSI must not be reported as an executable route.
 
-        prepare-payment previously discarded the routing basis, so the UI
-        rendered a bank's authoritative published correspondents under a
-        "heuristic" heading. The response now carries the basis so callers can
-        tell a published instruction from a corridor guess.
+        Seeded source documents are retained for information, but only an
+        explicitly verified, current instruction can drive routing.
         """
         r = client.post("/api/prepare-payment", json={
             "beneficiary_iban": "IN20SBIN0000123456789012",
@@ -449,10 +447,10 @@ class TestPrepareEndpoint:
         })
         assert r.status_code == 200
         routing = r.json()["routing"]
-        assert routing["routing_basis"] == "published-ssi"
+        assert routing["routing_basis"] == "corridor-heuristic"
         assert routing["suggested_intermediaries"]
         assert all(
-            i["basis"] == "published-ssi"
+            i["basis"] == "corridor-heuristic"
             for i in routing["suggested_intermediaries"]
         )
 

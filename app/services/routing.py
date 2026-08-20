@@ -12,6 +12,7 @@ against the Fedwire/FedACH directory (imported via `app.cli import-fedwire`).
 """
 
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ from sqlalchemy.orm import Session
 from ..data.settlement_directory import get_settlement_ids
 from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
 from ..schemas import BankInfo, IntermediarySuggestion, SettlementIds
+from ..ssi_terms import VALID_CHARGE_CODES, VALID_VALUE_DATES
 from .validator import detect_type, validate_bic, validate_iban
 
 
@@ -137,6 +139,81 @@ def _settlement_for(bic: Optional[str]) -> Optional[SettlementIds]:
     return SettlementIds(chips_uid=ids.get("chips_uid"), aba=ids.get("aba"))
 
 
+def _has_usable_text(value: Optional[str]) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_usable_ssi_account(value: Optional[str]) -> bool:
+    """Accept only a concrete account identifier, never a redaction token.
+
+    An account is operational routing data only when both account fields are
+    present and concrete.  The seed catalog intentionally uses ``ACCT-*``
+    placeholders, while imported bank documents commonly use words,
+    brackets, or punctuation to redact an account.  A strict shape check is
+    safer than growing a blacklist of masking conventions. Keep those rows
+    visible to the informational SSI endpoint, but never turn them into a
+    send path.
+    """
+    if not _has_usable_text(value):
+        return False
+
+    normalized = value.strip().upper()
+    if any(marker in normalized for marker in (
+        "ACCT", "ACCOUNT", "PLACEHOLDER", "MASK", "REDACT"
+    )):
+        return False
+    if any(char in normalized for char in "[]<>()*#"):
+        return False
+    if normalized.startswith("XX") or normalized.endswith("XX"):
+        return False
+    compact = re.sub(r"[\s-]", "", normalized)
+    if not 4 <= len(compact) <= 34:
+        return False
+    if not re.fullmatch(r"[A-Z0-9]+", compact):
+        return False
+    if not any(char.isdigit() for char in compact):
+        return False
+    if "XX" in compact:
+        return False
+    return True
+
+
+def _is_routable_ssi(row: SSI) -> bool:
+    """Return whether an SSI is safe to use as an executable route.
+
+    ``/api/ssi`` deliberately exposes the full catalog, including historical
+    and illustrative records.  Routing is narrower: only a currently
+    published, dated instruction with a named verifier, complete settlement
+    fields, and unmasked account data may select a correspondent.
+    """
+    return (
+        not row.bic_only
+        and row.status == "published"
+        and _has_usable_text(row.as_of)
+        and _has_usable_text(row.verified_by)
+        and _has_usable_text(row.notes)
+        and _is_usable_ssi_account(row.intermediary_account)
+        and _is_usable_ssi_account(row.beneficiary_account)
+        and row.charge_code in VALID_CHARGE_CODES
+        and row.value_date in VALID_VALUE_DATES
+    )
+
+
+def _ssi_routing_filters() -> tuple:
+    """Cheap SQL prefilter; ``_is_routable_ssi`` remains the final gate."""
+    return (
+        SSI.bic_only.is_(False),
+        SSI.status == "published",
+        SSI.as_of.isnot(None),
+        SSI.verified_by.isnot(None),
+        SSI.notes.isnot(None),
+        SSI.intermediary_account.isnot(None),
+        SSI.beneficiary_account.isnot(None),
+        SSI.charge_code.isnot(None),
+        SSI.value_date.isnot(None),
+    )
+
+
 def suggest_from_ssi(
     session: Session,
     beneficiary_bic_11: str,
@@ -164,12 +241,14 @@ def suggest_from_ssi(
     ]
     rows: list = []
     for cand in candidates:
-        rows = session.execute(
+        candidate_rows = session.execute(
             select(SSI).where(
                 SSI.beneficiary_bic == cand,
                 SSI.currency == settlement_currency,
+                *_ssi_routing_filters(),
             )
         ).scalars().all()
+        rows = [row for row in candidate_rows if _is_routable_ssi(row)]
         if rows:
             break
 

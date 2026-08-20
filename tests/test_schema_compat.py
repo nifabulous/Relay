@@ -4,7 +4,9 @@ Builds raw engines on in-memory SQLite (StaticPool, same convention as
 tests/conftest.py) so a "legacy" payment_events table can be simulated
 independently of the current ORM model.
 """
+import pytest
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
@@ -29,6 +31,18 @@ CREATE TABLE payment_events (
 """
 
 LEGACY_SSI_DDL = """
+CREATE TABLE ssi (
+    id INTEGER PRIMARY KEY,
+    beneficiary_bic VARCHAR(11) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    intermediary_bic VARCHAR(11) NOT NULL,
+    charge_code VARCHAR(3) NOT NULL DEFAULT 'SHA',
+    value_date VARCHAR(10) NOT NULL DEFAULT 'spot',
+    notes VARCHAR(500)
+)
+"""
+
+LEGACY_SSI_WITHOUT_SETTLEMENT_TERMS_DDL = """
 CREATE TABLE ssi (
     id INTEGER PRIMARY KEY,
     beneficiary_bic VARCHAR(11) NOT NULL,
@@ -92,6 +106,28 @@ def test_legacy_ssi_gains_provenance_columns_without_data_loss():
     assert row["as_of"] is None
     assert row["verified_by"] is None
     assert row["status"] == "illustrative"
+    columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+    assert {"as_of", "verified_by", "status", "bic_only", "seed_fingerprint"} <= columns
+
+
+def test_legacy_ssi_with_missing_terms_is_refused_before_schema_changes():
+    engine = _raw_engine()
+    with engine.begin() as conn:
+        conn.execute(text(LEGACY_SSI_WITHOUT_SETTLEMENT_TERMS_DDL))
+        conn.execute(text(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+            "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+        ))
+
+    with pytest.raises(ValueError, match="missing settlement terms"):
+        ensure_sqlite_schema(engine)
+
+    with engine.connect() as conn:
+        columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+        assert columns == {
+            "id", "beneficiary_bic", "currency", "intermediary_bic", "notes",
+        }
+        assert conn.execute(text("SELECT notes FROM ssi")).scalar_one() == "legacy row"
 
 
 def test_legacy_schema_repair_is_idempotent():
@@ -134,6 +170,15 @@ class TestLegacyTableGainsColumnsWithoutDataLoss:
         assert row["charge_code"] == "SHA"
         assert row["schedule"] == "instant"
         assert row["revealed_at"] is None
+
+    def test_payment_events_never_get_ssi_specific_columns(self):
+        engine = _legacy_engine_with_event()
+
+        ensure_sqlite_schema(engine)
+
+        columns = {column["name"] for column in inspect(engine).get_columns("payment_events")}
+        assert {"schedule", "revealed_at"}.issubset(columns)
+        assert {"bic_only", "value_date"}.isdisjoint(columns)
 
     def test_columns_are_added_with_expected_types(self):
         engine = _legacy_engine_with_event()
@@ -238,6 +283,8 @@ class TestCurrentSchemaIsANoop:
             "as_of",
             "verified_by",
             "status",
+            "bic_only",
+            "seed_fingerprint",
         }
         columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
         assert set(columns_before) == expected_columns
@@ -247,6 +294,8 @@ class TestCurrentSchemaIsANoop:
         assert columns_before["verified_by"]["nullable"] is True
         assert columns_before["status"]["type"].length == 12
         assert columns_before["status"]["nullable"] is False
+        assert columns_before["bic_only"]["type"].python_type is bool
+        assert columns_before["bic_only"]["nullable"] is False
         expected_provenance_metadata = {
             "as_of": (10, True),
             "verified_by": (120, True),
@@ -285,3 +334,303 @@ class TestCurrentSchemaIsANoop:
         assert provenance_metadata(columns_after_second) == expected_provenance_metadata
         assert row_after_first == row_before
         assert row_after_second == row_after_first
+
+    def test_legacy_ssi_rebuild_enforces_the_bic_only_check(self):
+        """The rebuild is not just cosmetic: a legacy table that gains the
+        CHECK must reject a violating direct insert afterwards — raw SQL,
+        deliberately, because the ORM would normalize first."""
+        import pytest
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy row')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            checks = {
+                c["name"] for c in inspect(engine).get_check_constraints("ssi")
+            }
+            assert "ck_ssi_bic_only_has_no_accounts" in checks
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, bic_only, status FROM ssi"
+            )).mappings().one()
+        assert row["bic_only"] == 0
+        assert row["status"] == "illustrative"
+
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "status, notes, bic_only, intermediary_account) "
+                    "VALUES ('EBILAEADXXX', 'USD', 'EBILAEADXXX', 'unverified', "
+                    "'Source: https://bank.example/charges (as of 2026-05-01).', "
+                    "1, 'ACCT-91001629')"
+                ))
+
+    def test_legacy_rebuild_rejects_whitespace_settlement_terms(self):
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "status, notes, charge_code, value_date) VALUES "
+                    "('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'illustrative', "
+                    "'legacy', '   ', char(9))"
+                ))
+
+    def test_legacy_rebuild_failure_after_swap_restores_the_original_table(
+        self, monkeypatch
+    ):
+        """A failure after the old table is renamed must not strand the DB."""
+        from app.services import schema_compat
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'keep this row')"
+            ))
+
+        original_recreate_triggers = schema_compat._recreate_triggers
+        calls = 0
+
+        def fail_once(conn, triggers):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise RuntimeError("simulated trigger restore failure")
+            return original_recreate_triggers(conn, triggers)
+
+        monkeypatch.setattr(schema_compat, "_recreate_triggers", fail_once)
+        with pytest.raises(RuntimeError, match="simulated trigger restore failure"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            tables = {
+                row[0] for row in conn.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ))
+            }
+            assert "ssi" in tables
+            assert "ssi__bic_only_backup" not in tables
+            assert "ssi__bic_only_rebuild" not in tables
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, notes FROM ssi"
+            )).mappings().one()
+        assert row == {
+            "beneficiary_bic": "CITIUS33XXX",
+            "notes": "keep this row",
+        }
+    def test_legacy_rebuild_refuses_to_drop_unknown_columns(self):
+        """A legacy ssi table carrying columns the current model does not know
+        must be refused, not silently rebuilt: the rebuild copies only model
+        columns and then DROPs the old table, which would permanently discard
+        the extra column from a dev database the helper promises never to lose
+        data from. The refusal must happen before any DDL runs."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text("ALTER TABLE ssi ADD COLUMN operator_tag VARCHAR(40)"))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                "notes, operator_tag) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy', 'keep-me')"
+            ))
+
+        with pytest.raises(ValueError, match="operator_tag"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(engine).get_columns("ssi")}
+            assert columns == {
+                "id", "beneficiary_bic", "currency", "intermediary_bic",
+                "charge_code", "value_date", "notes", "operator_tag",
+            }
+            assert "operator_tag" in columns
+            row = conn.execute(text(
+                "SELECT beneficiary_bic, operator_tag FROM ssi"
+            )).mappings().one()
+            assert row["operator_tag"] == "keep-me"
+
+    def test_legacy_constraints_are_checked_before_the_rebuild(self):
+        """Operator-owned checks and foreign keys must not disappear when the
+        compatibility path recreates the table."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(
+                "CREATE TABLE legacy_correspondents (bic VARCHAR(11) PRIMARY KEY)"
+            ))
+            conn.execute(text(
+                "INSERT INTO legacy_correspondents (bic) VALUES ('CHASUS33XXX')"
+            ))
+            conn.execute(text(
+                """
+                CREATE TABLE ssi (
+                    id INTEGER PRIMARY KEY,
+                    beneficiary_bic VARCHAR(11) NOT NULL,
+                    currency VARCHAR(3) NOT NULL,
+                    intermediary_bic VARCHAR(11) NOT NULL,
+                    charge_code VARCHAR(3),
+                    value_date VARCHAR(10),
+                    notes VARCHAR(500),
+                    CONSTRAINT legacy_ssi_bic_check
+                        CHECK (beneficiary_bic <> 'BLOCKED'),
+                    CONSTRAINT legacy_ssi_intermediary_fk
+                        FOREIGN KEY (intermediary_bic)
+                        REFERENCES legacy_correspondents(bic)
+                )
+                """
+            ))
+            conn.execute(text(
+                """
+                INSERT INTO ssi (
+                    beneficiary_bic, currency, intermediary_bic,
+                    charge_code, value_date, notes
+                ) VALUES (
+                    'CITIUS33XXX', 'USD', 'CHASUS33XXX',
+                    'SHA', 'spot', 'legacy row'
+                )
+                """
+            ))
+
+        with pytest.raises(ValueError, match="legacy_ssi_bic_check|legacy_ssi_intermediary_fk"):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            columns = {column["name"] for column in inspect(engine).get_columns("ssi")}
+            assert columns == {
+                "id", "beneficiary_bic", "currency", "intermediary_bic",
+                "charge_code", "value_date", "notes",
+            }
+            checks = {
+                check["name"] for check in inspect(engine).get_check_constraints("ssi")
+            }
+            assert "legacy_ssi_bic_check" in checks
+            foreign_keys = inspect(engine).get_foreign_keys("ssi")
+            assert any(
+                foreign_key["referred_table"] == "legacy_correspondents"
+                and foreign_key["constrained_columns"] == ["intermediary_bic"]
+                and foreign_key["referred_columns"] == ["bic"]
+                for foreign_key in foreign_keys
+            )
+
+    def test_legacy_rebuild_preserves_custom_indexes(self):
+        """A successful compatibility rebuild must not remove operator-owned
+        indexes, especially a unique one that protects data integrity."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "CREATE UNIQUE INDEX legacy_ssi_notes_uq ON ssi(notes)"
+            ))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        assert "legacy_ssi_notes_uq" in {
+            index["name"] for index in inspect(engine).get_indexes("ssi")
+        }
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "notes, status, charge_code, value_date) VALUES "
+                    "('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'legacy', "
+                    "'illustrative', 'SHA', 'spot')"
+                ))
+
+    def test_legacy_rebuild_refuses_unknown_table_unique_constraints(self):
+        """SQLite's implicit UNIQUE autoindexes have no SQL to replay."""
+        engine = _raw_engine()
+        legacy_ddl = LEGACY_SSI_DDL.replace(
+            "notes VARCHAR(500)", "notes VARCHAR(500) UNIQUE"
+        )
+        with engine.begin() as conn:
+            conn.execute(text(legacy_ddl))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy')"
+            ))
+
+        with pytest.raises(ValueError, match="unique constraints"):
+            ensure_sqlite_schema(engine)
+
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                    "VALUES ('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'legacy')"
+                ))
+
+    def test_legacy_rebuild_quotes_custom_trigger_names(self):
+        """SQLite permits trigger names that require identifier quoting."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                'CREATE TRIGGER "audit trigger" AFTER INSERT ON ssi '
+                'BEGIN SELECT 1; END'
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            trigger_names = {
+                row[0] for row in conn.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='trigger'"
+                ))
+            }
+        assert "audit trigger" in trigger_names
+
+    def test_legacy_rebuild_failure_rolls_back_the_whole_swap(self):
+        """Index drop + rebuild + row copy + table swap + trigger restore run
+        in ONE transaction. A row that violates the rebuild's unique composite
+        key must abort everything and leave the original table (name, data,
+        and no half-built ssi__bic_only_rebuild) untouched."""
+        from sqlalchemy.exc import IntegrityError
+
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'a')"
+            ))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'b')"
+            ))
+
+        with pytest.raises(IntegrityError):
+            ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            tables = [r[0] for r in conn.execute(text(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ))]
+            assert "ssi" in tables
+            assert "ssi__bic_only_rebuild" not in tables
+            notes = conn.execute(
+                text("SELECT notes FROM ssi ORDER BY notes")
+            ).scalars().all()
+            assert notes == ["a", "b"]
+        checks = {c["name"] for c in inspect(engine).get_check_constraints("ssi")}
+        assert "ck_ssi_bic_only_has_no_accounts" not in checks

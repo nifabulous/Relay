@@ -5,6 +5,12 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .services.validator import validate_currency_code
+from .ssi_terms import (
+    VALID_CHARGE_CODES,
+    VALID_VALUE_DATES,
+    normalize_charge_code,
+    normalize_value_date,
+)
 
 # ---------- responses ----------
 
@@ -123,8 +129,8 @@ class SSIRecord(BaseModel):
     intermediary_bank_name: Optional[str] = None
     intermediary_account: Optional[str] = None
     beneficiary_account: Optional[str] = None
-    charge_code: str = "SHA"
-    value_date: str = "spot"
+    charge_code: Optional[str] = None
+    value_date: Optional[str] = None
     notes: Optional[str] = None
     # Provenance: "published" (verified live today), "unverified" (a bank
     # document was read, currency not re-checked), "archived" (point-in-time
@@ -136,6 +142,31 @@ class SSIRecord(BaseModel):
     # Set only by the verification path; a response carrying "published"
     # without it would be unattributable.
     verified_by: Optional[str] = None
+    # A BIC-only row names the correspondents a bank settles through but
+    # carries no accounts, charge codes, or value dates — the source (a
+    # correspondent-bank-charges list) published none. It is informational,
+    # never a selectable settlement instruction.
+    bic_only: bool = False
+
+    @field_validator("charge_code")
+    @classmethod
+    def _charge_code_is_supported(cls, value: Optional[str]) -> Optional[str]:
+        normalized = normalize_charge_code(value)
+        if normalized is not None and normalized not in VALID_CHARGE_CODES:
+            raise ValueError(
+                f"charge_code {value!r} must be one of {sorted(VALID_CHARGE_CODES)}"
+            )
+        return normalized
+
+    @field_validator("value_date")
+    @classmethod
+    def _value_date_is_supported(cls, value: Optional[str]) -> Optional[str]:
+        normalized = normalize_value_date(value)
+        if normalized is not None and normalized not in VALID_VALUE_DATES:
+            raise ValueError(
+                f"value_date {value!r} must be one of {sorted(VALID_VALUE_DATES)}"
+            )
+        return normalized
 
     @field_validator("as_of")
     @classmethod
@@ -171,6 +202,19 @@ class SSIRecord(BaseModel):
 
     @model_validator(mode="after")
     def _published_carries_its_verification_date(self) -> "SSIRecord":
+        # Empty strings mean "absent" everywhere in this model — the same
+        # shape the database stores for missing values. Normalize before any
+        # validation or persistence so a bic_only record with charge_code=""
+        # is a field-level shape error, not a flush-time IntegrityError.
+        for field in (
+            "intermediary_account",
+            "beneficiary_account",
+            "charge_code",
+            "value_date",
+        ):
+            value = getattr(self, field)
+            if isinstance(value, str) and not value.strip():
+                setattr(self, field, None)
         # "published" means verified live; the date of that check is the
         # evidence. Without it the status is an unfalsifiable claim.
         if self.status == "published" and not self.as_of:
@@ -183,6 +227,42 @@ class SSIRecord(BaseModel):
         if self.status != "published" and self.verified_by:
             raise ValueError(
                 f"verified_by is only meaningful for status 'published', got status {self.status!r}"
+            )
+        # A bic_only row asserts correspondent availability, not instructions:
+        # it must not carry the fields the source never published. Mirrors the
+        # ck_ssi_bic_only_has_no_accounts CHECK so /api/import/ssi rejects the
+        # shape with a field error instead of a flush-time IntegrityError.
+        if self.bic_only and any(
+            value is not None for value in (
+                self.intermediary_account,
+                self.beneficiary_account,
+                self.charge_code,
+                self.value_date,
+            )
+        ):
+            raise ValueError(
+                "a bic_only record must not carry accounts, charge codes, or "
+                "value dates — the source published none"
+            )
+        # The mirror image: an ordinary record IS a settlement instruction,
+        # and one without charge terms or settlement timing instructs
+        # nothing. Routing selects exactly these rows, so a record that is
+        # ordinary but lacks them must be rejected here — not presented as a
+        # selectable instruction. Mirrors ck_ssi_ordinary_has_settlement_terms;
+        # the seed and the importer supply "SHA"/"spot" when a writer omits
+        # them, so only a malformed writer ever trips this.
+        if not self.bic_only and (
+            self.charge_code is None or self.value_date is None
+        ):
+            missing = ", ".join(
+                name for name, value in (
+                    ("charge_code", self.charge_code),
+                    ("value_date", self.value_date),
+                ) if value is None
+            )
+            raise ValueError(
+                f"an ordinary (non-bic_only) record requires charge_code and "
+                f"value_date — missing {missing}"
             )
         return self
     # The correspondent's settlement-system addresses, when it is a direct
