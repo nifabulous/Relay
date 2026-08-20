@@ -71,16 +71,16 @@
 }
 
 .app-shell__prefs-menu {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
-  z-index: 250;
   min-width: 240px;
   padding: var(--space-2);
   background: var(--color-surface);
   /* Thin structural border, no decorative shadow (DESIGN.md). */
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-region);
+}
+
+.app-shell__prefs-positioner {
+  z-index: 250;
 }
 
 .app-shell__prefs-group-label {
