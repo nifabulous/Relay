@@ -356,23 +356,10 @@ def test_route_usd_to_uae(client):
     for s in suggestions:
         assert s["basis"] == "corridor-heuristic"
         assert s["corridor"] == "USD->AE"
-    # None of the correspondents ONLY the bic_only SSI rows assert may reach
-    # the route response. CITIUS33XXX and SCBLUS33XXX appear above because
-    # the corridor table approves them, never because a BIC-only row does;
-    # the set is derived from the seed so it tracks the data, not a copy.
-    from app.services.seed import SSI_RECORDS
-
-    bic_only_only = {
-        row[3]
-        for row in SSI_RECORDS
-        if row[0] == "EBILAEADXXX" and len(row) > 13 and row[13]
-    } - set(bics)
-    assert bic_only_only, "the derivation found no bic_only-only correspondents to assert on"
-    routed = set(bics)
-    assert not (routed & bic_only_only), (
-        f"BIC-only correspondents leaked into the route response: "
-        f"{sorted(routed & bic_only_only)}"
-    )
+    # The direct SSI-path regression lives in test_routing.py. This endpoint
+    # test pins the fallback source and complete approved list separately, so
+    # a BIC-only row cannot silently change the HTTP result without changing
+    # this exact contract.
 
 
 def test_route_usd_to_saudi(client):

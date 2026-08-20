@@ -207,6 +207,14 @@ def test_bic_only_record_with_a_value_date_is_rejected():
     assert any("must not carry" in p and "value_date" in p for p in problems), problems
 
 
+@pytest.mark.parametrize("field", ["nostro", "with_an", "charge_code", "value_date"])
+def test_bic_only_record_with_whitespace_field_is_rejected(field):
+    bad = gulf_bic_only_results()
+    bad["banks"][0]["records"][0][field] = " \t"
+    problems = autopilot.validate_results(bad, MANIFEST)
+    assert any("must not carry" in p and field in p for p in problems), problems
+
+
 def test_bic_only_must_be_a_real_boolean():
     bad = gulf_bic_only_results()
     bad["banks"][0]["records"][0]["bic_only"] = "false"

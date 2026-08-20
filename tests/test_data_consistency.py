@@ -874,7 +874,7 @@ class TestSeedRollout:
             row for row in seed_module.SSI_RECORDS
             if len(row) > 13 and row[0] == "EBILAEADXXX" and row[2] == "USD"
         )
-        (ben_bic, ben_name, ccy, int_bic, int_name, _int_acct, _ben_acct,
+        (ben_bic, _ben_name, ccy, int_bic, _int_name, _int_acct, _ben_acct,
          _charge, _vdate, _notes, source_as_of, source_status,
          _verified_by, target_bic_only) = target
         assert target_bic_only is True
@@ -891,16 +891,23 @@ class TestSeedRollout:
         try:
             session.add(SSI(
                 beneficiary_bic=ben_bic,
-                beneficiary_bank_name=ben_name,
+                # These are the names from the pre-bic_only row. The source
+                # later normalized them, but that source-controlled change
+                # must not make the old machine row look operator-owned.
+                beneficiary_bank_name="Emirates NBD",
                 currency=ccy,
                 intermediary_bic=int_bic,
-                intermediary_bank_name=int_name,
-                intermediary_account="ACCT-LEGACY",
-                beneficiary_account="ACCT-LEGACY-BENE",
-                charge_code="SHA",
+                intermediary_bank_name="Citibank NA, New York",
+                intermediary_account="ACCT-91001632",
+                beneficiary_account="ACCT-91001630",
+                charge_code="OUR",
                 value_date="spot",
-                notes="Source: legacy seed. " + seed_module._SSI_REAL_NOTE,
-                as_of="2020-01-01",
+                notes=(
+                    "Source: " + seed_module._ENBD_BIC_ONLY_SOURCE
+                    + " (as of 2026-05-01). "
+                    + seed_module._SSI_REAL_NOTE
+                ),
+                as_of="2026-05-01",
                 status=source_status,
                 bic_only=False,
             ))

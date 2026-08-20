@@ -462,6 +462,11 @@ _SSI_REAL_NOTE = (
     "Sourced from bank-published SSI page. Verify current values before use."
 )
 
+_ENBD_BIC_ONLY_SOURCE = (
+    "https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-"
+    "charges/accounts/correspondent_bank_charges_for_international_transfers.pdf"
+)
+
 
 def _seed_fingerprint(row: SSI) -> str:
     """Hash the complete persisted SSI snapshot owned by the seeder."""
@@ -5310,34 +5315,31 @@ def _retire_stale_seed_ssis(session, source_keys: set[tuple[str, str, str]]) -> 
     return retired
 
 
-def _legacy_seed_row_is_unmodified(existing: SSI, beneficiary_name: str,
-                                   intermediary_name: str) -> bool:
+def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     """Recognize only the old seeder's unmistakable placeholder shape.
 
     Pre-fingerprint rows cannot prove ownership from a snapshot. The narrow
-    legacy exception is limited to rows whose names still match the current
-    source, both accounts are the repository's ``ACCT-*`` masks, the terms
-    are the seed defaults, and the notes carry a seed-owned placeholder/source
-    marker without an operator note. Anything else is preserved for review.
+    exception is limited to the known ENBD correspondent-list source, the
+    legacy reserved account block, the legacy seed terms, and the source
+    date/status. Names are deliberately not part of ownership: source refreshes
+    may normalize bank names while the row is still the untouched machine row.
+    Anything else is preserved for review.
     """
     return (
         existing.seed_fingerprint is None
-        and existing.beneficiary_bank_name == beneficiary_name
-        and existing.intermediary_bank_name == intermediary_name
-        and existing.intermediary_account is not None
-        and existing.intermediary_account.startswith("ACCT-")
-        and existing.beneficiary_account is not None
-        and existing.beneficiary_account.startswith("ACCT-")
-        and existing.charge_code in {"OUR", "SHA", "BEN"}
-        and existing.value_date in {"spot", "1d", "2d", "3d", "T+1", "T+2"}
-        and existing.status != "published"
-        and existing.verified_by is None
         and existing.notes is not None
+        and existing.notes.startswith(f"Source: {_ENBD_BIC_ONLY_SOURCE}")
+        and existing.as_of == "2026-05-01"
+        and existing.status == "unverified"
+        and existing.verified_by is None
+        and existing.intermediary_account is not None
+        and existing.intermediary_account.startswith("ACCT-910016")
+        and existing.beneficiary_account is not None
+        and existing.beneficiary_account == "ACCT-91001630"
+        and existing.charge_code == "OUR"
+        and existing.value_date == "spot"
         and "Operator note:" not in existing.notes
-        and (
-            "Illustrative placeholder" in existing.notes
-            or _SSI_REAL_NOTE in existing.notes
-        )
+        and _SSI_REAL_NOTE in existing.notes
     )
 
 
@@ -5465,9 +5467,7 @@ def seed_if_empty(session) -> dict:
             # settlement data after the last seed, so preserve the whole row
             # and require an explicit human resolution instead of clearing
             # accounts and terms to satisfy the new bic_only shape.
-            legacy_seed_owned = _legacy_seed_row_is_unmodified(
-                existing, ben_name, int_name
-            )
+            legacy_seed_owned = _legacy_seed_row_is_unmodified(existing)
             if (
                 not existing.bic_only
                 and bic_only
@@ -5561,7 +5561,14 @@ def seed_if_empty(session) -> dict:
                 inserted["ssi_provenance_updated"] = (
                     inserted.get("ssi_provenance_updated", 0) + 1
                 )
-            if prior_snapshot_unchanged or legacy_snapshot_unchanged:
+            # These flags describe ownership before this source refresh. A
+            # machine-only citation change therefore still refreshes the
+            # fingerprint after the new citation is applied; an operator edit
+            # leaves the mismatch in place so stale retirement cannot delete it.
+            machine_owned_snapshot = (
+                prior_snapshot_unchanged or legacy_snapshot_unchanged
+            )
+            if machine_owned_snapshot:
                 existing.seed_fingerprint = _seed_fingerprint(existing)
 
     # Account fixtures did not change in this PR; retain their historical
