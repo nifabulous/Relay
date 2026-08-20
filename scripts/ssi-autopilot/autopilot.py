@@ -679,6 +679,24 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             source = str(rec.get("source", "")).strip()
             as_of = str(rec.get("as_of", "")).strip()
 
+            # BIC-only records assert correspondent availability, not
+            # instructions: the source (a correspondent-bank-charges list, a
+            # names-only directory) publishes which banks a beneficiary
+            # settles through but no accounts, charge codes, or value dates.
+            # They are therefore validated *inverted*: the fields an ordinary
+            # record must carry are the fields a bic_only record must NOT
+            # carry, and the field-wise checks below are skipped for them.
+            # Only a real boolean is accepted; "false" the string would
+            # silently flip a record's shape.
+            raw_bic_only = rec.get("bic_only")
+            if raw_bic_only is not None and not isinstance(raw_bic_only, bool):
+                problems.append(
+                    f"{ben_bic}/{ccy}: bic_only must be a boolean, "
+                    f"got {type(raw_bic_only).__name__}"
+                )
+                raw_bic_only = False
+            bic_only = bool(raw_bic_only)
+
             # The correspondent name is what a learner reads next to the BIC.
             if not correspondent:
                 problems.append(f"{ben_bic}/{ccy}: missing correspondent name")
@@ -724,10 +742,30 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 )
 
             # value_dates is a manifest allowlist that was never consulted.
-            if value_date not in defaults["value_dates"]:
-                problems.append(
-                    f"{ben_bic}/{ccy}: value date {value_date!r} not in {defaults['value_dates']}"
-                )
+            # A bic_only record must not carry one at all — the source never
+            # established settlement timing.
+            if bic_only:
+                smuggled = {
+                    label: raw
+                    for label, raw in (
+                        ("nostro", rec.get("nostro")),
+                        ("with_an", rec.get("with_an")),
+                        ("charge_code", rec.get("charge_code")),
+                        ("value_date", rec.get("value_date")),
+                    )
+                    if raw not in (None, "")
+                }
+                if smuggled:
+                    problems.append(
+                        f"{ben_bic}/{ccy}: bic_only record must not carry "
+                        f"{sorted(smuggled)} — the source publishes no accounts, "
+                        f"charge codes, or value dates for it"
+                    )
+            else:
+                if value_date not in defaults["value_dates"]:
+                    problems.append(
+                        f"{ben_bic}/{ccy}: value date {value_date!r} not in {defaults['value_dates']}"
+                    )
 
             # Currency
             if not _CURRENCIES.match(ccy):
@@ -752,24 +790,27 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
             # region block range ARE the privacy guarantee: anything not in
             # the masked form is rejected, and the block check keeps the
             # numbers inside the reserved placeholder series.
-            for label, value in (("nostro", int_acct), ("with_an", ben_acct)):
-                if not value:
-                    problems.append(f"{ben_bic}/{ccy}: missing {label} account (must be ACCT- masked)")
-                    continue
-                if not _ACCT_MASK.match(value):
-                    problems.append(f"{ben_bic}/{ccy}: {label} {value!r} is not an ACCT- masked placeholder")
-                    # The block check below parses the suffix as an integer.
-                    # A value that failed the mask has already been rejected,
-                    # and parsing it would raise instead of reporting.
-                    continue
-                acct_num = int(value.split("-")[1])
-                if not (block <= acct_num <= max_acct):
-                    problems.append(
-                        f"{ben_bic}/{ccy}: {label} {value} outside region block {block}-{max_acct}"
-                    )
+            # bic_only records are the exception: they carry no accounts at
+            # all (checked above), so nothing to mask.
+            if not bic_only:
+                for label, value in (("nostro", int_acct), ("with_an", ben_acct)):
+                    if not value:
+                        problems.append(f"{ben_bic}/{ccy}: missing {label} account (must be ACCT- masked)")
+                        continue
+                    if not _ACCT_MASK.match(value):
+                        problems.append(f"{ben_bic}/{ccy}: {label} {value!r} is not an ACCT- masked placeholder")
+                        # The block check below parses the suffix as an integer.
+                        # A value that failed the mask has already been rejected,
+                        # and parsing it would raise instead of reporting.
+                        continue
+                    acct_num = int(value.split("-")[1])
+                    if not (block <= acct_num <= max_acct):
+                        problems.append(
+                            f"{ben_bic}/{ccy}: {label} {value} outside region block {block}-{max_acct}"
+                        )
 
-            # Charge code
-            if charge not in defaults["charge_codes"]:
+            # Charge code — skipped for bic_only records, which carry none.
+            if not bic_only and charge not in defaults["charge_codes"]:
                 problems.append(f"{ben_bic}/{ccy}: charge code {charge!r} not in {defaults['charge_codes']}")
 
             # Source citation. `startswith("http")` also accepted the bare
@@ -872,96 +913,153 @@ def _fold_row_shape(row: tuple[str, ...]) -> dict:
 
 
 def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str]:
-    """Verify only newly-added seed rows against validated result records."""
+    """Bind the committed seed rows to the results that were validated.
+
+    ``validate`` gates a JSON file, but the fold into seed.py is done by hand,
+    so nothing previously proved the rows being committed were the rows that
+    passed. Everything this fold *added* must correspond to a validated record,
+    and every validated record must appear. Pre-existing rows are history and
+    are not re-checked.
+    """
     problems: list[str] = []
-    raw_head = _ssi_rows(head_source)
-    raw_folded = _ssi_rows(folded_source)
-    head_raw_set = set(raw_head)
-    head_rows: dict[tuple[str, str, str], dict] = {}
-    folded_shapes: list[dict] = []
-    # Existing rows are history: malformed legacy rows remain out of scope.
-    for row in raw_head:
-        try:
-            shape = _fold_row_shape(row)
-        except ValueError:
-            continue
-        head_rows[(shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"])] = shape
-    for index, row in enumerate(raw_folded):
-        if row in head_raw_set:
-            continue
-        try:
-            folded_shapes.append(_fold_row_shape(row))
-        except ValueError as exc:
-            problems.append(f"folded SSI_RECORDS[{index}]: {exc}")
+    head = set(_ssi_rows(head_source))
+    added = [row for row in _ssi_rows(folded_source) if row not in head]
 
     expected: dict[tuple[str, str, str], dict] = {}
-    for bank_index, bank in enumerate(results.get("banks", [])):
-        try:
-            ben_bic = _canonical_bic11(bank.get("bic"), f"results.banks[{bank_index}].bic")
-        except (AttributeError, ValueError) as exc:
-            problems.append(str(exc))
-            continue
-        for rec_index, rec in enumerate(bank.get("records", [])):
-            try:
-                int_bic = _canonical_bic11(rec.get("int_bic"), f"results.banks[{bank_index}].records[{rec_index}].int_bic")
-            except (AttributeError, ValueError) as exc:
-                problems.append(str(exc))
-                continue
-            key = (ben_bic, str(rec.get("currency", "")).strip().upper(), int_bic)
-            if key in expected:
-                problems.append(f"duplicate canonical expected fold key {key}: records collide rather than overwrite")
-                continue
+    for bank in results.get("banks", []):
+        ben_bic = str(bank.get("bic", "")).upper()
+        ben_bic11 = ben_bic if len(ben_bic) == 11 else ben_bic[:8] + "XXX"
+        for rec in bank.get("records", []):
+            int_bic = str(rec.get("int_bic", "")).upper()
+            int_bic11 = int_bic if len(int_bic) == 11 else int_bic[:8] + "XXX"
+            key = (ben_bic11, str(rec.get("currency", "")).upper(), int_bic11)
             expected[key] = {"bank": bank, "record": rec}
 
-    added = [shape for shape in folded_shapes
-             if (shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"]) not in head_rows]
     seen: set[tuple[str, str, str]] = set()
-    for shape in added:
-        key = (shape["beneficiary_bic"], shape["currency"], shape["intermediary_bic"])
-        if key not in expected:
-            problems.append(f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the validated results")
+    for row in added:
+        if len(row) < 12:
+            problems.append(
+                f"folded row {row[0] if row else '?'} has {len(row)} fields; "
+                f"a sourced row carries 12 (as_of and status included)"
+            )
             continue
-        if key in seen:
-            problems.append(f"{key[0]}/{key[1]}/{key[2]}: duplicate folded canonical key")
+        key = (_literal(row[0]), _literal(row[2]), _literal(row[3]))
+        if key not in expected:
+            problems.append(
+                f"{key[0]}/{key[1]}/{key[2]}: folded into seed.py but not in the "
+                f"validated results — every committed row must have passed validation"
+            )
             continue
         seen.add(key)
-        bank, rec = expected[key]["bank"], expected[key]["record"]
-        expected_fields = {
-            "beneficiary_name": bank.get("name", ""),
-            "currency": str(rec.get("currency", "")).upper(),
-            "correspondent": rec.get("correspondent", ""),
-            "nostro": rec.get("nostro"), "with_an": rec.get("with_an"),
-            "charge_code": str(rec.get("charge_code", "")).upper(),
-            "value_date": rec.get("value_date"), "as_of": rec.get("as_of"),
-            "status": str(rec.get("status", "")).lower(),
-            "verified_by": rec.get("verified_by"),
-            "bic_only": rec.get("bic_only") is True,
-        }
-        for field, want in expected_fields.items():
-            got = shape.get(field)
-            if got != want:
-                problems.append(f"{key[0]}/{key[1]}: folded {field} {got!r} does not match validated {want!r}")
+        rec = expected[key]["record"]
+        bank = expected[key]["bank"]
+        # A bic_only fold must actually carry the flag (as provenance[3]);
+        # an ordinary fold must not. The flag lives only in the 14th field of
+        # a 14-field tuple; anything else — a provenance field, a verifier
+        # name spelled "True" — must not be mistaken for it. The 14th field
+        # itself must be the boolean literal True or False: the seed reads it
+        # with an isinstance-bool check, so a string "False" would be a
+        # runtime error there while this verifier accepted the row as
+        # ordinary. Reject it here instead.
+        row_bic_only = len(row) == 14 and row[13] == "True"
+        if len(row) == 14 and row[13] not in ("True", "False"):
+            problems.append(
+                f"{key[0]}/{key[1]}: the 14th field of a 14-field row must be "
+                f"the boolean literal True or False, got {row[13]!r}"
+            )
+        rec_bic_only = rec.get("bic_only") is True
+        if rec_bic_only and not row_bic_only:
+            problems.append(
+                f"{key[0]}/{key[1]}: folded row is missing the bic_only flag "
+                f"the validated record carries"
+            )
+        if row_bic_only and not rec_bic_only:
+            problems.append(
+                f"{key[0]}/{key[1]}: folded row carries bic_only but the "
+                f"validated record does not"
+            )
+        if rec_bic_only:
+            # BIC-only rows have no accounts, charge code, or value date in
+            # the seed — comparing them against the validated record would
+            # report every legitimate None as a mismatch. Their shape was
+            # already checked by validate_results; verify the name, the
+            # correspondent, the source citation, and the provenance only.
+            if _literal(row[1]) != bank.get("name", ""):
+                problems.append(
+                    f"{key[0]}/{key[1]}: folded beneficiary name {_literal(row[1])!r} "
+                    f"does not match the validated {bank.get('name', '')!r}"
+                )
+            if _literal(row[4]) != rec.get("correspondent", ""):
+                problems.append(
+                    f"{key[0]}/{key[1]}: folded correspondent {_literal(row[4])!r} "
+                    f"does not match the validated {rec.get('correspondent', '')!r}"
+                )
+            for field, label in (
+                (5, "nostro"),
+                (6, "with_an"),
+                (7, "charge code"),
+                (8, "value date"),
+            ):
+                if _literal(row[field]) is not None:
+                    problems.append(
+                        f"{key[0]}/{key[1]}: bic_only row must store None for "
+                        f"{label}, folded {_literal(row[field])!r}"
+                    )
+        else:
+            for index, (label, want) in enumerate([
+                ("beneficiary name", bank.get("name", "")),
+                ("correspondent", rec.get("correspondent", "")),
+                ("nostro", rec.get("nostro", "")),
+                ("with_an", rec.get("with_an", "")),
+                ("charge code", str(rec.get("charge_code", "")).upper()),
+                ("value date", rec.get("value_date", "")),
+            ]):
+                field = [1, 4, 5, 6, 7, 8][index]
+                got = _literal(row[field])
+                if got != want:
+                    problems.append(
+                        f"{key[0]}/{key[1]}: folded {label} {got!r} does not match "
+                        f"the validated {want!r}"
+                    )
+        if _literal(row[10]) != rec.get("as_of", ""):
+            problems.append(
+                f"{key[0]}/{key[1]}: folded as_of {_literal(row[10])!r} does not "
+                f"match the validated {rec.get('as_of', '')!r}"
+            )
+        if _literal(row[11]) != str(rec.get("status", "")).lower():
+            problems.append(
+                f"{key[0]}/{key[1]}: folded status {_literal(row[11])!r} does not "
+                f"match the validated {str(rec.get('status', '')).lower()!r}"
+            )
         source = str(rec.get("source", ""))
-        if source and source not in str(shape.get("notes", "")):
-            problems.append(f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}")
-        if shape["status"] == "published" and not shape.get("verified_by"):
-            problems.append(f"{key[0]}/{key[1]}: published folded row is missing verified_by")
-        if shape["status"] != "published" and shape.get("verified_by"):
-            problems.append(f"{key[0]}/{key[1]}: non-published folded row carries verified_by")
+        if source and source not in row[9]:
+            problems.append(
+                f"{key[0]}/{key[1]}: folded notes do not cite the validated source {source}"
+            )
 
+    head_keys = {(_literal(r[0]), _literal(r[2]), _literal(r[3])) for r in head if len(r) >= 4}
     for key in expected:
-        if key not in seen and key not in head_rows:
-            problems.append(f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py")
+        if key not in seen and key not in head_keys:
+            problems.append(
+                f"{key[0]}/{key[1]}/{key[2]}: was validated but not folded into seed.py"
+            )
     return problems
 
 
 # ── Test scaffolding ─────────────────────────────────────────────────────────
-def scaffold_coverage_class(region: dict) -> str:
+def scaffold_coverage_class(region: dict, manifest: dict) -> str:
     """Generate the region coverage test class for test_data_consistency.py.
 
     Only banks marked seedable (default true) are required to have seeded
     records; research-proven NOT-SEEDABLE banks stay in the manifest for their
     verified BICs but are excluded from the coverage assertions.
+
+    The class carries three tests: presence (each seedable bank has records
+    for every manifest currency), directory membership (each seedable bank is
+    also in BANKS), and a semantic pin over every seeded record — masked
+    accounts inside the region's block, charge/value dates from the manifest
+    defaults, a provenance status and citation, no bic_only smuggled fields,
+    and unique (beneficiary, currency, correspondent) keys.
     """
     name = region["name"]
     class_name = "".join(part.title() for part in name.split("-")) + "SsiCoverage"
@@ -999,6 +1097,62 @@ def scaffold_coverage_class(region: dict) -> str:
         "        assert not missing, (",
         f'            f"{name} SSI beneficiaries must also be seeded in BANKS so "',
         '            f"Explore can show their settlement instructions: {missing}"',
+        "        )",
+    ]
+    block = str(region["masked_block"])
+    mask_prefix = block[:-2]
+    forbidden = sorted({f.upper()[:8] for f in region.get("forbidden_bics", [])})
+    legacy = sorted(region.get("legacy_accounts", []))
+    charges = manifest["defaults"].get("charge_codes", ["SHA", "OUR", "BEN"])
+    vdates = manifest["defaults"].get("value_dates", ["spot", "T+1", "T+2"])
+    method = name.replace("-", "_")
+    lines += [
+        "",
+        f"    def test_{method}_seeded_records_are_semantically_valid(self):",
+        '        """Every seeded record for this region must satisfy the validator rules:',
+        "        masked accounts inside the region's block, charge/value dates from the",
+        "        manifest defaults, a provenance status and citation, no bic_only",
+        '        smuggled fields, and unique (beneficiary, currency, correspondent) keys.',
+        "        Pre-block-era legacy placeholders are enumerated in the manifest's",
+        "        legacy_accounts and may not be masked in-block; a new fold record can",
+        '        never join that set without an explicit manifest edit."""',
+        rf'        mask = re.compile(r"^ACCT-{mask_prefix}\d\d$")',
+        f"        allowed_charge = {{{', '.join(repr(c) for c in charges)}}}",
+        f"        allowed_value = {{{', '.join(repr(v) for v in vdates)}}}",
+        '        statuses = {"unverified", "illustrative", "published", "archived"}',
+        f"        forbidden = {{{', '.join(repr(b) for b in forbidden)}}}",
+        f"        legacy = {{{', '.join(repr(a) for a in legacy)}}}",
+        f"        banks = {{bic for bic, _name, _currencies in {list_name}}}",
+        "        rows = [row for row in SSI_RECORDS if row[0] in banks]",
+        f'        assert rows, f"{name}: no seeded records for the seedable banks"',
+        "        for row in rows:",
+        '            bic, ccy = row[0], row[2]',
+        '            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"',
+        "            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]",
+        "            if len(row) > 13 and row[13] is True:",
+        "                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (",
+        '                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"',
+        "                )",
+        "                continue",
+        f'            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{{bic}}/{{ccy}}: nostro {{int_acct}} is neither an ACCT-{mask_prefix}xx masked account nor a manifest legacy placeholder"',
+        f'            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{{bic}}/{{ccy}}: beneficiary account {{ben_acct}} is neither an ACCT-{mask_prefix}xx masked account nor a manifest legacy placeholder"',
+        '            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"',
+        '            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"',
+        "        for row in rows:",
+        "            bic, ccy = row[0], row[2]",
+        "            if len(row) < 12:",
+        "                continue",
+        "            if row[10] is not None:",
+        '                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (',
+        '                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"',
+        "                )",
+        '            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"',
+        '            assert row[9] and row[9].startswith("Source:"), (',
+        '                f"{bic}/{ccy}: notes must cite the source"',
+        "            )",
+        "        keys = [(row[0], row[2], row[3]) for row in rows]",
+        "        assert len(keys) == len(set(keys)), (",
+        f'            f"{name}: duplicate (beneficiary, currency, correspondent) keys"',
         "        )",
         "",
     ]
@@ -1063,7 +1217,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
 def cmd_scaffold(args: argparse.Namespace) -> None:
     manifest = load_manifest()
     region = get_region(manifest, args.region)
-    text = scaffold_coverage_class(region)
+    text = scaffold_coverage_class(region, manifest)
     existing = TEST_FILE.read_text()
     # One marker pair per region. A single shared marker made this destructive:
     # truncating at it deleted every previously scaffolded region, so seeding a
@@ -1115,8 +1269,9 @@ def cmd_verify(_args: argparse.Namespace) -> None:
             continue
         elts = node.value.elts
         # SSI rows carry optional provenance: 12 adds as_of and status, 13
-        # adds the verifier that "published" requires.
-        expected = (5,) if name == "BANKS" else (10, 12, 13)
+        # adds the verifier that "published" requires, 14 adds the bic_only
+        # flag (a bank-level list with no account numbers).
+        expected = (5,) if name == "BANKS" else (10, 12, 13, 14)
         for i, e in enumerate(elts):
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
                 got = len(e.elts) if isinstance(e, ast.Tuple) else type(e).__name__
@@ -1132,6 +1287,22 @@ def cmd_verify(_args: argparse.Namespace) -> None:
             for bic, count in seen.items():
                 if count > 1:
                     problems.append(f"BANKS: duplicate BIC {bic} ({count}x)")
+        if name == "SSI_RECORDS":
+            # The 14th field of a 14-field tuple is the bic_only flag and must
+            # be the boolean literal True or False. seed_if_empty checks
+            # isinstance(x, bool) and raises on anything else, so a string
+            # "False" would be a runtime error there; the AST verifier is the
+            # place to catch it before the fold is committed.
+            for i, e in enumerate(elts):
+                if not (isinstance(e, ast.Tuple) and len(e.elts) == 14):
+                    continue
+                flag = e.elts[13]
+                if not (isinstance(flag, ast.Constant) and isinstance(flag.value, bool)):
+                    problems.append(
+                        f"{name}[{i}]: the 14th (bic_only) field of a 14-field "
+                        f"tuple must be the boolean literal True or False, got "
+                        f"{ast.dump(flag)}"
+                    )
     if problems:
         raise SystemExit("seed.py invariants failed:\n" + "\n".join(f"  ✗ {p}" for p in problems))
     print("  ✓ seed.py invariants OK (BANKS/SSI_RECORDS arity, no duplicate BICs)")
