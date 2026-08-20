@@ -12,7 +12,7 @@ need to be deleted to gain the current schema.
 """
 import logging
 
-from sqlalchemy import MetaData, inspect, text
+from sqlalchemy import MetaData, UniqueConstraint, inspect, text
 
 from app.models import SSI
 
@@ -168,7 +168,15 @@ def _model_foreign_key_signatures() -> set[tuple]:
     return signatures
 
 
-def _refuse_unknown_ssi_constraints(inspector) -> None:
+def _model_unique_column_sets() -> set[tuple[str, ...]]:
+    return {
+        tuple(column.name for column in constraint.columns)
+        for constraint in SSI.__table__.constraints
+        if isinstance(constraint, UniqueConstraint)
+    }
+
+
+def _refuse_unknown_ssi_constraints(engine, inspector) -> None:
     """Refuse a rebuild that would silently drop legacy integrity rules."""
     expected_checks = _model_check_constraints()
     unknown_checks = []
@@ -183,12 +191,37 @@ def _refuse_unknown_ssi_constraints(inspector) -> None:
         for foreign_key in inspector.get_foreign_keys("ssi")
         if _foreign_key_signature(foreign_key) not in expected_foreign_keys
     ]
+    expected_unique_columns = _model_unique_column_sets()
+    unknown_unique_constraints = [
+        unique.get("name") or tuple(unique.get("column_names") or ())
+        for unique in inspector.get_unique_constraints("ssi")
+        if tuple(unique.get("column_names") or ()) not in expected_unique_columns
+    ]
+    # SQLite's inspector does not report table-level UNIQUE constraints. Their
+    # implicit autoindexes are visible only through PRAGMA index_list/index_info
+    # and have no SQL text that the rebuild could replay.
+    with engine.connect() as conn:
+        for index in conn.execute(text("PRAGMA index_list('ssi')")):
+            name = index[1]
+            is_unique = bool(index[2])
+            if not is_unique or not name.startswith("sqlite_autoindex_"):
+                continue
+            columns = tuple(
+                row[2]
+                for row in conn.execute(
+                    text(f"PRAGMA index_info({_quote_sqlite_identifier(name)})")
+                )
+            )
+            if columns not in expected_unique_columns:
+                unknown_unique_constraints.append(name or columns)
 
     details = []
     if unknown_checks:
         details.append(f"CHECK constraints {unknown_checks}")
     if unknown_foreign_keys:
         details.append(f"foreign keys {unknown_foreign_keys}")
+    if unknown_unique_constraints:
+        details.append(f"unique constraints {unknown_unique_constraints}")
     if details:
         raise ValueError(
             "Refusing to rebuild legacy ssi table: constraints not in the "
@@ -265,7 +298,7 @@ def _ensure_ssi_bic_only_check(engine, inspector) -> None:
 
     existing_columns = [c["name"] for c in inspector.get_columns("ssi")]
     _refuse_missing_settlement_terms(engine, set(existing_columns))
-    _refuse_unknown_ssi_constraints(inspector)
+    _refuse_unknown_ssi_constraints(engine, inspector)
     triggers = _ssi_trigger_sql(engine)
     indexes = _ssi_index_sql(engine)
     meta = MetaData()
@@ -372,7 +405,7 @@ def ensure_sqlite_schema(engine) -> None:
                 "data on startup."
             )
         _refuse_missing_settlement_terms(engine, existing_columns)
-        _refuse_unknown_ssi_constraints(inspector)
+        _refuse_unknown_ssi_constraints(engine, inspector)
     for table_name, patches in _TABLE_PATCHES.items():
         if not inspector.has_table(table_name):
             continue

@@ -1153,6 +1153,52 @@ class TestSeedRollout:
             session.close()
             engine.dispose()
 
+    def test_fingerprint_refreshes_when_the_machine_citation_changes(self, monkeypatch):
+        import app.services.seed as seed_module
+
+        original = next(
+            row for row in seed_module.SSI_RECORDS
+            if row[0] == "ZEIBNGLAXXX"
+            and row[2] == "USD"
+            and row[3] == "CITIUS33XXX"
+        )
+        monkeypatch.setattr(seed_module, "SSI_RECORDS", (original,))
+
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(bind=engine)
+        Session = sessionmaker(bind=engine, future=True)
+        session = Session()
+        try:
+            seed_module.seed_if_empty(session)
+            updated = (*original[:9], "Source: revised machine citation.", *original[10:])
+            monkeypatch.setattr(seed_module, "SSI_RECORDS", (updated,))
+            seed_module.seed_if_empty(session)
+
+            row = session.query(SSI).filter_by(
+                beneficiary_bic=original[0],
+                currency=original[2],
+                intermediary_bic=original[3],
+            ).one()
+            assert row.notes == updated[9]
+            assert row.seed_fingerprint == seed_module._seed_fingerprint(row)
+
+            monkeypatch.setattr(seed_module, "SSI_RECORDS", ())
+            result = seed_module.seed_if_empty(session)
+            assert result["ssi_retired"] == 1
+            assert session.query(SSI).filter_by(
+                beneficiary_bic=original[0],
+                currency=original[2],
+                intermediary_bic=original[3],
+            ).one_or_none() is None
+        finally:
+            session.close()
+            engine.dispose()
+
     def test_bic_only_row_becoming_ordinary_is_repopulated(self):
         """A previously availability-only row that the seed now defines as an
         ordinary instruction must GAIN its account/charge/value fields, not

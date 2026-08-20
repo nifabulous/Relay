@@ -537,6 +537,29 @@ class TestCurrentSchemaIsANoop:
                     "'illustrative', 'SHA', 'spot')"
                 ))
 
+    def test_legacy_rebuild_refuses_unknown_table_unique_constraints(self):
+        """SQLite's implicit UNIQUE autoindexes have no SQL to replay."""
+        engine = _raw_engine()
+        legacy_ddl = LEGACY_SSI_DDL.replace(
+            "notes VARCHAR(500)", "notes VARCHAR(500) UNIQUE"
+        )
+        with engine.begin() as conn:
+            conn.execute(text(legacy_ddl))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('SICOTHBKXXX', 'USD', 'MRMDUS33XXX', 'legacy')"
+            ))
+
+        with pytest.raises(ValueError, match="unique constraints"):
+            ensure_sqlite_schema(engine)
+
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                    "VALUES ('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'legacy')"
+                ))
+
     def test_legacy_rebuild_quotes_custom_trigger_names(self):
         """SQLite permits trigger names that require identifier quoting."""
         engine = _raw_engine()
