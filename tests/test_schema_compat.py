@@ -372,6 +372,26 @@ class TestCurrentSchemaIsANoop:
                     "1, 'ACCT-91001629')"
                 ))
 
+    def test_legacy_rebuild_rejects_whitespace_settlement_terms(self):
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+            conn.execute(text(
+                "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, notes) "
+                "VALUES ('CITIUS33XXX', 'USD', 'CHASUS33XXX', 'legacy row')"
+            ))
+
+        ensure_sqlite_schema(engine)
+
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "status, notes, charge_code, value_date) VALUES "
+                    "('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'illustrative', "
+                    "'legacy', '   ', char(9))"
+                ))
+
     def test_legacy_rebuild_failure_after_swap_restores_the_original_table(
         self, monkeypatch
     ):

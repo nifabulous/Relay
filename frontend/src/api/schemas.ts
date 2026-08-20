@@ -20,7 +20,10 @@ import { z } from "zod";
 const optionalString = z
   .string()
   .nullish()
-  .transform((v) => (v == null ? undefined : v));
+  .transform((v) => {
+    const trimmed = v?.trim();
+    return trimmed || undefined;
+  });
 
 /** A string field that may be null/missing and should never throw. */
 const safeOptionalString = optionalString.catch(undefined);

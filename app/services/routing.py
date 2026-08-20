@@ -12,6 +12,7 @@ against the Fedwire/FedACH directory (imported via `app.cli import-fedwire`).
 """
 
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -142,30 +143,36 @@ def _has_usable_text(value: Optional[str]) -> bool:
 
 
 def _is_usable_ssi_account(value: Optional[str]) -> bool:
-    """Reject the masking conventions used by seed/import data.
+    """Accept only a concrete account identifier, never a redaction token.
 
     An account is operational routing data only when both account fields are
     present and concrete.  The seed catalog intentionally uses ``ACCT-*``
-    placeholders, while imported bank documents commonly use words or
-    punctuation to redact an account.  Keep those rows visible to the
-    informational SSI endpoint, but never turn them into a send path.
+    placeholders, while imported bank documents commonly use words,
+    brackets, or punctuation to redact an account.  A strict shape check is
+    safer than growing a blacklist of masking conventions. Keep those rows
+    visible to the informational SSI endpoint, but never turn them into a
+    send path.
     """
     if not _has_usable_text(value):
         return False
 
     normalized = value.strip().upper()
-    masked_markers = ("PLACEHOLDER", "MASK", "REDACT", "<ACCOUNT")
-    if normalized.startswith("ACCT-"):
+    if any(marker in normalized for marker in (
+        "ACCT", "ACCOUNT", "PLACEHOLDER", "MASK", "REDACT"
+    )):
         return False
-    if any(marker in normalized for marker in masked_markers):
-        return False
-    if any(char in normalized for char in "*#"):
+    if any(char in normalized for char in "[]<>()*#"):
         return False
     if normalized.startswith("XX") or normalized.endswith("XX"):
         return False
-    if normalized.startswith("<") and normalized.endswith(">"):
+    compact = re.sub(r"[\s-]", "", normalized)
+    if not 4 <= len(compact) <= 34:
         return False
-    if set(normalized) <= {"X", "-", "_"}:
+    if not re.fullmatch(r"[A-Z0-9]+", compact):
+        return False
+    if not any(char.isdigit() for char in compact):
+        return False
+    if "XX" in compact:
         return False
     return True
 

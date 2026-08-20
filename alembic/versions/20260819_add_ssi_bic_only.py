@@ -52,8 +52,10 @@ BIC_ONLY_HAS_NO_ACCOUNTS = (
 # same PostgreSQL reason NOT is used above: `bic_only = 1` is
 # `boolean = integer`, which has no operator there.
 ORDINARY_HAS_SETTLEMENT_TERMS = (
-    "bic_only OR (charge_code IS NOT NULL AND charge_code != '' AND "
-    "value_date IS NOT NULL AND value_date != '')"
+    "bic_only OR (charge_code IS NOT NULL AND "
+    "ltrim(rtrim(charge_code, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '' AND "
+    "value_date IS NOT NULL AND "
+    "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')"
 )
 
 
@@ -93,8 +95,10 @@ def _ordinary_rows_missing_settlement_terms(bind) -> list[int]:
     """Return legacy ordinary SSI ids that cannot satisfy the new CHECK."""
     columns = {column["name"] for column in sa.inspect(bind).get_columns("ssi")}
     missing_terms = (
-        "(charge_code IS NULL OR charge_code = '' OR "
-        "value_date IS NULL OR value_date = '')"
+        "(charge_code IS NULL OR "
+        "ltrim(rtrim(charge_code, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') = '' OR "
+        "value_date IS NULL OR "
+        "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') = '')"
     )
     predicate = f"NOT bic_only AND {missing_terms}" if "bic_only" in columns else missing_terms
     return [

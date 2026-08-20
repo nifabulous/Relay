@@ -16,6 +16,7 @@ import pytest
 from app.models import SSI
 from app.schemas import BankInfo
 from app.services.routing import (
+    _is_usable_ssi_account,
     _normalize_bic_input,
     infer_destination_currency,
     is_us_routing_number,
@@ -40,6 +41,19 @@ def _approve_ssi_rows(session, beneficiary_bic, currency):
         row.beneficiary_account = "NG1234567890"
     session.commit()
     return rows
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["[ACCOUNT]", "ACCOUNT", "ACCT-1234", "MASKED-1234", "XXXX1234", "1234****"],
+)
+def test_masked_ssi_accounts_are_not_usable(value):
+    assert not _is_usable_ssi_account(value)
+
+
+@pytest.mark.parametrize("value", ["123456789", "GB29NWBK60161331926819"])
+def test_concrete_ssi_accounts_are_usable(value):
+    assert _is_usable_ssi_account(value)
 
 # ===========================================================================
 # _normalize_bic_input

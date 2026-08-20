@@ -182,7 +182,11 @@ def _refuse_unknown_ssi_constraints(engine, inspector) -> None:
     unknown_checks = []
     for check in inspector.get_check_constraints("ssi"):
         name = check.get("name")
-        if expected_checks.get(name) != _normalise_constraint_sql(check.get("sqltext")):
+        # A known constraint name is model-owned even when its expression has
+        # evolved (for example, the settlement-terms check becoming
+        # trim-aware). The rebuild replaces it with the current expression;
+        # only an unknown name would be silently dropped.
+        if name not in expected_checks:
             unknown_checks.append(name or check.get("sqltext") or "<unnamed CHECK>")
 
     expected_foreign_keys = _model_foreign_key_signatures()
@@ -235,8 +239,10 @@ def _ordinary_ssi_rows_missing_settlement_terms(engine, existing_columns: set[st
         terms = "1 = 1"
     else:
         terms = (
-            "(charge_code IS NULL OR charge_code = '' OR "
-            "value_date IS NULL OR value_date = '')"
+            "(charge_code IS NULL OR "
+            "ltrim(rtrim(charge_code, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') = '' OR "
+            "value_date IS NULL OR "
+            "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') = '')"
         )
     if "bic_only" in existing_columns:
         terms = f"NOT bic_only AND ({terms})"

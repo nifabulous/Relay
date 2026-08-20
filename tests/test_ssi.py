@@ -725,6 +725,18 @@ class TestProvenanceIsEnforcedAtTheBoundaries:
                 as_of="2007-12-13",
             )
 
+    def test_schema_rejects_whitespace_only_settlement_terms(self):
+        from pydantic import ValidationError
+
+        from app.schemas import SSIRecord
+
+        with pytest.raises(ValidationError, match="ordinary.*requires"):
+            SSIRecord(
+                beneficiary_bic="BOPIPHMMXXX", currency="USD",
+                intermediary_bic="CITIUS33XXX",
+                charge_code="   ", value_date="\t",
+            )
+
     def test_schema_accepts_a_well_formed_bic_only_record(self):
         from app.schemas import SSIRecord
 

@@ -1295,7 +1295,7 @@
     "TH"
    ],
    "masked_block": 91002100,
-   "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) publishes an SSI table (archived 2003-08-24, document dated 2002-08-08; 12 currencies, nostro accounts only, no with-an/charges/value-date published). Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI \u2014 NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa\u2192UFJ\u2192MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
+   "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) has a historical SSI table (archived 2003-08-24, document dated 2002-08-08). This fold retains its 12 correspondent BICs as availability-only records because the retained data does not establish usable account identifiers, with-an instructions, charges, or value dates. Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI \u2014 NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa\u2192UFJ\u2192MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
    "banks": [
     {
      "bic8": "BKKBTHBK",

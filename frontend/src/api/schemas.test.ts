@@ -44,6 +44,16 @@ describe("SSIRecord bic_only schema", () => {
       charge_code: "SHA",
     })).toThrow();
   });
+
+  it("treats whitespace-only settlement terms as missing", () => {
+    expect(() => SSIRecordSchema.parse({
+      beneficiary_bic: "GTBINGLAXXX",
+      currency: "USD",
+      intermediary_bic: "CITIUS33XXX",
+      charge_code: "   ",
+      value_date: "\t",
+    })).toThrow();
+  });
 });
 
 describe("SuggestedIntermediary schema", () => {

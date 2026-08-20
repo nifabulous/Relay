@@ -25,7 +25,7 @@ function SsiTable({ records }: { records: SSIRecord[] }) {
         </thead>
         <tbody>
           {records.map((r, index) => {
-            const settlement = r.intermediary_settlement;
+            const settlement = r.bic_only ? undefined : r.intermediary_settlement;
             const settlementIds =
               settlement && (settlement.chips_uid || settlement.aba)
                 ? [

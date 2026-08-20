@@ -295,8 +295,10 @@ class SSI(Base):
         # aborts), while a bare boolean column is a valid operand of OR on
         # both engines.
         CheckConstraint(
-            "bic_only OR (charge_code IS NOT NULL AND charge_code != '' AND "
-            "value_date IS NOT NULL AND value_date != '')",
+            "bic_only OR (charge_code IS NOT NULL AND "
+            "ltrim(rtrim(charge_code, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '' AND "
+            "value_date IS NOT NULL AND "
+            "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')",
             name="ck_ssi_ordinary_has_settlement_terms",
         ),
     )

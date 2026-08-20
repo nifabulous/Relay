@@ -186,7 +186,8 @@ class SSIRecord(BaseModel):
             "charge_code",
             "value_date",
         ):
-            if getattr(self, field) == "":
+            value = getattr(self, field)
+            if isinstance(value, str) and not value.strip():
                 setattr(self, field, None)
         # "published" means verified live; the date of that check is the
         # evidence. Without it the status is an unfalsifiable claim.
