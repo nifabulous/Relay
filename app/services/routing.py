@@ -137,6 +137,75 @@ def _settlement_for(bic: Optional[str]) -> Optional[SettlementIds]:
     return SettlementIds(chips_uid=ids.get("chips_uid"), aba=ids.get("aba"))
 
 
+def _has_usable_text(value: Optional[str]) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_usable_ssi_account(value: Optional[str]) -> bool:
+    """Reject the masking conventions used by seed/import data.
+
+    An account is operational routing data only when both account fields are
+    present and concrete.  The seed catalog intentionally uses ``ACCT-*``
+    placeholders, while imported bank documents commonly use words or
+    punctuation to redact an account.  Keep those rows visible to the
+    informational SSI endpoint, but never turn them into a send path.
+    """
+    if not _has_usable_text(value):
+        return False
+
+    normalized = value.strip().upper()
+    masked_markers = ("PLACEHOLDER", "MASK", "REDACT", "<ACCOUNT")
+    if normalized.startswith("ACCT-"):
+        return False
+    if any(marker in normalized for marker in masked_markers):
+        return False
+    if any(char in normalized for char in "*#"):
+        return False
+    if normalized.startswith("XX") or normalized.endswith("XX"):
+        return False
+    if normalized.startswith("<") and normalized.endswith(">"):
+        return False
+    if set(normalized) <= {"X", "-", "_"}:
+        return False
+    return True
+
+
+def _is_routable_ssi(row: SSI) -> bool:
+    """Return whether an SSI is safe to use as an executable route.
+
+    ``/api/ssi`` deliberately exposes the full catalog, including historical
+    and illustrative records.  Routing is narrower: only a currently
+    published, dated instruction with a named verifier, complete settlement
+    fields, and unmasked account data may select a correspondent.
+    """
+    return (
+        not row.bic_only
+        and row.status == "published"
+        and _has_usable_text(row.as_of)
+        and _has_usable_text(row.verified_by)
+        and _has_usable_text(row.notes)
+        and _is_usable_ssi_account(row.intermediary_account)
+        and _is_usable_ssi_account(row.beneficiary_account)
+        and _has_usable_text(row.charge_code)
+        and _has_usable_text(row.value_date)
+    )
+
+
+def _ssi_routing_filters() -> tuple:
+    """Cheap SQL prefilter; ``_is_routable_ssi`` remains the final gate."""
+    return (
+        SSI.bic_only.is_(False),
+        SSI.status == "published",
+        SSI.as_of.isnot(None),
+        SSI.verified_by.isnot(None),
+        SSI.notes.isnot(None),
+        SSI.intermediary_account.isnot(None),
+        SSI.beneficiary_account.isnot(None),
+        SSI.charge_code.isnot(None),
+        SSI.value_date.isnot(None),
+    )
+
+
 def suggest_from_ssi(
     session: Session,
     beneficiary_bic_11: str,
@@ -164,18 +233,14 @@ def suggest_from_ssi(
     ]
     rows: list = []
     for cand in candidates:
-        rows = session.execute(
+        candidate_rows = session.execute(
             select(SSI).where(
                 SSI.beneficiary_bic == cand,
                 SSI.currency == settlement_currency,
-                # BIC-only rows name correspondents but carry no account
-                # numbers, charge codes, or value dates — routing on them
-                # would send funds without a settlement instruction. They are
-                # informational ("this bank settles through X") and must not
-                # be selected as the path.
-                SSI.bic_only.is_(False),
+                *_ssi_routing_filters(),
             )
         ).scalars().all()
+        rows = [row for row in candidate_rows if _is_routable_ssi(row)]
         if rows:
             break
 

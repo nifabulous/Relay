@@ -281,11 +281,13 @@ def test_route_usd_to_japan(client):
     assert body["valid"] is True
     assert body["currency"] == "JPY"  # inferred from JP
     assert len(body["suggested_intermediaries"]) >= 1
-    # SSI-first: MUFG has a published USD instruction (its own NY branch),
-    # so the authoritative list wins over the corridor heuristic.
-    assert body["source"] == "published-ssi"
-    assert body["suggested_intermediaries"][0]["bic"] == "BOTKJPJTXXX"
-    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
+    # The seeded MUFG row is an unverified historical/illustrative record, so
+    # it is informational and must not become an executable route.
+    assert body["source"] == "curated-corridor-table"
+    assert all(
+        suggestion["basis"] == "corridor-heuristic"
+        for suggestion in body["suggested_intermediaries"]
+    )
 
 
 def test_route_usd_to_china(client):
@@ -302,12 +304,16 @@ def test_route_usd_to_hong_kong(client):
     assert r.status_code == 200
     body = r.json()
     assert body["currency"] == "HKD"
-    # SSI-first: HSBC Hong Kong publishes USD settlement via its own NY
-    # affiliate (HSBC Bank USA, MRMDUS33) — authoritative over the corridor
-    # heuristic, which would have guessed the self-loop.
-    assert body["source"] == "published-ssi"
-    assert body["suggested_intermediaries"][0]["bic"] == "MRMDUS33XXX"
-    assert body["suggested_intermediaries"][0]["basis"] == "published-ssi"
+    # The seeded HSBC row is an unverified historical/illustrative record and
+    # remains informational rather than selecting its NY affiliate.
+    assert body["source"] == "curated-corridor-table"
+    assert "MRMDUS33XXX" not in {
+        suggestion["bic"] for suggestion in body["suggested_intermediaries"]
+    }
+    assert all(
+        suggestion["basis"] == "corridor-heuristic"
+        for suggestion in body["suggested_intermediaries"]
+    )
 
 
 def test_route_usd_to_singapore(client):
