@@ -27,6 +27,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --radius: var(--radius-control);
   --radius-sm: var(--coss-radius-sm);
   --radius-md: var(--coss-radius-md);
   --radius-lg: var(--coss-radius-lg);

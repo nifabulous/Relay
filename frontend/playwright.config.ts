@@ -78,13 +78,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // The .venv and the FastAPI app live at the repo root, but `npm run
-    // test:e2e` is invoked from frontend/. Set cwd to the repo root so the
-    // relative `.venv/bin/uvicorn` path resolves and the app module is
-    // importable. reuseExistingServer lets a developer-run uvicorn (or a
-    // prior run) short-circuit the spawn.
+    // Start from the repository root so the shared launcher can resolve the
+    // current worktree's environment, a linked worktree's common .venv, or uv's
+    // project environment. reuseExistingServer still lets a developer-run
+    // uvicorn (or a prior run) short-circuit the spawn.
     cwd: "..",
-    command: ".venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000",
+    command: "./scripts/run_e2e_server.sh",
     url: "http://127.0.0.1:8000/api/health",
     reuseExistingServer: true,
     timeout: 30_000,

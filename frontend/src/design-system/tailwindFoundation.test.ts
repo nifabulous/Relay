@@ -63,6 +63,19 @@ describe("Tailwind foundation", () => {
     expect(globalCss).not.toContain("https://fonts.googleapis.com/css2");
   });
 
+  it("runs the pre-paint theme bootstrap before the third-party font request", () => {
+    const fontLink = indexHtml.indexOf("https://fonts.googleapis.com/css2");
+    const themeBootstrap = indexHtml.indexOf('var theme = "system";');
+
+    expect(fontLink).toBeGreaterThanOrEqual(0);
+    expect(themeBootstrap).toBeGreaterThanOrEqual(0);
+    expect(themeBootstrap).toBeLessThan(fontLink);
+  });
+
+  it("exposes the standard Coss radius alias", () => {
+    expect(cossThemeCss).toContain("--radius: var(--radius-control);");
+  });
+
   it("opts Tailwind source discovery into the Coss directory", () => {
     expect(globalCss).toContain("source(none)");
     expect(globalCss).toContain('@source "./coss"');
