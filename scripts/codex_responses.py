@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Call the OpenAI Responses API with explicitly supplied, bounded context."""
+"""Call a model API with explicitly supplied, bounded context.
+
+Two wire styles are supported so that swapping the slot's model is a
+settings change, not a refactor (loop-engineering plan §9.1): OpenAI's
+Responses API (the default, what the reviewer has always spoken) and the
+OpenAI-compatible chat completions shape most third-party providers and
+gateways expose. The endpoint moves with `CODEX_API_BASE_URL`; the key
+stays `OPENAI_API_KEY`, which compatible providers accept as a bearer
+token.
+"""
 
 from __future__ import annotations
 
@@ -10,11 +19,14 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import IO
 
-API_URL = "https://api.openai.com/v1/responses"
+RESPONSES_API_URL = "https://api.openai.com/v1/responses"
+CHAT_COMPLETIONS_API_URL = "https://api.openai.com/v1/chat/completions"
+API_STYLES = {"responses", "chat"}
 MODEL_PATTERN = re.compile(r"^[A-Za-z0-9._:/-]+$")
 EFFORTS = {"none", "low", "medium", "high", "xhigh"}
 TRUNCATION_MARKER = "\n[TRUNCATED INPUT]"
@@ -50,6 +62,46 @@ DEFAULT_REQUEST_TIMEOUT = 900
 POSTING_HEADROOM_SECONDS = 180
 
 
+def resolve_api_style(override: str | None = None) -> str:
+    """Pick the wire format: flag > `CODEX_API_STYLE` env > Responses default."""
+    style = override if override is not None else os.environ.get("CODEX_API_STYLE")
+    if style is None:
+        return "responses"
+    if style not in API_STYLES:
+        raise ValueError(
+            f"API style must be one of {sorted(API_STYLES)}, got {style!r}"
+        )
+    return style
+
+
+def resolve_api_url(api_style: str, override: str | None = None) -> str:
+    """Pick the endpoint: flag > `CODEX_API_BASE_URL` env > per-style default.
+
+    A base URL must be https — the API key travels as a bearer header —
+    except on loopback, where plain http is how a locally served model is
+    reached. Query strings and fragments would silently change what the
+    endpoint means, so they are rejected rather than forwarded.
+    """
+    url = override if override is not None else os.environ.get("CODEX_API_BASE_URL")
+    if url is None:
+        return CHAT_COMPLETIONS_API_URL if api_style == "chat" else RESPONSES_API_URL
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+        raise ValueError(f"API base URL is not a usable URL: {url!r}")
+    if parsed.query or parsed.fragment:
+        raise ValueError(
+            f"API base URL must not carry a query or fragment: {url!r}"
+        )
+    if parsed.scheme == "http":
+        host = (parsed.hostname or "").lower()
+        if host not in {"localhost", "127.0.0.1", "::1"}:
+            raise ValueError(
+                "API base URL must use https outside loopback "
+                f"(the API key travels as a bearer header): {url!r}"
+            )
+    return url
+
+
 def bound_input(text: str, max_bytes: int) -> str:
     """Return UTF-8 text no larger than max_bytes, marking truncation."""
     if max_bytes <= 0:
@@ -65,23 +117,59 @@ def bound_input(text: str, max_bytes: int) -> str:
     return prefix + TRUNCATION_MARKER
 
 
-def build_payload(
+def build_chat_payload(
     model: str,
     reasoning_effort: str,
     instructions: str,
     prompt: str,
     max_output_tokens: int,
 ) -> dict[str, object]:
-    """Build a Responses request.
+    """Build a chat-completions request for OpenAI-compatible providers.
+
+    The trusted/untrusted channel split survives verbatim: the role prompt is
+    the system message, the untrusted payload is the user message. No
+    ``store`` flag is sent — chat completions defaults to not retaining the
+    request, unlike the Responses API whose retain-by-default this module
+    overrides explicitly. ``reasoning_effort`` is sent only when set: it is
+    part of the OpenAI chat contract and accepted by reasoning-capable
+    compatible providers, but a provider without it should be configured
+    with ``none`` rather than have the parameter silently dropped.
+    """
+    payload: dict[str, object] = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": max_output_tokens,
+    }
+    if reasoning_effort != "none":
+        payload["reasoning_effort"] = reasoning_effort
+    return payload
+
+
+def build_payload(
+    model: str,
+    reasoning_effort: str,
+    instructions: str,
+    prompt: str,
+    max_output_tokens: int,
+    api_style: str = "responses",
+) -> dict[str, object]:
+    """Build a request for the configured wire style.
 
     ``instructions`` carries the trusted contract and ``input`` carries the
     untrusted GitHub payload, so a hostile diff cannot present itself as
-    policy. ``store`` is explicitly false: the Responses API otherwise retains
-    application state for 30 days, and for a payment project retention is a
-    decision to make, not a default to inherit. Reasoning is omitted for
-    ``none``, and generation is capped server-side rather than only trimmed
-    after the fact.
+    policy. ``store`` is explicitly false on the Responses API: it otherwise
+    retains application state for 30 days, and for a payment project
+    retention is a decision to make, not a default to inherit. Reasoning is
+    omitted for ``none``, and generation is capped server-side rather than
+    only trimmed after the fact.
     """
+    if api_style == "chat":
+        return build_chat_payload(
+            model, reasoning_effort, instructions, prompt, max_output_tokens
+        )
     payload: dict[str, object] = {
         "model": model,
         "instructions": instructions,
@@ -98,13 +186,13 @@ def read_bounded_body(stream: IO[bytes], max_bytes: int) -> dict[str, object]:
     """Read at most ``max_bytes`` of JSON, refusing anything larger."""
     raw = stream.read(max_bytes + 1)
     if len(raw) > max_bytes:
-        raise RuntimeError(f"OpenAI Responses body exceeded {max_bytes} bytes")
+        raise RuntimeError(f"Model API body exceeded {max_bytes} bytes")
     try:
         body = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        raise RuntimeError("OpenAI Responses returned an invalid response") from None
+        raise RuntimeError("Model API returned an invalid response") from None
     if not isinstance(body, dict):
-        raise RuntimeError("OpenAI Responses returned an invalid response")
+        raise RuntimeError("Model API returned an invalid response")
     return body
 
 
@@ -121,18 +209,29 @@ def enforce_output_bytes(text: str, max_bytes: int) -> str:
     """Reject an oversized model output instead of writing it out."""
     size = len(text.encode("utf-8"))
     if size > max_bytes:
-        raise RuntimeError(f"OpenAI Responses output exceeded {max_bytes} bytes ({size})")
+        raise RuntimeError(f"Model API output exceeded {max_bytes} bytes ({size})")
     return text
 
 
-def extract_output(response: dict[str, object]) -> str:
+def extract_output(response: dict[str, object], api_style: str = "responses") -> str:
     """Extract output text without echoing arbitrary response content.
 
-    An ``incomplete`` response that still carries text is a truncated review,
-    not a failure: posting it with an explicit marker is strictly better for a
-    human reader than posting nothing. Only a truncation that produced no text
-    at all — reasoning consumed the whole budget — is fatal.
+    An ``incomplete`` (Responses) or ``length``-truncated (chat) response
+    that still carries text is a truncated review, not a failure: posting it
+    with an explicit marker is strictly better for a human reader than
+    posting nothing. Only a truncation that produced no text at all —
+    reasoning consumed the whole budget — is fatal.
     """
+    if api_style == "chat":
+        text = _collect_chat_text(response)
+        finish_reason = _chat_finish_reason(response)
+        if finish_reason == "length":
+            if not text:
+                raise RuntimeError(
+                    "model API returned a length-truncated response with no text"
+                )
+            return text + OUTPUT_TRUNCATION_MARKER.format(reason="max_output_tokens")
+        return text
     text = _collect_output_text(response)
     if response.get("status") == "incomplete":
         details = response.get("incomplete_details")
@@ -140,10 +239,30 @@ def extract_output(response: dict[str, object]) -> str:
         reason = reason if isinstance(reason, str) else "unknown"
         if not text:
             raise RuntimeError(
-                f"OpenAI Responses returned an incomplete response with no text ({reason})"
+                f"Model API returned an incomplete response with no text ({reason})"
             )
         return text + OUTPUT_TRUNCATION_MARKER.format(reason=reason)
     return text
+
+
+def _collect_chat_text(response: dict[str, object]) -> str:
+    choices = response.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        message = choices[0].get("message")
+        if isinstance(message, dict):
+            text = message.get("content")
+            if isinstance(text, str):
+                return text
+    return ""
+
+
+def _chat_finish_reason(response: dict[str, object]) -> str:
+    choices = response.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        reason = choices[0].get("finish_reason")
+        if isinstance(reason, str):
+            return reason
+    return ""
 
 
 def _collect_output_text(response: dict[str, object]) -> str:
@@ -176,10 +295,15 @@ def request_response(
     max_output_tokens: int,
     max_output_bytes: int,
     request_timeout: int = DEFAULT_REQUEST_TIMEOUT,
+    api_style: str = "responses",
+    api_url: str | None = None,
 ) -> str:
-    payload = build_payload(model, reasoning_effort, instructions, prompt, max_output_tokens)
+    payload = build_payload(
+        model, reasoning_effort, instructions, prompt, max_output_tokens, api_style
+    )
+    url = api_url if api_url is not None else resolve_api_url(api_style)
     request = urllib.request.Request(
-        API_URL,
+        url,
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {api_key}",
@@ -196,12 +320,12 @@ def request_response(
                 response, response_body_limit(max_output_tokens, max_output_bytes)
             )
     except urllib.error.HTTPError as error:
-        raise RuntimeError(f"OpenAI Responses request failed with HTTP {error.code}") from None
+        raise RuntimeError(f"Model API request failed with HTTP {error.code}") from None
     except TimeoutError:
         # Distinguished from a connection failure: the CI log for a timeout
         # read only "request failed", which cannot be acted on.
         raise RuntimeError(
-            f"OpenAI Responses request timed out after {request_timeout}s "
+            f"Model API request timed out after {request_timeout}s "
             f"(max_output_tokens={max_output_tokens}); raise --request-timeout "
             f"or lower --max-output-tokens"
         ) from None
@@ -209,14 +333,14 @@ def request_response(
         reason = getattr(error, "reason", error)
         if isinstance(reason, TimeoutError) or "timed out" in str(reason).lower():
             raise RuntimeError(
-                f"OpenAI Responses request timed out after {request_timeout}s "
+                f"Model API request timed out after {request_timeout}s "
                 f"(max_output_tokens={max_output_tokens}); raise --request-timeout "
                 f"or lower --max-output-tokens"
             ) from None
-        raise RuntimeError(f"OpenAI Responses request failed to connect: {reason}") from None
-    result = extract_output(body)
+        raise RuntimeError(f"Model API request failed to connect: {reason}") from None
+    result = extract_output(body, api_style)
     if not result:
-        raise RuntimeError("OpenAI Responses returned no text")
+        raise RuntimeError("Model API returned no text")
     return enforce_output_bytes(result, max_output_bytes)
 
 
@@ -224,6 +348,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
     parser.add_argument("--reasoning-effort", required=True, choices=sorted(EFFORTS))
+    parser.add_argument(
+        "--api-style", choices=sorted(API_STYLES), default=None,
+        help="wire format: responses (default) or chat completions; "
+        "defaults from CODEX_API_STYLE",
+    )
+    parser.add_argument(
+        "--api-url", default=None,
+        help="endpoint URL; defaults from CODEX_API_BASE_URL, else the "
+        "per-style default endpoint. https required outside loopback.",
+    )
     parser.add_argument("--instructions", required=True, dest="instructions_path", type=Path)
     parser.add_argument("--input", required=True, dest="input_path", type=Path)
     parser.add_argument("--output", required=True, dest="output_path", type=Path)
@@ -305,6 +439,8 @@ def main(argv: list[str] | None = None) -> int:
         print("OPENAI_API_KEY is required", file=sys.stderr)
         return 1
     try:
+        api_style = resolve_api_style(args.api_style)
+        api_url = resolve_api_url(api_style, args.api_url)
         # One budget for the request, not one per channel: the trusted
         # instructions are drawn first and the untrusted payload gets whatever
         # is left, so --max-input-bytes bounds what is actually sent.
@@ -335,6 +471,8 @@ def main(argv: list[str] | None = None) -> int:
             args.max_output_tokens,
             args.max_output_bytes,
             args.request_timeout,
+            api_style=api_style,
+            api_url=api_url,
         )
         args.output_path.write_text(result, encoding="utf-8")
     except (OSError, ValueError, RuntimeError) as error:
