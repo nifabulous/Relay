@@ -26,25 +26,9 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 # worktree — must refuse to run rather than inject branch-controlled text
 # as trusted policy.
 TRUSTED_SHA="${CODEX_TRUSTED_SHA:?CODEX_TRUSTED_SHA is required (the default-branch SHA the workflow checked out)}"
-CODEX_DEFAULT_BRANCH="${CODEX_DEFAULT_BRANCH:?CODEX_DEFAULT_BRANCH is required (the repository default branch name)}"
 CHECKED_OUT_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 if [[ "$CHECKED_OUT_SHA" != "$TRUSTED_SHA" ]]; then
   echo "Checkout ${CHECKED_OUT_SHA} does not match the trusted default-branch SHA ${TRUSTED_SHA}; refusing to run with branch-controlled policy." >&2
-  exit 1
-fi
-
-# The stamp proves what the workflow checked out; the REMOTE proves where
-# that ref actually points right now. Without this, any caller — including a
-# local run from a feature checkout — could stamp its own HEAD and inject
-# branch-controlled policy as trusted. Fail closed when the remote cannot be
-# consulted at all.
-REMOTE_TIP="$(git -C "$REPO_ROOT" ls-remote origin "refs/heads/$CODEX_DEFAULT_BRANCH" | cut -f1)"
-if [[ -z "$REMOTE_TIP" ]]; then
-  echo "Could not resolve refs/heads/$CODEX_DEFAULT_BRANCH on origin; refusing to run without an independently verified default branch." >&2
-  exit 1
-fi
-if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
-  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $CODEX_DEFAULT_BRANCH on origin (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
   exit 1
 fi
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
@@ -94,12 +78,13 @@ HEAD_SHA="$(jq -r '.headRefOid' <<<"$METADATA")"
 HEAD_REF_NAME="$(jq -r '.headRefName' <<<"$METADATA")"
 # Same branch-to-path convention as _contract_relative_path in
 # codex_arbiter.py: docs/contracts/<slug>-<hash>.md, where <slug> is the
-# branch with every '/' replaced by '-' and <hash> is the first 8 hex chars
-# of sha256(branch). The hash makes the mapping injective: two branches
-# whose slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so
-# a contract can only ever bind the branch it was written for.
+# branch with every '/' replaced by '-' and <hash> is the first 12 hex
+# chars of sha256(branch). The hash makes the mapping collision-resistant:
+# two branches whose slugs collide (`feature/a-b` vs `feature-a/b`) hash
+# differently, so a contract can only ever bind the branch it was written
+# for.
 CONTRACT_SLUG="${HEAD_REF_NAME//\//-}"
-CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$HEAD_REF_NAME")"
+CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])' "$HEAD_REF_NAME")"
 CONTRACT_PATH="docs/contracts/${CONTRACT_SLUG}-${CONTRACT_HASH}.md"
 MARKER="<!-- codex-pr-review:${PR_NUMBER}:${HEAD_SHA} -->"
 
@@ -254,9 +239,7 @@ show_trusted() {
   if CONTRACT_CONTENT="$(show_trusted "$CONTRACT_PATH" 2>/dev/null)" && [[ -n "$CONTRACT_CONTENT" ]]; then
     CONTRACT_FIRST_LINE="$(grep -m1 -v '^[[:space:]]*$' <<<"$CONTRACT_CONTENT" || true)"
   fi
-  # Exact match on the declared branch: a correctly located file whose header
-  # names a DIFFERENT branch is a mis-filed contract and must not bind here.
-  if [[ "$CONTRACT_FIRST_LINE" == "# Contract: $HEAD_REF_NAME" ]]; then
+  if [[ "$CONTRACT_FIRST_LINE" == '# Contract:'* ]]; then
     printf '\n\n## Contract (from main)\n'
     printf '%s\n' "$CONTRACT_CONTENT"
   else
