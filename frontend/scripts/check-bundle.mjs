@@ -38,9 +38,7 @@ for (const ref of eager) {
     continue;
   }
   const raw = readFileSync(filePath);
-  // Measure the smallest production transfer representation so the fixed
-  // budget reflects the build artifact's maximum gzip headroom.
-  const gzipped = gzipSync(raw, { level: 9 });
+  const gzipped = gzipSync(raw);
   const gzipSize = gzipped.length;
   totalGzip += gzipSize;
   console.log(`  ${ref.padEnd(40)} ${gzipSize.toLocaleString()} bytes gzip`);

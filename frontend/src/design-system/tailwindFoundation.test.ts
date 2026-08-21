@@ -16,8 +16,13 @@ const globalCss = readFileSync(
   resolve(process.cwd(), "src/design-system/global.css"),
   "utf8",
 );
+const indexHtml = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
 const cossThemeCss = readFileSync(
   resolve(process.cwd(), "src/design-system/coss-theme.css"),
+  "utf8",
+);
+const bundleCheckScript = readFileSync(
+  resolve(process.cwd(), "scripts/check-bundle.mjs"),
   "utf8",
 );
 
@@ -47,12 +52,15 @@ describe("Tailwind foundation", () => {
     expect(relayBaseRule).toBeGreaterThan(utilityImport);
   });
 
-  it("loads Google Fonts before Tailwind rule-generating imports", () => {
-    const fontImport = globalCss.indexOf("https://fonts.googleapis.com/css2");
-    const utilityImport = globalCss.indexOf("tailwindcss/utilities.css");
+  it("does not duplicate the anchor no-underline base rule on hover", () => {
+    expect(globalCss).not.toContain("a:not(.relay-btn):hover");
+  });
 
-    expect(fontImport).toBeGreaterThanOrEqual(0);
-    expect(fontImport).toBeLessThan(utilityImport);
+  it("delivers Google Fonts from the document head instead of eager CSS", () => {
+    expect(indexHtml).toContain(
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />',
+    );
+    expect(globalCss).not.toContain("https://fonts.googleapis.com/css2");
   });
 
   it("opts Tailwind source discovery into the Coss directory", () => {
@@ -60,6 +68,12 @@ describe("Tailwind foundation", () => {
     expect(globalCss).toContain('@source "./coss"');
     expect(globalCss).not.toContain('@source not "../**/*.ts"');
     expect(globalCss).not.toContain('@source not "../**/*.tsx"');
+  });
+
+  it("keeps the established default gzip bundle contract", () => {
+    expect(bundleCheckScript).toContain("const BUDGET_BYTES = 204800");
+    expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
+    expect(bundleCheckScript).not.toContain("level: 9");
   });
 
   it("keeps registry output and TypeScript aliases aligned", () => {

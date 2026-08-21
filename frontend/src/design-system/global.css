@@ -11,8 +11,6 @@
  * from Google Fonts so the dev experience is immediate without font files.
  * Production build should place subset WOFF2 files in src/assets/fonts/.
  */
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
-
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme) reference;
 @import "./tokens.css";
@@ -65,11 +63,6 @@ h6 { font-size: var(--text-sm); }
 
 a {
   color: var(--color-action);
-  text-decoration: none;
-}
-
-/* Navigation links use color and component states, not hover underlines. */
-a:not(.relay-btn):hover {
   text-decoration: none;
 }
 

@@ -5,9 +5,24 @@ import { describe, expect, it } from "vitest";
 const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf8")) as {
   dependencies?: Record<string, string>;
 };
+const packageLock = JSON.parse(
+  readFileSync(resolve(process.cwd(), "package-lock.json"), "utf8"),
+) as {
+  packages: {
+    "": { dependencies?: Record<string, string> };
+    [packagePath: string]: { version?: string; dependencies?: Record<string, string> };
+  };
+};
 const componentsJson = JSON.parse(readFileSync(resolve(process.cwd(), "components.json"), "utf8")) as {
   aliases?: { utils?: string };
 };
+
+function installedVersion(packageName: string): string | undefined {
+  const installedPackageJson = JSON.parse(
+    readFileSync(resolve(process.cwd(), "node_modules", packageName, "package.json"), "utf8"),
+  ) as { version?: string };
+  return installedPackageJson.version;
+}
 
 describe("Coss registry foundation", () => {
   it("exposes a dependency-light class name helper at the configured alias target", async () => {
@@ -16,9 +31,16 @@ describe("Coss registry foundation", () => {
     expect(cn("px-2", false, undefined, "text-sm")).toBe("px-2 text-sm");
   });
 
-  it("pins the runtime dependencies used by the Coss Button registry item", () => {
+  it("keeps Coss runtime dependency declarations and installs aligned", () => {
     expect(componentsJson.aliases?.utils).toBe("@/lib/coss/cn");
-    expect(packageJson.dependencies?.["class-variance-authority"]).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(packageJson.dependencies?.["lucide-react"]).toMatch(/^\d+\.\d+\.\d+$/);
+
+    for (const packageName of ["class-variance-authority", "lucide-react"]) {
+      const declaredVersion = packageJson.dependencies?.[packageName];
+
+      expect(declaredVersion).toBeDefined();
+      expect(packageLock.packages[""].dependencies?.[packageName]).toBe(declaredVersion);
+      expect(packageLock.packages[`node_modules/${packageName}`]?.version).toBe(declaredVersion);
+      expect(installedVersion(packageName)).toBe(declaredVersion);
+    }
   });
 });
