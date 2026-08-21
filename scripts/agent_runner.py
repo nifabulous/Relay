@@ -35,20 +35,23 @@ AGENT_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 # boundary, so the headless path refuses to run until the dispatcher attests
 # — per run, via environment — that the preconditions hold.
 SANDBOX_REQUIRED_AGENTS = {"verifying-executor"}
-SANDBOX_ATTESTATION_ENV = "RELAY_AGENT_SANDBOX_ATTESTED"
 
 
 def require_sandbox_attestation(agent_name: str) -> None:
-    if agent_name not in SANDBOX_REQUIRED_AGENTS:
-        return
-    if os.environ.get(SANDBOX_ATTESTATION_ENV) != "1":
+    """Refuse execution-capable slots until their verified harness exists.
+
+    Unconditional by design (issue #47, review round 5): the definition
+    currently ships without Bash, and a caller-set environment variable was
+    never enforcement — so there is deliberately nothing a dispatcher can
+    set to unlock this slot. When the harness lands it will issue a
+    short-lived capability token that this check validates in place of the
+    blanket refusal.
+    """
+    if agent_name in SANDBOX_REQUIRED_AGENTS:
         raise PermissionError(
-            f"agent {agent_name!r} is an execution-capable slot whose "
-            f"isolation boundary must come from a verified disposable, "
-            f"credential-free, network-denied sandbox; set "
-            f"{SANDBOX_ATTESTATION_ENV}=1 only when that environment is "
-            "actually in place (until the sandbox harness lands, the "
-            "agent definition itself runs without Bash)"
+            f"agent {agent_name!r} is an execution-capable slot and its "
+            "verified sandbox harness (issue #47) has not landed; dispatch "
+            "is disabled until then"
         )
 
 # A research memo is an order of magnitude smaller than a full review; the

@@ -15,12 +15,12 @@ something the branch under review can edit unilaterally.
 
 Every loop-managed PR gets a contract file at
 `docs/contracts/<slug>-<hash>.md`, where `<slug>` is the branch name with
-every `/` replaced by `-` and `<hash>` is the first 8 hex chars of
-`sha256(branch)`. The hash makes the mapping injective: two branches whose
+every `/` replaced by `-` and `<hash>` is the first 12 hex chars of
+`sha256(branch)`. The hash makes the mapping collision-resistant: two branches whose
 slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so one
-branch's contract can never silently bind another, and no branch name
+branch's contract cannot silently bind another, and no branch name
 resolves onto this README. For example, branch `feat/loop-arbiter` has
-contract `docs/contracts/feat-loop-arbiter-564bdc00.md`.
+contract `docs/contracts/feat-loop-arbiter-564bdc00f842.md`.
 
 The same derivation is implemented exactly twice — `_contract_relative_path`
 in `scripts/codex_arbiter.py` and the `CONTRACT_PATH` block in

@@ -605,7 +605,7 @@ check_contract_lands_in_trusted_channel_only() {
   local branch="zz-codex-automation-test/contract-fixture"
   # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
   local contract_hash
-  contract_hash="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$branch")"
+  contract_hash="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])' "$branch")"
   local contract_rel="docs/contracts/${branch//\//-}-${contract_hash}.md"
   local contract_path="$TRUSTED_STAGING_ROOT/$contract_rel"
   local sentinel="ZZ_T5_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"

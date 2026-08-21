@@ -8,6 +8,7 @@ import {
   applyPreferenceFlags,
   type ResolvedTheme,
 } from "../design-system/theme";
+import { Icon, type IconName } from "../design-system/coss/icon";
 import type { RelayPreferences } from "../design-system/types";
 import { loadPreferences, savePreferences } from "../lib/persistence/storage";
 import { PreferencesMenu } from "./PreferencesMenu";
@@ -96,7 +97,7 @@ export function useResolvedTheme(): ResolvedTheme {
 interface NavItem {
   to: string;
   label: string;
-  icon: string;
+  icon: IconName;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -106,50 +107,22 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/operate", label: "Operate", icon: "play" },
 ];
 
-function NavIcon({ name }: { name: string }) {
-  // Simple inline SVG icons — no emoji per DESIGN.md anti-template
-  const paths: Record<string, ReactNode> = {
-    grid: (
-      <>
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-      </>
-    ),
-    book: (
-      <>
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      </>
-    ),
-    search: (
-      <>
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </>
-    ),
-    play: (
-      <>
-        <polygon points="6 3 20 12 6 21 6 3" />
-      </>
-    ),
-  };
+function NavIcon({ name }: { name: IconName }) {
+  // The Coss set is stroke-based and inherits currentColor, so active/hover
+  // states theme without per-state icon variants.
+  return <Icon name={name} size={18} />;
+}
 
+/**
+ * The brand mark reuses the route glyph — the same visual signature the
+ * PaymentRoute diagrams draw — so the product mark and its subject stay one
+ * idea (DESIGN.md: "the route is the visual signature").
+ */
+function BrandMark() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name] ?? null}
-    </svg>
+    <span className="app-shell__brand-mark" aria-hidden="true">
+      <Icon name="route" size={14} />
+    </span>
   );
 }
 
@@ -190,12 +163,16 @@ export function AppShell({ children }: { children?: ReactNode }) {
     >
       {/* Simulation banner — persistent, unmissable but not garish */}
       <div className="sim-banner" role="alert">
-        <strong>Educational payment simulation</strong> — Simulation, not a real payment. All data is illustrative.
+        <Icon name="alertTriangle" size={13} className="sim-banner__icon" />
+        <p className="sim-banner__text">
+          <strong>Educational payment simulation</strong> — Simulation, not a real payment. All data is illustrative.
+        </p>
       </div>
 
       {/* Top bar */}
       <header className="app-shell__topbar">
         <div className="app-shell__brand">
+          <BrandMark />
           <span className="app-shell__brand-name">Relay</span>
           <span className="app-shell__brand-sub">Educational payment simulation</span>
         </div>
@@ -207,6 +184,9 @@ export function AppShell({ children }: { children?: ReactNode }) {
       <div className="app-shell__body">
         {/* Desktop navigation rail */}
         <nav className="app-shell__rail" aria-label="Primary navigation">
+          <p className="app-shell__rail-eyebrow" aria-hidden="true">
+            Workspaces
+          </p>
           <ul className="app-shell__nav-list">
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>

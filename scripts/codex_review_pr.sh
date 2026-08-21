@@ -78,12 +78,13 @@ HEAD_SHA="$(jq -r '.headRefOid' <<<"$METADATA")"
 HEAD_REF_NAME="$(jq -r '.headRefName' <<<"$METADATA")"
 # Same branch-to-path convention as _contract_relative_path in
 # codex_arbiter.py: docs/contracts/<slug>-<hash>.md, where <slug> is the
-# branch with every '/' replaced by '-' and <hash> is the first 8 hex chars
-# of sha256(branch). The hash makes the mapping injective: two branches
-# whose slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so
-# a contract can only ever bind the branch it was written for.
+# branch with every '/' replaced by '-' and <hash> is the first 12 hex
+# chars of sha256(branch). The hash makes the mapping collision-resistant:
+# two branches whose slugs collide (`feature/a-b` vs `feature-a/b`) hash
+# differently, so a contract can only ever bind the branch it was written
+# for.
 CONTRACT_SLUG="${HEAD_REF_NAME//\//-}"
-CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$HEAD_REF_NAME")"
+CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])' "$HEAD_REF_NAME")"
 CONTRACT_PATH="docs/contracts/${CONTRACT_SLUG}-${CONTRACT_HASH}.md"
 MARKER="<!-- codex-pr-review:${PR_NUMBER}:${HEAD_SHA} -->"
 

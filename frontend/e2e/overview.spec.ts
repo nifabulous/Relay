@@ -32,3 +32,44 @@ test.describe("Overview page", () => {
     await expect(page.locator("h1")).toHaveText("Explore", { timeout: 15_000 });
   });
 });
+
+test.describe("Overview adaptive command center", () => {
+  test("renders the adaptive action and Learning Pulse regions", async ({ page }) => {
+    await page.goto("/app");
+    await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
+    await expect(page.getByText("Your payment routing learning hub.")).toBeVisible();
+    await expect(page.locator(".overview__action-title")).toContainText(/payments move/i);
+    await expect(page.getByRole("complementary", { name: /learning pulse/i })).toBeVisible();
+    await expect(page.getByText("Recent activity")).toBeVisible();
+  });
+
+  test("keeps exactly one primary CTA with the selected destination", async ({ page }) => {
+    await page.goto("/app");
+    const cta = page.locator(".overview__cta");
+    await expect(cta).toHaveCount(1);
+    // The basename is part of the rendered href in the real router.
+    await expect(cta).toHaveAttribute("href", "/app/explore?intro=1");
+  });
+
+  test("keeps the four quick routes as real links", async ({ page }) => {
+    await page.goto("/app");
+    const routes = [
+      [/^Search/i, "/app/explore"],
+      [/^Directory/i, "/app/explore/banks"],
+      [/^Track/i, "/app/operate"],
+      [/^Practice/i, "/app/learn/practice"],
+    ] as const;
+    for (const [name, href] of routes) {
+      await expect(page.getByRole("link", { name }).first()).toHaveAttribute("href", href);
+    }
+  });
+
+  test("has no horizontal overflow at 390px", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/app");
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+});

@@ -31,6 +31,7 @@ jobs:
     timeout-minutes: 20
     env:
       CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
+      CODEX_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
