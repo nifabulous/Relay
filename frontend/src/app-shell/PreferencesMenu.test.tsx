@@ -171,6 +171,29 @@ describe("PreferencesMenu remaining items", () => {
 });
 
 describe("PreferencesMenu keyboard and dismissal", () => {
+  it("exposes the RelayPopover menu contract around the real Preferences content", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+
+    await user.click(screen.getByRole("button", { name: /preferences/i }));
+
+    const trigger = screen.getByRole("button", { name: /preferences/i });
+    const menu = screen.getByRole("menu", { name: /preferences/i });
+
+    expect(menu).toHaveAttribute("id", "app-shell-preferences-menu");
+    expect(menu).toHaveAttribute("aria-labelledby", trigger.id);
+    expect(menu.parentElement).toHaveClass("app-shell__prefs-positioner");
+    expect(menu).toContainElement(
+      screen.getByRole("menuitemradio", { name: /system/i }),
+    );
+    expect(menu).toContainElement(
+      screen.getByRole("menuitemcheckbox", { name: /reduce motion/i }),
+    );
+    expect(menu).toContainElement(
+      screen.getByRole("menuitem", { name: /all settings/i }),
+    );
+  });
+
   it("moves focus into the menu on open", async () => {
     await openMenu();
 
