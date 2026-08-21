@@ -302,14 +302,13 @@ This task establishes the source/registry path without generating any Coss behav
 
   Preserve the current Vite server and build settings.
 
-- [ ] Add a single `@/*` source alias in `frontend/tsconfig.json`:
+- [ ] Add a single `@/*` source alias in `frontend/tsconfig.json`. The repository pins TypeScript 7, where `baseUrl` has been removed, so use the supported relative path target without adding a legacy `baseUrl` key:
 
   ```json
   {
     "compilerOptions": {
-      "baseUrl": ".",
       "paths": {
-        "@/*": ["src/*"]
+        "@/*": ["./src/*"]
       }
     }
   }
@@ -552,7 +551,7 @@ This task establishes the source/registry path without generating any Coss behav
       expect(componentsConfig.aliases.components).toBe("@/design-system/coss");
       expect(componentsConfig.aliases.ui).toBe("@/design-system/coss");
       expect(componentsConfig.aliases.utils).toBe("@/lib/coss/cn");
-      expect(tsconfig.compilerOptions.paths["@/*"]).toEqual(["src/*"]);
+      expect(tsconfig.compilerOptions.paths["@/*"]).toEqual(["./src/*"]);
     });
   });
   ```
