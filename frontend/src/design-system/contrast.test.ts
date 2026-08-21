@@ -51,6 +51,10 @@ function contrastRatio(fg: string, bg: string): number {
 // be converted to a plain path first. Anchoring on import.meta.url rather than
 // process.cwd() keeps this correct regardless of where vitest is invoked from.
 const CSS = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "tokens.css"), "utf8");
+const COSS_THEME_CSS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "coss-theme.css"),
+  "utf8",
+);
 const FLOATING_CSS = readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), "../features/tutor/FloatingTutorLauncher.css"),
   "utf8",
@@ -278,6 +282,39 @@ describe("dark palette selector structure", () => {
   it("never introduces a token that exists only in dark", () => {
     const darkOnly = Object.keys(DARK_MEDIA).filter((token) => !(token in LIGHT));
     expect(darkOnly).toEqual([]);
+  });
+});
+
+describe("Coss token bridge", () => {
+  it("maps semantic aliases to Relay tokens without hard-coded theme values", () => {
+    expect(CSS).toContain("--background: var(--color-canvas);");
+    expect(CSS).toContain("--primary: var(--color-action);");
+    expect(CSS).toContain("--border: var(--color-border);");
+    expect(CSS).toContain("--ring: var(--color-action);");
+    expect(CSS).toContain("--coss-radius-sm: var(--radius-control);");
+    expect(CSS).toContain("--coss-radius-md: var(--radius-control);");
+    expect(CSS).toContain("--coss-radius-lg: var(--radius-region);");
+    expect(CSS).toContain("--coss-radius-xl: var(--radius-region);");
+    expect(CSS).toContain("--coss-font-sans: var(--font-ui);");
+    expect(CSS).toContain("--coss-font-heading: var(--font-ui);");
+    expect(CSS).toContain("--coss-font-mono: var(--font-mono);");
+    expect(CSS).toContain("--success: var(--color-success);");
+    expect(CSS).toContain("--warning: var(--color-warning);");
+    expect(CSS).toContain("--info: var(--color-action);");
+  });
+
+  it("keeps the Relay light and dark token blocks present", () => {
+    expect(CSS).toMatch(/^:root\s*\{/m);
+    expect(CSS).toContain('@media (prefers-color-scheme: dark)');
+    expect(CSS).toMatch(/^:root\[data-theme="dark"\]\s*\{/m);
+  });
+
+  it("maps the Coss theme namespace back to the semantic bridge", () => {
+    expect(COSS_THEME_CSS).toContain("--font-sans: var(--coss-font-sans);");
+    expect(COSS_THEME_CSS).toContain("--font-heading: var(--coss-font-heading);");
+    expect(COSS_THEME_CSS).toContain("--font-mono: var(--coss-font-mono);");
+    expect(COSS_THEME_CSS).toContain('@custom-variant relay-dark');
+    expect(COSS_THEME_CSS).toContain('[data-theme="dark"]');
   });
 });
 

@@ -91,6 +91,39 @@
   --duration-fast: 120ms;
   --duration-normal: 200ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-action);
+  --primary-foreground: var(--color-on-action);
+  --secondary: var(--color-surface-2);
+  --secondary-foreground: var(--color-ink-strong);
+  --muted: var(--color-surface-2);
+  --muted-foreground: var(--color-ink-muted);
+  --accent: var(--color-action-surface);
+  --accent-foreground: var(--color-action);
+  --destructive: var(--color-danger);
+  --destructive-foreground: var(--color-on-danger);
+  --border: var(--color-border);
+  --input: var(--color-border-strong);
+  --ring: var(--color-action);
+  --coss-radius-sm: var(--radius-control);
+  --coss-radius-md: var(--radius-control);
+  --coss-radius-lg: var(--radius-region);
+  --coss-radius-xl: var(--radius-region);
+  --coss-font-sans: var(--font-ui);
+  --coss-font-heading: var(--font-ui);
+  --coss-font-mono: var(--font-mono);
+  --success: var(--color-success);
+  --success-foreground: var(--color-on-action);
+  --warning: var(--color-warning);
+  --warning-foreground: var(--color-ink-strong);
+  --info: var(--color-action);
+  --info-foreground: var(--color-on-action);
 }
 
 /*
