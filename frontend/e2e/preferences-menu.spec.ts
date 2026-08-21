@@ -35,27 +35,52 @@ test.describe("Preferences menu", () => {
     await expect(page).toHaveURL(/\/settings\/?$/);
   });
 
-  test("keeps the portalled menu inside the 390px viewport", async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "case-mobile-390",
-      "This geometry contract is owned by the 390px Playwright project",
-    );
-
+  // jsdom pins the declared placement (data-side/data-align); only a real
+  // browser can prove the resolved geometry. Runs at every project width —
+  // 390px included — because a popup that fits at 1440 can still clip at 390.
+  test("keeps the portalled menu inside the viewport, below and end-aligned to the trigger", async ({
+    page,
+  }) => {
     await page.goto("/app");
     await page.getByRole("button", { name: /preferences/i }).click();
 
     const menu = page.getByRole("menu", { name: /preferences/i });
     await expect(menu).toBeVisible();
 
-    const box = await menu.boundingBox();
-    const viewport = await page.evaluate(() => ({
-      innerWidth: window.innerWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-    }));
+    const geometry = await menu.evaluate((menu) => {
+      const menuRect = menu.getBoundingClientRect();
+      const triggerRect = document
+        .querySelector(".app-shell__prefs-trigger")
+        ?.getBoundingClientRect();
+      return {
+        menu: {
+          left: menuRect.left,
+          right: menuRect.right,
+          top: menuRect.top,
+          bottom: menuRect.bottom,
+        },
+        triggerRight: triggerRect?.right ?? 0,
+        triggerBottom: triggerRect?.bottom ?? 0,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        scrollWidth: document.documentElement.scrollWidth,
+      };
+    });
 
-    expect(box).not.toBeNull();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.innerWidth);
-    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.innerWidth);
+    // Fully on-screen — the portalled popup escapes the header's stacking
+    // context, so clipping or off-screen drift would otherwise go unnoticed.
+    expect(geometry.menu.left).toBeGreaterThanOrEqual(0);
+    expect(geometry.menu.right).toBeLessThanOrEqual(geometry.viewport.width);
+    expect(geometry.menu.top).toBeGreaterThanOrEqual(0);
+    expect(geometry.menu.bottom).toBeLessThanOrEqual(geometry.viewport.height);
+
+    // side="bottom": the popup hangs below the trigger (8px offset).
+    expect(geometry.menu.top).toBeGreaterThanOrEqual(geometry.triggerBottom - 1);
+
+    // align="end": the popup's right edge lines up with the trigger's, so it
+    // grows leftward into the page instead of off its right edge.
+    expect(geometry.menu.right).toBeLessThanOrEqual(geometry.triggerRight + 1);
+
+    // An off-screen popup would announce itself as horizontal overflow.
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.viewport.width);
   });
 });

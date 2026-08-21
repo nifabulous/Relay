@@ -194,6 +194,20 @@ describe("PreferencesMenu keyboard and dismissal", () => {
     );
   });
 
+  // The trigger sits at the top bar's right edge, so the popup must grow
+  // downward and leftward — any other placement clips it off-screen or drags
+  // it over the brand. Base UI reports the resolved placement as data
+  // attributes on the positioner, which is observable without a layout engine.
+  it("positions the popup below and end-aligned to the trigger", async () => {
+    await openMenu();
+
+    const positioner = screen.getByRole("menu", { name: /preferences/i })
+      .parentElement;
+    expect(positioner).toHaveClass("app-shell__prefs-positioner");
+    expect(positioner).toHaveAttribute("data-side", "bottom");
+    expect(positioner).toHaveAttribute("data-align", "end");
+  });
+
   it("moves focus into the menu on open", async () => {
     await openMenu();
 
