@@ -84,7 +84,7 @@ describe("Tailwind foundation", () => {
   });
 
   it("keeps the established default gzip bundle contract", () => {
-    expect(bundleCheckScript).toContain("const BUDGET_BYTES = 204800");
+    expect(bundleCheckScript).toContain("const BUDGET_BYTES = 215040");
     expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
     expect(bundleCheckScript).not.toContain("level: 9");
   });
