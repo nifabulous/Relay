@@ -745,6 +745,20 @@ def collect(pr: int, contract: Contract, repo: Optional[str] = None) -> dict:
 # --------------------------------------------------------------------------- #
 # Poster.                                                                       #
 # --------------------------------------------------------------------------- #
+def render_postable_comment(decision: Decision, pr) -> str:
+    """Render the recommendation comment and make it publishable.
+
+    Same treatment as every other posted surface: findings may carry
+    attacker-controlled diff bytes, so the rendered comment passes the
+    sanitizer before publication, then the size bound. The machine marker
+    survives sanitization — downstream dedup depends on it.
+    """
+    return _truncate_gap_body(
+        _sanitize_gap_body(render_comment(decision, pr)),
+        _ARBITER_COMMENT_MAX_BYTES,
+    )
+
+
 def render_comment(decision: Decision, pr) -> str:
     lines = [
         f"<!-- codex-arbiter:{pr} -->",
@@ -994,7 +1008,7 @@ def _is_contract_document(text: str, branch: str) -> bool:
 
 
 def _contract_relative_path(branch: str) -> str:
-    """Injective branch→path mapping under docs/contracts/.
+    """Collision-resistant branch→path mapping under docs/contracts/.
 
     Slug-and-hash: the slug keeps paths human-readable, and the 12-hex sha256
     prefix of the FULL branch name makes the mapping collision-resistant where the
@@ -1193,14 +1207,8 @@ def main(argv=None) -> int:
     history = collect(args.pr, contract, repo=args.repo)
     decision = decide(history, contract)
     if args.post:
-        # Same treatment as every other posted surface: findings may carry
-        # attacker-controlled diff bytes, so the rendered comment passes the
-        # sanitizer before publication, then the size bound.
-        comment_body = _truncate_gap_body(
-            _sanitize_gap_body(render_comment(decision, args.pr)),
-            _ARBITER_COMMENT_MAX_BYTES,
-        )
-        post_comment(args.pr, history["repo"], comment_body)
+        post_comment(args.pr, history["repo"],
+                     render_postable_comment(decision, args.pr))
         print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
         if decision.proposed_gaps:
             contract_text = load_contract_text(history.get("current_head_ref"))

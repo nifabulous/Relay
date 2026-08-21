@@ -20,7 +20,7 @@ every `/` replaced by `-` and `<hash>` is the first 12 hex chars of
 slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so one
 branch's contract cannot silently bind another, and no branch name
 resolves onto this README. For example, branch `feat/loop-arbiter` has
-contract `docs/contracts/docs/contracts/feat-loop-arbiter-564bdc00f842.md`.
+contract `docs/contracts/feat-loop-arbiter-564bdc00f842.md`.
 
 The same derivation is implemented exactly twice — `_contract_relative_path`
 in `scripts/codex_arbiter.py` and the `CONTRACT_PATH` block in

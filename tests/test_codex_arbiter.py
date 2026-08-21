@@ -1654,28 +1654,29 @@ def test_validate_trailer_rejects_hostile_identity_fields():
         assert reason == expected_reason, f"{override}: got {reason}"
 
 
-def test_rendered_arbiter_comment_sanitizes_untrusted_fields():
-    """Review P2 (head 9da9fc2): gap issues are sanitized before posting but
-    the recommendation comment was not — a trailer's `file` field could
-    carry diff bytes or sensitive text straight into a public comment.
-    The posting pipeline must run the same sanitize -> bound pass."""
+def test_posted_recommendation_comment_is_sanitized_and_bounded(monkeypatch):
+    """Review P2 (head 5d7a196): assert against the body actually handed to
+    post_comment on the production --post path — not a re-implementation of
+    the pipeline. A trailer's `file` field may carry attacker-controlled
+    diff bytes; they must be redacted, and the machine marker must survive."""
     comments = [
         _comment(1, 1, [_finding("P3", "NEW", "DE89370400440532013000", "cat-a", "gap-a")]),
         _comment(2, 2, [_finding("P3", "OPEN", "DE89370440532013000", "cat-a", "gap-a")]),
     ]
     history = _history(comments, pr=100, repo=STUB_REPO)
-    decision = arb.decide(history, _contract())
-    raw = arb.render_comment(decision, 100)
 
-    posted = arb._truncate_gap_body(
-        arb._sanitize_gap_body(raw), arb._ARBITER_COMMENT_MAX_BYTES
-    )
+    captured: dict = {}
+    monkeypatch.setattr(arb, "collect", lambda *a, **k: history)
+    monkeypatch.setattr(arb, "post_comment",
+                        lambda pr, repo, body: captured.update(body=body))
+
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    exit_code = arb.main(["100", "--repo", STUB_REPO, "--post"])
+    assert exit_code == 0
+    posted = captured["body"]
     assert "DE89370400440532013000" not in posted
     assert "[IBAN]" in posted
-    # The machine marker survives sanitization: downstream dedup and
-    # permalink resolution depend on it.
     assert "<!-- codex-arbiter:100 -->" in posted
-
 
 def test_contract_relative_path_is_injective_across_slug_collisions():
     """Review P2 (head 2afd089): the old slug-only mapping collapsed
