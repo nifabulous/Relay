@@ -43,10 +43,12 @@ def require_sandbox_attestation(agent_name: str) -> None:
         return
     if os.environ.get(SANDBOX_ATTESTATION_ENV) != "1":
         raise PermissionError(
-            f"agent {agent_name!r} executes untrusted instructions and "
-            f"requires a disposable, credential-free, network-denied "
-            f"sandbox; set {SANDBOX_ATTESTATION_ENV}=1 only when that "
-            "environment is actually in place"
+            f"agent {agent_name!r} is an execution-capable slot whose "
+            f"isolation boundary must come from a verified disposable, "
+            f"credential-free, network-denied sandbox; set "
+            f"{SANDBOX_ATTESTATION_ENV}=1 only when that environment is "
+            "actually in place (until the sandbox harness lands, the "
+            "agent definition itself runs without Bash)"
         )
 
 # A research memo is an order of magnitude smaller than a full review; the
