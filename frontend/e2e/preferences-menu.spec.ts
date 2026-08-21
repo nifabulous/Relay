@@ -28,6 +28,11 @@ test.describe("Preferences menu", () => {
     await page.getByRole("link", { name: "Overview", exact: true }).click();
     await expect(page.getByRole("menu", { name: /preferences/i })).toBeHidden();
     await expect(page).toHaveURL(/\/app\/?$/);
+
+    await page.getByRole("button", { name: /preferences/i }).click();
+    await page.getByRole("link", { name: "All settings", exact: true }).click();
+    await expect(page.getByRole("menu", { name: /preferences/i })).toBeHidden();
+    await expect(page).toHaveURL(/\/settings\/?$/);
   });
 
   test("keeps the portalled menu inside the 390px viewport", async ({ page }, testInfo) => {
@@ -49,6 +54,7 @@ test.describe("Preferences menu", () => {
     }));
 
     expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.innerWidth);
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.innerWidth);
   });
