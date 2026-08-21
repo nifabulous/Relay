@@ -48,10 +48,13 @@ test.describe("Preferences menu", () => {
     await expect(menu).toBeVisible();
 
     const geometry = await menu.evaluate((menu) => {
+      // Both rects come from one measurement pass in the same coordinate
+      // space. A missing trigger is a setup failure, not a zero coordinate
+      // to silently compare against.
+      const trigger = document.querySelector(".app-shell__prefs-trigger");
+      if (!trigger) throw new Error("Preferences trigger not found in the DOM");
       const menuRect = menu.getBoundingClientRect();
-      const triggerRect = document
-        .querySelector(".app-shell__prefs-trigger")
-        ?.getBoundingClientRect();
+      const triggerRect = trigger.getBoundingClientRect();
       return {
         menu: {
           left: menuRect.left,
@@ -59,8 +62,8 @@ test.describe("Preferences menu", () => {
           top: menuRect.top,
           bottom: menuRect.bottom,
         },
-        triggerRight: triggerRect?.right ?? 0,
-        triggerBottom: triggerRect?.bottom ?? 0,
+        triggerRight: triggerRect.right,
+        triggerBottom: triggerRect.bottom,
         viewport: { width: window.innerWidth, height: window.innerHeight },
         scrollWidth: document.documentElement.scrollWidth,
       };
@@ -73,12 +76,15 @@ test.describe("Preferences menu", () => {
     expect(geometry.menu.top).toBeGreaterThanOrEqual(0);
     expect(geometry.menu.bottom).toBeLessThanOrEqual(geometry.viewport.height);
 
-    // side="bottom": the popup hangs below the trigger (8px offset).
-    expect(geometry.menu.top).toBeGreaterThanOrEqual(geometry.triggerBottom - 1);
+    // side="bottom" at the configured 8px offset: the popup hangs just below
+    // the trigger. The ±1px tolerance absorbs subpixel layout rounding, not a
+    // real placement change — overlap, zero offset, or arbitrary drift fails.
+    const bottomGap = geometry.menu.top - geometry.triggerBottom;
+    expect(Math.abs(bottomGap - 8)).toBeLessThanOrEqual(1);
 
     // align="end": the popup's right edge lines up with the trigger's, so it
     // grows leftward into the page instead of off its right edge.
-    expect(geometry.menu.right).toBeLessThanOrEqual(geometry.triggerRight + 1);
+    expect(Math.abs(geometry.menu.right - geometry.triggerRight)).toBeLessThanOrEqual(1);
 
     // An off-screen popup would announce itself as horizontal overflow.
     expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.viewport.width);
