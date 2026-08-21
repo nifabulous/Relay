@@ -39,9 +39,7 @@
   font-size: var(--text-sm);
   color: var(--color-ink-strong);
   background: var(--color-surface);
-  /* A structural border rather than a drop shadow: DESIGN.md rules out
-     decorative shadows, and the border is what separates the pill from the
-     content scrolling beneath it in both palettes. */
+  /* Floating controls use the approved high-contrast boundary. */
   border: 1px solid var(--color-floating-border);
   border-radius: var(--radius-full);
   cursor: pointer;
@@ -97,7 +95,7 @@
   overflow-y: auto;
 
   padding: var(--space-3);
-  background: var(--color-canvas);
+  background: var(--color-surface);
   border: 1px solid var(--color-floating-border);
   border-radius: var(--radius-region);
 }
@@ -176,14 +174,9 @@
  * CT2. Elevation is expressed as an EFFECT, not as one mechanism.
  *
  * A drop shadow works by being darker than what is behind it. On Relay's dark
- * canvas (#080b12) the shadow colour #1d2433 is 5.3x LIGHTER, so it reads as a
- * faint smudge or as nothing at all — the floating layer would fall back to the
- * 1.51:1 hairline that DESIGN.md already records as a tracked gap, which is the
- * discoverability problem this control exists to solve.
- *
- * Dark interfaces have always expressed elevation by lifting the surface rather
- * than casting a shadow, which is why the palette already carries a lighter
- * surface step. Same rule, correct expression per theme.
+ * canvas the shadow colour is lighter, so it reads as a faint smudge or as
+ * nothing at all. Dark interfaces express elevation by lifting the surface
+ * instead, which is why the palette already carries a lighter surface step.
  */
 :root:not([data-theme="dark"]) .tutor-fab,
 :root:not([data-theme="dark"]) .tutor-floating-panel {

@@ -107,7 +107,7 @@
 
 .overview__utility-link:hover {
   border-color: var(--color-border-strong);
-  background: var(--color-surface-2);
+  background: var(--color-action-surface);
   text-decoration: none;
 }
 
