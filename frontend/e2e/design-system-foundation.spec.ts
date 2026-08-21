@@ -48,11 +48,10 @@ test("preserves Relay base styles without Tailwind Preflight", async ({ page }) 
     };
   });
 
-  expect(focusStyles).not.toBeNull();
-  expect(focusStyles!.matchesFocusVisible).toBe(true);
-  expect(focusStyles!.outlineWidth).toBe("2px");
-  expect(focusStyles!.outlineStyle).toBe("solid");
-  expect(focusStyles!.outlineOffset).toBe("2px");
+  expect(focusStyles.matchesFocusVisible).toBe(true);
+  expect(focusStyles.outlineWidth).toBe("2px");
+  expect(focusStyles.outlineStyle).toBe("solid");
+  expect(focusStyles.outlineOffset).toBe("2px");
 
   await page.evaluate(() => {
     document.querySelector("#relay-foundation-probe-button")?.parentElement?.remove();

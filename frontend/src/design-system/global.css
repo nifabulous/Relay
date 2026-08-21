@@ -5,11 +5,13 @@
  * no emoji as interface icons, no colored card edges.
  */
 
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/theme.css" layer(theme) reference;
 @import "./tokens.css";
 @import "./coss-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities) source("../");
+@source not "../**/*.ts";
+@source not "../**/*.tsx";
+@source "./coss";
 
 /*
  * Typography: Instrument Sans (UI) + IBM Plex Mono (identifiers/code).
