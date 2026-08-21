@@ -71,7 +71,7 @@ PR 24's reviewer kept re-raising the same P1 partly because the PR description
 *claimed* enforcement the code could not provide. The reviewer was holding the
 diff to its stated contract, and the stated contract was wrong.
 
-Every loop-managed PR gets a contract file: `docs/contracts/<branch>.md`.
+Every loop-managed PR gets a contract file: `docs/contracts/<slug>-<hash>.md` (slug-and-sha256 prefix of the branch; see docs/contracts/README.md).
 
 ```markdown
 # Contract: <branch>

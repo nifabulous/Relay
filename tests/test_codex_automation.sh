@@ -7,6 +7,9 @@ FAILURES=0
 # shadows `python3` on PATH, and a shim that re-resolves through PATH would
 # recurse into the stub forever.
 REAL_PYTHON3="$(python3 -c 'import sys; print(sys.executable)')"
+STAGING="$(mktemp -d)"
+TRUSTED_STAGING_ROOT="$STAGING/trusted"
+mkdir -p "$TRUSTED_STAGING_ROOT"
 # The SHA the script must see as its checkout to trust it. Tests run against
 # this worktree, so the worktree HEAD is the trusted SHA.
 ROOT_HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)"
@@ -172,7 +175,7 @@ refuse_text 'scripts/codex_review_pr.sh' '--label contract'
 # must never be injected as a signed-off contract, and a bare `-s` check
 # (true for a directory too) must never be able to abort the script.
 require_text 'scripts/codex_review_pr.sh' '# Contract:'\''*'
-require_text 'scripts/codex_review_pr.sh' '[[ -f "$CONTRACT_FULL_PATH" && -s "$CONTRACT_FULL_PATH" ]]'
+require_text 'scripts/codex_review_pr.sh' 'show_trusted "$CONTRACT_PATH"'
 
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
 require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
@@ -332,7 +335,46 @@ done
 exec "$CODEX_REAL_PYTHON3" "$@"
 STUB
 
-chmod +x "$STUB_DIR/gh" "$STUB_DIR/python3"
+cat >"$STUB_DIR/git" <<'GSTUB'
+#!/usr/bin/env bash
+# The reviewer script reads trusted content from GIT OBJECTS at the stamped
+# SHA. The stub serves those reads from a staging directory recorded at
+# stub-creation time, so tests exercise the object-read path without
+# committing fixtures into the developer's worktree.
+STUB_CFG="$(dirname "$(command -v git)")"
+REAL_GIT="$(command -v -p git 2>/dev/null || command -v git)"
+GIT_STUB_ROOT="$(cat "$STUB_CFG/git-root")"
+TRUSTED_STAGING="$(cat "$STUB_CFG/trusted-staging")"
+for arg in "$@"; do
+  if [[ "$arg" == "--show-toplevel" ]]; then
+    printf '%s\n' "$GIT_STUB_ROOT"
+    exit 0
+  fi
+done
+if [[ "${*: -1}" == "HEAD" && " $* " == *" rev-parse "* ]]; then
+  printf '%s\n' "$(cat "$STUB_CFG/trusted-sha")"
+  exit 0
+fi
+if [[ "$1" == "show" || ("$1" == "-C" && "$3" == "show") ]]; then
+  ref="${@: -1}"
+  path="${ref#*:}"
+  staging_file="$TRUSTED_STAGING/$path"
+  if [[ -f "$staging_file" ]]; then
+    cat "$staging_file"
+    exit 0
+  fi
+  exit 1
+fi
+exec "$REAL_GIT" "$@"
+GSTUB
+
+printf '%s\n' "$ROOT" >"$STUB_DIR/git-root"
+printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/trusted-sha"
+printf '%s\n' "$TRUSTED_STAGING_ROOT" >"$STUB_DIR/trusted-staging"
+# The policy file is genuinely part of the trusted checkout; serve the real one.
+mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
+cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
+chmod +x "$STUB_DIR/gh" "$STUB_DIR/python3" "$STUB_DIR/git"
 
 # The triage script fingerprints with sha256sum, which is GNU-only. Shim it so
 # the regression test runs on a developer machine as well as in CI.
@@ -365,7 +407,6 @@ run_suppression_case() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
@@ -406,7 +447,6 @@ check_timeout_propagates() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
@@ -452,7 +492,6 @@ check_override_beyond_job_deadline_is_refused() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -494,7 +533,6 @@ check_oversized_review_input_is_refused() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
@@ -568,7 +606,8 @@ check_contract_lands_in_trusted_channel_only() {
   # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
   local contract_hash
   contract_hash="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$branch")"
-  local contract_path="$ROOT/docs/contracts/${branch//\//-}-${contract_hash}.md"
+  local contract_rel="docs/contracts/${branch//\//-}-${contract_hash}.md"
+  local contract_path="$TRUSTED_STAGING_ROOT/$contract_rel"
   local sentinel="ZZ_T5_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
   local status=0
 
@@ -593,7 +632,6 @@ check_contract_lands_in_trusted_channel_only() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
@@ -660,7 +698,6 @@ check_non_contract_file_is_ignored() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -718,7 +755,6 @@ check_contract_path_as_directory_is_ignored() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
-    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \

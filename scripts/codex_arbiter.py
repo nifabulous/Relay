@@ -337,11 +337,22 @@ def _validate_history_document(history) -> None:
         raise ValueError("history must be a JSON object")
     if history.get("schema") != 1:
         raise ValueError(f"unsupported history schema: {history.get('schema')!r} (expected 1)")
-    for required in ("repo", "pr", "comments"):
+    for required in ("repo", "pr", "current_head_sha", "current_diff_files", "comments"):
         if required not in history:
             raise ValueError(f"history missing required field: {required}")
-    if not isinstance(history["pr"], int):
-        raise ValueError("pr must be an integer")
+    if not isinstance(history["repo"], str) or not history["repo"].strip():
+        raise ValueError("repo must be a non-empty string")
+    if not isinstance(history["pr"], int) or isinstance(history["pr"], bool) or history["pr"] <= 0:
+        raise ValueError("pr must be a positive integer")
+    # The head SHA anchors every round comparison; a malformed one would make
+    # repetition and staleness checks compare against garbage. Same shape the
+    # review marker carries (7-64 hex).
+    if not isinstance(history["current_head_sha"], str) or \
+            not re.fullmatch(r"[0-9a-fA-F]{7,64}", history["current_head_sha"]):
+        raise ValueError("current_head_sha must be a hex git SHA")
+    if not isinstance(history["current_diff_files"], list) or \
+            not all(isinstance(f, str) and f for f in history["current_diff_files"]):
+        raise ValueError("current_diff_files must be a list of non-empty strings")
     if not isinstance(history["comments"], list):
         raise ValueError("comments must be a list")
     for comment in history["comments"]:
@@ -350,6 +361,13 @@ def _validate_history_document(history) -> None:
         for required in ("comment_id", "created_at", "author_login", "head_sha", "marker"):
             if required not in comment:
                 raise ValueError(f"comment missing required field: {required}")
+        if not isinstance(comment["comment_id"], int) or isinstance(comment["comment_id"], bool):
+            raise ValueError("comment_id must be an integer")
+        if not isinstance(comment["head_sha"], str) or \
+                not re.fullmatch(r"[0-9a-fA-F]{7,64}", comment["head_sha"]):
+            raise ValueError("comment head_sha must be a hex git SHA")
+        if not isinstance(comment["marker"], str) or not comment["marker"].strip():
+            raise ValueError("comment marker must be a non-empty string")
         _parse_ts(comment["created_at"])
 
 
@@ -914,7 +932,17 @@ def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
              "--state", "all", "--json", "number,body", "--limit", str(limit)],
             capture_output=True, text=True, check=True,
         )
-        issues.extend(json.loads(proc.stdout))
+        label_issues = json.loads(proc.stdout)
+        # A saturated page means older ledger issues were silently cut off,
+        # and a marker beyond the cutoff would duplicate instead of dedup.
+        # That is not a state this poster may guess its way through: refuse
+        # and put the ledger back under a human's hands.
+        if len(label_issues) >= limit:
+            raise RuntimeError(
+                f"gap ledger label {label!r} has >= {limit} issues; manual "
+                "dedup/archival is required before posting new gaps"
+            )
+        issues.extend(label_issues)
     return issues
 
 

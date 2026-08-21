@@ -210,33 +210,37 @@ and a non-empty verification reference such as a test name. Never mark a
 finding RESOLVED without that evidence object.
 EOF
 
+# Trusted files are read from GIT OBJECTS at the verified SHA, never from
+# the working tree: `cat` would let any process that mutates a file after
+# the SHA check swap the policy or contract while HEAD stands still. git
+# show reads immutable content, so what the SHA check verified is exactly
+# what enters the instructions channel.
+show_trusted() {
+  git -C "$REPO_ROOT" "show" "$TRUSTED_SHA:$1"
+}
+
 {
   cat "$TEMP_DIR/prompt.txt"
   printf '\n\n## Trusted review policy\n'
-  cat "$REPO_ROOT/.github/codex/review-policy.md"
+  show_trusted ".github/codex/review-policy.md"
   # Disambiguation: the review policy above is the informal "trusted
   # contract" (prompt + policy bundle, docs/CODEX_GITHUB_AUTOMATION.md); what
   # follows is a second, distinct thing in the same trusted channel -- the
   # formal per-branch scope Contract from docs/contracts/ (docs/contracts/README.md).
   #
-  # docs/contracts/ is a flat namespace keyed on the branch name alone, so a
-  # branch literally named e.g. "README" resolves CONTRACT_PATH to
-  # docs/contracts/README.md -- the format doc itself ("# Contracts", plural,
-  # no colon), not a signed-off per-branch contract. Guard against injecting
-  # that doc (or any other stray file at this path) as a binding contract by
-  # requiring the first non-blank line to read "# Contract:" (singular, with
-  # a colon -- the real template header per docs/contracts/README.md). -f
-  # also excludes CONTRACT_PATH resolving to a directory: a bare -s check is
-  # true for a directory too, and `cat` on one would abort the whole script
-  # under `set -euo pipefail` instead of falling back to "no contract".
-  CONTRACT_FULL_PATH="$REPO_ROOT/$CONTRACT_PATH"
+  # The slug-and-hash mapping keeps one branch's contract from resolving onto
+  # another's, and the "# Contract:" header guard keeps a stray non-contract
+  # file at the mapped path (e.g. the format doc itself) from being injected
+  # as a binding contract. Both the header check and the content read run
+  # against the GIT OBJECT at TRUSTED_SHA -- working-tree edits after the SHA
+  # verification cannot touch what gets injected.
   CONTRACT_FIRST_LINE=""
-  if [[ -f "$CONTRACT_FULL_PATH" && -s "$CONTRACT_FULL_PATH" ]]; then
-    CONTRACT_FIRST_LINE="$(grep -m1 -v '^[[:space:]]*$' "$CONTRACT_FULL_PATH" || true)"
+  if CONTRACT_CONTENT="$(show_trusted "$CONTRACT_PATH" 2>/dev/null)" && [[ -n "$CONTRACT_CONTENT" ]]; then
+    CONTRACT_FIRST_LINE="$(grep -m1 -v '^[[:space:]]*$' <<<"$CONTRACT_CONTENT" || true)"
   fi
   if [[ "$CONTRACT_FIRST_LINE" == '# Contract:'* ]]; then
     printf '\n\n## Contract (from main)\n'
-    cat "$CONTRACT_FULL_PATH"
+    printf '%s\n' "$CONTRACT_CONTENT"
   else
     printf '\n\n## Contract\nNo contract on main for this branch; nothing is out of scope.\n'
   fi

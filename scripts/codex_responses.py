@@ -301,7 +301,10 @@ def request_response(
     payload = build_payload(
         model, reasoning_effort, instructions, prompt, max_output_tokens, api_style
     )
-    url = api_url if api_url is not None else resolve_api_url(api_style)
+    # Validation lives HERE, not only in the CLI: resolve_api_url re-checks
+    # an explicit override, so no caller can bypass the https/loopback and
+    # no-query rules by passing api_url directly (review P2, head 72cb9eb).
+    url = resolve_api_url(api_style, api_url)
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
