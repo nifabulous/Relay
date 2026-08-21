@@ -246,11 +246,10 @@
   transition: background var(--duration-fast) var(--ease),
     color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease);
-  text-decoration: none;
 }
 
 .app-shell__nav-link:hover {
-  background: var(--color-action-surface);
+  background: var(--color-action-border);
   color: var(--color-ink-strong);
   text-decoration: none;
 }

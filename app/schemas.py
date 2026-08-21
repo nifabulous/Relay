@@ -58,6 +58,11 @@ class LookupResponse(BaseModel):
     settlement: Optional[SettlementIds] = None
 
 
+class BankSearchResponse(BaseModel):
+    query: str
+    results: List[BankInfo] = Field(default_factory=list)
+
+
 class RouteResponse(BaseModel):
     bic: str
     bank: Optional[BankInfo] = None

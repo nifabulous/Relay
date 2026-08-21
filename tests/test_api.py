@@ -106,6 +106,17 @@ def test_lookup_unknown_bank(client):
     assert r.json()["found"] is False
 
 
+def test_bank_name_search_returns_case_insensitive_directory_matches(client):
+    r = client.get("/api/banks/search", params={"q": "guaranty trust"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == "guaranty trust"
+    assert body["results"]
+    assert body["results"][0]["bank_name"] == "Guaranty Trust Bank"
+    assert body["results"][0]["bic"] == "GTBINGLAXXX"
+
+
 def test_route_usd_to_nigeria(client):
     r = client.get(
         "/api/route",

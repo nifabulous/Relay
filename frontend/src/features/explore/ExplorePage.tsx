@@ -29,7 +29,7 @@ export function ExplorePage() {
     <div className="explore">
       <div className="explore__header">
         <h1>Explore</h1>
-        <p className="measure">Search banks, corridors, payment schemes, and glossary terms.</p>
+        <p className="measure">Search banks by name or BIC, corridors, payment schemes, and glossary terms.</p>
       </div>
 
       <CommandSearch initialQuery={query} />

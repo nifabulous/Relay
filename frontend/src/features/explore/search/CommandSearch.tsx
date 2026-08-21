@@ -1,6 +1,8 @@
 import { useState, useRef, useId, type KeyboardEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
+import { requestBankSearch } from "./bankSearch";
 import "./CommandSearch.css";
 
 const GROUP_LABELS: Record<SearchResultType, string> = {
@@ -11,7 +13,14 @@ const GROUP_LABELS: Record<SearchResultType, string> = {
   tool: "Tools",
 };
 
-const GROUP_ORDER: SearchResultType[] = ["lesson", "bank", "scheme", "glossary", "tool"];
+const GROUP_ORDER: SearchResultType[] = ["bank", "scheme", "glossary", "lesson", "tool"];
+
+const BIC_QUERY_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+
+function isBicQuery(value: string): boolean {
+  const normalized = value.trim();
+  return normalized === normalized.toUpperCase() && BIC_QUERY_PATTERN.test(normalized);
+}
 
 function groupResults(results: SearchResult[]): SearchGroup[] {
   const groups = new Map<SearchResultType, SearchResult[]>();
@@ -32,13 +41,42 @@ interface CommandSearchProps {
 
 export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchProps) {
   const [query, setQuery] = useState(initialQuery);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialQuery.trim().length > 0);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
 
-  const results = isOpen ? searchStatic(query) : [];
+  const normalizedQuery = query.trim();
+  const bicQuery = isBicQuery(normalizedQuery);
+  const bankSearch = useQuery({
+    queryKey: ["banks", normalizedQuery],
+    queryFn: () => requestBankSearch(normalizedQuery),
+    enabled: isOpen && normalizedQuery.length >= 2,
+    staleTime: 30_000,
+  });
+
+  const directoryBankResults: SearchResult[] = (bankSearch.data?.results ?? []).map((bank) => ({
+    id: `bank:${bank.bic}`,
+    type: "bank" as const,
+    label: bank.bank_name,
+    subtitle: [bank.country_code, bank.city, bank.bic].filter(Boolean).join(" · "),
+    href: `/app/explore/banks/${encodeURIComponent(bank.bic)}`,
+  }));
+
+  const bankResults: SearchResult[] = directoryBankResults.length > 0
+    ? directoryBankResults
+    : !bankSearch.isFetching && bicQuery
+      ? [{
+        id: `bank-bic:${normalizedQuery.toUpperCase()}`,
+        type: "bank",
+        label: `Look up bank by BIC: ${normalizedQuery.toUpperCase()}`,
+        subtitle: "Bank Directory lookup",
+        href: `/app/explore/banks/${encodeURIComponent(normalizedQuery.toUpperCase())}`,
+      }]
+      : [];
+
+  const results = isOpen ? [...bankResults, ...searchStatic(query)] : [];
   const groups = groupResults(results);
   const flatResults = groups.flatMap((g) => g.results);
 
@@ -112,9 +150,9 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
           ref={inputRef}
           type="search"
           role="searchbox"
-          aria-label="Search banks, lessons, terms"
+          aria-label="Search banks, payment schemes, lessons, terms, and tools"
           className="command-search__input"
-          placeholder="Search banks, corridors, lessons, terms…"
+          placeholder="Search banks by name, BIC, corridors, lessons, terms…"
           value={query}
           onChange={(e) => {
             handleChange(e.target.value);
@@ -134,40 +172,56 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
         <div className="command-search__results" ref={listRef} role="listbox" id={listboxId}>
           {flatResults.length === 0 ? (
             <div className="command-search__empty">
-              No results for &ldquo;{query}&rdquo;. Try a bank name, currency, or payment term.
+              {bankSearch.isFetching
+                ? "Searching the bank directory…"
+                : bankSearch.isError
+                  ? "Bank search unavailable. Try a BIC or Bank Directory."
+                : `No results for “${query}”. Try a bank name, BIC, currency, or payment term.`}
             </div>
           ) : (
-            groups.map((group) => (
-              <div key={group.type} className="command-search__group">
-                <div className="command-search__group-label">{group.label}</div>
-                {group.results.map((result) => {
-                  runningIndex++;
-                  const idx = runningIndex;
-                  return (
-                    <a
-                      key={result.id}
-                      id={`${listboxId}-opt-${runningIndex}`}
-                      href={result.href}
-                      className={[
-                        "command-search__item",
-                        idx === activeIndex && "command-search__item--active",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      role="option"
-                      aria-selected={idx === activeIndex}
-                      onClick={() => {
-                        setIsOpen(false);
-                        onNavigate?.(result.href);
-                      }}
-                    >
-                      <span className="command-search__item-label">{result.label}</span>
-                      <span className="command-search__item-subtitle">{result.subtitle}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            ))
+            <>
+              {bankSearch.isFetching && (
+                <div className="command-search__empty" role="status">
+                  Searching banks; other results remain available.
+                </div>
+              )}
+              {bankSearch.isError && (
+                <div className="command-search__empty" role="alert">
+                  Bank search unavailable; other results remain available.
+                </div>
+              )}
+              {groups.map((group) => (
+                <div key={group.type} className="command-search__group">
+                  <div className="command-search__group-label">{group.label}</div>
+                  {group.results.map((result) => {
+                    runningIndex++;
+                    const idx = runningIndex;
+                    return (
+                      <a
+                        key={result.id}
+                        id={`${listboxId}-opt-${runningIndex}`}
+                        href={result.href}
+                        className={[
+                          "command-search__item",
+                          idx === activeIndex && "command-search__item--active",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        role="option"
+                        aria-selected={idx === activeIndex}
+                        onClick={() => {
+                          setIsOpen(false);
+                          onNavigate?.(result.href);
+                        }}
+                      >
+                        <span className="command-search__item-label">{result.label}</span>
+                        <span className="command-search__item-subtitle">{result.subtitle}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              ))}
+            </>
           )}
         </div>
       )}
