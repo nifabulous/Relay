@@ -174,7 +174,7 @@ refuse_text 'scripts/codex_review_pr.sh' '--label contract'
 # docs/contracts/README.md itself, for a branch literally named "README")
 # must never be injected as a signed-off contract, and a bare `-s` check
 # (true for a directory too) must never be able to abort the script.
-require_text 'scripts/codex_review_pr.sh' '# Contract:'\''*'
+require_text 'scripts/codex_review_pr.sh' '"# Contract: $HEAD_REF_NAME"'
 require_text 'scripts/codex_review_pr.sh' 'show_trusted "$CONTRACT_PATH"'
 
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
@@ -342,7 +342,7 @@ cat >"$STUB_DIR/git" <<'GSTUB'
 # stub-creation time, so tests exercise the object-read path without
 # committing fixtures into the developer's worktree.
 STUB_CFG="$(dirname "$(command -v git)")"
-REAL_GIT="$(command -v -p git 2>/dev/null || command -v git)"
+REAL_GIT="$(cat "$STUB_CFG/real-git")"
 GIT_STUB_ROOT="$(cat "$STUB_CFG/git-root")"
 TRUSTED_STAGING="$(cat "$STUB_CFG/trusted-staging")"
 for arg in "$@"; do
@@ -353,6 +353,10 @@ for arg in "$@"; do
 done
 if [[ "${*: -1}" == "HEAD" && " $* " == *" rev-parse "* ]]; then
   printf '%s\n' "$(cat "$STUB_CFG/trusted-sha")"
+  exit 0
+fi
+if [[ "$1" == "ls-remote" || ("$1" == "-C" && "$3" == "ls-remote") ]]; then
+  printf '%s\trefs/heads/%s\n' "$(cat "$STUB_CFG/remote-tip")" "$(cat "$STUB_CFG/default-branch")"
   exit 0
 fi
 if [[ "$1" == "show" || ("$1" == "-C" && "$3" == "show") ]]; then
@@ -368,9 +372,15 @@ fi
 exec "$REAL_GIT" "$@"
 GSTUB
 
+# Resolved NOW, before any PATH stubbing exists: resolving inside the stub
+# would find the stub itself (it is first on PATH at runtime) and exec-loop.
+REAL_GIT_PATH="$(command -v git)"
 printf '%s\n' "$ROOT" >"$STUB_DIR/git-root"
 printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/trusted-sha"
 printf '%s\n' "$TRUSTED_STAGING_ROOT" >"$STUB_DIR/trusted-staging"
+printf '%s\n' "$REAL_GIT_PATH" >"$STUB_DIR/real-git"
+printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+printf '%s\n' "main" >"$STUB_DIR/default-branch"
 # The policy file is genuinely part of the trusted checkout; serve the real one.
 mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
 cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
@@ -408,6 +418,7 @@ run_suppression_case() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -448,6 +459,7 @@ check_timeout_propagates() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -492,6 +504,7 @@ check_override_beyond_job_deadline_is_refused() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -534,6 +547,7 @@ check_oversized_review_input_is_refused() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=20000 \
@@ -601,6 +615,56 @@ check_refuses_untrusted_checkout() {
   fi
 }
 
+# Issue #48: the workflow's stamp proves intent, but only the REMOTE proves
+# where the default branch actually points. A feature checkout that stamps
+# its own HEAD (CODEX_TRUSTED_SHA=$(git rev-parse HEAD)) must still be
+# refused because origin's default-branch tip differs.
+check_refuses_non_default_branch_head() {
+  local branch="zz-codex-automation-test/feature-checkout"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 17, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "beefcace"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  # The self-attacked setup: the caller stamps its own checkout's HEAD.
+  local self_sha
+  self_sha="$(git -C "$ROOT" rev-parse HEAD)"
+  printf '%s\n' "0000000000000000000000000000000000000000" >"$STUB_DIR/remote-tip"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$self_sha" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 17 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  # Restore the honest remote for subsequent checks.
+  printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh accepted a self-stamped SHA that origin contradicts.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'A self-stamped non-default checkout still reached comment publication.'
+  fi
+}
+
 check_contract_lands_in_trusted_channel_only() {
   local branch="zz-codex-automation-test/contract-fixture"
   # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
@@ -633,6 +697,7 @@ check_contract_lands_in_trusted_channel_only() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -698,6 +763,7 @@ check_non_contract_file_is_ignored() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -756,6 +822,7 @@ check_contract_path_as_directory_is_ignored() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -832,6 +899,7 @@ env \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
   CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -853,6 +921,7 @@ env \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
   CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -865,6 +934,7 @@ if [[ -s "$STUB_DIR/posted.log" ]]; then
 fi
 
 check_refuses_untrusted_checkout
+check_refuses_non_default_branch_head
 check_contract_lands_in_trusted_channel_only
 
 check_non_contract_file_is_ignored

@@ -26,9 +26,25 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 # worktree — must refuse to run rather than inject branch-controlled text
 # as trusted policy.
 TRUSTED_SHA="${CODEX_TRUSTED_SHA:?CODEX_TRUSTED_SHA is required (the default-branch SHA the workflow checked out)}"
+CODEX_DEFAULT_BRANCH="${CODEX_DEFAULT_BRANCH:?CODEX_DEFAULT_BRANCH is required (the repository default branch name)}"
 CHECKED_OUT_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 if [[ "$CHECKED_OUT_SHA" != "$TRUSTED_SHA" ]]; then
   echo "Checkout ${CHECKED_OUT_SHA} does not match the trusted default-branch SHA ${TRUSTED_SHA}; refusing to run with branch-controlled policy." >&2
+  exit 1
+fi
+
+# The stamp proves what the workflow checked out; the REMOTE proves where
+# that ref actually points right now. Without this, any caller — including a
+# local run from a feature checkout — could stamp its own HEAD and inject
+# branch-controlled policy as trusted. Fail closed when the remote cannot be
+# consulted at all.
+REMOTE_TIP="$(git -C "$REPO_ROOT" ls-remote origin "refs/heads/$CODEX_DEFAULT_BRANCH" | cut -f1)"
+if [[ -z "$REMOTE_TIP" ]]; then
+  echo "Could not resolve refs/heads/$CODEX_DEFAULT_BRANCH on origin; refusing to run without an independently verified default branch." >&2
+  exit 1
+fi
+if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
+  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $CODEX_DEFAULT_BRANCH on origin (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
   exit 1
 fi
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
@@ -238,7 +254,9 @@ show_trusted() {
   if CONTRACT_CONTENT="$(show_trusted "$CONTRACT_PATH" 2>/dev/null)" && [[ -n "$CONTRACT_CONTENT" ]]; then
     CONTRACT_FIRST_LINE="$(grep -m1 -v '^[[:space:]]*$' <<<"$CONTRACT_CONTENT" || true)"
   fi
-  if [[ "$CONTRACT_FIRST_LINE" == '# Contract:'* ]]; then
+  # Exact match on the declared branch: a correctly located file whose header
+  # names a DIFFERENT branch is a mis-filed contract and must not bind here.
+  if [[ "$CONTRACT_FIRST_LINE" == "# Contract: $HEAD_REF_NAME" ]]; then
     printf '\n\n## Contract (from main)\n'
     printf '%s\n' "$CONTRACT_CONTENT"
   else
