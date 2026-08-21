@@ -28,6 +28,7 @@ guard that keeps it that way.
 """
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -224,29 +225,29 @@ def test_scan_suffixes_include_config_formats():
     assert not missing, f"SCAN_SUFFIXES is missing config suffixes: {sorted(missing)}"
 
 
-def test_versioned_claude_id_in_json_config_is_caught():
+def test_versioned_claude_id_in_json_config_is_caught(tmp_path, monkeypatch):
     """Regression, proven by planting a real violation rather than merely
     asserting suffix membership: a versioned Claude id hiding in a .json
     config under a scanned root must not be invisible just because the file
-    is JSON instead of one of the original script/doc suffixes. Plants a
-    temp .json file under scripts/ (a scanned root, alongside the real
-    scripts/ssi-autopilot/regions.json), re-runs the module's own
-    suffix-filtered file walk, and proves the planted id is both collected
-    and flagged by the drift regex."""
-    planted = ROOT / "scripts" / "_test_model_pinning_drift_plant.json"
-    assert not planted.exists(), f"stale fixture file left over from a previous run: {planted}"
+    is JSON instead of one of the original script/doc suffixes. Plants the
+    violation in a tmp_path scan root (never the source tree — an
+    interrupted or concurrent run must not leave repository changes behind),
+    points the module's own suffix-filtered walk at it, and proves the
+    planted id is both collected and flagged by the drift regex."""
+    scan_root = tmp_path / "scripts"
+    scan_root.mkdir()
+    planted = scan_root / "_test_model_pinning_drift_plant.json"
     planted.write_text('{"model": "claude-opus-5-20260101"}\n')
-    try:
-        rescanned = list(_iter_scanned_files())
-        assert planted in rescanned, (
-            f"{planted.name}: a .json file under a scanned root was not "
-            "collected by _iter_scanned_files() -- SCAN_SUFFIXES is missing "
-            "'.json'"
-        )
-        match = CLAUDE_VERSIONED_RE.search(planted.read_text())
-        assert match is not None, (
-            f"{planted.name}: planted versioned Claude id "
-            "'claude-opus-5-20260101' was not detected by CLAUDE_VERSIONED_RE"
-        )
-    finally:
-        planted.unlink(missing_ok=True)
+    monkeypatch.setattr(sys.modules[__name__], "SCAN_ROOTS", [scan_root])
+
+    rescanned = list(_iter_scanned_files())
+    assert planted in rescanned, (
+        f"{planted.name}: a .json file under a scanned root was not "
+        "collected by _iter_scanned_files() -- SCAN_SUFFIXES is missing "
+        "'.json'"
+    )
+    match = CLAUDE_VERSIONED_RE.search(planted.read_text())
+    assert match is not None, (
+        f"{planted.name}: planted versioned Claude id "
+        "'claude-opus-5-20260101' was not detected by CLAUDE_VERSIONED_RE"
+    )

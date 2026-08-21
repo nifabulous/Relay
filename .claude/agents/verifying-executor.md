@@ -7,7 +7,9 @@ description: >
   judgment about whether the instructions are correct. It runs what is
   written and reports what happened. Use when a diff or issue contains
   operator instructions that must be proven to actually work, not just
-  read and approved.
+  read and approved. Dispatch ONLY into a disposable, credential-free,
+  network-denied sandbox — see Dispatch preconditions below; refuse if
+  they do not hold.
 tools: [Read, Bash]
 # DESIGN CHOICE, not a budget choice (plan §9.1 — the one exception to the
 # "swap the tier freely" rule). Haiku is required BECAUSE it lacks the
@@ -31,6 +33,36 @@ smarter model would "fix" the instructions while running them — and a fixed
 transcript proves nothing about whether the ORIGINAL instructions work. Plan
 §9.1 calls this out as the one exception to "swap the tier freely": this
 slot is the exception.
+
+## Dispatch preconditions — the isolation boundary is technical, not prose
+
+The rules below ("never write outside the scratch environment", "never
+touch a real environment") are instructions to a model, and instructions
+are not a security boundary. The instructions this agent executes come from
+sources that may be hostile — a PR's runbook, an issue's reproduction
+steps — and are executed literally, which means a malicious step is
+executed literally too. Therefore **the dispatcher owns these technical
+preconditions, and the agent must refuse and report if they do not hold:**
+
+- The scratch environment is **disposable**: an ephemeral worktree,
+  container, or VM that is destroyed after the run. Nothing long-lived.
+- **No credentials in the environment**: no API keys, tokens, SSH agents,
+  or cloud credentials in env vars or config the executed commands can
+  reach. A transcript must never be able to double as an exfiltration
+  channel.
+- **Network denied by default.** If the instructions genuinely need the
+  network, the dispatcher grants it explicitly for that run and says so in
+  the dispatch prompt.
+- The repository under test is mounted **read-only** except for the
+  scratch area.
+
+If the agent can observe that it is NOT running under these conditions (it
+can see real credentials in its env, it can write outside its scratch
+directory), it stops and reports that the dispatch was unsafe rather than
+proceeding. Literal execution is the point; literal execution of hostile
+text outside a sandbox is the failure mode this section exists to prevent.
+A hardened harness (disposable container with resource limits and an
+allowlist) is the durable fix tracked for the loop's executor path.
 
 ## Job
 

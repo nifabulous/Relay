@@ -18,6 +18,19 @@ fi
 
 PR_NUMBER="$1"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# T5's tamper-proofing rests on this checkout being the trusted default
+# branch: the per-branch contract AND the review policy travel from
+# $REPO_ROOT into the reviewer's instructions channel. The workflow stamps
+# the SHA it checked out; standing anywhere else — a PR checkout, a moved
+# worktree — must refuse to run rather than inject branch-controlled text
+# as trusted policy.
+TRUSTED_SHA="${CODEX_TRUSTED_SHA:?CODEX_TRUSTED_SHA is required (the default-branch SHA the workflow checked out)}"
+CHECKED_OUT_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+if [[ "$CHECKED_OUT_SHA" != "$TRUSTED_SHA" ]]; then
+  echo "Checkout ${CHECKED_OUT_SHA} does not match the trusted default-branch SHA ${TRUSTED_SHA}; refusing to run with branch-controlled policy." >&2
+  exit 1
+fi
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 : "${GH_REPO:?GH_REPO or GITHUB_REPOSITORY is required}"
@@ -63,9 +76,15 @@ trap 'rm -rf "$TEMP_DIR"' EXIT
 METADATA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json number,title,body,url,baseRefName,headRefName,headRefOid)"
 HEAD_SHA="$(jq -r '.headRefOid' <<<"$METADATA")"
 HEAD_REF_NAME="$(jq -r '.headRefName' <<<"$METADATA")"
-# Same branch-to-path convention as load_contract_text in codex_arbiter.py:
-# docs/contracts/<branch>.md with every '/' replaced by '-'.
-CONTRACT_PATH="docs/contracts/${HEAD_REF_NAME//\//-}.md"
+# Same branch-to-path convention as _contract_relative_path in
+# codex_arbiter.py: docs/contracts/<slug>-<hash>.md, where <slug> is the
+# branch with every '/' replaced by '-' and <hash> is the first 8 hex chars
+# of sha256(branch). The hash makes the mapping injective: two branches
+# whose slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so
+# a contract can only ever bind the branch it was written for.
+CONTRACT_SLUG="${HEAD_REF_NAME//\//-}"
+CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$HEAD_REF_NAME")"
+CONTRACT_PATH="docs/contracts/${CONTRACT_SLUG}-${CONTRACT_HASH}.md"
 MARKER="<!-- codex-pr-review:${PR_NUMBER}:${HEAD_SHA} -->"
 
 # Duplicate suppression must key on a marker the automation itself posted. A

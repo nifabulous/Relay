@@ -7,6 +7,9 @@ FAILURES=0
 # shadows `python3` on PATH, and a shim that re-resolves through PATH would
 # recurse into the stub forever.
 REAL_PYTHON3="$(python3 -c 'import sys; print(sys.executable)')"
+# The SHA the script must see as its checkout to trust it. Tests run against
+# this worktree, so the worktree HEAD is the trusted SHA.
+ROOT_HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 require_text() {
   local file="$1"
@@ -362,6 +365,8 @@ run_suppression_case() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -401,6 +406,8 @@ check_timeout_propagates() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -444,6 +451,8 @@ check_override_beyond_job_deadline_is_refused() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -485,6 +494,8 @@ check_oversized_review_input_is_refused() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=20000 \
@@ -510,9 +521,54 @@ check_oversized_review_input_is_refused() {
 # branch -- and must land only in the TRUSTED --instructions file, never in
 # the untrusted --input file alongside the PR diff/metadata.
 # ---------------------------------------------------------------------------
+# Review P1 (head 2afd089): T5's contract injection is only tamper-proof if
+# the checkout really is the trusted default branch. The script must refuse
+# to run at all when the SHA it stands on differs from the stamped trusted
+# SHA — a branch-controlled checkout must not be able to supply either the
+# contract or the review policy to the instructions channel.
+check_refuses_untrusted_checkout() {
+  local branch="zz-codex-automation-test/untrusted-checkout"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 16, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "cafebabe"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="0000000000000000000000000000000000000000" \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 16 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh ran on a checkout that does not match the trusted SHA.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'An untrusted checkout still reached comment publication.'
+  fi
+}
+
 check_contract_lands_in_trusted_channel_only() {
   local branch="zz-codex-automation-test/contract-fixture"
-  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
+  local contract_hash
+  contract_hash="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])' "$branch")"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}-${contract_hash}.md"
   local sentinel="ZZ_T5_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
   local status=0
 
@@ -537,6 +593,8 @@ check_contract_lands_in_trusted_channel_only() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -601,6 +659,8 @@ check_non_contract_file_is_ignored() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -658,6 +718,8 @@ check_contract_path_as_directory_is_ignored() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -733,6 +795,7 @@ env \
   OPENAI_API_KEY=stub-key \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
+  CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -753,6 +816,7 @@ env \
   OPENAI_API_KEY=stub-key \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
+  CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -764,6 +828,7 @@ if [[ -s "$STUB_DIR/posted.log" ]]; then
   fail 'A review was posted after the PR head moved during model generation.'
 fi
 
+check_refuses_untrusted_checkout
 check_contract_lands_in_trusted_channel_only
 
 check_non_contract_file_is_ignored

@@ -13,10 +13,18 @@ something the branch under review can edit unilaterally.
 
 ## Where contracts live
 
-Every loop-managed PR gets a contract file at `docs/contracts/<branch>.md`,
-where `<branch>` is the PR's branch name with every `/` replaced by `-`. For
-example, branch `feat/loop-arbiter` has contract
-`docs/contracts/feat-loop-arbiter.md`.
+Every loop-managed PR gets a contract file at
+`docs/contracts/<slug>-<hash>.md`, where `<slug>` is the branch name with
+every `/` replaced by `-` and `<hash>` is the first 8 hex chars of
+`sha256(branch)`. The hash makes the mapping injective: two branches whose
+slugs collide (`feature/a-b` vs `feature-a/b`) hash differently, so one
+branch's contract can never silently bind another, and no branch name
+resolves onto this README. For example, branch `feat/loop-arbiter` has
+contract `docs/contracts/feat-loop-arbiter-564bdc00.md`.
+
+The same derivation is implemented exactly twice — `_contract_relative_path`
+in `scripts/codex_arbiter.py` and the `CONTRACT_PATH` block in
+`scripts/codex_review_pr.sh` — and nowhere else.
 
 ## Format
 

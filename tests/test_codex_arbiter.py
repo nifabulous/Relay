@@ -1084,12 +1084,12 @@ def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_pat
 
 
 def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_path, monkeypatch):
-    """Minor 4: `gh issue list` must be scoped with BOTH `--label proposed-gap`
-    AND `--state all`. A regression dropping `--state all` would silently
+    """Minor 4: `gh issue list` must be scoped with a ledger label AND
+    `--state all`. A regression dropping `--state all` would silently
     narrow the search to open issues only, so a gap issue a maintainer already
     closed (e.g. as a documented accepted-gap) would no longer be found by
     _find_existing_issue and post_gap_issues would spuriously re-create it.
-    Asserts on the actual argv the gh stub recorded for the issue-list call,
+    Asserts on the actual argv the gh stub recorded for the issue-list calls,
     not on the search *result* — a passing search-before-create test does not
     prove the query was scoped correctly, only that today's stub happened to
     return the right thing."""
@@ -1108,12 +1108,45 @@ def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_pat
     arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
 
     list_calls = _calls_matching(stub_dir, "issue-list")
-    assert len(list_calls) == 1
-    argv = list_calls[0]
-    assert "--label" in argv
-    assert argv[argv.index("--label") + 1] == "proposed-gap"
-    assert "--state" in argv
-    assert argv[argv.index("--state") + 1] == "all"
+    assert len(list_calls) == 2
+    queried_labels = [
+        argv[argv.index("--label") + 1]
+        for argv in list_calls
+        if "--label" in argv
+    ]
+    assert queried_labels == ["proposed-gap", "accepted-gap"]
+    for argv in list_calls:
+        assert "--state" in argv
+        assert argv[argv.index("--state") + 1] == "all"
+
+
+def test_post_gap_issues_skips_an_issue_relabelled_accepted_gap(tmp_path, monkeypatch):
+    """Review P2 (head 2afd089): a maintainer's accepted-gap relabel REMOVES
+    the proposed-gap label, so an issue carrying only accepted-gap — open or
+    closed — must still be found by the marker search. A proposed-gap-only
+    query made the next re-proposal of that gap open a duplicate."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
+    # The relabel removed proposed-gap; this issue is what a
+    # proposed-gap-only query could no longer see.
+    (stub_dir / "issue_list.json").write_text(json.dumps([
+        {"number": 77, "body": f"{marker}\naccepted by maintainer"}
+    ]))
+
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 77}]
+    assert not (stub_dir / "created.jsonl").exists()
 
 
 def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monkeypatch):
@@ -1216,12 +1249,11 @@ def test_post_gap_issues_sanitizes_the_assembled_body(tmp_path, monkeypatch):
 
 def test_post_gap_issues_sanitizes_the_title(tmp_path, monkeypatch):
     """Minor 3: the issue TITLE goes through the same sanitize() call as the
-    body, not just the body. In ordinary operation the title's fields (sev,
-    cat, file, id) are safe slugs, but the stated guarantee is that the FINAL
-    assembled issue is sanitized — so this plants an IBAN in a finding's
-    `cat` (the field most directly interpolated into
-    _gap_issue_title/render_gap_issue_body) and asserts it never reaches the
-    `gh issue create --title` argv, mirroring
+    body, not just the body. The identity fields are now schema-bounded at
+    validate_trailer (kebab-case id/cat, single-line bounded file), so a
+    hostile value is rejected upstream — but `file` still legally carries
+    arbitrary non-newline text, so this plants an IBAN there and asserts it
+    never reaches the `gh issue create --title` argv, mirroring
     test_post_gap_issues_sanitizes_the_assembled_body's treatment of the body."""
     stub_dir = _install_gh_stub(tmp_path, monkeypatch)
     monkeypatch.setenv("ARBITER_OPERATOR", "1")
@@ -1229,8 +1261,8 @@ def test_post_gap_issues_sanitizes_the_title(tmp_path, monkeypatch):
 
     planted_iban = "DE89370400440532013000"
     comments = [
-        _comment(1, 1, [_finding("P3", "NEW", "app/a.py", planted_iban, "gap-a")]),
-        _comment(2, 2, [_finding("P3", "OPEN", "app/a.py", planted_iban, "gap-a")]),
+        _comment(1, 1, [_finding("P3", "NEW", planted_iban, "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P3", "OPEN", planted_iban, "cat-a", "gap-a")]),
     ]
     history = _history(comments, pr=100, repo=STUB_REPO)
     decision = arb.decide(history, contract)
@@ -1503,7 +1535,7 @@ def test_load_contract_text_ignores_a_present_file_without_the_contract_header(t
     docs/contracts/README.md's own real header, `# Contracts`) must degrade to
     None, never return that stray doc's content."""
     repo = _init_scratch_git_repo(tmp_path)
-    _commit_file(repo, "docs/contracts/readme-lookalike.md",
+    _commit_file(repo, arb._contract_relative_path("readme-lookalike"),
                  "# Contracts\n\nThis is the FORMAT doc, not a contract.\n")
     monkeypatch.setattr(arb, "_REPO_ROOT", repo)
     assert arb.load_contract_text("readme-lookalike") is None
@@ -1516,6 +1548,58 @@ def test_load_contract_text_returns_a_properly_headed_contract(tmp_path, monkeyp
     contracts."""
     repo = _init_scratch_git_repo(tmp_path)
     body = "# Contract: feat/readme-lookalike\n\n## Goal\n\nExample.\n"
-    _commit_file(repo, "docs/contracts/readme-lookalike.md", body)
+    _commit_file(repo, arb._contract_relative_path("readme-lookalike"), body)
     monkeypatch.setattr(arb, "_REPO_ROOT", repo)
     assert arb.load_contract_text("readme-lookalike") == body
+
+
+def test_validate_trailer_rejects_hostile_identity_fields():
+    """Review P2 (head 2afd089): id/cat are interpolated into markers, issue
+    titles, and posted comments before sanitization sees them, so they must
+    be the documented kebab-case slugs — bounded, no newlines, no markup.
+    `file` may carry arbitrary non-newline text (paths do) but is bounded and
+    single-line so a marker cannot be split from its search."""
+    base = {"sev": "P2", "state": "OPEN", "file": "app/a.py", "cat": "cat-a", "id": "gap-a"}
+
+    def trailer_with(**overrides):
+        finding = {**base, **overrides}
+        return {"schema": 2, "findings": [finding]}
+
+    assert arb.validate_trailer(trailer_with())[0] is not None  # control passes
+
+    hostile = [
+        ("bad-id", {"id": "gap a"}),
+        ("bad-id", {"id": "gap_a; rm -rf"}),
+        ("bad-id", {"id": "gap\na"}),
+        ("bad-id", {"id": "<script>alert(1)</script>"}),
+        ("bad-id", {"id": "g" * 65}),
+        ("bad-cat", {"cat": "Cat-A"}),
+        ("bad-cat", {"cat": "cat\na"}),
+        ("bad-cat", {"cat": "c" * 65}),
+        ("bad-file", {"file": "app/a.py\napp/b.py"}),
+        ("bad-file", {"file": "f" * 257}),
+    ]
+    for expected_reason, override in hostile:
+        validated, reason = arb.validate_trailer(trailer_with(**override))
+        assert validated is None, f"expected rejection for {override}"
+        assert reason == expected_reason, f"{override}: got {reason}"
+
+
+def test_contract_relative_path_is_injective_across_slug_collisions():
+    """Review P2 (head 2afd089): the old slug-only mapping collapsed
+    `feature/a-b` and `feature-a/b` onto one path, so one branch's contract
+    could silently bind another. The slug-and-hash mapping must separate
+    them, must never resolve onto the format doc, and must be stable."""
+    a = arb._contract_relative_path("feature/a-b")
+    b = arb._contract_relative_path("feature-a/b")
+    assert a != b
+    assert a.startswith("docs/contracts/feature-a-b-")
+    assert b.startswith("docs/contracts/feature-a-b-")
+
+    # No branch name resolves onto the format documentation itself.
+    assert arb._contract_relative_path("README") != "docs/contracts/README.md"
+
+    # Deterministic across calls: the same branch always binds the same path.
+    assert arb._contract_relative_path("feat/loop-arbiter") == (
+        arb._contract_relative_path("feat/loop-arbiter")
+    )

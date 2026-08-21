@@ -87,6 +87,16 @@ _TRAILER_SEVERITIES = ("P0", *_SEVERITIES)
 # (freeze-on-downgrade preserved by taking the max, never the latest).
 _SEV_RANK = {"P1": 3, "P2": 2, "P3": 1}
 _STATES = ("NEW", "OPEN", "RESOLVED")
+
+# Identity fields are interpolated into markers, issue titles, and posted
+# comments before sanitization runs, so they are bounded to the documented
+# shape (docs/loop/schemas.md: stable kebab-case ids and categories) rather
+# than trusted. A newline or markup in an identity field could make the
+# marker posted differ from the marker searched for — silently defeating
+# dedup — and an unbounded field could break GitHub API limits downstream.
+_IDENTITY_KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+_IDENTITY_MAX_LEN = 64
+_FILE_MAX_LEN = 256
 _TRAILER_OPEN = "<!-- codex-verdict:"
 _TRAILER_CLOSE = "-->"
 
@@ -270,6 +280,12 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
             value = finding.get(text_field)
             if not isinstance(value, str) or not value.strip():
                 return None, f"bad-{text_field}"
+        for identity_field in ("id", "cat"):
+            value = finding[identity_field]
+            if len(value) > _IDENTITY_MAX_LEN or not _IDENTITY_KEBAB_RE.fullmatch(value):
+                return None, f"bad-{identity_field}"
+        if len(finding["file"]) > _FILE_MAX_LEN or "\n" in finding["file"]:
+            return None, "bad-file"
         if finding["state"] == "RESOLVED":
             evidence = finding.get("evidence")
             if not isinstance(evidence, dict):
@@ -713,6 +729,7 @@ def post_comment(pr, repo, body) -> None:
 # GitHub — reachable only under the same operator gate as post_comment
 # (main()'s ``--post`` + ``ARBITER_OPERATOR=1`` check), never from decide().
 _PROPOSED_GAP_LABEL = "proposed-gap"
+_ACCEPTED_GAP_LABEL = "accepted-gap"
 _GAP_ISSUE_MAX_BYTES = 60_000  # mirrors codex_responses.py's output-bound style
 _GAP_ISSUE_LIST_LIMIT = 500
 
@@ -852,12 +869,25 @@ def _ensure_proposed_gap_label(repo: str) -> None:
 
 
 def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
-    proc = subprocess.run(
-        ["gh", "issue", "list", "--repo", repo, "--label", _PROPOSED_GAP_LABEL,
-         "--state", "all", "--json", "number,body", "--limit", str(limit)],
-        capture_output=True, text=True, check=True,
-    )
-    return json.loads(proc.stdout)
+    """Fetch every ledger issue the marker search must see, across relabels.
+
+    Both ledger labels are queried because a maintainer's accepted-gap
+    relabel REMOVES the proposed-gap label: an issue carrying only
+    accepted-gap is invisible to a proposed-gap-only query, and the next
+    re-proposal of that same gap would open a duplicate. gh ANDs repeated
+    --label flags, so this is one call per label with results concatenated.
+    --state all keeps closed ledger issues visible for the same reason.
+    """
+    issues: List[dict] = []
+    for label in (_PROPOSED_GAP_LABEL, _ACCEPTED_GAP_LABEL):
+        proc = subprocess.run(
+            ["gh", "issue", "list", "--repo", repo,
+             "--label", label,
+             "--state", "all", "--json", "number,body", "--limit", str(limit)],
+            capture_output=True, text=True, check=True,
+        )
+        issues.extend(json.loads(proc.stdout))
+    return issues
 
 
 def _find_existing_issue(existing_issues: List[dict], marker: str) -> Optional[int]:
@@ -893,6 +923,21 @@ def _is_contract_document(text: str) -> bool:
     return False
 
 
+def _contract_relative_path(branch: str) -> str:
+    """Injective branch→path mapping under docs/contracts/.
+
+    Slug-and-hash: the slug keeps paths human-readable, and the 8-hex sha256
+    prefix of the FULL branch name makes the mapping injective where the
+    slug alone is not — `feature/a-b` and `feature-a/b` both slug to
+    `feature-a-b` but hash differently, so one branch's contract can never
+    silently bind another. The hash also takes the README collision off the
+    table: no branch name resolves onto the format doc itself.
+    """
+    slug = branch.replace("/", "-")
+    digest = hashlib.sha256(branch.encode("utf-8")).hexdigest()[:8]
+    return f"docs/contracts/{slug}-{digest}.md"
+
+
 def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
     """Best-effort read of this branch's contract as it stands on `main`
     (docs/contracts/README.md §4.1: a contract binds only from the default
@@ -921,7 +966,7 @@ def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
         return None
     if not branch or branch == "HEAD":
         return None
-    path = f"docs/contracts/{branch.replace('/', '-')}.md"
+    path = _contract_relative_path(branch)
     for ref in ("origin/main", "main"):
         try:
             proc = subprocess.run(
