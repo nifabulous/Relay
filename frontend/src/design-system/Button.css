@@ -36,8 +36,8 @@
 
 /* Secondary — surface with border */
 .relay-btn--secondary {
-  background: var(--color-surface);
-  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
   color: var(--color-ink-strong);
 }
 

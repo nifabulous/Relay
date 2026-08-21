@@ -33,6 +33,21 @@ describe("Button", () => {
     await user.click(screen.getByRole("button"));
     expect(clicked).toBe(false);
   });
+
+  it("exposes the Relay Button treatment across render targets", () => {
+    const { rerender } = render(<Button variant="secondary">Secondary</Button>);
+    const button = screen.getByRole("button", { name: "Secondary" });
+
+    expect(button).toHaveClass("relay-btn", "relay-btn--secondary");
+
+    rerender(
+      <Button as="a" href="/settings" variant="danger">
+        Delete
+      </Button>,
+    );
+    const link = screen.getByRole("link", { name: "Delete" });
+    expect(link).toHaveClass("relay-btn", "relay-btn--danger");
+  });
 });
 
 describe("StatusChip", () => {

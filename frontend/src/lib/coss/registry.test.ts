@@ -34,16 +34,18 @@ describe("Coss registry foundation", () => {
     );
   });
 
-  it("keeps Coss runtime dependency declarations and installs aligned", () => {
+  it("keeps the minimal Coss runtime dependency contract aligned", () => {
     expect(componentsJson.aliases?.utils).toBe("@/lib/coss/cn");
 
-    for (const packageName of ["class-variance-authority", "clsx", "lucide-react"]) {
-      const declaredVersion = packageJson.dependencies?.[packageName];
+    const clsxVersion = packageJson.dependencies?.clsx;
+    expect(clsxVersion).toBeDefined();
+    expect(packageLock.packages[""].dependencies?.clsx).toBe(clsxVersion);
+    expect(packageLock.packages["node_modules/clsx"]?.version).toBe(clsxVersion);
+    expect(installedVersion("clsx")).toBe(clsxVersion);
 
-      expect(declaredVersion).toBeDefined();
-      expect(packageLock.packages[""].dependencies?.[packageName]).toBe(declaredVersion);
-      expect(packageLock.packages[`node_modules/${packageName}`]?.version).toBe(declaredVersion);
-      expect(installedVersion(packageName)).toBe(declaredVersion);
+    for (const packageName of ["class-variance-authority", "lucide-react"]) {
+      expect(packageJson.dependencies?.[packageName]).toBeUndefined();
+      expect(packageLock.packages[""].dependencies?.[packageName]).toBeUndefined();
     }
   });
 });

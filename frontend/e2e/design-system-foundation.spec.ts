@@ -150,3 +150,101 @@ test("resolves Coss semantic aliases with readable light and dark contrast", asy
     }
   }
 });
+
+test("uses the shared Relay Button treatment without losing router navigation", async ({ page }) => {
+  await page.goto("/app");
+
+  const action = page.locator(".overview__cta");
+  await expect(action).toHaveAttribute("href", "/app/explore?intro=1");
+
+  const styles = await action.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return {
+      borderRadius: computed.borderRadius,
+      minHeight: computed.minHeight,
+      borderWidth: computed.borderTopWidth,
+      fontFamily: computed.fontFamily,
+    };
+  });
+
+  expect(styles.borderRadius).toBe("8px");
+  expect(styles.minHeight).toBe("48px");
+  expect(styles.borderWidth).toBe("1px");
+  expect(styles.fontFamily).toContain("Instrument Sans");
+
+  await action.click();
+  await expect(page).toHaveURL(/\/app\/explore\?intro=1$/);
+});
+
+test("uses the Coss menu treatment for the real Preferences popup", async ({ page }) => {
+  await page.goto("/app");
+  await page.getByRole("button", { name: /preferences/i }).click();
+
+  const menu = page.getByRole("menu", { name: /preferences/i });
+  const styles = await menu.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return {
+      borderRadius: computed.borderRadius,
+      padding: computed.padding,
+      borderWidth: computed.borderTopWidth,
+    };
+  });
+
+  expect(styles.borderRadius).toBe("8px");
+  expect(styles.padding).toBe("4px");
+  expect(styles.borderWidth).toBe("1px");
+});
+
+test("uses an opaque tokenized surface for the tutor dialog", async ({ page }) => {
+  await page.route("**/api/tutor/availability", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ available: true }),
+    }),
+  );
+  await page.goto("/app");
+
+  await page.getByRole("button", { name: /^Tutor$/i }).click();
+  const dialog = page.getByRole("dialog", { name: "Tutor" });
+  const styles = await dialog.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return {
+      background: computed.backgroundColor,
+      borderColor: computed.borderTopColor,
+      boxShadow: computed.boxShadow,
+    };
+  });
+
+  expect(styles.background).toBe("rgb(255, 255, 255)");
+  expect(styles.borderColor).toBe("rgb(102, 112, 133)");
+  expect(styles.boxShadow).not.toBe("none");
+});
+
+test("keeps the primary Relay workspaces inside the viewport in both themes", async ({ page }) => {
+  for (const route of ["/app", "/app/explore", "/app/operate", "/app/learn", "/app/settings"]) {
+    await page.goto(route);
+
+    const themeBackgrounds = await page.evaluate((currentRoute) => {
+      const root = document.documentElement;
+      const backgrounds: Record<string, string> = {};
+      for (const theme of ["light", "dark"]) {
+        root.setAttribute("data-theme", theme);
+        backgrounds[theme] = getComputedStyle(root).getPropertyValue("--color-canvas").trim();
+        expectViewportWidth();
+      }
+      root.removeAttribute("data-theme");
+      return backgrounds;
+
+      function expectViewportWidth() {
+        if (document.documentElement.scrollWidth > window.innerWidth) {
+          throw new Error(
+            `${currentRoute} overflows at ${window.innerWidth}px: ${document.documentElement.scrollWidth}px`,
+          );
+        }
+      }
+    }, route);
+
+    expect(themeBackgrounds.light).not.toBe(themeBackgrounds.dark);
+  }
+});
