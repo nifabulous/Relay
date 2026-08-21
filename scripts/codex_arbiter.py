@@ -229,9 +229,18 @@ def extract_trailer(body: str) -> Tuple[Optional[dict], Optional[str]]:
     this scans from ``<!-- codex-verdict:`` through the matching ``-->`` and
     JSON-parses the enclosed object rather than assuming a single line.
 
-    Returns ``(trailer, None)`` for exactly one well-formed trailer, else
-    ``(None, reason)``. Zero trailers and more-than-one are both reasons the
-    collector records the round as invalid (§6.0).
+    The trailer must CLOSE the comment: nothing but whitespace may follow
+    its ``-->``. Review bodies legitimately quote diff content, and a PR can
+    plant a trailer-looking snippet in that content for the bot to quote;
+    accepting a trailer from anywhere in the body would parse attacker JSON
+    as the round's lifecycle record. Anchoring to the end (with the
+    multiple-trailer rejection below) means quoted snippets fail the round
+    closed instead of being consumed.
+
+    Returns ``(trailer, None)`` for exactly one well-formed trailer closing
+    the comment, else ``(None, reason)``. Zero trailers, more-than-one, and
+    non-final trailers are all reasons the collector records the round as
+    invalid (§6.0).
     """
     if not isinstance(body, str):
         return None, "no-body"
@@ -244,6 +253,8 @@ def extract_trailer(body: str) -> Tuple[Optional[dict], Optional[str]]:
     close = body.find(_TRAILER_CLOSE, start)
     if close == -1:
         return None, "unterminated-trailer"
+    if body[close + len(_TRAILER_CLOSE):].strip():
+        return None, "trailer-not-final"
     payload = body[start:close].strip()
     try:
         trailer = json.loads(payload)
@@ -586,30 +597,33 @@ def decide(history, contract: Contract) -> Decision:
                        proposed_gaps=_proposed_gaps(open_findings, pending_human),
                        detail="P1 resolution awaits human verification")
 
-    # Rule 3: EXHAUSTED-NOVELTY — no P1s, every open finding a repeated minor.
+    # Rule 3: HARD CAP (round >= hard_cap) — whatever remains escalates.
+    # Evaluated BEFORE the merge-family rules so the cap is a true ceiling:
+    # an unresolved loop at the configured maximum escalates to a human even
+    # when every open finding is a minor. "Never merge at the cap" is the
+    # fail-closed termination invariant; evaluating SOFT-GATE or
+    # EXHAUSTED-NOVELTY first would let round `hard_cap` return
+    # MERGE-WITH-GAPS and silently convert the ceiling into a merge gate.
+    if round_count >= contract.hard_cap:
+        gaps = _proposed_gaps(open_findings, pending_human)
+        return _result(ESCALATE, RULE_HARD_CAP, True, round_count, proposed_gaps=gaps,
+                       detail=f"hard cap reached at round {round_count}; contract likely wrong")
+
+    # Rule 4: EXHAUSTED-NOVELTY — no P1s, every open finding a repeated minor.
     if not open_p1 and all(_is_repeated(t, latest_index) for t in open_findings):
         gaps = _proposed_gaps(open_findings, pending_human)
         return _result(MERGE_WITH_GAPS, RULE_EXHAUSTED, True, round_count, proposed_gaps=gaps,
                        detail="every open finding is a repeated minor (no new information)")
 
-    # Rule 4: SOFT GATE (round >= soft_gate) — no P1s, only minors (new or not).
-    # The effective gate is clamped to the hard cap: soft_gate is env-tunable
-    # while hard_cap is fixed, so an operator setting soft_gate > hard_cap would
-    # otherwise leave the gate sitting *past* the cap. min(soft_gate, hard_cap)
-    # keeps the gate inside the loop's live range and preserves the invariant
-    # that the cap is the ceiling (pure — reads the contract, never the env).
-    soft_gate = min(contract.soft_gate, contract.hard_cap)
-    if round_count >= soft_gate and not open_p1:
+    # Rule 5: SOFT GATE (round >= soft_gate) — no P1s, only minors (new or
+    # not). No clamp against the hard cap is needed or wanted: the cap is
+    # evaluated first, so a soft_gate configured past the cap simply never
+    # fires — the loop escalates at the cap instead of merging there. A
+    # clamp would re-open the merge-at-the-cap hole this ordering closes.
+    if round_count >= contract.soft_gate and not open_p1:
         gaps = _proposed_gaps(open_findings, pending_human)
         return _result(MERGE_WITH_GAPS, RULE_SOFT_GATE, True, round_count, proposed_gaps=gaps,
                        detail=f"soft gate reached at round {round_count} with only minor findings")
-
-    # Rule 5: HARD CAP (round >= hard_cap) — whatever remains escalates; never
-    # merge at the cap, so a late stream of real P1s cannot be waved through.
-    if round_count >= contract.hard_cap:
-        gaps = _proposed_gaps(open_findings, pending_human)
-        return _result(ESCALATE, RULE_HARD_CAP, True, round_count, proposed_gaps=gaps,
-                       detail=f"hard cap reached at round {round_count}; contract likely wrong")
 
     # Rule 6: otherwise keep looping.
     return _result(CONTINUE, RULE_CONTINUE, False, round_count, detail="loop continues")
@@ -621,7 +635,8 @@ def decide(history, contract: Contract) -> Decision:
 _MARKER_RE_TMPL = r"codex-pr-review:{pr}:([0-9a-fA-F]{{7,64}})"
 
 
-def build_history(pr, repo, head_sha, diff_files, raw_comments, contract: Contract) -> dict:
+def build_history(pr, repo, head_sha, diff_files, raw_comments, contract: Contract,
+                  head_ref: Optional[str] = None) -> dict:
     """Pure: assemble schema-1 history from already-fetched raw comments.
 
     Each raw comment is a dict with ``id``, ``created_at``, ``login`` and
@@ -636,7 +651,12 @@ def build_history(pr, repo, head_sha, diff_files, raw_comments, contract: Contra
     for raw in raw_comments:
         login = raw.get("login", "")
         body = raw.get("body") or ""
-        match = marker_re.search(body)
+        # The poster emits the marker as the comment's FIRST line, so a
+        # canonical round is anchored there — and only there. Matching the
+        # marker anywhere in the body let a PR plant a fake marker in its
+        # diff, get the bot to quote it, and have the quote counted as a
+        # review round (review P2, head b73afd5).
+        match = marker_re.search(body.split("\n", 1)[0].strip())
         if login != contract.bot_login or match is None:
             continue
         comment_head_sha = match.group(1)
@@ -656,6 +676,11 @@ def build_history(pr, repo, head_sha, diff_files, raw_comments, contract: Contra
         "repo": repo,
         "pr": pr,
         "current_head_sha": head_sha,
+        # The PR's OWN branch name, not the checkout's. Gap issues cite the
+        # branch's contract; deriving it from `git rev-parse HEAD` resolves
+        # to None on a detached CI checkout or to the wrong branch when the
+        # arbiter runs from main (review P2, head b73afd5).
+        "current_head_ref": head_ref,
         "current_diff_files": sorted(diff_files),
         "comments": comments,
     }
@@ -677,15 +702,18 @@ def collect(pr: int, contract: Contract, repo: Optional[str] = None) -> dict:
     repo = repo or os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY")
     if not repo:
         raise SystemExit("GH_REPO or GITHUB_REPOSITORY is required")
-    meta = _gh_json(["pr", "view", str(pr), "--repo", repo, "--json", "headRefOid,files"])
+    meta = _gh_json(["pr", "view", str(pr), "--repo", repo,
+                     "--json", "headRefOid,headRefName,files"])
     head_sha = meta["headRefOid"]
+    head_ref = meta["headRefName"]
     diff_files = [f["path"] for f in meta.get("files", [])]
     raw = _gh_lines([
         "api", "--paginate", f"repos/{repo}/issues/{pr}/comments?per_page=100",
         "--jq", ".[] | {id: .id, created_at: .created_at, body: (.body // \"\"), "
                 "login: (.user.login // \"\")}",
     ])
-    return build_history(pr, repo, head_sha, diff_files, raw, contract)
+    return build_history(pr, repo, head_sha, diff_files, raw, contract,
+                         head_ref=head_ref)
 
 
 # --------------------------------------------------------------------------- #
@@ -1126,7 +1154,7 @@ def main(argv=None) -> int:
         post_comment(args.pr, history["repo"], render_comment(decision, args.pr))
         print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
         if decision.proposed_gaps:
-            contract_text = load_contract_text()
+            contract_text = load_contract_text(history.get("current_head_ref"))
             gap_results = post_gap_issues(decision, args.pr, history["repo"], contract,
                                            history, contract_text=contract_text)
             created = sum(1 for r in gap_results if r["action"] == "created")

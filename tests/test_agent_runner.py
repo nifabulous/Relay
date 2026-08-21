@@ -167,3 +167,77 @@ def test_role_prompt_is_never_truncated(agent_file, tmp_path, monkeypatch):
     )
 
     assert exit_code == 1
+
+
+def test_verifying_executor_requires_sandbox_attestation(tmp_path, monkeypatch):
+    """Review P1 (head b73afd5): the headless path must fail closed for the
+    literal-execution agent — prose preconditions are not a boundary, so the
+    runner demands a per-run attestation that the sandbox actually exists."""
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "verifying-executor.md").write_text(
+        "---\nname: verifying-executor\nmodel: haiku\n---\n\nRun as written.\n"
+    )
+    monkeypatch.setattr(agent_runner, "AGENTS_DIR", agents_dir)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("RELAY_AGENT_SANDBOX_ATTESTED", raising=False)
+
+    inbox = tmp_path / "input.md"
+    inbox.write_text("rm -rf /important-thing")
+    exit_code = agent_runner.main(
+        [
+            "--agent", "verifying-executor",
+            "--input", str(inbox),
+            "--output", str(tmp_path / "out.md"),
+            "--model", "m",
+        ]
+    )
+    assert exit_code == 1
+
+    # With the attestation set — the dispatcher vouching the sandbox exists —
+    # the run proceeds to the transport (stubbed here).
+    sent: dict = {}
+
+    def capture(*args, **kwargs):
+        sent["called"] = True
+        return "transcript"
+
+    monkeypatch.setenv("RELAY_AGENT_SANDBOX_ATTESTED", "1")
+    monkeypatch.setattr(agent_runner.codex_responses, "request_response", capture)
+    exit_code = agent_runner.main(
+        [
+            "--agent", "verifying-executor",
+            "--input", str(inbox),
+            "--output", str(tmp_path / "out.md"),
+            "--model", "m",
+        ]
+    )
+    assert exit_code == 0
+    assert sent["called"] is True
+
+
+def test_research_agents_need_no_sandbox_attestation(tmp_path, monkeypatch):
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "domain-researcher.md").write_text(
+        "---\nname: domain-researcher\nmodel: sonnet\n---\n\nResearch.\n"
+    )
+    monkeypatch.setattr(agent_runner, "AGENTS_DIR", agents_dir)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("RELAY_AGENT_SANDBOX_ATTESTED", raising=False)
+    monkeypatch.setenv("RELAY_AGENT_DOMAIN_RESEARCHER_MODEL", "m")
+
+    def capture(*args, **kwargs):
+        return "memo"
+
+    monkeypatch.setattr(agent_runner.codex_responses, "request_response", capture)
+    inbox = tmp_path / "q.md"
+    inbox.write_text("question")
+    exit_code = agent_runner.main(
+        [
+            "--agent", "domain-researcher",
+            "--input", str(inbox),
+            "--output", str(tmp_path / "memo.md"),
+        ]
+    )
+    assert exit_code == 0

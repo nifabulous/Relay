@@ -467,14 +467,14 @@ def test_soft_gate_merges_with_gaps_when_a_new_minor_is_present():
     assert decision.cited_rule == "SOFT-GATE"
 
 
-def test_soft_gate_is_clamped_to_the_hard_cap():
-    """A soft gate configured *softer* than the hard cap is clamped to the cap:
-    the effective gate is min(soft_gate, hard_cap). With soft_gate=12 and the
-    fixed hard_cap=10, a minors-only history (with a NEW minor at the latest
-    round, so EXHAUSTED-NOVELTY does not fire) reaches round 10 and merges via
-    the SOFT GATE — proving the effective gate is 10, not the raw 12. Without the
-    clamp, round 10 would fall through the (unreached) soft gate to a HARD-CAP
-    escalation, so this assertion fails on the pre-clamp code."""
+def test_soft_gate_past_the_hard_cap_never_merges_at_the_cap():
+    """Review P1 (head b73afd5): a soft gate configured past the fixed hard
+    cap must never turn the cap into a merge gate. With soft_gate=12 and
+    hard_cap=10, round 10 is the CAP — an unresolved loop escalates there no
+    matter what the open findings look like. The previous implementation
+    evaluated SOFT-GATE (with a clamp) before HARD-CAP and returned
+    MERGE-WITH-GAPS at round 10, converting the fail-closed ceiling into a
+    merge recommendation."""
     comments = [_comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "a")])]
     for n in range(2, 10):
         comments.append(_comment(n, n, [_finding("P2", "OPEN", "app/a.py", "cat-a", "a")]))
@@ -484,8 +484,34 @@ def test_soft_gate_is_clamped_to_the_hard_cap():
     ]))
     decision = arb.decide(_history(comments), _contract(soft_gate=12))  # hard_cap stays 10
     assert decision.round_count == 10
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "HARD-CAP"
+
+
+def test_hard_cap_preempts_merge_rules_for_repeated_minors():
+    """Review P1 (head b73afd5): at the cap, even a fully-repeated minors-only
+    history — which would merge via EXHAUSTED-NOVELTY one round earlier —
+    must escalate instead of merging AT the cap."""
+    comments = [_comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "a")])]
+    for n in range(2, 11):
+        comments.append(_comment(n, n, [_finding("P2", "OPEN", "app/a.py", "cat-a", "a")]))
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.round_count == 10
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "HARD-CAP"
+
+
+def test_exhausted_novelty_still_merges_the_round_before_the_cap():
+    """The accept path for the reorder above: novelty exhaustion remains a
+    legitimate merge rule when the loop has NOT reached the cap — this test
+    fails if HARD-CAP was moved too early and now swallows round 9."""
+    comments = [_comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "a")])]
+    for n in range(2, 10):
+        comments.append(_comment(n, n, [_finding("P2", "OPEN", "app/a.py", "cat-a", "a")]))
+    decision = arb.decide(_history(comments), _contract())  # soft_gate=5, hard_cap=10
+    assert decision.round_count == 9
     assert decision.recommendation == "MERGE-WITH-GAPS"
-    assert decision.cited_rule == "SOFT-GATE"
+    assert decision.cited_rule == "EXHAUSTED-NOVELTY"
 
 
 def test_hard_cap_escalates_and_never_merges():
@@ -846,11 +872,12 @@ def test_extract_trailer_returns_none_on_bad_json():
 # --------------------------------------------------------------------------- #
 def test_build_history_filters_non_canonical_and_derives_marker():
     raw = [
-        {  # canonical: bot + review marker in body
+        {  # canonical: bot + review marker on the FIRST line, trailer closing
             "id": 11,
             "created_at": "2026-08-17T09:02:00Z",
             "login": BOT,
-            "body": "review\n<!-- codex-pr-review:24:" + "a" * 40 + " -->\n"
+            "body": "<!-- codex-pr-review:24:" + "a" * 40 + " -->\n"
+                    "review\n"
                     '<!-- codex-verdict: {"schema":2,"verdict":"BLOCK","findings":[]} -->',
         },
         {  # non-bot author — dropped
@@ -877,6 +904,34 @@ def test_build_history_filters_non_canonical_and_derives_marker():
     assert history["schema"] == 1
     assert history["pr"] == 24
     assert [c["comment_id"] for c in history["comments"]] == [10, 11]  # sorted, filtered
+
+    # Review P2 (head b73afd5): machine metadata is anchored. A bot comment
+    # whose marker is NOT on the first line — the shape of a QUOTED marker
+    # inside prose the bot legitimately reproduces — is not a canonical
+    # round, and a trailer with prose after it is not a round trailer.
+    quoted = [{
+        "id": 21, "created_at": "2026-08-17T09:05:00Z", "login": BOT,
+        "body": "The PR diff contains this line, quoted verbatim:\n"
+                "> <!-- codex-pr-review:24:" + "e" * 40 + " -->\n"
+                '<!-- codex-verdict: {"schema":2,"verdict":"BLOCK","findings":[]} -->',
+    }]
+    spoofed_marker = arb.build_history(24, "leatherback/relay", "d" * 40,
+                                       ["app/models.py"], quoted, _contract())
+    assert spoofed_marker["comments"] == []
+
+    trailing_prose = [{
+        "id": 22, "created_at": "2026-08-17T09:06:00Z", "login": BOT,
+        "body": "<!-- codex-pr-review:24:" + "f" * 40 + " -->\n"
+                '<!-- codex-verdict: {"schema":2,"verdict":"BLOCK","findings":[]} -->\n'
+                "Thanks for reading!",
+    }]
+    non_final = arb.build_history(24, "leatherback/relay", "d" * 40,
+                                  ["app/models.py"], trailing_prose, _contract())
+    # The comment is still a canonical round (the marker is genuine), but its
+    # trailer failed the close-of-comment anchor and must NOT be consumed:
+    # the round records no trailer, which decide() fails closed on.
+    assert len(non_final["comments"]) == 1
+    assert non_final["comments"][0]["trailer"] is None
     assert history["comments"][0]["head_sha"] == "c" * 40
     assert history["comments"][0]["marker"] == "codex-pr-review:24:" + "c" * 40
     # And the core accepts what the collector emits.
@@ -1603,3 +1658,22 @@ def test_contract_relative_path_is_injective_across_slug_collisions():
     assert arb._contract_relative_path("feat/loop-arbiter") == (
         arb._contract_relative_path("feat/loop-arbiter")
     )
+
+
+def test_build_history_carries_the_pr_branch_name():
+    """Review P2 (head b73afd5): gap issues cite the PR branch's contract,
+    so the collector must retain headRefName explicitly. Deriving the branch
+    from the local checkout resolves to None on a detached CI checkout or to
+    the wrong branch when the arbiter runs from main."""
+    raw = [{
+        "id": 1, "created_at": "2026-08-17T00:00:00Z", "login": BOT,
+        "body": "<!-- codex-pr-review:100:" + "d" * 40 + " -->\n"
+                '<!-- codex-verdict: {"schema":2,"verdict":"BLOCK","findings":[]} -->',
+    }]
+    history = arb.build_history(100, STUB_REPO, "d" * 40, ["app/a.py"], raw,
+                                _contract(), head_ref="feat/some-branch")
+    assert history["current_head_ref"] == "feat/some-branch"
+
+    default_history = arb.build_history(100, STUB_REPO, "d" * 40, ["app/a.py"], raw,
+                                        _contract())
+    assert default_history["current_head_ref"] is None

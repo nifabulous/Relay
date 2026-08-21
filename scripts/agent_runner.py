@@ -28,6 +28,27 @@ import codex_responses  # noqa: E402
 AGENTS_DIR = Path(__file__).resolve().parent.parent / ".claude" / "agents"
 AGENT_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
+# Agents whose definitions demand technical isolation at dispatch time. The
+# verifying-executor runs hostile text literally; dispatching it outside a
+# disposable, credential-free, network-denied sandbox turns that into an
+# arbitrary-execution primitive. Prose in the definition cannot enforce the
+# boundary, so the headless path refuses to run until the dispatcher attests
+# — per run, via environment — that the preconditions hold.
+SANDBOX_REQUIRED_AGENTS = {"verifying-executor"}
+SANDBOX_ATTESTATION_ENV = "RELAY_AGENT_SANDBOX_ATTESTED"
+
+
+def require_sandbox_attestation(agent_name: str) -> None:
+    if agent_name not in SANDBOX_REQUIRED_AGENTS:
+        return
+    if os.environ.get(SANDBOX_ATTESTATION_ENV) != "1":
+        raise PermissionError(
+            f"agent {agent_name!r} executes untrusted instructions and "
+            f"requires a disposable, credential-free, network-denied "
+            f"sandbox; set {SANDBOX_ATTESTATION_ENV}=1 only when that "
+            "environment is actually in place"
+        )
+
 # A research memo is an order of magnitude smaller than a full review; the
 # defaults follow the artifact, not the reviewer's budget. Every one is
 # overridable because the ceilings are coherence-checked downstream.
@@ -162,6 +183,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     try:
         agent_name = args.agent
+        require_sandbox_attestation(agent_name)
         role_text = load_role_text(agent_path(agent_name))
         model = resolve_model(agent_name, args.model)
         api_style = codex_responses.resolve_api_style(args.api_style)
