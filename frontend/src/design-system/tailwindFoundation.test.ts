@@ -64,7 +64,7 @@ describe("Tailwind foundation", () => {
   });
 
   it("opts Tailwind source discovery into the Coss directory", () => {
-    expect(globalCss).toContain('source(none)');
+    expect(globalCss).toContain("source(none)");
     expect(globalCss).toContain('@source "./coss"');
     expect(globalCss).not.toContain('@source not "../**/*.ts"');
     expect(globalCss).not.toContain('@source not "../**/*.tsx"');

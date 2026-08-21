@@ -29,12 +29,15 @@ describe("Coss registry foundation", () => {
     const { cn } = await import("./cn");
 
     expect(cn("px-2", false, undefined, "text-sm")).toBe("px-2 text-sm");
+    expect(cn(["gap-2", null], { "items-center": true, hidden: false })).toBe(
+      "gap-2 items-center",
+    );
   });
 
   it("keeps Coss runtime dependency declarations and installs aligned", () => {
     expect(componentsJson.aliases?.utils).toBe("@/lib/coss/cn");
 
-    for (const packageName of ["class-variance-authority", "lucide-react"]) {
+    for (const packageName of ["class-variance-authority", "clsx", "lucide-react"]) {
       const declaredVersion = packageJson.dependencies?.[packageName];
 
       expect(declaredVersion).toBeDefined();

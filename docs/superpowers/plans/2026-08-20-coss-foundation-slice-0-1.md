@@ -13,7 +13,7 @@
 - Work from the clean UI worktree at `/Users/olaniyi.oladokun/Leatherback/swift-routing-ui`.
 - Preserve the existing `RelayPopover` API and all `PreferencesMenu` user-facing behavior.
 - Do not add Coss Menu, Dialog, Popover, or other behavior primitives in this slice. New interaction behavior must continue to flow through `RelayPopover` and existing Relay wrappers.
-- Do not import Tailwind Preflight. Import only Tailwind’s theme and utilities layers, with an explicit source root for `frontend/src`.
+- Do not import Tailwind Preflight. Import only Tailwind’s theme and utilities layers. Keep utility scanning opt-in for this foundation slice with `source(none)` plus an explicit `@source "./coss"`; general `frontend/src` utility scanning begins when a real Relay-owned Coss consumer is introduced.
 - Preserve Instrument Sans and IBM Plex Mono. Do not import Inter, Geist, Cal Sans, or any Coss default font.
 - Preserve `data-theme` plus system-preference theme behavior. Do not introduce an unmapped `.dark` selector or raw `dark:` utilities.
 - Do not rename existing Relay variables, replace the token system, or introduce default Coss shadows/gradients/motion.
@@ -78,7 +78,7 @@ global.css
     |
     +--> Tailwind theme layer
     +--> Relay tokens + Coss aliases + explicit data-theme dark variant
-    +--> Tailwind utilities scanning frontend/src
+    +--> Tailwind utilities scanning the opt-in Coss source directory
     +--> Relay reset/typography/focus rules after utilities
     |
     v
@@ -399,10 +399,11 @@ This task establishes the source/registry path without generating any Coss behav
   @import "tailwindcss/theme.css" layer(theme);
   @import "./tokens.css";
   @import "./coss-theme.css";
-  @import "tailwindcss/utilities.css" layer(utilities) source("../");
+  @import "tailwindcss/utilities.css" layer(utilities) source(none);
+  @source "./coss";
   ```
 
-  Do not use `@import "tailwindcss"`; that would include Preflight. Do not move the existing font imports or replace the existing base rules.
+  Do not use `@import "tailwindcss"`; that would include Preflight. Keep Relay’s font ownership and existing base rules; load the existing Google Fonts stylesheet from the document head so it does not become a late CSS import.
 
 - [ ] Add the semantic Coss aliases to `frontend/src/design-system/tokens.css`, mapping only to Relay variables. Keep them in the existing token scope so both light and dark values follow the existing theme switching:
 
@@ -527,7 +528,8 @@ This task establishes the source/registry path without generating any Coss behav
       expect(globalCss).toContain('@import "tailwindcss/utilities.css"');
       expect(globalCss).not.toContain('@import "tailwindcss"');
       expect(globalCss).not.toContain("preflight.css");
-      expect(globalCss).toContain('source("../")');
+      expect(globalCss).toContain('source(none)');
+      expect(globalCss).toContain('@source "./coss"');
       expect(cossThemeCss).toContain('--font-sans: var(--coss-font-sans)');
       expect(cossThemeCss).toContain('--font-heading: var(--coss-font-heading)');
       expect(cossThemeCss).toContain('--font-mono: var(--coss-font-mono)');

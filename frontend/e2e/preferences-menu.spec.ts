@@ -30,7 +30,7 @@ test.describe("Preferences menu", () => {
     await expect(page).toHaveURL(/\/app\/?$/);
 
     await page.getByRole("button", { name: /preferences/i }).click();
-    await page.getByRole("link", { name: "All settings", exact: true }).click();
+    await page.getByRole("menuitem", { name: "All settings", exact: true }).click();
     await expect(page.getByRole("menu", { name: /preferences/i })).toBeHidden();
     await expect(page).toHaveURL(/\/settings\/?$/);
   });

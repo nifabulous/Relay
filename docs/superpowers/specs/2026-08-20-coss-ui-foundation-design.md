@@ -105,7 +105,7 @@ pipeline. [Tailwind Vite installation](https://tailwindcss.com/docs/installation
 Do not import Tailwind’s default Preflight. Relay already owns its reset and
 base element rules, and Tailwind Preflight would reset headings, lists, and
 borders globally. Import only the Tailwind theme and utilities layers, in the
-documented order, and add an explicit source root for `frontend/src`. [Tailwind Preflight](https://tailwindcss.com/docs/preflight)
+documented order, and keep utility scanning opt-in to the Coss source directory for this foundation slice. General `frontend/src` scanning begins with the first real Relay-owned Coss consumer. [Tailwind Preflight](https://tailwindcss.com/docs/preflight)
 
 Keep Relay’s base rules after the Tailwind layers so focus-visible behavior,
 typography, spacing, and reset rules remain authoritative. The foundation slice
