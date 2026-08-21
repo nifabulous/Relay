@@ -221,6 +221,45 @@ test("uses an opaque tokenized surface for the tutor dialog", async ({ page }) =
   expect(styles.boxShadow).not.toBe("none");
 });
 
+test("preserves the dark-theme tutor surface elevation treatment", async ({ page }) => {
+  await page.route("**/api/tutor/availability", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ available: true }),
+    }),
+  );
+  await page.goto("/app");
+  await page.getByRole("button", { name: /preferences/i }).click();
+  await page.getByRole("menuitemradio", { name: "Dark", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: /^Tutor$/i }).click();
+  await expect(page.getByRole("dialog", { name: "Tutor" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator(".tutor-fab").evaluate((element) => getComputedStyle(element).backgroundColor),
+    )
+    .toBe("rgb(30, 38, 53)");
+
+  const styles = await page.locator(".tutor-fab, .tutor-floating-panel").evaluateAll((elements) =>
+    elements.map((element) => {
+      const computed = getComputedStyle(element);
+      return {
+        background: computed.backgroundColor,
+        borderColor: computed.borderTopColor,
+        boxShadow: computed.boxShadow,
+      };
+    }),
+  );
+  for (const style of styles) {
+    expect(style.background).toBe("rgb(30, 38, 53)");
+    expect(style.borderColor).toBe("rgb(110, 130, 173)");
+    expect(style.boxShadow).toBe("none");
+  }
+});
+
 test("keeps the primary Relay workspaces inside the viewport in both themes", async ({ page }) => {
   for (const route of ["/app", "/app/explore", "/app/operate", "/app/learn", "/app/settings"]) {
     await page.goto(route);

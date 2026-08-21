@@ -170,8 +170,16 @@
 
 /* The disabled pill stays visible and stays honest: dimmed, not hidden, with a
    not-allowed cursor so the affordance reads as "off" rather than "broken". */
-.tutor-fab,
-.tutor-floating-panel {
+/*
+ * CT2. Elevation is expressed as an EFFECT, not as one mechanism.
+ *
+ * A drop shadow works by being darker than what is behind it. On Relay's dark
+ * canvas the shadow colour is lighter, so it reads as a faint smudge or as
+ * nothing at all. Dark interfaces express elevation by lifting the surface
+ * instead, which is why the palette already carries a lighter surface step.
+ */
+:root:not([data-theme="dark"]) .tutor-fab,
+:root:not([data-theme="dark"]) .tutor-floating-panel {
   box-shadow: 0 2px 8px rgba(29, 36, 51, 0.10);
 }
 
