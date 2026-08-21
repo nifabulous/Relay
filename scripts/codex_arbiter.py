@@ -97,6 +97,12 @@ _STATES = ("NEW", "OPEN", "RESOLVED")
 _IDENTITY_KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 _IDENTITY_MAX_LEN = 64
 _FILE_MAX_LEN = 256
+# `file` may carry spaces and unusual path shapes, but not markup structure:
+# angle brackets build HTML comments, backticks build code spans, braces
+# build template/liquid structures, and "--" opens/closes HTML comment
+# syntax when paired. Anything structural is rejected upstream rather than
+# escaped downstream.
+_FILE_FORBIDDEN = ("<", ">", "`", "{", "}", "--")
 _TRAILER_OPEN = "<!-- codex-verdict:"
 _TRAILER_CLOSE = "-->"
 
@@ -296,6 +302,8 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
             if len(value) > _IDENTITY_MAX_LEN or not _IDENTITY_KEBAB_RE.fullmatch(value):
                 return None, f"bad-{identity_field}"
         if len(finding["file"]) > _FILE_MAX_LEN or "\n" in finding["file"]:
+            return None, "bad-file"
+        if any(marker in finding["file"] for marker in _FILE_FORBIDDEN):
             return None, "bad-file"
         if finding["state"] == "RESOLVED":
             evidence = finding.get("evidence")
@@ -774,6 +782,7 @@ def post_comment(pr, repo, body) -> None:
 # One idempotent ``proposed-gap`` issue per residual finding. WRITES to
 # GitHub — reachable only under the same operator gate as post_comment
 # (main()'s ``--post`` + ``ARBITER_OPERATOR=1`` check), never from decide().
+_ARBITER_COMMENT_MAX_BYTES = 60_000  # mirrors the gap-issue ceiling style
 _PROPOSED_GAP_LABEL = "proposed-gap"
 _ACCEPTED_GAP_LABEL = "accepted-gap"
 _GAP_ISSUE_MAX_BYTES = 60_000  # mirrors codex_responses.py's output-bound style
@@ -961,21 +970,24 @@ def _parse_issue_number(create_stdout: str) -> Optional[int]:
     return int(match.group(1)) if match else None
 
 
-def _is_contract_document(text: str) -> bool:
-    """True only if `text`'s first non-blank line is the literal contract
-    template header `# Contract:` (singular, with a colon --
-    docs/contracts/README.md's own "Format" section). This is the guard that
-    keeps docs/contracts/ being a flat namespace keyed on the branch name
-    alone from becoming a trust bug: a branch literally named e.g. `README`
-    makes load_contract_text resolve `path` to docs/contracts/README.md --
-    the FORMAT DOCUMENTATION file (header `# Contracts`, plural, no colon),
-    never a signed-off per-branch contract. Blank text, or text whose first
-    non-blank line is anything else, returns False.
+def _is_contract_document(text: str, branch: str) -> bool:
+    """True only if `text`'s first non-blank line is exactly
+    `# Contract: <branch>` for the requested branch (singular, with a colon,
+    per docs/contracts/README.md's "Format" section).
+
+    Two guards live in this one comparison. The prefix guard keeps a stray
+    file at a mapped path -- e.g. the FORMAT DOCUMENTATION itself, headed
+    `# Contracts`, plural -- from injecting as a binding contract. The
+    exact-match guard keeps a mis-filed or copy-pasted contract that names a
+    DIFFERENT branch from binding its scope to this one: a correctly located
+    path with the wrong branch in the header degrades to None like any other
+    missing contract (review P2, head 9da9fc2).
     """
+    expected = f"# Contract: {branch}"
     for line in text.splitlines():
         stripped = line.strip()
         if stripped:
-            return stripped.startswith("# Contract:")
+            return stripped == expected
     return False
 
 
@@ -1031,7 +1043,7 @@ def load_contract_text(branch: Optional[str] = None) -> Optional[str]:
             )
         except (OSError, subprocess.SubprocessError):
             continue
-        if proc.stdout.strip() and _is_contract_document(proc.stdout):
+        if proc.stdout.strip() and _is_contract_document(proc.stdout, branch):
             return proc.stdout
     return None
 
@@ -1179,7 +1191,14 @@ def main(argv=None) -> int:
     history = collect(args.pr, contract, repo=args.repo)
     decision = decide(history, contract)
     if args.post:
-        post_comment(args.pr, history["repo"], render_comment(decision, args.pr))
+        # Same treatment as every other posted surface: findings may carry
+        # attacker-controlled diff bytes, so the rendered comment passes the
+        # sanitizer before publication, then the size bound.
+        comment_body = _truncate_gap_body(
+            _sanitize_gap_body(render_comment(decision, args.pr)),
+            _ARBITER_COMMENT_MAX_BYTES,
+        )
+        post_comment(args.pr, history["repo"], comment_body)
         print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
         if decision.proposed_gaps:
             contract_text = load_contract_text(history.get("current_head_ref"))
