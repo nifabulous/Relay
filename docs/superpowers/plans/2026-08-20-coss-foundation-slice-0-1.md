@@ -444,7 +444,7 @@ This task establishes the source/registry path without generating any Coss behav
   --success: var(--color-success);
   --success-foreground: var(--color-on-action);
   --warning: var(--color-warning);
-  --warning-foreground: var(--color-ink-strong);
+  --warning-foreground: var(--color-on-action);
   --info: var(--color-action);
   --info-foreground: var(--color-on-action);
   ```
