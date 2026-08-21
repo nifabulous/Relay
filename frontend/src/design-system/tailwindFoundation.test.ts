@@ -27,7 +27,7 @@ describe("Tailwind foundation", () => {
     expect(globalCss).toContain('@import "tailwindcss/utilities.css"');
     expect(globalCss).not.toContain('@import "tailwindcss"');
     expect(globalCss).not.toContain("preflight.css");
-    expect(globalCss).toContain('source("../")');
+    expect(globalCss).toContain("source(none)");
     expect(cossThemeCss).toContain('--font-sans: var(--coss-font-sans)');
     expect(cossThemeCss).toContain('--font-heading: var(--coss-font-heading)');
     expect(cossThemeCss).toContain('--font-mono: var(--coss-font-mono)');
@@ -45,6 +45,21 @@ describe("Tailwind foundation", () => {
 
     expect(utilityImport).toBeGreaterThanOrEqual(0);
     expect(relayBaseRule).toBeGreaterThan(utilityImport);
+  });
+
+  it("loads Google Fonts before Tailwind rule-generating imports", () => {
+    const fontImport = globalCss.indexOf("https://fonts.googleapis.com/css2");
+    const utilityImport = globalCss.indexOf("tailwindcss/utilities.css");
+
+    expect(fontImport).toBeGreaterThanOrEqual(0);
+    expect(fontImport).toBeLessThan(utilityImport);
+  });
+
+  it("opts Tailwind source discovery into the Coss directory", () => {
+    expect(globalCss).toContain('source(none)');
+    expect(globalCss).toContain('@source "./coss"');
+    expect(globalCss).not.toContain('@source not "../**/*.ts"');
+    expect(globalCss).not.toContain('@source not "../**/*.tsx"');
   });
 
   it("keeps registry output and TypeScript aliases aligned", () => {
