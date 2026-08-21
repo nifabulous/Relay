@@ -1678,7 +1678,7 @@ def test_posted_recommendation_comment_is_sanitized_and_bounded(monkeypatch):
     assert "[IBAN]" in posted
     assert "<!-- codex-arbiter:100 -->" in posted
 
-def test_contract_relative_path_is_injective_across_slug_collisions():
+def test_contract_relative_path_distinguishes_slug_collisions():
     """Review P2 (head 2afd089): the old slug-only mapping collapsed
     `feature/a-b` and `feature-a/b` onto one path, so one branch's contract
     could silently bind another. The slug-and-hash mapping must separate
