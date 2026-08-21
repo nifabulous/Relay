@@ -5,6 +5,7 @@
  * no emoji as interface icons, no colored card edges.
  */
 
+@layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme) reference;
 @import "./tokens.css";
 @import "./coss-theme.css";
