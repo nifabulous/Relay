@@ -1538,21 +1538,21 @@ def test_is_contract_document_requires_hash_contract_colon_header():
     decision the fix adds; load_contract_text itself is a thin git-plumbing
     wrapper around it, covered separately below and by the pre-existing
     no-contract-on-main test above."""
-    assert arb._is_contract_document("# Contract: feat/x\n\n## Goal\n") is True
+    assert arb._is_contract_document("# Contract: feat/x\n\n## Goal\n", "feat/x") is True
     # First NON-BLANK line is what counts, not strictly the first line.
-    assert arb._is_contract_document("\n   \n# Contract: feat/x\n") is True
-    assert arb._is_contract_document("") is False
-    assert arb._is_contract_document("   \n\n  \n") is False
-    assert arb._is_contract_document("Some other doc\n# Contract: nope\n") is False
+    assert arb._is_contract_document("\n   \n# Contract: feat/x\n", "feat/x") is True
+    assert arb._is_contract_document("", "feat/x") is False
+    assert arb._is_contract_document("   \n\n  \n", "feat/x") is False
+    assert arb._is_contract_document("Some other doc\n# Contract: nope\n", "feat/x") is False
     # A near-miss that must NOT pass: plural, no colon.
-    assert arb._is_contract_document("# Contracts\n\nformat doc body\n") is False
+    assert arb._is_contract_document("# Contracts\n\nformat doc body\n", "feat/x") is False
     # The real repo's real format doc, read straight off disk (not via a git
     # ref) — ties this test to the actual exploit scenario: if this doc's
     # header ever drifted to satisfy the guard by accident, this assertion
     # would catch it.
     readme_text = (REPO_ROOT / "docs" / "contracts" / "README.md").read_text()
     assert readme_text.splitlines()[0] == "# Contracts"
-    assert arb._is_contract_document(readme_text) is False
+    assert arb._is_contract_document(readme_text, "feat/x") is False
 
 
 def _init_scratch_git_repo(tmp_path):
@@ -1602,10 +1602,21 @@ def test_load_contract_text_returns_a_properly_headed_contract(tmp_path, monkeyp
     full — the fix must reject the format doc without also rejecting real
     contracts."""
     repo = _init_scratch_git_repo(tmp_path)
-    body = "# Contract: feat/readme-lookalike\n\n## Goal\n\nExample.\n"
+    body = "# Contract: readme-lookalike\n\n## Goal\n\nExample.\n"
     _commit_file(repo, arb._contract_relative_path("readme-lookalike"), body)
     monkeypatch.setattr(arb, "_REPO_ROOT", repo)
     assert arb.load_contract_text("readme-lookalike") == body
+
+
+def test_load_contract_text_rejects_a_header_naming_a_different_branch(tmp_path, monkeypatch):
+    """Review P2 (head 9da9fc2): the header must name exactly the branch the
+    path was derived for. A correctly located file declaring another branch
+    is a mis-filed contract and binds nothing."""
+    repo = _init_scratch_git_repo(tmp_path)
+    body = "# Contract: some/other-branch\n\nOut of scope: everything.\n"
+    _commit_file(repo, arb._contract_relative_path("readme-lookalike"), body)
+    monkeypatch.setattr(arb, "_REPO_ROOT", repo)
+    assert arb.load_contract_text("readme-lookalike") is None
 
 
 def test_validate_trailer_rejects_hostile_identity_fields():
@@ -1633,11 +1644,37 @@ def test_validate_trailer_rejects_hostile_identity_fields():
         ("bad-cat", {"cat": "c" * 65}),
         ("bad-file", {"file": "app/a.py\napp/b.py"}),
         ("bad-file", {"file": "f" * 257}),
+        ("bad-file", {"file": "app/a.py<!-- inject -->"}),
+        ("bad-file", {"file": "`app/a.py`"}),
+        ("bad-file", {"file": "app/a.py--><script>"}),
     ]
     for expected_reason, override in hostile:
         validated, reason = arb.validate_trailer(trailer_with(**override))
         assert validated is None, f"expected rejection for {override}"
         assert reason == expected_reason, f"{override}: got {reason}"
+
+
+def test_rendered_arbiter_comment_sanitizes_untrusted_fields():
+    """Review P2 (head 9da9fc2): gap issues are sanitized before posting but
+    the recommendation comment was not — a trailer's `file` field could
+    carry diff bytes or sensitive text straight into a public comment.
+    The posting pipeline must run the same sanitize -> bound pass."""
+    comments = [
+        _comment(1, 1, [_finding("P3", "NEW", "DE89370400440532013000", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P3", "OPEN", "DE89370440532013000", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, _contract())
+    raw = arb.render_comment(decision, 100)
+
+    posted = arb._truncate_gap_body(
+        arb._sanitize_gap_body(raw), arb._ARBITER_COMMENT_MAX_BYTES
+    )
+    assert "DE89370400440532013000" not in posted
+    assert "[IBAN]" in posted
+    # The machine marker survives sanitization: downstream dedup and
+    # permalink resolution depend on it.
+    assert "<!-- codex-arbiter:100 -->" in posted
 
 
 def test_contract_relative_path_is_injective_across_slug_collisions():
