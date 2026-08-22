@@ -54,5 +54,54 @@
     "domains": [
       "stanbicbank.co.ug"
     ]
+  },
+  "HASEHKHH": {
+    "name": "Hang Seng Bank Limited",
+    "country": "HK",
+    "domains": [
+      "hangseng.com"
+    ]
+  },
+  "BEASHKHH": {
+    "name": "The Bank of East Asia, Limited",
+    "country": "HK",
+    "domains": [
+      "hkbea.com"
+    ]
+  },
+  "ESUNTWTP": {
+    "name": "E.SUN Commercial Bank, Ltd.",
+    "country": "TW",
+    "domains": [
+      "esunbank.com.tw"
+    ]
+  },
+  "UWCBTWTP": {
+    "name": "Cathay United Bank",
+    "country": "TW",
+    "domains": [
+      "cathaybk.com.tw"
+    ]
+  },
+  "HNBKTWTP": {
+    "name": "Hua Nan Commercial Bank, Ltd.",
+    "country": "TW",
+    "domains": [
+      "hncb.com.tw"
+    ]
+  },
+  "ROYCCAT2": {
+    "name": "Royal Bank of Canada",
+    "country": "CA",
+    "domains": [
+      "rbcroyalbank.com"
+    ]
+  },
+  "CIBCCATT": {
+    "name": "Canadian Imperial Bank of Commerce",
+    "country": "CA",
+    "domains": [
+      "cibc.com"
+    ]
   }
 }
