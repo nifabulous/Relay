@@ -3,7 +3,8 @@ import { test, expect } from "@playwright/test";
 test.describe("Prepare Payment", () => {
   test("renders the form with all required fields", async ({ page }) => {
     await page.goto("/app/operate/prepare");
-    await expect(page.locator("h1")).toHaveText("Prepare payment");
+    await expect(page.locator("h1")).toHaveText("Prepare a payment");
+    await expect(page.getByText("Prepare, validate, and understand a simulated payment.")).toBeVisible();
     await expect(page.locator("#beneficiary_iban")).toBeVisible();
     await expect(page.locator("#beneficiary_name")).toBeVisible();
     await expect(page.locator("#currency")).toBeVisible();
@@ -27,5 +28,23 @@ test.describe("Prepare Payment", () => {
     await page.locator("button", { hasText: "Run payment checks" }).click();
     // IBAN field should show aria-invalid
     await expect(page.locator("#beneficiary_iban")).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator("#prepare-validation-summary")).toHaveAttribute("role", "alert");
+    await expect(page.locator("#beneficiary_iban")).toBeFocused();
+  });
+
+  test("keeps the stage indicator accessible and simulation-only", async ({ page }) => {
+    await page.goto("/app/operate/prepare");
+    await expect(page.getByRole("navigation", { name: /payment preparation stages/i })).toBeVisible();
+    await expect(page.locator("[aria-current='step']")).toHaveText(/Payment details/);
+    await expect(page.locator("body")).not.toContainText(/execute|executing|send money|send payment/i);
+  });
+
+  test("keeps the mobile action reachable below the form", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/app/operate/prepare");
+    const action = page.locator(".prepare-payment__actions");
+    await expect(action).toBeVisible();
+    await expect(action.locator("button")).toHaveCSS("min-height", "44px");
+    await expect(action).toHaveCSS("position", "sticky");
   });
 });

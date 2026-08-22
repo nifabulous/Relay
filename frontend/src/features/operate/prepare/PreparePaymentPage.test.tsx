@@ -190,7 +190,7 @@ describe("PreparePaymentPage result cross-links", () => {
     await user.type(screen.getByLabelText(/amount/i), "500");
     await user.click(screen.getByRole("button", { name: /run payment checks/i }));
 
-    const trackLink = await screen.findByRole("link", { name: /track this payment/i });
+    const trackLink = await screen.findByRole("link", { name: /view simulated tracking/i });
     expect(trackLink).toHaveAttribute("href", "/app/operate/tracking?uetr=abc-123");
 
     expect(screen.getByRole("link", { name: /explore corridor details/i }))
@@ -220,7 +220,7 @@ describe("PreparePaymentPage result cross-links", () => {
     await user.click(screen.getByRole("button", { name: /run payment checks/i }));
 
     await screen.findByText("Stop");
-    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /view simulated tracking/i })).toBeNull();
   });
 
   it("does not link a review recommendation before confirmation", async () => {
@@ -246,7 +246,7 @@ describe("PreparePaymentPage result cross-links", () => {
     await user.click(screen.getByRole("button", { name: /run payment checks/i }));
 
     await screen.findByText("Review needed");
-    expect(screen.queryByRole("link", { name: /track this payment/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /view simulated tracking/i })).toBeNull();
   });
 });
 
@@ -443,7 +443,8 @@ describe("PreparePaymentPage IBAN flexibility", () => {
     await user.type(screen.getByLabelText(/amount/i), "500");
     await user.click(screen.getByRole("button", { name: /run payment checks/i }));
 
-    expect(screen.getByText(/enter a beneficiary iban or account number/i)).toBeVisible();
+    expect(document.getElementById("prepare-validation-summary"))
+      .toHaveTextContent(/enter a beneficiary iban or account number/i);
   });
 
   it("allows a payment with only a BIC (no IBAN/account)", async () => {
@@ -476,5 +477,126 @@ describe("PreparePaymentPage IBAN flexibility", () => {
 
     expect(await screen.findByText(/PROCEED/i)).toBeVisible();
     expect(screen.queryByText(/enter a beneficiary iban or account number/i)).toBeNull();
+  });
+});
+
+describe("PreparePaymentPage guided stages", () => {
+  it("uses the approved page copy and marks payment details as current initially", () => {
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "Prepare a payment" })).toBeVisible();
+    expect(screen.getByText("Prepare, validate, and understand a simulated payment.")).toBeVisible();
+
+    const stages = screen.getByRole("navigation", { name: /payment preparation stages/i });
+    expect(within(stages).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(stages).getByText("Payment details").closest("li")).toHaveAttribute("aria-current", "step");
+    expect(screen.getByRole("status")).toHaveTextContent(/stage: payment details/i);
+  });
+
+  it("shows checking as the current stage while one request is active", async () => {
+    server.use(
+      http.post("/api/prepare-payment", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return HttpResponse.json({
+          recommendation: "PROCEED",
+          reason: "Illustrative result",
+          is_blocking: false,
+          uetr: "checking-uetr",
+          validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+          vop: { outcome: "MATCH", score: 1, advice: "Matches" },
+          routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+          ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+          warnings: ["Simulation"],
+          blocks: [],
+        });
+      }),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(/stage: run checks/i);
+    expect(screen.getByText(/running simulated checks/i)).toBeVisible();
+    await screen.findByRole("heading", { name: /check results/i });
+  });
+
+  it("labels an explicit not-checked response partial and keeps it on review route", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "PROCEED",
+        reason: "Illustrative result",
+        is_blocking: false,
+        uetr: "partial-uetr",
+        validation: { valid: true, bic: "MASHAEADXXX", errors: [] },
+        vop: { outcome: "NOT_CHECKED", score: null, advice: "No account to check" },
+        routing: { beneficiary_country: "AE", inferred_currency: "AED", suggested_intermediaries: [] },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: ["Simulation"],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=MASHAEADXXX"] });
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    const results = await screen.findByRole("heading", { name: /check results/i });
+    expect(results.parentElement).toHaveAttribute("data-request-state", "partial");
+    expect(screen.getByText(/some evidence was not available/i)).toBeVisible();
+    expect(document.querySelector(".prepare-payment__live-status"))
+      .toHaveTextContent(/stage: review route/i);
+  });
+
+  it("keeps a failed request retryable and returns to review after retry", async () => {
+    let attempts = 0;
+    server.use(
+      http.post("/api/prepare-payment", () => {
+        attempts += 1;
+        if (attempts === 1) return HttpResponse.json({ detail: "Temporary failure" }, { status: 503 });
+        return HttpResponse.json({
+          recommendation: "PROCEED",
+          reason: "Illustrative result",
+          is_blocking: false,
+          uetr: "retry-uetr",
+          validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+          vop: { outcome: "MATCH", score: 1, advice: "Matches" },
+          routing: { beneficiary_country: "GB", inferred_currency: "GBP", suggested_intermediaries: [] },
+          ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+          warnings: ["Simulation"],
+          blocks: [],
+        });
+      }),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    const error = await screen.findByRole("alert", { name: "" });
+    expect(error).toHaveTextContent(/temporary failure/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/stage: run checks/i);
+    await user.click(within(error).getByRole("button", { name: "Retry" }));
+    await screen.findByRole("heading", { name: /check results/i });
+    expect(attempts).toBe(2);
+  });
+
+  it("debounces SSI lookup until a BIC settles", async () => {
+    let calls = 0;
+    server.use(
+      http.get("/api/ssi", () => {
+        calls += 1;
+        return HttpResponse.json({ beneficiary_bic: "MASHAEADXXX", currency: "ALL", instructions: [], disclaimer: "SIMULATION" });
+      }),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary bic/i), "MASHAEADXXX");
+    await waitFor(() => expect(calls).toBe(1), { timeout: 1500 });
   });
 });
