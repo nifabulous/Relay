@@ -65,6 +65,14 @@ export const handlers = [
     });
   }),
 
+  http.get("/api/banks/search", ({ request }) => {
+    const url = new URL(request.url);
+    return HttpResponse.json({
+      query: url.searchParams.get("q") ?? "",
+      results: [],
+    });
+  }),
+
   http.get("/api/route", ({ request }) => {
     const url = new URL(request.url);
     const bic = url.searchParams.get("bic") ?? "GTBINGLAXXX";

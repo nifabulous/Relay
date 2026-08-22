@@ -176,6 +176,29 @@ test("uses the shared Relay Button treatment without losing router navigation", 
   await expect(page).toHaveURL(/\/app\/explore\?intro=1$/);
 });
 
+test("gives the active Overview and Explore links a distinct hover state", async ({ page }) => {
+  test.skip((await page.viewportSize())?.width! < 1024, "desktop rail hover assertion");
+  await page.goto("/app");
+  const expectedHoverBackground = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.backgroundColor = "var(--color-surface-2)";
+    document.body.append(probe);
+    const value = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return value;
+  });
+
+  for (const route of ["/app", "/app/explore"]) {
+    await page.goto(route);
+    const activeLink = page.locator('.app-shell__nav-link--active');
+    await expect(activeLink).toHaveCount(1);
+    await activeLink.hover();
+    await expect
+      .poll(() => activeLink.evaluate((element) => getComputedStyle(element).backgroundColor))
+      .toBe(expectedHoverBackground);
+  }
+});
+
 test("uses the Coss menu treatment for the real Preferences popup", async ({ page }) => {
   await page.goto("/app");
   await page.getByRole("button", { name: /preferences/i }).click();

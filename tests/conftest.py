@@ -90,3 +90,29 @@ def client():
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def isolated_client():
+    """HTTP client with a fresh seeded database for controlled-row tests."""
+    from app.db import get_db
+    from app.main import app
+
+    engine, SessionLocal = _create_test_db()
+
+    def _isolated_get_db():
+        session = SessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    previous_overrides = dict(app.dependency_overrides)
+    app.dependency_overrides[get_db] = _isolated_get_db
+    try:
+        with TestClient(app) as c:
+            yield c, SessionLocal
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(previous_overrides)
+        engine.dispose()

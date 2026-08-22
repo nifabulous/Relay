@@ -1,6 +1,15 @@
-import { useState, useRef, useId, type KeyboardEvent } from "react";
+import { useEffect, useRef, useId, useState, type KeyboardEvent } from "react";
+import { useHref, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
+import { requestBankSearch } from "./bankSearch";
+import {
+  loadSearchHistory,
+  recordSearchHistory,
+  removeSearchHistory,
+  normalizeSearch,
+} from "./searchHistory";
 import "./CommandSearch.css";
 
 const GROUP_LABELS: Record<SearchResultType, string> = {
@@ -11,7 +20,31 @@ const GROUP_LABELS: Record<SearchResultType, string> = {
   tool: "Tools",
 };
 
-const GROUP_ORDER: SearchResultType[] = ["lesson", "bank", "scheme", "glossary", "tool"];
+const GROUP_ORDER: SearchResultType[] = ["bank", "scheme", "glossary", "lesson", "tool"];
+
+const BIC_QUERY_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+
+/**
+ * Search results keep their canonical browser hrefs, including the deployed
+ * `/app` prefix. React Router already owns that prefix through `basename`, so
+ * imperative navigation must receive the route path inside the basename.
+ */
+function toRouterPath(href: string, routerRootHref: string): string {
+  const routerBase = routerRootHref.replace(/\/$/, "");
+  if (!routerBase || routerBase === href) return routerBase ? "/" : href;
+  return href.startsWith(`${routerBase}/`) ? href.slice(routerBase.length) : href;
+}
+
+const EMPTY_DESTINATIONS: SearchResult[] = [
+  { id: "destination:banks", type: "bank", label: "Bank Directory", subtitle: "Browse and look up banks by BIC", href: "/app/explore/banks" },
+  { id: "destination:schemes", type: "scheme", label: "Payment Schemes", subtitle: "Compare payment rails and settlement schemes", href: "/app/explore/schemes" },
+  { id: "destination:glossary", type: "glossary", label: "Glossary", subtitle: "Payment terminology reference", href: "/app/explore/glossary" },
+];
+
+function isBicQuery(value: string): boolean {
+  const normalized = value.trim();
+  return BIC_QUERY_PATTERN.test(normalized);
+}
 
 function groupResults(results: SearchResult[]): SearchGroup[] {
   const groups = new Map<SearchResultType, SearchResult[]>();
@@ -31,26 +64,107 @@ interface CommandSearchProps {
 }
 
 export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchProps) {
+  const navigate = useNavigate();
+  const routerRootHref = useHref("/");
   const [query, setQuery] = useState(initialQuery);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialQuery.trim().length > 0);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [settledQuery, setSettledQuery] = useState(initialQuery.trim());
+  const [history, setHistory] = useState<string[]>(() => loadSearchHistory());
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
+  const historyLabelId = `${listboxId}-history-label`;
+  const normalizedQuery = query.trim();
 
-  const results = isOpen ? searchStatic(query) : [];
+  useEffect(() => {
+    if (!normalizedQuery) {
+      setSettledQuery("");
+      return;
+    }
+    const timer = window.setTimeout(() => setSettledQuery(normalizedQuery), 250);
+    return () => window.clearTimeout(timer);
+  }, [normalizedQuery]);
+
+  const bicQuery = isBicQuery(normalizedQuery);
+  const bankSearch = useQuery({
+    queryKey: ["banks", settledQuery],
+    queryFn: () => requestBankSearch(settledQuery),
+    enabled: isOpen && settledQuery.length >= 2,
+    staleTime: 30_000,
+  });
+
+  const directoryBankResults: SearchResult[] = (bankSearch.data?.results ?? []).map((bank) => ({
+    id: `bank:${bank.bic}`,
+    type: "bank" as const,
+    label: bank.bank_name,
+    subtitle: [bank.country_code, bank.city, bank.bic].filter(Boolean).join(" · "),
+    href: `/app/explore/banks/${encodeURIComponent(bank.bic)}`,
+  }));
+
+  const bankResults: SearchResult[] = directoryBankResults.length > 0
+    ? directoryBankResults
+    : !bankSearch.isFetching && bicQuery
+      ? [{
+        id: `bank-bic:${normalizedQuery.toUpperCase()}`,
+        type: "bank",
+        label: `Look up bank by BIC: ${normalizedQuery.toUpperCase()}`,
+        subtitle: "Bank Directory lookup",
+        href: `/app/explore/banks/${encodeURIComponent(normalizedQuery.toUpperCase())}`,
+      }]
+      : [];
+
+  const staticResults = searchStatic(query);
+  const results = isOpen
+    ? normalizedQuery
+      ? [...bankResults, ...staticResults]
+      : EMPTY_DESTINATIONS
+    : [];
   const groups = groupResults(results);
   const flatResults = groups.flatMap((g) => g.results);
+  const showSearchStatus = isOpen && normalizedQuery.length > 0 && (
+    bankSearch.isFetching || bankSearch.isError || flatResults.length === 0
+  );
+  const searchStatus = bankSearch.isFetching
+    ? flatResults.length > 0
+      ? "Searching banks; other results remain available."
+      : "Searching the bank directory…"
+    : bankSearch.isError
+      ? flatResults.length > 0
+        ? "Bank search unavailable; other results remain available."
+        : "Bank search unavailable. Try a BIC or Bank Directory."
+      : `No results for “${query}”. Try a bank name, BIC, currency, or payment term.`;
 
   // Compute the active option's id for aria-activedescendant
   const activeOptionId = activeIndex >= 0 && activeIndex < flatResults.length
     ? `${listboxId}-opt-${activeIndex}`
     : undefined;
 
+  useEffect(() => {
+    if (!activeOptionId) return;
+    const activeOption = listRef.current?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
+    if (typeof activeOption?.scrollIntoView === "function") {
+      activeOption.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeOptionId]);
+
   function handleChange(value: string) {
     setQuery(value);
-    setIsOpen(value.trim().length > 0);
+    setIsOpen(value.trim().length > 0 || document.activeElement === inputRef.current);
     setActiveIndex(-1);
+  }
+
+  function activateResult(result: SearchResult, event?: { preventDefault(): void }) {
+    const nextHistory = recordSearchHistory(normalizeSearch(query));
+    setHistory(nextHistory);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    event?.preventDefault();
+    if (onNavigate) {
+      onNavigate(result.href);
+    } else {
+      navigate(toRouterPath(result.href, routerRootHref));
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -66,8 +180,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       if (activeIndex >= 0 && activeIndex < flatResults.length) {
         e.preventDefault();
         const result = flatResults[activeIndex];
-        onNavigate?.(result.href);
-        setIsOpen(false);
+        activateResult(result, e);
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -112,9 +225,9 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
           ref={inputRef}
           type="search"
           role="searchbox"
-          aria-label="Search banks, lessons, terms"
+          aria-label="Search banks, payment schemes, lessons, terms, and tools"
           className="command-search__input"
-          placeholder="Search banks, corridors, lessons, terms…"
+          placeholder="Search banks by name, BIC, corridors, lessons, terms…"
           value={query}
           onChange={(e) => {
             handleChange(e.target.value);
@@ -122,7 +235,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (query.trim()) setIsOpen(true);
+            setIsOpen(true);
           }}
           aria-expanded={isOpen}
           aria-controls={isOpen ? listboxId : undefined}
@@ -131,14 +244,10 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       </div>
 
       {isOpen && (
-        <div className="command-search__results" ref={listRef} role="listbox" id={listboxId}>
-          {flatResults.length === 0 ? (
-            <div className="command-search__empty">
-              No results for &ldquo;{query}&rdquo;. Try a bank name, currency, or payment term.
-            </div>
-          ) : (
-            groups.map((group) => (
-              <div key={group.type} className="command-search__group">
+        <div className="command-search__results">
+          <div ref={listRef} role="listbox" id={listboxId}>
+            {groups.map((group) => (
+              <div key={group.type} className="command-search__group" role="group" aria-label={group.label}>
                 <div className="command-search__group-label">{group.label}</div>
                 {group.results.map((result) => {
                   runningIndex++;
@@ -156,10 +265,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                         .join(" ")}
                       role="option"
                       aria-selected={idx === activeIndex}
-                      onClick={() => {
-                        setIsOpen(false);
-                        onNavigate?.(result.href);
-                      }}
+                      onClick={(event) => activateResult(result, event)}
                     >
                       <span className="command-search__item-label">{result.label}</span>
                       <span className="command-search__item-subtitle">{result.subtitle}</span>
@@ -167,10 +273,55 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                   );
                 })}
               </div>
-            ))
+            ))}
+          </div>
+          {normalizedQuery.length === 0 && history.length > 0 && (
+            <section className="command-search__history" aria-labelledby={historyLabelId}>
+              <div id={historyLabelId} className="command-search__group-label">Recent searches</div>
+              {history.map((entry) => (
+                <div key={entry} className="command-search__history-item">
+                  <button
+                    type="button"
+                    className="command-search__history-query"
+                    onClick={() => {
+                      handleChange(entry);
+                      syncUrl(entry);
+                    }}
+                  >
+                    {entry}
+                  </button>
+                  <button
+                    type="button"
+                    className="command-search__history-remove"
+                    aria-label={`Remove ${entry} from recent searches`}
+                    onClick={() => setHistory(removeSearchHistory(entry))}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
+          {showSearchStatus && (
+            <div
+              className="command-search__empty"
+              role={bankSearch.isError ? "alert" : "status"}
+              aria-live={bankSearch.isError ? "assertive" : "polite"}
+            >
+              {searchStatus}
+            </div>
           )}
         </div>
       )}
+      <div className="sr-only" role="status" aria-live="polite">
+        {bankSearch.isFetching
+          ? "Searching banks"
+          : bankSearch.isError
+            ? "Bank search error"
+            : normalizedQuery
+              ? `${flatResults.length} search results`
+              : "Search ready"}
+      </div>
     </div>
   );
 }

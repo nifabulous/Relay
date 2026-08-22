@@ -1,0 +1,134 @@
+# Task 3: Explore Search Command Center
+
+## Status
+
+Implemented the Explore-only search command center. No Learn, Operate, backend/API contract, dependency, AppShell, or Overview files were changed.
+
+## TDD evidence
+
+### RED
+
+Added the focused history, command-search, Explore deep-link, and browser tests before implementing the feature. The first focused run failed as expected: the new `searchHistory` module was absent and the new behavior assertions failed for selection history, empty-query destinations, debounce, and recovery/deep-link expectations.
+
+### GREEN
+
+Final focused verification:
+
+```text
+Test Files  3 passed (3)
+Tests       57 passed (57)
+```
+
+The production build, including TypeScript checking, also passed.
+
+## Changed files
+
+- `frontend/src/features/explore/search/searchHistory.ts` — versioned, capped, normalized, failure-safe local history helpers.
+- `frontend/src/features/explore/search/searchHistory.test.ts` — normalization, ordering, dedupe, cap, removal, malformed data, and storage failure coverage.
+- `frontend/src/features/explore/search/CommandSearch.tsx` — unified activation, explicit-selection history, empty destinations/recent searches, debounced directory lookup, live status, and preserved BIC/static behavior.
+- `frontend/src/features/explore/search/CommandSearch.test.tsx` — click/Enter parity, typing persistence guard, empty state, deep-link focus, debounce, and recovery coverage.
+- `frontend/src/features/explore/search/CommandSearch.css` — recent-search controls and visually-hidden live status styling.
+- `frontend/src/features/explore/ExplorePage.test.tsx` — deep-link query and focus coverage.
+- `frontend/e2e/explore.spec.ts` — deep-link/grouping/focus and 390px overflow coverage.
+
+## Self-review
+
+- History writes happen only through explicit result activation; keystrokes do not persist.
+- Storage access is guarded for unavailable, malformed, security, quota, read, write, and removal failures.
+- Static results remain immediate while bank-directory requests settle for 250ms.
+- Group ordering remains Banks, Payment Schemes, Glossary, Lessons, Tools.
+- Valid BIC handoff, invalid numeric rejection, bank loading/error messaging, and no-results recovery remain covered.
+- No new dependency, remote history, search index, backend contract, or non-Explore surface was introduced.
+
+## Concerns
+
+The required Playwright command was attempted, but its configured `reuseExistingServer` attached to a server process from the sibling `/Users/olaniyi.oladokun/Leatherback/swift-routing` worktree. The rendered page was an older Explore implementation without the command-search results, so the new deep-link browser assertion failed there. The existing browser scenarios that did not depend on the new command-search surface passed. This is an environment/server-isolation concern, not a failure reproduced by the current worktree’s 57 focused tests or build.
+
+## Commit
+
+Subject: `feat: complete explore search command center`
+
+## Enter-navigation integration review fix
+
+- `ExplorePage.test.tsx`: added an integration regression rendering the real `ExplorePage` with no `onNavigate` prop; `ArrowDown` followed by `Enter` must move the MemoryRouter location to `/app/explore/glossary?term=IBAN`.
+- `CommandSearch.tsx`: added the existing React Router `useNavigate` fallback. Explicit `onNavigate` remains supported; click and Enter continue through the same activation handler, prevent the anchor default, record history, and navigate to the selected href.
+
+### TDD evidence
+
+RED command:
+
+```text
+npm test -- --run src/features/explore/ExplorePage.test.tsx -t 'navigates the selected result'
+```
+
+Result: failed as expected. The location remained `/app/explore?q=IBAN` instead of navigating to `/app/explore/glossary?term=IBAN`.
+
+GREEN focused verification:
+
+```text
+npm test -- --run src/features/explore/ExplorePage.test.tsx -t 'navigates the selected result'
+```
+
+Result: `1 passed | 31 skipped`.
+
+```text
+npm test -- --run src/features/explore/search/searchHistory.test.ts src/features/explore/search/CommandSearch.test.tsx src/features/explore/ExplorePage.test.tsx
+```
+
+Result: `Test Files 3 passed (3)` and `Tests 61 passed (61)`.
+
+## Explore review fix evidence
+
+- `searchHistory.ts`: storage reads now retain a failed-read state. `recordSearchHistory` and `removeSearchHistory` return non-persisted empty history after a read failure and do not call `setItem` or `removeItem`.
+- `searchHistory.test.ts`: added regressions proving failed reads produce zero `setItem`/`removeItem` calls for both record and remove paths.
+- `CommandSearch.tsx`: clearing a focused input keeps the command panel open, exposing Bank Directory, Payment Schemes, Glossary, and recent searches; the initial unfocused state remains closed.
+- `CommandSearch.test.tsx`: added a type-then-clear regression asserting focus and the empty-query destinations.
+- Focused verification command:
+
+```text
+npm test -- --run src/features/explore/search/searchHistory.test.ts src/features/explore/search/CommandSearch.test.tsx src/features/explore/ExplorePage.test.tsx
+Test Files  3 passed (3)
+Tests       60 passed (60)
+```
+
+## Final re-review fix
+
+- Scoped the deep-linked Glossary assertion to the exact group label so Playwright strict mode does not confuse it with the Banks and Lessons labels rendered alongside it.
+- Focused CommandSearch tests: 8 passed. Production build passed.
+- Isolated browser verification reached the current build; the corrected assertion is covered by the targeted review and the full Explore run's remaining failures are limited to the pre-existing bank-detail axe issue.
+
+## Latest review fixes (TDD)
+
+- RED: the new malformed-record and listbox-semantics regressions failed for the expected causes (`2 failed`, `30 passed`).
+- Fixed malformed JSON recovery by separating thrown storage reads from parse failures; corrupted readable data now resets in memory and is repaired by the next explicit record, while true read failures remain non-persisting.
+- Moved recent-search controls into a labelled region outside the results listbox and added component coverage for semantics, active-option navigation, removal, and persistence.
+- Added a deterministic browser test that seeds `relay:search-history:v1` through page `localStorage`, clicks removal, and verifies the visible list and persisted value.
+- GREEN focused verification: `3` files, `64` tests passed. Production build (`tsc --noEmit && vite build`) passed.
+- The focused browser scenario was attempted but the configured `reuseExistingServer` attached to the sibling worktree's server, which does not serve this Task 3 UI; it failed before finding the recent-search control. This remains an environment/server-isolation concern.
+
+## Mobile Explore recent-search reachability fix (TDD)
+
+- RED: `npm run test:e2e -- e2e/explore.spec.ts --project=mobile --grep "removing a recent search"` failed with the remove control at `640.75px` under the mobile nav beginning at `600px`.
+- Fix: added a mobile-only bounded dropdown scroll region with bottom clearance of `--nav-height-mobile` plus `safe-area-inset-bottom`; desktop positioning, listbox semantics, keyboard navigation, and local history are unchanged. The E2E regression scrolls the control into that region and asserts it clears the nav.
+- GREEN: targeted mobile test passed (`1 passed`); focused Explore unit tests passed (`4 files, 65 tests`); `npm run build` passed.
+
+## Mobile active-result scrolling fix (TDD)
+
+- RED: added an overflow keyboard regression for the long `payment` result set; the fifth ArrowDown left `scrollIntoView` uncalled, reproducing the hidden active-result behavior.
+- Fix: the existing listbox ref now finds the active `aria-selected="true"` option and calls `scrollIntoView({ block: "nearest" })` whenever the active option changes. A capability check keeps jsdom stable; click/Enter activation, `aria-activedescendant`, and desktop CSS remain unchanged.
+- GREEN: focused Explore tests passed (`3` files, `65` tests); `npm run build` passed.
+
+## Recent-search mobile-nav geometry regression fix
+
+- RED: `npm run test:e2e -- e2e/explore.spec.ts -g "removing a recent search" --project=desktop --project=mobile --project=case-mobile-390 --project=case-tablet-768 --project=case-desktop-1024 --project=case-wide-1440 --project=case-reduced-motion` reproduced 4 failures in desktop, case-desktop-1024, case-wide-1440, and case-reduced-motion: `removeBottom 618.75` versus hidden-nav `navTop 0`; mobile and tablet passed.
+- Fix: the geometry assertion now runs only when `.app-shell__mobile-nav` has computed `display` other than `none` and `visibility` other than `hidden`. The remove click, visible-list update, and localStorage persistence assertions remain unconditional.
+- GREEN: the same 7-project command passed `7 passed (20.7s)`.
+- Relevant unit tests: `3` files, `65` tests passed.
+- Frontend build/type check: `npm run build` passed.
+
+## Mobile-nav geometry coverage review fix
+
+- `frontend/e2e/explore.spec.ts`: viewports at or below 1023px now explicitly require exactly one visible `.app-shell__mobile-nav` before measuring its top; desktop geometry remains conditional on nav visibility. History removal, visible-list, and localStorage assertions remain unconditional.
+- Explore removal test matrix: `7 passed` across desktop, mobile, case-mobile-390, case-tablet-768, case-desktop-1024, case-wide-1440, and case-reduced-motion.
+- Explore unit tests: `8 files passed`, `103 tests passed`.
+- Frontend build/type check: `npm run build` passed.

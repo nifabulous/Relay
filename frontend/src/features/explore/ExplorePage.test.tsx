@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import {
+  ExplorePage,
   GlossaryPage,
   BankDirectoryPage,
   SchemesPage,
@@ -27,6 +28,11 @@ function renderGlossary(path = "/app/explore/glossary") {
       <GlossaryPage />
     </MemoryRouter>,
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}{location.search}</output>;
 }
 
 describe("GlossaryPage", () => {
@@ -57,6 +63,86 @@ describe("GlossaryPage", () => {
     renderGlossary("/app/explore/glossary?term=IBAN");
     expect(screen.getByText("IBAN", { selector: "dt" }).closest(".glossary-entry"))
       .toHaveClass("glossary-entry--highlighted");
+  });
+});
+
+describe("ExplorePage", () => {
+  it("describes the full Explore search scope", () => {
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore"]}>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
+
+    const purpose = screen.getByText(/banks by name or BIC/i);
+    expect(purpose).toBeVisible();
+    expect(purpose).toHaveTextContent(/corridors/i);
+    expect(purpose).toHaveTextContent(/payment schemes/i);
+    expect(purpose).toHaveTextContent(/glossary terms/i);
+    expect(purpose).toHaveTextContent(/lessons/i);
+    expect(purpose).toHaveTextContent(/tools/i);
+  });
+
+  it("renders search results from the q deep link without stealing focus", async () => {
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    expect(input).toHaveValue("IBAN");
+    expect(input).not.toHaveFocus();
+    expect((await screen.findAllByRole("option", { name: /IBAN/i }))[0]).toBeVisible();
+  });
+
+  it("navigates the selected result on ArrowDown and Enter without an onNavigate prop", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    await user.click(input);
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/app/explore/glossary?term=IBAN");
+  });
+
+  it("keeps click activation inside a router basename", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter basename="/app" initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const result = (await screen.findAllByRole("option", { name: /IBAN/i }))[0];
+    await user.click(result);
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/explore/glossary?term=IBAN");
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/app/app/");
+  });
+
+  it("keeps Enter activation inside a router basename", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter basename="/app" initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    await user.click(input);
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/explore/glossary?term=IBAN");
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/app/app/");
   });
 });
 
