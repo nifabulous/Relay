@@ -1115,8 +1115,9 @@
     align-items: start;
   }
 
-  /* Keep the task controls first in the DOM for keyboard users while placing
-   * the evidence ledger between workflow and recommendation on wide screens. */
+  /* Explicit column assignment: evidence ledger sits between the workflow
+   * rail and the task/recommendation column on wide screens, matching DOM
+   * order. */
   .case-desk__split > .case-desk__evidence {
     grid-column: 1;
   }
