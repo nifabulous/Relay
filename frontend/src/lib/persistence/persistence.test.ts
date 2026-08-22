@@ -88,6 +88,10 @@ describe("preferences", () => {
     savePreferences({ ...defaultPreferences, theme: "light" });
     expect(loadPreferences().theme).toBe("light");
 
+    // OLED variant — must survive storage without being coerced to dark.
+    savePreferences({ ...defaultPreferences, theme: "black" });
+    expect(loadPreferences().theme).toBe("black");
+
     savePreferences({ ...defaultPreferences, theme: "system" });
     expect(loadPreferences().theme).toBe("system");
   });
