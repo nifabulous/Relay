@@ -117,3 +117,11 @@ Tests       60 passed (60)
 - RED: added an overflow keyboard regression for the long `payment` result set; the fifth ArrowDown left `scrollIntoView` uncalled, reproducing the hidden active-result behavior.
 - Fix: the existing listbox ref now finds the active `aria-selected="true"` option and calls `scrollIntoView({ block: "nearest" })` whenever the active option changes. A capability check keeps jsdom stable; click/Enter activation, `aria-activedescendant`, and desktop CSS remain unchanged.
 - GREEN: focused Explore tests passed (`3` files, `65` tests); `npm run build` passed.
+
+## Recent-search mobile-nav geometry regression fix
+
+- RED: `npm run test:e2e -- e2e/explore.spec.ts -g "removing a recent search" --project=desktop --project=mobile --project=case-mobile-390 --project=case-tablet-768 --project=case-desktop-1024 --project=case-wide-1440 --project=case-reduced-motion` reproduced 4 failures in desktop, case-desktop-1024, case-wide-1440, and case-reduced-motion: `removeBottom 618.75` versus hidden-nav `navTop 0`; mobile and tablet passed.
+- Fix: the geometry assertion now runs only when `.app-shell__mobile-nav` has computed `display` other than `none` and `visibility` other than `hidden`. The remove click, visible-list update, and localStorage persistence assertions remain unconditional.
+- GREEN: the same 7-project command passed `7 passed (20.7s)`.
+- Relevant unit tests: `3` files, `65` tests passed.
+- Frontend build/type check: `npm run build` passed.

@@ -42,12 +42,18 @@ test.describe("Explore", () => {
       );
       const nav = document.querySelector<HTMLElement>(".app-shell__mobile-nav");
       const removeBox = remove?.getBoundingClientRect();
+      const navStyle = nav ? getComputedStyle(nav) : null;
       return {
         removeBottom: removeBox?.bottom ?? 0,
         navTop: nav?.getBoundingClientRect().top ?? window.innerHeight,
+        navVisible: Boolean(
+          navStyle && navStyle.display !== "none" && navStyle.visibility !== "hidden",
+        ),
       };
     });
-    expect(reachability.removeBottom).toBeLessThanOrEqual(reachability.navTop);
+    if (reachability.navVisible) {
+      expect(reachability.removeBottom).toBeLessThanOrEqual(reachability.navTop);
+    }
 
     await removeIban.click();
 
