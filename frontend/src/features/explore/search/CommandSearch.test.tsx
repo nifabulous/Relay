@@ -217,6 +217,19 @@ describe("CommandSearch", () => {
     expect(screen.getByRole("button", { name: /remove iban/i })).toBeVisible();
   });
 
+  it("opens the empty-query panel when a focused query is cleared", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+
+    await user.type(input, "IBAN");
+    await user.clear(input);
+
+    expect(input).toHaveFocus();
+    expect(screen.getByText("Bank Directory")).toBeVisible();
+    expect(screen.getAllByText("Payment Schemes")[0]).toBeVisible();
+    expect(screen.getAllByText("Glossary")[0]).toBeVisible();
+  });
+
   it("preserves focus for deep-link results and announces result state", async () => {
     renderSearch("IBAN");
     const input = screen.getByRole("searchbox");

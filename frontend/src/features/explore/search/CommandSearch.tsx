@@ -115,7 +115,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
 
   function handleChange(value: string) {
     setQuery(value);
-    setIsOpen(value.trim().length > 0);
+    setIsOpen(value.trim().length > 0 || document.activeElement === inputRef.current);
     setActiveIndex(-1);
   }
 

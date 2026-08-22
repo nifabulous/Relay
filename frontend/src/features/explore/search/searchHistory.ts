@@ -35,19 +35,22 @@ function uniqueHistory(values: unknown[]): string[] {
   return result;
 }
 
-export function loadSearchHistory(storage = defaultStorage()): string[] {
-  if (!storage) return [];
+function readSearchHistory(storage: SearchHistoryStorage | undefined): { history: string[]; readable: boolean } {
+  if (!storage) return { history: [], readable: true };
   try {
     const raw = storage.getItem(SEARCH_HISTORY_KEY);
-    if (!raw) return [];
+    if (!raw) return { history: [], readable: true };
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) return uniqueHistory(parsed);
+    if (Array.isArray(parsed)) return { history: uniqueHistory(parsed), readable: true };
     try { storage.removeItem(SEARCH_HISTORY_KEY); } catch { /* unavailable storage */ }
-    return [];
+    return { history: [], readable: true };
   } catch {
-    try { storage.removeItem(SEARCH_HISTORY_KEY); } catch { /* unavailable storage */ }
-    return [];
+    return { history: [], readable: false };
   }
+}
+
+export function loadSearchHistory(storage = defaultStorage()): string[] {
+  return readSearchHistory(storage).history;
 }
 
 function persist(history: string[], storage = defaultStorage()): void {
@@ -61,15 +64,19 @@ function persist(history: string[], storage = defaultStorage()): void {
 
 export function recordSearchHistory(value: string, storage = defaultStorage()): string[] {
   const normalized = normalizeSearch(value);
-  if (!normalized) return loadSearchHistory(storage);
-  const history = uniqueHistory([normalized, ...loadSearchHistory(storage)]);
+  const read = readSearchHistory(storage);
+  if (!read.readable) return [];
+  if (!normalized) return read.history;
+  const history = uniqueHistory([normalized, ...read.history]);
   persist(history, storage);
   return history;
 }
 
 export function removeSearchHistory(value: string, storage = defaultStorage()): string[] {
   const identity = normalizeSearch(value).toLocaleLowerCase();
-  const history = loadSearchHistory(storage).filter((entry) => entry.toLocaleLowerCase() !== identity);
+  const read = readSearchHistory(storage);
+  if (!read.readable) return [];
+  const history = read.history.filter((entry) => entry.toLocaleLowerCase() !== identity);
   persist(history, storage);
   return history;
 }

@@ -68,4 +68,32 @@ describe("search history", () => {
     expect(() => recordSearchHistory("IBAN", unavailable)).not.toThrow();
     expect(() => removeSearchHistory("IBAN", unavailable)).not.toThrow();
   });
+
+  it("does not write or remove after a failed read when recording", () => {
+    const setItem = vi.fn();
+    const removeItem = vi.fn();
+    const failedRead: SearchHistoryStorage = {
+      getItem: () => { throw new DOMException("denied", "SecurityError"); },
+      setItem,
+      removeItem,
+    };
+
+    expect(recordSearchHistory("IBAN", failedRead)).toEqual([]);
+    expect(setItem).not.toHaveBeenCalled();
+    expect(removeItem).not.toHaveBeenCalled();
+  });
+
+  it("does not write or remove after a failed read when removing", () => {
+    const setItem = vi.fn();
+    const removeItem = vi.fn();
+    const failedRead: SearchHistoryStorage = {
+      getItem: () => { throw new DOMException("denied", "SecurityError"); },
+      setItem,
+      removeItem,
+    };
+
+    expect(removeSearchHistory("IBAN", failedRead)).toEqual([]);
+    expect(setItem).not.toHaveBeenCalled();
+    expect(removeItem).not.toHaveBeenCalled();
+  });
 });

@@ -47,3 +47,17 @@ The required Playwright command was attempted, but its configured `reuseExisting
 ## Commit
 
 Subject: `feat: complete explore search command center`
+
+## Explore review fix evidence
+
+- `searchHistory.ts`: storage reads now retain a failed-read state. `recordSearchHistory` and `removeSearchHistory` return non-persisted empty history after a read failure and do not call `setItem` or `removeItem`.
+- `searchHistory.test.ts`: added regressions proving failed reads produce zero `setItem`/`removeItem` calls for both record and remove paths.
+- `CommandSearch.tsx`: clearing a focused input keeps the command panel open, exposing Bank Directory, Payment Schemes, Glossary, and recent searches; the initial unfocused state remains closed.
+- `CommandSearch.test.tsx`: added a type-then-clear regression asserting focus and the empty-query destinations.
+- Focused verification command:
+
+```text
+npm test -- --run src/features/explore/search/searchHistory.test.ts src/features/explore/search/CommandSearch.test.tsx src/features/explore/ExplorePage.test.tsx
+Test Files  3 passed (3)
+Tests       60 passed (60)
+```
