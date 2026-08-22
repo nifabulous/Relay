@@ -13,6 +13,21 @@ test.describe("Explore", () => {
     expect(await items.count()).toBeGreaterThanOrEqual(1);
   });
 
+  test("searches by bank name and opens the matching bank detail", async ({ page }) => {
+    await page.goto("/app/explore");
+    await expect(page.locator("h1")).toHaveText("Explore", { timeout: 10_000 });
+
+    await page.locator('input[type="search"]').fill("Guaranty Trust Bank");
+    const result = page.getByRole("option", { name: /Guaranty Trust Bank/i }).first();
+    await expect(result).toBeVisible({ timeout: 10_000 });
+    await result.click();
+
+    await expect(page).toHaveURL(/\/app\/explore\/banks\/GTBINGLAXXX$/);
+    await expect(
+      page.getByRole("heading", { name: "Guaranty Trust Bank" }),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test("deep-linked search preserves focus and shows grouped results", async ({ page }) => {
     await page.goto("/app/explore?q=IBAN");
     await expect(page.locator('input[type="search"]')).toHaveValue("IBAN");

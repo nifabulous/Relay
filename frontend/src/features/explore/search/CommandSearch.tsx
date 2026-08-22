@@ -43,7 +43,7 @@ const EMPTY_DESTINATIONS: SearchResult[] = [
 
 function isBicQuery(value: string): boolean {
   const normalized = value.trim();
-  return normalized === normalized.toUpperCase() && BIC_QUERY_PATTERN.test(normalized);
+  return BIC_QUERY_PATTERN.test(normalized);
 }
 
 function groupResults(results: SearchResult[]): SearchGroup[] {

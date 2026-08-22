@@ -81,6 +81,14 @@ describe("CommandSearch", () => {
     expect(result).toHaveAttribute("href", "/app/explore/banks/CITIUS33XXX");
   });
 
+  it("offers a canonical directory result for a lowercase BIC", async () => {
+    const { user } = renderSearch();
+    await user.type(screen.getByRole("searchbox"), "citius33xxx");
+
+    const result = await screen.findByRole("option", { name: /look up bank by bic/i });
+    expect(result).toHaveAttribute("href", "/app/explore/banks/CITIUS33XXX");
+  });
+
   it("does not treat an invalid numeric code as a BIC", async () => {
     const { user } = renderSearch();
     await user.type(screen.getByRole("searchbox"), "12345678");
