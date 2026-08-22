@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, it, expect } from "vitest";
 import { http, HttpResponse } from "msw";
-import { selectPrimaryAction } from "./selectPrimaryAction";
+import { selectPrimaryAction, type OverviewContext } from "./selectPrimaryAction";
 import { OverviewPage } from "./OverviewPage";
 import { server } from "../../test/server";
 import { saveProgress } from "../../lib/persistence/storage";
@@ -85,6 +85,23 @@ describe("selectPrimaryAction", () => {
       curriculumComplete: false,
     });
     expect(action.kind).toBe("resume_learn");
+  });
+
+  // The production router mounts with basename="/app" and react-router
+  // prepends it, so a `to` value that also carries /app renders /app/app/...
+  // and dies on the catch-all route — the historical double-basename bug.
+  it("never returns an /app-prefixed href from any branch of the table", () => {
+    const contexts: OverviewContext[] = [
+      { firstVisit: true },
+      { unfinishedOperateAt: 20, unfinishedLearnAt: 10 },
+      { unfinishedOperateAt: 10 },
+      { unfinishedLearnAt: 10 },
+      { curriculumComplete: false, nextModuleId: "lab-2" },
+      { curriculumComplete: true },
+    ];
+    for (const ctx of contexts) {
+      expect(selectPrimaryAction(ctx).href.startsWith("/app")).toBe(false);
+    }
   });
 });
 
@@ -182,7 +199,7 @@ describe("OverviewPage adaptive command center", () => {
     ).toBeInTheDocument();
     expect(document.querySelector(".overview__cta")).toHaveAttribute(
       "href",
-      "/app/learn/lab-2",
+      "/learn/lab-2",
     );
     // Progress reflects the seeded module; still no streak without practice.
     expect(screen.getByRole("complementary", { name: /learning pulse/i })).toHaveTextContent(
