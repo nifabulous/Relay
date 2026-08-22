@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "_reconstruction": "PR #24 replay. DOCUMENTED RECONSTRUCTION, not a fetch: PR 24's real history predates the schema-2 trailer. Real trajectory: 21 rounds, a single P1 ('published self-assertable', app/models.py, authorization) recurring from round 1 and never resolved. This reconstruction encodes the decision-relevant window (6 rounds): the P1 raised NEW in round 1 and carried OPEN through round 6, plus one P2 raised in round 1 and RESOLVED in round 2 so the trace shows the fixer making real progress on minors while the P1 persists. Each round is a distinct head SHA (a fixer push between appearances). Expected disposition: ESCALATE-TO-SCOPING citing STUCK-P1, firing at round 3 (the first round the P1 has been open >= 3 consecutive rounds with a fixer push between) — i.e. by round 5, NOT at round 21. Firing at round 3 would have saved 18 of the 21 rounds actually spent.",
+  "repo": "leatherback/relay",
+  "pr": 24,
+  "current_head_sha": "6666666666666666666666666666666666666666",
+  "current_diff_files": [
+    "app/services/ssi_importer.py"
+  ],
+  "comments": [
+    {
+      "comment_id": 2401,
+      "created_at": "2026-08-16T08:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "1111111111111111111111111111111111111111",
+      "marker": "codex-pr-review:24:1111111111111111111111111111111111111111",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "NEW", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"},
+          {"sev": "P2", "state": "NEW", "file": "app/services/ssi_importer.py", "cat": "audit-trail", "id": "import-audit-log"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2402,
+      "created_at": "2026-08-16T08:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "2222222222222222222222222222222222222222",
+      "marker": "codex-pr-review:24:2222222222222222222222222222222222222222",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"},
+          {"sev": "P2", "state": "RESOLVED", "file": "app/services/ssi_importer.py", "cat": "audit-trail", "id": "import-audit-log",
+           "evidence": {"files": ["app/services/ssi_importer.py"], "verification": "tests/test_ssi_importer.py::test_import_writes_audit_log"}}
+        ]
+      }
+    },
+    {
+      "comment_id": 2403,
+      "created_at": "2026-08-16T09:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "3333333333333333333333333333333333333333",
+      "marker": "codex-pr-review:24:3333333333333333333333333333333333333333",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2404,
+      "created_at": "2026-08-16T09:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "4444444444444444444444444444444444444444",
+      "marker": "codex-pr-review:24:4444444444444444444444444444444444444444",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2405,
+      "created_at": "2026-08-16T10:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "5555555555555555555555555555555555555555",
+      "marker": "codex-pr-review:24:5555555555555555555555555555555555555555",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2406,
+      "created_at": "2026-08-16T10:30:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "6666666666666666666666666666666666666666",
+      "marker": "codex-pr-review:24:6666666666666666666666666666666666666666",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P1", "state": "OPEN", "file": "app/models.py", "cat": "authorization", "id": "published-self-assert"}
+        ]
+      }
+    }
+  ]
+}

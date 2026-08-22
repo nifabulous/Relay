@@ -67,6 +67,22 @@ describe("GlossaryPage", () => {
 });
 
 describe("ExplorePage", () => {
+  it("describes the full Explore search scope", () => {
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore"]}>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
+
+    const purpose = screen.getByText(/banks by name or BIC/i);
+    expect(purpose).toBeVisible();
+    expect(purpose).toHaveTextContent(/corridors/i);
+    expect(purpose).toHaveTextContent(/payment schemes/i);
+    expect(purpose).toHaveTextContent(/glossary terms/i);
+    expect(purpose).toHaveTextContent(/lessons/i);
+    expect(purpose).toHaveTextContent(/tools/i);
+  });
+
   it("renders search results from the q deep link without stealing focus", async () => {
     renderRelay(
       <MemoryRouter initialEntries={["/app/explore?q=IBAN"]}>

@@ -1,9 +1,10 @@
 /**
  * Relay theme resolution and application.
  *
- * Three preference states collapse to two rendered themes. Only "system"
- * consults the OS; an explicit "light" or "dark" is the user overriding it, so
- * an OS flip must leave them alone.
+ * Four preference states collapse to two rendered themes. Only "system"
+ * consults the OS; an explicit choice is the user overriding it, so an OS flip
+ * must leave them alone. "black" paints with the OLED palette but resolves as
+ * dark everywhere a binary answer is needed (native color-scheme, hints).
  */
 
 import type { RelayTheme } from "./types";
@@ -25,7 +26,8 @@ export function prefersDarkNow(): boolean {
 
 export function resolveTheme(theme: RelayTheme, prefersDark: boolean): ResolvedTheme {
   if (theme === "system") return prefersDark ? "dark" : "light";
-  return theme;
+  // Black paints with its own palette but answers binary questions as dark.
+  return theme === "black" ? "dark" : theme;
 }
 
 /**

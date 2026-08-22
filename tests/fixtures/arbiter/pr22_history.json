@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "_reconstruction": "PR #22 replay. DOCUMENTED RECONSTRUCTION, not a fetch: PR 22's real comment history predates the schema-2 trailer, so it cannot be collected as schema-1 and is hand-authored here. Real trajectory: 4 rounds, converged (reviewer verdict BLOCK rounds 1-3, then everything verified fixed by round 4). Encodes two P2 findings raised in round 1, carried OPEN through round 3, and RESOLVED with in-diff evidence in round 4. Expected disposition: MERGE-CLEAN (rule CLEAN) at round 4.",
+  "repo": "leatherback/relay",
+  "pr": 22,
+  "current_head_sha": "4444444444444444444444444444444444444444",
+  "current_diff_files": [
+    "app/services/routing.py",
+    "app/services/fee_calculator.py"
+  ],
+  "comments": [
+    {
+      "comment_id": 2201,
+      "created_at": "2026-08-15T09:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "1111111111111111111111111111111111111111",
+      "marker": "codex-pr-review:22:1111111111111111111111111111111111111111",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P2", "state": "NEW", "file": "app/services/routing.py", "cat": "routing-order", "id": "correspondent-order"},
+          {"sev": "P2", "state": "NEW", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "our-fee-double-count"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2202,
+      "created_at": "2026-08-15T09:20:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "2222222222222222222222222222222222222222",
+      "marker": "codex-pr-review:22:2222222222222222222222222222222222222222",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P2", "state": "OPEN", "file": "app/services/routing.py", "cat": "routing-order", "id": "correspondent-order"},
+          {"sev": "P2", "state": "OPEN", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "our-fee-double-count"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2203,
+      "created_at": "2026-08-15T09:40:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "3333333333333333333333333333333333333333",
+      "marker": "codex-pr-review:22:3333333333333333333333333333333333333333",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "BLOCK",
+        "findings": [
+          {"sev": "P2", "state": "OPEN", "file": "app/services/routing.py", "cat": "routing-order", "id": "correspondent-order"},
+          {"sev": "P2", "state": "OPEN", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "our-fee-double-count"}
+        ]
+      }
+    },
+    {
+      "comment_id": 2204,
+      "created_at": "2026-08-15T10:00:00Z",
+      "author_login": "github-actions[bot]",
+      "head_sha": "4444444444444444444444444444444444444444",
+      "marker": "codex-pr-review:22:4444444444444444444444444444444444444444",
+      "body": "[body elided — see PR comment]",
+      "trailer": {
+        "schema": 2,
+        "verdict": "NO-ACTIONABLE-FINDINGS",
+        "findings": [
+          {"sev": "P2", "state": "RESOLVED", "file": "app/services/routing.py", "cat": "routing-order", "id": "correspondent-order",
+           "evidence": {"files": ["app/services/routing.py"], "verification": "tests/test_routing.py::test_correspondent_order"}},
+          {"sev": "P2", "state": "RESOLVED", "file": "app/services/fee_calculator.py", "cat": "fee-calc", "id": "our-fee-double-count",
+           "evidence": {"files": ["app/services/fee_calculator.py"], "verification": "tests/test_fees.py::test_our_fee_not_double_counted"}}
+        ]
+      }
+    }
+  ]
+}

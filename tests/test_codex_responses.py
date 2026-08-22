@@ -201,7 +201,7 @@ def test_input_budget_is_shared_between_instructions_and_payload(tmp_path) -> No
 
     sent: dict[str, object] = {}
 
-    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None):
+    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None, **kwargs):
         sent["instructions"] = instructions_text
         sent["prompt"] = prompt
         return "review"
@@ -283,7 +283,7 @@ def test_complete_input_mode_preserves_complete_multibyte_input(tmp_path, monkey
     payload.write_text("é" * 10, encoding="utf-8")
     sent: dict[str, str] = {}
 
-    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None):
+    def capture(model, effort, instructions_text, prompt, api_key, tokens, out_bytes, timeout=None, **kwargs):
         sent["instructions"] = instructions_text
         sent["prompt"] = prompt
         return "complete review"
@@ -517,3 +517,134 @@ def test_a_job_already_past_its_posting_window_is_refused(monkeypatch, capsys):
 
 def test_job_deadline_is_optional_so_local_runs_still_work():
     assert _parse("900").request_timeout == 900
+
+
+# ── Wire-style and endpoint configurability ─────────────────────────────────
+#
+# §9.1 rule 2: swapping the slot's model must be a settings change, not a
+# refactor. These pin the chat-completions shape and the base-URL binding.
+
+
+def test_chat_payload_keeps_the_trusted_untrusted_channel_split() -> None:
+    payload = codex_responses.build_payload(
+        "m", "none", "TRUSTED POLICY", "UNTRUSTED DIFF", 100, api_style="chat"
+    )
+
+    assert payload["messages"] == [
+        {"role": "system", "content": "TRUSTED POLICY"},
+        {"role": "user", "content": "UNTRUSTED DIFF"},
+    ]
+    assert payload["max_tokens"] == 100
+
+
+def test_chat_payload_omits_reasoning_until_effort_is_set() -> None:
+    off = codex_responses.build_payload(
+        "m", "none", "i", "p", 100, api_style="chat"
+    )
+    on = codex_responses.build_payload(
+        "m", "low", "i", "p", 100, api_style="chat"
+    )
+
+    assert "reasoning_effort" not in off
+    assert on["reasoning_effort"] == "low"
+
+
+def test_chat_output_is_extracted_from_the_first_choice() -> None:
+    response = {
+        "choices": [{"message": {"content": "review text"}, "finish_reason": "stop"}]
+    }
+
+    assert codex_responses.extract_output(response, api_style="chat") == "review text"
+
+
+def test_chat_length_truncation_is_marked_not_fatal_when_text_exists() -> None:
+    truncated = {
+        "choices": [{"message": {"content": "partial"}, "finish_reason": "length"}]
+    }
+    empty = {"choices": [{"message": {"content": ""}, "finish_reason": "length"}]}
+
+    assert "[TRUNCATED OUTPUT" in codex_responses.extract_output(
+        truncated, api_style="chat"
+    )
+    with pytest.raises(RuntimeError, match="no text"):
+        codex_responses.extract_output(empty, api_style="chat")
+
+
+def test_api_style_resolves_flag_over_env_over_default(monkeypatch) -> None:
+    monkeypatch.delenv("CODEX_API_STYLE", raising=False)
+    assert codex_responses.resolve_api_style(None) == "responses"
+
+    monkeypatch.setenv("CODEX_API_STYLE", "chat")
+    assert codex_responses.resolve_api_style(None) == "chat"
+    assert codex_responses.resolve_api_style("responses") == "responses"
+
+    with pytest.raises(ValueError, match="API style"):
+        codex_responses.resolve_api_style("grpc")
+
+
+def test_api_url_defaults_follow_the_wire_style(monkeypatch) -> None:
+    monkeypatch.delenv("CODEX_API_BASE_URL", raising=False)
+
+    assert (
+        codex_responses.resolve_api_url("responses")
+        == codex_responses.RESPONSES_API_URL
+    )
+    assert (
+        codex_responses.resolve_api_url("chat") == codex_responses.CHAT_COMPLETIONS_API_URL
+    )
+
+
+def test_api_url_override_binds_any_compatible_endpoint(monkeypatch) -> None:
+    monkeypatch.setenv("CODEX_API_BASE_URL", "https://gateway.example.com/v1/chat/completions")
+
+    assert (
+        codex_responses.resolve_api_url("chat")
+        == "https://gateway.example.com/v1/chat/completions"
+    )
+
+
+def test_api_url_rejects_plain_http_outside_loopback(monkeypatch) -> None:
+    monkeypatch.setenv("CODEX_API_BASE_URL", "http://api.example.com/v1")
+    with pytest.raises(ValueError, match="https outside loopback"):
+        codex_responses.resolve_api_url("responses")
+
+    monkeypatch.setenv("CODEX_API_BASE_URL", "http://127.0.0.1:8000/v1")
+    assert (
+        codex_responses.resolve_api_url("responses") == "http://127.0.0.1:8000/v1"
+    )
+
+
+def test_api_url_rejects_query_strings_and_fragments(monkeypatch) -> None:
+    monkeypatch.setenv("CODEX_API_BASE_URL", "https://api.example.com/v1?x=1")
+    with pytest.raises(ValueError, match="query or fragment"):
+        codex_responses.resolve_api_url("responses")
+
+
+def test_request_response_posts_to_the_resolved_endpoint(monkeypatch) -> None:
+    seen: dict = {}
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+    body = json.dumps(
+        {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
+    ).encode()
+    monkeypatch.setattr(
+        codex_responses.urllib.request,
+        "urlopen",
+        lambda request, **kwargs: (
+            seen.update(url=request.full_url),
+            Response(body),
+        )[1],
+    )
+
+    result = codex_responses.request_response(
+        model="m", reasoning_effort="none", instructions="i", prompt="p",
+        api_key="k", max_output_tokens=1000, max_output_bytes=4000,
+        request_timeout=600, api_style="chat",
+        api_url="https://gateway.example.com/v1/chat/completions",
+    )
+
+    assert result == "ok"
+    assert seen["url"] == "https://gateway.example.com/v1/chat/completions"

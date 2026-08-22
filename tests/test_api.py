@@ -4,6 +4,8 @@ Uses the session-scoped `client` fixture from conftest, which triggers the
 app's lifespan (table creation + seeding) exactly once.
 """
 
+import pytest
+
 
 def test_health_seeded(client):
     """App should boot, create tables, and seed the directory."""
@@ -115,6 +117,43 @@ def test_bank_name_search_returns_case_insensitive_directory_matches(client):
     assert body["results"]
     assert body["results"][0]["bank_name"] == "Guaranty Trust Bank"
     assert body["results"][0]["bic"] == "GTBINGLAXXX"
+
+
+@pytest.mark.parametrize("limit", [1, 20])
+def test_bank_name_search_honors_inclusive_limit_boundaries(client, limit):
+    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+
+    assert r.status_code == 200
+    assert len(r.json()["results"]) == limit
+
+
+@pytest.mark.parametrize("limit", [0, 21, "not-a-number"])
+def test_bank_name_search_rejects_invalid_limits(client, limit):
+    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+
+    assert r.status_code == 422
+
+
+def test_bank_name_search_normalizes_whitespace_and_requires_all_words(client):
+    r = client.get("/api/banks/search", params={"q": "  guaranty   trust  bank  "})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == "guaranty trust bank"
+    assert body["results"]
+    assert all(
+        all(token in result["bank_name"].lower() for token in ("guaranty", "trust", "bank"))
+        for result in body["results"]
+    )
+
+
+@pytest.mark.parametrize("literal", ["%%", "__", r"\\"])
+def test_bank_name_search_treats_like_metacharacters_literally(client, literal):
+    r = client.get("/api/banks/search", params={"q": literal})
+
+    assert r.status_code == 200
+    assert r.json()["query"] == literal
+    assert r.json()["results"] == []
 
 
 def test_route_usd_to_nigeria(client):

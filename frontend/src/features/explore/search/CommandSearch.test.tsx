@@ -45,7 +45,22 @@ describe("CommandSearch", () => {
     const input = screen.getByRole("searchbox");
     await user.type(input, "zzzznotfound");
 
-    expect(screen.getByText(/no results/i)).toBeVisible();
+    const noResults = await screen.findByText(/no results/i);
+    expect(noResults).toBeVisible();
+    expect(noResults).toHaveAttribute("role", "status");
+    expect(within(screen.getByRole("listbox")).queryByText(/no results/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps loading announcements outside the listbox", async () => {
+    server.use(
+      http.get("/api/banks/search", () => new Promise<Response>(() => {})),
+    );
+
+    const { user } = renderSearch();
+    await user.type(screen.getByRole("searchbox"), "citibank");
+
+    await waitFor(() => expect(screen.getAllByRole("status").some((node) => /searching/i.test(node.textContent ?? ""))).toBe(true));
+    expect(within(screen.getByRole("listbox")).queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("shows bank-name matches from the directory search", async () => {
@@ -106,7 +121,9 @@ describe("CommandSearch", () => {
     const { user } = renderSearch();
     await user.type(screen.getByRole("searchbox"), "IBAN");
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/other results remain available/i);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/other results remain available/i);
+    expect(within(screen.getByRole("listbox")).queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getAllByRole("option").some((option) => option.textContent?.trim().startsWith("IBAN"))).toBe(true);
   });
 
@@ -330,6 +347,30 @@ describe("CommandSearch", () => {
     await user.type(screen.getByRole("searchbox"), "citibank");
     expect(requests).toBe(0);
     await waitFor(() => expect(requests).toBe(1), { timeout: 1000 });
+  });
+
+  it("sends the exact settled bank-search query and keeps results usable", async () => {
+    const requestedQueries: string[] = [];
+    server.use(
+      http.get("/api/banks/search", ({ request }) => {
+        requestedQueries.push(new URL(request.url).searchParams.get("q") ?? "");
+        return HttpResponse.json({
+          query: requestedQueries.at(-1),
+          results: [{
+            bic: "CITIUS33XXX",
+            bank_name: "Citibank N.A.",
+            country_code: "US",
+            city: "New York",
+          }],
+        });
+      }),
+    );
+
+    const { user } = renderSearch();
+    await user.type(screen.getByRole("searchbox"), "  citibank  ");
+
+    await waitFor(() => expect(requestedQueries).toEqual(["citibank"]), { timeout: 1000 });
+    expect(await screen.findByRole("option", { name: /Citibank N\.A\./i })).toBeVisible();
   });
 
   it("renders result context and recovers from no results", async () => {

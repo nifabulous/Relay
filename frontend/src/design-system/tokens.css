@@ -233,6 +233,58 @@
   --color-danger-border: #7d3740;
 }
 
+/*
+ * Explicit black choice — the OLED variant.
+ *
+ * Neutral surfaces on a true-black canvas: the dark palette above is
+ * blue-tinted; this one is deliberately not. Accents (action, success,
+ * warning, danger and their -bg/-border companions) match the dark palette
+ * exactly so semantic colours keep their measured contrast pairs; only the
+ * neutrals (ink, surfaces, borders) move. Like dark, it redefines only the
+ * tokens that change and never follows the OS — no OS offers it.
+ *
+ * The canvas-to-surface elevation step is re-measured for this palette:
+ * #000 → #18181b lands at 1.18, above the 1.15 legibility floor the dark
+ * palette is held to (contrast.test.ts asserts the same floor here).
+ */
+:root[data-theme="black"] {
+  --color-action: #7b9bf0;
+  --color-action-hover: #94aef5;
+  --color-action-pressed: #a8bef8;
+  --color-action-surface: #1d1d22;
+  --color-action-border: #3d4052;
+  --color-on-action: #0f1420;
+  --color-on-danger: #2c1418;
+  --color-danger-hover: #f59aa4;
+
+  --color-ink-strong: #f3f4f6;
+  --color-ink: #d4d5d9;
+  --color-ink-muted: #a1a1aa;
+
+  --color-canvas: #000000;
+  --color-surface: #18181b;
+  --color-surface-2: #212124;
+  --color-surface-3: #2a2a2e;
+
+  /* Structural dividers, same reviewed sub-3:1 posture as the dark palette —
+     status is always text + icon + colour, never a border alone. */
+  --color-border: #303036;
+  --color-border-strong: #46464e;
+  --color-floating-border: #75757d;
+
+  --color-success: #4ec99a;
+  --color-success-bg: #10261f;
+  --color-success-border: #2f6d55;
+
+  --color-warning: #e0a54a;
+  --color-warning-bg: #2a1f0e;
+  --color-warning-border: #7a5a22;
+
+  --color-danger: #f0808c;
+  --color-danger-bg: #2c1418;
+  --color-danger-border: #7d3740;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0.01ms;

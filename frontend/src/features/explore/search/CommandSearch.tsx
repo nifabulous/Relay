@@ -122,6 +122,18 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
     : [];
   const groups = groupResults(results);
   const flatResults = groups.flatMap((g) => g.results);
+  const showSearchStatus = isOpen && normalizedQuery.length > 0 && (
+    bankSearch.isFetching || bankSearch.isError || flatResults.length === 0
+  );
+  const searchStatus = bankSearch.isFetching
+    ? flatResults.length > 0
+      ? "Searching banks; other results remain available."
+      : "Searching the bank directory…"
+    : bankSearch.isError
+      ? flatResults.length > 0
+        ? "Bank search unavailable; other results remain available."
+        : "Bank search unavailable. Try a BIC or Bank Directory."
+      : `No results for “${query}”. Try a bank name, BIC, currency, or payment term.`;
 
   // Compute the active option's id for aria-activedescendant
   const activeOptionId = activeIndex >= 0 && activeIndex < flatResults.length
@@ -234,57 +246,35 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       {isOpen && (
         <div className="command-search__results">
           <div ref={listRef} role="listbox" id={listboxId}>
-          {flatResults.length === 0 ? (
-            <div className="command-search__empty">
-              {bankSearch.isFetching
-                ? "Searching the bank directory…"
-                : bankSearch.isError
-                  ? "Bank search unavailable. Try a BIC or Bank Directory."
-                : `No results for “${query}”. Try a bank name, BIC, currency, or payment term.`}
-            </div>
-          ) : (
-            <>
-              {bankSearch.isFetching && (
-                <div className="command-search__empty" role="status">
-                  Searching banks; other results remain available.
-                </div>
-              )}
-              {bankSearch.isError && (
-                <div className="command-search__empty" role="alert">
-                  Bank search unavailable; other results remain available.
-                </div>
-              )}
-              {groups.map((group) => (
-                <div key={group.type} className="command-search__group">
-                  <div className="command-search__group-label">{group.label}</div>
-                  {group.results.map((result) => {
-                    runningIndex++;
-                    const idx = runningIndex;
-                    return (
-                      <a
-                        key={result.id}
-                        id={`${listboxId}-opt-${runningIndex}`}
-                        href={result.href}
-                        className={[
-                          "command-search__item",
-                          idx === activeIndex && "command-search__item--active",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        role="option"
-                        aria-selected={idx === activeIndex}
-                        onClick={(event) => activateResult(result, event)}
-                      >
-                        <span className="command-search__item-label">{result.label}</span>
-                        <span className="command-search__item-subtitle">{result.subtitle}</span>
-                      </a>
-                    );
-                  })}
-                </div>
-              ))}
-            </>
-          )}
-        </div>
+            {groups.map((group) => (
+              <div key={group.type} className="command-search__group" role="group" aria-label={group.label}>
+                <div className="command-search__group-label">{group.label}</div>
+                {group.results.map((result) => {
+                  runningIndex++;
+                  const idx = runningIndex;
+                  return (
+                    <a
+                      key={result.id}
+                      id={`${listboxId}-opt-${runningIndex}`}
+                      href={result.href}
+                      className={[
+                        "command-search__item",
+                        idx === activeIndex && "command-search__item--active",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      role="option"
+                      aria-selected={idx === activeIndex}
+                      onClick={(event) => activateResult(result, event)}
+                    >
+                      <span className="command-search__item-label">{result.label}</span>
+                      <span className="command-search__item-subtitle">{result.subtitle}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
           {normalizedQuery.length === 0 && history.length > 0 && (
             <section className="command-search__history" aria-labelledby={historyLabelId}>
               <div id={historyLabelId} className="command-search__group-label">Recent searches</div>
@@ -311,6 +301,15 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                 </div>
               ))}
             </section>
+          )}
+          {showSearchStatus && (
+            <div
+              className="command-search__empty"
+              role={bankSearch.isError ? "alert" : "status"}
+              aria-live={bankSearch.isError ? "assertive" : "polite"}
+            >
+              {searchStatus}
+            </div>
           )}
         </div>
       )}

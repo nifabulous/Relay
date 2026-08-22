@@ -27,8 +27,23 @@
 
 .app-shell__brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
+}
+
+/* ── Brand mark ────────────────────────────────────────── */
+/* The route glyph in an action-tinted chip: the product mark and the thing
+   the product teaches stay one visual idea. */
+.app-shell__brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-action);
+  color: var(--color-on-action);
 }
 
 /* ── Preferences menu ──────────────────────────────────── */
@@ -204,6 +219,10 @@
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   font-weight: 400;
+  /* Hairline separator from the wordmark; keeps the pair reading as
+     name + descriptor rather than one run-on label. */
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--color-border);
 }
 
 /* ── Body (rail + content) ─────────────────────────────── */
@@ -219,11 +238,21 @@
   flex-shrink: 0;
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
-  padding: var(--space-4) 0;
+  padding: var(--space-4) var(--space-2);
   position: sticky;
   top: calc(var(--sim-banner-height) + var(--topbar-height));
   height: calc(100vh - var(--sim-banner-height) - var(--topbar-height));
   overflow-y: auto;
+}
+
+.app-shell__rail-eyebrow {
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
 }
 
 .app-shell__nav-list {
@@ -231,25 +260,43 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: 0;
+  padding: 0;
 }
 
+/*
+ * Rail destinations are inset pills. The active state stacks three signals so
+ * it never rides on colour alone (DESIGN.md): the tinted surface, the heavier
+ * label, and the rounded indicator bar on the leading edge.
+ */
 .app-shell__nav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-ink-muted);
   text-decoration: none;
-  border-left: 2px solid transparent;
+  border-radius: var(--radius-control);
   transition: background var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease);
+    color var(--duration-fast) var(--ease);
+}
+
+.app-shell__nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 3px;
+  border-radius: var(--radius-full);
+  background: transparent;
 }
 
 .app-shell__nav-link:hover {
-  background: var(--color-action-border);
+  background: var(--color-surface-2);
   color: var(--color-ink-strong);
   text-decoration: none;
 }
@@ -260,8 +307,12 @@
 
 .app-shell__nav-link--active {
   color: var(--color-action);
-  border-left-color: var(--color-action);
   background: var(--color-action-surface);
+  font-weight: 600;
+}
+
+.app-shell__nav-link--active::before {
+  background: var(--color-action);
 }
 
 .app-shell__nav-link--active:visited {
@@ -343,6 +394,16 @@
 
   .app-shell__mobile-link--active:visited {
     color: var(--color-action);
+  }
+
+  /* The active icon sits in a tinted pill — the mobile sibling of the rail's
+     active surface. */
+  .app-shell__mobile-link--active svg {
+    background: var(--color-action-surface);
+    color: var(--color-action);
+    padding: 3px 12px;
+    border-radius: var(--radius-full);
+    box-sizing: content-box;
   }
 
   /* Non-color active indicator: top border bar (not color alone) */

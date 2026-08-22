@@ -4,11 +4,11 @@ import type { RelayTheme } from "../../design-system/types";
 import { usePreferences, useResolvedTheme, updatePreferences } from "../../app-shell/AppShell";
 import { LearnerDataPanel } from "../overview/LearnerDataPanel";
 import { loadLearningState } from "../../lib/persistence/learnerStateTransfer";
-// LearnerDataPanel still carries `overview__learner-data*` class names. Its
-// styles live in OverviewPage.css, which is eagerly loaded today because
-// OverviewPage is not lazy — but relying on that would break the moment it is.
-// Import it explicitly; Vite dedupes it into the same CSS bundle.
-import "../overview/OverviewPage.css";
+import type { IconName } from "../../design-system/coss/icon";
+import { Icon } from "../../design-system/coss/icon";
+import { Card } from "../../design-system/coss/card";
+import { FieldDescription } from "../../design-system/coss/field";
+import { Switch } from "../../design-system/coss/switch";
 import "./SettingsPage.css";
 
 /**
@@ -27,6 +27,7 @@ interface AppearanceOption {
   value: RelayTheme;
   label: string;
   description: string;
+  icon: IconName;
 }
 
 const APPEARANCE_OPTIONS: AppearanceOption[] = [
@@ -34,16 +35,25 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = [
     value: "system",
     label: "System",
     description: "Follow your device's appearance setting, and change when it changes.",
+    icon: "monitor",
   },
   {
     value: "light",
     label: "Light",
     description: "Always use the light palette, whatever your device is set to.",
+    icon: "sun",
   },
   {
     value: "dark",
     label: "Dark",
     description: "Always use the dark palette, whatever your device is set to.",
+    icon: "moon",
+  },
+  {
+    value: "black",
+    label: "Black",
+    description: "True-black OLED variant of the dark palette — neutral greys, no tint.",
+    icon: "contrast",
   },
 ];
 
@@ -70,87 +80,87 @@ export function SettingsPage() {
           Appearance
         </h2>
 
-        <fieldset className="settings__fieldset">
-          <legend className="settings__legend">Theme</legend>
+        <Card className="settings__card">
+          <fieldset className="settings__fieldset">
+            <legend className="settings__legend">Theme</legend>
 
-          {APPEARANCE_OPTIONS.map((option) => {
-            const inputId = `${idBase}-theme-${option.value}`;
-            const descriptionId = `${inputId}-description`;
-            return (
-              <div key={option.value} className="settings__option">
-                <input
-                  id={inputId}
-                  className="settings__option-control"
-                  type="radio"
-                  name={`${idBase}-theme`}
-                  value={option.value}
-                  checked={preferences.theme === option.value}
-                  aria-describedby={descriptionId}
-                  onChange={() => updatePreferences({ theme: option.value })}
-                />
-                <div className="settings__option-body">
-                  <label htmlFor={inputId} className="settings__option-label">
-                    {option.label}
-                    {option.value === "system" && (
-                      <span className="settings__option-hint">
-                        {" · "}
-                        {resolvedTheme === "dark" ? "Dark" : "Light"} right now
-                      </span>
-                    )}
-                  </label>
-                  <p id={descriptionId} className="settings__option-description">
-                    {option.description}
-                  </p>
+            {APPEARANCE_OPTIONS.map((option) => {
+              const inputId = `${idBase}-theme-${option.value}`;
+              const descriptionId = `${inputId}-description`;
+              return (
+                <div key={option.value} className="settings__option">
+                  <input
+                    id={inputId}
+                    className="settings__option-control"
+                    type="radio"
+                    name={`${idBase}-theme`}
+                    value={option.value}
+                    checked={preferences.theme === option.value}
+                    aria-describedby={descriptionId}
+                    onChange={() => updatePreferences({ theme: option.value })}
+                  />
+                  <span className="settings__option-icon" aria-hidden="true">
+                    <Icon name={option.icon} size={15} />
+                  </span>
+                  <div className="settings__option-body">
+                    <label htmlFor={inputId} className="settings__option-label">
+                      {option.label}
+                      {option.value === "system" && (
+                        <span className="settings__option-hint">
+                          {" · "}
+                          {resolvedTheme === "dark" ? "Dark" : "Light"} right now
+                        </span>
+                      )}
+                    </label>
+                    <FieldDescription id={descriptionId}>{option.description}</FieldDescription>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </fieldset>
+              );
+            })}
+          </fieldset>
 
-        <div className="settings__option">
-          <input
-            id={`${idBase}-reduced-motion`}
-            className="settings__option-control"
-            type="checkbox"
-            checked={preferences.reducedMotion}
-            aria-describedby={`${idBase}-reduced-motion-description`}
-            onChange={(event) => updatePreferences({ reducedMotion: event.target.checked })}
-          />
-          <div className="settings__option-body">
-            <label htmlFor={`${idBase}-reduced-motion`} className="settings__option-label">
-              Reduce motion
-            </label>
-            <p
-              id={`${idBase}-reduced-motion-description`}
-              className="settings__option-description"
-            >
-              Removes the theme crossfade, the loading shimmer and other animation.
-            </p>
-          </div>
-        </div>
+          <div className="settings__divider" role="presentation" />
 
-        <div className="settings__option">
-          <input
-            id={`${idBase}-density`}
-            className="settings__option-control"
-            type="checkbox"
-            checked={preferences.navigationDensity === "compact"}
-            aria-describedby={`${idBase}-density-description`}
-            onChange={(event) =>
-              updatePreferences({
-                navigationDensity: event.target.checked ? "compact" : "comfortable",
-              })
-            }
-          />
-          <div className="settings__option-body">
-            <label htmlFor={`${idBase}-density`} className="settings__option-label">
-              Compact navigation
-            </label>
-            <p id={`${idBase}-density-description`} className="settings__option-description">
-              Tightens spacing in the navigation rail so more fits on screen.
-            </p>
+          <div className="settings__option">
+            <Switch
+              id={`${idBase}-reduced-motion`}
+              checked={preferences.reducedMotion}
+              aria-describedby={`${idBase}-reduced-motion-description`}
+              onChange={(event) => updatePreferences({ reducedMotion: event.target.checked })}
+            />
+            <div className="settings__option-body">
+              <label htmlFor={`${idBase}-reduced-motion`} className="settings__option-label">
+                Reduce motion
+              </label>
+              <FieldDescription id={`${idBase}-reduced-motion-description`}>
+                Removes the theme crossfade, the loading shimmer and other animation.
+              </FieldDescription>
+            </div>
           </div>
-        </div>
+
+          <div className="settings__divider" role="presentation" />
+
+          <div className="settings__option">
+            <Switch
+              id={`${idBase}-density`}
+              checked={preferences.navigationDensity === "compact"}
+              aria-describedby={`${idBase}-density-description`}
+              onChange={(event) =>
+                updatePreferences({
+                  navigationDensity: event.target.checked ? "compact" : "comfortable",
+                })
+              }
+            />
+            <div className="settings__option-body">
+              <label htmlFor={`${idBase}-density`} className="settings__option-label">
+                Compact navigation
+              </label>
+              <FieldDescription id={`${idBase}-density-description`}>
+                Tightens spacing in the navigation rail so more fits on screen.
+              </FieldDescription>
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* ── Learner data ───────────────────────────────── */}

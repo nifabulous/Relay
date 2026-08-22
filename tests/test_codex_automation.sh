@@ -7,6 +7,12 @@ FAILURES=0
 # shadows `python3` on PATH, and a shim that re-resolves through PATH would
 # recurse into the stub forever.
 REAL_PYTHON3="$(python3 -c 'import sys; print(sys.executable)')"
+STAGING="$(mktemp -d)"
+TRUSTED_STAGING_ROOT="$STAGING/trusted"
+mkdir -p "$TRUSTED_STAGING_ROOT"
+# The SHA the script must see as its checkout to trust it. Tests run against
+# this worktree, so the worktree HEAD is the trusted SHA.
+ROOT_HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 require_text() {
   local file="$1"
@@ -131,6 +137,46 @@ require_text 'scripts/verify_before_push.sh' 'working tree changed during verifi
 require_text 'scripts/codex_review_pr.sh' 'review-sanitized.md'
 require_text 'scripts/codex_review_pr.sh' 'review-input.md'
 require_text 'scripts/codex_review_pr.sh' '--instructions "$TEMP_DIR/review-instructions.md"'
+
+# Finding memory (loop-engineering plan §5): the reviewer must read its own
+# prior review of this PR and emit a lifecycle trailer, so the arbiter (T3)
+# can count whether a finding recurs across rounds.
+require_text 'scripts/codex_review_pr.sh' 'prev-review.md'
+# prev-review-sanitized.md is written only by the codex_sanitize.py step and
+# read only by the codex_untrusted.py --label previous-review step, so its
+# presence proves the sanitize-before-wrap ordering for the prior review
+# comment (same convention as review-sanitized.md above for the model's own
+# output). The prior comment quotes PR diff content verbatim and can carry
+# secrets/IBANs; codex_untrusted.py only defangs delimiters, it does not
+# redact, so sanitizing first is a hard security requirement.
+require_text 'scripts/codex_review_pr.sh' 'prev-review-sanitized.md'
+require_text 'scripts/codex_review_pr.sh' '--label previous-review'
+require_text 'scripts/codex_review_pr.sh' 'codex-verdict'
+require_text 'scripts/codex_review_pr.sh' 'full accounting'
+
+# T5: the per-branch Contract (docs/contracts/<branch>.md) is read from THIS
+# checkout -- main's version by construction of the review workflow's
+# default-branch checkout -- and injected into the TRUSTED instructions
+# channel, appended after the trusted review policy. It must never be routed
+# through codex_untrusted.py, which is reserved for PR-controlled input.
+require_text 'scripts/codex_review_pr.sh' 'CONTRACT_PATH'
+require_text 'scripts/codex_review_pr.sh' 'docs/contracts/'
+require_text 'scripts/codex_review_pr.sh' '## Contract'
+require_text 'scripts/codex_review_pr.sh' 'Disambiguation:'
+# Wording must be robust to both the "## Contract (from main)" and plain
+# "## Contract" headings the script can emit, and must cover a PR that ADDS a
+# brand-new contract file with no main-side counterpart, not only one that
+# modifies an existing one.
+require_text 'scripts/codex_review_pr.sh' 'report any divergence from the Contract section below'
+require_text 'scripts/codex_review_pr.sh' 'adds or modifies the PR branch'
+refuse_text 'scripts/codex_review_pr.sh' '--label contract'
+# Review fix: a present-but-not-a-contract file at the resolved path (e.g.
+# docs/contracts/README.md itself, for a branch literally named "README")
+# must never be injected as a signed-off contract, and a bare `-s` check
+# (true for a directory too) must never be able to abort the script.
+require_text 'scripts/codex_review_pr.sh' '# Contract:'\''*'
+require_text 'scripts/codex_review_pr.sh' 'show_trusted "$CONTRACT_PATH"'
+
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
 require_text 'scripts/codex_triage_issue.sh' 'triage-input.md'
 require_text 'scripts/codex_triage_issue.sh' '--instructions "$TEMP_DIR/triage-instructions.md"'
@@ -264,12 +310,21 @@ for arg in "$@"; do
       exec "$CODEX_REAL_PYTHON3" "$@"
     fi
     out=""
+    instructions=""
+    input_file=""
     prev=""
     for candidate in "$@"; do
       [[ "$prev" == "--output" ]] && out="$candidate"
+      [[ "$prev" == "--instructions" ]] && instructions="$candidate"
+      [[ "$prev" == "--input" ]] && input_file="$candidate"
       prev="$candidate"
     done
     printf '%s\n' "$*" >"$CODEX_STUB_DIR/responses-argv.log"
+    # Captured before the caller's own mktemp TEMP_DIR (distinct from
+    # CODEX_STUB_DIR) is deleted by the caller's EXIT trap, so a test can
+    # assert which channel content actually reached the API call.
+    [[ -n "$instructions" ]] && cp "$instructions" "$CODEX_STUB_DIR/captured-instructions.md"
+    [[ -n "$input_file" ]] && cp "$input_file" "$CODEX_STUB_DIR/captured-input.md"
     printf 'stub review\n' >"$out"
     if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
       printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
@@ -280,7 +335,46 @@ done
 exec "$CODEX_REAL_PYTHON3" "$@"
 STUB
 
-chmod +x "$STUB_DIR/gh" "$STUB_DIR/python3"
+cat >"$STUB_DIR/git" <<'GSTUB'
+#!/usr/bin/env bash
+# The reviewer script reads trusted content from GIT OBJECTS at the stamped
+# SHA. The stub serves those reads from a staging directory recorded at
+# stub-creation time, so tests exercise the object-read path without
+# committing fixtures into the developer's worktree.
+STUB_CFG="$(dirname "$(command -v git)")"
+REAL_GIT="$(command -v -p git 2>/dev/null || command -v git)"
+GIT_STUB_ROOT="$(cat "$STUB_CFG/git-root")"
+TRUSTED_STAGING="$(cat "$STUB_CFG/trusted-staging")"
+for arg in "$@"; do
+  if [[ "$arg" == "--show-toplevel" ]]; then
+    printf '%s\n' "$GIT_STUB_ROOT"
+    exit 0
+  fi
+done
+if [[ "${*: -1}" == "HEAD" && " $* " == *" rev-parse "* ]]; then
+  printf '%s\n' "$(cat "$STUB_CFG/trusted-sha")"
+  exit 0
+fi
+if [[ "$1" == "show" || ("$1" == "-C" && "$3" == "show") ]]; then
+  ref="${@: -1}"
+  path="${ref#*:}"
+  staging_file="$TRUSTED_STAGING/$path"
+  if [[ -f "$staging_file" ]]; then
+    cat "$staging_file"
+    exit 0
+  fi
+  exit 1
+fi
+exec "$REAL_GIT" "$@"
+GSTUB
+
+printf '%s\n' "$ROOT" >"$STUB_DIR/git-root"
+printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/trusted-sha"
+printf '%s\n' "$TRUSTED_STAGING_ROOT" >"$STUB_DIR/trusted-staging"
+# The policy file is genuinely part of the trusted checkout; serve the real one.
+mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
+cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
+chmod +x "$STUB_DIR/gh" "$STUB_DIR/python3" "$STUB_DIR/git"
 
 # The triage script fingerprints with sha256sum, which is GNU-only. Shim it so
 # the regression test runs on a developer machine as well as in CI.
@@ -313,6 +407,7 @@ run_suppression_case() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -352,6 +447,7 @@ check_timeout_propagates() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -395,6 +491,7 @@ check_override_beyond_job_deadline_is_refused() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -436,6 +533,7 @@ check_oversized_review_input_is_refused() {
     OPENAI_API_KEY=stub-key \
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=20000 \
@@ -452,6 +550,233 @@ check_oversized_review_input_is_refused() {
   fi
   if [[ -s "$STUB_DIR/posted.log" ]]; then
     fail 'Oversized PR input reached comment publication.'
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# T5: the per-branch Contract (docs/contracts/<branch>.md) must be read from
+# THIS checkout -- main's version by construction, never fetched from the PR
+# branch -- and must land only in the TRUSTED --instructions file, never in
+# the untrusted --input file alongside the PR diff/metadata.
+# ---------------------------------------------------------------------------
+# Review P1 (head 2afd089): T5's contract injection is only tamper-proof if
+# the checkout really is the trusted default branch. The script must refuse
+# to run at all when the SHA it stands on differs from the stamped trusted
+# SHA — a branch-controlled checkout must not be able to supply either the
+# contract or the review policy to the instructions channel.
+check_refuses_untrusted_checkout() {
+  local branch="zz-codex-automation-test/untrusted-checkout"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 16, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "cafebabe"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="0000000000000000000000000000000000000000" \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 16 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh ran on a checkout that does not match the trusted SHA.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'An untrusted checkout still reached comment publication.'
+  fi
+}
+
+check_contract_lands_in_trusted_channel_only() {
+  local branch="zz-codex-automation-test/contract-fixture"
+  # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
+  local contract_hash
+  contract_hash="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])' "$branch")"
+  local contract_rel="docs/contracts/${branch//\//-}-${contract_hash}.md"
+  local contract_path="$TRUSTED_STAGING_ROOT/$contract_rel"
+  local sentinel="ZZ_T5_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
+  local status=0
+
+  mkdir -p "$(dirname "$contract_path")"
+  printf '# Contract: %s\n\nOut of scope: %s\n' "$branch" "$sentinel" >"$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -f "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status while checking contract channel placement"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+  elif ! grep -Fq -- "$sentinel" "$STUB_DIR/captured-instructions.md"; then
+    fail 'A present docs/contracts/<branch>.md did not land in the trusted instructions file.'
+  fi
+  if [[ -s "$STUB_DIR/captured-input.md" ]] && grep -Fq -- "$sentinel" "$STUB_DIR/captured-input.md"; then
+    fail 'The per-branch Contract leaked into the untrusted review-input.md channel.'
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Review fix: docs/contracts/ is a flat namespace keyed on the branch name
+# alone, so a PR branch that happens to resolve to a stray non-contract file
+# at that path (mirrors docs/contracts/README.md's own real shape: present,
+# non-empty, but headed "# Contracts" -- plural, no colon -- not
+# "# Contract:") must NOT have that file's content injected as a signed-off
+# scope contract. It must fall back to the same "no contract" text a missing
+# file produces.
+# ---------------------------------------------------------------------------
+check_non_contract_file_is_ignored() {
+  local branch="zz-codex-automation-test/not-a-contract"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  local sentinel="ZZ_T5_NOT_A_CONTRACT_SENTINEL_DO_NOT_MATCH_ELSEWHERE"
+  local status=0
+
+  mkdir -p "$(dirname "$contract_path")"
+  # Mirrors the real format doc's own header: "# Contracts" (plural, no
+  # colon) is not "# Contract:" and must not be treated as a per-branch
+  # contract just because a file happens to sit at this path.
+  printf '# Contracts\n\nSome unrelated body text: %s\n' "$sentinel" >"$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -f "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status while checking the non-contract fallback"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+    return
+  fi
+  if grep -Fq -- "$sentinel" "$STUB_DIR/captured-instructions.md"; then
+    fail 'A present-but-not-"# Contract:"-headed file was injected as a signed-off contract.'
+  fi
+  if ! grep -Fq -- 'No contract on main for this branch; nothing is out of scope.' "$STUB_DIR/captured-instructions.md"; then
+    fail 'A non-contract file present at the contract path did not fall back to "no contract".'
+  fi
+}
+
+# MINOR fail-safe: `-s` alone is true for a directory too. If CONTRACT_PATH
+# ever resolved to a directory, a bare `-s` guard would let the following
+# `cat` fail and abort the whole script under `set -euo pipefail` (a loud CI
+# failure with no review posted) instead of falling back to "no contract".
+check_contract_path_as_directory_is_ignored() {
+  local branch="zz-codex-automation-test/dir-not-a-file"
+  local contract_path="$ROOT/docs/contracts/${branch//\//-}.md"
+  local status=0
+
+  rm -rf "$contract_path"
+  mkdir -p "$contract_path"
+
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  rm -f "$STUB_DIR/captured-instructions.md" "$STUB_DIR/captured-input.md"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "deadbeef"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  rm -rf "$contract_path"
+
+  if (( status != 0 )); then
+    fail "codex_review_pr.sh exited $status when the contract path resolved to a directory"
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-instructions.md" ]]; then
+    fail 'codex_review_pr.sh did not pass an --instructions file to codex_responses.py'
+    return
+  fi
+  if ! grep -Fq -- 'No contract on main for this branch; nothing is out of scope.' "$STUB_DIR/captured-instructions.md"; then
+    fail 'A directory at the contract path did not fall back to "no contract".'
   fi
 }
 
@@ -506,6 +831,7 @@ env \
   OPENAI_API_KEY=stub-key \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
+  CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -526,6 +852,7 @@ env \
   OPENAI_API_KEY=stub-key \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
+  CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -536,6 +863,13 @@ env \
 if [[ -s "$STUB_DIR/posted.log" ]]; then
   fail 'A review was posted after the PR head moved during model generation.'
 fi
+
+check_refuses_untrusted_checkout
+check_contract_lands_in_trusted_channel_only
+
+check_non_contract_file_is_ignored
+
+check_contract_path_as_directory_is_ignored
 
 check_oversized_review_input_is_refused
 

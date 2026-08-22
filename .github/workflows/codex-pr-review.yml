@@ -31,6 +31,7 @@ jobs:
     timeout-minutes: 20
     env:
       CODEX_REVIEW_ENABLED: ${{ vars.CODEX_REVIEW_ENABLED }}
+      CODEX_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       CODEX_MODEL: ${{ vars.CODEX_MODEL || 'gpt-5.3-codex' }}
@@ -64,6 +65,13 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 1
+
+      # The reviewer's entire trusted-instructions channel (contract, review
+      # policy) is read from THIS checkout. Stamping its SHA lets the worker
+      # verify it is still standing on the trusted ref instead of trusting
+      # that nothing moved the working tree between here and the read.
+      - name: Stamp the trusted checkout SHA
+        run: echo "CODEX_TRUSTED_SHA=$(git rev-parse HEAD)" >>"$GITHUB_ENV"
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
