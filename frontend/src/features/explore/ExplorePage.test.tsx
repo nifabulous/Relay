@@ -95,6 +95,39 @@ describe("ExplorePage", () => {
 
     expect(screen.getByTestId("location")).toHaveTextContent("/app/explore/glossary?term=IBAN");
   });
+
+  it("keeps click activation inside a router basename", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter basename="/app" initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const result = (await screen.findAllByRole("option", { name: /IBAN/i }))[0];
+    await user.click(result);
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/explore/glossary?term=IBAN");
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/app/app/");
+  });
+
+  it("keeps Enter activation inside a router basename", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter basename="/app" initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    await user.click(input);
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/explore/glossary?term=IBAN");
+    expect(screen.getByTestId("location")).not.toHaveTextContent("/app/app/");
+  });
 });
 
 describe("BankDirectoryPage", () => {

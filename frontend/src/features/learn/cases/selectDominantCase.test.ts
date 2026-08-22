@@ -69,6 +69,16 @@ describe("selectDominantCase", () => {
     expect(selectDominantCase(entries)).toBe(entries[1]);
   });
 
+  it("does not let a catalog-level under-review in-progress case dominate fresh work", () => {
+    const underReview = { ...firstDefinition, reviewStatus: "under_review" as const };
+    const entries = [
+      entry(underReview, session(firstDefinition.id, "in_progress", "2026-08-22T10:00:00Z"), 0),
+      entry(secondDefinition, null, 1),
+    ];
+
+    expect(selectDominantCase(entries)).toBe(entries[1]);
+  });
+
   it("excludes catalog-level under-review entries from fresh fallback", () => {
     const underReview = { ...firstDefinition, reviewStatus: "under_review" as const };
     const entries = [entry(underReview, null, 0), entry(secondDefinition, null, 1)];

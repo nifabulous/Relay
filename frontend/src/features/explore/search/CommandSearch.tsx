@@ -1,5 +1,5 @@
 import { useEffect, useRef, useId, useState, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useHref, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
@@ -23,6 +23,17 @@ const GROUP_LABELS: Record<SearchResultType, string> = {
 const GROUP_ORDER: SearchResultType[] = ["bank", "scheme", "glossary", "lesson", "tool"];
 
 const BIC_QUERY_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+
+/**
+ * Search results keep their canonical browser hrefs, including the deployed
+ * `/app` prefix. React Router already owns that prefix through `basename`, so
+ * imperative navigation must receive the route path inside the basename.
+ */
+function toRouterPath(href: string, routerRootHref: string): string {
+  const routerBase = routerRootHref.replace(/\/$/, "");
+  if (!routerBase || routerBase === href) return routerBase ? "/" : href;
+  return href.startsWith(`${routerBase}/`) ? href.slice(routerBase.length) : href;
+}
 
 const EMPTY_DESTINATIONS: SearchResult[] = [
   { id: "destination:banks", type: "bank", label: "Bank Directory", subtitle: "Browse and look up banks by BIC", href: "/app/explore/banks" },
@@ -54,6 +65,7 @@ interface CommandSearchProps {
 
 export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchProps) {
   const navigate = useNavigate();
+  const routerRootHref = useHref("/");
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(initialQuery.trim().length > 0);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -136,7 +148,11 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
     setIsOpen(false);
     setActiveIndex(-1);
     event?.preventDefault();
-    (onNavigate ?? navigate)(result.href);
+    if (onNavigate) {
+      onNavigate(result.href);
+    } else {
+      navigate(toRouterPath(result.href, routerRootHref));
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {

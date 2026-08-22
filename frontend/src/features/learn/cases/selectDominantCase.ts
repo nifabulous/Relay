@@ -42,7 +42,10 @@ function newestByStatus(
 export function selectDominantCase(entries: readonly CaseEntrySnapshot[]): CaseEntrySnapshot | null {
   if (entries.length === 0) return null;
 
-  const inProgress = newestByStatus(entries, "in_progress");
+  const inProgress = newestByStatus(
+    entries.filter((entry) => entry.definition.reviewStatus !== "under_review"),
+    "in_progress",
+  );
   if (inProgress) return inProgress;
 
   const fresh = entries

@@ -87,7 +87,9 @@
 .command-search__item {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
+  min-height: 44px;
   padding: var(--space-2) var(--space-4);
   text-decoration: none;
   color: var(--color-ink);
@@ -126,6 +128,9 @@
 
 .command-search__history-query,
 .command-search__history-remove {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   border: 0;
   background: transparent;
   color: var(--color-ink-strong);

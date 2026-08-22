@@ -78,6 +78,41 @@ test.describe("Explore", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
 
+  test("keeps result and recent-search controls at a 44px touch target on 390px", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(() => {
+      localStorage.setItem("relay:search-history:v1", JSON.stringify(["IBAN"]));
+    });
+    await page.goto("/app/explore");
+
+    const input = page.locator('input[type="search"]');
+    await input.fill("IBAN");
+    const result = page.locator(".command-search__item").first();
+    await expect(result).toBeVisible();
+    const resultHeight = await result.evaluate((element) => element.getBoundingClientRect().height);
+    expect(resultHeight).toBeGreaterThanOrEqual(44);
+
+    await input.clear();
+    const remove = page.getByRole("button", { name: "Remove IBAN from recent searches" });
+    await expect(remove).toBeVisible();
+    const removeHeight = await remove.evaluate((element) => element.getBoundingClientRect().height);
+    expect(removeHeight).toBeGreaterThanOrEqual(44);
+  });
+
+  test("activates search results without duplicating the app basename", async ({ page }) => {
+    await page.goto("/app/explore");
+    const input = page.locator('input[type="search"]');
+    await input.fill("IBAN");
+    await page.locator(".command-search__item").filter({ hasText: "IBAN" }).first().click();
+    await expect(page).toHaveURL(/\/app\/explore\/glossary\?term=IBAN$/);
+
+    await page.goto("/app/explore");
+    await input.fill("IBAN");
+    await input.press("ArrowDown");
+    await input.press("Enter");
+    await expect(page).toHaveURL(/\/app\/explore\/glossary\?term=IBAN$/);
+  });
+
   test("glossary page shows terms", async ({ page }) => {
     await page.goto("/app/explore/glossary");
     // Wait for lazy-loaded page to render
