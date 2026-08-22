@@ -120,6 +120,45 @@ describe("CommandSearch", () => {
     expect(items[1]).toHaveClass("command-search__item--active");
   });
 
+  it("scrolls the active option into the nearest visible region while navigating overflow", async () => {
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      const { user } = renderSearch("payment");
+      const input = screen.getByRole("searchbox");
+      const items = screen.getAllByRole("option");
+      expect(items.length).toBeGreaterThan(5);
+
+      await user.click(input);
+      await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}");
+
+      const activeId = input.getAttribute("aria-activedescendant");
+      expect(activeId).toBeTruthy();
+      expect(document.getElementById(activeId!)).toBe(items[4]);
+      expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "nearest" });
+
+      await user.keyboard("{ArrowUp}");
+
+      expect(document.getElementById(input.getAttribute("aria-activedescendant")!)).toBe(items[3]);
+      expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "nearest" });
+      expect(scrollIntoView).toHaveBeenCalledTimes(6);
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+          configurable: true,
+          value: originalScrollIntoView,
+        });
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
+  });
+
   it("closes results on Escape and restores focus to input", async () => {
     const { user } = renderSearch();
     const input = screen.getByRole("searchbox");

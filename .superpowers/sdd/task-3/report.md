@@ -111,3 +111,9 @@ Tests       60 passed (60)
 - RED: `npm run test:e2e -- e2e/explore.spec.ts --project=mobile --grep "removing a recent search"` failed with the remove control at `640.75px` under the mobile nav beginning at `600px`.
 - Fix: added a mobile-only bounded dropdown scroll region with bottom clearance of `--nav-height-mobile` plus `safe-area-inset-bottom`; desktop positioning, listbox semantics, keyboard navigation, and local history are unchanged. The E2E regression scrolls the control into that region and asserts it clears the nav.
 - GREEN: targeted mobile test passed (`1 passed`); focused Explore unit tests passed (`4 files, 65 tests`); `npm run build` passed.
+
+## Mobile active-result scrolling fix (TDD)
+
+- RED: added an overflow keyboard regression for the long `payment` result set; the fifth ArrowDown left `scrollIntoView` uncalled, reproducing the hidden active-result behavior.
+- Fix: the existing listbox ref now finds the active `aria-selected="true"` option and calls `scrollIntoView({ block: "nearest" })` whenever the active option changes. A capability check keeps jsdom stable; click/Enter activation, `aria-activedescendant`, and desktop CSS remain unchanged.
+- GREEN: focused Explore tests passed (`3` files, `65` tests); `npm run build` passed.

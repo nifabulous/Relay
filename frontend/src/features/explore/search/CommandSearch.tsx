@@ -116,6 +116,14 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
     ? `${listboxId}-opt-${activeIndex}`
     : undefined;
 
+  useEffect(() => {
+    if (!activeOptionId) return;
+    const activeOption = listRef.current?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
+    if (typeof activeOption?.scrollIntoView === "function") {
+      activeOption.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeOptionId]);
+
   function handleChange(value: string) {
     setQuery(value);
     setIsOpen(value.trim().length > 0 || document.activeElement === inputRef.current);
