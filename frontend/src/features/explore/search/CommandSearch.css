@@ -150,6 +150,15 @@
   color: var(--color-ink-strong);
 }
 
+/* Keep the dropdown overlay on mobile, but make it a bounded scroll region so
+   its history controls can scroll clear of the fixed nav. */
+@media (max-width: 1023px) {
+  .command-search__results {
+    max-height: calc(50dvh - var(--space-7) - env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

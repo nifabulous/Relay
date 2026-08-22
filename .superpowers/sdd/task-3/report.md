@@ -91,6 +91,12 @@ Test Files  3 passed (3)
 Tests       60 passed (60)
 ```
 
+## Final re-review fix
+
+- Scoped the deep-linked Glossary assertion to the exact group label so Playwright strict mode does not confuse it with the Banks and Lessons labels rendered alongside it.
+- Focused CommandSearch tests: 8 passed. Production build passed.
+- Isolated browser verification reached the current build; the corrected assertion is covered by the targeted review and the full Explore run's remaining failures are limited to the pre-existing bank-detail axe issue.
+
 ## Latest review fixes (TDD)
 
 - RED: the new malformed-record and listbox-semantics regressions failed for the expected causes (`2 failed`, `30 passed`).
@@ -99,3 +105,9 @@ Tests       60 passed (60)
 - Added a deterministic browser test that seeds `relay:search-history:v1` through page `localStorage`, clicks removal, and verifies the visible list and persisted value.
 - GREEN focused verification: `3` files, `64` tests passed. Production build (`tsc --noEmit && vite build`) passed.
 - The focused browser scenario was attempted but the configured `reuseExistingServer` attached to the sibling worktree's server, which does not serve this Task 3 UI; it failed before finding the recent-search control. This remains an environment/server-isolation concern.
+
+## Mobile Explore recent-search reachability fix (TDD)
+
+- RED: `npm run test:e2e -- e2e/explore.spec.ts --project=mobile --grep "removing a recent search"` failed with the remove control at `640.75px` under the mobile nav beginning at `600px`.
+- Fix: added a mobile-only bounded dropdown scroll region with bottom clearance of `--nav-height-mobile` plus `safe-area-inset-bottom`; desktop positioning, listbox semantics, keyboard navigation, and local history are unchanged. The E2E regression scrolls the control into that region and asserts it clears the nav.
+- GREEN: targeted mobile test passed (`1 passed`); focused Explore unit tests passed (`4 files, 65 tests`); `npm run build` passed.

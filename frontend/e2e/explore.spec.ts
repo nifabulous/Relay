@@ -34,6 +34,21 @@ test.describe("Explore", () => {
     await input.click();
     const removeIban = page.getByRole("button", { name: "Remove IBAN from recent searches" });
     await expect(removeIban).toBeVisible();
+    await removeIban.scrollIntoViewIfNeeded();
+
+    const reachability = await page.evaluate(() => {
+      const remove = document.querySelector<HTMLElement>(
+        '[aria-label="Remove IBAN from recent searches"]',
+      );
+      const nav = document.querySelector<HTMLElement>(".app-shell__mobile-nav");
+      const removeBox = remove?.getBoundingClientRect();
+      return {
+        removeBottom: removeBox?.bottom ?? 0,
+        navTop: nav?.getBoundingClientRect().top ?? window.innerHeight,
+      };
+    });
+    expect(reachability.removeBottom).toBeLessThanOrEqual(reachability.navTop);
+
     await removeIban.click();
 
     await expect(removeIban).toHaveCount(0);
