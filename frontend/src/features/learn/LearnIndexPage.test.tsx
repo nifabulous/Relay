@@ -9,17 +9,20 @@ beforeEach(() => {
 });
 
 describe("LearnIndexPage case browsing", () => {
-  it("renders every case in one document-order list", () => {
+  it("renders the dominant case first and the remaining cases in Other cases", () => {
     render(
       <MemoryRouter>
         <LearnIndexPage />
       </MemoryRouter>,
     );
 
-    const list = screen.getByRole("list", { name: "Customer cases" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(CASE_CATALOG.length);
-    expect(within(list).getAllByRole("heading").map((heading) => heading.textContent)).toEqual(
-      CASE_CATALOG.map((definition) => definition.title),
+    const active = screen.getByRole("list", { name: "Active case" });
+    const other = screen.getByRole("list", { name: "Other cases" });
+    expect(within(active).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(other).getAllByRole("listitem")).toHaveLength(CASE_CATALOG.length - 1);
+    expect(within(active).getByRole("heading")).toHaveTextContent(CASE_CATALOG[0]!.title);
+    expect(within(other).getAllByRole("heading").map((heading) => heading.textContent)).toEqual(
+      CASE_CATALOG.slice(1).map((definition) => definition.title),
     );
   });
 });
