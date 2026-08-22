@@ -2460,6 +2460,365 @@
           "admitted_record_digest": "a1d6932c9ef1a551005b9883f8c9c28854ded97a7b84c6fc7efda00dea7fab83"
         }
       ]
+    },
+    {
+      "name": "uganda",
+      "label": "Uganda",
+      "countries": [
+        "UG"
+      ],
+      "masked_block": 91002900,
+      "note": "2026-08-22 research: Centenary Bank Uganda publishes an archived \"Correspondent Bank Address & Swift Codes\" page (2016) with per-currency nostro accounts, and Stanbic Bank Uganda publishes an archived SWIFT-code remittance sheet (2020) with a 14-row correspondent table - both seeded. Kenyan banks belong to north-east-africa; Equity Bank Kenya re-verified against its live SWIFT page and 2020 archive but left under its legacy seed rows, which carry published accounts this pass could not fully supersede. NOT SEEDABLE: Co-operative Bank, NCBA, Absa Kenya, StanChart Kenya, Stanbic Kenya, I&M, DTB, CRDB, NMB, dfcu, Exim TZ (names-only or nothing published). Centenary row citing truncated \"vory Bank\" (Ivory Bank Juba IVOJSSJB, directory-unverified) dropped and forbidden.",
+      "forbidden_bics": [
+        "IVOJSSJB"
+      ],
+      "banks": [
+        {
+          "bic8": "CERBUGKA",
+          "name": "Centenary Rural Development Bank Limited (Centenary Bank Uganda)",
+          "country": "UG",
+          "currencies": [
+            "CNY",
+            "EUR",
+            "GBP",
+            "KES",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "centenarybank.co.ug"
+          ],
+          "admitted_records": [
+            {
+              "currency": "CNY",
+              "correspondent": "Bank of China, Johannesburg",
+              "int_bic": "BKCHZAJJ",
+              "nostro": "ACCT-91002917",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002917",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Sparkasse Aachen, Germany",
+              "int_bic": "AACSDE33",
+              "nostro": "ACCT-91002914",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002914",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank, Frankfurt",
+              "int_bic": "DEUTDEFF",
+              "nostro": "ACCT-91002913",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002913",
+              "bic_only": false
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Deutsche Bank, Frankfurt",
+              "int_bic": "DEUTDEFF",
+              "nostro": "ACCT-91002913",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002913",
+              "bic_only": false
+            },
+            {
+              "currency": "KES",
+              "correspondent": "Citibank N.A., Nairobi",
+              "int_bic": "CITIKENA",
+              "nostro": "ACCT-91002915",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002915",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Sparkasse Aachen, Germany",
+              "int_bic": "AACSDE33",
+              "nostro": "ACCT-91002911",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002911",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Deutsche Bank Trust Company Americas, New York",
+              "int_bic": "BKTRUS33",
+              "nostro": "ACCT-91002909",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002909",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Citibank N.A., New York",
+              "int_bic": "CITIUS33",
+              "nostro": "ACCT-91002910",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002910",
+              "bic_only": false
+            },
+            {
+              "currency": "ZAR",
+              "correspondent": "Bank of China, Johannesburg",
+              "int_bic": "BKCHZAJJ",
+              "nostro": "ACCT-91002916",
+              "source": "https://web.archive.org/web/20160625044052/http://www.centenarybank.co.ug/?q=product/foreign-currency/correspondent-bank-address-swift-codes",
+              "as_of": "2016-06-25",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002916",
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "e98a272a891f9409e22c430429ed75afa378817d98f9af6277903b486b7a9d01"
+        },
+        {
+          "bic8": "SBICUGKX",
+          "name": "Stanbic Bank Uganda Limited",
+          "country": "UG",
+          "currencies": [
+            "CAD",
+            "CHF",
+            "CNY",
+            "DKK",
+            "EUR",
+            "GBP",
+            "JPY",
+            "KES",
+            "SEK",
+            "TZS",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "stanbicbank.co.ug"
+          ],
+          "admitted_records": [
+            {
+              "currency": "CAD",
+              "correspondent": "Canadian Imperial Bank of Commerce, Toronto",
+              "int_bic": "CIBCCATT",
+              "nostro": "ACCT-91002926",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002926",
+              "bic_only": false
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "Standard Bank of South Africa, Johannesburg",
+              "int_bic": "SBZAZAJJ",
+              "nostro": "ACCT-91002928",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002928",
+              "bic_only": false
+            },
+            {
+              "currency": "CNY",
+              "correspondent": "Standard Bank of South Africa, Johannesburg",
+              "int_bic": "SBZAZAJJ",
+              "nostro": "ACCT-91002929",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002929",
+              "bic_only": false
+            },
+            {
+              "currency": "DKK",
+              "correspondent": "Den Danske Bank, Copenhagen",
+              "int_bic": "DABADKKK",
+              "nostro": "ACCT-91002925",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002925",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Commerzbank AG, Frankfurt",
+              "int_bic": "COBADEFF",
+              "nostro": "ACCT-91002924",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002924",
+              "bic_only": false
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "HSBC Bank plc, London",
+              "int_bic": "MIDLGB22",
+              "nostro": "ACCT-91002921",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002921",
+              "bic_only": false
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Bank of Tokyo-Mitsubishi (UFJ), Tokyo",
+              "int_bic": "BOTKJPJT",
+              "nostro": "ACCT-91002923",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002923",
+              "bic_only": false
+            },
+            {
+              "currency": "KES",
+              "correspondent": "Stanbic Bank Kenya Ltd",
+              "int_bic": "SBICKENX",
+              "nostro": "ACCT-91002930",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002930",
+              "bic_only": false
+            },
+            {
+              "currency": "SEK",
+              "correspondent": "Svenska Handelsbanken, Stockholm",
+              "int_bic": "HANDSESS",
+              "nostro": "ACCT-91002927",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002927",
+              "bic_only": false
+            },
+            {
+              "currency": "TZS",
+              "correspondent": "Stanbic Bank Tanzania Ltd, Dar es Salaam",
+              "int_bic": "SBICTZTX",
+              "nostro": "ACCT-91002931",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002931",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Deutsche Bank Trust Company Americas, New York",
+              "int_bic": "BKTRUS33",
+              "nostro": "ACCT-91002918",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002918",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Citibank N.A., New York",
+              "int_bic": "CITIUS33",
+              "nostro": "ACCT-91002919",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002919",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Stanbic Bank Kenya Ltd",
+              "int_bic": "SBICKENX",
+              "nostro": "ACCT-91002920",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002920",
+              "bic_only": false
+            },
+            {
+              "currency": "ZAR",
+              "correspondent": "Standard Bank of South Africa, Johannesburg",
+              "int_bic": "SBZAZAJJ",
+              "nostro": "ACCT-91002922",
+              "source": "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+              "as_of": "2020-09-29",
+              "status": "archived",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "with_an": "ACCT-91002922",
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "f4e293a8f30e2ce23f0c1ba77f6315d1ca78014377bf42d2c8002e18b0075e6b"
+        }
+      ]
     }
   ]
 }

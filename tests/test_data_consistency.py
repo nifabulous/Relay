@@ -2337,3 +2337,161 @@ class TestIndonesiaSsiCoverage:
             f"indonesia: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: indonesia ----
+
+
+# ---- autopilot-generated coverage tests: east-africa ----
+EAST_AFRICA_SSI_COVERAGE = [
+    ("CERBUGKAXXX", "Centenary Rural Development Bank Limited (Centenary Bank Uganda)", {"CNY", "EUR", "GBP", "KES", "USD", "ZAR"}),
+    ("SBICUGKXXXX", "Stanbic Bank Uganda Limited", {"CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "KES", "SEK", "TZS", "USD", "ZAR"}),
+]
+
+
+class TestEastAfricaSsiCoverage:
+    def test_east_africa_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in EAST_AFRICA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_east_africa_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in EAST_AFRICA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"east-africa SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_east_africa_seeded_records_are_semantically_valid(self):
+        """Every seeded record for this region must satisfy the validator rules:
+        masked accounts inside the region's block, charge/value dates from the
+        manifest defaults, a provenance status and citation, no bic_only
+        smuggled fields, and unique (beneficiary, currency, correspondent) keys.
+        Pre-block-era legacy placeholders are enumerated in the manifest's
+        legacy_accounts and may not be masked in-block; a new fold record can
+        never join that set without an explicit manifest edit."""
+        mask = re.compile(r"^ACCT-910029\d\d$")
+        allowed_charge = {'SHA', 'OUR', 'BEN'}
+        allowed_value = {'spot', 'T+1', 'T+2'}
+        statuses = {"unverified", "illustrative", "published", "archived"}
+        forbidden = {'IVOJSSJB'}
+        legacy = {}
+        banks = {bic for bic, _name, _currencies in EAST_AFRICA_SSI_COVERAGE}
+        rows = [row for row in SSI_RECORDS if row[0] in banks]
+        assert rows, f"east-africa: no seeded records for the seedable banks"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
+            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]
+            if len(row) > 13 and row[13] is True:
+                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (
+                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"
+                )
+                continue
+            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{bic}/{ccy}: nostro {int_acct} is neither an ACCT-910029xx masked account nor a manifest legacy placeholder"
+            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910029xx masked account nor a manifest legacy placeholder"
+            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
+            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            if len(row) < 12:
+                continue
+            if row[10] is not None:
+                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (
+                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"
+                )
+            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"
+            assert row[9] and row[9].startswith("Source:"), (
+                f"{bic}/{ccy}: notes must cite the source"
+            )
+        keys = [(row[0], row[2], row[3]) for row in rows]
+        assert len(keys) == len(set(keys)), (
+            f"east-africa: duplicate (beneficiary, currency, correspondent) keys"
+        )
+# ---- end autopilot-generated coverage tests: east-africa ----
+
+
+# ---- autopilot-generated coverage tests: uganda ----
+UGANDA_SSI_COVERAGE = [
+    ("CERBUGKAXXX", "Centenary Rural Development Bank Limited (Centenary Bank Uganda)", {"CNY", "EUR", "GBP", "KES", "USD", "ZAR"}),
+    ("SBICUGKXXXX", "Stanbic Bank Uganda Limited", {"CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "KES", "SEK", "TZS", "USD", "ZAR"}),
+]
+
+
+class TestUgandaSsiCoverage:
+    def test_uganda_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in UGANDA_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_uganda_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in UGANDA_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"uganda SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_uganda_seeded_records_are_semantically_valid(self):
+        """Every seeded record for this region must satisfy the validator rules:
+        masked accounts inside the region's block, charge/value dates from the
+        manifest defaults, a provenance status and citation, no bic_only
+        smuggled fields, and unique (beneficiary, currency, correspondent) keys.
+        Pre-block-era legacy placeholders are enumerated in the manifest's
+        legacy_accounts and may not be masked in-block; a new fold record can
+        never join that set without an explicit manifest edit."""
+        mask = re.compile(r"^ACCT-910029\d\d$")
+        allowed_charge = {'SHA', 'OUR', 'BEN'}
+        allowed_value = {'spot', 'T+1', 'T+2'}
+        statuses = {"unverified", "illustrative", "published", "archived"}
+        forbidden = {'IVOJSSJB'}
+        legacy = {}
+        banks = {bic for bic, _name, _currencies in UGANDA_SSI_COVERAGE}
+        rows = [row for row in SSI_RECORDS if row[0] in banks]
+        assert rows, f"uganda: no seeded records for the seedable banks"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
+            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]
+            if len(row) > 13 and row[13] is True:
+                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (
+                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"
+                )
+                continue
+            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{bic}/{ccy}: nostro {int_acct} is neither an ACCT-910029xx masked account nor a manifest legacy placeholder"
+            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910029xx masked account nor a manifest legacy placeholder"
+            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
+            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            if len(row) < 12:
+                continue
+            if row[10] is not None:
+                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (
+                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"
+                )
+            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"
+            assert row[9] and row[9].startswith("Source:"), (
+                f"{bic}/{ccy}: notes must cite the source"
+            )
+        keys = [(row[0], row[2], row[3]) for row in rows]
+        assert len(keys) == len(set(keys)), (
+            f"uganda: duplicate (beneficiary, currency, correspondent) keys"
+        )
+# ---- end autopilot-generated coverage tests: uganda ----
