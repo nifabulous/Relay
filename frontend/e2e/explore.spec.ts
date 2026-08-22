@@ -13,6 +13,16 @@ test.describe("Explore", () => {
     expect(await items.count()).toBeGreaterThanOrEqual(1);
   });
 
+  test("deep-linked search preserves focus and shows grouped results", async ({ page }) => {
+    await page.goto("/app/explore?q=IBAN");
+    await expect(page.locator('input[type="search"]')).toHaveValue("IBAN");
+    await expect(page.locator(".command-search__results")).toBeVisible();
+    await expect(
+      page.locator(".command-search__group-label").filter({ hasText: /^Glossary$/ }),
+    ).toBeVisible();
+    await expect(page.locator('input[type="search"]')).not.toBeFocused();
+  });
+
   test("glossary page shows terms", async ({ page }) => {
     await page.goto("/app/explore/glossary");
     // Wait for lazy-loaded page to render
