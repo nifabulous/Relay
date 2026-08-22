@@ -1265,9 +1265,58 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
       <CustomerRequestAnchor request={definition.customerRequest} />
 
       <div className="case-desk__split">
+        {/* The evidence column. DOM order matches the visual reading order
+            (workflow → evidence → task/recommendation) so keyboard traversal
+            follows the layout on wide screens; narrow screens stack in the
+            same order. */}
+        <div className="case-desk__evidence">
+          <EvidenceRail
+            definition={definition}
+            requestedFactIds={session.requestedFactIds}
+            onOpenAllReferences={onOpenAllReferences}
+          />
+
+          {/* Enrichment region — rendered through AsyncRegion. Authored facts
+              sit ABOVE this region and remain usable in every state. */}
+          {enrichment && enrichmentAsyncStatus && (
+            <section className="case-desk__enrichment" aria-label="Live enrichment">
+              <h3 className="case-desk__section-title">Live enrichment</h3>
+              <AsyncRegion
+                status={enrichmentAsyncStatus}
+                loadingLabel="Loading live enrichment"
+                onRetry={enrichment.retry}
+                error={
+                  enrichment.state === "error"
+                    ? {
+                        status: 0,
+                        title: "Live enrichment is unavailable",
+                        detail: enrichment.message ?? "We couldn't load the live enrichment data.",
+                        fieldErrors: {},
+                        retryable: Boolean(enrichment.retry),
+                      }
+                    : null
+                }
+              >
+                {enrichment.state === "success" && enrichment.facts.length > 0 && (
+                  <ul className="case-desk__enrichment-facts">
+                    {enrichment.facts.map((fact) => (
+                      <li key={fact.id} className="case-desk__enrichment-fact">
+                        <span className="case-desk__enrichment-label">{fact.label}</span>
+                        <span className="case-desk__enrichment-value">{fact.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {enrichment.state === "success" && enrichment.facts.length === 0 && (
+                  <p className="case-desk__enrichment-empty">No additional live data available.</p>
+                )}
+              </AsyncRegion>
+            </section>
+          )}
+        </div>
+
         {/* The task column: fact request + rail choice. On wide screens this
-            sits beside the evidence rail; on narrow screens the evidence sheet
-            stacks below (labelled so AT can navigate it). */}
+            follows the evidence ledger in both DOM and layout order. */}
         <div className="case-desk__task">
           {/* Validation error-summary (design spec L213): on Send with an
               incomplete recommendation, a concise summary renders at the start
@@ -1427,52 +1476,6 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
             )}
         </div>
 
-        {/* The evidence column. */}
-        <div className="case-desk__evidence">
-          <EvidenceRail
-            definition={definition}
-            requestedFactIds={session.requestedFactIds}
-            onOpenAllReferences={onOpenAllReferences}
-          />
-
-          {/* Enrichment region — rendered through AsyncRegion. Authored facts
-              sit ABOVE this region and remain usable in every state. */}
-          {enrichment && enrichmentAsyncStatus && (
-            <section className="case-desk__enrichment" aria-label="Live enrichment">
-              <h3 className="case-desk__section-title">Live enrichment</h3>
-              <AsyncRegion
-                status={enrichmentAsyncStatus}
-                loadingLabel="Loading live enrichment"
-                onRetry={enrichment.retry}
-                error={
-                  enrichment.state === "error"
-                    ? {
-                        status: 0,
-                        title: "Live enrichment is unavailable",
-                        detail: enrichment.message ?? "We couldn't load the live enrichment data.",
-                        fieldErrors: {},
-                        retryable: Boolean(enrichment.retry),
-                      }
-                    : null
-                }
-              >
-                {enrichment.state === "success" && enrichment.facts.length > 0 && (
-                  <ul className="case-desk__enrichment-facts">
-                    {enrichment.facts.map((fact) => (
-                      <li key={fact.id} className="case-desk__enrichment-fact">
-                        <span className="case-desk__enrichment-label">{fact.label}</span>
-                        <span className="case-desk__enrichment-value">{fact.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {enrichment.state === "success" && enrichment.facts.length === 0 && (
-                  <p className="case-desk__enrichment-empty">No additional live data available.</p>
-                )}
-              </AsyncRegion>
-            </section>
-          )}
-        </div>
       </div>
 
       <div className="case-desk__nav">
