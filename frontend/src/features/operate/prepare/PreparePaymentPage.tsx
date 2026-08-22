@@ -205,6 +205,7 @@ export function PreparePaymentPage() {
   const [result, setResult] = useState<PreparePaymentResponse | null>(null);
   const [isStale, setIsStale] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [hasValidationError, setHasValidationError] = useState(false);
 
   const {
     register,
@@ -293,6 +294,7 @@ export function PreparePaymentPage() {
     onSuccess: (data) => { recordActivity({ type: "tool", label: "Prepare payment", at: Date.now() });
       setResult(data);
       setIsStale(false);
+      setHasValidationError(false);
       // Invalidate dependent queries — progress, route, ssi, vop
       queryClient.invalidateQueries({ queryKey: apiKeys.progress });
       // Clear stale route/ssi data since inputs may have changed
@@ -317,7 +319,7 @@ export function PreparePaymentPage() {
     result,
     isStale,
   });
-  const currentStage = getPrepareStage(requestState);
+  const currentStage = getPrepareStage(requestState, { hasValidationError });
   const requestStatusCopy: Record<PrepareRequestState, string> = {
     idle: "Enter payment details to begin.",
     validating: "Validating payment details.",
@@ -359,11 +361,14 @@ export function PreparePaymentPage() {
   // cross-field custom issue never reaches the field.
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasValidationError(false);
     setIsValidating(true);
     const schemaOk = await trigger(undefined, { shouldFocus: true });
     const crossOk = requireIbanOrBic();
+    const hasErrors = !schemaOk || !crossOk;
     setIsValidating(false);
-    if (!schemaOk || !crossOk) return;
+    setHasValidationError(hasErrors);
+    if (hasErrors) return;
     mutation.mutate(getValues());
   };
 

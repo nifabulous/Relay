@@ -36,3 +36,17 @@ Date: 2026-08-22
 ## Scope notes
 
 Only the requested Operate page, stylesheet, focused tests, browser suite, new state helper/tests, and this report are intended for the Task 4 commit. Existing unrelated worktree changes (`task-3/report.md` and the untracked shared plan) are left untouched and excluded from the commit. No backend, schema, AppShell, dependency manifest, or generated output changes were added.
+
+## Fix / TDD
+
+- Addressed the Luna review P1 stale-validation finding with an explicit `hasValidationError` presentation signal. Active validation/request/error states retain their required `validating`/`checking`/`error` semantics; a completed validation error maps the current stage to `Payment details` even when the prior result is stale. Added the page regression for a valid result → edited stale form → invalid re-submit.
+- Addressed the Luna review P1 mobile sticky-action finding by offsetting the action above `var(--nav-height-mobile)` plus safe-area inset and reserving the combined action/nav space. Added a 390px after-scroll geometry assertion that the action and button remain above the fixed shell nav, the result remains reachable, and the button can be clicked.
+- Extended `frontend/e2e/prepare.spec.ts` with production-route browser scenarios for success, explicit `NOT_CHECKED` partial, 503 request error/retry, stale re-check with current request payload, and mobile result/action reachability. Deterministic `page.route` handlers control only the API responses; navigation remains `/app/operate/prepare`.
+
+TDD evidence:
+
+1. RED: the new helper and stale-invalid-submit regressions failed (the stage mapper returned `Review route`, and the page kept Review current).
+2. GREEN: focused Vitest passed **40/40** across `prepareRequestState.test.ts` and `PreparePaymentPage.test.tsx`.
+3. Production build passed (`tsc --noEmit && vite build`); Vite emitted the existing large-chunk warning.
+4. Prepare browser matrix passed **40/40** across `desktop`, `case-mobile-390`, `case-tablet-768`, and `case-desktop-1024`.
+5. `git diff --check` passed.

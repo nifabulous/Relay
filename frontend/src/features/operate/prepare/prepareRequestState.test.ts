@@ -79,4 +79,10 @@ describe("prepare request stages", () => {
   ] as const)("maps %s to %s", (requestState, expectedStage) => {
     expect(getPrepareStage(requestState)).toBe(expectedStage);
   });
+
+  it("maps a completed validation error to payment details without changing stale state semantics", () => {
+    expect(getPrepareStage("validating", { hasValidationError: true })).toBe("Run checks");
+    expect(getPrepareStage("stale", { hasValidationError: true })).toBe("Payment details");
+    expect(getPrepareStage("stale")).toBe("Review route");
+  });
 });

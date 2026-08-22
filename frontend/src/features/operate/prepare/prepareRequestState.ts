@@ -11,6 +11,11 @@ export type PrepareRequestState =
 
 export type PrepareStage = "Payment details" | "Run checks" | "Review route";
 
+export interface PrepareStageOptions {
+  /** A completed submit found invalid form details. */
+  hasValidationError?: boolean;
+}
+
 export interface PrepareRequestStateInput {
   isValidating?: boolean;
   isRequestActive?: boolean;
@@ -59,7 +64,17 @@ export function derivePrepareRequestState({
   return "success";
 }
 
-export function getPrepareStage(state: PrepareRequestState): PrepareStage {
+export function getPrepareStage(
+  state: PrepareRequestState,
+  { hasValidationError = false }: PrepareStageOptions = {},
+): PrepareStage {
+  // Active transport states retain their required Run checks mapping. A
+  // completed validation error is only allowed to override presentation
+  // states, including stale results from an earlier successful check.
+  if (hasValidationError && !["validating", "checking", "error"].includes(state)) {
+    return "Payment details";
+  }
+
   switch (state) {
     case "idle":
       return "Payment details";

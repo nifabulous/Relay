@@ -551,6 +551,24 @@ describe("PreparePaymentPage guided stages", () => {
       .toHaveTextContent(/stage: review route/i);
   });
 
+  it("returns to payment details when a stale result is followed by an invalid submit", async () => {
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+    await screen.findByRole("heading", { name: /check results/i });
+
+    // Editing a completed form makes the previous result stale. Submitting
+    // invalid details must make the validation stage current again.
+    await user.clear(screen.getByLabelText(/beneficiary iban/i));
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(document.getElementById("prepare-validation-summary")).toBeVisible();
+    expect(document.querySelector('[data-stage="Payment details"]')).toHaveAttribute("aria-current", "step");
+    expect(screen.getByRole("status")).toHaveTextContent(/stage: payment details/i);
+  });
+
   it("keeps a failed request retryable and returns to review after retry", async () => {
     let attempts = 0;
     server.use(
