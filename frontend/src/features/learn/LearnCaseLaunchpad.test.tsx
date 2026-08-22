@@ -69,6 +69,18 @@ describe("LearnCaseLaunchpad", () => {
     );
   });
 
+  it("keeps a session-level stale draft message and safe alternative visible", () => {
+    const stale = snapshot(0, session(CASE_CATALOG[0]!.id, "under_review"));
+    renderLaunchpad([stale], stale);
+
+    expect(screen.getByText(/saved draft was based on older case material/i)).toBeVisible();
+    expect(screen.getByText(/start is paused until the update lands/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: /which rail/i })).toHaveAttribute(
+      "href",
+      "/learn/lab-7",
+    );
+  });
+
   it("shows safe under-review alternatives without inventing an active case", () => {
     const underReview = snapshot(0, null, { ...supplierCase, reviewStatus: "under_review" });
     renderLaunchpad([underReview], null);

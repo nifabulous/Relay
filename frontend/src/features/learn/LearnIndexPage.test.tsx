@@ -25,4 +25,18 @@ describe("LearnIndexPage case browsing", () => {
       CASE_CATALOG.slice(1).map((definition) => definition.title),
     );
   });
+
+  it("wires the Technical labs link to the rendered technical-labs target", () => {
+    render(
+      <MemoryRouter>
+        <LearnIndexPage />
+      </MemoryRouter>,
+    );
+
+    const technicalLabsLink = screen.getByRole("link", { name: "Technical labs" });
+    const technicalLabsTarget = document.getElementById("technical-labs");
+
+    expect(technicalLabsLink).toHaveAttribute("href", "#technical-labs");
+    expect(technicalLabsTarget).not.toBeNull();
+  });
 });
