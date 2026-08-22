@@ -189,7 +189,7 @@
 }
 
 /* Above the split breakpoint: task on the left, evidence on the right. */
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .case-desk__split {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     align-items: start;
@@ -901,4 +901,271 @@
   color: var(--color-ink);
   margin: var(--space-2) 0 0;
   line-height: var(--leading-relaxed);
+}
+
+/* ── Case Desk workbench alignment ─────────────────────────────────────────
+ * The investigation phase is intentionally arranged as a progress rail plus
+ * two bounded work surfaces. Existing controls remain in their original DOM
+ * order so persistence, focus targets, and evaluator behaviour are unchanged.
+ */
+
+.case-desk__investigate {
+  gap: var(--space-5);
+}
+
+.case-desk__case-title {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+}
+
+.case-desk__phase-description {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+.case-workflow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+}
+
+.case-workflow__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.case-workflow__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-action);
+}
+
+.case-workflow__status[data-state="complete"] {
+  color: var(--color-success);
+}
+
+.case-workflow__status-mark {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+.case-workflow__progress {
+  height: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+}
+
+.case-workflow__progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-action);
+  transition: width var(--duration-normal) var(--ease);
+}
+
+.case-workflow__steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.case-workflow__step {
+  position: relative;
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+}
+
+.case-workflow__step--current {
+  border-color: var(--color-action-border);
+  background: var(--color-action-surface);
+}
+
+.case-workflow__step-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--space-6);
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.case-workflow__step--complete .case-workflow__step-marker {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.case-workflow__step--current .case-workflow__step-marker {
+  border-color: var(--color-action);
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+
+.case-workflow__step-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.case-workflow__step-copy strong {
+  color: var(--color-ink-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+}
+
+.case-workflow__step-copy span {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+.case-workflow__step--locked .case-workflow__step-copy strong,
+.case-workflow__step--locked .case-workflow__step-copy span {
+  color: var(--color-ink-muted);
+}
+
+.case-workflow__step--locked .case-workflow__step-marker {
+  opacity: 0.8;
+}
+
+.case-desk__task,
+.case-desk__evidence {
+  min-width: 0;
+}
+
+.case-desk__task > .fact-request,
+.case-desk__task > .rail-shortlist,
+.case-desk__task > .case-desk__reasoning,
+.case-desk__task > .case-desk__recommendation,
+.case-desk__evidence > .evidence-rail,
+.case-desk__evidence > .case-desk__enrichment {
+  border-color: var(--color-border);
+}
+
+.case-desk__recommendation-actions .relay-btn--primary {
+  width: 100%;
+}
+
+.case-desk :is(button, input, textarea, a):focus-visible,
+.case-desk__investigate :is(button, input, textarea, a):focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .case-desk__investigate {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.35fr) minmax(0, 1.15fr);
+    align-items: start;
+  }
+
+  .case-desk__investigate > .case-desk__phase-header {
+    grid-column: 1 / -1;
+  }
+
+  .case-desk__investigate > .case-workflow {
+    grid-column: 1;
+    grid-row: 2 / span 3;
+    position: sticky;
+    top: var(--space-4);
+  }
+
+  .case-desk__investigate > .case-desk__baseline,
+  .case-desk__investigate > .evidence-rail__customer-request,
+  .case-desk__investigate > .case-desk__split,
+  .case-desk__investigate > .case-desk__nav {
+    grid-column: 2 / -1;
+  }
+
+  .case-desk__investigate > .case-desk__split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .case-workflow {
+    padding: var(--space-4);
+  }
+
+  .case-workflow__steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .case-workflow__step {
+    padding: var(--space-3);
+  }
+
+  .case-workflow__step:not(:last-child)::after {
+    position: absolute;
+    top: calc(var(--space-6) + var(--space-3));
+    bottom: calc(var(--space-2) * -1);
+    left: calc(var(--space-3) + var(--space-3));
+    width: 1px;
+    background: var(--color-border);
+    content: "";
+  }
+
+  .case-workflow__step--complete:not(:last-child)::after {
+    background: var(--color-success-border);
+  }
+}
+
+@media (max-width: 1023px) {
+  .case-workflow__steps {
+    overflow-x: auto;
+    grid-template-columns: repeat(5, minmax(160px, 1fr));
+    padding-bottom: var(--space-1);
+  }
+}
+
+@media (max-width: 768px) {
+  .case-desk__case-title {
+    font-size: var(--text-2xl);
+  }
+
+  .case-workflow__steps {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-workflow__progress > span {
+    transition: none;
+  }
 }
