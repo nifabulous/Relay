@@ -17,7 +17,9 @@ test.describe("Explore", () => {
     await page.goto("/app/explore?q=IBAN");
     await expect(page.locator('input[type="search"]')).toHaveValue("IBAN");
     await expect(page.locator(".command-search__results")).toBeVisible();
-    await expect(page.locator(".command-search__group-label")).toContainText("Glossary");
+    await expect(
+      page.locator(".command-search__group-label").filter({ hasText: /^Glossary$/ }),
+    ).toBeVisible();
     await expect(page.locator('input[type="search"]')).not.toBeFocused();
   });
 
