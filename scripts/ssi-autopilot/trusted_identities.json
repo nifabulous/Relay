@@ -2,16 +2,43 @@
   "BBDEBRSP": {
     "name": "Banco Bradesco",
     "country": "BR",
-    "domains": ["banco.bradesco"]
+    "domains": [
+      "banco.bradesco"
+    ]
   },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",
-    "domains": ["cmbchina.com"]
+    "domains": [
+      "cmbchina.com"
+    ]
   },
   "CTBAAU2S": {
     "name": "Commonwealth Bank of Australia",
     "country": "AU",
-    "domains": ["commbank.com.au"]
+    "domains": [
+      "commbank.com.au"
+    ]
+  },
+  "UOVBSGSG": {
+    "name": "United Overseas Bank Limited",
+    "country": "SG",
+    "domains": [
+      "uob.com.sg"
+    ]
+  },
+  "OCBCSGSG": {
+    "name": "Oversea-Chinese Banking Corporation Limited",
+    "country": "SG",
+    "domains": [
+      "ocbc.com"
+    ]
+  },
+  "BBUKIDJA": {
+    "name": "PT Bank KB Bukopin Tbk",
+    "country": "ID",
+    "domains": [
+      "bukopin.co.id"
+    ]
   }
 }

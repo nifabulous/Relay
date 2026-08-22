@@ -1293,3 +1293,114 @@ def test_new_region_ordering_and_digest_are_deterministic(tmp_path, monkeypatch)
     bank = autopilot.get_region(autopilot.load_manifest(), "new-region-lifecycle")["banks"][0]
     assert bank["admitted_record_digest"] == autopilot.record_digest(bank["admitted_records"])
     assert [r["currency"] for r in bank["admitted_records"]] == ["EUR", "USD"]
+
+def _wave3_identity_payload():
+    return {
+        "regions": [
+            {
+                "name": "wave3-sg-check",
+                "label": "Singapore",
+                "countries": ["SG"],
+                "masked_block": 91009000,
+                "note": "production-path identity test",
+                "forbidden_bics": [],
+                "banks": [
+                    {
+                        "bic8": "UOVBSGSG",
+                        "name": "United Overseas Bank Limited",
+                        "country": "SG",
+                        "currencies": ["USD"],
+                        "seedable": True,
+                        "source_domains": ["uob.com.sg"],
+                        "records": [
+                            {
+                                "currency": "USD",
+                                "correspondent": "JPMorgan Chase Bank, NA, New York",
+                                "int_bic": "CHASUS33",
+                                "nostro": None,
+                                "with_an": None,
+                                "charge_code": None,
+                                "value_date": None,
+                                "source": "https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+                                "as_of": "2024-08-07",
+                                "status": "archived",
+                                "bic_only": True,
+                            }
+                        ],
+                    },
+                    {
+                        "bic8": "OCBCSGSG",
+                        "name": "Oversea-Chinese Banking Corporation Limited",
+                        "country": "SG",
+                        "currencies": ["USD"],
+                        "seedable": True,
+                        "source_domains": ["ocbc.com"],
+                        "records": [
+                            {
+                                "currency": "USD",
+                                "correspondent": "JP Morgan Chase Bank, New York",
+                                "int_bic": "CHASUS33",
+                                "source": "https://www.ocbc.com/personal-banking/help-and-support/payments-and-transactions/telegraphic-transfer",
+                                "as_of": "2026-08-22",
+                                "status": "unverified",
+                                "bic_only": True,
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "name": "wave3-id-check",
+                "label": "Indonesia",
+                "countries": ["ID"],
+                "masked_block": 91009100,
+                "note": "production-path identity test",
+                "forbidden_bics": [],
+                "banks": [
+                    {
+                        "bic8": "BBUKIDJA",
+                        "name": "PT Bank KB Bukopin Tbk",
+                        "country": "ID",
+                        "currencies": ["USD"],
+                        "seedable": True,
+                        "source_domains": ["bukopin.co.id"],
+                        "records": [
+                            {
+                                "currency": "USD",
+                                "correspondent": "Citibank N.A., New York",
+                                "int_bic": "CITIUS33",
+                                "nostro": "ACCT-91009101",
+                                "with_an": "ACCT-91009101",
+                                "charge_code": "SHA",
+                                "value_date": "spot",
+                                "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+                                "as_of": "2017-05-16",
+                                "status": "archived",
+                            }
+                        ],
+                    },
+                ],
+            },
+        ]
+    }
+
+
+@pytest.mark.parametrize("region_name,bic", [
+    ("wave3-sg-check", "UOVBSGSG"),
+    ("wave3-sg-check", "OCBCSGSG"),
+    ("wave3-id-check", "BBUKIDJA"),
+])
+def test_wave3_enrolled_identities_admit_on_the_production_path(tmp_path, monkeypatch, region_name, bic):
+    """TRUST_REGISTRY step 4: each wave-3 enrollment admits via the real registry."""
+    manifest = json.loads(json.dumps(MANIFEST))
+    manifest["regions"] = [
+        r for r in manifest["regions"] if r["name"] not in ("singapore", "indonesia")
+    ]
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(manifest, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    summary = autopilot.admit_candidates(_wave3_identity_payload())
+    assert summary["added_banks"] == 3
+    manifest = autopilot.load_manifest()
+    bank = autopilot.get_region(manifest, region_name)["banks"]
+    assert any(b["bic8"] == bic for b in bank)

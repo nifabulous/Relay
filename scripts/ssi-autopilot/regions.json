@@ -1,1864 +1,2465 @@
 {
- "version": 1,
- "note": "Region manifest for the SSI autopilot. Each region lists the beneficiary banks to research, their verified BICs (from theswiftcodes country listings), the currencies to require coverage for, and the masked ACCT- block reserved for its seeded records. forbidden_bics are mislabeled/OCR-typo BICs the research flagged that must never appear in seed data.",
- "defaults": {
-  "charge_codes": [
-   "SHA",
-   "OUR",
-   "BEN"
-  ],
-  "value_dates": [
-   "spot",
-   "T+1",
-   "T+2"
-  ],
-  "min_records_per_bank": 1
- },
- "regions": [
-  {
-   "name": "oceania",
-   "label": "Oceania",
-   "countries": [
-    "AU",
-    "NZ"
-   ],
-   "masked_block": 91001400,
-   "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists \u2014 NOT SEEDABLE.",
-   "banks": [
-    {
-     "bic8": "CTBAAU2S",
-     "name": "Commonwealth Bank of Australia",
-     "country": "AU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "NZD",
-      "CAD",
-      "JPY",
-      "ZAR",
-      "SGD",
-      "HKD",
-      "CHF",
-      "NOK",
-      "SEK",
-      "DKK",
-      "FJD",
-      "XPF"
-     ]
-    },
-    {
-     "bic8": "ANZBAU3M",
-     "name": "ANZ",
-     "country": "AU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "WPACAU2S",
-     "name": "Westpac",
-     "country": "AU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "NATAAU33",
-     "name": "National Australia Bank",
-     "country": "AU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ANZBNZ22",
-     "name": "ANZ Bank New Zealand",
-     "country": "NZ",
-     "currencies": [
-      "USD",
-      "NZD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BKNZNZ22",
-     "name": "Bank of New Zealand",
-     "country": "NZ",
-     "currencies": [
-      "USD",
-      "NZD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ASBBNZ2A",
-     "name": "ASB Bank",
-     "country": "NZ",
-     "currencies": [
-      "USD",
-      "NZD"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "NATAU3P"
-   ]
+  "version": 1,
+  "note": "Region manifest for the SSI autopilot. Each region lists the beneficiary banks to research, their verified BICs (from theswiftcodes country listings), the currencies to require coverage for, and the masked ACCT- block reserved for its seeded records. forbidden_bics are mislabeled/OCR-typo BICs the research flagged that must never appear in seed data.",
+  "defaults": {
+    "charge_codes": [
+      "SHA",
+      "OUR",
+      "BEN"
+    ],
+    "value_dates": [
+      "spot",
+      "T+1",
+      "T+2"
+    ],
+    "min_records_per_bank": 1
   },
-  {
-   "name": "china",
-   "label": "China (CMB seedable; ICBC, CCB, ABC, BoCom NOT)",
-   "countries": [
-    "CN"
-   ],
-   "masked_block": 91001500,
-   "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists \u2014 NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
-   "banks": [
+  "regions": [
     {
-     "bic8": "CMBCCNBS",
-     "name": "China Merchants Bank",
-     "country": "CN",
-     "currencies": [
-      "USD",
-      "HKD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "AUD",
-      "SGD",
-      "CAD",
-      "CHF"
-     ]
+      "name": "oceania",
+      "label": "Oceania",
+      "countries": [
+        "AU",
+        "NZ"
+      ],
+      "masked_block": 91001400,
+      "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists — NOT SEEDABLE.",
+      "banks": [
+        {
+          "bic8": "CTBAAU2S",
+          "name": "Commonwealth Bank of Australia",
+          "country": "AU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "NZD",
+            "CAD",
+            "JPY",
+            "ZAR",
+            "SGD",
+            "HKD",
+            "CHF",
+            "NOK",
+            "SEK",
+            "DKK",
+            "FJD",
+            "XPF"
+          ]
+        },
+        {
+          "bic8": "ANZBAU3M",
+          "name": "ANZ",
+          "country": "AU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "WPACAU2S",
+          "name": "Westpac",
+          "country": "AU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "NATAAU33",
+          "name": "National Australia Bank",
+          "country": "AU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ANZBNZ22",
+          "name": "ANZ Bank New Zealand",
+          "country": "NZ",
+          "currencies": [
+            "USD",
+            "NZD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BKNZNZ22",
+          "name": "Bank of New Zealand",
+          "country": "NZ",
+          "currencies": [
+            "USD",
+            "NZD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ASBBNZ2A",
+          "name": "ASB Bank",
+          "country": "NZ",
+          "currencies": [
+            "USD",
+            "NZD"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "NATAU3P"
+      ]
     },
     {
-     "bic8": "ICBKCNBJ",
-     "name": "Industrial and Commercial Bank of China",
-     "country": "CN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CNY"
-     ],
-     "seedable": false
+      "name": "china",
+      "label": "China (CMB seedable; ICBC, CCB, ABC, BoCom NOT)",
+      "countries": [
+        "CN"
+      ],
+      "masked_block": 91001500,
+      "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists — NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
+      "banks": [
+        {
+          "bic8": "CMBCCNBS",
+          "name": "China Merchants Bank",
+          "country": "CN",
+          "currencies": [
+            "USD",
+            "HKD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AUD",
+            "SGD",
+            "CAD",
+            "CHF"
+          ]
+        },
+        {
+          "bic8": "ICBKCNBJ",
+          "name": "Industrial and Commercial Bank of China",
+          "country": "CN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CNY"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "PCBCCNBJ",
+          "name": "China Construction Bank",
+          "country": "CN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CNY"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ABOCCNBJ",
+          "name": "Agricultural Bank of China",
+          "country": "CN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CNY"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "COMMCNSH",
+          "name": "Bank of Communications",
+          "country": "CN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CNY"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "PNBPUS3NNYC",
+        "BBRUBEBB"
+      ]
     },
     {
-     "bic8": "PCBCCNBJ",
-     "name": "China Construction Bank",
-     "country": "CN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CNY"
-     ],
-     "seedable": false
+      "name": "latin-america",
+      "label": "Latin America (Brazil; Bradesco seedable)",
+      "countries": [
+        "BR"
+      ],
+      "masked_block": 91000800,
+      "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil and Itaú publish no beneficiary SSI lists — NOT SEEDABLE. 2026-08-19: Chile (BCHICLRM, BSCHCLRM, BECHCLRM), Colombia (COLOCOBM, CAFECOBB) and Peru (BCPLPEPL, BCONPEPL, BINPPEPL) moved to the andean region; this region now owns Brazil only.",
+      "banks": [
+        {
+          "bic8": "BBDEBRSP",
+          "name": "Banco Bradesco",
+          "country": "BR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CAD",
+            "AUD",
+            "NZD",
+            "DKK",
+            "NOK",
+            "SEK",
+            "CHF",
+            "JPY",
+            "MXN",
+            "GBP",
+            "ZAR",
+            "CNY"
+          ]
+        },
+        {
+          "bic8": "BSCHBRSP",
+          "name": "Banco Santander (Brasil)",
+          "country": "BR",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ITAUBRSP",
+          "name": "Itaú Unibanco",
+          "country": "BR",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": []
     },
     {
-     "bic8": "ABOCCNBJ",
-     "name": "Agricultural Bank of China",
-     "country": "CN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CNY"
-     ],
-     "seedable": false
+      "name": "korea",
+      "label": "South Korea",
+      "countries": [
+        "KR"
+      ],
+      "masked_block": 91000900,
+      "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) — SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
+      "banks": [
+        {
+          "bic8": "CZNBKRSE",
+          "name": "KB Kookmin Bank",
+          "country": "KR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "KRW"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SHBKKRSE",
+          "name": "Shinhan Bank",
+          "country": "KR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "KRW"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "KOEXKRSE",
+          "name": "Hana Bank",
+          "country": "KR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "KRW"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "HVBKKRSE",
+          "name": "Woori Bank",
+          "country": "KR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "KRW"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "KOCBKRSE",
+        "KBKOKRSE",
+        "CITICHZZ"
+      ]
     },
     {
-     "bic8": "COMMCNSH",
-     "name": "Bank of Communications",
-     "country": "CN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CNY"
-     ],
-     "seedable": false
+      "name": "turkey-israel",
+      "label": "Turkey + Israel",
+      "countries": [
+        "TR",
+        "IL"
+      ],
+      "masked_block": 91001000,
+      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "banks": [
+        {
+          "bic8": "AKBKTRIS",
+          "name": "Akbank T.A.S.",
+          "country": "TR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CHF",
+            "AUD",
+            "JPY",
+            "SEK",
+            "NOK",
+            "DKK",
+            "SAR"
+          ]
+        },
+        {
+          "bic8": "YAPITRIS",
+          "name": "Yapı ve Kredi Bankası",
+          "country": "TR",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CHF",
+            "AUD",
+            "CAD",
+            "JPY",
+            "SEK",
+            "NOK",
+            "DKK"
+          ]
+        }
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "nordics-poland",
+      "label": "Nordics + Poland",
+      "countries": [
+        "SE",
+        "NO",
+        "PL"
+      ],
+      "masked_block": 91001100,
+      "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) — NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) — SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
+      "banks": [
+        {
+          "bic8": "BREXPLPW",
+          "name": "mBank",
+          "country": "PL",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "CHF",
+            "SEK",
+            "NOK",
+            "DKK",
+            "TRY",
+            "ZAR"
+          ]
+        },
+        {
+          "bic8": "BPKOPLPW",
+          "name": "PKO Bank Polski",
+          "country": "PL",
+          "currencies": [
+            "USD",
+            "GBP",
+            "PLN",
+            "JPY",
+            "CHF",
+            "SEK",
+            "NOK",
+            "ZAR",
+            "AUD",
+            "CAD",
+            "CNY",
+            "CZK",
+            "DKK",
+            "HKD",
+            "HUF",
+            "SGD",
+            "TRY"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "SBAKNOBB"
+      ]
+    },
+    {
+      "name": "southern-africa",
+      "label": "Southern Africa",
+      "countries": [
+        "ZA"
+      ],
+      "masked_block": 91001200,
+      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
+      "banks": [
+        {
+          "bic8": "NEDSZAJJ",
+          "name": "Nedbank",
+          "country": "ZA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "ZAR"
+          ]
+        },
+        {
+          "bic8": "SBZAZAJJ",
+          "name": "Standard Bank of South Africa",
+          "country": "ZA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "ZAR"
+          ]
+        },
+        {
+          "bic8": "ABSAZAJJ",
+          "name": "Absa Bank",
+          "country": "ZA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "ZAR"
+          ]
+        },
+        {
+          "bic8": "FIRNZAJJ",
+          "name": "FirstRand Bank (FNB)",
+          "country": "ZA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "ZAR"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "SBICZAJJ",
+        "SBICUS44"
+      ]
+    },
+    {
+      "name": "north-east-africa",
+      "label": "North + East Africa (Morocco, Egypt, Kenya, Nigeria)",
+      "countries": [
+        "MA",
+        "EG",
+        "KE",
+        "NG"
+      ],
+      "masked_block": 91001300,
+      "note": "2026-08-16 research: five of the expected BICs were wrong — Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
+      "banks": [
+        {
+          "bic8": "FBNINGLA",
+          "name": "First Bank of Nigeria",
+          "country": "NG",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR"
+          ]
+        },
+        {
+          "bic8": "ZEIBNGLA",
+          "name": "Zenith Bank",
+          "country": "NG",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR"
+          ]
+        },
+        {
+          "bic8": "BCMAMAMC",
+          "name": "Attijariwafa Bank",
+          "country": "MA",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BMCEMAMC",
+          "name": "BMCE Bank of Africa",
+          "country": "MA",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "CIBEEGCX",
+          "name": "Commercial International Bank (Egypt)",
+          "country": "EG",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "NBEGEGCX",
+          "name": "National Bank of Egypt",
+          "country": "EG",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "QNBAEGCX",
+          "name": "QNB AlAhli",
+          "country": "EG",
+          "currencies": [
+            "USD",
+            "EUR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "KCBLKENX",
+          "name": "KCB Bank (Kenya)",
+          "country": "KE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "KES"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "CMAOMAMR",
+        "BMCEMAMA",
+        "COMEGCAX",
+        "QNBAAEGX",
+        "KCBKEN22",
+        "ZENINGLA",
+        "SBICZAJJ",
+        "SBICUS44"
+      ]
+    },
+    {
+      "name": "southeast-asia",
+      "label": "Southeast Asia (BPI verified seedable)",
+      "countries": [
+        "PH"
+      ],
+      "masked_block": 91000700,
+      "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, and Metrobank publish nothing — NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM). 2026-08-19: Thailand (BKKBTHBK, KASITHBK, SICOTHBK, KRTHTHBK, AYUDTHBK) moved to the thailand region (SCB's archived SSI table is seedable there); this region now owns the Philippines and Indonesia only. 2026-08-22: Indonesia moved to the new indonesia region (PT Bank KB Bukopin Tbk found seedable there); this region owns the Philippines only.",
+      "banks": [
+        {
+          "bic8": "BOPIPHMM",
+          "name": "Bank of the Philippine Islands",
+          "country": "PH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "SGD",
+            "HKD",
+            "CAD",
+            "CHF",
+            "SEK"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "BPIPPHMM",
+        "BEIIIDJA",
+        "CENAIDJJ"
+      ]
+    },
+    {
+      "name": "gulf",
+      "label": "Gulf (UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman)",
+      "countries": [
+        "AE",
+        "SA",
+        "QA",
+        "KW",
+        "BH",
+        "OM"
+      ],
+      "masked_block": 91001600,
+      "note": "2026-08-19 research: only NBK Kuwait (NBOKKWKW, SSI broadcast PDF archived 2025-07-23) and Emirates NBD (EBILAEAD, live correspondent-bank-charges PDF 05/2026, BIC-level, no accounts published) yield SSI data. FAB, ADCB, Al Rajhi, Riyad (BIC is RIBLSARI), SABB, QNB, AUB (domain dead), and Bank Muscat (BIC is BMUSOMRX) publish no SSI — NOT SEEDABLE. Wrong forms RIYBSARI/CBOMUSSR and FAB legacy FGBMAEAA forbidden.",
+      "banks": [
+        {
+          "bic8": "EBILAEAD",
+          "name": "Emirates NBD",
+          "country": "AE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "SAR",
+            "QAR",
+            "KWD",
+            "BHD",
+            "OMR"
+          ]
+        },
+        {
+          "bic8": "NBADAEAA",
+          "name": "First Abu Dhabi Bank",
+          "country": "AE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "AED"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ADCBAEAA",
+          "name": "Abu Dhabi Commercial Bank",
+          "country": "AE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "AED"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "RJHISARI",
+          "name": "Al Rajhi Bank",
+          "country": "SA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "SAR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "RIBLSARI",
+          "name": "Riyad Bank",
+          "country": "SA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "SAR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SABBSARI",
+          "name": "Saudi British Bank",
+          "country": "SA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "SAR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "QNBAQAQA",
+          "name": "Qatar National Bank",
+          "country": "QA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "QAR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "NBOKKWKW",
+          "name": "National Bank of Kuwait",
+          "country": "KW",
+          "currencies": [
+            "AED",
+            "AUD",
+            "BHD",
+            "CAD",
+            "CHF",
+            "CNY",
+            "DKK",
+            "EGP",
+            "EUR",
+            "GBP",
+            "HKD",
+            "INR",
+            "JOD",
+            "JPY",
+            "KRW",
+            "KWD",
+            "LKR",
+            "NOK",
+            "OMR",
+            "PHP",
+            "PKR",
+            "QAR",
+            "SAR",
+            "SEK",
+            "SGD",
+            "USD"
+          ]
+        },
+        {
+          "bic8": "AUBBBHBM",
+          "name": "Ahli United Bank",
+          "country": "BH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "BHD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BMUSOMRX",
+          "name": "Bank Muscat",
+          "country": "OM",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "OMR"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "RIYBSARI",
+        "CBOMUSSR",
+        "FGBMAEAA"
+      ]
+    },
+    {
+      "name": "vietnam",
+      "label": "Vietnam",
+      "countries": [
+        "VN"
+      ],
+      "masked_block": 91001700,
+      "note": "2026-08-19 research: no Vietnamese bank publishes account-level SSI. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only — NOT SEEDABLE. All 8 BICs verified correct.",
+      "banks": [
+        {
+          "bic8": "BFTVVNVX",
+          "name": "Vietcombank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND",
+            "JPY",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ICBVVNVX",
+          "name": "VietinBank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND",
+            "JPY",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BIDVVNVX",
+          "name": "BIDV",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND",
+            "JPY",
+            "AUD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "VTCBVNVX",
+          "name": "Techcombank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ASCBVNVX",
+          "name": "Asia Commercial Bank (ACB)",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SGTTVNVX",
+          "name": "Sacombank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "MSCBVNVX",
+          "name": "MB Bank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "VPBKVNVX",
+          "name": "VPBank",
+          "country": "VN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "VND"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "bangladesh",
+      "label": "Bangladesh",
+      "countries": [
+        "BD"
+      ],
+      "masked_block": 91001800,
+      "note": "2026-08-19 research: Agrani Bank (AGBKBDDH, nosto list archived 2025-10-13) and Eastern Bank PLC (EBLDBDDH, live correspondent-banking page as of 2026-08-18) publish beneficiary SSI lists. Sonali, Janata, Islami Bank BD, Dutch-Bangla, City, BRAC, and Pubali publish no BIC/account-level lists — NOT SEEDABLE. ACU/ACUD (Asian Clearing Union) settlement-unit rows dropped as non-ISO. 8 of 9 candidate BICs were wrong; corrected forms verified on theswiftcodes, wrong forms added to forbidden_bics.",
+      "banks": [
+        {
+          "bic8": "BSONBDDH",
+          "name": "Sonali Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "JANBBDDH",
+          "name": "Janata Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "AGBKBDDH",
+          "name": "Agrani Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "JPY",
+            "CAD",
+            "SGD",
+            "CHF",
+            "SAR",
+            "AED",
+            "CNY"
+          ]
+        },
+        {
+          "bic8": "IBBLBDDH",
+          "name": "Islami Bank Bangladesh",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "DBBLBDDH",
+          "name": "Dutch-Bangla Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "CIBLBDDH",
+          "name": "City Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BRAKBDDH",
+          "name": "BRAC Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "PUBABDDH",
+          "name": "Pubali Bank",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "GBP",
+            "EUR",
+            "BDT"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "EBLDBDDH",
+          "name": "Eastern Bank PLC",
+          "country": "BD",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "CNY",
+            "CHF",
+            "AUD",
+            "SAR",
+            "SGD",
+            "AED"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "SONABDDH",
+        "JANABDDH",
+        "AGRABDDH",
+        "DUTBBDDH",
+        "CIBBBDDH",
+        "BRACBDDH",
+        "EBLBBDDH",
+        "SCBLDEFX",
+        "SCBLDEFXXXX"
+      ]
+    },
+    {
+      "name": "malaysia",
+      "label": "Malaysia",
+      "countries": [
+        "MY"
+      ],
+      "masked_block": 91001900,
+      "note": "2026-08-19 research: no Malaysian bank publishes an SSI/correspondent list. Maybank (MBBEMYKL), CIMB (CIBBMYKL), Public Bank (PBBEMYKL), Hong Leong (HLBBMYKL), RHB (RHBBMYKL), AmBank (ARBKMYKL), Affin (PHBMMYKL), and Bank Islam (BIMBMYKL) publish remittance product pages and fee schedules only; remittance forms have blank intermediary fields — NOT SEEDABLE. All 8 BICs verified correct.",
+      "banks": [
+        {
+          "bic8": "MBBEMYKL",
+          "name": "Maybank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "CIBBMYKL",
+          "name": "CIMB Bank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "PBBEMYKL",
+          "name": "Public Bank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "HLBBMYKL",
+          "name": "Hong Leong Bank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "RHBBMYKL",
+          "name": "RHB Bank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ARBKMYKL",
+          "name": "AmBank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR",
+            "JPY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "PHBMMYKL",
+          "name": "Affin Bank",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BIMBMYKL",
+          "name": "Bank Islam Malaysia",
+          "country": "MY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MYR"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "india",
+      "label": "India",
+      "countries": [
+        "IN"
+      ],
+      "masked_block": 91002000,
+      "legacy_accounts": [
+        "ACCT-76369",
+        "ACCT-92540",
+        "ACCT-81303",
+        "ACCT-11287",
+        "ACCT-72579",
+        "ACCT-53522",
+        "ACCT-47525",
+        "ACCT-85558",
+        "ACCT-15341",
+        "ACCT-36362",
+        "ACCT-77359",
+        "ACCT-96995",
+        "ACCT-50240",
+        "ACCT-85203",
+        "ACCT-96181",
+        "ACCT-26403",
+        "ACCT-51968",
+        "ACCT-87329",
+        "ACCT-69958",
+        "ACCT-85107",
+        "ACCT-38765",
+        "ACCT-52667",
+        "ACCT-56597",
+        "ACCT-64063",
+        "ACCT-91959",
+        "ACCT-19225",
+        "ACCT-70868",
+        "ACCT-25636",
+        "ACCT-72219",
+        "ACCT-97173",
+        "ACCT-18267",
+        "ACCT-08664",
+        "ACCT-31894",
+        "ACCT-04040",
+        "ACCT-14136",
+        "ACCT-30624",
+        "ACCT-10959",
+        "ACCT-93194",
+        "ACCT-94791",
+        "ACCT-62164",
+        "ACCT-98503",
+        "ACCT-65817",
+        "ACCT-96184",
+        "ACCT-00221",
+        "ACCT-52806",
+        "ACCT-62402",
+        "ACCT-61923",
+        "ACCT-71687"
+      ],
+      "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) — INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped. legacy_accounts: pre-block-era (pre-91002000) HDFC/SBI rows whose masked placeholders predate the autopilot block scheme; a new fold record can never join this set without an explicit manifest edit.",
+      "banks": [
+        {
+          "bic8": "HDFCINBB",
+          "name": "HDFC Bank",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AED",
+            "SGD",
+            "HKD"
+          ]
+        },
+        {
+          "bic8": "ICICINBB",
+          "name": "ICICI Bank",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AED",
+            "SGD",
+            "HKD"
+          ]
+        },
+        {
+          "bic8": "SBININBB",
+          "name": "State Bank of India",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AED",
+            "SGD",
+            "HKD"
+          ]
+        },
+        {
+          "bic8": "AXISINBB",
+          "name": "Axis Bank",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "AED",
+            "SGD",
+            "HKD"
+          ]
+        },
+        {
+          "bic8": "KKBKINBB",
+          "name": "Kotak Mahindra Bank",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY"
+          ]
+        },
+        {
+          "bic8": "BARBINBB",
+          "name": "Bank of Baroda",
+          "country": "IN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY"
+          ]
+        }
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "thailand",
+      "label": "Thailand",
+      "countries": [
+        "TH"
+      ],
+      "masked_block": 91002100,
+      "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) has a historical SSI table (archived 2003-08-24, document dated 2002-08-08). This fold retains its 12 correspondent BICs as availability-only records because the retained data does not establish usable account identifiers, with-an instructions, charges, or value dates. Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI — NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa→UFJ→MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
+      "banks": [
+        {
+          "bic8": "BKKBTHBK",
+          "name": "Bangkok Bank",
+          "country": "TH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "THB",
+            "JPY",
+            "CNY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "KASITHBK",
+          "name": "Kasikornbank",
+          "country": "TH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "THB",
+            "JPY",
+            "CNY",
+            "SGD",
+            "HKD"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SICOTHBK",
+          "name": "Siam Commercial Bank",
+          "country": "TH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "SGD",
+            "HKD",
+            "AUD",
+            "CAD",
+            "CHF",
+            "DKK",
+            "NZD",
+            "SEK"
+          ]
+        },
+        {
+          "bic8": "KRTHTHBK",
+          "name": "Krungthai Bank",
+          "country": "TH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "THB",
+            "JPY",
+            "CNY"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "AYUDTHBK",
+          "name": "Bank of Ayudhya (Krungsri)",
+          "country": "TH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "THB",
+            "JPY"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": []
+    },
+    {
+      "name": "andean",
+      "label": "Andean (Colombia, Peru, Chile)",
+      "countries": [
+        "CO",
+        "PE",
+        "CL"
+      ],
+      "masked_block": 91002200,
+      "note": "2026-08-19 research: Banco Davivienda (CAFECOBB, giros-via-swift page archived 2004-12-08), Interbank Peru (BINPPEPL, Bancos Corresponsales PDF archived 2016-01-23, as-of 2015-10-12), and BancoEstado Chile (BECHCLRM, corresponsales page archived 2025-06-19) publish correspondent lists (BIC + city, no account numbers). Bancolombia, BCP, BBVA Peru, Banco de Chile (BIC is BCHICLRM), and Santander Chile publish no SSI — NOT SEEDABLE. BIC corrections: Davivienda is CAFECOBB not BBOGCOBM; Banco de Chile is BCHICLRM; BancoEstado is BECHCLRM. PNBPUS3NNYC normalized to PNBPUS33; PCBCCLRMCLR (CCB Chile) dropped as unconfirmed.",
+      "banks": [
+        {
+          "bic8": "COLOCOBM",
+          "name": "Bancolombia",
+          "country": "CO",
+          "currencies": [
+            "USD",
+            "EUR",
+            "COP"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "CAFECOBB",
+          "name": "Banco Davivienda",
+          "country": "CO",
+          "currencies": [
+            "USD",
+            "EUR"
+          ]
+        },
+        {
+          "bic8": "BCPLPEPL",
+          "name": "Banco de Credito del Peru",
+          "country": "PE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "PEN"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BCONPEPL",
+          "name": "BBVA Peru",
+          "country": "PE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "PEN"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BINPPEPL",
+          "name": "Interbank (Peru)",
+          "country": "PE",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CAD",
+            "JPY",
+            "CHF",
+            "CNY",
+            "HKD",
+            "MXN",
+            "AUD"
+          ]
+        },
+        {
+          "bic8": "BCHICLRM",
+          "name": "Banco de Chile",
+          "country": "CL",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CLP"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BSCHCLRM",
+          "name": "Banco Santander Chile",
+          "country": "CL",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CLP"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BECHCLRM",
+          "name": "BancoEstado",
+          "country": "CL",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "AUD",
+            "CAD",
+            "CHF",
+            "DKK",
+            "SEK",
+            "NOK",
+            "HKD",
+            "MXN"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "BBOGCOBM",
+        "CHBLCLRM",
+        "BECECLRM",
+        "CAVDCOBB"
+      ]
+    },
+    {
+      "name": "mexico-central-america",
+      "label": "Mexico + Central America",
+      "countries": [
+        "MX",
+        "GT",
+        "CR",
+        "PA",
+        "SV"
+      ],
+      "masked_block": 91002300,
+      "note": "2026-08-19 research: Banorte (MENOMXMT, live 2026-08-18), Banco General Panama (BAGEPAPA, live 2026-05-11), and Banco Agricola El Salvador (CAGRSVSS, archived 2025-08-06) publish correspondent lists. BBVA Mexico, Santander Mexico (BMSXMXMM), HSBC Mexico, Banrural (BRRLGTGC), BAC Credomatic GT, and Banco Nacional CR publish no SSI — NOT SEEDABLE. Corrected BICs: Banorte MENOMXMT (not BNMXMXMM), Santander BMSXMXMM, Banrural BRRLGTGC, Banco General BAGEPAPA, Banco Agricola CAGRSVSS; wrong forms forbidden.",
+      "banks": [
+        {
+          "bic8": "MENOMXMT",
+          "name": "Banorte (Banco Mercantil del Norte)",
+          "country": "MX",
+          "currencies": [
+            "USD",
+            "EUR",
+            "CAD",
+            "GBP",
+            "CHF",
+            "JPY",
+            "SEK",
+            "AUD",
+            "NOK"
+          ]
+        },
+        {
+          "bic8": "BCMRMXMM",
+          "name": "BBVA Mexico",
+          "country": "MX",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MXN"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BMSXMXMM",
+          "name": "Santander Mexico",
+          "country": "MX",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MXN"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BIMEMXMM",
+          "name": "HSBC Mexico",
+          "country": "MX",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MXN"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BRRLGTGC",
+          "name": "Banrural",
+          "country": "GT",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GTQ"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BACCGTGT",
+          "name": "BAC Credomatic Guatemala",
+          "country": "GT",
+          "currencies": [
+            "USD",
+            "GTQ"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BNCRCRSJ",
+          "name": "Banco Nacional de Costa Rica",
+          "country": "CR",
+          "currencies": [
+            "USD",
+            "CRC"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BAGEPAPA",
+          "name": "Banco General (Panama)",
+          "country": "PA",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MXN",
+            "CAD",
+            "CHF",
+            "JPY",
+            "AUD",
+            "DKK",
+            "HKD",
+            "NOK",
+            "SEK",
+            "ZAR",
+            "CNH"
+          ]
+        },
+        {
+          "bic8": "CAGRSVSS",
+          "name": "Banco Agricola (El Salvador)",
+          "country": "SV",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "MXN",
+            "JPY",
+            "CAD",
+            "CHF"
+          ]
+        }
+      ],
+      "forbidden_bics": [
+        "BNMXMXMM",
+        "BMEXMXMM",
+        "CUNIGTGT",
+        "BAGEGPAP",
+        "BAGRESSV"
+      ]
+    },
+    {
+      "name": "eastern-europe",
+      "label": "Eastern Europe (Romania, Hungary, Czechia)",
+      "countries": [
+        "RO",
+        "HU",
+        "CZ"
+      ],
+      "masked_block": 91002400,
+      "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none — NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
+      "banks": [
+        {
+          "bic8": "RNCBROBU",
+          "name": "BCR (Banca Comerciala Romana)",
+          "country": "RO",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "RON"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "BTRLRO22",
+          "name": "Banca Transilvania",
+          "country": "RO",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "RON",
+            "HUF",
+            "AUD",
+            "CAD",
+            "CHF",
+            "DKK",
+            "JPY",
+            "NOK",
+            "PLN",
+            "SEK",
+            "TRY"
+          ]
+        },
+        {
+          "bic8": "BRDEROBU",
+          "name": "BRD Groupe Societe Generale",
+          "country": "RO",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "RON"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "OTPVHUHB",
+          "name": "OTP Bank (Hungary)",
+          "country": "HU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "HUF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "GIBAHUHB",
+          "name": "Erste Bank Hungary",
+          "country": "HU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "HUF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "OKHBHUHB",
+          "name": "K&H Bank (Hungary)",
+          "country": "HU",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "HUF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "KOMBCZPP",
+          "name": "Komercni banka (Czechia)",
+          "country": "CZ",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CZK"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "CEKOCZPP",
+          "name": "CSOB (Czechia)",
+          "country": "CZ",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CZK"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "GIBACZPX",
+          "name": "Ceska sporitelna (Czechia)",
+          "country": "CZ",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CZK"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "RZBRROBU"
+      ]
+    },
+    {
+      "name": "west-africa",
+      "label": "West Africa (Ghana, Senegal, Cote d'Ivoire)",
+      "countries": [
+        "GH",
+        "SN",
+        "CI"
+      ],
+      "masked_block": 91002500,
+      "note": "2026-08-19 research: only GCB Bank (GHCBGHAC) publishes a correspondent list (2024 Annual Report \"Agents and Correspondent Banks\" section, archived 2025-04-17). Currency mapping inferred from regional grouping in the report; no account numbers published. BHFBDEFF (BHF Bank) and GHIBGB2L (Ghana International Bank) not confirmable on theswiftcodes — excluded as unverified. Ecobank GH/SN/CI, Stanbic GH, Societe Generale SN, and SGBCI publish no SSI — NOT SEEDABLE.",
+      "banks": [
+        {
+          "bic8": "GHCBGHAC",
+          "name": "GCB Bank (Ghana)",
+          "country": "GH",
+          "currencies": [
+            "USD",
+            "EUR"
+          ]
+        },
+        {
+          "bic8": "ECOCGHAC",
+          "name": "Ecobank Ghana",
+          "country": "GH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "GHS"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SBICGHAC",
+          "name": "Stanbic Bank Ghana",
+          "country": "GH",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "GHS"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ECOCSNDA",
+          "name": "Ecobank Senegal",
+          "country": "SN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "XOF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SGSNSNDA",
+          "name": "Societe Generale Senegal",
+          "country": "SN",
+          "currencies": [
+            "USD",
+            "EUR",
+            "XOF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "SGCICIAB",
+          "name": "SGBCI (Cote d'Ivoire)",
+          "country": "CI",
+          "currencies": [
+            "USD",
+            "EUR",
+            "XOF"
+          ],
+          "seedable": false
+        },
+        {
+          "bic8": "ECOCCIAB",
+          "name": "Ecobank Cote d'Ivoire",
+          "country": "CI",
+          "currencies": [
+            "USD",
+            "EUR",
+            "XOF"
+          ],
+          "seedable": false
+        }
+      ],
+      "forbidden_bics": [
+        "GHOCGHAC",
+        "ECOCIAB"
+      ]
+    },
+    {
+      "name": "indonesia",
+      "label": "Indonesia",
+      "countries": [
+        "ID"
+      ],
+      "masked_block": 91002800,
+      "note": "2026-08-22 research: PT Bank KB Bukopin Tbk published a 'List of Depository Correspondent Banks' PDF on bukopin.co.id (per-currency sections with nostro A/C No. and SWIFT; archived 2017-05-16, publication pattern corroborated by 2012 and 2017 RMA correspondent directories on the same domain) - 14 records across 8 currencies. BCA, Bank Mandiri, BNI, and BRI annual reports are narrative-only or image-only scans (no extractable account tables) - NOT SEEDABLE. CIMB Niaga, Danamon, Permata, and OCBC NISP publish nothing SSI-like.",
+      "forbidden_bics": [],
+      "banks": [
+        {
+          "bic8": "BBUKIDJA",
+          "name": "PT Bank KB Bukopin Tbk",
+          "country": "ID",
+          "currencies": [
+            "AUD",
+            "EUR",
+            "GBP",
+            "HKD",
+            "JPY",
+            "MYR",
+            "SGD",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "bukopin.co.id"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AUD",
+              "correspondent": "National Australia Bank Limited, Melbourne (International Service Centre, 271 Collins Street)",
+              "int_bic": "NATAAU33",
+              "nostro": "ACCT-91002813",
+              "with_an": "ACCT-91002813",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank AG, Frankfurt am Main (Taunusanlage 12)",
+              "int_bic": "DEUTDEFF",
+              "nostro": "ACCT-91002811",
+              "with_an": "ACCT-91002811",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Societe Generale, Paris La Defense (commercial payments only)",
+              "int_bic": "SOGEFRPP",
+              "nostro": "ACCT-91002812",
+              "with_an": "ACCT-91002812",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Standard Chartered Bank, London (1 Aldermanbury Square, EC2V 7SB)",
+              "int_bic": "SCBLGB2L",
+              "nostro": "ACCT-91002801",
+              "with_an": "ACCT-91002801",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "HKD",
+              "correspondent": "Standard Chartered Bank (Hong Kong) Limited, Hong Kong",
+              "int_bic": "SCBLHKHH",
+              "nostro": "ACCT-91002805",
+              "with_an": "ACCT-91002805",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo (1-2 Yurakucho 1-chome, Chiyoda-ku)",
+              "int_bic": "SMBCJPJT",
+              "nostro": "ACCT-91002804",
+              "with_an": "ACCT-91002804",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "MYR",
+              "correspondent": "OCBC Bank (Malaysia) Berhad, Kuala Lumpur (Menara OCBC, Jalan Tun Perak)",
+              "int_bic": "OCBCMYKL",
+              "nostro": "ACCT-91002814",
+              "with_an": "ACCT-91002814",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "SGD",
+              "correspondent": "Standard Chartered Bank, Singapore (6 Battery Road)",
+              "int_bic": "SCBLSGSG",
+              "nostro": "ACCT-91002802",
+              "with_an": "ACCT-91002802",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "SGD",
+              "correspondent": "United Overseas Bank Limited, Singapore (commercial payments only)",
+              "int_bic": "UOVBSGSG",
+              "nostro": "ACCT-91002803",
+              "with_an": "ACCT-91002803",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "PT Bank Mandiri (Persero) Tbk, Jakarta (bilateral only)",
+              "int_bic": "BMRIIDJA",
+              "nostro": "ACCT-91002809",
+              "with_an": "ACCT-91002809",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "PT Bank Central Asia Tbk, Jakarta (domestic clearing member only)",
+              "int_bic": "CENAIDJA",
+              "nostro": "ACCT-91002808",
+              "with_an": "ACCT-91002808",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Citibank N.A., New York (399 Park Avenue)",
+              "int_bic": "CITIUS33",
+              "nostro": "ACCT-91002806",
+              "with_an": "ACCT-91002806",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Habib American Bank (HAB BANK), New York (trade payments only; Fedwire participant, not a CHIPS clearer)",
+              "int_bic": "HANYUS33",
+              "nostro": "ACCT-91002810",
+              "with_an": "ACCT-91002810",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Standard Chartered Bank, New York (One Madison Avenue)",
+              "int_bic": "SCBLUS33",
+              "nostro": "ACCT-91002807",
+              "with_an": "ACCT-91002807",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+              "as_of": "2017-05-16",
+              "status": "archived",
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "697d37270d31a110503c0fcdcf2690556689a01d07febfa513ae68cd28137533"
+        }
+      ]
+    },
+    {
+      "name": "singapore",
+      "label": "Singapore",
+      "countries": [
+        "SG"
+      ],
+      "masked_block": 91002700,
+      "note": "2026-08-22 research: United Overseas Bank Limited publishes a 'List of Nostro Agents' page (per-currency agent bank + BIC, no account numbers - seeded bic_only; Wayback snapshot 2024-08-07 corroborated by the 2017 edition). OCBC publishes inward-USD instructions (intermediary JP Morgan Chase NY, CHIPS UIDs) on its live telegraphic-transfer help page - no accounts, seeded bic_only. DBS (dbs.com CDX sweep), HSBC Singapore (archived receiving-payments page read in full), and Standard Chartered Singapore (sc.com + ssi.standardchartered.com) publish no correspondent/nostro lists - NOT SEEDABLE; Citibank SG partially checked (CDX only). UOB prints THB agent BIC 'UOBVTHBK' in 2017 and 2024, but the directory code is UOVBTHBK - record dropped and the misprint forbidden. UOB's USD agent printed as legacy 'PNBPUS3NNYC' is normalized to PNBPUS33XXX per repo canon and the legacy form is forbidden.",
+      "forbidden_bics": [
+        "PNBPUS3N",
+        "UOBVTHBK"
+      ],
+      "banks": [
+        {
+          "bic8": "OCBCSGSG",
+          "name": "Oversea-Chinese Banking Corporation Limited",
+          "country": "SG",
+          "currencies": [
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "ocbc.com"
+          ],
+          "admitted_records": [
+            {
+              "currency": "USD",
+              "correspondent": "JP Morgan Chase Bank, New York",
+              "int_bic": "CHASUS33",
+              "source": "https://www.ocbc.com/personal-banking/help-and-support/payments-and-transactions/telegraphic-transfer",
+              "as_of": "2026-08-22",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            }
+          ],
+          "admitted_record_digest": "36d5c69e6eeea76fdfdfef6ec8e948c43cb817b9b2e5ef9f47c3fa8fc2357909"
+        },
+        {
+          "bic8": "UOVBSGSG",
+          "name": "United Overseas Bank Limited",
+          "country": "SG",
+          "currencies": [
+            "AED",
+            "AUD",
+            "BND",
+            "CAD",
+            "CHF",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "IDR",
+            "INR",
+            "JPY",
+            "NOK",
+            "NZD",
+            "RMB",
+            "SEK",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "uob.com.sg"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AED",
+              "correspondent": "Emirates NBD, Dubai",
+              "int_bic": "EBILAEAD",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "AUD",
+              "correspondent": "ANZ Banking Group Ltd, Melbourne",
+              "int_bic": "ANZBAU3M",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "AUD",
+              "correspondent": "National Australia Bank Limited, Melbourne",
+              "int_bic": "NATAAU33",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "BND",
+              "correspondent": "United Overseas Bank, Bandar Seri Begawan",
+              "int_bic": "UOVBBNBB",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CAD",
+              "correspondent": "Canadian Imperial Bank of Commerce, Toronto",
+              "int_bic": "CIBCCATT",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "UBS AG, Zurich",
+              "int_bic": "UBSWCHZH80A",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "DKK",
+              "correspondent": "Danske Bank, Copenhagen",
+              "int_bic": "DABADKKK",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "ING Belgium SA, Brussels",
+              "int_bic": "BBRUBEBB010",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank AG, Frankfurt",
+              "int_bic": "DEUTDEFF",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Barclays Bank PLC, London",
+              "int_bic": "BARCGB22",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "HKD",
+              "correspondent": "United Overseas Bank, Hong Kong",
+              "int_bic": "UOVBHKHH",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "IDR",
+              "correspondent": "PT Bank UOB Indonesia, Jakarta",
+              "int_bic": "BBIJIDJA",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "INR",
+              "correspondent": "Standard Chartered Bank, Mumbai",
+              "int_bic": "SCBLINBB",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "MUFG Bank Ltd, Tokyo",
+              "int_bic": "BOTKJPJT",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Mizuho Bank Ltd, Tokyo",
+              "int_bic": "MHCBJPJT",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+              "int_bic": "SMBCJPJT",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "NOK",
+              "correspondent": "Danske Bank A/S, Trondheim",
+              "int_bic": "DABANO22",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "NOK",
+              "correspondent": "Nordea Bank Norge, Oslo",
+              "int_bic": "NDEANOKK",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "NZD",
+              "correspondent": "ANZ Bank New Zealand, Wellington",
+              "int_bic": "ANZBNZ22",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "RMB",
+              "correspondent": "Industrial and Commercial Bank of China, Singapore",
+              "int_bic": "ICBKSGSGCLR",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "RMB",
+              "correspondent": "UOB (China) Ltd, Shanghai",
+              "int_bic": "UOVBCNSH",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "SEK",
+              "correspondent": "Danske Bank, Stockholm",
+              "int_bic": "DABASESX",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JPMorgan Chase Bank, NA, New York",
+              "int_bic": "CHASUS33",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Bank of New York Mellon, New York",
+              "int_bic": "IRVTUS3N",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            }
+          ],
+          "admitted_record_digest": "a1d6932c9ef1a551005b9883f8c9c28854ded97a7b84c6fc7efda00dea7fab83"
+        }
+      ]
     }
-   ],
-   "forbidden_bics": [
-    "PNBPUS3NNYC",
-    "BBRUBEBB"
-   ]
-  },
-  {
-   "name": "latin-america",
-   "label": "Latin America (Brazil; Bradesco seedable)",
-   "countries": [
-    "BR"
-   ],
-   "masked_block": 91000800,
-   "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil and Ita\u00fa publish no beneficiary SSI lists \u2014 NOT SEEDABLE. 2026-08-19: Chile (BCHICLRM, BSCHCLRM, BECHCLRM), Colombia (COLOCOBM, CAFECOBB) and Peru (BCPLPEPL, BCONPEPL, BINPPEPL) moved to the andean region; this region now owns Brazil only.",
-   "banks": [
-    {
-     "bic8": "BBDEBRSP",
-     "name": "Banco Bradesco",
-     "country": "BR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CAD",
-      "AUD",
-      "NZD",
-      "DKK",
-      "NOK",
-      "SEK",
-      "CHF",
-      "JPY",
-      "MXN",
-      "GBP",
-      "ZAR",
-      "CNY"
-     ]
-    },
-    {
-     "bic8": "BSCHBRSP",
-     "name": "Banco Santander (Brasil)",
-     "country": "BR",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ITAUBRSP",
-     "name": "Ita\u00fa Unibanco",
-     "country": "BR",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "korea",
-   "label": "South Korea",
-   "countries": [
-    "KR"
-   ],
-   "masked_block": 91000900,
-   "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) \u2014 SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
-   "banks": [
-    {
-     "bic8": "CZNBKRSE",
-     "name": "KB Kookmin Bank",
-     "country": "KR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "KRW"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SHBKKRSE",
-     "name": "Shinhan Bank",
-     "country": "KR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "KRW"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "KOEXKRSE",
-     "name": "Hana Bank",
-     "country": "KR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "KRW"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "HVBKKRSE",
-     "name": "Woori Bank",
-     "country": "KR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "KRW"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "KOCBKRSE",
-    "KBKOKRSE",
-    "CITICHZZ"
-   ]
-  },
-  {
-   "name": "turkey-israel",
-   "label": "Turkey + Israel",
-   "countries": [
-    "TR",
-    "IL"
-   ],
-   "masked_block": 91001000,
-   "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs \u2014 BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists \u2014 NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
-   "banks": [
-    {
-     "bic8": "AKBKTRIS",
-     "name": "Akbank T.A.S.",
-     "country": "TR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CHF",
-      "AUD",
-      "JPY",
-      "SEK",
-      "NOK",
-      "DKK",
-      "SAR"
-     ]
-    },
-    {
-     "bic8": "YAPITRIS",
-     "name": "Yap\u0131 ve Kredi Bankas\u0131",
-     "country": "TR",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CHF",
-      "AUD",
-      "CAD",
-      "JPY",
-      "SEK",
-      "NOK",
-      "DKK"
-     ]
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "nordics-poland",
-   "label": "Nordics + Poland",
-   "countries": [
-    "SE",
-    "NO",
-    "PL"
-   ],
-   "masked_block": 91001100,
-   "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) \u2014 NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) \u2014 SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
-   "banks": [
-    {
-     "bic8": "BREXPLPW",
-     "name": "mBank",
-     "country": "PL",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "CHF",
-      "SEK",
-      "NOK",
-      "DKK",
-      "TRY",
-      "ZAR"
-     ]
-    },
-    {
-     "bic8": "BPKOPLPW",
-     "name": "PKO Bank Polski",
-     "country": "PL",
-     "currencies": [
-      "USD",
-      "GBP",
-      "PLN",
-      "JPY",
-      "CHF",
-      "SEK",
-      "NOK",
-      "ZAR",
-      "AUD",
-      "CAD",
-      "CNY",
-      "CZK",
-      "DKK",
-      "HKD",
-      "HUF",
-      "SGD",
-      "TRY"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "SBAKNOBB"
-   ]
-  },
-  {
-   "name": "southern-africa",
-   "label": "Southern Africa",
-   "countries": [
-    "ZA"
-   ],
-   "masked_block": 91001200,
-   "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated \u2014 the real Standard Bank SA BIC is SBZAZAJJ \u2014 and SBICUS44 is not in any registry, so both are forbidden.",
-   "banks": [
-    {
-     "bic8": "NEDSZAJJ",
-     "name": "Nedbank",
-     "country": "ZA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "ZAR"
-     ]
-    },
-    {
-     "bic8": "SBZAZAJJ",
-     "name": "Standard Bank of South Africa",
-     "country": "ZA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "ZAR"
-     ]
-    },
-    {
-     "bic8": "ABSAZAJJ",
-     "name": "Absa Bank",
-     "country": "ZA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "ZAR"
-     ]
-    },
-    {
-     "bic8": "FIRNZAJJ",
-     "name": "FirstRand Bank (FNB)",
-     "country": "ZA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "ZAR"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "SBICZAJJ",
-    "SBICUS44"
-   ]
-  },
-  {
-   "name": "north-east-africa",
-   "label": "North + East Africa (Morocco, Egypt, Kenya, Nigeria)",
-   "countries": [
-    "MA",
-    "EG",
-    "KE",
-    "NG"
-   ],
-   "masked_block": 91001300,
-   "note": "2026-08-16 research: five of the expected BICs were wrong \u2014 Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
-   "banks": [
-    {
-     "bic8": "FBNINGLA",
-     "name": "First Bank of Nigeria",
-     "country": "NG",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR"
-     ]
-    },
-    {
-     "bic8": "ZEIBNGLA",
-     "name": "Zenith Bank",
-     "country": "NG",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR"
-     ]
-    },
-    {
-     "bic8": "BCMAMAMC",
-     "name": "Attijariwafa Bank",
-     "country": "MA",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BMCEMAMC",
-     "name": "BMCE Bank of Africa",
-     "country": "MA",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "CIBEEGCX",
-     "name": "Commercial International Bank (Egypt)",
-     "country": "EG",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "NBEGEGCX",
-     "name": "National Bank of Egypt",
-     "country": "EG",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "QNBAEGCX",
-     "name": "QNB AlAhli",
-     "country": "EG",
-     "currencies": [
-      "USD",
-      "EUR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "KCBLKENX",
-     "name": "KCB Bank (Kenya)",
-     "country": "KE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "KES"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "CMAOMAMR",
-    "BMCEMAMA",
-    "COMEGCAX",
-    "QNBAAEGX",
-    "KCBKEN22",
-    "ZENINGLA",
-    "SBICZAJJ",
-    "SBICUS44"
-   ]
-  },
-  {
-   "name": "southeast-asia",
-   "label": "Southeast Asia (BPI verified seedable)",
-   "countries": [
-    "PH",
-    "ID"
-   ],
-   "masked_block": 91000700,
-   "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, and Metrobank publish nothing \u2014 NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM). 2026-08-19: Thailand (BKKBTHBK, KASITHBK, SICOTHBK, KRTHTHBK, AYUDTHBK) moved to the thailand region (SCB's archived SSI table is seedable there); this region now owns the Philippines and Indonesia only.",
-   "banks": [
-    {
-     "bic8": "BOPIPHMM",
-     "name": "Bank of the Philippine Islands",
-     "country": "PH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "SGD",
-      "HKD",
-      "CAD",
-      "CHF",
-      "SEK"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "BPIPPHMM",
-    "BEIIIDJA",
-    "CENAIDJJ"
-   ]
-  },
-  {
-   "name": "gulf",
-   "label": "Gulf (UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman)",
-   "countries": [
-    "AE",
-    "SA",
-    "QA",
-    "KW",
-    "BH",
-    "OM"
-   ],
-   "masked_block": 91001600,
-   "note": "2026-08-19 research: only NBK Kuwait (NBOKKWKW, SSI broadcast PDF archived 2025-07-23) and Emirates NBD (EBILAEAD, live correspondent-bank-charges PDF 05/2026, BIC-level, no accounts published) yield SSI data. FAB, ADCB, Al Rajhi, Riyad (BIC is RIBLSARI), SABB, QNB, AUB (domain dead), and Bank Muscat (BIC is BMUSOMRX) publish no SSI \u2014 NOT SEEDABLE. Wrong forms RIYBSARI/CBOMUSSR and FAB legacy FGBMAEAA forbidden.",
-   "banks": [
-    {
-     "bic8": "EBILAEAD",
-     "name": "Emirates NBD",
-     "country": "AE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "SAR",
-      "QAR",
-      "KWD",
-      "BHD",
-      "OMR"
-     ]
-    },
-    {
-     "bic8": "NBADAEAA",
-     "name": "First Abu Dhabi Bank",
-     "country": "AE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "AED"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ADCBAEAA",
-     "name": "Abu Dhabi Commercial Bank",
-     "country": "AE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "AED"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "RJHISARI",
-     "name": "Al Rajhi Bank",
-     "country": "SA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "SAR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "RIBLSARI",
-     "name": "Riyad Bank",
-     "country": "SA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "SAR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SABBSARI",
-     "name": "Saudi British Bank",
-     "country": "SA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "SAR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "QNBAQAQA",
-     "name": "Qatar National Bank",
-     "country": "QA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "QAR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "NBOKKWKW",
-     "name": "National Bank of Kuwait",
-     "country": "KW",
-     "currencies": [
-      "AED",
-      "AUD",
-      "BHD",
-      "CAD",
-      "CHF",
-      "CNY",
-      "DKK",
-      "EGP",
-      "EUR",
-      "GBP",
-      "HKD",
-      "INR",
-      "JOD",
-      "JPY",
-      "KRW",
-      "KWD",
-      "LKR",
-      "NOK",
-      "OMR",
-      "PHP",
-      "PKR",
-      "QAR",
-      "SAR",
-      "SEK",
-      "SGD",
-      "USD"
-     ]
-    },
-    {
-     "bic8": "AUBBBHBM",
-     "name": "Ahli United Bank",
-     "country": "BH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "BHD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BMUSOMRX",
-     "name": "Bank Muscat",
-     "country": "OM",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "OMR"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "RIYBSARI",
-    "CBOMUSSR",
-    "FGBMAEAA"
-   ]
-  },
-  {
-   "name": "vietnam",
-   "label": "Vietnam",
-   "countries": [
-    "VN"
-   ],
-   "masked_block": 91001700,
-   "note": "2026-08-19 research: no Vietnamese bank publishes account-level SSI. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only \u2014 NOT SEEDABLE. All 8 BICs verified correct.",
-   "banks": [
-    {
-     "bic8": "BFTVVNVX",
-     "name": "Vietcombank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND",
-      "JPY",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ICBVVNVX",
-     "name": "VietinBank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND",
-      "JPY",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BIDVVNVX",
-     "name": "BIDV",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND",
-      "JPY",
-      "AUD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "VTCBVNVX",
-     "name": "Techcombank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ASCBVNVX",
-     "name": "Asia Commercial Bank (ACB)",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SGTTVNVX",
-     "name": "Sacombank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "MSCBVNVX",
-     "name": "MB Bank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "VPBKVNVX",
-     "name": "VPBank",
-     "country": "VN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "VND"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "bangladesh",
-   "label": "Bangladesh",
-   "countries": [
-    "BD"
-   ],
-   "masked_block": 91001800,
-   "note": "2026-08-19 research: Agrani Bank (AGBKBDDH, nosto list archived 2025-10-13) and Eastern Bank PLC (EBLDBDDH, live correspondent-banking page as of 2026-08-18) publish beneficiary SSI lists. Sonali, Janata, Islami Bank BD, Dutch-Bangla, City, BRAC, and Pubali publish no BIC/account-level lists \u2014 NOT SEEDABLE. ACU/ACUD (Asian Clearing Union) settlement-unit rows dropped as non-ISO. 8 of 9 candidate BICs were wrong; corrected forms verified on theswiftcodes, wrong forms added to forbidden_bics.",
-   "banks": [
-    {
-     "bic8": "BSONBDDH",
-     "name": "Sonali Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "JANBBDDH",
-     "name": "Janata Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "AGBKBDDH",
-     "name": "Agrani Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "JPY",
-      "CAD",
-      "SGD",
-      "CHF",
-      "SAR",
-      "AED",
-      "CNY"
-     ]
-    },
-    {
-     "bic8": "IBBLBDDH",
-     "name": "Islami Bank Bangladesh",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "DBBLBDDH",
-     "name": "Dutch-Bangla Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "CIBLBDDH",
-     "name": "City Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BRAKBDDH",
-     "name": "BRAC Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "PUBABDDH",
-     "name": "Pubali Bank",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "GBP",
-      "EUR",
-      "BDT"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "EBLDBDDH",
-     "name": "Eastern Bank PLC",
-     "country": "BD",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "CNY",
-      "CHF",
-      "AUD",
-      "SAR",
-      "SGD",
-      "AED"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "SONABDDH",
-    "JANABDDH",
-    "AGRABDDH",
-    "DUTBBDDH",
-    "CIBBBDDH",
-    "BRACBDDH",
-    "EBLBBDDH",
-    "SCBLDEFX",
-    "SCBLDEFXXXX"
-   ]
-  },
-  {
-   "name": "malaysia",
-   "label": "Malaysia",
-   "countries": [
-    "MY"
-   ],
-   "masked_block": 91001900,
-   "note": "2026-08-19 research: no Malaysian bank publishes an SSI/correspondent list. Maybank (MBBEMYKL), CIMB (CIBBMYKL), Public Bank (PBBEMYKL), Hong Leong (HLBBMYKL), RHB (RHBBMYKL), AmBank (ARBKMYKL), Affin (PHBMMYKL), and Bank Islam (BIMBMYKL) publish remittance product pages and fee schedules only; remittance forms have blank intermediary fields \u2014 NOT SEEDABLE. All 8 BICs verified correct.",
-   "banks": [
-    {
-     "bic8": "MBBEMYKL",
-     "name": "Maybank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "CIBBMYKL",
-     "name": "CIMB Bank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "PBBEMYKL",
-     "name": "Public Bank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "HLBBMYKL",
-     "name": "Hong Leong Bank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "RHBBMYKL",
-     "name": "RHB Bank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ARBKMYKL",
-     "name": "AmBank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR",
-      "JPY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "PHBMMYKL",
-     "name": "Affin Bank",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BIMBMYKL",
-     "name": "Bank Islam Malaysia",
-     "country": "MY",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MYR"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "india",
-   "label": "India",
-   "countries": [
-    "IN"
-   ],
-   "masked_block": 91002000,
-   "legacy_accounts": [
-    "ACCT-76369",
-    "ACCT-92540",
-    "ACCT-81303",
-    "ACCT-11287",
-    "ACCT-72579",
-    "ACCT-53522",
-    "ACCT-47525",
-    "ACCT-85558",
-    "ACCT-15341",
-    "ACCT-36362",
-    "ACCT-77359",
-    "ACCT-96995",
-    "ACCT-50240",
-    "ACCT-85203",
-    "ACCT-96181",
-    "ACCT-26403",
-    "ACCT-51968",
-    "ACCT-87329",
-    "ACCT-69958",
-    "ACCT-85107",
-    "ACCT-38765",
-    "ACCT-52667",
-    "ACCT-56597",
-    "ACCT-64063",
-    "ACCT-91959",
-    "ACCT-19225",
-    "ACCT-70868",
-    "ACCT-25636",
-    "ACCT-72219",
-    "ACCT-97173",
-    "ACCT-18267",
-    "ACCT-08664",
-    "ACCT-31894",
-    "ACCT-04040",
-    "ACCT-14136",
-    "ACCT-30624",
-    "ACCT-10959",
-    "ACCT-93194",
-    "ACCT-94791",
-    "ACCT-62164",
-    "ACCT-98503",
-    "ACCT-65817",
-    "ACCT-96184",
-    "ACCT-00221",
-    "ACCT-52806",
-    "ACCT-62402",
-    "ACCT-61923",
-    "ACCT-71687"
-   ],
-   "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) \u2014 INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped. legacy_accounts: pre-block-era (pre-91002000) HDFC/SBI rows whose masked placeholders predate the autopilot block scheme; a new fold record can never join this set without an explicit manifest edit.",
-   "banks": [
-    {
-     "bic8": "HDFCINBB",
-     "name": "HDFC Bank",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "AED",
-      "SGD",
-      "HKD"
-     ]
-    },
-    {
-     "bic8": "ICICINBB",
-     "name": "ICICI Bank",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "AED",
-      "SGD",
-      "HKD"
-     ]
-    },
-    {
-     "bic8": "SBININBB",
-     "name": "State Bank of India",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "AED",
-      "SGD",
-      "HKD"
-     ]
-    },
-    {
-     "bic8": "AXISINBB",
-     "name": "Axis Bank",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "AED",
-      "SGD",
-      "HKD"
-     ]
-    },
-    {
-     "bic8": "KKBKINBB",
-     "name": "Kotak Mahindra Bank",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY"
-     ]
-    },
-    {
-     "bic8": "BARBINBB",
-     "name": "Bank of Baroda",
-     "country": "IN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY"
-     ]
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "thailand",
-   "label": "Thailand",
-   "countries": [
-    "TH"
-   ],
-   "masked_block": 91002100,
-   "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) has a historical SSI table (archived 2003-08-24, document dated 2002-08-08). This fold retains its 12 correspondent BICs as availability-only records because the retained data does not establish usable account identifiers, with-an instructions, charges, or value dates. Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI \u2014 NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa\u2192UFJ\u2192MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
-   "banks": [
-    {
-     "bic8": "BKKBTHBK",
-     "name": "Bangkok Bank",
-     "country": "TH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "THB",
-      "JPY",
-      "CNY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "KASITHBK",
-     "name": "Kasikornbank",
-     "country": "TH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "THB",
-      "JPY",
-      "CNY",
-      "SGD",
-      "HKD"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SICOTHBK",
-     "name": "Siam Commercial Bank",
-     "country": "TH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "JPY",
-      "SGD",
-      "HKD",
-      "AUD",
-      "CAD",
-      "CHF",
-      "DKK",
-      "NZD",
-      "SEK"
-     ]
-    },
-    {
-     "bic8": "KRTHTHBK",
-     "name": "Krungthai Bank",
-     "country": "TH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "THB",
-      "JPY",
-      "CNY"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "AYUDTHBK",
-     "name": "Bank of Ayudhya (Krungsri)",
-     "country": "TH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "THB",
-      "JPY"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": []
-  },
-  {
-   "name": "andean",
-   "label": "Andean (Colombia, Peru, Chile)",
-   "countries": [
-    "CO",
-    "PE",
-    "CL"
-   ],
-   "masked_block": 91002200,
-   "note": "2026-08-19 research: Banco Davivienda (CAFECOBB, giros-via-swift page archived 2004-12-08), Interbank Peru (BINPPEPL, Bancos Corresponsales PDF archived 2016-01-23, as-of 2015-10-12), and BancoEstado Chile (BECHCLRM, corresponsales page archived 2025-06-19) publish correspondent lists (BIC + city, no account numbers). Bancolombia, BCP, BBVA Peru, Banco de Chile (BIC is BCHICLRM), and Santander Chile publish no SSI \u2014 NOT SEEDABLE. BIC corrections: Davivienda is CAFECOBB not BBOGCOBM; Banco de Chile is BCHICLRM; BancoEstado is BECHCLRM. PNBPUS3NNYC normalized to PNBPUS33; PCBCCLRMCLR (CCB Chile) dropped as unconfirmed.",
-   "banks": [
-    {
-     "bic8": "COLOCOBM",
-     "name": "Bancolombia",
-     "country": "CO",
-     "currencies": [
-      "USD",
-      "EUR",
-      "COP"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "CAFECOBB",
-     "name": "Banco Davivienda",
-     "country": "CO",
-     "currencies": [
-      "USD",
-      "EUR"
-     ]
-    },
-    {
-     "bic8": "BCPLPEPL",
-     "name": "Banco de Credito del Peru",
-     "country": "PE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "PEN"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BCONPEPL",
-     "name": "BBVA Peru",
-     "country": "PE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "PEN"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BINPPEPL",
-     "name": "Interbank (Peru)",
-     "country": "PE",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CAD",
-      "JPY",
-      "CHF",
-      "CNY",
-      "HKD",
-      "MXN",
-      "AUD"
-     ]
-    },
-    {
-     "bic8": "BCHICLRM",
-     "name": "Banco de Chile",
-     "country": "CL",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CLP"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BSCHCLRM",
-     "name": "Banco Santander Chile",
-     "country": "CL",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CLP"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BECHCLRM",
-     "name": "BancoEstado",
-     "country": "CL",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "AUD",
-      "CAD",
-      "CHF",
-      "DKK",
-      "SEK",
-      "NOK",
-      "HKD",
-      "MXN"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "BBOGCOBM",
-    "CHBLCLRM",
-    "BECECLRM",
-    "CAVDCOBB"
-   ]
-  },
-  {
-   "name": "mexico-central-america",
-   "label": "Mexico + Central America",
-   "countries": [
-    "MX",
-    "GT",
-    "CR",
-    "PA",
-    "SV"
-   ],
-   "masked_block": 91002300,
-   "note": "2026-08-19 research: Banorte (MENOMXMT, live 2026-08-18), Banco General Panama (BAGEPAPA, live 2026-05-11), and Banco Agricola El Salvador (CAGRSVSS, archived 2025-08-06) publish correspondent lists. BBVA Mexico, Santander Mexico (BMSXMXMM), HSBC Mexico, Banrural (BRRLGTGC), BAC Credomatic GT, and Banco Nacional CR publish no SSI \u2014 NOT SEEDABLE. Corrected BICs: Banorte MENOMXMT (not BNMXMXMM), Santander BMSXMXMM, Banrural BRRLGTGC, Banco General BAGEPAPA, Banco Agricola CAGRSVSS; wrong forms forbidden.",
-   "banks": [
-    {
-     "bic8": "MENOMXMT",
-     "name": "Banorte (Banco Mercantil del Norte)",
-     "country": "MX",
-     "currencies": [
-      "USD",
-      "EUR",
-      "CAD",
-      "GBP",
-      "CHF",
-      "JPY",
-      "SEK",
-      "AUD",
-      "NOK"
-     ]
-    },
-    {
-     "bic8": "BCMRMXMM",
-     "name": "BBVA Mexico",
-     "country": "MX",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MXN"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BMSXMXMM",
-     "name": "Santander Mexico",
-     "country": "MX",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MXN"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BIMEMXMM",
-     "name": "HSBC Mexico",
-     "country": "MX",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MXN"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BRRLGTGC",
-     "name": "Banrural",
-     "country": "GT",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GTQ"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BACCGTGT",
-     "name": "BAC Credomatic Guatemala",
-     "country": "GT",
-     "currencies": [
-      "USD",
-      "GTQ"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BNCRCRSJ",
-     "name": "Banco Nacional de Costa Rica",
-     "country": "CR",
-     "currencies": [
-      "USD",
-      "CRC"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BAGEPAPA",
-     "name": "Banco General (Panama)",
-     "country": "PA",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MXN",
-      "CAD",
-      "CHF",
-      "JPY",
-      "AUD",
-      "DKK",
-      "HKD",
-      "NOK",
-      "SEK",
-      "ZAR",
-      "CNH"
-     ]
-    },
-    {
-     "bic8": "CAGRSVSS",
-     "name": "Banco Agricola (El Salvador)",
-     "country": "SV",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "MXN",
-      "JPY",
-      "CAD",
-      "CHF"
-     ]
-    }
-   ],
-   "forbidden_bics": [
-    "BNMXMXMM",
-    "BMEXMXMM",
-    "CUNIGTGT",
-    "BAGEGPAP",
-    "BAGRESSV"
-   ]
-  },
-  {
-   "name": "eastern-europe",
-   "label": "Eastern Europe (Romania, Hungary, Czechia)",
-   "countries": [
-    "RO",
-    "HU",
-    "CZ"
-   ],
-   "masked_block": 91002400,
-   "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none \u2014 NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
-   "banks": [
-    {
-     "bic8": "RNCBROBU",
-     "name": "BCR (Banca Comerciala Romana)",
-     "country": "RO",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "RON"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "BTRLRO22",
-     "name": "Banca Transilvania",
-     "country": "RO",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "RON",
-      "HUF",
-      "AUD",
-      "CAD",
-      "CHF",
-      "DKK",
-      "JPY",
-      "NOK",
-      "PLN",
-      "SEK",
-      "TRY"
-     ]
-    },
-    {
-     "bic8": "BRDEROBU",
-     "name": "BRD Groupe Societe Generale",
-     "country": "RO",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "RON"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "OTPVHUHB",
-     "name": "OTP Bank (Hungary)",
-     "country": "HU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "HUF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "GIBAHUHB",
-     "name": "Erste Bank Hungary",
-     "country": "HU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "HUF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "OKHBHUHB",
-     "name": "K&H Bank (Hungary)",
-     "country": "HU",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "HUF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "KOMBCZPP",
-     "name": "Komercni banka (Czechia)",
-     "country": "CZ",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CZK"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "CEKOCZPP",
-     "name": "CSOB (Czechia)",
-     "country": "CZ",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CZK"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "GIBACZPX",
-     "name": "Ceska sporitelna (Czechia)",
-     "country": "CZ",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "CZK"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "RZBRROBU"
-   ]
-  },
-  {
-   "name": "west-africa",
-   "label": "West Africa (Ghana, Senegal, Cote d'Ivoire)",
-   "countries": [
-    "GH",
-    "SN",
-    "CI"
-   ],
-   "masked_block": 91002500,
-   "note": "2026-08-19 research: only GCB Bank (GHCBGHAC) publishes a correspondent list (2024 Annual Report \"Agents and Correspondent Banks\" section, archived 2025-04-17). Currency mapping inferred from regional grouping in the report; no account numbers published. BHFBDEFF (BHF Bank) and GHIBGB2L (Ghana International Bank) not confirmable on theswiftcodes \u2014 excluded as unverified. Ecobank GH/SN/CI, Stanbic GH, Societe Generale SN, and SGBCI publish no SSI \u2014 NOT SEEDABLE.",
-   "banks": [
-    {
-     "bic8": "GHCBGHAC",
-     "name": "GCB Bank (Ghana)",
-     "country": "GH",
-     "currencies": [
-      "USD",
-      "EUR"
-     ]
-    },
-    {
-     "bic8": "ECOCGHAC",
-     "name": "Ecobank Ghana",
-     "country": "GH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "GHS"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SBICGHAC",
-     "name": "Stanbic Bank Ghana",
-     "country": "GH",
-     "currencies": [
-      "USD",
-      "EUR",
-      "GBP",
-      "GHS"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ECOCSNDA",
-     "name": "Ecobank Senegal",
-     "country": "SN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "XOF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SGSNSNDA",
-     "name": "Societe Generale Senegal",
-     "country": "SN",
-     "currencies": [
-      "USD",
-      "EUR",
-      "XOF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "SGCICIAB",
-     "name": "SGBCI (Cote d'Ivoire)",
-     "country": "CI",
-     "currencies": [
-      "USD",
-      "EUR",
-      "XOF"
-     ],
-     "seedable": false
-    },
-    {
-     "bic8": "ECOCCIAB",
-     "name": "Ecobank Cote d'Ivoire",
-     "country": "CI",
-     "currencies": [
-      "USD",
-      "EUR",
-      "XOF"
-     ],
-     "seedable": false
-    }
-   ],
-   "forbidden_bics": [
-    "GHOCGHAC",
-    "ECOCIAB"
-   ]
-  }
- ]
+  ]
 }
