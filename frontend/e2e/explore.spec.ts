@@ -36,6 +36,13 @@ test.describe("Explore", () => {
     await expect(removeIban).toBeVisible();
     await removeIban.scrollIntoViewIfNeeded();
 
+    const isMobileViewport = (page.viewportSize()?.width ?? 0) <= 1023;
+    if (isMobileViewport) {
+      const mobileNav = page.locator(".app-shell__mobile-nav");
+      await expect(mobileNav).toHaveCount(1);
+      await expect(mobileNav).toBeVisible();
+    }
+
     const reachability = await page.evaluate(() => {
       const remove = document.querySelector<HTMLElement>(
         '[aria-label="Remove IBAN from recent searches"]',
@@ -51,7 +58,7 @@ test.describe("Explore", () => {
         ),
       };
     });
-    if (reachability.navVisible) {
+    if (isMobileViewport || reachability.navVisible) {
       expect(reachability.removeBottom).toBeLessThanOrEqual(reachability.navTop);
     }
 

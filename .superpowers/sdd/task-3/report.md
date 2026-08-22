@@ -125,3 +125,10 @@ Tests       60 passed (60)
 - GREEN: the same 7-project command passed `7 passed (20.7s)`.
 - Relevant unit tests: `3` files, `65` tests passed.
 - Frontend build/type check: `npm run build` passed.
+
+## Mobile-nav geometry coverage review fix
+
+- `frontend/e2e/explore.spec.ts`: viewports at or below 1023px now explicitly require exactly one visible `.app-shell__mobile-nav` before measuring its top; desktop geometry remains conditional on nav visibility. History removal, visible-list, and localStorage assertions remain unconditional.
+- Explore removal test matrix: `7 passed` across desktop, mobile, case-mobile-390, case-tablet-768, case-desktop-1024, case-wide-1440, and case-reduced-motion.
+- Explore unit tests: `8 files passed`, `103 tests passed`.
+- Frontend build/type check: `npm run build` passed.
