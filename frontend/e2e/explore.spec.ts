@@ -13,6 +13,22 @@ test.describe("Explore", () => {
     expect(await items.count()).toBeGreaterThanOrEqual(1);
   });
 
+  test("deep-linked search preserves focus and shows grouped results", async ({ page }) => {
+    await page.goto("/app/explore?q=IBAN");
+    await expect(page.locator('input[type="search"]')).toHaveValue("IBAN");
+    await expect(page.locator(".command-search__results")).toBeVisible();
+    await expect(page.locator(".command-search__group-label")).toContainText("Glossary");
+    await expect(page.locator('input[type="search"]')).not.toBeFocused();
+  });
+
+  test("search rows remain readable at 390px without horizontal overflow", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/app/explore");
+    await page.locator('input[type="search"]').fill("IBAN");
+    await expect(page.locator(".command-search__item").first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
   test("glossary page shows terms", async ({ page }) => {
     await page.goto("/app/explore/glossary");
     // Wait for lazy-loaded page to render

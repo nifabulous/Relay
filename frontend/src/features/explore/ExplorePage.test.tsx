@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import {
+  ExplorePage,
   GlossaryPage,
   BankDirectoryPage,
   SchemesPage,
@@ -57,6 +58,21 @@ describe("GlossaryPage", () => {
     renderGlossary("/app/explore/glossary?term=IBAN");
     expect(screen.getByText("IBAN", { selector: "dt" }).closest(".glossary-entry"))
       .toHaveClass("glossary-entry--highlighted");
+  });
+});
+
+describe("ExplorePage", () => {
+  it("renders search results from the q deep link without stealing focus", async () => {
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    expect(input).toHaveValue("IBAN");
+    expect(input).not.toHaveFocus();
+    expect((await screen.findAllByRole("option", { name: /IBAN/i }))[0]).toBeVisible();
   });
 });
 

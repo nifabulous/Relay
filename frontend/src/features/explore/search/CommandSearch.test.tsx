@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, it, expect } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { http, HttpResponse } from "msw";
@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CommandSearch } from "./CommandSearch";
 import { server } from "../../../test/server";
 
-function renderSearch(initialQuery = "") {
+function renderSearch(initialQuery = "", onNavigate?: (href: string) => void) {
   const user = userEvent.setup();
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -15,7 +15,7 @@ function renderSearch(initialQuery = "") {
   const utils = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <CommandSearch initialQuery={initialQuery} />
+        <CommandSearch initialQuery={initialQuery} onNavigate={onNavigate} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -23,6 +23,7 @@ function renderSearch(initialQuery = "") {
 }
 
 describe("CommandSearch", () => {
+  beforeEach(() => localStorage.clear());
   it("renders an input field with accessible label", () => {
     renderSearch();
     expect(screen.getByRole("searchbox", { name: /search/i })).toBeVisible();
@@ -168,5 +169,87 @@ describe("CommandSearch", () => {
     expect(activeId).toBeTruthy();
     // The option with that id should exist
     expect(document.getElementById(activeId!)).not.toBeNull();
+  });
+
+  it("does not write history while typing", async () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const { user } = renderSearch();
+
+    await user.type(screen.getByRole("searchbox"), "IBAN");
+
+    expect(setItem).not.toHaveBeenCalledWith("relay:search-history:v1", expect.any(String));
+    setItem.mockRestore();
+  });
+
+  it("records and navigates a clicked result", async () => {
+    const navigate = vi.fn();
+    const { user } = renderSearch("IBAN", navigate);
+
+    await user.click(screen.getAllByRole("option", { name: /IBAN/i })[0]);
+
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining("/app/explore/glossary"));
+    expect(JSON.parse(localStorage.getItem("relay:search-history:v1") ?? "[]")).toEqual(["IBAN"]);
+  });
+
+  it("records and navigates with the same handler on Enter", async () => {
+    const navigate = vi.fn();
+    const { user } = renderSearch("IBAN", navigate);
+    const input = screen.getByRole("searchbox");
+    await user.click(input);
+
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining("/app/explore/glossary"));
+    expect(JSON.parse(localStorage.getItem("relay:search-history:v1") ?? "[]")).toEqual(["IBAN"]);
+    expect(input).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("shows grouped destinations and removable recent searches for an empty focused query", async () => {
+    localStorage.setItem("relay:search-history:v1", JSON.stringify(["IBAN", "CITIUS33"]));
+    const { user } = renderSearch();
+
+    await user.click(screen.getByRole("searchbox"));
+
+    expect(screen.getByText("Bank Directory")).toBeVisible();
+    expect(screen.getAllByText("Payment Schemes")[0]).toBeVisible();
+    expect(screen.getAllByText("Glossary")[0]).toBeVisible();
+    expect(screen.getByText("Recent searches")).toBeVisible();
+    expect(screen.getByRole("button", { name: /remove iban/i })).toBeVisible();
+  });
+
+  it("preserves focus for deep-link results and announces result state", async () => {
+    renderSearch("IBAN");
+    const input = screen.getByRole("searchbox");
+
+    expect(input).not.toHaveFocus();
+    expect(await screen.findByText("IBAN")).toBeVisible();
+    await waitFor(() => expect(screen.getAllByRole("status").at(-1)).toHaveTextContent(/result/i));
+  });
+
+  it("debounces bank directory lookup until typing settles", async () => {
+    let requests = 0;
+    server.use(
+      http.get("/api/banks/search", async ({ request }) => {
+        requests += 1;
+        return HttpResponse.json({ query: new URL(request.url).searchParams.get("q"), results: [] });
+      }),
+    );
+    const { user } = renderSearch();
+
+    await user.type(screen.getByRole("searchbox"), "citibank");
+    expect(requests).toBe(0);
+    await waitFor(() => expect(requests).toBe(1), { timeout: 1000 });
+  });
+
+  it("renders result context and recovers from no results", async () => {
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+    await user.type(input, "zzzznotfound");
+    expect(await screen.findByText(/no results/i)).toBeVisible();
+
+    await user.clear(input);
+    await user.type(input, "IBAN");
+    const option = (await screen.findAllByRole("option", { name: /IBAN/i }))[0];
+    expect(within(option).getByText(/International Bank Account Number/i)).toBeVisible();
   });
 });

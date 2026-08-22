@@ -117,3 +117,47 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.command-search__history-item {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.command-search__history-query,
+.command-search__history-remove {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-strong);
+  cursor: pointer;
+  font: inherit;
+}
+
+.command-search__history-query {
+  flex: 1;
+  padding: var(--space-2) var(--space-4);
+  text-align: left;
+}
+
+.command-search__history-remove {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-ink-muted);
+}
+
+.command-search__history-query:hover,
+.command-search__history-remove:hover {
+  background: var(--color-action-surface);
+  color: var(--color-ink-strong);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

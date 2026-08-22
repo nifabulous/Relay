@@ -1,8 +1,14 @@
-import { useState, useRef, useId, type KeyboardEvent } from "react";
+import { useEffect, useRef, useId, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
 import { requestBankSearch } from "./bankSearch";
+import {
+  loadSearchHistory,
+  recordSearchHistory,
+  removeSearchHistory,
+  normalizeSearch,
+} from "./searchHistory";
 import "./CommandSearch.css";
 
 const GROUP_LABELS: Record<SearchResultType, string> = {
@@ -16,6 +22,12 @@ const GROUP_LABELS: Record<SearchResultType, string> = {
 const GROUP_ORDER: SearchResultType[] = ["bank", "scheme", "glossary", "lesson", "tool"];
 
 const BIC_QUERY_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+
+const EMPTY_DESTINATIONS: SearchResult[] = [
+  { id: "destination:banks", type: "bank", label: "Bank Directory", subtitle: "Browse and look up banks by BIC", href: "/app/explore/banks" },
+  { id: "destination:schemes", type: "scheme", label: "Payment Schemes", subtitle: "Compare payment rails and settlement schemes", href: "/app/explore/schemes" },
+  { id: "destination:glossary", type: "glossary", label: "Glossary", subtitle: "Payment terminology reference", href: "/app/explore/glossary" },
+];
 
 function isBicQuery(value: string): boolean {
   const normalized = value.trim();
@@ -43,16 +55,27 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(initialQuery.trim().length > 0);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [settledQuery, setSettledQuery] = useState(initialQuery.trim());
+  const [history, setHistory] = useState<string[]>(() => loadSearchHistory());
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
-
   const normalizedQuery = query.trim();
+
+  useEffect(() => {
+    if (!normalizedQuery) {
+      setSettledQuery("");
+      return;
+    }
+    const timer = window.setTimeout(() => setSettledQuery(normalizedQuery), 250);
+    return () => window.clearTimeout(timer);
+  }, [normalizedQuery]);
+
   const bicQuery = isBicQuery(normalizedQuery);
   const bankSearch = useQuery({
-    queryKey: ["banks", normalizedQuery],
-    queryFn: () => requestBankSearch(normalizedQuery),
-    enabled: isOpen && normalizedQuery.length >= 2,
+    queryKey: ["banks", settledQuery],
+    queryFn: () => requestBankSearch(settledQuery),
+    enabled: isOpen && settledQuery.length >= 2,
     staleTime: 30_000,
   });
 
@@ -76,7 +99,12 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       }]
       : [];
 
-  const results = isOpen ? [...bankResults, ...searchStatic(query)] : [];
+  const staticResults = searchStatic(query);
+  const results = isOpen
+    ? normalizedQuery
+      ? [...bankResults, ...staticResults]
+      : EMPTY_DESTINATIONS
+    : [];
   const groups = groupResults(results);
   const flatResults = groups.flatMap((g) => g.results);
 
@@ -89,6 +117,17 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
     setQuery(value);
     setIsOpen(value.trim().length > 0);
     setActiveIndex(-1);
+  }
+
+  function activateResult(result: SearchResult, event?: { preventDefault(): void }) {
+    const nextHistory = recordSearchHistory(normalizeSearch(query));
+    setHistory(nextHistory);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    if (onNavigate) {
+      event?.preventDefault();
+      onNavigate(result.href);
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -104,8 +143,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       if (activeIndex >= 0 && activeIndex < flatResults.length) {
         e.preventDefault();
         const result = flatResults[activeIndex];
-        onNavigate?.(result.href);
-        setIsOpen(false);
+        activateResult(result, e);
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -160,7 +198,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (query.trim()) setIsOpen(true);
+            setIsOpen(true);
           }}
           aria-expanded={isOpen}
           aria-controls={isOpen ? listboxId : undefined}
@@ -209,10 +247,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                           .join(" ")}
                         role="option"
                         aria-selected={idx === activeIndex}
-                        onClick={() => {
-                          setIsOpen(false);
-                          onNavigate?.(result.href);
-                        }}
+                        onClick={(event) => activateResult(result, event)}
                       >
                         <span className="command-search__item-label">{result.label}</span>
                         <span className="command-search__item-subtitle">{result.subtitle}</span>
@@ -221,10 +256,46 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                   })}
                 </div>
               ))}
+              {normalizedQuery.length === 0 && history.length > 0 && (
+                <div className="command-search__history" aria-label="Recent searches">
+                  <div className="command-search__group-label">Recent searches</div>
+                  {history.map((entry) => (
+                    <div key={entry} className="command-search__history-item">
+                      <button
+                        type="button"
+                        className="command-search__history-query"
+                        onClick={() => {
+                          handleChange(entry);
+                          syncUrl(entry);
+                        }}
+                      >
+                        {entry}
+                      </button>
+                      <button
+                        type="button"
+                        className="command-search__history-remove"
+                        aria-label={`Remove ${entry} from recent searches`}
+                        onClick={() => setHistory(removeSearchHistory(entry))}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
       )}
+      <div className="sr-only" role="status" aria-live="polite">
+        {bankSearch.isFetching
+          ? "Searching banks"
+          : bankSearch.isError
+            ? "Bank search error"
+            : normalizedQuery
+              ? `${flatResults.length} search results`
+              : "Search ready"}
+      </div>
     </div>
   );
 }
