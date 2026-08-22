@@ -332,7 +332,29 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     if identity is None and REGIONS_FILE.resolve() != (Path(__file__).resolve().parent / "regions.json"):
         identity = _TEST_IDENTITIES.get(bic)
     if identity is None:
-        raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
+        # Negative recording: a researched NOT-SEEDABLE bank may be admitted
+        # without registry enrollment because it owns no citations — it
+        # asserts "this bank publishes nothing", never a source domain. The
+        # registry gate exists to authorize evidence ownership, so a bank
+        # claiming none has nothing to authorize. Identity must still be
+        # internally consistent: the declared country has to match the BIC's
+        # own country code, so a typo'd BIC cannot park under the wrong flag.
+        if seedable or normalized_records or domains:
+            raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
+        if country != country_from_bic(bic):
+            raise ValueError(
+                f"{path}.country: {country} does not match the BIC's country "
+                f"{country_from_bic(bic)}"
+            )
+        return {
+            "bic8": bic,
+            "name": " ".join(name.split()),
+            "country": country,
+            "currencies": sorted(currencies),
+            "seedable": False,
+            "source_domains": [],
+            "records": [],
+        }
     if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
         raise ValueError(f"{path}.bic8: test identity is not admissible in the production manifest")
     canonical_name = str(identity["name"])
@@ -366,7 +388,7 @@ def _region_blocks_overlap(left: int, right: int) -> bool:
     return left <= right + 99 and right <= left + 99
 
 
-def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
+def _validate_admission_envelope(payload: dict, manifest: dict, *, revise: bool = False) -> list[dict]:
     payload = _require_mapping(payload, "candidate input")
     if set(payload) != {"regions"}:
         raise ValueError("candidate input must be an object containing only a regions list")
@@ -375,6 +397,12 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
         raise ValueError("candidate input regions must not be empty")
     existing_by_name = {r["name"]: r for r in manifest["regions"]}
     existing_bics = {b["bic8"].upper()[:8]: r["name"] for r in manifest["regions"] for b in r["banks"]}
+    # Country ownership: one geography, one region. Checked here so a clash
+    # surfaces at admission time instead of as a red test after folding.
+    country_owner: dict[str, str] = {}
+    for owned_region in manifest["regions"]:
+        for owned_country in owned_region.get("countries", []):
+            country_owner.setdefault(str(owned_country).strip().upper(), owned_region["name"])
     # Existing manifest entries are historical policy data and may contain
     # legacy typos; preserve them while applying strict validation to new input.
     forbidden_global = {
@@ -468,6 +496,14 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
         if not countries or any(not isinstance(c, str) or not re.fullmatch(r"[A-Z]{2}", c) for c in countries):
             raise ValueError(f"{path}.countries: expected non-empty two-letter country codes")
         region["countries"] = [c.upper() for c in countries]
+        for claimed in region["countries"]:
+            owner = country_owner.get(claimed)
+            if owner is None:
+                country_owner[claimed] = name
+            elif owner != name:
+                raise ValueError(
+                    f"{path}.countries: {claimed} is already owned by region {owner}"
+                )
         forbidden = _require_sequence(region.get("forbidden_bics", []), f"{path}.forbidden_bics")
         normalized_forbidden = []
         for forbidden_index, value in enumerate(forbidden):
@@ -515,20 +551,34 @@ def _validate_admission_envelope(payload: dict, manifest: dict) -> list[dict]:
             if bic in forbidden_global or bic in {x.upper()[:8] for x in region.get("forbidden_bics", [])}:
                 raise ValueError(f"{bank_path}.bic8: conflicts with a forbidden BIC")
             prior = banks.get(bic)
+            # Under --revise a re-admission may replace a bank's records and
+            # its declared currency coverage — the sanctioned way to land
+            # research corrections. Registry-bound identity fields (name,
+            # country, domains) and the seedable flag stay immutable either
+            # way; only an operator edit of trusted_identities.json changes
+            # those.
+            immutable_keys = (
+                {"bic8", "name", "country", "seedable", "source_domains"}
+                if revise
+                else {"bic8", "name", "country", "currencies", "seedable", "source_domains"}
+            )
             metadata = {k: bank[k] for k in ("bic8", "name", "country", "currencies", "seedable", "source_domains")}
             if prior:
-                prior_meta = {
-                    "bic8": prior["bic8"],
-                    "name": prior["name"],
-                    "country": prior["country"],
-                    "currencies": prior["currencies"],
-                    "seedable": prior.get("seedable", True),
-                    "source_domains": prior.get("source_domains", metadata["source_domains"]),
-                }
-                if prior_meta != metadata:
+                prior_meta = {k: prior.get(k) for k in immutable_keys}
+                # Legacy manifest rows may predate source_domains entirely;
+                # their absent claim keeps matching whatever the candidate
+                # declares instead of reading as an immutable-field conflict.
+                if prior_meta.get("source_domains") is None and "source_domains" in immutable_keys:
+                    prior_meta["source_domains"] = metadata["source_domains"]
+                candidate_meta = {k: metadata[k] for k in immutable_keys}
+                if prior_meta != candidate_meta:
                     raise ValueError(f"{bank_path}: existing bank metadata is immutable")
                 prior_records = prior.get("admitted_records", [])
-                if prior_records and record_digest(prior_records) != record_digest(bank["records"]):
+                if (
+                    prior_records
+                    and record_digest(prior_records) != record_digest(bank["records"])
+                    and not revise
+                ):
                     raise ValueError(f"{bank_path}: admitted record digest mismatch")
             bank["admitted_records"] = bank.pop("records")
             bank["admitted_record_digest"] = record_digest(bank["admitted_records"])
@@ -621,10 +671,10 @@ def _write_manifest_atomic(manifest: dict) -> None:
             os.unlink(temp_name)
 
 
-def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
+def admit_candidates(payload: dict, *, dry_run: bool = False, revise: bool = False) -> dict:
     with _manifest_lock():
         manifest = load_manifest()
-        normalized = _validate_admission_envelope(payload, manifest)
+        normalized = _validate_admission_envelope(payload, manifest, revise=revise)
         proposed = copy.deepcopy(manifest)
         existing = {r["name"]: r for r in proposed["regions"]}
         new_regions = []
@@ -637,6 +687,7 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
                 new_regions.append(region)
         proposed["regions"].extend(sorted(new_regions, key=lambda region: region["name"]))
         added_banks = added_records = unchanged_banks = unchanged_records = 0
+        revised_banks = revised_records = 0
         candidate_bics = {
             bank["bic8"].strip().upper()[:8]
             for raw_region in payload.get("regions", [])
@@ -658,7 +709,14 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
                 else:
                     unchanged_banks += 1
                     prior_records = prior.get("admitted_records", [])
-                    for record in bank.get("admitted_records", []):
+                    new_records = bank.get("admitted_records", [])
+                    if record_digest(prior_records) != record_digest(new_records):
+                        # Reachable only under --revise: the envelope rejects
+                        # silent drift otherwise.
+                        revised_banks += 1
+                        revised_records += sum(1 for record in new_records if record not in prior_records)
+                        continue
+                    for record in new_records:
                         if record in prior_records:
                             unchanged_records += 1
                         else:
@@ -669,6 +727,8 @@ def admit_candidates(payload: dict, *, dry_run: bool = False) -> dict:
             "added_records": added_records,
             "unchanged_banks": unchanged_banks,
             "unchanged_records": unchanged_records,
+            "revised_banks": revised_banks,
+            "revised_records": revised_records,
         }
         if not dry_run:
             current_bytes = REGIONS_FILE.read_bytes()
@@ -1075,14 +1135,29 @@ def _fold_row_shape(row: tuple[str, ...], *, enforce_invariants: bool = True) ->
 
 
 def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str]:
-    """Bind every folded row to the validated result using canonical identities."""
+    """Bind every folded row to the validated result using canonical identities.
+
+    Scoping: only rows whose canonical beneficiary belongs to the validated
+    results are checked. Folding several regions into seed.py before committing
+    them one at a time is supported — each commit verifies its own region's
+    rows and leaves rows awaiting another region's commit alone."""
     problems: list[str] = []
     head_rows = _ssi_rows(head_source)
     folded_rows = _ssi_rows(folded_source)
     head_set = set(head_rows)
     added = [row for row in folded_rows if row not in head_set]
+    region_bens: set[str] = set()
+    region_bens_raw: set[str] = set()
+    for bank in results.get("banks", []):
+        try:
+            region_bens.add(_canonical_bic11(bank.get("bic"), "validated beneficiary BIC"))
+        except (ValueError, TypeError):
+            continue
+        raw = str(bank.get("bic", "")).strip().upper()
+        region_bens_raw.update({raw[:8], raw})
 
-    def parse_rows(rows: list[tuple[str, ...]], label: str, report_errors: bool = True) -> tuple[dict, set]:
+    def parse_rows(rows: list[tuple[str, ...]], label: str, report_errors: bool = True,
+                   scope: set[str] | None = None) -> tuple[dict, set]:
         parsed: dict[tuple[str, str, str], dict] = {}
         duplicates: set[tuple[str, str, str]] = set()
         for index, row in enumerate(rows):
@@ -1090,8 +1165,12 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
                 fields = _fold_row_shape(row, enforce_invariants=False)
                 key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
             except (ValueError, TypeError, AttributeError) as exc:
-                if report_errors:
+                # A malformed row outside this region's scope belongs to
+                # another commit; its own verify will report it.
+                if report_errors and (scope is None or any(bic in str(row) for bic in scope)):
                     problems.append(f"{label}[{index}]: {exc}")
+                continue
+            if scope is not None and key[0] not in scope:
                 continue
             if key in parsed:
                 duplicates.add(key)
@@ -1102,7 +1181,7 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         return parsed, duplicates
 
     head_by_key, _ = parse_rows(head_rows, "head row", report_errors=False)
-    added_by_key, _ = parse_rows(added, "added row")
+    added_by_key, _ = parse_rows(added, "added row", True, scope=region_bens | region_bens_raw)
     expected: dict[tuple[str, str, str], dict] = {}
     for bank in results.get("banks", []):
         try:
@@ -1249,7 +1328,7 @@ def scaffold_coverage_class(region: dict, manifest: dict) -> str:
         f"        legacy = {{{', '.join(repr(a) for a in legacy)}}}",
         f"        banks = {{bic for bic, _name, _currencies in {list_name}}}",
         "        rows = [row for row in SSI_RECORDS if row[0] in banks]",
-        f'        assert rows, f"{name}: no seeded records for the seedable banks"',
+        f'        assert rows, "{name}: no seeded records for the seedable banks"',
         "        for row in rows:",
         '            bic, ccy = row[0], row[2]',
         '            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"',
@@ -1277,7 +1356,7 @@ def scaffold_coverage_class(region: dict, manifest: dict) -> str:
         "            )",
         "        keys = [(row[0], row[2], row[3]) for row in rows]",
         "        assert len(keys) == len(set(keys)), (",
-        f'            f"{name}: duplicate (beneficiary, currency, correspondent) keys"',
+        f'            "{name}: duplicate (beneficiary, currency, correspondent) keys"',
         "        )",
         "",
     ]
@@ -1312,16 +1391,22 @@ def cmd_admit(args: argparse.Namespace) -> None:
     input_path = Path(args.candidates)
     try:
         payload = json.loads(input_path.read_text())
-        summary = admit_candidates(payload, dry_run=args.dry_run)
+        summary = admit_candidates(payload, dry_run=args.dry_run, revise=args.revise)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         raise SystemExit(f"admission failed for {input_path}: {exc}") from exc
     action = "would admit" if args.dry_run else "admitted"
     suffix = " (dry-run; manifest not written)" if args.dry_run else ""
+    revise_note = (
+        f", {summary['revised_banks']} revised bank(s), {summary['revised_records']} revised record(s)"
+        if summary.get("revised_banks")
+        else ""
+    )
     print(
         f"  ✓ {action} {summary['added_banks']} added bank(s), "
         f"{summary['added_records']} added record(s), "
         f"{summary['unchanged_banks']} unchanged bank(s), "
-        f"{summary['unchanged_records']} unchanged record(s) in "
+        f"{summary['unchanged_records']} unchanged record(s)"
+        f"{revise_note} in "
         f"{', '.join(summary['regions'])}{suffix}"
     )
 
@@ -1587,6 +1672,10 @@ def main() -> None:
     p = sub.add_parser("admit", help="admit broadly discovered banks into the region manifest")
     p.add_argument("candidates", help="path to candidate discovery JSON")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument(
+        "--revise", action="store_true",
+        help="allow re-admission to replace an existing bank's records and currency coverage",
+    )
     p.set_defaults(func=cmd_admit)
 
     p = sub.add_parser("validate", help="validate research results JSON")

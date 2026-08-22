@@ -2228,7 +2228,7 @@ class TestSingaporeSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in SINGAPORE_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"singapore: no seeded records for the seedable banks"
+        assert rows, "singapore: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2256,7 +2256,7 @@ class TestSingaporeSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"singapore: duplicate (beneficiary, currency, correspondent) keys"
+            "singapore: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: singapore ----
 
@@ -2306,7 +2306,7 @@ class TestIndonesiaSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in INDONESIA_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"indonesia: no seeded records for the seedable banks"
+        assert rows, "indonesia: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2334,7 +2334,7 @@ class TestIndonesiaSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"indonesia: duplicate (beneficiary, currency, correspondent) keys"
+            "indonesia: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: indonesia ----
 
@@ -2385,7 +2385,7 @@ class TestEastAfricaSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in EAST_AFRICA_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"east-africa: no seeded records for the seedable banks"
+        assert rows, "east-africa: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2413,7 +2413,7 @@ class TestEastAfricaSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"east-africa: duplicate (beneficiary, currency, correspondent) keys"
+            "east-africa: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: east-africa ----
 
@@ -2464,7 +2464,7 @@ class TestUgandaSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in UGANDA_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"uganda: no seeded records for the seedable banks"
+        assert rows, "uganda: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2492,7 +2492,7 @@ class TestUgandaSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"uganda: duplicate (beneficiary, currency, correspondent) keys"
+            "uganda: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: uganda ----
 
@@ -2543,7 +2543,7 @@ class TestHongKongSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in HONG_KONG_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"hong-kong: no seeded records for the seedable banks"
+        assert rows, "hong-kong: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2571,7 +2571,7 @@ class TestHongKongSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"hong-kong: duplicate (beneficiary, currency, correspondent) keys"
+            "hong-kong: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: hong-kong ----
 
@@ -2622,7 +2622,7 @@ class TestTaiwanSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in TAIWAN_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"taiwan: no seeded records for the seedable banks"
+        assert rows, "taiwan: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2650,7 +2650,7 @@ class TestTaiwanSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"taiwan: duplicate (beneficiary, currency, correspondent) keys"
+            "taiwan: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: taiwan ----
 
@@ -2701,7 +2701,7 @@ class TestCanadaSsiCoverage:
         legacy = {}
         banks = {bic for bic, _name, _currencies in CANADA_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
-        assert rows, f"canada: no seeded records for the seedable banks"
+        assert rows, "canada: no seeded records for the seedable banks"
         for row in rows:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
@@ -2729,6 +2729,6 @@ class TestCanadaSsiCoverage:
             )
         keys = [(row[0], row[2], row[3]) for row in rows]
         assert len(keys) == len(set(keys)), (
-            f"canada: duplicate (beneficiary, currency, correspondent) keys"
+            "canada: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: canada ----
