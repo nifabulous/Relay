@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import {
   ExplorePage,
@@ -28,6 +28,11 @@ function renderGlossary(path = "/app/explore/glossary") {
       <GlossaryPage />
     </MemoryRouter>,
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}{location.search}</output>;
 }
 
 describe("GlossaryPage", () => {
@@ -73,6 +78,22 @@ describe("ExplorePage", () => {
     expect(input).toHaveValue("IBAN");
     expect(input).not.toHaveFocus();
     expect((await screen.findAllByRole("option", { name: /IBAN/i }))[0]).toBeVisible();
+  });
+
+  it("navigates the selected result on ArrowDown and Enter without an onNavigate prop", async () => {
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/app/explore?q=IBAN"]}>
+        <ExplorePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("searchbox");
+    await user.click(input);
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/app/explore/glossary?term=IBAN");
   });
 });
 

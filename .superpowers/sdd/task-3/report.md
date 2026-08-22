@@ -48,6 +48,35 @@ The required Playwright command was attempted, but its configured `reuseExisting
 
 Subject: `feat: complete explore search command center`
 
+## Enter-navigation integration review fix
+
+- `ExplorePage.test.tsx`: added an integration regression rendering the real `ExplorePage` with no `onNavigate` prop; `ArrowDown` followed by `Enter` must move the MemoryRouter location to `/app/explore/glossary?term=IBAN`.
+- `CommandSearch.tsx`: added the existing React Router `useNavigate` fallback. Explicit `onNavigate` remains supported; click and Enter continue through the same activation handler, prevent the anchor default, record history, and navigate to the selected href.
+
+### TDD evidence
+
+RED command:
+
+```text
+npm test -- --run src/features/explore/ExplorePage.test.tsx -t 'navigates the selected result'
+```
+
+Result: failed as expected. The location remained `/app/explore?q=IBAN` instead of navigating to `/app/explore/glossary?term=IBAN`.
+
+GREEN focused verification:
+
+```text
+npm test -- --run src/features/explore/ExplorePage.test.tsx -t 'navigates the selected result'
+```
+
+Result: `1 passed | 31 skipped`.
+
+```text
+npm test -- --run src/features/explore/search/searchHistory.test.ts src/features/explore/search/CommandSearch.test.tsx src/features/explore/ExplorePage.test.tsx
+```
+
+Result: `Test Files 3 passed (3)` and `Tests 61 passed (61)`.
+
 ## Explore review fix evidence
 
 - `searchHistory.ts`: storage reads now retain a failed-read state. `recordSearchHistory` and `removeSearchHistory` return non-persisted empty history after a read failure and do not call `setItem` or `removeItem`.

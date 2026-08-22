@@ -1,4 +1,5 @@
 import { useEffect, useRef, useId, useState, type KeyboardEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
@@ -52,6 +53,7 @@ interface CommandSearchProps {
 }
 
 export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchProps) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(initialQuery.trim().length > 0);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -124,10 +126,8 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
     setHistory(nextHistory);
     setIsOpen(false);
     setActiveIndex(-1);
-    if (onNavigate) {
-      event?.preventDefault();
-      onNavigate(result.href);
-    }
+    event?.preventDefault();
+    (onNavigate ?? navigate)(result.href);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
