@@ -23,7 +23,7 @@
         "NZ"
       ],
       "masked_block": 91001400,
-      "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists — NOT SEEDABLE.",
+      "note": "2026-08-16 research: only Commonwealth Bank of Australia (CTBAAU2S) publishes a correspondent list (15 rows, archived 2015-10-31 and 2019-09-20; no account numbers published). NAB's verified BIC is NATAAU33 (NATAU3P does not exist). ANZ, Westpac, ANZ NZ, BNZ, and ASB publish no beneficiary SSI lists \u2014 NOT SEEDABLE.",
       "banks": [
         {
           "bic8": "CTBAAU2S",
@@ -122,7 +122,7 @@
         "CN"
       ],
       "masked_block": 91001500,
-      "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists — NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
+      "note": "2026-08-16 research: only China Merchants Bank (CMBCCNBS) publishes an SSI table (official overseas-remittance page, archived 2016-10-16, table dated April 2012; ~40 records across USD/HKD/EUR/GBP/JPY/AUD/SGD/CAD/CHF). ICBC (ICBKCNBJ), CCB (PCBCCNBJ), ABC (ABOCCNBJ), and BoCom (COMMCNSH) publish no correspondent/nostro lists \u2014 NOT SEEDABLE. PNBPUS3NNYC (legacy Wells Fargo) and BBRUBEBB (ING Brussels) were unverifiable from the source.",
       "banks": [
         {
           "bic8": "CMBCCNBS",
@@ -197,7 +197,7 @@
         "BR"
       ],
       "masked_block": 91000800,
-      "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil and Itaú publish no beneficiary SSI lists — NOT SEEDABLE. 2026-08-19: Chile (BCHICLRM, BSCHCLRM, BECHCLRM), Colombia (COLOCOBM, CAFECOBB) and Peru (BCPLPEPL, BCONPEPL, BINPPEPL) moved to the andean region; this region now owns Brazil only.",
+      "note": "2026-08-16 research: only Banco Bradesco (BBDEBRSP) publishes an SSI table (official cambio PDF, archived 2024-02-24 with account numbers; live 2026 version drops them). Bradesco's own PDFs print the beneficiary branch BIC as BBDEBRSPSPO; we seed the canonical BBDEBRSPXXX. Santander Brasil and Ita\u00fa publish no beneficiary SSI lists \u2014 NOT SEEDABLE. 2026-08-19: Chile (BCHICLRM, BSCHCLRM, BECHCLRM), Colombia (COLOCOBM, CAFECOBB) and Peru (BCPLPEPL, BCONPEPL, BINPPEPL) moved to the andean region; this region now owns Brazil only.",
       "banks": [
         {
           "bic8": "BBDEBRSP",
@@ -232,7 +232,7 @@
         },
         {
           "bic8": "ITAUBRSP",
-          "name": "Itaú Unibanco",
+          "name": "Ita\u00fa Unibanco",
           "country": "BR",
           "currencies": [
             "USD",
@@ -250,7 +250,7 @@
         "KR"
       ],
       "masked_block": 91000900,
-      "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) — SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
+      "note": "2026-08-16 research: none of the four banks publishes a correspondent/nostro SSI list (live sites, archived sites, and financial statements checked). All four BICs verified and cross-corroborated (theswiftcodes + official bank pages + Sampath Bank AR 2023) \u2014 SEEDABLE for bank tuples only, NOT SEEDABLE for SSI records. KOCBKRSE/KBKOKRSE are wrong codes for Kookmin.",
       "banks": [
         {
           "bic8": "CZNBKRSE",
@@ -311,7 +311,7 @@
         "IL"
       ],
       "masked_block": 91001000,
-      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs \u2014 BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists \u2014 NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
       "banks": [
         {
           "bic8": "AKBKTRIS",
@@ -332,7 +332,7 @@
         },
         {
           "bic8": "YAPITRIS",
-          "name": "Yapı ve Kredi Bankası",
+          "name": "Yap\u0131 ve Kredi Bankas\u0131",
           "country": "TR",
           "currencies": [
             "USD",
@@ -359,7 +359,7 @@
         "PL"
       ],
       "masked_block": 91001100,
-      "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) — NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) — SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
+      "note": "2026-08-16 research: SEB (ESSESESS), Swedbank (SWEDSESS), Handelsbanken (HANDSESS), and DNB (DNBANOKK) publish no beneficiary SSI lists (BIC verified only) \u2014 NOT SEEDABLE as beneficiaries; they remain valid intermediaries. mBank (BREXPLPW) and PKO BP (BPKOPLPW) publish correspondent lists (mBank May-2026 + Aug-2019; PKO live + 2025/2026 archives) \u2014 SEEDABLE. mBank publishes no PLN correspondent and PKO's EUR row is TARGET2 self-routing, so those currencies are excluded from required coverage.",
       "banks": [
         {
           "bic8": "BREXPLPW",
@@ -414,7 +414,7 @@
         "ZA"
       ],
       "masked_block": 91001200,
-      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
+      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated \u2014 the real Standard Bank SA BIC is SBZAZAJJ \u2014 and SBICUS44 is not in any registry, so both are forbidden.",
       "banks": [
         {
           "bic8": "NEDSZAJJ",
@@ -472,7 +472,7 @@
         "NG"
       ],
       "masked_block": 91001300,
-      "note": "2026-08-16 research: five of the expected BICs were wrong — Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
+      "note": "2026-08-16 research: five of the expected BICs were wrong \u2014 Attijariwafa is BCMAMAMC (not CMAOMAMR), BMCE is BMCEMAMC, CIB Egypt is CIBEEGCX, QNB AlAhli is QNBAEGCX, KCB is KCBLKENX, Zenith is ZEIBNGLA. Morocco/Egypt/Kenya banks publish no beneficiary SSI lists (NOT SEEDABLE). Zenith Bank (SWIFT page archived 2021-10-09) and First Bank of Nigeria (correspondent list archived 2011-08-18; dated) are seedable.",
       "banks": [
         {
           "bic8": "FBNINGLA",
@@ -574,7 +574,7 @@
         "PH"
       ],
       "masked_block": 91000700,
-      "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, and Metrobank publish nothing — NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM). 2026-08-19: Thailand (BKKBTHBK, KASITHBK, SICOTHBK, KRTHTHBK, AYUDTHBK) moved to the thailand region (SCB's archived SSI table is seedable there); this region now owns the Philippines and Indonesia only. 2026-08-22: Indonesia moved to the new indonesia region (PT Bank KB Bukopin Tbk found seedable there); this region owns the Philippines only.",
+      "note": "2026-08-16 research: only BPI (BOPIPHMM) published an SSI list (archived 2007-12-13 on BPI's own domain; no account numbers published). Curated subset: defunct (American Express, Dresdner, Wachovia) and truncated/mislabeled rows dropped. Mandiri, BCA, and Metrobank publish nothing \u2014 NOT SEEDABLE. Wrong BICs: BMRIIDJA (not BEIIIDJA), CENAIDJA (not CENAIDJJ), BOPIPHMM (not BPIPPHMM). 2026-08-19: Thailand (BKKBTHBK, KASITHBK, SICOTHBK, KRTHTHBK, AYUDTHBK) moved to the thailand region (SCB's archived SSI table is seedable there); this region now owns the Philippines and Indonesia only. 2026-08-22: Indonesia moved to the new indonesia region (PT Bank KB Bukopin Tbk found seedable there); this region owns the Philippines only.",
       "banks": [
         {
           "bic8": "BOPIPHMM",
@@ -611,7 +611,7 @@
         "OM"
       ],
       "masked_block": 91001600,
-      "note": "2026-08-19 research: only NBK Kuwait (NBOKKWKW, SSI broadcast PDF archived 2025-07-23) and Emirates NBD (EBILAEAD, live correspondent-bank-charges PDF 05/2026, BIC-level, no accounts published) yield SSI data. FAB, ADCB, Al Rajhi, Riyad (BIC is RIBLSARI), SABB, QNB, AUB (domain dead), and Bank Muscat (BIC is BMUSOMRX) publish no SSI — NOT SEEDABLE. Wrong forms RIYBSARI/CBOMUSSR and FAB legacy FGBMAEAA forbidden.",
+      "note": "2026-08-19 research: only NBK Kuwait (NBOKKWKW, SSI broadcast PDF archived 2025-07-23) and Emirates NBD (EBILAEAD, live correspondent-bank-charges PDF 05/2026, BIC-level, no accounts published) yield SSI data. FAB, ADCB, Al Rajhi, Riyad (BIC is RIBLSARI), SABB, QNB, AUB (domain dead), and Bank Muscat (BIC is BMUSOMRX) publish no SSI \u2014 NOT SEEDABLE. Wrong forms RIYBSARI/CBOMUSSR and FAB legacy FGBMAEAA forbidden.",
       "banks": [
         {
           "bic8": "EBILAEAD",
@@ -771,7 +771,7 @@
         "VN"
       ],
       "masked_block": 91001700,
-      "note": "2026-08-19 research: no Vietnamese bank publishes account-level SSI. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only — NOT SEEDABLE. All 8 BICs verified correct.",
+      "note": "2026-08-19 research: no Vietnamese bank publishes account-level SSI. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only \u2014 NOT SEEDABLE. All 8 BICs verified correct.",
       "banks": [
         {
           "bic8": "BFTVVNVX",
@@ -885,7 +885,7 @@
         "BD"
       ],
       "masked_block": 91001800,
-      "note": "2026-08-19 research: Agrani Bank (AGBKBDDH, nosto list archived 2025-10-13) and Eastern Bank PLC (EBLDBDDH, live correspondent-banking page as of 2026-08-18) publish beneficiary SSI lists. Sonali, Janata, Islami Bank BD, Dutch-Bangla, City, BRAC, and Pubali publish no BIC/account-level lists — NOT SEEDABLE. ACU/ACUD (Asian Clearing Union) settlement-unit rows dropped as non-ISO. 8 of 9 candidate BICs were wrong; corrected forms verified on theswiftcodes, wrong forms added to forbidden_bics.",
+      "note": "2026-08-19 research: Agrani Bank (AGBKBDDH, nosto list archived 2025-10-13) and Eastern Bank PLC (EBLDBDDH, live correspondent-banking page as of 2026-08-18) publish beneficiary SSI lists. Sonali, Janata, Islami Bank BD, Dutch-Bangla, City, BRAC, and Pubali publish no BIC/account-level lists \u2014 NOT SEEDABLE. ACU/ACUD (Asian Clearing Union) settlement-unit rows dropped as non-ISO. 8 of 9 candidate BICs were wrong; corrected forms verified on theswiftcodes, wrong forms added to forbidden_bics.",
       "banks": [
         {
           "bic8": "BSONBDDH",
@@ -1025,7 +1025,7 @@
         "MY"
       ],
       "masked_block": 91001900,
-      "note": "2026-08-19 research: no Malaysian bank publishes an SSI/correspondent list. Maybank (MBBEMYKL), CIMB (CIBBMYKL), Public Bank (PBBEMYKL), Hong Leong (HLBBMYKL), RHB (RHBBMYKL), AmBank (ARBKMYKL), Affin (PHBMMYKL), and Bank Islam (BIMBMYKL) publish remittance product pages and fee schedules only; remittance forms have blank intermediary fields — NOT SEEDABLE. All 8 BICs verified correct.",
+      "note": "2026-08-19 research: no Malaysian bank publishes an SSI/correspondent list. Maybank (MBBEMYKL), CIMB (CIBBMYKL), Public Bank (PBBEMYKL), Hong Leong (HLBBMYKL), RHB (RHBBMYKL), AmBank (ARBKMYKL), Affin (PHBMMYKL), and Bank Islam (BIMBMYKL) publish remittance product pages and fee schedules only; remittance forms have blank intermediary fields \u2014 NOT SEEDABLE. All 8 BICs verified correct.",
       "banks": [
         {
           "bic8": "MBBEMYKL",
@@ -1201,7 +1201,7 @@
         "ACCT-61923",
         "ACCT-71687"
       ],
-      "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) — INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped. legacy_accounts: pre-block-era (pre-91002000) HDFC/SBI rows whose masked placeholders predate the autopilot block scheme; a new fold record can never join this set without an explicit manifest edit.",
+      "note": "2026-08-19 research: HDFC (18, archived 2026-01-16), ICICI (7, archived 2023-09), SBI (30, live page content dated 05-12-2020), Axis (19, live 2026-08-19), Kotak (4, live 2026-08-19), and Bank of Baroda (12, archived 2022-06-28) publish correspondent lists. No bank publishes an INR correspondent list (domestic routing) \u2014 INR excluded. Printed SCBLDEFX corrected to SCBLGB2L; PNBPUS3NNYC normalized to PNBPUS33; OCR-corrupt rows (EDB_DBSSIN, BOBDUB, SBINBSNS1) dropped. legacy_accounts: pre-block-era (pre-91002000) HDFC/SBI rows whose masked placeholders predate the autopilot block scheme; a new fold record can never join this set without an explicit manifest edit.",
       "banks": [
         {
           "bic8": "HDFCINBB",
@@ -1291,7 +1291,7 @@
         "TH"
       ],
       "masked_block": 91002100,
-      "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) has a historical SSI table (archived 2003-08-24, document dated 2002-08-08). This fold retains its 12 correspondent BICs as availability-only records because the retained data does not establish usable account identifiers, with-an instructions, charges, or value dates. Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI — NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa→UFJ→MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
+      "note": "2026-08-19 research: only Siam Commercial Bank (SICOTHBK) has a historical SSI table (archived 2003-08-24, document dated 2002-08-08). This fold retains its 12 correspondent BICs as availability-only records because the retained data does not establish usable account identifiers, with-an instructions, charges, or value dates. Bangkok Bank, Kasikornbank, Krungthai, and Bank of Ayudhya publish no account-level SSI \u2014 NOT SEEDABLE. Legacy 2002 BICs preserved as archival (MRMDUS33=HSBC USA, MIDLGB22=HSBC UK, SANWJPJT=Sanwa\u2192UFJ\u2192MUFG, UBSWCHZZ=truncated UBSWCHZH80A, UOVBSGSG=UOB).",
       "banks": [
         {
           "bic8": "BKKBTHBK",
@@ -1383,7 +1383,7 @@
         "CL"
       ],
       "masked_block": 91002200,
-      "note": "2026-08-19 research: Banco Davivienda (CAFECOBB, giros-via-swift page archived 2004-12-08), Interbank Peru (BINPPEPL, Bancos Corresponsales PDF archived 2016-01-23, as-of 2015-10-12), and BancoEstado Chile (BECHCLRM, corresponsales page archived 2025-06-19) publish correspondent lists (BIC + city, no account numbers). Bancolombia, BCP, BBVA Peru, Banco de Chile (BIC is BCHICLRM), and Santander Chile publish no SSI — NOT SEEDABLE. BIC corrections: Davivienda is CAFECOBB not BBOGCOBM; Banco de Chile is BCHICLRM; BancoEstado is BECHCLRM. PNBPUS3NNYC normalized to PNBPUS33; PCBCCLRMCLR (CCB Chile) dropped as unconfirmed.",
+      "note": "2026-08-19 research: Banco Davivienda (CAFECOBB, giros-via-swift page archived 2004-12-08), Interbank Peru (BINPPEPL, Bancos Corresponsales PDF archived 2016-01-23, as-of 2015-10-12), and BancoEstado Chile (BECHCLRM, corresponsales page archived 2025-06-19) publish correspondent lists (BIC + city, no account numbers). Bancolombia, BCP, BBVA Peru, Banco de Chile (BIC is BCHICLRM), and Santander Chile publish no SSI \u2014 NOT SEEDABLE. BIC corrections: Davivienda is CAFECOBB not BBOGCOBM; Banco de Chile is BCHICLRM; BancoEstado is BECHCLRM. PNBPUS3NNYC normalized to PNBPUS33; PCBCCLRMCLR (CCB Chile) dropped as unconfirmed.",
       "banks": [
         {
           "bic8": "COLOCOBM",
@@ -1503,7 +1503,7 @@
         "SV"
       ],
       "masked_block": 91002300,
-      "note": "2026-08-19 research: Banorte (MENOMXMT, live 2026-08-18), Banco General Panama (BAGEPAPA, live 2026-05-11), and Banco Agricola El Salvador (CAGRSVSS, archived 2025-08-06) publish correspondent lists. BBVA Mexico, Santander Mexico (BMSXMXMM), HSBC Mexico, Banrural (BRRLGTGC), BAC Credomatic GT, and Banco Nacional CR publish no SSI — NOT SEEDABLE. Corrected BICs: Banorte MENOMXMT (not BNMXMXMM), Santander BMSXMXMM, Banrural BRRLGTGC, Banco General BAGEPAPA, Banco Agricola CAGRSVSS; wrong forms forbidden.",
+      "note": "2026-08-19 research: Banorte (MENOMXMT, live 2026-08-18), Banco General Panama (BAGEPAPA, live 2026-05-11), and Banco Agricola El Salvador (CAGRSVSS, archived 2025-08-06) publish correspondent lists. BBVA Mexico, Santander Mexico (BMSXMXMM), HSBC Mexico, Banrural (BRRLGTGC), BAC Credomatic GT, and Banco Nacional CR publish no SSI \u2014 NOT SEEDABLE. Corrected BICs: Banorte MENOMXMT (not BNMXMXMM), Santander BMSXMXMM, Banrural BRRLGTGC, Banco General BAGEPAPA, Banco Agricola CAGRSVSS; wrong forms forbidden.",
       "banks": [
         {
           "bic8": "MENOMXMT",
@@ -1641,7 +1641,7 @@
         "CZ"
       ],
       "masked_block": 91002400,
-      "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none — NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
+      "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none \u2014 NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
       "banks": [
         {
           "bic8": "RNCBROBU",
@@ -1774,7 +1774,7 @@
         "CI"
       ],
       "masked_block": 91002500,
-      "note": "2026-08-19 research: only GCB Bank (GHCBGHAC) publishes a correspondent list (2024 Annual Report \"Agents and Correspondent Banks\" section, archived 2025-04-17). Currency mapping inferred from regional grouping in the report; no account numbers published. BHFBDEFF (BHF Bank) and GHIBGB2L (Ghana International Bank) not confirmable on theswiftcodes — excluded as unverified. Ecobank GH/SN/CI, Stanbic GH, Societe Generale SN, and SGBCI publish no SSI — NOT SEEDABLE.",
+      "note": "2026-08-19 research: only GCB Bank (GHCBGHAC) publishes a correspondent list (2024 Annual Report \"Agents and Correspondent Banks\" section, archived 2025-04-17). Currency mapping inferred from regional grouping in the report; no account numbers published. BHFBDEFF (BHF Bank) and GHIBGB2L (Ghana International Bank) not confirmable on theswiftcodes \u2014 excluded as unverified. Ecobank GH/SN/CI, Stanbic GH, Societe Generale SN, and SGBCI publish no SSI \u2014 NOT SEEDABLE.",
       "banks": [
         {
           "bic8": "GHCBGHAC",
@@ -3799,7 +3799,7 @@
         "TW"
       ],
       "masked_block": 91003100,
-      "note": "2026-08-22 research: E.SUN publishes a self-titled Nostro/SSI list (2018, archived), Cathay United inward-remittance instructions read live (also archived 2025-02), and Hua Nan five per-currency remittance PDFs (archived 2003-04) - all seeded bic_only. CTBC Taiwan's nostro table re-verified against its legacy seed rows - left under legacy seeding; Cathay rows colliding with its own legacy keys dropped. NOT SEEDABLE: Taishin, Taipei Fubon, Mega, Chang Hwa, First Commercial, Bank of Taiwan, Taiwan Cooperative. Directory-absent legacy codes CCFRERPP, SANWJPJT, BOFCJPJT (Hua Nan list) dropped and forbidden.",
+      "note": "2026-08-22 research: E.SUN publishes a self-titled Nostro/SSI list (2018, archived), Cathay United inward-remittance instructions read live (also archived 2025-02), and Hua Nan five per-currency remittance PDFs (archived 2003-04) - all seeded bic_only. CTBC Taiwan's nostro table re-verified against its legacy seed rows - left under legacy seeding; Cathay rows colliding with its own legacy keys dropped. NOT SEEDABLE: Taishin, Taipei Fubon, Mega, Chang Hwa, First Commercial, Bank of Taiwan, Taiwan Cooperative. Directory-absent legacy codes CCFRERPP, SANWJPJT, BOFCJPJT (Hua Nan list) dropped and forbidden. Cathay United excluded entirely: its legacy seeded rows carry published accounts outside this region's block and own several canonical keys.",
       "forbidden_bics": [
         "BOFCJPJT",
         "CCFRERPP",
@@ -4472,32 +4472,6 @@
             },
             {
               "currency": "USD",
-              "correspondent": "Hua Nan Commercial Bank Ltd., New York Agency (own office)",
-              "int_bic": "HNBKUS3N",
-              "source": "https://web.archive.org/web/20031114215645id_/http://www.hncb.com.tw/remitUSD.pdf",
-              "as_of": "2003-11-14",
-              "status": "archived",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "USD",
-              "correspondent": "Hua Nan Commercial Bank Ltd., Los Angeles Branch (own branch)",
-              "int_bic": "HNBKUS6L",
-              "source": "https://web.archive.org/web/20031114215645id_/http://www.hncb.com.tw/remitUSD.pdf",
-              "as_of": "2003-11-14",
-              "status": "archived",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "USD",
               "correspondent": "The Bank of New York, New York",
               "int_bic": "IRVTUS3N",
               "source": "https://web.archive.org/web/20031114215645id_/http://www.hncb.com.tw/remitUSD.pdf",
@@ -4523,203 +4497,7 @@
               "value_date": null
             }
           ],
-          "admitted_record_digest": "3b731dd3811fdfcd074f350ebb600db27a11cc9cdec74d2ee562aee9f88b33de"
-        },
-        {
-          "bic8": "UWCBTWTP",
-          "name": "Cathay United Bank",
-          "country": "TW",
-          "currencies": [
-            "AUD",
-            "CAD",
-            "CHF",
-            "DKK",
-            "EUR",
-            "GBP",
-            "JPY",
-            "NZD",
-            "SEK",
-            "SGD",
-            "THB",
-            "TRY",
-            "ZAR"
-          ],
-          "seedable": true,
-          "source_domains": [
-            "cathaybk.com.tw"
-          ],
-          "admitted_records": [
-            {
-              "currency": "AUD",
-              "correspondent": "ANZ, Melbourne",
-              "int_bic": "ANZBAU3M",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "CAD",
-              "correspondent": "Canadian Imperial Bank of Commerce, Toronto",
-              "int_bic": "CIBCCATT",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "CHF",
-              "correspondent": "UBS Switzerland AG, Zurich",
-              "int_bic": "UBSWCHZH80A",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "DKK",
-              "correspondent": "UBS Switzerland AG, Zurich",
-              "int_bic": "UBSWCHZH80A",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "EUR",
-              "correspondent": "JP Morgan Chase Bank AG (now JP Morgan SE), Frankfurt",
-              "int_bic": "CHASDEFX",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "GBP",
-              "correspondent": "JPMorgan Chase Bank, N.A., London",
-              "int_bic": "CHASGB2L",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "JPY",
-              "correspondent": "JPMorgan Chase Bank, N.A., Tokyo Branch",
-              "int_bic": "CHASJPJT",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "NZD",
-              "correspondent": "ANZ Bank New Zealand Limited, Wellington",
-              "int_bic": "ANZBNZ22",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "SEK",
-              "correspondent": "Skandinaviska Enskilda Banken (SEB), Stockholm",
-              "int_bic": "ESSESESS",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "SGD",
-              "correspondent": "DBS Bank Ltd, Singapore",
-              "int_bic": "DBSSSGSG",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "THB",
-              "correspondent": "Bangkok Bank, Bangkok",
-              "int_bic": "BKKBTHBK",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "TRY",
-              "correspondent": "UBS Switzerland AG, Zurich",
-              "int_bic": "UBSWCHZH80A",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "ZAR",
-              "correspondent": "The Standard Bank of South Africa Ltd., Johannesburg",
-              "int_bic": "SBZAZAJJ",
-              "source": "https://www.cathaybk.com.tw/ChatWeb/requestQAImage?imageId=202406SWIFT%20CODE_20240627030320.pdf",
-              "as_of": "2026-08-22",
-              "status": "unverified",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            }
-          ],
-          "admitted_record_digest": "2109b943f8b18f77e2b51e40861963ad308d2a1a63dc91048e18d238af75d52e"
+          "admitted_record_digest": "7ef89a0a9facc30b5823a98e3da1f77fe5cd880c83552851b23374afbaca3efd"
         }
       ]
     }
