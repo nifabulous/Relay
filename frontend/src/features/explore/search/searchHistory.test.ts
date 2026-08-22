@@ -43,6 +43,21 @@ describe("search history", () => {
     expect(loadSearchHistory(storage("not-json"))).toEqual([]);
   });
 
+  it("recovers from malformed JSON on the next explicit record", () => {
+    const setItem = vi.fn();
+    const malformed: SearchHistoryStorage = {
+      getItem: () => "not-json",
+      setItem,
+      removeItem: vi.fn(),
+    };
+
+    expect(recordSearchHistory("IBAN", malformed)).toEqual(["IBAN"]);
+    expect(setItem).toHaveBeenCalledWith(
+      "relay:search-history:v1",
+      JSON.stringify(["IBAN"]),
+    );
+  });
+
   it.each(["getItem", "setItem", "removeItem"] as const)(
     "survives %s storage failures",
     (operation) => {

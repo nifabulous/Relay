@@ -21,6 +21,25 @@ test.describe("Explore", () => {
     await expect(page.locator('input[type="search"]')).not.toBeFocused();
   });
 
+  test("removing a recent search updates the visible list and localStorage", async ({ page }) => {
+    await page.goto("/app/explore");
+    await page.evaluate(() => {
+      localStorage.setItem("relay:search-history:v1", JSON.stringify(["IBAN", "CITIUS33"]));
+    });
+    await page.reload();
+
+    const input = page.locator('input[type="search"]');
+    await input.click();
+    const removeIban = page.getByRole("button", { name: "Remove IBAN from recent searches" });
+    await expect(removeIban).toBeVisible();
+    await removeIban.click();
+
+    await expect(removeIban).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Remove CITIUS33 from recent searches" })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("relay:search-history:v1")))
+      .toBe(JSON.stringify(["CITIUS33"]));
+  });
+
   test("search rows remain readable at 390px without horizontal overflow", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/app/explore");

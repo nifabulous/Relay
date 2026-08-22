@@ -37,16 +37,28 @@ function uniqueHistory(values: unknown[]): string[] {
 
 function readSearchHistory(storage: SearchHistoryStorage | undefined): { history: string[]; readable: boolean } {
   if (!storage) return { history: [], readable: true };
+
+  let raw: string | null;
   try {
-    const raw = storage.getItem(SEARCH_HISTORY_KEY);
-    if (!raw) return { history: [], readable: true };
-    const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) return { history: uniqueHistory(parsed), readable: true };
-    try { storage.removeItem(SEARCH_HISTORY_KEY); } catch { /* unavailable storage */ }
-    return { history: [], readable: true };
+    raw = storage.getItem(SEARCH_HISTORY_KEY);
   } catch {
+    // A thrown read means storage is unavailable; do not overwrite unknown data.
     return { history: [], readable: false };
   }
+
+  if (!raw) return { history: [], readable: true };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    // Readable but corrupted data is recoverable on the next explicit record.
+    return { history: [], readable: true };
+  }
+
+  if (Array.isArray(parsed)) return { history: uniqueHistory(parsed), readable: true };
+  try { storage.removeItem(SEARCH_HISTORY_KEY); } catch { /* unavailable storage */ }
+  return { history: [], readable: true };
 }
 
 export function loadSearchHistory(storage = defaultStorage()): string[] {

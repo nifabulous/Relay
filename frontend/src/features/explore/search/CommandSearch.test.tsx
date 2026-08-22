@@ -217,6 +217,37 @@ describe("CommandSearch", () => {
     expect(screen.getByRole("button", { name: /remove iban/i })).toBeVisible();
   });
 
+  it("keeps recent-search controls outside the listbox option model", async () => {
+    localStorage.setItem("relay:search-history:v1", JSON.stringify(["IBAN"]));
+    const { user } = renderSearch();
+    const input = screen.getByRole("searchbox");
+
+    await user.click(input);
+
+    const listbox = screen.getByRole("listbox");
+    expect(within(listbox).queryByRole("button", { name: /remove iban/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Recent searches" })).toContainElement(
+      screen.getByRole("button", { name: /remove iban/i }),
+    );
+
+    await user.keyboard("{ArrowDown}");
+    const activeId = input.getAttribute("aria-activedescendant");
+    expect(activeId).toBeTruthy();
+    expect(document.getElementById(activeId!)).toHaveAttribute("role", "option");
+  });
+
+  it("removes a recent search and persists the updated list", async () => {
+    localStorage.setItem("relay:search-history:v1", JSON.stringify(["IBAN", "CITIUS33"]));
+    const { user } = renderSearch();
+
+    await user.click(screen.getByRole("searchbox"));
+    await user.click(screen.getByRole("button", { name: /remove iban/i }));
+
+    expect(screen.queryByRole("button", { name: /remove iban/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove CITIUS33/i })).toBeVisible();
+    expect(JSON.parse(localStorage.getItem("relay:search-history:v1") ?? "[]")).toEqual(["CITIUS33"]);
+  });
+
   it("opens the empty-query panel when a focused query is cleared", async () => {
     const { user } = renderSearch();
     const input = screen.getByRole("searchbox");

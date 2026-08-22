@@ -90,3 +90,12 @@ npm test -- --run src/features/explore/search/searchHistory.test.ts src/features
 Test Files  3 passed (3)
 Tests       60 passed (60)
 ```
+
+## Latest review fixes (TDD)
+
+- RED: the new malformed-record and listbox-semantics regressions failed for the expected causes (`2 failed`, `30 passed`).
+- Fixed malformed JSON recovery by separating thrown storage reads from parse failures; corrupted readable data now resets in memory and is repaired by the next explicit record, while true read failures remain non-persisting.
+- Moved recent-search controls into a labelled region outside the results listbox and added component coverage for semantics, active-option navigation, removal, and persistence.
+- Added a deterministic browser test that seeds `relay:search-history:v1` through page `localStorage`, clicks removal, and verifies the visible list and persisted value.
+- GREEN focused verification: `3` files, `64` tests passed. Production build (`tsc --noEmit && vite build`) passed.
+- The focused browser scenario was attempted but the configured `reuseExistingServer` attached to the sibling worktree's server, which does not serve this Task 3 UI; it failed before finding the recent-search control. This remains an environment/server-isolation concern.

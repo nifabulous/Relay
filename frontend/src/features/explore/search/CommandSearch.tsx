@@ -62,6 +62,7 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
+  const historyLabelId = `${listboxId}-history-label`;
   const normalizedQuery = query.trim();
 
   useEffect(() => {
@@ -207,7 +208,8 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
       </div>
 
       {isOpen && (
-        <div className="command-search__results" ref={listRef} role="listbox" id={listboxId}>
+        <div className="command-search__results">
+          <div ref={listRef} role="listbox" id={listboxId}>
           {flatResults.length === 0 ? (
             <div className="command-search__empty">
               {bankSearch.isFetching
@@ -256,34 +258,35 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
                   })}
                 </div>
               ))}
-              {normalizedQuery.length === 0 && history.length > 0 && (
-                <div className="command-search__history" aria-label="Recent searches">
-                  <div className="command-search__group-label">Recent searches</div>
-                  {history.map((entry) => (
-                    <div key={entry} className="command-search__history-item">
-                      <button
-                        type="button"
-                        className="command-search__history-query"
-                        onClick={() => {
-                          handleChange(entry);
-                          syncUrl(entry);
-                        }}
-                      >
-                        {entry}
-                      </button>
-                      <button
-                        type="button"
-                        className="command-search__history-remove"
-                        aria-label={`Remove ${entry} from recent searches`}
-                        onClick={() => setHistory(removeSearchHistory(entry))}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </>
+          )}
+        </div>
+          {normalizedQuery.length === 0 && history.length > 0 && (
+            <section className="command-search__history" aria-labelledby={historyLabelId}>
+              <div id={historyLabelId} className="command-search__group-label">Recent searches</div>
+              {history.map((entry) => (
+                <div key={entry} className="command-search__history-item">
+                  <button
+                    type="button"
+                    className="command-search__history-query"
+                    onClick={() => {
+                      handleChange(entry);
+                      syncUrl(entry);
+                    }}
+                  >
+                    {entry}
+                  </button>
+                  <button
+                    type="button"
+                    className="command-search__history-remove"
+                    aria-label={`Remove ${entry} from recent searches`}
+                    onClick={() => setHistory(removeSearchHistory(entry))}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </section>
           )}
         </div>
       )}
