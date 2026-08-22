@@ -1865,12 +1865,12 @@ class TestAndeanSsiCoverage:
 
 # ---- autopilot-generated coverage tests: india ----
 INDIA_SSI_COVERAGE = [
-    ("HDFCINBBXXX", "HDFC Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
-    ("ICICINBBXXX", "ICICI Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
-    ("SBININBBXXX", "State Bank of India", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
-    ("AXISINBBXXX", "Axis Bank", {"USD", "EUR", "GBP", "JPY", "AED", "SGD", "HKD"}),
-    ("KKBKINBBXXX", "Kotak Mahindra Bank", {"USD", "EUR", "GBP", "JPY"}),
-    ("BARBINBBXXX", "Bank of Baroda", {"USD", "EUR", "GBP", "JPY"}),
+    ("HDFCINBBXXX", "HDFC Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("ICICINBBXXX", "ICICI Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("SBININBBXXX", "State Bank of India", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("AXISINBBXXX", "Axis Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("KKBKINBBXXX", "Kotak Mahindra Bank", {"EUR", "GBP", "JPY", "USD"}),
+    ("BARBINBBXXX", "Bank of Baroda", {"EUR", "GBP", "JPY", "USD"}),
 ]
 
 
@@ -1907,7 +1907,7 @@ class TestIndiaSsiCoverage:
         never join that set without an explicit manifest edit."""
         mask = re.compile(r"^ACCT-910020\d\d$")
         allowed_charge = {'SHA', 'OUR', 'BEN'}
-        allowed_value = {'spot', '1d', '2d', '3d', 'T+1', 'T+2'}
+        allowed_value = {'spot', 'T+1', 'T+2'}
         statuses = {"unverified", "illustrative", "published", "archived"}
         forbidden = {}
         legacy = {'ACCT-00221', 'ACCT-04040', 'ACCT-08664', 'ACCT-10959', 'ACCT-11287', 'ACCT-14136', 'ACCT-15341', 'ACCT-18267', 'ACCT-19225', 'ACCT-25636', 'ACCT-26403', 'ACCT-30624', 'ACCT-31894', 'ACCT-36362', 'ACCT-38765', 'ACCT-47525', 'ACCT-50240', 'ACCT-51968', 'ACCT-52667', 'ACCT-52806', 'ACCT-53522', 'ACCT-56597', 'ACCT-61923', 'ACCT-62164', 'ACCT-62402', 'ACCT-64063', 'ACCT-65817', 'ACCT-69958', 'ACCT-70868', 'ACCT-71687', 'ACCT-72219', 'ACCT-72579', 'ACCT-76369', 'ACCT-77359', 'ACCT-81303', 'ACCT-85107', 'ACCT-85203', 'ACCT-85558', 'ACCT-87329', 'ACCT-91959', 'ACCT-92540', 'ACCT-93194', 'ACCT-94791', 'ACCT-96181', 'ACCT-96184', 'ACCT-96995', 'ACCT-97173', 'ACCT-98503'}
@@ -1944,8 +1944,6 @@ class TestIndiaSsiCoverage:
             "india: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: india ----
-
-
 # ---- autopilot-generated coverage tests: mexico-central-america ----
 MEXICO_CENTRAL_AMERICA_SSI_COVERAGE = [
     ("MENOMXMTXXX", "Banorte (Banco Mercantil del Norte)", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
