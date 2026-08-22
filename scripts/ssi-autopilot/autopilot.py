@@ -1059,14 +1059,24 @@ def _ssi_rows(source: str) -> list[tuple]:
             continue
         if node.targets[0].id != "SSI_RECORDS":
             continue
+        lines = source.splitlines(keepends=True)
         rows = []
         for element in node.value.elts:
             if not isinstance(element, ast.Tuple):
                 continue
-            rows.append(tuple(
-                (ast.get_source_segment(source, field) or "").strip()
-                for field in element.elts
-            ))
+            fields = []
+            for field in element.elts:
+                start, end = field.lineno - 1, field.end_lineno - 1
+                if start == end:
+                    segment = lines[start][field.col_offset:field.end_col_offset]
+                else:
+                    segment = (
+                        lines[start][field.col_offset:]
+                        + "".join(lines[start + 1:end])
+                        + lines[end][:field.end_col_offset]
+                    )
+                fields.append(segment.strip())
+            rows.append(tuple(fields))
         return rows
     return []
 
