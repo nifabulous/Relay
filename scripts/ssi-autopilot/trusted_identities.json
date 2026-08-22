@@ -40,5 +40,19 @@
     "domains": [
       "bukopin.co.id"
     ]
+  },
+  "CERBUGKA": {
+    "name": "Centenary Rural Development Bank Limited (Centenary Bank Uganda)",
+    "country": "UG",
+    "domains": [
+      "centenarybank.co.ug"
+    ]
+  },
+  "SBICUGKX": {
+    "name": "Stanbic Bank Uganda Limited",
+    "country": "UG",
+    "domains": [
+      "stanbicbank.co.ug"
+    ]
   }
 }
