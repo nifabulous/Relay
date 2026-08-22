@@ -361,6 +361,7 @@ export function PreparePaymentPage() {
   // cross-field custom issue never reaches the field.
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    mutation.reset();
     setHasValidationError(false);
     setIsValidating(true);
     const schemaOk = await trigger(undefined, { shouldFocus: true });

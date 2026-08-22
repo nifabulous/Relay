@@ -604,6 +604,31 @@ describe("PreparePaymentPage guided stages", () => {
     expect(attempts).toBe(2);
   });
 
+  it("returns to payment details when a failed request is followed by an invalid submit", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () =>
+        HttpResponse.json({ detail: "Temporary failure" }, { status: 503 }),
+      ),
+    );
+
+    const { user } = renderPage();
+    const iban = screen.getByLabelText(/beneficiary iban/i);
+    await user.type(iban, "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "John Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText(/temporary failure/i);
+    await user.clear(iban);
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    expect(document.getElementById("prepare-validation-summary"))
+      .toHaveTextContent(/review the highlighted payment details/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/stage: payment details/i);
+    expect(document.getElementById("prepare-validation-summary"))
+      .toHaveTextContent(/enter a beneficiary iban or account number/i);
+  });
+
   it("debounces SSI lookup until a BIC settles", async () => {
     let calls = 0;
     server.use(
