@@ -1526,8 +1526,9 @@ function CaseWorkflow({
 }) {
   // The existing reducer owns the phase transitions; this projection only
   // communicates progress and never changes what controls are available.
-  const currentIndex = phase === "brief" ? 0 : phase === "resolve" ? 3 : phase === "debrief" ? 4 : 2;
-  const completedThrough = Math.max(0, currentIndex - (phase === "investigate" && requestedFactCount === 0 ? 1 : 0));
+  const initialInvestigation = phase === "investigate" && requestedFactCount === 0;
+  const currentIndex = phase === "brief" ? 0 : initialInvestigation ? 0 : phase === "resolve" ? 3 : phase === "debrief" ? 4 : 2;
+  const completedThrough = initialInvestigation ? 0 : Math.max(0, currentIndex);
   const progress = ((currentIndex + 1) / CASE_WORKFLOW_STEPS.length) * 100;
 
   return (
@@ -1535,7 +1536,7 @@ function CaseWorkflow({
       <div className="case-workflow__meta">
         <span>Step {currentIndex + 1} of {CASE_WORKFLOW_STEPS.length}</span>
         <span aria-hidden="true">·</span>
-        <span>{phase === "debrief" ? "Complete" : "12 min remaining"}</span>
+        <span>{phase === "debrief" ? "Complete" : "In progress"}</span>
         <span className="case-workflow__status" data-state={phase === "debrief" ? "complete" : "current"}>
           <span className="case-workflow__status-mark" aria-hidden="true" />
           {phase === "debrief" ? "Complete" : "In progress"}

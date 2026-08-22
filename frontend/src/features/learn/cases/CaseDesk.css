@@ -917,7 +917,7 @@
   margin: 0;
   color: var(--color-ink-strong);
   font-size: var(--text-3xl);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
 }
@@ -1113,6 +1113,16 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-5);
     align-items: start;
+  }
+
+  /* Keep the task controls first in the DOM for keyboard users while placing
+   * the evidence ledger between workflow and recommendation on wide screens. */
+  .case-desk__split > .case-desk__evidence {
+    grid-column: 1;
+  }
+
+  .case-desk__split > .case-desk__task {
+    grid-column: 2;
   }
 
   .case-workflow {

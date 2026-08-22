@@ -356,6 +356,18 @@ describe("CaseDesk — consolidated reasoning prompts", () => {
   });
 });
 
+describe("CaseDesk — workflow progress", () => {
+  it("starts investigation on evidence collection without a fabricated duration", () => {
+    seedStartedSession();
+    renderDesk();
+
+    const workflow = screen.getByRole("region", { name: /case progress/i });
+    expect(workflow).toHaveTextContent("Step 1 of 5");
+    expect(workflow).toHaveTextContent("Evidence collected");
+    expect(workflow).not.toHaveTextContent("12 min");
+  });
+});
+
 // ─── Fact sections ──────────────────────────────────────────────────────────
 
 describe("CaseDesk — fact sections by state", () => {
@@ -393,9 +405,9 @@ describe("CaseDesk — fact sections by state", () => {
     renderDesk();
     expect(screen.getByText("Invoice currency")).toBeInTheDocument();
     // value
-    expect(screen.getByText("USD")).toBeInTheDocument();
+    expect(screen.getAllByText("USD").length).toBeGreaterThan(0);
     expect(screen.getByText("Invoice amount")).toBeInTheDocument();
-    expect(screen.getByText("USD 48,000.00")).toBeInTheDocument();
+    expect(screen.getAllByText("USD 48,000.00").length).toBeGreaterThan(0);
   });
 
   it("T1 UI: a requestable unknown fact's VALUE is hidden until requested (no answer leak)", () => {
@@ -839,7 +851,7 @@ describe("CaseDesk — phase rendering", () => {
     renderDesk();
     await user.click(screen.getByRole("button", { name: /^start/i }));
     // Investigate phase surfaces the evidence workspace heading.
-    const heading = await screen.findByRole("heading", { name: /evidence|investigate|gather facts/i });
+    const heading = await screen.findByRole("heading", { name: /^Gather evidence and weigh the rails$/i });
     expect(heading).toBeInTheDocument();
     // Focus is moved to the phase heading after the transition.
     await waitFor(() => {

@@ -29,3 +29,16 @@
 ## Concerns
 
 - Full and focused Vitest suites require dependency installation in the shared frontend environment before they can run.
+
+## Fix round 1 (review findings)
+
+- Important 1: Reassigned the desktop split's evidence surface to the middle grid column and task/recommendation surface to the right column. The DOM order remains task before evidence for keyboard traversal; mobile/tablet stacking is unchanged.
+- Important 2: Added a token-styled, read-only transaction-under-review summary that maps amount, currency, decline code, beneficiary BIC, and scheme facts when authored, plus an evidence timeline sourced from visible fact claim verification dates. Both sections gracefully omit when no matching data exists, and hidden requestable values remain undisclosed.
+- Important 3 / Minor 2: Initial investigation now presents Step 1 (Evidence collected) as current at 20% progress with no duration estimate. Later investigation remains Step 3 and uses neutral “In progress” text; the fabricated “12 min remaining” label is removed.
+- Minor 1: Replaced the non-token `font-weight: 650` with standard token-consistent `600`.
+- Added regression coverage in `EvidenceRail.test.tsx` and `CaseDesk.test.tsx`; updated two existing exact-text/broad-heading selectors to account for the new summary/timeline presentation.
+
+### Verification
+
+- `cd frontend && npx vitest run src/features/learn/cases` — passed: 10 files, 360 tests.
+- `cd frontend && npm test` — passed: 95 files, 1,379 tests.
