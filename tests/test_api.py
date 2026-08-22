@@ -134,13 +134,40 @@ def test_bank_name_search_rejects_invalid_limits(client, limit):
     assert r.status_code == 422
 
 
-def test_bank_name_search_normalizes_whitespace_and_requires_all_words(client):
-    r = client.get("/api/banks/search", params={"q": "  bank   guaranty  trust  "})
+def test_bank_name_search_normalizes_whitespace_and_requires_all_words(isolated_client):
+    from app.models import Bank
+
+    client, SessionLocal = isolated_client
+    with SessionLocal() as session:
+        session.add_all(
+            [
+                Bank(
+                    bic="TARGUS33XXX",
+                    bank_name="Bank Aurora Meridian",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+                Bank(
+                    bic="DECOUS33XXX",
+                    bank_name="Bank Aurora",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+            ]
+        )
+        session.commit()
+
+    r = client.get(
+        "/api/banks/search",
+        params={"q": "  bank   aurora   meridian  "},
+    )
 
     assert r.status_code == 200
     body = r.json()
-    assert body["query"] == "bank guaranty trust"
-    assert [result["bic"] for result in body["results"]] == ["GTBINGLAXXX"]
+    assert body["query"] == "bank aurora meridian"
+    assert [result["bic"] for result in body["results"]] == ["TARGUS33XXX"]
 
 
 @pytest.mark.parametrize("literal", ["%%", "__"])
