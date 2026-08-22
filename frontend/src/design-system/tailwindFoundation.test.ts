@@ -38,6 +38,10 @@ describe("Tailwind foundation", () => {
     expect(cossThemeCss).toContain('--font-mono: var(--coss-font-mono)');
     expect(cossThemeCss).toContain('@custom-variant relay-dark');
     expect(cossThemeCss).toContain('[data-theme="dark"]');
+    // The OLED theme renders a dark canvas, so relay-dark: utilities must
+    // activate under data-theme="black" too — a dark-only matcher silently
+    // skips them there.
+    expect(cossThemeCss).toContain('[data-theme="black"]');
     expect(cossThemeCss).not.toMatch(/\.dark\b/);
     expect(globalCss).toContain(":focus-visible");
     expect(globalCss).toContain("outline: 2px solid var(--color-action)");
