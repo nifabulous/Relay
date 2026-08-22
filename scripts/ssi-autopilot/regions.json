@@ -2082,7 +2082,7 @@
         "SG"
       ],
       "masked_block": 91002700,
-      "note": "2026-08-22 research: United Overseas Bank Limited publishes a 'List of Nostro Agents' page (per-currency agent bank + BIC, no account numbers - seeded bic_only; Wayback snapshot 2024-08-07 corroborated by the 2017 edition). OCBC publishes inward-USD instructions (intermediary JP Morgan Chase NY, CHIPS UIDs) on its live telegraphic-transfer help page - no accounts, seeded bic_only. DBS (dbs.com CDX sweep), HSBC Singapore (archived receiving-payments page read in full), and Standard Chartered Singapore (sc.com + ssi.standardchartered.com) publish no correspondent/nostro lists - NOT SEEDABLE; Citibank SG partially checked (CDX only). UOB prints THB agent BIC 'UOBVTHBK' in 2017 and 2024, but the directory code is UOVBTHBK - record dropped and the misprint forbidden. UOB's USD agent printed as legacy 'PNBPUS3NNYC' is normalized to PNBPUS33XXX per repo canon and the legacy form is forbidden.",
+      "note": "2026-08-22 research: United Overseas Bank Limited publishes a 'List of Nostro Agents' page (per-currency agent bank + BIC, no account numbers - seeded bic_only; Wayback snapshot 2024-08-07 corroborated by the 2017 edition). OCBC publishes inward-USD instructions (intermediary JP Morgan Chase NY, CHIPS UIDs) on its live telegraphic-transfer help page - no accounts, seeded bic_only. DBS (dbs.com CDX sweep), HSBC Singapore (archived receiving-payments page read in full), and Standard Chartered Singapore (sc.com + ssi.standardchartered.com) publish no correspondent/nostro lists - NOT SEEDABLE; Citibank SG partially checked (CDX only). UOB prints THB agent BIC 'UOBVTHBK' in 2017 and 2024, but the directory code is UOVBTHBK - record dropped and the misprint forbidden. UOB's USD agent printed as legacy 'PNBPUS3NNYC' is normalized to PNBPUS33XXX per repo canon and the legacy form is forbidden. UOB's page labels its yuan rows 'RMB'; normalized to ISO 4217 CNY at admission via the autopilot's currency alias map.",
       "forbidden_bics": [
         "PNBPUS3N",
         "UOBVTHBK"
@@ -2135,7 +2135,7 @@
             "JPY",
             "NOK",
             "NZD",
-            "RMB",
+            "CNY",
             "SEK",
             "USD"
           ],
@@ -2213,6 +2213,32 @@
               "currency": "CHF",
               "correspondent": "UBS AG, Zurich",
               "int_bic": "UBSWCHZH80A",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CNY",
+              "correspondent": "Industrial and Commercial Bank of China, Singapore",
+              "int_bic": "ICBKSGSGCLR",
+              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+              "as_of": "2024-08-07",
+              "status": "archived",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CNY",
+              "correspondent": "UOB (China) Ltd, Shanghai",
+              "int_bic": "UOVBCNSH",
               "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
               "as_of": "2024-08-07",
               "status": "archived",
@@ -2392,32 +2418,6 @@
               "value_date": null
             },
             {
-              "currency": "RMB",
-              "correspondent": "Industrial and Commercial Bank of China, Singapore",
-              "int_bic": "ICBKSGSGCLR",
-              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
-              "as_of": "2024-08-07",
-              "status": "archived",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
-              "currency": "RMB",
-              "correspondent": "UOB (China) Ltd, Shanghai",
-              "int_bic": "UOVBCNSH",
-              "source": "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
-              "as_of": "2024-08-07",
-              "status": "archived",
-              "bic_only": true,
-              "nostro": null,
-              "with_an": null,
-              "charge_code": null,
-              "value_date": null
-            },
-            {
               "currency": "SEK",
               "correspondent": "Danske Bank, Stockholm",
               "int_bic": "DABASESX",
@@ -2457,7 +2457,7 @@
               "value_date": null
             }
           ],
-          "admitted_record_digest": "a1d6932c9ef1a551005b9883f8c9c28854ded97a7b84c6fc7efda00dea7fab83"
+          "admitted_record_digest": "92f8d0e1831efb54d6d9472072e9882cf6abee812caa936c3d70040a4ada1ec8"
         }
       ]
     },

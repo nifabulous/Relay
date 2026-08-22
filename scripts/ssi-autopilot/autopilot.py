@@ -67,6 +67,11 @@ _ACCT_MASK = re.compile(r"^ACCT-\d{4,10}$")          # masked placeholder
 SSI_STATUSES = {"published", "unverified", "archived", "illustrative"}
 _CURRENCIES = re.compile(r"^[A-Z]{3}$")
 
+# Publisher shorthand → ISO 4217, applied at admission so every stored record
+# keys on the canonical code. The wording a bank printed stays in the region
+# note and evidence sidecars; the data layer speaks ISO only.
+CURRENCY_ALIASES = {"RMB": "CNY"}
+
 # Candidate source domains are admissions data, not evidence. Keep this registry
 # independent from the mutable manifest so a candidate cannot authorize its own
 # citations by supplying a matching domain.
@@ -191,6 +196,8 @@ def _normalize_record(record: dict, path: str) -> dict:
         if not isinstance(normalized[key], str):
             raise ValueError(f"{path}.{key}: expected a string")
         normalized[key] = normalized[key].strip().upper()
+        if key == "currency":
+            normalized[key] = CURRENCY_ALIASES.get(normalized[key], normalized[key])
     if not isinstance(normalized["status"], str):
         raise ValueError(f"{path}.status: expected a string")
     normalized["status"] = normalized["status"].strip().lower()
@@ -288,7 +295,7 @@ def _canonical_bic8(value: object, path: str) -> str:
     return bic[:8]
 
 
-def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
+def _normalize_bank(bank: dict, region: dict, path: str, *, allow_unregistered_negative: bool = False) -> dict:
     bank = _require_mapping(bank, path)
     unknown = set(bank) - _ADMISSION_BANK_KEYS
     if unknown:
@@ -334,12 +341,19 @@ def _normalize_bank(bank: dict, region: dict, path: str) -> dict:
     if identity is None:
         # Negative recording: a researched NOT-SEEDABLE bank may be admitted
         # without registry enrollment because it owns no citations — it
-        # asserts "this bank publishes nothing", never a source domain. The
-        # registry gate exists to authorize evidence ownership, so a bank
-        # claiming none has nothing to authorize. Identity must still be
-        # internally consistent: the declared country has to match the BIC's
-        # own country code, so a typo'd BIC cannot park under the wrong flag.
-        if seedable or normalized_records or domains:
+        # asserts "this bank publishes nothing", never a source domain. That
+        # is still a trust-boundary decision (the manifest gains an identity
+        # no registry reviewed), so it requires the operator to pass
+        # --allow-negative explicitly; the default path refuses. Identity
+        # must also be internally consistent: the declared country has to
+        # match the BIC's own country code, so a typo'd BIC cannot park
+        # under the wrong flag.
+        if (
+            not allow_unregistered_negative
+            or seedable
+            or normalized_records
+            or domains
+        ):
             raise ValueError(f"{path}.bic8: BIC {bic} is not operator-approved for admission")
         if country != country_from_bic(bic):
             raise ValueError(
@@ -388,7 +402,10 @@ def _region_blocks_overlap(left: int, right: int) -> bool:
     return left <= right + 99 and right <= left + 99
 
 
-def _validate_admission_envelope(payload: dict, manifest: dict, *, revise: bool = False) -> list[dict]:
+def _validate_admission_envelope(
+    payload: dict, manifest: dict, *, revise: bool = False,
+    allow_unregistered_negative: bool = False,
+) -> list[dict]:
     payload = _require_mapping(payload, "candidate input")
     if set(payload) != {"regions"}:
         raise ValueError("candidate input must be an object containing only a regions list")
@@ -538,7 +555,10 @@ def _validate_admission_envelope(payload: dict, manifest: dict, *, revise: bool 
         banks = {b["bic8"]: b for b in existing_region_banks}
         for bank_index, raw_bank in enumerate(candidate_region_banks):
             bank_path = f"{path}.banks[{bank_index}]"
-            bank = _normalize_bank(raw_bank, region, bank_path)
+            bank = _normalize_bank(
+                raw_bank, region, bank_path,
+                allow_unregistered_negative=allow_unregistered_negative,
+            )
             bic = bank["bic8"]
             owner = existing_bics.get(bic)
             if owner and owner != name:
@@ -671,10 +691,16 @@ def _write_manifest_atomic(manifest: dict) -> None:
             os.unlink(temp_name)
 
 
-def admit_candidates(payload: dict, *, dry_run: bool = False, revise: bool = False) -> dict:
+def admit_candidates(
+    payload: dict, *, dry_run: bool = False, revise: bool = False,
+    allow_unregistered_negative: bool = False,
+) -> dict:
     with _manifest_lock():
         manifest = load_manifest()
-        normalized = _validate_admission_envelope(payload, manifest, revise=revise)
+        normalized = _validate_admission_envelope(
+            payload, manifest, revise=revise,
+            allow_unregistered_negative=allow_unregistered_negative,
+        )
         proposed = copy.deepcopy(manifest)
         existing = {r["name"]: r for r in proposed["regions"]}
         new_regions = []
@@ -1401,7 +1427,10 @@ def cmd_admit(args: argparse.Namespace) -> None:
     input_path = Path(args.candidates)
     try:
         payload = json.loads(input_path.read_text())
-        summary = admit_candidates(payload, dry_run=args.dry_run, revise=args.revise)
+        summary = admit_candidates(
+            payload, dry_run=args.dry_run, revise=args.revise,
+            allow_unregistered_negative=args.allow_negative,
+        )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         raise SystemExit(f"admission failed for {input_path}: {exc}") from exc
     action = "would admit" if args.dry_run else "admitted"
@@ -1685,6 +1714,11 @@ def main() -> None:
     p.add_argument(
         "--revise", action="store_true",
         help="allow re-admission to replace an existing bank's records and currency coverage",
+    )
+    p.add_argument(
+        "--allow-negative", action="store_true",
+        help="operator authorization to record unregistered NOT-SEEDABLE banks "
+             "(no records, no domains); the default path refuses unregistered BICs",
     )
     p.set_defaults(func=cmd_admit)
 

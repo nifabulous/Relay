@@ -2185,7 +2185,7 @@ class TestEasternEuropeSsiCoverage:
 # ---- autopilot-generated coverage tests: singapore ----
 SINGAPORE_SSI_COVERAGE = [
     ("OCBCSGSGXXX", "Oversea-Chinese Banking Corporation Limited", {"USD"}),
-    ("UOVBSGSGXXX", "United Overseas Bank Limited", {"AED", "AUD", "BND", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "NOK", "NZD", "RMB", "SEK", "USD"}),
+    ("UOVBSGSGXXX", "United Overseas Bank Limited", {"AED", "AUD", "BND", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "NOK", "NZD", "CNY", "SEK", "USD"}),
 ]
 
 

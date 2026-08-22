@@ -1617,11 +1617,23 @@ def test_unenrolled_not_seedable_bank_is_recorded_without_registry(tmp_path, mon
     path = tmp_path / "regions.json"
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
     monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
-    summary = autopilot.admit_candidates(_negative_bank_payload())
+    summary = autopilot.admit_candidates(
+        _negative_bank_payload(), allow_unregistered_negative=True
+    )
     assert summary["added_banks"] == 1 and summary["added_records"] == 0
     bank = autopilot.get_region(autopilot.load_manifest(), "negative-recording-check")["banks"][0]
     assert bank["seedable"] is False and bank["source_domains"] == []
 
+
+def test_negative_recording_requires_explicit_operator_authorization(tmp_path, monkeypatch):
+    """The registry is the admission trust boundary; recording an unregistered
+    identity is an operator decision made via --allow-negative, never a
+    default."""
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    with pytest.raises(ValueError, match="not operator-approved"):
+        autopilot.admit_candidates(_negative_bank_payload())
 
 def test_negative_recording_still_requires_consistency(tmp_path, monkeypatch):
     path = tmp_path / "regions.json"
@@ -1630,11 +1642,13 @@ def test_negative_recording_still_requires_consistency(tmp_path, monkeypatch):
 
     wrong_country = _negative_bank_payload(country="FR")
     with pytest.raises(ValueError, match="does not match the BIC's country"):
-        autopilot.admit_candidates(wrong_country)
+        autopilot.admit_candidates(wrong_country, allow_unregistered_negative=True)
 
     claiming_domain = _negative_bank_payload(source_domains=["deutsche-bank.example"])
     with pytest.raises(ValueError, match="not operator-approved"):
-        autopilot.admit_candidates(claiming_domain)
+        autopilot.admit_candidates(
+            claiming_domain, allow_unregistered_negative=True
+        )
 
     carrying_records = _negative_bank_payload(records=[{
         "currency": "EUR", "correspondent": "Someone", "int_bic": "COBADEFF",
@@ -1644,7 +1658,7 @@ def test_negative_recording_still_requires_consistency(tmp_path, monkeypatch):
         "status": "unverified",
     }])
     with pytest.raises(ValueError, match="not operator-approved"):
-        autopilot.admit_candidates(carrying_records)
+        autopilot.admit_candidates(carrying_records, allow_unregistered_negative=True)
 
 
 # ── Change: country uniqueness enforced at admission time ───────────────────
@@ -1657,3 +1671,103 @@ def test_admission_refuses_a_country_already_owned_by_another_region(tmp_path, m
     clashing["regions"][0]["name"] = "kenya-annexation"
     with pytest.raises(ValueError, match="already owned by region north-east-africa"):
         autopilot.admit_candidates(clashing)
+
+
+# ── Currency canonicalization (Codex P1: non-ISO RMB key) ───────────────────
+
+def test_publisher_shorthand_currencies_are_normalized_at_admission():
+    record = gulf_bic_only_results()["banks"][0]["records"][0]
+    record["currency"] = "rmb"
+    normalized = autopilot._normalize_record(record, "record")
+    assert normalized["currency"] == "CNY"
+
+
+def test_no_non_canonical_currency_alias_survives_in_seed_or_manifest():
+    from app.services.seed import SSI_RECORDS
+
+    manifest = autopilot.load_manifest()
+    offenders = []
+    for row in SSI_RECORDS:
+        if row[2] in autopilot.CURRENCY_ALIASES:
+            offenders.append(("seed", row[0], row[2]))
+    for region in manifest["regions"]:
+        for bank in region["banks"]:
+            if any(c in autopilot.CURRENCY_ALIASES for c in bank.get("currencies", [])):
+                offenders.append(("manifest", bank["bic8"], bank["currencies"]))
+            for rec in bank.get("admitted_records", []):
+                if rec.get("currency") in autopilot.CURRENCY_ALIASES:
+                    offenders.append(("manifest", bank["bic8"], rec.get("currency")))
+    assert not offenders, offenders
+
+
+# ── Independent fixture: representative rows pinned as literals ─────────────
+# These expectations are hand-written here, NOT derived from regions.json, so
+# a manifest edit alone cannot make them pass (Codex P2: test-independence).
+
+_PINNED_ROWS = [
+    # (beneficiary, currency, intermediary, correspondent, bic_only, status,
+    #  as_of, source, nostro)
+    ("UOVBSGSGXXX", "CNY", "ICBKSGSGCLR", "Industrial and Commercial Bank of China, Singapore",
+     True, "archived", "2024-08-07",
+     "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+     None),
+    ("UOVBSGSGXXX", "USD", "IRVTUS3NXXX", "Bank of New York Mellon, New York",
+     True, "archived", "2024-08-07",
+     "https://web.archive.org/web/20240807054645/https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page",
+     None),
+    ("OCBCSGSGXXX", "USD", "CHASUS33XXX", "JP Morgan Chase Bank, New York",
+     True, "unverified", "2026-08-22",
+     "https://www.ocbc.com/personal-banking/help-and-support/payments-and-transactions/telegraphic-transfer",
+     None),
+    ("BBUKIDJAXXX", "GBP", "SCBLGB2LXXX", "Standard Chartered Bank, London (1 Aldermanbury Square, EC2V 7SB)",
+     False, "archived", "2017-05-16",
+     "https://web.archive.org/web/20170516204335id_/http://bukopin.co.id/files/pdf/Daftar%20Bank%20Depository%20Koresponden.pdf",
+     "ACCT-91002801"),
+    ("SBICUGKXXXX", "USD", "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York",
+     False, "archived", "2020-09-29",
+     "https://web.archive.org/web/20200929040159/https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+     "ACCT-91002918"),
+    ("HASEHKHHXXX", "EUR", "BKAUATWWXXX", "UniCredit Bank Austria AG, Vienna",
+     True, "archived", "2020-09-26",
+     "https://web.archive.org/web/20200926122446id_/https://www.hangseng.com/content/dam/hase/en_hk/personal/banking-services/pdf/inward_remittance_useful_tips.pdf",
+     None),
+    ("ESUNTWTPXXX", "USD", "CITIUS33XXX", "Citibank N.A.",
+     True, "archived", "2019-09-15",
+     "https://web.archive.org/web/20190915104156if_/https://www.esunbank.com.tw/bank/-/media/esunbank/files/about/applications/corporate/remittance-instructions_2018.pdf?la=en",
+     None),
+    ("ROYCCAT2XXX", "USD", "CHASUS33XXX", "JPMORGAN CHASE",
+     True, "unverified", "2026-08-22",
+     "https://www.rbcroyalbank.com/banking-services/wire-transfer.html",
+     None),
+]
+
+
+def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
+    """One representative row per wave region, hand-pinned. If seed.py or the
+    manifest drifts from what research actually read, this fails even though
+    the round-trip tests (which derive expectations from the manifest) hold."""
+    seed_source = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
+    index = {}
+    for entry in autopilot._ssi_rows(seed_source):
+        try:
+            fields = autopilot._fold_row_shape(entry, enforce_invariants=False)
+        except (ValueError, TypeError, AttributeError):
+            continue
+        index[(fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])] = fields
+
+    for ben, ccy, int_bic, corr, bic_only, status, as_of, source, nostro in _PINNED_ROWS:
+        row = index.get((ben, ccy, int_bic))
+        assert row is not None, f"{ben}/{ccy}: pinned fixture row missing from seed"
+        assert row["correspondent"] == corr, (ben, ccy)
+        assert row["bic_only"] is bic_only, (ben, ccy)
+        assert row["status"] == status, (ben, ccy)
+        assert row["as_of"] == as_of, (ben, ccy)
+        expected_note = (
+            f"Source: {source} (as of {as_of}). "
+            "Sourced from bank-published SSI page. Verify current values before use."
+        )
+        assert row["notes"] == expected_note, (ben, ccy)
+        if bic_only:
+            assert row["nostro"] is None and row["with_an"] is None, (ben, ccy)
+        else:
+            assert row["nostro"] == nostro and row["with_an"] == nostro, (ben, ccy)
