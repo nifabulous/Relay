@@ -1,7 +1,7 @@
 # Relay Overview — Adaptive Command Center
 
-Date: 2026-08-21  
-Branch: `codex/coss-slice-2`  
+Date: 2026-08-21
+Branch: `codex/coss-slice-2`
 Status: Amended design spec; execution plan pending review
 
 ## Decision

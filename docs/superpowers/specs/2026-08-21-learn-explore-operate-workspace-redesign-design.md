@@ -1,7 +1,7 @@
 # Relay Learn, Explore, and Operate Workspace Redesign
 
-Date: 2026-08-21  
-Branch: `codex/coss-slice-2`  
+Date: 2026-08-21
+Branch: `codex/coss-slice-2`
 Status: Approved visual directions; revised UX spec ready for approval
 
 ## Decision
