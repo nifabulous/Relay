@@ -59,8 +59,13 @@ describe("CommandSearch", () => {
     const { user } = renderSearch();
     await user.type(screen.getByRole("searchbox"), "citibank");
 
-    await waitFor(() => expect(screen.getAllByRole("status").some((node) => /searching/i.test(node.textContent ?? ""))).toBe(true));
-    expect(within(screen.getByRole("listbox")).queryByRole("status")).not.toBeInTheDocument();
+    const loadingAnnouncement = await screen.findByText("Searching the bank directory…", { exact: true });
+    expect(loadingAnnouncement).toBeVisible();
+    expect(loadingAnnouncement).toHaveAttribute("role", "status");
+
+    const listbox = screen.getByRole("listbox");
+    expect(loadingAnnouncement.parentElement).toBe(listbox.parentElement);
+    expect(listbox).not.toContainElement(loadingAnnouncement);
   });
 
   it("shows bank-name matches from the directory search", async () => {

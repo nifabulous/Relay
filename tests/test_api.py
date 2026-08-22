@@ -135,25 +135,45 @@ def test_bank_name_search_rejects_invalid_limits(client, limit):
 
 
 def test_bank_name_search_normalizes_whitespace_and_requires_all_words(client):
-    r = client.get("/api/banks/search", params={"q": "  guaranty   trust  bank  "})
+    r = client.get("/api/banks/search", params={"q": "  bank   guaranty  trust  "})
 
     assert r.status_code == 200
     body = r.json()
-    assert body["query"] == "guaranty trust bank"
-    assert body["results"]
-    assert all(
-        all(token in result["bank_name"].lower() for token in ("guaranty", "trust", "bank"))
-        for result in body["results"]
-    )
+    assert body["query"] == "bank guaranty trust"
+    assert [result["bic"] for result in body["results"]] == ["GTBINGLAXXX"]
 
 
-@pytest.mark.parametrize("literal", ["%%", "__", r"\\"])
+@pytest.mark.parametrize("literal", ["%%", "__"])
 def test_bank_name_search_treats_like_metacharacters_literally(client, literal):
     r = client.get("/api/banks/search", params={"q": literal})
 
     assert r.status_code == 200
     assert r.json()["query"] == literal
     assert r.json()["results"] == []
+
+
+def test_bank_name_search_matches_a_literal_backslash(isolated_client):
+    from app.models import Bank
+
+    client, SessionLocal = isolated_client
+    with SessionLocal() as session:
+        session.add(
+            Bank(
+                bic="BKSLUS33XXX",
+                bank_name=r"Backslash \ Bank",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+            )
+        )
+        session.commit()
+
+    r = client.get("/api/banks/search", params={"q": r"backslash \ bank"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == r"backslash \ bank"
+    assert [result["bic"] for result in body["results"]] == ["BKSLUS33XXX"]
 
 
 def test_route_usd_to_nigeria(client):

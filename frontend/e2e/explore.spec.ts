@@ -13,6 +13,14 @@ test.describe("Explore", () => {
     expect(await items.count()).toBeGreaterThanOrEqual(1);
   });
 
+  test("keeps the Explore search input clear of its icon", async ({ page }) => {
+    await page.goto("/app/explore");
+    const input = page.locator(".command-search__input");
+    await expect(input).toBeVisible();
+
+    await expect(input).toHaveCSS("padding-left", "38px");
+  });
+
   test("searches by bank name and opens the matching bank detail", async ({ page }) => {
     await page.goto("/app/explore");
     await expect(page.locator("h1")).toHaveText("Explore", { timeout: 10_000 });

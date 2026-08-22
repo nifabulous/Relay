@@ -181,7 +181,7 @@ test("gives the active Overview and Explore links a distinct hover state", async
   await page.goto("/app");
   const expectedHoverBackground = await page.evaluate(() => {
     const probe = document.createElement("span");
-    probe.style.backgroundColor = "var(--color-action-border)";
+    probe.style.backgroundColor = "var(--color-surface-2)";
     document.body.append(probe);
     const value = getComputedStyle(probe).backgroundColor;
     probe.remove();
