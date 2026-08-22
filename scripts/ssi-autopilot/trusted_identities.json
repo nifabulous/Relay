@@ -2,16 +2,99 @@
   "BBDEBRSP": {
     "name": "Banco Bradesco",
     "country": "BR",
-    "domains": ["banco.bradesco"]
+    "domains": [
+      "banco.bradesco"
+    ]
   },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",
-    "domains": ["cmbchina.com"]
+    "domains": [
+      "cmbchina.com"
+    ]
   },
   "CTBAAU2S": {
     "name": "Commonwealth Bank of Australia",
     "country": "AU",
-    "domains": ["commbank.com.au"]
+    "domains": [
+      "commbank.com.au"
+    ]
+  },
+  "UOVBSGSG": {
+    "name": "United Overseas Bank Limited",
+    "country": "SG",
+    "domains": [
+      "uob.com.sg"
+    ]
+  },
+  "OCBCSGSG": {
+    "name": "Oversea-Chinese Banking Corporation Limited",
+    "country": "SG",
+    "domains": [
+      "ocbc.com"
+    ]
+  },
+  "BBUKIDJA": {
+    "name": "PT Bank KB Bukopin Tbk",
+    "country": "ID",
+    "domains": [
+      "bukopin.co.id"
+    ]
+  },
+  "CERBUGKA": {
+    "name": "Centenary Rural Development Bank Limited (Centenary Bank Uganda)",
+    "country": "UG",
+    "domains": [
+      "centenarybank.co.ug"
+    ]
+  },
+  "SBICUGKX": {
+    "name": "Stanbic Bank Uganda Limited",
+    "country": "UG",
+    "domains": [
+      "stanbicbank.co.ug"
+    ]
+  },
+  "HASEHKHH": {
+    "name": "Hang Seng Bank Limited",
+    "country": "HK",
+    "domains": [
+      "hangseng.com"
+    ]
+  },
+  "BEASHKHH": {
+    "name": "The Bank of East Asia, Limited",
+    "country": "HK",
+    "domains": [
+      "hkbea.com"
+    ]
+  },
+  "ESUNTWTP": {
+    "name": "E.SUN Commercial Bank, Ltd.",
+    "country": "TW",
+    "domains": [
+      "esunbank.com.tw"
+    ]
+  },
+  "HNBKTWTP": {
+    "name": "Hua Nan Commercial Bank, Ltd.",
+    "country": "TW",
+    "domains": [
+      "hncb.com.tw"
+    ]
+  },
+  "ROYCCAT2": {
+    "name": "Royal Bank of Canada",
+    "country": "CA",
+    "domains": [
+      "rbcroyalbank.com"
+    ]
+  },
+  "CIBCCATT": {
+    "name": "Canadian Imperial Bank of Commerce",
+    "country": "CA",
+    "domains": [
+      "cibc.com"
+    ]
   }
 }
