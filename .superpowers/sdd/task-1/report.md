@@ -63,3 +63,18 @@ The build reports an existing Vite warning about chunks larger than 500 kB. No t
 
 - The build’s pre-existing large-chunk warning remains, but the build exits successfully and is unrelated to Task 1.
 - The worktree contained an unrelated untracked plan file at `docs/superpowers/plans/2026-08-22-learn-explore-operate-workspace-redesign-implementation.md`; it was intentionally left unchanged and uncommitted.
+
+## Review fix: runtime-missing `updatedAt`
+
+Guarded `timestampValue` against a runtime-missing `session.updatedAt` and added a regression test that removes the field from a session object at runtime, proving catalog-order fallback among unavailable timestamps and preference for a valid timestamp.
+
+### Changed files
+
+- `frontend/src/features/learn/cases/selectDominantCase.ts` — safely handles an absent `updatedAt` before trimming.
+- `frontend/src/features/learn/cases/selectDominantCase.test.ts` — covers a runtime-missing `updatedAt` field.
+- `.superpowers/sdd/task-1/report.md` — appended this review-fix report.
+
+### Verification
+
+- `cd frontend && npm test -- --run src/features/learn/cases/selectDominantCase.test.ts` — passed; 1 file, 7 tests.
+- `cd frontend && npm test -- --run src/features/learn/cases` — passed; 9 files, 356 tests.

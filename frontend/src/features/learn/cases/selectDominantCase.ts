@@ -8,7 +8,7 @@ export interface CaseEntrySnapshot {
 }
 
 function timestampValue(session: CaseSession): number | null {
-  const value = session.updatedAt.trim();
+  const value = session.updatedAt?.trim();
   if (!value) return null;
 
   const timestamp = Date.parse(value);

@@ -32,8 +32,13 @@ describe("selectDominantCase", () => {
   });
 
   it("treats missing and invalid timestamps as older than valid timestamps", () => {
+    const runtimeMissingTimestamp = Object.fromEntries(
+      Object.entries(session(firstDefinition.id, "in_progress", "")).filter(
+        ([key]) => key !== "updatedAt",
+      ),
+    ) as CaseSession;
     const entries = [
-      entry(firstDefinition, session(firstDefinition.id, "in_progress", "not-a-date"), 0),
+      entry(firstDefinition, runtimeMissingTimestamp, 0),
       entry(secondDefinition, session(secondDefinition.id, "in_progress", ""), 1),
       entry(thirdDefinition, session(thirdDefinition.id, "in_progress", "2026-08-19T10:00:00Z"), 2),
     ];
