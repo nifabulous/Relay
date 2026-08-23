@@ -176,7 +176,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    const search = screen.getByLabelText("BIC to look up");
+    const search = screen.getByLabelText("Search bank name or BIC");
     await user.type(search, "Mizuho");
     expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open HSBC details" })).toBeNull();
@@ -228,7 +228,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "CITIUS33");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "CITIUS33");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     const link = await screen.findByRole("link", { name: /Prepare a payment/i });
@@ -291,7 +291,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "SBININBB");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     // The full settlement section renders on the result card itself.
@@ -354,7 +354,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "SBININBB");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     expect(

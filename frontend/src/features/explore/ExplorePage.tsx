@@ -167,7 +167,7 @@ export function BankDirectoryPage() {
             setBic(e.target.value);
             setDirectoryPage(1);
           }}
-          aria-label="BIC to look up"
+          aria-label="Search bank name or BIC"
           aria-describedby="bank-directory-search-help"
           maxLength={80}
         />

@@ -75,7 +75,8 @@
 
 .bank-directory__search:focus-within {
   border-color: var(--color-action);
-  box-shadow: 0 0 0 3px var(--color-action-surface);
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
 }
 
 .bank-directory__search-icon {
