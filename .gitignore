@@ -60,3 +60,9 @@ output/
 # Local scratch / staging archives (never publish)
 _to_delete/
 .ssi-autopilot-state.json
+
+# Research sidecars may retain source-published identifiers for audit trails.
+# Keep the reviewed candidate evidence tracked, but never sweep generated
+# result files into a commit or workspace archive.
+/scripts/ssi-autopilot/results/*
+!/scripts/ssi-autopilot/results/candidates-pakistan.json
