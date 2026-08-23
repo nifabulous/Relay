@@ -22,6 +22,43 @@ import "./PracticePage.css";
 
 type Phase = "intro" | "drilling" | "done";
 
+function StatIcon({ type }: { type: "streak" | "reviews" }) {
+  return (
+    <span className={`practice-stat__icon practice-stat__icon--${type}`} aria-hidden="true">
+      {type === "streak" ? (
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M12.4 2.5c.4 3.2-1.8 4.8-3.1 6.5-1.1 1.4-1.5 2.7-.9 4.2.4-1 1.1-1.8 2.2-2.4-.1 2.3 1.2 3.8 3 4.7 1.1-1 1.6-2.2 1.5-3.6 1.6 1.2 2.4 2.8 2.4 4.6 0 3.2-2.5 5.5-5.7 5.5s-5.7-2.3-5.7-5.5c0-3.8 2.8-6.6 6.3-10.1Z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M5 4.5h14v3H5zM5 10.5h14v3H5zM5 16.5h14v3H5z" />
+          <path d="M2.5 4.5h1v3h-1zM2.5 10.5h1v3h-1zM2.5 16.5h1v3h-1z" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+function TodayProgress({ completed, total }: { completed: number; total: number }) {
+  const ratio = total > 0 ? Math.min(completed / total, 1) : 0;
+  const circumference = 2 * Math.PI * 19;
+  return (
+    <span className="practice-stat__progress-ring" aria-hidden="true">
+      <svg viewBox="0 0 48 48" focusable="false">
+        <circle className="practice-stat__progress-track" cx="24" cy="24" r="19" />
+        <circle
+          className="practice-stat__progress-value"
+          cx="24"
+          cy="24"
+          r="19"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - ratio)}
+        />
+      </svg>
+    </span>
+  );
+}
+
 export function PracticePage() {
   const today = useMemo(() => dayKey(new Date()), []);
   const [state, setState] = useState<PracticeState>(() => loadPracticeState());
@@ -118,14 +155,17 @@ export function PracticePage() {
 
           <div className="practice-stats" role="group" aria-label="Practice stats">
             <div className="practice-stat">
+              <StatIcon type="streak" />
               <span className="practice-stat__value mono">{streak}</span>
               <span className="practice-stat__label">day streak</span>
             </div>
             <div className="practice-stat">
+              <StatIcon type="reviews" />
               <span className="practice-stat__value mono">{reviewCount}</span>
               <span className="practice-stat__label">reviews due</span>
             </div>
             <div className="practice-stat practice-stat--progress">
+              <TodayProgress completed={0} total={questions.length} />
               <span className="practice-stat__value mono">0 <small>of {questions.length}</small></span>
               <span className="practice-stat__label">today</span>
             </div>
@@ -154,14 +194,17 @@ export function PracticePage() {
           <div className="practice-drill__layout">
             <aside className="practice-drill__stats" aria-label="Practice stats">
               <div className="practice-stat">
+                <StatIcon type="streak" />
                 <span className="practice-stat__value mono">{streak}</span>
                 <span className="practice-stat__label">day streak</span>
               </div>
               <div className="practice-stat">
+                <StatIcon type="reviews" />
                 <span className="practice-stat__value mono">{reviewCount}</span>
                 <span className="practice-stat__label">reviews due</span>
               </div>
               <div className="practice-stat practice-stat--progress">
+                <TodayProgress completed={outcomes.length} total={questions.length} />
                 <span className="practice-stat__value mono">{outcomes.length} <small>of {questions.length}</small></span>
                 <span className="practice-stat__label">today</span>
               </div>

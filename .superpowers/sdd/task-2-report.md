@@ -32,3 +32,15 @@
 ## Concerns
 
 - The concept includes decorative stat icons and a progress ring; the implementation intentionally keeps those regions text-led so status remains accessible and token-only without introducing new assets or dependencies.
+
+## Fix round 1 (review findings)
+
+- Added decorative inline SVG flame and reviews/list affordances to both intro and active-drill stat rows.
+- Added a token-colored, static SVG today-progress ring to both stat rows; the existing `completed of total` text remains the semantic value.
+- Verified no store logic, telemetry, feedback flow, or dependencies changed.
+
+### Verification
+
+- `cd frontend && npx vitest run src/features/learn/practice` — 3 files, 37 tests passed.
+- `cd frontend && npm test` — 95 files, 1,380 tests passed.
+- `cd frontend && npm run build` — TypeScript and Vite build passed.
