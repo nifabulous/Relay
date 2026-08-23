@@ -8301,7 +8301,7 @@
         "PK"
       ],
       "masked_block": 91003300,
-      "note": "2025-09-20 Wayback capture of Bank Alfalah Islamic Nostro Accounts plus the 2015-03-21 archived conventional PDF; the older 2014 Islamic PDF was superseded by the later archived page. Bank-owned sources publish account/IBAN lines but omit charge-code and value-date terms, so all rows normalize to SHA/spot and every published account string is masked into the reserved ACCT-91003300 block.",
+      "note": "2025-09-20 Wayback capture of Bank Alfalah Islamic Nostro Accounts plus the 2015-03-21 archived conventional PDF; the older 2014 Islamic PDF was superseded by the later archived page. Bank-owned sources publish account/IBAN lines but omit charge-code and value-date terms, so all rows normalize to SHA/spot and every published account string is masked into the reserved ACCT-91003300 block. Non-ISO Asian Clearing Union (`ACU`) rows were deliberately dropped under established repo policy, which also excluded the mismatched Standard Chartered Karachi / SCBLINBB row.",
       "forbidden_bics": [],
       "banks": [
         {
@@ -8309,7 +8309,6 @@
           "name": "Bank Alfalah Limited",
           "country": "PK",
           "currencies": [
-            "ACU",
             "AED",
             "AUD",
             "CAD",
@@ -8330,110 +8329,6 @@
             "bankalfalah.com"
           ],
           "admitted_records": [
-            {
-              "currency": "ACU",
-              "correspondent": "Bank Alfalah Dhaka Bangladesh",
-              "int_bic": "ALFHBDDH",
-              "nostro": "ACCT-91003302",
-              "with_an": "ACCT-91003302",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/",
-              "as_of": "2025-09-20",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "Habib Bank Limited, Bangladesh, Dhaka",
-              "int_bic": "HABBBDDH",
-              "nostro": "ACCT-91003347",
-              "with_an": "ACCT-91003347",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "Hatton National Bank Ltd., Colombo, Sri Lanka",
-              "int_bic": "HBLILKLX",
-              "nostro": "ACCT-91003345",
-              "with_an": "ACCT-91003345",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "ICICI Bank Ltd., Mumbai, India",
-              "int_bic": "ICICINBB",
-              "nostro": "ACCT-91003349",
-              "with_an": "ACCT-91003349",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "Mashreqbank PSC, Mumbai, India",
-              "int_bic": "MSHQINBB",
-              "nostro": "ACCT-91003346",
-              "with_an": "ACCT-91003346",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "MCB Bank Limited",
-              "int_bic": "MUCBLKLC",
-              "nostro": "ACCT-91003301",
-              "with_an": "ACCT-91003301",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/",
-              "as_of": "2025-09-20",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "Standard Chartered Bank, Karachi, Pakistan",
-              "int_bic": "SCBLINBB",
-              "nostro": "ACCT-91003300",
-              "with_an": "ACCT-91003300",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/",
-              "as_of": "2025-09-20",
-              "status": "archived",
-              "bic_only": false
-            },
-            {
-              "currency": "ACU",
-              "correspondent": "Union Bank of India, Mumbai, India",
-              "int_bic": "UBININBB",
-              "nostro": "ACCT-91003348",
-              "with_an": "ACCT-91003348",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived",
-              "bic_only": false
-            },
             {
               "currency": "AED",
               "correspondent": "Bank Alfalah Limited Dubai",
@@ -8864,7 +8759,7 @@
               "bic_only": false
             }
           ],
-          "admitted_record_digest": "0c53d81d80ebf033ef7b2287a9c7e07a379d4e9746a5704383df78237c531d99"
+          "admitted_record_digest": "99ebf6fbd088afcee9dd841488744300e6d0e5ff07df66f13fc162a6ec312cf2"
         }
       ]
     }
