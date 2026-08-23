@@ -58,9 +58,39 @@ export function ExplorePage() {
 /** Example BICs shown in the Bank Directory's pre-search guidance. */
 const EXAMPLE_BICS = ["GTBINGLAXXX", "MASHAEADXXX", "CTCBHKHHXXX"];
 
+type DirectoryRow = {
+  bic: string;
+  name: string;
+  country: string;
+  market: string;
+  capability: "Cross-border" | "Domestic";
+  verified: boolean;
+  monogram: string;
+};
+
+/**
+ * The directory browse state is intentionally a small, curated view of the
+ * seeded teaching data. BIC lookup remains the source of truth for a full
+ * institution record and settlement instructions.
+ */
+const DIRECTORY_ROWS: DirectoryRow[] = [
+  { name: "Lloyds Bank", bic: "LOYDGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", verified: true, monogram: "LB" },
+  { name: "HSBC", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", verified: true, monogram: "HS" },
+  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", verified: true, monogram: "JC" },
+  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", verified: true, monogram: "DB" },
+  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", verified: true, monogram: "MZ" },
+];
+
+const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+const BIC_LIKE_PATTERN = /^[A-Z]{4}[A-Z\d]{2,7}$/i;
+
 export function BankDirectoryPage() {
   const [bic, setBic] = useState("");
   const [searchBic, setSearchBic] = useState<string | null>(null);
+  const [market, setMarket] = useState("all");
+  const [capability, setCapability] = useState("all");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [directoryPage, setDirectoryPage] = useState(1);
 
   const query = useQuery({
     queryKey: searchBic ? apiKeys.lookup(searchBic) : ["lookup", "idle"],
@@ -85,31 +115,151 @@ export function BankDirectoryPage() {
   else if (query.isError) status = "error";
   else if (query.data) status = query.data.found ? "success" : "empty";
 
+  const normalizedDirectoryQuery = bic.trim().toLowerCase();
+  const filteredRows = DIRECTORY_ROWS.filter((row) => {
+    const matchesQuery = !normalizedDirectoryQuery ||
+      `${row.name} ${row.bic} ${row.country}`.toLowerCase().includes(normalizedDirectoryQuery);
+    const matchesMarket = market === "all" || row.market === market;
+    const matchesCapability = capability === "all" || row.capability === capability;
+    // Browse rows represent published seed records, so the verified toggle is
+    // a useful explicit affordance even though every curated row is verified.
+    const matchesVerified = !verifiedOnly || row.verified;
+    return matchesQuery && matchesMarket && matchesCapability && matchesVerified;
+  });
+  const directoryPageSize = 5;
+  const directoryPageCount = Math.max(1, Math.ceil(filteredRows.length / directoryPageSize));
+  const currentDirectoryPage = Math.min(directoryPage, directoryPageCount);
+  const visibleRows = filteredRows.slice(
+    (currentDirectoryPage - 1) * directoryPageSize,
+    currentDirectoryPage * directoryPageSize,
+  );
+  const directoryStart = filteredRows.length === 0 ? 0 : (currentDirectoryPage - 1) * directoryPageSize + 1;
+  const directoryEnd = Math.min(currentDirectoryPage * directoryPageSize, filteredRows.length);
+
   return (
-    <div className="explore">
+    <div className="explore bank-directory">
       <div className="explore__header">
-        <h1>Bank Directory</h1>
-        <p className="measure">Look up a bank by its BIC (SWIFT code).</p>
+        <h1>Bank directory</h1>
+        <p className="measure">Browse verified institutions by BIC, market, and capability.</p>
       </div>
 
       <form
-        className="explore__bank-form"
+        className="bank-directory__search"
         onSubmit={(e) => {
           e.preventDefault();
-          if (bic.trim()) setSearchBic(bic.trim().toUpperCase());
+          const value = bic.trim();
+          if (value && (BIC_PATTERN.test(value) || BIC_LIKE_PATTERN.test(value))) {
+            setSearchBic(value.toUpperCase());
+          }
+          setDirectoryPage(1);
         }}
       >
+        <svg className="bank-directory__search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-4-4" />
+        </svg>
         <input
           type="text"
-          className="explore__bank-input mono"
-          placeholder="e.g. CITIUS33, GTBINGLAXXX"
+          className="bank-directory__search-input"
+          placeholder="Search by name or BIC…"
           value={bic}
-          onChange={(e) => setBic(e.target.value)}
+          onChange={(e) => {
+            setBic(e.target.value);
+            setDirectoryPage(1);
+          }}
           aria-label="BIC to look up"
-          maxLength={11}
+          aria-describedby="bank-directory-search-help"
+          maxLength={80}
         />
-        <Button type="submit" variant="primary">Look up</Button>
+        <Button type="submit" variant="secondary" className="bank-directory__search-submit">Look up</Button>
       </form>
+      <p id="bank-directory-search-help" className="sr-only">Type a bank name to filter the directory, or enter an 8 or 11 character BIC to look up its full record.</p>
+
+      <div className="bank-directory__filters" aria-label="Bank directory filters">
+        <label className="bank-directory__select-chip">
+          <span className="sr-only">Market</span>
+          <select
+            aria-label="Filter by market"
+            value={market}
+            onChange={(event) => { setMarket(event.target.value); setDirectoryPage(1); }}
+          >
+            <option value="all">Market: All</option>
+            <option value="GB">Market: United Kingdom</option>
+            <option value="US">Market: United States</option>
+            <option value="DE">Market: Germany</option>
+            <option value="JP">Market: Japan</option>
+          </select>
+        </label>
+        <label className="bank-directory__select-chip">
+          <span className="sr-only">Capability</span>
+          <select
+            aria-label="Filter by capability"
+            value={capability}
+            onChange={(event) => { setCapability(event.target.value); setDirectoryPage(1); }}
+          >
+            <option value="all">Capability: All</option>
+            <option value="Cross-border">Capability: Cross-border</option>
+            <option value="Domestic">Capability: Domestic</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          className={["bank-directory__filter-chip", verifiedOnly && "bank-directory__filter-chip--active"].filter(Boolean).join(" ")}
+          aria-pressed={verifiedOnly}
+          onClick={() => { setVerifiedOnly((current) => !current); setDirectoryPage(1); }}
+        >
+          <span className="bank-directory__status-icon" aria-hidden="true">✓</span>
+          Verified only
+        </button>
+      </div>
+
+      <section className="bank-directory__table-card" aria-labelledby="bank-directory-results-heading">
+        <h2 id="bank-directory-results-heading" className="sr-only">Bank directory results</h2>
+        <div className="bank-directory__table-scroll">
+          <table className="bank-directory__table">
+            <thead>
+              <tr>
+                <th scope="col">Institution</th>
+                <th scope="col">BIC</th>
+                <th scope="col">Country</th>
+                <th scope="col">Capabilities</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((row) => (
+                <tr key={row.bic}>
+                  <td data-label="Institution">
+                    <Link className="bank-directory__institution" to={`/explore/banks/${encodeURIComponent(row.bic)}`} aria-label={`Open ${row.name} details`}>
+                      <span className="bank-directory__logo" aria-hidden="true">{row.monogram}</span>
+                      <span>{row.name}</span>
+                    </Link>
+                  </td>
+                  <td data-label="BIC" className="mono bank-directory__bic">{row.bic}</td>
+                  <td data-label="Country">{row.country}</td>
+                  <td data-label="Capabilities">
+                    <span className={["bank-directory__capability", row.capability === "Domestic" && "bank-directory__capability--domestic"].filter(Boolean).join(" ")}>
+                      <span className="bank-directory__capability-icon" aria-hidden="true">{row.capability === "Domestic" ? "–" : "✓"}</span>
+                      {row.capability}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {visibleRows.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="bank-directory__no-results">No institutions match these filters. Clear a filter or try another name or BIC.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <footer className="bank-directory__pagination">
+          <span aria-live="polite">Showing {directoryStart}–{directoryEnd} of {filteredRows.length}</span>
+          <div className="bank-directory__pagination-actions">
+            <button type="button" className="bank-directory__page-button" aria-label="Previous page" disabled={currentDirectoryPage <= 1} onClick={() => setDirectoryPage((page) => Math.max(1, page - 1))}>‹</button>
+            <button type="button" className="bank-directory__page-button" aria-label="Next page" disabled={currentDirectoryPage >= directoryPageCount} onClick={() => setDirectoryPage((page) => Math.min(directoryPageCount, page + 1))}>›</button>
+          </div>
+        </footer>
+      </section>
 
       {searchBic === null && (
         <div className="explore__empty">

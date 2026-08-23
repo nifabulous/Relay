@@ -147,6 +147,46 @@ describe("ExplorePage", () => {
 });
 
 describe("BankDirectoryPage", () => {
+  it("renders the browse table with typed bank context and capabilities", () => {
+    queryClient.clear();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Bank directory" })).toBeVisible();
+    expect(screen.getByPlaceholderText("Search by name or BIC…")).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Institution" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open HSBC details" })).toHaveAttribute(
+      "href",
+      "/explore/banks/HSBCGB22XXX",
+    );
+    expect(screen.getAllByText("Cross-border")).toHaveLength(4);
+    expect(screen.getByText("Domestic")).toBeVisible();
+    expect(screen.getByText("Showing 1–5 of 5")).toBeVisible();
+  });
+
+  it("filters browse rows by bank name and capability", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const search = screen.getByLabelText("BIC to look up");
+    await user.type(search, "Mizuho");
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open HSBC details" })).toBeNull();
+
+    await user.clear(search);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by capability" }), "Domestic");
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open Deutsche Bank details" })).toBeNull();
+  });
+
   it("shows guidance with example BICs before any search", async () => {
     queryClient.clear();
     renderRelay(
