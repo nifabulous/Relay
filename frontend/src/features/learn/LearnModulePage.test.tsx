@@ -175,4 +175,21 @@ describe("LearnModulePage analytics", () => {
       expect(sink.events.filter((event) => event.name === "module_completed")).toHaveLength(1);
     });
   });
+
+  it("presents module progress, lesson outline states, and the content card", () => {
+    renderModule();
+
+    expect(screen.getByText("MODULE 1")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Module completion" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+
+    const outline = screen.getByRole("list", { name: "Lesson outline" });
+    expect(outline).toBeInTheDocument();
+    expect(screen.getByText("Lesson 1")).toBeInTheDocument();
+    expect(screen.getByText("Current")).toBeInTheDocument();
+    expect(screen.getAllByText("Upcoming")).not.toHaveLength(0);
+    expect(screen.getByRole("region", { name: "What you'll learn" })).toBeInTheDocument();
+  });
 });
