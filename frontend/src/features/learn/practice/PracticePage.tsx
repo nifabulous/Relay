@@ -122,12 +122,12 @@ export function PracticePage() {
               <span className="practice-stat__label">day streak</span>
             </div>
             <div className="practice-stat">
-              <span className="practice-stat__value mono">{state.bestStreak}</span>
-              <span className="practice-stat__label">best streak</span>
-            </div>
-            <div className="practice-stat">
               <span className="practice-stat__value mono">{reviewCount}</span>
-              <span className="practice-stat__label">due for review</span>
+              <span className="practice-stat__label">reviews due</span>
+            </div>
+            <div className="practice-stat practice-stat--progress">
+              <span className="practice-stat__value mono">0 <small>of {questions.length}</small></span>
+              <span className="practice-stat__label">today</span>
             </div>
           </div>
 
@@ -146,59 +146,89 @@ export function PracticePage() {
 
       {phase === "drilling" && currentQuestion && (
         <div className="practice-drill">
-          <p className="practice-progress mono" aria-live="polite">
-            Question {index + 1} of {questions.length}
-          </p>
+          <header className="practice-drill__header">
+            <h1>Daily practice</h1>
+            <p>Build speed and accuracy.</p>
+          </header>
 
-          <fieldset className="lab-multiple-choice practice-question">
-            <legend className="lab-multiple-choice__legend">{currentQuestion.question}</legend>
-            {orderedOptions.map((opt) => {
-              const isSelected = selectedId === opt.id;
-              const revealCorrect = selectedId !== null && opt.correct;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={[
-                    "lab-multiple-choice__option",
-                    isSelected && opt.correct && "lab-multiple-choice__option--correct",
-                    isSelected && !opt.correct && "lab-multiple-choice__option--wrong",
-                    !isSelected && revealCorrect && "lab-multiple-choice__option--correct",
-                  ].filter(Boolean).join(" ")}
-                  onClick={() => handleSelect(opt.id)}
-                  disabled={selectedId !== null}
-                  aria-pressed={isSelected}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-            {selectedId !== null && (() => {
-              const chosen = currentQuestion.options.find((o) => o.id === selectedId);
-              if (!chosen) return null;
-              const correctOption = currentQuestion.options.find((o) => o.correct);
-              return (
-                <div
-                  className={`lab-multiple-choice__feedback lab-exercise__feedback--${chosen.correct ? "correct" : "wrong"}`}
-                  role={chosen.correct ? "status" : "alert"}
-                >
-                  {chosen.correct ? <StatusChip status="passed" /> : <StatusChip status="failed" />}
-                  <span>
-                    {chosen.explanation}
-                    {!chosen.correct && correctOption && (
-                      <> The answer: <strong>{correctOption.label}</strong>.</>
-                    )}
-                  </span>
-                </div>
-              );
-            })()}
-          </fieldset>
+          <div className="practice-drill__layout">
+            <aside className="practice-drill__stats" aria-label="Practice stats">
+              <div className="practice-stat">
+                <span className="practice-stat__value mono">{streak}</span>
+                <span className="practice-stat__label">day streak</span>
+              </div>
+              <div className="practice-stat">
+                <span className="practice-stat__value mono">{reviewCount}</span>
+                <span className="practice-stat__label">reviews due</span>
+              </div>
+              <div className="practice-stat practice-stat--progress">
+                <span className="practice-stat__value mono">{outcomes.length} <small>of {questions.length}</small></span>
+                <span className="practice-stat__label">today</span>
+              </div>
+            </aside>
 
-          {selectedId !== null && (
-            <button type="button" className="relay-btn relay-btn--primary" onClick={handleNext}>
-              {index + 1 < questions.length ? "Next question" : "Finish drill"}
+            <section className="practice-drill__card" aria-label="Daily practice question">
+              <p className="practice-progress mono" aria-live="polite">
+                Question {index + 1} of {questions.length}
+              </p>
+
+              <fieldset className="lab-multiple-choice practice-question">
+                <legend className="lab-multiple-choice__legend">{currentQuestion.question}</legend>
+                {orderedOptions.map((opt) => {
+                  const isSelected = selectedId === opt.id;
+                  const revealCorrect = selectedId !== null && opt.correct;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={[
+                        "lab-multiple-choice__option",
+                        isSelected && opt.correct && "lab-multiple-choice__option--correct",
+                        isSelected && !opt.correct && "lab-multiple-choice__option--wrong",
+                        !isSelected && revealCorrect && "lab-multiple-choice__option--correct",
+                      ].filter(Boolean).join(" ")}
+                      onClick={() => handleSelect(opt.id)}
+                      disabled={selectedId !== null}
+                      aria-pressed={isSelected}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+                {selectedId !== null && (() => {
+                  const chosen = currentQuestion.options.find((o) => o.id === selectedId);
+                  if (!chosen) return null;
+                  const correctOption = currentQuestion.options.find((o) => o.correct);
+                  return (
+                    <div
+                      className={`lab-multiple-choice__feedback lab-exercise__feedback--${chosen.correct ? "correct" : "wrong"}`}
+                      role={chosen.correct ? "status" : "alert"}
+                    >
+                      {chosen.correct ? <StatusChip status="passed" /> : <StatusChip status="failed" />}
+                      <span>
+                        {chosen.explanation}
+                        {!chosen.correct && correctOption && (
+                          <> The answer: <strong>{correctOption.label}</strong>.</>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </fieldset>
+            </section>
+          </div>
+
+          <footer className="practice-drill__footer">
+            <button type="button" className="practice-drill__end" onClick={() => setPhase("intro")}>
+              End session
             </button>
-          )}
+            {selectedId !== null && (
+              <button type="button" className="relay-btn relay-btn--primary" onClick={handleNext}>
+                {index + 1 < questions.length ? "Next question" : "Finish drill"}
+                <span aria-hidden="true" className="practice-drill__next-icon">→</span>
+              </button>
+            )}
+          </footer>
         </div>
       )}
 
