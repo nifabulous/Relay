@@ -20,6 +20,10 @@ export function LearnModulePage() {
   const lastViewedModuleIdRef = useRef<string | undefined>(undefined);
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
+  // Resolve this before any early return so page-level checkpoint state and
+  // header values always have a safe definition to work from.
+  const definition = mod ? getLabDefinition(mod.id) : undefined;
+  const requiredCheckpoints = definition?.requiredCheckpoints ?? [];
 
   useEffect(() => {
     if (!mod) {
@@ -89,6 +93,23 @@ export function LearnModulePage() {
     });
   }, []);
 
+  const onCheckpointReached = useCallback((checkpointId: string) => {
+    if (!mod) return;
+    track("checkpoint_reached", {
+      module_id: mod.id,
+      checkpoint_id: checkpointId,
+    });
+  }, [mod?.id]);
+
+  const { completed: completedCheckpoints, markCheckpoint } = useLabCompletion(
+    requiredCheckpoints,
+    () => {
+      if (mod) completeModule(mod.id);
+    },
+    onCheckpointReached,
+    mod?.id,
+  );
+
   if (!mod) {
     return (
       <div className="learn-page">
@@ -103,9 +124,25 @@ export function LearnModulePage() {
   const moduleIndex = CURRICULUM.findIndex((m) => m.id === mod.id);
   const prevModule = moduleIndex > 0 ? CURRICULUM[moduleIndex - 1] : null;
   const nextModule = moduleIndex < CURRICULUM.length - 1 ? CURRICULUM[moduleIndex + 1] : null;
-  const completionPercent = isComplete ? 100 : 0;
+  const completionPercent = isComplete
+    ? 100
+    : requiredCheckpoints.length > 0
+      ? Math.round((completedCheckpoints.size / requiredCheckpoints.length) * 100)
+      : 0;
+  const currentLessonIndex = Math.min(
+    completedCheckpoints.size,
+    Math.max(mod.outcomes.length - 1, 0),
+  );
   const lessonItems = mod.outcomes.map((outcome, index) => {
-    const state = isComplete ? "complete" : index === 0 ? "current" : "upcoming";
+    const state = isComplete
+      ? "complete"
+      : requiredCheckpoints.length === 0
+        ? index === 0 ? "current" : "upcoming"
+        : index < currentLessonIndex
+          ? "complete"
+          : index === currentLessonIndex
+            ? "current"
+            : "upcoming";
     return { outcome, index, state } as const;
   });
 
@@ -120,9 +157,6 @@ export function LearnModulePage() {
       </div>
     );
   }
-
-  // Resolve the lab content from the registry
-  const definition = getLabDefinition(mod.id);
 
   return (
     <div className="learn-page">
@@ -176,7 +210,7 @@ export function LearnModulePage() {
           <ol className="learn-lesson-outline__list" aria-label="Lesson outline">
             {lessonItems.map(({ outcome, index, state }) => (
               <li
-                key={outcome}
+                key={index}
                 className={`learn-lesson-outline__item learn-lesson-outline__item--${state}`}
                 data-state={state}
                 aria-current={state === "current" ? "step" : undefined}
@@ -213,14 +247,9 @@ export function LearnModulePage() {
                   moduleId={mod.id}
                   isComplete={isComplete}
                   requiredCheckpoints={definition.requiredCheckpoints}
+                  completed={completedCheckpoints}
+                  markCheckpoint={markCheckpoint}
                   component={definition.component}
-                  onComplete={() => completeModule(mod.id)}
-                  onCheckpointReached={(checkpointId) => {
-                    track("checkpoint_reached", {
-                      module_id: mod.id,
-                      checkpoint_id: checkpointId,
-                    });
-                  }}
                 />
               </Suspense>
             ) : (
@@ -280,23 +309,17 @@ function LabContentRenderer({
   moduleId,
   isComplete,
   requiredCheckpoints,
+  completed,
+  markCheckpoint,
   component: LabComponent,
-  onComplete,
-  onCheckpointReached,
 }: {
   moduleId: string;
   isComplete: boolean;
   requiredCheckpoints: readonly string[];
+  completed: ReadonlySet<string>;
+  markCheckpoint: (id: string) => void;
   component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
-  onComplete: () => void;
-  onCheckpointReached: (id: string) => void;
 }) {
-  const { completed, markCheckpoint } = useLabCompletion(
-    requiredCheckpoints,
-    onComplete,
-    onCheckpointReached,
-  );
-
   return (
     <>
       <LabCompletionChecklist

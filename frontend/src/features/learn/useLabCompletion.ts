@@ -17,12 +17,23 @@ export function useLabCompletion(
   required: readonly LabCheckpointId[],
   onComplete: () => void,
   onCheckpointReached?: (id: LabCheckpointId) => void,
+  scope?: string,
 ): {
   completed: ReadonlySet<LabCheckpointId>;
   markCheckpoint: (id: LabCheckpointId) => void;
 } {
-  const [completed, setCompleted] = useState<Set<LabCheckpointId>>(new Set());
+  const [completionState, setCompletionState] = useState(() => ({
+    scope,
+    completed: new Set<LabCheckpointId>(),
+  }));
+  // A page can stay mounted while its route changes. Expose an empty set for
+  // the new scope immediately, then accept checkpoints into that scope's
+  // state so completion cannot leak between modules.
+  const completed = completionState.scope === scope
+    ? completionState.completed
+    : new Set<LabCheckpointId>();
   const hasFired = useRef(false);
+  const previousScopeRef = useRef(scope);
   const onCompleteRef = useRef(onComplete);
   const onCheckpointReachedRef = useRef(onCheckpointReached);
   const reportedCheckpointIdsRef = useRef<Set<LabCheckpointId>>(new Set());
@@ -41,6 +52,13 @@ export function useLabCompletion(
   const isReady = required.length > 0 && required.every((id) => completed.has(id));
 
   useEffect(() => {
+    if (previousScopeRef.current === scope) return;
+    previousScopeRef.current = scope;
+    hasFired.current = false;
+    reportedCheckpointIdsRef.current.clear();
+  }, [scope]);
+
+  useEffect(() => {
     for (const id of completed) {
       if (reportedCheckpointIdsRef.current.has(id)) continue;
       reportedCheckpointIdsRef.current.add(id);
@@ -57,13 +75,14 @@ export function useLabCompletion(
 
   const markCheckpoint = useCallback((id: LabCheckpointId) => {
     if (!requiredSet.has(id)) return;
-    setCompleted((prev) => {
-      if (prev.has(id)) return prev;
-      const next = new Set(prev);
+    setCompletionState((prev) => {
+      const current = prev.scope === scope ? prev.completed : new Set<LabCheckpointId>();
+      if (current.has(id)) return prev;
+      const next = new Set(current);
       next.add(id);
-      return next;
+      return { scope, completed: next };
     });
-  }, [requiredSet]);
+  }, [requiredSet, scope]);
 
   return { completed, markCheckpoint };
 }
