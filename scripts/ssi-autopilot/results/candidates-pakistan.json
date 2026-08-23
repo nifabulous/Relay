@@ -74,7 +74,7 @@
             {
               "currency": "EUR",
               "correspondent": "Standard Chartered Bank (Germany) GmbH, Frankfurt, Germany",
-              "int_bic": "SCBLDEFX",
+              "int_bic": "SCBLDEFFXXX",
               "nostro": "ACCT-91003306",
               "with_an": "ACCT-91003306",
               "charge_code": "SHA",
@@ -221,18 +221,6 @@
               "int_bic": "BKTRUS33",
               "nostro": "ACCT-91003319",
               "with_an": "ACCT-91003319",
-              "charge_code": "SHA",
-              "value_date": "spot",
-              "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
-              "as_of": "2015-03-21",
-              "status": "archived"
-            },
-            {
-              "currency": "USD",
-              "correspondent": "Habib Bank Limited, New York, U.S.A.",
-              "int_bic": "HABBUS33",
-              "nostro": "ACCT-91003320",
-              "with_an": "ACCT-91003320",
               "charge_code": "SHA",
               "value_date": "spot",
               "source": "https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf",
