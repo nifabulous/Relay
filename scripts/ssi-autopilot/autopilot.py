@@ -1085,7 +1085,8 @@ def _ssi_rows(source: str) -> list[tuple]:
             continue
         if node.targets[0].id != "SSI_RECORDS":
             continue
-        lines = source.splitlines(keepends=True)
+        # AST columns are UTF-8 byte offsets; slice bytes, not code points.
+        lines = source.encode("utf-8").splitlines(keepends=True)
         rows = []
         for element in node.value.elts:
             if not isinstance(element, ast.Tuple):
@@ -1098,10 +1099,10 @@ def _ssi_rows(source: str) -> list[tuple]:
                 else:
                     segment = (
                         lines[start][field.col_offset:]
-                        + "".join(lines[start + 1:end])
+                        + b"".join(lines[start + 1:end])
                         + lines[end][:field.end_col_offset]
                     )
-                fields.append(segment.strip())
+                fields.append(segment.decode("utf-8").strip())
             rows.append(tuple(fields))
         return rows
     return []

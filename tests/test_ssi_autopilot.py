@@ -1771,3 +1771,59 @@ def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
             assert row["nostro"] is None and row["with_an"] is None, (ben, ccy)
         else:
             assert row["nostro"] == nostro and row["with_an"] == nostro, (ben, ccy)
+
+
+@pytest.mark.parametrize("region_name,bic", [
+    ("india", "HDFCINBB"),
+    ("india", "ICICINBB"),
+    ("india", "SBININBB"),
+    ("india", "AXISINBB"),
+    ("india", "KKBKINBB"),
+    ("india", "BARBINBB"),
+    ("gulf", "NBOKKWKW"),
+    ("gulf", "EBILAEAD"),
+    ("bangladesh", "AGBKBDDH"),
+    ("bangladesh", "EBLDBDDH"),
+    ("andean", "CAFECOBB"),
+    ("andean", "BINPPEPL"),
+    ("andean", "BECHCLRM"),
+    ("mexico-central-america", "MENOMXMT"),
+    ("mexico-central-america", "BAGEPAPA"),
+    ("mexico-central-america", "CAGRSVSS"),
+])
+def test_recovered_wave_identities_admit_on_the_production_path(tmp_path, monkeypatch, region_name, bic):
+    """TRUST_REGISTRY step 4: each recovered enrollment admits via the real registry."""
+    # Start from the production geography without the recovered bank so this
+    # exercises first-time registry admission, not an idempotent re-run.
+    manifest = json.loads(json.dumps(autopilot.load_manifest()))
+    region = autopilot.get_region(manifest, region_name)
+    region["banks"] = [b for b in region["banks"] if b["bic8"] != bic]
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(manifest, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    identity = autopilot.TRUSTED_SOURCE_IDENTITIES[bic]
+    domain = identity["domains"][0]
+    bank = {
+        "bic8": bic,
+        "name": identity["name"],
+        "country": identity["country"],
+        "currencies": ["USD"],
+        "seedable": True,
+        "source_domains": list(identity["domains"]),
+        "records": [{
+            "currency": "USD",
+            "correspondent": "Citibank N.A., New York",
+            "int_bic": "CITIUS33",
+            "nostro": f"ACCT-{region['masked_block'] + 1}",
+            "with_an": f"ACCT-{region['masked_block'] + 2}",
+            "charge_code": "SHA",
+            "value_date": "spot",
+            "source": f"https://{domain}/ssi",
+            "as_of": "2026-08-22",
+            "status": "unverified",
+        }],
+    }
+    summary = autopilot.admit_candidates(
+        {"regions": [{"name": region_name, "banks": [bank]}]}
+    )
+    assert summary["added_banks"] == 1 and summary["added_records"] == 1

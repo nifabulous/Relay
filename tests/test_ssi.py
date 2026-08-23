@@ -242,33 +242,6 @@ class TestSSISeedIntegrity:
             ("NCBKSAJEXXX", "USD"),
             ("BOTKJPJTXXX", "USD"),
             # Real sourced SSIs — Emirates NBD multi-currency
-            ("EBILAEADXXX", "EUR"),
-            ("EBILAEADXXX", "GBP"),
-            ("EBILAEADXXX", "AED"),
-            ("EBILAEADXXX", "CHF"),
-            ("EBILAEADXXX", "JPY"),
-            ("EBILAEADXXX", "CAD"),
-            ("EBILAEADXXX", "AUD"),
-            ("EBILAEADXXX", "SGD"),
-            ("EBILAEADXXX", "HKD"),
-            ("EBILAEADXXX", "INR"),
-            ("EBILAEADXXX", "SAR"),
-            ("EBILAEADXXX", "QAR"),
-            ("EBILAEADXXX", "KWD"),
-            ("EBILAEADXXX", "BHD"),
-            ("EBILAEADXXX", "OMR"),
-            ("EBILAEADXXX", "JOD"),
-            ("EBILAEADXXX", "EGP"),
-            ("EBILAEADXXX", "SEK"),
-            ("EBILAEADXXX", "NOK"),
-            ("EBILAEADXXX", "DKK"),
-            ("EBILAEADXXX", "ZAR"),
-            ("EBILAEADXXX", "NZD"),
-            ("EBILAEADXXX", "PKR"),
-            ("EBILAEADXXX", "BDT"),
-            ("EBILAEADXXX", "LKR"),
-            ("EBILAEADXXX", "MAD"),
-            ("EBILAEADXXX", "ILS"),
             # Bank of Ceylon
             ("BCEYLKLXXXX", "USD"),
             ("BCEYLKLXXXX", "GBP"),
@@ -519,19 +492,12 @@ class TestSSIModel:
             assert row.charge_code is None
             assert row.value_date is None
 
-    def test_enbd_multi_currency_coverage(self, db_session_clean):
-        """Emirates NBD should have SSI across many currencies."""
-        from sqlalchemy import select
+    def test_enbd_bic_only_coverage_matches_the_charges_pdf(self):
+        """The reviewed ENBD source is a BIC-only charges list for eight currencies."""
+        from app.services.seed import SSI_RECORDS
 
-        from app.models import SSI
-
-        currencies = db_session_clean.execute(
-            select(SSI.currency)
-            .where(SSI.beneficiary_bic == "EBILAEADXXX")
-            .distinct()
-        ).scalars().all()
-        # ENBD publishes SSIs for 25+ currencies
-        assert len(currencies) >= 25, f"Expected 25+ currencies for ENBD, got {len(currencies)}"
+        currencies = {r[2] for r in SSI_RECORDS if r[0] == "EBILAEADXXX"}
+        assert currencies == {"USD", "EUR", "GBP", "SAR", "QAR", "KWD", "BHD", "OMR"}
 
     def test_ssi_query_by_bic_and_currency(self, db_session_clean):
         from sqlalchemy import select
@@ -557,13 +523,16 @@ class TestSSIModel:
 
         from app.models import SSI
 
-        # ENBD now has many rows; just check the first one has all fields populated
+        # ENBD's reviewed source is BIC-only; use an account-bearing seed row.
         row = db_session_clean.execute(
-            select(SSI).where(SSI.beneficiary_bic == "EBILAEADXXX").limit(1)
+            select(SSI).where(
+                SSI.beneficiary_bic == "GTBINGLAXXX",
+                SSI.status == "illustrative",
+            ).limit(1)
         ).scalar_one_or_none()
 
         assert row is not None
-        # Every field that defines an SSI should be populated
+        # Every field that defines an illustrative SSI should be populated.
         assert row.beneficiary_bic
         assert row.beneficiary_bank_name
         assert row.currency

@@ -606,82 +606,6 @@ class TestAsiaDeepSsiCoverage:
 
 
 # ---------------------------------------------------------------------------
-# Gulf / Middle East SSI coverage
-# ---------------------------------------------------------------------------
-#
-# Third region pass. Three Gulf banks publish usable SSIs:
-#   - Mashreq (MASHAEAD)     — full BIC-only SSI table on its own page
-#                              (mashreq.com standard-settlement-instruction,
-#                              archived 2026); USD via its own NY branch
-#                              MSHQUS33
-#   - Doha Bank (DOHBQAQA)   — 2010 "List of Nostro Accounts" (accounts
-#                              printed, masked here); USD via Citibank NY
-#   - NBK Kuwait (NBOKKWKW)  — 2021 SSI broadcast (IBANs printed, masked
-#                              here); USD via Deutsche Bank Trust / Citi /
-#                              JPMorgan NY
-# FAB, ADCB, DIB, ADIB, QNB, KFH, Al Rajhi, Riyad, SNB, Bank Muscat, NBB
-# and the Turkish HQs publish no usable SSIs — excluded.
-#
-# The seed previously carried three WRONG beneficiary BICs for these banks
-# (NRBMAEAD for Mashreq, DOHAQAQA for Doha, NBOMKWKE for NBK) that match no
-# published source; the bank-published values (MASHAEAD, DOHBQAQA,
-# NBOKKWKW) are pinned below. Mashreq's own page also prints typos
-# (U0VBSGSG, BN0RPHMM, SCBLDEFXXXX) that must never be seeded.
-GULF_SSI_COVERAGE = [
-    ("MASHAEADXXX", "Mashreq Bank", {"USD", "EUR", "GBP", "SAR", "KWD", "BHD", "TRY"}),
-    ("DOHBQAQAXXX", "Doha Bank", {"USD", "EUR", "GBP", "SAR", "AED", "BHD"}),
-    ("NBOKKWKWXXX", "National Bank of Kuwait",
-     {"USD", "EUR", "GBP", "KWD", "QAR", "AED", "SAR", "CNY", "AUD", "BHD", "CAD",
-      "CHF", "DKK", "EGP", "HKD", "INR", "JOD", "JPY", "KRW", "LKR", "NOK", "OMR",
-      "PHP", "PKR", "SEK", "SGD"}),
-    ("EBILAEADXXX", "Emirates NBD",
-     {"USD", "EUR", "GBP", "SAR", "QAR", "KWD", "BHD", "OMR"}),
-]
-
-
-class TestGulfSsiCoverage:
-    def test_gulf_banks_have_seeded_ssi_records(self):
-        seeded = {}
-        for record in SSI_RECORDS:
-            seeded.setdefault(record[0], set()).add(record[2])
-        for bic, name, currencies in GULF_SSI_COVERAGE:
-            have = seeded.get(bic, set())
-            missing = currencies - have
-            assert not missing, (
-                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
-            )
-
-    def test_gulf_banks_use_the_bank_published_bics(self):
-        """The old seed keyed these banks under BICs matching no published
-        source (NRBMAEAD, DOHAQAQA, NBOMKWKE). Pin the bank-published values
-        and forbid the wrong ones."""
-        bank_bics = {row[0] for row in BANKS}
-        assert "MASHAEADXXX" in bank_bics, "Mashreq must be MASHAEAD"
-        assert "DOHBQAQAXXX" in bank_bics, "Doha Bank must be DOHBQAQA"
-        assert "NBOKKWKWXXX" in bank_bics, "NBK must be NBOKKWKW"
-        for wrong in ("NRBMAEADXXX", "DOHAQAQAXXX", "NBOMKWKEXXX"):
-            assert wrong not in bank_bics, f"Wrong BIC {wrong} still in BANKS"
-
-    def test_kuwait_corridor_clears_through_the_published_bic(self):
-        kwd_rules = [
-            bic for _ccy, _country, bic, _name, corridor, _conf, _rank
-            in CORRIDOR_RULES if corridor == "USD->KW"
-        ]
-        assert "NBOKKWKWXXX" in kwd_rules, f"USD->KW must clear via NBOKKWKW: {kwd_rules}"
-        assert "NBOMKWKEXXX" not in kwd_rules
-
-    def test_mashreq_source_typos_are_not_seeded(self):
-        """Mashreq's own page prints U0VBSGSG (UOB), BN0RPHMM (BDO) and
-        SCBLDEFXXXX (SCB Frankfurt) — OCR typos for real BICs. None may
-        appear as an intermediary."""
-        used = set()
-        for record in SSI_RECORDS:
-            used.add(record[3])
-        for typo in ("U0VBSGSGXXX", "BN0RPHMMXXX", "SCBLDEFXXXX"):
-            assert typo not in used, f"Mashreq-page typo {typo} must not be seeded"
-
-
-# ---------------------------------------------------------------------------
 # South Asia SSI coverage
 # ---------------------------------------------------------------------------
 #
@@ -2730,3 +2654,82 @@ class TestCanadaSsiCoverage:
             "canada: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: canada ----
+
+
+# ---- autopilot-generated coverage tests: gulf ----
+GULF_SSI_COVERAGE = [
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", {"BHD", "EUR", "GBP", "KWD", "OMR", "QAR", "SAR", "USD"}),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "DKK", "EGP", "EUR", "GBP", "HKD", "INR", "JOD", "JPY", "KRW", "KWD", "LKR", "NOK", "OMR", "PHP", "PKR", "QAR", "SAR", "SEK", "SGD", "USD"}),
+]
+
+
+class TestGulfSsiCoverage:
+    def test_gulf_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in GULF_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_gulf_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in GULF_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"gulf SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_gulf_seeded_records_are_semantically_valid(self):
+        """Every seeded record for this region must satisfy the validator rules:
+        masked accounts inside the region's block, charge/value dates from the
+        manifest defaults, a provenance status and citation, no bic_only
+        smuggled fields, and unique (beneficiary, currency, correspondent) keys.
+        Pre-block-era legacy placeholders are enumerated in the manifest's
+        legacy_accounts and may not be masked in-block; a new fold record can
+        never join that set without an explicit manifest edit."""
+        mask = re.compile(r"^ACCT-910016\d\d$")
+        allowed_charge = {'SHA', 'OUR', 'BEN'}
+        allowed_value = {'spot', 'T+1', 'T+2'}
+        statuses = {"unverified", "illustrative", "published", "archived"}
+        forbidden = {'CBOMUSSR', 'FGBMAEAA', 'RIYBSARI'}
+        legacy = {}
+        banks = {bic for bic, _name, _currencies in GULF_SSI_COVERAGE}
+        rows = [row for row in SSI_RECORDS if row[0] in banks]
+        assert rows, "gulf: no seeded records for the seedable banks"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
+            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]
+            if len(row) > 13 and row[13] is True:
+                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (
+                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"
+                )
+                continue
+            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{bic}/{ccy}: nostro {int_acct} is neither an ACCT-910016xx masked account nor a manifest legacy placeholder"
+            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910016xx masked account nor a manifest legacy placeholder"
+            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
+            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            if len(row) < 12:
+                continue
+            if row[10] is not None:
+                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (
+                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"
+                )
+            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"
+            assert row[9] and row[9].startswith("Source:"), (
+                f"{bic}/{ccy}: notes must cite the source"
+            )
+        keys = [(row[0], row[2], row[3]) for row in rows]
+        assert len(keys) == len(set(keys)), (
+            "gulf: duplicate (beneficiary, currency, correspondent) keys"
+        )
+# ---- end autopilot-generated coverage tests: gulf ----

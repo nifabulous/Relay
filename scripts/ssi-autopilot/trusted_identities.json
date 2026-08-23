@@ -96,5 +96,121 @@
     "domains": [
       "cibc.com"
     ]
+  },
+  "HDFCINBB": {
+    "name": "HDFC Bank",
+    "country": "IN",
+    "domains": [
+      "hdfc.bank.in",
+      "hdfcbank.com"
+    ]
+  },
+  "ICICINBB": {
+    "name": "ICICI Bank",
+    "country": "IN",
+    "domains": [
+      "icicibank.com"
+    ]
+  },
+  "SBININBB": {
+    "name": "State Bank of India",
+    "country": "IN",
+    "domains": [
+      "sbi.bank.in",
+      "sbi.co.in"
+    ]
+  },
+  "AXISINBB": {
+    "name": "Axis Bank",
+    "country": "IN",
+    "domains": [
+      "axis.bank.in",
+      "axisbank.com"
+    ]
+  },
+  "KKBKINBB": {
+    "name": "Kotak Mahindra Bank",
+    "country": "IN",
+    "domains": [
+      "kotak.bank.in",
+      "kotak.com"
+    ]
+  },
+  "BARBINBB": {
+    "name": "Bank of Baroda",
+    "country": "IN",
+    "domains": [
+      "bankofbaroda.in"
+    ]
+  },
+  "NBOKKWKW": {
+    "name": "National Bank of Kuwait (S.A.K.P.)",
+    "country": "KW",
+    "domains": [
+      "nbk.com"
+    ]
+  },
+  "EBILAEAD": {
+    "name": "Emirates NBD Bank (P.J.S.C.)",
+    "country": "AE",
+    "domains": [
+      "emiratesnbd.com"
+    ]
+  },
+  "AGBKBDDH": {
+    "name": "Agrani Bank PLC",
+    "country": "BD",
+    "domains": [
+      "agranibank.org"
+    ]
+  },
+  "EBLDBDDH": {
+    "name": "Eastern Bank PLC",
+    "country": "BD",
+    "domains": [
+      "ebl.com.bd"
+    ]
+  },
+  "CAFECOBB": {
+    "name": "Banco Davivienda S.A.",
+    "country": "CO",
+    "domains": [
+      "davivienda.com"
+    ]
+  },
+  "BINPPEPL": {
+    "name": "Banco Internacional del Peru (Interbank)",
+    "country": "PE",
+    "domains": [
+      "interbank.com.pe"
+    ]
+  },
+  "BECHCLRM": {
+    "name": "Banco del Estado de Chile (BancoEstado)",
+    "country": "CL",
+    "domains": [
+      "bancoestado.cl"
+    ]
+  },
+  "MENOMXMT": {
+    "name": "Banco Mercantil del Norte (Banorte) - Mexico",
+    "country": "MX",
+    "domains": [
+      "banorte.com"
+    ]
+  },
+  "BAGEPAPA": {
+    "name": "Banco General S.A. - Panama",
+    "country": "PA",
+    "domains": [
+      "bgeneral.com"
+    ]
+  },
+  "CAGRSVSS": {
+    "name": "Banco Agricola S.A. - El Salvador",
+    "country": "SV",
+    "domains": [
+      "bancoagricola.com"
+    ]
   }
 }
