@@ -66,8 +66,11 @@ function schemeRows(currency: string | undefined): SchemeRow[] {
         : { name: normalized ? `${normalized} clearing` : "Local clearing", description: "Domestic payment settlement" };
 
   return [
-    { name: "SWIFT MT103", description: "Global correspondent messaging", status: "verified" },
-    { name: domestic.name, description: domestic.description, status: "verified" },
+    // Lookup only establishes the institution identity and its directory
+    // currency. It does not establish bank-level verification or bilateral
+    // scheme membership, so currency-derived rows must remain under review.
+    { name: "SWIFT MT103", description: "Global correspondent messaging", status: "under_review" },
+    { name: domestic.name, description: domestic.description, status: "under_review" },
     { name: normalized === "GBP" ? "SEPA" : "Correspondent settlement", description: "Cross-border payment routing", status: "under_review" },
   ];
 }
@@ -216,13 +219,17 @@ export function BankDetailRoute() {
                   </svg>
                   {countryName(bank.country_code)}
                 </p>
-                <StatusChip status="verified" className="bank-detail__verified" />
+                <StatusChip status="under_review" className="bank-detail__verified" />
               </div>
             </section>
 
             <div className="bank-detail__body">
               <section className="bank-detail__schemes" aria-labelledby="bank-detail-schemes-title">
                 <h2 id="bank-detail-schemes-title">Payment schemes supported</h2>
+                <p className="bank-detail__scheme-note">
+                  Scheme availability is inferred from the directory currency and
+                  remains under review until the receiving bank confirms support.
+                </p>
                 <div className="bank-detail__scheme-list">
                   {schemeRows(bank.country_currency).map((scheme) => (
                     <div className="bank-detail__scheme-row" key={scheme.name}>

@@ -19,6 +19,65 @@ function renderBank(bic: string) {
 }
 
 describe("BankDetailRoute identity", () => {
+  it("renders evidence-safe identity, scheme, details, and payment action semantics", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "SBININBBXXX",
+          found: true,
+          bank: {
+            bic: "SBININBBXXX",
+            bank_name: "State Bank of India",
+            country_code: "IN",
+            city: "Mumbai",
+            country_currency: "INR",
+          },
+          settlement: null,
+        }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    renderBank("SBININBBXXX");
+
+    const heading = await screen.findByRole("heading", { name: "State Bank of India" });
+    const detail = heading.closest(".bank-detail")!;
+    const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(within(breadcrumb).getByRole("link", { name: "Bank Directory" })).toHaveAttribute(
+      "href",
+      "/explore/banks",
+    );
+    expect(within(breadcrumb).getByText("SBININBBXXX")).toBeVisible();
+
+    expect(within(detail).getByText("SBININBBXXX", { selector: ".bank-detail__bic" })).toBeVisible();
+    expect(within(detail).getByText("India", { selector: ".bank-detail__country" })).toBeVisible();
+    expect(detail.querySelector(".bank-detail__verified")).toHaveAttribute("aria-label", "Under review");
+    expect(detail.querySelector(".bank-detail__verified")).toBeVisible();
+    expect(detail.querySelector(".bank-detail__verified[aria-label='Verified']")).toBeNull();
+
+    const schemes = within(detail).getByRole("heading", { name: "Payment schemes supported" }).closest("section")!;
+    expect(within(schemes).getByText(/inferred from the directory currency/i)).toBeVisible();
+    expect(within(schemes).getAllByLabelText("Under review")).toHaveLength(3);
+    expect(within(schemes).queryByLabelText("Verified")).toBeNull();
+
+    const details = within(detail).getByRole("heading", { name: "Institution details" }).closest("aside")!;
+    expect(within(details).getByText("BIC")).toBeVisible();
+    expect(within(details).getByText("Country")).toBeVisible();
+    expect(within(details).getByText("City")).toBeVisible();
+    expect(within(details).getByText("Currency")).toBeVisible();
+    expect(within(details).getByRole("link", { name: "Prepare payment to this bank" })).toHaveAttribute(
+      "href",
+      "/operate/prepare?bic=SBININBBXXX",
+    );
+  });
+
   it("renders the bank's name and identity fields", async () => {
     server.use(
       http.get("/api/lookup", () =>
