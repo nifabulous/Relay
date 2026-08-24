@@ -170,6 +170,48 @@ describe("StpPage", () => {
       expect(screen.getByText(/MT103 → pacs\.008 field mapping/i)).toBeInTheDocument(),
     );
   });
+
+  it("renders the field checklist and can re-validate the current message", async () => {
+    let calls = 0;
+    server.use(
+      http.post("/api/message/stp-check", () => {
+        calls += 1;
+        return HttpResponse.json({
+          verdict: "REPAIRABLE",
+          stp_passes: true,
+          field_summary: [
+            { field: "20", field_name: "Sender's Reference", present: true, valid: true, findings: 0 },
+            { field: "71A", field_name: "Details of Charges", present: false, valid: false, findings: 1 },
+          ],
+          findings: [{
+            field: "71A",
+            field_name: "Details of Charges",
+            severity: "warning",
+            code: "STP-CHARGE-CODE-MISSING",
+            message: "Details of charges is missing.",
+            repair: "Add SHA, OUR, or BEN.",
+          }],
+          disclaimer: "Simulation only",
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<StpPage />);
+    await user.type(screen.getByLabelText(/transaction reference/i), "REF1");
+    await user.type(screen.getByLabelText(/value date/i), "2026-07-20");
+    await user.type(screen.getByLabelText(/interbank amount/i), "100000");
+    await user.click(screen.getByRole("button", { name: /check stp compliance/i }));
+
+    await waitFor(() => expect(screen.getByRole("list", { name: /stp field validation checklist/i })).toBeVisible());
+    expect(screen.getByText("Sender's Reference")).toBeVisible();
+    expect(screen.getByText("Details of Charges")).toBeVisible();
+    expect(screen.getByText("Add SHA, OUR, or BEN.")).toBeVisible();
+    expect(screen.getByLabelText(/stp score 50%/i)).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /re-validate/i }));
+    await waitFor(() => expect(calls).toBe(2));
+  });
 });
 
 describe("TrackingPage", () => {
