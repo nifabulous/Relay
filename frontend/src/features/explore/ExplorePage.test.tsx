@@ -72,7 +72,7 @@ describe("GlossaryPage", () => {
     expect(screen.getByRole("navigation", { name: "Glossary alphabetical index" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Jump to C" })).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("heading", { name: "Recently viewed" })).toBeVisible();
-    expect(screen.getAllByText("noun", { selector: "span.glossary-entry__tag" })[0]).toBeVisible();
+    expect(screen.getByText("BIC", { selector: "dt" })).toHaveAttribute("data-part-of-speech", "noun");
     expect(screen.getByLabelText("Related terms for BIC")).toBeVisible();
 
     await user.click(screen.getByRole("link", { name: "Jump to B" }));
@@ -88,6 +88,8 @@ describe("GlossaryPage", () => {
     expect(entry).not.toBeNull();
     expect(term.parentElement).toBe(entry);
     expect(entry?.querySelector("dd")?.parentElement).toBe(entry);
+    expect(entry?.querySelector("span.glossary-entry__tag")).toBeNull();
+    expect(Array.from(entry?.children ?? []).every((child) => ["DT", "DD"].includes(child.tagName))).toBe(true);
   });
 });
 

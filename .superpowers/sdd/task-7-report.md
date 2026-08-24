@@ -43,3 +43,15 @@
 
 - No filtering, query highlighting, related links, or routing behavior changed.
 - CSS remains token-only with no shadows, gradients, or dependencies; interactive letter targets remain at least 40px in the compact grid.
+
+### Re-review fix — valid definition-list grouping
+
+- Removed the standalone noun `<span>` between each `dt` and `dd`; the noun tag is now rendered by a token-only `dt::after` pseudo-element sourced from `data-part-of-speech`.
+- Moved related-term links inside the definition `dd`, so every `.glossary-entry` wrapper contains only direct `dt`/`dd` children while preserving filtering, deep links, and layout.
+- Updated the focused test to assert the data-backed noun metadata, absence of the standalone tag span, and valid direct-child grouping.
+
+### Re-review verification
+
+- `npm test -- --run src/features/explore/ExplorePage.test.tsx` — 39/39 passed.
+- `npm run build` — TypeScript and Vite build passed; Vite emitted its existing large-chunk advisory.
+- `git diff --check` — clean.

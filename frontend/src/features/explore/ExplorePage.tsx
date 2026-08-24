@@ -551,22 +551,23 @@ export function GlossaryPage() {
         highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
       ].filter(Boolean).join(" ")}
     >
-      <dt className="glossary-entry__term">{term}</dt>
-      <span className="glossary-entry__tag">noun</span>
-      <dd className="glossary-entry__def">{def}</dd>
-      {related.length > 0 && (
-        <div className="glossary-entry__related" aria-label={`Related terms for ${term}`}>
-          {related.map((relatedTerm) => (
-            <Link
-              key={relatedTerm}
-              className="glossary-entry__chip"
-              to={`/explore/glossary?term=${encodeURIComponent(relatedTerm)}`}
-            >
-              {relatedTerm}
-            </Link>
-          ))}
-        </div>
-      )}
+      <dt className="glossary-entry__term" data-part-of-speech="noun">{term}</dt>
+      <dd className="glossary-entry__def">
+        {def}
+        {related.length > 0 && (
+          <div className="glossary-entry__related" aria-label={`Related terms for ${term}`}>
+            {related.map((relatedTerm) => (
+              <Link
+                key={relatedTerm}
+                className="glossary-entry__chip"
+                to={`/explore/glossary?term=${encodeURIComponent(relatedTerm)}`}
+              >
+                {relatedTerm}
+              </Link>
+            ))}
+          </div>
+        )}
+      </dd>
     </div>
     );
   };
