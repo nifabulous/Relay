@@ -19,10 +19,31 @@ function scopeOf(scheme: CatalogueScheme): string | undefined {
     : undefined;
 }
 
+function tileLabel(scheme: CatalogueScheme): string {
+  const name = scheme.name.toLowerCase();
+  if (name.includes("faster")) return "➤";
+  if (name.includes("sepa")) return "★";
+  if (name.includes("swift")) return "◎";
+  if (name.includes("chaps")) return "✦";
+  if (name.includes("fedwire")) return "◆";
+  if (name.includes("ach")) return "×";
+  return scheme.name.slice(0, 2).toUpperCase();
+}
+
+type Availability = "available" | "limited" | "domestic";
+
+function availabilityOf(scheme: CatalogueScheme): { label: string; tone: Availability } {
+  const name = scheme.name.toLowerCase();
+  if (scopeOf(scheme)) return { label: "Available", tone: "available" };
+  if (name.includes("chaps")) return { label: "Limited", tone: "limited" };
+  if (name.includes("fedwire") || name === "ach") return { label: "Domestic", tone: "domestic" };
+  return { label: "Available", tone: "available" };
+}
+
 /**
- * Summary table/card for the catalogue. A real table (column headers,
- * row headers) that stacks into labelled cards on narrow screens via
- * `data-label` attributes — the semantics stay intact for assistive tech.
+ * Summary cards for the catalogue. The real table semantics are retained so
+ * screen readers and existing consumers still get column and row headers;
+ * CSS turns each row into a responsive card on the visual surface.
  */
 export function SchemeTable({ schemes }: { schemes: readonly CatalogueScheme[] }) {
   if (schemes.length === 0) return null;
@@ -44,16 +65,31 @@ export function SchemeTable({ schemes }: { schemes: readonly CatalogueScheme[] }
           {schemes.map((scheme) => (
             <tr key={scheme.name}>
               <th scope="row" data-label="Rail">
-                {scheme.name}
-                {scopeOf(scheme) && (
-                  <span className="scheme-table__scope">{scopeOf(scheme)}</span>
-                )}
+                <span className="scheme-table__identity">
+                  <span className={["scheme-table__tile", `scheme-table__tile--${availabilityOf(scheme).tone}`].join(" ")} aria-hidden="true">
+                    {tileLabel(scheme)}
+                  </span>
+                  <span className="scheme-table__identity-copy">
+                    <strong className="scheme-table__name">{scheme.name}</strong>
+                    {scopeOf(scheme) && (
+                      <span className="scheme-table__scope">{scopeOf(scheme)}</span>
+                    )}
+                    <span className="scheme-table__description" aria-hidden="true" data-description={scheme.useCase} />
+                  </span>
+                </span>
               </th>
-              <td data-label="Speed">{scheme.speed}</td>
-              <td data-label="Limit">{scheme.limit}</td>
-              <td data-label="Cost">{scheme.cost}</td>
-              <td data-label="Use case">{scheme.useCase}</td>
-              <td data-label="Operator">{scheme.operator}</td>
+              <td data-label="Speed"><span className="scheme-table__meta-label">Speed</span><span>{scheme.speed}</span></td>
+              <td data-label="Limit"><span className="scheme-table__meta-label">Limit</span><span>{scheme.limit}</span></td>
+              <td data-label="Cost"><span className="scheme-table__meta-label">Cost</span><span>{scheme.cost}</span></td>
+              <td data-label="Use case"><span className="scheme-table__meta-label">Use case</span><span>{scheme.useCase}</span></td>
+              <td data-label="Operator">
+                <span className="scheme-table__meta-label">Operator</span>
+                <span className="scheme-table__operator">{scheme.operator}<span className="scheme-table__arrow" aria-hidden="true">›</span></span>
+                <span className={["scheme-table__availability", `scheme-table__availability--${availabilityOf(scheme).tone}`].join(" ")}>
+                  <span className="scheme-table__availability-dot" aria-hidden="true" />
+                  {availabilityOf(scheme).label}
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>

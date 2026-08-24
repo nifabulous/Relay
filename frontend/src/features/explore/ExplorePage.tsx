@@ -439,7 +439,7 @@ export function SchemesPage() {
   );
 
   return (
-    <div className="explore">
+    <div className="explore schemes-page">
       <div className="explore__header">
         <h1>Payment Schemes</h1>
         <p className="measure">Compare domestic payment rails by speed, cost, and limits. Educational reference — always check the operator's current rules.</p>
