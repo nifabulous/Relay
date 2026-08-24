@@ -18,6 +18,14 @@ function renderBank(bic: string) {
   );
 }
 
+function closestHTMLElement(element: Element, selector: string): HTMLElement {
+  const closest = element.closest(selector);
+  if (!(closest instanceof HTMLElement)) {
+    throw new Error(`Expected ${selector} ancestor to be an HTMLElement`);
+  }
+  return closest;
+}
+
 describe("BankDetailRoute identity", () => {
   it("renders evidence-safe identity, scheme, details, and payment action semantics", async () => {
     server.use(
@@ -48,7 +56,7 @@ describe("BankDetailRoute identity", () => {
     renderBank("SBININBBXXX");
 
     const heading = await screen.findByRole("heading", { name: "State Bank of India" });
-    const detail = heading.closest(".bank-detail")!;
+    const detail = closestHTMLElement(heading, ".bank-detail");
     const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
     expect(within(breadcrumb).getByRole("link", { name: "Bank Directory" })).toHaveAttribute(
       "href",
@@ -62,12 +70,18 @@ describe("BankDetailRoute identity", () => {
     expect(detail.querySelector(".bank-detail__verified")).toBeVisible();
     expect(detail.querySelector(".bank-detail__verified[aria-label='Verified']")).toBeNull();
 
-    const schemes = within(detail).getByRole("heading", { name: "Payment schemes supported" }).closest("section")!;
+    const schemes = closestHTMLElement(
+      within(detail).getByRole("heading", { name: "Payment schemes supported" }),
+      "section",
+    );
     expect(within(schemes).getByText(/inferred from the directory currency/i)).toBeVisible();
     expect(within(schemes).getAllByLabelText("Under review")).toHaveLength(3);
     expect(within(schemes).queryByLabelText("Verified")).toBeNull();
 
-    const details = within(detail).getByRole("heading", { name: "Institution details" }).closest("aside")!;
+    const details = closestHTMLElement(
+      within(detail).getByRole("heading", { name: "Institution details" }),
+      "aside",
+    );
     expect(within(details).getByText("BIC")).toBeVisible();
     expect(within(details).getByText("Country")).toBeVisible();
     expect(within(details).getByText("City")).toBeVisible();
@@ -100,7 +114,7 @@ describe("BankDetailRoute identity", () => {
     expect(
       await screen.findByRole("heading", { name: "State Bank of India" }),
     ).toBeVisible();
-    const grid = screen.getByText("BIC").closest("dl")!;
+    const grid = closestHTMLElement(screen.getByText("BIC"), "dl");
     expect(within(grid).getByText("SBININBBXXX")).toBeVisible();
     expect(within(grid).getByText("Mumbai")).toBeVisible();
   });
@@ -656,7 +670,7 @@ describe("BankDetailRoute settlement identifiers", () => {
     renderBank("CITIUS33XXX");
 
     expect(await screen.findByRole("heading", { name: "Citibank N.A." })).toBeVisible();
-    const grid = screen.getByText("BIC").closest("dl")!;
+    const grid = closestHTMLElement(screen.getByText("BIC"), "dl");
     expect(within(grid).getByText("CHIPS participant")).toBeVisible();
     expect(within(grid).getByText("0008")).toBeVisible();
     expect(within(grid).getByText("ABA (Fedwire)")).toBeVisible();
