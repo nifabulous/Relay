@@ -41,3 +41,8 @@
 - `npm test -- --run src/features/operate/tools/OperateTools.test.tsx` — 1 file / 11 tests passed.
 - `npm run build` — TypeScript and Vite production build passed (Vite emitted the existing chunk-size warning only).
 - `git diff --check` — clean.
+
+## Responsive fix
+
+- Updated `.stp-page__result-layout` to use a single-column grid by default, with the two-column result treatment enabled only in an `@media (min-width: 1024px)` rule; removed the redundant max-width collapse from the 768px mobile block.
+- Verification: `npm test -- --run src/features/operate/tools/OperateTools.test.tsx` — 1 file / 11 tests passed; `npm test -- --run` — 95 files / 1,388 tests passed; `npm run build` — TypeScript and Vite production build passed (existing chunk-size warning only); `git diff --check` — clean.

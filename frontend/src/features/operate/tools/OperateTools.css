@@ -1095,9 +1095,15 @@
 
 .stp-page__result-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .stp-page__result-layout {
+    grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.85fr);
+  }
 }
 
 .stp-page__check-card,
@@ -1341,10 +1347,6 @@
   }
 
   .screening-page__layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .stp-page__result-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
