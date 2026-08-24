@@ -64,6 +64,20 @@ describe("GlossaryPage", () => {
     expect(screen.getByText("IBAN", { selector: "dt" }).closest(".glossary-entry"))
       .toHaveClass("glossary-entry--highlighted");
   });
+
+  it("provides the reference layout with alphabetical navigation and related terms", async () => {
+    const user = userEvent.setup();
+    renderGlossary();
+
+    expect(screen.getByRole("navigation", { name: "Glossary alphabetical index" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Jump to C" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("heading", { name: "Recently viewed" })).toBeVisible();
+    expect(screen.getAllByText("noun", { selector: "span.glossary-entry__tag" })[0]).toBeVisible();
+    expect(screen.getByLabelText("Related terms for BIC")).toBeVisible();
+
+    await user.click(screen.getByRole("link", { name: "Jump to B" }));
+    expect(screen.getByRole("link", { name: "Jump to B" })).toHaveAttribute("aria-current", "true");
+  });
 });
 
 describe("ExplorePage", () => {

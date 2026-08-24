@@ -492,10 +492,30 @@ const GLOSSARY_GROUPS = [
   { id: "tracking-messaging", label: "Tracking & messaging", terms: ["UETR", "gpi", "MT103", "pacs.008"] },
 ] as const;
 
+const GLOSSARY_RELATED: Record<string, string[]> = {
+  BIC: ["SWIFT code", "IBAN"],
+  "SWIFT code": ["BIC", "UETR"],
+  IBAN: ["MOD-97", "BIC"],
+  "MOD-97": ["IBAN"],
+  Nostro: ["Vostro", "Correspondent bank"],
+  Vostro: ["Nostro", "Correspondent bank"],
+  "Correspondent bank": ["Intermediary bank", "SSI"],
+  "Intermediary bank": ["Correspondent bank", "SSI"],
+  SSI: ["Nostro", "Vostro"],
+  UETR: ["gpi", "MT103"],
+  gpi: ["UETR", "MT103"],
+  MT103: ["pacs.008", "UETR"],
+  "pacs.008": ["MT103", "gpi"],
+};
+
+const RECENTLY_VIEWED_TERMS = ["BIC", "IBAN", "STP"];
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
 export function GlossaryPage() {
   const [searchParams] = useSearchParams();
   const highlightTerm = searchParams.get("term");
   const [filter, setFilter] = useState("");
+  const [activeLetter, setActiveLetter] = useState("C");
 
   const filtered = GLOSSARY_TERMS.filter(([term, def]) => {
     if (!filter) return true;
@@ -513,24 +533,51 @@ export function GlossaryPage() {
   const groupedTermNames = new Set<string>(GLOSSARY_GROUPS.flatMap((group) => group.terms));
   const otherEntries = filtered.filter(([term]) => !groupedTermNames.has(term));
 
-  const renderEntry = ([term, def]: [string, string]) => (
+  const letterTargets = new Map<string, string>();
+  filtered.forEach(([term]) => {
+    const letter = term.charAt(0).toUpperCase();
+    if (!letterTargets.has(letter)) letterTargets.set(letter, `glossary-term-${term.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`);
+  });
+
+  const renderEntry = ([term, def]: [string, string]) => {
+    const related = (GLOSSARY_RELATED[term] ?? []).filter((relatedTerm) => termsByName.has(relatedTerm));
+    const termId = `glossary-term-${term.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    return (
     <div
       key={term}
+      id={termId}
       className={[
         "glossary-entry",
         highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
       ].filter(Boolean).join(" ")}
     >
-      <dt className="glossary-entry__term mono">{term}</dt>
+      <div className="glossary-entry__heading">
+        <dt className="glossary-entry__term">{term}</dt>
+        <span className="glossary-entry__tag">noun</span>
+      </div>
       <dd className="glossary-entry__def">{def}</dd>
+      {related.length > 0 && (
+        <div className="glossary-entry__related" aria-label={`Related terms for ${term}`}>
+          {related.map((relatedTerm) => (
+            <Link
+              key={relatedTerm}
+              className="glossary-entry__chip"
+              to={`/explore/glossary?term=${encodeURIComponent(relatedTerm)}`}
+            >
+              {relatedTerm}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
-  );
+    );
+  };
 
   return (
-    <div className="explore">
+    <div className="explore glossary-page">
       <div className="explore__header">
         <h1>Glossary</h1>
-        <p className="measure">Payment terminology used across Relay.</p>
+        <p className="measure">Definitions for cross-border payment terms.</p>
       </div>
 
       <div className="glossary-toolbar">
@@ -557,26 +604,73 @@ export function GlossaryPage() {
           <p>Try a broader word or clear the filter to browse the full glossary.</p>
         </div>
       ) : (
-        <div className="glossary-sections">
-          {groupedTerms.map((group) => (
-            <section className="glossary-section" key={group.id} aria-labelledby={`glossary-${group.id}`}>
-              <div className="glossary-section__heading">
-                <h2 id={`glossary-${group.id}`}>{group.label}</h2>
-                <span>{group.entries.length} {group.entries.length === 1 ? "term" : "terms"}</span>
-              </div>
-              <dl className="glossary-grid">{group.entries.map(renderEntry)}</dl>
-            </section>
-          ))}
+        <div className="glossary-layout">
+          <nav className="glossary-index" aria-label="Glossary alphabetical index">
+            <span className="glossary-index__label">Jump to</span>
+            <div className="glossary-index__letters">
+              {ALPHABET.map((letter) => {
+                const target = letterTargets.get(letter);
+                return target ? (
+                  <a
+                    key={letter}
+                    href={`#${target}`}
+                    className={activeLetter === letter ? "glossary-index__letter glossary-index__letter--active" : "glossary-index__letter"}
+                    aria-label={`Jump to ${letter}`}
+                    aria-current={activeLetter === letter ? "true" : undefined}
+                    onClick={() => setActiveLetter(letter)}
+                  >
+                    {letter}
+                  </a>
+                ) : (
+                  <span key={letter} className="glossary-index__letter glossary-index__letter--disabled" aria-hidden="true">
+                    {letter}
+                  </span>
+                );
+              })}
+            </div>
+          </nav>
 
-          {otherEntries.length > 0 && (
-            <section className="glossary-section" aria-labelledby="glossary-other">
-              <div className="glossary-section__heading">
-                <h2 id="glossary-other">Other payment terms</h2>
-                <span>{otherEntries.length} terms</span>
-              </div>
-              <dl className="glossary-grid">{otherEntries.map(renderEntry)}</dl>
-            </section>
-          )}
+          <div className="glossary-results">
+            <div className="glossary-results__summary">
+              <h2>Definitions</h2>
+              <span>{filtered.length} {filtered.length === 1 ? "term" : "terms"}</span>
+            </div>
+            <div className="glossary-sections">
+              {groupedTerms.map((group) => (
+                <section className="glossary-section" key={group.id} aria-labelledby={`glossary-${group.id}`}>
+                  <div className="glossary-section__heading">
+                    <h2 id={`glossary-${group.id}`}>{group.label}</h2>
+                    <span>{group.entries.length} {group.entries.length === 1 ? "term" : "terms"}</span>
+                  </div>
+                  <dl className="glossary-grid">{group.entries.map(renderEntry)}</dl>
+                </section>
+              ))}
+
+              {otherEntries.length > 0 && (
+                <section className="glossary-section" aria-labelledby="glossary-other">
+                  <div className="glossary-section__heading">
+                    <h2 id="glossary-other">Other payment terms</h2>
+                    <span>{otherEntries.length} terms</span>
+                  </div>
+                  <dl className="glossary-grid">{otherEntries.map(renderEntry)}</dl>
+                </section>
+              )}
+            </div>
+          </div>
+
+          <aside className="glossary-recent" aria-labelledby="glossary-recent-heading">
+            <h2 id="glossary-recent-heading">Recently viewed</h2>
+            <ul className="glossary-recent__list">
+              {RECENTLY_VIEWED_TERMS.map((term) => (
+                <li key={term}>
+                  <Link to={`/explore/glossary?term=${encodeURIComponent(term)}`} className="glossary-recent__link">
+                    <span>{term}</span>
+                    <span className="glossary-recent__icon" aria-hidden="true">◷</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
       )}
     </div>
