@@ -1592,7 +1592,10 @@ class TestBangladeshSsiCoverage:
         allowed_charge = {'SHA', 'OUR', 'BEN'}
         allowed_value = {'spot', '1d', '2d', '3d', 'T+1', 'T+2'}
         statuses = {"unverified", "illustrative", "published", "archived"}
-        forbidden = {'AGRABDDH', 'BRACBDDH', 'CIBBBDDH', 'DUTBBDDH', 'EBLBBDDH', 'JANABDDH', 'SCBLDEFX', 'SONABDDH'}
+        forbidden = {
+            'AGRABDDH', 'BRACBDDH', 'CIBBBDDH', 'DUTBBDDH', 'EBLBBDDH',
+            'JANABDDH', 'SCBLDEFX', 'SCBLDEFXXXX', 'SONABDDH',
+        }
         legacy = {}
         banks = {bic for bic, _name, _currencies in BANGLADESH_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
@@ -2794,6 +2797,10 @@ class TestPakistanSsiCoverage:
             assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910033xx masked account nor a manifest legacy placeholder"
             assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
             assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+            assert len(row) == 15 and row[14] is True, (
+                f"{bic}/{ccy}: Bank Alfalah omitted charge/value terms, so the "
+                "folded ordinary row must explicitly mark them inferred"
+            )
         for row in rows:
             bic, ccy = row[0], row[2]
             if len(row) < 12:

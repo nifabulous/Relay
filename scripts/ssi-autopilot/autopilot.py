@@ -87,7 +87,12 @@ _TEST_IDENTITIES = {
 
 # These are legacy manifest values retained for compatibility. They are not
 # valid BICs and may not be introduced in new candidate payloads.
-_LEGACY_FORBIDDEN_BICS = {"NATAU3P", "ECOCIAB", "COMEGCAX"}
+_LEGACY_FORBIDDEN_BICS = {
+    "NATAU3P", "ECOCIAB", "COMEGCAX",
+    # South Asian PDFs print these malformed Frankfurt spellings; preserve
+    # the historical blocklist even though canonical admission rejects them.
+    "SCBLDEFX", "SCBLDEFXXXX",
+}
 
 
 def bic_is_valid(bic: str) -> bool:
@@ -133,7 +138,8 @@ _ADMISSION_REGION_KEYS = {"name", "label", "countries", "masked_block", "note", 
 _ADMISSION_BANK_KEYS = {"bic8", "name", "country", "currencies", "seedable", "records", "source_domains"}
 _ADMISSION_RECORD_KEYS = {
     "currency", "correspondent", "int_bic", "nostro", "with_an",
-    "charge_code", "value_date", "source", "as_of", "status", "verified_by", "bic_only",
+    "charge_code", "value_date", "source", "as_of", "status", "verified_by",
+    "bic_only", "terms_inferred",
 }
 
 
@@ -178,8 +184,10 @@ def _normalize_record(record: dict, path: str) -> dict:
     if unknown:
         raise ValueError(f"{path}: unknown fields: {', '.join(sorted(unknown))}")
     normalized = dict(record)
+    if "terms_inferred" in record and not isinstance(record["terms_inferred"], bool):
+        raise ValueError(f"{path}.terms_inferred: expected a boolean")
     bic_only = normalized.get("bic_only", False)
-    required = _ADMISSION_RECORD_KEYS - {"verified_by", "bic_only"}
+    required = _ADMISSION_RECORD_KEYS - {"verified_by", "bic_only", "terms_inferred"}
     if bic_only is True:
         required -= {"nostro", "with_an", "charge_code", "value_date"}
     missing = required - set(record)
@@ -533,7 +541,11 @@ def _validate_admission_envelope(
                 normalized_forbidden.append(canonical[:8])
             else:
                 raise ValueError(f"{path}.forbidden_bics[{forbidden_index}]: malformed BIC {value!r}")
-        if len(set(normalized_forbidden)) != len(normalized_forbidden):
+        non_legacy_forbidden = [
+            value for value in normalized_forbidden
+            if value not in _LEGACY_FORBIDDEN_BICS
+        ]
+        if len(set(non_legacy_forbidden)) != len(non_legacy_forbidden):
             raise ValueError(f"{path}.forbidden_bics: duplicate BIC")
         region["forbidden_bics"] = sorted(normalized_forbidden)
         owned_in_region = {bank["bic8"] for bank in region.get("banks", [])}
@@ -928,6 +940,18 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 )
                 raw_bic_only = False
             bic_only = bool(raw_bic_only)
+            raw_terms_inferred = rec.get("terms_inferred", False)
+            if not isinstance(raw_terms_inferred, bool):
+                problems.append(
+                    f"{ben_bic}/{ccy}: terms_inferred must be a boolean, "
+                    f"got {type(raw_terms_inferred).__name__}"
+                )
+                raw_terms_inferred = False
+            terms_inferred = bool(raw_terms_inferred)
+            if bic_only and terms_inferred:
+                problems.append(
+                    f"{ben_bic}/{ccy}: terms_inferred applies only to ordinary rows"
+                )
 
             # The correspondent name is what a learner reads next to the BIC.
             if not correspondent:
@@ -1139,14 +1163,15 @@ def _canonical_bic11(value: object, path: str) -> str:
 
 def _fold_row_shape(row: tuple[str, ...], *, enforce_invariants: bool = True) -> dict:
     """Parse supported SSI tuple layouts into named, position-safe fields."""
-    if not isinstance(row, tuple) or len(row) not in (12, 13, 14):
+    if not isinstance(row, tuple) or len(row) not in (12, 13, 14, 15):
         got = len(row) if isinstance(row, tuple) else type(row).__name__
-        raise ValueError(f"SSI row has unsupported tuple arity {got}; expected 12, 13, or 14 fields")
+        raise ValueError(f"SSI row has unsupported tuple arity {got}; expected 12, 13, 14, or 15 fields")
     values = [_literal(field) for field in row]
     fields = dict(zip(
         ("beneficiary_bic", "beneficiary_name", "currency", "intermediary_bic",
          "correspondent", "nostro", "with_an", "charge_code", "value_date",
-         "notes", "as_of", "status", "verified_by", "bic_only"), values
+         "notes", "as_of", "status", "verified_by", "bic_only",
+         "terms_inferred"), values
     ))
     fields["beneficiary_bic"] = _canonical_bic11(fields["beneficiary_bic"], "folded beneficiary BIC")
     fields["intermediary_bic"] = _canonical_bic11(fields["intermediary_bic"], "folded intermediary BIC")
@@ -1155,11 +1180,17 @@ def _fold_row_shape(row: tuple[str, ...], *, enforce_invariants: bool = True) ->
     if len(row) == 12:
         fields["verified_by"] = None
         fields["bic_only"] = False
+        fields["terms_inferred"] = False
     elif len(row) == 13:
         fields["bic_only"] = False
+        fields["terms_inferred"] = False
     else:
         if not isinstance(fields["bic_only"], bool):
             raise ValueError("folded 14-field row bic_only must be the boolean literal True or False")
+        if len(row) == 15 and not isinstance(fields["terms_inferred"], bool):
+            raise ValueError("folded 15-field row terms_inferred must be the boolean literal True or False")
+        elif len(row) == 14:
+            fields["terms_inferred"] = False
     if enforce_invariants:
         verified_by = fields["verified_by"]
         if verified_by is not None and not isinstance(verified_by, str):
@@ -1254,7 +1285,13 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
                 problems.append(f"{key[0]}/{key[1]}: folded bic_only {fields['bic_only']!r} does not match validated {bic_only!r}")
         comparisons = {"beneficiary_name": bank.get("name", ""), "correspondent": rec.get("correspondent", ""), "as_of": rec.get("as_of", ""), "status": str(rec.get("status", "")).strip().lower()}
         if not bic_only:
-            comparisons.update({"nostro": rec.get("nostro", ""), "with_an": rec.get("with_an", ""), "charge_code": str(rec.get("charge_code", "")).upper(), "value_date": rec.get("value_date", "")})
+            comparisons.update({
+                "nostro": rec.get("nostro", ""),
+                "with_an": rec.get("with_an", ""),
+                "charge_code": str(rec.get("charge_code", "")).upper(),
+                "value_date": rec.get("value_date", ""),
+                "terms_inferred": rec.get("terms_inferred", False),
+            })
         else:
             comparisons.update({"nostro": None, "with_an": None, "charge_code": None, "value_date": None})
         for field, want in comparisons.items():
@@ -1521,7 +1558,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
         # SSI rows carry optional provenance: 12 adds as_of and status, 13
         # adds the verifier that "published" requires, 14 adds the bic_only
         # flag (a bank-level list with no account numbers).
-        expected = (5,) if name == "BANKS" else (10, 12, 13, 14)
+        expected = (5,) if name == "BANKS" else (10, 12, 13, 14, 15)
         for i, e in enumerate(elts):
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
                 got = len(e.elts) if isinstance(e, ast.Tuple) else type(e).__name__

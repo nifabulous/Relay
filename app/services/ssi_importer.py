@@ -154,6 +154,14 @@ def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
     if normalized.get("status") in SOURCED_SSI_STATUSES and not normalized.get("notes"):
         normalized["status"] = "illustrative"
 
+    terms_inferred = raw.get("terms_inferred", False)
+    if not isinstance(terms_inferred, bool):
+        errors.append(
+            f"Invalid terms_inferred: {terms_inferred!r} (must be a boolean)"
+        )
+    else:
+        normalized["terms_inferred"] = terms_inferred
+
     charge = normalize_charge_code(raw.get("charge_code") or "SHA")
     if charge not in VALID_CHARGE_CODES:
         errors.append(f"Invalid charge_code: {charge!r} (must be OUR/SHA/BEN)")
@@ -282,6 +290,7 @@ def load_ssi_rows(session: Session, rows: List[dict]) -> SSIImportResult:
             # it supersedes any bic_only (availability-only) row, which by
             # definition stores none of those.
             existing.bic_only = False
+            existing.terms_inferred = normalized["terms_inferred"]
             existing.intermediary_account = normalized["intermediary_account"]
             existing.beneficiary_account = normalized["beneficiary_account"]
             existing.charge_code = normalized["charge_code"]

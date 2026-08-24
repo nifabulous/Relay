@@ -492,12 +492,20 @@ class TestSSIModel:
             assert row.charge_code is None
             assert row.value_date is None
 
-    def test_enbd_bic_only_coverage_matches_the_charges_pdf(self):
-        """The reviewed ENBD source is a BIC-only charges list for eight currencies."""
-        from app.services.seed import SSI_RECORDS
+    def test_enbd_bic_only_coverage_matches_the_charges_pdf(self, db_session_clean):
+        """Persisted ENBD coverage must match the reviewed BIC-only source."""
+        from sqlalchemy import select
 
-        currencies = {r[2] for r in SSI_RECORDS if r[0] == "EBILAEADXXX"}
-        assert currencies == {"USD", "EUR", "GBP", "SAR", "QAR", "KWD", "BHD", "OMR"}
+        from app.models import SSI
+
+        rows = db_session_clean.execute(
+            select(SSI).where(SSI.beneficiary_bic == "EBILAEADXXX")
+        ).scalars().all()
+        assert rows
+        assert {row.currency for row in rows} == {
+            "BHD", "EUR", "GBP", "KWD", "OMR", "QAR", "SAR", "USD"
+        }
+        assert all(row.bic_only for row in rows)
 
     def test_ssi_query_by_bic_and_currency(self, db_session_clean):
         from sqlalchemy import select
@@ -1988,7 +1996,7 @@ class TestResearchCanActuallyPublishThroughTheSeed:
             / "scripts" / "ssi-autopilot" / "autopilot.py"
         )
         source = script.read_text()
-        assert "(10, 12, 13, 14)" in source, "a 14-field bic_only row would fail verify"
+        assert "(10, 12, 13, 14, 15)" in source, "a 15-field terms_inferred row would fail verify"
         result = subprocess.run(
             [sys.executable, str(script), "verify"], capture_output=True, text=True
         )

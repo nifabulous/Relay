@@ -499,6 +499,11 @@ def _seed_fingerprint(row: SSI) -> str:
         row.verified_by,
         row.bic_only,
     )
+    # Older fingerprints predate terms_inferred. Omitting the field when false
+    # keeps those machine-owned snapshots valid; a true flag changes the hash,
+    # which is exactly the source-shape change we want reconciliation to see.
+    if row.terms_inferred:
+        values += (True,)
     payload = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -2823,131 +2828,131 @@ SSI_RECORDS = [
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "AED",
      "ALFHAEADXXX", "Bank Alfalah Limited Dubai",
      "ACCT-91003315", "ACCT-91003315", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "AUD",
      "WPACAU2SXXX", "Westpac Banking Corporation, Sydney, Australia",
      "ACCT-91003334", "ACCT-91003334", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "CAD",
      "BOFMCAM2XXX", "Bank of Montreal, Montreal, Canada",
      "ACCT-91003335", "ACCT-91003335", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "CHF",
      "COBADEFFXXX", "Commerzbank, Frankfurt, Germany",
      "ACCT-91003340", "ACCT-91003340", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "CNY",
      "BKCHPKKAXXX", "Bank of China, Karachi",
      "ACCT-91003303", "ACCT-91003303", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "CNY",
      "SCBLCNSXSHA", "Standard Chartered Bank (China) Limited, Shanghai, China",
      "ACCT-91003337", "ACCT-91003337", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "DKK",
      "DABADKKKXXX", "Danske Bank, Copenhagen, Denmark",
      "ACCT-91003343", "ACCT-91003344", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "BCITITMMXXX", "Intesa Sanpaolo SpA, Milan, Italy",
      "ACCT-91003332", "ACCT-91003333", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "BKAUATWWXXX", "Unicredit Bank Austria AG, Vienna, Austria",
      "ACCT-91003326", "ACCT-91003327", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "CHASDEFXXXX", "JP Morgan, Frankfurt, Germany",
      "ACCT-91003307", "ACCT-91003307", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "COBADEFFXXX", "Commerzbank, A.G., Frankfurt, Germany",
      "ACCT-91003324", "ACCT-91003325", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "HABBBEBBXXX", "Habib Bank Limited, Brussels, Belgium",
      "ACCT-91003328", "ACCT-91003329", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "HYVEDEMMXXX", "UniCredit Bank AG, Munich, Germany",
      "ACCT-91003305", "ACCT-91003305", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "NBPADEFFXXX", "National Bank of Pakistan, Frankfurt, Germany",
      "ACCT-91003330", "ACCT-91003331", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "SCBLDEFFXXX", "Standard Chartered Bank (Germany) GmbH, Frankfurt, Germany",
      "ACCT-91003306", "ACCT-91003306", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "EUR",
      "UNCRITMMXXX", "UNICREDIT SPA, Milan, Italy",
      "ACCT-91003304", "ACCT-91003304", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "GBP",
      "CHASGB2LXXX", "JP Morgan, London, U.K.",
      "ACCT-91003309", "ACCT-91003310", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "GBP",
      "HABBGB2LXXX", "Habib Allied Int’l Bank plc, London, U.K.",
      "ACCT-91003322", "ACCT-91003323", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "GBP",
      "NWBKGB2LXXX", "National Westminster Bank plc, London, U.K.",
      "ACCT-91003321", "ACCT-91003321", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "GBP",
      "SCBLGB2LXXX", "Standard Chartered Bank, London, U.K.",
      "ACCT-91003311", "ACCT-91003311", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "HKD",
      "HABBHKHHXXX", "Habib Finance Int’l Limited, Hong Kong",
      "ACCT-91003336", "ACCT-91003336", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "JPY",
      "NBPAJPJTXXX", "National Bank of Pakistan, Tokyo, Japan",
      "ACCT-91003308", "ACCT-91003308", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "SAR",
      "AAALSARIXXX", "Saudi Hollandi Bank, Riyadh, Saudi Arabia",
      "ACCT-91003341", "ACCT-91003342", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "SAR",
      "ALBISARIXXX", "Bank Al Bilad",
      "ACCT-91003316", "ACCT-91003316", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "SEK",
      "NDEASESSXXX", "Nordea Bank Sweden AB (Publ), Stockholm, Sweden",
      "ACCT-91003339", "ACCT-91003339", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "SGD",
      "HABBSGSGXXX", "Habib Bank Limited, Singapore",
      "ACCT-91003338", "ACCT-91003338", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York, U.S.A.",
      "ACCT-91003319", "ACCT-91003319", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "CHASUS33XXX", "JP Morgan, New York, U.S.A.",
      "ACCT-91003314", "ACCT-91003314", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "CITIUS33XXX", "Citibank N.A., New York, U.S.A.",
      "ACCT-91003318", "ACCT-91003318", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "HANYUS33XXX", "Habib American Bank, New York, U.S.A.",
      "ACCT-91003317", "ACCT-91003317", "SHA", "spot",
-     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived"),
+     "Source: https://web.archive.org/web/20150321230452id_/http://www.bankalfalah.com/cltp-content/uploads/2013/02/20141203-Nostro-Accounts-for-Pakistan-Conventional-Banking-WEBSITE-UPDATE.pdf (as of 2015-03-21). " + _SSI_REAL_NOTE, "2015-03-21", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "MSHQUS33XXX", "Mashreqbank PJSC",
      "ACCT-91003312", "ACCT-91003312", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank",
      "ACCT-91003313", "ACCT-91003313", "SHA", "spot",
-     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived"),
+     "Source: https://web.archive.org/web/20250920073101/https://www.bankalfalah.com/islamic-banking/treasury-capital-markets/nostro-accounts/ (as of 2025-09-20). " + _SSI_REAL_NOTE, "2025-09-20", "archived", None, False, True),
     # ---- Habib Bank (HABBPKKA) ----
     ("HABBPKKAXXX", "Habib Bank", "USD",
      "CITIUS33XXX", "Citibank NA, New York",
@@ -6189,6 +6194,18 @@ def seed_if_empty(session) -> dict:
             bic_only = provenance[3]
         else:
             bic_only = False
+        # A 5th provenance element marks charge/value-date values inferred
+        # because the bank source omitted them. Like bic_only, it must be a
+        # real boolean so a string cannot change routing behavior.
+        if len(provenance) > 4:
+            if not isinstance(provenance[4], bool):
+                raise ValueError(
+                    f"SSI row {ben_bic}/{ccy}/{int_bic}: terms_inferred must "
+                    f"be a Python boolean, got {provenance[4]!r}"
+                )
+            terms_inferred = provenance[4]
+        else:
+            terms_inferred = False
         existing = session.query(SSI).filter(
             SSI.beneficiary_bic == ben_bic,
             SSI.currency == ccy,
@@ -6210,6 +6227,7 @@ def seed_if_empty(session) -> dict:
                 status=status,
                 verified_by=verified_by,
                 bic_only=bic_only,
+                terms_inferred=terms_inferred,
             )
             seeded.seed_fingerprint = _seed_fingerprint(seeded)
             session.add(seeded)
@@ -6233,6 +6251,7 @@ def seed_if_empty(session) -> dict:
                 and existing.status == status
                 and existing.verified_by == verified_by
                 and existing.bic_only == bic_only
+                and existing.terms_inferred == terms_inferred
             )
             # A source shape change is destructive for an ordinary row. A
             # fingerprint mismatch means an operator may have supplied real
@@ -6280,7 +6299,8 @@ def seed_if_empty(session) -> dict:
                 existing.status,
                 existing.verified_by,
                 existing.bic_only,
-            ) != (as_of, status, verified_by, bic_only)
+                existing.terms_inferred,
+            ) != (as_of, status, verified_by, bic_only, terms_inferred)
             # A sourced status and its citation are source-controlled. Refresh
             # the citation even when provenance is unchanged, while retaining
             # an operator note as a second line instead of leaving the row
@@ -6309,6 +6329,7 @@ def seed_if_empty(session) -> dict:
                     existing.status = status
                     existing.verified_by = verified_by
                     existing.bic_only = bic_only
+                    existing.terms_inferred = terms_inferred
                     if bic_only:
                         # Becoming bic_only must shed the account/charge/value
                         # fields the row used to carry; leaving them behind would

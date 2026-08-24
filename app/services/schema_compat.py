@@ -48,6 +48,7 @@ _TABLE_PATCHES = {
         # rebuild after the columns land.
         ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
         ("seed_fingerprint VARCHAR(64)", "seed_fingerprint"),
+        ("terms_inferred BOOLEAN NOT NULL DEFAULT 0", "terms_inferred"),
     ),
 }
 

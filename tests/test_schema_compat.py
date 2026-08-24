@@ -285,6 +285,7 @@ class TestCurrentSchemaIsANoop:
             "status",
             "bic_only",
             "seed_fingerprint",
+            "terms_inferred",
         }
         columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
         assert set(columns_before) == expected_columns

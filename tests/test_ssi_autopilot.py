@@ -1784,6 +1784,7 @@ def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
     ("gulf", "EBILAEAD"),
     ("bangladesh", "AGBKBDDH"),
     ("bangladesh", "EBLDBDDH"),
+    ("pakistan", "ALFHPKKA"),
     ("andean", "CAFECOBB"),
     ("andean", "BINPPEPL"),
     ("andean", "BECHCLRM"),
