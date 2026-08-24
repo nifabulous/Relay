@@ -946,7 +946,7 @@
 
   .glossary-index__letter {
     width: 100%;
-    min-height: 40px;
+    min-height: calc(var(--space-5) + var(--space-4) + var(--space-1));
     border-bottom: 2px solid transparent;
     border-left: 0;
   }

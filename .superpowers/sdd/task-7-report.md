@@ -42,7 +42,17 @@
 ### Fix self-review
 
 - No filtering, query highlighting, related links, or routing behavior changed.
-- CSS remains token-only with no shadows, gradients, or dependencies; interactive letter targets remain at least 40px in the compact grid.
+- CSS remains token-only with no shadows, gradients, or dependencies; interactive letter targets remain at least 44px in the compact grid.
+
+### Review follow-up — mobile target size
+
+- Increased compact-grid alphabet targets to a token-only 44px minimum (`calc(var(--space-5) + var(--space-4) + var(--space-1))`) to satisfy the responsive accessibility contract.
+
+### Follow-up verification
+
+- `npm test -- --run src/features/explore/ExplorePage.test.tsx` — 39/39 passed.
+- `npm run build` — TypeScript and Vite build passed; Vite emitted its existing large-chunk advisory.
+- `git diff --check` — clean.
 
 ### Re-review fix — valid definition-list grouping
 
