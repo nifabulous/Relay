@@ -948,6 +948,13 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 )
                 raw_terms_inferred = False
             terms_inferred = bool(raw_terms_inferred)
+            identity = TRUSTED_SOURCE_IDENTITIES.get(ben_bic, {})
+            terms_published = bool(identity.get("settlement_terms_published", True))
+            if not bic_only and not terms_published and not terms_inferred:
+                problems.append(
+                    f"{ben_bic}/{ccy}: trusted source omits settlement terms; "
+                    "terms_inferred must be true"
+                )
             if bic_only and terms_inferred:
                 problems.append(
                     f"{ben_bic}/{ccy}: terms_inferred applies only to ordinary rows"

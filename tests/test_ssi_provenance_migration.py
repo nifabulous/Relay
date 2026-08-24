@@ -581,3 +581,61 @@ class TestBicOnlyMigration:
             )
         finally:
             _BIC_ONLY_MIGRATION.op = None
+
+
+@pytest.mark.skipif(
+    subprocess.run([sys.executable, "-m", "alembic", "--help"],
+                   capture_output=True).returncode != 0,
+    reason="alembic CLI unavailable",
+)
+def test_terms_inferred_migration_round_trip_preserves_triggers(tmp_path):
+    """An existing database gets the flag and keeps as_of triggers through both
+    SQLite batch rebuilds; downgrade refuses to discard an inferred label."""
+    db = tmp_path / "terms-inferred.db"
+    assert _alembic(db, "upgrade", "20260820_ssi_seed_fingerprint").returncode == 0
+
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+        "as_of, charge_code, value_date) VALUES "
+        "('AAAAPKKAXXX', 'USD', 'CITIUS33XXX', 'archived', 'Source: x', "
+        "'2025-09-20', 'SHA', 'spot')"
+    )
+    connection.commit()
+    connection.close()
+    assert _alembic(db, "upgrade", "head").returncode == 0
+
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "UPDATE ssi SET terms_inferred = 1 WHERE beneficiary_bic = 'AAAAPKKAXXX'"
+    )
+    connection.commit()
+    ddl = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE name='ssi'"
+    ).fetchone()[0]
+    column = next(
+        row for row in connection.execute("PRAGMA table_info(ssi)")
+        if row[1] == "terms_inferred"
+    )
+    assert column[3] == 1
+    assert "ck_ssi_inferred_terms_are_labeled_placeholders" in ddl
+    connection.close()
+    result = _alembic(db, "downgrade", "20260820_ssi_seed_fingerprint")
+    assert result.returncode != 0
+    assert "Refusing to remove terms_inferred" in result.stderr
+
+    connection = sqlite3.connect(db)
+    connection.execute("UPDATE ssi SET terms_inferred = 0")
+    connection.commit()
+    connection.close()
+    assert _alembic(db, "downgrade", "20260820_ssi_seed_fingerprint").returncode == 0
+
+    connection = sqlite3.connect(db)
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(ssi)")}
+    triggers = [row[0] for row in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='trigger'"
+    )]
+    connection.close()
+    assert "terms_inferred" not in columns
+    assert "ssi_as_of_insert" in triggers
+    assert "ssi_as_of_update" in triggers

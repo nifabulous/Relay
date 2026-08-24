@@ -104,8 +104,7 @@ describe("RelayDialog", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(screen.getByRole("button", { name: /page control/i }));
 
-    const pageControl = screen.getByRole("button", { name: /page control/i });
-    expect(pageControl).toBeEnabled();
+    expect(screen.getByRole("button", { name: /page control/i })).toHaveFocus();
     expect(dialog).toBeInTheDocument();
   });
 

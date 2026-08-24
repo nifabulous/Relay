@@ -505,7 +505,17 @@ class TestSSIModel:
         assert {row.currency for row in rows} == {
             "BHD", "EUR", "GBP", "KWD", "OMR", "QAR", "SAR", "USD"
         }
-        assert all(row.bic_only for row in rows)
+        assert all(
+            row.bic_only
+            and row.intermediary_account is None
+            and row.beneficiary_account is None
+            and row.charge_code is None
+            and row.value_date is None
+            and row.status == "unverified"
+            and row.as_of == "2026-05-01"
+            and row.notes.startswith("Source: https://www.emiratesnbd.com/")
+            for row in rows
+        )
 
     def test_ssi_query_by_bic_and_currency(self, db_session_clean):
         from sqlalchemy import select

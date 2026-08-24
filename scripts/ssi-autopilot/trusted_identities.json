@@ -2,6 +2,7 @@
   "ALFHPKKA": {
     "name": "Bank Alfalah Limited",
     "country": "PK",
+    "settlement_terms_published": false,
     "domains": [
       "bankalfalah.com"
     ]

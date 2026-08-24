@@ -1,4 +1,4 @@
-import { useRef, type ReactElement, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, type ReactElement, type ReactNode, type RefObject } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 
 export interface RelayDialogProps {
@@ -27,6 +27,25 @@ export function RelayDialog({
   children,
 }: RelayDialogProps) {
   const popupRef = useRef<HTMLDivElement>(null);
+
+  // A non-modal dialog must leave the page operable. Base UI can move focus
+  // back into the popup during an outside press, so restore the pressed page
+  // control while the dialog deliberately remains open.
+  useEffect(() => {
+    if (!open) return;
+
+    let cleanup: (() => void) | undefined;
+    let disposed = false;
+    import("./preserveDialogOutsideFocus").then(({ preserveDialogOutsideFocus }) => {
+      if (!disposed) {
+        cleanup = preserveDialogOutsideFocus(popupRef, popupId);
+      }
+    });
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [open, popupId]);
 
   return (
     <Dialog.Root

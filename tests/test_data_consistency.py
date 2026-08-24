@@ -1742,19 +1742,9 @@ class TestAndeanSsiCoverage:
         )
 
     def test_andean_seeded_records_are_semantically_valid(self):
-        """Every seeded record for this region must satisfy the validator rules:
-        masked accounts inside the region's block, charge/value dates from the
-        manifest defaults, a provenance status and citation, no bic_only
-        smuggled fields, and unique (beneficiary, currency, correspondent) keys.
-        Pre-block-era legacy placeholders are enumerated in the manifest's
-        legacy_accounts and may not be masked in-block; a new fold record can
-        never join that set without an explicit manifest edit."""
-        mask = re.compile(r"^ACCT-910022\d\d$")
-        allowed_charge = {'SHA', 'OUR', 'BEN'}
-        allowed_value = {'spot', '1d', '2d', '3d', 'T+1', 'T+2'}
+        """Andean sources publish availability only: every row must remain BIC-only."""
         statuses = {"unverified", "illustrative", "published", "archived"}
         forbidden = {'BBOGCOBM', 'BECECLRM', 'CAVDCOBB', 'CHBLCLRM'}
-        legacy = {}
         banks = {bic for bic, _name, _currencies in ANDEAN_SSI_COVERAGE}
         rows = [row for row in SSI_RECORDS if row[0] in banks]
         assert rows, "andean: no seeded records for the seedable banks"
@@ -1762,15 +1752,18 @@ class TestAndeanSsiCoverage:
             bic, ccy = row[0], row[2]
             assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
             int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]
-            if len(row) > 13 and row[13] is True:
-                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (
-                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"
-                )
-                continue
-            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{bic}/{ccy}: nostro {int_acct} is neither an ACCT-910022xx masked account nor a manifest legacy placeholder"
-            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910022xx masked account nor a manifest legacy placeholder"
-            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
-            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+            assert len(row) == 14 and row[13] is True, (
+                f"{bic}/{ccy}: Andean source has no accounts/terms; row must be BIC-only"
+            )
+            assert int_acct is None and ben_acct is None, (
+                f"{bic}/{ccy}: BIC-only source must not gain account placeholders"
+            )
+            assert charge is None and vdate is None, (
+                f"{bic}/{ccy}: BIC-only source must not gain inferred settlement terms"
+            )
+            assert "BIC-level list" in row[9] and "no account numbers published" in row[9], (
+                f"{bic}/{ccy}: note must preserve the source-shape limitation"
+            )
         for row in rows:
             bic, ccy = row[0], row[2]
             if len(row) < 12:

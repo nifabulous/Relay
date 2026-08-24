@@ -1456,8 +1456,14 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                 assert row["as_of"] == rec["as_of"], key
                 assert row["status"] == rec["status"].strip().lower(), key
                 assert bool(row.get("bic_only")) is (rec.get("bic_only") is True), key
+                source_citation = f"Source: {rec['source']} (as of {rec['as_of']})"
+                if rec.get("bic_only") is True and "BIC-level list" in row["notes"]:
+                    source_citation += (
+                        " BIC-level list — no account numbers published; "
+                        "not a selectable settlement instruction"
+                    )
                 expected_note = (
-                    f"Source: {rec['source']} (as of {rec['as_of']}). "
+                    f"{source_citation}. "
                     "Sourced from bank-published SSI page. Verify current values before use."
                 )
                 assert row["notes"] == expected_note, f"{key}: note drifted from the canonical citation"
@@ -1471,6 +1477,33 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                     assert row["value_date"] == rec["value_date"], key
                 checked += 1
     assert checked >= 170, f"only {checked} admitted records cross-checked; expected the wave data"
+
+
+def test_pakistan_candidate_evidence_preserves_inferred_terms():
+    """Candidate provenance must survive unchanged into the admission ledger."""
+    candidate_path = Path(__file__).resolve().parents[1] / (
+        "scripts/ssi-autopilot/results/candidates-pakistan.json"
+    )
+    candidates = json.loads(candidate_path.read_text())
+    region = autopilot.get_region(candidates, "pakistan")
+    bank = region["banks"][0]
+    normalized = [
+        autopilot._normalize_record(record, f"candidates[{index}]")
+        for index, record in enumerate(bank["records"])
+    ]
+
+    manifest_bank = autopilot.get_region(MANIFEST, "pakistan")["banks"][0]
+    expected = sorted(manifest_bank["admitted_records"], key=autopilot._record_sort_key)
+    actual = sorted(normalized, key=autopilot._record_sort_key)
+    assert actual == expected
+    assert all(record["terms_inferred"] is True for record in actual)
+    assert all(record["bic_only"] is False for record in actual)
+
+    results = {
+        "region": "pakistan",
+        "banks": [{"bic": bank["bic8"], "name": bank["name"], "records": bank["records"]}],
+    }
+    assert autopilot.validate_results(results, MANIFEST) == []
 
 
 WAVE_REGIONS = ["singapore", "indonesia", "uganda", "hong-kong", "taiwan", "canada"]
@@ -1824,6 +1857,8 @@ def test_recovered_wave_identities_admit_on_the_production_path(tmp_path, monkey
             "status": "unverified",
         }],
     }
+    if bic == "ALFHPKKA":
+        bank["records"][0]["terms_inferred"] = True
     summary = autopilot.admit_candidates(
         {"regions": [{"name": region_name, "banks": [bank]}]}
     )
