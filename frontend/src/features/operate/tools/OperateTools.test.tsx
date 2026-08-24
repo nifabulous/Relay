@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -99,6 +99,37 @@ describe("ValueDatePage", () => {
     expect(screen.getByLabelText(/send date/i)).toBeVisible();
     expect(screen.getByLabelText(/currency/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /calculate/i })).toBeVisible();
+  });
+
+  it("shows the settlement date details and week legend from the response", async () => {
+    server.use(
+      http.post("/api/value-date", () => HttpResponse.json({
+        trade_date: "2026-05-14",
+        cut_off_local: "14:00",
+        cut_off_tz: "Europe/London",
+        cut_off_note: "",
+        missed_cut_off: false,
+        value_date: "2026-05-18",
+        settlement_type: "T+2",
+        business_days: 2,
+        skipped_holidays: ["2026-05-20"],
+        explanation: "Settlement rolls around the holiday.",
+        disclaimer: "Simulation only",
+      })),
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<ValueDatePage />);
+    fireEvent.change(screen.getByLabelText(/send date/i), { target: { value: "2026-05-14T12:00" } });
+    await user.click(screen.getByRole("button", { name: /calculate/i }));
+
+    await waitFor(() => expect(screen.getByText("18 May 2026")).toBeVisible());
+    expect(screen.getByText(/2026-05-20/)).toBeVisible();
+    expect(screen.getByRole("list", { name: /settlement week days/i })).toBeVisible();
+    expect(screen.getAllByRole("listitem")).toHaveLength(7);
+    expect(screen.getByRole("listitem", { name: /public holiday/i })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: /settlement date/i })).toBeVisible();
+    expect(screen.getByText(/simulation.*not a real payment/i)).toBeVisible();
   });
 });
 
