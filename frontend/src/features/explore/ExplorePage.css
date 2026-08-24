@@ -713,6 +713,10 @@
 }
 
 .glossary-entry {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-2);
   min-width: 0;
   padding: var(--space-4);
   background: var(--color-surface);
@@ -720,14 +724,6 @@
   border-radius: var(--radius-control);
   transition: border-color var(--duration-fast) var(--ease),
     background var(--duration-fast) var(--ease);
-}
-
-.glossary-entry__heading {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
 }
 
 .glossary-entry--highlighted {
@@ -740,6 +736,8 @@
 }
 
 .glossary-entry__term {
+  min-width: 0;
+  margin: 0;
   font-weight: 600;
   color: var(--color-ink-strong);
   font-size: var(--text-xl);
@@ -758,6 +756,7 @@
 }
 
 .glossary-entry__related {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -786,6 +785,8 @@
 }
 
 .glossary-entry__def {
+  grid-column: 1 / -1;
+  margin: var(--space-4) 0 0;
   font-size: var(--text-sm);
   color: var(--color-ink);
   line-height: var(--leading-snug);
@@ -935,7 +936,7 @@
 
   .glossary-index__letters {
     display: grid;
-    grid-template-columns: repeat(13, minmax(24px, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: var(--space-1);
     min-height: 0;
   }

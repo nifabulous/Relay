@@ -78,6 +78,17 @@ describe("GlossaryPage", () => {
     await user.click(screen.getByRole("link", { name: "Jump to B" }));
     expect(screen.getByRole("link", { name: "Jump to B" })).toHaveAttribute("aria-current", "true");
   });
+
+  it("keeps each definition term and description directly grouped in the definition list", () => {
+    renderGlossary();
+
+    const term = screen.getByText("BIC", { selector: "dt" });
+    const entry = term.closest(".glossary-entry");
+
+    expect(entry).not.toBeNull();
+    expect(term.parentElement).toBe(entry);
+    expect(entry?.querySelector("dd")?.parentElement).toBe(entry);
+  });
 });
 
 describe("ExplorePage", () => {

@@ -551,10 +551,8 @@ export function GlossaryPage() {
         highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
       ].filter(Boolean).join(" ")}
     >
-      <div className="glossary-entry__heading">
-        <dt className="glossary-entry__term">{term}</dt>
-        <span className="glossary-entry__tag">noun</span>
-      </div>
+      <dt className="glossary-entry__term">{term}</dt>
+      <span className="glossary-entry__tag">noun</span>
       <dd className="glossary-entry__def">{def}</dd>
       {related.length > 0 && (
         <div className="glossary-entry__related" aria-label={`Related terms for ${term}`}>
