@@ -639,3 +639,19 @@ def test_terms_inferred_migration_round_trip_preserves_triggers(tmp_path):
     assert "terms_inferred" not in columns
     assert "ssi_as_of_insert" in triggers
     assert "ssi_as_of_update" in triggers
+    connection = sqlite3.connect(db)
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="as_of must be a real calendar date",
+    ):
+        connection.execute(
+            "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, status, notes, "
+            "as_of) VALUES ('BBBAPKKAXXX', 'USD', 'CITIUS33XXX', 'archived', "
+            "'Source: x', '2999-01-01')"
+        )
+    connection.rollback()
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="as_of must be a real calendar date",
+    ):
+        connection.execute("UPDATE ssi SET as_of = '2999-01-01'")

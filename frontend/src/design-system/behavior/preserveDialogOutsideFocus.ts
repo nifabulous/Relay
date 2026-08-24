@@ -25,6 +25,7 @@ export function preserveDialogOutsideFocus(
     if (!outsideTarget || !(focused instanceof Element)) return;
     if (!popupRef.current?.contains(focused)) return;
     const restoreTarget = outsideTarget;
+    outsideTarget = null;
     window.setTimeout(() => {
       if (
         document.activeElement === focused &&

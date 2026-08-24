@@ -1457,7 +1457,7 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                 assert row["status"] == rec["status"].strip().lower(), key
                 assert bool(row.get("bic_only")) is (rec.get("bic_only") is True), key
                 source_citation = f"Source: {rec['source']} (as of {rec['as_of']})"
-                if rec.get("bic_only") is True and "BIC-level list" in row["notes"]:
+                if rec.get("bic_only") is True:
                     source_citation += (
                         " BIC-level list — no account numbers published; "
                         "not a selectable settlement instruction"
@@ -1477,6 +1477,32 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                     assert row["value_date"] == rec["value_date"], key
                 checked += 1
     assert checked >= 170, f"only {checked} admitted records cross-checked; expected the wave data"
+
+
+def test_every_bic_only_seed_row_states_its_availability_only_limitation():
+    """BIC-only provenance must be visible at the record boundary, not implied."""
+    seed_source = (
+        Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+    ).read_text()
+    checked = 0
+
+    for entry in autopilot._ssi_rows(seed_source):
+        try:
+            fields = autopilot._fold_row_shape(entry, enforce_invariants=False)
+        except (ValueError, TypeError, AttributeError):
+            continue
+        if fields.get("bic_only") is not True:
+            continue
+        key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
+        assert (
+            "BIC-level list — no account numbers published; "
+            "not a selectable settlement instruction"
+        ) in fields["notes"], key
+        checked += 1
+
+    assert checked >= 150, (
+        f"only {checked} BIC-only rows checked; expected the full directory"
+    )
 
 
 def test_pakistan_candidate_evidence_preserves_inferred_terms():
@@ -1795,8 +1821,14 @@ def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
         assert row["bic_only"] is bic_only, (ben, ccy)
         assert row["status"] == status, (ben, ccy)
         assert row["as_of"] == as_of, (ben, ccy)
+        source_citation = f"Source: {source} (as of {as_of})"
+        if bic_only:
+            source_citation += (
+                " BIC-level list — no account numbers published; "
+                "not a selectable settlement instruction"
+            )
         expected_note = (
-            f"Source: {source} (as of {as_of}). "
+            f"{source_citation}. "
             "Sourced from bank-published SSI page. Verify current values before use."
         )
         assert row["notes"] == expected_note, (ben, ccy)
