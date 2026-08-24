@@ -31,26 +31,78 @@ export function ScreeningPage() {
     rec === "REVIEW" ? "needs_attention" as const :
     "failed" as const;
 
-  return (
-    <div className="tool-page">
-      <h1>Sanctions Screening</h1>
-      <p className="measure">Screen payment parties against a fictional watchlist (training data only).</p>
+  const parties = result ? [result.sender, result.beneficiary] : [];
+  const matchedParties = parties.filter((party) => party.hit).length;
+  const matchedHops = result?.hops.filter((hop) => hop.decision !== "CLEAR").length ?? 0;
+  const checksRun = result ? parties.length + result.hops.length : null;
 
-      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (senderName && beneficiaryName) mutation.mutate(); }}>
-        <div className="tool-form__field">
-          <label htmlFor="screen-sender">Sender name</label>
-          <input id="screen-sender" type="text" maxLength={200}
-            value={senderName} onChange={(e) => setSenderName(e.target.value)}
-            placeholder="Sender name" aria-label="Sender name" />
-        </div>
-        <div className="tool-form__field">
-          <label htmlFor="screen-beneficiary">Beneficiary name</label>
-          <input id="screen-beneficiary" type="text" maxLength={200}
-            value={beneficiaryName} onChange={(e) => setBeneficiaryName(e.target.value)}
-            placeholder="Beneficiary name" aria-label="Beneficiary name" />
-        </div>
-        <Button type="submit" variant="primary" isLoading={mutation.isPending}>Screen parties</Button>
-      </form>
+  const recommendationLabel = (recommendation: string) =>
+    recommendation === "CLEAR" ? "Clear" :
+    recommendation === "REVIEW" ? "Review required" :
+    "Blocked";
+
+  const partySummary = (party: ScreenResponse["sender"]) => {
+    if (party.matched_entry) {
+      const confidence = party.score == null ? "Possible watchlist match" : `${(party.score * 100).toFixed(0)}% confidence`;
+      return `${party.matched_entry} · ${confidence}`;
+    }
+    return "No match found";
+  };
+
+  return (
+    <div className="tool-page screening-page">
+      <nav className="tool-breadcrumb" aria-label="Breadcrumb">
+        <span>Operate</span>
+        <span aria-hidden="true">/</span>
+        <span>Tools</span>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Screening</span>
+      </nav>
+
+      <header className="tool-page__header">
+        <h1>Sanctions screening</h1>
+        <p className="measure">Check payment parties against watchlists before release.</p>
+      </header>
+
+      <div className="screening-page__layout">
+        <section className="screening-page__card screening-page__form-card" aria-labelledby="screen-form-heading">
+          <h2 id="screen-form-heading">Screen payment parties</h2>
+          <p className="screening-page__supporting-copy">Use fictional training data to understand how a compliance check is evaluated.</p>
+          <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (senderName && beneficiaryName) mutation.mutate(); }}>
+            <div className="screening-page__fields">
+              <div className="tool-form__field">
+                <label htmlFor="screen-sender">Sender name</label>
+                <input id="screen-sender" type="text" maxLength={200}
+                  value={senderName} onChange={(e) => setSenderName(e.target.value)}
+                  placeholder="Sender name" aria-label="Sender name" />
+              </div>
+              <div className="tool-form__field">
+                <label htmlFor="screen-beneficiary">Beneficiary name</label>
+                <input id="screen-beneficiary" type="text" maxLength={200}
+                  value={beneficiaryName} onChange={(e) => setBeneficiaryName(e.target.value)}
+                  placeholder="Beneficiary name" aria-label="Beneficiary name" />
+              </div>
+            </div>
+            <fieldset className="screening-page__watchlists">
+              <legend>Watchlists checked</legend>
+              <div className="screening-page__watchlist-chips" aria-label="Watchlists checked">
+                {['OFAC', 'UN', 'EU', 'HMT'].map((watchlist) => <span className="screening-page__watchlist" key={watchlist}>{watchlist}</span>)}
+              </div>
+            </fieldset>
+            <Button className="screening-page__submit" type="submit" variant="primary" isLoading={mutation.isPending}>Run screen</Button>
+          </form>
+        </section>
+
+        <aside className="screening-page__card screening-page__stats-card" aria-labelledby="screen-stats-heading">
+          <h2 id="screen-stats-heading">This screen</h2>
+          <dl className="screening-page__stats">
+            <div><dt>Checks run</dt><dd>{checksRun ?? "—"}</dd></div>
+            <div><dt>Potential matches</dt><dd>{result ? matchedParties + matchedHops : "—"}</dd></div>
+            <div><dt>Route hops</dt><dd>{result ? result.hops.length : "—"}</dd></div>
+          </dl>
+          <p className="screening-page__stats-note">Results are illustrative and never authorize a real payment.</p>
+        </aside>
+      </div>
 
       {error && (
         <div className="tool-error" role="alert">
@@ -60,45 +112,37 @@ export function ScreeningPage() {
       )}
 
       {result && (
-        <div className="tool-result">
-          <h2>Screening results</h2>
+        <section className="tool-result screening-page__result-card" aria-labelledby="screen-results-heading" aria-live="polite">
+          <h2 id="screen-results-heading">Screening results</h2>
           <div className="screen-result__overall">
             <StatusChip status={recStatus(result.overall_recommendation)} />
+            <span>{recommendationLabel(result.overall_recommendation)}</span>
             {result.blocked && <span className="screen-result__blocked">Blocked at hop {result.blocked_at_hop}</span>}
           </div>
-          <table className="screen-table">
-            <thead><tr><th>Party</th><th>Name</th><th>Score</th><th>Result</th></tr></thead>
-            <tbody>
-              <tr>
-                <td>Sender</td><td>{result.sender.name}</td>
-                <td className="mono">{((result.sender.score ?? 0) * 100).toFixed(0)}%</td>
-                <td><StatusChip status={recStatus(result.sender.recommendation)} /></td>
-              </tr>
-              <tr>
-                <td>Beneficiary</td><td>{result.beneficiary.name}</td>
-                <td className="mono">{((result.beneficiary.score ?? 0) * 100).toFixed(0)}%</td>
-                <td><StatusChip status={recStatus(result.beneficiary.recommendation)} /></td>
-              </tr>
-            </tbody>
-          </table>
-          {result.hops.length > 0 && (
-            <table className="screen-table">
-              <thead><tr><th>Hop</th><th>Bank</th><th>Decision</th><th>Action</th><th>Delay</th></tr></thead>
-              <tbody>
-                {result.hops.map((hop) => (
-                  <tr key={hop.hop}>
-                    <td className="mono">{hop.hop}</td>
-                    <td>{String(hop.bank_name ?? hop.bic)}</td>
-                    <td>{hop.decision}</td>
-                    <td>{hop.action}</td>
-                    <td className="mono">{hop.delay_hours}h</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <div className="screening-page__rows" role="list" aria-label="Screened parties">
+            {parties.map((party) => (
+              <div className="screening-page__row" role="listitem" key={party.party}>
+                <div className="screening-page__row-main">
+                  <span className="screening-page__row-party">{party.party === "sender" ? "Sender" : "Beneficiary"}</span>
+                  <strong>{party.name}</strong>
+                </div>
+                <span className="screening-page__row-summary">{partySummary(party)}</span>
+                <StatusChip status={recStatus(party.recommendation)} />
+              </div>
+            ))}
+            {result.hops.map((hop) => (
+              <div className="screening-page__row screening-page__row--hop" role="listitem" key={`hop-${hop.hop}`}>
+                <div className="screening-page__row-main">
+                  <span className="screening-page__row-party">Hop {hop.hop}</span>
+                  <strong>{String(hop.bank_name || hop.bic)}</strong>
+                </div>
+                <span className="screening-page__row-summary">{hop.decision} · {hop.action} · {hop.delay_hours}h delay</span>
+                <StatusChip status={hop.decision === "CLEAR" ? "passed" : hop.decision === "POSSIBLE_HIT" ? "needs_attention" : "failed"} />
+              </div>
+            ))}
+          </div>
           <p className="tool-sim-label"><strong>Simulation — not a real payment.</strong></p>
-        </div>
+        </section>
       )}
     </div>
   );
