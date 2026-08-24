@@ -24,13 +24,24 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe("ToolIndexPage", () => {
-  it("lists all available tools with links", () => {
+  it("renders the tools grid with one actionable link per tool", () => {
     renderWithProviders(<ToolIndexPage />);
-    expect(screen.getByRole("link", { name: /fee calculator/i })).toBeVisible();
-    expect(screen.getByRole("link", { name: /sanctions screening/i })).toBeVisible();
-    expect(screen.getByRole("link", { name: /value date/i })).toBeVisible();
-    expect(screen.getByRole("link", { name: /stp.*checker/i })).toBeVisible();
-    expect(screen.getByRole("link", { name: /payment tracking/i })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Tools" })).toBeVisible();
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(5);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/operate/fees",
+      "/operate/screening",
+      "/operate/value-date",
+      "/operate/stp",
+      "/operate/tracking",
+    ]);
+    expect(screen.getByRole("link", { name: /fee calculator.*open/i })).toBeVisible();
+    expect(screen.getByRole("link", { name: /sanctions screening.*open/i })).toBeVisible();
+    expect(screen.getByRole("link", { name: /value date.*open/i })).toBeVisible();
+    expect(screen.getByRole("link", { name: /stp.*checker.*open/i })).toBeVisible();
+    expect(screen.getByRole("link", { name: /payment tracking.*open/i })).toBeVisible();
+    expect(document.querySelectorAll(".tool-index__icon-tile")).toHaveLength(5);
   });
 });
 
