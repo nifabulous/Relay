@@ -95,7 +95,7 @@
 
 .scheme-table tbody {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
 }
 
@@ -178,14 +178,13 @@
 .scheme-table__availability--domestic { border-color: var(--color-border-strong); background: var(--color-surface-2); color: var(--color-ink-muted); }
 .scheme-table__availability-dot { width: 12px; height: 12px; flex: 0 0 12px; border-radius: var(--radius-full); background: currentColor; }
 
-@media (max-width: 1023px) {
-  .scheme-table tbody { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 1024px) {
+  .scheme-table tbody { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
   .scheme-tabs__list { width: 100%; flex-wrap: wrap; overflow-x: visible; }
   .scheme-tab { flex: 1 1 33.333%; min-width: 0; padding-inline: var(--space-3); }
-  .scheme-table tbody { grid-template-columns: 1fr; }
   .scheme-table tbody tr { min-height: 0; }
 }
 

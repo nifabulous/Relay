@@ -51,13 +51,13 @@
 
 .tool-index__list {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 
 .tool-index__item {
   display: flex;
-  grid-column: span 2;
+  grid-column: span 1;
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
@@ -70,10 +70,6 @@
   color: inherit;
   transition: background-color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease);
-}
-
-.tool-index__item:nth-child(n + 4) {
-  grid-column: span 3;
 }
 
 .tool-index__item:hover {
@@ -1317,14 +1313,17 @@
 }
 
 /* ── Tool index breakpoints ─────────────────────────────── */
-@media (max-width: 900px) {
+@media (min-width: 1024px) {
   .tool-index__list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .tool-index__item,
+  .tool-index__item {
+    grid-column: span 2;
+  }
+
   .tool-index__item:nth-child(n + 4) {
-    grid-column: span 1;
+    grid-column: span 3;
   }
 }
 
@@ -1400,15 +1399,6 @@
 }
 
 @media (max-width: 600px) {
-  .tool-index__list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .tool-index__item,
-  .tool-index__item:nth-child(n + 4) {
-    grid-column: span 1;
-  }
-
   .tool-index__item {
     min-height: 260px;
     padding: var(--space-4);
