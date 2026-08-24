@@ -217,7 +217,16 @@ export function StpPage() {
             </div>
             <div className="stp-score" aria-label={`STP score ${score}%`}>
               <strong>STP score</strong>
-              <span className="stp-score__track" aria-hidden="true"><span style={{ width: `${score}%` }} /></span>
+              <span
+                className="stp-score__track"
+                role="progressbar"
+                aria-label="STP score"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={score}
+              >
+                <span aria-hidden="true" style={{ width: `${score}%` }} />
+              </span>
               <strong className="stp-score__value">{score}%</strong>
             </div>
             <p className="tool-sim-label"><strong>{result.disclaimer || "Simulation — not a real payment."}</strong></p>
