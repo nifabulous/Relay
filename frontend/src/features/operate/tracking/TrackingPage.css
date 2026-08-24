@@ -170,6 +170,19 @@
   height: 10px;
 }
 
+.tracking-timeline__item--upcoming .tracking-timeline__dot {
+  color: var(--color-ink-muted);
+  border-color: var(--color-border-strong);
+  border-style: dashed;
+  background: var(--color-surface);
+}
+
+.tracking-timeline__item--upcoming .tracking-timeline__dot span {
+  width: 6px;
+  height: 6px;
+  background: var(--color-border-strong);
+}
+
 /* Modifiers are the lowercased form of the backend's own status vocabulary
    (app/services/tracking.py:37-43). `in_transit` and `pending` used to appear
    here; neither is a status the backend has ever emitted, so those rules were
@@ -221,6 +234,12 @@
   text-transform: capitalize;
 }
 
+.tracking-timeline__upcoming-label {
+  color: var(--color-ink-strong);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
 .tracking-timeline__time {
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
@@ -261,12 +280,5 @@
     align-items: flex-start;
     flex-direction: column;
     gap: var(--space-1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tracking-timeline__dot,
-  .tracking-timeline__dot span {
-    transition: none;
   }
 }

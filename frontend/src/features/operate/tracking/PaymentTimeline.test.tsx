@@ -82,6 +82,18 @@ describe("PaymentTimeline", () => {
     expect(header?.querySelector('[aria-label="Passed"]')).toBeNull();
   });
 
+  it("does not render an upcoming phase for a terminal credited payment", () => {
+    render(<PaymentTimeline payment={samplePayment} />);
+    expect(screen.queryByText("Beneficiary credit")).toBeNull();
+    expect(screen.queryByText("Upcoming")).toBeNull();
+  });
+
+  it("does not render an upcoming phase for a terminal failed payment", () => {
+    render(<PaymentTimeline payment={rejectedPayment} />);
+    expect(screen.queryByText("Beneficiary credit")).toBeNull();
+    expect(screen.queryByText("Upcoming")).toBeNull();
+  });
+
   it("marks the rejecting hop as failed and the earlier hops as passed", () => {
     render(<PaymentTimeline payment={rejectedPayment} />);
     const timeline = screen.getByRole("list", { name: /payment timeline/i });
@@ -207,6 +219,15 @@ const scheduledPayment: TrackPaymentResponse = {
 const SCHEDULED_STATUSES = ["INITIATED", "ACCEPTED", "IN_PROGRESS", "FORWARDED"] as const;
 
 describe("PaymentTimeline scheduled payments", () => {
+  it("renders one upcoming beneficiary credit phase for a non-terminal payment", () => {
+    render(<PaymentTimeline payment={scheduledPayment} />);
+    const timeline = screen.getByRole("list", { name: /payment timeline/i });
+
+    expect(screen.getByText("Beneficiary credit")).toBeVisible();
+    expect(screen.getByText("Upcoming")).toBeVisible();
+    expect(timeline.querySelectorAll(".tracking-timeline__item--upcoming")).toHaveLength(1);
+  });
+
   it("renders a partial timeline without a terminal label", () => {
     render(<PaymentTimeline payment={scheduledPayment} />);
     expect(screen.getByText("Bank of America")).toBeVisible();

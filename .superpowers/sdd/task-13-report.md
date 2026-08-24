@@ -26,3 +26,11 @@
 - Checked mobile stacking and narrow timeline rows at 390px, two-column breakpoint at 1024px, token-only colors, visible labels, and status text/icon/color treatment.
 - No selector or test changes were required.
 - No known concerns.
+
+## Review fixes
+
+- Added one presentation-only “Beneficiary credit” / “Upcoming” lifecycle node after revealed events for non-terminal payments; terminal credited, rejected, and returned payments do not render it. The node has no fabricated backend timestamp, amount, bank, or BIC and uses a dashed, muted marker to distinguish its upcoming state.
+- Removed the no-op reduced-motion block because the tracking treatment defines no transitions or animations.
+- Added focused coverage for non-terminal upcoming rendering and terminal credited/failed exclusions.
+
+Verification: focused tracking tests (34 passed), full test suite, production build, and `git diff --check` all passed.

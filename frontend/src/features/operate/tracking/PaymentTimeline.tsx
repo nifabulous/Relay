@@ -82,6 +82,19 @@ export function PaymentTimeline({ payment, hideFees = false }: PaymentTimelinePr
                 </li>
               );
             })}
+            {!payment.is_terminal && (
+              <li className="tracking-timeline__item tracking-timeline__item--upcoming">
+                <div className="tracking-timeline__dot" aria-hidden="true"><span /></div>
+                <div className="tracking-timeline__content">
+                  <div className="tracking-timeline__row">
+                    <div className="tracking-timeline__label">
+                      <span className="tracking-timeline__upcoming-label">Beneficiary credit</span>
+                      <span className="tracking-timeline__phase">Upcoming</span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            )}
           </ol>
         </section>
 
