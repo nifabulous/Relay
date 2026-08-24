@@ -444,16 +444,39 @@
 }
 
 /* ─── Not Found ──────────────────────────────────────────────────────────────
-   Terminal state for an unmatched /app URL. Deliberately plain: this is an
-   error state, not a destination, so it gets no decoration beyond what makes
-   the path readable and the way out obvious. */
+   Terminal state for an unmatched /app URL. The bounded surface gives the
+   error a clear reading order while keeping the path and way out obvious. */
 .app-shell__not-found {
   max-width: 60ch;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.app-shell__not-found-eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.app-shell__not-found-heading {
+  margin: 0;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
 }
 
 .app-shell__not-found p {
-  margin: var(--space-3) 0;
+  margin: var(--space-4) 0 0;
   color: var(--color-ink);
+}
+
+.app-shell__not-found-path {
+  overflow-wrap: anywhere;
 }
 
 .app-shell__not-found-hint {
@@ -463,4 +486,10 @@
 
 .app-shell__not-found .relay-btn {
   margin-top: var(--space-4);
+}
+
+@media (max-width: 390px) {
+  .app-shell__not-found {
+    padding: var(--space-4);
+  }
 }

@@ -6,8 +6,11 @@
  */
 
 .settings {
+  display: flex;
+  flex-direction: column;
   max-width: var(--content-max);
   padding: var(--space-5);
+  gap: var(--space-6);
 }
 
 .settings__breadcrumb {
@@ -24,15 +27,23 @@
 }
 
 .settings__heading {
-  margin-bottom: var(--space-5);
+  margin: 0;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
 }
 
 .settings__section {
-  margin-bottom: var(--space-6);
+  margin: 0;
 }
 
 .settings__section-title {
-  margin-bottom: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
 }
 
 .settings__section-intro {
@@ -43,7 +54,8 @@
 }
 
 .settings__card {
-  max-width: 640px;
+  max-width: 720px;
+  padding: var(--space-4) var(--space-5);
 }
 
 .settings__fieldset {
@@ -151,7 +163,7 @@
 
 .overview__learner-data-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
 }
 
@@ -255,5 +267,11 @@
     padding: var(--space-4);
     /* Clear the fixed bottom nav. */
     padding-bottom: calc(var(--nav-height-mobile) + var(--space-6));
+  }
+}
+
+@media (min-width: 1024px) {
+  .overview__learner-data-body {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   }
 }
