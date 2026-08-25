@@ -110,6 +110,19 @@ _TRAILER_CLOSE = "-->"
 # --------------------------------------------------------------------------- #
 # Contract + Decision.                                                          #
 # --------------------------------------------------------------------------- #
+
+
+def _positive_env_int(env, name: str, default: int) -> int:
+    raw = env.get(name, str(default))
+    try:
+        value = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
 @dataclass(frozen=True)
 class Contract:
     """Tunable knobs. Read from the environment at the CLI boundary and passed
@@ -119,13 +132,21 @@ class Contract:
     soft_gate: int = 5
     hard_cap: int = 10
     stuck_p1_rounds: int = 3
+    unverifiable_rounds: int = 2
 
     @classmethod
     def from_env(cls, env=None) -> "Contract":
         env = env if env is not None else os.environ
         return cls(
             bot_login=env.get("CODEX_BOT_LOGIN", "github-actions[bot]"),
-            soft_gate=int(env.get("ARBITER_SOFT_GATE", "5")),
+            soft_gate=_positive_env_int(env, "ARBITER_SOFT_GATE", 5),
+            hard_cap=_positive_env_int(env, "ARBITER_HARD_CAP", 10),
+            stuck_p1_rounds=_positive_env_int(
+                env, "ARBITER_STUCK_P1_ROUNDS", 3
+            ),
+            unverifiable_rounds=_positive_env_int(
+                env, "ARBITER_UNVERIFIABLE_ROUNDS", 2
+            ),
         )
 
 

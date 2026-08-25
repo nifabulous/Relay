@@ -1032,6 +1032,36 @@ def test_contract_reads_env_overrides():
     assert contract.soft_gate == 7
 
 
+def test_contract_reads_every_env_override():
+    contract = arb.Contract.from_env({
+        "CODEX_BOT_LOGIN": "custom[bot]",
+        "ARBITER_SOFT_GATE": "7",
+        "ARBITER_HARD_CAP": "12",
+        "ARBITER_STUCK_P1_ROUNDS": "4",
+        "ARBITER_UNVERIFIABLE_ROUNDS": "3",
+    })
+    assert contract == arb.Contract(
+        bot_login="custom[bot]",
+        soft_gate=7,
+        hard_cap=12,
+        stuck_p1_rounds=4,
+        unverifiable_rounds=3,
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("ARBITER_SOFT_GATE", "0"),
+        ("ARBITER_HARD_CAP", "-1"),
+        ("ARBITER_STUCK_P1_ROUNDS", "nope"),
+        ("ARBITER_UNVERIFIABLE_ROUNDS", ""),
+    ],
+)
+def test_contract_rejects_invalid_positive_integer_knobs(name, value):
+    with pytest.raises(ValueError, match=name):
+        arb.Contract.from_env({name: value})
+
 # --------------------------------------------------------------------------- #
 # T4: the gap-issue ledger poster (post_gap_issues).                          #
 #                                                                              #
