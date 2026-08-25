@@ -1218,6 +1218,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", help="owner/name (defaults to GH_REPO / GITHUB_REPOSITORY)")
     parser.add_argument("--post", action="store_true",
                         help="post the recommendation comment (requires operator mode)")
+    parser.add_argument(
+        "--gap-issues",
+        action="store_true",
+        help="also file proposed-gap issues; requires --post and operator mode",
+    )
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="emit the decision as JSON instead of a rendered comment")
     return parser
@@ -1240,7 +1245,10 @@ def _emit(decision: Decision, pr, as_json: bool) -> None:
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    args = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if args.gap_issues and not args.post:
+        parser.error("--gap-issues requires --post")
     contract = Contract.from_env()
 
     # Posting is a network write on the user's behalf: gated behind explicit
@@ -1266,17 +1274,24 @@ def main(argv=None) -> int:
         post_comment(args.pr, history["repo"],
                      render_postable_comment(decision, args.pr),
                      contract.bot_login)
-        print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
-        if decision.proposed_gaps:
+        print(
+            f"Posted arbiter recommendation ({decision.recommendation}) "
+            f"to PR #{args.pr}.",
+            file=sys.stderr,
+        )
+        if args.gap_issues and decision.proposed_gaps:
             contract_text = load_contract_text(history.get("current_head_ref"))
             gap_results = post_gap_issues(decision, args.pr, history["repo"], contract,
                                            history, contract_text=contract_text)
             created = sum(1 for r in gap_results if r["action"] == "created")
             existing = len(gap_results) - created
-            print(f"Gap ledger: {created} new proposed-gap issue(s) opened, "
-                  f"{existing} already tracked.")
-    else:
-        _emit(decision, args.pr, args.as_json)
+            print(
+                f"Gap ledger: {created} new proposed-gap issue(s) opened, "
+                f"{existing} already tracked.",
+                file=sys.stderr,
+            )
+
+    _emit(decision, args.pr, args.as_json)
     return 0
 
 

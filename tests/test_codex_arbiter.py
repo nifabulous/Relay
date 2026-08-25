@@ -1017,6 +1017,66 @@ def test_cli_post_refused_without_operator_mode(monkeypatch):
     assert rc != 0
 
 
+def test_cli_post_does_not_file_gap_issues(monkeypatch):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+    monkeypatch.setattr(arb, "post_comment",
+                        lambda *args, **kwargs: None)
+    filed = []
+    monkeypatch.setattr(
+        arb, "post_gap_issues", lambda *args, **kwargs: filed.append(True)
+    )
+
+    assert arb.main(["100", "--repo", STUB_REPO, "--post"]) == 0
+    assert filed == []
+
+
+def test_cli_gap_issues_are_explicitly_opted_in(monkeypatch):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+    monkeypatch.setattr(arb, "post_comment", lambda *args, **kwargs: None)
+    filed = []
+    monkeypatch.setattr(
+        arb, "post_gap_issues", lambda *args, **kwargs: filed.append(True) or []
+    )
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--gap-issues"
+    ]) == 0
+    assert filed == [True]
+
+
+def test_cli_post_json_collects_once_and_keeps_stdout_machine_readable(
+    monkeypatch, capsys
+):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    collected = []
+    monkeypatch.setattr(
+        arb,
+        "collect",
+        lambda *args, **kwargs: collected.append(True) or history,
+    )
+    monkeypatch.setattr(arb, "post_comment", lambda *args, **kwargs: None)
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--json"
+    ]) == 0
+    assert collected == [True]
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["round_count"] == 1
+
+
 def test_arbiter_source_makes_no_model_or_http_calls():
     """The arbiter's whole value is being deterministic — it must never reach a
     model, and it must only touch the network through the `gh` CLI seam."""
