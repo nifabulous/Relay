@@ -23,7 +23,6 @@ describe("preserveDialogOutsideFocus", () => {
     const outside = document.querySelector<HTMLElement>("#outside")!;
     const firstInside = document.querySelector<HTMLElement>("#first-inside")!;
     const secondInside = document.querySelector<HTMLElement>("#second-inside")!;
-    const restoreFocus = vi.spyOn(outside, "focus").mockImplementation(() => {});
     const cleanup = preserveDialogOutsideFocus(
       { current: document.querySelector<HTMLElement>("#popup") },
       "popup",
@@ -35,14 +34,38 @@ describe("preserveDialogOutsideFocus", () => {
       vi.advanceTimersByTime(0);
     });
 
-    expect(restoreFocus).toHaveBeenCalledTimes(1);
-
-    restoreFocus.mockClear();
+    expect(document.activeElement).toBe(outside);
     secondInside.focus();
     act(() => {
       vi.advanceTimersByTime(0);
     });
-    expect(restoreFocus).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(secondInside);
+
+    cleanup();
+  });
+
+  it("leaves dialog focus in place when the pressed control is disconnected", () => {
+    document.body.innerHTML = `
+      <button id="outside">Leaving page</button>
+      <div id="popup">
+        <button id="inside">Inside control</button>
+      </div>
+    `;
+    const outside = document.querySelector<HTMLElement>("#outside")!;
+    const inside = document.querySelector<HTMLElement>("#inside")!;
+    const cleanup = preserveDialogOutsideFocus(
+      { current: document.querySelector<HTMLElement>("#popup") },
+      "popup",
+    );
+
+    fireEvent.pointerDown(outside);
+    outside.remove();
+    inside.focus();
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(document.activeElement).toBe(inside);
 
     cleanup();
   });

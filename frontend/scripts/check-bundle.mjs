@@ -6,7 +6,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { gzipSync } from "zlib";
 
-const BUDGET_BYTES = 205000; // 200KB plus the dialog focus-restoration loader
+const BUDGET_BYTES = 205120; // 200KB plus the dialog focus-restoration guard
 const ASSETS_DIR = join(process.cwd(), "..", "app", "static", "relay", "assets");
 const HTML_PATH = join(process.cwd(), "..", "app", "static", "relay", "index.html");
 

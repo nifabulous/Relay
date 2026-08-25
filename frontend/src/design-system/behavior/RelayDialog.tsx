@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactElement, type ReactNode, type RefObject } from "react";
 import { Dialog } from "@base-ui/react/dialog";
+import { preserveDialogOutsideFocus } from "./preserveDialogOutsideFocus";
 
 export interface RelayDialogProps {
   open: boolean;
@@ -34,17 +35,7 @@ export function RelayDialog({
   useEffect(() => {
     if (!open) return;
 
-    let cleanup: (() => void) | undefined;
-    let disposed = false;
-    import("./preserveDialogOutsideFocus").then(({ preserveDialogOutsideFocus }) => {
-      if (!disposed) {
-        cleanup = preserveDialogOutsideFocus(popupRef, popupId);
-      }
-    });
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
+    return preserveDialogOutsideFocus(popupRef, popupId);
   }, [open, popupId]);
 
   return (

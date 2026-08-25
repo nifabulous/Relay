@@ -91,7 +91,7 @@ describe("Tailwind foundation", () => {
     const configuredBudget = Number(
       bundleCheckScript.match(/const BUDGET_BYTES = (\d+);/)?.[1],
     );
-    expect(configuredBudget).toBe(205000);
+    expect(configuredBudget).toBe(205120);
     expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
     expect(bundleCheckScript).not.toContain("level: 9");
     if (existsSync(builtRelayHtmlPath)) {
