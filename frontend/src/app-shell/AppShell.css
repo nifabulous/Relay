@@ -423,9 +423,16 @@
     line-height: 1;
   }
 
-  /* Add bottom padding so content isn't hidden behind bottom nav */
+  /* Reserve room for both fixed layers: navigation and the floating Tutor
+     cluster. The matching scroll margin lets the browser scroll an otherwise
+     "visible" control above both layers instead of leaving it obscured. */
   .app-shell__main {
-    padding: var(--space-4) var(--space-4) calc(var(--nav-height-mobile) + var(--space-4));
+    padding: var(--space-4);
+    padding-bottom: var(--mobile-fixed-reserve);
+  }
+
+  .app-shell__main :where(a, button, input, select, textarea, [tabindex]):not([tabindex="-1"]) {
+    scroll-margin-bottom: var(--mobile-fixed-reserve);
   }
 
   .app-shell__topbar {
@@ -435,7 +442,8 @@
 
 @media (max-width: 390px) {
   .app-shell__main {
-    padding: var(--space-3) var(--space-3) calc(var(--nav-height-mobile) + var(--space-3));
+    padding: var(--space-3);
+    padding-bottom: var(--mobile-fixed-reserve);
   }
 
   .app-shell__brand-sub {

@@ -23,6 +23,17 @@ function record(overrides: Partial<SSIRecord> = {}): SSIRecord {
 }
 
 describe("SettlementInstructions provenance", () => {
+  it("keeps the horizontally scrolling instruction table keyboard accessible", () => {
+    render(
+      <SettlementInstructions groups={[{ currency: "USD", records: [record()] }]} />,
+    );
+
+    const scrollRegion = screen.getByRole("region", {
+      name: "Settlement instruction table",
+    });
+    expect(scrollRegion).toHaveAttribute("tabindex", "0");
+  });
+
   it("warns on an instruction read from an archived snapshot", () => {
     render(
       <SettlementInstructions

@@ -9,7 +9,12 @@ import { SsiProvenance } from "./SsiProvenance";
  */
 function SsiTable({ records }: { records: SSIRecord[] }) {
   return (
-    <div className="bank-ssi__table-scroll">
+    <div
+      className="bank-ssi__table-scroll"
+      role="region"
+      aria-label="Settlement instruction table"
+      tabIndex={0}
+    >
       <table className="bank-ssi__table">
         <thead>
           <tr>

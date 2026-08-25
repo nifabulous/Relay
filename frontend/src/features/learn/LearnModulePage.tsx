@@ -83,14 +83,21 @@ export function LearnModulePage() {
   );
 
   const completeModule = useCallback((id: string) => {
+    // Persist before the visible checklist flips to complete. A full page
+    // navigation immediately after that UI transition must not be able to race
+    // an effect that owns this write.
     setCompleted((prev) => {
       if (prev.includes(id)) return prev;
       const next = [...prev, id];
+      return next;
+    });
+    const current = loadProgress().completedModuleIds;
+    if (!current.includes(id)) {
+      const next = [...current, id];
       saveProgress({ schemaVersion: 1, completedModuleIds: next });
       const title = getModuleById(id)?.title ?? id;
       recordActivity({ type: "module", label: title, at: Date.now() });
-      return next;
-    });
+    }
   }, []);
 
   const onCheckpointReached = useCallback((checkpointId: string) => {
