@@ -30,16 +30,6 @@ function tileLabel(scheme: CatalogueScheme): string {
   return scheme.name.slice(0, 2).toUpperCase();
 }
 
-type Availability = "available" | "limited" | "domestic";
-
-function availabilityOf(scheme: CatalogueScheme): { label: string; tone: Availability } {
-  const name = scheme.name.toLowerCase();
-  if (scopeOf(scheme)) return { label: "Available", tone: "available" };
-  if (name.includes("chaps")) return { label: "Limited", tone: "limited" };
-  if (name.includes("fedwire") || name === "ach") return { label: "Domestic", tone: "domestic" };
-  return { label: "Available", tone: "available" };
-}
-
 /**
  * Summary cards for the catalogue. The real table semantics are retained so
  * screen readers and existing consumers still get column and row headers;
@@ -66,7 +56,7 @@ export function SchemeTable({ schemes }: { schemes: readonly CatalogueScheme[] }
             <tr key={scheme.name}>
               <th scope="row" data-label="Rail">
                 <span className="scheme-table__identity">
-                  <span className={["scheme-table__tile", `scheme-table__tile--${availabilityOf(scheme).tone}`].join(" ")} aria-hidden="true">
+                  <span className="scheme-table__tile" aria-hidden="true">
                     {tileLabel(scheme)}
                   </span>
                   <span className="scheme-table__identity-copy">
@@ -85,9 +75,8 @@ export function SchemeTable({ schemes }: { schemes: readonly CatalogueScheme[] }
               <td data-label="Operator">
                 <span className="scheme-table__meta-label">Operator</span>
                 <span className="scheme-table__operator">{scheme.operator}<span className="scheme-table__arrow" aria-hidden="true">›</span></span>
-                <span className={["scheme-table__availability", `scheme-table__availability--${availabilityOf(scheme).tone}`].join(" ")}>
-                  <span className="scheme-table__availability-dot" aria-hidden="true" />
-                  {availabilityOf(scheme).label}
+                <span className="scheme-table__reference">
+                  Reference
                 </span>
               </td>
             </tr>

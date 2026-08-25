@@ -264,6 +264,55 @@ describe("BankDirectoryPage", () => {
     expect(link).toHaveAttribute("href", "/operate/prepare?bic=CITIUS33");
   });
 
+  it("rejects invalid lookup lengths and clears stale results on a bank-name search", async () => {
+    queryClient.clear();
+    let lookupCalls = 0;
+    server.use(
+      http.get("/api/lookup", () => {
+        lookupCalls += 1;
+        return HttpResponse.json({
+          bic: "CITIUS33",
+          found: true,
+          bank: {
+            bic: "CITIUS33",
+            bank_name: "Citibank New York",
+            country_code: "US",
+            city: "New York",
+            country_currency: "USD",
+          },
+        });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const search = screen.getByLabelText("Search bank name or BIC");
+    await user.type(search, "ABCDEF123");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(lookupCalls).toBe(0);
+    expect(screen.getByText(/Find a bank to see its settlement instructions/i)).toBeVisible();
+
+    await user.clear(search);
+    await user.type(search, "CITIUS33");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+    expect(await screen.findByRole("link", { name: /Prepare a payment/i })).toBeVisible();
+    expect(lookupCalls).toBe(1);
+
+    await user.clear(search);
+    await user.type(search, "Mizuho");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+
+    expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+  });
+
   it("shows the settlement details inline on the result card — no click-through", async () => {
     queryClient.clear();
     const user = userEvent.setup();
@@ -748,6 +797,10 @@ describe("SchemeTable", () => {
     expect(screen.getByText("$10-35")).toBeVisible();
     expect(screen.getByText("High-value, wires")).toBeVisible();
     expect(screen.getByText("Federal Reserve")).toBeVisible();
+    expect(screen.getByText("Reference")).toBeVisible();
+    expect(screen.queryByText("Available")).toBeNull();
+    expect(screen.queryByText("Limited")).toBeNull();
+    expect(screen.queryByText("Domestic")).toBeNull();
   });
 
   it("annotates every cell with its column label for the narrow-screen card layout", () => {

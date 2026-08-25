@@ -81,7 +81,6 @@ const DIRECTORY_ROWS: DirectoryRow[] = [
 ];
 
 const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
-const BIC_LIKE_PATTERN = /^[A-Z]{4}[A-Z\d]{2,7}$/i;
 
 export function BankDirectoryPage() {
   const [bic, setBic] = useState("");
@@ -143,8 +142,10 @@ export function BankDirectoryPage() {
         onSubmit={(e) => {
           e.preventDefault();
           const value = bic.trim();
-          if (value && (BIC_PATTERN.test(value) || BIC_LIKE_PATTERN.test(value))) {
+          if (value && BIC_PATTERN.test(value)) {
             setSearchBic(value.toUpperCase());
+          } else if (searchBic !== null) {
+            setSearchBic(null);
           }
           setDirectoryPage(1);
         }}
@@ -160,6 +161,7 @@ export function BankDirectoryPage() {
           value={bic}
           onChange={(e) => {
             setBic(e.target.value);
+            if (searchBic !== null) setSearchBic(null);
             setDirectoryPage(1);
           }}
           aria-label="Search bank name or BIC"
