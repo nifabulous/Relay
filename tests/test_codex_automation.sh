@@ -182,6 +182,16 @@ require_text 'scripts/codex_review_pr.sh' 'raise it again as NEW'
 # default-branch checkout -- and injected into the TRUSTED instructions
 # channel, appended after the trusted review policy. It must never be routed
 # through codex_untrusted.py, which is reserved for PR-controlled input.
+# The default-branch tip is read over the authenticated API channel
+# (GH_TOKEN + GH_REPO), never from the local `origin` remote: `origin` is
+# caller-controlled, so consulting it to authenticate the checkout asks the
+# same untrusted party twice. Content integrity then follows from git's
+# content addressing -- show_trusted reads `git show $TRUSTED_SHA:<path>`, and
+# no repository can hold different bytes under the real tip's commit SHA.
+require_text 'scripts/codex_review_pr.sh' 'git/ref/heads/'
+require_text 'scripts/codex_review_pr.sh' '^[0-9a-f]{40}$'
+refuse_text 'scripts/codex_review_pr.sh' 'ls-remote'
+
 require_text 'scripts/codex_review_pr.sh' 'CONTRACT_PATH'
 require_text 'scripts/codex_review_pr.sh' 'docs/contracts/'
 require_text 'scripts/codex_review_pr.sh' '## Contract'
@@ -317,7 +327,19 @@ case "${1:-}" in
       *) exit 1 ;;
     esac
     ;;
-  api) cat "$CODEX_STUB_DIR/comments.jsonl" ;;
+  api)
+    # Two distinct API reads share this verb. The default-branch tip is the
+    # trust root; the comment list is ordinary data. Route on the path so the
+    # trust root can never be satisfied by the comment fixture.
+    if [[ "$*" == *"/git/ref/heads/"* ]]; then
+      jq -n --arg sha "$(cat "$CODEX_STUB_DIR/remote-tip")" \
+            --arg branch "$(cat "$CODEX_STUB_DIR/default-branch")" \
+            '{ref: ("refs/heads/" + $branch), object: {sha: $sha, type: "commit"}}' \
+        | apply_jq "$@"
+    else
+      cat "$CODEX_STUB_DIR/comments.jsonl"
+    fi
+    ;;
   *) exit 1 ;;
 esac
 STUB
@@ -379,8 +401,11 @@ if [[ "${*: -1}" == "HEAD" && " $* " == *" rev-parse "* ]]; then
   exit 0
 fi
 if [[ "$1" == "ls-remote" || ("$1" == "-C" && "$3" == "ls-remote") ]]; then
-  printf '%s\trefs/heads/%s\n' "$(cat "$STUB_CFG/remote-tip")" "$(cat "$STUB_CFG/default-branch")"
-  exit 0
+  # The trust root is the authenticated GitHub API, not the local remote. A
+  # stray ls-remote means caller-controlled `origin` is back in the trust
+  # path, so refuse instead of serving it a plausible answer.
+  echo "git ls-remote is not available to the reviewer worker" >&2
+  exit 127
 fi
 if [[ "$1" == "show" || ("$1" == "-C" && "$3" == "show") ]]; then
   ref="${@: -1}"
@@ -688,6 +713,59 @@ check_refuses_non_default_branch_head() {
   fi
 }
 
+# The trust root must fail CLOSED when the forge cannot be consulted or
+# answers with something that is not a commit SHA (an error document, an empty
+# body, a truncated value). Without the shape check, a garbage answer would
+# fall through to a string comparison and merely produce a confusing refusal
+# instead of the honest "cannot verify" one.
+check_refuses_unresolvable_default_branch_tip() {
+  local branch="zz-codex-automation-test/unresolvable-tip"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 18, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "beefcace"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  # The API answers, but not with a SHA -- the shape a rate-limit or
+  # not-found body would produce once --jq finds no .object.sha.
+  printf '%s\n' "null" >"$STUB_DIR/remote-tip"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 18 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  # Restore the honest tip for subsequent checks.
+  printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh ran with a default-branch tip it could not resolve.'
+  fi
+  if ! grep -q 'independently verified default branch' "$STUB_DIR/run.log"; then
+    fail 'An unresolvable default-branch tip did not produce the verification refusal.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'An unresolvable default-branch tip still reached comment publication.'
+  fi
+}
+
 check_contract_lands_in_trusted_channel_only() {
   local branch="zz-codex-automation-test/contract-fixture"
   # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
@@ -958,6 +1036,7 @@ fi
 
 check_refuses_untrusted_checkout
 check_refuses_non_default_branch_head
+check_refuses_unresolvable_default_branch_tip
 check_contract_lands_in_trusted_channel_only
 
 check_non_contract_file_is_ignored

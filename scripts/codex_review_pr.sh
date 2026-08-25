@@ -33,23 +33,38 @@ if [[ "$CHECKED_OUT_SHA" != "$TRUSTED_SHA" ]]; then
   exit 1
 fi
 
-# The stamp proves what the workflow checked out; the REMOTE proves where
-# that ref actually points right now. Without this, any caller — including a
-# local run from a feature checkout — could stamp its own HEAD and inject
-# branch-controlled policy as trusted. Fail closed when the remote cannot be
-# consulted at all.
-REMOTE_TIP="$(git -C "$REPO_ROOT" ls-remote origin "refs/heads/$CODEX_DEFAULT_BRANCH" | cut -f1)"
-if [[ -z "$REMOTE_TIP" ]]; then
-  echo "Could not resolve refs/heads/$CODEX_DEFAULT_BRANCH on origin; refusing to run without an independently verified default branch." >&2
-  exit 1
-fi
-if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
-  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $CODEX_DEFAULT_BRANCH on origin (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
-  exit 1
-fi
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 : "${GH_REPO:?GH_REPO or GITHUB_REPOSITORY is required}"
+
+# The stamp proves what the workflow checked out. Only the FORGE proves where
+# the default branch actually points, and it has to be asked over the same
+# authenticated channel every other read here uses (GH_TOKEN + GH_REPO) --
+# never through the local `origin` remote. `origin` is caller-controlled: a
+# run could point it at an attacker's repository, publish that repository's
+# tip as CODEX_TRUSTED_SHA, and inject branch-controlled text as trusted
+# policy while still posting the review to the real PR with real credentials.
+# Asking that same remote whether the checkout is authentic would be asking
+# the untrusted party twice.
+#
+# Matching the SHA is sufficient for content integrity, so the remote's
+# identity never has to be trusted -- only the SHA the forge reports.
+# show_trusted() below reads `git show $TRUSTED_SHA:<path>`, and git objects
+# are content-addressed: no local repository can hold a different policy or
+# contract file under the real tip's commit SHA.
+REMOTE_TIP="$(gh api "repos/${GH_REPO}/git/ref/heads/${CODEX_DEFAULT_BRANCH}" \
+  --jq '.object.sha' 2>/dev/null || true)"
+# Fail closed on anything that is not a full commit SHA: an empty body, an
+# error document, or a truncated value must refuse rather than fall through to
+# a comparison against garbage.
+if [[ ! "$REMOTE_TIP" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Could not resolve refs/heads/$CODEX_DEFAULT_BRANCH on $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
+  exit 1
+fi
+if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
+  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $CODEX_DEFAULT_BRANCH on $GH_REPO (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
+  exit 1
+fi
 : "${CODEX_MODEL:?CODEX_MODEL is required}"
 : "${CODEX_REASONING_EFFORT:?CODEX_REASONING_EFFORT is required}"
 : "${CODEX_MAX_INPUT_BYTES:?CODEX_MAX_INPUT_BYTES is required}"
