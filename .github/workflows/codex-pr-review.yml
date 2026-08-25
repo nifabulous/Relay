@@ -53,6 +53,8 @@ jobs:
       EVENT_NAME: ${{ github.event_name }}
       EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
       DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
+    outputs:
+      pr_numbers: ${{ steps.targets.outputs.pr_numbers }}
 
     steps:
       # Stamped before checkout so the worker's remaining-budget check counts
@@ -105,6 +107,8 @@ jobs:
           else
             echo "Selected PRs: $(tr '\n' ' ' < /tmp/codex-pr-numbers)"
           fi
+          PR_NUMBERS_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' /tmp/codex-pr-numbers)"
+          echo "pr_numbers=$PR_NUMBERS_JSON" >> "$GITHUB_OUTPUT"
 
       - name: Run read-only Codex reviews
         id: run_reviews
@@ -134,3 +138,41 @@ jobs:
           if (( failed > 0 )); then
             exit 1
           fi
+
+  arbiter:
+    if: vars.CODEX_REVIEW_ENABLED == 'true' && needs.review.result == 'success'
+    needs: [review]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
+      ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}
+      PR_NUMBERS_JSON: ${{ needs.review.outputs.pr_numbers }}
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+
+      - name: Evaluate review-loop dispositions
+        run: |
+          set -euo pipefail
+          while IFS= read -r pr_number; do
+            [[ -n "$pr_number" ]] || continue
+            decision_file="$(mktemp)"
+            arbiter_args=("$pr_number" --repo "$GH_REPO" --json)
+            if [[ "$ARBITER_OPERATOR" == "1" ]]; then
+              arbiter_args+=(--post)
+            fi
+            python3 scripts/codex_arbiter.py "${arbiter_args[@]}" >"$decision_file"
+            {
+              echo "### Arbiter disposition for PR #$pr_number"
+              echo '```json'
+              cat "$decision_file"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            rm -f "$decision_file"
+          done < <(jq -r '.[]' <<<"${PR_NUMBERS_JSON:-[]}")

@@ -284,6 +284,48 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'actions/setup-python@'
 done
 
+require_text '.github/workflows/codex-pr-review.yml' 'arbiter:'
+require_text '.github/workflows/codex-pr-review.yml' 'needs: [review]'
+require_text '.github/workflows/codex-pr-review.yml' \
+  'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
+require_text '.github/workflows/codex-pr-review.yml' 'scripts/codex_arbiter.py'
+require_text '.github/workflows/codex-pr-review.yml' 'GITHUB_STEP_SUMMARY'
+refuse_text '.github/workflows/codex-pr-review.yml' 'ARBITER_OPERATOR: 1'
+
+# Text checks can be fooled by content in the model-calling review job, so
+# isolate the arbiter job and prove it stays deterministic and write-minimal.
+ARBITER_BLOCK="$(awk '
+  /^  arbiter:$/ { in_arbiter=1 }
+  in_arbiter && /^  [A-Za-z][A-Za-z0-9_-]*:$/ && $0 !~ /^  arbiter:$/ { exit }
+  in_arbiter { print }
+' "$ROOT/.github/workflows/codex-pr-review.yml")"
+if [[ -z "$ARBITER_BLOCK" ]]; then
+  fail 'Could not extract the arbiter job from codex-pr-review.yml.'
+fi
+for forbidden in OPENAI_API_KEY codex_responses.py 'codex exec' pytest 'npm test' 'swift test' --gap-issues; do
+  if grep -Fq -- "$forbidden" <<<"$ARBITER_BLOCK"; then
+    fail "The arbiter job must not contain $forbidden."
+  fi
+done
+
+# The bounded PR set must flow directly from the review job into the arbiter;
+# an independently selected set would not necessarily review the same PRs.
+ruby_status=0
+ruby -ryaml <<'RUBY' || ruby_status=1
+workflow = YAML.load_file(".github/workflows/codex-pr-review.yml")
+jobs = workflow.fetch("jobs")
+review = jobs.fetch("review")
+arbiter = jobs.fetch("arbiter")
+raise unless review.fetch("outputs").fetch("pr_numbers") ==
+  "${{ steps.targets.outputs.pr_numbers }}"
+raise unless Array(arbiter.fetch("needs")) == ["review"]
+raise unless arbiter.fetch("env").fetch("PR_NUMBERS_JSON") ==
+  "${{ needs.review.outputs.pr_numbers }}"
+RUBY
+if (( ruby_status != 0 )); then
+  fail 'Arbiter workflow is structurally disconnected from the review PR set.'
+fi
+
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
 
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
