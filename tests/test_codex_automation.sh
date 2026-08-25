@@ -326,6 +326,27 @@ if (( ruby_status != 0 )); then
   fail 'Arbiter workflow is structurally disconnected from the review PR set.'
 fi
 
+require_text '.github/workflows/codex-pr-review.yml' 'workflow_run:'
+require_text '.github/workflows/codex-pr-review.yml' 'workflows: [CI]'
+require_text '.github/workflows/codex-pr-review.yml' 'types: [completed]'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_EXPECTED_HEAD_SHA='
+# Coverage invariant: direct push events remain for heads whose conflicting
+# merge ref prevents GitHub from creating a CI pull_request run at all.
+require_text '.github/workflows/codex-pr-review.yml' \
+  'types: [opened, synchronize, reopened, ready_for_review]'
+require_text '.github/workflows/codex-pr-review.yml' \
+  'workflow_run.pull_requests[0].number'
+require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
+require_text 'scripts/codex_review_pr.sh' \
+  'actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs'
+require_text 'scripts/codex_review_pr.sh' 'commits/${HEAD_SHA}/check-runs'
+require_text 'scripts/codex_review_pr.sh' '--label verification-results'
+require_text 'scripts/codex_review_pr.sh' 'not available at review time'
+refuse_text '.github/workflows/codex-pr-review.yml' 'actions/download-artifact'
+refuse_text 'scripts/codex_review_pr.sh' 'pytest'
+refuse_text 'scripts/codex_review_pr.sh' 'npm test'
+refuse_text 'scripts/codex_review_pr.sh' 'swift test'
+
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
 
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
@@ -408,7 +429,12 @@ case "${1:-}" in
     # Two distinct API reads share this verb. The default-branch tip is the
     # trust root; the comment list is ordinary data. Route on the path so the
     # trust root can never be satisfied by the comment fixture.
-    if [[ "$*" == *"/git/ref/heads/"* ]]; then
+    printf '%s\n' "$*" >>"$CODEX_STUB_DIR/api.log"
+    if [[ "$*" == *"/commits/"*"/check-runs"* ]]; then
+      jq -s . <"$CODEX_STUB_DIR/check-runs.json"
+    elif [[ "$*" == *"/actions/workflows/"*"/runs"* ]]; then
+      apply_jq "$@" <"$CODEX_STUB_DIR/workflow-runs.json"
+    elif [[ "$*" == *"/git/ref/heads/"* ]]; then
       jq -n --arg sha "$(cat "$CODEX_STUB_DIR/remote-tip")" \
             --arg branch "$(cat "$CODEX_STUB_DIR/default-branch")" \
             '{ref: ("refs/heads/" + $branch), object: {sha: $sha, type: "commit"}}' \
@@ -511,6 +537,8 @@ printf '%s\n' "$TRUSTED_STAGING_ROOT" >"$STUB_DIR/trusted-staging"
 printf '%s\n' "$REAL_GIT_PATH" >"$STUB_DIR/real-git"
 printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
 printf '%s\n' "main" >"$STUB_DIR/default-branch"
+printf '%s\n' '{"total_count": 0, "workflow_runs": []}' >"$STUB_DIR/workflow-runs.json"
+jq -n '{total_count: 1, check_runs: [{id: 1, name: "quality-gate", status: "completed", conclusion: "success", completed_at: "2026-08-25T10:00:00Z"}]}' >"$STUB_DIR/check-runs.json"
 # The policy file is genuinely part of the trusted checkout; serve the real one.
 mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
 cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
@@ -694,6 +722,212 @@ check_oversized_review_input_is_refused() {
   fi
   if [[ -s "$STUB_DIR/posted.log" ]]; then
     fail 'Oversized PR input reached comment publication.'
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Task 5: completed-CI sequencing, exact-head binding, coverage fallback, and
+# sanitize-before-wrap behavior are exercised through the same fake gh/API
+# boundary used by the suppression tests.
+# ---------------------------------------------------------------------------
+CI_HEAD="$(printf 'a%.0s' {1..40})"
+NEWER_CI_HEAD="$(printf 'b%.0s' {1..40})"
+CI_REVIEW_STATUS=0
+
+prepare_ci_review_case() {
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/api.log"
+  : >"$STUB_DIR/responses-argv.log"
+  rm -f "$STUB_DIR/captured-input.md"
+  printf '%s\n' "$(jq -n --arg sha "$CI_HEAD" \
+    '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg sha "$CI_HEAD" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: "topic", headRefOid: $sha}' >"$STUB_DIR/metadata.json"
+}
+
+invoke_ci_review_case() {
+  CI_REVIEW_STATUS=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$@" \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || CI_REVIEW_STATUS=$?
+}
+
+check_matching_completed_ci_head_reaches_model() {
+  prepare_ci_review_case
+  jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
+  jq -n '{count: 3, check_runs: [
+    {id: 2, name: "frontend@owner@example.com", status: "completed",
+     conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
+    {id: 1, name: "quality-gate", status: "completed",
+     conclusion: "success", completed_at: "2026-08-25T10:00:00Z"},
+    {id: 3, name: "external-wait", status: "in_progress",
+     conclusion: null, completed_at: null}
+  ]}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A matching completed-CI head did not review successfully.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-input.md" ]]; then
+    fail 'The CI-completion path did not reach the model.'
+    return
+  fi
+  if ! grep -Fq 'UNTRUSTED_DATA verification-results' "$STUB_DIR/captured-input.md"; then
+    fail 'Completed CI evidence was not wrapped as untrusted input.'
+  fi
+  if grep -Fq 'owner@example.com' "$STUB_DIR/captured-input.md"; then
+    fail 'A personal identifier in a check name reached the model unsanitized.'
+  fi
+  if ! grep -Eq '\[EMAIL\]|\[REDACTED\]' "$STUB_DIR/captured-input.md"; then
+    fail 'The sanitized check name was not present in the model input.'
+  fi
+  if ! grep -Fq '"unsettled_count": 1' "$STUB_DIR/captured-input.md"; then
+    fail 'An unsettled external check was not counted without erasing completed evidence.'
+  fi
+}
+
+check_stale_workflow_run_exits_before_model() {
+  prepare_ci_review_case
+  jq -n '{count: 1, check_runs: [{id: 1, name: "quality-gate", status: "completed",
+    conclusion: "success", completed_at: "2026-08-25T10:00:00Z"}]}' \
+    >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$NEWER_CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A stale workflow-run/head pairing failed instead of exiting zero.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ -s "$STUB_DIR/responses-argv.log" ]]; then
+    fail 'A stale workflow-run/head pairing reached the model.'
+  fi
+  if grep -Fq '/check-runs' "$STUB_DIR/api.log"; then
+    fail 'A stale workflow-run/head pairing collected verification evidence.'
+  fi
+}
+
+check_direct_path_without_ci_run_reviews() {
+  prepare_ci_review_case
+  printf '{"total_count": 0, "workflow_runs": []}' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=ci.yml \
+    CODEX_CI_DISCOVERY_SECONDS=1 \
+    CODEX_CI_DISCOVERY_POLL_SECONDS=1 \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A conflicting head with no CI run was not reviewed as required.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-input.md" ]] || \
+    ! grep -Fq 'CI produced no run' "$STUB_DIR/captured-input.md"; then
+    fail 'The no-CI-run fallback did not explicitly state that CI produced no run.'
+  fi
+}
+
+check_direct_path_with_ci_run_defers() {
+  prepare_ci_review_case
+  jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=ci.yml \
+    CODEX_CI_DISCOVERY_SECONDS=1 \
+    CODEX_CI_DISCOVERY_POLL_SECONDS=1 \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'The direct push path did not exit zero while deferring to CI completion.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ -s "$STUB_DIR/responses-argv.log" ]] || grep -Fq '/check-runs' "$STUB_DIR/api.log"; then
+    fail 'A direct push covered by CI was reviewed twice.'
+  fi
+}
+
+check_failed_ci_run_probe_fails_safe_toward_review() {
+  prepare_ci_review_case
+  printf 'not-json' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=ci.yml \
+    CODEX_CI_DISCOVERY_SECONDS=1 \
+    CODEX_CI_DISCOVERY_POLL_SECONDS=1 \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || [[ ! -s "$STUB_DIR/responses-argv.log" ]]; then
+    fail 'A failed CI discovery probe did not fail safe toward reviewing.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
+check_workflow_run_path_never_probes_for_a_run() {
+  prepare_ci_review_case
+  printf 'sentinel-if-probed' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || grep -Fq '/actions/workflows/' "$STUB_DIR/api.log"; then
+    fail 'The workflow_run path probed for a second CI run.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
+check_empty_ci_evidence_is_explicit() {
+  prepare_ci_review_case
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || \
+    ! grep -Fiq 'not available at review time' "$STUB_DIR/captured-input.md"; then
+    fail 'Absent completed checks were not made explicit to the reviewer.'
+    cat "$STUB_DIR/run.log" >&2
   fi
 }
 
@@ -1173,6 +1407,14 @@ check_non_contract_file_is_ignored
 check_contract_path_as_directory_is_ignored
 
 check_oversized_review_input_is_refused
+
+check_matching_completed_ci_head_reaches_model
+check_stale_workflow_run_exits_before_model
+check_direct_path_without_ci_run_reviews
+check_direct_path_with_ci_run_defers
+check_failed_ci_run_probe_fails_safe_toward_review
+check_workflow_run_path_never_probes_for_a_run
+check_empty_ci_evidence_is_explicit
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",
