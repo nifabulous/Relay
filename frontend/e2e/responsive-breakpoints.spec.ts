@@ -19,7 +19,7 @@ test("keeps major two-column layouts below the 1024px breakpoint", async ({ page
   for (const route of routes) {
     for (const width of [768, 769, 1024]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto(route.path);
+      await page.goto(route.path, { waitUntil: "networkidle" });
       await expect(page.getByRole("heading", { name: route.heading })).toBeVisible({ timeout: 10_000 });
 
       const columnCount = await page

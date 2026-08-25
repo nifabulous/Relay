@@ -70,6 +70,13 @@ export function PracticePage() {
   );
 
   const alreadyDone = practicedToday(state, today);
+  // The intro and active drill should report the same persisted, current-day
+  // completion record after a reload. History is newest-first, so the first
+  // matching entry is the latest round if the learner practices again today.
+  const completedToday = Math.min(
+    state.history.find((record) => record.day === today)?.total ?? 0,
+    questions.length,
+  );
   const [phase, setPhase] = useState<Phase>("intro");
   const [index, setIndex] = useState(0);
   const [outcomes, setOutcomes] = useState<AnswerOutcome[]>([]);
@@ -165,8 +172,8 @@ export function PracticePage() {
               <span className="practice-stat__label">reviews due</span>
             </div>
             <div className="practice-stat practice-stat--progress">
-              <TodayProgress completed={0} total={questions.length} />
-              <span className="practice-stat__value mono">0 <small>of {questions.length}</small></span>
+              <TodayProgress completed={completedToday} total={questions.length} />
+              <span className="practice-stat__value mono">{completedToday} <small>of {questions.length}</small></span>
               <span className="practice-stat__label">today</span>
             </div>
           </div>

@@ -118,7 +118,9 @@ export function StpPage() {
 
   const checklist = result ? buildChecklist(result) : [];
   const validCount = checklist.filter((row) => row.status === "valid").length;
-  const score = checklist.length > 0 ? Math.round((validCount / checklist.length) * 100) : result?.stp_passes ? 100 : 0;
+  const checklistCoverage = checklist.length > 0
+    ? Math.round((validCount / checklist.length) * 100)
+    : result?.stp_passes ? 100 : 0;
   const tips = result?.findings
     .map((finding) => finding.repair || finding.message)
     .filter((tip): tip is string => Boolean(tip)) ?? [];
@@ -226,19 +228,24 @@ export function StpPage() {
                 </div>
               ))}
             </div>
-            <div className="stp-score" aria-label={`STP score ${score}%`}>
-              <strong>STP score</strong>
+            <div className="stp-score">
+              <div className="stp-score__label">
+                <strong>Checklist coverage</strong>
+                <span className="stp-score__note">
+                  Derived from returned field checks — not a backend compliance score.
+                </span>
+              </div>
               <span
                 className="stp-score__track"
                 role="progressbar"
-                aria-label="STP score"
+                aria-label={`Checklist coverage ${checklistCoverage}%`}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-valuenow={score}
+                aria-valuenow={checklistCoverage}
               >
-                <span aria-hidden="true" style={{ width: `${score}%` }} />
+                <span aria-hidden="true" style={{ width: `${checklistCoverage}%` }} />
               </span>
-              <strong className="stp-score__value">{score}%</strong>
+              <strong className="stp-score__value">{checklistCoverage}%</strong>
             </div>
             <p className="tool-sim-label">
               <strong>Simulation — not a real payment.</strong>

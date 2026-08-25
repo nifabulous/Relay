@@ -207,7 +207,8 @@ describe("StpPage", () => {
     expect(screen.getByText("Sender's Reference")).toBeVisible();
     expect(screen.getByText("Details of Charges")).toBeVisible();
     expect(screen.getByText("Add SHA, OUR, or BEN.")).toBeVisible();
-    expect(screen.getByLabelText(/stp score 50%/i)).toBeVisible();
+    expect(screen.getByLabelText(/checklist coverage 50%/i)).toBeVisible();
+    expect(screen.getByText(/derived from returned field checks.*not a backend compliance score/i)).toBeVisible();
     expect(screen.getByText("Simulation — not a real payment.")).toBeVisible();
     expect(screen.getByText("Simulation only")).toBeVisible();
 

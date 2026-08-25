@@ -154,5 +154,7 @@ describe("PracticePage", () => {
     renderPage();
     expect(screen.getByText(/already practiced today/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /practice again/i })).toBeVisible();
+    expect(document.querySelector(".practice-intro .practice-stat--progress .practice-stat__value"))
+      .toHaveTextContent(/5\s+of\s+5/);
   });
 });
