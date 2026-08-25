@@ -208,6 +208,8 @@ describe("StpPage", () => {
     expect(screen.getByText("Details of Charges")).toBeVisible();
     expect(screen.getByText("Add SHA, OUR, or BEN.")).toBeVisible();
     expect(screen.getByLabelText(/stp score 50%/i)).toBeVisible();
+    expect(screen.getByText("Simulation — not a real payment.")).toBeVisible();
+    expect(screen.getByText("Simulation only")).toBeVisible();
 
     await user.clear(screen.getByLabelText(/transaction reference/i));
     const revalidate = screen.getByRole("button", { name: /re-validate/i });

@@ -240,7 +240,12 @@ export function StpPage() {
               </span>
               <strong className="stp-score__value">{score}%</strong>
             </div>
-            <p className="tool-sim-label"><strong>{result.disclaimer || "Simulation — not a real payment."}</strong></p>
+            <p className="tool-sim-label">
+              <strong>Simulation — not a real payment.</strong>
+              {result.disclaimer && result.disclaimer !== "Simulation — not a real payment." && (
+                <span className="tool-sim-label__source">{result.disclaimer}</span>
+              )}
+            </p>
           </section>
 
           <aside className="stp-page__tips-card" aria-labelledby="stp-tips-heading">

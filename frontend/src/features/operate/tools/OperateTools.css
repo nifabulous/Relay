@@ -223,6 +223,12 @@
   color: var(--color-warning);
 }
 
+.tool-sim-label__source {
+  display: block;
+  margin-top: var(--space-1);
+  font-weight: 400;
+}
+
 /* ── Results ────────────────────────────────────────────── */
 .tool-result {
   display: flex;
@@ -241,7 +247,7 @@
 /* ── Fee calculator ────────────────────────────────────── */
 .fee-page__layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: stretch;
 }
@@ -510,7 +516,7 @@
 /* ── Sanctions screening ──────────────────────────────── */
 .screening-page__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: start;
 }
@@ -764,7 +770,7 @@
 /* ── Value date checker ────────────────────────────────── */
 .value-date-page__layout {
   display: grid;
-  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: stretch;
 }
@@ -1312,6 +1318,21 @@
   font-size: var(--text-xs);
 }
 
+/* ── Tool layout breakpoints ────────────────────────────── */
+@media (min-width: 1024px) {
+  .fee-page__layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .screening-page__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
+  }
+
+  .value-date-page__layout {
+    grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  }
+}
+
 /* ── Tool index breakpoints ─────────────────────────────── */
 @media (min-width: 1024px) {
   .tool-index__list {
@@ -1333,20 +1354,8 @@
     gap: var(--space-3);
   }
 
-  .value-date-page__layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .fee-page__layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .tool-form__row {
     flex-direction: column;
-  }
-
-  .screening-page__layout {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .fee-hops,
