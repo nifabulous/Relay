@@ -38,7 +38,7 @@ export const defaultPreferences: RelayPreferences = {
   theme: "system",
 };
 
-const RELAY_THEMES: readonly string[] = ["system", "light", "dark"];
+const RELAY_THEMES: readonly string[] = ["system", "light", "dark", "black"];
 
 /**
  * Read-boundary coercion for the theme preference.

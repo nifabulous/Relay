@@ -54,11 +54,11 @@ describe("PreferencesMenu appearance group", () => {
   // DESIGN.md: status is text + icon + colour, never colour alone. aria-checked
   // is what makes the active state available to assistive tech and to a user
   // who cannot distinguish the selected tint.
-  it("exposes three appearance states with the active one programmatically determinable", async () => {
+  it("exposes four appearance states with the active one programmatically determinable", async () => {
     await openMenu();
 
     const options = screen.getAllByRole("menuitemradio");
-    expect(options).toHaveLength(3);
+    expect(options).toHaveLength(4);
 
     // "system" is the default from Task 7.2.
     expect(screen.getByRole("menuitemradio", { name: /^System/ })).toHaveAttribute(
@@ -70,6 +70,11 @@ describe("PreferencesMenu appearance group", () => {
       "false",
     );
     expect(screen.getByRole("menuitemradio", { name: "Dark" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    // The OLED variant joins dark as an explicit non-OS choice.
+    expect(screen.getByRole("menuitemradio", { name: /Black/ })).toHaveAttribute(
       "aria-checked",
       "false",
     );
@@ -92,7 +97,7 @@ describe("PreferencesMenu appearance group", () => {
     expect(loadPreferences().theme).toBe("dark");
   });
 
-  it("round-trips all three appearance states", async () => {
+  it("round-trips all four appearance states", async () => {
     const user = await openMenu();
 
     await user.click(screen.getByRole("menuitemradio", { name: "Light" }));
@@ -100,6 +105,9 @@ describe("PreferencesMenu appearance group", () => {
 
     await user.click(screen.getByRole("menuitemradio", { name: "Dark" }));
     expect(loadPreferences().theme).toBe("dark");
+
+    await user.click(screen.getByRole("menuitemradio", { name: /Black/ }));
+    expect(loadPreferences().theme).toBe("black");
 
     await user.click(screen.getByRole("menuitemradio", { name: /^System/ }));
     expect(loadPreferences().theme).toBe("system");

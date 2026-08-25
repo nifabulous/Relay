@@ -2,11 +2,12 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import SSI, Bank, CorridorRule, FedACHBank, FedwireBank
-from ..schemas import HealthResponse, LookupResponse, ValidateResponse
+from ..schemas import BankSearchResponse, HealthResponse, LookupResponse, ValidateResponse
 from ..services.routing import _normalize_bic_input, _settlement_for, lookup_bank
 from ..services.validator import detect_type, validate_bic, validate_iban
 
@@ -101,4 +102,53 @@ def lookup(
         bank=bank,
         found=bank is not None,
         settlement=_settlement_for(normalized),
+    )
+
+
+def _escape_like_token(value: str) -> str:
+    """Escape SQL LIKE wildcards while preserving ordinary name search."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+@router.get("/banks/search", response_model=BankSearchResponse)
+def search_banks(
+    q: str = Query(..., min_length=2, max_length=80, description="Bank name to search"),
+    limit: int = Query(8, ge=1, le=20, description="Maximum number of matches"),
+    db: Session = Depends(get_db),
+):
+    """Search the curated bank directory by all words in a bank name."""
+    normalized = " ".join(q.split())
+    if len(normalized) < 2:
+        raise HTTPException(status_code=400, detail="Search query must contain at least 2 characters")
+
+    filters = [
+        Bank.bank_name.ilike(
+            f"%{_escape_like_token(token)}%",
+            escape="\\",
+        )
+        for token in normalized.split()
+    ]
+    banks = (
+        db.execute(
+            select(Bank)
+            .where(*filters)
+            .order_by(Bank.bank_name.asc(), Bank.bic.asc())
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
+
+    return BankSearchResponse(
+        query=normalized,
+        results=[
+            {
+                "bic": bank.bic,
+                "bank_name": bank.bank_name,
+                "country_code": bank.country_code,
+                "city": bank.city,
+                "country_currency": bank.country_currency,
+            }
+            for bank in banks
+        ],
     )

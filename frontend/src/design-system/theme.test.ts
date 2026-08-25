@@ -66,6 +66,12 @@ describe("resolveTheme", () => {
     expect(resolveTheme("dark", false)).toBe("dark");
     expect(resolveTheme("light", true)).toBe("light");
   });
+
+  // The OLED variant paints with its own palette but answers binary questions
+  // (native color-scheme, menu hints) as dark.
+  it("resolves black as dark for binary consumers", () => {
+    expect(resolveTheme("black", false)).toBe("dark");
+  });
 });
 
 describe("prefersDarkNow", () => {
@@ -89,6 +95,9 @@ describe("applyTheme", () => {
 
     applyTheme("dark", false, root);
     expect(root.getAttribute("data-theme")).toBe("dark");
+
+    applyTheme("black", false, root);
+    expect(root.getAttribute("data-theme")).toBe("black");
 
     applyTheme("light", true, root);
     expect(root.getAttribute("data-theme")).toBe("light");
@@ -246,6 +255,8 @@ describe("pre-paint theme script", () => {
     ["light", false],
     ["dark", true],
     ["dark", false],
+    ["black", true],
+    ["black", false],
   ];
 
   it.each(matrix)("matches applyTheme for stored=%s osDark=%s", (theme, osDark) => {

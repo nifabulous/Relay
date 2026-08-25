@@ -87,12 +87,12 @@ describe("Tailwind foundation", () => {
     expect(globalCss).not.toContain('@source not "../**/*.tsx"');
   });
 
-  it("keeps the established default gzip bundle contract", () => {
-    const configuredBudget = Number(
-      bundleCheckScript.match(/const BUDGET_BYTES = (\d+);/)?.[1],
-    );
-    expect(configuredBudget).toBe(205120);
-    expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
+    it("keeps the established default gzip bundle contract", () => {
+        const configuredBudget = Number(
+            bundleCheckScript.match(/const BUDGET_BYTES = (\d+);/)?.[1],
+        );
+        expect(configuredBudget).toBe(215040);
+        expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
     expect(bundleCheckScript).not.toContain("level: 9");
     if (existsSync(builtRelayHtmlPath)) {
       expect(

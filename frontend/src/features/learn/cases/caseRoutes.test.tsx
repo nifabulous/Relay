@@ -437,24 +437,18 @@ describe("LearnIndexPage — production wiring of the case session", () => {
     expect(headingIds.size).toBe(CASE_CATALOG.length);
   });
 
-  it("groups all case entries in the labelled Customer case desks region", () => {
+  it("groups the dominant and secondary entries in the Active case desk region", () => {
     render(
       <MemoryRouter>
         <LearnIndexPage />
       </MemoryRouter>,
     );
 
-    const rail = screen.getByRole("region", { name: "Customer case desks" });
-    const tracks = Array.from(rail.children).filter((child) =>
-      child.classList.contains("learn-case-desks__track"),
-    );
-    expect(tracks).toHaveLength(1);
-
-    const track = tracks[0];
-    expect(track.children).toHaveLength(CASE_CATALOG.length);
-    expect(
-      Array.from(track.children).every((child) => child.matches("section.case-entry")),
-    ).toBe(true);
+    const rail = screen.getByRole("region", { name: "Active case desk" });
+    const active = within(rail).getByRole("list", { name: "Active case" });
+    const other = within(rail).getByRole("list", { name: "Other cases" });
+    expect(within(active).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(other).getAllByRole("listitem")).toHaveLength(CASE_CATALOG.length - 1);
     expect(rail.querySelectorAll('a[href^="/learn/cases/"]')).toHaveLength(
       CASE_CATALOG.filter((definition) => definition.reviewStatus !== "under_review").length,
     );

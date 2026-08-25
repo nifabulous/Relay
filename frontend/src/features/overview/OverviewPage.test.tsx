@@ -2,8 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, it, expect } from "vitest";
+import { http, HttpResponse } from "msw";
 import { selectPrimaryAction } from "./selectPrimaryAction";
 import { OverviewPage } from "./OverviewPage";
+import { server } from "../../test/server";
+import { saveProgress } from "../../lib/persistence/storage";
 
 function renderOverviewPage() {
   const queryClient = new QueryClient({
@@ -99,5 +102,113 @@ describe("OverviewPage", () => {
 
     expect(screen.queryByRole("heading", { name: /learning backup/i })).toBeNull();
     expect(document.querySelector(".overview__learner-data")).toBeNull();
+  });
+});
+
+/**
+ * Adaptive Command Center rendering contract
+ * (docs/superpowers/specs/2026-08-21-overview-adaptive-command-center-design.md).
+ * Assertions target user-visible copy and region presence, never query state.
+ */
+describe("OverviewPage adaptive command center", () => {
+  it("renders the explicit page heading and supporting copy", () => {
+    renderOverviewPage();
+
+    expect(screen.getByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
+    expect(screen.getByText("Your payment routing learning hub.")).toBeInTheDocument();
+  });
+
+  it("renders the first-visit action with its exact copy contract and one CTA", () => {
+    renderOverviewPage();
+
+    // Exactly one primary CTA, carrying the explore_intro copy.
+    const ctas = document.querySelectorAll(".overview__cta");
+    expect(ctas).toHaveLength(1);
+    expect(ctas[0]).toHaveAttribute("href", "/explore?intro=1");
+    expect(ctas[0]).toHaveAccessibleName(/explore how payments move/i);
+
+    expect(screen.getByText("Start here")).toBeInTheDocument();
+    expect(document.querySelector(".overview__action-title")).toHaveTextContent(
+      "Explore how payments move",
+    );
+    expect(
+      screen.getByText("Start with an illustrative payment flow."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the zero-progress starting point and omits zero-value pulse rows", () => {
+    renderOverviewPage();
+
+    const pulse = screen.getByRole("complementary", { name: /learning pulse/i });
+    expect(pulse).toHaveTextContent("0 / 16");
+    // Zero streak and zero reviews are omitted rather than rendered as stats.
+    expect(pulse).not.toHaveTextContent(/day streak/i);
+    expect(pulse).not.toHaveTextContent(/due for review/i);
+  });
+
+  it("keeps the four quick routes as real links to their destinations", () => {
+    renderOverviewPage();
+
+    const expected = [
+      [/^search/i, "/explore"],
+      [/^directory/i, "/explore/banks"],
+      [/^track/i, "/operate"],
+      [/^practice/i, "/learn/practice"],
+    ] as const;
+    for (const [name, href] of expected) {
+      const link = screen.getByRole("link", { name: new RegExp(name.source, name.flags) });
+      expect(link).toHaveAttribute("href", href);
+    }
+  });
+
+  it("shows the first-visit empty activity copy", () => {
+    renderOverviewPage();
+
+    expect(
+      screen.getByText("No activity yet. Start by exploring how payments move."),
+    ).toBeInTheDocument();
+  });
+
+  it("adapts copy for a returning learner mid-curriculum", () => {
+    saveProgress({ schemaVersion: 1, completedModuleIds: ["lab-1"] });
+    renderOverviewPage();
+
+    // next_learn kind — title, supporting line, and CTA label per the contract.
+    expect(document.querySelector(".overview__action-title")).toHaveTextContent(
+      "Continue to the next module",
+    );
+    expect(
+      screen.getByText("Build on your progress with the next lesson."),
+    ).toBeInTheDocument();
+    expect(document.querySelector(".overview__cta")).toHaveAttribute(
+      "href",
+      "/app/learn/lab-2",
+    );
+    // Progress reflects the seeded module; still no streak without practice.
+    expect(screen.getByRole("complementary", { name: /learning pulse/i })).toHaveTextContent(
+      "1 / 16",
+    );
+    // Returning user with an empty feed gets the returning-visitor copy.
+    expect(
+      screen.getByText("No activity yet. Your recent simulations and learning will appear here."),
+    ).toBeInTheDocument();
+  });
+
+  it("degrades the system inventory to a quiet note when health fails", async () => {
+    server.use(
+      http.get("/api/health", () => HttpResponse.error(), { once: true }),
+    );
+
+    renderOverviewPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("System inventory is temporarily unavailable."),
+      ).toBeInTheDocument();
+    });
+
+    // The failure must not take the rest of the page down with it.
+    expect(document.querySelector(".overview__cta")).not.toBeNull();
+    expect(screen.getByRole("complementary", { name: /learning pulse/i })).toBeInTheDocument();
   });
 });

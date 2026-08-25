@@ -1,6 +1,7 @@
 import { useCallback, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { RelayPopover } from "../design-system/behavior/RelayPopover";
+import { Icon } from "../design-system/coss/icon";
 import type { RelayTheme } from "../design-system/types";
 import { usePreferences, useResolvedTheme, updatePreferences } from "./AppShell";
 
@@ -20,6 +21,7 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
+  { value: "black", label: "Black · OLED" },
 ];
 
 function CheckIcon() {
@@ -99,6 +101,7 @@ export function PreferencesMenu() {
             aria-expanded={open}
             aria-haspopup="menu"
           >
+            <Icon name="sliders" size={15} />
             Preferences
           </button>
         }
@@ -155,9 +158,9 @@ export function PreferencesMenu() {
           >
             <span className="app-shell__prefs-item-label">Reduce motion</span>
             {/* A switch, not a checkmark. The radio items above use CheckIcon to mark
-                which one of three is selected; a binary preference needs a control that
-                shows BOTH states, or "off" renders as no indicator at all and the item
-                is indistinguishable from a radio option. */}
+                which one of the appearance options is selected; a binary preference needs
+                a control that shows BOTH states, or "off" renders as no indicator at all
+                and the item is indistinguishable from a radio option. */}
             <span className="app-shell__prefs-switch" aria-hidden="true" />
           </button>
 

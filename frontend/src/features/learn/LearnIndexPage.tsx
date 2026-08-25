@@ -8,10 +8,11 @@ import {
 } from "./curriculum";
 import { loadProgress } from "../../lib/persistence/storage";
 import { useState, useCallback } from "react";
-import { CaseEntry } from "./cases/CaseEntry";
 import { CASE_CATALOG } from "./cases/caseCatalog";
 import { loadCaseSession } from "./cases/caseStore";
+import { selectDominantCase } from "./cases/selectDominantCase";
 import { loadPracticeState, dueReviews, practicedToday, displayStreak, dayKey } from "./practice/practiceStore";
+import { LearnCaseLaunchpad } from "./LearnCaseLaunchpad";
 import "./LearnPage.css";
 
 export function LearnIndexPage() {
@@ -29,8 +30,9 @@ export function LearnIndexPage() {
     CASE_CATALOG.map((definition) => ({
       definition,
       session: loadCaseSession(definition.id),
-    })),
+    })).map((entry, index) => ({ ...entry, index })),
   );
+  const dominantCase = selectDominantCase(caseEntries);
 
   const isComplete = useCallback((id: string) => completed.includes(id), [completed]);
 
@@ -41,45 +43,11 @@ export function LearnIndexPage() {
         <p className="measure">Guided modules covering the full cross-border payment lifecycle.</p>
       </div>
 
-      {/* Case-first entry: the dominant actions sit ABOVE the legacy
-          curriculum so a learner's eye lands on the case work first.
-          The curriculum list below is unchanged. */}
-      <section
-        className="learn-case-desks"
-        aria-label="Customer case desks"
-      >
-        <div
-          className="learn-case-desks__track"
-          role="list"
-          aria-label="Customer cases"
-        >
-          {caseEntries.map(({ definition, session }) => (
-            <CaseEntry key={definition.id} caseDef={definition} session={session} />
-          ))}
-        </div>
-      </section>
-
-      {/* Daily practice strip — the return habit */}
-      <div className="learn-practice-strip">
-        <div className="learn-practice-strip__text">
-          <span className="learn-practice-strip__title">Daily practice</span>
-          <span className="learn-practice-strip__sub">
-            {doneToday
-              ? `Done for today — ${streak}-day streak`
-              : reviewsDue > 0
-                ? `${reviewsDue} question${reviewsDue === 1 ? "" : "s"} due for review · 5-minute drill`
-                : streak > 0
-                  ? `Keep your ${streak}-day streak alive · 5-minute drill`
-                  : "Five quick questions from what you've learned"}
-          </span>
-        </div>
-        <Link
-          to="/learn/practice"
-          className={`relay-btn ${doneToday ? "relay-btn--secondary" : "relay-btn--primary"}`}
-        >
-          {doneToday ? "Practice again" : "Start drill"}
-        </Link>
-      </div>
+      <LearnCaseLaunchpad
+        entries={caseEntries}
+        dominant={dominantCase}
+        practice={{ doneToday, reviewsDue, streak }}
+      />
 
       <div className="learn-page__progress">
         <span className="mono">{completed.length} / {CURRICULUM.length}</span>
@@ -90,7 +58,7 @@ export function LearnIndexPage() {
         </div>
       </div>
 
-      <div className="learn-page__section-heading">
+      <div id="technical-labs" className="learn-page__section-heading">
         <h2>Technical labs</h2>
         <p className="measure">
           Self-paced reference modules covering identifiers, schemes, messaging,

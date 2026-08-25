@@ -149,7 +149,9 @@ test.describe("Learner state portability", () => {
     await expect(page.getByText("1 activity entry")).toBeVisible();
 
     await page.getByRole("button", { name: "Import learning backup" }).click();
-    await expect(page.getByRole("status")).toHaveText(
+    // Scoped: an unscoped getByRole("status") also matches the tutor
+    // availability announcement rendered by FloatingTutorLauncher.
+    await expect(page.locator(".overview__learner-data-feedback")).toHaveText(
       "Imported 1 new module, 1 activity entry, and 0 case sessions.",
     );
 

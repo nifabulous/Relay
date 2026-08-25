@@ -4,6 +4,8 @@ Uses the session-scoped `client` fixture from conftest, which triggers the
 app's lifespan (table creation + seeding) exactly once.
 """
 
+import pytest
+
 
 def test_health_seeded(client):
     """App should boot, create tables, and seed the directory."""
@@ -104,6 +106,101 @@ def test_lookup_unknown_bank(client):
     r = client.get("/api/lookup", params={"bic": "ZZZZUS31XXX"})
     assert r.status_code == 200
     assert r.json()["found"] is False
+
+
+def test_bank_name_search_returns_case_insensitive_directory_matches(client):
+    r = client.get("/api/banks/search", params={"q": "guaranty trust"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == "guaranty trust"
+    assert body["results"]
+    assert body["results"][0]["bank_name"] == "Guaranty Trust Bank"
+    assert body["results"][0]["bic"] == "GTBINGLAXXX"
+
+
+@pytest.mark.parametrize("limit", [1, 20])
+def test_bank_name_search_honors_inclusive_limit_boundaries(client, limit):
+    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+
+    assert r.status_code == 200
+    assert len(r.json()["results"]) == limit
+
+
+@pytest.mark.parametrize("limit", [0, 21, "not-a-number"])
+def test_bank_name_search_rejects_invalid_limits(client, limit):
+    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+
+    assert r.status_code == 422
+
+
+def test_bank_name_search_normalizes_whitespace_and_requires_all_words(isolated_client):
+    from app.models import Bank
+
+    client, SessionLocal = isolated_client
+    with SessionLocal() as session:
+        session.add_all(
+            [
+                Bank(
+                    bic="TARGUS33XXX",
+                    bank_name="Bank Aurora Meridian",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+                Bank(
+                    bic="DECOUS33XXX",
+                    bank_name="Bank Aurora",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+            ]
+        )
+        session.commit()
+
+    r = client.get(
+        "/api/banks/search",
+        params={"q": "  bank   aurora   meridian  "},
+    )
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == "bank aurora meridian"
+    assert [result["bic"] for result in body["results"]] == ["TARGUS33XXX"]
+
+
+@pytest.mark.parametrize("literal", ["%%", "__"])
+def test_bank_name_search_treats_like_metacharacters_literally(client, literal):
+    r = client.get("/api/banks/search", params={"q": literal})
+
+    assert r.status_code == 200
+    assert r.json()["query"] == literal
+    assert r.json()["results"] == []
+
+
+def test_bank_name_search_matches_a_literal_backslash(isolated_client):
+    from app.models import Bank
+
+    client, SessionLocal = isolated_client
+    with SessionLocal() as session:
+        session.add(
+            Bank(
+                bic="BKSLUS33XXX",
+                bank_name=r"Backslash \ Bank",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+            )
+        )
+        session.commit()
+
+    r = client.get("/api/banks/search", params={"q": r"backslash \ bank"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["query"] == r"backslash \ bank"
+    assert [result["bic"] for result in body["results"]] == ["BKSLUS33XXX"]
 
 
 def test_route_usd_to_nigeria(client):

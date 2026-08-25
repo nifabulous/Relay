@@ -31,7 +31,7 @@
           if (
             parsed &&
             parsed.schemaVersion === 1 &&
-            (parsed.theme === "light" || parsed.theme === "dark")
+            (parsed.theme === "light" || parsed.theme === "dark" || parsed.theme === "black")
           ) {
             theme = parsed.theme;
           }
@@ -41,6 +41,7 @@
 
         var dark =
           theme === "dark" ||
+          theme === "black" ||
           (theme === "system" &&
             typeof matchMedia === "function" &&
             matchMedia("(prefers-color-scheme: dark)").matches);

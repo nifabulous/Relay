@@ -73,13 +73,15 @@ export interface PrepareDraft {
 }
 
 /**
- * Theme preference. Three states, not a boolean: "system" must stay
- * distinguishable from an explicit "light", because only "system" follows the
- * OS. Collapsing to a boolean would make "explicitly light" and "OS happens to
- * be light" indistinguishable, and the OS-change listener would then flip a
- * user who deliberately chose light.
+ * Theme preference. Four states: "system" must stay distinguishable from an
+ * explicit "light", because only "system" follows the OS. Collapsing to a
+ * boolean would make "explicitly light" and "OS happens to be light"
+ * indistinguishable, and the OS-change listener would then flip a user who
+ * deliberately chose light. "dark" is the standard dark palette (blue-tinted);
+ * "black" is an explicit OLED variant (neutral true-black canvas) — it never
+ * follows the OS because no OS offers it.
  */
-export type RelayTheme = "system" | "light" | "dark";
+export type RelayTheme = "system" | "light" | "dark" | "black";
 
 export interface RelayPreferences {
   schemaVersion: 1;

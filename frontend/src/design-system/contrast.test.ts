@@ -119,6 +119,15 @@ function darkExplicit(): Tokens {
   return declarations(blockBody(CSS, /^:root\[data-theme="dark"\]\s*\{/m));
 }
 
+// The OLED variant: an explicit-only palette with neutral true-black surfaces.
+// It has no OS media counterpart, so there is no parity twin — it is measured
+// directly against the same AA pairs as the dark palette below.
+const BLACK_EXPLICIT = declarations(
+  blockBody(CSS, /^:root\[data-theme="black"\]\s*\{/m),
+);
+/** How the cascade resolves in the black theme: its redefinitions over light. */
+const BLACK: Tokens = { ...LIGHT, ...BLACK_EXPLICIT };
+
 /**
  * How the cascade actually resolves: a dark block redefines only the tokens
  * that change, everything else falls through to the bare `:root`. Resolving
@@ -258,6 +267,26 @@ describe("WCAG 2.2 AA contrast for the dark palette", () => {
    */
   it("keeps a perceptible canvas-to-surface elevation step (>= 1.15)", () => {
     expect(ratio(DARK, "--color-canvas", "--color-surface")).toBeGreaterThanOrEqual(1.15);
+  });
+});
+
+// ─── Black (OLED) palette ───────────────────────────────────────────────────
+
+describe("WCAG 2.2 AA contrast for the black palette", () => {
+  // Same pairs, same bar: the OLED variant changes the neutrals, not the rules.
+  it.each(DARK_TEXT_PAIRS)("black %s on %s meets 4.5:1", (fg, bg) => {
+    expect(ratio(BLACK, fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps the same canvas-to-surface elevation floor as dark (>= 1.15)", () => {
+    expect(ratio(BLACK, "--color-canvas", "--color-surface")).toBeGreaterThanOrEqual(1.15);
+  });
+
+  // The black block may only REDEFINE tokens that exist in light — a token
+  // reachable solely in the OLED theme would render nothing in the others.
+  it("never introduces a token that exists only in black", () => {
+    const blackOnly = Object.keys(BLACK_EXPLICIT).filter((token) => !(token in LIGHT));
+    expect(blackOnly).toEqual([]);
   });
 });
 

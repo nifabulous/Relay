@@ -194,16 +194,10 @@ def test_verifying_executor_requires_sandbox_attestation(tmp_path, monkeypatch):
     )
     assert exit_code == 1
 
-    # With the attestation set — the dispatcher vouching the sandbox exists —
-    # the run proceeds to the transport (stubbed here).
-    sent: dict = {}
-
-    def capture(*args, **kwargs):
-        sent["called"] = True
-        return "transcript"
-
+    # WITH the caller-set attestation: still rejected. The variable attests
+    # nothing, and until issue #47's harness lands there is deliberately no
+    # unlock path for this slot (review round 5).
     monkeypatch.setenv("RELAY_AGENT_SANDBOX_ATTESTED", "1")
-    monkeypatch.setattr(agent_runner.codex_responses, "request_response", capture)
     exit_code = agent_runner.main(
         [
             "--agent", "verifying-executor",
@@ -212,8 +206,7 @@ def test_verifying_executor_requires_sandbox_attestation(tmp_path, monkeypatch):
             "--model", "m",
         ]
     )
-    assert exit_code == 0
-    assert sent["called"] is True
+    assert exit_code == 1
 
 
 def test_research_agents_need_no_sandbox_attestation(tmp_path, monkeypatch):

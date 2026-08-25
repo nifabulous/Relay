@@ -1,0 +1,31 @@
+/*
+ * Coss shared CSS — only what Tailwind utilities cannot express: keyframes and
+ * pseudo-element animations. Everything else about the Coss layer lives in the
+ * component files as utilities, which is why global.css opts source discovery
+ * into this directory and nowhere else.
+ */
+
+.coss-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-full);
+  animation: coss-spin 0.6s linear infinite;
+}
+
+@keyframes coss-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The control that reports loading must not spin when the user asked for
+   stillness — same contract as .relay-btn__spinner in Button.css. */
+@media (prefers-reduced-motion: reduce) {
+  .coss-spinner {
+    animation: none;
+    border-top-color: currentColor;
+  }
+}
