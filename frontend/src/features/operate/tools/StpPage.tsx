@@ -110,6 +110,12 @@ export function StpPage() {
 
   const error = mutation.error as ApiProblem | null;
   const translateError = translateMutation.error as ApiProblem | null;
+  const hasRequiredMessageFields = Boolean(txRef && valueDate && amount);
+
+  function runValidation() {
+    if (hasRequiredMessageFields) mutation.mutate();
+  }
+
   const checklist = result ? buildChecklist(result) : [];
   const validCount = checklist.filter((row) => row.status === "valid").length;
   const score = checklist.length > 0 ? Math.round((validCount / checklist.length) * 100) : result?.stp_passes ? 100 : 0;
@@ -137,7 +143,7 @@ export function StpPage() {
         <p className="measure">Validate payment fields for straight-through processing.</p>
       </header>
 
-      <form className="tool-form stp-page__form" onSubmit={(e) => { e.preventDefault(); if (txRef && valueDate && amount) mutation.mutate(); }}>
+      <form className="tool-form stp-page__form" onSubmit={(e) => { e.preventDefault(); runValidation(); }}>
         <div className="stp-page__form-heading">
           <h2>Message fields</h2>
           <p>Use the MT103 values you want to validate.</p>
@@ -172,7 +178,8 @@ export function StpPage() {
           <Button type="submit" variant="primary" isLoading={mutation.isPending}>Check STP compliance</Button>
           <Button type="button" variant="secondary"
           isLoading={translateMutation.isPending}
-          onClick={() => { if (txRef && valueDate && amount) translateMutation.mutate(); }}>
+          disabled={!hasRequiredMessageFields}
+          onClick={() => { if (hasRequiredMessageFields) translateMutation.mutate(); }}>
             View as pacs.008
           </Button>
         </div>
@@ -181,7 +188,11 @@ export function StpPage() {
       {error && (
         <div className="tool-error" role="alert">
           <strong>{error.title}</strong>
-          {error.retryable && <Button variant="secondary" onClick={() => mutation.mutate()}>Retry</Button>}
+          {error.retryable && (
+            <Button variant="secondary" onClick={runValidation} disabled={!hasRequiredMessageFields}>
+              Retry
+            </Button>
+          )}
         </div>
       )}
 
@@ -243,7 +254,14 @@ export function StpPage() {
                 <p className="stp-tips__empty">No findings returned. Re-validate after any message edits.</p>
               )}
             </div>
-            <Button className="stp-page__revalidate" type="button" variant="primary" isLoading={mutation.isPending} onClick={() => mutation.mutate()}>
+            <Button
+              className="stp-page__revalidate"
+              type="button"
+              variant="primary"
+              isLoading={mutation.isPending}
+              disabled={!hasRequiredMessageFields}
+              onClick={runValidation}
+            >
               Re-validate
             </Button>
           </aside>

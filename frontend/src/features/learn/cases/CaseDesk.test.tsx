@@ -366,6 +366,24 @@ describe("CaseDesk — workflow progress", () => {
     expect(workflow).toHaveTextContent("Evidence collected");
     expect(workflow).not.toHaveTextContent("12 min");
   });
+
+  it("keeps requested facts inside the investigation milestone", () => {
+    seedStartedSession({ requestedFactIds: ["price-sensitivity"] });
+    renderDesk();
+
+    const workflow = screen.getByRole("region", { name: /case progress/i });
+    const evidenceStep = within(workflow)
+      .getByText("Evidence collected")
+      .closest(".case-workflow__step");
+    const recommendationStep = within(workflow)
+      .getByText("Recommend next action")
+      .closest(".case-workflow__step");
+
+    expect(workflow).toHaveTextContent("Step 1 of 5");
+    expect(evidenceStep).toHaveAttribute("aria-current", "step");
+    expect(evidenceStep).toHaveClass("case-workflow__step--current");
+    expect(recommendationStep).toHaveClass("case-workflow__step--locked");
+  });
 });
 
 // ─── Fact sections ──────────────────────────────────────────────────────────

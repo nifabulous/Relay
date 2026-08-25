@@ -183,6 +183,8 @@ describe("BankDirectoryPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Bank directory" })).toBeVisible();
+    expect(screen.getByText(/curated teaching directory/i)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Verified only" })).toBeNull();
     expect(screen.getByPlaceholderText("Search by name or BIC…")).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Institution" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Open HSBC details" })).toHaveAttribute(

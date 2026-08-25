@@ -209,8 +209,13 @@ describe("StpPage", () => {
     expect(screen.getByText("Add SHA, OUR, or BEN.")).toBeVisible();
     expect(screen.getByLabelText(/stp score 50%/i)).toBeVisible();
 
-    await user.click(screen.getByRole("button", { name: /re-validate/i }));
-    await waitFor(() => expect(calls).toBe(2));
+    await user.clear(screen.getByLabelText(/transaction reference/i));
+    const revalidate = screen.getByRole("button", { name: /re-validate/i });
+    expect(revalidate).toBeDisabled();
+
+    await user.click(revalidate);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(calls).toBe(1);
   });
 });
 

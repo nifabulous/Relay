@@ -1196,7 +1196,7 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
         </p>
       </header>
 
-      <CaseWorkflow phase={phaseKey} requestedFactCount={session.requestedFactIds.length} />
+      <CaseWorkflow phase={phaseKey} />
 
       {/* Baseline + confidence capture (design spec L171, Investigate step 2).
           Shown ONLY in the investigate phase before any facts are requested —
@@ -1522,16 +1522,14 @@ const CASE_WORKFLOW_STEPS = [
 
 function CaseWorkflow({
   phase,
-  requestedFactCount,
 }: {
   phase: WorkflowPhase | string;
-  requestedFactCount: number;
 }) {
   // The existing reducer owns the phase transitions; this projection only
   // communicates progress and never changes what controls are available.
-  const initialInvestigation = phase === "investigate" && requestedFactCount === 0;
-  const currentIndex = phase === "brief" ? 0 : initialInvestigation ? 0 : phase === "resolve" ? 3 : phase === "debrief" ? 4 : 2;
-  const completedThrough = initialInvestigation ? 0 : Math.max(0, currentIndex);
+  const isInInvestigation = phase === "brief" || phase === "investigate";
+  const currentIndex = isInInvestigation ? 0 : phase === "resolve" ? 3 : phase === "debrief" ? 4 : 2;
+  const completedThrough = isInInvestigation ? 0 : Math.max(0, currentIndex);
   const progress = ((currentIndex + 1) / CASE_WORKFLOW_STEPS.length) * 100;
 
   return (

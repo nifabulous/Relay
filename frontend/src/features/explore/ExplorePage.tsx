@@ -64,7 +64,6 @@ type DirectoryRow = {
   country: string;
   market: string;
   capability: "Cross-border" | "Domestic";
-  verified: boolean;
   monogram: string;
 };
 
@@ -74,11 +73,11 @@ type DirectoryRow = {
  * institution record and settlement instructions.
  */
 const DIRECTORY_ROWS: DirectoryRow[] = [
-  { name: "Lloyds Bank", bic: "LOYDGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", verified: true, monogram: "LB" },
-  { name: "HSBC", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", verified: true, monogram: "HS" },
-  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", verified: true, monogram: "JC" },
-  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", verified: true, monogram: "DB" },
-  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", verified: true, monogram: "MZ" },
+  { name: "Lloyds Bank", bic: "LOYDGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "LB" },
+  { name: "HSBC", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "HS" },
+  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", monogram: "JC" },
+  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", monogram: "DB" },
+  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", monogram: "MZ" },
 ];
 
 const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
@@ -89,7 +88,6 @@ export function BankDirectoryPage() {
   const [searchBic, setSearchBic] = useState<string | null>(null);
   const [market, setMarket] = useState("all");
   const [capability, setCapability] = useState("all");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [directoryPage, setDirectoryPage] = useState(1);
 
   const query = useQuery({
@@ -121,10 +119,7 @@ export function BankDirectoryPage() {
       `${row.name} ${row.bic} ${row.country}`.toLowerCase().includes(normalizedDirectoryQuery);
     const matchesMarket = market === "all" || row.market === market;
     const matchesCapability = capability === "all" || row.capability === capability;
-    // Browse rows represent published seed records, so the verified toggle is
-    // a useful explicit affordance even though every curated row is verified.
-    const matchesVerified = !verifiedOnly || row.verified;
-    return matchesQuery && matchesMarket && matchesCapability && matchesVerified;
+    return matchesQuery && matchesMarket && matchesCapability;
   });
   const directoryPageSize = 5;
   const directoryPageCount = Math.max(1, Math.ceil(filteredRows.length / directoryPageSize));
@@ -140,7 +135,7 @@ export function BankDirectoryPage() {
     <div className="explore bank-directory">
       <div className="explore__header">
         <h1>Bank directory</h1>
-        <p className="measure">Browse verified institutions by BIC, market, and capability.</p>
+        <p className="measure">Browse a curated teaching directory by market and capability.</p>
       </div>
 
       <form
@@ -202,15 +197,6 @@ export function BankDirectoryPage() {
             <option value="Domestic">Capability: Domestic</option>
           </select>
         </label>
-        <button
-          type="button"
-          className={["bank-directory__filter-chip", verifiedOnly && "bank-directory__filter-chip--active"].filter(Boolean).join(" ")}
-          aria-pressed={verifiedOnly}
-          onClick={() => { setVerifiedOnly((current) => !current); setDirectoryPage(1); }}
-        >
-          <span className="bank-directory__status-icon" aria-hidden="true">✓</span>
-          Verified only
-        </button>
       </div>
 
       <section className="bank-directory__table-card" aria-labelledby="bank-directory-results-heading">

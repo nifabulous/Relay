@@ -114,8 +114,7 @@
   align-items: center;
 }
 
-.bank-directory__select-chip,
-.bank-directory__filter-chip {
+.bank-directory__select-chip {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -151,26 +150,12 @@
   cursor: pointer;
 }
 
-.bank-directory__select-chip:focus-within,
-.bank-directory__filter-chip:focus-visible {
+.bank-directory__select-chip:focus-within {
   border-color: var(--color-action);
   outline: 2px solid var(--color-action);
   outline-offset: 2px;
 }
 
-.bank-directory__filter-chip {
-  gap: var(--space-2);
-  padding: 0 var(--space-3);
-  cursor: pointer;
-}
-
-.bank-directory__filter-chip:hover,
-.bank-directory__filter-chip--active {
-  border-color: var(--color-action);
-  background: var(--color-action-surface);
-}
-
-.bank-directory__status-icon,
 .bank-directory__capability-icon {
   display: inline-flex;
   align-items: center;
@@ -181,10 +166,6 @@
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   line-height: 1;
-}
-
-.bank-directory__status-icon {
-  color: var(--color-success);
 }
 
 .bank-directory__table-card {
@@ -833,13 +814,11 @@
     flex-direction: column;
   }
 
-  .bank-directory__select-chip,
-  .bank-directory__filter-chip {
+  .bank-directory__select-chip {
     width: 100%;
   }
 
-  .bank-directory__select-chip select,
-  .bank-directory__filter-chip {
+  .bank-directory__select-chip select {
     flex: 1;
   }
 
