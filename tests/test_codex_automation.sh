@@ -330,6 +330,8 @@ require_text '.github/workflows/codex-pr-review.yml' 'workflow_run:'
 require_text '.github/workflows/codex-pr-review.yml' 'workflows: [CI]'
 require_text '.github/workflows/codex-pr-review.yml' 'types: [completed]'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_EXPECTED_HEAD_SHA='
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_FILES:'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_BYTES:'
 # Coverage invariant: direct push events remain for heads whose conflicting
 # merge ref prevents GitHub from creating a CI pull_request run at all.
 require_text '.github/workflows/codex-pr-review.yml' \
@@ -342,6 +344,10 @@ require_text 'scripts/codex_review_pr.sh' \
 require_text 'scripts/codex_review_pr.sh' 'commits/${HEAD_SHA}/check-runs'
 require_text 'scripts/codex_review_pr.sh' '--label verification-results'
 require_text 'scripts/codex_review_pr.sh' 'not available at review time'
+require_text 'scripts/codex_review_pr.sh' 'show_trusted ".github/codex/context-files.txt"'
+require_text 'scripts/codex_review_pr.sh' '## Trusted reference material (not policy)'
+refuse_text 'scripts/codex_review_pr.sh' 'cat .github/codex/context-files.txt'
+require_text '.github/codex/context-files.txt' '.github/workflows/codex-pr-review.yml'
 refuse_text '.github/workflows/codex-pr-review.yml' 'actions/download-artifact'
 refuse_text 'scripts/codex_review_pr.sh' 'pytest'
 refuse_text 'scripts/codex_review_pr.sh' 'npm test'
@@ -542,6 +548,13 @@ jq -n '{total_count: 1, check_runs: [{id: 1, name: "quality-gate", status: "comp
 # The policy file is genuinely part of the trusted checkout; serve the real one.
 mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
 cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
+mkdir -p "$TRUSTED_STAGING_ROOT/.github/workflows"
+{
+  printf '# TRUSTED_WORKFLOW_CONTEXT_SENTINEL\n'
+  cat "$ROOT/.github/workflows/codex-pr-review.yml"
+} >"$TRUSTED_STAGING_ROOT/.github/workflows/codex-pr-review.yml"
+printf '# Trusted reference material supplied to the PR reviewer.\n.github/workflows/codex-pr-review.yml\n' \
+  >"$TRUSTED_STAGING_ROOT/.github/codex/context-files.txt"
 chmod +x "$STUB_DIR/gh" "$STUB_DIR/python3" "$STUB_DIR/git"
 
 # The triage script fingerprints with sha256sum, which is GNU-only. Shim it so
@@ -708,7 +721,7 @@ check_oversized_review_input_is_refused() {
     CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
-    CODEX_MAX_INPUT_BYTES=20000 \
+    CODEX_MAX_INPUT_BYTES=40000 \
     CODEX_MAX_OUTPUT_TOKENS=32000 \
     CODEX_MAX_OUTPUT_BYTES=50000 \
     CODEX_BOT_LOGIN='github-actions[bot]' \
@@ -928,6 +941,163 @@ check_empty_ci_evidence_is_explicit() {
     ! grep -Fiq 'not available at review time' "$STUB_DIR/captured-input.md"; then
     fail 'Absent completed checks were not made explicit to the reviewer.'
     cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Task 6: trusted context references are read from the stamped Git object,
+# bounded by count/bytes, and kept in the trusted instructions channel.
+# ---------------------------------------------------------------------------
+prepare_context_case() {
+  : >"$STUB_DIR/posted.log"
+  : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/api.log"
+  : >"$STUB_DIR/responses-argv.log"
+  rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-instructions.md"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg sha "$CI_HEAD" \
+    '{number: 15, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: "topic", headRefOid: $sha}' >"$STUB_DIR/metadata.json"
+}
+
+invoke_context_case() {
+  local status=0
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$@" \
+    "$ROOT/scripts/codex_review_pr.sh" 15 >"$STUB_DIR/run.log" 2>&1 || status=$?
+  return "$status"
+}
+
+check_context_allowlist_comes_from_trusted_sha() {
+  local root_allowlist="$ROOT/.github/codex/context-files.txt"
+  local attacker_path="$ROOT/docs/codex-context-attacker.md"
+  local saved_allowlist="$STUB_DIR/context-files.saved"
+  local had_allowlist=0
+  local status=0
+
+  if [[ -f "$root_allowlist" ]]; then
+    cp "$root_allowlist" "$saved_allowlist"
+    had_allowlist=1
+  fi
+  mkdir -p "$(dirname "$root_allowlist")" "$(dirname "$attacker_path")"
+  printf 'docs/codex-context-attacker.md\n' >"$root_allowlist"
+  printf 'PR-SIDE-CONTEXT-MUST-NOT-REACH-TRUSTED-CHANNEL\n' >"$attacker_path"
+
+  prepare_context_case
+  invoke_context_case \
+    CODEX_CONTEXT_MAX_FILES=10 \
+    CODEX_CONTEXT_MAX_BYTES=50000 || status=$?
+
+  if (( had_allowlist )); then
+    cp "$saved_allowlist" "$root_allowlist"
+  else
+    rm -f "$root_allowlist"
+  fi
+  rm -f "$attacker_path"
+
+  if (( status != 0 )); then
+    fail 'Trusted context review failed while testing allowlist provenance.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if ! grep -Fq '## Trusted reference material (not policy)' \
+    "$STUB_DIR/captured-instructions.md"; then
+    fail 'Trusted context heading was missing from the instructions channel.'
+  fi
+  if ! grep -Fq 'TRUSTED_WORKFLOW_CONTEXT_SENTINEL' \
+    "$STUB_DIR/captured-instructions.md"; then
+    fail 'The allowlist from TRUSTED_SHA did not include the trusted workflow.'
+  fi
+  if grep -Fq 'PR-SIDE-CONTEXT-MUST-NOT-REACH-TRUSTED-CHANNEL' \
+    "$STUB_DIR/captured-instructions.md"; then
+    fail 'A working-tree/PR-side allowlist entry reached trusted instructions.'
+  fi
+}
+
+check_trusted_missing_context_path_is_skipped() {
+  local allowlist="$TRUSTED_STAGING_ROOT/.github/codex/context-files.txt"
+  printf '# trusted fixture\nmissing/from-trusted-object.md\n.github/workflows/codex-pr-review.yml\n' \
+    >"$allowlist"
+
+  prepare_context_case
+  local status=0
+  invoke_context_case \
+    CODEX_CONTEXT_MAX_FILES=10 \
+    CODEX_CONTEXT_MAX_BYTES=50000 || status=$?
+
+  printf '# Trusted reference material supplied to the PR reviewer.\n.github/workflows/codex-pr-review.yml\n' \
+    >"$allowlist"
+
+  if (( status != 0 )); then
+    fail 'A missing trusted context path failed the review.'
+    cat "$STUB_DIR/run.log" >&2
+  elif grep -Fq 'missing/from-trusted-object.md' "$STUB_DIR/captured-instructions.md"; then
+    fail 'A missing trusted context path was emitted as reference material.'
+  elif ! grep -Fq 'TRUSTED_WORKFLOW_CONTEXT_SENTINEL' \
+    "$STUB_DIR/captured-instructions.md"; then
+    fail 'A valid trusted context path was lost beside a missing path.'
+  fi
+}
+
+check_trusted_context_caps() {
+  local allowlist="$TRUSTED_STAGING_ROOT/.github/codex/context-files.txt"
+  local context_dir="$TRUSTED_STAGING_ROOT/trusted-context"
+  mkdir -p "$context_dir"
+  : >"$allowlist"
+  local index path
+  for index in $(seq 1 11); do
+    path="trusted-context/small-${index}.md"
+    printf '%s\n' "small trusted context ${index}" >"$TRUSTED_STAGING_ROOT/$path"
+    printf '%s\n' "$path" >>"$allowlist"
+  done
+  printf '%*s' 60000 '' | tr ' ' x >"$TRUSTED_STAGING_ROOT/trusted-context/oversized.md"
+  printf '%s\n' 'trusted-context/oversized.md' >>"$allowlist"
+
+  prepare_context_case
+  local status=0
+  invoke_context_case \
+    CODEX_CONTEXT_MAX_FILES=10 \
+    CODEX_CONTEXT_MAX_BYTES=50000 || status=$?
+
+  printf '# Trusted reference material supplied to the PR reviewer.\n.github/workflows/codex-pr-review.yml\n' \
+    >"$allowlist"
+
+  if (( status != 0 )); then
+    fail 'Trusted context caps caused the review to fail.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  local context_material="$STUB_DIR/context-material.md"
+  awk '/## Trusted reference material \(not policy\)/{capture=1} capture{print}' \
+    "$STUB_DIR/captured-instructions.md" >"$context_material"
+  local included_count context_bytes
+  included_count="$(grep -c '^### Reference:' "$context_material" || true)"
+  context_bytes="$(wc -c <"$context_material" | tr -d ' ')"
+  if (( included_count > 10 )); then
+    fail "Trusted context included $included_count files despite CODEX_CONTEXT_MAX_FILES=10."
+  fi
+  if (( context_bytes > 50000 )); then
+    fail "Trusted context included $context_bytes bytes despite CODEX_CONTEXT_MAX_BYTES=50000."
+  fi
+  if grep -Fq 'oversized.md' "$context_material"; then
+    fail 'An oversized trusted context file was not skipped.'
   fi
 }
 
@@ -1415,6 +1585,9 @@ check_direct_path_with_ci_run_defers
 check_failed_ci_run_probe_fails_safe_toward_review
 check_workflow_run_path_never_probes_for_a_run
 check_empty_ci_evidence_is_explicit
+check_context_allowlist_comes_from_trusted_sha
+check_trusted_missing_context_path_is_skipped
+check_trusted_context_caps
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",

@@ -69,6 +69,8 @@ jobs:
       CODEX_CI_DISCOVERY_POLL_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_POLL_SECONDS || '10' }}
       CODEX_CHECK_MAX_ITEMS: ${{ vars.CODEX_CHECK_MAX_ITEMS || '50' }}
       CODEX_CHECK_MAX_BYTES: ${{ vars.CODEX_CHECK_MAX_BYTES || '20000' }}
+      CODEX_CONTEXT_MAX_FILES: ${{ vars.CODEX_CONTEXT_MAX_FILES || '10' }}
+      CODEX_CONTEXT_MAX_BYTES: ${{ vars.CODEX_CONTEXT_MAX_BYTES || '50000' }}
       EVENT_NAME: ${{ github.event_name }}
       EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
       DISPATCH_PR_NUMBER: ${{ inputs.pr_number }}
