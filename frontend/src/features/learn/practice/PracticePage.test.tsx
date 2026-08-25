@@ -73,6 +73,16 @@ describe("PracticePage", () => {
     expect(state.history[0].total).toBe(5);
   });
 
+  it("presents the active drill with stats, card region, and session actions", async () => {
+    const { user } = renderPage();
+    await user.click(screen.getByRole("button", { name: /start today's five/i }));
+
+    expect(document.querySelector(".practice-drill__stats")).not.toBeNull();
+    expect(screen.getByText(/reviews due/i)).toBeVisible();
+    expect(document.querySelector(".practice-drill__card")).not.toBeNull();
+    expect(screen.getByRole("button", { name: /end session/i })).toBeVisible();
+  });
+
   it("locks the question after one attempt (single-attempt drill)", async () => {
     const { user } = renderPage();
     await user.click(screen.getByRole("button", { name: /start today's five/i }));
@@ -144,5 +154,7 @@ describe("PracticePage", () => {
     renderPage();
     expect(screen.getByText(/already practiced today/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /practice again/i })).toBeVisible();
+    expect(document.querySelector(".practice-intro .practice-stat--progress .practice-stat__value"))
+      .toHaveTextContent(/5\s+of\s+5/);
   });
 });

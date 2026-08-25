@@ -1187,10 +1187,16 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
     <section className="case-desk__investigate" aria-label="Investigate the case">
       <header className="case-desk__phase-header">
         <p className="case-desk__eyebrow">Customer case desk — investigation</p>
+        <p className="case-desk__case-title">{definition.title}</p>
         <h2 ref={phaseHeadingRef} className="case-desk__phase-title">
           Gather evidence and weigh the rails
         </h2>
+        <p className="case-desk__phase-description">
+          Trace the evidence, identify the missing facts, and recommend the next safe action.
+        </p>
       </header>
+
+      <CaseWorkflow phase={phaseKey} />
 
       {/* Baseline + confidence capture (design spec L171, Investigate step 2).
           Shown ONLY in the investigate phase before any facts are requested —
@@ -1259,9 +1265,58 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
       <CustomerRequestAnchor request={definition.customerRequest} />
 
       <div className="case-desk__split">
+        {/* The evidence column. DOM order matches the visual reading order
+            (workflow → evidence → task/recommendation) so keyboard traversal
+            follows the layout on wide screens; narrow screens stack in the
+            same order. */}
+        <div className="case-desk__evidence">
+          <EvidenceRail
+            definition={definition}
+            requestedFactIds={session.requestedFactIds}
+            onOpenAllReferences={onOpenAllReferences}
+          />
+
+          {/* Enrichment region — rendered through AsyncRegion. Authored facts
+              sit ABOVE this region and remain usable in every state. */}
+          {enrichment && enrichmentAsyncStatus && (
+            <section className="case-desk__enrichment" aria-label="Live enrichment">
+              <h3 className="case-desk__section-title">Live enrichment</h3>
+              <AsyncRegion
+                status={enrichmentAsyncStatus}
+                loadingLabel="Loading live enrichment"
+                onRetry={enrichment.retry}
+                error={
+                  enrichment.state === "error"
+                    ? {
+                        status: 0,
+                        title: "Live enrichment is unavailable",
+                        detail: enrichment.message ?? "We couldn't load the live enrichment data.",
+                        fieldErrors: {},
+                        retryable: Boolean(enrichment.retry),
+                      }
+                    : null
+                }
+              >
+                {enrichment.state === "success" && enrichment.facts.length > 0 && (
+                  <ul className="case-desk__enrichment-facts">
+                    {enrichment.facts.map((fact) => (
+                      <li key={fact.id} className="case-desk__enrichment-fact">
+                        <span className="case-desk__enrichment-label">{fact.label}</span>
+                        <span className="case-desk__enrichment-value">{fact.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {enrichment.state === "success" && enrichment.facts.length === 0 && (
+                  <p className="case-desk__enrichment-empty">No additional live data available.</p>
+                )}
+              </AsyncRegion>
+            </section>
+          )}
+        </div>
+
         {/* The task column: fact request + rail choice. On wide screens this
-            sits beside the evidence rail; on narrow screens the evidence sheet
-            stacks below (labelled so AT can navigate it). */}
+            follows the evidence ledger in both DOM and layout order. */}
         <div className="case-desk__task">
           {/* Validation error-summary (design spec L213): on Send with an
               incomplete recommendation, a concise summary renders at the start
@@ -1421,52 +1476,6 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
             )}
         </div>
 
-        {/* The evidence column. */}
-        <div className="case-desk__evidence">
-          <EvidenceRail
-            definition={definition}
-            requestedFactIds={session.requestedFactIds}
-            onOpenAllReferences={onOpenAllReferences}
-          />
-
-          {/* Enrichment region — rendered through AsyncRegion. Authored facts
-              sit ABOVE this region and remain usable in every state. */}
-          {enrichment && enrichmentAsyncStatus && (
-            <section className="case-desk__enrichment" aria-label="Live enrichment">
-              <h3 className="case-desk__section-title">Live enrichment</h3>
-              <AsyncRegion
-                status={enrichmentAsyncStatus}
-                loadingLabel="Loading live enrichment"
-                onRetry={enrichment.retry}
-                error={
-                  enrichment.state === "error"
-                    ? {
-                        status: 0,
-                        title: "Live enrichment is unavailable",
-                        detail: enrichment.message ?? "We couldn't load the live enrichment data.",
-                        fieldErrors: {},
-                        retryable: Boolean(enrichment.retry),
-                      }
-                    : null
-                }
-              >
-                {enrichment.state === "success" && enrichment.facts.length > 0 && (
-                  <ul className="case-desk__enrichment-facts">
-                    {enrichment.facts.map((fact) => (
-                      <li key={fact.id} className="case-desk__enrichment-fact">
-                        <span className="case-desk__enrichment-label">{fact.label}</span>
-                        <span className="case-desk__enrichment-value">{fact.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {enrichment.state === "success" && enrichment.facts.length === 0 && (
-                  <p className="case-desk__enrichment-empty">No additional live data available.</p>
-                )}
-              </AsyncRegion>
-            </section>
-          )}
-        </div>
       </div>
 
       <div className="case-desk__nav">
@@ -1497,6 +1506,62 @@ function InvestigatePhase(props: InvestigatePhaseProps) {
           returnFocusRef={referenceOpenerRef}
         />
       )}
+    </section>
+  );
+}
+
+type WorkflowPhase = "brief" | "investigate" | "recommend" | "resolve" | "debrief";
+
+const CASE_WORKFLOW_STEPS = [
+  { label: "Evidence collected", detail: "Gather key transaction and network data" },
+  { label: "Root cause identified", detail: "Analyze evidence to determine the likely cause" },
+  { label: "Recommend next action", detail: "Choose the safest next step to resolve" },
+  { label: "Review outcome", detail: "Validate results and measure impact" },
+  { label: "Case closed", detail: "Complete the case and document learnings" },
+] as const;
+
+function CaseWorkflow({
+  phase,
+}: {
+  phase: WorkflowPhase | string;
+}) {
+  // The existing reducer owns the phase transitions; this projection only
+  // communicates progress and never changes what controls are available.
+  const isInInvestigation = phase === "brief" || phase === "investigate";
+  const currentIndex = isInInvestigation ? 0 : phase === "resolve" ? 3 : phase === "debrief" ? 4 : 2;
+  const completedThrough = isInInvestigation ? 0 : Math.max(0, currentIndex);
+  const progress = ((currentIndex + 1) / CASE_WORKFLOW_STEPS.length) * 100;
+
+  return (
+    <section className="case-workflow" aria-label="Case progress">
+      <div className="case-workflow__meta">
+        <span>Step {currentIndex + 1} of {CASE_WORKFLOW_STEPS.length}</span>
+        <span aria-hidden="true">·</span>
+        <span>{phase === "debrief" ? "Complete" : "In progress"}</span>
+        <span className="case-workflow__status" data-state={phase === "debrief" ? "complete" : "current"}>
+          <span className="case-workflow__status-mark" aria-hidden="true" />
+          {phase === "debrief" ? "Complete" : "In progress"}
+        </span>
+      </div>
+      <div className="case-workflow__progress" role="progressbar" aria-label="Case progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
+        <span style={{ width: `${progress}%` }} />
+      </div>
+      <ol className="case-workflow__steps">
+        {CASE_WORKFLOW_STEPS.map((step, index) => {
+          const state = index < completedThrough ? "complete" : index === currentIndex ? "current" : "locked";
+          return (
+            <li key={step.label} className={`case-workflow__step case-workflow__step--${state}`} aria-current={state === "current" ? "step" : undefined}>
+              <span className="case-workflow__step-marker" aria-hidden="true">
+                {state === "complete" ? "✓" : state === "locked" ? "▣" : index + 1}
+              </span>
+              <span className="case-workflow__step-copy">
+                <strong>{step.label}</strong>
+                <span>{step.detail}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

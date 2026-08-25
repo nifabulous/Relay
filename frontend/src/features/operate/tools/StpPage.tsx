@@ -10,6 +10,66 @@ import { Pacs008View } from "./Pacs008View";
 import "./OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 
+type ChecklistStatus = "valid" | "attention" | "missing" | "invalid";
+
+interface ChecklistRow {
+  field: string;
+  fieldName: string;
+  detail: string;
+  status: ChecklistStatus;
+  statusLabel: string;
+}
+
+function statusForFinding(severity: string): ChecklistStatus {
+  return severity.toLowerCase() === "error" ? "invalid" : "attention";
+}
+
+function statusLabel(status: ChecklistStatus): string {
+  return status === "valid" ? "Valid" : status === "missing" ? "Missing" : status === "invalid" ? "Invalid" : "Review";
+}
+
+function buildChecklist(result: STPCheckResponse): ChecklistRow[] {
+  const findingsByField = new Map<string, STPCheckResponse["findings"]>();
+  result.findings.forEach((finding) => {
+    const existing = findingsByField.get(finding.field) ?? [];
+    existing.push(finding);
+    findingsByField.set(finding.field, existing);
+  });
+
+  const rows: ChecklistRow[] = result.field_summary.flatMap((raw) => {
+    const field = typeof raw.field === "string" ? raw.field : "";
+    if (!field) return [];
+    const fieldName = typeof raw.field_name === "string" && raw.field_name ? raw.field_name : `Field ${field}`;
+    const present = raw.present === true;
+    const valid = raw.valid === true;
+    const findings = findingsByField.get(field) ?? [];
+    const finding = findings[0];
+    const status = finding ? statusForFinding(finding.severity) : valid ? "valid" : present ? "invalid" : "missing";
+    return [{
+      field,
+      fieldName,
+      detail: finding?.message ?? (valid ? "Field present and well-formed" : present ? "Field needs correction" : "Not provided"),
+      status,
+      statusLabel: statusLabel(status),
+    }];
+  });
+
+  // Preserve findings attached to compound fields (for example 50K/59) even
+  // when the backend does not include them in the per-field summary.
+  result.findings.forEach((finding) => {
+    if (rows.some((row) => row.field === finding.field)) return;
+    rows.push({
+      field: finding.field,
+      fieldName: finding.field_name || `Field ${finding.field}`,
+      detail: finding.message,
+      status: statusForFinding(finding.severity),
+      statusLabel: statusLabel(statusForFinding(finding.severity)),
+    });
+  });
+
+  return rows;
+}
+
 export function StpPage() {
   const [txRef, setTxRef] = useState("");
   const [valueDate, setValueDate] = useState("");
@@ -50,6 +110,20 @@ export function StpPage() {
 
   const error = mutation.error as ApiProblem | null;
   const translateError = translateMutation.error as ApiProblem | null;
+  const hasRequiredMessageFields = Boolean(txRef && valueDate && amount);
+
+  function runValidation() {
+    if (hasRequiredMessageFields) mutation.mutate();
+  }
+
+  const checklist = result ? buildChecklist(result) : [];
+  const validCount = checklist.filter((row) => row.status === "valid").length;
+  const checklistCoverage = checklist.length > 0
+    ? Math.round((validCount / checklist.length) * 100)
+    : result?.stp_passes ? 100 : 0;
+  const tips = result?.findings
+    .map((finding) => finding.repair || finding.message)
+    .filter((tip): tip is string => Boolean(tip)) ?? [];
 
   const verdictStatus = (verdict: string) =>
     verdict === "CLEAN" ? "passed" as const :
@@ -57,11 +131,25 @@ export function StpPage() {
     "failed" as const;
 
   return (
-    <div className="tool-page">
-      <h1>MT103 STP Checker</h1>
-      <p className="measure">Validate an MT103 message for straight-through processing across 12 rules.</p>
+    <div className="tool-page stp-page">
+      <nav className="tool-breadcrumb" aria-label="Breadcrumb">
+        <span>Operate</span>
+        <span aria-hidden="true">/</span>
+        <span>Tools</span>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">STP checker</span>
+      </nav>
 
-      <form className="tool-form" onSubmit={(e) => { e.preventDefault(); if (txRef && valueDate && amount) mutation.mutate(); }}>
+      <header className="tool-page__header">
+        <h1>STP checker</h1>
+        <p className="measure">Validate payment fields for straight-through processing.</p>
+      </header>
+
+      <form className="tool-form stp-page__form" onSubmit={(e) => { e.preventDefault(); runValidation(); }}>
+        <div className="stp-page__form-heading">
+          <h2>Message fields</h2>
+          <p>Use the MT103 values you want to validate.</p>
+        </div>
         <div className="tool-form__field">
           <label htmlFor="stp-ref">Transaction reference</label>
           <input id="stp-ref" type="text" value={txRef}
@@ -88,18 +176,25 @@ export function StpPage() {
               placeholder="100000.00" aria-label="Interbank amount" />
           </div>
         </div>
-        <Button type="submit" variant="primary" isLoading={mutation.isPending}>Check STP compliance</Button>
-        <Button type="button" variant="secondary"
+        <div className="stp-page__form-actions">
+          <Button type="submit" variant="primary" isLoading={mutation.isPending}>Check STP compliance</Button>
+          <Button type="button" variant="secondary"
           isLoading={translateMutation.isPending}
-          onClick={() => { if (txRef && valueDate && amount) translateMutation.mutate(); }}>
-          View as pacs.008
-        </Button>
+          disabled={!hasRequiredMessageFields}
+          onClick={() => { if (hasRequiredMessageFields) translateMutation.mutate(); }}>
+            View as pacs.008
+          </Button>
+        </div>
       </form>
 
       {error && (
         <div className="tool-error" role="alert">
           <strong>{error.title}</strong>
-          {error.retryable && <Button variant="secondary" onClick={() => mutation.mutate()}>Retry</Button>}
+          {error.retryable && (
+            <Button variant="secondary" onClick={runValidation} disabled={!hasRequiredMessageFields}>
+              Retry
+            </Button>
+          )}
         </div>
       )}
 
@@ -111,30 +206,77 @@ export function StpPage() {
       )}
 
       {result && (
-        <div className="tool-result">
-          <h2>STP check result</h2>
-          <div className="stp-verdict">
-            <StatusChip status={verdictStatus(result.verdict)} />
-            <span>Verdict: <strong>{result.verdict}</strong></span>
-            <span>STP passes: <strong>{result.stp_passes ? "Yes" : "No"}</strong></span>
-          </div>
-          {result.findings.length > 0 && (
-            <table className="stp-findings">
-              <thead><tr><th>Field</th><th>Severity</th><th>Code</th><th>Message</th><th>Repair</th></tr></thead>
-              <tbody>
-                {result.findings.map((f, i) => (
-                  <tr key={i}>
-                    <td className="mono">{f.field}</td>
-                    <td>{f.severity}</td>
-                    <td className="mono">{f.code}</td>
-                    <td>{f.message}</td>
-                    <td>{f.repair ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <p className="tool-sim-label"><strong>Simulation — not a real payment.</strong></p>
+        <div className="stp-page__result-layout">
+          <section className="stp-page__check-card" aria-labelledby="stp-check-heading" aria-live="polite">
+            <div className="stp-page__result-heading">
+              <div>
+                <h2 id="stp-check-heading">Field validation</h2>
+                <p>{result.verdict === "CLEAN" ? "Ready for straight-through processing." : "Review the fields below before release."}</p>
+              </div>
+              <StatusChip status={verdictStatus(result.verdict)} />
+            </div>
+            <div className="stp-checklist" role="list" aria-label="STP field validation checklist">
+              {checklist.map((row) => (
+                <div className={`stp-checklist__row stp-checklist__row--${row.status}`} role="listitem" key={row.field}>
+                  <span className="stp-checklist__marker" aria-hidden="true">{row.status === "valid" ? "✓" : row.status === "attention" || row.status === "missing" ? "!" : "×"}</span>
+                  <div className="stp-checklist__copy">
+                    <strong>{row.fieldName}</strong>
+                    <span className="stp-checklist__separator" aria-hidden="true">—</span>
+                    <span>{row.detail}</span>
+                  </div>
+                  <span className="stp-checklist__pill"><span aria-hidden="true">{row.status === "valid" ? "✓" : row.status === "attention" || row.status === "missing" ? "!" : "×"}</span>{row.statusLabel}</span>
+                </div>
+              ))}
+            </div>
+            <div className="stp-score">
+              <div className="stp-score__label">
+                <strong>Checklist coverage</strong>
+                <span className="stp-score__note">
+                  Derived from returned field checks — not a backend compliance score.
+                </span>
+              </div>
+              <span
+                className="stp-score__track"
+                role="progressbar"
+                aria-label={`Checklist coverage ${checklistCoverage}%`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={checklistCoverage}
+              >
+                <span aria-hidden="true" style={{ width: `${checklistCoverage}%` }} />
+              </span>
+              <strong className="stp-score__value">{checklistCoverage}%</strong>
+            </div>
+            <p className="tool-sim-label">
+              <strong>Simulation — not a real payment.</strong>
+              {result.disclaimer && result.disclaimer !== "Simulation — not a real payment." && (
+                <span className="tool-sim-label__source">{result.disclaimer}</span>
+              )}
+            </p>
+          </section>
+
+          <aside className="stp-page__tips-card" aria-labelledby="stp-tips-heading">
+            <div>
+              <h2 id="stp-tips-heading">{tips.length > 0 ? "Fix before release" : "Next step"}</h2>
+              {tips.length > 0 ? (
+                <ul className="stp-tips">
+                  {tips.map((tip, index) => <li key={`${tip}-${index}`}>{tip}</li>)}
+                </ul>
+              ) : (
+                <p className="stp-tips__empty">No findings returned. Re-validate after any message edits.</p>
+              )}
+            </div>
+            <Button
+              className="stp-page__revalidate"
+              type="button"
+              variant="primary"
+              isLoading={mutation.isPending}
+              disabled={!hasRequiredMessageFields}
+              onClick={runValidation}
+            >
+              Re-validate
+            </Button>
+          </aside>
         </div>
       )}
 

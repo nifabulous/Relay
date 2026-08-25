@@ -58,9 +58,36 @@ export function ExplorePage() {
 /** Example BICs shown in the Bank Directory's pre-search guidance. */
 const EXAMPLE_BICS = ["GTBINGLAXXX", "MASHAEADXXX", "CTCBHKHHXXX"];
 
+type DirectoryRow = {
+  bic: string;
+  name: string;
+  country: string;
+  market: string;
+  capability: "Cross-border" | "Domestic";
+  monogram: string;
+};
+
+/**
+ * The directory browse state is intentionally a small, curated view of the
+ * seeded teaching data. BIC lookup remains the source of truth for a full
+ * institution record and settlement instructions.
+ */
+const DIRECTORY_ROWS: DirectoryRow[] = [
+  { name: "Lloyds Bank", bic: "LOYDGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "LB" },
+  { name: "HSBC", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "HS" },
+  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", monogram: "JC" },
+  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", monogram: "DB" },
+  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", monogram: "MZ" },
+];
+
+const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
+
 export function BankDirectoryPage() {
   const [bic, setBic] = useState("");
   const [searchBic, setSearchBic] = useState<string | null>(null);
+  const [market, setMarket] = useState("all");
+  const [capability, setCapability] = useState("all");
+  const [directoryPage, setDirectoryPage] = useState(1);
 
   const query = useQuery({
     queryKey: searchBic ? apiKeys.lookup(searchBic) : ["lookup", "idle"],
@@ -85,31 +112,142 @@ export function BankDirectoryPage() {
   else if (query.isError) status = "error";
   else if (query.data) status = query.data.found ? "success" : "empty";
 
+  const normalizedDirectoryQuery = bic.trim().toLowerCase();
+  const filteredRows = DIRECTORY_ROWS.filter((row) => {
+    const matchesQuery = !normalizedDirectoryQuery ||
+      `${row.name} ${row.bic} ${row.country}`.toLowerCase().includes(normalizedDirectoryQuery);
+    const matchesMarket = market === "all" || row.market === market;
+    const matchesCapability = capability === "all" || row.capability === capability;
+    return matchesQuery && matchesMarket && matchesCapability;
+  });
+  const directoryPageSize = 5;
+  const directoryPageCount = Math.max(1, Math.ceil(filteredRows.length / directoryPageSize));
+  const currentDirectoryPage = Math.min(directoryPage, directoryPageCount);
+  const visibleRows = filteredRows.slice(
+    (currentDirectoryPage - 1) * directoryPageSize,
+    currentDirectoryPage * directoryPageSize,
+  );
+  const directoryStart = filteredRows.length === 0 ? 0 : (currentDirectoryPage - 1) * directoryPageSize + 1;
+  const directoryEnd = Math.min(currentDirectoryPage * directoryPageSize, filteredRows.length);
+
   return (
-    <div className="explore">
+    <div className="explore bank-directory">
       <div className="explore__header">
-        <h1>Bank Directory</h1>
-        <p className="measure">Look up a bank by its BIC (SWIFT code).</p>
+        <h1>Bank directory</h1>
+        <p className="measure">Browse a curated teaching directory by market and capability.</p>
       </div>
 
       <form
-        className="explore__bank-form"
+        className="bank-directory__search"
         onSubmit={(e) => {
           e.preventDefault();
-          if (bic.trim()) setSearchBic(bic.trim().toUpperCase());
+          const value = bic.trim();
+          if (value && BIC_PATTERN.test(value)) {
+            setSearchBic(value.toUpperCase());
+          } else if (searchBic !== null) {
+            setSearchBic(null);
+          }
+          setDirectoryPage(1);
         }}
       >
+        <svg className="bank-directory__search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-4-4" />
+        </svg>
         <input
           type="text"
-          className="explore__bank-input mono"
-          placeholder="e.g. CITIUS33, GTBINGLAXXX"
+          className="bank-directory__search-input"
+          placeholder="Search by name or BIC…"
           value={bic}
-          onChange={(e) => setBic(e.target.value)}
-          aria-label="BIC to look up"
-          maxLength={11}
+          onChange={(e) => {
+            setBic(e.target.value);
+            if (searchBic !== null) setSearchBic(null);
+            setDirectoryPage(1);
+          }}
+          aria-label="Search bank name or BIC"
+          aria-describedby="bank-directory-search-help"
+          maxLength={80}
         />
-        <Button type="submit" variant="primary">Look up</Button>
+        <Button type="submit" variant="secondary" className="bank-directory__search-submit">Look up</Button>
       </form>
+      <p id="bank-directory-search-help" className="sr-only">Type a bank name to filter the directory, or enter an 8 or 11 character BIC to look up its full record.</p>
+
+      <div className="bank-directory__filters" aria-label="Bank directory filters">
+        <label className="bank-directory__select-chip">
+          <span className="sr-only">Market</span>
+          <select
+            aria-label="Filter by market"
+            value={market}
+            onChange={(event) => { setMarket(event.target.value); setDirectoryPage(1); }}
+          >
+            <option value="all">Market: All</option>
+            <option value="GB">Market: United Kingdom</option>
+            <option value="US">Market: United States</option>
+            <option value="DE">Market: Germany</option>
+            <option value="JP">Market: Japan</option>
+          </select>
+        </label>
+        <label className="bank-directory__select-chip">
+          <span className="sr-only">Capability</span>
+          <select
+            aria-label="Filter by capability"
+            value={capability}
+            onChange={(event) => { setCapability(event.target.value); setDirectoryPage(1); }}
+          >
+            <option value="all">Capability: All</option>
+            <option value="Cross-border">Capability: Cross-border</option>
+            <option value="Domestic">Capability: Domestic</option>
+          </select>
+        </label>
+      </div>
+
+      <section className="bank-directory__table-card" aria-labelledby="bank-directory-results-heading">
+        <h2 id="bank-directory-results-heading" className="sr-only">Bank directory results</h2>
+        <div className="bank-directory__table-scroll">
+          <table className="bank-directory__table">
+            <thead>
+              <tr>
+                <th scope="col">Institution</th>
+                <th scope="col">BIC</th>
+                <th scope="col">Country</th>
+                <th scope="col">Capabilities</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((row) => (
+                <tr key={row.bic}>
+                  <td data-label="Institution">
+                    <Link className="bank-directory__institution" to={`/explore/banks/${encodeURIComponent(row.bic)}`} aria-label={`Open ${row.name} details`}>
+                      <span className="bank-directory__logo" aria-hidden="true">{row.monogram}</span>
+                      <span>{row.name}</span>
+                    </Link>
+                  </td>
+                  <td data-label="BIC" className="mono bank-directory__bic">{row.bic}</td>
+                  <td data-label="Country">{row.country}</td>
+                  <td data-label="Capabilities">
+                    <span className={["bank-directory__capability", row.capability === "Domestic" && "bank-directory__capability--domestic"].filter(Boolean).join(" ")}>
+                      <span className="bank-directory__capability-icon" aria-hidden="true">{row.capability === "Domestic" ? "–" : "✓"}</span>
+                      {row.capability}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {visibleRows.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="bank-directory__no-results">No institutions match these filters. Clear a filter or try another name or BIC.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <footer className="bank-directory__pagination">
+          <span aria-live="polite">Showing {directoryStart}–{directoryEnd} of {filteredRows.length}</span>
+          <div className="bank-directory__pagination-actions">
+            <button type="button" className="bank-directory__page-button" aria-label="Previous page" disabled={currentDirectoryPage <= 1} onClick={() => setDirectoryPage((page) => Math.max(1, page - 1))}>‹</button>
+            <button type="button" className="bank-directory__page-button" aria-label="Next page" disabled={currentDirectoryPage >= directoryPageCount} onClick={() => setDirectoryPage((page) => Math.min(directoryPageCount, page + 1))}>›</button>
+          </div>
+        </footer>
+      </section>
 
       {searchBic === null && (
         <div className="explore__empty">
@@ -289,7 +427,7 @@ export function SchemesPage() {
   );
 
   return (
-    <div className="explore">
+    <div className="explore schemes-page">
       <div className="explore__header">
         <h1>Payment Schemes</h1>
         <p className="measure">Compare domestic payment rails by speed, cost, and limits. Educational reference — always check the operator's current rules.</p>
@@ -342,10 +480,30 @@ const GLOSSARY_GROUPS = [
   { id: "tracking-messaging", label: "Tracking & messaging", terms: ["UETR", "gpi", "MT103", "pacs.008"] },
 ] as const;
 
+const GLOSSARY_RELATED: Record<string, string[]> = {
+  BIC: ["SWIFT code", "IBAN"],
+  "SWIFT code": ["BIC", "UETR"],
+  IBAN: ["MOD-97", "BIC"],
+  "MOD-97": ["IBAN"],
+  Nostro: ["Vostro", "Correspondent bank"],
+  Vostro: ["Nostro", "Correspondent bank"],
+  "Correspondent bank": ["Intermediary bank", "SSI"],
+  "Intermediary bank": ["Correspondent bank", "SSI"],
+  SSI: ["Nostro", "Vostro"],
+  UETR: ["gpi", "MT103"],
+  gpi: ["UETR", "MT103"],
+  MT103: ["pacs.008", "UETR"],
+  "pacs.008": ["MT103", "gpi"],
+};
+
+const RECENTLY_VIEWED_TERMS = ["BIC", "IBAN", "STP"];
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
 export function GlossaryPage() {
   const [searchParams] = useSearchParams();
   const highlightTerm = searchParams.get("term");
   const [filter, setFilter] = useState("");
+  const [activeLetter, setActiveLetter] = useState("C");
 
   const filtered = GLOSSARY_TERMS.filter(([term, def]) => {
     if (!filter) return true;
@@ -363,24 +521,50 @@ export function GlossaryPage() {
   const groupedTermNames = new Set<string>(GLOSSARY_GROUPS.flatMap((group) => group.terms));
   const otherEntries = filtered.filter(([term]) => !groupedTermNames.has(term));
 
-  const renderEntry = ([term, def]: [string, string]) => (
+  const letterTargets = new Map<string, string>();
+  filtered.forEach(([term]) => {
+    const letter = term.charAt(0).toUpperCase();
+    if (!letterTargets.has(letter)) letterTargets.set(letter, `glossary-term-${term.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`);
+  });
+
+  const renderEntry = ([term, def]: [string, string]) => {
+    const related = (GLOSSARY_RELATED[term] ?? []).filter((relatedTerm) => termsByName.has(relatedTerm));
+    const termId = `glossary-term-${term.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    return (
     <div
       key={term}
+      id={termId}
       className={[
         "glossary-entry",
         highlightTerm?.toLowerCase() === term.toLowerCase() && "glossary-entry--highlighted",
       ].filter(Boolean).join(" ")}
     >
-      <dt className="glossary-entry__term mono">{term}</dt>
-      <dd className="glossary-entry__def">{def}</dd>
+      <dt className="glossary-entry__term" data-part-of-speech="noun">{term}</dt>
+      <dd className="glossary-entry__def">
+        {def}
+        {related.length > 0 && (
+          <div className="glossary-entry__related" aria-label={`Related terms for ${term}`}>
+            {related.map((relatedTerm) => (
+              <Link
+                key={relatedTerm}
+                className="glossary-entry__chip"
+                to={`/explore/glossary?term=${encodeURIComponent(relatedTerm)}`}
+              >
+                {relatedTerm}
+              </Link>
+            ))}
+          </div>
+        )}
+      </dd>
     </div>
-  );
+    );
+  };
 
   return (
-    <div className="explore">
+    <div className="explore glossary-page">
       <div className="explore__header">
         <h1>Glossary</h1>
-        <p className="measure">Payment terminology used across Relay.</p>
+        <p className="measure">Definitions for cross-border payment terms.</p>
       </div>
 
       <div className="glossary-toolbar">
@@ -407,26 +591,73 @@ export function GlossaryPage() {
           <p>Try a broader word or clear the filter to browse the full glossary.</p>
         </div>
       ) : (
-        <div className="glossary-sections">
-          {groupedTerms.map((group) => (
-            <section className="glossary-section" key={group.id} aria-labelledby={`glossary-${group.id}`}>
-              <div className="glossary-section__heading">
-                <h2 id={`glossary-${group.id}`}>{group.label}</h2>
-                <span>{group.entries.length} {group.entries.length === 1 ? "term" : "terms"}</span>
-              </div>
-              <dl className="glossary-grid">{group.entries.map(renderEntry)}</dl>
-            </section>
-          ))}
+        <div className="glossary-layout">
+          <nav className="glossary-index" aria-label="Glossary alphabetical index">
+            <span className="glossary-index__label">Jump to</span>
+            <div className="glossary-index__letters">
+              {ALPHABET.map((letter) => {
+                const target = letterTargets.get(letter);
+                return target ? (
+                  <a
+                    key={letter}
+                    href={`#${target}`}
+                    className={activeLetter === letter ? "glossary-index__letter glossary-index__letter--active" : "glossary-index__letter"}
+                    aria-label={`Jump to ${letter}`}
+                    aria-current={activeLetter === letter ? "true" : undefined}
+                    onClick={() => setActiveLetter(letter)}
+                  >
+                    {letter}
+                  </a>
+                ) : (
+                  <span key={letter} className="glossary-index__letter glossary-index__letter--disabled" aria-hidden="true">
+                    {letter}
+                  </span>
+                );
+              })}
+            </div>
+          </nav>
 
-          {otherEntries.length > 0 && (
-            <section className="glossary-section" aria-labelledby="glossary-other">
-              <div className="glossary-section__heading">
-                <h2 id="glossary-other">Other payment terms</h2>
-                <span>{otherEntries.length} terms</span>
-              </div>
-              <dl className="glossary-grid">{otherEntries.map(renderEntry)}</dl>
-            </section>
-          )}
+          <div className="glossary-results">
+            <div className="glossary-results__summary">
+              <h2>Definitions</h2>
+              <span>{filtered.length} {filtered.length === 1 ? "term" : "terms"}</span>
+            </div>
+            <div className="glossary-sections">
+              {groupedTerms.map((group) => (
+                <section className="glossary-section" key={group.id} aria-labelledby={`glossary-${group.id}`}>
+                  <div className="glossary-section__heading">
+                    <h2 id={`glossary-${group.id}`}>{group.label}</h2>
+                    <span>{group.entries.length} {group.entries.length === 1 ? "term" : "terms"}</span>
+                  </div>
+                  <dl className="glossary-grid">{group.entries.map(renderEntry)}</dl>
+                </section>
+              ))}
+
+              {otherEntries.length > 0 && (
+                <section className="glossary-section" aria-labelledby="glossary-other">
+                  <div className="glossary-section__heading">
+                    <h2 id="glossary-other">Other payment terms</h2>
+                    <span>{otherEntries.length} terms</span>
+                  </div>
+                  <dl className="glossary-grid">{otherEntries.map(renderEntry)}</dl>
+                </section>
+              )}
+            </div>
+          </div>
+
+          <aside className="glossary-recent" aria-labelledby="glossary-recent-heading">
+            <h2 id="glossary-recent-heading">Recently viewed</h2>
+            <ul className="glossary-recent__list">
+              {RECENTLY_VIEWED_TERMS.map((term) => (
+                <li key={term}>
+                  <Link to={`/explore/glossary?term=${encodeURIComponent(term)}`} className="glossary-recent__link">
+                    <span>{term}</span>
+                    <span className="glossary-recent__icon" aria-hidden="true">◷</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
       )}
     </div>

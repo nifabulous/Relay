@@ -141,3 +141,19 @@
   font-size: var(--text-sm);
   color: var(--color-ink-muted);
 }
+
+/* The selected rail is the learner's primary decision. Keep the native radio
+ * for semantics while making the whole bounded option read as a choice. */
+.rail-shortlist__item:has(input[type="radio"]:checked) {
+  border-color: var(--color-action);
+  background: var(--color-action-surface);
+}
+
+.rail-shortlist__item:has(input[type="radio"]:checked) .rail-shortlist__rail-name {
+  color: var(--color-action);
+}
+
+.rail-shortlist__item:focus-within {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}

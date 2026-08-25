@@ -20,6 +20,10 @@ export function LearnModulePage() {
   const lastViewedModuleIdRef = useRef<string | undefined>(undefined);
 
   const mod = moduleId ? getModuleById(moduleId) : undefined;
+  // Resolve this before any early return so page-level checkpoint state and
+  // header values always have a safe definition to work from.
+  const definition = mod ? getLabDefinition(mod.id) : undefined;
+  const requiredCheckpoints = definition?.requiredCheckpoints ?? [];
 
   useEffect(() => {
     if (!mod) {
@@ -79,15 +83,39 @@ export function LearnModulePage() {
   );
 
   const completeModule = useCallback((id: string) => {
+    // Persist before the visible checklist flips to complete. A full page
+    // navigation immediately after that UI transition must not be able to race
+    // an effect that owns this write.
     setCompleted((prev) => {
       if (prev.includes(id)) return prev;
       const next = [...prev, id];
+      return next;
+    });
+    const current = loadProgress().completedModuleIds;
+    if (!current.includes(id)) {
+      const next = [...current, id];
       saveProgress({ schemaVersion: 1, completedModuleIds: next });
       const title = getModuleById(id)?.title ?? id;
       recordActivity({ type: "module", label: title, at: Date.now() });
-      return next;
-    });
+    }
   }, []);
+
+  const onCheckpointReached = useCallback((checkpointId: string) => {
+    if (!mod) return;
+    track("checkpoint_reached", {
+      module_id: mod.id,
+      checkpoint_id: checkpointId,
+    });
+  }, [mod?.id]);
+
+  const { completed: completedCheckpoints, markCheckpoint } = useLabCompletion(
+    requiredCheckpoints,
+    () => {
+      if (mod) completeModule(mod.id);
+    },
+    onCheckpointReached,
+    mod?.id,
+  );
 
   if (!mod) {
     return (
@@ -103,6 +131,27 @@ export function LearnModulePage() {
   const moduleIndex = CURRICULUM.findIndex((m) => m.id === mod.id);
   const prevModule = moduleIndex > 0 ? CURRICULUM[moduleIndex - 1] : null;
   const nextModule = moduleIndex < CURRICULUM.length - 1 ? CURRICULUM[moduleIndex + 1] : null;
+  const completionPercent = isComplete
+    ? 100
+    : requiredCheckpoints.length > 0
+      ? Math.round((completedCheckpoints.size / requiredCheckpoints.length) * 100)
+      : 0;
+  const currentLessonIndex = Math.min(
+    completedCheckpoints.size,
+    Math.max(mod.outcomes.length - 1, 0),
+  );
+  const lessonItems = mod.outcomes.map((outcome, index) => {
+    const state = isComplete
+      ? "complete"
+      : requiredCheckpoints.length === 0
+        ? index === 0 ? "current" : "upcoming"
+        : index < currentLessonIndex
+          ? "complete"
+          : index === currentLessonIndex
+            ? "current"
+            : "upcoming";
+    return { outcome, index, state } as const;
+  });
 
   if (!unlocked) {
     return (
@@ -116,9 +165,6 @@ export function LearnModulePage() {
     );
   }
 
-  // Resolve the lab content from the registry
-  const definition = getLabDefinition(mod.id);
-
   return (
     <div className="learn-page">
       <nav className="learn-breadcrumb" aria-label="Breadcrumb">
@@ -128,54 +174,108 @@ export function LearnModulePage() {
       </nav>
 
       <div className="learn-module-header">
+        <span className="learn-module-header__badge">MODULE {moduleIndex + 1}</span>
         <div className="learn-module-header__title-row">
           <h1>{mod.title}</h1>
+          {isComplete && <StatusChip status="passed" />}
+        </div>
+        <p className="measure">{mod.subtitle}</p>
+        <div className="learn-module-header__progress">
+          <div
+            className="learn-module-header__progress-track"
+            role="progressbar"
+            aria-label="Module completion"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={completionPercent}
+          >
+            <span
+              className="learn-module-header__progress-fill"
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+          <span className="learn-module-header__progress-label">
+            {completionPercent}% complete
+          </span>
+        </div>
+        <div className="learn-module-header__meta">
           <span
             className="learn-module-header__duration"
             aria-label={formatDurationAriaLabel(mod.duration)}
           >
             {formatDuration(mod.duration)}
           </span>
-          {isComplete && <StatusChip status="passed" />}
         </div>
-        <p className="measure">{mod.subtitle}</p>
         {/* Module identity only — never the lesson's rendered content. The
             backend has its own card for this module, so passing the ID reaches
             better grounding than any amount of scraped text would. */}
       </div>
 
-      <div className="learn-content">
-        <h2>What you'll learn</h2>
-        <ul className="learn-outcomes">
-          {mod.outcomes.map((outcome, i) => (
-            <li key={i}>{outcome}</li>
-          ))}
-        </ul>
-      </div>
+      <div className="learn-module-layout">
+        <aside className="learn-lesson-outline" aria-labelledby="lesson-outline-title">
+          <h2 id="lesson-outline-title">Lesson outline</h2>
+          <ol className="learn-lesson-outline__list" aria-label="Lesson outline">
+            {lessonItems.map(({ outcome, index, state }) => (
+              <li
+                key={index}
+                className={`learn-lesson-outline__item learn-lesson-outline__item--${state}`}
+                data-state={state}
+                aria-current={state === "current" ? "step" : undefined}
+              >
+                <span className="learn-lesson-outline__indicator" aria-hidden="true">
+                  {state === "complete" ? "✓" : index + 1}
+                </span>
+                <span className="learn-lesson-outline__copy">
+                  <span className="learn-lesson-outline__eyebrow">Lesson {index + 1}</span>
+                  <span className="learn-lesson-outline__title">{outcome}</span>
+                  <span className="learn-lesson-outline__state">{
+                    state === "complete" ? "Completed" : state === "current" ? "Current" : "Upcoming"
+                  }</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </aside>
 
-      {/* Lab content from registry (lazy-loaded) */}
-      {definition ? (
-        <Suspense fallback={<div className="skeleton skeleton--line" style={{ width: "60%", height: "100px" }} />}>
-          <LabContentRenderer
-            key={mod.id}
-            moduleId={mod.id}
-            isComplete={isComplete}
-            requiredCheckpoints={definition.requiredCheckpoints}
-            component={definition.component}
-            onComplete={() => completeModule(mod.id)}
-            onCheckpointReached={(checkpointId) => {
-              track("checkpoint_reached", {
-                module_id: mod.id,
-                checkpoint_id: checkpointId,
-              });
-            }}
-          />
-        </Suspense>
-      ) : (
-        <div className="learn-content__body">
-          <p className="measure">Interactive content for this module is coming soon. Check back later.</p>
-        </div>
-      )}
+        <section className="learn-module-content-card" aria-labelledby="module-content-title">
+          <div className="learn-module-content-card__body">
+            <h2 id="module-content-title">What you'll learn</h2>
+            <ul className="learn-outcomes">
+              {mod.outcomes.map((outcome, i) => (
+                <li key={i}>{outcome}</li>
+              ))}
+            </ul>
+
+            {/* Lab content from registry (lazy-loaded) */}
+            {definition ? (
+              <Suspense fallback={<div className="skeleton skeleton--line" style={{ width: "60%", height: "100px" }} />}>
+                <LabContentRenderer
+                  key={mod.id}
+                  moduleId={mod.id}
+                  isComplete={isComplete}
+                  requiredCheckpoints={definition.requiredCheckpoints}
+                  completed={completedCheckpoints}
+                  markCheckpoint={markCheckpoint}
+                  component={definition.component}
+                />
+              </Suspense>
+            ) : (
+              <div className="learn-content__body">
+                <p className="measure">Interactive content for this module is coming soon. Check back later.</p>
+              </div>
+            )}
+          </div>
+          <footer className="learn-module-content-card__footer">
+            <span className="learn-module-content-card__duration" aria-label={formatDurationAriaLabel(mod.duration)}>
+              <svg className="learn-module-content-card__duration-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+              </svg>
+              {formatDuration(mod.duration)} read
+            </span>
+          </footer>
+        </section>
+      </div>
 
       {/* Prior / Next navigation */}
       <nav className="learn-nav" aria-label="Module navigation">
@@ -216,23 +316,17 @@ function LabContentRenderer({
   moduleId,
   isComplete,
   requiredCheckpoints,
+  completed,
+  markCheckpoint,
   component: LabComponent,
-  onComplete,
-  onCheckpointReached,
 }: {
   moduleId: string;
   isComplete: boolean;
   requiredCheckpoints: readonly string[];
+  completed: ReadonlySet<string>;
+  markCheckpoint: (id: string) => void;
   component: React.ComponentType<{ moduleId: string; isComplete: boolean; onCheckpoint: (id: string) => void }>;
-  onComplete: () => void;
-  onCheckpointReached: (id: string) => void;
 }) {
-  const { completed, markCheckpoint } = useLabCompletion(
-    requiredCheckpoints,
-    onComplete,
-    onCheckpointReached,
-  );
-
   return (
     <>
       <LabCompletionChecklist

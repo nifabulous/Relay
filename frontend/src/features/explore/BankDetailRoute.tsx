@@ -14,6 +14,7 @@ import { PaymentRoute } from "../../design-system/payment-route/PaymentRoute";
 import { buildRouteNodes } from "../../design-system/payment-route/routeNodes";
 import { groupByCurrency } from "./ssiGrouping";
 import { SettlementInstructions } from "./SettlementInstructions";
+import { StatusChip } from "../../design-system/StatusChip";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import "./ExplorePage.css";
@@ -23,6 +24,56 @@ const CONFIDENCE_RANK: Record<SuggestedIntermediary["confidence"], number> = {
   medium: 1,
   high: 2,
 };
+
+const COUNTRY_NAMES: Record<string, string> = {
+  GB: "United Kingdom",
+  US: "United States",
+  DE: "Germany",
+  FR: "France",
+  IN: "India",
+  NG: "Nigeria",
+  AE: "United Arab Emirates",
+  JP: "Japan",
+  CA: "Canada",
+  AU: "Australia",
+};
+
+function countryName(code: string | undefined) {
+  if (!code) return "Country not specified";
+  return COUNTRY_NAMES[code.toUpperCase()] ?? code.toUpperCase();
+}
+
+function bankMonogram(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "BK";
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+type PotentialRailRow = {
+  name: string;
+  description: string;
+  status: "verified" | "under_review";
+};
+
+function potentialRails(currency: string | undefined): PotentialRailRow[] {
+  const normalized = currency?.toUpperCase();
+  const domestic = normalized === "GBP"
+    ? { name: "CHAPS", description: "Same-day high-value settlement" }
+    : normalized === "EUR"
+      ? { name: "SEPA", description: "Euro credit transfers" }
+      : normalized === "USD"
+        ? { name: "Fedwire", description: "Real-time gross settlement" }
+        : { name: normalized ? `${normalized} clearing` : "Local clearing", description: "Domestic payment settlement" };
+
+  return [
+    // Lookup only establishes the institution identity and its directory
+    // currency. It does not establish bank-level verification or bilateral
+    // scheme membership, so currency-derived rows must remain under review.
+    { name: "SWIFT MT103", description: "Global correspondent messaging", status: "under_review" },
+    { name: domestic.name, description: domestic.description, status: "under_review" },
+    { name: normalized === "GBP" ? "SEPA" : "Correspondent settlement", description: "Cross-border payment routing", status: "under_review" },
+  ];
+}
 
 /**
  * The confidence of the weakest hop in a suggested chain.
@@ -153,68 +204,123 @@ export function BankDetailRoute() {
       >
         {bank && (
           <>
-            <div className="bank-detail">
-              <h1 className="bank-detail__name">{bank.bank_name}</h1>
-              <dl className="bank-detail__grid">
-                <dt>BIC</dt>
-                <dd className="mono">{bank.bic}</dd>
-                {bank.country_code && (
-                  <>
-                    <dt>Country</dt>
-                    <dd className="mono">{bank.country_code}</dd>
-                  </>
-                )}
-                {bank.city && (
-                  <>
-                    <dt>City</dt>
-                    <dd>{bank.city}</dd>
-                  </>
-                )}
-                {bank.country_currency && (
-                  <>
-                    <dt>Currency</dt>
-                    <dd className="mono">{bank.country_currency}</dd>
-                  </>
-                )}
-                {lookup.data?.settlement?.chips_uid && (
-                  <>
-                    <dt>CHIPS participant</dt>
-                    <dd className="mono">{lookup.data.settlement.chips_uid}</dd>
-                  </>
-                )}
-                {lookup.data?.settlement?.aba && (
-                  <>
-                    <dt>ABA (Fedwire)</dt>
-                    <dd className="mono">{lookup.data.settlement.aba}</dd>
-                  </>
-                )}
-              </dl>
-
-              {lookup.data?.settlement && (
-                <p className="measure bank-detail__settlement-note">
-                  This bank is a direct participant in the US settlement systems:
-                  the CHIPS participant number and ABA routing number above are its
-                  addresses on CHIPS and Fedwire — why it appears as a USD
-                  correspondent in other banks' settlement instructions.
+            <div className="bank-detail bank-detail--route">
+            <section className="bank-detail__hero" aria-labelledby="bank-detail-title">
+              <div className="bank-detail__logo" aria-hidden="true">{bankMonogram(bank.bank_name)}</div>
+              <div className="bank-detail__identity">
+                <h1 id="bank-detail-title" className="bank-detail__name">{bank.bank_name}</h1>
+                <div className="bank-detail__bic-row">
+                  <span className="bank-detail__bic mono">{bank.bic}</span>
+                  <span className="bank-detail__bic-label">Bank identifier</span>
+                </div>
+                <p className="bank-detail__country">
+                  <svg className="bank-detail__country-mark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 21V4m0 0c4-3 7 3 13 0v9c-6 3-9-3-13 0" />
+                  </svg>
+                  {countryName(bank.country_code)}
                 </p>
-              )}
-
-              {resolvedDiffers && (
-                <p className="bank-detail__resolution">
-                  Showing institution-level records for{" "}
-                  <span className="mono">{bank.bic}</span>. The BIC you searched
-                  resolves to this institution rather than a specific branch.
-                </p>
-              )}
-
-              <div className="bank-detail__actions">
-                <Link
-                  to={`/operate/prepare?bic=${encodeURIComponent(bank.bic)}`}
-                  className="relay-btn relay-btn--secondary"
-                >
-                  Prepare payment to this bank
-                </Link>
+                <StatusChip status="under_review" className="bank-detail__verified" />
               </div>
+            </section>
+
+            <div className="bank-detail__body">
+              <section className="bank-detail__schemes" aria-labelledby="bank-detail-schemes-title">
+                <h2 id="bank-detail-schemes-title">Potential rails to verify</h2>
+                <p className="bank-detail__scheme-note">
+                  These are generic educational examples for the directory currency,
+                  not confirmation that this bank supports them.
+                </p>
+                <div className="bank-detail__scheme-list">
+                  {potentialRails(bank.country_currency).map((scheme) => (
+                    <div className="bank-detail__scheme-row" key={scheme.name}>
+                      <span className="bank-detail__scheme-icon" aria-hidden="true">{scheme.name === "SWIFT MT103" ? "◎" : "↗"}</span>
+                      <span className="bank-detail__scheme-copy">
+                        <strong>{scheme.name}</strong>
+                        <span>{scheme.description}</span>
+                      </span>
+                      <StatusChip status={scheme.status} className="bank-detail__scheme-status" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bank-detail__about">
+                  <h2>About</h2>
+                  <p>
+                    {bank.bank_name} is a banking institution serving payment
+                    corridors from {countryName(bank.country_code)}.
+                  </p>
+                  <p>
+                    Confirm the receiving bank&apos;s current rules and settlement
+                    instructions before initiating a payment.
+                  </p>
+                </div>
+              </section>
+
+              <aside className="bank-detail__details" aria-labelledby="bank-detail-details-title">
+                <h2 id="bank-detail-details-title">Institution details</h2>
+                <dl className="bank-detail__grid">
+                  <div>
+                    <dt>BIC</dt>
+                    <dd className="mono">{bank.bic}</dd>
+                  </div>
+                  {bank.country_code && (
+                    <div>
+                      <dt>Country</dt>
+                      <dd>{countryName(bank.country_code)}</dd>
+                    </div>
+                  )}
+                  {bank.city && (
+                    <div>
+                      <dt>City</dt>
+                      <dd>{bank.city}</dd>
+                    </div>
+                  )}
+                  {bank.country_currency && (
+                    <div>
+                      <dt>Currency</dt>
+                      <dd className="mono">{bank.country_currency}</dd>
+                    </div>
+                  )}
+                  {lookup.data?.settlement?.chips_uid && (
+                    <div>
+                      <dt>CHIPS participant</dt>
+                      <dd className="mono">{lookup.data.settlement.chips_uid}</dd>
+                    </div>
+                  )}
+                  {lookup.data?.settlement?.aba && (
+                    <div>
+                      <dt>ABA (Fedwire)</dt>
+                      <dd className="mono">{lookup.data.settlement.aba}</dd>
+                    </div>
+                  )}
+                </dl>
+                <div className="bank-detail__actions">
+                  <Link
+                    to={`/operate/prepare?bic=${encodeURIComponent(bank.bic)}`}
+                    className="relay-btn relay-btn--primary"
+                  >
+                    Prepare payment to this bank
+                  </Link>
+                </div>
+              </aside>
+            </div>
+
+            {lookup.data?.settlement && (
+              <p className="measure bank-detail__settlement-note">
+                This bank is a direct participant in the US settlement systems:
+                the CHIPS participant number and ABA routing number above are its
+                addresses on CHIPS and Fedwire — why it appears as a USD
+                correspondent in other banks&apos; settlement instructions.
+              </p>
+            )}
+
+            {resolvedDiffers && (
+              <p className="bank-detail__resolution">
+                Showing institution-level records for{" "}
+                <span className="mono">{bank.bic}</span>. The BIC you searched
+                resolves to this institution rather than a specific branch.
+              </p>
+            )}
             </div>
 
             {hasSSI && (

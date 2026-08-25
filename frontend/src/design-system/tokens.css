@@ -82,6 +82,18 @@
   /* ── Layout ───────────────────────────────────────────── */
   --nav-width-desktop: 240px;
   --nav-height-mobile: 64px;
+  --mobile-fixed-footer-height: calc(
+    var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px)
+  );
+  /* The Tutor cluster carries its button plus an availability message. Keep a
+     token-level floor so page content can always be scrolled clear of both it
+     and the fixed mobile navigation. */
+  --floating-cluster-min-height: 112px;
+  --mobile-fixed-reserve: calc(
+    var(--mobile-fixed-footer-height) +
+    var(--floating-cluster-min-height) +
+    var(--space-3)
+  );
   --topbar-height: 52px;
   --sim-banner-height: 32px;
   --reading-measure: 66ch;

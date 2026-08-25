@@ -64,6 +64,33 @@ describe("GlossaryPage", () => {
     expect(screen.getByText("IBAN", { selector: "dt" }).closest(".glossary-entry"))
       .toHaveClass("glossary-entry--highlighted");
   });
+
+  it("provides the reference layout with alphabetical navigation and related terms", async () => {
+    const user = userEvent.setup();
+    renderGlossary();
+
+    expect(screen.getByRole("navigation", { name: "Glossary alphabetical index" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Jump to C" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("heading", { name: "Recently viewed" })).toBeVisible();
+    expect(screen.getByText("BIC", { selector: "dt" })).toHaveAttribute("data-part-of-speech", "noun");
+    expect(screen.getByLabelText("Related terms for BIC")).toBeVisible();
+
+    await user.click(screen.getByRole("link", { name: "Jump to B" }));
+    expect(screen.getByRole("link", { name: "Jump to B" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("keeps each definition term and description directly grouped in the definition list", () => {
+    renderGlossary();
+
+    const term = screen.getByText("BIC", { selector: "dt" });
+    const entry = term.closest(".glossary-entry");
+
+    expect(entry).not.toBeNull();
+    expect(term.parentElement).toBe(entry);
+    expect(entry?.querySelector("dd")?.parentElement).toBe(entry);
+    expect(entry?.querySelector("span.glossary-entry__tag")).toBeNull();
+    expect(Array.from(entry?.children ?? []).every((child) => ["DT", "DD"].includes(child.tagName))).toBe(true);
+  });
 });
 
 describe("ExplorePage", () => {
@@ -147,6 +174,48 @@ describe("ExplorePage", () => {
 });
 
 describe("BankDirectoryPage", () => {
+  it("renders the browse table with typed bank context and capabilities", () => {
+    queryClient.clear();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Bank directory" })).toBeVisible();
+    expect(screen.getByText(/curated teaching directory/i)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Verified only" })).toBeNull();
+    expect(screen.getByPlaceholderText("Search by name or BIC…")).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Institution" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open HSBC details" })).toHaveAttribute(
+      "href",
+      "/explore/banks/HSBCGB22XXX",
+    );
+    expect(screen.getAllByText("Cross-border")).toHaveLength(4);
+    expect(screen.getByText("Domestic")).toBeVisible();
+    expect(screen.getByText("Showing 1–5 of 5")).toBeVisible();
+  });
+
+  it("filters browse rows by bank name and capability", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const search = screen.getByLabelText("Search bank name or BIC");
+    await user.type(search, "Mizuho");
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open HSBC details" })).toBeNull();
+
+    await user.clear(search);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by capability" }), "Domestic");
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open Deutsche Bank details" })).toBeNull();
+  });
+
   it("shows guidance with example BICs before any search", async () => {
     queryClient.clear();
     renderRelay(
@@ -188,11 +257,60 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "CITIUS33");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "CITIUS33");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     const link = await screen.findByRole("link", { name: /Prepare a payment/i });
     expect(link).toHaveAttribute("href", "/operate/prepare?bic=CITIUS33");
+  });
+
+  it("rejects invalid lookup lengths and clears stale results on a bank-name search", async () => {
+    queryClient.clear();
+    let lookupCalls = 0;
+    server.use(
+      http.get("/api/lookup", () => {
+        lookupCalls += 1;
+        return HttpResponse.json({
+          bic: "CITIUS33",
+          found: true,
+          bank: {
+            bic: "CITIUS33",
+            bank_name: "Citibank New York",
+            country_code: "US",
+            city: "New York",
+            country_currency: "USD",
+          },
+        });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const search = screen.getByLabelText("Search bank name or BIC");
+    await user.type(search, "ABCDEF123");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(lookupCalls).toBe(0);
+    expect(screen.getByText(/Find a bank to see its settlement instructions/i)).toBeVisible();
+
+    await user.clear(search);
+    await user.type(search, "CITIUS33");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+    expect(await screen.findByRole("link", { name: /Prepare a payment/i })).toBeVisible();
+    expect(lookupCalls).toBe(1);
+
+    await user.clear(search);
+    await user.type(search, "Mizuho");
+    await user.click(screen.getByRole("button", { name: "Look up" }));
+
+    expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
+    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
   });
 
   it("shows the settlement details inline on the result card — no click-through", async () => {
@@ -251,7 +369,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "SBININBB");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     // The full settlement section renders on the result card itself.
@@ -314,7 +432,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.type(screen.getByLabelText("BIC to look up"), "SBININBB");
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "SBININBB");
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     expect(
@@ -679,6 +797,10 @@ describe("SchemeTable", () => {
     expect(screen.getByText("$10-35")).toBeVisible();
     expect(screen.getByText("High-value, wires")).toBeVisible();
     expect(screen.getByText("Federal Reserve")).toBeVisible();
+    expect(screen.getByText("Reference")).toBeVisible();
+    expect(screen.queryByText("Available")).toBeNull();
+    expect(screen.queryByText("Limited")).toBeNull();
+    expect(screen.queryByText("Domestic")).toBeNull();
   });
 
   it("annotates every cell with its column label for the narrow-screen card layout", () => {

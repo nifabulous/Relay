@@ -374,11 +374,11 @@ test.describe("Case Desk recovery scenarios", () => {
     // in-progress draft. Navigate there and assert.
     await page.goto(LEARN_URL, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/app\/learn\/?$/, { timeout: LAZY_TIMEOUT });
-    // Scope to the seeded case's own entry. CaseEntry renders each case as a
-    // <section aria-labelledby={title}>, and the catalog now holds four cases —
+    // Scope to the seeded case's own entry. CaseEntry is a semantic list item
+    // inside an explicit list, and the catalog now holds four cases —
     // the three without a draft still legitimately offer "Start case", so a
     // page-wide count would assert the wrong thing.
-    const supplierEntry = page.getByRole("region", {
+    const supplierEntry = page.getByRole("listitem", {
       name: "Canada → US supplier payment",
     });
     await expect(
@@ -526,8 +526,9 @@ test.describe("Case Desk recovery scenarios", () => {
     await page.goto(CASE_URL, { waitUntil: "networkidle" });
     await waitForCaseDesk(page);
 
-    // The recovery notice (role="status") appears with the under_review chip.
-    const notice = page.getByRole("status");
+    // Scope by accessible name: the floating Tutor launcher also renders a
+    // page-wide availability status when its backend is disabled.
+    const notice = page.getByRole("status", { name: "Case updated" });
     await expect(notice).toBeVisible({ timeout: LAZY_TIMEOUT });
     await expect(notice).toContainText(/updated since your last visit/i);
     // The first attempt is preserved — the notice says so.

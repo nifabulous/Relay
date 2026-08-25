@@ -58,6 +58,283 @@
 }
 
 /* ── Bank directory ─────────────────────────────────────── */
+.bank-directory {
+  gap: var(--space-5);
+}
+
+.bank-directory__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 56px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.bank-directory__search:focus-within {
+  border-color: var(--color-action);
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.bank-directory__search-icon {
+  flex: 0 0 auto;
+  margin-left: var(--space-4);
+  color: var(--color-ink-muted);
+}
+
+.bank-directory__search-input {
+  min-width: 0;
+  flex: 1;
+  height: 54px;
+  padding: 0 var(--space-3);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-size: var(--text-lg);
+}
+
+.bank-directory__search-input::placeholder {
+  color: var(--color-ink-muted);
+}
+
+.bank-directory__search-submit {
+  margin-right: var(--space-2);
+  min-width: 44px;
+}
+
+.bank-directory__filters {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.bank-directory__select-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.bank-directory__select-chip {
+  position: relative;
+}
+
+.bank-directory__select-chip::after {
+  content: "⌄";
+  pointer-events: none;
+  color: var(--color-ink-muted);
+  margin-right: var(--space-3);
+  margin-left: calc(var(--space-2) * -1);
+}
+
+.bank-directory__select-chip select {
+  appearance: none;
+  min-height: 42px;
+  padding: 0 var(--space-6) 0 var(--space-3);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bank-directory__select-chip:focus-within {
+  border-color: var(--color-action);
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.bank-directory__capability-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  line-height: 1;
+}
+
+.bank-directory__table-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+}
+
+.bank-directory__table-scroll {
+  overflow-x: auto;
+}
+
+.bank-directory__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-base);
+}
+
+.bank-directory__table th,
+.bank-directory__table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bank-directory__table th {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-3);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.bank-directory__table tbody tr {
+  transition: background var(--duration-fast) var(--ease);
+}
+
+.bank-directory__table tbody tr:hover,
+.bank-directory__table tbody tr:focus-within {
+  background: var(--color-action-surface);
+}
+
+.bank-directory__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.bank-directory__institution {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  color: var(--color-ink-strong);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bank-directory__institution:hover {
+  color: var(--color-action);
+  text-decoration: none;
+}
+
+.bank-directory__institution:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.bank-directory__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+  color: var(--color-ink-strong);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-micro);
+}
+
+.bank-directory__bic {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-variant-ligatures: none;
+}
+
+.bank-directory__capability {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+  color: var(--color-success);
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.bank-directory__capability--domestic {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
+  color: var(--color-ink-muted);
+}
+
+.bank-directory__no-results {
+  padding-top: var(--space-6) !important;
+  padding-bottom: var(--space-6) !important;
+  color: var(--color-ink-muted);
+  text-align: center !important;
+}
+
+.bank-directory__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  color: var(--color-ink-muted);
+}
+
+.bank-directory__pagination-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.bank-directory__page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-size: var(--text-xl);
+  cursor: pointer;
+}
+
+.bank-directory__page-button:hover:not(:disabled) {
+  border-color: var(--color-action);
+  color: var(--color-action);
+}
+
+.bank-directory__page-button:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.bank-directory__page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-directory__table tbody tr {
+    transition: none;
+  }
+}
+
 .explore__bank-form {
   display: flex;
   gap: var(--space-2);
@@ -239,7 +516,8 @@
 .explore__glossary-filter:focus {
   outline: none;
   border-color: var(--color-action);
-  box-shadow: 0 0 0 3px var(--color-action-surface);
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
 }
 
 .glossary-toolbar__count,
@@ -253,6 +531,141 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
+}
+
+.glossary-page {
+  max-width: var(--content-max);
+}
+
+.glossary-layout {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 240px;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.glossary-index,
+.glossary-recent {
+  min-width: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+}
+
+.glossary-index {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) var(--space-2);
+}
+
+.glossary-index__label {
+  margin-bottom: var(--space-3);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-micro);
+}
+
+.glossary-index__letters {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 440px;
+}
+
+.glossary-index__letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  border-left: 2px solid transparent;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.glossary-index__letter:hover,
+.glossary-index__letter:focus-visible,
+.glossary-index__letter--active {
+  border-left-color: var(--color-action);
+  color: var(--color-action);
+  text-decoration: none;
+}
+
+.glossary-index__letter--disabled {
+  color: var(--color-border-strong);
+}
+
+.glossary-results {
+  min-width: 0;
+}
+
+.glossary-results__summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.glossary-results__summary h2 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+}
+
+.glossary-results__summary span {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.glossary-recent {
+  padding: var(--space-5);
+}
+
+.glossary-recent h2 {
+  margin: 0 0 var(--space-5);
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+}
+
+.glossary-recent__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glossary-recent__list li {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.glossary-recent__list li:last-child {
+  border-bottom: 0;
+}
+
+.glossary-recent__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 56px;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.glossary-recent__link:hover,
+.glossary-recent__link:focus-visible {
+  color: var(--color-action);
+  text-decoration: none;
+}
+
+.glossary-recent__icon {
+  color: var(--color-ink-muted);
+  font-size: var(--text-lg);
 }
 
 .glossary-section {
@@ -281,6 +694,10 @@
 }
 
 .glossary-entry {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-2);
   min-width: 0;
   padding: var(--space-4);
   background: var(--color-surface);
@@ -300,13 +717,60 @@
 }
 
 .glossary-entry__term {
+  min-width: 0;
+  margin: 0;
   font-weight: 600;
   color: var(--color-ink-strong);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.glossary-entry__term::after {
+  content: attr(data-part-of-speech);
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  margin-left: var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.glossary-entry__related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.glossary-entry__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-action-border);
+  border-radius: var(--radius-control);
+  color: var(--color-ink);
   font-size: var(--text-sm);
-  margin-bottom: 2px;
+  text-decoration: none;
+}
+
+.glossary-entry__chip:hover,
+.glossary-entry__chip:focus-visible {
+  border-color: var(--color-action);
+  color: var(--color-action);
+  text-decoration: none;
 }
 
 .glossary-entry__def {
+  grid-column: 1 / -1;
+  margin: var(--space-4) 0 0;
   font-size: var(--text-sm);
   color: var(--color-ink);
   line-height: var(--leading-snug);
@@ -331,6 +795,95 @@
 
 /* ── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .bank-directory__search {
+    min-height: 52px;
+  }
+
+  .bank-directory__search-input {
+    height: 50px;
+    font-size: var(--text-base);
+  }
+
+  .bank-directory__search-submit {
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  .bank-directory__filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bank-directory__select-chip {
+    width: 100%;
+  }
+
+  .bank-directory__select-chip select {
+    flex: 1;
+  }
+
+  .bank-directory__table-scroll {
+    overflow-x: visible;
+  }
+
+  .bank-directory__table,
+  .bank-directory__table tbody,
+  .bank-directory__table tr,
+  .bank-directory__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .bank-directory__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .bank-directory__table tbody tr {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .bank-directory__table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .bank-directory__table td {
+    display: grid;
+    grid-template-columns: minmax(6rem, 34%) minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 0;
+  }
+
+  .bank-directory__table td::before {
+    content: attr(data-label);
+    color: var(--color-ink-muted);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-micro);
+    text-transform: uppercase;
+  }
+
+  .bank-directory__institution {
+    min-width: 0;
+  }
+
+  .bank-directory__institution span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .bank-directory__pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .explore__bank-form {
     flex-direction: column;
     gap: var(--space-3);
@@ -353,6 +906,39 @@
 
   .glossary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .glossary-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .glossary-index {
+    order: -1;
+  }
+
+  .glossary-index__letters {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-1);
+    min-height: 0;
+  }
+
+  .glossary-index__letter {
+    width: 100%;
+    min-height: calc(var(--space-5) + var(--space-4) + var(--space-1));
+    border-bottom: 2px solid transparent;
+    border-left: 0;
+  }
+
+  .glossary-index__letter:hover,
+  .glossary-index__letter:focus-visible,
+  .glossary-index__letter--active {
+    border-bottom-color: var(--color-action);
+    border-left-color: transparent;
+  }
+
+  .glossary-recent {
+    order: 1;
   }
 
   .glossary-toolbar__controls {
@@ -548,4 +1134,310 @@
 .bank-route__meta dt {
   color: var(--color-ink-muted);
   font-weight: 500;
+}
+
+/* ─── Bank detail — institution profile ─────────────────────────────── */
+/* Scoped to the route so the compact inline lookup card on the directory
+   page keeps its existing information architecture. */
+.bank-detail--route {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.bank-detail__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+}
+
+.bank-detail__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 128px;
+  height: 128px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-action);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+}
+
+.bank-detail__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.bank-detail--route .bank-detail__name {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.bank-detail__bic-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+}
+
+.bank-detail__bic {
+  color: var(--color-ink-strong);
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.bank-detail__bic-label {
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.bank-detail__country {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-lg);
+}
+
+.bank-detail__country-mark {
+  color: var(--color-ink-muted);
+  flex: 0 0 auto;
+}
+
+.bank-detail__verified {
+  margin-top: var(--space-1);
+}
+
+.bank-detail__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.bank-detail__schemes,
+.bank-detail__details {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+  background: var(--color-surface);
+}
+
+.bank-detail--route h2 {
+  margin: 0 0 var(--space-4);
+  color: var(--color-ink-strong);
+  font-size: var(--text-xl);
+}
+
+.bank-detail__scheme-list {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.bank-detail__scheme-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 72px;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bank-detail__scheme-row:last-child {
+  border-bottom: 0;
+}
+
+.bank-detail__scheme-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  color: var(--color-action);
+  font-size: var(--text-lg);
+}
+
+.bank-detail__scheme-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.bank-detail__scheme-copy strong {
+  color: var(--color-ink-strong);
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.bank-detail__scheme-copy span {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.bank-detail__scheme-status {
+  justify-self: end;
+}
+
+.bank-detail__about {
+  margin-top: var(--space-6);
+}
+
+.bank-detail__about h2 {
+  margin-bottom: var(--space-3);
+}
+
+.bank-detail__about p {
+  max-width: var(--reading-measure);
+  margin: 0 0 var(--space-2);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.bank-detail--route .bank-detail__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
+.bank-detail--route .bank-detail__grid > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bank-detail--route .bank-detail__grid > div:first-child {
+  padding-top: 0;
+}
+
+.bank-detail--route .bank-detail__grid > div:last-child {
+  border-bottom: 0;
+}
+
+.bank-detail--route .bank-detail__grid dt,
+.bank-detail--route .bank-detail__grid dd {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.bank-detail--route .bank-detail__grid dt {
+  color: var(--color-ink-muted);
+}
+
+.bank-detail--route .bank-detail__grid dd {
+  color: var(--color-ink-strong);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.bank-detail--route .bank-detail__actions {
+  margin-top: var(--space-5);
+}
+
+.bank-detail--route .bank-detail__actions .relay-btn {
+  width: 100%;
+}
+
+.bank-detail--route .bank-detail__settlement-note,
+.bank-detail--route .bank-detail__resolution {
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .bank-detail__body {
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bank-detail__hero {
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .bank-detail__logo {
+    width: 72px;
+    height: 72px;
+    font-size: var(--text-xl);
+  }
+
+  .bank-detail--route .bank-detail__name {
+    font-size: var(--text-2xl);
+  }
+
+}
+
+@media (max-width: 420px) {
+  .bank-detail__hero {
+    flex-direction: column;
+  }
+
+  .bank-detail__identity {
+    width: 100%;
+  }
+
+  .bank-detail__bic-row {
+    width: 100%;
+  }
+
+  .bank-detail__scheme-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .bank-detail__scheme-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bank-detail__scheme-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .bank-detail--route .bank-detail__grid > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  .bank-detail--route .bank-detail__grid dd {
+    text-align: left;
+  }
 }

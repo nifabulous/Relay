@@ -18,7 +18,85 @@ function renderBank(bic: string) {
   );
 }
 
+function closestHTMLElement(element: Element, selector: string): HTMLElement {
+  const closest = element.closest(selector);
+  if (!(closest instanceof HTMLElement)) {
+    throw new Error(`Expected ${selector} ancestor to be an HTMLElement`);
+  }
+  return closest;
+}
+
 describe("BankDetailRoute identity", () => {
+  it("renders evidence-safe identity, scheme, details, and payment action semantics", async () => {
+    server.use(
+      http.get("/api/lookup", () =>
+        HttpResponse.json({
+          bic: "SBININBBXXX",
+          found: true,
+          bank: {
+            bic: "SBININBBXXX",
+            bank_name: "State Bank of India",
+            country_code: "IN",
+            city: "Mumbai",
+            country_currency: "INR",
+          },
+          settlement: null,
+        }),
+      ),
+      http.get("/api/ssi", () =>
+        HttpResponse.json({
+          beneficiary_bic: "SBININBBXXX",
+          currency: "ALL",
+          instructions: [],
+          disclaimer: "SIMULATION",
+        }),
+      ),
+    );
+
+    renderBank("SBININBBXXX");
+
+    const heading = await screen.findByRole("heading", { name: "State Bank of India" });
+    const detail = closestHTMLElement(heading, ".bank-detail");
+    const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(within(breadcrumb).getByRole("link", { name: "Bank Directory" })).toHaveAttribute(
+      "href",
+      "/explore/banks",
+    );
+    expect(within(breadcrumb).getByText("SBININBBXXX")).toBeVisible();
+
+    expect(within(detail).getByText("SBININBBXXX", { selector: ".bank-detail__bic" })).toBeVisible();
+    expect(within(detail).getByText("India", { selector: ".bank-detail__country" })).toBeVisible();
+    expect(detail.querySelector(".bank-detail__verified")).toHaveAttribute("aria-label", "Under review");
+    expect(detail.querySelector(".bank-detail__verified")).toBeVisible();
+    expect(detail.querySelector(".bank-detail__verified[aria-label='Verified']")).toBeNull();
+
+    const schemes = closestHTMLElement(
+      within(detail).getByRole("heading", { name: "Potential rails to verify" }),
+      "section",
+    );
+    expect(
+      within(schemes).getByText(/generic educational examples.*not confirmation that this bank supports them/i),
+    ).toBeVisible();
+    expect(
+      within(schemes).queryByRole("heading", { name: "Payment schemes supported" }),
+    ).toBeNull();
+    expect(within(schemes).getAllByLabelText("Under review")).toHaveLength(3);
+    expect(within(schemes).queryByLabelText("Verified")).toBeNull();
+
+    const details = closestHTMLElement(
+      within(detail).getByRole("heading", { name: "Institution details" }),
+      "aside",
+    );
+    expect(within(details).getByText("BIC")).toBeVisible();
+    expect(within(details).getByText("Country")).toBeVisible();
+    expect(within(details).getByText("City")).toBeVisible();
+    expect(within(details).getByText("Currency")).toBeVisible();
+    expect(within(details).getByRole("link", { name: "Prepare payment to this bank" })).toHaveAttribute(
+      "href",
+      "/operate/prepare?bic=SBININBBXXX",
+    );
+  });
+
   it("renders the bank's name and identity fields", async () => {
     server.use(
       http.get("/api/lookup", () =>
@@ -41,7 +119,7 @@ describe("BankDetailRoute identity", () => {
     expect(
       await screen.findByRole("heading", { name: "State Bank of India" }),
     ).toBeVisible();
-    const grid = screen.getByText("BIC").closest("dl")!;
+    const grid = closestHTMLElement(screen.getByText("BIC"), "dl");
     expect(within(grid).getByText("SBININBBXXX")).toBeVisible();
     expect(within(grid).getByText("Mumbai")).toBeVisible();
   });
@@ -597,7 +675,7 @@ describe("BankDetailRoute settlement identifiers", () => {
     renderBank("CITIUS33XXX");
 
     expect(await screen.findByRole("heading", { name: "Citibank N.A." })).toBeVisible();
-    const grid = screen.getByText("BIC").closest("dl")!;
+    const grid = closestHTMLElement(screen.getByText("BIC"), "dl");
     expect(within(grid).getByText("CHIPS participant")).toBeVisible();
     expect(within(grid).getByText("0008")).toBeVisible();
     expect(within(grid).getByText("ABA (Fedwire)")).toBeVisible();

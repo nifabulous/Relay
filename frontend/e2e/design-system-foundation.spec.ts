@@ -83,7 +83,11 @@ test("preserves Relay base styles without Tailwind Preflight", async ({ page }) 
     probe.style.left = "-10000px";
     probe.innerHTML =
       '<h1>Probe</h1><ul><li>Item</li></ul><button id="relay-foundation-probe-before" type="button">Before</button><button id="relay-foundation-probe-button" type="button">Probe</button><button id="relay-foundation-probe-after" type="button">After</button>';
-    document.body.append(probe);
+    // Keep the probe before the app shell so Tab has an in-page successor and
+    // Shift+Tab returns to the probe. Appending it after the shell makes the
+    // result depend on how many focusable controls the shell renders, which
+    // differs between desktop and mobile navigation.
+    document.body.prepend(probe);
   });
 
   const styles = await page.evaluate(() => {
@@ -107,10 +111,14 @@ test("preserves Relay base styles without Tailwind Preflight", async ({ page }) 
   expect(styles.listStyle).not.toBe("none");
   expect(styles.buttonBorderWidth).not.toBe("0px");
 
+  // Ask Chromium for keyboard-intent focus directly. Walking Tab through the
+  // surrounding app shell would make this style assertion depend on how much
+  // chrome exists at each breakpoint, while scripted focus() alone suppresses
+  // :focus-visible.
   const probeButton = page.locator("#relay-foundation-probe-button");
-  await probeButton.focus();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Shift+Tab");
+  await probeButton.evaluate((button) => {
+    button.focus({ focusVisible: true });
+  });
   const focusStyles = await probeButton.evaluate((button) => {
     const style = getComputedStyle(button);
     return {

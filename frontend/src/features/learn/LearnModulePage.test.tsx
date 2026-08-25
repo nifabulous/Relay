@@ -12,11 +12,16 @@ import { LearnModulePage } from "./LearnModulePage";
 
 vi.mock("./labRegistry", () => ({
   getLabDefinition: () => ({
-    requiredCheckpoints: ["checkpoint-a"],
+    requiredCheckpoints: ["checkpoint-a", "checkpoint-b"],
     component: ({ onCheckpoint }: LabContentProps) => (
-      <button type="button" onClick={() => onCheckpoint("checkpoint-a")}>
-        Reach checkpoint
-      </button>
+      <>
+        <button type="button" onClick={() => onCheckpoint("checkpoint-a")}>
+          Reach checkpoint
+        </button>
+        <button type="button" onClick={() => onCheckpoint("checkpoint-b")}>
+          Reach second checkpoint
+        </button>
+      </>
     ),
   }),
 }));
@@ -61,6 +66,21 @@ describe("LearnModulePage analytics", () => {
         name: "checkpoint_reached",
         properties: { module_id: "lab-1", checkpoint_id: "checkpoint-a" },
       });
+      expect(sink.events).not.toContainEqual({
+        name: "module_completed",
+        properties: { module_id: "lab-1" },
+      });
+    });
+    expect(screen.getByRole("progressbar", { name: "Module completion" })).toHaveAttribute(
+      "aria-valuenow",
+      "50",
+    );
+    expect(screen.getAllByText("Completed")).not.toHaveLength(0);
+    expect(screen.getByText("Current")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reach second checkpoint" }));
+
+    await waitFor(() => {
       expect(sink.events).toContainEqual({
         name: "module_completed",
         properties: { module_id: "lab-1" },
@@ -71,9 +91,9 @@ describe("LearnModulePage analytics", () => {
       "/learn/lab-2",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Reach checkpoint" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reach second checkpoint" }));
     await waitFor(() => {
-      expect(sink.events.filter((event) => event.name === "checkpoint_reached")).toHaveLength(1);
+      expect(sink.events.filter((event) => event.name === "checkpoint_reached")).toHaveLength(2);
       expect(sink.events.filter((event) => event.name === "module_completed")).toHaveLength(1);
     });
   });
@@ -114,6 +134,7 @@ describe("LearnModulePage analytics", () => {
     renderModule();
 
     fireEvent.click(await screen.findByRole("button", { name: "Reach checkpoint" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reach second checkpoint" }));
 
     await waitFor(() => {
       expect(sink.events).toContainEqual({
@@ -170,9 +191,27 @@ describe("LearnModulePage analytics", () => {
     });
 
     fireEvent.click(await screen.findByRole("button", { name: "Reach checkpoint" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reach second checkpoint" }));
 
     await waitFor(() => {
       expect(sink.events.filter((event) => event.name === "module_completed")).toHaveLength(1);
     });
+  });
+
+  it("presents module progress, lesson outline states, and the content card", () => {
+    renderModule();
+
+    expect(screen.getByText("MODULE 1")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Module completion" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+
+    const outline = screen.getByRole("list", { name: "Lesson outline" });
+    expect(outline).toBeInTheDocument();
+    expect(screen.getByText("Lesson 1")).toBeInTheDocument();
+    expect(screen.getByText("Current")).toBeInTheDocument();
+    expect(screen.getAllByText("Upcoming")).not.toHaveLength(0);
+    expect(screen.getByRole("region", { name: "What you'll learn" })).toBeInTheDocument();
   });
 });

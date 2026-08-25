@@ -55,38 +55,67 @@ function overallStatus(currentStatus: string, isTerminal: boolean): CheckStatus 
 }
 
 export function PaymentTimeline({ payment, hideFees = false }: PaymentTimelineProps) {
+  const lastEventIndex = payment.timeline.length - 1;
   return (
     <div className="tracking-result">
-      <div className="tracking-result__header">
-        <StatusChip status={overallStatus(payment.current_status, payment.is_terminal)} />
-        <span className="mono">{payment.uetr}</span>
-        {payment.is_terminal && <span>Terminal: {payment.current_status}</span>}
-      </div>
-      {payment.sent_amount && payment.final_amount && (
-        <div className="tracking-result__amounts">
-          <span>Sent: <span className="mono">{payment.sent_amount}</span></span>
-          <span>Final: <span className="mono">{payment.final_amount}</span></span>
-          {!hideFees && payment.total_fees !== null && payment.total_fees !== undefined && (
-            <span>Fees: <span className="mono">{payment.total_fees.toFixed(2)}</span></span>
+      <div className="tracking-result__grid">
+        <section className="tracking-lifecycle" aria-labelledby="tracking-lifecycle-title">
+          <h2 id="tracking-lifecycle-title">Lifecycle</h2>
+          <ol className="tracking-timeline" aria-label="Payment timeline">
+            {payment.timeline.map((event, i) => {
+              const phase = !payment.is_terminal && i === lastEventIndex ? "current" : "completed";
+              return (
+                <li key={i} className={`tracking-timeline__item tracking-timeline__item--${normalise(event.status)} tracking-timeline__item--${phase}`}>
+                  <div className="tracking-timeline__dot" aria-hidden="true"><span /></div>
+                  <div className="tracking-timeline__content">
+                    <div className="tracking-timeline__row">
+                      <div className="tracking-timeline__label">
+                        <StatusChip status={eventStatus(event.status)} />
+                        <span className="tracking-timeline__phase">{phase}</span>
+                      </div>
+                      <span className="tracking-timeline__time mono">{event.timestamp}</span>
+                    </div>
+                    <div className="tracking-timeline__bank">{event.bank_name ?? event.bank_bic}</div>
+                    {event.message && <div className="tracking-timeline__message">{event.message}</div>}
+                    {event.amount && <div className="tracking-timeline__amount mono">{event.amount}</div>}
+                  </div>
+                </li>
+              );
+            })}
+            {!payment.is_terminal && (
+              <li className="tracking-timeline__item tracking-timeline__item--upcoming">
+                <div className="tracking-timeline__dot" aria-hidden="true"><span /></div>
+                <div className="tracking-timeline__content">
+                  <div className="tracking-timeline__row">
+                    <div className="tracking-timeline__label">
+                      <span className="tracking-timeline__upcoming-label">Beneficiary credit</span>
+                      <span className="tracking-timeline__phase">Upcoming</span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            )}
+          </ol>
+        </section>
+
+        <section className="tracking-summary" aria-labelledby="tracking-summary-title">
+          <h2 id="tracking-summary-title">Payment</h2>
+          <div className="tracking-result__header">
+            <StatusChip status={overallStatus(payment.current_status, payment.is_terminal)} />
+            <span className="mono tracking-result__uetr">{payment.uetr}</span>
+            {payment.is_terminal && <span>Terminal: {payment.current_status}</span>}
+          </div>
+          {payment.sent_amount && payment.final_amount && (
+            <dl className="tracking-result__amounts">
+              <div><dt>Sent</dt><dd className="mono">{payment.sent_amount}</dd></div>
+              <div><dt>Final</dt><dd className="mono">{payment.final_amount}</dd></div>
+              {!hideFees && payment.total_fees !== null && payment.total_fees !== undefined && (
+                <div><dt>Fees</dt><dd className="mono">{payment.total_fees.toFixed(2)}</dd></div>
+              )}
+            </dl>
           )}
-        </div>
-      )}
-      <ol className="tracking-timeline" aria-label="Payment timeline">
-        {payment.timeline.map((event, i) => (
-          <li key={i} className={`tracking-timeline__item tracking-timeline__item--${normalise(event.status)}`}>
-            <div className="tracking-timeline__dot" />
-            <div className="tracking-timeline__content">
-              <div className="tracking-timeline__row">
-                <StatusChip status={eventStatus(event.status)} />
-                <span className="tracking-timeline__time mono">{event.timestamp}</span>
-              </div>
-              <div className="tracking-timeline__bank">{event.bank_name ?? event.bank_bic}</div>
-              {event.message && <div className="tracking-timeline__message">{event.message}</div>}
-              {event.amount && <div className="tracking-timeline__amount mono">{event.amount}</div>}
-            </div>
-          </li>
-        ))}
-      </ol>
+        </section>
+      </div>
     </div>
   );
 }

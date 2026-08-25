@@ -72,6 +72,33 @@ function sourceStatus(definition: CaseDefinition): "verified" | "under_review" {
   return definition.reviewStatus === "under_review" ? "under_review" : "verified";
 }
 
+type SummaryField = { label: string; fact: CaseFact };
+
+const SUMMARY_MATCHERS: ReadonlyArray<{ label: string; matches: (fact: CaseFact) => boolean }> = [
+  { label: "Amount", matches: (fact) => fact.id.includes("amount") || /\bamount\b/i.test(fact.label) },
+  { label: "Currency", matches: (fact) => fact.id.includes("currency") || /\bcurrency\b/i.test(fact.label) },
+  { label: "Decline code", matches: (fact) => /decline|reject|reason.code/i.test(`${fact.id} ${fact.label}`) },
+  { label: "Beneficiary BIC", matches: (fact) => /\bbic\b|swift.code/i.test(`${fact.id} ${fact.label}`) },
+  { label: "Scheme", matches: (fact) => /scheme/i.test(`${fact.id} ${fact.label}`) },
+];
+
+function transactionSummary(facts: CaseFact[], requestedSet: Set<string>): SummaryField[] {
+  return SUMMARY_MATCHERS.flatMap(({ label, matches }) => {
+    const fact = facts.find((candidate) => {
+      const hidden = candidate.requestable && candidate.state === "unknown" && !requestedSet.has(candidate.id);
+      return !hidden && matches(candidate);
+    });
+    return fact ? [{ label, fact }] : [];
+  });
+}
+
+function timelineFacts(facts: CaseFact[], requestedSet: Set<string>): CaseFact[] {
+  return facts.filter((fact) => {
+    const hidden = fact.requestable && fact.state === "unknown" && !requestedSet.has(fact.id);
+    return !hidden && Boolean(fact.claim?.verifiedAt);
+  });
+}
+
 export function EvidenceRail({
   definition,
   requestedFactIds,
@@ -79,6 +106,8 @@ export function EvidenceRail({
 }: EvidenceRailProps) {
   const requestedSet = new Set(requestedFactIds);
   const factStatus = sourceStatus(definition);
+  const summaryFields = transactionSummary(definition.facts, requestedSet);
+  const timeline = timelineFacts(definition.facts, requestedSet);
   const referenceableFacts = definition.facts.filter((fact) => {
     const valueHidden = fact.requestable && fact.state === "unknown" && !requestedSet.has(fact.id);
     return Boolean(fact.claim) && !valueHidden;
@@ -94,6 +123,38 @@ export function EvidenceRail({
         >
           Open all references ({referenceableFacts.length})
         </Button>
+      )}
+
+      {summaryFields.length > 0 && (
+        <section className="evidence-rail__transaction" aria-labelledby="evidence-rail-transaction-title">
+          <h2 id="evidence-rail-transaction-title" className="evidence-rail__section-title">
+            Transaction under review
+          </h2>
+          <dl className="evidence-rail__transaction-fields">
+            {summaryFields.map(({ label, fact }) => (
+              <div key={label} className="evidence-rail__transaction-field">
+                <dt>{label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {timeline.length > 0 && (
+        <section className="evidence-rail__timeline" aria-labelledby="evidence-rail-timeline-title">
+          <h2 id="evidence-rail-timeline-title" className="evidence-rail__section-title">
+            Evidence timeline
+          </h2>
+          <ol className="evidence-rail__timeline-list">
+            {timeline.map((fact) => (
+              <li key={`${fact.id}-${fact.claim?.verifiedAt}`} className="evidence-rail__timeline-event">
+                <time dateTime={fact.claim?.verifiedAt}>{fact.claim?.verifiedAt}</time>
+                <span>{fact.label} recorded</span>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
 
       {SECTIONS.map(({ state, heading, description }) => {

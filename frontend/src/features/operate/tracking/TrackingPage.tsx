@@ -157,7 +157,7 @@ export function TrackingPage() {
   return (
     <div className="tracking-page">
       <h1>Payment Tracking</h1>
-      <p className="measure">Look up a simulated payment by its UETR (Unique End-to-End Transaction Reference).</p>
+      <p className="measure">Follow a payment across its lifecycle by UETR (Unique End-to-End Transaction Reference).</p>
 
       <div className="tracking-page__sim-label" role="note">
         <strong>Simulation — not a real payment.</strong> All tracking events are illustrative.
