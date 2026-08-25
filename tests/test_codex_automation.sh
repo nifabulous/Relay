@@ -175,6 +175,15 @@ refuse_text 'scripts/codex_review_pr.sh' 'previously raised on this PR must reap
 # arbiter accepts it (the key is no longer in the open-set, so it is not an
 # AMBIGUOUS-IDENTITY rename).
 require_text 'scripts/codex_review_pr.sh' 'Closed does not mean untouchable'
+# The same lifecycle contract must also stand in the TRUSTED channel. The
+# prompt heredoc and docs/loop/schemas.md are not injected as policy, so a
+# reviewer reading only review-policy.md saw a lifecycle change as untrusted
+# PR content with no trusted counterpart -- and reported a correct change as an
+# unapproved protocol change twice.
+require_text '.github/codex/review-policy.md' '## Finding lifecycle'
+require_text '.github/codex/review-policy.md' 'Silence is not resolution'
+require_text '.github/codex/review-policy.md' 'reported exactly once'
+require_text '.github/codex/review-policy.md' 'Closed is not untouchable'
 require_text 'scripts/codex_review_pr.sh' 'raise it again as NEW'
 
 # T5: the per-branch Contract (docs/contracts/<branch>.md) is read from THIS

@@ -43,6 +43,32 @@ Before calling a finding speculative, verify the installed type/runtime or the
 supplied implementation. If a boundary cannot be verified from the artifacts,
 report it as a verification gap rather than asserting an unsupported fact.
 
+## Finding lifecycle
+
+Each finding carries exactly one lifecycle state: NEW, OPEN, or RESOLVED.
+
+Account for every finding in the previous review that is still unresolved: each
+one must reappear with a state. Silence is not resolution — an unresolved
+finding that simply stops being mentioned must never read as fixed.
+
+A resolution is terminal and is reported exactly once, in the round that
+verifies it, with the evidence that closes it. A finding an earlier round
+already marked RESOLVED is closed: do not restate it, neither in the findings,
+nor in the resolved list, nor in the trailer. The arbiter removes a resolved
+finding from its open set, so repeating it matches nothing open and fails the
+whole pull request closed as ORPHAN-STATE; it also grows every later comment
+without bound.
+
+Closed is not untouchable. If a resolution turns out to have been mistaken, or
+a later commit regresses the fix, raise the defect again as NEW under a fresh
+id and say in the evidence that it was previously reported resolved. Never stay
+silent about a live defect because an earlier round called it fixed.
+
+This policy and the reviewer prompt are read from the same default-branch
+commit, so they cannot disagree at run time. `docs/loop/schemas.md` is the
+normative statement of these states and of the trailer that carries them; if
+this file and that one ever drift, that one is the tiebreaker.
+
 ## Review order
 
 1. Correctness and regressions: compare the change with the stated behavior and inspect affected callers, state transitions, persistence, and error paths.
