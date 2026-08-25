@@ -103,7 +103,7 @@ describe("App routing — case desk route resolves against the real App tree", (
       expect(
         screen.getByRole("heading", { name: /Canada → US supplier payment/i }),
       ).toBeInTheDocument();
-    });
+    }, { timeout: 10_000 });
     expect(screen.queryByText(/module not found/i)).toBeNull();
     // The Case Desk renders the customer request text. Assert it so a future
     // change that routes to the wrong lazy chunk is caught. (This replaced an

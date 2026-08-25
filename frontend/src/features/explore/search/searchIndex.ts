@@ -1,9 +1,10 @@
 /**
  * Static search index for Relay Explore.
  *
- * This data is bundled so client-side search is instant. Bank lookups
- * go through /api/lookup (server-side by BIC). Everything else — glossary
- * terms, lesson modules, schemes, and tools — is searchable here.
+ * This data is bundled so client-side search is instant. Bank-name lookups
+ * go through /api/banks/search, while direct BIC lookups go through the Bank
+ * Directory route. Everything else — glossary terms, lesson modules, schemes,
+ * and tools — is searchable here.
  */
 
 import type { SearchResult } from "./searchTypes";

@@ -19,6 +19,11 @@ import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
 import { filterSupportedCurrencies, SUPPORTED_CURRENCY_CODES } from "../currencyCatalogue";
+import {
+  derivePrepareRequestState,
+  getPrepareStage,
+  type PrepareRequestState,
+} from "./prepareRequestState";
 
 /**
  * Currencies offered when Prepare Payment has no usable beneficiary BIC yet.
@@ -199,6 +204,8 @@ export function PreparePaymentPage() {
   const queryClient = useQueryClient();
   const [result, setResult] = useState<PreparePaymentResponse | null>(null);
   const [isStale, setIsStale] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [hasValidationError, setHasValidationError] = useState(false);
 
   const {
     register,
@@ -225,11 +232,17 @@ export function PreparePaymentPage() {
   // publishes as clickable picks that populate the currency dropdown.
   const watchedBic = watch("beneficiary_bic");
   const bicForSsi = (watchedBic ?? "").trim().toUpperCase();
-  const ssiEnabled = isBicLike(bicForSsi);
+  const [settledBic, setSettledBic] = useState(bicForSsi);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSettledBic(bicForSsi), 300);
+    return () => window.clearTimeout(timeout);
+  }, [bicForSsi]);
+
+  const ssiEnabled = isBicLike(settledBic);
   const ssiQuery = useQuery({
-    queryKey: apiKeys.ssi(bicForSsi, ""),
+    queryKey: apiKeys.ssi(settledBic, ""),
     queryFn: () =>
-      apiRequest(`/api/ssi?bic=${encodeURIComponent(bicForSsi)}`, undefined, SSIResponseSchema),
+      apiRequest(`/api/ssi?bic=${encodeURIComponent(settledBic)}`, undefined, SSIResponseSchema),
     enabled: ssiEnabled,
   });
   const publishedCurrencies = filterSupportedCurrencies(
@@ -281,6 +294,7 @@ export function PreparePaymentPage() {
     onSuccess: (data) => { recordActivity({ type: "tool", label: "Prepare payment", at: Date.now() });
       setResult(data);
       setIsStale(false);
+      setHasValidationError(false);
       // Invalidate dependent queries — progress, route, ssi, vop
       queryClient.invalidateQueries({ queryKey: apiKeys.progress });
       // Clear stale route/ssi data since inputs may have changed
@@ -298,6 +312,23 @@ export function PreparePaymentPage() {
 
   const apiError = mutation.error as ApiProblem | null;
   const isDuplicate = mutation.isPending;
+  const requestState: PrepareRequestState = derivePrepareRequestState({
+    isValidating,
+    isRequestActive: mutation.isPending,
+    requestError: apiError,
+    result,
+    isStale,
+  });
+  const currentStage = getPrepareStage(requestState, { hasValidationError });
+  const requestStatusCopy: Record<PrepareRequestState, string> = {
+    idle: "Enter payment details to begin.",
+    validating: "Validating payment details.",
+    checking: "Running simulated checks.",
+    success: "Checks complete. Review the route evidence.",
+    partial: "Checks complete with some evidence unavailable. Review the route evidence.",
+    error: "Checks could not be completed. Retry to run them again.",
+    stale: "Results are stale. Re-run checks for the current details.",
+  };
 
   // The backend recommendation engine is authoritative — it already maps
   // NOT_CHECKED → CAUTION/STOP and no-routing → BLOCKED with correct semantics.
@@ -330,37 +361,54 @@ export function PreparePaymentPage() {
   // cross-field custom issue never reaches the field.
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const schemaOk = await trigger();
+    mutation.reset();
+    setHasValidationError(false);
+    setIsValidating(true);
+    const schemaOk = await trigger(undefined, { shouldFocus: true });
     const crossOk = requireIbanOrBic();
-    if (!schemaOk || !crossOk) return;
+    const hasErrors = !schemaOk || !crossOk;
+    setIsValidating(false);
+    setHasValidationError(hasErrors);
+    if (hasErrors) return;
     mutation.mutate(getValues());
   };
 
   return (
     <div className="prepare-payment">
       <div className="prepare-payment__header">
-        <h1>Prepare payment</h1>
+        <h1>Prepare a payment</h1>
         <p className="measure">
-          Enter beneficiary details to validate, verify, route, and assess the payment.
+          Prepare, validate, and understand a simulated payment.
         </p>
       </div>
 
-      <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
-        <h2>What this simulation covers</h2>
-        <ul>
-          <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
-          <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
-          <li><strong>International / SWIFT:</strong> provides educational routing guidance, not payment execution.</li>
-          <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
-        </ul>
-      </aside>
+      <nav className="prepare-payment__stages" aria-label="Payment preparation stages">
+        <ol>
+          {["Payment details", "Run checks", "Review route"].map((stage, index) => (
+            <li
+              key={stage}
+              className={stage === currentStage ? "is-current" : undefined}
+              aria-current={stage === currentStage ? "step" : undefined}
+              data-stage={stage}
+            >
+              <span className="prepare-payment__stage-number" aria-hidden="true">{index + 1}</span>
+              <span>{stage}</span>
+            </li>
+          ))}
+        </ol>
+      </nav>
+      <p className="prepare-payment__live-status" role="status" aria-live="polite">
+        Stage: {currentStage}. {requestStatusCopy[requestState]}
+      </p>
 
-      {/* ── Form ───────────────────────────────────── */}
-      <form
-        className="prepare-payment__form"
-        onSubmit={onSubmit}
-        onChange={handleInputChange}
-      >
+      <div className="prepare-payment__workspace">
+        <div className="prepare-payment__main">
+          {/* ── Form ───────────────────────────────────── */}
+          <form
+            className="prepare-payment__form"
+            onSubmit={onSubmit}
+            onChange={handleInputChange}
+          >
         <div className="prepare-payment__field">
           <label htmlFor="beneficiary_iban">Beneficiary IBAN or account number</label>
           <input
@@ -496,39 +544,58 @@ export function PreparePaymentPage() {
           </div>
         </div>
 
-        <div className="prepare-payment__actions">
-          <Button type="submit" variant="primary" isLoading={isDuplicate}>
-            {isDuplicate ? "Checking…" : "Run payment checks"}
-          </Button>
-        </div>
-
-        {apiError && (
-          <div className="prepare-payment__api-error" role="alert">
-            <strong>{apiError.title}</strong>
-            {apiError.detail && <p>{apiError.detail}</p>}
-            {Object.entries(apiError.fieldErrors).map(([field, msgs]) => (
-              <p key={field}>{field}: {msgs.join(", ")}</p>
-            ))}
-            {apiError.retryable && (
-              <Button variant="secondary" onClick={() => mutation.mutate(formValues)}>
-                Retry
+            <div className="prepare-payment__actions">
+              <Button type="submit" variant="primary" isLoading={isDuplicate}>
+                {isDuplicate ? "Checking…" : "Run payment checks"}
               </Button>
+            </div>
+
+            {Object.keys(errors).length > 0 && (
+              <div id="prepare-validation-summary" className="prepare-payment__validation-summary" role="alert">
+                <strong>Review the highlighted payment details.</strong>
+                <ul>
+                  {Object.entries(errors).map(([field, error]) => (
+                    <li key={field}>
+                      <a href={`#${field}`}>{error?.message ?? "This field needs attention."}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-          </div>
-        )}
-      </form>
 
-      {/* ── Staleness warning ──────────────────────── */}
-      {isStale && result && (
-        <div className="prepare-payment__stale" role="alert">
-          Form inputs changed — results below are stale. Re-run checks for current values.
-        </div>
-      )}
+            {apiError && (
+              <div className="prepare-payment__api-error" role="alert">
+                <strong>{apiError.title}</strong>
+                {apiError.detail && <p>{apiError.detail}</p>}
+                {Object.entries(apiError.fieldErrors).map(([field, msgs]) => (
+                  <p key={field}>{field}: {msgs.join(", ")}</p>
+                ))}
+                {apiError.retryable && (
+                  <Button type="button" variant="secondary" onClick={() => mutation.mutate(formValues)}>
+                    Retry
+                  </Button>
+                )}
+              </div>
+            )}
+          </form>
 
-      {/* ── Results ────────────────────────────────── */}
-      {result && !isStale && (
-        <div className="prepare-payment__results">
+          {/* ── Staleness warning ──────────────────────── */}
+          {isStale && result && requestState === "stale" && (
+            <div className="prepare-payment__stale" role="alert">
+              Form inputs changed — results below are stale. Re-run checks for current values.
+            </div>
+          )}
+
+          {/* ── Results ────────────────────────────────── */}
+          {result && (requestState === "success" || requestState === "partial") && (
+            <div className="prepare-payment__results" data-request-state={requestState}>
           <h2>Check results</h2>
+
+          {requestState === "partial" && (
+            <p className="prepare-payment__partial-note" role="note">
+              Some evidence was not available for this simulation. Review the available checks and their individual statuses.
+            </p>
+          )}
 
           <Recommendation
             state={recState}
@@ -688,7 +755,7 @@ export function PreparePaymentPage() {
                   a trackable payment for a blocked or pending-review result. */}
               {result.validation.bic && TRACKABLE_RECOMMENDATIONS.has(result.recommendation) && (
                 <Link to={`/operate/tracking?uetr=${result.uetr}`} className="relay-btn relay-btn--secondary">
-                  Track this payment
+                  View simulated tracking
                 </Link>
               )}
               <Link to="/explore" className="relay-btn relay-btn--secondary">
@@ -696,8 +763,20 @@ export function PreparePaymentPage() {
               </Link>
             </div>
           </div>
+            </div>
+          )}
         </div>
-      )}
+
+        <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
+          <h2>What this simulation covers</h2>
+          <ul>
+            <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
+            <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
+            <li><strong>International / SWIFT:</strong> provides educational routing guidance, not a live payment.</li>
+            <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
+          </ul>
+        </aside>
+      </div>
     </div>
   );
 }

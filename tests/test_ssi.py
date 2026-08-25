@@ -11,9 +11,51 @@ Covers:
 # (datetime.now(timezone.utc).date()); a test building "today" from the local
 # date.today() can be a day off from production around a midnight boundary,
 # failing or passing for timezone configuration rather than behaviour.
+import functools
 from datetime import datetime, timedelta, timezone
 
 import pytest
+
+
+def _node_source(lines, node):
+    """Source text of an AST node without re-splitting the file per call.
+
+    `ast.get_source_segment` re-derives the line table on every invocation,
+    which is quadratic on Python <=3.10 (~100ms per field against seed.py).
+    The lines are computed once by the caller instead."""
+    start, end = node.lineno - 1, node.end_lineno - 1
+    if start == end:
+        return lines[start][node.col_offset:node.end_col_offset]
+    parts = [lines[start][node.col_offset:]]
+    parts.extend(lines[start + 1:end])
+    parts.append(lines[end][:node.end_col_offset])
+    return "".join(parts)
+
+
+@functools.lru_cache(maxsize=1)
+def _seed_ssi_rows():
+    """(bic, raw_note_source_text, as_of, status) for every SSI_RECORDS row.
+
+    Parsed once per session; every provenance test iterates the same tuples."""
+    import ast
+    from pathlib import Path
+
+    src = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
+    lines = src.splitlines(keepends=True)
+    tree = ast.parse(src)
+    rows = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
+            for element in node.value.elts:
+                note = _node_source(lines, element.elts[9])
+                rows.append((
+                    ast.literal_eval(element.elts[0]),
+                    note,
+                    ast.literal_eval(element.elts[10]) if len(element.elts) > 10 else None,
+                    ast.literal_eval(element.elts[11]) if len(element.elts) > 11 else None,
+                ))
+            break
+    return tuple(rows)
 
 
 def _utc_today() -> str:
@@ -578,22 +620,7 @@ class TestSSIProvenanceIsConsistentWithItsSource:
 
     @staticmethod
     def _rows():
-        import ast
-        from pathlib import Path
-
-        src = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
-        tree = ast.parse(src)
-        for node in tree.body:
-            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
-                for element in node.value.elts:
-                    note = ast.get_source_segment(src, element.elts[9]) or ""
-                    yield (
-                        ast.literal_eval(element.elts[0]),
-                        note,
-                        ast.literal_eval(element.elts[10]) if len(element.elts) > 10 else None,
-                        ast.literal_eval(element.elts[11]) if len(element.elts) > 11 else None,
-                    )
-                return
+        return iter(_seed_ssi_rows())
 
     def test_no_row_claims_published_without_verified_currency(self):
         """Nothing in the seed data establishes a source was live when read, so

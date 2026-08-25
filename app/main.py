@@ -175,7 +175,7 @@ def api_manifest():
         "ui": "/ui",
         "learn": "/learn",
         "endpoints": [
-            "/api/health", "/api/validate", "/api/lookup", "/api/route",
+            "/api/health", "/api/validate", "/api/lookup", "/api/banks/search", "/api/route",
             "/api/us-bank", "/api/ssi", "/api/verify-payee",
             "/api/prepare-payment", "/api/track/create", "/api/track/{uetr}",
             "/api/track/{uetr}/skip", "/api/track/{uetr}/complete",

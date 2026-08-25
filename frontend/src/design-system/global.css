@@ -117,9 +117,11 @@ a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited
    with class rules where a surface needs something different. This is what
    makes an input in Learn, Explore, or Operate read as the same instrument.
    Checkbox/radio/range are excluded — they draw their own affordances. */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-select,
-textarea {
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea
+) {
   min-height: 44px;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border-strong);
@@ -151,9 +153,11 @@ textarea:disabled {
 /* DESIGN.md typography rule: controls stay ≥16px on mobile so iOS Safari
    does not zoom on focus. */
 @media (max-width: 767px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  select,
-  textarea {
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea
+  ) {
     font-size: var(--text-base);
   }
 }
