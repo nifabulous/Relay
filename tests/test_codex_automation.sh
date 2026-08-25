@@ -236,6 +236,23 @@ require_text 'scripts/codex_responses.py' '"store": False'
 # A hardcoded socket timeout aborted a 32000-token generation mid-call.
 refuse_text 'scripts/codex_responses.py' 'timeout=120'
 
+# The reviewer worker cannot establish its own trust root. GH_REPO and
+# CODEX_DEFAULT_BRANCH decide which repository and which branch supply the
+# trusted policy and contract, and a shell script cannot prove its own
+# environment -- that anchor has to come from the invoker. The workflow IS the
+# invoker, and pull_request_target reads it from the base ref, so a PR author
+# cannot reach either value. Assert the anchor instead of assuming it: reading
+# only the script, these are two ordinary environment variables with no visible
+# provenance, which is exactly how a reviewer with no sight of this file
+# concluded the trust root was caller-controlled.
+require_text '.github/workflows/codex-pr-review.yml' 'GH_REPO: ${{ github.repository }}'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}'
+# Nothing may redirect the API host either: GH_HOST/GH_ENTERPRISE_TOKEN would
+# point every `gh` read AND the `gh pr comment` write at another forge.
+refuse_text '.github/workflows/codex-pr-review.yml' 'GH_HOST'
+refuse_text '.github/workflows/codex-pr-review.yml' 'GH_ENTERPRISE_TOKEN'
+refuse_text 'scripts/codex_review_pr.sh' 'GH_HOST'
+
 for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-triage.yml; do
   require_text "$file" 'CODEX_MODEL:'
   require_text "$file" 'CODEX_REASONING_EFFORT:'
