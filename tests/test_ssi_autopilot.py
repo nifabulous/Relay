@@ -45,6 +45,43 @@ def test_valid_results_pass():
     assert autopilot.validate_results(sample_results(), MANIFEST) == []
 
 
+def test_trusted_identity_must_state_whether_settlement_terms_were_published(monkeypatch):
+    """Omitted registry provenance fails closed: an ordinary row cannot rely on
+    the old default and present inferred charge/value values as authoritative."""
+    bad = sample_results()
+    monkeypatch.setitem(
+        autopilot.TRUSTED_SOURCE_IDENTITIES,
+        "BOPIPHMM",
+        {
+            "name": "Bank of the Philippine Islands",
+            "country": "PH",
+            "domains": ("bpi.com.ph",),
+        },
+    )
+    problems = autopilot.validate_results(bad, MANIFEST)
+
+    assert any(
+        "BOPIPHMM/USD: trusted identity must explicitly state "
+        "settlement_terms_published" in problem
+        for problem in problems
+    ), problems
+    assert any(
+        "trusted source omits settlement terms; terms_inferred must be true"
+        in problem
+        for problem in problems
+    ), problems
+
+    labeled = sample_results()
+    labeled["banks"][0]["records"][0]["terms_inferred"] = True
+    problems = autopilot.validate_results(labeled, MANIFEST)
+    assert any(
+        "trusted identity must explicitly state settlement_terms_published"
+        in problem
+        for problem in problems
+    ), problems
+    assert not any("terms_inferred must be true" in problem for problem in problems)
+
+
 def test_manifest_value_dates_use_application_vocabulary():
     from app.ssi_terms import VALID_VALUE_DATES, normalize_value_date
 
@@ -1890,6 +1927,8 @@ def test_recovered_wave_identities_admit_on_the_production_path(tmp_path, monkey
         }],
     }
     if bic == "ALFHPKKA":
+        bank["records"][0]["terms_inferred"] = True
+    elif autopilot.TRUSTED_SOURCE_IDENTITIES[bic]["settlement_terms_published"] is False:
         bank["records"][0]["terms_inferred"] = True
     summary = autopilot.admit_candidates(
         {"regions": [{"name": region_name, "banks": [bank]}]}

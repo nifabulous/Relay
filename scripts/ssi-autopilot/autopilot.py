@@ -76,14 +76,29 @@ CURRENCY_ALIASES = {"RMB": "CNY"}
 # independent from the mutable manifest so a candidate cannot authorize its own
 # citations by supplying a matching domain.
 TRUSTED_IDENTITIES_FILE = Path(__file__).resolve().parent / "trusted_identities.json"
+_PRODUCTION_REGIONS_FILE = Path(__file__).resolve().parent / "regions.json"
 TRUSTED_SOURCE_IDENTITIES: dict[str, dict[str, object]] = json.loads(
     TRUSTED_IDENTITIES_FILE.read_text(encoding="utf-8")
 )
 _TEST_BICS = {"TESTPHMM", "NEWPPHMM"}
 _TEST_IDENTITIES = {
-    "TESTPHMM": {"name": "Test Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
-    "NEWPPHMM": {"name": "New Philippine Bank", "country": "PH", "domains": ("testphilippinebank.com",)},
+    "TESTPHMM": {
+        "name": "Test Philippine Bank",
+        "country": "PH",
+        "domains": ("testphilippinebank.com",),
+        "settlement_terms_published": True,
+    },
+    "NEWPPHMM": {
+        "name": "New Philippine Bank",
+        "country": "PH",
+        "domains": ("testphilippinebank.com",),
+        "settlement_terms_published": True,
+    },
 }
+if REGIONS_FILE.resolve() != _PRODUCTION_REGIONS_FILE:
+    for test_bic, test_identity in _TEST_IDENTITIES.items():
+        if test_bic not in TRUSTED_SOURCE_IDENTITIES:
+            TRUSTED_SOURCE_IDENTITIES[test_bic] = dict(test_identity)
 
 # These are legacy manifest values retained for compatibility. They are not
 # valid BICs and may not be introduced in new candidate payloads.
@@ -288,7 +303,7 @@ def _bank_owned_source(source: str, bank: dict) -> bool:
 
 def _trusted_domains_for_bic(bic: str) -> set[str]:
     """Return operator-reviewed domains, excluding test identities in production."""
-    if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
+    if bic in _TEST_BICS and REGIONS_FILE.resolve() == _PRODUCTION_REGIONS_FILE:
         return set()
     identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
     return set(identity["domains"]) if identity else set()
@@ -301,6 +316,14 @@ def _canonical_bic8(value: object, path: str) -> str:
     if not bic_is_valid(bic):
         raise ValueError(f"{path}: invalid BIC")
     return bic[:8]
+
+
+def _trusted_identity_for_bic(bic: str) -> dict[str, object] | None:
+    """Return the registry identity for the BIC width used by research input."""
+    identity = TRUSTED_SOURCE_IDENTITIES.get(bic[:8])
+    if identity is None and REGIONS_FILE.resolve() != _PRODUCTION_REGIONS_FILE:
+        return _TEST_IDENTITIES.get(bic[:8])
+    return identity
 
 
 def _normalize_bank(bank: dict, region: dict, path: str, *, allow_unregistered_negative: bool = False) -> dict:
@@ -344,7 +367,7 @@ def _normalize_bank(bank: dict, region: dict, path: str, *, allow_unregistered_n
     if len(set(domains)) != len(domains):
         raise ValueError(f"{path}.source_domains: expected unique domains")
     identity = TRUSTED_SOURCE_IDENTITIES.get(bic)
-    if identity is None and REGIONS_FILE.resolve() != (Path(__file__).resolve().parent / "regions.json"):
+    if identity is None and REGIONS_FILE.resolve() != _PRODUCTION_REGIONS_FILE:
         identity = _TEST_IDENTITIES.get(bic)
     if identity is None:
         # Negative recording: a researched NOT-SEEDABLE bank may be admitted
@@ -377,7 +400,7 @@ def _normalize_bank(bank: dict, region: dict, path: str, *, allow_unregistered_n
             "source_domains": [],
             "records": [],
         }
-    if bic in _TEST_BICS and REGIONS_FILE.resolve() == (Path(__file__).resolve().parent / "regions.json"):
+    if bic in _TEST_BICS and REGIONS_FILE.resolve() == _PRODUCTION_REGIONS_FILE:
         raise ValueError(f"{path}.bic8: test identity is not admissible in the production manifest")
     canonical_name = str(identity["name"])
     if _canonical_name(name) != _canonical_name(canonical_name):
@@ -948,8 +971,16 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
                 )
                 raw_terms_inferred = False
             terms_inferred = bool(raw_terms_inferred)
-            identity = TRUSTED_SOURCE_IDENTITIES.get(ben_bic, {})
-            terms_published = bool(identity.get("settlement_terms_published", True))
+            identity = _trusted_identity_for_bic(ben_bic8) or {}
+            raw_terms_published = identity.get("settlement_terms_published")
+            if not isinstance(raw_terms_published, bool):
+                problems.append(
+                    f"{ben_bic}/{ccy}: trusted identity must explicitly state "
+                    "settlement_terms_published"
+                )
+                terms_published = False
+            else:
+                terms_published = raw_terms_published
             if not bic_only and not terms_published and not terms_inferred:
                 problems.append(
                     f"{ben_bic}/{ccy}: trusted source omits settlement terms; "
