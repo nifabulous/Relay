@@ -184,7 +184,7 @@ Return only a complete Markdown review. Keep each finding focused, but do not
 omit a matrix area merely to keep the response short. Include:
 
 1. A one-line verdict: BLOCK, NEEDS-FOLLOW-UP, or NO-ACTIONABLE-FINDINGS.
-2. Findings ordered by severity (P0–P3). Each finding must include severity, file/line if available, concrete evidence, user impact, and a focused fix.
+2. Findings ordered by severity (P0–P3). Each NEW or OPEN finding must include severity, file/line if available, concrete evidence, user impact, and a focused fix. A RESOLVED finding gets no section: list resolutions once under a "## Resolved this round" heading, one line each — severity, id, file, and the verification reference. Omit that heading entirely when nothing resolved in this round.
 3. Test and verification gaps.
 4. Residual risks and what a human should verify before merge.
 5. A machine-readable trailer as the very last line (shape below). This is additive: it never replaces or shortens findings 1-4 above.
@@ -193,18 +193,32 @@ Do not report style preferences, duplicate existing CI checks, or speculative is
 
 The user input may include a previous-review block: your own most recent
 review of this PR from an earlier round, or the placeholder text
-"(no previous review)" if this is the first round on this PR. Do a full accounting:
-every finding you have previously raised on this PR must reappear in this
-review with a lifecycle state. Silence is not resolution: a finding you
-simply stop mentioning must never read as fixed. If the block is the
+"(no previous review)" if this is the first round on this PR. Do a full accounting
+of every finding in it that is still unresolved: each one must reappear in this
+review with a lifecycle state. Silence is not resolution: an unresolved finding
+you simply stop mentioning must never read as fixed. If the block is the
 "(no previous review)" placeholder, mark every finding NEW.
+
+A finding a previous review already marked RESOLVED is closed, and closed
+findings are not carried forward. Do not restate it: not as a finding, not in
+the "Resolved this round" list, and not in the trailer. A resolution is
+reported exactly once — in the round that verifies it — and repeating it in a
+later round is an error that invalidates the entire review, because the
+downstream arbiter has already removed that finding from the open set.
+
+Closed does not mean untouchable. If this diff shows the defect is in fact
+still present — the earlier resolution was mistaken, or a later commit
+regressed it — raise it again as NEW, with a fresh id, and say in the evidence
+that it was previously reported resolved. Never stay silent about a live defect
+because an earlier round called it fixed.
 
 Mark each finding with exactly one lifecycle state:
 
 NEW        first appearance
 OPEN       previously raised, still present (with one line on whether the
            last fix attempt changed anything)
-RESOLVED   previously raised, verified fixed in this diff (with the evidence)
+RESOLVED   previously raised, verified fixed in this diff (with the evidence);
+           reported in this round only, then never mentioned again
 
 End the comment with exactly one trailer as its last line, an HTML comment
 with this exact shape (schema 2):
@@ -224,7 +238,9 @@ kebab-case slug you keep identical across rounds for the same finding; cat is
 a short kebab-case category. A RESOLVED finding always carries an evidence
 object: {"files": [...], "verification": "..."} naming the files that fix it
 and a non-empty verification reference such as a test name. Never mark a
-finding RESOLVED without that evidence object.
+finding RESOLVED without that evidence object. The findings array carries only
+this round's states: findings resolved in an earlier round are absent from it,
+exactly as they are absent from the comment body.
 EOF
 
 # Trusted files are read from GIT OBJECTS at the verified SHA, never from

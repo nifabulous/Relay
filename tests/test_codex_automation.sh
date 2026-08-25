@@ -154,6 +154,29 @@ require_text 'scripts/codex_review_pr.sh' '--label previous-review'
 require_text 'scripts/codex_review_pr.sh' 'codex-verdict'
 require_text 'scripts/codex_review_pr.sh' 'full accounting'
 
+# A resolution is emitted ONCE. codex_arbiter.py's _apply_round deletes a
+# RESOLVED-with-evidence finding from the open-set, so a prompt that asks for
+# every past finding to reappear every round asks the reviewer to produce
+# ORPHAN-STATE (tests/test_codex_arbiter.py::
+# test_reemitting_an_already_resolved_finding_is_orphan_needs_human) and grows
+# the comment without bound -- PR 56 reached 12 re-listed RESOLVED findings in
+# an 18.6KB comment carrying 1 NEW and 1 OPEN. The accounting duty binds
+# findings that are still open; 'silence is not resolution' still holds for
+# those.
+require_text 'scripts/codex_review_pr.sh' 'still unresolved'
+require_text 'scripts/codex_review_pr.sh' 'already marked RESOLVED is closed'
+require_text 'scripts/codex_review_pr.sh' 'Do not restate it'
+require_text 'scripts/codex_review_pr.sh' 'Resolved this round'
+refuse_text 'scripts/codex_review_pr.sh' 'previously raised on this PR must reappear'
+# ...but a closed finding is not an untouchable one. Dropping resolved findings
+# must not teach the reviewer to stay quiet about a defect an earlier round
+# mistakenly closed or a later commit regressed; that would trade comment bloat
+# for silent suppression. Re-raising as NEW is the sanctioned route and the
+# arbiter accepts it (the key is no longer in the open-set, so it is not an
+# AMBIGUOUS-IDENTITY rename).
+require_text 'scripts/codex_review_pr.sh' 'Closed does not mean untouchable'
+require_text 'scripts/codex_review_pr.sh' 'raise it again as NEW'
+
 # T5: the per-branch Contract (docs/contracts/<branch>.md) is read from THIS
 # checkout -- main's version by construction of the review workflow's
 # default-branch checkout -- and injected into the TRUSTED instructions

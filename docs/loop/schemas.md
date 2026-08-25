@@ -46,17 +46,33 @@ cited evidence actually closes a P1 while reviewing the same head.
 
 ### Finding lifecycle states
 
-Every finding the reviewer has previously raised on a PR must appear in the
-new trailer with a lifecycle state — a full accounting. Silence is not
-resolution: a finding the model simply stops mentioning must never read as
-fixed.
+Every finding the reviewer has previously raised on a PR and not yet resolved
+must appear in the new trailer with a lifecycle state — a full accounting of
+what is still open. Silence is not resolution: an unresolved finding the model
+simply stops mentioning must never read as fixed.
 
 ```
 NEW        first appearance
 OPEN       previously raised, still present (with one line on whether the
            last fix attempt changed anything)
-RESOLVED   previously raised, verified fixed in this diff (with the evidence)
+RESOLVED   previously raised, verified fixed in this diff (with the evidence);
+           emitted in that round only, then never repeated
 ```
+
+A resolution is terminal and is emitted exactly once. `_apply_round` deletes a
+`RESOLVED` finding with bounded evidence from the open-set, so the accounting
+duty above no longer covers it: re-listing it in a later trailer matches
+nothing open and fails closed as `ORPHAN-STATE`, which makes the whole PR's
+disposition `needs-human`. The reviewer prompt states this in the same terms;
+the trailer and the comment body agree, so a closed finding disappears from
+both at once and the comment does not grow round over round.
+
+Closed is not untouchable. When a resolution turns out to be mistaken, or a
+later commit regresses the fix, the reviewer raises the defect again as `NEW`
+under a fresh `id`. That is accepted: the key left the open-set at resolution,
+so this is neither `ORPHAN-STATE` nor the `AMBIGUOUS-IDENTITY` rename, which is
+refused only while the original is still open. Silence about a live defect is
+never the cheaper comment.
 
 ## Schema 1: canonical history
 
