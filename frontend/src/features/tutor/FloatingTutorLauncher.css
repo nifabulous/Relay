@@ -178,8 +178,11 @@
  * nothing at all. Dark interfaces express elevation by lifting the surface
  * instead, which is why the palette already carries a lighter surface step.
  */
-:root:not([data-theme="dark"]) .tutor-fab,
-:root:not([data-theme="dark"]) .tutor-floating-panel {
+/* "black" renders a dark canvas too, so it must join every dark-side guard
+ * here — leaving it in the light bucket gave the OLED surface a stale
+ * light-mode drop shadow when the OS preference is light. */
+:root:not([data-theme="dark"]):not([data-theme="black"]) .tutor-fab,
+:root:not([data-theme="dark"]):not([data-theme="black"]) .tutor-floating-panel {
   box-shadow: 0 2px 8px rgba(29, 36, 51, 0.10);
 }
 
@@ -193,7 +196,9 @@
 }
 
 :root[data-theme="dark"] .tutor-fab,
-:root[data-theme="dark"] .tutor-floating-panel {
+:root[data-theme="dark"] .tutor-floating-panel,
+:root[data-theme="black"] .tutor-fab,
+:root[data-theme="black"] .tutor-floating-panel {
   box-shadow: none;
   background: var(--color-surface-2);
   border-color: var(--color-floating-border);

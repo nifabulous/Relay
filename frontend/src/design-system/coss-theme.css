@@ -34,4 +34,13 @@
   --radius-xl: var(--coss-radius-xl);
 }
 
-@custom-variant relay-dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* "black" renders the dark canvas too, so dark-side utilities must activate
+ * under it — otherwise relay-dark: styles silently skip the OLED theme. */
+@custom-variant relay-dark (
+  &:where(
+    [data-theme="dark"],
+    [data-theme="dark"] *,
+    [data-theme="black"],
+    [data-theme="black"] *
+  )
+);

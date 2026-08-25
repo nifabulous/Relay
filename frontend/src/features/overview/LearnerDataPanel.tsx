@@ -132,7 +132,7 @@ export function LearnerDataPanel({ profilePersistence }: LearnerDataPanelProps) 
           <h2 id="overview-learning-backup-title" className="overview__section-title">
             Learning backup
           </h2>
-          <p className="overview__muted">
+          <p className="overview__learner-data-note">
             Relay saves your learning data on this device. Download a private backup before moving
             to another browser or machine.
           </p>

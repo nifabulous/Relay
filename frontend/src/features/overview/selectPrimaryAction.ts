@@ -73,7 +73,9 @@ export function selectPrimaryAction(ctx: OverviewContext): PrimaryAction {
     const moduleId = ctx.nextModuleId ?? "lab-1";
     return {
       kind: "next_learn",
-      href: `/app/learn/${moduleId}`,
+      // No /app prefix: the router mounts with basename="/app" and joins it
+      // itself, so a prefixed `to` renders /app/app/... (double-basename bug).
+      href: `/learn/${moduleId}`,
       label: "Continue to next module",
     };
   }

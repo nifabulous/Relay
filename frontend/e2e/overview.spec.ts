@@ -51,6 +51,23 @@ test.describe("Overview adaptive command center", () => {
     await expect(cta).toHaveAttribute("href", "/app/explore?intro=1");
   });
 
+  test("keeps the mid-curriculum CTA inside the /app basename", async ({ page }) => {
+    // Regression: next_learn used to return an href that already carried the
+    // /app prefix; the router's basename joined it again into /app/app/...
+    // and landed on the NotFoundPage. Only a seeded returning user reaches
+    // that branch, so the suite's first-visit paths never saw it.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "relay:progress",
+        JSON.stringify({ schemaVersion: 1, completedModuleIds: ["lab-1"] }),
+      );
+    });
+    await page.goto("/app");
+    const cta = page.locator(".overview__cta");
+    await expect(cta).toHaveCount(1);
+    await expect(cta).toHaveAttribute("href", "/app/learn/lab-2");
+  });
+
   test("keeps the four quick routes as real links", async ({ page }) => {
     await page.goto("/app");
     const routes = [

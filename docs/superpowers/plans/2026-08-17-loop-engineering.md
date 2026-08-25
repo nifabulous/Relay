@@ -134,6 +134,14 @@ OPEN       previously raised, still present (with one line on whether the
 RESOLVED   previously raised, verified fixed in this diff (with the evidence)
 ```
 
+> **Superseded 2026-08-25.** The accounting duty binds only findings that are
+> still open. `_apply_round` deletes a `RESOLVED` finding with bounded evidence
+> from the open-set, so re-listing it in a later round is `ORPHAN-STATE` and
+> makes the PR's disposition `needs-human`; it also grew PR 56's review comment
+> from 6.9KB to 18.6KB across six rounds. A resolution is now emitted exactly
+> once, in the round that verifies it, and never repeated in the body or the
+> trailer. `docs/loop/schemas.md` is the current normative statement.
+
 The machine-readable trailer carries structured fields, not just a slug:
 
 ```json

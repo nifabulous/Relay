@@ -360,6 +360,58 @@ def test_resolved_state_with_unknown_id_is_orphan_needs_human():
     assert decision.cited_rule == "ORPHAN-STATE"
 
 
+def test_reemitting_an_already_resolved_finding_is_orphan_needs_human():
+    """A resolution is emitted ONCE. `_apply_round` deletes a RESOLVED finding
+    with bounded evidence from the open-set, so restating it in a later round
+    matches nothing open and fails closed as an orphan — poisoning the whole
+    PR's disposition, not just that round.
+
+    This is the arbiter-side reason the reviewer prompt in
+    scripts/codex_review_pr.sh must not carry resolved findings forward: a
+    prompt that asks for every past finding to reappear every round asks for
+    exactly this failure.
+    """
+    resolved = _finding("P2", "RESOLVED", "app/fees.py", "fee-calc", "fee-a",
+                        evidence=_evidence(["app/fees.py"]))
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/fees.py", "fee-calc", "fee-a")]),
+        _comment(2, 2, [resolved]),
+        _comment(3, 3, [dict(resolved)]),  # the re-listing PR 56 exhibited
+    ]
+    decision = arb.decide(_history(comments, diff_files=["app/fees.py"]), _contract())
+    assert decision.needs_human is True
+    assert decision.cited_rule == "ORPHAN-STATE"
+    assert not decision.recommendation.startswith("MERGE")
+
+    # Control: stopping after the single RESOLVED round is the clean path, so
+    # the failure above is caused by the repetition and nothing else.
+    stopped = arb.decide(_history(comments[:2], diff_files=["app/fees.py"]), _contract())
+    assert stopped.needs_human is False
+    assert stopped.cited_rule == "CLEAN"
+    assert stopped.recommendation == "MERGE-CLEAN"
+
+
+def test_resolved_finding_can_be_reraised_as_new_under_a_fresh_id():
+    """The sanctioned escape hatch from the rule above: a finding whose earlier
+    resolution was mistaken, or which a later commit regressed, is raised again
+    as NEW with a fresh id. The key is no longer in the open-set, so this is
+    neither an orphan nor the AMBIGUOUS-IDENTITY rename (which is refused only
+    while the original is STILL open).
+
+    Without this, dropping resolved findings from the review comment would buy
+    a shorter comment at the price of silent suppression.
+    """
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/fees.py", "fee-calc", "fee-a")]),
+        _comment(2, 2, [_finding("P2", "RESOLVED", "app/fees.py", "fee-calc", "fee-a",
+                                 evidence=_evidence(["app/fees.py"]))]),
+        _comment(3, 3, [_finding("P2", "NEW", "app/fees.py", "fee-calc", "fee-a-regressed")]),
+    ]
+    decision = arb.decide(_history(comments, diff_files=["app/fees.py"]), _contract())
+    assert decision.cited_rule not in ("ORPHAN-STATE", "AMBIGUOUS-IDENTITY")
+    assert decision.recommendation != "MERGE-CLEAN"
+
+
 # --------------------------------------------------------------------------- #
 # Rule ordering.                                                               #
 # --------------------------------------------------------------------------- #

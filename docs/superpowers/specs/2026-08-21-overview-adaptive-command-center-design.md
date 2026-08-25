@@ -1,7 +1,9 @@
 # Relay Overview — Adaptive Command Center
 
 Date: 2026-08-21
+
 Branch: `codex/coss-slice-2`
+
 Status: Amended design spec; execution plan pending review
 
 ## Decision
@@ -100,6 +102,11 @@ The action surface contains:
 - One short explanatory sentence that describes what will happen after activation.
 - The existing `.overview__cta` primary link, retained as the only primary CTA.
 - A compact progress cue when it helps explain the action; it must not become a second competing progress section.
+
+> **Implementation amendment (2026-08-22):** the fixed `NEXT ACTION` eyebrow shipped as
+> per-kind stage pills instead (e.g. "Start here" for `explore_intro`, "Continue" stages for
+> resume/next kinds) — same position and role, but the label names the stage rather than a
+> constant string. Recorded here so the contract matches what shipped.
 
 Learning Pulse contains grouped rows for:
 

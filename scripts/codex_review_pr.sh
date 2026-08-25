@@ -26,14 +26,71 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 # worktree — must refuse to run rather than inject branch-controlled text
 # as trusted policy.
 TRUSTED_SHA="${CODEX_TRUSTED_SHA:?CODEX_TRUSTED_SHA is required (the default-branch SHA the workflow checked out)}"
+CODEX_DEFAULT_BRANCH="${CODEX_DEFAULT_BRANCH:?CODEX_DEFAULT_BRANCH is required (the repository default branch name)}"
 CHECKED_OUT_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 if [[ "$CHECKED_OUT_SHA" != "$TRUSTED_SHA" ]]; then
   echo "Checkout ${CHECKED_OUT_SHA} does not match the trusted default-branch SHA ${TRUSTED_SHA}; refusing to run with branch-controlled policy." >&2
   exit 1
 fi
+
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 : "${GH_REPO:?GH_REPO or GITHUB_REPOSITORY is required}"
+# GH_REPO is interpolated into API paths below, so a crafted value could
+# redirect a read to a different endpoint. owner/name only.
+if [[ ! "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+  echo "GH_REPO must be owner/name." >&2
+  exit 2
+fi
+
+# CODEX_DEFAULT_BRANCH names the branch to trust; it does not PROVE that
+# branch is the default one, and the two are not interchangeable. GH_REPO is
+# bound to the OUTPUT side as well -- every read and `gh pr comment` use it, so
+# substituting the repository takes the whole review with it, comment included,
+# and nothing reaches the real PR. The branch name has no such binding: it
+# selects only where trusted policy and the contract are READ from. A caller
+# with push access to any branch could name that branch, stamp its tip as
+# CODEX_TRUSTED_SHA, stand in it, and have branch-controlled text injected as
+# trusted policy while the review still posts to the real PR. So ask the forge
+# which branch is actually default, and refuse a caller that disagrees.
+ACTUAL_DEFAULT_BRANCH="$(gh api "repos/${GH_REPO}" --jq '.default_branch' 2>/dev/null || true)"
+if [[ -z "$ACTUAL_DEFAULT_BRANCH" || "$ACTUAL_DEFAULT_BRANCH" == "null" ]]; then
+  echo "Could not resolve the default branch of $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
+  exit 1
+fi
+if [[ "$CODEX_DEFAULT_BRANCH" != "$ACTUAL_DEFAULT_BRANCH" ]]; then
+  echo "CODEX_DEFAULT_BRANCH=${CODEX_DEFAULT_BRANCH} is not the default branch of $GH_REPO (${ACTUAL_DEFAULT_BRANCH}); refusing to read trusted policy from a non-default branch." >&2
+  exit 1
+fi
+
+# The stamp proves what the workflow checked out. Only the FORGE proves where
+# the default branch actually points, and it has to be asked over the same
+# authenticated channel every other read here uses (GH_TOKEN + GH_REPO) --
+# never through the local `origin` remote. `origin` is caller-controlled: a
+# run could point it at an attacker's repository, publish that repository's
+# tip as CODEX_TRUSTED_SHA, and inject branch-controlled text as trusted
+# policy while still posting the review to the real PR with real credentials.
+# Asking that same remote whether the checkout is authentic would be asking
+# the untrusted party twice.
+#
+# Matching the SHA is sufficient for content integrity, so the remote's
+# identity never has to be trusted -- only the SHA the forge reports.
+# show_trusted() below reads `git show $TRUSTED_SHA:<path>`, and git objects
+# are content-addressed: no local repository can hold a different policy or
+# contract file under the real tip's commit SHA.
+REMOTE_TIP="$(gh api "repos/${GH_REPO}/git/ref/heads/${ACTUAL_DEFAULT_BRANCH}" \
+  --jq '.object.sha' 2>/dev/null || true)"
+# Fail closed on anything that is not a full commit SHA: an empty body, an
+# error document, or a truncated value must refuse rather than fall through to
+# a comparison against garbage.
+if [[ ! "$REMOTE_TIP" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Could not resolve refs/heads/$ACTUAL_DEFAULT_BRANCH on $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
+  exit 1
+fi
+if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
+  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $ACTUAL_DEFAULT_BRANCH on $GH_REPO (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
+  exit 1
+fi
 : "${CODEX_MODEL:?CODEX_MODEL is required}"
 : "${CODEX_REASONING_EFFORT:?CODEX_REASONING_EFFORT is required}"
 : "${CODEX_MAX_INPUT_BYTES:?CODEX_MAX_INPUT_BYTES is required}"
@@ -168,7 +225,7 @@ Return only a complete Markdown review. Keep each finding focused, but do not
 omit a matrix area merely to keep the response short. Include:
 
 1. A one-line verdict: BLOCK, NEEDS-FOLLOW-UP, or NO-ACTIONABLE-FINDINGS.
-2. Findings ordered by severity (P0–P3). Each finding must include severity, file/line if available, concrete evidence, user impact, and a focused fix.
+2. Findings ordered by severity (P0–P3). Each NEW or OPEN finding must include severity, file/line if available, concrete evidence, user impact, and a focused fix. A RESOLVED finding gets no section: list resolutions once under a "## Resolved this round" heading, one line each — severity, id, file, and the verification reference. Omit that heading entirely when nothing resolved in this round.
 3. Test and verification gaps.
 4. Residual risks and what a human should verify before merge.
 5. A machine-readable trailer as the very last line (shape below). This is additive: it never replaces or shortens findings 1-4 above.
@@ -177,18 +234,32 @@ Do not report style preferences, duplicate existing CI checks, or speculative is
 
 The user input may include a previous-review block: your own most recent
 review of this PR from an earlier round, or the placeholder text
-"(no previous review)" if this is the first round on this PR. Do a full accounting:
-every finding you have previously raised on this PR must reappear in this
-review with a lifecycle state. Silence is not resolution: a finding you
-simply stop mentioning must never read as fixed. If the block is the
+"(no previous review)" if this is the first round on this PR. Do a full accounting
+of every finding in it that is still unresolved: each one must reappear in this
+review with a lifecycle state. Silence is not resolution: an unresolved finding
+you simply stop mentioning must never read as fixed. If the block is the
 "(no previous review)" placeholder, mark every finding NEW.
+
+A finding a previous review already marked RESOLVED is closed, and closed
+findings are not carried forward. Do not restate it: not as a finding, not in
+the "Resolved this round" list, and not in the trailer. A resolution is
+reported exactly once — in the round that verifies it — and repeating it in a
+later round is an error that invalidates the entire review, because the
+downstream arbiter has already removed that finding from the open set.
+
+Closed does not mean untouchable. If this diff shows the defect is in fact
+still present — the earlier resolution was mistaken, or a later commit
+regressed it — raise it again as NEW, with a fresh id, and say in the evidence
+that it was previously reported resolved. Never stay silent about a live defect
+because an earlier round called it fixed.
 
 Mark each finding with exactly one lifecycle state:
 
 NEW        first appearance
 OPEN       previously raised, still present (with one line on whether the
            last fix attempt changed anything)
-RESOLVED   previously raised, verified fixed in this diff (with the evidence)
+RESOLVED   previously raised, verified fixed in this diff (with the evidence);
+           reported in this round only, then never mentioned again
 
 End the comment with exactly one trailer as its last line, an HTML comment
 with this exact shape (schema 2):
@@ -208,7 +279,9 @@ kebab-case slug you keep identical across rounds for the same finding; cat is
 a short kebab-case category. A RESOLVED finding always carries an evidence
 object: {"files": [...], "verification": "..."} naming the files that fix it
 and a non-empty verification reference such as a test name. Never mark a
-finding RESOLVED without that evidence object.
+finding RESOLVED without that evidence object. The findings array carries only
+this round's states: findings resolved in an earlier round are absent from it,
+exactly as they are absent from the comment body.
 EOF
 
 # Trusted files are read from GIT OBJECTS at the verified SHA, never from
@@ -239,7 +312,9 @@ show_trusted() {
   if CONTRACT_CONTENT="$(show_trusted "$CONTRACT_PATH" 2>/dev/null)" && [[ -n "$CONTRACT_CONTENT" ]]; then
     CONTRACT_FIRST_LINE="$(grep -m1 -v '^[[:space:]]*$' <<<"$CONTRACT_CONTENT" || true)"
   fi
-  if [[ "$CONTRACT_FIRST_LINE" == '# Contract:'* ]]; then
+  # Exact match on the declared branch: a correctly located file whose header
+  # names a DIFFERENT branch is a mis-filed contract and must not bind here.
+  if [[ "$CONTRACT_FIRST_LINE" == "# Contract: $HEAD_REF_NAME" ]]; then
     printf '\n\n## Contract (from main)\n'
     printf '%s\n' "$CONTRACT_CONTENT"
   else

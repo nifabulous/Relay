@@ -154,11 +154,62 @@ require_text 'scripts/codex_review_pr.sh' '--label previous-review'
 require_text 'scripts/codex_review_pr.sh' 'codex-verdict'
 require_text 'scripts/codex_review_pr.sh' 'full accounting'
 
+# A resolution is emitted ONCE. codex_arbiter.py's _apply_round deletes a
+# RESOLVED-with-evidence finding from the open-set, so a prompt that asks for
+# every past finding to reappear every round asks the reviewer to produce
+# ORPHAN-STATE (tests/test_codex_arbiter.py::
+# test_reemitting_an_already_resolved_finding_is_orphan_needs_human) and grows
+# the comment without bound -- PR 56 reached 12 re-listed RESOLVED findings in
+# an 18.6KB comment carrying 1 NEW and 1 OPEN. The accounting duty binds
+# findings that are still open; 'silence is not resolution' still holds for
+# those.
+require_text 'scripts/codex_review_pr.sh' 'still unresolved'
+require_text 'scripts/codex_review_pr.sh' 'already marked RESOLVED is closed'
+require_text 'scripts/codex_review_pr.sh' 'Do not restate it'
+require_text 'scripts/codex_review_pr.sh' 'Resolved this round'
+refuse_text 'scripts/codex_review_pr.sh' 'previously raised on this PR must reappear'
+# ...but a closed finding is not an untouchable one. Dropping resolved findings
+# must not teach the reviewer to stay quiet about a defect an earlier round
+# mistakenly closed or a later commit regressed; that would trade comment bloat
+# for silent suppression. Re-raising as NEW is the sanctioned route and the
+# arbiter accepts it (the key is no longer in the open-set, so it is not an
+# AMBIGUOUS-IDENTITY rename).
+require_text 'scripts/codex_review_pr.sh' 'Closed does not mean untouchable'
+# The same lifecycle contract must also stand in the TRUSTED channel. The
+# prompt heredoc and docs/loop/schemas.md are not injected as policy, so a
+# reviewer reading only review-policy.md saw a lifecycle change as untrusted
+# PR content with no trusted counterpart -- and reported a correct change as an
+# unapproved protocol change twice.
+require_text '.github/codex/review-policy.md' '## Finding lifecycle'
+require_text '.github/codex/review-policy.md' 'Silence is not resolution'
+require_text '.github/codex/review-policy.md' 'reported exactly once'
+require_text '.github/codex/review-policy.md' 'Closed is not untouchable'
+require_text 'scripts/codex_review_pr.sh' 'raise it again as NEW'
+
 # T5: the per-branch Contract (docs/contracts/<branch>.md) is read from THIS
 # checkout -- main's version by construction of the review workflow's
 # default-branch checkout -- and injected into the TRUSTED instructions
 # channel, appended after the trusted review policy. It must never be routed
 # through codex_untrusted.py, which is reserved for PR-controlled input.
+# The default-branch tip is read over the authenticated API channel
+# (GH_TOKEN + GH_REPO), never from the local `origin` remote: `origin` is
+# caller-controlled, so consulting it to authenticate the checkout asks the
+# same untrusted party twice. Content integrity then follows from git's
+# content addressing -- show_trusted reads `git show $TRUSTED_SHA:<path>`, and
+# no repository can hold different bytes under the real tip's commit SHA.
+require_text 'scripts/codex_review_pr.sh' 'git/ref/heads/'
+# The branch name is the FORGE's answer, never the caller's claim: GH_REPO is
+# bound to the output side too (a substituted repository takes the comment with
+# it, so nothing reaches the real PR), but the branch name only selects where
+# trusted policy is read from -- push access to any branch would otherwise be
+# enough to inject policy while still posting to the real PR.
+require_text 'scripts/codex_review_pr.sh' 'ACTUAL_DEFAULT_BRANCH'
+require_text 'scripts/codex_review_pr.sh' 'default_branch'
+require_text 'scripts/codex_review_pr.sh' 'refusing to read trusted policy from a non-default branch'
+refuse_text 'scripts/codex_review_pr.sh' 'heads/${CODEX_DEFAULT_BRANCH}'
+require_text 'scripts/codex_review_pr.sh' '^[0-9a-f]{40}$'
+refuse_text 'scripts/codex_review_pr.sh' 'ls-remote'
+
 require_text 'scripts/codex_review_pr.sh' 'CONTRACT_PATH'
 require_text 'scripts/codex_review_pr.sh' 'docs/contracts/'
 require_text 'scripts/codex_review_pr.sh' '## Contract'
@@ -174,7 +225,7 @@ refuse_text 'scripts/codex_review_pr.sh' '--label contract'
 # docs/contracts/README.md itself, for a branch literally named "README")
 # must never be injected as a signed-off contract, and a bare `-s` check
 # (true for a directory too) must never be able to abort the script.
-require_text 'scripts/codex_review_pr.sh' '# Contract:'\''*'
+require_text 'scripts/codex_review_pr.sh' '"# Contract: $HEAD_REF_NAME"'
 require_text 'scripts/codex_review_pr.sh' 'show_trusted "$CONTRACT_PATH"'
 
 require_text 'scripts/codex_triage_issue.sh' 'triage-sanitized.md'
@@ -184,6 +235,23 @@ require_text 'scripts/codex_responses.py' 'https://api.openai.com/v1/responses'
 require_text 'scripts/codex_responses.py' '"store": False'
 # A hardcoded socket timeout aborted a 32000-token generation mid-call.
 refuse_text 'scripts/codex_responses.py' 'timeout=120'
+
+# The reviewer worker cannot establish its own trust root. GH_REPO and
+# CODEX_DEFAULT_BRANCH decide which repository and which branch supply the
+# trusted policy and contract, and a shell script cannot prove its own
+# environment -- that anchor has to come from the invoker. The workflow IS the
+# invoker, and pull_request_target reads it from the base ref, so a PR author
+# cannot reach either value. Assert the anchor instead of assuming it: reading
+# only the script, these are two ordinary environment variables with no visible
+# provenance, which is exactly how a reviewer with no sight of this file
+# concluded the trust root was caller-controlled.
+require_text '.github/workflows/codex-pr-review.yml' 'GH_REPO: ${{ github.repository }}'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}'
+# Nothing may redirect the API host either: GH_HOST/GH_ENTERPRISE_TOKEN would
+# point every `gh` read AND the `gh pr comment` write at another forge.
+refuse_text '.github/workflows/codex-pr-review.yml' 'GH_HOST'
+refuse_text '.github/workflows/codex-pr-review.yml' 'GH_ENTERPRISE_TOKEN'
+refuse_text 'scripts/codex_review_pr.sh' 'GH_HOST'
 
 for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-triage.yml; do
   require_text "$file" 'CODEX_MODEL:'
@@ -294,7 +362,24 @@ case "${1:-}" in
       *) exit 1 ;;
     esac
     ;;
-  api) cat "$CODEX_STUB_DIR/comments.jsonl" ;;
+  api)
+    # Two distinct API reads share this verb. The default-branch tip is the
+    # trust root; the comment list is ordinary data. Route on the path so the
+    # trust root can never be satisfied by the comment fixture.
+    if [[ "$*" == *"/git/ref/heads/"* ]]; then
+      jq -n --arg sha "$(cat "$CODEX_STUB_DIR/remote-tip")" \
+            --arg branch "$(cat "$CODEX_STUB_DIR/default-branch")" \
+            '{ref: ("refs/heads/" + $branch), object: {sha: $sha, type: "commit"}}' \
+        | apply_jq "$@"
+    elif [[ "$*" != *"/issues/"* ]]; then
+      # The repository document. This is what names the default branch, and it
+      # is the forge's answer -- never the caller's CODEX_DEFAULT_BRANCH.
+      jq -n --arg branch "$(cat "$CODEX_STUB_DIR/default-branch")" \
+            '{default_branch: $branch}' | apply_jq "$@"
+    else
+      cat "$CODEX_STUB_DIR/comments.jsonl"
+    fi
+    ;;
   *) exit 1 ;;
 esac
 STUB
@@ -342,7 +427,7 @@ cat >"$STUB_DIR/git" <<'GSTUB'
 # stub-creation time, so tests exercise the object-read path without
 # committing fixtures into the developer's worktree.
 STUB_CFG="$(dirname "$(command -v git)")"
-REAL_GIT="$(command -v -p git 2>/dev/null || command -v git)"
+REAL_GIT="$(cat "$STUB_CFG/real-git")"
 GIT_STUB_ROOT="$(cat "$STUB_CFG/git-root")"
 TRUSTED_STAGING="$(cat "$STUB_CFG/trusted-staging")"
 for arg in "$@"; do
@@ -354,6 +439,13 @@ done
 if [[ "${*: -1}" == "HEAD" && " $* " == *" rev-parse "* ]]; then
   printf '%s\n' "$(cat "$STUB_CFG/trusted-sha")"
   exit 0
+fi
+if [[ "$1" == "ls-remote" || ("$1" == "-C" && "$3" == "ls-remote") ]]; then
+  # The trust root is the authenticated GitHub API, not the local remote. A
+  # stray ls-remote means caller-controlled `origin` is back in the trust
+  # path, so refuse instead of serving it a plausible answer.
+  echo "git ls-remote is not available to the reviewer worker" >&2
+  exit 127
 fi
 if [[ "$1" == "show" || ("$1" == "-C" && "$3" == "show") ]]; then
   ref="${@: -1}"
@@ -368,9 +460,15 @@ fi
 exec "$REAL_GIT" "$@"
 GSTUB
 
+# Resolved NOW, before any PATH stubbing exists: resolving inside the stub
+# would find the stub itself (it is first on PATH at runtime) and exec-loop.
+REAL_GIT_PATH="$(command -v git)"
 printf '%s\n' "$ROOT" >"$STUB_DIR/git-root"
 printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/trusted-sha"
 printf '%s\n' "$TRUSTED_STAGING_ROOT" >"$STUB_DIR/trusted-staging"
+printf '%s\n' "$REAL_GIT_PATH" >"$STUB_DIR/real-git"
+printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+printf '%s\n' "main" >"$STUB_DIR/default-branch"
 # The policy file is genuinely part of the trusted checkout; serve the real one.
 mkdir -p "$TRUSTED_STAGING_ROOT/.github/codex"
 cp "$ROOT/.github/codex/review-policy.md" "$TRUSTED_STAGING_ROOT/.github/codex/review-policy.md"
@@ -408,6 +506,7 @@ run_suppression_case() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -448,6 +547,7 @@ check_timeout_propagates() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -492,6 +592,7 @@ check_override_beyond_job_deadline_is_refused() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -534,6 +635,7 @@ check_oversized_review_input_is_refused() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=20000 \
@@ -601,6 +703,155 @@ check_refuses_untrusted_checkout() {
   fi
 }
 
+# Issue #48: the workflow's stamp proves intent, but only the REMOTE proves
+# where the default branch actually points. A feature checkout that stamps
+# its own HEAD (CODEX_TRUSTED_SHA=$(git rev-parse HEAD)) must still be
+# refused because origin's default-branch tip differs.
+check_refuses_non_default_branch_head() {
+  local branch="zz-codex-automation-test/feature-checkout"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 17, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "beefcace"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  # The self-attacked setup: the caller stamps its own checkout's HEAD.
+  local self_sha
+  self_sha="$(git -C "$ROOT" rev-parse HEAD)"
+  printf '%s\n' "0000000000000000000000000000000000000000" >"$STUB_DIR/remote-tip"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$self_sha" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 17 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  # Restore the honest remote for subsequent checks.
+  printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh accepted a self-stamped SHA that origin contradicts.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'A self-stamped non-default checkout still reached comment publication.'
+  fi
+}
+
+# The trust root must fail CLOSED when the forge cannot be consulted or
+# answers with something that is not a commit SHA (an error document, an empty
+# body, a truncated value). Without the shape check, a garbage answer would
+# fall through to a string comparison and merely produce a confusing refusal
+# instead of the honest "cannot verify" one.
+check_refuses_unresolvable_default_branch_tip() {
+  local branch="zz-codex-automation-test/unresolvable-tip"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 18, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "beefcace"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  # The API answers, but not with a SHA -- the shape a rate-limit or
+  # not-found body would produce once --jq finds no .object.sha.
+  printf '%s\n' "null" >"$STUB_DIR/remote-tip"
+
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 18 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  # Restore the honest tip for subsequent checks.
+  printf '%s\n' "$ROOT_HEAD_SHA" >"$STUB_DIR/remote-tip"
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh ran with a default-branch tip it could not resolve.'
+  fi
+  if ! grep -q 'independently verified default branch' "$STUB_DIR/run.log"; then
+    fail 'An unresolvable default-branch tip did not produce the verification refusal.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'An unresolvable default-branch tip still reached comment publication.'
+  fi
+}
+
+# A caller naming a NON-default branch must be refused. Without this, push
+# access to any branch of the real repository is enough to have
+# branch-controlled text injected as trusted policy -- the review still posts
+# to the real PR, because only GH_REPO is bound to the output side.
+check_refuses_non_default_policy_branch() {
+  local branch="zz-codex-automation-test/policy-branch"
+  local status=0
+
+  : >"$STUB_DIR/posted.log"
+  printf 'diff --git a/a b/a\n+line\n' >"$STUB_DIR/pr.diff"
+  jq -n --arg branch "$branch" \
+    '{number: 19, title: "t", body: "b", url: "u", baseRefName: "main",
+      headRefName: $branch, headRefOid: "beefcace"}' >"$STUB_DIR/metadata.json"
+  printf '%s\n' "$(jq -n '{login: "someone-else", body: "no marker here"}')" \
+    >"$STUB_DIR/comments.jsonl"
+
+  # The forge still says the default branch is main; the caller claims another.
+  env \
+    PATH="$STUB_DIR:$PATH" \
+    CODEX_STUB_DIR="$STUB_DIR" \
+    CODEX_REAL_PYTHON3="$REAL_PYTHON3" \
+    CODEX_REVIEW_ENABLED=true \
+    OPENAI_API_KEY=stub-key \
+    GH_TOKEN=stub-token \
+    GH_REPO=nifabulous/Relay \
+    CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=attacker-controlled \
+    CODEX_MODEL=gpt-5.3-codex \
+    CODEX_REASONING_EFFORT=medium \
+    CODEX_MAX_INPUT_BYTES=120000 \
+    CODEX_MAX_OUTPUT_TOKENS=32000 \
+    CODEX_MAX_OUTPUT_BYTES=50000 \
+    CODEX_BOT_LOGIN='github-actions[bot]' \
+    "$ROOT/scripts/codex_review_pr.sh" 19 >"$STUB_DIR/run.log" 2>&1 || status=$?
+
+  if (( status == 0 )); then
+    fail 'codex_review_pr.sh read trusted policy from a caller-named non-default branch.'
+  fi
+  if ! grep -q 'non-default branch' "$STUB_DIR/run.log"; then
+    fail 'A non-default policy branch did not produce the default-branch refusal.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'A non-default policy branch still reached comment publication.'
+  fi
+}
+
 check_contract_lands_in_trusted_channel_only() {
   local branch="zz-codex-automation-test/contract-fixture"
   # Same slug-and-hash derivation as codex_review_pr.sh's CONTRACT_PATH.
@@ -633,6 +884,7 @@ check_contract_lands_in_trusted_channel_only() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -698,6 +950,7 @@ check_non_contract_file_is_ignored() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -756,6 +1009,7 @@ check_contract_path_as_directory_is_ignored() {
     GH_TOKEN=stub-token \
     GH_REPO=nifabulous/Relay \
     CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
     CODEX_MODEL=gpt-5.3-codex \
     CODEX_REASONING_EFFORT=medium \
     CODEX_MAX_INPUT_BYTES=120000 \
@@ -832,6 +1086,7 @@ env \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
   CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -853,6 +1108,7 @@ env \
   GH_TOKEN=stub-token \
   GH_REPO=nifabulous/Relay \
   CODEX_TRUSTED_SHA="$ROOT_HEAD_SHA" \
+    CODEX_DEFAULT_BRANCH=main \
   CODEX_MODEL=gpt-5.3-codex \
   CODEX_REASONING_EFFORT=medium \
   CODEX_MAX_INPUT_BYTES=120000 \
@@ -865,6 +1121,9 @@ if [[ -s "$STUB_DIR/posted.log" ]]; then
 fi
 
 check_refuses_untrusted_checkout
+check_refuses_non_default_branch_head
+check_refuses_unresolvable_default_branch_tip
+check_refuses_non_default_policy_branch
 check_contract_lands_in_trusted_channel_only
 
 check_non_contract_file_is_ignored

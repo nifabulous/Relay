@@ -1,5 +1,6 @@
 /**
- * Bundle budget gate — verifies the eager shell is ≤200KB gzip.
+ * Bundle budget gate — verifies the eager shell fits the gzip budget
+ * (BUDGET_BYTES below; currently 210KiB).
  * Reads the Vite manifest and sums eager (non-lazy) asset sizes.
  */
 import { readFileSync, existsSync } from "fs";
