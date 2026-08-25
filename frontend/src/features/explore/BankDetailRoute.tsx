@@ -49,13 +49,13 @@ function bankMonogram(name: string) {
   return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
-type SchemeRow = {
+type PotentialRailRow = {
   name: string;
   description: string;
   status: "verified" | "under_review";
 };
 
-function schemeRows(currency: string | undefined): SchemeRow[] {
+function potentialRails(currency: string | undefined): PotentialRailRow[] {
   const normalized = currency?.toUpperCase();
   const domestic = normalized === "GBP"
     ? { name: "CHAPS", description: "Same-day high-value settlement" }
@@ -225,13 +225,13 @@ export function BankDetailRoute() {
 
             <div className="bank-detail__body">
               <section className="bank-detail__schemes" aria-labelledby="bank-detail-schemes-title">
-                <h2 id="bank-detail-schemes-title">Payment schemes supported</h2>
+                <h2 id="bank-detail-schemes-title">Potential rails to verify</h2>
                 <p className="bank-detail__scheme-note">
-                  Scheme availability is inferred from the directory currency and
-                  remains under review until the receiving bank confirms support.
+                  These are generic educational examples for the directory currency,
+                  not confirmation that this bank supports them.
                 </p>
                 <div className="bank-detail__scheme-list">
-                  {schemeRows(bank.country_currency).map((scheme) => (
+                  {potentialRails(bank.country_currency).map((scheme) => (
                     <div className="bank-detail__scheme-row" key={scheme.name}>
                       <span className="bank-detail__scheme-icon" aria-hidden="true">{scheme.name === "SWIFT MT103" ? "◎" : "↗"}</span>
                       <span className="bank-detail__scheme-copy">

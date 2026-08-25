@@ -71,10 +71,15 @@ describe("BankDetailRoute identity", () => {
     expect(detail.querySelector(".bank-detail__verified[aria-label='Verified']")).toBeNull();
 
     const schemes = closestHTMLElement(
-      within(detail).getByRole("heading", { name: "Payment schemes supported" }),
+      within(detail).getByRole("heading", { name: "Potential rails to verify" }),
       "section",
     );
-    expect(within(schemes).getByText(/inferred from the directory currency/i)).toBeVisible();
+    expect(
+      within(schemes).getByText(/generic educational examples.*not confirmation that this bank supports them/i),
+    ).toBeVisible();
+    expect(
+      within(schemes).queryByRole("heading", { name: "Payment schemes supported" }),
+    ).toBeNull();
     expect(within(schemes).getAllByLabelText("Under review")).toHaveLength(3);
     expect(within(schemes).queryByLabelText("Verified")).toBeNull();
 
