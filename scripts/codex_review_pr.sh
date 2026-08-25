@@ -36,6 +36,32 @@ fi
 GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 : "${GH_TOKEN:?GH_TOKEN is required}"
 : "${GH_REPO:?GH_REPO or GITHUB_REPOSITORY is required}"
+# GH_REPO is interpolated into API paths below, so a crafted value could
+# redirect a read to a different endpoint. owner/name only.
+if [[ ! "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+  echo "GH_REPO must be owner/name." >&2
+  exit 2
+fi
+
+# CODEX_DEFAULT_BRANCH names the branch to trust; it does not PROVE that
+# branch is the default one, and the two are not interchangeable. GH_REPO is
+# bound to the OUTPUT side as well -- every read and `gh pr comment` use it, so
+# substituting the repository takes the whole review with it, comment included,
+# and nothing reaches the real PR. The branch name has no such binding: it
+# selects only where trusted policy and the contract are READ from. A caller
+# with push access to any branch could name that branch, stamp its tip as
+# CODEX_TRUSTED_SHA, stand in it, and have branch-controlled text injected as
+# trusted policy while the review still posts to the real PR. So ask the forge
+# which branch is actually default, and refuse a caller that disagrees.
+ACTUAL_DEFAULT_BRANCH="$(gh api "repos/${GH_REPO}" --jq '.default_branch' 2>/dev/null || true)"
+if [[ -z "$ACTUAL_DEFAULT_BRANCH" || "$ACTUAL_DEFAULT_BRANCH" == "null" ]]; then
+  echo "Could not resolve the default branch of $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
+  exit 1
+fi
+if [[ "$CODEX_DEFAULT_BRANCH" != "$ACTUAL_DEFAULT_BRANCH" ]]; then
+  echo "CODEX_DEFAULT_BRANCH=${CODEX_DEFAULT_BRANCH} is not the default branch of $GH_REPO (${ACTUAL_DEFAULT_BRANCH}); refusing to read trusted policy from a non-default branch." >&2
+  exit 1
+fi
 
 # The stamp proves what the workflow checked out. Only the FORGE proves where
 # the default branch actually points, and it has to be asked over the same
@@ -52,17 +78,17 @@ GH_REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 # show_trusted() below reads `git show $TRUSTED_SHA:<path>`, and git objects
 # are content-addressed: no local repository can hold a different policy or
 # contract file under the real tip's commit SHA.
-REMOTE_TIP="$(gh api "repos/${GH_REPO}/git/ref/heads/${CODEX_DEFAULT_BRANCH}" \
+REMOTE_TIP="$(gh api "repos/${GH_REPO}/git/ref/heads/${ACTUAL_DEFAULT_BRANCH}" \
   --jq '.object.sha' 2>/dev/null || true)"
 # Fail closed on anything that is not a full commit SHA: an empty body, an
 # error document, or a truncated value must refuse rather than fall through to
 # a comparison against garbage.
 if [[ ! "$REMOTE_TIP" =~ ^[0-9a-f]{40}$ ]]; then
-  echo "Could not resolve refs/heads/$CODEX_DEFAULT_BRANCH on $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
+  echo "Could not resolve refs/heads/$ACTUAL_DEFAULT_BRANCH on $GH_REPO through the GitHub API; refusing to run without an independently verified default branch." >&2
   exit 1
 fi
 if [[ "$CHECKED_OUT_SHA" != "$REMOTE_TIP" ]]; then
-  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $CODEX_DEFAULT_BRANCH on $GH_REPO (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
+  echo "Checkout ${CHECKED_OUT_SHA} is not the tip of $ACTUAL_DEFAULT_BRANCH on $GH_REPO (${REMOTE_TIP}); refusing to run with branch-controlled policy." >&2
   exit 1
 fi
 : "${CODEX_MODEL:?CODEX_MODEL is required}"
