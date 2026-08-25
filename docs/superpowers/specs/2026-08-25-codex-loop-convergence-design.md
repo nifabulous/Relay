@@ -151,14 +151,41 @@ distinction and the prompt will cite it.
 
 **Timing.** CI outlasts the review today — on `66eb8d1`, `test (3.10)` took
 2m21s and `frontend` and `quality-gate` were still pending after the review
-finished in 1m37s. The job waits for check runs on the exact head to reach a
-conclusion, bounded by the same `CODEX_JOB_DEADLINE_EPOCH` the workflow
-already stamps at job start, so the wait competes with the model call for one
-shared budget instead of introducing a second, independent timeout. When the
-checks do not settle before that budget is spent, the block says so
-explicitly. An absent result must read as "not available at review time",
-never as absence of evidence, or this component manufactures the very failure
-it exists to fix.
+finished in 1m37s. Reserving the existing 900-second model timeout and
+180-second posting headroom inside the 1,200-second job would leave only 120
+seconds for polling, so an in-job wait would structurally finish before the
+measured CI result this component exists to carry.
+
+Push reviews therefore start from `workflow_run: completed` for the separate
+`CI` workflow rather than directly from the PR's `opened` or `synchronize`
+event. The privileged review workflow validates that the source event was
+`pull_request`, binds the run's head SHA to the current PR head, and exits
+without a model call when the PR has already advanced; the newer head's CI
+completion owns that review.
+
+`opened` and `synchronize` are kept as a coverage fallback, because sequencing
+a review behind CI may delay it but must never delete it. A `pull_request` run
+does not always exist: when a PR conflicts with its base, GitHub cannot build
+the merge ref and creates no run, so no `workflow_run` event can fire for that
+head. This repository has the case on record — every head on
+`fix/coss-review-followups` has a `CI` run except `368f956`, pushed while PR 53
+conflicted, which was reviewed only because `synchronize` was still a trigger.
+The `schedule` path cannot substitute: it selects only PRs labelled
+`codex-review`, and that label is not defined here.
+
+The two paths are made mutually exclusive rather than merely both present. On
+`opened` and `synchronize` the worker asks whether a `CI` run exists for the
+exact head, waiting a short discovery window because GitHub creates runs
+asynchronously, and defers with an exit-zero skip when one does. It reviews
+immediately only when no run appears, and says in the verification block that
+CI produced no run — which is a different statement from checks that exist but
+have not settled. A probe that fails is treated as "no run found", so the
+invariant fails safe toward reviewing rather than toward silence. It checks out only the trusted default branch,
+downloads no CI artifacts or caches, and executes no PR code. `reopened`,
+`ready_for_review`, manual, and scheduled runs may read the exact head's
+currently completed checks once without polling. Any absent result reads as
+"not available at review time", never as absence of evidence, and unsettled
+external checks do not erase completed CI evidence.
 
 ### 6. Named context files reach the reviewer (B-ii)
 
@@ -226,9 +253,11 @@ and 7 are cheap to test directly, following the existing builders in
   `ARBITER_OPERATOR` from a variable rather than a literal, and makes no model
   call.
 - **4** — each knob is read; a non-positive value is rejected.
-- **5** — the block is sanitized before wrapping and wrapped before sending;
-  the job never invokes a test runner; an unsettled check set produces the
-  explicit not-available text.
+- **5** — `workflow_run` is restricted to completed `CI` runs sourced from a
+  pull request; a stale run/head pairing exits before the model; the block is
+  sanitized before wrapping and wrapped before sending; the privileged job
+  never invokes a test runner or downloads CI artifacts/caches; an absent
+  completed result produces explicit not-available text.
 - **6** — the allowlist is read from the trusted SHA, a branch-side edit to it
   has no effect, an unresolvable path is skipped, and the caps hold.
 - **7** — unverifiable does not close; P1 routes to `needs_human`; a missing
