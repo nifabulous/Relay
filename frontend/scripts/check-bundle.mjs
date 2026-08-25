@@ -34,7 +34,8 @@ console.log("Eager shell assets:");
 for (const ref of eager) {
   const filePath = join(ASSETS_DIR, ref);
   if (!existsSync(filePath)) {
-    console.warn(`  ⚠  ${ref} — file not found`);
+    console.error(`\n❌ FAILED — referenced eager asset not found: ${ref}`);
+    process.exit(1);
     continue;
   }
   const raw = readFileSync(filePath);

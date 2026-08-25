@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -24,6 +24,10 @@ const cossThemeCss = readFileSync(
 const bundleCheckScript = readFileSync(
   resolve(process.cwd(), "scripts/check-bundle.mjs"),
   "utf8",
+);
+const builtRelayHtmlPath = resolve(
+  process.cwd(),
+  "../app/static/relay/index.html",
 );
 
 describe("Tailwind foundation", () => {
@@ -90,6 +94,11 @@ describe("Tailwind foundation", () => {
     expect(configuredBudget).toBe(205000);
     expect(bundleCheckScript).toMatch(/gzipSync\(raw\);/);
     expect(bundleCheckScript).not.toContain("level: 9");
+    if (existsSync(builtRelayHtmlPath)) {
+      expect(
+        bundleCheckScript.includes("referenced eager asset not found"),
+      ).toBe(true);
+    }
   });
 
   it("keeps registry output and TypeScript aliases aligned", () => {

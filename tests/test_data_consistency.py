@@ -1045,6 +1045,7 @@ class TestSeedRollout:
             row for row in seed_module.SSI_RECORDS
             if len(row) > 13 and row[13] is True
         )
+        removed_enbd_key = ("EBILAEADXXX", "USD", "OLDSUPPXXX")
         monkeypatch.setattr(seed_module, "SSI_RECORDS", (current,))
 
         engine = create_engine(
@@ -1077,6 +1078,33 @@ class TestSeedRollout:
             removed_row.seed_fingerprint = seed_module._seed_fingerprint(removed_row)
             session.add(removed_row)
             session.add(SSI(
+                beneficiary_bic=removed_enbd_key[0],
+                beneficiary_bank_name="Emirates NBD Bank (P.J.S.C.)",
+                currency=removed_enbd_key[1],
+                intermediary_bic=removed_enbd_key[2],
+                intermediary_bank_name="Obsolete Superseded Bank",
+                intermediary_account="ACCT-91001699",
+                beneficiary_account="ACCT-91001698",
+                charge_code="SHA",
+                value_date="spot",
+                notes=(
+                    "Source: https://www.emiratesnbd.com/example"
+                    " (as of 2026-05-01). " + seed_module._SSI_REAL_NOTE
+                ),
+                as_of="2026-05-01",
+                status="unverified",
+                bic_only=False,
+            ))
+            session.flush()
+            removed_enbd_row = session.query(SSI).filter_by(
+                beneficiary_bic=removed_enbd_key[0],
+                currency=removed_enbd_key[1],
+                intermediary_bic=removed_enbd_key[2],
+            ).one()
+            removed_enbd_row.seed_fingerprint = seed_module._seed_fingerprint(
+                removed_enbd_row
+            )
+            session.add(SSI(
                 beneficiary_bic=operator_corrected[0],
                 beneficiary_bank_name=operator_corrected[1],
                 currency=operator_corrected[2],
@@ -1105,11 +1133,16 @@ class TestSeedRollout:
 
             result = seed_module.seed_if_empty(session)
 
-            assert result["ssi_retired"] == 1
+            assert result["ssi_retired"] == 2
             assert session.query(SSI).filter_by(
                 beneficiary_bic=removed[0],
                 currency=removed[2],
                 intermediary_bic=removed[3],
+            ).one_or_none() is None
+            assert session.query(SSI).filter_by(
+                beneficiary_bic=removed_enbd_key[0],
+                currency=removed_enbd_key[1],
+                intermediary_bic=removed_enbd_key[2],
             ).one_or_none() is None
             preserved = session.query(SSI).filter_by(
                 beneficiary_bic=operator_corrected[0],
