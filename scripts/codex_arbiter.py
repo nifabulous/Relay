@@ -806,7 +806,42 @@ def render_comment(decision: Decision, pr) -> str:
     return "\n".join(lines)
 
 
-def post_comment(pr, repo, body) -> None:
+def post_comment(pr, repo, body, bot_login: str) -> None:
+    if os.environ.get("ARBITER_OPERATOR") != "1":
+        raise RuntimeError(
+            "post_comment requires ARBITER_OPERATOR=1 (operator mode)"
+        )
+
+    marker = f"<!-- codex-arbiter:{pr} -->"
+    result = subprocess.run(
+        [
+            "gh", "api", "--paginate",
+            f"repos/{repo}/issues/{pr}/comments?per_page=100",
+            "--jq", '.[] | {id, login: (.user.login // ""), body: (.body // "")}',
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    comments = [
+        json.loads(line) for line in result.stdout.splitlines() if line
+    ]
+    matches = [
+        item for item in comments
+        if item["login"] == bot_login and marker in item["body"]
+    ]
+    if matches:
+        comment_id = matches[-1]["id"]
+        subprocess.run(
+            [
+                "gh", "api", "--method", "PATCH",
+                f"repos/{repo}/issues/comments/{comment_id}",
+                "-f", f"body={body}",
+            ],
+            check=True,
+        )
+        return
+
     subprocess.run(
         ["gh", "pr", "comment", str(pr), "--repo", repo, "--body", body],
         check=True,
@@ -1229,7 +1264,8 @@ def main(argv=None) -> int:
     decision = decide(history, contract)
     if args.post:
         post_comment(args.pr, history["repo"],
-                     render_postable_comment(decision, args.pr))
+                     render_postable_comment(decision, args.pr),
+                     contract.bot_login)
         print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
         if decision.proposed_gaps:
             contract_text = load_contract_text(history.get("current_head_ref"))

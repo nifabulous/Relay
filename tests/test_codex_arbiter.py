@@ -1062,6 +1062,44 @@ def test_contract_rejects_invalid_positive_integer_knobs(name, value):
     with pytest.raises(ValueError, match=name):
         arb.Contract.from_env({name: value})
 
+
+def test_post_comment_creates_once_then_patches_existing_bot_comment(
+    tmp_path, monkeypatch
+):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text("[]")
+
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nfirst", BOT)
+    (stub_dir / "comments.json").write_text(json.dumps([
+        {"id": 44, "login": BOT, "body": "<!-- codex-arbiter:100 -->\nfirst"}
+    ]))
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nsecond", BOT)
+
+    assert len(_calls_matching(stub_dir, "comment-create")) == 1
+    patches = _calls_matching(stub_dir, "comment-patch")
+    assert len(patches) == 1
+    assert "repos/stub-org/stub-repo/issues/comments/44" in patches[0]
+
+
+def test_post_comment_does_not_adopt_forged_marker(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text(json.dumps([
+        {"id": 55, "login": "pr-author", "body": "<!-- codex-arbiter:100 -->"}
+    ]))
+
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nreal", BOT)
+
+    assert len(_calls_matching(stub_dir, "comment-create")) == 1
+    assert _calls_matching(stub_dir, "comment-patch") == []
+
+
+def test_post_comment_refuses_without_operator_mode(monkeypatch):
+    monkeypatch.delenv("ARBITER_OPERATOR", raising=False)
+    with pytest.raises(RuntimeError, match="ARBITER_OPERATOR=1"):
+        arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->", BOT)
+
 # --------------------------------------------------------------------------- #
 # T4: the gap-issue ledger poster (post_gap_issues).                          #
 #                                                                              #
@@ -1091,6 +1129,23 @@ def _log(name, argv):
 
 def main():
     argv = sys.argv[1:]
+
+    if argv[:2] == ["api", "--paginate"]:
+        _log("comment-list", argv)
+        path = os.path.join(STUB_DIR, "comments.json")
+        if os.path.exists(path):
+            with open(path) as fh:
+                for item in json.load(fh):
+                    print(json.dumps(item))
+        return 0
+
+    if argv[:3] == ["api", "--method", "PATCH"] and "issues/comments/" in argv[3]:
+        _log("comment-patch", argv)
+        return 0
+
+    if argv[:2] == ["pr", "comment"]:
+        _log("comment-create", argv)
+        return 0
 
     if argv[:2] == ["label", "create"]:
         _log("label-create", argv)
@@ -1750,7 +1805,7 @@ def test_posted_recommendation_comment_is_sanitized_and_bounded(monkeypatch):
     captured: dict = {}
     monkeypatch.setattr(arb, "collect", lambda *a, **k: history)
     monkeypatch.setattr(arb, "post_comment",
-                        lambda pr, repo, body: captured.update(body=body))
+                        lambda pr, repo, body, bot_login: captured.update(body=body))
 
     monkeypatch.setenv("ARBITER_OPERATOR", "1")
     exit_code = arb.main(["100", "--repo", STUB_REPO, "--post"])
