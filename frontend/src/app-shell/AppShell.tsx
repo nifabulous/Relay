@@ -172,6 +172,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
         </p>
       </div>
 
+      <FloatingTutorLauncher onOpenChange={setTutorOpen} />
+
       {/* Top bar */}
       <header className="app-shell__topbar">
         <div className="app-shell__brand">
@@ -181,7 +183,6 @@ export function AppShell({ children }: { children?: ReactNode }) {
         </div>
 
         <div className="app-shell__actions">
-          <FloatingTutorLauncher onOpenChange={setTutorOpen} />
           {/* The only entry point to preferences and, through it, to Settings. */}
           <PreferencesMenu />
         </div>

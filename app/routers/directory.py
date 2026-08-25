@@ -2,7 +2,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select
+from sqlalchemy import or_, select, func
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -112,27 +112,63 @@ def _escape_like_token(value: str) -> str:
 
 @router.get("/banks/search", response_model=BankSearchResponse)
 def search_banks(
-    q: str = Query(..., min_length=2, max_length=80, description="Bank name to search"),
-    limit: int = Query(8, ge=1, le=20, description="Maximum number of matches"),
+    q: Optional[str] = Query(None, max_length=80, description="Bank name or partial BIC to search"),
+    limit: int = Query(8, ge=1, le=100, description="Maximum number of matches"),
+    offset: int = Query(0, ge=0, description="Number of matches to skip"),
+    country: Optional[str] = Query(None, min_length=2, max_length=2, description="ISO country code"),
+    capability: Optional[str] = Query(None, pattern="^(all|swift|local)$", description="Directory connectivity"),
+    verified: Optional[bool] = Query(None, description="Only banks with at least one settlement instruction"),
     db: Session = Depends(get_db),
 ):
-    """Search the curated bank directory by all words in a bank name."""
-    normalized = " ".join(q.split())
-    if len(normalized) < 2:
-        raise HTTPException(status_code=400, detail="Search query must contain at least 2 characters")
+    """Browse or search the curated directory from one authoritative source."""
+    normalized = " ".join((q or "").split())
+    filters = []
 
-    filters = [
-        Bank.bank_name.ilike(
-            f"%{_escape_like_token(token)}%",
-            escape="\\",
+    if normalized:
+        name_filters = [
+            Bank.bank_name.ilike(
+                f"%{_escape_like_token(token)}%",
+                escape="\\",
+            )
+            for token in normalized.split()
+        ]
+        bic_filters = [
+            Bank.bic.ilike(
+                f"%{_escape_like_token(token)}%",
+                escape="\\",
+            )
+            for token in normalized.split()
+        ]
+        # A token can match the name OR the BIC; multi-token queries still
+        # require every token to appear somewhere in that identity.
+        filters.append(or_(*name_filters, *bic_filters))
+
+    normalized_country = country.upper() if country else None
+    if normalized_country:
+        filters.append(Bank.country_code == normalized_country)
+
+    normalized_capability = None if capability == "all" else capability
+    if normalized_capability == "swift":
+        filters.append(Bank.swift_active == "Y")
+    elif normalized_capability == "local":
+        filters.append(Bank.swift_active != "Y")
+
+    if verified is True:
+        filters.append(
+            select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
         )
-        for token in normalized.split()
-    ]
+    elif verified is False:
+        filters.append(
+            ~select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
+        )
+
+    total = db.execute(select(func.count()).select_from(Bank).where(*filters)).scalar_one()
     banks = (
         db.execute(
             select(Bank)
             .where(*filters)
             .order_by(Bank.bank_name.asc(), Bank.bic.asc())
+            .offset(offset)
             .limit(limit)
         )
         .scalars()
@@ -148,7 +184,12 @@ def search_banks(
                 "country_code": bank.country_code,
                 "city": bank.city,
                 "country_currency": bank.country_currency,
+                "capability": "swift" if (bank.swift_active or "Y").upper() == "Y" else "local",
+                "verified": db.execute(
+                    select(SSI.id).where(SSI.beneficiary_bic == bank.bic).limit(1)
+                ).first() is not None,
             }
             for bank in banks
         ],
+        total=total,
     )

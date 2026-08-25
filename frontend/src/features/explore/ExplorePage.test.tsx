@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -174,8 +174,55 @@ describe("ExplorePage", () => {
 });
 
 describe("BankDirectoryPage", () => {
-  it("renders the browse table with typed bank context and capabilities", () => {
+  const directoryBanks = [
+    { bic: "HSBCGB22XXX", bank_name: "HSBC UK", country_code: "GB", city: "Birmingham", country_currency: "GBP", capability: "swift", verified: true },
+    { bic: "CHASUS33XXX", bank_name: "JPMorgan Chase", country_code: "US", city: "New York", country_currency: "USD", capability: "swift", verified: true },
+    { bic: "DEUTDEFFXXX", bank_name: "Deutsche Bank", country_code: "DE", city: "Frankfurt", country_currency: "EUR", capability: "swift", verified: true },
+    { bic: "CITIUS33XXX", bank_name: "Citibank N.A.", country_code: "US", city: "New York", country_currency: "USD", capability: "swift", verified: true },
+    { bic: "BOFAUS3NXXX", bank_name: "Bank of America", country_code: "US", city: "Charlotte", country_currency: "USD", capability: "swift", verified: true },
+    { bic: "PNBPUS33XXX", bank_name: "Wells Fargo Bank N.A.", country_code: "US", city: "New York", country_currency: "USD", capability: "swift", verified: true },
+    { bic: "BARCGB22XXX", bank_name: "Barclays", country_code: "GB", city: "London", country_currency: "GBP", capability: "swift", verified: true },
+    { bic: "NWBKGB2LXXX", bank_name: "NatWest", country_code: "GB", city: "London", country_currency: "GBP", capability: "swift", verified: true },
+    { bic: "COBADEFFXXX", bank_name: "Commerzbank", country_code: "DE", city: "Frankfurt", country_currency: "EUR", capability: "swift", verified: true },
+    { bic: "MHCBJPJTXXX", bank_name: "Mizuho Bank", country_code: "JP", city: "Tokyo", country_currency: "JPY", capability: "local", verified: true },
+    { bic: "STARGB2LXXX", bank_name: "Starling Bank", country_code: "GB", city: "London", country_currency: "GBP", capability: "local", verified: false },
+    { bic: "HDFCINBBXXX", bank_name: "HDFC Bank", country_code: "IN", city: "Mumbai", country_currency: "INR", capability: "local", verified: false },
+    { bic: "ICICINBBXXX", bank_name: "ICICI Bank", country_code: "IN", city: "Mumbai", country_currency: "INR", capability: "local", verified: false },
+    { bic: "AXISINBBXXX", bank_name: "Axis Bank", country_code: "IN", city: "Mumbai", country_currency: "INR", capability: "local", verified: false },
+    { bic: "CAIXESBBXXX", bank_name: "CaixaBank", country_code: "ES", city: "Valencia", country_currency: "EUR", capability: "local", verified: false },
+  ];
+
+  const useDirectoryHandler = () => {
+    server.use(
+      http.get("/api/banks/search", ({ request }) => {
+        const url = new URL(request.url);
+        const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+        const country = url.searchParams.get("country") ?? "all";
+        const capability = url.searchParams.get("capability") ?? "all";
+        const verifiedOnly = url.searchParams.get("verified") === "true";
+        const offset = Number(url.searchParams.get("offset") ?? "0");
+        const limit = Number(url.searchParams.get("limit") ?? "8");
+
+        const filtered = directoryBanks.filter((bank) =>
+          (!q || `${bank.bank_name} ${bank.bic} ${bank.country_code}`.toLowerCase().includes(q))
+          && (country === "all" || bank.country_code === country)
+          && (capability === "all" || bank.capability === capability)
+          && (!verifiedOnly || bank.verified),
+        );
+
+        return HttpResponse.json({
+          query: q,
+          total: filtered.length,
+          results: filtered.slice(offset, offset + limit),
+        });
+      }),
+    );
+  };
+  afterAll(() => server.resetHandlers());
+
+  it("renders the browse table with typed bank context and capabilities", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
         <BankDirectoryPage />
@@ -190,17 +237,18 @@ describe("BankDirectoryPage", () => {
     );
     expect(screen.getByPlaceholderText("Search by name or BIC…")).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Institution" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open HSBC UK details" })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Open HSBC UK details" })).toHaveAttribute(
       "href",
       "/explore/banks/HSBCGB22XXX",
     );
-    expect(screen.getAllByText("Cross-border")).toHaveLength(9);
-    expect(screen.getByText("Domestic")).toBeVisible();
+    expect(screen.getAllByText("SWIFT")).toHaveLength(9);
+    expect(screen.getByText("Local")).toBeVisible();
     expect(screen.getByText("Showing 1–10 of 15")).toBeVisible();
   });
 
-  it("filters browse rows by bank name and capability", async () => {
+  it("filters the backend-backed browse rows by name and capability", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
@@ -210,18 +258,19 @@ describe("BankDirectoryPage", () => {
 
     const search = screen.getByLabelText("Search bank name or BIC");
     await user.type(search, "Mizuho");
-    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open HSBC details" })).toBeNull();
 
     await user.clear(search);
     await user.click(await screen.findByRole("combobox", { name: "Filter by capability" }));
-    await user.click(await screen.findByRole("option", { name: "Capability: Domestic" }));
-    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    await user.click(await screen.findByRole("option", { name: "Capability: Local" }));
+    expect(await screen.findByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open Deutsche Bank details" })).toBeNull();
   });
 
   it("paginates the directory and exposes every row as a clickable route", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
@@ -229,6 +278,7 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
+    await screen.findByRole("link", { name: "Open HSBC UK details" });
     const rows = screen.getAllByRole("row");
     expect(rows).toHaveLength(11);
     for (const row of rows.slice(1)) {
@@ -236,12 +286,13 @@ describe("BankDirectoryPage", () => {
     }
 
     await user.click(screen.getByRole("button", { name: "Next page" }));
-    expect(screen.getByText("Showing 11–15 of 15")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open Starling Bank details" })).toBeVisible();
+    expect(await screen.findByText("Showing 11–15 of 15")).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Open Starling Bank details" })).toBeVisible();
   });
 
   it("filters verified records only without implying unverified teaching rows are audited", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
@@ -250,12 +301,13 @@ describe("BankDirectoryPage", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Verified only" }));
-    expect(screen.getByText("Showing 1–10 of 10")).toBeVisible();
+    expect(await screen.findByText("Showing 1–10 of 10")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open Starling Bank details" })).toBeNull();
   });
 
   it("shows guidance with example BICs before any search", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
         <BankDirectoryPage />
@@ -273,6 +325,7 @@ describe("BankDirectoryPage", () => {
 
   it("runs the lookup when an example BIC is clicked", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     renderRelay(
       <MemoryRouter initialEntries={["/explore/banks"]}>
@@ -288,6 +341,7 @@ describe("BankDirectoryPage", () => {
 
   it("links a found bank to payment preparation, pre-filled with its BIC", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
 
     renderRelay(
@@ -305,6 +359,7 @@ describe("BankDirectoryPage", () => {
 
   it("rejects invalid lookup lengths and clears stale results on a bank-name search", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     let lookupCalls = 0;
     server.use(
       http.get("/api/lookup", () => {
@@ -349,11 +404,12 @@ describe("BankDirectoryPage", () => {
     await user.click(screen.getByRole("button", { name: "Look up" }));
 
     expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
-    expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
   });
 
   it("shows the settlement details inline on the result card — no click-through", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     server.use(
       http.get("/api/lookup", () =>
@@ -425,6 +481,7 @@ describe("BankDirectoryPage", () => {
 
   it("shows an SSI error with retry instead of silently omitting instructions", async () => {
     queryClient.clear();
+    useDirectoryHandler();
     const user = userEvent.setup();
     let attempt = 0;
     server.use(

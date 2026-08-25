@@ -114,6 +114,15 @@
   align-items: center;
 }
 
+.bank-directory__status {
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.bank-directory__table-card[data-pending="true"] {
+  opacity: 0.72;
+}
+
 .bank-directory__select,
 .bank-directory__filter-toggle {
   display: inline-flex;

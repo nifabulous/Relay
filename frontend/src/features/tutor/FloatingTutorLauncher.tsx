@@ -138,11 +138,7 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
           titleId={HEADING_ID}
           ariaLabel="Tutor"
           popupId="tutor-floating-panel"
-          className={
-            open
-              ? "tutor-floating-panel tutor-floating-panel--topbar"
-              : "tutor-floating-panel"
-          }
+          className="tutor-floating-panel"
           finalFocus={launcherRef}
         >
           <Suspense

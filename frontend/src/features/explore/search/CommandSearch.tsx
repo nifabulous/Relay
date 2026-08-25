@@ -3,7 +3,8 @@ import { useHref, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { searchStatic } from "./searchIndex";
 import type { SearchResult, SearchResultType, SearchGroup } from "./searchTypes";
-import { requestBankSearch } from "./bankSearch";
+import { apiKeys } from "../../../api/queryKeys";
+import { requestBankDirectory } from "./bankSearch";
 import {
   loadSearchHistory,
   recordSearchHistory,
@@ -88,8 +89,8 @@ export function CommandSearch({ initialQuery = "", onNavigate }: CommandSearchPr
 
   const bicQuery = isBicQuery(normalizedQuery);
   const bankSearch = useQuery({
-    queryKey: ["banks", settledQuery],
-    queryFn: () => requestBankSearch(settledQuery),
+    queryKey: apiKeys.bankDirectory({ q: settledQuery, limit: 8 }),
+    queryFn: () => requestBankDirectory({ q: settledQuery, limit: 8 }),
     enabled: isOpen && settledQuery.length >= 2,
     staleTime: 30_000,
   });

@@ -25,25 +25,6 @@
   max-width: calc(100vw - (2 * var(--space-4)));
 }
 
-/* In the app shell's trailing action group, the former floating cluster becomes
-   an inline header control. The unavailable hint is still associated with the
-   button, but it must not force the whole top bar to grow to fit its copy. */
-.app-shell__actions .tutor-fab-cluster {
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  flex-direction: row;
-  align-items: center;
-  max-width: none;
-}
-
-.app-shell__actions .tutor-fab__reason {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
-  z-index: 260;
-}
-
 .tutor-fab {
   position: static;
 
@@ -119,24 +100,6 @@
   border-radius: var(--radius-region);
 }
 
-/* The header variant deliberately overlays content instead of reserving a page
-   column: it behaves like a menu attached to the Tutor control, not like a
-   permanent workspace panel. */
-.tutor-floating-panel--topbar {
-  left: auto;
-  right: var(--space-3);
-  top: calc(
-    var(--sim-banner-height) + var(--topbar-height) + var(--space-2)
-  );
-  bottom: auto;
-  width: min(380px, calc(100vw - (2 * var(--space-3))));
-  height: min(70dvh, 42rem);
-  max-height: calc(
-    100dvh - var(--sim-banner-height) - var(--topbar-height) -
-    var(--nav-height-mobile) - env(safe-area-inset-bottom, 0px) - var(--space-6)
-  );
-}
-
 .tutor-floating-panel__loading {
   margin: 0;
   font-family: var(--font-ui);
@@ -175,12 +138,6 @@
     top: calc(var(--sim-banner-height) + var(--topbar-height) + var(--space-5));
     width: 380px;
     bottom: var(--space-5);
-    max-height: none;
-  }
-
-  .tutor-floating-panel--topbar {
-    right: var(--space-5);
-    bottom: auto;
     max-height: none;
   }
 }
