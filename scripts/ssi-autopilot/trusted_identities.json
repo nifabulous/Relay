@@ -1,100 +1,262 @@
 {
+  "ALFHPKKA": {
+    "name": "Bank Alfalah Limited",
+    "country": "PK",
+    "settlement_terms_published": false,
+    "domains": [
+      "bankalfalah.com"
+    ]
+  },
   "BBDEBRSP": {
     "name": "Banco Bradesco",
     "country": "BR",
     "domains": [
       "banco.bradesco"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",
     "domains": [
       "cmbchina.com"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "CTBAAU2S": {
     "name": "Commonwealth Bank of Australia",
     "country": "AU",
     "domains": [
       "commbank.com.au"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "UOVBSGSG": {
     "name": "United Overseas Bank Limited",
     "country": "SG",
     "domains": [
       "uob.com.sg"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "OCBCSGSG": {
     "name": "Oversea-Chinese Banking Corporation Limited",
     "country": "SG",
     "domains": [
       "ocbc.com"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "BBUKIDJA": {
     "name": "PT Bank KB Bukopin Tbk",
     "country": "ID",
     "domains": [
       "bukopin.co.id"
-    ]
+    ],
+    "settlement_terms_published": true
   },
   "CERBUGKA": {
     "name": "Centenary Rural Development Bank Limited (Centenary Bank Uganda)",
     "country": "UG",
     "domains": [
       "centenarybank.co.ug"
-    ]
+    ],
+    "settlement_terms_published": true
   },
   "SBICUGKX": {
     "name": "Stanbic Bank Uganda Limited",
     "country": "UG",
     "domains": [
       "stanbicbank.co.ug"
-    ]
+    ],
+    "settlement_terms_published": true
   },
   "HASEHKHH": {
     "name": "Hang Seng Bank Limited",
     "country": "HK",
     "domains": [
       "hangseng.com"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "BEASHKHH": {
     "name": "The Bank of East Asia, Limited",
     "country": "HK",
     "domains": [
       "hkbea.com"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "ESUNTWTP": {
     "name": "E.SUN Commercial Bank, Ltd.",
     "country": "TW",
     "domains": [
       "esunbank.com.tw"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "HNBKTWTP": {
     "name": "Hua Nan Commercial Bank, Ltd.",
     "country": "TW",
     "domains": [
       "hncb.com.tw"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "ROYCCAT2": {
     "name": "Royal Bank of Canada",
     "country": "CA",
     "domains": [
       "rbcroyalbank.com"
-    ]
+    ],
+    "settlement_terms_published": false
   },
   "CIBCCATT": {
     "name": "Canadian Imperial Bank of Commerce",
     "country": "CA",
     "domains": [
       "cibc.com"
-    ]
+    ],
+    "settlement_terms_published": false
+  },
+  "HDFCINBB": {
+    "name": "HDFC Bank",
+    "country": "IN",
+    "domains": [
+      "hdfc.bank.in",
+      "hdfcbank.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "ICICINBB": {
+    "name": "ICICI Bank",
+    "country": "IN",
+    "domains": [
+      "icicibank.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "SBININBB": {
+    "name": "State Bank of India",
+    "country": "IN",
+    "domains": [
+      "sbi.bank.in",
+      "sbi.co.in"
+    ],
+    "settlement_terms_published": true
+  },
+  "AXISINBB": {
+    "name": "Axis Bank",
+    "country": "IN",
+    "domains": [
+      "axis.bank.in",
+      "axisbank.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "KKBKINBB": {
+    "name": "Kotak Mahindra Bank",
+    "country": "IN",
+    "domains": [
+      "kotak.bank.in",
+      "kotak.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "BARBINBB": {
+    "name": "Bank of Baroda",
+    "country": "IN",
+    "domains": [
+      "bankofbaroda.in"
+    ],
+    "settlement_terms_published": true
+  },
+  "NBOKKWKW": {
+    "name": "National Bank of Kuwait (S.A.K.P.)",
+    "country": "KW",
+    "domains": [
+      "nbk.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "EBILAEAD": {
+    "name": "Emirates NBD Bank (P.J.S.C.)",
+    "country": "AE",
+    "domains": [
+      "emiratesnbd.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "AGBKBDDH": {
+    "name": "Agrani Bank PLC",
+    "country": "BD",
+    "domains": [
+      "agranibank.org"
+    ],
+    "settlement_terms_published": true
+  },
+  "EBLDBDDH": {
+    "name": "Eastern Bank PLC",
+    "country": "BD",
+    "domains": [
+      "ebl.com.bd"
+    ],
+    "settlement_terms_published": true
+  },
+  "CAFECOBB": {
+    "name": "Banco Davivienda S.A.",
+    "country": "CO",
+    "domains": [
+      "davivienda.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "BINPPEPL": {
+    "name": "Banco Internacional del Peru (Interbank)",
+    "country": "PE",
+    "domains": [
+      "interbank.com.pe"
+    ],
+    "settlement_terms_published": false
+  },
+  "BECHCLRM": {
+    "name": "Banco del Estado de Chile (BancoEstado)",
+    "country": "CL",
+    "domains": [
+      "bancoestado.cl"
+    ],
+    "settlement_terms_published": false
+  },
+  "MENOMXMT": {
+    "name": "Banco Mercantil del Norte (Banorte) - Mexico",
+    "country": "MX",
+    "domains": [
+      "banorte.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "BAGEPAPA": {
+    "name": "Banco General S.A. - Panama",
+    "country": "PA",
+    "domains": [
+      "bgeneral.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "CAGRSVSS": {
+    "name": "Banco Agricola S.A. - El Salvador",
+    "country": "SV",
+    "domains": [
+      "bancoagricola.com"
+    ],
+    "settlement_terms_published": true
+  },
+  "BOPIPHMM": {
+    "name": "Bank of the Philippine Islands",
+    "country": "PH",
+    "domains": [
+      "bpi.com.ph"
+    ],
+    "settlement_terms_published": true
   }
 }

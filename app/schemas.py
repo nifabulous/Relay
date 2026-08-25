@@ -152,6 +152,9 @@ class SSIRecord(BaseModel):
     # correspondent-bank-charges list) published none. It is informational,
     # never a selectable settlement instruction.
     bic_only: bool = False
+    # True when the source omitted charge/value-date terms and the stored
+    # values are defaults for review rather than facts from the bank.
+    terms_inferred: bool = False
 
     @field_validator("charge_code")
     @classmethod
@@ -268,6 +271,13 @@ class SSIRecord(BaseModel):
             raise ValueError(
                 f"an ordinary (non-bic_only) record requires charge_code and "
                 f"value_date — missing {missing}"
+            )
+        if self.terms_inferred and (
+            self.charge_code is None or self.value_date is None
+        ):
+            raise ValueError(
+                "a terms_inferred record must retain labeled charge_code and "
+                "value_date placeholders"
             )
         return self
     # The correspondent's settlement-system addresses, when it is a direct

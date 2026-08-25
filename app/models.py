@@ -196,6 +196,12 @@ class SSI(Base):
     # expression and the CREATE TABLE would fail. "false" is valid on both
     # engines (SQLite accepts FALSE as an alias for the integer 0).
     bic_only = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Some bank directories publish correspondent accounts but omit the
+    # charge/value-date terms. Keep those rows for review only when the
+    # inferred defaults are explicitly labeled; routing rejects this flag.
+    terms_inferred = Column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     # Snapshot of the row as last written by the curated seeder. It lets a
     # later source reconciliation distinguish an untouched machine row from
     # one an operator has corrected, without treating free-form notes as an
@@ -300,6 +306,15 @@ class SSI(Base):
             "value_date IS NOT NULL AND "
             "ltrim(rtrim(value_date, ' \t\n\r\u00a0'), ' \t\n\r\u00a0') != '')",
             name="ck_ssi_ordinary_has_settlement_terms",
+        ),
+        # An inferred-terms row is a research lead, not an executable SSI.
+        # It may retain source-published account fields, but its placeholder
+        # charge/value values must remain explicit rather than silently
+        # authoritative.
+        CheckConstraint(
+            "NOT terms_inferred OR (charge_code IS NOT NULL AND "
+            "value_date IS NOT NULL)",
+            name="ck_ssi_inferred_terms_are_labeled_placeholders",
         ),
     )
 

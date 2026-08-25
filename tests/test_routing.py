@@ -82,6 +82,24 @@ def test_unsupported_settlement_terms_are_not_routable(field, value):
     setattr(row, field, value)
     assert not _is_routable_ssi(row)
 
+
+def test_inferred_settlement_terms_are_never_routable():
+    row = SSI(
+        beneficiary_bic="TESTPKKAXXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: bank document; terms inferred.",
+        as_of="2025-09-20",
+        verified_by="Treasury Operations",
+        status="published",
+        terms_inferred=True,
+    )
+    assert not _is_routable_ssi(row)
+
 # ===========================================================================
 # _normalize_bic_input
 # ===========================================================================
@@ -193,7 +211,7 @@ class TestLookupBank:
         result = lookup_bank(db_session, "EBILAEADXXX")
         assert result is not None
         assert result.country_code == "AE"
-        assert result.bank_name == "Emirates NBD"
+        assert result.bank_name == "Emirates NBD Bank (P.J.S.C.)"
 
     @pytest.mark.parametrize(
         "bic",
@@ -546,6 +564,7 @@ class TestSuggestFromSSI:
                 as_of="2026-08-19",
                 verified_by="Treasury Operations",
                 status="published",
+                terms_inferred=True,
             ),
             SSI(
                 beneficiary_bic="TESTUS33XXX",

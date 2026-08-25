@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 _REQUIRED_SSI_CHECKS = frozenset({
     "ck_ssi_bic_only_has_no_accounts",
     "ck_ssi_ordinary_has_settlement_terms",
+    "ck_ssi_inferred_terms_are_labeled_placeholders",
 })
 
 _TABLE_PATCHES = {
@@ -48,6 +49,7 @@ _TABLE_PATCHES = {
         # rebuild after the columns land.
         ("bic_only BOOLEAN NOT NULL DEFAULT 0", "bic_only"),
         ("seed_fingerprint VARCHAR(64)", "seed_fingerprint"),
+        ("terms_inferred BOOLEAN NOT NULL DEFAULT 0", "terms_inferred"),
     ),
 }
 

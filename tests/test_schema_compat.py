@@ -285,6 +285,7 @@ class TestCurrentSchemaIsANoop:
             "status",
             "bic_only",
             "seed_fingerprint",
+            "terms_inferred",
         }
         columns_before = {c["name"]: c for c in inspect(engine).get_columns("ssi")}
         assert set(columns_before) == expected_columns
@@ -390,6 +391,29 @@ class TestCurrentSchemaIsANoop:
                     "status, notes, charge_code, value_date) VALUES "
                     "('ABNANL2AXXX', 'EUR', 'MRMDUS33XXX', 'illustrative', "
                     "'legacy', '   ', char(9))"
+                ))
+
+    def test_legacy_rebuild_enforces_the_inferred_terms_check(self):
+        """A compatibility rebuild must install the inferred-terms invariant,
+        not merely add the nullable provenance column."""
+        engine = _raw_engine()
+        with engine.begin() as conn:
+            conn.execute(text(LEGACY_SSI_DDL))
+
+        ensure_sqlite_schema(engine)
+
+        with engine.connect() as conn:
+            checks = {
+                c["name"] for c in inspect(engine).get_check_constraints("ssi")
+            }
+        assert "ck_ssi_inferred_terms_are_labeled_placeholders" in checks
+        with pytest.raises(IntegrityError):
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "INSERT INTO ssi (beneficiary_bic, currency, intermediary_bic, "
+                    "status, notes, terms_inferred) VALUES "
+                    "('ALFHPKKAXXX', 'USD', 'CHASUS33XXX', 'archived', "
+                    "'Source: https://bank.example/ssi (as of 2025-09-20).', 1)"
                 ))
 
     def test_legacy_rebuild_failure_after_swap_restores_the_original_table(

@@ -45,6 +45,43 @@ def test_valid_results_pass():
     assert autopilot.validate_results(sample_results(), MANIFEST) == []
 
 
+def test_trusted_identity_must_state_whether_settlement_terms_were_published(monkeypatch):
+    """Omitted registry provenance fails closed: an ordinary row cannot rely on
+    the old default and present inferred charge/value values as authoritative."""
+    bad = sample_results()
+    monkeypatch.setitem(
+        autopilot.TRUSTED_SOURCE_IDENTITIES,
+        "BOPIPHMM",
+        {
+            "name": "Bank of the Philippine Islands",
+            "country": "PH",
+            "domains": ("bpi.com.ph",),
+        },
+    )
+    problems = autopilot.validate_results(bad, MANIFEST)
+
+    assert any(
+        "BOPIPHMM/USD: trusted identity must explicitly state "
+        "settlement_terms_published" in problem
+        for problem in problems
+    ), problems
+    assert any(
+        "trusted source omits settlement terms; terms_inferred must be true"
+        in problem
+        for problem in problems
+    ), problems
+
+    labeled = sample_results()
+    labeled["banks"][0]["records"][0]["terms_inferred"] = True
+    problems = autopilot.validate_results(labeled, MANIFEST)
+    assert any(
+        "trusted identity must explicitly state settlement_terms_published"
+        in problem
+        for problem in problems
+    ), problems
+    assert not any("terms_inferred must be true" in problem for problem in problems)
+
+
 def test_manifest_value_dates_use_application_vocabulary():
     from app.ssi_terms import VALID_VALUE_DATES, normalize_value_date
 
@@ -1456,8 +1493,14 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                 assert row["as_of"] == rec["as_of"], key
                 assert row["status"] == rec["status"].strip().lower(), key
                 assert bool(row.get("bic_only")) is (rec.get("bic_only") is True), key
+                source_citation = f"Source: {rec['source']} (as of {rec['as_of']})"
+                if rec.get("bic_only") is True:
+                    source_citation += (
+                        " BIC-level list — no account numbers published; "
+                        "not a selectable settlement instruction"
+                    )
                 expected_note = (
-                    f"Source: {rec['source']} (as of {rec['as_of']}). "
+                    f"{source_citation}. "
                     "Sourced from bank-published SSI page. Verify current values before use."
                 )
                 assert row["notes"] == expected_note, f"{key}: note drifted from the canonical citation"
@@ -1471,6 +1514,59 @@ def test_admitted_records_are_present_field_exact_in_the_seed():
                     assert row["value_date"] == rec["value_date"], key
                 checked += 1
     assert checked >= 170, f"only {checked} admitted records cross-checked; expected the wave data"
+
+
+def test_every_bic_only_seed_row_states_its_availability_only_limitation():
+    """BIC-only provenance must be visible at the record boundary, not implied."""
+    seed_source = (
+        Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
+    ).read_text()
+    checked = 0
+
+    for entry in autopilot._ssi_rows(seed_source):
+        try:
+            fields = autopilot._fold_row_shape(entry, enforce_invariants=False)
+        except (ValueError, TypeError, AttributeError):
+            continue
+        if fields.get("bic_only") is not True:
+            continue
+        key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
+        assert (
+            "BIC-level list — no account numbers published; "
+            "not a selectable settlement instruction"
+        ) in fields["notes"], key
+        checked += 1
+
+    assert checked >= 150, (
+        f"only {checked} BIC-only rows checked; expected the full directory"
+    )
+
+
+def test_pakistan_candidate_evidence_preserves_inferred_terms():
+    """Candidate provenance must survive unchanged into the admission ledger."""
+    candidate_path = Path(__file__).resolve().parents[1] / (
+        "scripts/ssi-autopilot/results/candidates-pakistan.json"
+    )
+    candidates = json.loads(candidate_path.read_text())
+    region = autopilot.get_region(candidates, "pakistan")
+    bank = region["banks"][0]
+    normalized = [
+        autopilot._normalize_record(record, f"candidates[{index}]")
+        for index, record in enumerate(bank["records"])
+    ]
+
+    manifest_bank = autopilot.get_region(MANIFEST, "pakistan")["banks"][0]
+    expected = sorted(manifest_bank["admitted_records"], key=autopilot._record_sort_key)
+    actual = sorted(normalized, key=autopilot._record_sort_key)
+    assert actual == expected
+    assert all(record["terms_inferred"] is True for record in actual)
+    assert all(record["bic_only"] is False for record in actual)
+
+    results = {
+        "region": "pakistan",
+        "banks": [{"bic": bank["bic8"], "name": bank["name"], "records": bank["records"]}],
+    }
+    assert autopilot.validate_results(results, MANIFEST) == []
 
 
 WAVE_REGIONS = ["singapore", "indonesia", "uganda", "hong-kong", "taiwan", "canada"]
@@ -1762,8 +1858,14 @@ def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
         assert row["bic_only"] is bic_only, (ben, ccy)
         assert row["status"] == status, (ben, ccy)
         assert row["as_of"] == as_of, (ben, ccy)
+        source_citation = f"Source: {source} (as of {as_of})"
+        if bic_only:
+            source_citation += (
+                " BIC-level list — no account numbers published; "
+                "not a selectable settlement instruction"
+            )
         expected_note = (
-            f"Source: {source} (as of {as_of}). "
+            f"{source_citation}. "
             "Sourced from bank-published SSI page. Verify current values before use."
         )
         assert row["notes"] == expected_note, (ben, ccy)
@@ -1771,3 +1873,64 @@ def test_pinned_fixture_rows_exist_field_exact_in_the_seed():
             assert row["nostro"] is None and row["with_an"] is None, (ben, ccy)
         else:
             assert row["nostro"] == nostro and row["with_an"] == nostro, (ben, ccy)
+
+
+@pytest.mark.parametrize("region_name,bic", [
+    ("india", "HDFCINBB"),
+    ("india", "ICICINBB"),
+    ("india", "SBININBB"),
+    ("india", "AXISINBB"),
+    ("india", "KKBKINBB"),
+    ("india", "BARBINBB"),
+    ("gulf", "NBOKKWKW"),
+    ("gulf", "EBILAEAD"),
+    ("bangladesh", "AGBKBDDH"),
+    ("bangladesh", "EBLDBDDH"),
+    ("pakistan", "ALFHPKKA"),
+    ("andean", "CAFECOBB"),
+    ("andean", "BINPPEPL"),
+    ("andean", "BECHCLRM"),
+    ("mexico-central-america", "MENOMXMT"),
+    ("mexico-central-america", "BAGEPAPA"),
+    ("mexico-central-america", "CAGRSVSS"),
+])
+def test_recovered_wave_identities_admit_on_the_production_path(tmp_path, monkeypatch, region_name, bic):
+    """TRUST_REGISTRY step 4: each recovered enrollment admits via the real registry."""
+    # Start from the production geography without the recovered bank so this
+    # exercises first-time registry admission, not an idempotent re-run.
+    manifest = json.loads(json.dumps(autopilot.load_manifest()))
+    region = autopilot.get_region(manifest, region_name)
+    region["banks"] = [b for b in region["banks"] if b["bic8"] != bic]
+    path = tmp_path / "regions.json"
+    path.write_bytes(json.dumps(manifest, indent=2).encode() + b"\n")
+    monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
+    identity = autopilot.TRUSTED_SOURCE_IDENTITIES[bic]
+    domain = identity["domains"][0]
+    bank = {
+        "bic8": bic,
+        "name": identity["name"],
+        "country": identity["country"],
+        "currencies": ["USD"],
+        "seedable": True,
+        "source_domains": list(identity["domains"]),
+        "records": [{
+            "currency": "USD",
+            "correspondent": "Citibank N.A., New York",
+            "int_bic": "CITIUS33",
+            "nostro": f"ACCT-{region['masked_block'] + 1}",
+            "with_an": f"ACCT-{region['masked_block'] + 2}",
+            "charge_code": "SHA",
+            "value_date": "spot",
+            "source": f"https://{domain}/ssi",
+            "as_of": "2026-08-22",
+            "status": "unverified",
+        }],
+    }
+    if bic == "ALFHPKKA":
+        bank["records"][0]["terms_inferred"] = True
+    elif autopilot.TRUSTED_SOURCE_IDENTITIES[bic]["settlement_terms_published"] is False:
+        bank["records"][0]["terms_inferred"] = True
+    summary = autopilot.admit_candidates(
+        {"regions": [{"name": region_name, "banks": [bank]}]}
+    )
+    assert summary["added_banks"] == 1 and summary["added_records"] == 1

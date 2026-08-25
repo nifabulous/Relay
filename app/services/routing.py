@@ -188,6 +188,7 @@ def _is_routable_ssi(row: SSI) -> bool:
     """
     return (
         not row.bic_only
+        and not row.terms_inferred
         and row.status == "published"
         and _has_usable_text(row.as_of)
         and _has_usable_text(row.verified_by)
@@ -203,6 +204,7 @@ def _ssi_routing_filters() -> tuple:
     """Cheap SQL prefilter; ``_is_routable_ssi`` remains the final gate."""
     return (
         SSI.bic_only.is_(False),
+        SSI.terms_inferred.is_(False),
         SSI.status == "published",
         SSI.as_of.isnot(None),
         SSI.verified_by.isnot(None),
