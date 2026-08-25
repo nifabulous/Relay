@@ -6,7 +6,7 @@ import { useTutorSurfaceContext } from "./tutorSurfaceStore";
 import "./FloatingTutorLauncher.css";
 
 /**
- * The tutor's single entry point: a pill fixed to the bottom-right, on every route.
+ * The tutor's single entry point: a compact pill in the top bar, on every route.
  *
  * It replaces the three in-page launchers rather than joining them. Those put
  * the tutor on a lesson page, a scheme tab, and a tracking result — so on every
@@ -20,11 +20,9 @@ import "./FloatingTutorLauncher.css";
  * `surface: "global"`. So the pill is contextual where context exists and still
  * works where it does not.
  *
- * **Geometry.** Below 1024px a fixed bottom nav occupies the last 64px plus the
- * safe-area inset, so the pill clears both. At 1024px and up the rail is on the
- * left and the bottom-right corner is free. `z-index: 150` sits above page
- * content and below the top bar's menu, which is the one thing that must stay
- * on top of it.
+ * **Geometry.** The launcher lives beside Preferences so the tutor is visible
+ * without competing with page content or mobile navigation. Its panel is a
+ * right-aligned dropdown below the persistent top bar on every viewport.
  */
 
 const TutorPanel = lazy(() =>
@@ -140,7 +138,11 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
           titleId={HEADING_ID}
           ariaLabel="Tutor"
           popupId="tutor-floating-panel"
-          className="tutor-floating-panel"
+          className={
+            open
+              ? "tutor-floating-panel tutor-floating-panel--topbar"
+              : "tutor-floating-panel"
+          }
           finalFocus={launcherRef}
         >
           <Suspense

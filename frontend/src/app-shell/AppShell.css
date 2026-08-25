@@ -48,6 +48,17 @@
 
 /* ── Preferences menu ──────────────────────────────────── */
 /* Pushed to the trailing edge; the brand keeps the leading edge. */
+.app-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.app-shell__actions .app-shell__prefs {
+  margin-left: 0;
+}
+
 .app-shell__prefs {
   position: relative;
   margin-left: auto;
@@ -325,15 +336,6 @@
   min-width: 0;
   padding: var(--space-6) var(--space-7);
   overflow-y: auto;
-}
-
-/* Reserve the tutor's fixed desktop column so the open panel reflows the
-   learner's content instead of covering it. The panel itself owns the right
-   380px; this reservation accounts for its right edge and the content gap. */
-@media (min-width: 1024px) {
-  .app-shell--tutor-open .app-shell__body {
-    padding-right: calc(380px + var(--space-5) + var(--space-6));
-  }
 }
 
 /* ── Mobile bottom navigation (hidden on desktop) ──────── */

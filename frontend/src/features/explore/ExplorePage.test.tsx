@@ -184,16 +184,19 @@ describe("BankDirectoryPage", () => {
 
     expect(screen.getByRole("heading", { name: "Bank directory" })).toBeVisible();
     expect(screen.getByText(/curated teaching directory/i)).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Verified only" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Verified only" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     expect(screen.getByPlaceholderText("Search by name or BIC…")).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Institution" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open HSBC details" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open HSBC UK details" })).toHaveAttribute(
       "href",
       "/explore/banks/HSBCGB22XXX",
     );
-    expect(screen.getAllByText("Cross-border")).toHaveLength(4);
+    expect(screen.getAllByText("Cross-border")).toHaveLength(9);
     expect(screen.getByText("Domestic")).toBeVisible();
-    expect(screen.getByText("Showing 1–5 of 5")).toBeVisible();
+    expect(screen.getByText("Showing 1–10 of 15")).toBeVisible();
   });
 
   it("filters browse rows by bank name and capability", async () => {
@@ -211,9 +214,44 @@ describe("BankDirectoryPage", () => {
     expect(screen.queryByRole("link", { name: "Open HSBC details" })).toBeNull();
 
     await user.clear(search);
-    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by capability" }), "Domestic");
+    await user.click(await screen.findByRole("combobox", { name: "Filter by capability" }));
+    await user.click(await screen.findByRole("option", { name: "Capability: Domestic" }));
     expect(screen.getByRole("link", { name: "Open Mizuho Bank details" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open Deutsche Bank details" })).toBeNull();
+  });
+
+  it("paginates the directory and exposes every row as a clickable route", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(11);
+    for (const row of rows.slice(1)) {
+      expect(row).toHaveClass("bank-directory__clickable-row");
+    }
+
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getByText("Showing 11–15 of 15")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open Starling Bank details" })).toBeVisible();
+  });
+
+  it("filters verified records only without implying unverified teaching rows are audited", async () => {
+    queryClient.clear();
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Verified only" }));
+    expect(screen.getByText("Showing 1–10 of 10")).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Open Starling Bank details" })).toBeNull();
   });
 
   it("shows guidance with example BICs before any search", async () => {
@@ -224,9 +262,10 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Find a bank to see its settlement instructions/i),
-    ).toBeVisible();
+    expect(screen.getByText(/Type a bank name to filter the directory/i)).toBeVisible();
+    expect(screen.getByLabelText("Search bank name or BIC")).toHaveAccessibleDescription(
+      /8 or 11 character BIC/i,
+    );
     expect(screen.getByRole("button", { name: /GTBINGLAXXX/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /MASHAEADXXX/i })).toBeVisible();
     expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
@@ -297,7 +336,7 @@ describe("BankDirectoryPage", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(lookupCalls).toBe(0);
-    expect(screen.getByText(/Find a bank to see its settlement instructions/i)).toBeVisible();
+    expect(screen.getByText(/Type a bank name to filter the directory/i)).toBeVisible();
 
     await user.clear(search);
     await user.type(search, "CITIUS33");

@@ -1,6 +1,20 @@
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import {
+  siAxisbank,
+  siBarclays,
+  siBankofamerica,
+  siCaixabank,
+  siChase,
+  siCommerzbank,
+  siDeutschebank,
+  siHdfcbank,
+  siHsbc,
+  siIcicibank,
+  siStarlingbank,
+  siWellsfargo,
+} from "simple-icons";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
@@ -8,6 +22,7 @@ import { LookupResponseSchema, SchemesResponseSchema, InternationalSchemesRespon
 import type { LookupResponse, SchemesResponse, InternationalSchemesResponse } from "../../api/schemas";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
 import { Button } from "../../design-system/Button";
+import { RelaySelect } from "../../design-system/behavior/RelaySelect";
 import type { AsyncStatus } from "../../design-system/types";
 import type { ApiProblem } from "../../api/problem";
 import { groupByCurrency } from "./ssiGrouping";
@@ -18,6 +33,7 @@ import { SchemeTable } from "./SchemeTable";
 import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
 import { buildSchemeContext } from "../tutor/tutorContext";
 import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
+import { Icon } from "../../design-system/coss/icon";
 import "./ExplorePage.css";
 import "../learn/labs/LabContent.css";
 
@@ -64,29 +80,58 @@ type DirectoryRow = {
   country: string;
   market: string;
   capability: "Cross-border" | "Domestic";
-  monogram: string;
+  mark: ReactNode;
+  resolved: boolean;
 };
 
 /**
- * The directory browse state is intentionally a small, curated view of the
- * seeded teaching data. BIC lookup remains the source of truth for a full
- * institution record and settlement instructions.
+ * The directory browse state is a curated view of the seeded teaching data.
+ * Rows flagged resolved are known to answer /lookup; the remaining teaching
+ * rows stay visible but are excluded from "Verified only". Simple Icons
+ * supplies marks where available, otherwise a text monogram is used.
  */
 const DIRECTORY_ROWS: DirectoryRow[] = [
-  { name: "Lloyds Bank", bic: "LOYDGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "LB" },
-  { name: "HSBC", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", monogram: "HS" },
-  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", monogram: "JC" },
-  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", monogram: "DB" },
-  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", monogram: "MZ" },
+  { name: "HSBC UK", bic: "HSBCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", mark: <BankMark icon={siHsbc} fallback="HS" />, resolved: true },
+  { name: "JPMorgan Chase", bic: "CHASUS33XXX", country: "United States", market: "US", capability: "Cross-border", mark: <BankMark icon={siChase} fallback="JC" />, resolved: true },
+  { name: "Deutsche Bank", bic: "DEUTDEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", mark: <BankMark icon={siDeutschebank} fallback="DB" />, resolved: true },
+  { name: "Citibank N.A.", bic: "CITIUS33XXX", country: "United States", market: "US", capability: "Cross-border", mark: <BankMark fallback="CI" />, resolved: true },
+  { name: "Bank of America", bic: "BOFAUS3NXXX", country: "United States", market: "US", capability: "Cross-border", mark: <BankMark icon={siBankofamerica} fallback="BA" />, resolved: true },
+  { name: "Wells Fargo Bank N.A.", bic: "PNBPUS33XXX", country: "United States", market: "US", capability: "Cross-border", mark: <BankMark icon={siWellsfargo} fallback="WF" />, resolved: true },
+  { name: "Barclays", bic: "BARCGB22XXX", country: "United Kingdom", market: "GB", capability: "Cross-border", mark: <BankMark icon={siBarclays} fallback="BA" />, resolved: true },
+  { name: "NatWest", bic: "NWBKGB2LXXX", country: "United Kingdom", market: "GB", capability: "Cross-border", mark: <BankMark fallback="NW" />, resolved: true },
+  { name: "Commerzbank", bic: "COBADEFFXXX", country: "Germany", market: "DE", capability: "Cross-border", mark: <BankMark icon={siCommerzbank} fallback="CB" />, resolved: true },
+  { name: "Mizuho Bank", bic: "MHCBJPJTXXX", country: "Japan", market: "JP", capability: "Domestic", mark: <BankMark fallback="MZ" />, resolved: true },
+  { name: "Starling Bank", bic: "STARGB2LXXX", country: "United Kingdom", market: "GB", capability: "Domestic", mark: <BankMark icon={siStarlingbank} fallback="SB" />, resolved: false },
+  { name: "HDFC Bank", bic: "HDFCINBBXXX", country: "India", market: "IN", capability: "Domestic", mark: <BankMark icon={siHdfcbank} fallback="HD" />, resolved: false },
+  { name: "ICICI Bank", bic: "ICICINBBXXX", country: "India", market: "IN", capability: "Domestic", mark: <BankMark icon={siIcicibank} fallback="IC" />, resolved: false },
+  { name: "Axis Bank", bic: "AXISINBBXXX", country: "India", market: "IN", capability: "Domestic", mark: <BankMark icon={siAxisbank} fallback="AX" />, resolved: false },
+  { name: "CaixaBank", bic: "CAIXESBBXXX", country: "Spain", market: "ES", capability: "Domestic", mark: <BankMark icon={siCaixabank} fallback="CX" />, resolved: false },
 ];
+
+function BankMark({ icon, fallback }: { icon?: { path: string; title: string }; fallback: string }) {
+  return (
+    <span className="bank-directory__logo">
+      {icon ? (
+        <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+          <title>{icon.title}</title>
+          <path d={icon.path} fill="currentColor" />
+        </svg>
+      ) : (
+        fallback
+      )}
+    </span>
+  );
+}
 
 const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
 
 export function BankDirectoryPage() {
+  const navigate = useNavigate();
   const [bic, setBic] = useState("");
   const [searchBic, setSearchBic] = useState<string | null>(null);
   const [market, setMarket] = useState("all");
   const [capability, setCapability] = useState("all");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [directoryPage, setDirectoryPage] = useState(1);
 
   const query = useQuery({
@@ -118,9 +163,10 @@ export function BankDirectoryPage() {
       `${row.name} ${row.bic} ${row.country}`.toLowerCase().includes(normalizedDirectoryQuery);
     const matchesMarket = market === "all" || row.market === market;
     const matchesCapability = capability === "all" || row.capability === capability;
-    return matchesQuery && matchesMarket && matchesCapability;
+    const matchesVerified = !verifiedOnly || row.resolved;
+    return matchesQuery && matchesMarket && matchesCapability && matchesVerified;
   });
-  const directoryPageSize = 5;
+  const directoryPageSize = 10;
   const directoryPageCount = Math.max(1, Math.ceil(filteredRows.length / directoryPageSize));
   const currentDirectoryPage = Math.min(directoryPage, directoryPageCount);
   const visibleRows = filteredRows.slice(
@@ -170,35 +216,64 @@ export function BankDirectoryPage() {
         />
         <Button type="submit" variant="secondary" className="bank-directory__search-submit">Look up</Button>
       </form>
-      <p id="bank-directory-search-help" className="sr-only">Type a bank name to filter the directory, or enter an 8 or 11 character BIC to look up its full record.</p>
+      <div className="bank-directory__search-guidance">
+        <p id="bank-directory-search-help">Type a bank name to filter the directory, or enter an 8 or 11 character BIC to open its full record.</p>
+        {searchBic === null && (
+          <div className="explore__examples">
+            <span className="bank-directory__guidance-label">Try:</span>
+            {EXAMPLE_BICS.map((example) => (
+              <button
+                key={example}
+                type="button"
+                className="explore__example"
+                onClick={() => { setBic(example); setSearchBic(example); }}
+              >
+                <span className="mono">{example}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="bank-directory__filters" aria-label="Bank directory filters">
-        <label className="bank-directory__select-chip">
-          <span className="sr-only">Market</span>
-          <select
-            aria-label="Filter by market"
-            value={market}
-            onChange={(event) => { setMarket(event.target.value); setDirectoryPage(1); }}
-          >
-            <option value="all">Market: All</option>
-            <option value="GB">Market: United Kingdom</option>
-            <option value="US">Market: United States</option>
-            <option value="DE">Market: Germany</option>
-            <option value="JP">Market: Japan</option>
-          </select>
-        </label>
-        <label className="bank-directory__select-chip">
-          <span className="sr-only">Capability</span>
-          <select
-            aria-label="Filter by capability"
-            value={capability}
-            onChange={(event) => { setCapability(event.target.value); setDirectoryPage(1); }}
-          >
-            <option value="all">Capability: All</option>
-            <option value="Cross-border">Capability: Cross-border</option>
-            <option value="Domestic">Capability: Domestic</option>
-          </select>
-        </label>
+        <RelaySelect
+          ariaLabel="Filter by market"
+          value={market}
+          onValueChange={(value) => { setMarket(value); setDirectoryPage(1); }}
+          triggerClassName="bank-directory__select"
+          options={[
+            { value: "all", label: "Market: All" },
+            { value: "GB", label: "Market: United Kingdom" },
+            { value: "US", label: "Market: United States" },
+            { value: "DE", label: "Market: Germany" },
+            { value: "JP", label: "Market: Japan" },
+            { value: "IN", label: "Market: India" },
+            { value: "ES", label: "Market: Spain" },
+          ]}
+        />
+        <RelaySelect
+          ariaLabel="Filter by capability"
+          value={capability}
+          onValueChange={(value) => { setCapability(value); setDirectoryPage(1); }}
+          triggerClassName="bank-directory__select"
+          options={[
+            { value: "all", label: "Capability: All" },
+            { value: "Cross-border", label: "Capability: Cross-border" },
+            { value: "Domestic", label: "Capability: Domestic" },
+          ]}
+        />
+        <button
+          type="button"
+          className={[
+            "bank-directory__filter-toggle",
+            verifiedOnly && "bank-directory__filter-toggle--active",
+          ].filter(Boolean).join(" ")}
+          aria-pressed={verifiedOnly}
+          onClick={() => { setVerifiedOnly((checked) => !checked); setDirectoryPage(1); }}
+        >
+          <Icon name="checkCircle" size={15} aria-hidden="true" />
+          Verified only
+        </button>
       </div>
 
       <section className="bank-directory__table-card" aria-labelledby="bank-directory-results-heading">
@@ -215,10 +290,14 @@ export function BankDirectoryPage() {
             </thead>
             <tbody>
               {visibleRows.map((row) => (
-                <tr key={row.bic}>
+                <tr
+                  key={row.bic}
+                  className="bank-directory__clickable-row"
+                  onClick={() => navigate(`/explore/banks/${encodeURIComponent(row.bic)}`)}
+                >
                   <td data-label="Institution">
                     <Link className="bank-directory__institution" to={`/explore/banks/${encodeURIComponent(row.bic)}`} aria-label={`Open ${row.name} details`}>
-                      <span className="bank-directory__logo" aria-hidden="true">{row.monogram}</span>
+                      {row.mark}
                       <span>{row.name}</span>
                     </Link>
                   </td>
@@ -248,29 +327,6 @@ export function BankDirectoryPage() {
           </div>
         </footer>
       </section>
-
-      {searchBic === null && (
-        <div className="explore__empty">
-          <p className="explore__empty-title">Find a bank to see its settlement instructions</p>
-          <p className="measure explore__empty-body">
-            Enter a SWIFT BIC (8 or 11 characters, for example GTBINGLAXXX or
-            CITIUS33) to see the bank&apos;s identity and the correspondents it
-            publishes for receiving payments. Try an example:
-          </p>
-          <div className="explore__examples">
-            {EXAMPLE_BICS.map((example) => (
-              <button
-                key={example}
-                type="button"
-                className="explore__example"
-                onClick={() => { setBic(example); setSearchBic(example); }}
-              >
-                <span className="mono">{example}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {searchBic && (
         <div className="explore__bank-result">

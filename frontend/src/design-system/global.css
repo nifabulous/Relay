@@ -112,6 +112,13 @@ a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited
 .sim-banner__icon { flex-shrink: 0; }
 .sim-banner__text { margin: 0; }
 
+/* The reserved banner height is a layout contract for the sticky top bar. On
+   compact viewports the long sentence would wrap and overlap the header, so
+   the essential label stays while the explanatory detail moves out of flow. */
+@media (max-width: 640px) {
+  .sim-banner__detail { display: none; }
+}
+
 /* ── Form controls — one baseline for the whole product ──────────────────────
    Every text-like control starts from this treatment; feature CSS overrides
    with class rules where a surface needs something different. This is what
