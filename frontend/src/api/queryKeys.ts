@@ -35,6 +35,20 @@ export const apiKeys = {
     },
   ),
 
+  bankDirectory: Object.assign(
+    (filters: {
+      q?: string;
+      country?: string;
+      capability?: string;
+      verified?: boolean;
+      limit?: number;
+      offset?: number;
+    }) => ["bankDirectory", filters] as const,
+    {
+      all: ["bankDirectory"] as const,
+    },
+  ),
+
   route: Object.assign(
     (bic: string, currency: string) => ["route", bic, currency] as const,
     {

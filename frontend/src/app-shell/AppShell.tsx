@@ -165,9 +165,17 @@ export function AppShell({ children }: { children?: ReactNode }) {
       <div className="sim-banner" role="alert">
         <Icon name="alertTriangle" size={13} className="sim-banner__icon" />
         <p className="sim-banner__text">
-          <strong>Educational payment simulation</strong> — Simulation, not a real payment. All data is illustrative.
+          <strong>Educational payment simulation</strong>
+          <span className="sim-banner__detail">
+            {" "}— Simulation, not a real payment. All data is illustrative.
+          </span>
+          <span className="sim-banner__detail sim-banner__detail--compact">
+            {" "}Simulation only — not a real payment.
+          </span>
         </p>
       </div>
+
+      <FloatingTutorLauncher onOpenChange={setTutorOpen} />
 
       {/* Top bar */}
       <header className="app-shell__topbar">
@@ -177,8 +185,10 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <span className="app-shell__brand-sub">Educational payment simulation</span>
         </div>
 
-        {/* The only entry point to preferences and, through it, to Settings. */}
-        <PreferencesMenu />
+        <div className="app-shell__actions">
+          {/* The only entry point to preferences and, through it, to Settings. */}
+          <PreferencesMenu />
+        </div>
       </header>
 
       <div className="app-shell__body">
@@ -216,12 +226,6 @@ export function AppShell({ children }: { children?: ReactNode }) {
           {children ?? <Outlet />}
         </main>
       </div>
-
-      {/* The tutor's single entry point, on every route. Contextual where a page
-          publishes context, global everywhere else. Kept out of the top bar
-          deliberately — that bar is already tight, and the bottom-right corner
-          is free at every width once the mobile nav is cleared. */}
-      <FloatingTutorLauncher onOpenChange={setTutorOpen} />
 
       {/* Mobile bottom navigation */}
       <nav className="app-shell__mobile-nav" aria-label="Mobile navigation">

@@ -21,6 +21,11 @@ class BankInfo(BaseModel):
     country_code: str
     city: Optional[str] = None
     country_currency: Optional[str] = None
+    # Directory metadata. Other lookup surfaces may omit these; the browse
+    # endpoint always computes them so the UI does not invent capabilities or
+    # audit status from a bank's name.
+    capability: Optional[Literal["swift", "local"]] = None
+    verified: Optional[bool] = None
 
 
 class SettlementIds(BaseModel):
@@ -61,6 +66,7 @@ class LookupResponse(BaseModel):
 class BankSearchResponse(BaseModel):
     query: str
     results: List[BankInfo] = Field(default_factory=list)
+    total: Optional[int] = None
 
 
 class RouteResponse(BaseModel):

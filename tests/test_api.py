@@ -17,6 +17,17 @@ def test_health_seeded(client):
     assert body["corridor_rules"] > 0
 
 
+def test_bank_directory_browse_uses_the_full_routing_directory(client):
+    r = client.get("/api/banks/search", params={"limit": 100})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] >= 250
+    gtb = client.get("/api/banks/search", params={"q": "GTBINGLA"}).json()
+    assert [result["bic"] for result in gtb["results"]] == ["GTBINGLAXXX"]
+    first_page = client.get("/api/banks/search", params={"limit": 1}).json()
+    assert first_page["total"] == body["total"]
+
+
 def test_validate_valid_iban(client):
     # GB29NWBK60161331926819 is NatWest's well-known test IBAN.
     r = client.get("/api/validate", params={"value": "GB29NWBK60161331926819"})
@@ -108,36 +119,50 @@ def test_lookup_unknown_bank(client):
     assert r.json()["found"] is False
 
 
-def test_bank_name_search_returns_case_insensitive_directory_matches(client):
+def test_bank_directory_search_returns_name_and_bic_matches(client):
     r = client.get("/api/banks/search", params={"q": "guaranty trust"})
 
     assert r.status_code == 200
     body = r.json()
     assert body["query"] == "guaranty trust"
     assert body["results"]
-    assert body["results"][0]["bank_name"] == "Guaranty Trust Bank"
-    assert body["results"][0]["bic"] == "GTBINGLAXXX"
+    guaranty = next(result for result in body["results"] if result["bic"] == "GTBINGLAXXX")
+    assert guaranty["bank_name"] == "Guaranty Trust Bank"
+    assert guaranty["capability"] in {"swift", "local"}
+    assert isinstance(guaranty["verified"], bool)
+    assert body["total"] >= len(body["results"])
 
 
-@pytest.mark.parametrize("limit", [1, 20])
-def test_bank_name_search_honors_inclusive_limit_boundaries(client, limit):
-    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+def test_bank_directory_search_matches_partial_bics(client):
+    r = client.get("/api/banks/search", params={"q": "GTBINGLA"})
 
     assert r.status_code == 200
-    assert len(r.json()["results"]) == limit
+    body = r.json()
+    assert [result["bic"] for result in body["results"]] == ["GTBINGLAXXX"]
 
 
-@pytest.mark.parametrize("limit", [0, 21, "not-a-number"])
+@pytest.mark.parametrize("limit", [1, 100])
+def test_bank_name_search_honors_inclusive_limit_boundaries(client, limit):
+    total = client.get("/api/banks/search", params={"limit": 1}).json()["total"]
+    r = client.get("/api/banks/search", params={"limit": limit})
+
+    assert r.status_code == 200
+    assert len(r.json()["results"]) == min(limit, total)
+
+
+@pytest.mark.parametrize("limit", [0, 101, "not-a-number"])
 def test_bank_name_search_rejects_invalid_limits(client, limit):
     r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
 
     assert r.status_code == 422
 
 
-def test_bank_name_search_normalizes_whitespace_and_requires_all_words(isolated_client):
+def test_bank_directory_search_normalizes_whitespace_and_matches_name_or_bic_tokens(
+    empty_client,
+):
     from app.models import Bank
 
-    client, SessionLocal = isolated_client
+    client, SessionLocal = empty_client
     with SessionLocal() as session:
         session.add_all(
             [
@@ -168,6 +193,93 @@ def test_bank_name_search_normalizes_whitespace_and_requires_all_words(isolated_
     body = r.json()
     assert body["query"] == "bank aurora meridian"
     assert [result["bic"] for result in body["results"]] == ["TARGUS33XXX"]
+    assert body["total"] == 1
+
+
+def test_bank_directory_browse_filters_by_country_and_capability(client):
+    all_rows = client.get("/api/banks/search", params={"limit": 100}).json()
+    assert all_rows["total"] > 0
+
+    japan = client.get(
+        "/api/banks/search",
+        params={"country": "JP", "capability": "swift", "limit": 100},
+    ).json()
+    assert japan["query"] == ""
+    assert japan["total"] > 0
+    assert all(row["country_code"] == "JP" for row in japan["results"])
+    assert all(row["capability"] == "swift" for row in japan["results"])
+    assert japan["total"] < all_rows["total"]
+
+
+@pytest.mark.parametrize(
+    ("stored_value", "expected"),
+    [
+        ("Y", "swift"),
+        ("y", "swift"),
+        (None, "swift"),
+        ("N", "local"),
+        ("n", "local"),
+        ("X", "local"),
+    ],
+)
+def test_bank_directory_capability_filter_matches_serialization(
+    empty_client,
+    stored_value,
+    expected,
+):
+    from app.models import Bank
+
+    client, SessionLocal = empty_client
+    bic = f"CAP{expected[:2].upper()}US3"
+    with SessionLocal() as session:
+        session.add(
+            Bank(
+                bic=bic,
+                bank_name=f"Capability {stored_value or 'null'}",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+                swift_active=stored_value,
+            )
+        )
+        session.commit()
+
+    matching = client.get("/api/banks/search", params={"q": bic, "capability": expected}).json()
+    opposite = "local" if expected == "swift" else "swift"
+    excluded = client.get("/api/banks/search", params={"q": bic, "capability": opposite}).json()
+
+    assert [result["bic"] for result in matching["results"]] == [bic]
+    assert matching["results"][0]["capability"] == expected
+    assert excluded["results"] == []
+
+
+def test_bank_directory_pagination_returns_the_requested_window(client):
+    first = client.get("/api/banks/search", params={"limit": 2, "offset": 0}).json()
+    second = client.get("/api/banks/search", params={"limit": 2, "offset": 2}).json()
+
+    assert len(first["results"]) == 2
+    assert len(second["results"]) == 2
+    assert {row["bic"] for row in first["results"]}.isdisjoint(
+        {row["bic"] for row in second["results"]}
+    )
+    assert first["total"] == second["total"]
+
+
+def test_bank_directory_verified_filter_uses_settlement_records(client):
+    all_rows = client.get("/api/banks/search", params={"limit": 100}).json()
+    verified = client.get(
+        "/api/banks/search",
+        params={"limit": 100, "verified": True},
+    ).json()
+    unverified = client.get(
+        "/api/banks/search",
+        params={"limit": 100, "verified": False},
+    ).json()
+
+    assert verified["total"] > 0
+    assert all(row["verified"] is True for row in verified["results"])
+    assert all(row["verified"] is False for row in unverified["results"])
+    assert verified["total"] + unverified["total"] == all_rows["total"]
 
 
 @pytest.mark.parametrize("literal", ["%%", "__"])
@@ -179,10 +291,10 @@ def test_bank_name_search_treats_like_metacharacters_literally(client, literal):
     assert r.json()["results"] == []
 
 
-def test_bank_name_search_matches_a_literal_backslash(isolated_client):
+def test_bank_name_search_matches_a_literal_backslash(empty_client):
     from app.models import Bank
 
-    client, SessionLocal = isolated_client
+    client, SessionLocal = empty_client
     with SessionLocal() as session:
         session.add(
             Bank(
@@ -201,6 +313,41 @@ def test_bank_name_search_matches_a_literal_backslash(isolated_client):
     body = r.json()
     assert body["query"] == r"backslash \ bank"
     assert [result["bic"] for result in body["results"]] == ["BKSLUS33XXX"]
+
+
+def test_bank_directory_requires_every_search_token_to_match_the_same_row(empty_client):
+    from app.models import Bank
+
+    client, SessionLocal = empty_client
+    with SessionLocal() as session:
+        session.add_all(
+            [
+                Bank(
+                    bic="APHAUS33XXX",
+                    bank_name="Alpha Beta Bank",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+                Bank(
+                    bic="BETAUS22XXX",
+                    bank_name="Beta Gamma Bank",
+                    country_code="US",
+                    city="Chicago",
+                    country_currency="USD",
+                ),
+            ]
+        )
+        session.commit()
+
+    r = client.get(
+        "/api/banks/search",
+        params={"q": "alpha beta"},
+    )
+
+    assert r.status_code == 200
+    body = r.json()
+    assert [result["bic"] for result in body["results"]] == ["APHAUS33XXX"]
 
 
 def test_route_usd_to_nigeria(client):

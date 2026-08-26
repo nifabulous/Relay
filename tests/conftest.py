@@ -116,3 +116,41 @@ def isolated_client():
         app.dependency_overrides.clear()
         app.dependency_overrides.update(previous_overrides)
         engine.dispose()
+
+
+@pytest.fixture()
+def empty_client():
+    """HTTP client with an empty database for controlled directory searches."""
+    from app.db import get_db
+    from app.main import app
+
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(bind=engine)
+    EmptySessionLocal = sessionmaker(
+        bind=engine,
+        autoflush=False,
+        autocommit=False,
+        future=True,
+    )
+
+    def _empty_get_db():
+        session = EmptySessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    previous_overrides = dict(app.dependency_overrides)
+    app.dependency_overrides[get_db] = _empty_get_db
+    try:
+        with TestClient(app) as c:
+            yield c, EmptySessionLocal
+    finally:
+        app.dependency_overrides.clear()
+        app.dependency_overrides.update(previous_overrides)
+        engine.dispose()
