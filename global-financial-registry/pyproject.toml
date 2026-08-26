@@ -1,0 +1,40 @@
+[project]
+name = "global-financial-registry"
+version = "0.1.0"
+description = "Reproducible global financial institution and brand registry core"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "cairosvg>=2.7,<3",
+  "defusedxml>=0.7,<1",
+  "httpx>=0.27,<1",
+  "imagehash>=4.3,<5",
+  "pillow>=10,<12",
+  "pycountry>=24.6,<25",
+  "pydantic>=2.5,<3",
+  "typer>=0.12,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "pytest-cov>=5,<7",
+  "ruff>=0.4,<1",
+]
+
+[project.scripts]
+financial-registry = "financial_registry.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
