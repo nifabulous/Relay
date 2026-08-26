@@ -1,0 +1,258 @@
+{
+  "aliases": [
+    {
+      "alias_type": "national_code",
+      "alias_value": "Example Bank Old",
+      "owner_id": "inst_example_bank",
+      "source_id": "src_regulator_gb"
+    }
+  ],
+  "asset_root": "logos",
+  "assets": [
+    {
+      "binary_path": "assets/asset_example_bank.svg",
+      "format": "svg",
+      "id": "asset_example_bank",
+      "license_name": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "owner_id": "brand_example_bank",
+      "review_status": "approved",
+      "reviewed_at": "2026-08-26T00:00:00+00:00",
+      "reviewed_by": "fixture",
+      "rights_status": "redistributable",
+      "sha256": "134daa8ffeb17ed9e56a345d6e9775f69f43821738fb2aa9fd320d08c1d377d9",
+      "source_id": "src_regulator_gb",
+      "source_uri": "https://example-bank.test/logo.svg",
+      "staging_path": "example-bank.svg",
+      "territories": [
+        "GB"
+      ],
+      "variant": "primary",
+      "verified_at": "2026-08-26T00:00:00+00:00"
+    },
+    {
+      "binary_path": null,
+      "format": "svg",
+      "id": "asset_example_wallet",
+      "license_name": null,
+      "license_url": null,
+      "owner_id": "brand_example_wallet",
+      "review_status": "approved",
+      "reviewed_at": null,
+      "rights_status": "source_link_only",
+      "sha256": null,
+      "source_id": "src_regulator_ng",
+      "source_uri": "https://example-wallet.test/logo.svg",
+      "staging_path": null,
+      "territories": [],
+      "variant": "primary",
+      "verified_at": null
+    }
+  ],
+  "brands": [
+    {
+      "aliases": [
+        "Example Bank PLC"
+      ],
+      "confidence": 1.0,
+      "country_codes": [
+        "GB"
+      ],
+      "display_name": "Example Bank",
+      "domains": [
+        "example-bank.test"
+      ],
+      "id": "brand_example_bank",
+      "localized_names": {
+        "en": "Example Bank"
+      },
+      "source_ids": [
+        "src_regulator_gb"
+      ],
+      "status": "active"
+    },
+    {
+      "aliases": [
+        "Example Wallet Ltd"
+      ],
+      "confidence": 1.0,
+      "country_codes": [
+        "NG"
+      ],
+      "display_name": "Example Wallet",
+      "domains": [
+        "example-wallet.test"
+      ],
+      "id": "brand_example_wallet",
+      "localized_names": {
+        "en": "Example Wallet"
+      },
+      "source_ids": [
+        "src_regulator_ng"
+      ],
+      "status": "active"
+    }
+  ],
+  "identifiers": [
+    {
+      "confidence": 1.0,
+      "country_code": "GB",
+      "owner_id": "inst_example_bank",
+      "source_id": "src_regulator_gb",
+      "type": "bic",
+      "value": "EXBKGB2L"
+    },
+    {
+      "confidence": 1.0,
+      "owner_id": "inst_example_bank",
+      "source_id": "src_regulator_gb",
+      "type": "domain",
+      "value": "example-bank.test"
+    },
+    {
+      "confidence": 1.0,
+      "country_code": "NG",
+      "owner_id": "inst_example_wallet",
+      "source_id": "src_regulator_ng",
+      "type": "bic",
+      "value": "EXWANG21"
+    }
+  ],
+  "institutions": [
+    {
+      "aliases": [
+        "Example Bank"
+      ],
+      "canonical_key": "institution:example-bank-gb",
+      "categories": [
+        "commercial_bank"
+      ],
+      "confidence": 1.0,
+      "country_code": "GB",
+      "domains": [
+        "example-bank.test"
+      ],
+      "id": "inst_example_bank",
+      "jurisdictions": [
+        "GB"
+      ],
+      "legal_name": "Example Bank PLC",
+      "normalized_name": "example bank",
+      "operating_markets": [
+        "GB"
+      ],
+      "regulator_identifier": "GB001",
+      "regulator_jurisdiction": "GB",
+      "short_name": "Example Bank",
+      "source_ids": [
+        "src_regulator_gb"
+      ],
+      "status": "active"
+    },
+    {
+      "aliases": [
+        "Example Wallet"
+      ],
+      "canonical_key": "institution:example-wallet-ng",
+      "categories": [
+        "mobile_wallet"
+      ],
+      "confidence": 1.0,
+      "country_code": "NG",
+      "domains": [
+        "example-wallet.test"
+      ],
+      "id": "inst_example_wallet",
+      "jurisdictions": [
+        "NG"
+      ],
+      "legal_name": "Example Wallet Ltd",
+      "normalized_name": "example wallet",
+      "operating_markets": [
+        "NG"
+      ],
+      "regulator_identifier": "NG001",
+      "regulator_jurisdiction": "NG",
+      "short_name": "Example Wallet",
+      "source_ids": [
+        "src_regulator_ng"
+      ],
+      "status": "active"
+    }
+  ],
+  "rekey_events": [
+    {
+      "id": "rekey_example_bank",
+      "new_key": "institution:example-bank-gb",
+      "occurred_at": "2026-08-25T00:00:00+00:00",
+      "old_key": "institution:example-bank-old-gb",
+      "owner_id": "inst_example_bank",
+      "reason": "source correction",
+      "source_id": "src_regulator_gb"
+    }
+  ],
+  "relationships": [
+    {
+      "confidence": 1.0,
+      "from_id": "brand_example_bank",
+      "id": "rel_example_bank",
+      "relation_type": "brand_of",
+      "source_id": "src_regulator_gb",
+      "to_id": "inst_example_bank"
+    },
+    {
+      "confidence": 1.0,
+      "from_id": "brand_example_wallet",
+      "id": "rel_example_wallet",
+      "relation_type": "brand_of",
+      "source_id": "src_regulator_ng",
+      "to_id": "inst_example_wallet"
+    }
+  ],
+  "source_runs": [
+    {
+      "candidate_count": 1,
+      "finished_at": "2026-08-26T00:00:00+00:00",
+      "id": "src_regulator_gb:fixture",
+      "snapshot_path": "snapshots/gb.bin",
+      "snapshot_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "source_id": "src_regulator_gb",
+      "started_at": "2026-08-26T00:00:00+00:00",
+      "status": "succeeded"
+    },
+    {
+      "candidate_count": 1,
+      "finished_at": "2026-08-26T00:00:00+00:00",
+      "id": "src_regulator_ng:fixture",
+      "snapshot_path": "snapshots/ng.bin",
+      "snapshot_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_id": "src_regulator_ng",
+      "started_at": "2026-08-26T00:00:00+00:00",
+      "status": "succeeded"
+    }
+  ],
+  "sources": [
+    {
+      "check_frequency": "daily",
+      "connector_version": "fixture-1",
+      "id": "src_regulator_gb",
+      "jurisdiction": "GB",
+      "publisher": "Bank of England",
+      "source_type": "regulator",
+      "terms_url": "https://www.bankofengland.co.uk/terms",
+      "trust_tier": "authoritative",
+      "url": "https://www.bankofengland.co.uk/register"
+    },
+    {
+      "check_frequency": "daily",
+      "connector_version": "fixture-1",
+      "id": "src_regulator_ng",
+      "jurisdiction": "NG",
+      "publisher": "Central Bank of Nigeria",
+      "source_type": "regulator",
+      "terms_url": "https://www.cbn.gov.ng/terms",
+      "trust_tier": "authoritative",
+      "url": "https://www.cbn.gov.ng/register"
+    }
+  ]
+}

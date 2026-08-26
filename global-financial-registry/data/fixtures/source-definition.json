@@ -1,0 +1,11 @@
+{
+  "id": "src_regulator_gb",
+  "publisher": "Bank of England",
+  "jurisdiction": "GB",
+  "source_type": "regulator",
+  "url": "https://www.bankofengland.co.uk/register",
+  "terms_url": "https://www.bankofengland.co.uk/terms",
+  "trust_tier": "authoritative",
+  "check_frequency": "daily",
+  "connector_version": "fixture-1"
+}
