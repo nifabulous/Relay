@@ -25,7 +25,7 @@ In the repository settings:
 11. Optionally add `CODEX_CHECK_MAX_ITEMS` (default `50`) and `CODEX_CHECK_MAX_BYTES` (default `20000`) to bound exact-head CI evidence.
 12. Optionally add `CODEX_CONTEXT_MAX_FILES` (default `10`) and `CODEX_CONTEXT_MAX_BYTES` (default `50000`) to bound trusted default-branch reference material.
 13. Optionally add `CODEX_CHECK_MAX_PAGES` (default `10`) and `CODEX_CHECK_MAX_RAW_BYTES` (default `200000`) to bound the number and raw byte size of exact-head check-run API pages before evidence rendering. If a page exceeds the raw cap or is malformed, the review proceeds with an explicit unavailable-evidence note.
-14. Optionally add `CODEX_CI_WORKFLOW_FILE` (default `ci.yml`), `CODEX_CI_DISCOVERY_SECONDS` (default `60`), and `CODEX_CI_DISCOVERY_POLL_SECONDS` (default `10`) for the direct-event fallback probe.
+14. The production CI workflow identity is fixed to `ci.yml`, matching the `workflow_run` trigger; it is not a repository-variable override. Optionally add `CODEX_CI_DISCOVERY_SECONDS` (default `60`) and `CODEX_CI_DISCOVERY_POLL_SECONDS` (default `10`) for the direct-event fallback probe.
 15. Set `ARBITER_AUTOPOST=1` only when the repository should allow the model-free arbiter to create or edit its per-PR disposition comment. Unset means summary-only evaluation. `ARBITER_SOFT_GATE` (default `5`), `ARBITER_HARD_CAP` (default `10`), `ARBITER_STUCK_P1_ROUNDS` (default `3`), and `ARBITER_UNVERIFIABLE_ROUNDS` (default `2`) are strict positive-integer termination controls.
 16. Create the labels `codex-review` and `codex-triage` if scheduled review is wanted.
 
