@@ -834,6 +834,38 @@ def test_validate_trailer_rejects_malformed_unverifiable(unverifiable):
     assert err == "bad-unverifiable"
 
 
+@pytest.mark.parametrize(
+    "missing",
+    ["line one\n@everyone", "embedded\x00control", "x" * 513],
+)
+def test_validate_trailer_rejects_unsafe_unverifiable_missing(missing):
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": missing},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "bad-unverifiable"
+
+
+def test_validate_trailer_redacts_secret_in_unverifiable_missing():
+    secret = "sk-live-" + "a" * 20
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": f"artifact token {secret}"},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert err is None
+    assert validated["findings"][0]["unverifiable"]["missing"] == (
+        "artifact token [REDACTED_TOKEN]"
+    )
+    assert secret not in json.dumps(validated)
+
+
 def test_validate_trailer_rejects_unverifiable_resolved_finding():
     finding = _finding(
         "P2", "RESOLVED", "app/a.py", "verification", "missing-proof",
@@ -1218,7 +1250,7 @@ def test_render_comment_includes_unverifiable_missing_artifact():
         }],
     )
     body = arb.render_comment(decision, 100)
-    assert "Missing artifact: exact-head check result." in body
+    assert "Missing artifact: `exact-head check result`." in body
 
 
 def test_render_gap_issue_body_includes_unverifiable_missing_artifact():
@@ -1232,7 +1264,35 @@ def test_render_gap_issue_body_includes_unverifiable_missing_artifact():
         "first_round": 1,
     }
     body = arb.render_gap_issue_body(gap, 100, None, None)
-    assert "Missing artifact: exact-head check result." in body
+    assert "Missing artifact: `exact-head check result`." in body
+
+
+def test_render_unverifiable_missing_escapes_markup_and_mentions():
+    decision = arb.Decision(
+        recommendation="MERGE-WITH-GAPS",
+        loop_action="MERGE-WITH-GAPS",
+        cited_rule="EXHAUSTED-NOVELTY",
+        needs_human=True,
+        round_count=2,
+        proposed_gaps=[{
+            "id": "missing-proof",
+            "file": "app/a.py",
+            "cat": "verification",
+            "sev": "P2",
+            "status": "unverifiable",
+            "missing": "@everyone `<!-- injected -->`",
+            "first_round": 1,
+        }],
+    )
+
+    comment = arb.render_comment(decision, 100)
+    issue = arb.render_gap_issue_body(decision.proposed_gaps[0], 100, None, None)
+
+    expected = "Missing artifact: `@everyone &#96;&lt;!-- injected --&gt;&#96;`."
+    assert expected in comment
+    assert expected in issue
+    assert "<!-- injected -->" not in comment
+    assert "<!-- injected -->" not in issue
 
 
 def test_arbiter_source_makes_no_model_or_http_calls():

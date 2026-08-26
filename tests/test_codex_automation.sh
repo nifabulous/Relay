@@ -284,8 +284,9 @@ for file in .github/workflows/codex-pr-review.yml .github/workflows/codex-issue-
   require_text "$file" 'actions/setup-python@'
 done
 
+require_text '.github/workflows/codex-pr-review.yml' 'targets:'
 require_text '.github/workflows/codex-pr-review.yml' 'arbiter:'
-require_text '.github/workflows/codex-pr-review.yml' 'needs: [review]'
+require_text '.github/workflows/codex-pr-review.yml' 'needs: [targets]'
 require_text '.github/workflows/codex-pr-review.yml' \
   'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
 for arbiter_knob in ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS; do
@@ -311,26 +312,39 @@ for forbidden in OPENAI_API_KEY codex_responses.py 'codex exec' pytest 'npm test
   fi
 done
 
-# The bounded PR set must flow directly from the review job into the arbiter;
-# an independently selected set would not necessarily review the same PRs.
+# The bounded PR set must flow directly from target selection into both matrix
+# jobs. Per-PR concurrency and fail-fast=false are what keep a scheduled batch
+# from racing event-driven work and keep one failure from suppressing later PRs.
 ruby_status=0
 ruby -ryaml <<'RUBY' || ruby_status=1
 workflow = YAML.load_file(".github/workflows/codex-pr-review.yml")
 jobs = workflow.fetch("jobs")
+targets = jobs.fetch("targets")
 review = jobs.fetch("review")
 arbiter = jobs.fetch("arbiter")
-concurrency_group = workflow.fetch("concurrency").fetch("group")
-raise unless review.fetch("outputs").fetch("pr_numbers") ==
+raise if workflow.key?("concurrency")
+raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.targets.outputs.pr_numbers }}"
-raise unless Array(arbiter.fetch("needs")) == ["review"]
-raise unless arbiter.fetch("env").fetch("PR_NUMBERS_JSON") ==
-  "${{ needs.review.outputs.pr_numbers }}"
+raise unless targets.fetch("outputs").fetch("expected_head_sha") ==
+  "${{ steps.targets.outputs.expected_head_sha }}"
+raise unless Array(review.fetch("needs")) == ["targets"]
+raise unless review.fetch("strategy").fetch("fail-fast") == false
+raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
+  "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
+raise unless review.fetch("concurrency").fetch("group") ==
+  "codex-pr-review-${{ matrix.pr_number }}"
+raise unless Array(arbiter.fetch("needs")).sort == ["review", "targets"]
+raise unless arbiter.fetch("strategy").fetch("fail-fast") == false
+raise unless arbiter.fetch("strategy").fetch("matrix").fetch("pr_number") ==
+  "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
+raise unless arbiter.fetch("concurrency").fetch("group") ==
+  "codex-pr-review-${{ matrix.pr_number }}"
+raise if arbiter.fetch("env").key?("PR_NUMBERS_JSON")
 %w[ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS].each do |name|
   raise unless arbiter.fetch("env").fetch(name).include?("vars.#{name}")
 end
 raise unless arbiter.fetch("if").include?("always()")
-raise unless arbiter.fetch("if").include?("needs.review.result == 'failure'")
-raise unless concurrency_group.include?("github.event.workflow_run.pull_requests[0].number")
+raise unless arbiter.fetch("if").include?("needs.review.result == 'cancelled'")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Arbiter workflow is structurally disconnected from the review PR set.'

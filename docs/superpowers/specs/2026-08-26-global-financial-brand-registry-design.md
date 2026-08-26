@@ -1,7 +1,7 @@
 # Global Financial Brand Registry and Logo API Design
 
-**Date:** 2026-08-26  
-**Status:** Design approved in conversation; awaiting written-spec review  
+**Date:** 2026-08-26
+**Status:** Design approved in conversation; awaiting written-spec review
 **Product boundary:** Standalone product, separate from the Relay/SWIFT Routing application
 
 ## Summary

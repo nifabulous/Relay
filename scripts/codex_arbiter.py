@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import re
@@ -105,6 +106,8 @@ _FILE_MAX_LEN = 256
 # syntax when paired. Anything structural is rejected upstream rather than
 # escaped downstream.
 _FILE_FORBIDDEN = ("<", ">", "`", "{", "}", "--")
+_UNVERIFIABLE_MISSING_MAX_LEN = 512
+_UNVERIFIABLE_MISSING_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 _TRAILER_OPEN = "<!-- codex-verdict:"
 _TRAILER_CLOSE = "-->"
 
@@ -112,6 +115,34 @@ _TRAILER_CLOSE = "-->"
 # --------------------------------------------------------------------------- #
 # Contract + Decision.                                                          #
 # --------------------------------------------------------------------------- #
+
+
+def _normalize_unverifiable_missing(value: object) -> Optional[str]:
+    """Return a single-line, bounded artifact description or ``None``.
+
+    ``missing`` is model output, so it must not be allowed to add Markdown
+    structure, mentions, HTML, or an unbounded payload to a bot-authored write.
+    Validation rejects unsafe values; renderers call the same helper as a
+    defensive backstop for decisions assembled directly in tests or callers.
+    """
+    if not isinstance(value, str) or _UNVERIFIABLE_MISSING_CONTROL_RE.search(value):
+        return None
+    normalized = " ".join(value.split())
+    if not normalized or len(normalized) > _UNVERIFIABLE_MISSING_MAX_LEN:
+        return None
+    # Apply the repository's canonical credential/payment redaction before the
+    # value enters the arbiter state. The final postable-body sanitizer remains
+    # a second defensive layer, but direct renderers and proposed-gap data must
+    # not retain a secret merely because a caller bypassed that wrapper.
+    return _sanitize_gap_body(normalized)
+
+
+def _render_unverifiable_missing(value: object) -> str:
+    normalized = _normalize_unverifiable_missing(value)
+    if normalized is None:
+        normalized = "[invalid missing-artifact text]"
+    escaped = html.escape(normalized, quote=True).replace("`", "&#96;")
+    return f"`{escaped}`"
 
 
 def _positive_env_int(env, name: str, default: int) -> int:
@@ -332,12 +363,18 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
             return None, "bad-file"
         if "unverifiable" in finding:
             unverifiable = finding["unverifiable"]
+            missing = (
+                _normalize_unverifiable_missing(unverifiable.get("missing"))
+                if isinstance(unverifiable, dict) else None
+            )
             if (
                 not isinstance(unverifiable, dict)
-                or not isinstance(unverifiable.get("missing"), str)
-                or not unverifiable["missing"].strip()
+                or missing is None
             ):
                 return None, "bad-unverifiable"
+            # Keep the canonical history value normalized so every downstream
+            # renderer sees the same bounded field, not the raw model text.
+            unverifiable["missing"] = missing
             if finding["state"] == "RESOLVED":
                 return None, "unverifiable-resolved"
         if finding["state"] == "RESOLVED":
@@ -870,7 +907,10 @@ def render_comment(decision: Decision, pr) -> str:
                 f"first raised round {gap['first_round']}"
             )
             if gap.get("status") == "unverifiable":
-                gap_line += f" — Missing artifact: {gap['missing'].strip()}."
+                gap_line += (
+                    f" — Missing artifact: "
+                    f"{_render_unverifiable_missing(gap.get('missing'))}."
+                )
             lines.append(gap_line)
     lines.append("")
     lines.append("_Deterministic arbiter (no model call). Human approval is required before merge._")
@@ -1019,7 +1059,7 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
     (never appended at the end, where truncation could drop it).
     """
     missing_line = (
-        [f"- Missing artifact: {gap['missing'].strip()}."]
+        [f"- Missing artifact: {_render_unverifiable_missing(gap.get('missing'))}."]
         if gap.get("status") == "unverifiable" else []
     )
     lines = [
