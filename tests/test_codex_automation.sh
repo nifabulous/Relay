@@ -506,12 +506,24 @@ case "${1:-}" in
       page_fixture="$CODEX_STUB_DIR/check-runs-${requested_sha}-page-${requested_page}.json"
       sha_fixture="$CODEX_STUB_DIR/check-runs-${requested_sha}.json"
       if [[ -n "$requested_sha" && -n "$requested_page" && -f "$page_fixture" ]]; then
-        jq '.' <"$page_fixture"
+        fixture="$page_fixture"
       elif [[ -n "$requested_sha" && -f "$sha_fixture" ]]; then
-        jq '.' <"$sha_fixture"
+        fixture="$sha_fixture"
       else
-        jq '.' <"$CODEX_STUB_DIR/check-runs.json"
+        fixture="$CODEX_STUB_DIR/check-runs.json"
       fi
+      response_file="$CODEX_STUB_DIR/check-response-$$.json"
+      if [[ -n "$requested_page" && -n "$requested_per_page" ]]; then
+        jq --argjson page "$requested_page" --argjson per_page "$requested_per_page" \
+          '.check_runs = (.check_runs[($page - 1) * $per_page : $page * $per_page])' \
+          <"$fixture" >"$response_file"
+      else
+        jq '.' <"$fixture" >"$response_file"
+      fi
+      printf '%s\t%s\n' "$requested_page" "$(jq '.check_runs | length' "$response_file")" \
+        >>"$CODEX_STUB_DIR/check-response.log"
+      cat "$response_file"
+      rm -f "$response_file"
     elif [[ "$*" == *"/actions/workflows/"*"/runs"* ]]; then
       apply_jq "$@" <"$CODEX_STUB_DIR/workflow-runs.json"
     elif [[ "$*" == *"/git/ref/heads/"* ]]; then
@@ -827,7 +839,7 @@ prepare_ci_review_case() {
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
   rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-comment.md" "$STUB_DIR/patched.log"
-  rm -f "$STUB_DIR/check-sha.log" "$STUB_DIR/check-query.log" "$STUB_DIR"/check-runs-*.json
+  rm -f "$STUB_DIR/check-sha.log" "$STUB_DIR/check-query.log" "$STUB_DIR/check-response.log" "$STUB_DIR"/check-runs-*.json
   printf '%s\n' "$(jq -n --arg sha "$CI_HEAD" \
     '{login: "someone-else", body: "no marker here"}')" \
     >"$STUB_DIR/comments.jsonl"
@@ -1184,6 +1196,9 @@ check_check_run_item_and_page_limits_are_enforced() {
     ! grep -Fq $'\t1\t2' "$STUB_DIR/check-query.log"; then
     fail 'The check-run item limit did not stop after one bounded page request.'
   fi
+  if ! grep -Fq $'1\t2' "$STUB_DIR/check-response.log"; then
+    fail 'The fake check-run API did not return only the requested item count.'
+  fi
   if ! grep -Fq '"omitted_count": 2' "$STUB_DIR/captured-input.md"; then
     fail 'The check-run item limit did not report the omitted count.'
   fi
@@ -1213,6 +1228,9 @@ check_check_run_item_and_page_limits_are_enforced() {
   if [[ "$(wc -l <"$STUB_DIR/check-query.log" | tr -d ' ')" != 1 ]] ||
     ! grep -Fq $'\t1\t4' "$STUB_DIR/check-query.log"; then
     fail 'The check-run page limit did not stop after the configured page count.'
+  fi
+  if ! grep -Fq $'1\t2' "$STUB_DIR/check-response.log"; then
+    fail 'The fake check-run API did not return the first page size.'
   fi
   if ! grep -Fq '"omitted_count": 2' "$STUB_DIR/captured-input.md" ||
     ! grep -Fq '"truncated": true' "$STUB_DIR/captured-input.md"; then

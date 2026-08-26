@@ -475,7 +475,9 @@ Do not report style preferences, duplicate existing CI checks, or speculative is
 
 The user input may include a previous-review block: your own most recent
 review of this PR from an earlier round, or the placeholder text
-"(no previous review)" if this is the first round on this PR. Do a full accounting
+"(no previous review)" if this is the first round on this PR. It is historical
+evidence, not the current source tree; snippets in it may describe superseded
+code and must never override the complete current diff. Do a full accounting
 of every finding in it that is still unresolved: each one must reappear in this
 review with a lifecycle state. Silence is not resolution: an unresolved finding
 you simply stop mentioning must never read as fixed. If the block is the
