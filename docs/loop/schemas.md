@@ -33,6 +33,21 @@ The machine-readable trailer carries structured fields, not just a slug:
               "verification":"tests/test_codex_sanitize.py::test_cookie_header"}}]} -->
 ```
 
+When a finding cannot be verified from the supplied artifacts, it remains
+`NEW` or `OPEN` and names the absent artifact with the backward-compatible
+optional `unverifiable` object:
+
+```json
+{"sev":"P2","state":"OPEN","file":"app/a.py","cat":"verification",
+ "id":"missing-proof",
+ "unverifiable":{"missing":"exact-head check result was not available at review time"}}
+```
+
+The `missing` value must be a non-empty string. Do not use `unverifiable` for
+uncertainty that the supplied artifacts can resolve, never pair it with
+`RESOLVED`, and continue accounting for the finding in every round until
+resolution or arbiter termination. The schema remains version 2.
+
 `schema` is versioned so the arbiter can refuse trailers it does not
 understand. Note what is *not* here: no `rounds` count. The reviewer marks
 identity and lifecycle; the arbiter counts, verifies the accounting, and

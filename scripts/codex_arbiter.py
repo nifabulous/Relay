@@ -61,6 +61,8 @@ RULE_SOFT_GATE = "SOFT-GATE"
 RULE_HARD_CAP = "HARD-CAP"
 RULE_CONTINUE = "CONTINUE"
 RULE_P1_PENDING = "P1-RESOLUTION-PENDING"
+RULE_UNVERIFIABLE_HIGH_SEVERITY = "UNVERIFIABLE-HIGH-SEVERITY"
+RULE_UNVERIFIABLE_ROUND_CAP = "UNVERIFIABLE-ROUND-CAP"
 # fail-closed cited rules (§6.1) — always paired with loop_action CONTINUE
 RULE_MALFORMED = "MALFORMED-TRAILER"
 RULE_ACCOUNTING_GAP = "ACCOUNTING-GAP"
@@ -192,6 +194,8 @@ class _Tracked:
     sev: str
     first_round: int
     open_round_indices: List[int] = field(default_factory=list)
+    unverifiable_round_indices: List[int] = field(default_factory=list)
+    unverifiable_missing: str = ""
 
 
 # --------------------------------------------------------------------------- #
@@ -326,6 +330,16 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
             return None, "bad-file"
         if any(marker in finding["file"] for marker in _FILE_FORBIDDEN):
             return None, "bad-file"
+        if "unverifiable" in finding:
+            unverifiable = finding["unverifiable"]
+            if (
+                not isinstance(unverifiable, dict)
+                or not isinstance(unverifiable.get("missing"), str)
+                or not unverifiable["missing"].strip()
+            ):
+                return None, "bad-unverifiable"
+            if finding["state"] == "RESOLVED":
+                return None, "unverifiable-resolved"
         if finding["state"] == "RESOLVED":
             evidence = finding.get("evidence")
             if not isinstance(evidence, dict):
@@ -431,7 +445,7 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                     RULE_AMBIGUOUS_IDENTITY,
                     f"NEW finding {fid!r} at {key} collides with still-open {open_set[key].id!r}",
                 )
-            open_set[key] = _Tracked(
+            tracked = _Tracked(
                 id=fid,
                 key=key,
                 file=finding["file"],
@@ -440,6 +454,11 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                 first_round=idx,
                 open_round_indices=[idx],
             )
+            unverifiable = finding.get("unverifiable")
+            if unverifiable is not None:
+                tracked.unverifiable_round_indices.append(idx)
+                tracked.unverifiable_missing = unverifiable["missing"].strip()
+            open_set[key] = tracked
             touched_keys.add(key)
             continue
 
@@ -469,6 +488,10 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
 
         if state == "OPEN":
             tracked.open_round_indices.append(idx)
+            unverifiable = finding.get("unverifiable")
+            if unverifiable is not None:
+                tracked.unverifiable_round_indices.append(idx)
+                tracked.unverifiable_missing = unverifiable["missing"].strip()
         else:  # RESOLVED
             if _evidence_ok(finding.get("evidence"), diff_files):
                 del open_set[tracked.key]
@@ -524,17 +547,21 @@ def _is_repeated(tracked: _Tracked, latest_index: int) -> bool:
     return tracked.first_round < latest_index
 
 
-def _proposed_gaps(open_findings, pending_human) -> List[dict]:
+def _proposed_gaps(open_findings, pending_human, latest_index) -> List[dict]:
     gaps = []
     for tracked in sorted(open_findings, key=lambda t: (t.sev, t.first_round)):
-        gaps.append({
+        gap = {
             "id": tracked.id,
             "file": tracked.file,
             "cat": tracked.cat,
             "sev": tracked.sev,
             "status": "open",
             "first_round": tracked.first_round + 1,
-        })
+        }
+        if latest_index in tracked.unverifiable_round_indices:
+            gap["status"] = "unverifiable"
+            gap["missing"] = tracked.unverifiable_missing
+        gaps.append(gap)
     for tracked in sorted(pending_human.values(), key=lambda t: t.first_round):
         gaps.append({
             "id": tracked.id,
@@ -614,6 +641,45 @@ def decide(history, contract: Contract) -> Decision:
     # 4. Rules — first match wins (§6.2). "Findings" means the open-set.
     open_findings = list(open_set.values())
     open_p1 = [t for t in open_findings if t.sev == "P1"]
+    latest_unverifiable = [
+        tracked for tracked in open_findings
+        if latest_index in tracked.unverifiable_round_indices
+    ]
+
+    # An unverifiable high-severity finding cannot be closed or treated as an
+    # ordinary loop continuation: a human must supply the missing evidence.
+    if any(tracked.sev == "P1" for tracked in latest_unverifiable):
+        return _result(
+            CONTINUE,
+            RULE_UNVERIFIABLE_HIGH_SEVERITY,
+            True,
+            round_count,
+            proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
+            detail="a high-severity finding is missing named verification evidence",
+        )
+
+    # A minor finding may remain unverifiable for the configured number of
+    # rounds, but a longer trailing run must terminate under human ownership.
+    capped_unverifiable = next(
+        (
+            tracked for tracked in latest_unverifiable
+            if len(_trailing_run(tracked.unverifiable_round_indices, latest_index))
+            > contract.unverifiable_rounds
+        ),
+        None,
+    )
+    if capped_unverifiable is not None:
+        return _result(
+            ESCALATE,
+            RULE_UNVERIFIABLE_ROUND_CAP,
+            True,
+            round_count,
+            proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
+            detail=(
+                f"finding {capped_unverifiable.id!r} remained unverifiable for "
+                f"more than {contract.unverifiable_rounds} consecutive rounds"
+            ),
+        )
 
     # Rule 1: CLEAN — everything ever raised is resolved with bounded evidence,
     # and no P1 resolution is pending human verification.
@@ -625,7 +691,7 @@ def decide(history, contract: Contract) -> Decision:
     # ride out under novelty exhaustion or slip past the cap under a softer rule.
     stuck = _first_stuck_p1(open_p1, canon, latest_index, contract)
     if stuck is not None:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(ESCALATE, RULE_STUCK_P1, True, round_count, proposed_gaps=gaps,
                        detail=f"P1 {stuck.id!r} open >= {contract.stuck_p1_rounds} rounds "
                               f"with fixer pushes between")
@@ -641,7 +707,7 @@ def decide(history, contract: Contract) -> Decision:
     # right here too, status "open", beside the pending entry's "pending-human".
     if pending_human:
         return _result(CONTINUE, RULE_P1_PENDING, True, round_count,
-                       proposed_gaps=_proposed_gaps(open_findings, pending_human),
+                       proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
                        detail="P1 resolution awaits human verification")
 
     # Rule 3: HARD CAP (round >= hard_cap) — whatever remains escalates.
@@ -652,13 +718,13 @@ def decide(history, contract: Contract) -> Decision:
     # EXHAUSTED-NOVELTY first would let round `hard_cap` return
     # MERGE-WITH-GAPS and silently convert the ceiling into a merge gate.
     if round_count >= contract.hard_cap:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(ESCALATE, RULE_HARD_CAP, True, round_count, proposed_gaps=gaps,
                        detail=f"hard cap reached at round {round_count}; contract likely wrong")
 
     # Rule 4: EXHAUSTED-NOVELTY — no P1s, every open finding a repeated minor.
     if not open_p1 and all(_is_repeated(t, latest_index) for t in open_findings):
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(MERGE_WITH_GAPS, RULE_EXHAUSTED, True, round_count, proposed_gaps=gaps,
                        detail="every open finding is a repeated minor (no new information)")
 
@@ -668,7 +734,7 @@ def decide(history, contract: Contract) -> Decision:
     # fires — the loop escalates at the cap instead of merging there. A
     # clamp would re-open the merge-at-the-cap hole this ordering closes.
     if round_count >= contract.soft_gate and not open_p1:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(MERGE_WITH_GAPS, RULE_SOFT_GATE, True, round_count, proposed_gaps=gaps,
                        detail=f"soft gate reached at round {round_count} with only minor findings")
 
@@ -796,11 +862,14 @@ def render_comment(decision: Decision, pr) -> str:
         lines.append("")
         lines.append("### Proposed gaps")
         for gap in decision.proposed_gaps:
-            lines.append(
+            gap_line = (
                 f"- `{gap['sev']}` `{gap['id']}` "
                 f"({gap['file']} / {gap['cat']}) — {gap.get('status', 'open')}, "
                 f"first raised round {gap['first_round']}"
             )
+            if gap.get("status") == "unverifiable":
+                gap_line += f" — Missing artifact: {gap['missing'].strip()}."
+            lines.append(gap_line)
     lines.append("")
     lines.append("_Deterministic arbiter (no model call). Human approval is required before merge._")
     return "\n".join(lines)
@@ -947,6 +1016,10 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
     marker is the FIRST line so it survives the later size-bound truncation
     (never appended at the end, where truncation could drop it).
     """
+    missing_line = (
+        [f"- Missing artifact: {gap['missing'].strip()}."]
+        if gap.get("status") == "unverifiable" else []
+    )
     lines = [
         _gap_marker(pr, gap["id"], gap["file"], gap["cat"]),
         f"## Proposed gap: `{gap['id']}`",
@@ -961,6 +1034,7 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
         f"- Category: `{gap['cat']}`",
         f"- Status: `{gap.get('status', 'open')}`",
         f"- First raised: round {gap['first_round']}",
+        *missing_line,
         "",
         "### Full context",
         (f"The finding text is in the review comment: {permalink}" if permalink

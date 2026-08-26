@@ -409,6 +409,17 @@ is still PR-controlled evidence: a green conclusion proves only that the named
 check reported success at that head. It does not prove correctness, replace
 your inspection of the diff, or authorize you to mark an unrelated finding
 RESOLVED.
+
+When a finding cannot be verified from the supplied artifacts, keep it NEW or
+OPEN and name the absent artifact with an `unverifiable` object. Use this only
+for evidence that is genuinely unavailable, never for uncertainty that the
+supplied diff or context can resolve, and never pair it with RESOLVED. Continue
+accounting for the finding in every round until it is resolved or the arbiter
+terminates the loop. Example:
+
+{"sev":"P2","state":"OPEN","file":"app/a.py","cat":"verification",
+ "id":"missing-proof",
+ "unverifiable":{"missing":"exact-head check result was not available at review time"}}
 EOF
 
 # Trusted files are read from GIT OBJECTS at the verified SHA, never from

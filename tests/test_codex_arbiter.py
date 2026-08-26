@@ -42,10 +42,12 @@ def _ts(n: int) -> str:
     return f"2026-08-17T09:{n:02d}:00Z"
 
 
-def _finding(sev, state, file, cat, fid, evidence=None):
+def _finding(sev, state, file, cat, fid, evidence=None, unverifiable=None):
     obj = {"sev": sev, "state": state, "file": file, "cat": cat, "id": fid}
     if evidence is not None:
         obj["evidence"] = evidence
+    if unverifiable is not None:
+        obj["unverifiable"] = unverifiable
     return obj
 
 
@@ -800,6 +802,120 @@ def test_severity_escalated_and_resolved_same_round_routes_pending_human_as_p1()
 
 
 # --------------------------------------------------------------------------- #
+# Unverifiable findings remain open and terminate safely.                       #
+# --------------------------------------------------------------------------- #
+def test_validate_trailer_accepts_valid_unverifiable_without_schema_bump():
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": "exact-head check result"},
+    )
+    finding["unrelated"] = {"future": True}
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert err is None
+    assert validated is not None
+    assert validated["schema"] == 2
+
+
+@pytest.mark.parametrize(
+    "unverifiable",
+    [{}, {"missing": ""}, {"missing": "   "}, {"missing": 42}],
+)
+def test_validate_trailer_rejects_malformed_unverifiable(unverifiable):
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable=unverifiable,
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "bad-unverifiable"
+
+
+def test_validate_trailer_rejects_unverifiable_resolved_finding():
+    finding = _finding(
+        "P2", "RESOLVED", "app/a.py", "verification", "missing-proof",
+        evidence=_evidence(["app/a.py"]),
+        unverifiable={"missing": "exact-head check result"},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "unverifiable-resolved"
+
+
+def test_unverifiable_p1_routes_to_human_without_closing():
+    finding = _finding(
+        "P1", "NEW", "app/a.py", "authorization", "trust-anchor",
+        unverifiable={"missing": "trusted workflow file"},
+    )
+    decision = arb.decide(_history([_comment(1, 1, [finding])]), _contract())
+    assert decision.loop_action == "CONTINUE"
+    assert decision.needs_human is True
+    assert decision.cited_rule == "UNVERIFIABLE-HIGH-SEVERITY"
+    assert decision.proposed_gaps[0]["status"] == "unverifiable"
+    assert decision.proposed_gaps[0]["missing"] == "trusted workflow file"
+
+
+def test_repeated_unverifiable_minor_enters_gap_ledger_not_clean():
+    comments = [
+        _comment(1, 1, [_finding(
+            "P2", "NEW", "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )]),
+        _comment(2, 2, [_finding(
+            "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )]),
+    ]
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+    assert decision.proposed_gaps[0]["status"] == "unverifiable"
+    assert decision.proposed_gaps[0]["missing"] == "exact-head check result"
+
+
+def test_unverifiable_round_cap_escalates_on_third_consecutive_round():
+    def round_comment(n, state):
+        return _comment(n, n, [_finding(
+            "P2", state, "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )])
+
+    comments = [
+        round_comment(1, "NEW"),
+        round_comment(2, "OPEN"),
+        round_comment(3, "OPEN"),
+    ]
+    decision = arb.decide(_history(comments), _contract(unverifiable_rounds=2))
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "UNVERIFIABLE-ROUND-CAP"
+    assert decision.needs_human is True
+
+
+def test_normal_round_breaks_unverifiable_consecutive_run():
+    def round_comment(n, state, missing=None):
+        return _comment(n, n, [_finding(
+            "P2", state, "app/a.py", "verification", "missing-proof",
+            unverifiable=(
+                {"missing": missing} if missing is not None else None
+            ),
+        )])
+
+    comments = [
+        round_comment(1, "NEW", "exact-head check result"),
+        round_comment(2, "OPEN", "exact-head check result"),
+        round_comment(3, "OPEN"),
+        round_comment(4, "OPEN", "exact-head check result"),
+    ]
+    decision = arb.decide(_history(comments), _contract(unverifiable_rounds=2))
+    assert decision.cited_rule != "UNVERIFIABLE-ROUND-CAP"
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+
+
+# --------------------------------------------------------------------------- #
 # P0 (the reviewer's prompt-injection tier) is accepted and normalized to P1.  #
 # --------------------------------------------------------------------------- #
 def test_validate_trailer_accepts_p0_and_keeps_sibling_findings():
@@ -1075,6 +1191,41 @@ def test_cli_post_json_collects_once_and_keeps_stdout_machine_readable(
     assert collected == [True]
     payload = json.loads(capsys.readouterr().out)
     assert payload["round_count"] == 1
+
+
+def test_render_comment_includes_unverifiable_missing_artifact():
+    decision = arb.Decision(
+        recommendation="MERGE-WITH-GAPS",
+        loop_action="MERGE-WITH-GAPS",
+        cited_rule="EXHAUSTED-NOVELTY",
+        needs_human=True,
+        round_count=2,
+        proposed_gaps=[{
+            "id": "missing-proof",
+            "file": "app/a.py",
+            "cat": "verification",
+            "sev": "P2",
+            "status": "unverifiable",
+            "missing": "exact-head check result",
+            "first_round": 1,
+        }],
+    )
+    body = arb.render_comment(decision, 100)
+    assert "Missing artifact: exact-head check result." in body
+
+
+def test_render_gap_issue_body_includes_unverifiable_missing_artifact():
+    gap = {
+        "id": "missing-proof",
+        "file": "app/a.py",
+        "cat": "verification",
+        "sev": "P2",
+        "status": "unverifiable",
+        "missing": "exact-head check result",
+        "first_round": 1,
+    }
+    body = arb.render_gap_issue_body(gap, 100, None, None)
+    assert "Missing artifact: exact-head check result." in body
 
 
 def test_arbiter_source_makes_no_model_or_http_calls():
