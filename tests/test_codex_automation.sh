@@ -289,6 +289,8 @@ require_text '.github/workflows/codex-pr-review.yml' 'arbiter:'
 require_text '.github/workflows/codex-pr-review.yml' 'needs: [targets]'
 require_text '.github/workflows/codex-pr-review.yml' 'actions: read'
 require_text '.github/workflows/codex-pr-review.yml' 'checks: read'
+require_text '.github/workflows/codex-pr-review.yml' '  schedule:'
+require_text '.github/workflows/codex-pr-review.yml' 'cron: "17 2 * * 1-5"'
 require_text '.github/workflows/codex-pr-review.yml' \
   'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
 for arbiter_knob in ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS; do
