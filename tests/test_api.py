@@ -211,6 +211,48 @@ def test_bank_directory_browse_filters_by_country_and_capability(client):
     assert japan["total"] < all_rows["total"]
 
 
+@pytest.mark.parametrize(
+    ("stored_value", "expected"),
+    [
+        ("Y", "swift"),
+        ("y", "swift"),
+        (None, "swift"),
+        ("N", "local"),
+        ("n", "local"),
+        ("X", "local"),
+    ],
+)
+def test_bank_directory_capability_filter_matches_serialization(
+    empty_client,
+    stored_value,
+    expected,
+):
+    from app.models import Bank
+
+    client, SessionLocal = empty_client
+    bic = f"CAP{expected[:2].upper()}US3"
+    with SessionLocal() as session:
+        session.add(
+            Bank(
+                bic=bic,
+                bank_name=f"Capability {stored_value or 'null'}",
+                country_code="US",
+                city="New York",
+                country_currency="USD",
+                swift_active=stored_value,
+            )
+        )
+        session.commit()
+
+    matching = client.get("/api/banks/search", params={"q": bic, "capability": expected}).json()
+    opposite = "local" if expected == "swift" else "swift"
+    excluded = client.get("/api/banks/search", params={"q": bic, "capability": opposite}).json()
+
+    assert [result["bic"] for result in matching["results"]] == [bic]
+    assert matching["results"][0]["capability"] == expected
+    assert excluded["results"] == []
+
+
 def test_bank_directory_pagination_returns_the_requested_window(client):
     first = client.get("/api/banks/search", params={"limit": 2, "offset": 0}).json()
     second = client.get("/api/banks/search", params={"limit": 2, "offset": 2}).json()

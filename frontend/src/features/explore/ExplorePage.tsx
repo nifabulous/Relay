@@ -1,6 +1,6 @@
 import { useSearchParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import * as simpleIcons from "simple-icons";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
@@ -18,6 +18,7 @@ import { SchemeTabs } from "./SchemeTabs";
 import { SchemeDetails } from "./SchemeDetails";
 import { SchemeTable } from "./SchemeTable";
 import { requestBankDirectory } from "./search/bankSearch";
+import type { BankSearchResponse } from "./search/bankSearch";
 import { SCHEME_TAB_ORDER, DEFAULT_SCHEME_TAB_ID } from "./schemeCatalog";
 import { buildSchemeContext } from "../tutor/tutorContext";
 import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
@@ -134,9 +135,19 @@ export function BankDirectoryPage() {
     queryKey: apiKeys.bankDirectory(directoryFilters),
     queryFn: () => requestBankDirectory(directoryFilters),
     enabled: !isExactLookup,
-    placeholderData: (previous) => previous,
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
+
+  // TanStack drops placeholderData once a query settles into an error state, so
+  // keep the last successful directory response here to render as stale results.
+  const [lastDirectoryResult, setLastDirectoryResult] = useState<BankSearchResponse>();
+  useEffect(() => {
+    if (directory.data) {
+      setLastDirectoryResult(directory.data);
+    }
+  }, [directory.data]);
+  const directoryResult = directory.data ?? lastDirectoryResult;
 
   // Inline settlement summary: fetch SSI in parallel with the lookup so the
   // result card can show the bank's settlement currencies at a glance.
@@ -155,8 +166,8 @@ export function BankDirectoryPage() {
   else if (query.isError) status = "error";
   else if (query.data) status = query.data.found ? "success" : "empty";
 
-  const rows = directory.data?.results ?? [];
-  const rowCount = directory.data?.total ?? 0;
+  const rows = directoryResult?.results ?? [];
+  const rowCount = directoryResult?.total ?? 0;
   const directoryPageSize = 10;
   const directoryPageCount = Math.max(1, Math.ceil(rowCount / directoryPageSize));
   const currentDirectoryPage = Math.min(directoryPage, directoryPageCount);
@@ -276,7 +287,20 @@ export function BankDirectoryPage() {
         </button>
       </div>
 
-      {!isExactLookup && (
+      {!isExactLookup && directory.isError && (
+        <div className="bank-directory__error" role="alert">
+          <p>
+            {directoryResult
+              ? "The bank directory could not be refreshed. Showing your last results."
+              : "The bank directory could not be loaded."}
+          </p>
+          <Button type="button" variant="secondary" onClick={() => directory.refetch()}>
+            Retry directory
+          </Button>
+        </div>
+      )}
+
+      {!isExactLookup && (!directory.isError || Boolean(directoryResult)) && (
         <section
           className="bank-directory__table-card"
           aria-labelledby="bank-directory-results-heading"
@@ -323,7 +347,7 @@ export function BankDirectoryPage() {
                     </td>
                   </tr>
                 ))}
-                {rows.length === 0 && !directory.isFetching && (
+                {rows.length === 0 && !directory.isFetching && !directory.isError && (
                   <tr>
                     <td colSpan={4} className="bank-directory__no-results">No institutions match these filters. Clear a filter or try another name or BIC.</td>
                   </tr>

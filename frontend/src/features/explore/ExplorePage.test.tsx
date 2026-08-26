@@ -192,31 +192,31 @@ describe("BankDirectoryPage", () => {
     { bic: "CAIXESBBXXX", bank_name: "CaixaBank", country_code: "ES", city: "Valencia", country_currency: "EUR", capability: "local", verified: false },
   ];
 
-  const useDirectoryHandler = () => {
-    server.use(
-      http.get("/api/banks/search", ({ request }) => {
-        const url = new URL(request.url);
-        const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
-        const country = url.searchParams.get("country") ?? "all";
-        const capability = url.searchParams.get("capability") ?? "all";
-        const verifiedOnly = url.searchParams.get("verified") === "true";
-        const offset = Number(url.searchParams.get("offset") ?? "0");
-        const limit = Number(url.searchParams.get("limit") ?? "8");
+  async function directoryResponse({ request }: { request: Request }) {
+    const url = new URL(request.url);
+    const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+    const country = url.searchParams.get("country") ?? "all";
+    const capability = url.searchParams.get("capability") ?? "all";
+    const verifiedOnly = url.searchParams.get("verified") === "true";
+    const offset = Number(url.searchParams.get("offset") ?? "0");
+    const limit = Number(url.searchParams.get("limit") ?? "8");
 
-        const filtered = directoryBanks.filter((bank) =>
-          (!q || `${bank.bank_name} ${bank.bic} ${bank.country_code}`.toLowerCase().includes(q))
-          && (country === "all" || bank.country_code === country)
-          && (capability === "all" || bank.capability === capability)
-          && (!verifiedOnly || bank.verified),
-        );
-
-        return HttpResponse.json({
-          query: q,
-          total: filtered.length,
-          results: filtered.slice(offset, offset + limit),
-        });
-      }),
+    const filtered = directoryBanks.filter((bank) =>
+      (!q || `${bank.bank_name} ${bank.bic} ${bank.country_code}`.toLowerCase().includes(q))
+      && (country === "all" || bank.country_code === country)
+      && (capability === "all" || bank.capability === capability)
+      && (!verifiedOnly || bank.verified),
     );
+
+    return HttpResponse.json({
+      query: q,
+      total: filtered.length,
+      results: filtered.slice(offset, offset + limit),
+    });
+  }
+
+  const useDirectoryHandler = () => {
+    server.use(http.get("/api/banks/search", directoryResponse));
   };
   afterAll(() => server.resetHandlers());
 
@@ -342,6 +342,82 @@ describe("BankDirectoryPage", () => {
     expect(await screen.findByRole("link", { name: "Open HSBC UK details" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Next page" }));
     expect(await screen.findByRole("link", { name: "Open Starling Bank details" })).toBeVisible();
+  });
+
+  it("distinguishes a failed directory request from a successful empty result", async () => {
+    queryClient.clear();
+    server.use(
+      http.get("/api/banks/search", () =>
+        HttpResponse.json({ detail: "directory unavailable" }, { status: 503 }),
+      ),
+    );
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("The bank directory could not be loaded.");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("recovers the directory after a failed request is retried", async () => {
+    queryClient.clear();
+    let attempts = 0;
+    server.use(
+      http.get("/api/banks/search", () => {
+        attempts += 1;
+        if (attempts === 1) {
+          return HttpResponse.json({ detail: "boom" }, { status: 500 });
+        }
+        return HttpResponse.json({
+          query: "",
+          total: 1,
+          results: [directoryBanks[0]],
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Retry directory" }));
+
+    expect(await screen.findByRole("link", { name: "Open HSBC UK details" })).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("keeps stale results distinct while a refresh fails", async () => {
+    queryClient.clear();
+    useDirectoryHandler();
+    let failRefresh = false;
+
+    server.use(
+      http.get("/api/banks/search", async (input) => {
+        if (failRefresh) return HttpResponse.error();
+        return directoryResponse(input);
+      }),
+    );
+    const user = userEvent.setup();
+    renderRelay(
+      <MemoryRouter initialEntries={["/explore/banks"]}>
+        <BankDirectoryPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("link", { name: "Open HSBC UK details" });
+    failRefresh = true;
+    await user.type(screen.getByLabelText("Search bank name or BIC"), "HSBC");
+
+    expect(await screen.findByText(/could not be refreshed/i)).toBeVisible();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open HSBC UK details" })).toBeVisible();
+    expect(screen.queryByText(/No institutions match these filters/i)).not.toBeInTheDocument();
   });
 
   it("shows guidance with example BICs before any search", async () => {

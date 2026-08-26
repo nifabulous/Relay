@@ -2,7 +2,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, not_, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -12,6 +12,11 @@ from ..services.routing import _normalize_bic_input, _settlement_for, lookup_ban
 from ..services.validator import detect_type, validate_bic, validate_iban
 
 router = APIRouter(prefix="/api", tags=["swift"])
+
+
+def _is_swift_active(value: Optional[str]) -> bool:
+    """Treat absent connectivity as SWIFT-capable; only N-like values are local."""
+    return (value or "Y").upper() == "Y"
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -150,10 +155,11 @@ def search_banks(
         filters.append(Bank.country_code == normalized_country)
 
     normalized_capability = None if capability == "all" else capability
+    swift_active = func.upper(func.coalesce(Bank.swift_active, "Y")) == "Y"
     if normalized_capability == "swift":
-        filters.append(Bank.swift_active == "Y")
+        filters.append(swift_active)
     elif normalized_capability == "local":
-        filters.append(Bank.swift_active != "Y")
+        filters.append(not_(swift_active))
 
     verified_exists = select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
     if verified is True:
@@ -185,7 +191,7 @@ def search_banks(
                 "country_code": bank.country_code,
                 "city": bank.city,
                 "country_currency": bank.country_currency,
-                "capability": "swift" if (bank.swift_active or "Y").upper() == "Y" else "local",
+                "capability": "swift" if _is_swift_active(bank.swift_active) else "local",
                 "verified": bool(bank_has_ssi),
             }
             for bank, bank_has_ssi in banks
