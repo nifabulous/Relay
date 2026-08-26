@@ -287,6 +287,8 @@ done
 require_text '.github/workflows/codex-pr-review.yml' 'targets:'
 require_text '.github/workflows/codex-pr-review.yml' 'arbiter:'
 require_text '.github/workflows/codex-pr-review.yml' 'needs: [targets]'
+require_text '.github/workflows/codex-pr-review.yml' 'actions: read'
+require_text '.github/workflows/codex-pr-review.yml' 'checks: read'
 require_text '.github/workflows/codex-pr-review.yml' \
   'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
 for arbiter_knob in ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS; do
@@ -939,6 +941,30 @@ check_delayed_ci_completion_replaces_fallback_review() {
   fi
 }
 
+check_ci_completion_replaces_ordinary_review() {
+  prepare_ci_review_case
+  local marker
+  marker="<!-- codex-pr-review:15:${CI_HEAD} -->"
+  jq -n --arg marker "$marker" \
+    '{id: 42, login: "github-actions[bot]", body: ($marker + "\nordinary review")}' \
+    >"$STUB_DIR/comments.jsonl"
+  printf '{"count": 1, "check_runs": [{"id": 1, "name": "quality-gate", "status": "completed", "conclusion": "success", "completed_at": "2026-08-25T10:00:00Z"}]}' \
+    >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || [[ ! -s "$STUB_DIR/captured-input.md" ]]; then
+    fail 'A completed CI run did not regenerate an ordinary same-head review.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ ! -s "$STUB_DIR/patched.log" ]] || [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'A completed CI run did not replace the ordinary same-head review in place.'
+  fi
+}
+
 check_closed_pr_workflow_run_is_skipped() {
   prepare_ci_review_case
   jq '.state = "CLOSED"' "$STUB_DIR/metadata.json" >"$STUB_DIR/metadata.closed.json"
@@ -1187,6 +1213,40 @@ check_trusted_context_caps() {
   fi
   if grep -Fq 'oversized.md' "$context_material"; then
     fail 'An oversized trusted context file was not skipped.'
+  fi
+}
+
+check_trusted_context_wrapper_counts_toward_cap() {
+  local allowlist="$TRUSTED_STAGING_ROOT/.github/codex/context-files.txt"
+  local context_path="trusted-context/boundary.md"
+  mkdir -p "$TRUSTED_STAGING_ROOT/trusted-context"
+  printf '%s\n' "$context_path" >"$allowlist"
+  printf '%*s' 49850 '' | tr ' ' x >"$TRUSTED_STAGING_ROOT/$context_path"
+
+  prepare_context_case
+  local status=0
+  invoke_context_case \
+    CODEX_CONTEXT_MAX_FILES=10 \
+    CODEX_CONTEXT_MAX_BYTES=50000 || status=$?
+
+  printf '# Trusted reference material supplied to the PR reviewer.\n.github/workflows/codex-pr-review.yml\n' \
+    >"$allowlist"
+
+  if (( status != 0 )); then
+    fail 'Trusted context wrapper-boundary review failed.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  local context_material="${STUB_DIR}/context-material.md"
+  awk '/## Trusted reference material \(not policy\)/{capture=1} capture{print}' \
+    "$STUB_DIR/captured-instructions.md" >"$context_material"
+  if grep -Fq "$context_path" "$context_material"; then
+    fail 'A raw trusted file that exceeded the complete wrapper cap was emitted.'
+  fi
+  local context_bytes
+  context_bytes="$(wc -c <"$context_material" | tr -d ' ')"
+  if (( context_bytes > 50000 )); then
+    fail "Trusted context wrapper exceeded CODEX_CONTEXT_MAX_BYTES: $context_bytes."
   fi
 }
 
@@ -1671,6 +1731,7 @@ check_matching_completed_ci_head_reaches_model
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
 check_delayed_ci_completion_replaces_fallback_review
+check_ci_completion_replaces_ordinary_review
 check_closed_pr_workflow_run_is_skipped
 check_direct_path_with_ci_run_defers
 check_failed_ci_run_probe_fails_safe_toward_review
@@ -1679,6 +1740,7 @@ check_empty_ci_evidence_is_explicit
 check_context_allowlist_comes_from_trusted_sha
 check_trusted_missing_context_path_is_skipped
 check_trusted_context_caps
+check_trusted_context_wrapper_counts_toward_cap
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",
