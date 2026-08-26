@@ -22,6 +22,17 @@ The product is not a manually curated folder of images and is not a promise that
 - The published release bundle is the source of truth. Operational databases and API indexes are generated read models, not competing canonical stores.
 - Initial implementation uses a modular application and background workers, not a fleet of microservices.
 
+## Program decomposition
+
+The complete product is intentionally divided into independently testable implementation plans:
+
+1. **Registry and release core** — canonical schema, source manifests, raw snapshots, normalization, deterministic resolution, asset validation, rights gates, and reproducible release bundles.
+2. **Serving plane** — generated API read model, REST API, CDN, immutable URLs, authentication, quotas, and self-hosting.
+3. **Governance and catalog** — private review console, public searchable catalog, contributor submissions, correction workflow, and takedowns.
+4. **Distribution and commercial layer** — JavaScript/Python packages, usage analytics, paid limits, billing, and enterprise controls.
+
+Plan 1 is the dependency foundation. Each plan must produce working software without requiring a later plan to be complete.
+
 ## Goals
 
 1. Provide a global institution and brand directory that developers can search by name, domain, LEI, BIC, national identifier, routing code, or alias.
@@ -40,6 +51,17 @@ The product is not a manually curated folder of images and is not a promise that
 - Serving assets marked `unknown`, `source_link_only`, or `removed`.
 - Replacing licensed SWIFT/BIC reference products with an unauthorized full-directory redistribution.
 - Building a payment-processing or banking-connectivity product.
+
+## Licensing defaults
+
+The proposed defaults are:
+
+- processing code: Apache-2.0;
+- project-created normalized metadata: CC BY 4.0, except fields whose upstream source terms impose different conditions;
+- third-party logos: governed by the per-asset rights record, never by the repository's code or metadata license;
+- source snapshots: retained privately under the applicable source terms and not included in public releases unless permitted.
+
+The launch checklist must include legal confirmation that each published field and asset follows its upstream terms. A project license cannot override a source restriction.
 
 ## Users and use cases
 
@@ -121,7 +143,9 @@ Raw source snapshots and downloaded originals are stored outside Git in content-
 
 - immutable internal ID;
 - legal name and normalized name;
-- country and jurisdiction;
+- ISO country or territory code;
+- regulator jurisdiction and regulator identifier;
+- operating markets, which may differ from the legal jurisdiction;
 - one or more controlled categories;
 - regulator and license references;
 - lifecycle status: `active`, `inactive`, `merged`, `renamed`, or `unknown`;
@@ -136,6 +160,19 @@ Raw source snapshots and downloaded originals are stored outside Git in content-
 - parent brand or successor brand;
 - app/product names kept separate from legal entities;
 - active and historical display periods when known.
+
+### Relationship
+
+Relationships are directed and typed. The initial allowed values are:
+
+- `brand_of` — brand presented by an institution;
+- `subsidiary_of` — legal subsidiary relationship;
+- `branch_of` — branch or office relationship;
+- `successor_of` — current entity succeeds a prior entity;
+- `previous_brand_of` — current brand replaced a prior brand;
+- `operates_in` — institution or brand operates in a market or jurisdiction.
+
+Each relationship stores `from_id`, `to_id`, `relation_type`, `source_id`, `valid_from`, `valid_to`, and `confidence`. Reverse relationships are derived rather than independently edited.
 
 ### Identifier
 
@@ -166,7 +203,15 @@ source_id
 source_uri
 rights_status
 license_note
+license_name
+license_url
+permission_reference
+territories
+expires_at
+attribution_text
 verified_at
+reviewed_by
+reviewed_at
 review_status
 ```
 
@@ -211,13 +256,22 @@ Matching order:
 
 A failed connector is quarantined and cannot erase a previously verified record. A source outage leaves the prior record published with a stale-source warning.
 
+When sources conflict, identity and logo precedence are evaluated separately:
+
+- identity: current regulator or central-bank register, then GLEIF, licensed BIC data, verified official domain, approved repository, and commercial provider;
+- logo: current official brand asset, official open-finance directory, rights-cleared institution submission, approved repository, and commercial provider.
+
+Precedence does not silently overwrite a conflicting record. The conflicting evidence is retained and a review item is created. A lower-ranked source may be selected when the higher-ranked source is stale, unavailable, or explicitly scoped to a different jurisdiction, but that decision must be recorded.
+
 ## Asset processing and review
 
 For every candidate asset:
 
 - allow HTTPS sources only;
 - block localhost, private-network, metadata-service, and unsafe redirect targets;
+- resolve DNS before and after redirects and reject private or link-local address changes;
 - enforce response-size, image-dimension, decompression, and SVG-complexity limits;
+- reject nested archives, decompression bombs, and ambiguous content-disposition values;
 - sanitize scripts, event handlers, external references, and embedded objects;
 - preserve the original separately from derived public variants;
 - generate canonical SVG/PNG variants when permitted;
@@ -264,6 +318,17 @@ GET /v1/releases/{version}/manifest
 
 Responses include canonical identity, identifiers, brand relationships, logo variants, rights state, source URI, verification date, and confidence.
 
+API behavior:
+
+- collection endpoints use opaque cursor pagination and return `next_cursor`;
+- `/resolve` ranks exact identifiers first, then verified domains, aliases, normalized names, and review-approved fuzzy matches; each result includes `match_method` and `confidence`;
+- invalid filters and malformed identifiers return a stable 422 error envelope;
+- missing resources return a stable 404 error envelope;
+- a `source_link_only` logo returns metadata and `source_uri` but no binary URL;
+- `unknown` and `removed` assets are omitted from binary responses;
+- data releases use semantic data versions, while API/schema compatibility uses a separate schema major version;
+- breaking API changes require a new major version and never mutate an existing release.
+
 Immutable URLs use release versions:
 
 ```text
@@ -271,6 +336,15 @@ Immutable URLs use release versions:
 ```
 
 The `latest` alias is a convenience for application developers and is excluded from canonical checksums and reproducible examples.
+
+Release lifecycle:
+
+```text
+draft → validated → published → superseded
+                         ↘ withdrawn
+```
+
+Only `published` releases feed the public API. A `withdrawn` release remains auditable but is not returned by `latest` or ordinary release listings.
 
 Distribution targets:
 
@@ -290,6 +364,16 @@ Distribution targets:
 - source failure: preserve last verified record and emit stale-source warning.
 
 Operational metrics include connector success/failure, source age, unresolved candidates, asset drift, rights gaps, provenance coverage, release duration, API latency, cache hit rate, and removal-request resolution time.
+
+Initial operational targets:
+
+- 100% of published records have at least one source reference;
+- 100% of published binary assets have a permitted rights state and checksum;
+- zero automatic fuzzy merges;
+- weekly release pipeline success of at least 99% after retries;
+- cached metadata API p95 latency below 250 ms at the service edge;
+- urgent removal requests disabled from binary delivery within one business day after confirmation;
+- connector failures alert within 15 minutes of a failed scheduled run.
 
 ## Security, legal, and governance
 
