@@ -1,7 +1,12 @@
 import httpx
 import pytest
 
-from financial_registry.fetch_policy import AssetPolicyError, SafeHttpxAssetFetcher, UnsafeSourceUrl, validate_source_url
+from financial_registry.fetch_policy import (
+    AssetPolicyError,
+    SafeHttpxAssetFetcher,
+    UnsafeSourceUrl,
+    validate_source_url,
+)
 
 
 def test_source_url_requires_https():

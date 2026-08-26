@@ -4,9 +4,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..domain import RegistryInput
+from ..domain import CandidateRecord, RegistryInput
 from ..snapshots import RawSnapshot
-from ..domain import CandidateRecord
 
 
 class FixtureConnector:

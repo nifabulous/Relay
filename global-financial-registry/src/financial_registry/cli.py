@@ -1,6 +1,6 @@
+import json
 from datetime import datetime
 from pathlib import Path
-import json
 
 import typer
 from pydantic import ValidationError

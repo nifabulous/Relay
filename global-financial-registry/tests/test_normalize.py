@@ -1,4 +1,4 @@
-from financial_registry.normalize import normalize_domain, normalize_name, normalize_identifier
+from financial_registry.normalize import normalize_domain, normalize_identifier, normalize_name
 
 
 def test_name_normalization_collapses_case_spacing_and_punctuation():

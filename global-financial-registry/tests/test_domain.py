@@ -3,10 +3,9 @@ from pydantic import ValidationError
 
 from financial_registry.domain import (
     Asset,
-    Identifier,
     Institution,
-    RightsStatus,
     ReviewStatus,
+    RightsStatus,
 )
 
 

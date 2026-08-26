@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import io
-import re
-import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone

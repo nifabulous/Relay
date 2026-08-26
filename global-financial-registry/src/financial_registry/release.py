@@ -7,13 +7,13 @@ import re
 import shutil
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pycountry
 
-from .domain import RegistryInput, ReleaseStatus, RightsStatus, ReviewStatus
 from . import __version__
+from .domain import RegistryInput, ReleaseStatus, ReviewStatus, RightsStatus
 
 
 @dataclass(frozen=True)
@@ -138,7 +138,6 @@ class ReleaseBuilder:
             if rekey.source_id not in source_ids:
                 issues.append(ValidationIssue("missing_provenance", f"rekey_events/{rekey.id}", f"rekey missing valid source {rekey.source_id}"))
         # Asset validations
-        asset_ids_seen = set()
         binary_paths_seen = set()
         for asset in registry.assets:
             if asset.owner_id not in all_entity_ids:
@@ -420,24 +419,6 @@ class ReleaseBuilder:
             # We will write manifest, then compute final checksums for checksums.txt
             # For determinism, files list includes all expected files including schema-version.json
             expected_files = sorted(initial_files_sorted + ["schema-version.json"])
-            # Placeholder checksums: use initial checksums for existing files, and placeholder for manifest
-            placeholder_manifest_dict = {
-                "release_version": version,
-                "schema_version": SCHEMA_VERSION,
-                "generated_at": generated_at.isoformat(),
-                "lifecycle_status": lifecycle.value if hasattr(lifecycle, "value") else str(lifecycle),
-                "generation_commit": generation_commit,
-                "source_run_ids": sorted([r.id for r in source_runs]),
-                "counts": counts,
-                "unresolved_matches": 0,
-                "stale_sources": 0,
-                "provenance_coverage": coverage,
-                "input_sha256": input_sha,
-                "processor_version": processor_version,
-                "files": expected_files,
-                "checksums": {**initial_checksums, "schema-version.json": "0" * 64},
-            }
-            # Compute deterministic placeholder to get files list correct, but we will overwrite with actual
             # Actually create manifest with placeholder checksum for itself
             manifest = ReleaseManifest(
                 release_version=version,

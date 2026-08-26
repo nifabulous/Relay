@@ -25,8 +25,7 @@ def normalize_domain(value: str) -> str:
     hostname = parsed.hostname or value
     # hostname may still contain unicode; casefold and strip
     hostname = hostname.strip().casefold().rstrip(".")
-    if hostname.startswith("www."):
-        hostname = hostname[4:]
+    hostname = hostname.removeprefix("www.")
     # Remove port if present (hostname already excludes port, but for non-url fallback)
     # IDNA encoding for unicode domains
     try:

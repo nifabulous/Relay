@@ -41,7 +41,7 @@ class ResolverIndex:
         return cls(index.institutions, index.identifiers_by_key, verified_domains, index.names_by_country)
 
     @classmethod
-    def from_registry(cls, registry: RegistryInput) -> "ResolverIndex":
+    def from_registry(cls, registry: RegistryInput) -> ResolverIndex:
         institutions = tuple(sorted(registry.institutions, key=lambda item: item.id))
         ids = {item.id for item in institutions}
         if len(ids) != len(institutions):

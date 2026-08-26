@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from financial_registry.release import ReleaseBuilder, ReleaseLifecycle, ReleaseValidationError
 from financial_registry.domain import RegistryInput, ReleaseStatus, RightsStatus
+from financial_registry.release import ReleaseBuilder, ReleaseLifecycle, ReleaseValidationError
 
 
 def test_release_is_byte_for_byte_reproducible(tmp_path, demo_registry: RegistryInput):

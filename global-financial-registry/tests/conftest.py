@@ -1,22 +1,22 @@
-import pytest
 from datetime import datetime, timezone
-from pathlib import Path
+
+import pytest
 
 from financial_registry.domain import (
     Asset,
     Brand,
     Identifier,
     Institution,
-    Relationship,
     RegistryInput,
+    Relationship,
     RelationType,
-    RightsStatus,
     ReviewStatus,
+    RightsStatus,
     SourceDefinition,
     SourceRun,
+    SourceRunStatus,
     SourceType,
     TrustTier,
-    SourceRunStatus,
 )
 
 
@@ -116,8 +116,8 @@ def flaky_connector(tmp_path):
     # Provide a connector that succeeds once then fails, retaining previous snapshot.
     # Lazy imports avoid hard dependency on snapshots module before Task 3.
     try:
-        from financial_registry.snapshots import FilesystemSnapshotStore, RawSnapshot
         from financial_registry.domain import SourceDefinition, SourceType, TrustTier
+        from financial_registry.snapshots import FilesystemSnapshotStore
 
         store = FilesystemSnapshotStore(tmp_path / "snapshots")
 
