@@ -112,12 +112,23 @@ jobs:
             echo "CODEX_MAX_ITEMS must be a positive integer." >&2
             exit 1
           fi
+          select_open_pr() {
+            local candidate="$1"
+            local state
+            state="$(gh pr view "$candidate" --repo "$GH_REPO" --json state --jq '.state')"
+            if [[ "$state" == "OPEN" ]]; then
+              printf '%s\n' "$candidate"
+            else
+              echo "### Codex PR review skipped" >> "$GITHUB_STEP_SUMMARY"
+              echo "- PR #$candidate is not open (state=$state)." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
           if [[ "$EVENT_NAME" == "schedule" ]]; then
             gh pr list --repo "$GH_REPO" --state open --json number,labels \
               --jq '[.[] | select([.labels[].name] | index("codex-review")) | .number] | .[]' \
               > /tmp/codex-pr-all
           elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            printf '%s\n' "$DISPATCH_PR_NUMBER" > /tmp/codex-pr-all
+            select_open_pr "$DISPATCH_PR_NUMBER" > /tmp/codex-pr-all
           elif [[ "$EVENT_NAME" == "workflow_run" ]]; then
             if [[ ! "$WORKFLOW_RUN_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
               echo "WORKFLOW_RUN_HEAD_SHA must be a full lowercase commit SHA." >&2
@@ -139,10 +150,14 @@ jobs:
               fi
             fi
             if [[ -s /tmp/codex-pr-all ]]; then
+              select_open_pr "$(cat /tmp/codex-pr-all)" > /tmp/codex-pr-open
+              mv /tmp/codex-pr-open /tmp/codex-pr-all
+            fi
+            if [[ -s /tmp/codex-pr-all ]]; then
               echo "CODEX_EXPECTED_HEAD_SHA=$WORKFLOW_RUN_HEAD_SHA" >> "$GITHUB_ENV"
             fi
           else
-            printf '%s\n' "$EVENT_PR_NUMBER" > /tmp/codex-pr-all
+            select_open_pr "$EVENT_PR_NUMBER" > /tmp/codex-pr-all
           fi
           TOTAL=$(wc -l < /tmp/codex-pr-all | tr -d ' ')
           head -n "$CODEX_MAX_ITEMS" /tmp/codex-pr-all > /tmp/codex-pr-numbers
@@ -188,7 +203,10 @@ jobs:
           fi
 
   arbiter:
-    if: vars.CODEX_REVIEW_ENABLED == 'true' && needs.review.result == 'success'
+    if: >-
+      always() &&
+      vars.CODEX_REVIEW_ENABLED == 'true' &&
+      (needs.review.result == 'success' || needs.review.result == 'failure')
     needs: [review]
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -197,6 +215,10 @@ jobs:
       GH_REPO: ${{ github.repository }}
       CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
       ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}
+      ARBITER_SOFT_GATE: ${{ vars.ARBITER_SOFT_GATE || '5' }}
+      ARBITER_HARD_CAP: ${{ vars.ARBITER_HARD_CAP || '10' }}
+      ARBITER_STUCK_P1_ROUNDS: ${{ vars.ARBITER_STUCK_P1_ROUNDS || '3' }}
+      ARBITER_UNVERIFIABLE_ROUNDS: ${{ vars.ARBITER_UNVERIFIABLE_ROUNDS || '2' }}
       PR_NUMBERS_JSON: ${{ needs.review.outputs.pr_numbers }}
     steps:
       - name: Check out trusted default branch

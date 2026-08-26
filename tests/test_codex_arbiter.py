@@ -1107,6 +1107,13 @@ def test_build_history_filters_non_canonical_and_derives_marker():
     assert decision.round_count == 2
 
 
+def test_collect_refuses_to_arbitrate_a_closed_pr(monkeypatch):
+    monkeypatch.setattr(arb, "_gh_json", lambda args: {"state": "CLOSED"})
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.collect(24, _contract(), repo=STUB_REPO)
+
+
 # --------------------------------------------------------------------------- #
 # Document validation, CLI, and the no-model invariant.                        #
 # --------------------------------------------------------------------------- #
@@ -1521,6 +1528,8 @@ def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_pat
     for argv in list_calls:
         assert "--state" in argv
         assert argv[argv.index("--state") + 1] == "all"
+        assert "--json" in argv
+        assert argv[argv.index("--json") + 1] == "number,body,author"
 
 
 def test_post_gap_issues_skips_an_issue_relabelled_accepted_gap(tmp_path, monkeypatch):
@@ -1543,7 +1552,8 @@ def test_post_gap_issues_skips_an_issue_relabelled_accepted_gap(tmp_path, monkey
     # The relabel removed proposed-gap; this issue is what a
     # proposed-gap-only query could no longer see.
     (stub_dir / "issue_list.json").write_text(json.dumps([
-        {"number": 77, "body": f"{marker}\naccepted by maintainer"}
+        {"number": 77, "body": f"{marker}\naccepted by maintainer",
+         "author": {"login": BOT}}
     ]))
 
     results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
@@ -1570,13 +1580,40 @@ def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monk
 
     marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
     (stub_dir / "issue_list.json").write_text(json.dumps([
-        {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text"}
+        {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text",
+         "author": {"login": BOT}}
     ]))
 
     results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
 
     assert results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 55}]
     assert not (stub_dir / "created.jsonl").exists()
+
+
+def test_post_gap_issues_does_not_trust_a_human_authored_marker(tmp_path, monkeypatch):
+    """A user-authored issue carrying the deterministic marker must not
+    suppress the bot-owned gap ledger entry."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
+    (stub_dir / "issue_list.json").write_text(json.dumps([{
+        "number": 88,
+        "body": f"{marker}\nforged by a reporter",
+        "author": {"login": "reporter"},
+    }]))
+
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert results == [{"gap_id": "gap-a", "action": "created", "issue_number": 1000}]
+    assert len(_read_jsonl(stub_dir / "created.jsonl")) == 1
 
 
 def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
@@ -1616,7 +1653,9 @@ def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
     assert decision_round2.round_count == 3
     assert history_round2["current_head_sha"] != history_round1["current_head_sha"]
 
-    (stub_dir / "issue_list.json").write_text(json.dumps([{"number": 1000, "body": body}]))
+    (stub_dir / "issue_list.json").write_text(json.dumps([{
+        "number": 1000, "body": body, "author": {"login": BOT}
+    }]))
     second_results = arb.post_gap_issues(decision_round2, 100, STUB_REPO, contract, history_round2)
 
     assert second_results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 1000}]

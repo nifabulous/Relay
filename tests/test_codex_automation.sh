@@ -288,6 +288,9 @@ require_text '.github/workflows/codex-pr-review.yml' 'arbiter:'
 require_text '.github/workflows/codex-pr-review.yml' 'needs: [review]'
 require_text '.github/workflows/codex-pr-review.yml' \
   'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
+for arbiter_knob in ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS; do
+  require_text '.github/workflows/codex-pr-review.yml' "$arbiter_knob: \${{ vars.$arbiter_knob ||"
+done
 require_text '.github/workflows/codex-pr-review.yml' 'scripts/codex_arbiter.py'
 require_text '.github/workflows/codex-pr-review.yml' 'GITHUB_STEP_SUMMARY'
 refuse_text '.github/workflows/codex-pr-review.yml' 'ARBITER_OPERATOR: 1'
@@ -322,6 +325,11 @@ raise unless review.fetch("outputs").fetch("pr_numbers") ==
 raise unless Array(arbiter.fetch("needs")) == ["review"]
 raise unless arbiter.fetch("env").fetch("PR_NUMBERS_JSON") ==
   "${{ needs.review.outputs.pr_numbers }}"
+%w[ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS].each do |name|
+  raise unless arbiter.fetch("env").fetch(name).include?("vars.#{name}")
+end
+raise unless arbiter.fetch("if").include?("always()")
+raise unless arbiter.fetch("if").include?("needs.review.result == 'failure'")
 raise unless concurrency_group.include?("github.event.workflow_run.pull_requests[0].number")
 RUBY
 if (( ruby_status != 0 )); then
@@ -429,11 +437,20 @@ case "${1:-}" in
         if [[ -s "$CODEX_STUB_DIR/head-override" && "$*" == *--jq* ]]; then
           cat "$CODEX_STUB_DIR/head-override"
         else
-          apply_jq "$@" <"$CODEX_STUB_DIR/metadata.json"
+          jq '.state //= "OPEN"' "$CODEX_STUB_DIR/metadata.json" | apply_jq "$@"
         fi
         ;;
       diff) cat "$CODEX_STUB_DIR/pr.diff" ;;
-      comment) printf 'posted\n' >>"$CODEX_STUB_DIR/posted.log" ;;
+      comment)
+        printf 'posted\n' >>"$CODEX_STUB_DIR/posted.log"
+        previous=""
+        for argument in "$@"; do
+          if [[ "$previous" == "--body-file" ]]; then
+            cp "$argument" "$CODEX_STUB_DIR/captured-comment.md"
+          fi
+          previous="$argument"
+        done
+        ;;
       *) exit 1 ;;
     esac
     ;;
@@ -442,7 +459,9 @@ case "${1:-}" in
     # trust root; the comment list is ordinary data. Route on the path so the
     # trust root can never be satisfied by the comment fixture.
     printf '%s\n' "$*" >>"$CODEX_STUB_DIR/api.log"
-    if [[ "$*" == *"/commits/"*"/check-runs"* ]]; then
+    if [[ "$*" == *"--method PATCH"*"/issues/comments/"* ]]; then
+      printf '%s\n' "$*" >>"$CODEX_STUB_DIR/patched.log"
+    elif [[ "$*" == *"/commits/"*"/check-runs"* ]]; then
       jq -s . <"$CODEX_STUB_DIR/check-runs.json"
     elif [[ "$*" == *"/actions/workflows/"*"/runs"* ]]; then
       apply_jq "$@" <"$CODEX_STUB_DIR/workflow-runs.json"
@@ -758,7 +777,7 @@ prepare_ci_review_case() {
   : >"$STUB_DIR/head-override"
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
-  rm -f "$STUB_DIR/captured-input.md"
+  rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-comment.md" "$STUB_DIR/patched.log"
   printf '%s\n' "$(jq -n --arg sha "$CI_HEAD" \
     '{login: "someone-else", body: "no marker here"}')" \
     >"$STUB_DIR/comments.jsonl"
@@ -874,6 +893,56 @@ check_direct_path_without_ci_run_reviews() {
   if [[ ! -s "$STUB_DIR/captured-input.md" ]] || \
     ! grep -Fq 'CI produced no run' "$STUB_DIR/captured-input.md"; then
     fail 'The no-CI-run fallback did not explicitly state that CI produced no run.'
+  fi
+  if [[ ! -s "$STUB_DIR/captured-comment.md" ]] || \
+    ! grep -Fq 'codex-pr-review-no-ci:' "$STUB_DIR/captured-comment.md"; then
+    fail 'The no-CI-run fallback did not mark its review for later replacement.'
+  fi
+}
+
+check_delayed_ci_completion_replaces_fallback_review() {
+  prepare_ci_review_case
+  local marker fallback_marker
+  marker="<!-- codex-pr-review:15:${CI_HEAD} -->"
+  fallback_marker="<!-- codex-pr-review-no-ci:15:${CI_HEAD} -->"
+  jq -n --arg marker "$marker" --arg fallback "$fallback_marker" \
+    '{id: 41, login: "github-actions[bot]", body: ($marker + "\\n" + $fallback)}' \
+    >"$STUB_DIR/comments.jsonl"
+  printf '{"count": 1, "check_runs": [{"id": 1, "name": "quality-gate", "status": "completed", "conclusion": "success", "completed_at": "2026-08-25T10:00:00Z"}]}' \
+    >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || [[ ! -s "$STUB_DIR/captured-input.md" ]]; then
+    fail 'A completed CI run did not replace the earlier no-CI fallback review.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ ! -s "$STUB_DIR/patched.log" ]] || [[ -s "$STUB_DIR/posted.log" ]]; then
+    fail 'A completed CI run did not edit the existing no-CI fallback comment in place.'
+  fi
+}
+
+check_closed_pr_workflow_run_is_skipped() {
+  prepare_ci_review_case
+  jq '.state = "CLOSED"' "$STUB_DIR/metadata.json" >"$STUB_DIR/metadata.closed.json"
+  mv "$STUB_DIR/metadata.closed.json" "$STUB_DIR/metadata.json"
+  printf '{"count": 1, "check_runs": [{"id": 1, "name": "quality-gate", "status": "completed", "conclusion": "success", "completed_at": "2026-08-25T10:00:00Z"}]}' \
+    >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A closed PR workflow_run failed instead of being skipped.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+  if [[ -s "$STUB_DIR/responses-argv.log" ]] || grep -Fq '/check-runs' "$STUB_DIR/api.log"; then
+    fail 'A closed PR workflow_run reached review or evidence collection.'
   fi
 }
 
@@ -1587,6 +1656,8 @@ check_oversized_review_input_is_refused
 check_matching_completed_ci_head_reaches_model
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
+check_delayed_ci_completion_replaces_fallback_review
+check_closed_pr_workflow_run_is_skipped
 check_direct_path_with_ci_run_defers
 check_failed_ci_run_probe_fails_safe_toward_review
 check_workflow_run_path_never_probes_for_a_run

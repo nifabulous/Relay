@@ -147,7 +147,12 @@ fi
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-METADATA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json number,title,body,url,baseRefName,headRefName,headRefOid)"
+METADATA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json number,title,body,url,state,baseRefName,headRefName,headRefOid)"
+PR_STATE="$(jq -r '.state // empty' <<<"$METADATA")"
+if [[ "$PR_STATE" != "OPEN" ]]; then
+  echo "PR #${PR_NUMBER} is not open (state=${PR_STATE:-unknown}); skipping review."
+  exit 0
+fi
 HEAD_SHA="$(jq -r '.headRefOid' <<<"$METADATA")"
 if [[ -n "${CODEX_EXPECTED_HEAD_SHA:-}" ]]; then
   if [[ ! "$CODEX_EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
@@ -171,16 +176,33 @@ CONTRACT_SLUG="${HEAD_REF_NAME//\//-}"
 CONTRACT_HASH="$(python3 -c 'import hashlib, sys; sys.stdout.write(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])' "$HEAD_REF_NAME")"
 CONTRACT_PATH="docs/contracts/${CONTRACT_SLUG}-${CONTRACT_HASH}.md"
 MARKER="<!-- codex-pr-review:${PR_NUMBER}:${HEAD_SHA} -->"
+# A direct-event fallback may run before GitHub has created the CI workflow
+# run. This second, bot-authored marker tells the later workflow_run invocation
+# that the current-head review is eligible for replacement once exact-head CI
+# evidence exists. Ordinary reviews do not carry it, so retries remain
+# duplicate-suppressed.
+NO_CI_MARKER="<!-- codex-pr-review-no-ci:${PR_NUMBER}:${HEAD_SHA} -->"
 
 # Duplicate suppression must key on a marker the automation itself posted. A
 # body-only match lets any PR author paste the marker and silence the review of
 # their own head commit, so the comment author is checked too; a login is
 # unforgeable, unlike comment text.
 gh api --paginate "repos/${GH_REPO}/issues/${PR_NUMBER}/comments?per_page=100" \
-  --jq '.[] | {login: (.user.login // ""), body: (.body // "")}' >"$TEMP_DIR/comments.jsonl"
+  --jq '.[] | {id: (.id // 0), login: (.user.login // ""), body: (.body // "")}' >"$TEMP_DIR/comments.jsonl"
+REPLACE_COMMENT_ID=""
+if [[ "${CODEX_EVENT_NAME:-}" == "workflow_run" ]]; then
+  REPLACE_COMMENT_ID="$(jq -s -r --arg bot "$CODEX_BOT_LOGIN" --arg marker "$MARKER" \
+    --arg no_ci_marker "$NO_CI_MARKER" \
+    '[.[] | select(.login == $bot and (.body | contains($marker))
+                    and (.body | contains($no_ci_marker)))]
+     | if length == 0 then "" else (last.id // "") end' \
+    "$TEMP_DIR/comments.jsonl")"
+fi
 if jq -e -n --arg bot "$CODEX_BOT_LOGIN" --arg marker "$MARKER" \
+  --arg no_ci_marker "$NO_CI_MARKER" --arg event "${CODEX_EVENT_NAME:-}" \
   'reduce inputs as $comment (false;
-     . or ($comment.login == $bot and ($comment.body | contains($marker))))' \
+     . or ($comment.login == $bot and ($comment.body | contains($marker)) and
+       (($event != "workflow_run") or (($comment.body | contains($no_ci_marker)) | not))))' \
   "$TEMP_DIR/comments.jsonl" >/dev/null; then
   echo "Codex already reviewed PR #${PR_NUMBER} at ${HEAD_SHA}."
   exit 0
@@ -548,8 +570,16 @@ fi
 
 {
   printf '%s\n\n' "$MARKER"
+  if (( CI_PRODUCED_NO_RUN )); then
+    printf '%s\n\n' "$NO_CI_MARKER"
+  fi
   printf '%s\n\n' '_Codex read-only review. Human verification and approval are required._'
   cat "$TEMP_DIR/review.md"
 } >"$TEMP_DIR/comment.md"
 
-gh pr comment "$PR_NUMBER" --repo "$GH_REPO" --body-file "$TEMP_DIR/comment.md"
+if [[ -n "$REPLACE_COMMENT_ID" && "$REPLACE_COMMENT_ID" != "0" ]]; then
+  gh api --method PATCH "repos/${GH_REPO}/issues/comments/${REPLACE_COMMENT_ID}" \
+    -f "body=$(cat "$TEMP_DIR/comment.md")"
+else
+  gh pr comment "$PR_NUMBER" --repo "$GH_REPO" --body-file "$TEMP_DIR/comment.md"
+fi

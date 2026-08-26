@@ -816,7 +816,9 @@ def collect(pr: int, contract: Contract, repo: Optional[str] = None) -> dict:
     if not repo:
         raise SystemExit("GH_REPO or GITHUB_REPOSITORY is required")
     meta = _gh_json(["pr", "view", str(pr), "--repo", repo,
-                     "--json", "headRefOid,headRefName,files"])
+                     "--json", "state,headRefOid,headRefName,files"])
+    if meta.get("state") != "OPEN":
+        raise RuntimeError(f"PR #{pr} is not open; refusing to arbitrate it")
     head_sha = meta["headRefOid"]
     head_ref = meta["headRefName"]
     diff_files = [f["path"] for f in meta.get("files", [])]
@@ -1084,7 +1086,7 @@ def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
         proc = subprocess.run(
             ["gh", "issue", "list", "--repo", repo,
              "--label", label,
-             "--state", "all", "--json", "number,body", "--limit", str(limit)],
+             "--state", "all", "--json", "number,body,author", "--limit", str(limit)],
             capture_output=True, text=True, check=True,
         )
         label_issues = json.loads(proc.stdout)
@@ -1101,12 +1103,16 @@ def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
     return issues
 
 
-def _find_existing_issue(existing_issues: List[dict], marker: str) -> Optional[int]:
+def _find_existing_issue(existing_issues: List[dict], marker: str,
+                         bot_login: str) -> Optional[int]:
     # A deterministic, local grep over already-fetched bodies — never GitHub's
     # own search indexing, which is not guaranteed to index HTML comments
-    # (plan §6.4 / task brief).
+    # (plan §6.4 / task brief). The marker is public and forgeable, so only an
+    # issue authored by the configured bot can establish ledger ownership.
     for issue in existing_issues:
-        if marker in (issue.get("body") or ""):
+        author = issue.get("author") or {}
+        if (author.get("login") == bot_login
+                and marker in (issue.get("body") or "")):
             return issue.get("number")
     return None
 
@@ -1232,7 +1238,8 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
     results = []
     for gap in decision.proposed_gaps:
         marker = _gap_marker(pr, gap["id"], gap["file"], gap["cat"])
-        existing_number = _find_existing_issue(existing_issues, marker)
+        existing_number = _find_existing_issue(existing_issues, marker,
+                                                contract.bot_login)
         if existing_number is not None:
             results.append({
                 "gap_id": gap["id"],
@@ -1275,7 +1282,11 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
         # findings that merely share an `id` at different (file, cat); those
         # now hash to different markers (see _gap_marker) and always get
         # their own issue.
-        existing_issues.append({"number": created_number, "body": body})
+        existing_issues.append({
+            "number": created_number,
+            "body": body,
+            "author": {"login": contract.bot_login},
+        })
     return results
 
 
