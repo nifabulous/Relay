@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import difflib
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 from .domain import Institution, RegistryInput
 from .normalize import normalize_domain, normalize_identifier, normalize_name
@@ -42,7 +43,9 @@ class ResolverIndex:
         return cls(index.institutions, index.identifiers_by_key, verified_domains, index.names_by_country, index.aliases_by_institution)
 
     @classmethod
-    def from_registry(cls, registry: RegistryInput) -> ResolverIndex:
+    def from_registry(cls, registry: RegistryInput, now: datetime | None = None) -> ResolverIndex:
+        if now is None:
+            now = datetime.now(timezone.utc)
         institutions = tuple(sorted(registry.institutions, key=lambda item: item.id))
         ids = {item.id for item in institutions}
         if len(ids) != len(institutions):
@@ -51,6 +54,11 @@ class ResolverIndex:
         for item in registry.identifiers:
             if item.owner_id not in ids:
                 raise ValueError(f"identifier owner does not resolve: {item.owner_id}")
+            # Skip retired identifiers
+            if item.valid_to is not None and item.valid_to <= now:
+                continue
+            if item.valid_from is not None and item.valid_from > now:
+                continue
             key = (item.type, normalize_identifier(item.type, item.value))
             identifier_map.setdefault(key, []).append(item.owner_id)
         domain_map: dict[str, list[str]] = {}

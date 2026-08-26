@@ -79,7 +79,46 @@ class SafeHttpxAssetFetcher:
         current = url
         for redirect_count in range(self.max_redirects + 1):
             validate_source_url(current, resolver=self.resolver)
-            with self.client.stream("GET", current, follow_redirects=False, timeout=self.timeout) as response:
+            # Pin DNS: resolve and use IP for connection with Host header and SNI
+            parsed = urlparse(current)
+            hostname = parsed.hostname or ""
+            try:
+                ips = self.resolver(hostname) if hostname else []
+            except Exception:
+                ips = []
+            # Build pinned URL and headers for httpx
+            pinned_url = current
+            headers = {}
+            extensions = {}
+            if ips:
+                ip = ips[0]
+                # Validate IP again (already validated, but ensure)
+                # Construct URL with IP
+                port = f":{parsed.port}" if parsed.port else ""
+                path = parsed.path or "/"
+                if parsed.query:
+                    path += f"?{parsed.query}"
+                # Handle IPv6 brackets
+                if ":" in ip and not ip.startswith("["):
+                    # IPv6 without brackets
+                    if ip.startswith("::ffff:"):
+                        # IPv4-mapped IPv6, treat as is with brackets
+                        ip_url_host = f"[{ip}]"
+                    else:
+                        ip_url_host = f"[{ip}]"
+                else:
+                    ip_url_host = ip
+                pinned_url = f"{parsed.scheme}://{ip_url_host}{port}{path}"
+                headers["Host"] = hostname
+                # SNI extension for TLS
+                extensions["sni_hostname"] = hostname
+            # Use pinned URL if available, else original
+            request_url = pinned_url if ips else current
+            # Prepare stream kwargs with SNI if needed
+            stream_kwargs = {"headers": headers} if headers else {}
+            if extensions:
+                stream_kwargs["extensions"] = extensions
+            with self.client.stream("GET", request_url, follow_redirects=False, timeout=self.timeout, **stream_kwargs) as response:
                 if response.status_code in {301, 302, 303, 307, 308}:
                     location = response.headers.get("location")
                     if not location:

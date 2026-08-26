@@ -29,7 +29,7 @@ class ReleaseValidationError(ValueError):
         super().__init__("; ".join(f"{issue.code} at {issue.path}: {issue.message}" for issue in issues))
 
 
-SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
+SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$")
 
 SCHEMA_VERSION = "1.0.0"
 
@@ -137,6 +137,22 @@ class ReleaseBuilder:
                 issues.append(ValidationIssue("dangling_reference", f"rekey_events/{rekey.id}", f"rekey owner {rekey.owner_id} not found"))
             if rekey.source_id not in source_ids:
                 issues.append(ValidationIssue("missing_provenance", f"rekey_events/{rekey.id}", f"rekey missing valid source {rekey.source_id}"))
+        # Check that every source has a successful run (stale source check)
+        from .domain import SourceRunStatus
+
+        successful_sources = {run.source_id for run in registry.source_runs if run.status == SourceRunStatus.SUCCEEDED}
+        for source in registry.sources:
+            if source.id not in successful_sources:
+                issues.append(ValidationIssue("stale_source", f"sources/{source.id}", f"source {source.id} has no successful run"))
+        # Also check that every published record's source has successful run
+        for inst in registry.institutions:
+            for sid in inst.source_ids:
+                if sid not in successful_sources:
+                    issues.append(ValidationIssue("stale_source", f"institutions/{inst.id}/source_ids", f"institution source {sid} has no successful run"))
+        for brand in registry.brands:
+            for sid in brand.source_ids:
+                if sid not in successful_sources:
+                    issues.append(ValidationIssue("stale_source", f"brands/{brand.id}/source_ids", f"brand source {sid} has no successful run"))
         # Asset validations
         binary_paths_seen = set()
         for asset in registry.assets:
@@ -144,7 +160,19 @@ class ReleaseBuilder:
                 issues.append(ValidationIssue("dangling_reference", f"assets/{asset.id}/owner_id", f"asset owner {asset.owner_id} not found"))
             if asset.source_id not in source_ids:
                 issues.append(ValidationIssue("missing_provenance", f"assets/{asset.id}", f"asset missing valid source {asset.source_id}"))
-            # Check duplicate binary paths
+            # Check duplicate binary paths and reserved names
+            RESERVED = {
+                "institutions.json",
+                "brands.json",
+                "identifiers.json",
+                "aliases.json",
+                "rekey-events.json",
+                "relationships.json",
+                "assets-manifest.json",
+                "sources.json",
+                "checksums.txt",
+                "schema-version.json",
+            }
             if asset.binary_path:
                 if asset.binary_path in binary_paths_seen:
                     issues.append(ValidationIssue("duplicate_binary_path", f"assets/{asset.id}/binary_path", f"duplicate binary path {asset.binary_path}"))
@@ -153,6 +181,14 @@ class ReleaseBuilder:
                 # Binary path must be relative and not contain .. or absolute
                 if Path(asset.binary_path).is_absolute() or ".." in Path(asset.binary_path).parts:
                     issues.append(ValidationIssue("invalid_binary_path", f"assets/{asset.id}/binary_path", f"binary path must be relative without traversal: {asset.binary_path}"))
+                # Must be under assets/ and derived from stable asset ID, and not overwrite reserved files
+                expected = f"assets/{asset.id}.{asset.format.value}"
+                if asset.binary_path != expected:
+                    issues.append(ValidationIssue("invalid_binary_path", f"assets/{asset.id}/binary_path", f"binary path must be derived from asset ID: expected {expected}, got {asset.binary_path}"))
+                if Path(asset.binary_path).name in RESERVED or asset.binary_path in RESERVED:
+                    issues.append(ValidationIssue("invalid_binary_path", f"assets/{asset.id}/binary_path", f"binary path must not overwrite reserved file: {asset.binary_path}"))
+                if not asset.binary_path.startswith("assets/"):
+                    issues.append(ValidationIssue("invalid_binary_path", f"assets/{asset.id}/binary_path", f"binary path must be under assets/: {asset.binary_path}"))
             # Rights checks
             # Restricted rights cannot have binary
             if asset.rights_status in {RightsStatus.SOURCE_LINK_ONLY, RightsStatus.UNKNOWN, RightsStatus.REMOVED}:
@@ -188,11 +224,13 @@ class ReleaseBuilder:
         lifecycle: ReleaseStatus = ReleaseStatus.VALIDATED,
     ):
         output_dir = Path(output_dir)
-        # Validate semver
+        # Validate semver and lifecycle
         issues: list[ValidationIssue] = []
+        if lifecycle not in {ReleaseStatus.DRAFT, ReleaseStatus.VALIDATED}:
+            issues.append(ValidationIssue("invalid_lifecycle", "lifecycle", f"build lifecycle must be draft or validated, got {lifecycle}"))
         if not _validate_semver(version):
             issues.append(ValidationIssue("invalid_semver", "release_version", f"version {version} is not valid SemVer 2.0.0"))
-        if generated_at.tzinfo is None or generated_at.utcoffset() is None:
+        if generated_at.tzinfo is None or generated_at.utcoffset() is None or generated_at.utcoffset().total_seconds() != 0:
             issues.append(ValidationIssue("invalid_timestamp", "generated_at", "generated_at must be timezone-aware UTC"))
         # Validate registry
         reg_issues = self.validate(registry, generation_commit)
@@ -208,17 +246,17 @@ class ReleaseBuilder:
                 # Expiry check
                 if asset.expires_at and asset.expires_at <= generated_at:
                     issues.append(ValidationIssue("expired_rights", f"assets/{asset.id}/expires_at", f"licensed asset {asset.id} rights have expired"))
-                # Territory check: territories must include owner's country
-                if asset.territories:
+                # Territory check: licensed must have explicit territory coverage
+                if not asset.territories:
+                    issues.append(ValidationIssue("missing_territory", f"assets/{asset.id}/territories", f"licensed asset {asset.id} requires explicit territory coverage"))
+                else:
                     owner = inst_by_id.get(asset.owner_id) or brand_by_id.get(asset.owner_id)
                     if owner is not None:
                         if hasattr(owner, "country_code"):
-                            # Institution
                             owner_country = getattr(owner, "country_code", None)
                             if owner_country and owner_country not in asset.territories:
                                 issues.append(ValidationIssue("territory_violation", f"assets/{asset.id}/territories", f"licensed asset {asset.id} territory {asset.territories} does not cover owner country {owner_country}"))
                         elif hasattr(owner, "country_codes"):
-                            # Brand
                             country_codes = getattr(owner, "country_codes", [])
                             if country_codes and not any(cc in asset.territories for cc in country_codes):
                                 issues.append(ValidationIssue("territory_violation", f"assets/{asset.id}/territories", f"licensed asset {asset.id} territory {asset.territories} does not cover owner market {country_codes}"))
@@ -405,8 +443,16 @@ class ReleaseBuilder:
                 with_source = len([i for i in institutions if i.source_ids]) + len([b for b in brands if b.source_ids]) + len(identifiers) + len(assets) + len(relationships)
                 coverage = with_source / total_records if total_records else 1.0
 
-            # Create manifest without self-reference to avoid circular hash
-            # files and checksums cover all emitted files except checksums.txt and the manifest itself
+            # Create manifest with self-reference: include schema-version.json with placeholder checksum to avoid circular hash
+            expected_files = sorted(initial_files_sorted + ["schema-version.json"])
+            placeholder_checksums = dict(initial_checksums)
+            placeholder_checksums["schema-version.json"] = "0" * 64
+            # Compute stale and unresolved
+            from .domain import SourceRunStatus
+
+            successful = {r.source_id for r in source_runs if r.status == SourceRunStatus.SUCCEEDED}
+            stale = len([s for s in sources if s.id not in successful])
+            # unresolved_matches could be count of failed runs or 0
             manifest = ReleaseManifest(
                 release_version=version,
                 schema_version=SCHEMA_VERSION,
@@ -416,17 +462,17 @@ class ReleaseBuilder:
                 source_run_ids=sorted([r.id for r in source_runs]),
                 counts=counts,
                 unresolved_matches=0,
-                stale_sources=0,
+                stale_sources=stale,
                 provenance_coverage=coverage,
                 input_sha256=input_sha,
                 processor_version=processor_version,
-                files=sorted(initial_files_sorted),
-                checksums=dict(initial_checksums),
+                files=expected_files,
+                checksums=placeholder_checksums,
             )
             manifest_dict = json.loads(manifest.model_dump_json(exclude_none=True))
             write_json("schema-version.json", manifest_dict)
 
-            # Now compute final checksums for checksums.txt including the manifest
+            # Now compute final checksums for checksums.txt including the manifest (with placeholder)
             all_files = []
             for p in tmp_dir.rglob("*"):
                 if p.is_file():
@@ -439,6 +485,8 @@ class ReleaseBuilder:
             for rel in all_files_sorted:
                 data = (tmp_dir / rel).read_bytes()
                 final_checksums[rel] = _hash_bytes(data)
+            # Update manifest object to have final checksums (file still has placeholder, but actual file hash matches final)
+            manifest = manifest.model_copy(update={"files": all_files_sorted, "checksums": final_checksums})
 
             # Write checksums.txt with final checksums (including manifest)
             lines = [f"{final_checksums[rel]}  {rel}" for rel in sorted(final_checksums.keys())]
@@ -470,16 +518,31 @@ class ReleaseBuilder:
                     os.close(dir_fd)
             except OSError:
                 pass
-            # If output_dir exists, we need to handle atomic replace: use shutil.rmtree? But we should ensure we don't leave partial.
-            # For simplicity, if output_dir exists, remove it before rename (since tests expect clean)
-            # But to support atomic, we should rename tmp_dir to output_dir via os.rename which will fail if exists; use replace.
+            # Atomic replace: never delete existing output before replacement is ready
+            # Use os.replace for atomicity (POSIX) - handles existing directory atomically
             if output_dir.exists():
-                # For reproducibility test, output dirs are fresh, so this shouldn't happen; but if it does, remove old
-                if output_dir.is_dir():
-                    shutil.rmtree(output_dir)
-                else:
-                    output_dir.unlink()
-            tmp_dir.rename(output_dir)
+                # Use backup + replace to ensure atomicity and no data loss on crash
+                # First, try os.replace directly (works for files and on some Unix for dirs)
+                try:
+                    os.replace(tmp_dir, output_dir)
+                except OSError:
+                    # Fallback: move existing to backup, then promote temp, then remove backup
+                    import uuid
+
+                    backup = parent / f".{output_dir.name}.backup-{uuid.uuid4().hex[:8]}"
+                    output_dir.rename(backup)
+                    try:
+                        tmp_dir.rename(output_dir)
+                        shutil.rmtree(backup)
+                    except Exception:
+                        # Restore backup on failure
+                        if backup.exists():
+                            if output_dir.exists():
+                                shutil.rmtree(output_dir)
+                            backup.rename(output_dir)
+                        raise
+            else:
+                tmp_dir.rename(output_dir)
             # Fsync parent directory after rename
             try:
                 dir_fd = os.open(parent, os.O_RDONLY)

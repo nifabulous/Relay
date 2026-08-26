@@ -19,7 +19,7 @@ class FilesystemSnapshotStore:
         self.max_snapshot_bytes = max_snapshot_bytes
 
     def put(self, source_id: str, retrieved_at: datetime, body: bytes) -> RawSnapshot:
-        if not source_id or Path(source_id).name != source_id:
+        if not source_id or source_id in {".", ".."} or "/" in source_id or "\\" in source_id or Path(source_id).name != source_id:
             raise ValueError("source_id must be a single path-safe component")
         if retrieved_at.tzinfo is None or retrieved_at.utcoffset() is None:
             raise ValueError("retrieved_at must be timezone-aware")
@@ -54,7 +54,7 @@ class FilesystemSnapshotStore:
         return body
 
     def prune(self, source_id: str, keep_digests: set[str]) -> list[RawSnapshot]:
-        if not source_id or Path(source_id).name != source_id:
+        if not source_id or source_id in {".", ".."} or "/" in source_id or "\\" in source_id or Path(source_id).name != source_id:
             raise ValueError("source_id must be a single path-safe component")
         if any(
             len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest)

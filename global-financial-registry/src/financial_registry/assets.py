@@ -244,8 +244,18 @@ class AssetProcessor:
         if len(body) > self.max_bytes:
             raise AssetPolicyError("raster image exceeds size limit")
         try:
+            # Decompression bomb guard: set max pixels before open
+            Image.MAX_IMAGE_PIXELS = self.max_dimension * self.max_dimension
             image = Image.open(io.BytesIO(body))
+            # Check dimensions from header before decoding
+            width, height = image.size
+            if width > self.max_dimension or height > self.max_dimension:
+                raise AssetPolicyError("raster dimensions exceed limit")
+            if width * height > self.max_dimension * self.max_dimension:
+                raise AssetPolicyError("raster image exceeds pixel limit")
             image.load()
+        except AssetPolicyError:
+            raise
         except Exception as exc:
             raise AssetPolicyError(f"invalid raster image: {exc}") from exc
         if image.width > self.max_dimension or image.height > self.max_dimension:
