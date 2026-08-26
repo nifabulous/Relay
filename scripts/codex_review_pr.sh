@@ -347,12 +347,14 @@ PY
 # enough to compute the omitted count. If the raw response exceeds its cap or
 # is malformed, degrade to an explicit unavailable-evidence note rather than
 # silently treating an incomplete payload as a complete result.
-capture_bounded_json() {
+capture_bounded_stream() {
   local max_bytes="$1"
+  local description="$2"
   python3 -c '
 import sys
 
 limit = int(sys.argv[1])
+description = sys.argv[2]
 data = bytearray()
 while True:
     chunk = sys.stdin.buffer.read(min(65536, limit + 1 - len(data)))
@@ -360,10 +362,10 @@ while True:
         break
     data.extend(chunk)
     if len(data) > limit:
-        print(f"check-run API page exceeds CODEX_CHECK_MAX_RAW_BYTES={limit}", file=sys.stderr)
+        print(f"{description} exceeds its byte limit ({limit})", file=sys.stderr)
         raise SystemExit(1)
 sys.stdout.buffer.write(data)
-' "$max_bytes"
+' "$max_bytes" "$description"
 }
 
 collect_check_runs() {
@@ -384,7 +386,7 @@ collect_check_runs() {
     page_file="$TEMP_DIR/check-runs-page-${page}.json"
     if ! gh api \
       "repos/${GH_REPO}/commits/${HEAD_SHA}/check-runs?per_page=${page_size}&page=${page}" \
-      | capture_bounded_json "$CODEX_CHECK_MAX_RAW_BYTES" >"$page_file"; then
+      | capture_bounded_stream "$CODEX_CHECK_MAX_RAW_BYTES" "check-run API page" >"$page_file"; then
       return 1
     fi
     if ! jq -e 'type == "object" and (.check_runs | type) == "array" and ((.total_count // .count) | type) == "number"' \
@@ -596,7 +598,10 @@ show_trusted() {
     printf '%s\n' "$context_prefix"
   fi
   context_count=0
-  context_allowlist="$(show_trusted ".github/codex/context-files.txt" 2>/dev/null || true)"
+  if ! context_allowlist="$(show_trusted ".github/codex/context-files.txt" 2>/dev/null \
+    | capture_bounded_stream "$CODEX_CONTEXT_MAX_BYTES" "trusted context allowlist")"; then
+    context_allowlist=""
+  fi
   if (( ! context_enabled )); then
     context_allowlist=""
   fi
@@ -614,7 +619,12 @@ show_trusted() {
     done
     (( invalid_context_path )) && continue
     (( context_count >= CODEX_CONTEXT_MAX_FILES )) && break
-    if ! context_content="$(show_trusted "$context_path" 2>/dev/null)"; then
+    remaining_context_bytes=$((CODEX_CONTEXT_MAX_BYTES - context_bytes))
+    if (( remaining_context_bytes <= 0 )); then
+      continue
+    fi
+    if ! context_content="$(show_trusted "$context_path" 2>/dev/null \
+      | capture_bounded_stream "$remaining_context_bytes" "trusted context file $context_path")"; then
       continue
     fi
     context_section="$(printf '\n### Reference: `%s`\n\n%s\n' \

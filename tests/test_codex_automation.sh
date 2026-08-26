@@ -387,6 +387,7 @@ require_text 'scripts/codex_review_pr.sh' 'unverifiable'
 require_text '.github/codex/review-policy.md' 'unverifiable'
 require_text 'docs/loop/schemas.md' 'exact-head check result was not available at review time'
 require_text 'scripts/codex_review_pr.sh' 'show_trusted ".github/codex/context-files.txt"'
+require_text 'scripts/codex_review_pr.sh' 'capture_bounded_stream'
 require_text 'scripts/codex_review_pr.sh' '## Trusted reference material (not policy)'
 refuse_text 'scripts/codex_review_pr.sh' 'cat .github/codex/context-files.txt'
 require_text '.github/codex/context-files.txt' '.github/workflows/codex-pr-review.yml'
@@ -874,8 +875,8 @@ invoke_ci_review_case() {
 check_matching_completed_ci_head_reaches_model() {
   prepare_ci_review_case
   jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
-  # This is a syntactically valid address; [EMAIL] is reserved for the
-  # redactor's output and must never be used as the fixture input.
+  # This is a syntactically valid address; the expected marker is constructed
+  # separately so the fixture value can never be confused with sanitizer output.
   jq -n '{total_count: 3, check_runs: [
     {id: 2, name: "frontend@owner.example", status: "completed",
      conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
@@ -909,7 +910,8 @@ check_matching_completed_ci_head_reaches_model() {
   if grep -Fq 'frontend@owner.example' "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name reached the model unsanitized.'
   fi
-  if ! grep -Fq '[EMAIL]' "$STUB_DIR/captured-input.md"; then
+  expected_email_marker="$(printf '[%s]' EMAIL)"
+  if ! grep -Fq "$expected_email_marker" "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name was not replaced with the documented redaction marker.'
   fi
   if ! grep -Fq "/commits/${CI_HEAD}/check-runs" "$STUB_DIR/api.log" ||
@@ -1429,6 +1431,33 @@ check_trusted_context_wrapper_counts_toward_cap() {
   fi
 }
 
+check_trusted_context_allowlist_read_is_bounded() {
+  local allowlist="$TRUSTED_STAGING_ROOT/.github/codex/context-files.txt"
+  printf '%*s' 60000 '' | tr ' ' x >"$allowlist"
+
+  prepare_context_case
+  local status=0
+  invoke_context_case \
+    CODEX_CONTEXT_MAX_FILES=10 \
+    CODEX_CONTEXT_MAX_BYTES=50000 || status=$?
+
+  printf '# Trusted reference material supplied to the PR reviewer.\n.github/workflows/codex-pr-review.yml\n' \
+    >"$allowlist"
+
+  if (( status != 0 )); then
+    fail 'An oversized trusted context allowlist failed the review.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  local context_material="${STUB_DIR}/context-material.md"
+  awk '/## Trusted reference material \(not policy\)/{capture=1} capture{print}' \
+    "$STUB_DIR/captured-instructions.md" >"$context_material"
+  if grep -Fq 'xxxxxxxx' "$context_material" ||
+    (( $(wc -c <"$context_material" | tr -d ' ') > 50000 )); then
+    fail 'An oversized trusted context allowlist escaped the acquisition cap.'
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # T5: the per-branch Contract (docs/contracts/<branch>.md) must be read from
 # THIS checkout -- main's version by construction, never fetched from the PR
@@ -1923,6 +1952,7 @@ check_context_allowlist_comes_from_trusted_sha
 check_trusted_missing_context_path_is_skipped
 check_trusted_context_caps
 check_trusted_context_wrapper_counts_toward_cap
+check_trusted_context_allowlist_read_is_bounded
 
 jq -n '{number: 21, title: "t", body: "b", url: "u", state: "OPEN", labels: [],
         author: {login: "reporter"}, createdAt: "2026-08-15T00:00:00Z",
