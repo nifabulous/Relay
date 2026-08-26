@@ -127,7 +127,9 @@ require_text 'scripts/codex_review_pr.sh' 'LATEST_METADATA'
 require_text 'scripts/codex_review_pr.sh' '--json state,headRefOid'
 require_text 'scripts/codex_review_pr.sh' 'LATEST_STATE'
 require_text 'scripts/codex_review_pr.sh' 'CODEX_CI_WORKFLOW_FILE must be ci.yml'
-require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request")'
+require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request" and .head_sha == $head)'
+require_text 'scripts/codex_review_pr.sh' 'pull_requests[]?.number?'
+require_text 'scripts/codex_review_pr.sh' 'index($pr)'
 refuse_text 'scripts/codex_review_pr.sh' '--paginate --slurp'
 require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
 require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
@@ -1071,6 +1073,29 @@ check_non_pr_ci_run_does_not_defer() {
   fi
 }
 
+check_shared_head_ci_run_does_not_defer_unassociated_pr() {
+  prepare_ci_review_case
+  # PR #99 owns the only CI run for this shared commit. This invocation is for
+  # PR #15 and must review rather than deferring behind another PR's run.
+  jq -n --arg sha "$CI_HEAD" \
+    '{workflow_runs: [{event: "pull_request", head_sha: $sha,
+      pull_requests: [{number: 99}]}]}' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=ci.yml \
+    CODEX_CI_DISCOVERY_SECONDS=1 \
+    CODEX_CI_DISCOVERY_POLL_SECONDS=1 \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )) || [[ ! -s "$STUB_DIR/responses-argv.log" ]]; then
+    fail 'A CI run for another PR sharing the head incorrectly suppressed this PR review.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
 check_delayed_ci_completion_replaces_fallback_review() {
   prepare_ci_review_case
   local marker fallback_marker
@@ -1144,7 +1169,8 @@ check_closed_pr_workflow_run_is_skipped() {
 check_direct_path_with_ci_run_defers() {
   prepare_ci_review_case
   jq -n --arg sha "$CI_HEAD" \
-    '{workflow_runs: [{event: "pull_request", head_sha: $sha}]}' >"$STUB_DIR/workflow-runs.json"
+    '{workflow_runs: [{event: "pull_request", head_sha: $sha,
+      pull_requests: [{number: 15}]}]}' >"$STUB_DIR/workflow-runs.json"
   printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
 
   invoke_ci_review_case \
@@ -2009,6 +2035,7 @@ check_non_ci_workflow_override_is_refused
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
 check_non_pr_ci_run_does_not_defer
+check_shared_head_ci_run_does_not_defer_unassociated_pr
 check_delayed_ci_completion_replaces_fallback_review
 check_ci_completion_replaces_ordinary_review
 check_closed_pr_workflow_run_is_skipped

@@ -227,9 +227,19 @@ fi
 if [[ "${CODEX_EVENT_NAME:-}" == "pull_request_target" && "${CODEX_PR_ACTION:-}" =~ ^(opened|synchronize)$ ]]; then
   discovery_deadline=$(( $(date +%s) + CODEX_CI_DISCOVERY_SECONDS ))
   while :; do
-    ci_runs="$(gh api \
+    ci_runs_payload="$(gh api \
       "repos/${GH_REPO}/actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs?head_sha=${HEAD_SHA}&per_page=100" \
-      --jq '[.workflow_runs[]? | select(.event == "pull_request")] | length' 2>/dev/null || true)"
+      2>/dev/null || true)"
+    # A commit can be the head of multiple open PRs. Defer only when the
+    # pull_request workflow run explicitly names THIS PR; another PR's run is
+    # not evidence that this PR's review will receive a workflow_run callback.
+    # Missing/malformed association data fails safe toward reviewing rather
+    # than silently dropping coverage.
+    ci_runs="$(jq -r --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" \
+      '[.workflow_runs[]?
+       | select(.event == "pull_request" and .head_sha == $head)
+       | select(([.pull_requests[]?.number? | tostring] | index($pr)) != null)]
+       | length' <<<"$ci_runs_payload" 2>/dev/null || true)"
     if [[ "$ci_runs" =~ ^[0-9]+$ ]] && (( ci_runs > 0 )); then
       echo "CI run exists for ${HEAD_SHA}; deferring to the CI-completion review."
       exit 0
