@@ -126,6 +126,7 @@ require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
 require_text 'scripts/codex_review_pr.sh' 'LATEST_METADATA'
 require_text 'scripts/codex_review_pr.sh' '--json state,headRefOid'
 require_text 'scripts/codex_review_pr.sh' 'LATEST_STATE'
+require_text 'scripts/codex_review_pr.sh' 'CODEX_CI_WORKFLOW_FILE must be ci.yml'
 require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request")'
 refuse_text 'scripts/codex_review_pr.sh' '--paginate --slurp'
 require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
@@ -298,6 +299,8 @@ require_text '.github/workflows/codex-pr-review.yml' '  schedule:'
 require_text '.github/workflows/codex-pr-review.yml' 'cron: "17 2 * * 1-5"'
 require_text '.github/workflows/codex-pr-review.yml' \
   'ARBITER_OPERATOR: ${{ vars.ARBITER_AUTOPOST }}'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CI_WORKFLOW_FILE: ci.yml'
+refuse_text '.github/workflows/codex-pr-review.yml' 'vars.CODEX_CI_WORKFLOW_FILE'
 for arbiter_knob in ARBITER_SOFT_GATE ARBITER_HARD_CAP ARBITER_STUCK_P1_ROUNDS ARBITER_UNVERIFIABLE_ROUNDS; do
   require_text '.github/workflows/codex-pr-review.yml' "$arbiter_knob: \${{ vars.$arbiter_knob ||"
 done
@@ -978,6 +981,20 @@ check_final_publication_skips_closed_pr() {
   fi
 }
 
+check_non_ci_workflow_override_is_refused() {
+  prepare_ci_review_case
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=other.yml
+  if (( CI_REVIEW_STATUS == 0 )); then
+    fail 'A CI workflow override outside the workflow_run trigger was accepted.'
+  elif ! grep -Fq 'CODEX_CI_WORKFLOW_FILE must be ci.yml' "$STUB_DIR/run.log"; then
+    fail 'A non-CI workflow override failed for the wrong reason.'
+    cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
 check_stale_workflow_run_exits_before_model() {
   prepare_ci_review_case
   jq -n '{count: 1, check_runs: [{id: 1, name: "quality-gate", status: "completed",
@@ -1200,7 +1217,8 @@ check_empty_ci_evidence_is_explicit() {
 check_oversized_raw_ci_evidence_degrades_explicitly() {
   prepare_ci_review_case
   jq -n --arg payload "$(printf 'raw-sensitive-payload-%.0s' {1..300})" \
-    '{total_count: 1, check_runs: [], payload: $payload}' >"$STUB_DIR/check-runs.json"
+    '{total_count: 1, check_runs: [{id: 999, name: $payload,
+      status: "completed", conclusion: "success"}]}' >"$STUB_DIR/check-runs.json"
 
   invoke_ci_review_case \
     CODEX_EVENT_NAME=workflow_run \
@@ -1986,6 +2004,7 @@ check_oversized_review_input_is_refused
 
 check_matching_completed_ci_head_reaches_model
 check_final_publication_skips_closed_pr
+check_non_ci_workflow_override_is_refused
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
 check_non_pr_ci_run_does_not_defer

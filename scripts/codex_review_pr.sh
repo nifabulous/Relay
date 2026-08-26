@@ -146,6 +146,10 @@ if [[ ! "$CODEX_CI_WORKFLOW_FILE" =~ ^[A-Za-z0-9._-]+$ ]]; then
   echo "CODEX_CI_WORKFLOW_FILE must contain only a workflow file name." >&2
   exit 2
 fi
+if [[ "$CODEX_CI_WORKFLOW_FILE" != "ci.yml" ]]; then
+  echo "CODEX_CI_WORKFLOW_FILE must be ci.yml because workflow_run is bound to the CI workflow." >&2
+  exit 2
+fi
 
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
@@ -497,6 +501,12 @@ still present — the earlier resolution was mistaken, or a later commit
 regressed it — raise it again as NEW, with a fresh id, and say in the evidence
 that it was previously reported resolved. Never stay silent about a live defect
 because an earlier round called it fixed.
+
+Before carrying a prior finding forward as OPEN, independently locate its
+evidence in the complete current diff and affected files. A code snippet quoted
+by the historical review may be stale or mistaken; do not copy it as current
+evidence. If the current source no longer has the cited defect, mark that
+finding RESOLVED this round and cite the current verification instead.
 
 Mark each finding with exactly one lifecycle state:
 

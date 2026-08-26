@@ -169,7 +169,10 @@ jobs:
       CODEX_EVENT_NAME: ${{ github.event_name }}
       CODEX_PR_ACTION: ${{ github.event.action }}
       CODEX_EXPECTED_HEAD_SHA: ${{ needs.targets.outputs.expected_head_sha }}
-      CODEX_CI_WORKFLOW_FILE: ${{ vars.CODEX_CI_WORKFLOW_FILE || 'ci.yml' }}
+      # The workflow_run trigger below is fixed to the production CI workflow;
+      # keep the discovery probe bound to that same identity so a repository
+      # variable cannot silently defer a review to an unobserved workflow.
+      CODEX_CI_WORKFLOW_FILE: ci.yml
       CODEX_CI_DISCOVERY_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_SECONDS || '60' }}
       CODEX_CI_DISCOVERY_POLL_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_POLL_SECONDS || '10' }}
       CODEX_CHECK_MAX_ITEMS: ${{ vars.CODEX_CHECK_MAX_ITEMS || '50' }}
