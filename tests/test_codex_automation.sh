@@ -123,6 +123,7 @@ done
 
 require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
 require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
+require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request")'
 require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
 require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
 require_text 'scripts/verify_before_push.sh' 'SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT='
@@ -918,6 +919,30 @@ check_direct_path_without_ci_run_reviews() {
   fi
 }
 
+check_non_pr_ci_run_does_not_defer() {
+  prepare_ci_review_case
+  jq -n --arg sha "$CI_HEAD" \
+    '{workflow_runs: [{event: "push", head_sha: $sha}]}' >"$STUB_DIR/workflow-runs.json"
+  printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=pull_request_target \
+    CODEX_PR_ACTION=synchronize \
+    CODEX_CI_WORKFLOW_FILE=ci.yml \
+    CODEX_CI_DISCOVERY_SECONDS=1 \
+    CODEX_CI_DISCOVERY_POLL_SECONDS=1 \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A same-head non-PR CI run caused the direct review to fail.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/responses-argv.log" ]]; then
+    fail 'A same-head non-PR CI run incorrectly deferred the direct review.'
+  fi
+}
+
 check_delayed_ci_completion_replaces_fallback_review() {
   prepare_ci_review_case
   local marker fallback_marker
@@ -990,7 +1015,8 @@ check_closed_pr_workflow_run_is_skipped() {
 
 check_direct_path_with_ci_run_defers() {
   prepare_ci_review_case
-  jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
+  jq -n --arg sha "$CI_HEAD" \
+    '{workflow_runs: [{event: "pull_request", head_sha: $sha}]}' >"$STUB_DIR/workflow-runs.json"
   printf '{"count": 0, "check_runs": []}' >"$STUB_DIR/check-runs.json"
 
   invoke_ci_review_case \
@@ -1732,6 +1758,7 @@ check_oversized_review_input_is_refused
 check_matching_completed_ci_head_reaches_model
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
+check_non_pr_ci_run_does_not_defer
 check_delayed_ci_completion_replaces_fallback_review
 check_ci_completion_replaces_ordinary_review
 check_closed_pr_workflow_run_is_skipped

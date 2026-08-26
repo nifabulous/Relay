@@ -211,15 +211,18 @@ if [[ "${CODEX_EVENT_NAME:-}" != "workflow_run" ]]; then
 fi
 
 # On direct push events, wait briefly for GitHub to create CI's asynchronous
-# pull_request run. If it exists, the completed-CI path owns this head. The
+# pull_request run. If one exists, the completed-CI path owns this head. The
 # fallback exists for conflicting PRs, where GitHub never creates that run;
-# a probe error therefore fails safe toward reviewing rather than silence.
+# only workflow runs whose event is actually `pull_request` count. A same-head
+# push/workflow_dispatch run must not defer this review, because its
+# workflow_run event is intentionally rejected below. A probe error therefore
+# fails safe toward reviewing rather than silence.
 if [[ "${CODEX_EVENT_NAME:-}" == "pull_request_target" && "${CODEX_PR_ACTION:-}" =~ ^(opened|synchronize)$ ]]; then
   discovery_deadline=$(( $(date +%s) + CODEX_CI_DISCOVERY_SECONDS ))
   while :; do
     ci_runs="$(gh api \
-      "repos/${GH_REPO}/actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs?head_sha=${HEAD_SHA}&per_page=1" \
-      --jq '.total_count' 2>/dev/null || true)"
+      "repos/${GH_REPO}/actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs?head_sha=${HEAD_SHA}&per_page=100" \
+      --jq '[.workflow_runs[]? | select(.event == "pull_request")] | length' 2>/dev/null || true)"
     if [[ "$ci_runs" =~ ^[0-9]+$ ]] && (( ci_runs > 0 )); then
       echo "CI run exists for ${HEAD_SHA}; deferring to the CI-completion review."
       exit 0
