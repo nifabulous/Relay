@@ -2,7 +2,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -12,6 +12,26 @@ from ..services.routing import _normalize_bic_input, _settlement_for, lookup_ban
 from ..services.validator import detect_type, validate_bic, validate_iban
 
 router = APIRouter(prefix="/api", tags=["swift"])
+
+# The public browse/search surface is deliberately narrower than the routing
+# database. These are the teaching-directory institutions approved for the
+# Explore UI; lookup, validation, and routing continue to resolve the full
+# curated directory by BIC.
+DIRECTORY_BICS = {
+    "CITIUS33XXX",
+    "BOFAUS3NXXX",
+    "CHASUS33XXX",
+    "COBADEFFXXX",
+    "DEUTDEFFXXX",
+    "BARCGB22XXX",
+    "NWBKGB2LXXX",
+    "HSBCGB22XXX",
+    "HDFCINBBXXX",
+    "ICICINBBXXX",
+    "AXISINBBXXX",
+    "PNBPUS33XXX",
+    "MHCBJPJTXXX",
+}
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -122,7 +142,7 @@ def search_banks(
 ):
     """Browse or search the curated directory from one authoritative source."""
     normalized = " ".join((q or "").split())
-    filters = []
+    filters = [Bank.bic.in_(DIRECTORY_BICS)]
 
     if normalized:
         name_filters = [
@@ -139,9 +159,11 @@ def search_banks(
             )
             for token in normalized.split()
         ]
-        # A token can match the name OR the BIC; multi-token queries still
+        # A token may match either the name OR the BIC; multi-token queries still
         # require every token to appear somewhere in that identity.
-        filters.append(or_(*name_filters, *bic_filters))
+        filters.append(and_(
+            *(or_(name_filter, bic_filter) for name_filter, bic_filter in zip(name_filters, bic_filters))
+        ))
 
     normalized_country = country.upper() if country else None
     if normalized_country:
@@ -153,25 +175,24 @@ def search_banks(
     elif normalized_capability == "local":
         filters.append(Bank.swift_active != "Y")
 
+    verified_exists = select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
     if verified is True:
-        filters.append(
-            select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
-        )
+        filters.append(verified_exists)
     elif verified is False:
-        filters.append(
-            ~select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
-        )
+        filters.append(~verified_exists)
+
+    has_ssi = select(SSI.id).where(SSI.beneficiary_bic == Bank.bic).exists()
 
     total = db.execute(select(func.count()).select_from(Bank).where(*filters)).scalar_one()
     banks = (
         db.execute(
             select(Bank)
+            .add_columns(has_ssi.label("has_ssi"))
             .where(*filters)
             .order_by(Bank.bank_name.asc(), Bank.bic.asc())
             .offset(offset)
             .limit(limit)
         )
-        .scalars()
         .all()
     )
 
@@ -185,11 +206,9 @@ def search_banks(
                 "city": bank.city,
                 "country_currency": bank.country_currency,
                 "capability": "swift" if (bank.swift_active or "Y").upper() == "Y" else "local",
-                "verified": db.execute(
-                    select(SSI.id).where(SSI.beneficiary_bic == bank.bic).limit(1)
-                ).first() is not None,
+                "verified": bool(bank_has_ssi),
             }
-            for bank in banks
+            for bank, bank_has_ssi in banks
         ],
         total=total,
     )

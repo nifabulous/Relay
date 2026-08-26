@@ -111,12 +111,15 @@ a:not(.relay-btn):not(.app-shell__nav-link):not(.app-shell__mobile-link):visited
 .sim-banner strong { font-weight: 600; }
 .sim-banner__icon { flex-shrink: 0; }
 .sim-banner__text { margin: 0; }
+.sim-banner__detail--compact { display: none; }
 
 /* The reserved banner height is a layout contract for the sticky top bar. On
    compact viewports the long sentence would wrap and overlap the header, so
-   the essential label stays while the explanatory detail moves out of flow. */
+   the essential label stays with a shorter, visible disclosure instead of
+   removing safety information entirely. */
 @media (max-width: 640px) {
   .sim-banner__detail { display: none; }
+  .sim-banner__detail--compact { display: inline; }
 }
 
 /* ── Form controls — one baseline for the whole product ──────────────────────

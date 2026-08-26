@@ -1,6 +1,7 @@
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import * as simpleIcons from "simple-icons";
 import { CommandSearch } from "./search/CommandSearch";
 import { apiKeys } from "../../api/queryKeys";
 import { apiRequest } from "../../api/client";
@@ -59,7 +60,7 @@ export function ExplorePage() {
 // ─── Bank Directory ──────────────────────────────────────
 
 /** Example BICs shown in the Bank Directory's pre-search guidance. */
-const EXAMPLE_BICS = ["GTBINGLAXXX", "MASHAEADXXX", "CTCBHKHHXXX"];
+const EXAMPLE_BICS = ["CITIUS33XXX", "PNBPUS33XXX", "MHCBJPJTXXX"];
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: "United Arab Emirates",
@@ -85,10 +86,26 @@ function directoryCountry(code: string) {
   return COUNTRY_NAMES[code.toUpperCase()] ?? code.toUpperCase();
 }
 
+const BANK_MARKS: Record<string, string> = {
+  HSBCGB22XXX: simpleIcons.siHsbc.path,
+  CHASUS33XXX: simpleIcons.siChase.path,
+  DEUTDEFFXXX: simpleIcons.siDeutschebank.path,
+  BOFAUS3NXXX: simpleIcons.siBankofamerica.path,
+  PNBPUS33XXX: simpleIcons.siWellsfargo.path,
+  BARCGB22XXX: simpleIcons.siBarclays.path,
+  COBADEFFXXX: simpleIcons.siCommerzbank.path,
+  HDFCINBBXXX: simpleIcons.siHdfcbank.path,
+  ICICINBBXXX: simpleIcons.siIcicibank.path,
+  AXISINBBXXX: simpleIcons.siAxisbank.path,
+};
+
+function bankMark(bic: string) {
+  return BANK_MARKS[bic.toUpperCase()];
+}
+
 const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z\d]{2}(?:[A-Z\d]{3})?$/i;
 
 export function BankDirectoryPage() {
-  const navigate = useNavigate();
   const [bic, setBic] = useState("");
   const [settledBic, setSettledBic] = useState("");
   const [searchBic, setSearchBic] = useState<string | null>(null);
@@ -282,11 +299,17 @@ export function BankDirectoryPage() {
                   <tr
                     key={row.bic}
                     className="bank-directory__clickable-row"
-                    onClick={() => navigate(`/explore/banks/${encodeURIComponent(row.bic)}`)}
                   >
                     <td data-label="Institution">
                       <Link className="bank-directory__institution" to={`/explore/banks/${encodeURIComponent(row.bic)}`} aria-label={`Open ${row.bank_name} details`}>
-                        <span className="bank-directory__logo" aria-hidden="true">{bankMonogram(row.bank_name)}</span>
+                        <span className="bank-directory__logo" aria-hidden="true">
+                          {(() => {
+                            const mark = bankMark(row.bic);
+                            return mark
+                              ? <svg viewBox="0 0 24 24" role="presentation"><path d={mark} /></svg>
+                              : bankMonogram(row.bank_name);
+                          })()}
+                        </span>
                         <span>{row.bank_name}</span>
                       </Link>
                     </td>

@@ -194,6 +194,13 @@ describe("theme crossfade", () => {
     expect(reducedMotionBlocks, "global.css: no reduced-motion block").not.toBeNull();
     expect(reducedMotionBlocks!.join("\n")).toMatch(/body\s*\{[^}]*transition:\s*none/);
   });
+
+  it("keeps the simulation disclosure visible on compact viewports", () => {
+    expect(GLOBAL_CSS).toMatch(/\.sim-banner__detail--compact\s*\{\s*display:\s*none/);
+    expect(GLOBAL_CSS).toMatch(
+      /@media \(max-width: 640px\)\s*\{[^@]*\.sim-banner__detail\s*\{\s*display:\s*none[^@]*\.sim-banner__detail--compact\s*\{\s*display:\s*inline/,
+    );
+  });
 });
 
 // ─── Pre-paint script (index.html) ──────────────────────────────────────────

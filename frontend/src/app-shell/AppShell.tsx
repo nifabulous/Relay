@@ -169,6 +169,9 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <span className="sim-banner__detail">
             {" "}— Simulation, not a real payment. All data is illustrative.
           </span>
+          <span className="sim-banner__detail sim-banner__detail--compact">
+            {" "}Simulation only — not a real payment.
+          </span>
         </p>
       </div>
 

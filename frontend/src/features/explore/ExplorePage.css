@@ -304,7 +304,20 @@
   transition: background var(--duration-fast) var(--ease);
 }
 
-.bank-directory__table tbody tr:hover,
+.bank-directory__clickable-row {
+  position: relative;
+}
+
+/* The institution link owns navigation, keyboard focus, and modified clicks.
+   Its stretched overlay gives mouse users the expected full-row target without
+   turning the table row itself into an inaccessible event handler. */
+.bank-directory__clickable-row .bank-directory__institution::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.bank-directory__table tbody tr.bank-directory__clickable-row:hover,
 .bank-directory__table tbody tr:focus-within {
   background: var(--color-action-surface);
   box-shadow: inset 0 0 0 1px var(--color-action);
@@ -994,6 +1007,10 @@
     font-weight: 600;
     letter-spacing: var(--tracking-micro);
     text-transform: uppercase;
+  }
+
+  .bank-directory__clickable-row .bank-directory__institution::after {
+    display: none;
   }
 
   .bank-directory__institution {

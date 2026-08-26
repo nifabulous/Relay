@@ -17,6 +17,17 @@ def test_health_seeded(client):
     assert body["corridor_rules"] > 0
 
 
+def test_bank_directory_browse_is_limited_to_the_curated_teaching_set(client):
+    from app.routers.directory import DIRECTORY_BICS
+
+    r = client.get("/api/banks/search", params={"limit": 100})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == len(DIRECTORY_BICS)
+    assert {result["bic"] for result in body["results"]} == DIRECTORY_BICS
+
+
 def test_validate_valid_iban(client):
     # GB29NWBK60161331926819 is NatWest's well-known test IBAN.
     r = client.get("/api/validate", params={"value": "GB29NWBK60161331926819"})
@@ -109,33 +120,37 @@ def test_lookup_unknown_bank(client):
 
 
 def test_bank_directory_search_returns_name_and_bic_matches(client):
-    r = client.get("/api/banks/search", params={"q": "guaranty trust"})
+    from app.routers.directory import DIRECTORY_BICS
+
+    r = client.get("/api/banks/search", params={"q": "hsbc uk"})
 
     assert r.status_code == 200
     body = r.json()
-    assert body["query"] == "guaranty trust"
+    assert body["query"] == "hsbc uk"
     assert body["results"]
-    guaranty = next(result for result in body["results"] if result["bic"] == "GTBINGLAXXX")
-    assert guaranty["bank_name"] == "Guaranty Trust Bank"
-    assert guaranty["capability"] in {"swift", "local"}
-    assert isinstance(guaranty["verified"], bool)
+    hsbc = next(result for result in body["results"] if result["bic"] == "HSBCGB22XXX")
+    assert hsbc["bank_name"] == "HSBC UK"
+    assert hsbc["bic"] in DIRECTORY_BICS
+    assert hsbc["capability"] in {"swift", "local"}
+    assert isinstance(hsbc["verified"], bool)
     assert body["total"] >= len(body["results"])
 
 
 def test_bank_directory_search_matches_partial_bics(client):
-    r = client.get("/api/banks/search", params={"q": "GTBINGLA"})
+    r = client.get("/api/banks/search", params={"q": "CITIUS33"})
 
     assert r.status_code == 200
     body = r.json()
-    assert [result["bic"] for result in body["results"]] == ["GTBINGLAXXX"]
+    assert [result["bic"] for result in body["results"]] == ["CITIUS33XXX"]
 
 
 @pytest.mark.parametrize("limit", [1, 100])
 def test_bank_name_search_honors_inclusive_limit_boundaries(client, limit):
-    r = client.get("/api/banks/search", params={"q": "bank", "limit": limit})
+    total = client.get("/api/banks/search", params={"limit": 1}).json()["total"]
+    r = client.get("/api/banks/search", params={"limit": limit})
 
     assert r.status_code == 200
-    assert len(r.json()["results"]) == limit
+    assert len(r.json()["results"]) == min(limit, total)
 
 
 @pytest.mark.parametrize("limit", [0, 101, "not-a-number"])
@@ -148,7 +163,10 @@ def test_bank_name_search_rejects_invalid_limits(client, limit):
 def test_bank_directory_search_normalizes_whitespace_and_matches_name_or_bic_tokens(
     empty_client,
 ):
+    from contextlib import ExitStack
+
     from app.models import Bank
+    from app.routers import directory as directory_module
 
     client, SessionLocal = empty_client
     with SessionLocal() as session:
@@ -172,19 +190,23 @@ def test_bank_directory_search_normalizes_whitespace_and_matches_name_or_bic_tok
         )
         session.commit()
 
-    r = client.get(
-        "/api/banks/search",
-        params={"q": "  bank   aurora   meridian  "},
-    )
+    with ExitStack() as stack:
+        stack.callback(setattr, directory_module, "DIRECTORY_BICS", directory_module.DIRECTORY_BICS)
+        directory_module.DIRECTORY_BICS = {
+            *directory_module.DIRECTORY_BICS,
+            "TARGUS33XXX",
+            "DECOUS33XXX",
+        }
+        r = client.get(
+            "/api/banks/search",
+            params={"q": "  bank   aurora   meridian  "},
+        )
 
     assert r.status_code == 200
     body = r.json()
     assert body["query"] == "bank aurora meridian"
-    assert [result["bic"] for result in body["results"]] == [
-        "DECOUS33XXX",
-        "TARGUS33XXX",
-    ]
-    assert body["total"] == 2
+    assert [result["bic"] for result in body["results"]] == ["TARGUS33XXX"]
+    assert body["total"] == 1
 
 
 def test_bank_directory_browse_filters_by_country_and_capability(client):
@@ -241,7 +263,10 @@ def test_bank_name_search_treats_like_metacharacters_literally(client, literal):
 
 
 def test_bank_name_search_matches_a_literal_backslash(empty_client):
+    from contextlib import ExitStack
+
     from app.models import Bank
+    from app.routers import directory as directory_module
 
     client, SessionLocal = empty_client
     with SessionLocal() as session:
@@ -256,12 +281,60 @@ def test_bank_name_search_matches_a_literal_backslash(empty_client):
         )
         session.commit()
 
-    r = client.get("/api/banks/search", params={"q": r"backslash \ bank"})
+    with ExitStack() as stack:
+        stack.callback(setattr, directory_module, "DIRECTORY_BICS", directory_module.DIRECTORY_BICS)
+        directory_module.DIRECTORY_BICS = {*directory_module.DIRECTORY_BICS, "BKSLUS33XXX"}
+        r = client.get("/api/banks/search", params={"q": r"backslash \ bank"})
 
     assert r.status_code == 200
     body = r.json()
     assert body["query"] == r"backslash \ bank"
     assert [result["bic"] for result in body["results"]] == ["BKSLUS33XXX"]
+
+
+def test_bank_directory_requires_every_search_token_to_match_the_same_row(empty_client):
+    from contextlib import ExitStack
+
+    from app.models import Bank
+    from app.routers import directory as directory_module
+
+    client, SessionLocal = empty_client
+    with SessionLocal() as session:
+        session.add_all(
+            [
+                Bank(
+                    bic="APHAUS33XXX",
+                    bank_name="Alpha Beta Bank",
+                    country_code="US",
+                    city="New York",
+                    country_currency="USD",
+                ),
+                Bank(
+                    bic="BETAUS22XXX",
+                    bank_name="Beta Gamma Bank",
+                    country_code="US",
+                    city="Chicago",
+                    country_currency="USD",
+                ),
+            ]
+        )
+        session.commit()
+
+    with ExitStack() as stack:
+        stack.callback(setattr, directory_module, "DIRECTORY_BICS", directory_module.DIRECTORY_BICS)
+        directory_module.DIRECTORY_BICS = {
+            *directory_module.DIRECTORY_BICS,
+            "APHAUS33XXX",
+            "BETAUS22XXX",
+        }
+        r = client.get(
+            "/api/banks/search",
+            params={"q": "alpha beta"},
+        )
+
+    assert r.status_code == 200
+    body = r.json()
+    assert [result["bic"] for result in body["results"]] == ["APHAUS33XXX"]
 
 
 def test_route_usd_to_nigeria(client):

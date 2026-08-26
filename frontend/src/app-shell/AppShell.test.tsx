@@ -38,6 +38,17 @@ describe("AppShell", () => {
     expect(banner).toHaveTextContent(/not a real payment/i);
   });
 
+  it("provides a compact simulation disclosure for narrow viewports", () => {
+    renderShell();
+    const banner = screen.getByRole("alert");
+
+    expect(banner.querySelector(".sim-banner__detail")).toHaveTextContent(
+      "All data is illustrative",
+    );
+    expect(banner.querySelector(".sim-banner__detail--compact"))
+      .toHaveTextContent("Simulation only — not a real payment.");
+  });
+
   it("exposes four navigation destinations with accessible names", () => {
     renderShell();
     const nav = screen.getByLabelText("Primary navigation");
