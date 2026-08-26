@@ -1378,6 +1378,22 @@ def test_post_comment_refuses_without_operator_mode(monkeypatch):
     with pytest.raises(RuntimeError, match="ARBITER_OPERATOR=1"):
         arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->", BOT)
 
+
+def test_post_comment_skips_when_pr_closes_after_collection(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    # The first check is the pre-collection guard; the second is the
+    # write-boundary guard after the comments have been listed.
+    (stub_dir / "pr_states.json").write_text(json.dumps(["OPEN", "CLOSED"]))
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nbody", BOT)
+
+    assert _calls_matching(stub_dir, "comment-create") == []
+    assert _calls_matching(stub_dir, "comment-patch") == []
+
+
 # --------------------------------------------------------------------------- #
 # T4: the gap-issue ledger poster (post_gap_issues).                          #
 #                                                                              #
@@ -1415,6 +1431,20 @@ def main():
             with open(path) as fh:
                 for item in json.load(fh):
                     print(json.dumps(item))
+        return 0
+
+    if argv[:2] == ["pr", "view"]:
+        _log("pr-view", argv)
+        sequence_path = os.path.join(STUB_DIR, "pr_states.json")
+        if os.path.exists(sequence_path):
+            with open(sequence_path) as fh:
+                states = json.load(fh)
+            state = states.pop(0) if states else "OPEN"
+            with open(sequence_path, "w") as fh:
+                json.dump(states, fh)
+        else:
+            state = "OPEN"
+        print(json.dumps({"state": state}))
         return 0
 
     if argv[:3] == ["api", "--method", "PATCH"] and "issues/comments/" in argv[3]:
@@ -1551,6 +1581,26 @@ def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_pat
     # canonical round that carries it — so the permalink must point there.
     gap_a_body = next(b for b in bodies if "gap-a" in b)
     assert "https://github.com/stub-org/stub-repo/pull/100#issuecomment-2" in gap_a_body
+
+
+def test_post_gap_issues_skips_when_pr_closes_before_issue_write(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    (stub_dir / "issue_list.json").write_text("[]")
+    # The first check happens before label/ledger reads; the second is the
+    # guard immediately before the issue-create write.
+    (stub_dir / "pr_states.json").write_text(json.dumps(["OPEN", "CLOSED"]))
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert _calls_matching(stub_dir, "issue-create") == []
 
 
 def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_path, monkeypatch):

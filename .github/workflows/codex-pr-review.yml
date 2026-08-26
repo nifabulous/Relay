@@ -47,7 +47,7 @@ jobs:
       - name: Select PRs
         id: targets
         env:
-          WORKFLOW_RUN_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          WORKFLOW_RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if [[ ! "$CODEX_MAX_ITEMS" =~ ^[1-9][0-9]*$ ]]; then
@@ -76,8 +76,9 @@ jobs:
               echo "WORKFLOW_RUN_HEAD_SHA must be a full lowercase commit SHA." >&2
               exit 1
             fi
-            if [[ "$WORKFLOW_RUN_PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
-              printf '%s\n' "$WORKFLOW_RUN_PR_NUMBER" > /tmp/codex-pr-all
+            if [[ -n "$WORKFLOW_RUN_PULL_REQUESTS" && "$WORKFLOW_RUN_PULL_REQUESTS" != "null" && "$WORKFLOW_RUN_PULL_REQUESTS" != "[]" ]]; then
+              jq -r '[.[]? | .number? | tostring] | unique | .[]' \
+                <<<"$WORKFLOW_RUN_PULL_REQUESTS" > /tmp/codex-pr-candidates
             else
               gh api "repos/${GH_REPO}/commits/${WORKFLOW_RUN_HEAD_SHA}/pulls?per_page=100" \
                 --jq '[.[] | select(.state == "open")] | length' > /tmp/codex-pr-count
@@ -91,8 +92,13 @@ jobs:
                   --jq '[.[] | select(.state == "open")][0].number' > /tmp/codex-pr-all
               fi
             fi
-            if [[ -s /tmp/codex-pr-all ]]; then
-              select_open_pr "$(cat /tmp/codex-pr-all)" > /tmp/codex-pr-open
+            : > /tmp/codex-pr-open
+            if [[ -s /tmp/codex-pr-candidates ]]; then
+              head -n "$CODEX_MAX_ITEMS" /tmp/codex-pr-candidates |
+                while IFS= read -r candidate; do
+                  [[ "$candidate" =~ ^[1-9][0-9]*$ ]] || continue
+                  select_open_pr "$candidate" >> /tmp/codex-pr-open
+                done
               mv /tmp/codex-pr-open /tmp/codex-pr-all
             fi
             if [[ -s /tmp/codex-pr-all ]]; then

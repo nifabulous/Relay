@@ -841,6 +841,19 @@ def _gh_json(args):
     return json.loads(proc.stdout)
 
 
+def _require_open_pr(pr, repo: str) -> None:
+    """Re-check PR eligibility at the write boundary.
+
+    ``collect`` performs an initial state check, but arbitration and rendering
+    happen after that read. A PR can close in the interval, so every posting
+    path re-reads the forge state immediately before its first and final write
+    rather than publishing a stale disposition or gap issue.
+    """
+    meta = _gh_json(["pr", "view", str(pr), "--repo", repo, "--json", "state"])
+    if meta.get("state") != "OPEN":
+        raise RuntimeError(f"PR #{pr} is not open; refusing to write arbitration output")
+
+
 def _gh_lines(args):
     proc = subprocess.run(["gh", *args], capture_output=True, text=True, check=True)
     return [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
@@ -922,6 +935,7 @@ def post_comment(pr, repo, body, bot_login: str) -> None:
         raise RuntimeError(
             "post_comment requires ARBITER_OPERATOR=1 (operator mode)"
         )
+    _require_open_pr(pr, repo)
 
     marker = f"<!-- codex-arbiter:{pr} -->"
     result = subprocess.run(
@@ -943,6 +957,7 @@ def post_comment(pr, repo, body, bot_login: str) -> None:
     ]
     if matches:
         comment_id = matches[-1]["id"]
+        _require_open_pr(pr, repo)
         subprocess.run(
             [
                 "gh", "api", "--method", "PATCH",
@@ -953,6 +968,7 @@ def post_comment(pr, repo, body, bot_login: str) -> None:
         )
         return
 
+    _require_open_pr(pr, repo)
     subprocess.run(
         ["gh", "pr", "comment", str(pr), "--repo", repo, "--body", body],
         check=True,
@@ -1271,6 +1287,7 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
     if not decision.proposed_gaps:
         return []
 
+    _require_open_pr(pr, repo)
     canon = _poster_canonical_comments(history, pr, contract)
     _ensure_proposed_gap_label(repo)
     existing_issues = _list_existing_gap_issues(repo, list_limit)
@@ -1302,6 +1319,7 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
         body = _truncate_gap_body(_sanitize_gap_body(body), _GAP_ISSUE_MAX_BYTES)
         title = _sanitize_gap_body(_gap_issue_title(gap))
 
+        _require_open_pr(pr, repo)
         proc = subprocess.run(
             ["gh", "issue", "create", "--repo", repo,
              "--title", title, "--body", body,

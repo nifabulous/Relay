@@ -370,6 +370,12 @@ require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CHECK_MAX_RAW_BYTES:
 require_text '.github/workflows/codex-pr-review.yml' \
   'types: [opened, synchronize, reopened, ready_for_review]'
 require_text '.github/workflows/codex-pr-review.yml' \
+  'WORKFLOW_RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
+require_text '.github/workflows/codex-pr-review.yml' \
+  "jq -r '[.[]? | .number? | tostring] | unique | .[]'"
+require_text '.github/workflows/codex-pr-review.yml' \
+  'head -n "$CODEX_MAX_ITEMS" /tmp/codex-pr-candidates'
+refuse_text '.github/workflows/codex-pr-review.yml' \
   'workflow_run.pull_requests[0].number'
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \
@@ -485,12 +491,24 @@ case "${1:-}" in
       printf '%s\n' "$*" >>"$CODEX_STUB_DIR/patched.log"
     elif [[ "$*" == *"/commits/"*"/check-runs"* ]]; then
       requested_sha=""
+      requested_page=""
+      requested_per_page=""
       if [[ "$*" =~ /commits/([0-9a-f]{40})/check-runs ]]; then
         requested_sha="${BASH_REMATCH[1]}"
       fi
+      if [[ "$*" =~ check-runs\?per_page=([0-9]+)\&page=([0-9]+) ]]; then
+        requested_per_page="${BASH_REMATCH[1]}"
+        requested_page="${BASH_REMATCH[2]}"
+      fi
       printf '%s\n' "$requested_sha" >>"$CODEX_STUB_DIR/check-sha.log"
-      if [[ -n "$requested_sha" && -f "$CODEX_STUB_DIR/check-runs-${requested_sha}.json" ]]; then
-        jq '.' <"$CODEX_STUB_DIR/check-runs-${requested_sha}.json"
+      printf '%s\t%s\t%s\n' "$requested_sha" "$requested_page" "$requested_per_page" \
+        >>"$CODEX_STUB_DIR/check-query.log"
+      page_fixture="$CODEX_STUB_DIR/check-runs-${requested_sha}-page-${requested_page}.json"
+      sha_fixture="$CODEX_STUB_DIR/check-runs-${requested_sha}.json"
+      if [[ -n "$requested_sha" && -n "$requested_page" && -f "$page_fixture" ]]; then
+        jq '.' <"$page_fixture"
+      elif [[ -n "$requested_sha" && -f "$sha_fixture" ]]; then
+        jq '.' <"$sha_fixture"
       else
         jq '.' <"$CODEX_STUB_DIR/check-runs.json"
       fi
@@ -809,7 +827,7 @@ prepare_ci_review_case() {
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
   rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-comment.md" "$STUB_DIR/patched.log"
-  rm -f "$STUB_DIR/check-sha.log" "$STUB_DIR"/check-runs-*.json
+  rm -f "$STUB_DIR/check-sha.log" "$STUB_DIR/check-query.log" "$STUB_DIR"/check-runs-*.json
   printf '%s\n' "$(jq -n --arg sha "$CI_HEAD" \
     '{login: "someone-else", body: "no marker here"}')" \
     >"$STUB_DIR/comments.jsonl"
@@ -844,6 +862,8 @@ invoke_ci_review_case() {
 check_matching_completed_ci_head_reaches_model() {
   prepare_ci_review_case
   jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
+  # This is a syntactically valid address; [EMAIL] is reserved for the
+  # redactor's output and must never be used as the fixture input.
   jq -n '{total_count: 3, check_runs: [
     {id: 2, name: "frontend@owner.example", status: "completed",
      conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
@@ -874,11 +894,10 @@ check_matching_completed_ci_head_reaches_model() {
   if ! grep -Fq 'UNTRUSTED_DATA verification-results' "$STUB_DIR/captured-input.md"; then
     fail 'Completed CI evidence was not wrapped as untrusted input.'
   fi
-  if grep -Fq 'owner@example.com' "$STUB_DIR/captured-input.md"; then
-    fail 'A personal identifier in a check name reached the model unsanitized.'
+  if grep -Fq 'frontend@owner.example' "$STUB_DIR/captured-input.md"; then
+    fail 'A valid email-shaped check name reached the model unsanitized.'
   fi
-  if grep -Fq 'owner.example' "$STUB_DIR/captured-input.md" ||
-    ! grep -Fq '[EMAIL]' "$STUB_DIR/captured-input.md"; then
+  if ! grep -Fq '[EMAIL]' "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name was not replaced with the documented redaction marker.'
   fi
   if ! grep -Fq "/commits/${CI_HEAD}/check-runs" "$STUB_DIR/api.log" ||
@@ -1137,6 +1156,67 @@ check_oversized_raw_ci_evidence_degrades_explicitly() {
   fi
   if grep -Fq 'raw-sensitive-payload' "$STUB_DIR/captured-input.md"; then
     fail 'An oversized raw check-run response reached the model input.'
+  fi
+}
+
+check_check_run_item_and_page_limits_are_enforced() {
+  prepare_ci_review_case
+  jq -n '{total_count: 4, check_runs: [
+    {id: 1, name: "check-a", status: "completed", conclusion: "success"},
+    {id: 2, name: "check-b", status: "completed", conclusion: "success"},
+    {id: 3, name: "check-c", status: "completed", conclusion: "failure"},
+    {id: 4, name: "check-d", status: "completed", conclusion: "success"}
+  ]}' >"$STUB_DIR/check-runs-${CI_HEAD}.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=2 \
+    CODEX_CHECK_MAX_PAGES=10 \
+    CODEX_CHECK_MAX_BYTES=20000 \
+    CODEX_CHECK_MAX_RAW_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'The check-run item-limit case failed.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ "$(wc -l <"$STUB_DIR/check-query.log" | tr -d ' ')" != 1 ]] ||
+    ! grep -Fq $'\t1\t2' "$STUB_DIR/check-query.log"; then
+    fail 'The check-run item limit did not stop after one bounded page request.'
+  fi
+  if ! grep -Fq '"omitted_count": 2' "$STUB_DIR/captured-input.md"; then
+    fail 'The check-run item limit did not report the omitted count.'
+  fi
+
+  prepare_ci_review_case
+  jq -n '{total_count: 4, check_runs: [
+    {id: 1, name: "page-one-a", status: "completed", conclusion: "success"},
+    {id: 2, name: "page-one-b", status: "completed", conclusion: "success"}
+  ]}' >"$STUB_DIR/check-runs-${CI_HEAD}-page-1.json"
+  jq -n '{total_count: 4, check_runs: [
+    {id: 3, name: "page-two-a", status: "completed", conclusion: "failure"},
+    {id: 4, name: "page-two-b", status: "completed", conclusion: "success"}
+  ]}' >"$STUB_DIR/check-runs-${CI_HEAD}-page-2.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=4 \
+    CODEX_CHECK_MAX_PAGES=1 \
+    CODEX_CHECK_MAX_BYTES=20000 \
+    CODEX_CHECK_MAX_RAW_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'The check-run page-limit case failed.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ "$(wc -l <"$STUB_DIR/check-query.log" | tr -d ' ')" != 1 ]] ||
+    ! grep -Fq $'\t1\t4' "$STUB_DIR/check-query.log"; then
+    fail 'The check-run page limit did not stop after the configured page count.'
+  fi
+  if ! grep -Fq '"omitted_count": 2' "$STUB_DIR/captured-input.md" ||
+    ! grep -Fq '"truncated": true' "$STUB_DIR/captured-input.md"; then
+    fail 'The check-run page limit did not report truncated evidence.'
   fi
 }
 
@@ -1820,6 +1900,7 @@ check_failed_ci_run_probe_fails_safe_toward_review
 check_workflow_run_path_never_probes_for_a_run
 check_empty_ci_evidence_is_explicit
 check_oversized_raw_ci_evidence_degrades_explicitly
+check_check_run_item_and_page_limits_are_enforced
 check_context_allowlist_comes_from_trusted_sha
 check_trusted_missing_context_path_is_skipped
 check_trusted_context_caps
