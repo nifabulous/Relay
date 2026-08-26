@@ -357,8 +357,8 @@ describe("BankDirectoryPage", () => {
     expect(screen.getByLabelText("Search bank name or BIC")).toHaveAccessibleDescription(
       /8 or 11 character BIC/i,
     );
-    expect(screen.getByRole("button", { name: /CITIUS33XXX/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /PNBPUS33XXX/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /GTBINGLAXXX/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /MASHAEADXXX/i })).toBeVisible();
     expect(screen.queryByRole("link", { name: /Prepare a payment/i })).toBeNull();
   });
 
@@ -372,10 +372,10 @@ describe("BankDirectoryPage", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole("button", { name: /PNBPUS33XXX/i }));
+    await user.click(screen.getByRole("button", { name: /MASHAEADXXX/i }));
 
     const link = await screen.findByRole("link", { name: /Prepare a payment/i });
-    expect(link).toHaveAttribute("href", "/operate/prepare?bic=PNBPUS33XXX");
+    expect(link).toHaveAttribute("href", "/operate/prepare?bic=MASHAEADXXX");
   });
 
   it("links a found bank to payment preparation, pre-filled with its BIC", async () => {

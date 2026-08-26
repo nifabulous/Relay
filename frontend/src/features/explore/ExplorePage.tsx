@@ -60,7 +60,7 @@ export function ExplorePage() {
 // ─── Bank Directory ──────────────────────────────────────
 
 /** Example BICs shown in the Bank Directory's pre-search guidance. */
-const EXAMPLE_BICS = ["CITIUS33XXX", "PNBPUS33XXX", "MHCBJPJTXXX"];
+const EXAMPLE_BICS = ["GTBINGLAXXX", "MASHAEADXXX", "CTCBHKHHXXX"];
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: "United Arab Emirates",
