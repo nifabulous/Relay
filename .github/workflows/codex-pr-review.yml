@@ -64,6 +64,7 @@ jobs:
       CODEX_JOB_TIMEOUT_SECONDS: '1200'
       CODEX_BOT_LOGIN: ${{ vars.CODEX_BOT_LOGIN || 'github-actions[bot]' }}
       CODEX_EVENT_NAME: ${{ github.event_name }}
+      CODEX_PR_ACTION: ${{ github.event.action }}
       CODEX_CI_WORKFLOW_FILE: ${{ vars.CODEX_CI_WORKFLOW_FILE || 'ci.yml' }}
       CODEX_CI_DISCOVERY_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_SECONDS || '60' }}
       CODEX_CI_DISCOVERY_POLL_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_POLL_SECONDS || '10' }}

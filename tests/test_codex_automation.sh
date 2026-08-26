@@ -316,11 +316,13 @@ workflow = YAML.load_file(".github/workflows/codex-pr-review.yml")
 jobs = workflow.fetch("jobs")
 review = jobs.fetch("review")
 arbiter = jobs.fetch("arbiter")
+concurrency_group = workflow.fetch("concurrency").fetch("group")
 raise unless review.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.targets.outputs.pr_numbers }}"
 raise unless Array(arbiter.fetch("needs")) == ["review"]
 raise unless arbiter.fetch("env").fetch("PR_NUMBERS_JSON") ==
   "${{ needs.review.outputs.pr_numbers }}"
+raise unless concurrency_group.include?("github.event.workflow_run.pull_requests[0].number")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Arbiter workflow is structurally disconnected from the review PR set.'
@@ -330,6 +332,7 @@ require_text '.github/workflows/codex-pr-review.yml' 'workflow_run:'
 require_text '.github/workflows/codex-pr-review.yml' 'workflows: [CI]'
 require_text '.github/workflows/codex-pr-review.yml' 'types: [completed]'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_EXPECTED_HEAD_SHA='
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_PR_ACTION:'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_FILES:'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_BYTES:'
 # Coverage invariant: direct push events remain for heads whose conflicting
