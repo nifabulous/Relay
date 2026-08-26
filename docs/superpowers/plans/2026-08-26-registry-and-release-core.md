@@ -1417,3 +1417,129 @@ git commit -m "docs(registry-core): document release contract"
 - **Placeholder scan:** The plan contains no `TBD`, `TODO`, “implement later,” or unspecified test steps.
 - **Type consistency:** `RegistryInput`, `AssetCandidate`, `SourceDefinition`, `ReleaseBuilder`, `FixtureConnector`, `RightsStatus`, and `ReleaseManifest` are named consistently across tasks. The implementation must add any model field referenced by a later test before running that task’s focused suite.
 - **Safety:** The plan never fetches live websites in tests, never emits restricted binaries, preserves source failures, and keeps the existing Relay application untouched.
+
+## Engineering Review Findings
+
+**Review date:** 2026-08-26
+**Verdict:** NOT CLEARED for implementation yet. The package boundary and task sequencing are sound, but the P1 findings below can produce incorrect identity merges, non-reproducible releases, unsafe asset fetches, or legally over-broad binary publication.
+
+### Scope and acceptance criteria
+
+- **S1 (P1) The plan does not define a complete Plan 1 acceptance contract.** The fixture release proves that a small happy-path dataset can be serialized, but it does not prove the core guarantees for conflicting sources, stale-source retention, rebrands, rights expiry, or withdrawn releases. Add a release acceptance matrix with one passing and one failing fixture for every global constraint in lines 13-24.
+- **S2 (P2) “Global” is not measurable in this plan.** That is acceptable for a fixture-only foundation, but the README and release manifest should state that coverage is intentionally not a launch claim and expose counts for institutions, brands, identifiers, unresolved candidates, stale sources, and rights gaps.
+
+### Architecture and data flow
+
+- **1A (P1) The canonical models are narrower than the approved design.** `Institution` at lines 433-444 lacks controlled categories, normalized name, regulator identifier/reference, operating markets, effective dates, and explicit evidence/confidence fields. `Brand` at lines 446-455 lacks aliases, localized names, historical display periods, and multi-institution ownership. `Relationship` at lines 457-464 lacks `valid_from` and `valid_to`. `Asset` at lines 378-395 lacks perceptual hash, dimensions, attribution, license note, verification/reviewer fields, and review timestamps. `ReleaseManifest` at lines 518-525 lacks generation commit, source-run IDs, counts, unresolved matches, stale sources, and provenance coverage. Add these fields now; otherwise Plans 2-4 will require a breaking schema retrofit.
+- **1B (P1) Lifecycle enums drift from the approved design.** The plan uses `dissolved` but omits the designed `merged` and `renamed` states, and reuses `InstitutionStatus` for brands. Align the status vocabulary with the spec and add effective intervals so historical entities and rebrands are representable without inventing ad hoc strings.
+- **1C (P1) Brand ownership is modeled as singular even though the design permits multiple legal entities.** `Brand.owner_id` cannot represent a consumer brand used by country-specific institutions. Make the canonical relationship graph authoritative for ownership, or replace `owner_id` with an explicit set plus a validation invariant that every owner has a sourced relationship. Do not keep two independently editable ownership representations.
+- **1D (P1) Identifiers have two competing canonical representations.** `RegistryInput.identifiers` is a top-level collection, while `Institution.identifiers` is embedded solely for resolver tests (lines 433-444 and 528-536). This will drift and produce ambiguous release output. Choose one source of truth. Recommended: keep identifiers top-level, build a resolver index from them, and remove embedded identifiers from published models.
+- **1E (P1) Stable ID allocation has no re-key policy.** UUID5 over an arbitrary `identity_key` (lines 319-338) is deterministic only while that key remains unchanged. The plan does not define how an institution keeps its ID when a source identifier is corrected, a BIC is retired, or a legal entity succeeds another. Add an explicit curated `canonical_key`, alias/re-key records, and tests proving source-key changes do not silently create a second institution.
+- **1F (P1) Source precedence and conflict evidence are described in the design but absent from the implementation plan.** `SourceDefinition` and `TrustTier` alone do not implement separate identity-versus-logo precedence, scoped-source exceptions, or retained conflicting evidence. Add a deterministic precedence module, a conflict/review record, and tests for higher-ranked stale data versus lower-ranked current data.
+- **1G (P1) Source failure retention is prose, not a complete state transition.** The plan names `ConnectorRunResult` and says a runner preserves `previous_snapshot` (line 715), but no runner interface, persisted last-success pointer, failure state, or test exists. Define `run(connector, previous_snapshot)`, persist `SourceRun`, and test that a failed run leaves the prior verified snapshot and release record intact.
+- **1H (P1) The release is not yet the complete reproducibility boundary.** `ReleaseBuilder` reads mutable files through `RegistryInput.asset_root` (line 1050), but the release manifest does not record the canonical input digest, source-run IDs, processor version, generation commit, or staged asset digests. A file can change between validation and build while retaining the same logical input. Make all inputs content-addressed, record their digests, and verify them immediately before atomic publication.
+- **1I (P1) Asset URL safety is specified more strongly than the interfaces implement.** `AssetFetcher` is only a protocol (lines 1002-1014); no concrete streaming HTTP implementation models redirect limits, DNS revalidation after each redirect, response-size limits, content-type checks, timeouts, or redirect target policy. Either add a `SafeHttpxAssetFetcher` with injected DNS/transport and adversarial tests, or explicitly move all fetching out of Plan 1 and remove those guarantees from this plan.
+- **1J (P1) The staging trust boundary is incomplete.** The plan says `staging_path` contains sanitized bytes (line 1019), but it does not require the release builder to reject symlink escapes, absolute paths, `..` traversal, duplicate output paths, or a staged checksum mismatch. Add path containment and checksum verification before any output is written.
+- **1K (P1) Rights gates do not distinguish licensed assets from merely labeled licensed assets.** A `licensed` binary needs a permission reference, applicable license/territory terms, and an unexpired permission. Add validators and release tests for missing permission, expired permission, and territory mismatch. `source_link_only`, `unknown`, and `removed` should also have an explicit metadata-only publication policy.
+- **1L (P1) Release lifecycle values are listed but no transitions are designed.** Lines 1048-1052 name `draft`, `validated`, `published`, `superseded`, and `withdrawn`, but there is no transition function, predecessor/supersession reference, withdrawal reason, or test that withdrawn releases disappear from ordinary listings while remaining auditable. Define lifecycle transition rules or narrow Plan 1 to emitting only `validated` bundles.
+
+### Code quality and interface precision
+
+- **2A (P1) Several interfaces are named but not defined.** `Resolution`, `ValidatedUrl`, `ValidationIssue`, `ReleaseValidationError`, and the concrete release/run result shapes are referenced without fields, serialization rules, or error codes. Add exact dataclasses/Pydantic models and make every later test import a defined interface rather than relying on prose.
+- **2B (P2) Published model validation is underspecified in code.** The snippets use free-form strings for status, format, variant, dates, semver, and country values, while the prose promises strict validation. Use controlled enums where the taxonomy is closed, timezone-aware datetimes for run/review fields, a semver validator, and explicit ISO country/territory validation. Add lowercase/invalid-date/invalid-semver tests.
+- **2C (P2) The file map is incomplete.** Task 1 creates `src/financial_registry/cli.py` but does not list it in the Task 1 file set, and Task 8 creates `tests/test_release_contract.py` but the top-level file map omits it. Add both so the plan can be executed without discovering missing files mid-task.
+- **2D (P2) The CLI example catches `Exception` broadly.** That turns programming errors into user-facing “invalid” data errors and makes debugging harder. Catch expected parse/validation exceptions, preserve a traceback for unexpected failures in debug mode, and add stable error codes for automation.
+- **2E (P2) The plan does not connect the standalone package to repository quality gates.** The root project already runs Python 3.10-3.12 and Ruff in CI, but the standalone package has no Ruff dependency, package-specific CI job, or matrix command. Add a workflow or CI job that installs `global-financial-registry[dev]`, runs its lint/tests on 3.10-3.12, and keeps root Relay tests separate.
+
+### Test review
+
+- **3A (P1) Security coverage is far below the stated threat model.** Current tests cover only HTTP rejection, one loopback resolver, script removal, and source-link-only suppression. Add tests for redirect-to-private, DNS rebinding, localhost aliases, IPv4-mapped IPv6, oversized streaming bodies, decompression bombs, malformed SVG/XML, external references, event handlers, embedded objects, oversized dimensions, content-type mismatch, and symlink/path traversal.
+- **3B (P1) Release tests do not exercise the global invariants.** Add failing fixtures for duplicate IDs, missing source references, dangling relationships/identifiers/assets, unapproved binaries, checksum mismatch, licensed-without-permission, unknown/removed binary paths, expired rights, invalid lifecycle, semver errors, and missing provenance.
+- **3C (P1) The deterministic rebuild test is too weak.** It builds the same in-memory object twice. Add a test that permutes input list order, rebuilds from a fresh parsed JSON snapshot, changes file mtimes, and confirms byte-identical output. Also assert that the manifest records the input/source/processor digests.
+- **3D (P1) The CLI failure contract is untested.** Add tests that validation failures return exit code 1, emit stable machine-readable diagnostics, and leave no partial output directory. Test invalid timestamps, missing input files, output collisions, and path traversal.
+- **3E (P2) Resolver tests do not cover the dangerous cases.** Add competing exact identifiers, exact identifiers pointing to different entities, unverified domains, retired identifiers, aliases/localized names, deterministic fuzzy ties, and the invariant that no fuzzy result becomes a merge.
+- **3F (P2) Source-run retention is untested.** Add a fixture connector that succeeds, then fails, and assert the previous snapshot, record, warning, and release input remain available.
+- **3G (P2) The contract test does not prove the binary gate.** It checks manifest fields but does not assert that source-link-only assets have no file under `assets/`, that checksums cover every emitted file, or that restricted/removed assets are absent from public paths.
+- **3H (P2) No cross-version or property-style tests are planned.** The package promises Python 3.10+, deterministic normalization, and stable IDs. Add the 3.10-3.12 CI matrix and property tests for normalization/idempotence and stable sorting.
+
+### Performance and operations
+
+- **4A (P2) Resolver complexity is unspecified.** A naive scan of every existing institution for every candidate will become quadratic at the planned several-thousand-entity scale and worse during global expansion. Build indexes for normalized identifiers, verified domains, and names; define a fixture-size target and a p95 resolution budget.
+- **4B (P2) Asset processing has no resource/concurrency budget.** CairoSVG/Pillow work can consume substantial CPU and memory. Define bounded worker concurrency, per-asset wall-clock/memory limits, and whether processing is serial in the core or delegated to isolated workers in the next plan.
+- **4C (P2) Snapshot and release storage behavior is incomplete.** Define retention, maximum snapshot size, atomic writes, fsync/rename semantics, and cleanup of abandoned temporary releases. The current filesystem store is suitable for a demo, but not yet a reliable release source.
+- **4D (P3) Operational observability is absent from the first package.** At minimum, emit structured run warnings and counts that later schedulers can consume; document that alerting/metrics are deferred to the operations layer rather than implying the 15-minute target is already implemented.
+
+### Parallelization and execution order
+
+The current linear order is safe but slower than necessary. After Tasks 1-2 land, run three independent lanes in parallel: Lane A source/snapshot contracts (Task 3), Lane B normalization/resolution (Task 4), and Lane C fetch/asset safety (Task 5). Merge those before Task 6 release writing, then run Task 7 fixture/CLI, then Task 8 contract and CI verification. Tasks 3-5 must not concurrently edit `domain.py`; make the domain schema a hard dependency and keep their changes in separate modules.
+
+### What already exists
+
+The repository contains the Relay/SWIFT Routing application, its BIC-keyed `Bank` model, and root CI/test tooling. It does not contain a `global-financial-registry/` package, source connector framework, release builder, or global logo dataset. The existing dirty changes are unrelated and must remain untouched; reusing `app/` models would violate the standalone boundary.
+
+### Failure modes that remain if implementation starts now
+
+1. A source-key correction can create a duplicate institution or silently change a canonical ID.
+2. A conflicting exact identifier or unverified domain can produce the wrong automatic match.
+3. A restricted, expired, or path-escaped asset can reach a public release because the rights and staging gates are incomplete.
+4. A staged file or source snapshot can change between validation and build, making the release non-reproducible.
+5. A failed connector can be represented as a warning without a durable last-success pointer, allowing accidental data loss on the next release.
+
+## Implementation Tasks
+
+Synthesized from this review's findings. These tasks should be folded into the plan before implementation begins.
+
+- [ ] **T1 (P1, human: ~1-2 days / CC: ~20 min)** - Canonical schema alignment - expand models and enums to match the approved design, including categories, aliases, geography, lifecycle dates, asset rights/reviewer fields, source-run metadata, and release counts/provenance.
+  - Surfaced by: 1A, 1B, 1C, 2B.
+  - Files: `global-financial-registry/src/financial_registry/domain.py`, `global-financial-registry/tests/test_domain.py`.
+  - Verify: focused domain tests plus serialized fixture snapshots on Python 3.10, 3.11, and 3.12.
+- [ ] **T2 (P1, human: ~1 day / CC: ~15 min)** - Canonical identity and identifier ownership - define curated canonical keys, re-key/alias behavior, one identifier source of truth, and multi-owner brand relationships.
+  - Surfaced by: 1C, 1D, 1E.
+  - Files: `global-financial-registry/src/financial_registry/ids.py`, `domain.py`, `resolver.py`, `tests/test_ids.py`, `tests/test_resolver.py`.
+  - Verify: source-key correction, retired identifier, multi-owner brand, and duplicate-prevention tests.
+- [ ] **T3 (P1, human: ~1-2 days / CC: ~20 min)** - Source precedence and failure retention - implement deterministic identity/logo precedence, conflict evidence, durable source runs, and last-success preservation.
+  - Surfaced by: 1F, 1G, 3F.
+  - Files: `sources.py`, `snapshots.py`, `domain.py`, `tests/test_sources.py`, `tests/test_snapshots.py`.
+  - Verify: conflicting-source and success-then-failure fixture runs.
+- [ ] **T4 (P1, human: ~2 days / CC: ~30 min)** - Hardened asset fetch and sanitizer - add a concrete injected HTTP fetcher with streaming limits, redirect/DNS revalidation, content sniffing, and adversarial image/SVG handling.
+  - Surfaced by: 1I, 3A.
+  - Files: `fetch_policy.py`, `assets.py`, `tests/test_fetch_policy.py`, `tests/test_assets.py`.
+  - Verify: SSRF, rebinding, redirect, bomb, malformed-content, dimension, and sanitization tests without live network access.
+- [ ] **T5 (P1, human: ~1-2 days / CC: ~20 min)** - Rights and staging gate - require licensed permissions, enforce expiry/territory rules, reject path escapes and symlinks, and verify staged bytes before publication.
+  - Surfaced by: 1J, 1K, 3B, 3G.
+  - Files: `domain.py`, `assets.py`, `release.py`, `tests/test_domain.py`, `tests/test_assets.py`, `tests/test_release.py`.
+  - Verify: rights matrix, checksum mismatch, traversal, symlink, and public-binary absence tests.
+- [ ] **T6 (P1, human: ~1-2 days / CC: ~20 min)** - Reproducible atomic release - add input/source/processor digests, UTC/semver validation, lifecycle transitions, atomic temp-directory publication, and withdrawal metadata.
+  - Surfaced by: 1H, 1L, 3C, 3D.
+  - Files: `release.py`, `domain.py`, `cli.py`, `tests/test_release.py`, `tests/test_cli.py`.
+  - Verify: reordered-input rebuild, staged-file mutation, failed-build cleanup, supersede, and withdrawn-release tests.
+- [ ] **T7 (P2, human: ~1 day / CC: ~15 min)** - Resolver determinism and indexing - define exact interface/error shapes, verified-domain semantics, conflict handling, tie-breaking, and indexed lookup performance.
+  - Surfaced by: 2A, 3E, 4A.
+  - Files: `normalize.py`, `resolver.py`, `tests/test_normalize.py`, `tests/test_resolver.py`.
+  - Verify: competing matches, alias cases, deterministic ties, and a several-thousand-record p95 benchmark.
+- [ ] **T8 (P2, human: ~1 day / CC: ~15 min)** - Standalone CI and contract coverage - add the package to Python 3.10-3.12 lint/test CI and complete the release contract/negative CLI tests.
+  - Surfaced by: 2C, 2E, 3B, 3D, 3H.
+  - Files: `global-financial-registry/pyproject.toml`, `.github/workflows/ci.yml` or a new package workflow, `tests/test_release_contract.py`, `README.md`.
+  - Verify: clean checkout installs and passes Ruff, focused tests, coverage, and the root Relay suite independently.
+- [ ] **T9 (P3, human: ~0.5 day / CC: ~10 min)** - Document deferred operations and licensing - record snapshot retention, resource limits, coverage disclaimers, CC BY metadata attribution, and the boundary between this package and the later serving/governance plans.
+  - Surfaced by: S2, 4B, 4C, 4D.
+  - Files: `global-financial-registry/README.md`, `LICENSE`, release documentation.
+  - Verify: README command/contract review and a clean legal/operations checklist.
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | - | Not run in this review |
+| Codex Review | `/codex review` | Independent second opinion | 0 | - | Not run; no outside voice available |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | ISSUES_OPEN | 31 findings, 18 critical gaps |
+| Design Review | `/plan-design-review` | UI/UX gaps | 0 | - | No UI in this plan |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | - | Not run |
+
+**VERDICT:** Scope decomposition is accepted, but the plan is not ready to implement until P1 tasks T1-T6 are folded in and re-reviewed.
+
+**UNRESOLVED DECISIONS:**
+- Choose the single canonical representation for identifiers and decide whether brand ownership is relationship-only or also denormalized.
+- Define the institution canonical-key and re-key policy for corrected, retired, merged, or succeeded entities.
+- Decide whether Plan 1 includes a concrete safe HTTP fetcher or defers all live fetching to a later connector plan.
+- Decide whether Plan 1 implements full release lifecycle transitions or emits only validated bundles.
