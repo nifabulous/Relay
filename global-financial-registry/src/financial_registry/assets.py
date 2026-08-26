@@ -85,14 +85,25 @@ class AssetProcessor:
         fetched = fetcher.fetch(candidate.source_uri)
         if len(fetched.body) > self.max_bytes:
             raise AssetPolicyError("asset body exceeds size limit")
-        # For restricted rights, sanitize minimally but still enforce some checks
+        # For restricted rights, enforce size/node limits but do not require valid image for metadata-only
         if candidate.rights_status in {RightsStatus.SOURCE_LINK_ONLY, RightsStatus.UNKNOWN, RightsStatus.REMOVED}:
-            # Still compute sanitized bytes as fetched body but enforce no external script? For test, just bypass heavy validation.
-            # We still enforce basic size and return no public binary.
-            # However if body is SVG with script, we still want to not expose it; but restricted already has no public binary, so we can skip.
-            # Compute hash of fetched body for private tracking
+            # Enforce size limits even for restricted
+            if len(fetched.body) > self.max_bytes:
+                raise AssetPolicyError("asset body exceeds size limit")
+            if fetched.body.lstrip().startswith(b"<") and len(fetched.body) > self.max_svg_bytes:
+                raise AssetPolicyError("SVG exceeds size limit")
+            # Try sanitization for SVG to enforce node/external checks, but allow non-image bodies
+            if fetched.body.lstrip().startswith(b"<"):
+                try:
+                    # Use sanitization to check for disallowed elements/nodes, but ignore rasterization errors for metadata-only
+                    self._sanitize_svg(fetched.body)
+                except AssetPolicyError:
+                    # For restricted, we still enforce policy errors for disallowed content
+                    raise
+                except Exception:
+                    # Non-SVG or malformed but restricted - allow
+                    pass
             sha = hashlib.sha256(fetched.body).hexdigest()
-            # Try to compute hash but ignore errors
             try:
                 ih = compute_imagehash(fetched.body, fetched.content_type)
             except Exception:

@@ -211,27 +211,17 @@ class ReleaseBuilder:
                 # Territory check: territories must include owner's country
                 if asset.territories:
                     owner = inst_by_id.get(asset.owner_id) or brand_by_id.get(asset.owner_id)
-                    owner_country = None
-                    if owner:
-                        if isinstance(owner, type(list(registry.institutions)[0] if registry.institutions else None)) or hasattr(owner, "country_code"):
-                            # Institution has country_code
+                    if owner is not None:
+                        if hasattr(owner, "country_code"):
+                            # Institution
                             owner_country = getattr(owner, "country_code", None)
-                        else:
-                            # Brand has country_codes list
-                            ccs = getattr(owner, "country_codes", [])
-                            owner_country = ccs[0] if ccs else None
-                    # For institution, check country_code; for brand, check any country_codes
-                    if owner_country:
-                        if isinstance(owner_country, list):
-                            # brand case
-                            if not any(cc in asset.territories for cc in owner_country):
-                                issues.append(ValidationIssue("territory_violation", f"assets/{asset.id}/territories", f"licensed asset {asset.id} territory {asset.territories} does not cover owner market {owner_country}"))
-                        else:
-                            if owner_country not in asset.territories:
+                            if owner_country and owner_country not in asset.territories:
                                 issues.append(ValidationIssue("territory_violation", f"assets/{asset.id}/territories", f"licensed asset {asset.id} territory {asset.territories} does not cover owner country {owner_country}"))
-                    else:
-                        # If no owner country, check operating_markets?
-                        pass
+                        elif hasattr(owner, "country_codes"):
+                            # Brand
+                            country_codes = getattr(owner, "country_codes", [])
+                            if country_codes and not any(cc in asset.territories for cc in country_codes):
+                                issues.append(ValidationIssue("territory_violation", f"assets/{asset.id}/territories", f"licensed asset {asset.id} territory {asset.territories} does not cover owner market {country_codes}"))
                 # Also need permission reference already checked earlier, but double-check for build
                 if not asset.permission_reference:
                     # Already added, but ensure message contains permission
@@ -415,11 +405,8 @@ class ReleaseBuilder:
                 with_source = len([i for i in institutions if i.source_ids]) + len([b for b in brands if b.source_ids]) + len(identifiers) + len(assets) + len(relationships)
                 coverage = with_source / total_records if total_records else 1.0
 
-            # Create manifest with files including schema-version.json placeholder
-            # We will write manifest, then compute final checksums for checksums.txt
-            # For determinism, files list includes all expected files including schema-version.json
-            expected_files = sorted(initial_files_sorted + ["schema-version.json"])
-            # Actually create manifest with placeholder checksum for itself
+            # Create manifest without self-reference to avoid circular hash
+            # files and checksums cover all emitted files except checksums.txt and the manifest itself
             manifest = ReleaseManifest(
                 release_version=version,
                 schema_version=SCHEMA_VERSION,
@@ -433,13 +420,13 @@ class ReleaseBuilder:
                 provenance_coverage=coverage,
                 input_sha256=input_sha,
                 processor_version=processor_version,
-                files=expected_files,
-                checksums={**initial_checksums, "schema-version.json": "0" * 64},
+                files=sorted(initial_files_sorted),
+                checksums=dict(initial_checksums),
             )
             manifest_dict = json.loads(manifest.model_dump_json(exclude_none=True))
             write_json("schema-version.json", manifest_dict)
 
-            # Now compute actual checksums for all files except checksums.txt (including actual manifest)
+            # Now compute final checksums for checksums.txt including the manifest
             all_files = []
             for p in tmp_dir.rglob("*"):
                 if p.is_file():
@@ -448,47 +435,22 @@ class ReleaseBuilder:
                         continue
                     all_files.append(rel)
             all_files_sorted = sorted(all_files)
-            actual_checksums: dict[str, str] = {}
+            final_checksums: dict[str, str] = {}
             for rel in all_files_sorted:
                 data = (tmp_dir / rel).read_bytes()
-                actual_checksums[rel] = _hash_bytes(data)
+                final_checksums[rel] = _hash_bytes(data)
 
-            # Update manifest with actual files and checksums (now includes actual manifest hash)
-            manifest = manifest.model_copy(update={"files": all_files_sorted, "checksums": actual_checksums})
-            manifest_dict = json.loads(manifest.model_dump_json(exclude_none=True))
-            # Rewrite manifest with actual checksums (this changes its hash, but we keep checksums.txt with previous actual hash for manifest)
-            # To avoid circular hash, we keep manifest's stored hash for itself as the hash before this rewrite (actual_checksums value)
-            # So we don't recompute after rewrite; we accept that manifest file's actual hash will differ from stored hash,
-            # but we handle verification specially.
-            (tmp_dir / "schema-version.json").write_text(_deterministic_json(manifest_dict), encoding="utf-8")
-            with (tmp_dir / "schema-version.json").open("rb") as f:
-                os.fsync(f.fileno())
-
-            # For checksums.txt, use actual_checksums (which was computed before rewrite) for all files except manifest's new hash
-            # But we need to recompute manifest's hash after rewrite for checksums.txt to be accurate
-            # Compute final actual hash for manifest after rewrite
-            final_manifest_hash = _hash_bytes((tmp_dir / "schema-version.json").read_bytes())
-            final_checksums = dict(actual_checksums)
-            final_checksums["schema-version.json"] = final_manifest_hash
-            # Also need to ensure checksums.txt itself is not included
-            # Write checksums.txt with final checksums (including final manifest hash)
+            # Write checksums.txt with final checksums (including manifest)
             lines = [f"{final_checksums[rel]}  {rel}" for rel in sorted(final_checksums.keys())]
             checksums_content = "\n".join(lines) + "\n" if lines else ""
             (tmp_dir / "checksums.txt").write_text(checksums_content, encoding="utf-8")
             with (tmp_dir / "checksums.txt").open("rb") as f:
                 os.fsync(f.fileno())
 
-            # For manifest's internal checksums, keep it as actual_checksums (before final rewrite) to avoid circular,
-            # but update it to final_checksums for consistency so files==checksums sets match
-            manifest = manifest.model_copy(update={"checksums": final_checksums})
-
             # Validate completed manifest and checksums before rename
             if set(manifest.files) != set(manifest.checksums.keys()):
                 raise ReleaseValidationError((ValidationIssue("checksum_manifest_mismatch", "manifest", "files and checksums mismatch"),))
-            # Verify checksums for all files except schema-version.json (since its stored hash is stale due to circularity)
-            for rel, expected_sha in final_checksums.items():
-                if rel == "schema-version.json":
-                    continue
+            for rel, expected_sha in manifest.checksums.items():
                 actual = _hash_bytes((tmp_dir / rel).read_bytes())
                 if actual != expected_sha:
                     raise ReleaseValidationError((ValidationIssue("checksum_mismatch", rel, "checksum mismatch"),))
