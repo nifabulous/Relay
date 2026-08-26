@@ -124,6 +124,7 @@ done
 require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
 require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
 require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request")'
+refuse_text 'scripts/codex_review_pr.sh' '--paginate --slurp'
 require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
 require_text 'scripts/verify_before_push.sh' 'usage: $0 <base-ref-or-sha>'
 require_text 'scripts/verify_before_push.sh' 'SENTRY_AUTH_TOKEN= SENTRY_ORG= SENTRY_PROJECT='
@@ -362,6 +363,8 @@ require_text '.github/workflows/codex-pr-review.yml' 'CODEX_EXPECTED_HEAD_SHA='
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_PR_ACTION:'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_FILES:'
 require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CONTEXT_MAX_BYTES:'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CHECK_MAX_PAGES:'
+require_text '.github/workflows/codex-pr-review.yml' 'CODEX_CHECK_MAX_RAW_BYTES:'
 # Coverage invariant: direct push events remain for heads whose conflicting
 # merge ref prevents GitHub from creating a CI pull_request run at all.
 require_text '.github/workflows/codex-pr-review.yml' \
@@ -481,7 +484,16 @@ case "${1:-}" in
     if [[ "$*" == *"--method PATCH"*"/issues/comments/"* ]]; then
       printf '%s\n' "$*" >>"$CODEX_STUB_DIR/patched.log"
     elif [[ "$*" == *"/commits/"*"/check-runs"* ]]; then
-      jq -s . <"$CODEX_STUB_DIR/check-runs.json"
+      requested_sha=""
+      if [[ "$*" =~ /commits/([0-9a-f]{40})/check-runs ]]; then
+        requested_sha="${BASH_REMATCH[1]}"
+      fi
+      printf '%s\n' "$requested_sha" >>"$CODEX_STUB_DIR/check-sha.log"
+      if [[ -n "$requested_sha" && -f "$CODEX_STUB_DIR/check-runs-${requested_sha}.json" ]]; then
+        jq '.' <"$CODEX_STUB_DIR/check-runs-${requested_sha}.json"
+      else
+        jq '.' <"$CODEX_STUB_DIR/check-runs.json"
+      fi
     elif [[ "$*" == *"/actions/workflows/"*"/runs"* ]]; then
       apply_jq "$@" <"$CODEX_STUB_DIR/workflow-runs.json"
     elif [[ "$*" == *"/git/ref/heads/"* ]]; then
@@ -797,6 +809,7 @@ prepare_ci_review_case() {
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
   rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-comment.md" "$STUB_DIR/patched.log"
+  rm -f "$STUB_DIR/check-sha.log" "$STUB_DIR"/check-runs-*.json
   printf '%s\n' "$(jq -n --arg sha "$CI_HEAD" \
     '{login: "someone-else", body: "no marker here"}')" \
     >"$STUB_DIR/comments.jsonl"
@@ -831,14 +844,18 @@ invoke_ci_review_case() {
 check_matching_completed_ci_head_reaches_model() {
   prepare_ci_review_case
   jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
-  jq -n '{count: 3, check_runs: [
-    {id: 2, name: "frontend@owner@example.com", status: "completed",
+  jq -n '{total_count: 3, check_runs: [
+    {id: 2, name: "frontend@owner.example", status: "completed",
      conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
     {id: 1, name: "quality-gate", status: "completed",
      conclusion: "success", completed_at: "2026-08-25T10:00:00Z"},
     {id: 3, name: "external-wait", status: "in_progress",
      conclusion: null, completed_at: null}
   ]}' >"$STUB_DIR/check-runs.json"
+  cp "$STUB_DIR/check-runs.json" "$STUB_DIR/check-runs-${CI_HEAD}.json"
+  jq -n '{total_count: 1, check_runs: [{id: 202, name: "wrong-head-evidence", status: "completed",
+    conclusion: "failure", completed_at: "2026-08-25T10:03:00Z"}]}' \
+    >"$STUB_DIR/check-runs-${NEWER_CI_HEAD}.json"
 
   invoke_ci_review_case \
     CODEX_EVENT_NAME=workflow_run \
@@ -860,8 +877,20 @@ check_matching_completed_ci_head_reaches_model() {
   if grep -Fq 'owner@example.com' "$STUB_DIR/captured-input.md"; then
     fail 'A personal identifier in a check name reached the model unsanitized.'
   fi
-  if ! grep -Eq '\[EMAIL\]|\[REDACTED\]' "$STUB_DIR/captured-input.md"; then
-    fail 'The sanitized check name was not present in the model input.'
+  if grep -Fq 'owner.example' "$STUB_DIR/captured-input.md" ||
+    ! grep -Fq '[EMAIL]' "$STUB_DIR/captured-input.md"; then
+    fail 'A valid email-shaped check name was not replaced with the documented redaction marker.'
+  fi
+  if ! grep -Fq "/commits/${CI_HEAD}/check-runs" "$STUB_DIR/api.log" ||
+    ! grep -Fq "$CI_HEAD" "$STUB_DIR/check-sha.log"; then
+    fail 'Exact-head check evidence was not requested for the completed CI head.'
+  fi
+  if grep -Fq "$NEWER_CI_HEAD" "$STUB_DIR/check-sha.log"; then
+    fail 'Check evidence was requested for a different head.'
+  fi
+  if grep -Fq 'wrong-head-evidence' "$STUB_DIR/captured-input.md" ||
+    ! grep -Fq 'quality-gate' "$STUB_DIR/captured-input.md"; then
+    fail 'The check-run fixture was not bound to the requested exact head.'
   fi
   if ! grep -Fq '"unsettled_count": 1' "$STUB_DIR/captured-input.md"; then
     fail 'An unsettled external check was not counted without erasing completed evidence.'
@@ -1084,6 +1113,30 @@ check_empty_ci_evidence_is_explicit() {
     ! grep -Fiq 'not available at review time' "$STUB_DIR/captured-input.md"; then
     fail 'Absent completed checks were not made explicit to the reviewer.'
     cat "$STUB_DIR/run.log" >&2
+  fi
+}
+
+check_oversized_raw_ci_evidence_degrades_explicitly() {
+  prepare_ci_review_case
+  jq -n --arg payload "$(printf 'raw-sensitive-payload-%.0s' {1..300})" \
+    '{total_count: 1, check_runs: [], payload: $payload}' >"$STUB_DIR/check-runs.json"
+
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000 \
+    CODEX_CHECK_MAX_RAW_BYTES=128
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'An oversized raw check-run response failed the review instead of degrading explicitly.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if ! grep -Fiq 'not available at review time' "$STUB_DIR/captured-input.md"; then
+    fail 'An oversized raw check-run response did not become explicit unavailable evidence.'
+  fi
+  if grep -Fq 'raw-sensitive-payload' "$STUB_DIR/captured-input.md"; then
+    fail 'An oversized raw check-run response reached the model input.'
   fi
 }
 
@@ -1766,6 +1819,7 @@ check_direct_path_with_ci_run_defers
 check_failed_ci_run_probe_fails_safe_toward_review
 check_workflow_run_path_never_probes_for_a_run
 check_empty_ci_evidence_is_explicit
+check_oversized_raw_ci_evidence_degrades_explicitly
 check_context_allowlist_comes_from_trusted_sha
 check_trusted_missing_context_path_is_skipped
 check_trusted_context_caps

@@ -12,6 +12,8 @@ on:
         description: Pull request number to review
         required: true
         type: string
+  # Weekday labelled-PR sweep; keep this trigger alongside the selector's
+  # schedule branch so scheduled coverage remains explicit and reviewable.
   schedule:
     - cron: "17 2 * * 1-5"
 
@@ -166,6 +168,8 @@ jobs:
       CODEX_CI_DISCOVERY_POLL_SECONDS: ${{ vars.CODEX_CI_DISCOVERY_POLL_SECONDS || '10' }}
       CODEX_CHECK_MAX_ITEMS: ${{ vars.CODEX_CHECK_MAX_ITEMS || '50' }}
       CODEX_CHECK_MAX_BYTES: ${{ vars.CODEX_CHECK_MAX_BYTES || '20000' }}
+      CODEX_CHECK_MAX_PAGES: ${{ vars.CODEX_CHECK_MAX_PAGES || '10' }}
+      CODEX_CHECK_MAX_RAW_BYTES: ${{ vars.CODEX_CHECK_MAX_RAW_BYTES || '200000' }}
       CODEX_CONTEXT_MAX_FILES: ${{ vars.CODEX_CONTEXT_MAX_FILES || '10' }}
       CODEX_CONTEXT_MAX_BYTES: ${{ vars.CODEX_CONTEXT_MAX_BYTES || '50000' }}
     steps:

@@ -111,6 +111,8 @@ CODEX_BOT_LOGIN="${CODEX_BOT_LOGIN:-github-actions[bot]}"
 : "${CODEX_CI_DISCOVERY_POLL_SECONDS:=10}"
 : "${CODEX_CHECK_MAX_ITEMS:=50}"
 : "${CODEX_CHECK_MAX_BYTES:=20000}"
+: "${CODEX_CHECK_MAX_PAGES:=10}"
+: "${CODEX_CHECK_MAX_RAW_BYTES:=200000}"
 : "${CODEX_CONTEXT_MAX_FILES:=10}"
 : "${CODEX_CONTEXT_MAX_BYTES:=50000}"
 
@@ -131,7 +133,8 @@ for bound in \
   CODEX_MAX_INPUT_BYTES CODEX_MAX_OUTPUT_TOKENS CODEX_MAX_OUTPUT_BYTES \
   CODEX_REQUEST_TIMEOUT CODEX_JOB_TIMEOUT_SECONDS \
   CODEX_CI_DISCOVERY_SECONDS CODEX_CI_DISCOVERY_POLL_SECONDS \
-  CODEX_CHECK_MAX_ITEMS CODEX_CHECK_MAX_BYTES \
+  CODEX_CHECK_MAX_ITEMS CODEX_CHECK_MAX_BYTES CODEX_CHECK_MAX_PAGES \
+  CODEX_CHECK_MAX_RAW_BYTES \
   CODEX_CONTEXT_MAX_FILES CODEX_CONTEXT_MAX_BYTES; do
   if [[ ! "${!bound}" =~ ^[1-9][0-9]*$ ]]; then
     echo "$bound must be a positive integer." >&2
@@ -275,15 +278,18 @@ fi
 
 render_verification_results() {
   local source_file="$1"
-  python3 - "$HEAD_SHA" "$CODEX_CHECK_MAX_ITEMS" "$CODEX_CHECK_MAX_BYTES" "$source_file" <<'PY'
+  local metadata_file="$2"
+  python3 - "$HEAD_SHA" "$CODEX_CHECK_MAX_ITEMS" "$CODEX_CHECK_MAX_BYTES" "$source_file" "$metadata_file" <<'PY'
 import json
 import sys
 
-exact_head, max_items_raw, max_bytes_raw, source_file = sys.argv[1:]
+exact_head, max_items_raw, max_bytes_raw, source_file, metadata_file = sys.argv[1:]
 max_items = int(max_items_raw)
 max_bytes = int(max_bytes_raw)
 with open(source_file, encoding="utf-8") as source:
     pages = json.load(source)
+with open(metadata_file, encoding="utf-8") as metadata_source:
+    metadata = json.load(metadata_source)
 all_runs = [run for page in pages for run in (page or {}).get("check_runs", [])]
 unique = {run.get("id"): run for run in all_runs if run.get("id") is not None}
 ordered = sorted(
@@ -306,9 +312,12 @@ unsettled_count = sum(
 document = {
     "exact_head": exact_head,
     "checks": [],
-    "omitted_count": len(completed),
+    "omitted_count": len(completed) + int(metadata.get("unknown_count", 0)),
     "unsettled_count": unsettled_count,
 }
+if metadata.get("truncated"):
+    document["truncated"] = True
+    document["unsettled_count_unknown"] = int(metadata.get("unknown_count", 0))
 if not completed:
     document["availability"] = (
         "Verification results were not available at review time for the exact PR head."
@@ -319,7 +328,7 @@ for item in completed[:max_items]:
     if len(json.dumps(candidate, indent=2).encode()) > max_bytes:
         break
     document = candidate
-    document["omitted_count"] -= 1
+    document["omitted_count"] = max(0, document["omitted_count"] - 1)
 if len(json.dumps(document, indent=2).encode()) > max_bytes:
     print(
         "CODEX_CHECK_MAX_BYTES is too small for verification metadata.",
@@ -330,15 +339,99 @@ print(json.dumps(document, indent=2))
 PY
 }
 
+# Materializing every API page before the renderer can
+# apply its item/byte limits. A hostile or simply noisy commit can therefore
+# exhaust the runner before the configured evidence budget takes effect. Read
+# each page through a byte-capped pipe, retain only a bounded number of pages,
+# and stop once the configured item budget plus the endpoint's total_count are
+# enough to compute the omitted count. If the raw response exceeds its cap or
+# is malformed, degrade to an explicit unavailable-evidence note rather than
+# silently treating an incomplete payload as a complete result.
+capture_bounded_json() {
+  local max_bytes="$1"
+  python3 -c '
+import sys
+
+limit = int(sys.argv[1])
+data = bytearray()
+while True:
+    chunk = sys.stdin.buffer.read(min(65536, limit + 1 - len(data)))
+    if not chunk:
+        break
+    data.extend(chunk)
+    if len(data) > limit:
+        print(f"check-run API page exceeds CODEX_CHECK_MAX_RAW_BYTES={limit}", file=sys.stderr)
+        raise SystemExit(1)
+sys.stdout.buffer.write(data)
+' "$max_bytes"
+}
+
+collect_check_runs() {
+  local output_file="$1"
+  local metadata_file="$2"
+  local page_size="$CODEX_CHECK_MAX_ITEMS"
+  local page=1
+  local total_count=-1
+  local fetched_count=0
+  local page_count
+  local page_file
+  local separator=""
+
+  (( page_size > 100 )) && page_size=100
+  : >"$output_file"
+  printf '[\n' >"$output_file"
+  while (( page <= CODEX_CHECK_MAX_PAGES )); do
+    page_file="$TEMP_DIR/check-runs-page-${page}.json"
+    if ! gh api \
+      "repos/${GH_REPO}/commits/${HEAD_SHA}/check-runs?per_page=${page_size}&page=${page}" \
+      | capture_bounded_json "$CODEX_CHECK_MAX_RAW_BYTES" >"$page_file"; then
+      return 1
+    fi
+    if ! jq -e 'type == "object" and (.check_runs | type) == "array" and ((.total_count // .count) | type) == "number"' \
+      "$page_file" >/dev/null; then
+      echo "check-run API page ${page} was not a valid check-runs response." >&2
+      return 1
+    fi
+    page_count="$(jq -r '.check_runs | length' "$page_file")"
+    if (( total_count < 0 )); then
+      total_count="$(jq -r '.total_count // .count' "$page_file")"
+    fi
+    if (( page_count == 0 )); then
+      break
+    fi
+    printf '%s%s' "$separator" "$(<"$page_file")" >>"$output_file"
+    separator=$',\n'
+    fetched_count=$((fetched_count + page_count))
+    # With total_count known, no later page can affect omitted_count once the
+    # configured evidence item budget has been collected.
+    if (( fetched_count >= CODEX_CHECK_MAX_ITEMS || fetched_count >= total_count )); then
+      break
+    fi
+    page=$((page + 1))
+  done
+  printf '\n]\n' >>"$output_file"
+  local unique_fetched
+  unique_fetched="$(jq '[.[].check_runs[]? | select(.id != null) | .id] | unique | length' "$output_file")"
+  local unknown_count=$(( total_count > unique_fetched ? total_count - unique_fetched : 0 ))
+  local truncated=0
+  if (( unknown_count > 0 )); then
+    truncated=1
+  fi
+  jq -n --argjson unknown_count "$unknown_count" --argjson truncated "$truncated" \
+    '{unknown_count: $unknown_count, truncated: ($truncated == 1)}' >"$metadata_file"
+}
+
 if (( CI_PRODUCED_NO_RUN )); then
   printf 'CI produced no run for the exact PR head %s; verification results were not available at review time.\n' \
     "$HEAD_SHA" >"$TEMP_DIR/verification-results.txt"
 else
-  gh api --paginate --slurp \
-    "repos/${GH_REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" \
-    >"$TEMP_DIR/check-runs.json"
-  render_verification_results "$TEMP_DIR/check-runs.json" \
-    >"$TEMP_DIR/verification-results.txt"
+  if collect_check_runs "$TEMP_DIR/check-runs.json" "$TEMP_DIR/check-runs-metadata.json"; then
+    render_verification_results "$TEMP_DIR/check-runs.json" "$TEMP_DIR/check-runs-metadata.json" \
+      >"$TEMP_DIR/verification-results.txt"
+  else
+    printf 'Verification results were not available at review time for the exact PR head %s; the bounded check-run API read failed or exceeded its raw response limit.\n' \
+      "$HEAD_SHA" >"$TEMP_DIR/verification-results.txt"
+  fi
 fi
 python3 "$REPO_ROOT/scripts/codex_sanitize.py" \
   <"$TEMP_DIR/verification-results.txt" \
