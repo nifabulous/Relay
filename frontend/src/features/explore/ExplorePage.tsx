@@ -167,7 +167,7 @@ export function BankDirectoryPage() {
     <div className="explore bank-directory">
       <div className="explore__header">
         <h1>Bank directory</h1>
-        <p className="measure">Browse a curated teaching directory by market and capability.</p>
+        <p className="measure">Browse the complete routing directory by market and capability.</p>
       </div>
 
       <form

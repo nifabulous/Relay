@@ -13,26 +13,6 @@ from ..services.validator import detect_type, validate_bic, validate_iban
 
 router = APIRouter(prefix="/api", tags=["swift"])
 
-# The public browse/search surface is deliberately narrower than the routing
-# database. These are the teaching-directory institutions approved for the
-# Explore UI; lookup, validation, and routing continue to resolve the full
-# curated directory by BIC.
-DIRECTORY_BICS = {
-    "CITIUS33XXX",
-    "BOFAUS3NXXX",
-    "CHASUS33XXX",
-    "COBADEFFXXX",
-    "DEUTDEFFXXX",
-    "BARCGB22XXX",
-    "NWBKGB2LXXX",
-    "HSBCGB22XXX",
-    "HDFCINBBXXX",
-    "ICICINBBXXX",
-    "AXISINBBXXX",
-    "PNBPUS33XXX",
-    "MHCBJPJTXXX",
-}
-
 
 @router.get("/health", response_model=HealthResponse)
 def health(request: Request, db: Session = Depends(get_db)):
@@ -140,9 +120,9 @@ def search_banks(
     verified: Optional[bool] = Query(None, description="Only banks with at least one settlement instruction"),
     db: Session = Depends(get_db),
 ):
-    """Browse or search the curated directory from one authoritative source."""
+    """Browse or search the complete routing directory from one source."""
     normalized = " ".join((q or "").split())
-    filters = [Bank.bic.in_(DIRECTORY_BICS)]
+    filters = []
 
     if normalized:
         name_filters = [
