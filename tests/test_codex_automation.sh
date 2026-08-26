@@ -894,16 +894,15 @@ check_matching_completed_ci_head_reaches_model() {
   # literal constructed separately so the fixture value can never be confused
   # with sanitizer output. Keep both values visible in this fixture so a review
   # of the regression itself cannot mistake raw input for the redaction marker.
-  raw_email_check_name='frontend-check-owner@example.test'
-  jq -n --arg raw_name "$raw_email_check_name" '{total_count: 3, check_runs: [
-    {id: 2, name: $raw_name, status: "completed",
+  jq -n '{total_count: 3, check_runs: [
+    {id: 2, name: "frontend-check-owner@example.test", status: "completed",
      conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
     {id: 1, name: "quality-gate", status: "completed",
      conclusion: "success", completed_at: "2026-08-25T10:00:00Z"},
     {id: 3, name: "external-wait", status: "in_progress",
      conclusion: null, completed_at: null}
   ]}' >"$STUB_DIR/check-runs.json"
-  if ! grep -Fq "$raw_email_check_name" "$STUB_DIR/check-runs.json" ||
+  if ! grep -Fq 'frontend-check-owner@example.test' "$STUB_DIR/check-runs.json" ||
     grep -Fq '[EMAIL]' "$STUB_DIR/check-runs.json"; then
     fail 'The redaction fixture did not contain distinct raw input and expected output values.'
     return
@@ -930,7 +929,7 @@ check_matching_completed_ci_head_reaches_model() {
   if ! grep -Fq 'UNTRUSTED_DATA verification-results' "$STUB_DIR/captured-input.md"; then
     fail 'Completed CI evidence was not wrapped as untrusted input.'
   fi
-  if grep -Fq "$raw_email_check_name" "$STUB_DIR/captured-input.md"; then
+  if grep -Fq 'frontend-check-owner@example.test' "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name reached the model unsanitized.'
   fi
   expected_email_marker='[EMAIL]'
