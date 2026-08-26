@@ -964,6 +964,8 @@ def post_comment(pr, repo, body, bot_login: str) -> None:
                 f"repos/{repo}/issues/comments/{comment_id}",
                 "-f", f"body={body}",
             ],
+            capture_output=True,
+            text=True,
             check=True,
         )
         return
@@ -971,6 +973,8 @@ def post_comment(pr, repo, body, bot_login: str) -> None:
     _require_open_pr(pr, repo)
     subprocess.run(
         ["gh", "pr", "comment", str(pr), "--repo", repo, "--body", body],
+        capture_output=True,
+        text=True,
         check=True,
     )
 

@@ -1232,6 +1232,58 @@ def test_cli_post_json_collects_once_and_keeps_stdout_machine_readable(
     assert payload["round_count"] == 1
 
 
+def test_cli_post_json_keeps_stdout_clean_across_real_comment_write(
+    tmp_path, monkeypatch, capsys
+):
+    """The machine-readable contract includes the real gh write boundary.
+
+    A GitHub CLI can print a success line even when the caller only requested
+    JSON. The write subprocess must capture that output so stdout remains one
+    parseable decision object; human status belongs on stderr.
+    """
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setenv("GH_STUB_NOISY_WRITES", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+
+    assert arb.main(["100", "--repo", STUB_REPO, "--post", "--json"]) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["round_count"] == 1
+    assert "fake gh comment output" not in captured.out
+    assert "Posted arbiter recommendation" in captured.err
+
+
+def test_cli_post_json_keeps_stdout_clean_across_gap_issue_writes(
+    tmp_path, monkeypatch, capsys
+):
+    """The explicit gap-issue write path has the same stdout guarantee."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setenv("GH_STUB_NOISY_WRITES", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    (stub_dir / "issue_list.json").write_text("[]")
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--gap-issues", "--json"
+    ]) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["proposed_gaps"]
+    assert "fake gh comment output" not in captured.out
+    assert "fake gh label output" not in captured.out
+    assert "github.com/stub-org/stub-repo/issues/" not in captured.out
+
+
 def test_render_comment_includes_unverifiable_missing_artifact():
     decision = arb.Decision(
         recommendation="MERGE-WITH-GAPS",
@@ -1449,14 +1501,20 @@ def main():
 
     if argv[:3] == ["api", "--method", "PATCH"] and "issues/comments/" in argv[3]:
         _log("comment-patch", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh patch output")
         return 0
 
     if argv[:2] == ["pr", "comment"]:
         _log("comment-create", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh comment output")
         return 0
 
     if argv[:2] == ["label", "create"]:
         _log("label-create", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh label output")
         return 0
 
     if argv[:2] == ["issue", "list"]:

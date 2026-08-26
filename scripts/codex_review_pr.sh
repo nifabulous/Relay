@@ -684,12 +684,16 @@ python3 "$REPO_ROOT/scripts/codex_truncate.py" \
   <"$TEMP_DIR/review.md" >"$TEMP_DIR/review-truncated.md"
 mv "$TEMP_DIR/review-truncated.md" "$TEMP_DIR/review.md"
 
-# The model call can take long enough for another push to land after the first
-# head check. Do not post a stale review under the old marker; the synchronize
-# event for the new head owns that review.
-LATEST_SHA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json headRefOid --jq '.headRefOid')"
-if [[ "$LATEST_SHA" != "$HEAD_SHA" ]]; then
-  echo "PR #${PR_NUMBER} moved from ${HEAD_SHA} to ${LATEST_SHA} before comment publication; leaving it to the run for the new head."
+# The model call can take long enough for another push or a close to land after
+# the first eligibility check. Do not post a stale review under the old marker,
+# and do not write to a PR that is no longer open. This is deliberately the
+# final forge read before either PATCH or create; the synchronize/close event
+# owns any follow-up and this run exits successfully without a write.
+LATEST_METADATA="$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json state,headRefOid)"
+LATEST_STATE="$(jq -r '.state // empty' <<<"$LATEST_METADATA")"
+LATEST_SHA="$(jq -r '.headRefOid // empty' <<<"$LATEST_METADATA")"
+if [[ "$LATEST_STATE" != "OPEN" || "$LATEST_SHA" != "$HEAD_SHA" ]]; then
+  echo "PR #${PR_NUMBER} changed before comment publication (state=${LATEST_STATE:-unknown}, head=${LATEST_SHA:-unknown}); leaving it to the current PR lifecycle."
   exit 0
 fi
 

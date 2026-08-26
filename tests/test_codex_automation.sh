@@ -123,6 +123,9 @@ done
 
 require_text 'scripts/codex_review_pr.sh' 'CURRENT_SHA'
 require_text 'scripts/codex_review_pr.sh' '--require-complete-input'
+require_text 'scripts/codex_review_pr.sh' 'LATEST_METADATA'
+require_text 'scripts/codex_review_pr.sh' '--json state,headRefOid'
+require_text 'scripts/codex_review_pr.sh' 'LATEST_STATE'
 require_text 'scripts/codex_review_pr.sh' 'select(.event == "pull_request")'
 refuse_text 'scripts/codex_review_pr.sh' '--paginate --slurp'
 require_text 'scripts/verify_before_push.sh' 'git diff --check "$BASE_SHA" "$HEAD_SHA"'
@@ -463,7 +466,15 @@ case "${1:-}" in
       view)
         # head-override simulates a push landing mid-run: the re-read of
         # headRefOid returns a different SHA than the initial metadata read.
-        if [[ -s "$CODEX_STUB_DIR/head-override" && "$*" == *--jq* ]]; then
+        if [[ -s "$CODEX_STUB_DIR/state-override" ]]; then
+          jq --arg state "$(cat "$CODEX_STUB_DIR/state-override")" \
+             --arg sha "$(jq -r '.headRefOid' "$CODEX_STUB_DIR/metadata.json")" \
+             '{state: $state, headRefOid: $sha}' | apply_jq "$@"
+        elif [[ -s "$CODEX_STUB_DIR/head-override" && "$*" == *"state,headRefOid"* ]]; then
+          jq --arg sha "$(cat "$CODEX_STUB_DIR/head-override")" \
+             '(.state //= "OPEN") | .headRefOid = $sha' \
+            "$CODEX_STUB_DIR/metadata.json" | apply_jq "$@"
+        elif [[ -s "$CODEX_STUB_DIR/head-override" && "$*" == *--jq* ]]; then
           cat "$CODEX_STUB_DIR/head-override"
         else
           jq '.state //= "OPEN"' "$CODEX_STUB_DIR/metadata.json" | apply_jq "$@"
@@ -574,6 +585,9 @@ for arg in "$@"; do
     printf 'stub review\n' >"$out"
     if [[ -n "${CODEX_STUB_FINAL_HEAD:-}" ]]; then
       printf '%s\n' "$CODEX_STUB_FINAL_HEAD" >"$CODEX_STUB_DIR/head-override"
+    fi
+    if [[ -n "${CODEX_STUB_FINAL_STATE:-}" ]]; then
+      printf '%s\n' "$CODEX_STUB_FINAL_STATE" >"$CODEX_STUB_DIR/state-override"
     fi
     exit 0
   fi
@@ -837,6 +851,7 @@ CI_REVIEW_STATUS=0
 prepare_ci_review_case() {
   : >"$STUB_DIR/posted.log"
   : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/state-override"
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
   rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-comment.md" "$STUB_DIR/patched.log"
@@ -875,16 +890,24 @@ invoke_ci_review_case() {
 check_matching_completed_ci_head_reaches_model() {
   prepare_ci_review_case
   jq -n '{total_count: 1, workflow_runs: []}' >"$STUB_DIR/workflow-runs.json"
-  # This is a syntactically valid address; the expected marker is constructed
-  # separately so the fixture value can never be confused with sanitizer output.
-  jq -n '{total_count: 3, check_runs: [
-    {id: 2, name: "frontend@owner.example", status: "completed",
+  # This is a syntactically valid address; the expected marker is a distinct
+  # literal constructed separately so the fixture value can never be confused
+  # with sanitizer output. Keep both values visible in this fixture so a review
+  # of the regression itself cannot mistake raw input for the redaction marker.
+  raw_email_check_name='frontend-check-owner@example.test'
+  jq -n --arg raw_name "$raw_email_check_name" '{total_count: 3, check_runs: [
+    {id: 2, name: $raw_name, status: "completed",
      conclusion: "failure", completed_at: "2026-08-25T10:01:00Z"},
     {id: 1, name: "quality-gate", status: "completed",
      conclusion: "success", completed_at: "2026-08-25T10:00:00Z"},
     {id: 3, name: "external-wait", status: "in_progress",
      conclusion: null, completed_at: null}
   ]}' >"$STUB_DIR/check-runs.json"
+  if ! grep -Fq "$raw_email_check_name" "$STUB_DIR/check-runs.json" ||
+    grep -Fq '[EMAIL]' "$STUB_DIR/check-runs.json"; then
+    fail 'The redaction fixture did not contain distinct raw input and expected output values.'
+    return
+  fi
   cp "$STUB_DIR/check-runs.json" "$STUB_DIR/check-runs-${CI_HEAD}.json"
   jq -n '{total_count: 1, check_runs: [{id: 202, name: "wrong-head-evidence", status: "completed",
     conclusion: "failure", completed_at: "2026-08-25T10:03:00Z"}]}' \
@@ -907,10 +930,10 @@ check_matching_completed_ci_head_reaches_model() {
   if ! grep -Fq 'UNTRUSTED_DATA verification-results' "$STUB_DIR/captured-input.md"; then
     fail 'Completed CI evidence was not wrapped as untrusted input.'
   fi
-  if grep -Fq 'frontend@owner.example' "$STUB_DIR/captured-input.md"; then
+  if grep -Fq "$raw_email_check_name" "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name reached the model unsanitized.'
   fi
-  expected_email_marker="$(printf '[%s]' EMAIL)"
+  expected_email_marker='[EMAIL]'
   if ! grep -Fq "$expected_email_marker" "$STUB_DIR/captured-input.md"; then
     fail 'A valid email-shaped check name was not replaced with the documented redaction marker.'
   fi
@@ -927,6 +950,32 @@ check_matching_completed_ci_head_reaches_model() {
   fi
   if ! grep -Fq '"unsettled_count": 1' "$STUB_DIR/captured-input.md"; then
     fail 'An unsettled external check was not counted without erasing completed evidence.'
+  fi
+}
+
+check_final_publication_skips_closed_pr() {
+  prepare_ci_review_case
+  printf '{"count": 1, "check_runs": [{"id": 1, "name": "quality-gate", "status": "completed", "conclusion": "success", "completed_at": "2026-08-25T10:00:00Z"}]}' \
+    >"$STUB_DIR/check-runs.json"
+
+  # The model stub closes the PR after returning its review. The final
+  # publication guard must re-read both state and head and refuse every write.
+  invoke_ci_review_case \
+    CODEX_EVENT_NAME=workflow_run \
+    CODEX_EXPECTED_HEAD_SHA="$CI_HEAD" \
+    CODEX_STUB_FINAL_STATE=CLOSED \
+    CODEX_CHECK_MAX_ITEMS=50 \
+    CODEX_CHECK_MAX_BYTES=20000
+  if (( CI_REVIEW_STATUS != 0 )); then
+    fail 'A PR closed after model generation caused a non-zero review failure.'
+    cat "$STUB_DIR/run.log" >&2
+    return
+  fi
+  if [[ ! -s "$STUB_DIR/captured-input.md" ]]; then
+    fail 'The closed-after-model case did not reach the model before its final guard.'
+  fi
+  if [[ -s "$STUB_DIR/posted.log" || -s "$STUB_DIR/patched.log" ]]; then
+    fail 'A review was written after the PR closed during model generation.'
   fi
 }
 
@@ -1247,6 +1296,7 @@ check_check_run_item_and_page_limits_are_enforced() {
 prepare_context_case() {
   : >"$STUB_DIR/posted.log"
   : >"$STUB_DIR/head-override"
+  : >"$STUB_DIR/state-override"
   : >"$STUB_DIR/api.log"
   : >"$STUB_DIR/responses-argv.log"
   rm -f "$STUB_DIR/captured-input.md" "$STUB_DIR/captured-instructions.md"
@@ -1936,6 +1986,7 @@ check_contract_path_as_directory_is_ignored
 check_oversized_review_input_is_refused
 
 check_matching_completed_ci_head_reaches_model
+check_final_publication_skips_closed_pr
 check_stale_workflow_run_exits_before_model
 check_direct_path_without_ci_run_reviews
 check_non_pr_ci_run_does_not_defer
