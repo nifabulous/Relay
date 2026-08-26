@@ -81,7 +81,7 @@ A PR caller workflow owns `pull_request_target`, `workflow_run`, manual, and sch
 
 Other CI systems and local runs use the `loopkeeper` executable with JSON manifests. The CLI accepts bounded file references, invokes the same package core, and emits deterministic JSON/Markdown artifacts. It does not assume GitHub credentials, event payloads, comment APIs, or a particular CI vendor. A consuming pipeline decides whether and how to publish those artifacts.
 
-Generic runs declare their trust mode explicitly. `github-forge-verified` is reserved for the GitHub adapter; standalone and other-CI runs use `caller-attested` and must provide repository identity, head SHA, trusted-policy revision, and the caller's verification method. Manifests are trusted control-plane inputs and must be created outside PR-controlled content.
+Generic runs declare their trust mode explicitly. `github-forge-verified` is reserved for the GitHub adapter; standalone and other-CI runs use `caller-attested` and must provide repository identity, head SHA, trusted-policy revision, and a verification record that binds those values to the manifest digest. `trust.verification` is mandatory for `caller-attested`, contains a supported method and a trusted record reference, and is validated before any model call; a missing, malformed, unsupported, or unverifiable record exits `4`. Manifests are trusted control-plane inputs and must be created outside PR-controlled content.
 
 ### Public seam
 
@@ -187,7 +187,7 @@ The privileged GitHub workflow checks out the actual default-branch tip and read
 
 ### Caller and reusable workflow topology
 
-The consumer repository contains a small caller workflow whose `on:` block is read from the consumer default branch. It declares the static `pull_request_target`, `workflow_run`, manual, and schedule triggers and invokes the pinned Loopkeeper reusable workflow with `uses: <loopkeeper-repo>/.github/workflows/<entrypoint>.yml@<full-sha>`. The remote entrypoint is declared with `workflow_call`; it does not rely on direct triggers that only exist in its own repository. The caller passes the consumer repository, PR/issue identifiers, expected CI workflow file/name, configuration variables, and explicitly scoped secrets.
+The consumer repository contains a small caller workflow whose `on:` block is read from the consumer default branch. It declares the static `pull_request_target`, `workflow_run`, manual, and schedule triggers and invokes the pinned Loopkeeper reusable workflow with `uses: <loopkeeper-repo>/.github/workflows/<entrypoint>.yml@<full-sha>`. The remote entrypoint is declared with `workflow_call`; it does not rely on direct triggers that only exist in its own repository. The caller passes the consumer repository, PR/issue identifiers, expected CI workflow name and file, configuration variables, and explicitly scoped secrets.
 
 The called workflow uses two separate checkouts: the consumer repository at the forge-verified `CONSUMER_TRUSTED_SHA` for policy, contracts, and context, and the Loopkeeper repository at the immutable `LOOPKEEPER_SHA` for Bash/Python code. The workflow verifies both values independently and never lets a runtime input replace either trust root.
 
@@ -195,15 +195,15 @@ The consumer caller sets the top-level least-privilege permissions; a called wor
 
 ### Review coverage invariant
 
-Every reachable open PR head receives at least one review result and at most one current-head result after idempotent replacement. CI sequencing may delay review but may never delete coverage.
+Every open PR head handled by the configured GitHub integration receives at least one review result and at most one current-head result after idempotent replacement. CI sequencing may delay review but may never delete coverage.
 
-- `workflow_run: completed` handles the named CI workflow only when the source event is `pull_request`, the run head SHA is exact, and the PR is still open/current. The caller's static workflow list and the probe's workflow file/name are required inputs and are validated equal before a review can defer.
+- `workflow_run: completed` handles the named CI workflow only when the source event is `pull_request`, the run head SHA is exact, and the PR is still open/current. GitHub's `workflow_run.workflows` trigger entries are display names, while discovery may use a file path. Setup and runtime validation resolve the display name through `GET /actions/workflows` to a unique workflow id and require that its `path` matches the configured file; the probe then queries that resolved id. A missing, ambiguous, or mismatched name/file mapping is a configuration failure and must not defer review; the fallback path reviews instead.
 - `opened` and `synchronize` remain an exclusive fallback for conflicting PRs where GitHub creates no pull-request CI run. The worker waits only within a bounded discovery window, defers when a matching run exists, and reviews when no run appears or lookup fails.
 - Manual, reopened, ready-for-review, and scheduled paths read currently completed exact-head checks once without polling.
 - A later CI completion can replace a no-CI fallback review for the same head with exact-head evidence.
 - Concurrency groups are keyed by PR on every trigger; no run-id fallback may silently disable cancellation.
 
-The default idempotency markers are `loopkeeper-pr-review:<pr>:<head_sha>` for reviewer output, `loopkeeper-issue-triage:<issue>` for triage output, and `loopkeeper-arbiter:<pr>` for the disposition comment. Suppression requires both the marker and the configured bot author; the Relay adapter may also recognize the corresponding legacy markers during migration.
+The default idempotency markers are `loopkeeper-pr-review:<pr>:<head_sha>` for reviewer output, `loopkeeper-issue-triage:<issue>` for triage output, and `loopkeeper-arbiter:<pr>` for the disposition comment. Reviewer output also carries a trusted evidence-state field, `fallback` or `ci`, generated by the adapter from the trigger path rather than copied from model text. A repeated fallback suppresses when the same marker and bot author already exist; a CI-completion run explicitly replaces an existing same-head `fallback` comment in place, changing its state to `ci`, and suppresses only when a same-head `ci` result already exists. The reviewer comment upsert runs in the PR-scoped writer concurrency group, re-reads before create, and reconciles any concurrently discovered duplicate to the single canonical comment, so fallback/CI paths cannot leave two current-head results. The Relay adapter may also recognize the corresponding legacy markers during migration.
 
 The privileged path executes no PR code, downloads no PR-controlled artifacts or caches, and exposes the model key only to the model-call step. Check-run summaries are bounded, sanitized untrusted evidence; a green check never proves correctness.
 
@@ -224,7 +224,7 @@ loopkeeper agent     --manifest agent.json     --output-dir artifacts/
 loopkeeper arbitrate --history history.json    --output decision.json
 ```
 
-Manifests are JSON and have `manifest: 1`, a `kind`, a `trust` object, trusted file references, bounded untrusted artifact references, and explicit output/configuration overrides. A review manifest includes `trust.repo`, `trust.head_sha`, `trust.trusted_revision`, `trust.mode`, optional `trust.verification`, `trusted.policy`, optional `trusted.contract`, optional `trusted.context_files`, `untrusted.metadata`, `untrusted.diff`, optional `untrusted.previous_review`, optional `untrusted.checks`, and the requested limits. Triage includes the trusted policy/file index and an issue artifact. Agent includes the trusted role file, agent name, and task artifact. Arbitration includes a Schema-1 history file and the arbiter thresholds. Complete examples and a JSON Schema ship with the CLI.
+Manifests are JSON and have `manifest: 1`, a `kind`, a `trust` object, trusted file references, bounded untrusted artifact references, and explicit output/configuration overrides. A review manifest includes `trust.repo`, `trust.head_sha`, `trust.trusted_revision`, `trust.mode`, required `trust.verification` when `trust.mode` is `caller-attested`, `trusted.policy`, optional `trusted.contract`, optional `trusted.context_files`, `untrusted.metadata`, `untrusted.diff`, optional `untrusted.previous_review`, optional `untrusted.checks`, and the requested limits. Triage includes the trusted policy/file index and an issue artifact. Agent includes the trusted role file, agent name, and task artifact. Arbitration includes a Schema-1 history file and the arbiter thresholds. Complete examples and a JSON Schema ship with the CLI.
 
 A minimal review manifest is structurally explicit about its trust boundary:
 
@@ -255,7 +255,7 @@ A minimal review manifest is structurally explicit about its trust boundary:
 }
 ```
 
-The manifest is a trusted control-plane file and must be created outside PR-controlled content. Trusted and untrusted paths are resolved under separate declared roots. Absolute paths, `..` escapes, control characters, and symlinks that leave the declared root are rejected. Every file is read through a byte cap before parsing. Untrusted inline material is never accepted as trusted policy, contract, role text, endpoint, redactor, or write configuration.
+The manifest is a trusted control-plane file and must be created outside PR-controlled content. Trusted and untrusted paths are resolved under separate declared roots; `trust.verification.record` is trusted-path material and is never read from the untrusted root. Absolute paths, `..` escapes, control characters, and symlinks that leave the declared root are rejected. Every file is read through a byte cap before parsing. Untrusted inline material is never accepted as trusted policy, contract, role text, endpoint, redactor, or write configuration.
 
 Stable artifact names are:
 
@@ -340,8 +340,9 @@ Required layers are:
 The design is successful when all of the following hold:
 
 - A new GitHub project can adopt Loopkeeper by adding a small caller workflow for each enabled integration, pinning the matching reusable workflow SHA, and supplying trusted policy/contract/context configuration; it does not copy the worker or arbiter source.
+- Every open PR head handled by the configured GitHub integration receives at least one review result, including a conflicting head for which CI never starts; a later exact-head CI result replaces the fallback in place, and duplicate trigger paths leave at most one current-head result.
 - A local or non-GitHub CI project can install `loopkeeper` from PyPI, run the documented JSON-manifest CLI, and consume deterministic JSON/Markdown artifacts without GitHub credentials.
-- Generic runs identify themselves as `caller-attested` and cannot claim the GitHub adapter's independent forge verification.
+- Generic runs identify themselves as `caller-attested`, require a verified `trust.verification` record bound to the manifest digest, fail with exit `4` when that record is missing or invalid, and cannot claim the GitHub adapter's independent forge verification.
 - PR review, issue triage, and headless agents share one transport and the same sanitize-then-wrap trust boundary.
 - The pure arbiter returns a deterministic disposition for every valid history, fails closed for invalid/ambiguous history, and the configured review triggers bound repeated `CONTINUE` rounds with a hard cap so the loop eventually reaches a terminal or human-escalation state.
 - Finding accounting preserves `NEW`/`OPEN`/one-time `RESOLVED` semantics, and `unverifiable` never suppresses a finding.
