@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import re
@@ -61,6 +62,8 @@ RULE_SOFT_GATE = "SOFT-GATE"
 RULE_HARD_CAP = "HARD-CAP"
 RULE_CONTINUE = "CONTINUE"
 RULE_P1_PENDING = "P1-RESOLUTION-PENDING"
+RULE_UNVERIFIABLE_HIGH_SEVERITY = "UNVERIFIABLE-HIGH-SEVERITY"
+RULE_UNVERIFIABLE_ROUND_CAP = "UNVERIFIABLE-ROUND-CAP"
 # fail-closed cited rules (§6.1) — always paired with loop_action CONTINUE
 RULE_MALFORMED = "MALFORMED-TRAILER"
 RULE_ACCOUNTING_GAP = "ACCOUNTING-GAP"
@@ -103,6 +106,8 @@ _FILE_MAX_LEN = 256
 # syntax when paired. Anything structural is rejected upstream rather than
 # escaped downstream.
 _FILE_FORBIDDEN = ("<", ">", "`", "{", "}", "--")
+_UNVERIFIABLE_MISSING_MAX_LEN = 512
+_UNVERIFIABLE_MISSING_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 _TRAILER_OPEN = "<!-- codex-verdict:"
 _TRAILER_CLOSE = "-->"
 
@@ -110,6 +115,47 @@ _TRAILER_CLOSE = "-->"
 # --------------------------------------------------------------------------- #
 # Contract + Decision.                                                          #
 # --------------------------------------------------------------------------- #
+
+
+def _normalize_unverifiable_missing(value: object) -> Optional[str]:
+    """Return a single-line, bounded artifact description or ``None``.
+
+    ``missing`` is model output, so it must not be allowed to add Markdown
+    structure, mentions, HTML, or an unbounded payload to a bot-authored write.
+    Validation rejects unsafe values; renderers call the same helper as a
+    defensive backstop for decisions assembled directly in tests or callers.
+    """
+    if not isinstance(value, str) or _UNVERIFIABLE_MISSING_CONTROL_RE.search(value):
+        return None
+    normalized = " ".join(value.split())
+    if not normalized or len(normalized) > _UNVERIFIABLE_MISSING_MAX_LEN:
+        return None
+    # Apply the repository's canonical credential/payment redaction before the
+    # value enters the arbiter state. The final postable-body sanitizer remains
+    # a second defensive layer, but direct renderers and proposed-gap data must
+    # not retain a secret merely because a caller bypassed that wrapper.
+    return _sanitize_gap_body(normalized)
+
+
+def _render_unverifiable_missing(value: object) -> str:
+    normalized = _normalize_unverifiable_missing(value)
+    if normalized is None:
+        normalized = "[invalid missing-artifact text]"
+    escaped = html.escape(normalized, quote=True).replace("`", "&#96;")
+    return f"`{escaped}`"
+
+
+def _positive_env_int(env, name: str, default: int) -> int:
+    raw = env.get(name, str(default))
+    try:
+        value = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
 @dataclass(frozen=True)
 class Contract:
     """Tunable knobs. Read from the environment at the CLI boundary and passed
@@ -119,13 +165,21 @@ class Contract:
     soft_gate: int = 5
     hard_cap: int = 10
     stuck_p1_rounds: int = 3
+    unverifiable_rounds: int = 2
 
     @classmethod
     def from_env(cls, env=None) -> "Contract":
         env = env if env is not None else os.environ
         return cls(
             bot_login=env.get("CODEX_BOT_LOGIN", "github-actions[bot]"),
-            soft_gate=int(env.get("ARBITER_SOFT_GATE", "5")),
+            soft_gate=_positive_env_int(env, "ARBITER_SOFT_GATE", 5),
+            hard_cap=_positive_env_int(env, "ARBITER_HARD_CAP", 10),
+            stuck_p1_rounds=_positive_env_int(
+                env, "ARBITER_STUCK_P1_ROUNDS", 3
+            ),
+            unverifiable_rounds=_positive_env_int(
+                env, "ARBITER_UNVERIFIABLE_ROUNDS", 2
+            ),
         )
 
 
@@ -171,6 +225,8 @@ class _Tracked:
     sev: str
     first_round: int
     open_round_indices: List[int] = field(default_factory=list)
+    unverifiable_round_indices: List[int] = field(default_factory=list)
+    unverifiable_missing: str = ""
 
 
 # --------------------------------------------------------------------------- #
@@ -305,6 +361,22 @@ def validate_trailer(trailer) -> Tuple[Optional[dict], Optional[str]]:
             return None, "bad-file"
         if any(marker in finding["file"] for marker in _FILE_FORBIDDEN):
             return None, "bad-file"
+        if "unverifiable" in finding:
+            unverifiable = finding["unverifiable"]
+            missing = (
+                _normalize_unverifiable_missing(unverifiable.get("missing"))
+                if isinstance(unverifiable, dict) else None
+            )
+            if (
+                not isinstance(unverifiable, dict)
+                or missing is None
+            ):
+                return None, "bad-unverifiable"
+            # Keep the canonical history value normalized so every downstream
+            # renderer sees the same bounded field, not the raw model text.
+            unverifiable["missing"] = missing
+            if finding["state"] == "RESOLVED":
+                return None, "unverifiable-resolved"
         if finding["state"] == "RESOLVED":
             evidence = finding.get("evidence")
             if not isinstance(evidence, dict):
@@ -410,7 +482,7 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                     RULE_AMBIGUOUS_IDENTITY,
                     f"NEW finding {fid!r} at {key} collides with still-open {open_set[key].id!r}",
                 )
-            open_set[key] = _Tracked(
+            tracked = _Tracked(
                 id=fid,
                 key=key,
                 file=finding["file"],
@@ -419,6 +491,11 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
                 first_round=idx,
                 open_round_indices=[idx],
             )
+            unverifiable = finding.get("unverifiable")
+            if unverifiable is not None:
+                tracked.unverifiable_round_indices.append(idx)
+                tracked.unverifiable_missing = unverifiable["missing"].strip()
+            open_set[key] = tracked
             touched_keys.add(key)
             continue
 
@@ -448,6 +525,10 @@ def _apply_round(idx, findings, open_set, pending_human, resolved, diff_files):
 
         if state == "OPEN":
             tracked.open_round_indices.append(idx)
+            unverifiable = finding.get("unverifiable")
+            if unverifiable is not None:
+                tracked.unverifiable_round_indices.append(idx)
+                tracked.unverifiable_missing = unverifiable["missing"].strip()
         else:  # RESOLVED
             if _evidence_ok(finding.get("evidence"), diff_files):
                 del open_set[tracked.key]
@@ -503,17 +584,21 @@ def _is_repeated(tracked: _Tracked, latest_index: int) -> bool:
     return tracked.first_round < latest_index
 
 
-def _proposed_gaps(open_findings, pending_human) -> List[dict]:
+def _proposed_gaps(open_findings, pending_human, latest_index) -> List[dict]:
     gaps = []
     for tracked in sorted(open_findings, key=lambda t: (t.sev, t.first_round)):
-        gaps.append({
+        gap = {
             "id": tracked.id,
             "file": tracked.file,
             "cat": tracked.cat,
             "sev": tracked.sev,
             "status": "open",
             "first_round": tracked.first_round + 1,
-        })
+        }
+        if latest_index in tracked.unverifiable_round_indices:
+            gap["status"] = "unverifiable"
+            gap["missing"] = tracked.unverifiable_missing
+        gaps.append(gap)
     for tracked in sorted(pending_human.values(), key=lambda t: t.first_round):
         gaps.append({
             "id": tracked.id,
@@ -593,6 +678,45 @@ def decide(history, contract: Contract) -> Decision:
     # 4. Rules — first match wins (§6.2). "Findings" means the open-set.
     open_findings = list(open_set.values())
     open_p1 = [t for t in open_findings if t.sev == "P1"]
+    latest_unverifiable = [
+        tracked for tracked in open_findings
+        if latest_index in tracked.unverifiable_round_indices
+    ]
+
+    # An unverifiable high-severity finding cannot be closed or treated as an
+    # ordinary loop continuation: a human must supply the missing evidence.
+    if any(tracked.sev == "P1" for tracked in latest_unverifiable):
+        return _result(
+            CONTINUE,
+            RULE_UNVERIFIABLE_HIGH_SEVERITY,
+            True,
+            round_count,
+            proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
+            detail="a high-severity finding is missing named verification evidence",
+        )
+
+    # A minor finding may remain unverifiable for the configured number of
+    # rounds, but a longer trailing run must terminate under human ownership.
+    capped_unverifiable = next(
+        (
+            tracked for tracked in latest_unverifiable
+            if len(_trailing_run(tracked.unverifiable_round_indices, latest_index))
+            > contract.unverifiable_rounds
+        ),
+        None,
+    )
+    if capped_unverifiable is not None:
+        return _result(
+            ESCALATE,
+            RULE_UNVERIFIABLE_ROUND_CAP,
+            True,
+            round_count,
+            proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
+            detail=(
+                f"finding {capped_unverifiable.id!r} remained unverifiable for "
+                f"more than {contract.unverifiable_rounds} consecutive rounds"
+            ),
+        )
 
     # Rule 1: CLEAN — everything ever raised is resolved with bounded evidence,
     # and no P1 resolution is pending human verification.
@@ -604,7 +728,7 @@ def decide(history, contract: Contract) -> Decision:
     # ride out under novelty exhaustion or slip past the cap under a softer rule.
     stuck = _first_stuck_p1(open_p1, canon, latest_index, contract)
     if stuck is not None:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(ESCALATE, RULE_STUCK_P1, True, round_count, proposed_gaps=gaps,
                        detail=f"P1 {stuck.id!r} open >= {contract.stuck_p1_rounds} rounds "
                               f"with fixer pushes between")
@@ -620,7 +744,7 @@ def decide(history, contract: Contract) -> Decision:
     # right here too, status "open", beside the pending entry's "pending-human".
     if pending_human:
         return _result(CONTINUE, RULE_P1_PENDING, True, round_count,
-                       proposed_gaps=_proposed_gaps(open_findings, pending_human),
+                       proposed_gaps=_proposed_gaps(open_findings, pending_human, latest_index),
                        detail="P1 resolution awaits human verification")
 
     # Rule 3: HARD CAP (round >= hard_cap) — whatever remains escalates.
@@ -631,13 +755,13 @@ def decide(history, contract: Contract) -> Decision:
     # EXHAUSTED-NOVELTY first would let round `hard_cap` return
     # MERGE-WITH-GAPS and silently convert the ceiling into a merge gate.
     if round_count >= contract.hard_cap:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(ESCALATE, RULE_HARD_CAP, True, round_count, proposed_gaps=gaps,
                        detail=f"hard cap reached at round {round_count}; contract likely wrong")
 
     # Rule 4: EXHAUSTED-NOVELTY — no P1s, every open finding a repeated minor.
     if not open_p1 and all(_is_repeated(t, latest_index) for t in open_findings):
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(MERGE_WITH_GAPS, RULE_EXHAUSTED, True, round_count, proposed_gaps=gaps,
                        detail="every open finding is a repeated minor (no new information)")
 
@@ -647,7 +771,7 @@ def decide(history, contract: Contract) -> Decision:
     # fires — the loop escalates at the cap instead of merging there. A
     # clamp would re-open the merge-at-the-cap hole this ordering closes.
     if round_count >= contract.soft_gate and not open_p1:
-        gaps = _proposed_gaps(open_findings, pending_human)
+        gaps = _proposed_gaps(open_findings, pending_human, latest_index)
         return _result(MERGE_WITH_GAPS, RULE_SOFT_GATE, True, round_count, proposed_gaps=gaps,
                        detail=f"soft gate reached at round {round_count} with only minor findings")
 
@@ -717,6 +841,19 @@ def _gh_json(args):
     return json.loads(proc.stdout)
 
 
+def _require_open_pr(pr, repo: str) -> None:
+    """Re-check PR eligibility at the write boundary.
+
+    ``collect`` performs an initial state check, but arbitration and rendering
+    happen after that read. A PR can close in the interval, so every posting
+    path re-reads the forge state immediately before its first and final write
+    rather than publishing a stale disposition or gap issue.
+    """
+    meta = _gh_json(["pr", "view", str(pr), "--repo", repo, "--json", "state"])
+    if meta.get("state") != "OPEN":
+        raise RuntimeError(f"PR #{pr} is not open; refusing to write arbitration output")
+
+
 def _gh_lines(args):
     proc = subprocess.run(["gh", *args], capture_output=True, text=True, check=True)
     return [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
@@ -729,7 +866,9 @@ def collect(pr: int, contract: Contract, repo: Optional[str] = None) -> dict:
     if not repo:
         raise SystemExit("GH_REPO or GITHUB_REPOSITORY is required")
     meta = _gh_json(["pr", "view", str(pr), "--repo", repo,
-                     "--json", "headRefOid,headRefName,files"])
+                     "--json", "state,headRefOid,headRefName,files"])
+    if meta.get("state") != "OPEN":
+        raise RuntimeError(f"PR #{pr} is not open; refusing to arbitrate it")
     head_sha = meta["headRefOid"]
     head_ref = meta["headRefName"]
     diff_files = [f["path"] for f in meta.get("files", [])]
@@ -775,19 +914,67 @@ def render_comment(decision: Decision, pr) -> str:
         lines.append("")
         lines.append("### Proposed gaps")
         for gap in decision.proposed_gaps:
-            lines.append(
+            gap_line = (
                 f"- `{gap['sev']}` `{gap['id']}` "
                 f"({gap['file']} / {gap['cat']}) — {gap.get('status', 'open')}, "
                 f"first raised round {gap['first_round']}"
             )
+            if gap.get("status") == "unverifiable":
+                gap_line += (
+                    f" — Missing artifact: "
+                    f"{_render_unverifiable_missing(gap.get('missing'))}."
+                )
+            lines.append(gap_line)
     lines.append("")
     lines.append("_Deterministic arbiter (no model call). Human approval is required before merge._")
     return "\n".join(lines)
 
 
-def post_comment(pr, repo, body) -> None:
+def post_comment(pr, repo, body, bot_login: str) -> None:
+    if os.environ.get("ARBITER_OPERATOR") != "1":
+        raise RuntimeError(
+            "post_comment requires ARBITER_OPERATOR=1 (operator mode)"
+        )
+    _require_open_pr(pr, repo)
+
+    marker = f"<!-- codex-arbiter:{pr} -->"
+    result = subprocess.run(
+        [
+            "gh", "api", "--paginate",
+            f"repos/{repo}/issues/{pr}/comments?per_page=100",
+            "--jq", '.[] | {id, login: (.user.login // ""), body: (.body // "")}',
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    comments = [
+        json.loads(line) for line in result.stdout.splitlines() if line
+    ]
+    matches = [
+        item for item in comments
+        if item["login"] == bot_login and marker in item["body"]
+    ]
+    if matches:
+        comment_id = matches[-1]["id"]
+        _require_open_pr(pr, repo)
+        subprocess.run(
+            [
+                "gh", "api", "--method", "PATCH",
+                f"repos/{repo}/issues/comments/{comment_id}",
+                "-f", f"body={body}",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return
+
+    _require_open_pr(pr, repo)
     subprocess.run(
         ["gh", "pr", "comment", str(pr), "--repo", repo, "--body", body],
+        capture_output=True,
+        text=True,
         check=True,
     )
 
@@ -891,6 +1078,10 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
     marker is the FIRST line so it survives the later size-bound truncation
     (never appended at the end, where truncation could drop it).
     """
+    missing_line = (
+        [f"- Missing artifact: {_render_unverifiable_missing(gap.get('missing'))}."]
+        if gap.get("status") == "unverifiable" else []
+    )
     lines = [
         _gap_marker(pr, gap["id"], gap["file"], gap["cat"]),
         f"## Proposed gap: `{gap['id']}`",
@@ -905,6 +1096,7 @@ def render_gap_issue_body(gap: dict, pr, permalink: Optional[str],
         f"- Category: `{gap['cat']}`",
         f"- Status: `{gap.get('status', 'open')}`",
         f"- First raised: round {gap['first_round']}",
+        *missing_line,
         "",
         "### Full context",
         (f"The finding text is in the review comment: {permalink}" if permalink
@@ -954,7 +1146,7 @@ def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
         proc = subprocess.run(
             ["gh", "issue", "list", "--repo", repo,
              "--label", label,
-             "--state", "all", "--json", "number,body", "--limit", str(limit)],
+             "--state", "all", "--json", "number,body,author", "--limit", str(limit)],
             capture_output=True, text=True, check=True,
         )
         label_issues = json.loads(proc.stdout)
@@ -971,12 +1163,16 @@ def _list_existing_gap_issues(repo: str, limit: int) -> List[dict]:
     return issues
 
 
-def _find_existing_issue(existing_issues: List[dict], marker: str) -> Optional[int]:
+def _find_existing_issue(existing_issues: List[dict], marker: str,
+                         bot_login: str) -> Optional[int]:
     # A deterministic, local grep over already-fetched bodies — never GitHub's
     # own search indexing, which is not guaranteed to index HTML comments
-    # (plan §6.4 / task brief).
+    # (plan §6.4 / task brief). The marker is public and forgeable, so only an
+    # issue authored by the configured bot can establish ledger ownership.
     for issue in existing_issues:
-        if marker in (issue.get("body") or ""):
+        author = issue.get("author") or {}
+        if (author.get("login") == bot_login
+                and marker in (issue.get("body") or "")):
             return issue.get("number")
     return None
 
@@ -1095,6 +1291,7 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
     if not decision.proposed_gaps:
         return []
 
+    _require_open_pr(pr, repo)
     canon = _poster_canonical_comments(history, pr, contract)
     _ensure_proposed_gap_label(repo)
     existing_issues = _list_existing_gap_issues(repo, list_limit)
@@ -1102,7 +1299,8 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
     results = []
     for gap in decision.proposed_gaps:
         marker = _gap_marker(pr, gap["id"], gap["file"], gap["cat"])
-        existing_number = _find_existing_issue(existing_issues, marker)
+        existing_number = _find_existing_issue(existing_issues, marker,
+                                                contract.bot_login)
         if existing_number is not None:
             results.append({
                 "gap_id": gap["id"],
@@ -1125,6 +1323,7 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
         body = _truncate_gap_body(_sanitize_gap_body(body), _GAP_ISSUE_MAX_BYTES)
         title = _sanitize_gap_body(_gap_issue_title(gap))
 
+        _require_open_pr(pr, repo)
         proc = subprocess.run(
             ["gh", "issue", "create", "--repo", repo,
              "--title", title, "--body", body,
@@ -1145,7 +1344,11 @@ def post_gap_issues(decision: Decision, pr, repo: str, contract: Contract,
         # findings that merely share an `id` at different (file, cat); those
         # now hash to different markers (see _gap_marker) and always get
         # their own issue.
-        existing_issues.append({"number": created_number, "body": body})
+        existing_issues.append({
+            "number": created_number,
+            "body": body,
+            "author": {"login": contract.bot_login},
+        })
     return results
 
 
@@ -1162,6 +1365,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", help="owner/name (defaults to GH_REPO / GITHUB_REPOSITORY)")
     parser.add_argument("--post", action="store_true",
                         help="post the recommendation comment (requires operator mode)")
+    parser.add_argument(
+        "--gap-issues",
+        action="store_true",
+        help="also file proposed-gap issues; requires --post and operator mode",
+    )
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="emit the decision as JSON instead of a rendered comment")
     return parser
@@ -1184,7 +1392,10 @@ def _emit(decision: Decision, pr, as_json: bool) -> None:
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    args = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if args.gap_issues and not args.post:
+        parser.error("--gap-issues requires --post")
     contract = Contract.from_env()
 
     # Posting is a network write on the user's behalf: gated behind explicit
@@ -1208,18 +1419,26 @@ def main(argv=None) -> int:
     decision = decide(history, contract)
     if args.post:
         post_comment(args.pr, history["repo"],
-                     render_postable_comment(decision, args.pr))
-        print(f"Posted arbiter recommendation ({decision.recommendation}) to PR #{args.pr}.")
-        if decision.proposed_gaps:
+                     render_postable_comment(decision, args.pr),
+                     contract.bot_login)
+        print(
+            f"Posted arbiter recommendation ({decision.recommendation}) "
+            f"to PR #{args.pr}.",
+            file=sys.stderr,
+        )
+        if args.gap_issues and decision.proposed_gaps:
             contract_text = load_contract_text(history.get("current_head_ref"))
             gap_results = post_gap_issues(decision, args.pr, history["repo"], contract,
                                            history, contract_text=contract_text)
             created = sum(1 for r in gap_results if r["action"] == "created")
             existing = len(gap_results) - created
-            print(f"Gap ledger: {created} new proposed-gap issue(s) opened, "
-                  f"{existing} already tracked.")
-    else:
-        _emit(decision, args.pr, args.as_json)
+            print(
+                f"Gap ledger: {created} new proposed-gap issue(s) opened, "
+                f"{existing} already tracked.",
+                file=sys.stderr,
+            )
+
+    _emit(decision, args.pr, args.as_json)
     return 0
 
 

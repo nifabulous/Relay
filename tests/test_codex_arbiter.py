@@ -42,10 +42,12 @@ def _ts(n: int) -> str:
     return f"2026-08-17T09:{n:02d}:00Z"
 
 
-def _finding(sev, state, file, cat, fid, evidence=None):
+def _finding(sev, state, file, cat, fid, evidence=None, unverifiable=None):
     obj = {"sev": sev, "state": state, "file": file, "cat": cat, "id": fid}
     if evidence is not None:
         obj["evidence"] = evidence
+    if unverifiable is not None:
+        obj["unverifiable"] = unverifiable
     return obj
 
 
@@ -800,6 +802,152 @@ def test_severity_escalated_and_resolved_same_round_routes_pending_human_as_p1()
 
 
 # --------------------------------------------------------------------------- #
+# Unverifiable findings remain open and terminate safely.                       #
+# --------------------------------------------------------------------------- #
+def test_validate_trailer_accepts_valid_unverifiable_without_schema_bump():
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": "exact-head check result"},
+    )
+    finding["unrelated"] = {"future": True}
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert err is None
+    assert validated is not None
+    assert validated["schema"] == 2
+
+
+@pytest.mark.parametrize(
+    "unverifiable",
+    [{}, {"missing": ""}, {"missing": "   "}, {"missing": 42}],
+)
+def test_validate_trailer_rejects_malformed_unverifiable(unverifiable):
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable=unverifiable,
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "bad-unverifiable"
+
+
+@pytest.mark.parametrize(
+    "missing",
+    ["line one\n@everyone", "embedded\x00control", "x" * 513],
+)
+def test_validate_trailer_rejects_unsafe_unverifiable_missing(missing):
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": missing},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "bad-unverifiable"
+
+
+def test_validate_trailer_redacts_secret_in_unverifiable_missing():
+    secret = "sk-live-" + "a" * 20
+    finding = _finding(
+        "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+        unverifiable={"missing": f"artifact token {secret}"},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert err is None
+    assert validated["findings"][0]["unverifiable"]["missing"] == (
+        "artifact token [REDACTED_TOKEN]"
+    )
+    assert secret not in json.dumps(validated)
+
+
+def test_validate_trailer_rejects_unverifiable_resolved_finding():
+    finding = _finding(
+        "P2", "RESOLVED", "app/a.py", "verification", "missing-proof",
+        evidence=_evidence(["app/a.py"]),
+        unverifiable={"missing": "exact-head check result"},
+    )
+    validated, err = arb.validate_trailer({
+        "schema": 2, "verdict": "BLOCK", "findings": [finding],
+    })
+    assert validated is None
+    assert err == "unverifiable-resolved"
+
+
+def test_unverifiable_p1_routes_to_human_without_closing():
+    finding = _finding(
+        "P1", "NEW", "app/a.py", "authorization", "trust-anchor",
+        unverifiable={"missing": "trusted workflow file"},
+    )
+    decision = arb.decide(_history([_comment(1, 1, [finding])]), _contract())
+    assert decision.loop_action == "CONTINUE"
+    assert decision.needs_human is True
+    assert decision.cited_rule == "UNVERIFIABLE-HIGH-SEVERITY"
+    assert decision.proposed_gaps[0]["status"] == "unverifiable"
+    assert decision.proposed_gaps[0]["missing"] == "trusted workflow file"
+
+
+def test_repeated_unverifiable_minor_enters_gap_ledger_not_clean():
+    comments = [
+        _comment(1, 1, [_finding(
+            "P2", "NEW", "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )]),
+        _comment(2, 2, [_finding(
+            "P2", "OPEN", "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )]),
+    ]
+    decision = arb.decide(_history(comments), _contract())
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+    assert decision.proposed_gaps[0]["status"] == "unverifiable"
+    assert decision.proposed_gaps[0]["missing"] == "exact-head check result"
+
+
+def test_unverifiable_round_cap_escalates_on_third_consecutive_round():
+    def round_comment(n, state):
+        return _comment(n, n, [_finding(
+            "P2", state, "app/a.py", "verification", "missing-proof",
+            unverifiable={"missing": "exact-head check result"},
+        )])
+
+    comments = [
+        round_comment(1, "NEW"),
+        round_comment(2, "OPEN"),
+        round_comment(3, "OPEN"),
+    ]
+    decision = arb.decide(_history(comments), _contract(unverifiable_rounds=2))
+    assert decision.recommendation == "ESCALATE-TO-SCOPING"
+    assert decision.cited_rule == "UNVERIFIABLE-ROUND-CAP"
+    assert decision.needs_human is True
+
+
+def test_normal_round_breaks_unverifiable_consecutive_run():
+    def round_comment(n, state, missing=None):
+        return _comment(n, n, [_finding(
+            "P2", state, "app/a.py", "verification", "missing-proof",
+            unverifiable=(
+                {"missing": missing} if missing is not None else None
+            ),
+        )])
+
+    comments = [
+        round_comment(1, "NEW", "exact-head check result"),
+        round_comment(2, "OPEN", "exact-head check result"),
+        round_comment(3, "OPEN"),
+        round_comment(4, "OPEN", "exact-head check result"),
+    ]
+    decision = arb.decide(_history(comments), _contract(unverifiable_rounds=2))
+    assert decision.cited_rule != "UNVERIFIABLE-ROUND-CAP"
+    assert decision.recommendation == "MERGE-WITH-GAPS"
+
+
+# --------------------------------------------------------------------------- #
 # P0 (the reviewer's prompt-injection tier) is accepted and normalized to P1.  #
 # --------------------------------------------------------------------------- #
 def test_validate_trailer_accepts_p0_and_keeps_sibling_findings():
@@ -991,6 +1139,13 @@ def test_build_history_filters_non_canonical_and_derives_marker():
     assert decision.round_count == 2
 
 
+def test_collect_refuses_to_arbitrate_a_closed_pr(monkeypatch):
+    monkeypatch.setattr(arb, "_gh_json", lambda args: {"state": "CLOSED"})
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.collect(24, _contract(), repo=STUB_REPO)
+
+
 # --------------------------------------------------------------------------- #
 # Document validation, CLI, and the no-model invariant.                        #
 # --------------------------------------------------------------------------- #
@@ -1017,6 +1172,181 @@ def test_cli_post_refused_without_operator_mode(monkeypatch):
     assert rc != 0
 
 
+def test_cli_post_does_not_file_gap_issues(monkeypatch):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+    monkeypatch.setattr(arb, "post_comment",
+                        lambda *args, **kwargs: None)
+    filed = []
+    monkeypatch.setattr(
+        arb, "post_gap_issues", lambda *args, **kwargs: filed.append(True)
+    )
+
+    assert arb.main(["100", "--repo", STUB_REPO, "--post"]) == 0
+    assert filed == []
+
+
+def test_cli_gap_issues_are_explicitly_opted_in(monkeypatch):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+    monkeypatch.setattr(arb, "post_comment", lambda *args, **kwargs: None)
+    filed = []
+    monkeypatch.setattr(
+        arb, "post_gap_issues", lambda *args, **kwargs: filed.append(True) or []
+    )
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--gap-issues"
+    ]) == 0
+    assert filed == [True]
+
+
+def test_cli_post_json_collects_once_and_keeps_stdout_machine_readable(
+    monkeypatch, capsys
+):
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    collected = []
+    monkeypatch.setattr(
+        arb,
+        "collect",
+        lambda *args, **kwargs: collected.append(True) or history,
+    )
+    monkeypatch.setattr(arb, "post_comment", lambda *args, **kwargs: None)
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--json"
+    ]) == 0
+    assert collected == [True]
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["round_count"] == 1
+
+
+def test_cli_post_json_keeps_stdout_clean_across_real_comment_write(
+    tmp_path, monkeypatch, capsys
+):
+    """The machine-readable contract includes the real gh write boundary.
+
+    A GitHub CLI can print a success line even when the caller only requested
+    JSON. The write subprocess must capture that output so stdout remains one
+    parseable decision object; human status belongs on stderr.
+    """
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setenv("GH_STUB_NOISY_WRITES", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+
+    assert arb.main(["100", "--repo", STUB_REPO, "--post", "--json"]) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["round_count"] == 1
+    assert "fake gh comment output" not in captured.out
+    assert "Posted arbiter recommendation" in captured.err
+
+
+def test_cli_post_json_keeps_stdout_clean_across_gap_issue_writes(
+    tmp_path, monkeypatch, capsys
+):
+    """The explicit gap-issue write path has the same stdout guarantee."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    monkeypatch.setenv("GH_STUB_NOISY_WRITES", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    (stub_dir / "issue_list.json").write_text("[]")
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], repo=STUB_REPO)
+    monkeypatch.setattr(arb, "collect", lambda *args, **kwargs: history)
+
+    assert arb.main([
+        "100", "--repo", STUB_REPO, "--post", "--gap-issues", "--json"
+    ]) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["proposed_gaps"]
+    assert "fake gh comment output" not in captured.out
+    assert "fake gh label output" not in captured.out
+    assert "github.com/stub-org/stub-repo/issues/" not in captured.out
+
+
+def test_render_comment_includes_unverifiable_missing_artifact():
+    decision = arb.Decision(
+        recommendation="MERGE-WITH-GAPS",
+        loop_action="MERGE-WITH-GAPS",
+        cited_rule="EXHAUSTED-NOVELTY",
+        needs_human=True,
+        round_count=2,
+        proposed_gaps=[{
+            "id": "missing-proof",
+            "file": "app/a.py",
+            "cat": "verification",
+            "sev": "P2",
+            "status": "unverifiable",
+            "missing": "exact-head check result",
+            "first_round": 1,
+        }],
+    )
+    body = arb.render_comment(decision, 100)
+    assert "Missing artifact: `exact-head check result`." in body
+
+
+def test_render_gap_issue_body_includes_unverifiable_missing_artifact():
+    gap = {
+        "id": "missing-proof",
+        "file": "app/a.py",
+        "cat": "verification",
+        "sev": "P2",
+        "status": "unverifiable",
+        "missing": "exact-head check result",
+        "first_round": 1,
+    }
+    body = arb.render_gap_issue_body(gap, 100, None, None)
+    assert "Missing artifact: `exact-head check result`." in body
+
+
+def test_render_unverifiable_missing_escapes_markup_and_mentions():
+    decision = arb.Decision(
+        recommendation="MERGE-WITH-GAPS",
+        loop_action="MERGE-WITH-GAPS",
+        cited_rule="EXHAUSTED-NOVELTY",
+        needs_human=True,
+        round_count=2,
+        proposed_gaps=[{
+            "id": "missing-proof",
+            "file": "app/a.py",
+            "cat": "verification",
+            "sev": "P2",
+            "status": "unverifiable",
+            "missing": "@everyone `<!-- injected -->`",
+            "first_round": 1,
+        }],
+    )
+
+    comment = arb.render_comment(decision, 100)
+    issue = arb.render_gap_issue_body(decision.proposed_gaps[0], 100, None, None)
+
+    expected = "Missing artifact: `@everyone &#96;&lt;!-- injected --&gt;&#96;`."
+    assert expected in comment
+    assert expected in issue
+    assert "<!-- injected -->" not in comment
+    assert "<!-- injected -->" not in issue
+
+
 def test_arbiter_source_makes_no_model_or_http_calls():
     """The arbiter's whole value is being deterministic — it must never reach a
     model, and it must only touch the network through the `gh` CLI seam."""
@@ -1030,6 +1360,90 @@ def test_contract_reads_env_overrides():
     contract = arb.Contract.from_env({"CODEX_BOT_LOGIN": "custom[bot]", "ARBITER_SOFT_GATE": "7"})
     assert contract.bot_login == "custom[bot]"
     assert contract.soft_gate == 7
+
+
+def test_contract_reads_every_env_override():
+    contract = arb.Contract.from_env({
+        "CODEX_BOT_LOGIN": "custom[bot]",
+        "ARBITER_SOFT_GATE": "7",
+        "ARBITER_HARD_CAP": "12",
+        "ARBITER_STUCK_P1_ROUNDS": "4",
+        "ARBITER_UNVERIFIABLE_ROUNDS": "3",
+    })
+    assert contract == arb.Contract(
+        bot_login="custom[bot]",
+        soft_gate=7,
+        hard_cap=12,
+        stuck_p1_rounds=4,
+        unverifiable_rounds=3,
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("ARBITER_SOFT_GATE", "0"),
+        ("ARBITER_HARD_CAP", "-1"),
+        ("ARBITER_STUCK_P1_ROUNDS", "nope"),
+        ("ARBITER_UNVERIFIABLE_ROUNDS", ""),
+    ],
+)
+def test_contract_rejects_invalid_positive_integer_knobs(name, value):
+    with pytest.raises(ValueError, match=name):
+        arb.Contract.from_env({name: value})
+
+
+def test_post_comment_creates_once_then_patches_existing_bot_comment(
+    tmp_path, monkeypatch
+):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text("[]")
+
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nfirst", BOT)
+    (stub_dir / "comments.json").write_text(json.dumps([
+        {"id": 44, "login": BOT, "body": "<!-- codex-arbiter:100 -->\nfirst"}
+    ]))
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nsecond", BOT)
+
+    assert len(_calls_matching(stub_dir, "comment-create")) == 1
+    patches = _calls_matching(stub_dir, "comment-patch")
+    assert len(patches) == 1
+    assert "repos/stub-org/stub-repo/issues/comments/44" in patches[0]
+
+
+def test_post_comment_does_not_adopt_forged_marker(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text(json.dumps([
+        {"id": 55, "login": "pr-author", "body": "<!-- codex-arbiter:100 -->"}
+    ]))
+
+    arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nreal", BOT)
+
+    assert len(_calls_matching(stub_dir, "comment-create")) == 1
+    assert _calls_matching(stub_dir, "comment-patch") == []
+
+
+def test_post_comment_refuses_without_operator_mode(monkeypatch):
+    monkeypatch.delenv("ARBITER_OPERATOR", raising=False)
+    with pytest.raises(RuntimeError, match="ARBITER_OPERATOR=1"):
+        arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->", BOT)
+
+
+def test_post_comment_skips_when_pr_closes_after_collection(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    (stub_dir / "comments.json").write_text("[]")
+    # The first check is the pre-collection guard; the second is the
+    # write-boundary guard after the comments have been listed.
+    (stub_dir / "pr_states.json").write_text(json.dumps(["OPEN", "CLOSED"]))
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.post_comment(100, STUB_REPO, "<!-- codex-arbiter:100 -->\nbody", BOT)
+
+    assert _calls_matching(stub_dir, "comment-create") == []
+    assert _calls_matching(stub_dir, "comment-patch") == []
 
 
 # --------------------------------------------------------------------------- #
@@ -1062,8 +1476,45 @@ def _log(name, argv):
 def main():
     argv = sys.argv[1:]
 
+    if argv[:2] == ["api", "--paginate"]:
+        _log("comment-list", argv)
+        path = os.path.join(STUB_DIR, "comments.json")
+        if os.path.exists(path):
+            with open(path) as fh:
+                for item in json.load(fh):
+                    print(json.dumps(item))
+        return 0
+
+    if argv[:2] == ["pr", "view"]:
+        _log("pr-view", argv)
+        sequence_path = os.path.join(STUB_DIR, "pr_states.json")
+        if os.path.exists(sequence_path):
+            with open(sequence_path) as fh:
+                states = json.load(fh)
+            state = states.pop(0) if states else "OPEN"
+            with open(sequence_path, "w") as fh:
+                json.dump(states, fh)
+        else:
+            state = "OPEN"
+        print(json.dumps({"state": state}))
+        return 0
+
+    if argv[:3] == ["api", "--method", "PATCH"] and "issues/comments/" in argv[3]:
+        _log("comment-patch", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh patch output")
+        return 0
+
+    if argv[:2] == ["pr", "comment"]:
+        _log("comment-create", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh comment output")
+        return 0
+
     if argv[:2] == ["label", "create"]:
         _log("label-create", argv)
+        if os.environ.get("GH_STUB_NOISY_WRITES") == "1":
+            print("fake gh label output")
         return 0
 
     if argv[:2] == ["issue", "list"]:
@@ -1190,6 +1641,26 @@ def test_post_gap_issues_creates_one_issue_per_gap_with_marker_and_label(tmp_pat
     assert "https://github.com/stub-org/stub-repo/pull/100#issuecomment-2" in gap_a_body
 
 
+def test_post_gap_issues_skips_when_pr_closes_before_issue_write(tmp_path, monkeypatch):
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+    history = _history([
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ], pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    (stub_dir / "issue_list.json").write_text("[]")
+    # The first check happens before label/ledger reads; the second is the
+    # guard immediately before the issue-create write.
+    (stub_dir / "pr_states.json").write_text(json.dumps(["OPEN", "CLOSED"]))
+
+    with pytest.raises(RuntimeError, match="not open"):
+        arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert _calls_matching(stub_dir, "issue-create") == []
+
+
 def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_path, monkeypatch):
     """Minor 4: `gh issue list` must be scoped with a ledger label AND
     `--state all`. A regression dropping `--state all` would silently
@@ -1225,6 +1696,8 @@ def test_list_existing_gap_issues_invocation_scopes_label_and_all_states(tmp_pat
     for argv in list_calls:
         assert "--state" in argv
         assert argv[argv.index("--state") + 1] == "all"
+        assert "--json" in argv
+        assert argv[argv.index("--json") + 1] == "number,body,author"
 
 
 def test_post_gap_issues_skips_an_issue_relabelled_accepted_gap(tmp_path, monkeypatch):
@@ -1247,7 +1720,8 @@ def test_post_gap_issues_skips_an_issue_relabelled_accepted_gap(tmp_path, monkey
     # The relabel removed proposed-gap; this issue is what a
     # proposed-gap-only query could no longer see.
     (stub_dir / "issue_list.json").write_text(json.dumps([
-        {"number": 77, "body": f"{marker}\naccepted by maintainer"}
+        {"number": 77, "body": f"{marker}\naccepted by maintainer",
+         "author": {"login": BOT}}
     ]))
 
     results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
@@ -1274,13 +1748,40 @@ def test_post_gap_issues_is_idempotent_when_marker_already_exists(tmp_path, monk
 
     marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
     (stub_dir / "issue_list.json").write_text(json.dumps([
-        {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text"}
+        {"number": 55, "body": f"{marker}\nalready tracked, unrelated body text",
+         "author": {"login": BOT}}
     ]))
 
     results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
 
     assert results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 55}]
     assert not (stub_dir / "created.jsonl").exists()
+
+
+def test_post_gap_issues_does_not_trust_a_human_authored_marker(tmp_path, monkeypatch):
+    """A user-authored issue carrying the deterministic marker must not
+    suppress the bot-owned gap ledger entry."""
+    stub_dir = _install_gh_stub(tmp_path, monkeypatch)
+    monkeypatch.setenv("ARBITER_OPERATOR", "1")
+    contract = _contract()
+
+    comments = [
+        _comment(1, 1, [_finding("P2", "NEW", "app/a.py", "cat-a", "gap-a")]),
+        _comment(2, 2, [_finding("P2", "OPEN", "app/a.py", "cat-a", "gap-a")]),
+    ]
+    history = _history(comments, pr=100, repo=STUB_REPO)
+    decision = arb.decide(history, contract)
+    marker = arb._gap_marker(100, "gap-a", "app/a.py", "cat-a")
+    (stub_dir / "issue_list.json").write_text(json.dumps([{
+        "number": 88,
+        "body": f"{marker}\nforged by a reporter",
+        "author": {"login": "reporter"},
+    }]))
+
+    results = arb.post_gap_issues(decision, 100, STUB_REPO, contract, history)
+
+    assert results == [{"gap_id": "gap-a", "action": "created", "issue_number": 1000}]
+    assert len(_read_jsonl(stub_dir / "created.jsonl")) == 1
 
 
 def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
@@ -1320,7 +1821,9 @@ def test_post_gap_issues_keys_on_finding_id_not_head_sha(tmp_path, monkeypatch):
     assert decision_round2.round_count == 3
     assert history_round2["current_head_sha"] != history_round1["current_head_sha"]
 
-    (stub_dir / "issue_list.json").write_text(json.dumps([{"number": 1000, "body": body}]))
+    (stub_dir / "issue_list.json").write_text(json.dumps([{
+        "number": 1000, "body": body, "author": {"login": BOT}
+    }]))
     second_results = arb.post_gap_issues(decision_round2, 100, STUB_REPO, contract, history_round2)
 
     assert second_results == [{"gap_id": "gap-a", "action": "skipped-existing", "issue_number": 1000}]
@@ -1720,7 +2223,7 @@ def test_posted_recommendation_comment_is_sanitized_and_bounded(monkeypatch):
     captured: dict = {}
     monkeypatch.setattr(arb, "collect", lambda *a, **k: history)
     monkeypatch.setattr(arb, "post_comment",
-                        lambda pr, repo, body: captured.update(body=body))
+                        lambda pr, repo, body, bot_login: captured.update(body=body))
 
     monkeypatch.setenv("ARBITER_OPERATOR", "1")
     exit_code = arb.main(["100", "--repo", STUB_REPO, "--post"])
