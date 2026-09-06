@@ -514,5 +514,101 @@
       "natbank.co.mw"
     ],
     "settlement_terms_published": false
+  },
+  "ADBLNPKA": {
+    "name": "Agricultural Development Bank Ltd.",
+    "country": "NP",
+    "domains": [
+      "adbl.gov.np"
+    ],
+    "settlement_terms_published": false
+  },
+  "EVBLNPKA": {
+    "name": "Everest Bank Ltd.",
+    "country": "NP",
+    "domains": [
+      "everestbankltd.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "LXBLNPKA": {
+    "name": "Laxmi Sunrise Bank Limited",
+    "country": "NP",
+    "domains": [
+      "laxmisunrise.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "CTZNNPKA": {
+    "name": "Citizens Bank International Limited",
+    "country": "NP",
+    "domains": [
+      "ctznbank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "NARBNPKA": {
+    "name": "Nabil Bank Limited",
+    "country": "NP",
+    "domains": [
+      "nabilbank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "TBOMMNUB": {
+    "name": "Transport and Development Bank LLC (TransBank)",
+    "country": "MN",
+    "domains": [
+      "transbank.mn"
+    ],
+    "settlement_terms_published": false
+  },
+  "CAXBMNUB": {
+    "name": "XacBank JSC",
+    "country": "MN",
+    "domains": [
+      "xacbank.mn"
+    ],
+    "settlement_terms_published": false
+  },
+  "BAIDBNBB": {
+    "name": "Baiduri Bank Berhad",
+    "country": "BN",
+    "domains": [
+      "baiduri.com.bn"
+    ],
+    "settlement_terms_published": false
+  },
+  "BKCHBNBB": {
+    "name": "Bank of China (Hong Kong) Limited, Brunei Branch",
+    "country": "BN",
+    "domains": [
+      "bankofchina.com.bn"
+    ],
+    "settlement_terms_published": false
+  },
+  "ABAAKHPP": {
+    "name": "Advanced Bank of Asia Limited",
+    "country": "KH",
+    "domains": [
+      "ababank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "FTCCKHPP": {
+    "name": "Foreign Trade Bank of Cambodia",
+    "country": "KH",
+    "domains": [
+      "ftb.com.kh"
+    ],
+    "settlement_terms_published": false
+  },
+  "PPCBKHPP": {
+    "name": "Phnom Penh Commercial Bank PLC",
+    "country": "KH",
+    "domains": [
+      "ppcbank.com.kh"
+    ],
+    "settlement_terms_published": false
   }
 }

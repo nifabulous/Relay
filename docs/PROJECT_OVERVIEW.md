@@ -103,7 +103,7 @@ _Last updated: 2026-09-06._
 **Data model** (`app/models.py`, 8): `Bank`, `CorridorRule`, `FedwireBank`, `FedACHBank`, `SSI`,
 `Account`, `PaymentEvent`, `IdempotencyKey`.
 
-**Seed / reference data:** ~311 curated banks + 25,891 US Fedwire/FedACH banks, ~1,572 SSI records,
+**Seed / reference data:** ~323 curated banks + 25,891 US Fedwire/FedACH banks, ~1,787 SSI records,
 72 corridor rules across 28 destination countries, a synthetic sanctions watchlist, MT103 samples,
 and domestic payment-scheme data for **10 currencies** (GBP, CAD, USD, EUR, NGN, KES, INR, AUD,
 JPY, AED) — including Kenya's KEPSS/PesaLink/M-Pesa/EFT layers.
