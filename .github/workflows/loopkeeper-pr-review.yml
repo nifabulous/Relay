@@ -1,0 +1,71 @@
+# Relay's PR review runs on Loopkeeper — the standalone extraction of
+# this repository's own review-loop harness (nifabulous/loopkeeper, extracted
+# at source commit e834773). This caller replaced the inlined
+# .github/workflows/codex-pr-review.yml at v0.1.1.
+#
+# The reusable workflow keeps the trust separation the inlined version had:
+# the eligibility job holds no model secret and re-reads the pull request
+# rather than trusting the event snapshot, the review job runs with
+# LOOPKEEPER_OPERATOR=0 and read-only permissions, and only the writer job is
+# granted pull-requests: write.
+#
+# Fork pull requests are reviewed only once a maintainer applies the
+# `loopkeeper-approved` label; removing it revokes eligibility before the next
+# model call.
+name: Loopkeeper PR Review
+
+on:
+  pull_request_target:
+    # labeled/unlabeled are required: applying or revoking the fork approval
+    # label must trigger a fresh eligibility evaluation.
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  review:
+    # Kill switch: set the repository variable LOOPKEEPER_REVIEW_ENABLED to
+    # `false` to stop review without editing this file. Reviewing is the
+    # default so an unset variable does not silently disable it.
+    #
+    # The workflow_run guard mirrors the retired workflow: a CI run that was
+    # not for a pull request carries no PR number, and the reusable workflow
+    # refuses to guess one.
+    if: >-
+      vars.LOOPKEEPER_REVIEW_ENABLED != 'false' &&
+      (github.event_name != 'workflow_run' ||
+       github.event.workflow_run.event == 'pull_request')
+    uses: nifabulous/loopkeeper/.github/workflows/pr-review-posting.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+    with:
+      consumer_repo: ${{ github.repository }}
+      loopkeeper_repo: nifabulous/loopkeeper
+      # Empty resolves to the consumer's default-branch head in the reusable
+      # workflow's `resolve` job.
+      consumer_trusted_sha: ""
+      # Must stay identical to the `uses:` pin above — the release contract
+      # requires the checkout SHA and the workflow pin to agree.
+      loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+      ci_workflow_name: CI
+      ci_workflow_file: ci.yml
+      pr_number: ${{ fromJSON(format('{0}', github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || inputs.pr_number || 0)) }}
+      expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
+      job_timeout_seconds: 1200
+      post_comments: true
+    secrets:
+      # Loopkeeper is provider-neutral; this repository already holds an
+      # OpenAI key for the retired reviewer, so no new secret is needed.
+      model_api_key: ${{ secrets.OPENAI_API_KEY }}
