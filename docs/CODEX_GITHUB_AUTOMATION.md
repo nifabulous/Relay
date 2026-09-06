@@ -6,7 +6,11 @@ Relay has opt-in Codex workflows for pull-request review and GitHub issue triage
 > [Loopkeeper](https://github.com/nifabulous/loopkeeper) v0.1.1 — the standalone
 > extraction of this repository's own review harness — via the thin caller
 > `.github/workflows/loopkeeper-pr-review.yml`. The inlined
-> `.github/workflows/codex-pr-review.yml` was removed. **Issue triage still runs
+> `.github/workflows/codex-pr-review.yml` is kept on standby, not deleted:
+> every job in it is gated on `CODEX_PR_REVIEW_ENABLED`, which is unset, so
+> nothing in it runs. It also remains a required fixture for
+> `tests/test_codex_automation.sh`, `tests/test_model_pinning.py`, and the
+> arbiter tests. **Issue triage still runs
 > on the Codex workflow described below and still uses every `CODEX_*` variable
 > listed here.** The review-specific parts of this document describe the retired
 > implementation and have not been rewritten for Loopkeeper yet; "Pull requests"
@@ -77,8 +81,18 @@ without editing the workflow. Trusted reference material is still the bounded
 file list in `.github/codex/context-files.txt`, and the review policy is still
 `.github/codex/review-policy.md`.
 
-The retired inlined implementation is described below for historical reference
-and no longer runs:
+To roll back to the inlined reviewer:
+
+```bash
+gh variable set CODEX_PR_REVIEW_ENABLED --body true
+gh variable set LOOPKEEPER_REVIEW_ENABLED --body false
+```
+
+`CODEX_REVIEW_ENABLED` is deliberately not the standby gate: it stays `true`
+for issue triage, so reusing it would start both reviewers at once.
+
+The standby inlined implementation is described below. It is accurate for that
+workflow, which does not run while its gate is unset:
 
 `.github/workflows/codex-pr-review.yml` runs normal push reviews from `workflow_run: completed` for `CI`. It checks the completed run's `head_sha`, resolves the open PR, and reviews only that exact head. `reopened`, `ready_for_review`, manual, and scheduled paths remain available without polling. `opened` and `synchronize` remain as a coverage fallback for conflicting heads whose `CI` workflow is never created; they probe for the exact-head CI run and defer with exit zero only when a matching run whose event is `pull_request` exists or appears during the discovery window. Same-head `push` or manually dispatched runs do not count, because their completion events are not accepted as review triggers. A probe error is treated as no run and reviews proceed, so a failed lookup cannot silently delete coverage. A fallback review carries a separate bot-authored no-CI marker; if the CI run is created after the fallback window, the later completion event is allowed to replace that review with exact-head evidence. Every selection path rejects closed PRs, and the arbiter rechecks the PR state before collecting or posting a disposition.
 
