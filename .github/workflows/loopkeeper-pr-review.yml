@@ -38,15 +38,15 @@ permissions:
 
 jobs:
   review:
-    # Kill switch: set the repository variable LOOPKEEPER_REVIEW_ENABLED to
-    # `false` to stop review without editing this file. Reviewing is the
-    # default so an unset variable does not silently disable it.
+    # Explicit opt-in, matching the gate the inlined reviewer used. Starting a
+    # paid external model call and sending PR content to it is a decision the
+    # repository has to make on purpose, so an unset variable means off.
     #
     # The workflow_run guard mirrors the retired workflow: a CI run that was
     # not for a pull request carries no PR number, and the reusable workflow
     # refuses to guess one.
     if: >-
-      vars.LOOPKEEPER_REVIEW_ENABLED != 'false' &&
+      vars.LOOPKEEPER_REVIEW_ENABLED == 'true' &&
       (github.event_name != 'workflow_run' ||
        github.event.workflow_run.event == 'pull_request')
     uses: nifabulous/loopkeeper/.github/workflows/pr-review-posting.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231

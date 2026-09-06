@@ -76,8 +76,8 @@ Configuration: the model key is `secrets.OPENAI_API_KEY`, passed as the reusable
 workflow's `model_api_key` secret. Every `LOOPKEEPER_*` repository variable is
 optional and defaults inside the reusable workflow; `LOOPKEEPER_MODEL` defaults
 to the same model this repository already selected for Codex. Set the
-repository variable `LOOPKEEPER_REVIEW_ENABLED` to `false` to stop review
-without editing the workflow. Trusted reference material is still the bounded
+repository variable `LOOPKEEPER_REVIEW_ENABLED` to `true` to enable review;
+an unset variable means off, so paid model execution is never the default. Trusted reference material is still the bounded
 file list in `.github/codex/context-files.txt`, and the review policy is still
 `.github/codex/review-policy.md`.
 
@@ -87,6 +87,10 @@ To roll back to the inlined reviewer:
 gh variable set CODEX_PR_REVIEW_ENABLED --body true
 gh variable set LOOPKEEPER_REVIEW_ENABLED --body false
 ```
+
+Both reviewers are opt-in and both are off unless their own variable reads
+exactly `true`, so neither a rollback nor a fresh clone can start paid model
+execution by accident, and the two can never run at once by default.
 
 `CODEX_REVIEW_ENABLED` is deliberately not the standby gate: it stays `true`
 for issue triage, so reusing it would start both reviewers at once.
