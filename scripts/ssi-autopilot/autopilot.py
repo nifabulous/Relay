@@ -1353,7 +1353,18 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
             f"Source: {source} (as of {as_of}). "
             "Sourced from bank-published SSI page. Verify current values before use."
         )
-        if source and note_text.strip('"') != expected_notes:
+        expected_note_variants = {expected_notes}
+        if bic_only:
+            # Older result fixtures used the generic citation, while committed
+            # BIC-only seed rows carry the explicit availability-only warning.
+            # Accept both forms here so the fold gate remains backwards
+            # compatible; the seed-level provenance test enforces the warning.
+            expected_note_variants.add(
+                f"Source: {source} (as of {as_of}) BIC-level list — no account numbers published; "
+                "not a selectable settlement instruction. Sourced from bank-published SSI page. "
+                "Verify current values before use."
+            )
+        if source and note_text.strip('"') not in expected_note_variants:
             problems.append(f"{key[0]}/{key[1]}: folded notes do not exactly match the canonical citation")
 
     for key in expected:
