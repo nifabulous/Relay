@@ -4,7 +4,10 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
+    # Stacked PRs target one another (codex/*), so they need the same exact-
+    # head checks as PRs targeting the default branch. Without this pattern,
+    # downstream stack heads have no CI run for Loopkeeper to attest.
+    branches: [main, master, "codex/**"]
 
 # A fresh push supersedes the in-flight run for the same PR: the old result
 # says nothing about the head anyone can review.
