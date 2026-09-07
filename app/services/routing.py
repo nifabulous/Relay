@@ -211,6 +211,7 @@ def _is_routable_ssi(row: SSI) -> bool:
     published, dated instruction with a named verifier, complete settlement
     fields, and unmasked account data may select a correspondent.
     """
+    accounts_are_usable = _has_usable_ssi_accounts(row)
     return (
         not row.bic_only
         and not row.terms_inferred
@@ -219,7 +220,9 @@ def _is_routable_ssi(row: SSI) -> bool:
         and _has_usable_text(row.as_of)
         and _has_usable_text(row.verified_by)
         and _has_usable_text(row.notes)
-        and _has_usable_ssi_accounts(row)
+        # Keep the account gate in this shared predicate, not only in the
+        # SQL-backed selectors, so direct callers cannot promote placeholders.
+        and accounts_are_usable
         and row.charge_code in VALID_CHARGE_CODES
         and row.value_date in VALID_VALUE_DATES
     )
