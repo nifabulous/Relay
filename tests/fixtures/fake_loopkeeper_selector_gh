@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "${1:-}" == "api" ]] || exit 2
+endpoint="${2:-}"
+case "$endpoint" in
+  repos/*/commits/*/pulls?per_page=100\&page=1)
+    case "${FAKE_FALLBACK_MODE:-single}" in
+      paginated)
+        printf '{"returned":100,"candidates":[{"number":102}]}\n'
+        ;;
+      multiple)
+        printf '{"returned":2,"candidates":[{"number":7},{"number":8}]}\n'
+        ;;
+      *)
+        printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
+        ;;
+    esac
+    ;;
+  repos/*/commits/*/pulls?per_page=100\&page=2)
+    printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
+    ;;
+  repos/*/pulls/*)
+    pr="${endpoint##*/}"
+    [[ "$pr" != "103" ]] || exit 1
+    state="open"
+    head_sha="${FAKE_HEAD_SHA:?}"
+    [[ "$pr" != "101" ]] || state="closed"
+    [[ "$pr" != "102" ]] || head_sha="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    printf '{"state":"%s","head_sha":"%s"}\n' "$state" "$head_sha"
+    ;;
+  *)
+    exit 2
+    ;;
+esac
