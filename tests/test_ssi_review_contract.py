@@ -394,3 +394,29 @@ def test_namibia_names_only_rows_are_nonselectable():
     assert all(row[13] is True for row in rows)
     assert all(row[5:9] == (None, None, None, None) for row in rows)
     assert all(not _is_routable_ssi(_row_object(row)) for row in rows)
+
+
+def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
+    """Every admitted Sri Lanka/Africa row is complete but non-selectable."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region_names = {
+        "southasia-mekong-wave3",
+        "africa-wave2",
+        "namibia-wave1",
+    }
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for region in manifest["regions"]
+        if region["name"] in region_names
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    keys = {key for key in expected if key[0] in beneficiary_bics}
+    assert len(keys) == 180
+    assert {key for key in seed if key[0] in beneficiary_bics} == keys
+    for key in keys:
+        row = seed[key][0]
+        assert row[10] and row[11] in {"unverified", "archived"}
+        assert row[9].startswith("Source: ")
+        assert not _is_routable_ssi(_row_object(row)), key
