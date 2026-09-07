@@ -33,7 +33,9 @@ from ..schemas import (
 )
 from .recommendation import Recommendation, RecommendationResult, decide
 from .routing import (
+    _is_routable_ssi,
     _normalize_bic_input,
+    _ssi_routing_filters,
     infer_destination_currency,
     lookup_bank,
     suggest_intermediaries,
@@ -204,10 +206,12 @@ def prepare_payment(
                     select(SSI).where(
                         SSI.beneficiary_bic == candidate,
                         SSI.currency == ssi_ccy,
+                        *_ssi_routing_filters(),
                     )
                 ).scalars().all()
-                if rows:
-                    ssi_rows = rows
+                routable_rows = [row for row in rows if _is_routable_ssi(row)]
+                if routable_rows:
+                    ssi_rows = routable_rows
                     break
             if ssi_rows:
                 break
