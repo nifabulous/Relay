@@ -1356,17 +1356,17 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
             f"Source: {source} (as of {as_of}). "
             "Sourced from bank-published SSI page. Verify current values before use."
         )
-        expected_note_variants = {expected_notes}
         if bic_only:
-            # Older result fixtures used the generic citation, while committed
-            # BIC-only seed rows carry the explicit availability-only warning.
-            # Accept both forms here so the fold gate remains backwards
-            # compatible; the seed-level provenance test enforces the warning.
-            expected_note_variants.add(
+            # A BIC-only row is availability metadata, not an executable SSI.
+            # Require the explicit warning in the fold itself so a generic
+            # source citation can never make it look like a complete route.
+            expected_note_variants = {
                 f"Source: {source} (as of {as_of}) BIC-level list — no account numbers published; "
                 "not a selectable settlement instruction. Sourced from bank-published SSI page. "
                 "Verify current values before use."
-            )
+            }
+        else:
+            expected_note_variants = {expected_notes}
         if source and note_text.strip('"') not in expected_note_variants:
             problems.append(f"{key[0]}/{key[1]}: folded notes do not exactly match the canonical citation")
 
@@ -1386,10 +1386,12 @@ def scaffold_coverage_class(region: dict, manifest: dict) -> str:
 
     The class carries three tests: presence (each seedable bank has records
     for every manifest currency), directory membership (each seedable bank is
-    also in BANKS), and a semantic pin over every seeded record — masked
-    accounts inside the region's block, charge/value dates from the manifest
-    defaults, a provenance status and citation, no bic_only smuggled fields,
-    and unique (beneficiary, currency, correspondent) keys.
+    also in BANKS), and a record-level semantic pin.  The generated test loads
+    the manifest at runtime and delegates the exact admitted-record contract
+    to the shared helper in ``test_data_consistency.py``.  This keeps a bank's
+    account reservation, exclusions, status policy, and BIC-only semantics
+    scoped to that bank instead of copying one region-wide mask over legacy
+    rows.
     """
     name = region["name"]
     class_name = "".join(part.title() for part in name.split("-")) + "SsiCoverage"
@@ -1405,85 +1407,33 @@ def scaffold_coverage_class(region: dict, manifest: dict) -> str:
     lines.append("]")
     lines += [
         "",
-        "",
         f"class Test{class_name}:",
-        f"    def test_{name.replace('-', '_')}_banks_have_seeded_ssi_records(self):",
+    ]
+    method = name.replace("-", "_")
+    lines += [
+        "",
+        f"    def test_{method}_banks_have_seeded_ssi_records(self):",
+        f'        manifest_expected = _manifest_seedable_coverage("{name}")',
+        f"        generated_expected = {{bic: (bank_name, currencies) for bic, bank_name, currencies in {list_name}}}",
+        "        assert generated_expected == manifest_expected",
         "        seeded = {}",
         "        for record in SSI_RECORDS:",
         "            seeded.setdefault(record[0], set()).add(record[2])",
-        f"        for bic, name, currencies in {list_name}:",
-        "            have = seeded.get(bic, set())",
-        "            missing = currencies - have",
-        "            assert not missing, (",
-        '                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"',
-        "            )",
+        "        for bic, (bank_name, currencies) in manifest_expected.items():",
+        "            missing = currencies - seeded.get(bic, set())",
+        '            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"',
         "",
-        f"    def test_{name.replace('-', '_')}_banks_are_in_the_bank_directory(self):",
+        f"    def test_{method}_banks_are_in_the_bank_directory(self):",
         "        bank_bics = {row[0] for row in BANKS}",
-        "        missing = [",
-        f"            bic for bic, _name, _currencies in {list_name}",
-        "            if bic not in bank_bics",
-        "        ]",
+        f'        manifest_expected = _manifest_seedable_coverage("{name}")',
+        "        missing = [bic for bic in manifest_expected if bic not in bank_bics]",
         "        assert not missing, (",
         f'            f"{name} SSI beneficiaries must also be seeded in BANKS so "',
         '            f"Explore can show their settlement instructions: {missing}"',
         "        )",
-    ]
-    block = str(region["masked_block"])
-    mask_prefix = block[:-2]
-    forbidden = sorted({f.upper()[:8] for f in region.get("forbidden_bics", [])})
-    legacy = sorted(region.get("legacy_accounts", []))
-    charges = manifest["defaults"].get("charge_codes", ["SHA", "OUR", "BEN"])
-    vdates = manifest["defaults"].get("value_dates", ["spot", "T+1", "T+2"])
-    method = name.replace("-", "_")
-    lines += [
         "",
         f"    def test_{method}_seeded_records_are_semantically_valid(self):",
-        '        """Every seeded record for this region must satisfy the validator rules:',
-        "        masked accounts inside the region's block, charge/value dates from the",
-        "        manifest defaults, a provenance status and citation, no bic_only",
-        '        smuggled fields, and unique (beneficiary, currency, correspondent) keys.',
-        "        Pre-block-era legacy placeholders are enumerated in the manifest's",
-        "        legacy_accounts and may not be masked in-block; a new fold record can",
-        '        never join that set without an explicit manifest edit."""',
-        rf'        mask = re.compile(r"^ACCT-{mask_prefix}\d\d$")',
-        f"        allowed_charge = {{{', '.join(repr(c) for c in charges)}}}",
-        f"        allowed_value = {{{', '.join(repr(v) for v in vdates)}}}",
-        '        statuses = {"unverified", "illustrative", "published", "archived"}',
-        f"        forbidden = {{{', '.join(repr(b) for b in forbidden)}}}",
-        f"        legacy = {{{', '.join(repr(a) for a in legacy)}}}",
-        f"        banks = {{bic for bic, _name, _currencies in {list_name}}}",
-        "        rows = [row for row in SSI_RECORDS if row[0] in banks]",
-        f'        assert rows, "{name}: no seeded records for the seedable banks"',
-        "        for row in rows:",
-        '            bic, ccy = row[0], row[2]',
-        '            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"',
-        "            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]",
-        "            if len(row) > 13 and row[13] is True:",
-        "                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (",
-        '                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"',
-        "                )",
-        "                continue",
-        f'            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{{bic}}/{{ccy}}: nostro {{int_acct}} is neither an ACCT-{mask_prefix}xx masked account nor a manifest legacy placeholder"',
-        f'            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{{bic}}/{{ccy}}: beneficiary account {{ben_acct}} is neither an ACCT-{mask_prefix}xx masked account nor a manifest legacy placeholder"',
-        '            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"',
-        '            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"',
-        "        for row in rows:",
-        "            bic, ccy = row[0], row[2]",
-        "            if len(row) < 12:",
-        "                continue",
-        "            if row[10] is not None:",
-        '                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (',
-        '                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"',
-        "                )",
-        '            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"',
-        '            assert row[9] and row[9].startswith("Source:"), (',
-        '                f"{bic}/{ccy}: notes must cite the source"',
-        "            )",
-        "        keys = [(row[0], row[2], row[3]) for row in rows]",
-        "        assert len(keys) == len(set(keys)), (",
-        f'            "{name}: duplicate (beneficiary, currency, correspondent) keys"',
-        "        )",
+        f'        _assert_manifest_region_records("{name}", SSI_RECORDS, BANKS)',
         "",
     ]
     return "\n".join(lines)
