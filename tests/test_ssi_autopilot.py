@@ -285,7 +285,7 @@ def test_bic_only_must_be_a_real_boolean():
 EBILAEAD_BIC_ONLY_ROW = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
      "EBILAEADXXX", "Emirates NBD",
      None, None, None, None,
-     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01). " + _SSI_REAL_NOTE,
+     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
      "2026-05-01", "unverified", None, True),'''
 
 
@@ -299,6 +299,23 @@ def test_bic_only_fold_matching_the_validated_results_passes():
     results = gulf_bic_only_results()
     problems = autopilot.verify_fold(results, SEED_HEAD, _folded(EBILAEAD_BIC_ONLY_ROW))
     assert problems == [], problems
+
+
+def test_bic_only_fold_with_generic_citation_is_rejected():
+    """A BIC-only fold must carry the explicit availability-only warning.
+
+    The generic source citation is not enough: without the warning a consumer
+    can mistake a correspondent relationship for a complete settlement
+    instruction.
+    """
+    generic = EBILAEAD_BIC_ONLY_ROW.replace(
+        " BIC-level list — no account numbers published; not a selectable settlement instruction",
+        "",
+    )
+    problems = autopilot.verify_fold(
+        gulf_bic_only_results(), SEED_HEAD, _folded(generic)
+    )
+    assert any("exactly match the canonical citation" in problem for problem in problems)
 
 
 def test_bic_only_fold_missing_the_flag_is_rejected():
@@ -395,6 +412,14 @@ def test_scaffold_contains_expected_pieces():
     assert "class TestSoutheastAsiaSsiCoverage:" in text
     assert "test_southeast_asia_banks_have_seeded_ssi_records" in text
     assert "test_southeast_asia_seeded_records_are_semantically_valid" in text
+
+
+def test_scaffold_uses_manifest_scope_and_exact_record_validation():
+    region = autopilot.get_region(MANIFEST, "southeast-asia")
+    text = autopilot.scaffold_coverage_class(region, MANIFEST)
+    assert "_manifest_seedable_coverage(\"southeast-asia\")" in text
+    assert "_assert_manifest_region_records(\"southeast-asia\", SSI_RECORDS, BANKS)" in text
+    assert 'statuses = {"unverified", "illustrative", "published", "archived"}' not in text
 
 
 # ── Commit counter / PR threshold ────────────────────────────────────────────
@@ -1637,7 +1662,7 @@ def test_verify_fold_ignores_rows_awaiting_another_region_commit():
     gulf_row = '''    ("EBILAEADXXX", "Emirates NBD", "USD",
      "EBILAEADXXX", "Emirates NBD",
      None, None, None, None,
-     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01). " + _SSI_REAL_NOTE,
+     "Source: https://www.emiratesnbd.com/en/correspondent-bank-charges (as of 2026-05-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
      "2026-05-01", "unverified", None, True),'''
     assert autopilot.verify_fold(results, SEED_HEAD, _folded(gulf_row, other_region_row)) == []
 

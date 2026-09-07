@@ -21,6 +21,63 @@ from app.services.recommendation import (
     decide,
 )
 
+
+def test_prepare_exposes_only_routable_ssi_rows(client):
+    """Reference SSIs must not be presented as executable instructions.
+
+    The seed deliberately contains unverified account placeholders and
+    BIC-only availability rows.  Both are useful in the catalog, but neither
+    has the provenance and concrete settlement fields required for a send
+    path.  ``prepare-payment`` must apply the same gate as the routing
+    suggester instead of copying the raw table into its response.
+    """
+    for bic in ("ABNGNGLAXXX", "EBILAEADXXX", "ALFHPKKAXXX"):
+        response = client.post("/api/prepare-payment", json={
+            "beneficiary_iban": "NG3705000012345678901234",
+            "beneficiary_name": "Unknown beneficiary",
+            "beneficiary_bic": bic,
+            "currency": "USD",
+            "amount": 1000,
+        })
+        assert response.status_code == 200
+        assert response.json()["ssi"]["instructions"] == []
+
+
+def test_prepare_exposes_a_current_published_ssi(isolated_client):
+    """The routing gate removes reference rows but keeps verified instructions."""
+    client, session_factory = isolated_client
+    from app.models import SSI
+
+    session = session_factory()
+    session.add(SSI(
+        beneficiary_bic="TESTUS33XXX",
+        beneficiary_bank_name="Test Beneficiary Bank",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank N.A.",
+        intermediary_account="021000089",
+        beneficiary_account="NG1234567890",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: test bank SSI page.",
+        as_of="2026-08-19",
+        status="published",
+        verified_by="Treasury Operations",
+    ))
+    session.commit()
+    session.close()
+
+    response = client.post("/api/prepare-payment", json={
+        "beneficiary_iban": "NG3705000012345678901234",
+        "beneficiary_name": "Unknown beneficiary",
+        "beneficiary_bic": "TESTUS33XXX",
+        "currency": "USD",
+        "amount": 1000,
+    })
+    assert response.status_code == 200
+    instructions = response.json()["ssi"]["instructions"]
+    assert [item["intermediary_bic"] for item in instructions] == ["CITIUS33XXX"]
+
 # ===========================================================================
 # Recommendation engine — pure function, every matrix cell
 # ===========================================================================
