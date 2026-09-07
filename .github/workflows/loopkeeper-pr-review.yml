@@ -37,18 +37,127 @@ permissions:
   pull-requests: write
 
 jobs:
-  review:
+  targets:
     # Explicit opt-in, matching the gate the inlined reviewer used. Starting a
     # paid external model call and sending PR content to it is a decision the
     # repository has to make on purpose, so an unset variable means off.
-    #
-    # The workflow_run guard mirrors the retired workflow: a CI run that was
-    # not for a pull request carries no PR number, and the reusable workflow
-    # refuses to guess one.
     if: >-
       vars.LOOPKEEPER_REVIEW_ENABLED == 'true' &&
       (github.event_name != 'workflow_run' ||
        github.event.workflow_run.event == 'pull_request')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr_numbers: ${{ steps.select.outputs.pr_numbers }}
+    steps:
+      - name: Select open PRs at the completed run head
+        id: select
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          DIRECT_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number || 0 }}
+          RUN_SOURCE_EVENT: ${{ github.event.workflow_run.event || '' }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAX_WORKFLOW_RUN_ASSOCIATIONS=20
+          MAX_WORKFLOW_RUN_TARGETS=8
+          [[ "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] || {
+            echo "repository must be owner/name" >&2
+            exit 2
+          }
+
+          if [[ "$EVENT_NAME" != "workflow_run" ]]; then
+            [[ "$DIRECT_PR_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
+              echo "a PR number is required" >&2
+              exit 2
+            }
+            echo "pr_numbers=[$DIRECT_PR_NUMBER]" >>"$GITHUB_OUTPUT"
+            echo "| Selected PRs | \`[$DIRECT_PR_NUMBER]\` |" >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [[ "$RUN_SOURCE_EVENT" != "pull_request" || ! "$RUN_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "workflow_run is not a pull_request completion with a full head SHA; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" ]]; then
+            RUN_PULL_REQUESTS='[]'
+          fi
+          jq -e 'type == "array"' <<<"$RUN_PULL_REQUESTS" >/dev/null || {
+            echo "workflow_run.pull_requests was not an array; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          }
+          association_count="$(jq 'length' <<<"$RUN_PULL_REQUESTS")"
+          if (( association_count > MAX_WORKFLOW_RUN_ASSOCIATIONS )); then
+            echo "workflow_run associated $association_count PRs; maximum is $MAX_WORKFLOW_RUN_ASSOCIATIONS; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          targets_file="$(mktemp)"
+          response_file="$(mktemp)"
+          trap 'rm -f "$targets_file" "$response_file"' EXIT
+          declare -A seen=()
+          selection_unavailable=0
+          while IFS= read -r pr; do
+            [[ "$pr" =~ ^[1-9][0-9]*$ ]] || continue
+            [[ -z "${seen[$pr]+present}" ]] || continue
+            seen[$pr]=1
+            if ! gh api "repos/${GH_REPO}/pulls/${pr}" \
+              --jq '{state: .state, head_sha: (.head.sha // "")}' \
+              >"$response_file" 2>/dev/null; then
+              echo "could not read PR #${pr}; refusing to guess its current state" >&2
+              selection_unavailable=1
+              continue
+            fi
+            state="$(jq -r '.state // ""' "$response_file")"
+            head_sha="$(jq -r '.head_sha // ""' "$response_file")"
+            if [[ "$state" == "open" && "$head_sha" == "$RUN_HEAD_SHA" ]]; then
+              printf '%s\n' "$pr" >>"$targets_file"
+            fi
+          done < <(jq -r '.[].number // empty' <<<"$RUN_PULL_REQUESTS")
+
+          if (( selection_unavailable )); then
+            echo "one or more associated PRs were unverifiable; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          selected_count="$(wc -l <"$targets_file" | tr -d ' ')"
+          if (( selected_count > MAX_WORKFLOW_RUN_TARGETS )); then
+            echo "$selected_count exact-head PRs matched; maximum is $MAX_WORKFLOW_RUN_TARGETS; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -s "$targets_file" ]]; then
+            pr_numbers="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' <"$targets_file")"
+          else
+            pr_numbers='[]'
+          fi
+          echo "pr_numbers=$pr_numbers" >>"$GITHUB_OUTPUT"
+          {
+            echo "## Loopkeeper target selection"
+            echo ""
+            echo "| Run head | Selected open exact-head PRs |"
+            echo "| --- | --- |"
+            echo "| \`$RUN_HEAD_SHA\` | \`$pr_numbers\` |"
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  review:
+    needs: targets
+    if: ${{ needs.targets.outputs.pr_numbers != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
     uses: nifabulous/loopkeeper/.github/workflows/pr-review-posting.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
     with:
       consumer_repo: ${{ github.repository }}
@@ -61,7 +170,7 @@ jobs:
       loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
       ci_workflow_name: CI
       ci_workflow_file: ci.yml
-      pr_number: ${{ fromJSON(format('{0}', github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || inputs.pr_number || 0)) }}
+      pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
       post_comments: true

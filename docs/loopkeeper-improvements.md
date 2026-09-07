@@ -26,20 +26,20 @@ request, the intended contract, and the Relay evidence that motivated it.
 ## External implementation and verification
 
 The two completed items above are implemented on immutable Loopkeeper commit
-[`1893baf2c959f8bf1b099e32a7e1132f52082ccc`](https://github.com/nifabulous/loopkeeper/commit/1893baf2c959f8bf1b099e32a7e1132f52082ccc),
+[`ce89e906d3e3809f76deb329603831a05d6e7461`](https://github.com/nifabulous/loopkeeper/commit/ce89e906d3e3809f76deb329603831a05d6e7461),
 currently proposed in [Loopkeeper PR #36](https://github.com/nifabulous/loopkeeper/pull/36).
 That candidate is not released or pinned into Relay yet; production activation
 still requires the separate merge/release/pin step.
 
-- Append-only writer: [`arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/src/loopkeeper/adapters/github/arbiter_io.py),
+- Append-only writer: [`arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/ce89e906d3e3809f76deb329603831a05d6e7461/src/loopkeeper/adapters/github/arbiter_io.py),
   `test_arbiter_comment_appends_changed_decision_for_same_head`, and
   `test_arbiter_comment_suppresses_exact_decision_retry` in
-  [`test_arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/tests/github/test_arbiter_io.py).
-- Five-round boundaries: [`arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/src/loopkeeper/arbiter.py),
+  [`test_arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/ce89e906d3e3809f76deb329603831a05d6e7461/tests/github/test_arbiter_io.py).
+- Five-round boundaries: [`arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/ce89e906d3e3809f76deb329603831a05d6e7461/src/loopkeeper/arbiter.py),
   `test_default_stuck_p1_boundary_is_four_five_and_six_rounds`,
   `test_default_unverifiable_round_cap_allows_five_then_escalates_on_sixth`,
   and `test_arbiter_config_defaults_use_five_round_review_boundaries` in
-  [`test_arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/tests/unit/test_arbiter.py).
+  [`test_arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/ce89e906d3e3809f76deb329603831a05d6e7461/tests/unit/test_arbiter.py).
 - The candidate's Python 3.10–3.12, lint, shell, and workflow-validation checks
   are recorded on [PR #36](https://github.com/nifabulous/loopkeeper/pull/36).
 
@@ -48,12 +48,11 @@ still requires the separate merge/release/pin step.
 These are separate from the two requested changes and are ordered by how much
 they improve auditability or reduce the chance of a false disposition.
 
-1. **P1 — make arbiter idempotency reads bounded and paginated.** The current
-   poster reads one 100-comment page. Once a PR has more than 100 comments, an
-   older decision fingerprint can be missed and a retry can append a duplicate.
-   Reuse the adapter's existing page/byte budgets, and fail closed with an
-   explicit `ARBITER-IDEMPOTENCY-UNVERIFIABLE` result when the budget is
-   exhausted instead of guessing that the event is new.
+1. [x] **P1 — make arbiter idempotency reads bounded and paginated.** Implemented
+   at `ce89e906d3e3809f76deb329603831a05d6e7461`: comment history is paginated,
+   stdout is streamed within a shared byte budget, and an oversized response
+   terminates the child process before JSON parsing. Page- and byte-cap
+   exhaustion fail closed instead of guessing that the event is new.
 
 2. **P1 — serialize the writer per PR and expose the event id.** The final
    read-before-create prevents stale-head writes but cannot make two concurrent
@@ -62,8 +61,9 @@ they improve auditability or reduce the chance of a false disposition.
    and add a replay test that runs two writers against the same head.
 
 3. [x] **P1 — fan out `workflow_run` evidence across all associated PRs.**
-   Implemented in the caller templates and reusable workflow contract. The
-   selector de-duplicates associated numbers, re-fetches each PR, keeps only
+   Implemented in the caller templates, reusable workflow contract, and Relay
+   caller. The selector de-duplicates associated numbers, re-fetches each PR,
+   keeps only
    open exact-head matches, and sends one explicit PR number per matrix job;
    missing/unverifiable targets select none rather than choosing index 0.
 

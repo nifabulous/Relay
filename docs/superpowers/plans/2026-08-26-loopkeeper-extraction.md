@@ -1070,7 +1070,7 @@ git commit -m "feat: add GitHub adapter and Relay compatibility boundary"
 
 **Interfaces:**
 - Reusable entrypoints use `on: workflow_call`; they do not own consumer triggers.
-- PR caller owns `pull_request_target`, `workflow_run`, manual, and schedule triggers.
+- The generic PR caller owns `pull_request_target`, `workflow_run`, and manual triggers. Scheduled PR reconciliation requires a separate consumer-owned bounded selector that supplies one explicit PR number per matrix job; the generic caller must not expose a targetless schedule.
 - Issue caller owns issue, manual, and schedule triggers.
 - Called workflow inputs use lowercase snake_case keys (`consumer_repo`, optional `consumer_trusted_sha` hint, `loopkeeper_sha`, `ci_workflow_name`, `ci_workflow_file`, `job_timeout_seconds`, and `post_comments`) and are copied into uppercase runtime variables only after validation. The runtime always resolves the consumer default-branch SHA from the forge; the hint is compared for diagnostics and can never replace that result. Inputs also include PR/issue identifiers, policy/contract/context references, and explicitly scoped secrets.
 - Read-only caller examples request only read permissions; posting caller examples are separate and request the smallest write permission for the enabled comment/issue path. The reusable workflow never tries to elevate caller permissions.
@@ -1137,7 +1137,6 @@ def test_caller_uses_pin_and_loopkeeper_sha_input_are_identical():
         "pr-review-posting-caller.yml",
         "issue-triage-caller.yml",
         "issue-triage-posting-caller.yml",
-        "agent-caller.yml",
     )
     for name in reusable_callers:
         path = Path("examples/github") / name

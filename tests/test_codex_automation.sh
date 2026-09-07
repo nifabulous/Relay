@@ -385,6 +385,50 @@ require_text '.github/workflows/codex-pr-review.yml' \
   'head -n "$CODEX_MAX_ITEMS" /tmp/codex-pr-candidates'
 refuse_text '.github/workflows/codex-pr-review.yml' \
   'workflow_run.pull_requests[0].number'
+
+# The standalone caller must preserve the same workflow_run coverage invariant
+# as the retired inlined reviewer: every bounded, unique, open PR at the exact
+# completed-run head gets its own reusable-workflow invocation. A schedule is
+# intentionally absent unless the consumer supplies a separate bounded PR
+# enumerator; a targetless scheduled reusable call cannot name a PR safely.
+require_text '.github/workflows/loopkeeper-pr-review.yml' 'targets:'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_ASSOCIATIONS=20'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_TARGETS=8'
+require_text '.github/workflows/loopkeeper-pr-review.yml' 'declare -A seen=()'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'gh api "repos/${GH_REPO}/pulls/${pr}"'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  '"$state" == "open" && "$head_sha" == "$RUN_HEAD_SHA"'
+require_text '.github/workflows/loopkeeper-pr-review.yml' 'matrix:'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'pr_number: ${{ matrix.pr_number }}'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'workflow_run.pull_requests[0].number'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' '  schedule:'
+require_text 'docs/superpowers/specs/2026-08-26-loopkeeper-extraction-design.md' \
+  'The generic PR caller intentionally has no targetless `schedule` trigger.'
+
+ruby_status=0
+ruby -ryaml <<'RUBY' || ruby_status=1
+workflow = YAML.load_file(".github/workflows/loopkeeper-pr-review.yml")
+jobs = workflow.fetch("jobs")
+targets = jobs.fetch("targets")
+review = jobs.fetch("review")
+raise unless targets.fetch("outputs").fetch("pr_numbers") ==
+  "${{ steps.select.outputs.pr_numbers }}"
+raise unless review.fetch("needs") == "targets"
+raise unless review.fetch("strategy").fetch("fail-fast") == false
+raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
+  "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
+raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
+RUBY
+if (( ruby_status != 0 )); then
+  fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
+fi
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \
   'actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs'

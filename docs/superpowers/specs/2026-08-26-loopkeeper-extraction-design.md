@@ -75,7 +75,7 @@ The GitHub adapter retains the existing Bash PR-review and issue-triage workers 
 
 The repository ships separate `pr-review` and `issue-triage` reusable workflow entrypoints. Each consumer keeps a small caller workflow in its own default branch. The caller owns the event triggers and invokes the matching Loopkeeper workflow with an immutable Loopkeeper release SHA. The called workflow checks out the consumer repository at a separately verified `CONSUMER_TRUSTED_SHA` for policy/contract/context, and checks out Loopkeeper at `LOOPKEEPER_SHA` for code. These two trust roots are never represented by one variable or one checkout.
 
-A PR caller workflow owns `pull_request_target`, `workflow_run`, manual, and schedule triggers. An issue caller owns issue/manual/schedule triggers. The headless-agent path is a CLI/package capability. Its optional dispatch-only caller invokes the reusable `agent.yml` entrypoint, whose unprivileged callee runs the CLI without executing PR code or granting the model shell/network capability; it is not a PR-triggered workflow.
+A generic PR caller workflow owns `pull_request_target`, `workflow_run`, and manual triggers. The generic PR caller intentionally has no targetless `schedule` trigger. A consumer that needs reconciliation adds a separate scheduled selector that enumerates a bounded set of open PRs and passes one explicit PR number per matrix job; it must not invoke the reusable workflow without a verified target. An issue caller owns issue/manual/schedule triggers. The headless-agent path is a CLI/package capability. Its optional dispatch-only caller invokes the reusable `agent.yml` entrypoint, whose unprivileged callee runs the CLI without executing PR code or granting the model shell/network capability; it is not a PR-triggered workflow.
 
 ### Generic CLI adapter
 
@@ -187,7 +187,7 @@ The privileged GitHub workflow checks out the actual default-branch tip and read
 
 ### Caller and reusable workflow topology
 
-The consumer repository contains a small caller workflow whose `on:` block is read from the consumer default branch. It declares the static `pull_request_target`, `workflow_run`, manual, and schedule triggers and invokes the pinned Loopkeeper reusable workflow with `uses: <loopkeeper-repo>/.github/workflows/<entrypoint>.yml@<full-sha>`. The remote entrypoint is declared with `workflow_call`; it does not rely on direct triggers that only exist in its own repository. The caller passes the consumer repository, PR/issue identifiers, expected CI workflow name and file, configuration variables, and explicitly scoped secrets.
+The consumer repository contains a small caller workflow whose `on:` block is read from the consumer default branch. Its generic PR form declares static `pull_request_target`, `workflow_run`, and manual triggers and invokes the pinned Loopkeeper reusable workflow with `uses: <loopkeeper-repo>/.github/workflows/<entrypoint>.yml@<full-sha>`. Scheduled PR reconciliation is an optional consumer-owned selector with explicit bounded enumeration, not a targetless trigger on the generic caller. The remote entrypoint is declared with `workflow_call`; it does not rely on direct triggers that only exist in its own repository. The caller passes the consumer repository, PR/issue identifiers, expected CI workflow name and file, configuration variables, and explicitly scoped secrets.
 
 The called workflow uses two separate checkouts: the consumer repository at the forge-verified `CONSUMER_TRUSTED_SHA` for policy, contracts, and context, and the Loopkeeper repository at the immutable `LOOPKEEPER_SHA` for Bash/Python code. The workflow verifies both values independently and never lets a runtime input replace either trust root.
 
@@ -199,7 +199,7 @@ Every open PR head handled by the configured GitHub integration receives at leas
 
 - `workflow_run: completed` handles the named CI workflow only when the source event is `pull_request`, the run head SHA is exact, and the PR is still open/current. GitHub's `workflow_run.workflows` trigger entries are display names, while discovery may use a file path. Setup and runtime validation resolve the display name through `GET /actions/workflows` to a unique workflow id and require that its `path` matches the configured file; the probe then queries that resolved id. A missing, ambiguous, or mismatched name/file mapping is a configuration failure and must not defer review; the fallback path reviews instead.
 - `opened` and `synchronize` remain an exclusive fallback for conflicting PRs where GitHub creates no pull-request CI run. The worker waits only within a bounded discovery window, defers when a matching run exists, and reviews when no run appears or lookup fails.
-- Manual, reopened, ready-for-review, and scheduled paths read currently completed exact-head checks once without polling.
+- Manual, reopened, and ready-for-review paths read currently completed exact-head checks once without polling. An optional scheduled selector follows the same rule after it has resolved a bounded set of explicit, open PR targets.
 - A later CI completion can replace a no-CI fallback review for the same head with exact-head evidence.
 - Concurrency groups are keyed by PR on every trigger; no run-id fallback may silently disable cancellation.
 
