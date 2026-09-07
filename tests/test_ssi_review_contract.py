@@ -317,3 +317,32 @@ def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
     )
+
+
+def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
+    """BIC-only and inferred wave-4 rows cannot reach the DB selector."""
+    seed = _seed_index()
+    targets = (
+        ("CABARS22XXX", "EUR", "RS"),
+        ("EMPOALTRXXX", "USD", "AL"),
+        ("BSAHBJBJXXX", "USD", "BJ"),
+    )
+    query_targets = []
+    for index, (beneficiary_bic, currency, country) in enumerate(targets):
+        rows = [
+            row
+            for key, values in seed.items()
+            if key[:2] == (beneficiary_bic, currency)
+            for row in values
+        ]
+        assert rows
+        model = _row_object(rows[0])
+        model.beneficiary_bic = f"W4TEST{index:02d}XXX"
+        db_session_clean.add(model)
+        query_targets.append((model.beneficiary_bic, currency, country))
+    db_session_clean.commit()
+
+    for beneficiary_bic, currency, country in query_targets:
+        assert suggest_from_ssi(
+            db_session_clean, beneficiary_bic, currency, country
+        ) == []

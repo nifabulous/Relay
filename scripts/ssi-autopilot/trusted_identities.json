@@ -738,5 +738,85 @@
       "ukrgasbank.com"
     ],
     "settlement_terms_published": false
+  },
+  "BSGNGNGN": {
+    "name": "BSIC Guinea",
+    "country": "GN",
+    "domains": [
+      "bsic-guinee.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "BSAHBJBJ": {
+    "name": "BSIC Benin",
+    "country": "BJ",
+    "domains": [
+      "bsic-guinee.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "TCZBMEPG": {
+    "name": "Ziraat Bank Montenegro",
+    "country": "ME",
+    "domains": [
+      "ziraatbank.me"
+    ],
+    "settlement_terms_published": false
+  },
+  "VALLMTMT": {
+    "name": "Bank of Valletta plc",
+    "country": "MT",
+    "domains": [
+      "bov.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "MBWMMTMT": {
+    "name": "MeDirect Bank Malta",
+    "country": "MT",
+    "domains": [
+      "medirect.com.mt"
+    ],
+    "settlement_terms_published": false
+  },
+  "GLITISRE": {
+    "name": "Islandsbanki hf.",
+    "country": "IS",
+    "domains": [
+      "islandsbanki.is"
+    ],
+    "settlement_terms_published": false
+  },
+  "MPBAISRE": {
+    "name": "Kvika banki hf.",
+    "country": "IS",
+    "domains": [
+      "kvika.is"
+    ],
+    "settlement_terms_published": false
+  },
+  "AZAMZMLU": {
+    "name": "Access Bank Zambia Limited",
+    "country": "ZM",
+    "domains": [
+      "accessbankplc.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "ABYSETAA": {
+    "name": "Bank of Abyssinia",
+    "country": "ET",
+    "domains": [
+      "bankofabyssinia.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "FIRNBWGX": {
+    "name": "First National Bank of Botswana Limited",
+    "country": "BW",
+    "domains": [
+      "rmb.co.bw"
+    ],
+    "settlement_terms_published": false
   }
 }
