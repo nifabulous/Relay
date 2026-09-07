@@ -2,6 +2,20 @@
 
 Relay has opt-in Codex workflows for pull-request review and GitHub issue triage.
 
+> **Status (PR review):** pull-request review moved to
+> [Loopkeeper](https://github.com/nifabulous/loopkeeper) v0.1.1 — the standalone
+> extraction of this repository's own review harness — via the thin caller
+> `.github/workflows/loopkeeper-pr-review.yml`. The inlined
+> `.github/workflows/codex-pr-review.yml` is kept on standby, not deleted:
+> every job in it is gated on `CODEX_PR_REVIEW_ENABLED`, which is unset, so
+> nothing in it runs. It also remains a required fixture for
+> `tests/test_codex_automation.sh`, `tests/test_model_pinning.py`, and the
+> arbiter tests. **Issue triage still runs
+> on the Codex workflow described below and still uses every `CODEX_*` variable
+> listed here.** The review-specific parts of this document describe the retired
+> implementation and have not been rewritten for Loopkeeper yet; "Pull requests"
+> below states what actually runs today.
+
 ## Enable it
 
 In the repository settings:
@@ -36,6 +50,53 @@ The workflows are disabled at the job level until the variable is enabled. The A
 ## What runs
 
 ### Pull requests
+
+`.github/workflows/loopkeeper-pr-review.yml` is a thin caller for Loopkeeper's
+reusable `pr-review-posting.yml`, pinned to the immutable release SHA
+`ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231` (tag `v0.1.1`). It triggers on
+`pull_request_target`, on `workflow_run` completion for `CI`, and on manual
+dispatch. There is no scheduled sweep: a schedule carries no pull-request
+number and the reusable workflow refuses to infer one.
+
+The reusable workflow separates trust across jobs. `eligibility` holds no model
+secret and re-reads the pull request rather than trusting the event payload,
+because an event is a snapshot and label state can change after it fires.
+`review` runs with `LOOPKEEPER_OPERATOR=0` and read-only permissions, and
+re-verifies eligibility immediately before invoking the model. Only `writer`
+receives `pull-requests: write` and `LOOPKEEPER_OPERATOR=1`.
+
+A same-repository pull request is eligible on its own. A fork is eligible only
+while the `loopkeeper-approved` label is present AND the actor who applied the
+currently effective label holds the `maintain` or `admin` repository role —
+read from the permission endpoint's `role_name`, never the legacy `permission`
+field, which collapses Maintain to `write`. Removing the label revokes
+eligibility before the next model call.
+
+Configuration: the model key is `secrets.OPENAI_API_KEY`, passed as the reusable
+workflow's `model_api_key` secret. Every `LOOPKEEPER_*` repository variable is
+optional and defaults inside the reusable workflow; `LOOPKEEPER_MODEL` defaults
+to the same model this repository already selected for Codex. Set the
+repository variable `LOOPKEEPER_REVIEW_ENABLED` to `true` to enable review;
+an unset variable means off, so paid model execution is never the default. Trusted reference material is still the bounded
+file list in `.github/codex/context-files.txt`, and the review policy is still
+`.github/codex/review-policy.md`.
+
+To roll back to the inlined reviewer:
+
+```bash
+gh variable set CODEX_PR_REVIEW_ENABLED --body true
+gh variable set LOOPKEEPER_REVIEW_ENABLED --body false
+```
+
+Both reviewers are opt-in and both are off unless their own variable reads
+exactly `true`, so neither a rollback nor a fresh clone can start paid model
+execution by accident, and the two can never run at once by default.
+
+`CODEX_REVIEW_ENABLED` is deliberately not the standby gate: it stays `true`
+for issue triage, so reusing it would start both reviewers at once.
+
+The standby inlined implementation is described below. It is accurate for that
+workflow, which does not run while its gate is unset:
 
 `.github/workflows/codex-pr-review.yml` runs normal push reviews from `workflow_run: completed` for `CI`. It checks the completed run's `head_sha`, resolves the open PR, and reviews only that exact head. `reopened`, `ready_for_review`, manual, and scheduled paths remain available without polling. `opened` and `synchronize` remain as a coverage fallback for conflicting heads whose `CI` workflow is never created; they probe for the exact-head CI run and defer with exit zero only when a matching run whose event is `pull_request` exists or appears during the discovery window. Same-head `push` or manually dispatched runs do not count, because their completion events are not accepted as review triggers. A probe error is treated as no run and reviews proceed, so a failed lookup cannot silently delete coverage. A fallback review carries a separate bot-authored no-CI marker; if the CI run is created after the fallback window, the later completion event is allowed to replace that review with exact-head evidence. Every selection path rejects closed PRs, and the arbiter rechecks the PR state before collecting or posting a disposition.
 
