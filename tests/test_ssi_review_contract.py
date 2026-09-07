@@ -138,6 +138,27 @@ def test_admitted_rows_are_not_routable_until_reverified():
         assert not _is_routable_ssi(_row_object(row)), key
 
 
+def test_published_status_is_required_for_an_explicit_settlement_instruction():
+    """Status is an independent gate, not an accidental side effect of masking."""
+    row = SSI(
+        beneficiary_bic="STATEMENTUS",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank New York",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: contract test.",
+        as_of="2026-09-07",
+        verified_by="Treasury Operations",
+        status="unverified",
+    )
+    assert not _is_routable_ssi(row)
+    row.status = "published"
+    assert _is_routable_ssi(row)
+
+
 def test_masked_bic_only_and_multi_hop_rows_cannot_enter_settlement_path(db_session_clean):
     """The end-to-end SSI selector accepts only complete, explicit instructions."""
     rows = [
