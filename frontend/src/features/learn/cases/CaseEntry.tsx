@@ -42,6 +42,7 @@
 import { Link } from "react-router-dom";
 import type { CaseDefinition } from "./caseTypes";
 import type { CaseSession } from "./caseStore";
+import { Icon } from "../../../design-system/coss/icon";
 import "../LearnPage.css";
 
 // ─── Visible entry state ───────────────────────────────────────────────────
@@ -118,17 +119,40 @@ const ALTERNATIVE_LAB = {
 interface CaseEntryProps {
   caseDef: CaseDefinition;
   session: CaseSession | null;
+  variant?: "active" | "compact";
 }
 
-export function CaseEntry({ caseDef, session }: CaseEntryProps) {
+const CASE_PHASE_STEPS: Record<CaseSession["phase"], number> = {
+  brief: 1,
+  investigate: 2,
+  recommend: 3,
+  resolve: 4,
+  debrief: 5,
+};
+
+const CASE_STEP_COUNT = Object.keys(CASE_PHASE_STEPS).length;
+
+export function CaseEntry({ caseDef, session, variant = "compact" }: CaseEntryProps) {
   const state = deriveCaseEntryState(caseDef, session);
   const href = CASE_HREF(caseDef.id);
   const titleId = `case-entry__title-${caseDef.id}`;
+  const isActive = variant === "active";
+  const step = session ? CASE_PHASE_STEPS[session.phase] : 1;
+  const progress = Math.round((step / CASE_STEP_COUNT) * 100);
+  const statusLabel =
+    state === "resume"
+      ? "In progress"
+      : state === "completed"
+        ? "Completed"
+        : state === "fresh"
+          ? "Ready to start"
+          : "Needs attention";
 
   return (
     <section
       className={[
         "case-entry",
+        isActive && "case-entry--active",
         state === "under_review_catalog" && "case-entry--under-review",
         state === "under_review_stale" && "case-entry--under-review",
         state === "completed" && "case-entry--completed",
@@ -139,7 +163,7 @@ export function CaseEntry({ caseDef, session }: CaseEntryProps) {
       aria-labelledby={titleId}
     >
       <div className="case-entry__header">
-        <p className="case-entry__eyebrow">Customer case desk</p>
+        <p className="case-entry__eyebrow">{isActive ? "Active case desk" : "Customer case desk"}</p>
         <h2 id={titleId} className="case-entry__title">
           {caseDef.title}
         </h2>
@@ -149,6 +173,35 @@ export function CaseEntry({ caseDef, session }: CaseEntryProps) {
       </div>
 
       <div className="case-entry__body">
+        {isActive && (
+          <>
+            <div className="case-entry__meta" aria-label="Case progress">
+              <span>
+                <Icon name="route" size={16} />
+                Step {step} of {CASE_STEP_COUNT}
+              </span>
+              <span className="case-entry__status">
+                <span className="case-entry__status-dot" aria-hidden="true" />
+                {statusLabel}
+              </span>
+            </div>
+            {/* Reported on the phase scale the learner sees, not a derived
+                percentage — the bar's width is presentation, the value is the
+                step. */}
+            <div
+              className="case-entry__progress"
+              role="progressbar"
+              aria-label="Case progress"
+              aria-valuemin={0}
+              aria-valuemax={CASE_STEP_COUNT}
+              aria-valuenow={step}
+              aria-valuetext={`Step ${step} of ${CASE_STEP_COUNT}`}
+            >
+              <span style={{ width: `${progress}%` }} />
+            </div>
+          </>
+        )}
+
         {state === "fresh" && (
           <Link to={href} className="relay-btn relay-btn--primary case-entry__action">
             Start case

@@ -6,8 +6,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { preparePaymentInputSchema, type PreparePaymentInput } from "./prepareSchema";
 import { apiPost, apiRequest } from "../../../api/client";
 import { apiKeys } from "../../../api/queryKeys";
-import { PreparePaymentResponseSchema, SSIResponseSchema } from "../../../api/schemas";
-import type { PreparePaymentResponse } from "../../../api/schemas";
+import {
+  LookupResponseSchema,
+  PreparePaymentResponseSchema,
+  SSIResponseSchema,
+} from "../../../api/schemas";
+import type { LookupResponse, PreparePaymentResponse } from "../../../api/schemas";
 import type { ApiProblem } from "../../../api/problem";
 import type { RecommendationState } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
@@ -35,6 +39,28 @@ const TRACKABLE_RECOMMENDATIONS = new Set([
   "PROCEED_WITH_CAUTION",
   "CAUTION",
 ]);
+
+/*
+ * The seed directory spans far more markets than any hand-kept list would,
+ * and a bank whose country renders as a bare "PK" reads as missing data.
+ * Intl.DisplayNames covers all of ISO 3166-1 from the platform; the raw code
+ * remains the fallback where the runtime has no name for it.
+ */
+const countryDisplayNames =
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "region", fallback: "none" })
+    : null;
+
+function countryName(code: string | undefined) {
+  if (!code) return "Country not specified";
+  const normalized = code.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return normalized;
+  try {
+    return countryDisplayNames?.of(normalized) ?? normalized;
+  } catch {
+    return normalized;
+  }
+}
 
 /** True when a string looks like a BIC worth querying SSI for. */
 function isBicLike(value: string): boolean {
@@ -243,6 +269,16 @@ export function PreparePaymentPage() {
     queryKey: apiKeys.ssi(settledBic, ""),
     queryFn: () =>
       apiRequest(`/api/ssi?bic=${encodeURIComponent(settledBic)}`, undefined, SSIResponseSchema),
+    enabled: ssiEnabled,
+  });
+  const bankLookup = useQuery({
+    queryKey: apiKeys.lookup(settledBic),
+    queryFn: () =>
+      apiRequest<LookupResponse>(
+        `/api/lookup?bic=${encodeURIComponent(settledBic)}`,
+        undefined,
+        LookupResponseSchema,
+      ),
     enabled: ssiEnabled,
   });
   const publishedCurrencies = filterSupportedCurrencies(
@@ -767,14 +803,101 @@ export function PreparePaymentPage() {
           )}
         </div>
 
-        <aside className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
-          <h2>What this simulation covers</h2>
-          <ul>
-            <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
-            <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
-            <li><strong>International / SWIFT:</strong> provides educational routing guidance, not a live payment.</li>
-            <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
-          </ul>
+        <aside
+          className="prepare-payment__route-context"
+          role="region"
+          aria-labelledby="prepare-route-context-title"
+        >
+          <h2 id="prepare-route-context-title">Route context</h2>
+
+          {!ssiEnabled && (
+            <div className="prepare-payment__context-empty">
+              <p>Enter a beneficiary BIC to load bank context.</p>
+            </div>
+          )}
+
+          {ssiEnabled && bankLookup.isPending && (
+            <p className="prepare-payment__context-status" role="status">Loading bank context…</p>
+          )}
+
+          {ssiEnabled && bankLookup.isError && (
+            <div className="prepare-payment__context-error" role="alert">
+              <p>Bank context could not be loaded. The form is still usable.</p>
+              <Button type="button" variant="secondary" onClick={() => void bankLookup.refetch()}>
+                Retry bank lookup
+              </Button>
+            </div>
+          )}
+
+          {ssiEnabled && bankLookup.data && !bankLookup.data.found && (
+            <p className="prepare-payment__context-status" role="status">
+              No bank profile was found for <span className="mono">{settledBic}</span>.
+            </p>
+          )}
+
+          {bankLookup.data?.found && bankLookup.data.bank && (
+            <div className="prepare-payment__context-content">
+              <section className="prepare-payment__context-bank" aria-labelledby="prepare-beneficiary-bank-title">
+                <span className="prepare-payment__context-label" id="prepare-beneficiary-bank-title">Beneficiary bank</span>
+                <strong>{bankLookup.data.bank.bank_name}</strong>
+                <span className="mono">{bankLookup.data.bank.bic}</span>
+                <span>{countryName(bankLookup.data.bank.country_code)}</span>
+              </section>
+
+              <section className="prepare-payment__context-section" aria-labelledby="prepare-published-currencies-title">
+                <span className="prepare-payment__context-label" id="prepare-published-currencies-title">Published currencies</span>
+                {ssiQuery.isPending ? (
+                  <p>Loading published settlement currencies…</p>
+                ) : ssiQuery.isError ? (
+                  <p>Published settlement currencies could not be loaded.</p>
+                ) : publishedCurrencies.length > 0 ? (
+                  <div className="prepare-payment__context-pills">
+                    {publishedCurrencies.map((currency) => (
+                      <span key={currency} className="prepare-payment__context-pill mono">{currency}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No published settlement currencies are on file for this bank.</p>
+                )}
+              </section>
+
+              <section className="prepare-payment__context-section" aria-labelledby="prepare-simulation-title">
+                <span className="prepare-payment__context-label" id="prepare-simulation-title">Educational simulation</span>
+                <p>This is an educational simulation. No real money moves.</p>
+              </section>
+
+            </div>
+          )}
+
+          <section className="prepare-payment__context-section" aria-labelledby="prepare-route-preview-title">
+            <span className="prepare-payment__context-label" id="prepare-route-preview-title">Route preview</span>
+            <div className="prepare-payment__route-preview" aria-label="Illustrative route preview">
+              <span>You</span>
+              <span aria-hidden="true">→</span>
+              <span>Intermediaries</span>
+              <span aria-hidden="true">→</span>
+              <span>{bankLookup.data?.bank?.bank_name ?? "Beneficiary bank"}</span>
+            </div>
+            <p className="prepare-payment__context-note">
+              {bankLookup.isError
+                ? "Bank context unavailable — route remains illustrative."
+                : bankLookup.data && !bankLookup.data.found
+                  ? "No bank profile found — route remains illustrative."
+                  : bankLookup.data?.found
+                    ? "Illustrative route — run checks to evaluate it."
+                    : "Enter a beneficiary BIC to load the bank context."}
+            </p>
+          </section>
+
+          <section className="prepare-payment__coverage" role="note" aria-label="Payment coverage">
+            <h3>What this simulation covers</h3>
+            <ul>
+              <li><strong>Currency entry validation:</strong> accepts supported ISO currency codes.</li>
+              <li><strong>Domestic rail catalogue:</strong> available only for markets listed in Payment Schemes.</li>
+              <li><strong>International / SWIFT:</strong> provides educational routing guidance, not a live payment.</li>
+              <li><strong>Bank-published settlement instructions:</strong> appear only when illustrative SSI records exist for the selected bank and currency.</li>
+            </ul>
+          </section>
         </aside>
       </div>
     </div>

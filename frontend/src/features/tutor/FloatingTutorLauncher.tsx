@@ -89,6 +89,20 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
     availability === "probe-error"
       ? "Tutor availability could not be confirmed. Refresh to try again."
       : "The tutor is not available in this deployment. Everything else in Relay works as usual.";
+  /*
+   * The floating pill has room for a short line, not two sentences. When the
+   * full reason does not fit, the notice stays compact and the pill's
+   * accessible description carries the whole sentence; when it already fits,
+   * the visible notice IS the description, so assistive tech is not read the
+   * same text twice.
+   */
+  const compactNotice =
+    availability === "probe-error" ? unavailableMessage : "Tutor unavailable";
+  const describedById =
+    compactNotice === unavailableMessage
+      ? "tutor-fab-unavailable"
+      : "tutor-fab-unavailable-description";
+  const showsNotice = availability !== "available" && availability !== "checking";
   const launcherRef = useRef<HTMLButtonElement>(null);
 
   const handleOpenChange = useCallback(
@@ -110,9 +124,7 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
       ref={launcherRef}
       className="tutor-fab"
       disabled={!canOpen}
-      aria-describedby={
-        !canOpen && availability !== "checking" ? "tutor-fab-unavailable" : undefined
-      }
+      aria-describedby={showsNotice ? describedById : undefined}
       aria-expanded={open}
       aria-controls={open ? "tutor-floating-panel" : undefined}
     >
@@ -155,10 +167,17 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
             <TutorPanel context={context} headingId={HEADING_ID} autoFocusHeading compact />
           </Suspense>
         </RelayDialog>
-        {availability !== "available" && availability !== "checking" && (
-          <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
-            {unavailableMessage}
-          </span>
+        {showsNotice && (
+          <>
+            <span id="tutor-fab-unavailable" className="tutor-fab__reason" role="status">
+              {compactNotice}
+            </span>
+            {describedById === "tutor-fab-unavailable-description" && (
+              <span id="tutor-fab-unavailable-description" className="tutor-fab__reason-description">
+                {unavailableMessage}
+              </span>
+            )}
+          </>
         )}
       </div>
     </>

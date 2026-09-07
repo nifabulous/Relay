@@ -68,16 +68,21 @@ test.describe("Overview adaptive command center", () => {
     await expect(cta).toHaveAttribute("href", "/app/learn/lab-2");
   });
 
-  test("keeps the four quick routes as real links", async ({ page }) => {
+  // The standalone quick-routes strip became the workspace launchpad; the
+  // destinations it carried must all still be one click from Overview.
+  test("keeps every quick-route destination in the workspace launchpad", async ({ page }) => {
     await page.goto("/app");
-    const routes = [
-      [/^Search/i, "/app/explore"],
-      [/^Directory/i, "/app/explore/banks"],
-      [/^Track/i, "/app/operate"],
-      [/^Practice/i, "/app/learn/practice"],
-    ] as const;
-    for (const [name, href] of routes) {
-      await expect(page.getByRole("link", { name }).first()).toHaveAttribute("href", href);
+    const launchpad = page.getByRole("region", { name: /workspace launchpad/i });
+    await expect(launchpad).toBeVisible();
+    for (const href of [
+      "/app/learn",
+      "/app/learn/practice",
+      "/app/explore",
+      "/app/explore/banks",
+      "/app/operate/prepare",
+      "/app/operate/tracking",
+    ]) {
+      await expect(launchpad.locator(`a[href="${href}"]`)).toHaveCount(1);
     }
   });
 

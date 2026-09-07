@@ -446,12 +446,20 @@ describe("LearnIndexPage — production wiring of the case session", () => {
 
     const rail = screen.getByRole("region", { name: "Active case desk" });
     const active = within(rail).getByRole("list", { name: "Active case" });
-    const other = within(rail).getByRole("list", { name: "Other cases" });
     expect(within(active).getAllByRole("listitem")).toHaveLength(1);
+    const other = screen.getByRole("list", { name: "Other cases" });
     expect(within(other).getAllByRole("listitem")).toHaveLength(CASE_CATALOG.length - 1);
-    expect(rail.querySelectorAll('a[href^="/learn/cases/"]')).toHaveLength(
-      CASE_CATALOG.filter((definition) => definition.reviewStatus !== "under_review").length,
-    );
+    // The rail now holds the dominant case alone; the rest moved to their own
+    // section below the labs, so exactly one case link remains inside it.
+    expect(rail.querySelectorAll('a[href^="/learn/cases/"]')).toHaveLength(1);
+    // Every bookable case is still linked exactly once somewhere on the page.
+    // Asserted per case rather than as a count so a catalog change fails on
+    // the case that moved, not on arithmetic that assumed the dominant entry
+    // is never itself under review.
+    for (const definition of CASE_CATALOG) {
+      const links = document.querySelectorAll(`a[href="/learn/cases/${definition.id}"]`);
+      expect(links).toHaveLength(definition.reviewStatus === "under_review" ? 0 : 1);
+    }
   });
 
   it("keeps the Canada card fresh when only the Mexico case has a saved session", () => {

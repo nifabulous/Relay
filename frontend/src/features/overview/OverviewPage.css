@@ -1,88 +1,383 @@
-/*
- * Relay Overview — Adaptive Command Center.
- *
- * One dominant adaptive action first (with the payment-route cue), Learning
- * Pulse beside it at desktop; quick routes and a scan-friendly activity feed
- * below; system inventory last and quietest. Thin structural borders only —
- * no shadows, no gradients (spec: 2026-08-21 overview-adaptive-command-center).
- */
+/* Relay Overview — Workspace Launchpad.
+   Structural borders and tokenized surfaces keep the page useful in both
+   light and dark themes without decorative shadows or gradients. */
 
 .overview {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  max-width: var(--content-max);
+  width: 100%;
+  max-width: 1280px;
+  gap: var(--space-5);
 }
 
-/* ── Page header ────────────────────────────────────────── */
 .overview__header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .overview__heading {
-  font-size: var(--text-2xl);
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tighter);
 }
 
 .overview__tagline {
   margin: 0;
   color: var(--color-ink-muted);
+  font-size: var(--text-base);
 }
 
 .overview__eyebrow {
   margin: 0;
+  color: var(--color-action);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--color-ink-muted);
 }
 
-.overview__section-title {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-ink-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-micro);
-  margin: 0 0 var(--space-3);
-}
-
-/* ── Hero: adaptive action + Learning Pulse ─────────────── */
-.overview__hero {
-  display: flex;
-  flex-direction: column;
+.overview-launchpad__focus {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(290px, 0.82fr);
   gap: var(--space-4);
+  align-items: stretch;
 }
 
-/* Action-first stacking is the default; the two-column band only opens where
-   both columns keep readable minimum widths (≥1024px). */
-@media (min-width: 1024px) {
-  .overview__hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: var(--space-5);
-    align-items: stretch;
-  }
-}
-
-.overview__action {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-6);
+.overview-launchpad__task,
+.overview-launchpad__plan,
+.overview-launchpad__panel {
+  min-width: 0;
+  padding: var(--space-5);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-region);
 }
 
-.overview__action-main {
+.overview-launchpad__task {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.overview-launchpad__task-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
 }
+
+.overview-launchpad__plan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-action-surface);
+  border: 1px solid var(--color-action-border);
+  border-radius: var(--radius-control);
+  color: var(--color-action);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.overview-launchpad__task-title {
+  max-width: 27ch;
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tighter);
+}
+
+.overview-launchpad__task-summary {
+  max-width: var(--reading-measure);
+  margin: 0;
+  color: var(--color-ink-muted);
+}
+
+.overview-launchpad__task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.overview-launchpad__task-meta > span + span::before {
+  content: "•";
+  margin-right: var(--space-3);
+  color: var(--color-border-strong);
+}
+
+.overview-launchpad__task-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.overview-launchpad__plan-link,
+.overview-launchpad__panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-action);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.overview-launchpad__plan-link:hover,
+.overview-launchpad__panel-link:hover,
+.overview-launchpad__workspace-link:hover {
+  color: var(--color-action);
+}
+
+.overview-launchpad__section-head h2 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+.overview-launchpad__plan {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-launchpad__plan-list,
+.overview-launchpad__system-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.overview-launchpad__plan-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.overview-launchpad__plan-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+}
+
+.overview-launchpad__plan-dot--active {
+  background: var(--color-warning);
+}
+
+.overview-launchpad__plan-label {
+  min-width: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.overview-launchpad__plan-chip {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.overview-launchpad__plan-chip--active {
+  background: var(--color-action-surface);
+  border-color: var(--color-action-border);
+  color: var(--color-action);
+}
+
+.overview-launchpad__plan-link,
+.overview-launchpad__panel-link {
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.overview-launchpad__workspaces {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.overview-launchpad__workspace {
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.overview-launchpad__workspace + .overview-launchpad__workspace {
+  border-left: 1px solid var(--color-border);
+}
+
+.overview-launchpad__workspace-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.overview-launchpad__workspace-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: var(--color-action);
+  border-radius: var(--radius-control);
+  color: var(--color-on-action);
+}
+
+.overview-launchpad__workspace-head h2 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+.overview-launchpad__workspace-head p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.overview-launchpad__workspace-links {
+  border-top: 1px solid var(--color-border);
+}
+
+.overview-launchpad__workspace-link {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.overview-launchpad__workspace-link:last-child {
+  border-bottom: 0;
+}
+
+.overview-launchpad__workspace-link-icon {
+  display: inline-flex;
+  color: var(--color-action);
+}
+
+.overview-launchpad__workspace-link-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.overview-launchpad__workspace-link-label {
+  color: var(--color-ink-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.overview-launchpad__workspace-link-description {
+  overflow: hidden;
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-launchpad__workspace-link-arrow {
+  color: var(--color-ink-muted);
+  transition: color var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
+}
+
+.overview-launchpad__workspace-link:hover .overview-launchpad__workspace-link-arrow {
+  color: var(--color-action);
+  transform: translateX(2px);
+}
+
+.overview-launchpad__lower {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.86fr) minmax(0, 1.2fr) minmax(240px, 0.94fr);
+  gap: var(--space-4);
+}
+
+.overview-launchpad__panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-launchpad__system-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 42px;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+
+.overview-launchpad__system-name {
+  color: var(--color-ink-strong);
+  font-weight: 600;
+}
+
+.overview-launchpad__system-state {
+  overflow: hidden;
+  color: var(--color-ink-strong);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status value: colour follows the reported status, and an icon carries the
+   same meaning so it never rides on colour alone. */
+.overview-launchpad__system-state--ok,
+.overview-launchpad__system-state--warning {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  text-transform: capitalize;
+}
+
+.overview-launchpad__system-state--ok {
+  color: var(--color-success);
+}
+
+.overview-launchpad__system-state--warning {
+  color: var(--color-warning);
+}
+
+.overview-launchpad__inventory-footnote {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+}
+
+.overview-launchpad__inventory-error {
+  margin: var(--space-4) 0;
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+}
+
+/* ── Adaptive action — stage pill and the page's single primary CTA ── */
 
 /* Stage pill — the action's small leading label. Tinted per family so a
    glance distinguishes learn from operate stages; the text carries the
@@ -107,101 +402,6 @@
   color: var(--color-ink-muted);
 }
 
-.overview__action-title {
-  margin: 0;
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tighter);
-  line-height: var(--leading-tight);
-  color: var(--color-ink-strong);
-  max-width: 24ch;
-}
-
-.overview__action-supporting {
-  margin: 0;
-  color: var(--color-ink-muted);
-  max-width: var(--reading-measure);
-}
-
-/* ── Route cue — originator → correspondent → beneficiary ── */
-.overview__action-cue {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  width: 100%;
-  max-width: 380px;
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-canvas);
-}
-
-.overview__cue-nodes {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.overview__cue-node {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-2);
-  color: var(--color-ink-muted);
-}
-
-.overview__cue-nodes--active .overview__cue-node--origin {
-  border-color: var(--color-action);
-  background: var(--color-action);
-  color: var(--color-on-action);
-}
-
-.overview__cue-link {
-  flex: 1;
-  min-width: var(--space-6);
-  border-top: 2px dashed var(--color-border-strong);
-}
-
-.overview__cue-caption {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.overview__cue-context {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-ink-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.overview__cue-track {
-  height: 4px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-3);
-  overflow: hidden;
-}
-
-.overview__cue-fill {
-  display: block;
-  height: 100%;
-  background: var(--color-action);
-  border-radius: var(--radius-full);
-}
-
-.overview__cue-meta {
-  font-size: var(--text-xs);
-  color: var(--color-ink-muted);
-}
-
 /* The only primary CTA on the page. Geometry pinned by the design-system
    e2e: 48px tall, 8px radius, 1px border. */
 .overview__cta {
@@ -221,6 +421,7 @@
 /* ── Learning Pulse ─────────────────────────────────────── */
 .overview__pulse {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   padding: var(--space-4) var(--space-5) var(--space-2);
   background: var(--color-surface);
@@ -384,96 +585,15 @@
   background: var(--color-warning);
 }
 
-/* ── Quick routes ───────────────────────────────────────── */
-.overview__section {
-  display: flex;
-  flex-direction: column;
-}
-
-.overview__routes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-3);
-}
-
-.overview__route {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 44px;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: inherit;
-  transition: border-color var(--duration-fast) var(--ease),
-    background var(--duration-fast) var(--ease);
-}
-
-.overview__route:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-action-surface);
-}
-
-.overview__route:hover .overview__route-label,
-.overview__route:hover .overview__route-icon {
-  color: var(--color-action);
-}
-
-.overview__route-icon {
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-ink-muted);
-  transition: color var(--duration-fast) var(--ease);
-}
-
-.overview__route-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.overview__route-label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-ink-strong);
-  transition: color var(--duration-fast) var(--ease);
-}
-
-.overview__route-purpose {
-  font-size: var(--text-xs);
-  color: var(--color-ink-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.overview__route-arrow {
-  margin-left: auto;
-  color: var(--color-ink-muted);
-  flex-shrink: 0;
-  transition: color var(--duration-fast) var(--ease),
-    transform var(--duration-fast) var(--ease);
-}
-
-.overview__route:hover .overview__route-arrow {
-  color: var(--color-action);
-  transform: translateX(2px);
-}
-
 /* ── Recent activity — scan-friendly feed with a timeline rail ── */
 .overview__activity {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   padding: var(--space-4) var(--space-5);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-region);
-}
-
-.overview__activity .overview__section-title {
-  margin-bottom: var(--space-2);
 }
 
 .overview__empty {
@@ -581,10 +701,6 @@
 }
 
 /* ── System inventory — quietest line on the page ──────── */
-.overview__status {
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
 
 .overview__status-text {
   margin: 0;
@@ -597,23 +713,59 @@
   color: var(--color-ink);
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 959px) {
+  .overview-launchpad__focus,
+  .overview-launchpad__lower {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 767px) {
   .overview {
-    gap: var(--space-5);
+    gap: var(--space-4);
   }
 
-  /* The route cue drops its inset panel look; nodes stay legible at 390px
-     without adding horizontal pressure. */
-  .overview__action {
+  .overview__heading {
+    font-size: var(--text-2xl);
+  }
+
+  .overview-launchpad__task,
+  .overview-launchpad__plan,
+  .overview-launchpad__panel {
     padding: var(--space-4);
   }
 
-  .overview__action-cue {
-    padding: var(--space-3);
+  .overview-launchpad__task-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
+  .overview-launchpad__task-title {
+    font-size: var(--text-xl);
+  }
+
+  .overview-launchpad__plan-item {
+    grid-template-columns: 8px minmax(0, 1fr);
+  }
+
+  .overview-launchpad__plan-chip {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: -4px;
+  }
+
+  .overview-launchpad__workspaces {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-launchpad__workspace + .overview-launchpad__workspace {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+
+}
+
+@media (max-width: 767px) {
   /* Full-width primary CTA on mobile. */
   .overview__cta {
     width: 100%;
@@ -635,7 +787,6 @@
   }
 
   .overview__activity-marker {
-    content: none;
     display: none;
   }
 

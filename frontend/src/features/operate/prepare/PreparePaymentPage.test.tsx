@@ -23,6 +23,57 @@ function renderPage(options: { basename?: string; initialEntries?: string[] } = 
 }
 
 describe("PreparePaymentPage form accessibility", () => {
+  it("renders route context from a valid beneficiary BIC", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.json({
+        bic: "GTBINGLAXXX",
+        found: true,
+        bank: {
+          bic: "GTBINGLAXXX",
+          bank_name: "Guaranty Trust Bank",
+          country_code: "NG",
+          country_currency: "NGN",
+        },
+      })),
+      http.get("/api/ssi", () => HttpResponse.json({
+        beneficiary_bic: "GTBINGLAXXX",
+        currency: "ALL",
+        instructions: [
+          {
+            beneficiary_bic: "GTBINGLAXXX",
+            beneficiary_bank_name: "Guaranty Trust Bank",
+            currency: "USD",
+            intermediary_bic: "CITIUS33XXX",
+            intermediary_bank_name: "Citibank",
+            intermediary_account: "ACCT-1",
+            beneficiary_account: "ACCT-2",
+            charge_code: "SHA",
+            value_date: "spot",
+          },
+        ],
+        disclaimer: "SIMULATION",
+      })),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    expect(await within(context).findAllByText("Guaranty Trust Bank")).not.toHaveLength(0);
+    expect(within(context).getByText("GTBINGLAXXX")).toBeVisible();
+    expect(within(context).getByText("Published currencies")).toBeVisible();
+    expect(within(context).getByText("USD")).toBeVisible();
+    expect(within(context).getByText("Route preview")).toBeVisible();
+    expect(within(context).getByText("Illustrative route — run checks to evaluate it.")).toBeVisible();
+  });
+
+  it("asks for a BIC before showing bank route context", () => {
+    renderPage();
+
+    const context = screen.getByRole("region", { name: "Route context" });
+    expect(context).toHaveTextContent(/enter a beneficiary bic to load bank context/i);
+    expect(context).toHaveTextContent(/route preview/i);
+  });
+
   it("separates accepted currency input from rail and SSI coverage", () => {
     renderPage();
 

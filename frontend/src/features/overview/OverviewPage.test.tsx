@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, it, expect } from "vitest";
@@ -163,18 +163,18 @@ describe("OverviewPage adaptive command center", () => {
     expect(pulse).not.toHaveTextContent(/due for review/i);
   });
 
-  it("keeps the four quick routes as real links to their destinations", () => {
+  // The standalone "Quick routes" strip became the workspace launchpad. The
+  // destinations it carried must all still be one click from Overview — this
+  // asserts the hrefs rather than the old labels so a rename cannot quietly
+  // drop a destination.
+  it("keeps every quick-route destination reachable from the launchpad", () => {
     renderOverviewPage();
 
-    const expected = [
-      [/^search/i, "/explore"],
-      [/^directory/i, "/explore/banks"],
-      [/^track/i, "/operate"],
-      [/^practice/i, "/learn/practice"],
-    ] as const;
-    for (const [name, href] of expected) {
-      const link = screen.getByRole("link", { name: new RegExp(name.source, name.flags) });
-      expect(link).toHaveAttribute("href", href);
+    const launchpad = screen.getByRole("region", { name: /workspace launchpad/i });
+    const hrefs = Array.from(launchpad.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+
+    for (const href of ["/explore", "/explore/banks", "/learn/practice", "/learn"]) {
+      expect(hrefs).toContain(href);
     }
   });
 
@@ -227,5 +227,86 @@ describe("OverviewPage adaptive command center", () => {
     // The failure must not take the rest of the page down with it.
     expect(document.querySelector(".overview__cta")).not.toBeNull();
     expect(screen.getByRole("complementary", { name: /learning pulse/i })).toBeInTheDocument();
+  });
+});
+
+describe("OverviewPage workspace launchpad", () => {
+  it("leads with the current task and today's plan", () => {
+    renderOverviewPage();
+
+    expect(screen.getByRole("region", { name: /current task/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /today's plan/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /view full plan/i })).toBeInTheDocument();
+  });
+
+  it("groups launch destinations into Learn, Explore, and Operate workspaces", () => {
+    renderOverviewPage();
+
+    const launchpad = screen.getByRole("region", { name: /workspace launchpad/i });
+    expect(within(launchpad).getByRole("heading", { name: "Learn" })).toBeInTheDocument();
+    expect(within(launchpad).getByRole("heading", { name: "Explore" })).toBeInTheDocument();
+    expect(within(launchpad).getByRole("heading", { name: "Operate" })).toBeInTheDocument();
+    expect(within(launchpad).getByRole("link", { name: /continue learning/i })).toHaveAttribute(
+      "href",
+      "/learn",
+    );
+  });
+
+  it("closes with learner state, activity, and the live inventory", async () => {
+    renderOverviewPage();
+
+    expect(screen.getByRole("complementary", { name: /learning pulse/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /recent activity/i })).toBeInTheDocument();
+
+    // Counts come from /api/health, not from a hardcoded service list — the
+    // panel may only report what the probe actually returned.
+    const system = await screen.findByRole("region", { name: /system status/i });
+    await waitFor(() => expect(system).toHaveTextContent("150"));
+    expect(system).toHaveTextContent("470");
+  });
+
+  // Everything on this page is derived. A literal that reads as live
+  // operational truth — an incident, a corridor's health, a service status —
+  // would teach learners to trust invented status in a simulator.
+  // /api/health reports "degraded" when seeding failed or the bank table is
+  // empty (app/routers/directory.py). Painting that value with the success
+  // token would tell a glancing reader the system is fine at the one moment
+  // it is not.
+  it("does not dress a degraded inventory as healthy", async () => {
+    server.use(
+      http.get("/api/health", () =>
+        HttpResponse.json({
+          status: "degraded",
+          banks: 0,
+          corridor_rules: 0,
+          fedwire_banks: 0,
+          fedach_banks: 0,
+          ssi_records: 0,
+        }),
+      ),
+    );
+
+    renderOverviewPage();
+
+    const value = await screen.findByText("degraded");
+    expect(value).toHaveClass("overview-launchpad__system-state--warning");
+    expect(value).not.toHaveClass("overview-launchpad__system-state--ok");
+    expect(screen.queryByText("Healthy")).toBeNull();
+  });
+
+  it("states no operational fact the page cannot source", async () => {
+    const { container } = renderOverviewPage();
+
+    // Sweep the LOADED page. The inventory panel is the branch the fabricated
+    // service list lived in, and it does not exist until the health query
+    // resolves — a synchronous sweep would only ever read "Loading…".
+    await screen.findByText("Healthy");
+    const text = container.textContent ?? "";
+
+    expect(text).not.toMatch(/\d+(\.\d+)?%\s*(since|drop)/i);
+    expect(text).not.toMatch(/all (services|providers)/i);
+    expect(text).not.toMatch(/no active incidents/i);
+    // No clock-time plan rows: the plan is a derived list, not a calendar.
+    expect(text).not.toMatch(/\d{1,2}:\d{2}\s*(AM|PM)/i);
   });
 });

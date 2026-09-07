@@ -6,10 +6,10 @@ import { AppShell } from "./AppShell";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import { NotFoundPage } from "./NotFoundPage";
 import { PageLoader } from "./PageLoader";
-import { OverviewPage } from "../features/overview/OverviewPage";
 import { track } from "../lib/analytics/analytics";
 
 // Route-level code splitting — Learn, Explore, and Operate are separate chunks
+const OverviewPage = lazy(() => import("../features/overview/OverviewPage").then(m => ({ default: m.OverviewPage })));
 const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.ExplorePage })));
 const BankDirectoryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.BankDirectoryPage })));
 const SchemesPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.SchemesPage })));
@@ -59,7 +59,7 @@ export function App() {
         <AppErrorBoundary>
           <SentryRoutes>
             <Route element={<AppShell />}>
-              <Route index element={<OverviewPage />} />
+              <Route index element={<Suspense fallback={<PageLoader destination="Overview" />}><OverviewPage /></Suspense>} />
               <Route path="learn" element={<Suspense fallback={<PageLoader destination="Learn" />}><LearnIndexPage /></Suspense>} />
             {/* MUST precede learn/:moduleId so 'cases' is never captured as a
                 module id. React Router v6 ranks static segments above dynamic
