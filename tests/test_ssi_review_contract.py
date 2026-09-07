@@ -244,6 +244,7 @@ def test_kenya_rows_use_the_manifest_scoped_account_policy():
         rows = [seed[key][0] for key in expected if key[0] == beneficiary_bic]
         assert rows
         for row in rows:
+            assert row[11] in {"unverified", "archived"}
             if row[13]:
                 assert row[5:9] == (None, None, None, None)
             else:
