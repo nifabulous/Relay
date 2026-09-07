@@ -7,12 +7,12 @@ request, the intended contract, and the Relay evidence that motivated it.
 ## Requested changes
 
 - [x] **Append-only arbiter history.** Implemented in the standalone
-  Loopkeeper adapter. New decisions append an immutable comment with a
-  canonical SHA-256 decision fingerprint; an exact retry for the same PR,
+  Loopkeeper adapter candidate. New decisions append an immutable comment with
+  a canonical SHA-256 decision fingerprint; an exact retry for the same PR,
   head, and decision is suppressed. Historical comments are never patched.
 
 - [x] **Move the arbiter's five-review boundaries.** The requested semantics
-  are now explicit and implemented:
+  are now explicit and implemented in the standalone candidate:
 
   1. `STUCK-P1` requires five consecutive rounds;
   2. five consecutive unverifiable rounds are allowed, with
@@ -22,6 +22,26 @@ request, the intended contract, and the Relay evidence that motivated it.
 
   The defaults are covered by regression tests; explicit `ArbiterConfig`
   overrides retain their existing `more-than-cap` semantics.
+
+## External implementation and verification
+
+The two completed items above are implemented on immutable Loopkeeper commit
+[`1893baf2c959f8bf1b099e32a7e1132f52082ccc`](https://github.com/nifabulous/loopkeeper/commit/1893baf2c959f8bf1b099e32a7e1132f52082ccc),
+currently proposed in [Loopkeeper PR #36](https://github.com/nifabulous/loopkeeper/pull/36).
+That candidate is not released or pinned into Relay yet; production activation
+still requires the separate merge/release/pin step.
+
+- Append-only writer: [`arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/src/loopkeeper/adapters/github/arbiter_io.py),
+  `test_arbiter_comment_appends_changed_decision_for_same_head`, and
+  `test_arbiter_comment_suppresses_exact_decision_retry` in
+  [`test_arbiter_io.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/tests/github/test_arbiter_io.py).
+- Five-round boundaries: [`arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/src/loopkeeper/arbiter.py),
+  `test_default_stuck_p1_boundary_is_four_five_and_six_rounds`,
+  `test_default_unverifiable_round_cap_allows_five_then_escalates_on_sixth`,
+  and `test_arbiter_config_defaults_use_five_round_review_boundaries` in
+  [`test_arbiter.py`](https://github.com/nifabulous/loopkeeper/blob/1893baf2c959f8bf1b099e32a7e1132f52082ccc/tests/unit/test_arbiter.py).
+- The candidate's Python 3.10–3.12, lint, shell, and workflow-validation checks
+  are recorded on [PR #36](https://github.com/nifabulous/loopkeeper/pull/36).
 
 ## Recommended next improvements
 

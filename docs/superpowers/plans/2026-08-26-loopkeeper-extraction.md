@@ -16,7 +16,7 @@
 - Repository creation is an explicit preflight, not an implicit side effect: confirm the final remote owner/name and sibling path, require the destination to be absent or empty, record the remote URL in the new repository, and abort rather than initializing over an existing checkout.
 - Runtime dependencies remain zero on Python 3.10–3.12.
 - New public settings use `LOOPKEEPER_*`; `CODEX_*`, `ARBITER_*`, `RELAY_AGENT_*`, `OPENAI_API_KEY`, and `codex-*` markers exist only in the Relay compatibility adapter.
-- Public markers are exact and adapter-owned: reviewer comments use `loopkeeper-pr-review:{pr}:{head_sha}`, evidence state uses `loopkeeper-evidence:{fallback|ci}`, arbiter comments use `loopkeeper-arbiter:{pr}`, and triage comments use `loopkeeper-issue-triage:{issue}`; the model cannot author or mutate these markers.
+- Public markers are exact and adapter-owned: reviewer comments use `loopkeeper-pr-review:{pr}:{head_sha}`, evidence state uses `loopkeeper-evidence:{fallback|ci}`, arbiter comments use `loopkeeper-arbiter:{pr}:{head_sha}:{decision_digest}`, and triage comments use `loopkeeper-issue-triage:{issue}`; the model cannot author or mutate these markers.
 - The Bash worker remains the GitHub orchestration path; it is ported and pared into an adapter, not rewritten from memory in Python.
 - Trusted policy, contracts, roles, verification records, and context files never come from PR-controlled paths.
 - PR/issue/task material is sanitized, delimiter-defanged, wrapped as untrusted input, and bounded before a model call.
@@ -375,7 +375,7 @@ git commit -m "feat: define Loopkeeper history and trailer schemas"
 - Copy: `loopkeeper/tests/fixtures/relay-e834773/*.json`
 
 **Interfaces:**
-- `ArbiterConfig(soft_gate: int = 5, hard_cap: int = 10, stuck_p1_rounds: int = 3, unverifiable_rounds: int = 2)`.
+- `ArbiterConfig(soft_gate: int = 5, hard_cap: int = 10, stuck_p1_rounds: int = 5, unverifiable_rounds: int = 5)`.
 - `Decision(recommendation, loop_action, cited_rule, needs_human, round_count, proposed_gaps, detail)`.
 - `decide(history: History, config: ArbiterConfig) -> Decision`; it performs no environment reads, filesystem reads, subprocesses, network calls, or model calls.
 - `build_history(comments: Sequence[Comment], current_head_sha: str, current_diff_files: Sequence[str]) -> History` lives in the adapter-facing collector module, not in the pure arbiter.
@@ -997,7 +997,7 @@ git commit -m "feat: add trusted headless agent runner"
 
 **Interfaces:**
 - `collect_history(repo: str, pr: int, trusted_sha: str, bot_login: str) -> History`.
-- `CommentWriter` is a protocol with bounded `read_head`, `read_comments`, `create`, and `update` operations; it never exposes a bulk-delete operation.
+- `CommentWriter` is a protocol with bounded `read_head`, `read_comments`, `create`, and `update` operations; `update` is limited to reviewer fallback/CI replacement and duplicate reconciliation, while arbiter publication uses read/create only; it never exposes a bulk-delete operation.
 - `upsert_review_comment(repo: str, pr: int, head_sha: str, evidence_state: Literal["fallback", "ci"], body: str, writer: CommentWriter) -> None`.
 - `post_arbiter_comment(repo: str, pr: int, decision: Decision, operator: bool) -> None`.
 - `map_relay_environment(env: Mapping[str, str]) -> dict[str, str]`.
@@ -1009,7 +1009,7 @@ git commit -m "feat: add trusted headless agent runner"
 - `render_comment(model_markdown: str, marker: str, evidence_state: Literal["fallback", "ci"], max_bytes: int) -> str` adds the adapter-owned marker/evidence footer after sanitizing and UTF-8-truncating model Markdown; marker-like text in model output is escaped and cannot satisfy suppression. The marker/footer reservation is included in the byte budget.
 - Marker serialization is fixed in one module and tested byte-for-byte: `<!-- loopkeeper-pr-review:{pr}:{head_sha} -->` followed by `<!-- loopkeeper-evidence:{fallback|ci} -->`. Suppression parses only these exact HTML comments plus the authenticated bot author; prose that resembles a marker is never sufficient.
 - `verify_gap_label(repo: str, label: str, api: GitHubApi) -> None` performs an exact, bounded label lookup before any issue-create request; blank, control-character, or missing labels raise `GapLabelUnavailable` and yield the `GAP_LABEL_UNAVAILABLE` result.
-- Arbiter comments use the same marker-plus-author lookup and serialized writer as reviewer comments. The body carries the current head and decision artifact, repeats update in place for the same head, and never creates a second current-head arbiter comment.
+- Arbiter comments use the same authenticated lookup and serialized writer as reviewer comments, but their history is append-only. The body carries the current head and decision artifact, and the marker is `loopkeeper-arbiter:{pr}:{head_sha}:{decision_digest}`. An exact same-PR/head/decision digest suppresses a retry; a changed decision or head creates a new immutable event. Historical arbiter comments are never updated, and legacy two-part markers are read-only compatibility records.
 
 - [ ] **Step 1: Port the existing shell harness and change imports to canonical modules.**
 
@@ -1038,7 +1038,9 @@ deadline-aware backoff, but a failed or truncated read is never interpreted as
 “no CI run” or “no comments.” The fallback path records unavailable evidence;
 write calls are handled only by the idempotent writer state machine.
 
-Implement comment upsert with this state machine: same-head fallback plus new fallback suppresses; same-head fallback plus CI evidence updates the existing comment in place and changes the adapter-generated evidence state to `ci`; same-head CI plus any duplicate suppresses; no existing state performs a create. The adapter-generated marker and evidence state are appended outside the model body, so model text cannot forge or change the state. The rendered body is sanitized and bounded, including the marker/footer reservation. When duplicate current-head comments already exist, keep the oldest qualifying bot-authored comment as canonical and rewrite every other qualifying marker to a bounded `loopkeeper-superseded:{pr}:{head_sha}:{comment_id}` marker in the same operator-gated transaction; never silently delete review history. Run a dedicated PR-scoped writer job with `cancel-in-progress: false`, re-read the PR head and comments immediately before the write, and retry only the reconciliation read when the head moved. Collection/model jobs may cancel stale work, but the writer cannot be canceled after it owns the group. `LOOPKEEPER_OPERATOR=1` is required inside every write function. `LOOPKEEPER_GAP_LABEL` must resolve to an existing label before `--gap-issues`; otherwise emit `GAP_LABEL_UNAVAILABLE` and perform no write.
+Implement reviewer comment upsert with this state machine: same-head fallback plus new fallback suppresses; same-head fallback plus CI evidence updates the existing comment in place and changes the adapter-generated evidence state to `ci`; same-head CI plus any duplicate suppresses; no existing state performs a create. The adapter-generated marker and evidence state are appended outside the model body, so model text cannot forge or change the state. The rendered body is sanitized and bounded, including the marker/footer reservation. When duplicate current-head comments already exist, keep the oldest qualifying bot-authored comment as canonical and rewrite every other qualifying marker to a bounded `loopkeeper-superseded:{pr}:{head_sha}:{comment_id}` marker in the same operator-gated transaction; never silently delete review history. Run a dedicated PR-scoped writer job with `cancel-in-progress: false`, re-read the PR head and comments immediately before the write, and retry only the reconciliation read when the head moved. Collection/model jobs may cancel stale work, but the writer cannot be canceled after it owns the group. `LOOPKEEPER_OPERATOR=1` is required inside every write function. `LOOPKEEPER_GAP_LABEL` must resolve to an existing label before `--gap-issues`; otherwise emit `GAP_LABEL_UNAVAILABLE` and perform no write.
+
+Implement arbiter publication separately as an append-only event writer: read the current head and bounded bot-authored comments, compute the canonical decision digest, suppress only an exact matching `loopkeeper-arbiter:{pr}:{head_sha}:{decision_digest}` marker, and create a new comment for every changed decision or head. A malformed or truncated read fails closed; no historical arbiter comment is patched or reused, and old two-part markers remain read-only compatibility records.
 
 - [ ] **Step 4: Run GitHub adapter, compatibility, and security tests.**
 
@@ -1130,11 +1132,29 @@ def test_caller_pins_remote_workflow_and_keeps_triggers_on_default_branch():
 
 
 def test_caller_uses_pin_and_loopkeeper_sha_input_are_identical():
-    for path in Path("examples/github").glob("*.yml"):
+    reusable_callers = (
+        "pr-review-caller.yml",
+        "pr-review-posting-caller.yml",
+        "issue-triage-caller.yml",
+        "issue-triage-posting-caller.yml",
+        "agent-caller.yml",
+    )
+    for name in reusable_callers:
+        path = Path("examples/github") / name
         raw = path.read_text()
         use_sha = re.search(r"uses: [^@]+@([0-9a-f]{40})", raw).group(1)
         input_sha = re.search(r"loopkeeper_sha:\s*([0-9a-f]{40})", raw).group(1)
         assert use_sha == input_sha, path
+
+
+def test_agent_caller_is_dispatch_only_and_its_callee_runs_the_cli():
+    caller = Path("examples/github/agent-caller.yml").read_text()
+    callee = Path(".github/workflows/agent.yml").read_text()
+    assert "workflow_dispatch:" in caller
+    assert "pull_request_target:" not in caller
+    assert re.search(r"uses: example-org/loopkeeper/.github/workflows/agent.yml@[0-9a-f]{40}", caller)
+    assert "loopkeeper agent" in callee
+    assert "--manifest" in callee
 
 
 def test_posting_and_read_only_callers_have_distinct_permissions():
@@ -1310,7 +1330,7 @@ consumer has not enabled posting.
 
 The implementation must resolve `CI` through bounded, byte-capped `GET /actions/workflows` pages to a unique active workflow ID whose returned `path` is `.github/workflows/ci.yml` (normalize the leading `.github/workflows/` before comparing to the configured `ci.yml`), then probe that numeric ID. It must not compare the strings `CI` and `ci.yml`. A missing, ambiguous, inactive, truncated, or mismatched mapping does not defer review; the fallback path reviews the current head. The caller passes a positive `job_timeout_seconds`; the called workflow stamps `LOOPKEEPER_JOB_DEADLINE_EPOCH` before checkout/model work and passes the remaining budget into transport. The PR writer uses a PR-scoped concurrency group with `cancel-in-progress: false`; collection jobs may cancel stale work, but the comment upsert path serializes fallback/CI replacement.
 
-Permissions are explicit: PR review gets `contents: read`, `actions: read`, `checks: read`, `pull-requests: read`, and only the posting caller adds `pull-requests: write`; issue triage gets `contents: read`, `issues: read`, and only the posting caller adds `issues: write`; the model secret is passed only to the model step. The agent example is a CLI invocation and never runs privileged PR code.
+Permissions are explicit: PR review gets `contents: read`, `actions: read`, `checks: read`, `pull-requests: read`, and only the posting caller adds `pull-requests: write`; issue triage gets `contents: read`, `issues: read`, and only the posting caller adds `issues: write`; the model secret is passed only to the model step. The dispatch-only agent caller invokes the reusable `agent.yml` entrypoint; that callee runs the unprivileged `loopkeeper agent` CLI after creating a caller-attested manifest and never executes PR code or grants a shell/network capability to the model.
 
 Issue triage uses an issue-number marker plus authenticated bot author and the
 same bounded body/upsert helper. Replays update the existing triage comment in
@@ -1688,8 +1708,9 @@ deliver a later exact-head CI completion and verify in-place replacement with
 the `loopkeeper-evidence:ci` marker. Seed duplicate current-head bot comments
 and verify deterministic oldest-comment canonicalization plus bounded
 `loopkeeper-superseded:{pr}:{head_sha}:{comment_id}` markers. Exercise a real
-arbiter disposition and replay the same fallback/CI events to prove
-idempotent suppression. Capture the final comment bodies, bounded API write
+arbiter disposition, replay the exact same decision to prove suppression, and
+then change the decision or head to prove a new immutable arbiter event is
+appended. Capture the final comment bodies, bounded API write
 log, artifact provenance, and arbiter output; assert no write escaped the
 throwaway repository and no gap issue was created.
 
@@ -1712,8 +1733,9 @@ Run: `python3.12 -m pytest -q && bash tests/github/test_automation.sh && if rg -
 Expected: supported-version tests pass; Stage A demonstrates coverage for every
 handled open head, exact-head evidence, privacy, and zero unintended writes;
 Stage B demonstrates fallback creation, fallback-to-CI replacement, duplicate
-reconciliation, one current-head comment, arbiter disposition, and idempotent
-replay; no raw input/API key/model envelope appears in logs or uploads; and the
+reconciliation, one current-head reviewer comment, append-only arbiter
+disposition events, and exact-retry suppression; no raw input/API key/model
+envelope appears in logs or uploads; and the
 standalone package has no imports from Relay's `app` package or repository-local
 application modules. Production write enablement remains a separate human
 change after both evidence sets are reviewed; it is not part of this command.
@@ -1738,7 +1760,7 @@ git commit -m "test: verify Loopkeeper parity and coverage invariants"
 - [ ] The called workflow independently resolves the consumer default-branch SHA, verifies the Loopkeeper checkout and release manifest, and rejects altered or mutable trust-root inputs before reading trusted files.
 - [ ] Workflow display-name/file mapping resolves through a unique workflow ID and rejects missing, ambiguous, or mismatched API results without deferring review.
 - [ ] Stage A runs with `LOOPKEEPER_OPERATOR` unset and proves coverage, exact-head evidence, artifact privacy, and zero unintended writes.
-- [ ] Stage B runs only against a human-approved disposable consumer with `LOOPKEEPER_OPERATOR=1` and proves fallback creation, fallback-to-CI replacement, deterministic duplicate reconciliation, arbiter disposition, and idempotent replay.
+- [ ] Stage B runs only against a human-approved disposable consumer with `LOOPKEEPER_OPERATOR=1` and proves fallback creation, fallback-to-CI replacement, deterministic duplicate reconciliation, append-only arbiter disposition events, and exact-retry suppression.
 - [ ] The fallback/CI writer uses a non-cancelable PR-scoped writer, performs deterministic duplicate reconciliation, and has a fake concurrent-create test.
 - [ ] A caller-attested manifest without a valid verification record exits `4` before any model call.
 - [ ] A conflicting PR with no CI run still receives a review result.
@@ -1759,21 +1781,21 @@ Plan complete and saved to `docs/superpowers/plans/2026-08-26-loopkeeper-extract
 | Code quality | DONE | Public `LOOPKEEPER_*` APIs stay provider-neutral, Relay compatibility is isolated, package resources use `importlib.resources`, and trusted reads share one `TrustedReader` seam. |
 | Security/trust | DONE | Caller attestation is mandatory for `caller-attested` mode and fails with exit `4`; HMAC canonicalization, protected key-file rules, exact SHA binding, path confinement, redaction order, and operator gates are explicit. |
 | GitHub correctness | DONE | Workflow display names resolve to a unique numeric ID and normalized path; workflow-run evidence requires exactly one explicit target-PR association; fallback coverage and exact-head CI replacement are acceptance criteria. |
-| Idempotency/concurrency | DONE | Marker suppression includes authenticated author and evidence state; fallback-to-CI replacement is explicit; duplicate comments reconcile deterministically; the PR writer is serialized with `cancel-in-progress: false` and retries only its final reconciliation read. Disposable-repository Stage B now executes these write-dependent paths under explicit human approval. |
+| Idempotency/concurrency | DONE | Reviewer marker suppression includes authenticated author and evidence state; fallback-to-CI replacement is explicit; duplicate reviewer comments reconcile deterministically; arbiter events are append-only with exact decision-digest suppression; the PR writer is serialized with `cancel-in-progress: false` and retries only its final reconciliation read. Disposable-repository Stage B now executes these write-dependent paths under explicit human approval. |
 | Tests | DONE | The plan adds negative, mutation, race, two-PR/same-commit, privacy, bounded-pagination, workflow-contract, wheel, and sdist checks, with concrete commands and expected outcomes. |
 | Performance/release | DONE | Stream/page/item/body ceilings, deadline propagation, no retry after response establishment, package-version single source of truth, immutable pins, and exclusion of test attestation keys from both wheel and sdist are specified. |
 
 ### Findings folded into the plan
 
 - `trust.verification` is required whenever `trust.mode` is `caller-attested`; missing or malformed records fail before model invocation with exit `4`.
-- Fallback and later CI evidence use an explicit evidence-state marker, so same-head CI replaces fallback instead of being suppressed by the base idempotency marker.
+- Fallback and later CI evidence use an explicit evidence-state marker, so same-head CI replaces fallback instead of being suppressed by the base idempotency marker; arbiter dispositions use a separate append-only decision digest.
 - The no-CI/conflicting-PR coverage invariant is present in global constraints, phase gates, acceptance checks, mutation tests, and the real-PR dogfood gate.
 - `workflows: [CI]` is never compared textually with `ci.yml`; the adapter resolves the display name through `/actions/workflows`, normalizes the returned path, requires one active workflow ID, and then probes that ID.
 - The ambiguous “reachable” qualifier was removed from the safety invariant; scope is now the configured integration’s handled open heads, with a bounded artifact counted even when posting is disabled.
 - The writer contract now includes a fake race test, deterministic duplicate reconciliation, a non-cancelable concurrency group, and a strict rule that only the final reconciliation read may retry.
 - All caller templates carry an explicit template marker, every caller checks its `uses` SHA against `loopkeeper_sha`, and release tests reject unpinned refs, fixture slugs, and placeholder SHAs.
 - The release plan now declares `MANIFEST.in` and tests both wheel and sdist contents so the attestation key fixture cannot ship.
-- The dogfood gate is now staged: operator-off Stage A proves coverage, exact-head evidence, privacy, and zero writes; operator-on Stage B runs only in a disposable consumer and proves comment creation, fallback-to-CI replacement, duplicate reconciliation, arbiter disposition, and idempotent replay before production enablement.
+- The dogfood gate is now staged: operator-off Stage A proves coverage, exact-head evidence, privacy, and zero writes; operator-on Stage B runs only in a disposable consumer and proves comment creation, fallback-to-CI replacement, duplicate reconciliation, append-only arbiter disposition events, and exact-retry suppression before production enablement.
 
 ### Residual implementation gates
 
