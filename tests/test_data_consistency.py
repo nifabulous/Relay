@@ -4244,6 +4244,9 @@ NORTH_EAST_AFRICA_SSI_COVERAGE = [
     ("FBNINGLAXXX", "First Bank of Nigeria", {"USD", "GBP", "EUR"}),
     ("ZEIBNGLAXXX", "Zenith Bank", {"USD", "GBP", "EUR"}),
     ("NBKEKENXXXX", "NATIONAL BANK OF KENYA LTD.", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "INR", "KES", "NOK", "SEK", "TZS", "UGX", "USD", "ZAR"}),
+    ("SBICKENXXXX", "STANBIC BANK KENYA LIMITED", {"AED", "AUD", "BIF", "CAD", "CHF", "CNY", "EUR", "GBP", "GHS", "INR", "JPY", "KES", "MUR", "RWF", "SEK", "SSP", "TZS", "UGX", "USD", "ZAR"}),
+    ("SBMKKENAXXX", "SBM BANK (KENYA) LIMITED", {"AUD", "CAD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("SIDNKENAXXX", "SIDIAN BANK LIMITED", {"AUD", "CAD", "EUR", "GBP", "JPY", "KES", "RWF", "TZS", "UGX", "USD", "ZAR"}),
 ]
 
 

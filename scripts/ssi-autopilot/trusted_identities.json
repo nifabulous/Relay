@@ -986,5 +986,29 @@
       "nationalbank.co.ke"
     ],
     "settlement_terms_published": false
+  },
+  "SBICKENX": {
+    "name": "STANBIC BANK KENYA LIMITED",
+    "country": "KE",
+    "domains": [
+      "stanbicbank.co.ke"
+    ],
+    "settlement_terms_published": false
+  },
+  "SBMKKENA": {
+    "name": "SBM BANK (KENYA) LIMITED",
+    "country": "KE",
+    "domains": [
+      "sbmbank.co.ke"
+    ],
+    "settlement_terms_published": false
+  },
+  "SIDNKENA": {
+    "name": "SIDIAN BANK LIMITED",
+    "country": "KE",
+    "domains": [
+      "sidianbank.co.ke"
+    ],
+    "settlement_terms_published": false
   }
 }
