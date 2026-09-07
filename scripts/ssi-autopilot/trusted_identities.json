@@ -754,5 +754,45 @@
       "bsic-guinee.com"
     ],
     "settlement_terms_published": false
+  },
+  "TCZBMEPG": {
+    "name": "Ziraat Bank Montenegro",
+    "country": "ME",
+    "domains": [
+      "ziraatbank.me"
+    ],
+    "settlement_terms_published": false
+  },
+  "VALLMTMT": {
+    "name": "Bank of Valletta plc",
+    "country": "MT",
+    "domains": [
+      "bov.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "MBWMMTMT": {
+    "name": "MeDirect Bank Malta",
+    "country": "MT",
+    "domains": [
+      "medirect.com.mt"
+    ],
+    "settlement_terms_published": false
+  },
+  "GLITISRE": {
+    "name": "Islandsbanki hf.",
+    "country": "IS",
+    "domains": [
+      "islandsbanki.is"
+    ],
+    "settlement_terms_published": false
+  },
+  "MPBAISRE": {
+    "name": "Kvika banki hf.",
+    "country": "IS",
+    "domains": [
+      "kvika.is"
+    ],
+    "settlement_terms_published": false
   }
 }

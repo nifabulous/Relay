@@ -3830,3 +3830,85 @@ class TestWestCentralAfricaWave4SsiCoverage:
             "west-central-africa-wave4: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: west-central-africa-wave4 ----
+
+
+# ---- autopilot-generated coverage tests: europe-remaining-wave5 ----
+EUROPE_REMAINING_WAVE5_SSI_COVERAGE = [
+    ("GLITISREXXX", "Islandsbanki hf.", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "NZD", "PLN", "SEK", "USD"}),
+    ("MBWMMTMTXXX", "MeDirect Bank Malta", {"AUD", "CAD", "CHF", "CZK", "DKK", "GBP", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "USD", "ZAR"}),
+    ("MPBAISREXXX", "Kvika banki hf.", {"CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("TCZBMEPGXXX", "Ziraat Bank Montenegro", {"EUR", "TRY", "USD"}),
+    ("VALLMTMTXXX", "Bank of Valletta plc", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "JPY", "KWD", "MXN", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "TND", "TRY", "USD", "ZAR"}),
+]
+
+
+class TestEuropeRemainingWave5SsiCoverage:
+    def test_europe_remaining_wave5_banks_have_seeded_ssi_records(self):
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, name, currencies in EUROPE_REMAINING_WAVE5_SSI_COVERAGE:
+            have = seeded.get(bic, set())
+            missing = currencies - have
+            assert not missing, (
+                f"{name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+            )
+
+    def test_europe_remaining_wave5_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        missing = [
+            bic for bic, _name, _currencies in EUROPE_REMAINING_WAVE5_SSI_COVERAGE
+            if bic not in bank_bics
+        ]
+        assert not missing, (
+            f"europe-remaining-wave5 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_europe_remaining_wave5_seeded_records_are_semantically_valid(self):
+        """Every seeded record for this region must satisfy the validator rules:
+        masked accounts inside the region's block, charge/value dates from the
+        manifest defaults, a provenance status and citation, no bic_only
+        smuggled fields, and unique (beneficiary, currency, correspondent) keys.
+        Pre-block-era legacy placeholders are enumerated in the manifest's
+        legacy_accounts and may not be masked in-block; a new fold record can
+        never join that set without an explicit manifest edit."""
+        mask = re.compile(r"^ACCT-910047\d\d$")
+        allowed_charge = {'SHA', 'OUR', 'BEN'}
+        allowed_value = {'spot', 'T+1', 'T+2'}
+        statuses = {"unverified", "illustrative", "published", "archived"}
+        forbidden = {}
+        legacy = {}
+        banks = {bic for bic, _name, _currencies in EUROPE_REMAINING_WAVE5_SSI_COVERAGE}
+        rows = [row for row in SSI_RECORDS if row[0] in banks]
+        assert rows, "europe-remaining-wave5: no seeded records for the seedable banks"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            assert bic[:8] not in forbidden, f"{bic}: BIC is on the forbidden list"
+            int_acct, ben_acct, charge, vdate = row[5], row[6], row[7], row[8]
+            if len(row) > 13 and row[13] is True:
+                assert int_acct is None and ben_acct is None and charge is None and vdate is None, (
+                    f"{bic}/{ccy}: bic_only row must not carry accounts, charge, or value date"
+                )
+                continue
+            assert int_acct is not None and (mask.match(int_acct) or int_acct in legacy), f"{bic}/{ccy}: nostro {int_acct} is neither an ACCT-910047xx masked account nor a manifest legacy placeholder"
+            assert ben_acct is not None and (mask.match(ben_acct) or ben_acct in legacy), f"{bic}/{ccy}: beneficiary account {ben_acct} is neither an ACCT-910047xx masked account nor a manifest legacy placeholder"
+            assert charge in allowed_charge, f"{bic}/{ccy}: charge {charge} not in {allowed_charge}"
+            assert vdate in allowed_value, f"{bic}/{ccy}: value date {vdate} not in {allowed_value}"
+        for row in rows:
+            bic, ccy = row[0], row[2]
+            if len(row) < 12:
+                continue
+            if row[10] is not None:
+                assert len(row[10]) == 10 and row[10][4] == "-" and row[10][7] == "-", (
+                    f"{bic}/{ccy}: as_of {row[10]!r} must be written YYYY-MM-DD"
+                )
+            assert row[11] in statuses, f"{bic}/{ccy}: status {row[11]!r} not in {statuses}"
+            assert row[9] and row[9].startswith("Source:"), (
+                f"{bic}/{ccy}: notes must cite the source"
+            )
+        keys = [(row[0], row[2], row[3]) for row in rows]
+        assert len(keys) == len(set(keys)), (
+            "europe-remaining-wave5: duplicate (beneficiary, currency, correspondent) keys"
+        )
+# ---- end autopilot-generated coverage tests: europe-remaining-wave5 ----
