@@ -16,6 +16,7 @@ import pytest
 from app.models import SSI
 from app.schemas import BankInfo
 from app.services.routing import (
+    _has_unstructured_multi_hop_label,
     _is_routable_ssi,
     _is_usable_ssi_account,
     _normalize_bic_input,
@@ -98,6 +99,26 @@ def test_inferred_settlement_terms_are_never_routable():
         status="published",
         terms_inferred=True,
     )
+    assert not _is_routable_ssi(row)
+
+
+def test_unstructured_multi_hop_correspondent_is_never_routable():
+    """A free-text ``via`` hop cannot be safely represented by one BIC."""
+    row = SSI(
+        beneficiary_bic="TESTCOBBXXX",
+        currency="USD",
+        intermediary_bic="ROYCCAT2XXX",
+        intermediary_bank_name="Royal Bank of Canada, Toronto (credit via JPM London)",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: bank document.",
+        as_of="2026-08-19",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    assert _has_unstructured_multi_hop_label(row.intermediary_bank_name)
     assert not _is_routable_ssi(row)
 
 # ===========================================================================
@@ -572,6 +593,21 @@ class TestSuggestFromSSI:
                 currency="USD",
                 intermediary_bic="MRMDUS33XXX",
                 intermediary_bank_name="HSBC Bank USA",
+                intermediary_account="123456789",
+                beneficiary_account="987654321",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: test.",
+                as_of="2026-08-19",
+                verified_by="Treasury Operations",
+                status="published",
+            ),
+            SSI(
+                beneficiary_bic="TESTUS33XXX",
+                beneficiary_bank_name="Test Bank",
+                currency="USD",
+                intermediary_bic="ROYCCAT2XXX",
+                intermediary_bank_name="Royal Bank of Canada, Toronto (credit via JPM London)",
                 intermediary_account="123456789",
                 beneficiary_account="987654321",
                 charge_code="SHA",
