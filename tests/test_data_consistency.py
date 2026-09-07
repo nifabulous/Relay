@@ -4006,6 +4006,9 @@ CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("LBRTGE22XXX", "JSC Liberty Bank", {"AMD", "AUD", "AZN", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "HKD", "TRY", "USD"}),
     ("SPRBTJ22XXX", "Spitamen Bank CJSC", {"CNY", "EUR", "USD"}),
     ("TEBAGE22XXX", "JSC Terabank", {"AED", "CHF", "CNY", "EUR", "GBP", "GEL", "JPY", "TRY", "USD"}),
+    ("ACABAZ22XXX", "AccessBank CJSC", {"EUR", "GBP", "RUB", "TRY", "USD"}),
+    ("ARMCAM22XXX", "Araratbank OJSC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "USD"}),
+    ("UBAZAZ22XXX", "Unibank CB", {"EUR", "GBP", "GEL", "RUB", "USD"}),
 ]
 
 
@@ -4079,8 +4082,6 @@ class TestCaucasusWave5SsiCoverage:
             "caucasus-wave5: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: caucasus-wave5 ----
-
-
 # ---- autopilot-generated coverage tests: uzbekistan-wave6 ----
 UZBEKISTAN_WAVE6_SSI_COVERAGE = [
     ("UZHOUZ22XXX", "Ipoteka Bank JSC", {"CHF", "CNY", "EUR", "RUB", "USD"}),
