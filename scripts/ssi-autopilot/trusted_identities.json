@@ -738,5 +738,21 @@
       "ukrgasbank.com"
     ],
     "settlement_terms_published": false
+  },
+  "BSGNGNGN": {
+    "name": "BSIC Guinea",
+    "country": "GN",
+    "domains": [
+      "bsic-guinee.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "BSAHBJBJ": {
+    "name": "BSIC Benin",
+    "country": "BJ",
+    "domains": [
+      "bsic-guinee.com"
+    ],
+    "settlement_terms_published": false
   }
 }

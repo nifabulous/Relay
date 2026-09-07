@@ -22937,6 +22937,315 @@
           "admitted_record_digest": "5a51acfe4808494d2dbca319d728127f9cf953a27c35c812384c2f1b2de5887c"
         }
       ]
+    },
+    {
+      "name": "west-central-africa-wave4",
+      "label": "West/Central Africa correspondent networks (wave 4)",
+      "countries": [
+        "GN",
+        "BJ"
+      ],
+      "masked_block": 91004200,
+      "note": "2026-09-06 desk research from BSIC Guinea's bank-owned correspondent pages. Each beneficiary lists EUR and USD settlement relationships across UBAF Paris, BIA Paris, A&T Bank, Alubaf Tunis, and BMCE Madrid. Only UBAF rows publish account/IBAN values and are represented as masked ordinary rows; all other rows are BIC-only because no account, charge-code, or value-date terms were published. A&T's USD source prints a parenthesized IRVTUS3N intermediary; that legacy/parenthesized presentation is retained in the correspondent label while the canonical BIC is used for validation. No corridor rules inferred.",
+      "forbidden_bics": [],
+      "banks": [
+        {
+          "bic8": "BSAHBJBJ",
+          "name": "BSIC Benin",
+          "country": "BJ",
+          "currencies": [
+            "EUR",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "bsic-guinee.com"
+          ],
+          "admitted_records": [
+            {
+              "currency": "EUR",
+              "correspondent": "Alubaf International Bank Tunis",
+              "int_bic": "ALUBTNTT",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "A&T Bank",
+              "int_bic": "ATUBTRIS",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "BIA Paris",
+              "int_bic": "BIARFRPP",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "BMCE Bank International Madrid",
+              "int_bic": "BMCEESMM",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "UBAF Paris",
+              "int_bic": "UBAFFRPP",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": "ACCT-91004205",
+              "with_an": "ACCT-91004206",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Alubaf International Bank Tunis",
+              "int_bic": "ALUBTNTT",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "BMCE Bank International Madrid",
+              "int_bic": "BMCEESMM",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "BIA Paris via JPMorgan Chase",
+              "int_bic": "CHASUS33",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "A&T Bank (published parenthesized intermediary)",
+              "int_bic": "IRVTUS3N",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "UBAF Paris",
+              "int_bic": "UBAFFRPP",
+              "source": "https://bsic-guinee.com/benin/reseaux/nos-correspondants/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": "ACCT-91004207",
+              "with_an": "ACCT-91004208",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "aba5848ea8ddf231e8169fb1b01049da4cd1289cf4a40936bb0c402267ab6b93"
+        },
+        {
+          "bic8": "BSGNGNGN",
+          "name": "BSIC Guinea",
+          "country": "GN",
+          "currencies": [
+            "EUR",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "bsic-guinee.com"
+          ],
+          "admitted_records": [
+            {
+              "currency": "EUR",
+              "correspondent": "Alubaf International Bank Tunis",
+              "int_bic": "ALUBTNTT",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "A&T Bank",
+              "int_bic": "ATUBTRIS",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "BIA Paris",
+              "int_bic": "BIARFRPP",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "BMCE Bank International Madrid",
+              "int_bic": "BMCEESMM",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "UBAF Paris",
+              "int_bic": "UBAFFRPP",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": "ACCT-91004201",
+              "with_an": "ACCT-91004202",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Alubaf International Bank Tunis",
+              "int_bic": "ALUBTNTT",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "BMCE Bank International Madrid",
+              "int_bic": "BMCEESMM",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "BIA Paris via JPMorgan Chase",
+              "int_bic": "CHASUS33",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "A&T Bank (published parenthesized intermediary)",
+              "int_bic": "IRVTUS3N",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "UBAF Paris",
+              "int_bic": "UBAFFRPP",
+              "source": "https://www.bsic-guinee.com/notre-reseau/",
+              "as_of": "2026-09-06",
+              "status": "unverified",
+              "nostro": "ACCT-91004203",
+              "with_an": "ACCT-91004204",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "36b98134ca91bc943f757a99f342640eb64e15b5a189ee2b1e52b2464d35068b"
+        }
+      ]
     }
   ]
 }
