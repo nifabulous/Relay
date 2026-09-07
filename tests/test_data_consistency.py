@@ -31,6 +31,7 @@ from sqlalchemy.pool import StaticPool
 from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_ids
 from app.db import Base
 from app.models import SSI, Bank, CorridorRule
+from app.services.routing import _is_routable_ssi
 from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
 
 _SSI_MANIFEST_PATH = (
@@ -81,6 +82,28 @@ def _canonical_ssi_note(record):
     )
 
 
+def _ssi_from_seed_row(row):
+    """Build the routing-policy view used to audit an expanded seed row."""
+    provenance = list(row[10:])
+    return SSI(
+        beneficiary_bic=row[0],
+        beneficiary_bank_name=row[1],
+        currency=row[2],
+        intermediary_bic=row[3],
+        intermediary_bank_name=row[4],
+        intermediary_account=row[5],
+        beneficiary_account=row[6],
+        charge_code=row[7],
+        value_date=row[8],
+        notes=row[9],
+        as_of=provenance[0] if provenance else None,
+        status=provenance[1] if len(provenance) > 1 else "illustrative",
+        verified_by=provenance[2] if len(provenance) > 2 else None,
+        bic_only=provenance[3] if len(provenance) > 3 else False,
+        terms_inferred=provenance[4] if len(provenance) > 4 else False,
+    )
+
+
 def _assert_manifest_region_records(region_name, ssi_records, banks):
     """Check every admitted record field, not only aggregate currency counts.
 
@@ -114,6 +137,32 @@ def _assert_manifest_region_records(region_name, ssi_records, banks):
     defaults = _load_ssi_manifest()["defaults"]
     allowed_charge = set(defaults.get("charge_codes", ()))
     allowed_value = set(defaults.get("value_dates", ()))
+
+    # A bank may have legacy seed rows in addition to the records admitted by
+    # this manifest. Those rows are allowed to remain informational, but an
+    # unlisted row must never become an executable route by accident. This is
+    # the negative side of the manifest contract: every extra row for a bank
+    # with admitted records is still checked by the shared routing predicate.
+    admitted_bics = {
+        bank["bic8"] + "XXX"
+        for bank in seedable
+        if bank.get("admitted_records")
+    }
+    admitted_keys = {
+        (
+            bank["bic8"] + "XXX",
+            record["currency"].strip().upper(),
+            _canonical_ssi_bic(record["int_bic"]),
+        )
+        for bank in seedable
+        for record in bank.get("admitted_records") or []
+    }
+    for row in rows:
+        key = (row[0], row[2], _canonical_ssi_bic(row[3]))
+        if row[0] in admitted_bics and key not in admitted_keys:
+            assert not _is_routable_ssi(_ssi_from_seed_row(row)), (
+                f"{region_name}: unlisted seed row became routable: {key}"
+            )
 
     checked = 0
     for bank in seedable:
