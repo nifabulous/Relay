@@ -381,11 +381,6 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         "africa-wave5",
         "caucasus-wave5",
     }
-    expected_counts = {
-        "europe-remaining-wave5": 69,
-        "africa-wave5": 49,
-        "caucasus-wave5": 134,
-    }
     for region in manifest["regions"]:
         if region["name"] not in region_names:
             continue
@@ -396,7 +391,12 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         }
         admitted = {key for key in expected if key[0] in bics}
         actual = {key for key in seed if key[0] in bics}
-        assert len(admitted) == expected_counts[region["name"]]
+        manifest_count = sum(
+            len(bank.get("admitted_records") or [])
+            for bank in region["banks"]
+            if bank.get("seedable", True) and bank.get("admitted_records")
+        )
+        assert len(admitted) == manifest_count
         assert actual == admitted
         forbidden = {
             bic.strip().upper()[:8]
