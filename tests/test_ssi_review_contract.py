@@ -192,3 +192,26 @@ def test_masked_bic_only_and_multi_hop_rows_cannot_enter_settlement_path(db_sess
     suggestions = suggest_from_ssi(db_session_clean, "GOODUS33XXX", "USD", "US")
     assert [suggestion.bic for suggestion in suggestions] == ["CITIUS33XXX"]
 
+
+def test_unibank_has_the_complete_six_currency_correspondent_matrix():
+    seed = _seed_index()
+    rows = [row for key, values in seed.items() if key[0] == "UBAZAZ22XXX" for row in values]
+    groups = {(row[2], _bic11(row[3])) for row in rows}
+    assert groups == {
+        ("EUR", "COBADEFFXXX"),
+        ("EUR", "SOGEFRPPXXX"),
+        ("GBP", "COBADEFFXXX"),
+        ("GEL", "BAGAGE22XXX"),
+        ("RUB", "ASANRU8XXXX"),
+        ("USD", "IRVTUS3NXXX"),
+    }
+    assert {row[5] for row in rows} == {"ACCT-91004699"}
+
+
+def test_namibia_names_only_rows_are_nonselectable():
+    seed = _seed_index()
+    rows = [row for key, values in seed.items() if key[0] == "FIRNNANXXXX" for row in values]
+    assert {row[2] for row in rows} == {"AUD", "CHF", "EUR", "GBP", "USD"}
+    assert all(row[13] is True for row in rows)
+    assert all(row[5:9] == (None, None, None, None) for row in rows)
+    assert all(not _is_routable_ssi(_row_object(row)) for row in rows)
