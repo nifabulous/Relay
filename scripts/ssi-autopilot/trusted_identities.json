@@ -970,5 +970,13 @@
       "fnbnamibia.com.na"
     ],
     "settlement_terms_published": false
+  },
+  "HBLILKLX": {
+    "name": "HATTON NATIONAL BANK PLC",
+    "country": "LK",
+    "domains": [
+      "hnb.lk"
+    ],
+    "settlement_terms_published": false
   }
 }

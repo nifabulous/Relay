@@ -225,7 +225,7 @@ Note the four slashes in the SQLite URL: `sqlite://` plus the absolute path
 ### What the ephemeral database means
 
 Each function instance gets its own `/tmp`, recreated and reseeded on cold
-start. Everything the app reads — 368 banks, 2,532 SSI records, 72 corridor
+start. Everything the app reads — 368 banks, 2,570 SSI records, 72 corridor
 rules — comes from `seed.py`, so reads behave identically to local. Writes do
 not persist: a simulated gpi timeline created through `/api/track/create` can
 return 404 from `/api/track/{uetr}` if the follow-up request lands on a
