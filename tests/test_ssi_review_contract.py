@@ -270,3 +270,50 @@ def test_manifest_exclusions_and_extra_rows_are_fail_closed():
             assert all(
                 not _is_routable_ssi(_row_object(row)) for row in rows
             ), (region["name"], key)
+
+
+def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
+    """The 215-row Asia-Pacific expansion has no unlisted seed identities."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "asia-pacific-wave4"
+    )
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    expected_keys = {key for key in expected if key[0] in beneficiary_bics}
+    actual_keys = {key for key in seed if key[0] in beneficiary_bics}
+    assert len(expected_keys) == 215
+    assert actual_keys == expected_keys
+    assert all(
+        not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
+    )
+
+
+def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
+    """The 323-row Europe expansion preserves its exclusion semantics."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "europe-uncovered-wave4"
+    )
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    expected_keys = {key for key in expected if key[0] in beneficiary_bics}
+    actual_keys = {key for key in seed if key[0] in beneficiary_bics}
+    assert len(expected_keys) == 323
+    assert actual_keys == expected_keys
+    assert all(key[0][:8] != key[2][:8] for key in actual_keys)
+    assert all(
+        not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
+    )
