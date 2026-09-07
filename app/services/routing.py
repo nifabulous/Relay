@@ -178,6 +178,17 @@ def _is_usable_ssi_account(value: Optional[str]) -> bool:
     return True
 
 
+def _has_unstructured_multi_hop_label(value: Optional[str]) -> bool:
+    """Detect a second correspondent hidden in a free-text bank label.
+
+    The SSI schema currently has one intermediary BIC. A label such as
+    ``"RBC Toronto (credit via JPM London)"`` cannot be represented as an
+    executable chain, because selecting it would silently drop the second
+    hop. Keep these rows informational until a structured chain field exists.
+    """
+    return isinstance(value, str) and re.search(r"\bvia\b", value, re.IGNORECASE) is not None
+
+
 def _is_routable_ssi(row: SSI) -> bool:
     """Return whether an SSI is safe to use as an executable route.
 
@@ -189,6 +200,7 @@ def _is_routable_ssi(row: SSI) -> bool:
     return (
         not row.bic_only
         and not row.terms_inferred
+        and not _has_unstructured_multi_hop_label(row.intermediary_bank_name)
         and row.status == "published"
         and _has_usable_text(row.as_of)
         and _has_usable_text(row.verified_by)
