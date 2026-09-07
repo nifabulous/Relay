@@ -60,12 +60,15 @@ they improve auditability or reduce the chance of a false disposition.
    PR-scoped writer, include the decision digest in the step summary/artifact,
    and add a replay test that runs two writers against the same head.
 
-3. [x] **P1 — fan out `workflow_run` evidence across all associated PRs.**
+3. [x] **P1 — preserve complete `workflow_run` coverage with bounded fan-out.**
    Implemented in the caller templates, reusable workflow contract, and Relay
    caller. The selector de-duplicates associated numbers, re-fetches each PR,
-   keeps only
-   open exact-head matches, and sends one explicit PR number per matrix job;
-   missing/unverifiable targets select none rather than choosing index 0.
+   keeps only open exact-head matches, and sends one explicit PR number per
+   matrix job. An empty association payload falls back to a unique open PR at
+   the run head.
+   The caller processes up to 20 associations in one bounded batch. Above that
+   limit it fails visibly, and manual dispatch is the explicit continuation path
+   for each PR rather than silently dropping the tail or selecting index 0.
 
 4. **P2 — wire arbiter thresholds through one visible configuration path.**
    `ArbiterConfig` now has the correct defaults, but the CLI still constructs
@@ -101,8 +104,10 @@ These are decisions/verification steps, not more fixer commits:
   `ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231`, including its
   `pull-requests: write` comment-posting contract and job-level permissions.
   **Approved.**
-- [x] Require full associated-PR fan-out for `workflow_run` before merge
-  (`workflow-run-first-pr-only` is not sufficient). **Approved.**
+- [x] Require complete associated-PR coverage for `workflow_run` before merge
+  (`workflow-run-first-pr-only` is not sufficient): one bounded automatic batch,
+  with visible failure and explicit per-PR manual continuation on overflow.
+  **Approved.**
 - After merge, validate a same-repository PR, an approved fork, an
   unapproved/revoked fork, a multi-PR `workflow_run`, and one successful posted
   review/arbiter result on the exact new head.

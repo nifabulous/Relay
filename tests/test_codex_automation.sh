@@ -396,9 +396,14 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'MAX_WORKFLOW_RUN_ASSOCIATIONS=20'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_TARGETS='
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_TARGETS=8'
-require_text '.github/workflows/loopkeeper-pr-review.yml' 'declare -A seen=()'
+  'commits/${RUN_HEAD_SHA}/pulls?per_page=100'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'workflow_run has no associated PRs; recovering targets from the run head'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  '[.[]? | .number? | select(type == "number")] | unique | .[]'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'gh api "repos/${GH_REPO}/pulls/${pr}"'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -411,6 +416,8 @@ refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' '  schedule:'
 require_text 'docs/superpowers/specs/2026-08-26-loopkeeper-extraction-design.md' \
   'The generic PR caller intentionally has no targetless `schedule` trigger.'
+require_text 'docs/loopkeeper-improvements.md' \
+  'manual dispatch is the explicit continuation path'
 
 ruby_status=0
 ruby -ryaml <<'RUBY' || ruby_status=1
@@ -429,6 +436,74 @@ RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
 fi
+
+# Execute the embedded selector with a deterministic gh stub so the edge cases
+# are behavioral regressions, not only text contracts.
+SELECTOR_SCRIPT="$STAGING/loopkeeper-selector.sh"
+ruby -ryaml -e '
+  workflow = YAML.load_file(".github/workflows/loopkeeper-pr-review.yml")
+  step = workflow.fetch("jobs").fetch("targets").fetch("steps").find { |item| item["id"] == "select" }
+  print step.fetch("run")
+' >"$SELECTOR_SCRIPT"
+chmod +x "$SELECTOR_SCRIPT"
+mkdir -p "$STAGING/loopkeeper-bin"
+ln -s "$ROOT/tests/fixtures/fake_loopkeeper_selector_gh" "$STAGING/loopkeeper-bin/gh"
+SELECTOR_HEAD_SHA="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+run_loopkeeper_selector() {
+  local associations="$1"
+  local output_file="$2"
+  local summary_file="$3"
+  env \
+    PATH="$STAGING/loopkeeper-bin:$PATH" \
+    FAKE_HEAD_SHA="$SELECTOR_HEAD_SHA" \
+    GH_REPO="nifabulous/Relay" \
+    EVENT_NAME="workflow_run" \
+    DIRECT_PR_NUMBER="0" \
+    RUN_SOURCE_EVENT="pull_request" \
+    RUN_HEAD_SHA="$SELECTOR_HEAD_SHA" \
+    RUN_PULL_REQUESTS="$associations" \
+    GITHUB_OUTPUT="$output_file" \
+    GITHUB_STEP_SUMMARY="$summary_file" \
+    bash "$SELECTOR_SCRIPT"
+}
+
+SELECTOR_OUTPUT="$STAGING/loopkeeper-output"
+SELECTOR_SUMMARY="$STAGING/loopkeeper-summary"
+nine_associations="$(jq -nc '[range(1; 10) | {number: .}]')"
+run_loopkeeper_selector "$nine_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector rejected nine bounded exact-head PRs.'
+require_text_from_file() {
+  local file="$1"
+  local text="$2"
+  grep -Fq -- "$text" "$file" || fail "missing $text in $file"
+}
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1,2,3,4,5,6,7,8,9]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not recover an empty association payload.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+mixed_associations='[{"number":1},{"number":101},{"number":102}]'
+run_loopkeeper_selector "$mixed_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector failed while filtering closed or stale PRs.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+if run_loopkeeper_selector "$(jq -nc '[range(1; 22) | {number: .}]')" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector silently accepted more than 20 associations.'
+fi
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+run_loopkeeper_selector '[{"number":1},{"number":103}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector should fail closed without publishing a partial target set.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \
   'actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs'

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "${1:-}" == "api" ]] || exit 2
+endpoint="${2:-}"
+case "$endpoint" in
+  repos/*/commits/*/pulls?per_page=100)
+    printf '[{"number":7}]\n'
+    ;;
+  repos/*/pulls/*)
+    pr="${endpoint##*/}"
+    [[ "$pr" != "103" ]] || exit 1
+    state="open"
+    head_sha="${FAKE_HEAD_SHA:?}"
+    [[ "$pr" != "101" ]] || state="closed"
+    [[ "$pr" != "102" ]] || head_sha="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    printf '{"state":"%s","head_sha":"%s"}\n' "$state" "$head_sha"
+    ;;
+  *)
+    exit 2
+    ;;
+esac
