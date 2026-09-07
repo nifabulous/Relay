@@ -5,7 +5,7 @@ set -euo pipefail
 endpoint="${2:-}"
 case "$endpoint" in
   repos/*/commits/*/pulls?per_page=100)
-    printf '[{"number":7}]\n'
+    printf '[{"number":7},{"number":102}]\n'
     ;;
   repos/*/pulls/*)
     pr="${endpoint##*/}"

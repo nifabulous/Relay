@@ -65,10 +65,10 @@ they improve auditability or reduce the chance of a false disposition.
    caller. The selector de-duplicates associated numbers, re-fetches each PR,
    keeps only open exact-head matches, and sends one explicit PR number per
    matrix job. An empty association payload falls back to a unique open PR at
-   the run head.
-   The caller processes up to 20 associations in one bounded batch. Above that
-   limit it fails visibly, and manual dispatch is the explicit continuation path
-   for each PR rather than silently dropping the tail or selecting index 0.
+   the run head after applying the same exact-head filter. The caller does not
+   impose a smaller association cap. Every GitHub-supplied target reaches the
+   filter; execution remains bounded by the five-minute selector timeout and
+   GitHub's matrix limits.
 
 4. **P2 — wire arbiter thresholds through one visible configuration path.**
    `ArbiterConfig` now has the correct defaults, but the CLI still constructs
@@ -105,9 +105,9 @@ These are decisions/verification steps, not more fixer commits:
   `pull-requests: write` comment-posting contract and job-level permissions.
   **Approved.**
 - [x] Require complete associated-PR coverage for `workflow_run` before merge
-  (`workflow-run-first-pr-only` is not sufficient): one bounded automatic batch,
-  with visible failure and explicit per-PR manual continuation on overflow.
-  **Approved.**
+  (`workflow-run-first-pr-only` is not sufficient). Every GitHub-supplied
+  association must reach exact-head filtering without a smaller caller-owned
+  drop cap. **Approved.**
 - After merge, validate a same-repository PR, an approved fork, an
   unapproved/revoked fork, a multi-PR `workflow_run`, and one successful posted
   review/arbiter result on the exact new head.

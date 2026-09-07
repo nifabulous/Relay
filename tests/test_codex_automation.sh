@@ -394,8 +394,8 @@ refuse_text '.github/workflows/codex-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'targets:'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
-require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_ASSOCIATIONS=20'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_ASSOCIATIONS='
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   'MAX_WORKFLOW_RUN_TARGETS='
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -417,7 +417,7 @@ refuse_text '.github/workflows/loopkeeper-pr-review.yml' '  schedule:'
 require_text 'docs/superpowers/specs/2026-08-26-loopkeeper-extraction-design.md' \
   'The generic PR caller intentionally has no targetless `schedule` trigger.'
 require_text 'docs/loopkeeper-improvements.md' \
-  'manual dispatch is the explicit continuation path'
+  'impose a smaller association cap'
 
 ruby_status=0
 ruby -ryaml <<'RUBY' || ruby_status=1
@@ -495,9 +495,11 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-if run_loopkeeper_selector "$(jq -nc '[range(1; 22) | {number: .}]')" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
-  fail 'Loopkeeper selector silently accepted more than 20 associations.'
-fi
+twenty_one_associations="$(jq -nc '[range(1; 22) | {number: .}]')"
+run_loopkeeper_selector "$twenty_one_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector dropped associations above a caller-owned cap.'
+require_text_from_file "$SELECTOR_OUTPUT" \
+  'pr_numbers=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"

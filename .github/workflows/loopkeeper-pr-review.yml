@@ -66,7 +66,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          MAX_WORKFLOW_RUN_ASSOCIATIONS=20
           [[ "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] || {
             echo "repository must be owner/name" >&2
             exit 2
@@ -91,6 +90,7 @@ jobs:
           targets_file="$(mktemp)"
           response_file="$(mktemp)"
           trap 'rm -f "$targets_file" "$response_file"' EXIT
+          fallback_recovery=0
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
             if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100" \
@@ -99,12 +99,7 @@ jobs:
               echo "could not recover PR associations from the run head" >&2
               exit 1
             fi
-            fallback_count="$(jq 'length' "$response_file")"
-            if [[ "$fallback_count" != "1" ]]; then
-              echo "run-head recovery found $fallback_count open PRs; a unique target is required" >&2
-              echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
-              exit 0
-            fi
+            fallback_recovery=1
             RUN_PULL_REQUESTS="$(<"$response_file")"
           fi
           jq -e 'type == "array"' <<<"$RUN_PULL_REQUESTS" >/dev/null || {
@@ -112,13 +107,6 @@ jobs:
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           }
-          association_count="$(jq 'length' <<<"$RUN_PULL_REQUESTS")"
-          if (( association_count > MAX_WORKFLOW_RUN_ASSOCIATIONS )); then
-            echo "workflow_run associated $association_count PRs; maximum is $MAX_WORKFLOW_RUN_ASSOCIATIONS." >&2
-            echo "Use workflow_dispatch with an explicit pr_number for each target to continue." >&2
-            exit 1
-          fi
-
           selection_unavailable=0
           while IFS= read -r pr; do
             [[ "$pr" =~ ^[1-9][0-9]*$ ]] || continue
@@ -138,6 +126,12 @@ jobs:
 
           if (( selection_unavailable )); then
             echo "one or more associated PRs were unverifiable; selecting no PRs." >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          selected_count="$(wc -l <"$targets_file" | tr -d ' ')"
+          if (( fallback_recovery )) && [[ "$selected_count" != "1" ]]; then
+            echo "run-head recovery found $selected_count open exact-head PRs; a unique target is required" >&2
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           fi
