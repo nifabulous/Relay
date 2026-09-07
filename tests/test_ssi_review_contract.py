@@ -159,6 +159,30 @@ def test_published_status_is_required_for_an_explicit_settlement_instruction():
     assert _is_routable_ssi(row)
 
 
+def test_routable_predicate_rejects_masked_accounts_directly():
+    """A direct predicate caller cannot promote a redacted account row."""
+    row = SSI(
+        beneficiary_bic="MASKUS33XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank New York",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: contract test.",
+        as_of="2026-09-07",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    assert _is_routable_ssi(row)
+    for field in ("intermediary_account", "beneficiary_account"):
+        for masked in ("ACCT-91004901", "1234XX78", "[REDACTED]"):
+            setattr(row, field, masked)
+            assert not _is_routable_ssi(row), (field, masked)
+            setattr(row, field, "123456789")
+
+
 def test_masked_bic_only_and_multi_hop_rows_cannot_enter_settlement_path(db_session_clean):
     """The end-to-end SSI selector accepts only complete, explicit instructions."""
     rows = [
@@ -212,6 +236,40 @@ def test_masked_bic_only_and_multi_hop_rows_cannot_enter_settlement_path(db_sess
     assert suggest_from_ssi(db_session_clean, "MULTUS33XXX", "USD", "US") == []
     suggestions = suggest_from_ssi(db_session_clean, "GOODUS33XXX", "USD", "US")
     assert [suggestion.bic for suggestion in suggestions] == ["CITIUS33XXX"]
+
+
+def test_manifest_exclusions_and_extra_rows_are_fail_closed():
+    """Unlisted legacy rows and forbidden identities cannot become routes."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+
+    forbidden = {
+        bic.strip().upper()[:8]
+        for region in manifest["regions"]
+        for bic in region.get("forbidden_bics", [])
+    }
+    assert not {
+        row[0][:8] for row in SSI_RECORDS if row[0][:8] in forbidden
+    }
+
+    for region in manifest["regions"]:
+        banks = [
+            bank
+            for bank in region["banks"]
+            if bank.get("seedable", True) and bank.get("admitted_records")
+        ]
+        if not banks:
+            continue
+        beneficiary_bics = {bank["bic8"] + "XXX" for bank in banks}
+        admitted_keys = {
+            key for key in expected if key[0] in beneficiary_bics
+        }
+        for key, rows in seed.items():
+            if key[0] not in beneficiary_bics or key in admitted_keys:
+                continue
+            assert all(
+                not _is_routable_ssi(_row_object(row)) for row in rows
+            ), (region["name"], key)
 
 
 def test_unibank_has_the_complete_six_currency_correspondent_matrix():
