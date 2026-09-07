@@ -189,6 +189,20 @@ def _has_unstructured_multi_hop_label(value: Optional[str]) -> bool:
     return isinstance(value, str) and re.search(r"\bvia\b", value, re.IGNORECASE) is not None
 
 
+def _has_usable_ssi_accounts(row: SSI) -> bool:
+    """Require both account fields to be executable, not merely present.
+
+    SQL can cheaply remove NULL values, but it cannot distinguish a real
+    account from a redaction token such as ``ACCT-...`` or ``[REDACTED]``.
+    Keep this explicit in the shared predicate so every caller gets the same
+    non-selectability guarantee, including callers that bypass the SQL query.
+    """
+    return (
+        _is_usable_ssi_account(row.intermediary_account)
+        and _is_usable_ssi_account(row.beneficiary_account)
+    )
+
+
 def _is_routable_ssi(row: SSI) -> bool:
     """Return whether an SSI is safe to use as an executable route.
 
@@ -205,8 +219,7 @@ def _is_routable_ssi(row: SSI) -> bool:
         and _has_usable_text(row.as_of)
         and _has_usable_text(row.verified_by)
         and _has_usable_text(row.notes)
-        and _is_usable_ssi_account(row.intermediary_account)
-        and _is_usable_ssi_account(row.beneficiary_account)
+        and _has_usable_ssi_accounts(row)
         and row.charge_code in VALID_CHARGE_CODES
         and row.value_date in VALID_VALUE_DATES
     )
