@@ -2526,3 +2526,46 @@ class TestSouthernAfricaWave3SsiCoverage:
     def test_southern_africa_wave3_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("southern-africa-wave3", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: southern-africa-wave3 ----
+
+
+# ---- autopilot-generated coverage tests: asia-pacific-wave4 ----
+ASIA_PACIFIC_WAVE4_SSI_COVERAGE = [
+    ("ABAAKHPPXXX", "Advanced Bank of Asia Limited", {"AUD", "CAD", "CNY", "EUR", "GBP", "JPY", "SGD", "THB", "USD", "VND"}),
+    ("ADBLNPKAXXX", "Agricultural Development Bank Ltd.", {"AED", "AUD", "GBP", "INR", "JPY", "USD"}),
+    ("BAIDBNBBXXX", "Baiduri Bank Berhad", {"AED", "AUD", "BND", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "MYR", "NZD", "PHP", "SAR", "SGD", "THB", "USD"}),
+    ("BKCHBNBBXXX", "Bank of China (Hong Kong) Limited, Brunei Branch", {"AUD", "BND", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "NZD", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("CAXBMNUBXXX", "XacBank JSC", {"AUD", "CAD", "CNY", "EUR", "GBP", "HKD", "JPY", "KRW", "SGD", "USD"}),
+    ("CTZNNPKAXXX", "Citizens Bank International Limited", {"CNY", "EUR", "USD"}),
+    ("EVBLNPKAXXX", "Everest Bank Ltd.", {"AED", "AUD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("FTCCKHPPXXX", "Foreign Trade Bank of Cambodia", {"AUD", "CNY", "EUR", "GBP", "HKD", "JPY", "SGD", "THB", "USD"}),
+    ("LXBLNPKAXXX", "Laxmi Sunrise Bank Limited", {"AED", "AUD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("NARBNPKAXXX", "Nabil Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "INR", "JPY", "SGD", "USD"}),
+    ("PPCBKHPPXXX", "Phnom Penh Commercial Bank PLC", {"JPY", "KRW", "SGD", "THB", "USD"}),
+    ("TBOMMNUBXXX", "Transport and Development Bank LLC (TransBank)", {"CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "SGD", "TRY", "USD"}),
+]
+
+class TestAsiaPacificWave4SsiCoverage:
+
+    def test_asia_pacific_wave4_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("asia-pacific-wave4")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in ASIA_PACIFIC_WAVE4_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_asia_pacific_wave4_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("asia-pacific-wave4")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"asia-pacific-wave4 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_asia_pacific_wave4_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("asia-pacific-wave4", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: asia-pacific-wave4 ----
