@@ -4084,6 +4084,8 @@ class TestCaucasusWave5SsiCoverage:
 # ---- autopilot-generated coverage tests: uzbekistan-wave6 ----
 UZBEKISTAN_WAVE6_SSI_COVERAGE = [
     ("UZHOUZ22XXX", "Ipoteka Bank JSC", {"CHF", "CNY", "EUR", "RUB", "USD"}),
+    ("INIPUZ22XXX", "JSIC Bank Ipak Yuli", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "USD"}),
+    ("UJSIUZ22XXX", "Uzbek Industrial and Construction Bank (Uzpromstroybank)", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
 ]
 
 

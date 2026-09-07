@@ -930,5 +930,21 @@
       "ipotekabank.uz"
     ],
     "settlement_terms_published": false
+  },
+  "INIPUZ22": {
+    "name": "JSIC Bank Ipak Yuli",
+    "country": "UZ",
+    "domains": [
+      "ipakyulibank.uz"
+    ],
+    "settlement_terms_published": false
+  },
+  "UJSIUZ22": {
+    "name": "Uzbek Industrial and Construction Bank (Uzpromstroybank)",
+    "country": "UZ",
+    "domains": [
+      "sqb.uz"
+    ],
+    "settlement_terms_published": false
   }
 }
