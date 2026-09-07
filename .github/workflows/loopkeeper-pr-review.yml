@@ -91,10 +91,8 @@ jobs:
           targets_file="$(mktemp)"
           response_file="$(mktemp)"
           trap 'rm -f "$targets_file" "$response_file"' EXIT
-          fallback_recovery=0
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
-            fallback_recovery=1
             fallback_candidates='[]'
             for page in 1 2 3; do
               if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}" \
@@ -151,12 +149,6 @@ jobs:
           if (( selection_unavailable )); then
             echo "one or more associated PRs were unverifiable; failing target selection." >&2
             exit 1
-          fi
-          selected_count="$(wc -l <"$targets_file" | tr -d ' ')"
-          if (( fallback_recovery )) && [[ "$selected_count" != "1" ]]; then
-            echo "run-head recovery found $selected_count open exact-head PRs; a unique target is required" >&2
-            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
-            exit 0
           fi
           if [[ -s "$targets_file" ]]; then
             pr_numbers="$(jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)' <"$targets_file")"

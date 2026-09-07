@@ -489,6 +489,12 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
+FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector rejected multiple verified fallback targets.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7,8]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
 mixed_associations='[{"number":1},{"number":101},{"number":102}]'
 run_loopkeeper_selector "$mixed_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
   fail 'Loopkeeper selector failed while filtering closed or stale PRs.'

@@ -64,9 +64,10 @@ they improve auditability or reduce the chance of a false disposition.
    Implemented in the caller templates, reusable workflow contract, and Relay
    caller. The selector de-duplicates associated numbers, re-fetches each PR,
    keeps only open exact-head matches, and sends one explicit PR number per
-   matrix job. An empty association payload falls back to a unique open PR at
-   the run head after applying the same exact-head filter. The caller does not
-   impose a smaller association cap: it supports 256 unique targets, matching
+   matrix job. An empty association payload recovers all open PR candidates at
+   the run head, then applies the same exact-head filter and fans out every
+   verified match. The caller does not impose a smaller association cap: it
+   supports 256 unique targets, matching
    GitHub's maximum matrix job count, and fails visibly above that contract.
    Run-head recovery reads at most three 100-item API pages and also fails if a
    full third page means selection would be incomplete. Lookup failures are

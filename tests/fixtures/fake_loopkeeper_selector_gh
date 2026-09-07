@@ -5,11 +5,17 @@ set -euo pipefail
 endpoint="${2:-}"
 case "$endpoint" in
   repos/*/commits/*/pulls?per_page=100\&page=1)
-    if [[ "${FAKE_FALLBACK_MODE:-single}" == "paginated" ]]; then
-      printf '{"returned":100,"candidates":[{"number":102}]}\n'
-    else
-      printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
-    fi
+    case "${FAKE_FALLBACK_MODE:-single}" in
+      paginated)
+        printf '{"returned":100,"candidates":[{"number":102}]}\n'
+        ;;
+      multiple)
+        printf '{"returned":2,"candidates":[{"number":7},{"number":8}]}\n'
+        ;;
+      *)
+        printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
+        ;;
+    esac
     ;;
   repos/*/commits/*/pulls?per_page=100\&page=2)
     printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
