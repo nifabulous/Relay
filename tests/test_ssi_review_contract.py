@@ -370,3 +370,36 @@ def test_wave5_routable_rows_require_two_unmasked_accounts():
     row.intermediary_account = "123456789"
     row.beneficiary_account = "[REDACTED]"
     assert not _is_routable_ssi(row)
+
+
+def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
+    """Each wave-five region has exactly its admitted, non-forbidden keys."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region_names = {
+        "europe-remaining-wave5",
+        "africa-wave5",
+        "caucasus-wave5",
+    }
+    expected_counts = {
+        "europe-remaining-wave5": 69,
+        "africa-wave5": 49,
+        "caucasus-wave5": 134,
+    }
+    for region in manifest["regions"]:
+        if region["name"] not in region_names:
+            continue
+        bics = {
+            bank["bic8"] + "XXX"
+            for bank in region["banks"]
+            if bank.get("seedable", True) and bank.get("admitted_records")
+        }
+        admitted = {key for key in expected if key[0] in bics}
+        actual = {key for key in seed if key[0] in bics}
+        assert len(admitted) == expected_counts[region["name"]]
+        assert actual == admitted
+        forbidden = {
+            bic.strip().upper()[:8]
+            for bic in region.get("forbidden_bics", [])
+        }
+        assert all(key[0][:8] not in forbidden for key in actual)
