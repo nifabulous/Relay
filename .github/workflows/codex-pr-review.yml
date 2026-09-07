@@ -1,3 +1,15 @@
+# STANDBY — this workflow is the retired inlined reviewer, kept as a one-variable
+# rollback from Loopkeeper (.github/workflows/loopkeeper-pr-review.yml).
+#
+# Every job is gated on CODEX_PR_REVIEW_ENABLED, which is deliberately unset, so
+# nothing here runs. To roll back:
+#
+#   gh variable set CODEX_PR_REVIEW_ENABLED --body true
+#   gh variable set LOOPKEEPER_REVIEW_ENABLED --body false
+#
+# It is NOT gated on CODEX_REVIEW_ENABLED, which stays `true` for issue triage.
+# The file also remains a required fixture for tests/test_codex_automation.sh,
+# tests/test_model_pinning.py, and the arbiter tests.
 name: Codex PR Review
 
 on:
@@ -27,7 +39,7 @@ permissions:
 jobs:
   targets:
     if: >-
-      vars.CODEX_REVIEW_ENABLED == 'true' &&
+      vars.CODEX_PR_REVIEW_ENABLED == 'true' &&
       (github.event_name != 'workflow_run' ||
        github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
@@ -129,7 +141,7 @@ jobs:
   review:
     if: >-
       always() &&
-      vars.CODEX_REVIEW_ENABLED == 'true' &&
+      vars.CODEX_PR_REVIEW_ENABLED == 'true' &&
       needs.targets.result == 'success' &&
       needs.targets.outputs.pr_numbers != '[]'
     needs: [targets]
@@ -213,7 +225,7 @@ jobs:
   arbiter:
     if: >-
       always() &&
-      vars.CODEX_REVIEW_ENABLED == 'true' &&
+      vars.CODEX_PR_REVIEW_ENABLED == 'true' &&
       needs.targets.result == 'success' &&
       needs.targets.outputs.pr_numbers != '[]' &&
       (needs.review.result == 'success' ||
