@@ -898,5 +898,37 @@
       "kicb.net"
     ],
     "settlement_terms_published": false
+  },
+  "ARMCAM22": {
+    "name": "Araratbank OJSC",
+    "country": "AM",
+    "domains": [
+      "araratbank.am"
+    ],
+    "settlement_terms_published": false
+  },
+  "ACABAZ22": {
+    "name": "AccessBank CJSC",
+    "country": "AZ",
+    "domains": [
+      "accessbank.az"
+    ],
+    "settlement_terms_published": false
+  },
+  "UBAZAZ22": {
+    "name": "Unibank CB",
+    "country": "AZ",
+    "domains": [
+      "unibank.az"
+    ],
+    "settlement_terms_published": false
+  },
+  "UZHOUZ22": {
+    "name": "Ipoteka Bank JSC",
+    "country": "UZ",
+    "domains": [
+      "ipotekabank.uz"
+    ],
+    "settlement_terms_published": false
   }
 }
