@@ -978,5 +978,13 @@
       "hnb.lk"
     ],
     "settlement_terms_published": false
+  },
+  "NBKEKENX": {
+    "name": "NATIONAL BANK OF KENYA LTD.",
+    "country": "KE",
+    "domains": [
+      "nationalbank.co.ke"
+    ],
+    "settlement_terms_published": false
   }
 }

@@ -107,6 +107,9 @@ _LEGACY_FORBIDDEN_BICS = {
     # South Asian PDFs print these malformed Frankfurt spellings; preserve
     # the historical blocklist even though canonical admission rejects them.
     "SCBLDEFX", "SCBLDEFXXXX",
+    # The Kenya region inherited this malformed KCB blocklist entry before
+    # strict BIC validation was enabled; retain it as historical policy data.
+    "KCBKEN22",
 }
 
 
