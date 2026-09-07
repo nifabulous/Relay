@@ -65,10 +65,11 @@ def test_concrete_ssi_accounts_are_usable(value):
     assert _is_usable_ssi_account(value)
 
 
-def test_seeded_masked_ssi_is_never_routable(db_session):
+@pytest.mark.parametrize("beneficiary_bic", ["UZHOUZ22XXX", "UJSIUZ22XXX"])
+def test_seeded_masked_ssi_is_never_routable(db_session, beneficiary_bic):
     """Seeded account masks stay informational, never executable routes."""
     row = db_session.query(SSI).filter(
-        SSI.beneficiary_bic == "UZHOUZ22XXX",
+        SSI.beneficiary_bic == beneficiary_bic,
         SSI.currency == "USD",
     ).first()
     assert row is not None
