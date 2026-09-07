@@ -4,8 +4,15 @@ set -euo pipefail
 [[ "${1:-}" == "api" ]] || exit 2
 endpoint="${2:-}"
 case "$endpoint" in
-  repos/*/commits/*/pulls?per_page=100)
-    printf '[{"number":7},{"number":102}]\n'
+  repos/*/commits/*/pulls?per_page=100\&page=1)
+    if [[ "${FAKE_FALLBACK_MODE:-single}" == "paginated" ]]; then
+      printf '{"returned":100,"candidates":[{"number":102}]}\n'
+    else
+      printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
+    fi
+    ;;
+  repos/*/commits/*/pulls?per_page=100\&page=2)
+    printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
     ;;
   repos/*/pulls/*)
     pr="${endpoint##*/}"

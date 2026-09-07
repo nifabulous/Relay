@@ -66,6 +66,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          MAX_WORKFLOW_RUN_TARGETS=256
           [[ "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] || {
             echo "repository must be owner/name" >&2
             exit 2
@@ -93,20 +94,43 @@ jobs:
           fallback_recovery=0
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
-            if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100" \
-              --jq '[.[] | select(.state == "open") | {number: .number}]' \
-              >"$response_file" 2>/dev/null; then
-              echo "could not recover PR associations from the run head" >&2
-              exit 1
-            fi
             fallback_recovery=1
-            RUN_PULL_REQUESTS="$(<"$response_file")"
+            fallback_candidates='[]'
+            for page in 1 2 3; do
+              if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}" \
+                --jq '{returned: length, candidates: [.[] | select(.state == "open") | {number: .number}]}' \
+                >"$response_file" 2>/dev/null; then
+                echo "could not recover PR associations from the run head" >&2
+                exit 1
+              fi
+              page_returned="$(jq -r '.returned' "$response_file")"
+              fallback_candidates="$(
+                jq -cn \
+                  --argjson accumulated "$fallback_candidates" \
+                  --argjson page "$(<"$response_file")" \
+                  '$accumulated + $page.candidates'
+              )"
+              if (( page_returned < 100 )); then
+                break
+              fi
+              if (( page == 3 )); then
+                echo "run-head recovery exceeded three 100-item pages; refusing incomplete selection" >&2
+                exit 1
+              fi
+            done
+            RUN_PULL_REQUESTS="$fallback_candidates"
           fi
           jq -e 'type == "array"' <<<"$RUN_PULL_REQUESTS" >/dev/null || {
             echo "workflow_run.pull_requests was not an array; selecting no PRs." >&2
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           }
+          candidate_numbers="$(jq -c '[.[]? | .number? | select(type == "number")] | unique' <<<"$RUN_PULL_REQUESTS")"
+          candidate_count="$(jq 'length' <<<"$candidate_numbers")"
+          if (( candidate_count > MAX_WORKFLOW_RUN_TARGETS )); then
+            echo "$candidate_count unique PR targets exceed GitHub's $MAX_WORKFLOW_RUN_TARGETS-job matrix limit" >&2
+            exit 1
+          fi
           selection_unavailable=0
           while IFS= read -r pr; do
             [[ "$pr" =~ ^[1-9][0-9]*$ ]] || continue
@@ -122,12 +146,11 @@ jobs:
             if [[ "$state" == "open" && "$head_sha" == "$RUN_HEAD_SHA" ]]; then
               printf '%s\n' "$pr" >>"$targets_file"
             fi
-          done < <(jq -r '[.[]? | .number? | select(type == "number")] | unique | .[]' <<<"$RUN_PULL_REQUESTS")
+          done < <(jq -r '.[]' <<<"$candidate_numbers")
 
           if (( selection_unavailable )); then
-            echo "one or more associated PRs were unverifiable; selecting no PRs." >&2
-            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
-            exit 0
+            echo "one or more associated PRs were unverifiable; failing target selection." >&2
+            exit 1
           fi
           selected_count="$(wc -l <"$targets_file" | tr -d ' ')"
           if (( fallback_recovery )) && [[ "$selected_count" != "1" ]]; then

@@ -66,9 +66,11 @@ they improve auditability or reduce the chance of a false disposition.
    keeps only open exact-head matches, and sends one explicit PR number per
    matrix job. An empty association payload falls back to a unique open PR at
    the run head after applying the same exact-head filter. The caller does not
-   impose a smaller association cap. Every GitHub-supplied target reaches the
-   filter; execution remains bounded by the five-minute selector timeout and
-   GitHub's matrix limits.
+   impose a smaller association cap: it supports 256 unique targets, matching
+   GitHub's maximum matrix job count, and fails visibly above that contract.
+   Run-head recovery reads at most three 100-item API pages and also fails if a
+   full third page means selection would be incomplete. Lookup failures are
+   nonzero and retryable rather than successful empty reviews.
 
 4. **P2 — wire arbiter thresholds through one visible configuration path.**
    `ArbiterConfig` now has the correct defaults, but the CLI still constructs

@@ -396,14 +396,14 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   'MAX_WORKFLOW_RUN_ASSOCIATIONS='
-refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_TARGETS='
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'commits/${RUN_HEAD_SHA}/pulls?per_page=100'
+  'MAX_WORKFLOW_RUN_TARGETS=256'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'workflow_run has no associated PRs; recovering targets from the run head'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  '[.[]? | .number? | select(type == "number")] | unique | .[]'
+  '[.[]? | .number? | select(type == "number")] | unique'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'gh api "repos/${GH_REPO}/pulls/${pr}"'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -457,6 +457,7 @@ run_loopkeeper_selector() {
   env \
     PATH="$STAGING/loopkeeper-bin:$PATH" \
     FAKE_HEAD_SHA="$SELECTOR_HEAD_SHA" \
+    FAKE_FALLBACK_MODE="${FAKE_FALLBACK_MODE:-single}" \
     GH_REPO="nifabulous/Relay" \
     EVENT_NAME="workflow_run" \
     DIRECT_PR_NUMBER="0" \
@@ -482,7 +483,7 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1,2,3,4,5,6,7,8,9]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+FAKE_FALLBACK_MODE=paginated run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
   fail 'Loopkeeper selector did not recover an empty association payload.'
 require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
 
@@ -503,9 +504,15 @@ require_text_from_file "$SELECTOR_OUTPUT" \
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-run_loopkeeper_selector '[{"number":1},{"number":103}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector should fail closed without publishing a partial target set.'
-require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+if run_loopkeeper_selector '[{"number":1},{"number":103}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector reported success after an unverifiable PR lookup.'
+fi
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+if run_loopkeeper_selector "$(jq -nc '[range(1; 258) | {number: .}]')" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted more targets than one GitHub matrix supports.'
+fi
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \
   'actions/workflows/${CODEX_CI_WORKFLOW_FILE}/runs'
