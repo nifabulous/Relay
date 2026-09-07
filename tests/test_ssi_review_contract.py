@@ -272,6 +272,106 @@ def test_manifest_exclusions_and_extra_rows_are_fail_closed():
             ), (region["name"], key)
 
 
+def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
+    """The 215-row Asia-Pacific expansion has no unlisted seed identities."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "asia-pacific-wave4"
+    )
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    expected_keys = {key for key in expected if key[0] in beneficiary_bics}
+    actual_keys = {key for key in seed if key[0] in beneficiary_bics}
+    assert len(expected_keys) == 215
+    assert actual_keys == expected_keys
+    assert all(
+        not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
+    )
+
+
+def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
+    """The 323-row Europe expansion preserves its exclusion semantics."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "europe-uncovered-wave4"
+    )
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    expected_keys = {key for key in expected if key[0] in beneficiary_bics}
+    actual_keys = {key for key in seed if key[0] in beneficiary_bics}
+    assert len(expected_keys) == 323
+    assert actual_keys == expected_keys
+    assert all(key[0][:8] != key[2][:8] for key in actual_keys)
+    assert all(
+        not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
+    )
+
+
+def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
+    """BIC-only and inferred wave-4 rows cannot reach the DB selector."""
+    seed = _seed_index()
+    targets = (
+        ("CABARS22XXX", "EUR", "RS"),
+        ("EMPOALTRXXX", "USD", "AL"),
+        ("BSAHBJBJXXX", "USD", "BJ"),
+    )
+    query_targets = []
+    for index, (beneficiary_bic, currency, country) in enumerate(targets):
+        rows = [
+            row
+            for key, values in seed.items()
+            if key[:2] == (beneficiary_bic, currency)
+            for row in values
+        ]
+        assert rows
+        model = _row_object(rows[0])
+        model.beneficiary_bic = f"W4TEST{index:02d}XXX"
+        db_session_clean.add(model)
+        query_targets.append((model.beneficiary_bic, currency, country))
+    db_session_clean.commit()
+
+    for beneficiary_bic, currency, country in query_targets:
+        assert suggest_from_ssi(
+            db_session_clean, beneficiary_bic, currency, country
+        ) == []
+
+
+def test_wave5_routable_rows_require_two_unmasked_accounts():
+    """Published metadata cannot make either redacted account executable."""
+    row = SSI(
+        beneficiary_bic="W5TEST00XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank New York",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: contract test.",
+        as_of="2026-09-07",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    assert _is_routable_ssi(row)
+    row.intermediary_account = "ACCT-91004601"
+    assert not _is_routable_ssi(row)
+    row.intermediary_account = "123456789"
+    row.beneficiary_account = "[REDACTED]"
+    assert not _is_routable_ssi(row)
+
+
 def test_unibank_has_the_complete_six_currency_correspondent_matrix():
     seed = _seed_index()
     rows = [row for key, values in seed.items() if key[0] == "UBAZAZ22XXX" for row in values]
