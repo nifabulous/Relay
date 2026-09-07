@@ -21,8 +21,8 @@ than letting the list grow.
 """
 
 import json
-import re
 from pathlib import Path
+import re
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
