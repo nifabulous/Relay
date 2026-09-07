@@ -346,3 +346,27 @@ def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
         assert suggest_from_ssi(
             db_session_clean, beneficiary_bic, currency, country
         ) == []
+
+
+def test_wave5_routable_rows_require_two_unmasked_accounts():
+    """Published metadata cannot make either redacted account executable."""
+    row = SSI(
+        beneficiary_bic="W5TEST00XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank New York",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: contract test.",
+        as_of="2026-09-07",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    assert _is_routable_ssi(row)
+    row.intermediary_account = "ACCT-91004601"
+    assert not _is_routable_ssi(row)
+    row.intermediary_account = "123456789"
+    row.beneficiary_account = "[REDACTED]"
+    assert not _is_routable_ssi(row)
