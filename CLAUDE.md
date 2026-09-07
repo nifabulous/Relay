@@ -134,7 +134,7 @@ app/
 │   ├── progress.py      # Badge computation
 │   ├── ssi_importer.py  # SSI CSV/JSON import + upsert
 │   ├── fed_importer.py  # Fedwire/FedACH import (fail-closed, no default URL)
-│   └── seed.py          # Seed data (237 banks, 559 SSI, 72 corridor rules)
+│   └── seed.py          # Seed data (323 banks, 1,787 SSI, 72 corridor rules)
 ├── data/                # Static reference data (payment schemes, watchlist, MT103 samples)
 └── static/              # Frontend (vanilla HTML/JS/CSS)
     ├── index.html       # Admin SPA shell (/ui)

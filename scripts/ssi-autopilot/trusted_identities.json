@@ -258,5 +258,357 @@
       "bpi.com.ph"
     ],
     "settlement_terms_published": true
+  },
+  "DNEXJPJT": {
+    "name": "Daiwa Next Bank, Ltd.",
+    "country": "JP",
+    "domains": [
+      "bank-daiwa.co.jp"
+    ],
+    "settlement_terms_published": false
+  },
+  "RAKTJPJT": {
+    "name": "Rakuten Bank, Ltd.",
+    "country": "JP",
+    "domains": [
+      "rakuten-bank.co.jp"
+    ],
+    "settlement_terms_published": false
+  },
+  "JICRJPJT": {
+    "name": "au Jibun Bank Corporation",
+    "country": "JP",
+    "domains": [
+      "jibunbank.co.jp"
+    ],
+    "settlement_terms_published": false
+  },
+  "CCRTIT2T": {
+    "name": "CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.",
+    "country": "IT",
+    "domains": [
+      "cassacentrale.it"
+    ],
+    "settlement_terms_published": false
+  },
+  "BAPPIT22": {
+    "name": "BANCO BPM SPA",
+    "country": "IT",
+    "domains": [
+      "gruppo.bancobpm.it"
+    ],
+    "settlement_terms_published": false
+  },
+  "AREBESMM": {
+    "name": "ARESBANK, S.A.",
+    "country": "ES",
+    "domains": [
+      "aresbank.es"
+    ],
+    "settlement_terms_published": false
+  },
+  "CRBAGRAA": {
+    "name": "ALPHA BANK S.A.",
+    "country": "GR",
+    "domains": [
+      "alpha.gr"
+    ],
+    "settlement_terms_published": true
+  },
+  "MPCBMUMU": {
+    "name": "MauBank Ltd",
+    "country": "MU",
+    "domains": [
+      "maubank.mu"
+    ],
+    "settlement_terms_published": false
+  },
+  "AFBLMUMU": {
+    "name": "AfrAsia Bank Limited",
+    "country": "MU",
+    "domains": [
+      "afrasiabank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "GUAYECEG": {
+    "name": "Banco Guayaquil S.A.",
+    "country": "EC",
+    "domains": [
+      "bancoguayaquil.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "GNDRBO22": {
+    "name": "Banco Ganadero S.A.",
+    "country": "BO",
+    "domains": [
+      "bg.com.bo"
+    ],
+    "settlement_terms_published": false
+  },
+  "FAMIPYPA": {
+    "name": "Banco Familiar S.A.E.C.A.",
+    "country": "PY",
+    "domains": [
+      "familiar.com.py"
+    ],
+    "settlement_terms_published": false
+  },
+  "BSUDPYPX": {
+    "name": "Sudameris Bank S.A.E.C.A.",
+    "country": "PY",
+    "domains": [
+      "sudameris.com.py"
+    ],
+    "settlement_terms_published": false
+  },
+  "ITAUUYMM": {
+    "name": "Banco Itaú Uruguay S.A.",
+    "country": "UY",
+    "domains": [
+      "itau.com.uy"
+    ],
+    "settlement_terms_published": false
+  },
+  "COMEUYMM": {
+    "name": "Scotiabank Uruguay S.A.",
+    "country": "UY",
+    "domains": [
+      "scotiabank.com.uy"
+    ],
+    "settlement_terms_published": false
+  },
+  "IMRWRWRW": {
+    "name": "I AND M BANK (RWANDA) PLC",
+    "country": "RW",
+    "domains": [
+      "imbankgroup.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "BKIGRWRW": {
+    "name": "BANK OF KIGALI PLC",
+    "country": "RW",
+    "domains": [
+      "bk.rw"
+    ],
+    "settlement_terms_published": false
+  },
+  "IMBLTZTZ": {
+    "name": "I AND M BANK (T) LIMITED",
+    "country": "TZ",
+    "domains": [
+      "imbank.co.tz"
+    ],
+    "settlement_terms_published": false
+  },
+  "AGRZZWHA": {
+    "name": "AFC COMMERCIAL BANK LIMITED",
+    "country": "ZW",
+    "domains": [
+      "afcholdings.co.zw"
+    ],
+    "settlement_terms_published": false
+  },
+  "NMBLZWHX": {
+    "name": "NMB BANK LIMITED",
+    "country": "ZW",
+    "domains": [
+      "nmbz.co.zw"
+    ],
+    "settlement_terms_published": false
+  },
+  "CECBBGSF": {
+    "name": "CENTRAL COOPERATIVE BANK PLC",
+    "country": "BG",
+    "domains": [
+      "ccbank.bg"
+    ],
+    "settlement_terms_published": false
+  },
+  "ABKLCY2N": {
+    "name": "ALPHA BANK CYPRUS LTD",
+    "country": "CY",
+    "domains": [
+      "alphabank.com.cy"
+    ],
+    "settlement_terms_published": false
+  },
+  "HEBACY2N": {
+    "name": "HELLENIC BANK PUBLIC COMPANY LTD.",
+    "country": "CY",
+    "domains": [
+      "eurobank.cy"
+    ],
+    "settlement_terms_published": false
+  },
+  "IRTYKZKA": {
+    "name": "FORTEBANK JSC",
+    "country": "KZ",
+    "domains": [
+      "forte.kz"
+    ],
+    "settlement_terms_published": false
+  },
+  "KCJBKZKX": {
+    "name": "JSC 'BANK CENTERCREDIT'",
+    "country": "KZ",
+    "domains": [
+      "bcc.kz"
+    ],
+    "settlement_terms_published": false
+  },
+  "ATYNKZKA": {
+    "name": "JSC 'ALTYN BANK' (SB OF CHINA CITIC BANK CORPORATION)",
+    "country": "KZ",
+    "domains": [
+      "altynbank.kz"
+    ],
+    "settlement_terms_published": false
+  },
+  "KZIBKZKA": {
+    "name": "KAZAKHSTAN-ZIRAAT INTERNATIONAL BANK",
+    "country": "KZ",
+    "domains": [
+      "kzibank.kz"
+    ],
+    "settlement_terms_published": false
+  },
+  "NSBALKLX": {
+    "name": "National Savings Bank",
+    "country": "LK",
+    "domains": [
+      "nsb.lk"
+    ],
+    "settlement_terms_published": false
+  },
+  "PSBKLKLX": {
+    "name": "People's Bank",
+    "country": "LK",
+    "domains": [
+      "peoplesbank.lk"
+    ],
+    "settlement_terms_published": false
+  },
+  "BFMXAOLU": {
+    "name": "Banco de Fomento Angola S.A.",
+    "country": "AO",
+    "domains": [
+      "bfa.ao"
+    ],
+    "settlement_terms_published": false
+  },
+  "MOZAMZMA": {
+    "name": "Moza Banco S.A.",
+    "country": "MZ",
+    "domains": [
+      "mozabanco.co.mz"
+    ],
+    "settlement_terms_published": false
+  },
+  "NBMAMWMW": {
+    "name": "National Bank of Malawi plc",
+    "country": "MW",
+    "domains": [
+      "natbank.co.mw"
+    ],
+    "settlement_terms_published": false
+  },
+  "ADBLNPKA": {
+    "name": "Agricultural Development Bank Ltd.",
+    "country": "NP",
+    "domains": [
+      "adbl.gov.np"
+    ],
+    "settlement_terms_published": false
+  },
+  "EVBLNPKA": {
+    "name": "Everest Bank Ltd.",
+    "country": "NP",
+    "domains": [
+      "everestbankltd.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "LXBLNPKA": {
+    "name": "Laxmi Sunrise Bank Limited",
+    "country": "NP",
+    "domains": [
+      "laxmisunrise.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "CTZNNPKA": {
+    "name": "Citizens Bank International Limited",
+    "country": "NP",
+    "domains": [
+      "ctznbank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "NARBNPKA": {
+    "name": "Nabil Bank Limited",
+    "country": "NP",
+    "domains": [
+      "nabilbank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "TBOMMNUB": {
+    "name": "Transport and Development Bank LLC (TransBank)",
+    "country": "MN",
+    "domains": [
+      "transbank.mn"
+    ],
+    "settlement_terms_published": false
+  },
+  "CAXBMNUB": {
+    "name": "XacBank JSC",
+    "country": "MN",
+    "domains": [
+      "xacbank.mn"
+    ],
+    "settlement_terms_published": false
+  },
+  "BAIDBNBB": {
+    "name": "Baiduri Bank Berhad",
+    "country": "BN",
+    "domains": [
+      "baiduri.com.bn"
+    ],
+    "settlement_terms_published": false
+  },
+  "BKCHBNBB": {
+    "name": "Bank of China (Hong Kong) Limited, Brunei Branch",
+    "country": "BN",
+    "domains": [
+      "bankofchina.com.bn"
+    ],
+    "settlement_terms_published": false
+  },
+  "ABAAKHPP": {
+    "name": "Advanced Bank of Asia Limited",
+    "country": "KH",
+    "domains": [
+      "ababank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "FTCCKHPP": {
+    "name": "Foreign Trade Bank of Cambodia",
+    "country": "KH",
+    "domains": [
+      "ftb.com.kh"
+    ],
+    "settlement_terms_published": false
+  },
+  "PPCBKHPP": {
+    "name": "Phnom Penh Commercial Bank PLC",
+    "country": "KH",
+    "domains": [
+      "ppcbank.com.kh"
+    ],
+    "settlement_terms_published": false
   }
 }
