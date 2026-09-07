@@ -2569,3 +2569,153 @@ class TestAsiaPacificWave4SsiCoverage:
     def test_asia_pacific_wave4_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("asia-pacific-wave4", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: asia-pacific-wave4 ----
+
+
+# ---- autopilot-generated coverage tests: europe-uncovered-wave4 ----
+EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
+    ("CABARS22XXX", "Halkbank a.d. Beograd", {"AUD", "CAD", "CHF", "EUR", "GBP", "SEK", "TRY", "USD"}),
+    ("CBVILT2XXXX", "AB SEB bankas", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "ISK", "JPY", "KZT", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "SAR", "SEK", "SGD", "TRY", "USD", "ZAR"}),
+    ("EEUHEE2XXXX", "AS SEB Pank", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "PLN", "RON", "SEK", "TRY", "USD"}),
+    ("EMPOALTRXXX", "ABI Bank sh.a.", {"ALL", "EUR", "GBP", "USD"}),
+    ("EXSKSKBXXXX", "EXIMBANKA SR", {"CZK", "EUR", "GBP", "HUF", "PLN", "USD"}),
+    ("HABALV22XXX", "Swedbank AS", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "ZAR"}),
+    ("INDULT2XXXX", "AS Citadele banka, Lithuanian branch", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("KOBSMK2XXXX", "Komercijalna Banka AD Skopje", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "RSD", "SEK", "USD"}),
+    ("LJBASI2XXXX", "NLB d.d., Ljubljana", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "MKD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "SEK", "TRY", "USD", "ZAR"}),
+    ("NBMDMD2XXXX", "National Bank of Moldova", {"EUR", "GBP", "JPY", "RON", "USD"}),
+    ("OTPVHR2XXXX", "OTP banka d.d.", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "RSD", "SEK", "TRY", "USD"}),
+    ("PARXLV22XXX", "AS Citadele banka", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("SBSLHR2XXXX", "Slatinska Banka d.d.", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("STOBMK2XXXX", "Stopanska Banka AD Skopje", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("TBTUBA22XXX", "NLB Banka d.d., Sarajevo", {"AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "MKD", "NOK", "RSD", "SEK", "TRY", "USD"}),
+    ("UGASUAUKXXX", "Ukrgasbank JSC", {"CAD", "CHF", "CNY", "CZK", "EUR", "GBP", "HUF", "JPY", "PLN", "SEK", "USD", "XAG", "XAU", "XPD", "XPT"}),
+]
+
+class TestEuropeUncoveredWave4SsiCoverage:
+
+    def test_europe_uncovered_wave4_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("europe-uncovered-wave4")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_europe_uncovered_wave4_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("europe-uncovered-wave4")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"europe-uncovered-wave4 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_europe_uncovered_wave4_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("europe-uncovered-wave4", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: europe-uncovered-wave4 ----
+
+
+# ---- autopilot-generated coverage tests: west-central-africa-wave4 ----
+WEST_CENTRAL_AFRICA_WAVE4_SSI_COVERAGE = [
+    ("BSAHBJBJXXX", "BSIC Benin", {"EUR", "USD"}),
+    ("BSGNGNGNXXX", "BSIC Guinea", {"EUR", "USD"}),
+]
+
+class TestWestCentralAfricaWave4SsiCoverage:
+
+    def test_west_central_africa_wave4_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("west-central-africa-wave4")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in WEST_CENTRAL_AFRICA_WAVE4_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_west_central_africa_wave4_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("west-central-africa-wave4")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"west-central-africa-wave4 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_west_central_africa_wave4_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("west-central-africa-wave4", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: west-central-africa-wave4 ----
+
+
+# ---- autopilot-generated coverage tests: europe-remaining-wave5 ----
+EUROPE_REMAINING_WAVE5_SSI_COVERAGE = [
+    ("GLITISREXXX", "Islandsbanki hf.", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "NZD", "PLN", "SEK", "USD"}),
+    ("MBWMMTMTXXX", "MeDirect Bank Malta", {"AUD", "CAD", "CHF", "CZK", "DKK", "GBP", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "USD", "ZAR"}),
+    ("MPBAISREXXX", "Kvika banki hf.", {"CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("TCZBMEPGXXX", "Ziraat Bank Montenegro", {"EUR", "TRY", "USD"}),
+    ("VALLMTMTXXX", "Bank of Valletta plc", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "JPY", "KWD", "MXN", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "TND", "TRY", "USD", "ZAR"}),
+]
+
+class TestEuropeRemainingWave5SsiCoverage:
+
+    def test_europe_remaining_wave5_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("europe-remaining-wave5")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in EUROPE_REMAINING_WAVE5_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_europe_remaining_wave5_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("europe-remaining-wave5")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"europe-remaining-wave5 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_europe_remaining_wave5_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("europe-remaining-wave5", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: europe-remaining-wave5 ----
+
+
+# ---- autopilot-generated coverage tests: africa-wave5 ----
+AFRICA_WAVE5_SSI_COVERAGE = [
+    ("ABYSETAAXXX", "Bank of Abyssinia", {"AED", "EUR", "GBP", "USD"}),
+    ("AZAMZMLUXXX", "Access Bank Zambia Limited", {"GBP", "USD", "ZAR"}),
+    ("FIRNBWGXXXX", "First National Bank of Botswana Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "GHS", "HKD", "INR", "JPY", "KES", "LSL", "MUR", "MWK", "NAD", "NGN", "NOK", "NZD", "SEK", "SGD", "SZL", "THB", "UGX", "USD", "ZMW"}),
+]
+
+class TestAfricaWave5SsiCoverage:
+
+    def test_africa_wave5_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("africa-wave5")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in AFRICA_WAVE5_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_africa_wave5_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("africa-wave5")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"africa-wave5 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_africa_wave5_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("africa-wave5", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: africa-wave5 ----
