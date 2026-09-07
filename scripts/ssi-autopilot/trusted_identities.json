@@ -946,5 +946,13 @@
       "sqb.uz"
     ],
     "settlement_terms_published": false
+  },
+  "SEYBLKLX": {
+    "name": "Seylan Bank PLC",
+    "country": "LK",
+    "domains": [
+      "seylan.lk"
+    ],
+    "settlement_terms_published": false
   }
 }

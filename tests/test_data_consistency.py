@@ -3416,6 +3416,7 @@ class TestCaucasusCentralAsiaWave3SsiCoverage:
 SOUTHASIA_MEKONG_WAVE3_SSI_COVERAGE = [
     ("NSBALKLXXXX", "National Savings Bank", {"CHF", "EUR", "JPY", "SGD", "USD"}),
     ("PSBKLKLXXXX", "People's Bank", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SEK", "SGD", "USD"}),
+    ("SEYBLKLXXXX", "Seylan Bank PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "USD"}),
 ]
 
 
@@ -3489,8 +3490,6 @@ class TestSouthasiaMekongWave3SsiCoverage:
             "southasia-mekong-wave3: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: southasia-mekong-wave3 ----
-
-
 # ---- autopilot-generated coverage tests: southern-africa-wave3 ----
 SOUTHERN_AFRICA_WAVE3_SSI_COVERAGE = [
     ("BFMXAOLUXXX", "Banco de Fomento Angola S.A.", {"AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "NAD", "NOK", "SEK", "USD", "ZAR"}),
