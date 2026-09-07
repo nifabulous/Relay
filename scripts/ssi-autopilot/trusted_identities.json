@@ -962,5 +962,13 @@
       "absa.co.tz"
     ],
     "settlement_terms_published": false
+  },
+  "FIRNNANX": {
+    "name": "FIRST NATIONAL BANK OF NAMIBIA LIMITED",
+    "country": "NA",
+    "domains": [
+      "fnbnamibia.com.na"
+    ],
+    "settlement_terms_published": false
   }
 }

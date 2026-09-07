@@ -29302,6 +29302,102 @@
           "admitted_record_digest": "9887574d0ca877fdd5ad6fc65ef77208a46b72e706545fee3d26e86ab7a24f9a"
         }
       ]
+    },
+    {
+      "name": "namibia-wave1",
+      "label": "Namibia SSI (wave 1)",
+      "countries": [
+        "NA"
+      ],
+      "masked_block": 91004900,
+      "note": "2026-09-07 bank-owned FNB Namibia FX page: currency-to-correspondent table published for USD, GBP, AUD, EUR and CHF. The page publishes no beneficiary account numbers, charge terms or value dates; rows remain explicit BIC-only references and are not selectable settlement instructions.",
+      "forbidden_bics": [],
+      "banks": [
+        {
+          "bic8": "FIRNNANX",
+          "name": "FIRST NATIONAL BANK OF NAMIBIA LIMITED",
+          "country": "NA",
+          "currencies": [
+            "AUD",
+            "CHF",
+            "EUR",
+            "GBP",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "fnbnamibia.com.na"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AUD",
+              "correspondent": "Australia and New Zealand Banking Group Ltd - Melbourne",
+              "int_bic": "ANZBAU3M",
+              "source": "https://www.online.fnbnamibia.com.na/forex/understanding-forex/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "Union Bank of Switzerland - Zurich",
+              "int_bic": "UBSWCHZH80A",
+              "source": "https://www.online.fnbnamibia.com.na/forex/understanding-forex/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank Ag - Frankfurt",
+              "int_bic": "DEUTDEFF",
+              "source": "https://www.online.fnbnamibia.com.na/forex/understanding-forex/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Lloyds TSB Bank PLC - London",
+              "int_bic": "LOYDGB2L",
+              "source": "https://www.online.fnbnamibia.com.na/forex/understanding-forex/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JP Morgan Chase Bank - New York",
+              "int_bic": "CHASUS33",
+              "source": "https://www.online.fnbnamibia.com.na/forex/understanding-forex/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            }
+          ],
+          "admitted_record_digest": "fe56006f2ca081a99e58d0471e757e1582caa2a93214e7c11d54c93da0588718"
+        }
+      ]
     }
   ]
 }
