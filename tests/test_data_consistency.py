@@ -21,8 +21,8 @@ than letting the list grow.
 """
 
 import json
-from pathlib import Path
 import re
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -32,7 +32,6 @@ from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_i
 from app.db import Base
 from app.models import SSI, Bank, CorridorRule
 from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
-
 
 _SSI_MANIFEST_PATH = (
     Path(__file__).resolve().parents[1]
