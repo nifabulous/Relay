@@ -946,5 +946,37 @@
       "sqb.uz"
     ],
     "settlement_terms_published": false
+  },
+  "SEYBLKLX": {
+    "name": "Seylan Bank PLC",
+    "country": "LK",
+    "domains": [
+      "seylan.lk"
+    ],
+    "settlement_terms_published": false
+  },
+  "BARCTZTZ": {
+    "name": "ABSA BANK TANZANIA LIMITED",
+    "country": "TZ",
+    "domains": [
+      "absa.co.tz"
+    ],
+    "settlement_terms_published": false
+  },
+  "FIRNNANX": {
+    "name": "FIRST NATIONAL BANK OF NAMIBIA LIMITED",
+    "country": "NA",
+    "domains": [
+      "fnbnamibia.com.na"
+    ],
+    "settlement_terms_published": false
+  },
+  "HBLILKLX": {
+    "name": "HATTON NATIONAL BANK PLC",
+    "country": "LK",
+    "domains": [
+      "hnb.lk"
+    ],
+    "settlement_terms_published": false
   }
 }
