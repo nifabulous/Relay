@@ -452,9 +452,23 @@ def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
     assert len(keys) == 180
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
+        _, bank, record = expected[key]
         row = seed[key][0]
-        assert row[10] and row[11] in {"unverified", "archived"}
-        assert row[9].startswith("Source: ")
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"]
+        assert row[11] == record["status"].lower()
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
         assert not _is_routable_ssi(_row_object(row)), key
 
 
@@ -471,10 +485,23 @@ def test_wave8_kenya_correspondent_rows_have_exact_record_contract():
     assert len(keys) == 52
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
+        _, bank, record = expected[key]
         row = seed[key][0]
-        assert row[10] == "2026-09-07"
-        assert row[11] == "unverified"
-        assert row[9].startswith("Source: ")
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"] == "2026-09-07"
+        assert row[11] == record["status"].lower() == "unverified"
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
         assert not _is_routable_ssi(_row_object(row)), key
 
 
@@ -486,6 +513,11 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         "europe-remaining-wave5",
         "africa-wave5",
         "caucasus-wave5",
+    }
+    expected_counts = {
+        "europe-remaining-wave5": 69,
+        "africa-wave5": 49,
+        "caucasus-wave5": 164,
     }
     for region in manifest["regions"]:
         if region["name"] not in region_names:
@@ -502,7 +534,8 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
             for bank in region["banks"]
             if bank.get("seedable", True) and bank.get("admitted_records")
         )
-        assert len(admitted) == manifest_count
+        assert manifest_count == expected_counts[region["name"]]
+        assert len(admitted) == expected_counts[region["name"]]
         assert actual == admitted
         forbidden = {
             bic.strip().upper()[:8]
