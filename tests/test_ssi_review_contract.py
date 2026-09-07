@@ -215,3 +215,38 @@ def test_namibia_names_only_rows_are_nonselectable():
     assert all(row[13] is True for row in rows)
     assert all(row[5:9] == (None, None, None, None) for row in rows)
     assert all(not _is_routable_ssi(_row_object(row)) for row in rows)
+
+
+def test_kenya_rows_use_the_manifest_scoped_account_policy():
+    """Kenya coverage derives its mask from the region, never a global literal."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    kenya_bics = {
+        bank["bic8"] + "XXX"
+        for region in manifest["regions"]
+        if "KE" in region["countries"]
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    assert kenya_bics
+    for beneficiary_bic in kenya_bics:
+        region = next(
+            region
+            for region in manifest["regions"]
+            if any(
+                bank["bic8"] + "XXX" == beneficiary_bic
+                for bank in region["banks"]
+            )
+        )
+        prefix = str(region["masked_block"])[:-2]
+        mask = re.compile(rf"^ACCT-{re.escape(prefix)}\d\d$")
+        legacy = set(region.get("legacy_accounts", []))
+        rows = [seed[key][0] for key in expected if key[0] == beneficiary_bic]
+        assert rows
+        for row in rows:
+            if row[13]:
+                assert row[5:9] == (None, None, None, None)
+            else:
+                assert mask.fullmatch(row[5]) or row[5] in legacy
+                assert mask.fullmatch(row[6]) or row[6] in legacy
+            assert not _is_routable_ssi(_row_object(row)), row[:5]
