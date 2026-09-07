@@ -610,5 +610,133 @@
       "ppcbank.com.kh"
     ],
     "settlement_terms_published": false
+  },
+  "CABARS22": {
+    "name": "Halkbank a.d. Beograd",
+    "country": "RS",
+    "domains": [
+      "halkbank.rs"
+    ],
+    "settlement_terms_published": false
+  },
+  "SBSLHR2X": {
+    "name": "Slatinska Banka d.d.",
+    "country": "HR",
+    "domains": [
+      "slatinska-banka.hr"
+    ],
+    "settlement_terms_published": false
+  },
+  "OTPVHR2X": {
+    "name": "OTP banka d.d.",
+    "country": "HR",
+    "domains": [
+      "otpbanka.hr"
+    ],
+    "settlement_terms_published": false
+  },
+  "EXSKSKBX": {
+    "name": "EXIMBANKA SR",
+    "country": "SK",
+    "domains": [
+      "eximbanka.sk"
+    ],
+    "settlement_terms_published": false
+  },
+  "LJBASI2X": {
+    "name": "NLB d.d., Ljubljana",
+    "country": "SI",
+    "domains": [
+      "nlb.si"
+    ],
+    "settlement_terms_published": false
+  },
+  "CBVILT2X": {
+    "name": "AB SEB bankas",
+    "country": "LT",
+    "domains": [
+      "seb.lt"
+    ],
+    "settlement_terms_published": false
+  },
+  "INDULT2X": {
+    "name": "AS Citadele banka, Lithuanian branch",
+    "country": "LT",
+    "domains": [
+      "citadele.lt"
+    ],
+    "settlement_terms_published": false
+  },
+  "HABALV22": {
+    "name": "Swedbank AS",
+    "country": "LV",
+    "domains": [
+      "swedbank.lv"
+    ],
+    "settlement_terms_published": false
+  },
+  "PARXLV22": {
+    "name": "AS Citadele banka",
+    "country": "LV",
+    "domains": [
+      "citadele.lv"
+    ],
+    "settlement_terms_published": false
+  },
+  "EEUHEE2X": {
+    "name": "AS SEB Pank",
+    "country": "EE",
+    "domains": [
+      "seb.ee"
+    ],
+    "settlement_terms_published": false
+  },
+  "NBMDMD2X": {
+    "name": "National Bank of Moldova",
+    "country": "MD",
+    "domains": [
+      "bnm.md"
+    ],
+    "settlement_terms_published": false
+  },
+  "EMPOALTR": {
+    "name": "ABI Bank sh.a.",
+    "country": "AL",
+    "domains": [
+      "abi.al"
+    ],
+    "settlement_terms_published": false
+  },
+  "TBTUBA22": {
+    "name": "NLB Banka d.d., Sarajevo",
+    "country": "BA",
+    "domains": [
+      "nlb-fbih.ba"
+    ],
+    "settlement_terms_published": false
+  },
+  "KOBSMK2X": {
+    "name": "Komercijalna Banka AD Skopje",
+    "country": "MK",
+    "domains": [
+      "kb.mk"
+    ],
+    "settlement_terms_published": false
+  },
+  "STOBMK2X": {
+    "name": "Stopanska Banka AD Skopje",
+    "country": "MK",
+    "domains": [
+      "stb.com.mk"
+    ],
+    "settlement_terms_published": false
+  },
+  "UGASUAUK": {
+    "name": "Ukrgasbank JSC",
+    "country": "UA",
+    "domains": [
+      "ukrgasbank.com"
+    ],
+    "settlement_terms_published": false
   }
 }
