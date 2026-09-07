@@ -1,6 +1,6 @@
 # Loopkeeper Review Loop Extraction Design
 
-**Date:** 2026-08-26  
+**Date:** 2026-08-26
 **Status:** Design amended after extensive review; written-spec review pending
 **Source:** Relay review-loop handover compiled from `origin/main` at `e834773`
 
