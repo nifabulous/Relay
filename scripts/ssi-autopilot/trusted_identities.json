@@ -954,5 +954,13 @@
       "seylan.lk"
     ],
     "settlement_terms_published": false
+  },
+  "BARCTZTZ": {
+    "name": "ABSA BANK TANZANIA LIMITED",
+    "country": "TZ",
+    "domains": [
+      "absa.co.tz"
+    ],
+    "settlement_terms_published": false
   }
 }

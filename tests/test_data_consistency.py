@@ -3176,6 +3176,7 @@ AFRICA_WAVE2_SSI_COVERAGE = [
     ("IMBLTZTZXXX", "I AND M BANK (T) LIMITED", {"EUR", "GBP", "INR", "KES", "MUR", "USD", "ZAR"}),
     ("IMRWRWRWXXX", "I AND M BANK (RWANDA) PLC", {"CAD", "EUR", "GBP", "INR", "JPY", "KES", "RWF", "TZS", "USD", "ZAR"}),
     ("NMBLZWHXXXX", "NMB BANK LIMITED", {"CNY", "EUR", "GBP", "USD"}),
+    ("BARCTZTZXXX", "ABSA BANK TANZANIA LIMITED", {"DKK", "EUR", "GBP", "JPY", "KES", "NOK", "TZS", "USD", "ZAR"}),
 ]
 
 
@@ -3249,8 +3250,6 @@ class TestAfricaWave2SsiCoverage:
             "africa-wave2: duplicate (beneficiary, currency, correspondent) keys"
         )
 # ---- end autopilot-generated coverage tests: africa-wave2 ----
-
-
 # ---- autopilot-generated coverage tests: europe-wave2 ----
 EUROPE_WAVE2_SSI_COVERAGE = [
     ("ABKLCY2NXXX", "ALPHA BANK CYPRUS LTD", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "ILS", "JPY", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SEK", "SGD", "USD", "ZAR"}),

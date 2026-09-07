@@ -11769,6 +11769,146 @@
             }
           ],
           "admitted_record_digest": "dd17ab5a10941f21ed11aead7acdbe07c4bbfda5c8d5b1913b1e13c6d8b60e12"
+        },
+        {
+          "bic8": "BARCTZTZ",
+          "name": "ABSA BANK TANZANIA LIMITED",
+          "country": "TZ",
+          "currencies": [
+            "DKK",
+            "EUR",
+            "GBP",
+            "JPY",
+            "KES",
+            "NOK",
+            "TZS",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "absa.co.tz"
+          ],
+          "admitted_records": [
+            {
+              "currency": "DKK",
+              "correspondent": "Den Danske Bank, Copenhagen",
+              "int_bic": "DABADKKK",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Societe Generale, Paris",
+              "int_bic": "SOGEFRPP",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Standard Chartered Bank London, London",
+              "int_bic": "SCBLGB2L",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Sumitomo Mitsui Banking Corp.",
+              "int_bic": "SMBCJPJT",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "KES",
+              "correspondent": "Absa Kenya PLC, Nairobi",
+              "int_bic": "BARCKENX",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "NOK",
+              "correspondent": "Den Norske Bank, Oslo",
+              "int_bic": "DNBANOKK",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "TZS",
+              "correspondent": "Bank of Tanzania, Dar es Salaam",
+              "int_bic": "TANZTZTX",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JP Morgan Chase Bank",
+              "int_bic": "CHASUS33",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "ZAR",
+              "correspondent": "Absa",
+              "int_bic": "ABSAZAJJ",
+              "source": "https://www.absa.co.tz/corresponding-banks/",
+              "as_of": "2026-09-07",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            }
+          ],
+          "admitted_record_digest": "6de4f396226a830ad484d19dc210aba0548cfb054dd9772788e8dbaff8e8b546"
         }
       ]
     },
