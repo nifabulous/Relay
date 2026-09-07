@@ -191,4 +191,3 @@ def test_masked_bic_only_and_multi_hop_rows_cannot_enter_settlement_path(db_sess
     assert suggest_from_ssi(db_session_clean, "MULTUS33XXX", "USD", "US") == []
     suggestions = suggest_from_ssi(db_session_clean, "GOODUS33XXX", "USD", "US")
     assert [suggestion.bic for suggestion in suggestions] == ["CITIUS33XXX"]
-
