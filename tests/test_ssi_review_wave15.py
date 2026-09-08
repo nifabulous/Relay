@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from app.services.seed import SEED_BIC_ALIASES
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -18,6 +20,7 @@ def test_wave15_wells_fargo_alias_is_explicit_and_non_routable():
     usd = [record for record in bank["admitted_records"] if record["currency"] == "USD"]
     wells = next(record for record in usd if "Wells Fargo" in record["correspondent"])
     assert wells["int_bic"] == "PNBPUS33"
+    assert SEED_BIC_ALIASES["PNBPUS3NNYC"] == wells["int_bic"]
     assert wells["bic_only"] is True
     assert wells["nostro"] is None and wells["with_an"] is None
     assert "PNBPUS3NNYC" not in {record["int_bic"] for record in usd}

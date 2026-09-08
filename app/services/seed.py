@@ -7758,6 +7758,9 @@ SEED_BIC_ALIASES = {
     "DOHAQAQAXXX": "DOHBQAQAXXX",
     "NBOMKWKEXXX": "NBOKKWKWXXX",
     "SCBLDEFXXXX": "SCBLDEFFXXX",
+    # Kasikornbank's source prints the Wells Fargo branch as PNBPUS3NNYC;
+    # the repository's canonical directory entry is PNBPUS33.
+    "PNBPUS3NNYC": "PNBPUS33",
 }
 
 
