@@ -2907,6 +2907,28 @@ class TestTurkeyIsraelSsiCoverage:
     def test_turkey_israel_banks_have_seeded_ssi_records(self):
         manifest_expected = _manifest_seedable_coverage("turkey-israel")
         generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in TURKEY_ISRAEL_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_turkey_israel_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("turkey-israel")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"turkey-israel SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_turkey_israel_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("turkey-israel", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: turkey-israel ----
+
+
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
