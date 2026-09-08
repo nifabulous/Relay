@@ -209,7 +209,7 @@
     "domains": [
       "vikkibank.vn"
     ],
-    "settlement_terms_published": true
+    "settlement_terms_published": false
   },
   "CAFECOBB": {
     "name": "Banco Davivienda S.A.",
