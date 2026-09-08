@@ -961,7 +961,7 @@
     "domains": [
       "bancatransilvania.ro"
     ],
-    "settlement_terms_published": true
+    "settlement_terms_published": false
   },
   "SEYBLKLX": {
     "name": "Seylan Bank PLC",
