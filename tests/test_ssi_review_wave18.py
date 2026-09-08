@@ -5,7 +5,6 @@ from app.models import SSI
 from app.services.routing import _is_routable_ssi
 from app.services.seed import SSI_RECORDS
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
