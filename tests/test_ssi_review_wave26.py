@@ -21,6 +21,16 @@ def test_wave26_mask_preserves_route_account_identity():
     assert all(re.fullmatch(r"ACCT-\d{8}", value) for pair in actual.values() for value in pair)
     fingerprints = {(route["currency"], route["int_bic"]): (route["nostro_fingerprint"], route["with_an_fingerprint"]) for route in evidence["routes"]}
     assert len(set(actual.values())) == len(set(fingerprints.values()))
+    for left_key, left_fp in fingerprints.items():
+        for right_key, right_fp in fingerprints.items():
+            assert (actual[left_key] == actual[right_key]) == (left_fp == right_fp)
+    from app.services.seed import SSI_RECORDS
+    seeded = {}
+    for row in SSI_RECORDS:
+        if row[0] == "DNBAGB2LXXX":
+            seeded[(row[2], row[3])] = (row[5], row[6])
+            seeded[(row[2], row[3][:8])] = (row[5], row[6])
+    assert {key: seeded[key] for key in actual} == actual
     assert evidence["masking"]["raw_accounts_committed"] is False
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
     assert trusted["DNBAGB2L"]["settlement_terms_published"] is False

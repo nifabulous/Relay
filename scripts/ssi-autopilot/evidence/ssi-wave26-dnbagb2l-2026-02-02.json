@@ -178,5 +178,99 @@
       "nostro_mask": "ACCT-91005108",
       "with_an_mask": "ACCT-91005108"
     }
-  ]
+  ],
+  "source_snapshot": {
+    "source": "https://content.dnb.no/docs/9553985/ssi-london-02-02-2026.pdf",
+    "source_sha256": "ee955eb5cf677f8cc11c1dbe328d835e573105be809dc1403c0036aab057eb4d",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract from the cited source; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 21,
+    "route_keys": [
+      [
+        "AED",
+        "CBDUAEAD"
+      ],
+      [
+        "AUD",
+        "ANZBAU3M"
+      ],
+      [
+        "CAD",
+        "ROYCCAT2"
+      ],
+      [
+        "CHF",
+        "UBSWCHZH80A"
+      ],
+      [
+        "CZK",
+        "GIBACZPX"
+      ],
+      [
+        "DKK",
+        "DNBADKKX"
+      ],
+      [
+        "EUR",
+        "DNBANOKK"
+      ],
+      [
+        "HKD",
+        "HSBCHKHHHKH"
+      ],
+      [
+        "HUF",
+        "UBRTHUHB"
+      ],
+      [
+        "ISK",
+        "GLITISRE"
+      ],
+      [
+        "JPY",
+        "BOTKJPJT"
+      ],
+      [
+        "MXN",
+        "CITIMXMMCVT"
+      ],
+      [
+        "NOK",
+        "DNBANOKK"
+      ],
+      [
+        "NZD",
+        "ANZBNZ22058"
+      ],
+      [
+        "PLN",
+        "BPKOPLPW"
+      ],
+      [
+        "SAR",
+        "SABBSARI"
+      ],
+      [
+        "SEK",
+        "DNBASESX"
+      ],
+      [
+        "SGD",
+        "HSBCSGSG"
+      ],
+      [
+        "THB",
+        "HSBCTHBK"
+      ],
+      [
+        "USD",
+        "IRVTUS3N"
+      ],
+      [
+        "ZAR",
+        "SBZAZAJJ"
+      ]
+    ]
+  }
 }
