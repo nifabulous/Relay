@@ -73,7 +73,13 @@ def test_wave21_source_and_mask_equivalence_are_auditable():
             assert (actual[left_key] == actual[right_key]) == (left_fp == right_fp)
     assert evidence["source_snapshot"]["source_sha256"] == evidence["source_sha256"]
     assert evidence["source_snapshot"]["raw_accounts_committed"] is False
-    assert evidence["source_snapshot"]["bic_aliases"]["PNBPUS33"] == "PNBPUS3NNYC"
+    aliases = evidence["source_snapshot"]["bic_aliases"]
+    assert aliases == {
+        "SCBLDEFX": "SCBLDEFFXXX",
+        "PNBPUS3NNYC": "PNBPUS33XXX",
+    }
+    route_bics = {route["int_bic"] for route in evidence["routes"]}
+    assert set(aliases.values()) <= route_bics
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
     assert trusted["FNNBTRIS"]["settlement_terms_published"] is False
 
@@ -83,3 +89,14 @@ def test_wave21_inferred_routes_are_excluded_by_the_selection_guard():
     assert len(rows) == 31
     assert all(row[14] is True for row in rows)
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
+
+
+def test_wave21_manifest_coverage_is_non_vacuous():
+    manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
+    region = next(region for region in manifest["regions"] if region["name"] == "turkey-israel")
+    bank = next(bank for bank in region["banks"] if bank["bic8"] == "FNNBTRIS")
+    seeded = [row for row in SSI_RECORDS if row[0] == "FNNBTRISXXX"]
+    assert {record["currency"] for record in bank["admitted_records"]} == {
+        row[2] for row in seeded
+    }
+    assert len(seeded) == len(bank["admitted_records"]) == 31

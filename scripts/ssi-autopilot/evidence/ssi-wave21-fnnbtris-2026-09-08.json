@@ -297,8 +297,8 @@
     "extraction": "HTML table extraction; account values omitted after hashing",
     "raw_accounts_committed": false,
     "bic_aliases": {
-      "SCBLDEFF": "SCBLDEFX",
-      "PNBPUS33": "PNBPUS3NNYC"
+      "SCBLDEFX": "SCBLDEFFXXX",
+      "PNBPUS3NNYC": "PNBPUS33XXX"
     },
     "routes": [
       {
