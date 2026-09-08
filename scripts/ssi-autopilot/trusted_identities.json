@@ -21,7 +21,7 @@
     "domains": [
       "qnb.com.tr"
     ],
-    "settlement_terms_published": true
+    "settlement_terms_published": false
   },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
