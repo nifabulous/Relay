@@ -61,8 +61,15 @@ def test_wave17_redacted_source_extract_and_terms_are_consistent():
     assert trusted["BTRLRO22"]["settlement_terms_published"] is False
 
 
-def test_wave17_inferred_routes_are_excluded_by_the_selection_guard():
+def test_wave17_inferred_routes_are_excluded_by_the_selection_guard(db_session_clean):
+    from app.services.routing import suggest_from_ssi
+
     rows = [row for row in SSI_RECORDS if row[0] == "BTRLRO22XXX"]
     assert len(rows) == 20
     assert all(row[14] is True for row in rows)
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
+    currencies = {row[2] for row in rows}
+    assert all(
+        suggest_from_ssi(db_session_clean, "BTRLRO22XXX", currency, "RO") == []
+        for currency in currencies
+    )
