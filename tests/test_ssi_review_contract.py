@@ -293,3 +293,283 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
     )
+
+
+def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
+    """The 323-row Europe expansion preserves its exclusion semantics."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "europe-uncovered-wave4"
+    )
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    expected_keys = {key for key in expected if key[0] in beneficiary_bics}
+    actual_keys = {key for key in seed if key[0] in beneficiary_bics}
+    assert len(expected_keys) == 323
+    assert actual_keys == expected_keys
+    assert all(key[0][:8] != key[2][:8] for key in actual_keys)
+    assert all(
+        not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
+    )
+
+
+def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
+    """BIC-only and inferred wave-4 rows cannot reach the DB selector."""
+    seed = _seed_index()
+    targets = (
+        ("CABARS22XXX", "EUR", "RS"),
+        ("EMPOALTRXXX", "USD", "AL"),
+        ("BSAHBJBJXXX", "USD", "BJ"),
+    )
+    query_targets = []
+    for index, (beneficiary_bic, currency, country) in enumerate(targets):
+        rows = [
+            row
+            for key, values in seed.items()
+            if key[:2] == (beneficiary_bic, currency)
+            for row in values
+        ]
+        assert rows
+        model = _row_object(rows[0])
+        model.beneficiary_bic = f"W4TEST{index:02d}XXX"
+        db_session_clean.add(model)
+        query_targets.append((model.beneficiary_bic, currency, country))
+    db_session_clean.commit()
+
+    for beneficiary_bic, currency, country in query_targets:
+        assert suggest_from_ssi(
+            db_session_clean, beneficiary_bic, currency, country
+        ) == []
+
+
+def test_wave5_routable_rows_require_two_unmasked_accounts():
+    """Published metadata cannot make either redacted account executable."""
+    row = SSI(
+        beneficiary_bic="W5TEST00XXX",
+        currency="USD",
+        intermediary_bic="CITIUS33XXX",
+        intermediary_bank_name="Citibank New York",
+        intermediary_account="123456789",
+        beneficiary_account="987654321",
+        charge_code="SHA",
+        value_date="spot",
+        notes="Source: contract test.",
+        as_of="2026-09-07",
+        verified_by="Treasury Operations",
+        status="published",
+    )
+    assert _is_routable_ssi(row)
+    row.intermediary_account = "ACCT-91004601"
+    assert not _is_routable_ssi(row)
+    row.intermediary_account = "123456789"
+    row.beneficiary_account = "[REDACTED]"
+    assert not _is_routable_ssi(row)
+
+
+def test_unibank_has_the_complete_six_currency_correspondent_matrix():
+    seed = _seed_index()
+    rows = [row for key, values in seed.items() if key[0] == "UBAZAZ22XXX" for row in values]
+    groups = {(row[2], _bic11(row[3])) for row in rows}
+    assert groups == {
+        ("EUR", "COBADEFFXXX"),
+        ("EUR", "SOGEFRPPXXX"),
+        ("GBP", "COBADEFFXXX"),
+        ("GEL", "BAGAGE22XXX"),
+        ("RUB", "ASANRU8XXXX"),
+        ("USD", "IRVTUS3NXXX"),
+    }
+    assert {row[5] for row in rows} == {"ACCT-91004699"}
+
+
+def test_namibia_names_only_rows_are_nonselectable():
+    seed = _seed_index()
+    rows = [row for key, values in seed.items() if key[0] == "FIRNNANXXXX" for row in values]
+    assert {row[2] for row in rows} == {"AUD", "CHF", "EUR", "GBP", "USD"}
+    assert all(row[13] is True for row in rows)
+    assert all(row[5:9] == (None, None, None, None) for row in rows)
+    assert all(not _is_routable_ssi(_row_object(row)) for row in rows)
+
+
+def test_kenya_rows_use_the_manifest_scoped_account_policy():
+    """Kenya coverage derives its mask from the region, never a global literal."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    kenya_bics = {
+        bank["bic8"] + "XXX"
+        for region in manifest["regions"]
+        if "KE" in region["countries"]
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    assert kenya_bics
+    for beneficiary_bic in kenya_bics:
+        region = next(
+            region
+            for region in manifest["regions"]
+            if any(
+                bank["bic8"] + "XXX" == beneficiary_bic
+                for bank in region["banks"]
+            )
+        )
+        prefix = str(region["masked_block"])[:-2]
+        mask = re.compile(rf"^ACCT-{re.escape(prefix)}\d\d$")
+        legacy = set(region.get("legacy_accounts", []))
+        rows = [seed[key][0] for key in expected if key[0] == beneficiary_bic]
+        assert rows
+        for row in rows:
+            assert row[11] in {"unverified", "archived"}
+            if row[13]:
+                assert row[5:9] == (None, None, None, None)
+            else:
+                assert mask.fullmatch(row[5]) or row[5] in legacy
+                assert mask.fullmatch(row[6]) or row[6] in legacy
+            assert not _is_routable_ssi(_row_object(row)), row[:5]
+
+
+def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
+    """Every admitted Sri Lanka/Africa row is complete but non-selectable."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region_names = {
+        "southasia-mekong-wave3",
+        "africa-wave2",
+        "namibia-wave1",
+    }
+    beneficiary_bics = {
+        bank["bic8"] + "XXX"
+        for region in manifest["regions"]
+        if region["name"] in region_names
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    keys = {key for key in expected if key[0] in beneficiary_bics}
+    assert len(keys) == 180
+    assert {key for key in seed if key[0] in beneficiary_bics} == keys
+    for key in keys:
+        _, bank, record = expected[key]
+        row = seed[key][0]
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"]
+        assert row[11] == record["status"].lower()
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
+        assert not _is_routable_ssi(_row_object(row)), key
+
+
+def test_wave8_kenya_correspondent_rows_have_exact_record_contract():
+    """All 52 Stanbic/SBM/Sidian rows retain provenance and non-selectability."""
+    _, expected = _manifest_contract()
+    seed = _seed_index()
+    beneficiary_bics = {
+        "SBICKENXXXX",
+        "SBMKKENAXXX",
+        "SIDNKENAXXX",
+    }
+    keys = {key for key in expected if key[0] in beneficiary_bics}
+    assert len(keys) == 52
+    assert {key for key in seed if key[0] in beneficiary_bics} == keys
+    assert all(len(seed[key]) == 1 for key in keys)
+    assert all(len(key[2]) == 11 and key[2].isalnum() for key in keys)
+    for key in keys:
+        _, bank, record = expected[key]
+        row = seed[key][0]
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"] == "2026-09-07"
+        assert row[11] == record["status"].lower() == "unverified"
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
+        assert not _is_routable_ssi(_row_object(row)), key
+
+
+def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
+    """Each wave-five region has exactly its admitted, non-forbidden keys."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region_names = {
+        "europe-remaining-wave5",
+        "africa-wave5",
+        "caucasus-wave5",
+    }
+    expected_counts = {
+        "europe-remaining-wave5": 69,
+        "africa-wave5": 49,
+        "caucasus-wave5": 164,
+    }
+    for region in manifest["regions"]:
+        if region["name"] not in region_names:
+            continue
+        bics = {
+            bank["bic8"] + "XXX"
+            for bank in region["banks"]
+            if bank.get("seedable", True) and bank.get("admitted_records")
+        }
+        admitted = {key for key in expected if key[0] in bics}
+        actual = {key for key in seed if key[0] in bics}
+        manifest_count = sum(
+            len(bank.get("admitted_records") or [])
+            for bank in region["banks"]
+            if bank.get("seedable", True) and bank.get("admitted_records")
+        )
+        assert manifest_count == expected_counts[region["name"]]
+        assert len(admitted) == expected_counts[region["name"]]
+        assert actual == admitted
+        forbidden = {
+            bic.strip().upper()[:8]
+            for bic in region.get("forbidden_bics", [])
+        }
+        assert all(key[0][:8] not in forbidden for key in actual)
+
+
+def test_wave6_caucasus_additions_explain_the_164_record_total():
+    """Three later banks add 30 records to the original 134-row region."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "caucasus-wave5"
+    )
+    region_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    keys = {key for key in expected if key[0] in region_bics}
+    added_counts = {
+        "ACABAZ22XXX": 14,
+        "ARMCAM22XXX": 10,
+        "UBAZAZ22XXX": 6,
+    }
+    assert {
+        bic: sum(key[0] == bic for key in keys) for bic in added_counts
+    } == added_counts
+    assert sum(added_counts.values()) == 30
+    assert len(keys) - sum(added_counts.values()) == 134
+    assert len(keys) == 164
+    assert {key for key in seed if key[0] in region_bics} == keys
