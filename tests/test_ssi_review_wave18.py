@@ -44,6 +44,17 @@ def test_wave18_source_snapshot_and_selection_guard_cover_all_routes():
     assert len(bank["admitted_records"]) == evidence["source_snapshot"]["route_count"] == len(records)
     assert evidence["source_snapshot"]["source_sha256"] == evidence["source_sha256"]
     assert evidence["source_snapshot"]["raw_accounts_committed"] is False
+    assert evidence["source_snapshot"]["routes"] == [
+        {
+            "currency": record["currency"],
+            "int_bic": record["int_bic"],
+            "correspondent": record["correspondent"],
+            "bic_only": record["bic_only"],
+            "has_account_data": record["nostro"] is not None,
+            **({"terms_inferred": True} if record.get("terms_inferred") else {}),
+        }
+        for record in bank["admitted_records"]
+    ]
     bic_only = [row for row in records if row[13] is True]
     assert len(bic_only) == evidence["source_snapshot"]["bic_only_route_count"]
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in bic_only)
@@ -61,5 +72,11 @@ def test_wave18_seeded_rows_are_excluded_by_the_production_selector(db_session_c
     ).all()
     assert len(rows) == 24
     assert all(not _is_routable_ssi(row) for row in rows)
+    loaded_jpy = next(row for row in rows if row.currency == "JPY")
+    assert loaded_jpy.intermediary_bic == "BOTKJPJTXXX"
+    assert loaded_jpy.bic_only is False
+    assert loaded_jpy.terms_inferred is True
+    assert loaded_jpy.intermediary_account == "ACCT-91000841"
+    assert loaded_jpy.beneficiary_account == "ACCT-91000842"
     assert suggest_from_ssi(db_session_clean, "BBDEBRSPXXX", "USD", "BR") == []
     assert suggest_from_ssi(db_session_clean, "BBDEBRSPXXX", "JPY", "BR") == []
