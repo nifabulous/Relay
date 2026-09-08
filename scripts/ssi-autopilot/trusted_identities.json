@@ -1018,5 +1018,13 @@
       "sidianbank.co.ke"
     ],
     "settlement_terms_published": false
+  },
+  "DNBAUS33": {
+    "name": "DNB Bank ASA New York Branch",
+    "country": "US",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
   }
 }
