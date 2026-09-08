@@ -1,0 +1,54 @@
+import json
+from pathlib import Path
+
+from app.models import SSI
+from app.services.routing import _is_routable_ssi
+from app.services.seed import SSI_RECORDS
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _row_to_ssi(row):
+    provenance = list(row[10:])
+    return SSI(
+        beneficiary_bic=row[0],
+        beneficiary_bank_name=row[1],
+        currency=row[2],
+        intermediary_bic=row[3],
+        intermediary_bank_name=row[4],
+        intermediary_account=row[5],
+        beneficiary_account=row[6],
+        charge_code=row[7],
+        value_date=row[8],
+        notes=row[9],
+        as_of=provenance[0] if provenance else None,
+        status=provenance[1] if len(provenance) > 1 else "illustrative",
+        verified_by=provenance[2] if len(provenance) > 2 else None,
+        bic_only=provenance[3] if len(provenance) > 3 else False,
+        terms_inferred=provenance[4] if len(provenance) > 4 else False,
+    )
+
+
+def test_wave18_source_snapshot_and_selection_guard_cover_all_routes():
+    manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
+    evidence = json.loads(
+        (ROOT / "scripts/ssi-autopilot/evidence/ssi-wave18-bbdebrsp-2026-09-08.json").read_text()
+    )
+    bank = next(
+        bank
+        for region in manifest["regions"]
+        for bank in region["banks"]
+        if bank["bic8"] == "BBDEBRSP"
+    )
+    records = [row for row in SSI_RECORDS if row[0] == "BBDEBRSPXXX"]
+    assert len(bank["admitted_records"]) == evidence["source_snapshot"]["route_count"] == len(records)
+    assert evidence["source_snapshot"]["source_sha256"] == evidence["source_sha256"]
+    assert evidence["source_snapshot"]["raw_accounts_committed"] is False
+    bic_only = [row for row in records if row[13] is True]
+    assert len(bic_only) == evidence["source_snapshot"]["bic_only_route_count"]
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in bic_only)
+    jpy = next(row for row in records if row[2] == "JPY")
+    assert len(jpy) == 15
+    assert jpy[13] is False and jpy[14] is True
+    assert _is_routable_ssi(_row_to_ssi(jpy)) is False

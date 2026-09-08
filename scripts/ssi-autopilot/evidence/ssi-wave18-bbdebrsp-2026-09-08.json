@@ -1,0 +1,16 @@
+{
+  "source": "https://banco.bradesco/html/pessoajuridica/solucoes-integradas/comercio-exterior/produtos-financeiros/canal-bancario.shtm",
+  "source_sha256": "72f604740434c39b44784e645474695414280975b7cad0a58f010df6ef59d499",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "BBDEBRSP",
+  "source_snapshot": {
+    "source": "https://banco.bradesco/html/pessoajuridica/solucoes-integradas/comercio-exterior/produtos-financeiros/canal-bancario.shtm",
+    "source_sha256": "72f604740434c39b44784e645474695414280975b7cad0a58f010df6ef59d499",
+    "captured_at": "2026-09-08",
+    "extraction": "HTML correspondent list extract; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 24,
+    "bic_only_route_count": 23,
+    "account_backed_route_keys": ["JPY:BOTKJPJT"]
+  }
+}
