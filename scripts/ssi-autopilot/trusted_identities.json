@@ -259,6 +259,14 @@
     ],
     "settlement_terms_published": true
   },
+  "DNBASESX": {
+    "name": "DNB Bank Sweden",
+    "country": "SE",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": true
+  },
   "DNEXJPJT": {
     "name": "Daiwa Next Bank, Ltd.",
     "country": "JP",
