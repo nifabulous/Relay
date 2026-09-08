@@ -203,6 +203,14 @@
     ],
     "settlement_terms_published": true
   },
+  "EACBVNVX": {
+    "name": "Vikki Digital Bank Limited",
+    "country": "VN",
+    "domains": [
+      "vikkibank.vn"
+    ],
+    "settlement_terms_published": true
+  },
   "CAFECOBB": {
     "name": "Banco Davivienda S.A.",
     "country": "CO",
