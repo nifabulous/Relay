@@ -45,7 +45,7 @@
     "domains": [
       "uob.co.th"
     ],
-    "settlement_terms_published": true
+    "settlement_terms_published": false
   },
   "OCBCSGSG": {
     "name": "Oversea-Chinese Banking Corporation Limited",
