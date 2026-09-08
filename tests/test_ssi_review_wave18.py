@@ -51,3 +51,15 @@ def test_wave18_source_snapshot_and_selection_guard_cover_all_routes():
     assert len(jpy) == 15
     assert jpy[13] is False and jpy[14] is True
     assert _is_routable_ssi(_row_to_ssi(jpy)) is False
+
+
+def test_wave18_seeded_rows_are_excluded_by_the_production_selector(db_session_clean):
+    from app.services.routing import suggest_from_ssi
+
+    rows = db_session_clean.query(SSI).filter(
+        SSI.beneficiary_bic == "BBDEBRSPXXX"
+    ).all()
+    assert len(rows) == 24
+    assert all(not _is_routable_ssi(row) for row in rows)
+    assert suggest_from_ssi(db_session_clean, "BBDEBRSPXXX", "USD", "BR") == []
+    assert suggest_from_ssi(db_session_clean, "BBDEBRSPXXX", "JPY", "BR") == []
