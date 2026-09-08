@@ -157,7 +157,7 @@
     {
       "currency": "JPY",
       "int_bic": "BOTKJPJT",
-      "correspondent": "MUFG BANK LTD., Tokyo",
+      "correspondent": "MUFG Bank Ltd., Tokyo",
       "nostro_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
       "with_an_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
       "nostro_mask": "ACCT-91001023",
@@ -175,7 +175,7 @@
     {
       "currency": "PLN",
       "int_bic": "BREXPLPW",
-      "correspondent": "m Bank SA",
+      "correspondent": "mBank SA",
       "nostro_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
       "with_an_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
       "nostro_mask": "ACCT-91001030",
@@ -416,7 +416,7 @@
       {
         "currency": "JPY",
         "int_bic": "BOTKJPJT",
-        "correspondent": "MUFG BANK LTD., Tokyo",
+        "correspondent": "MUFG Bank Ltd., Tokyo",
         "nostro_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
         "with_an_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed"
       },
@@ -430,7 +430,7 @@
       {
         "currency": "PLN",
         "int_bic": "BREXPLPW",
-        "correspondent": "m Bank SA",
+        "correspondent": "mBank SA",
         "nostro_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
         "with_an_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e"
       },
