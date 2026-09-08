@@ -259,6 +259,14 @@
     ],
     "settlement_terms_published": true
   },
+  "DNBAGB2L": {
+    "name": "DNB Bank ASA London Branch",
+    "country": "GB",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": true
+  },
   "DNEXJPJT": {
     "name": "Daiwa Next Bank, Ltd.",
     "country": "JP",
