@@ -452,9 +452,58 @@ def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
     assert len(keys) == 180
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
+        _, bank, record = expected[key]
         row = seed[key][0]
-        assert row[10] and row[11] in {"unverified", "archived"}
-        assert row[9].startswith("Source: ")
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"]
+        assert row[11] == record["status"].lower()
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
+        assert not _is_routable_ssi(_row_object(row)), key
+
+
+def test_wave8_kenya_correspondent_rows_have_exact_record_contract():
+    """All 52 Stanbic/SBM/Sidian rows retain provenance and non-selectability."""
+    _, expected = _manifest_contract()
+    seed = _seed_index()
+    beneficiary_bics = {
+        "SBICKENXXXX",
+        "SBMKKENAXXX",
+        "SIDNKENAXXX",
+    }
+    keys = {key for key in expected if key[0] in beneficiary_bics}
+    assert len(keys) == 52
+    assert {key for key in seed if key[0] in beneficiary_bics} == keys
+    assert all(len(seed[key]) == 1 for key in keys)
+    assert all(len(key[2]) == 11 and key[2].isalnum() for key in keys)
+    for key in keys:
+        _, bank, record = expected[key]
+        row = seed[key][0]
+        assert row[1] == bank["name"]
+        assert row[4] == record["correspondent"]
+        assert row[5] == record["nostro"]
+        assert row[6] == record["with_an"]
+        assert row[7] == (
+            record["charge_code"].upper() if record["charge_code"] else None
+        )
+        assert row[8] == record["value_date"]
+        assert row[9] == _canonical_note(record)
+        assert row[10] == record["as_of"] == "2026-09-07"
+        assert row[11] == record["status"].lower() == "unverified"
+        assert row[13] is record["bic_only"]
+        assert (row[14] if len(row) > 14 else False) is record.get(
+            "terms_inferred", False
+        )
         assert not _is_routable_ssi(_row_object(row)), key
 
 
@@ -466,6 +515,11 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         "europe-remaining-wave5",
         "africa-wave5",
         "caucasus-wave5",
+    }
+    expected_counts = {
+        "europe-remaining-wave5": 69,
+        "africa-wave5": 49,
+        "caucasus-wave5": 164,
     }
     for region in manifest["regions"]:
         if region["name"] not in region_names:
@@ -482,10 +536,40 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
             for bank in region["banks"]
             if bank.get("seedable", True) and bank.get("admitted_records")
         )
-        assert len(admitted) == manifest_count
+        assert manifest_count == expected_counts[region["name"]]
+        assert len(admitted) == expected_counts[region["name"]]
         assert actual == admitted
         forbidden = {
             bic.strip().upper()[:8]
             for bic in region.get("forbidden_bics", [])
         }
         assert all(key[0][:8] not in forbidden for key in actual)
+
+
+def test_wave6_caucasus_additions_explain_the_164_record_total():
+    """Three later banks add 30 records to the original 134-row region."""
+    manifest, expected = _manifest_contract()
+    seed = _seed_index()
+    region = next(
+        region
+        for region in manifest["regions"]
+        if region["name"] == "caucasus-wave5"
+    )
+    region_bics = {
+        bank["bic8"] + "XXX"
+        for bank in region["banks"]
+        if bank.get("seedable", True) and bank.get("admitted_records")
+    }
+    keys = {key for key in expected if key[0] in region_bics}
+    added_counts = {
+        "ACABAZ22XXX": 14,
+        "ARMCAM22XXX": 10,
+        "UBAZAZ22XXX": 6,
+    }
+    assert {
+        bic: sum(key[0] == bic for key in keys) for bic in added_counts
+    } == added_counts
+    assert sum(added_counts.values()) == 30
+    assert len(keys) - sum(added_counts.values()) == 134
+    assert len(keys) == 164
+    assert {key for key in seed if key[0] in region_bics} == keys
