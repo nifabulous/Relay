@@ -2363,6 +2363,7 @@ AFRICA_WAVE2_SSI_COVERAGE = [
     ("IMBLTZTZXXX", "I AND M BANK (T) LIMITED", {"EUR", "GBP", "INR", "KES", "MUR", "USD", "ZAR"}),
     ("IMRWRWRWXXX", "I AND M BANK (RWANDA) PLC", {"CAD", "EUR", "GBP", "INR", "JPY", "KES", "RWF", "TZS", "USD", "ZAR"}),
     ("NMBLZWHXXXX", "NMB BANK LIMITED", {"CNY", "EUR", "GBP", "USD"}),
+    ("BARCTZTZXXX", "ABSA BANK TANZANIA LIMITED", {"DKK", "EUR", "GBP", "JPY", "KES", "NOK", "TZS", "USD", "ZAR"}),
 ]
 
 class TestAfricaWave2SsiCoverage:
@@ -2390,8 +2391,6 @@ class TestAfricaWave2SsiCoverage:
     def test_africa_wave2_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("africa-wave2", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: africa-wave2 ----
-
-
 # ---- autopilot-generated coverage tests: europe-wave2 ----
 EUROPE_WAVE2_SSI_COVERAGE = [
     ("ABKLCY2NXXX", "ALPHA BANK CYPRUS LTD", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "ILS", "JPY", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SEK", "SGD", "USD", "ZAR"}),
@@ -2465,6 +2464,8 @@ class TestCaucasusCentralAsiaWave3SsiCoverage:
 SOUTHASIA_MEKONG_WAVE3_SSI_COVERAGE = [
     ("NSBALKLXXXX", "National Savings Bank", {"CHF", "EUR", "JPY", "SGD", "USD"}),
     ("PSBKLKLXXXX", "People's Bank", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SEK", "SGD", "USD"}),
+    ("SEYBLKLXXXX", "Seylan Bank PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "USD"}),
+    ("HBLILKLXXXX", "HATTON NATIONAL BANK PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "THB", "USD"}),
 ]
 
 class TestSouthasiaMekongWave3SsiCoverage:
@@ -2492,8 +2493,6 @@ class TestSouthasiaMekongWave3SsiCoverage:
     def test_southasia_mekong_wave3_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("southasia-mekong-wave3", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: southasia-mekong-wave3 ----
-
-
 # ---- autopilot-generated coverage tests: southern-africa-wave3 ----
 SOUTHERN_AFRICA_WAVE3_SSI_COVERAGE = [
     ("BFMXAOLUXXX", "Banco de Fomento Angola S.A.", {"AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "NAD", "NOK", "SEK", "USD", "ZAR"}),
@@ -2719,3 +2718,141 @@ class TestAfricaWave5SsiCoverage:
     def test_africa_wave5_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("africa-wave5", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: africa-wave5 ----
+
+
+# ---- autopilot-generated coverage tests: caucasus-wave5 ----
+CAUCASUS_WAVE5_SSI_COVERAGE = [
+    ("AGCAAM22XXX", "ACBA Bank OJSC", {"AED", "CHF", "CNY", "EUR", "GBP", "GEL", "RUB", "USD"}),
+    ("ASCJKG22XXX", "Bank of Asia CJSC", {"CNY", "EUR", "KZT", "RUB", "USD"}),
+    ("CRTUGE22XXX", "JSC Cartu Bank", {"EUR", "USD"}),
+    ("EJSATJ22XXX", "Bank Eskhata", {"CNY", "EUR", "USD"}),
+    ("IBAZAZ2XXXX", "International Bank of Azerbaijan OJSC (ABB)", {"AED", "AUD", "CHF", "CNY", "EUR", "GBP", "JPY", "KZT", "RUB", "TRY", "USD"}),
+    ("INJSAM22XXX", "Inecobank CJSC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "USD"}),
+    ("KICBKG22XXX", "Kyrgyz Investment and Credit Bank", {"AED", "CHF", "CNY", "EUR", "GBP", "KZT", "RUB", "TRY", "USD", "UZS"}),
+    ("LBRTGE22XXX", "JSC Liberty Bank", {"AMD", "AUD", "AZN", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "HKD", "TRY", "USD"}),
+    ("SPRBTJ22XXX", "Spitamen Bank CJSC", {"CNY", "EUR", "USD"}),
+    ("TEBAGE22XXX", "JSC Terabank", {"AED", "CHF", "CNY", "EUR", "GBP", "GEL", "JPY", "TRY", "USD"}),
+    ("ACABAZ22XXX", "AccessBank CJSC", {"EUR", "GBP", "RUB", "TRY", "USD"}),
+    ("ARMCAM22XXX", "Araratbank OJSC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "USD"}),
+    ("UBAZAZ22XXX", "Unibank CB", {"EUR", "GBP", "GEL", "RUB", "USD"}),
+]
+
+class TestCaucasusWave5SsiCoverage:
+
+    def test_caucasus_wave5_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("caucasus-wave5")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in CAUCASUS_WAVE5_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_caucasus_wave5_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("caucasus-wave5")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"caucasus-wave5 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_caucasus_wave5_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("caucasus-wave5", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: caucasus-wave5 ----
+
+
+class TestUnibankSsiRecordCoverage:
+    """Pin Unibank's complete admitted currency set at record level."""
+
+    def test_unibank_keeps_usd_rub_and_all_published_currency_rows(self):
+        rows = [row for row in SSI_RECORDS if row[0] == "UBAZAZ22XXX"]
+        expected = {
+            ("EUR", "COBADEFFXXX"),
+            ("EUR", "SOGEFRPPXXX"),
+            ("GBP", "COBADEFFXXX"),
+            ("GEL", "BAGAGE22XXX"),
+            ("RUB", "ASANRU8XXXX"),
+            ("USD", "IRVTUS3NXXX"),
+        }
+        assert {
+            (row[2], _canonical_ssi_bic(row[3])) for row in rows
+        } == expected
+        assert len(rows) == len(expected)
+        for row in rows:
+            assert row[1] == "Unibank CB"
+            assert row[5] == row[6] == "ACCT-91004699"
+            assert row[7:9] == ("SHA", "spot")
+            assert row[9].startswith(
+                "Source: https://unibank.az/en/corporatemenus/64/korrespondentskie_scheta"
+            )
+            assert row[10:13] == ("2026-09-06", "unverified", None)
+            assert row[13] is False and row[14] is True
+
+
+# ---- autopilot-generated coverage tests: uzbekistan-wave6 ----
+UZBEKISTAN_WAVE6_SSI_COVERAGE = [
+    ("UZHOUZ22XXX", "Ipoteka Bank JSC", {"CHF", "CNY", "EUR", "RUB", "USD"}),
+    ("INIPUZ22XXX", "JSIC Bank Ipak Yuli", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "USD"}),
+    ("UJSIUZ22XXX", "Uzbek Industrial and Construction Bank (Uzpromstroybank)", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
+]
+
+class TestUzbekistanWave6SsiCoverage:
+
+    def test_uzbekistan_wave6_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("uzbekistan-wave6")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in UZBEKISTAN_WAVE6_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_uzbekistan_wave6_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("uzbekistan-wave6")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"uzbekistan-wave6 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_uzbekistan_wave6_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("uzbekistan-wave6", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: uzbekistan-wave6 ----
+
+
+# ---- autopilot-generated coverage tests: namibia-wave1 ----
+NAMIBIA_WAVE1_SSI_COVERAGE = [
+    ("FIRNNANXXXX", "FIRST NATIONAL BANK OF NAMIBIA LIMITED", {"AUD", "CHF", "EUR", "GBP", "USD"}),
+]
+
+class TestNamibiaWave1SsiCoverage:
+
+    def test_namibia_wave1_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("namibia-wave1")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in NAMIBIA_WAVE1_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_namibia_wave1_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("namibia-wave1")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"namibia-wave1 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_namibia_wave1_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("namibia-wave1", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: namibia-wave1 ----

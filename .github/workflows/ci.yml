@@ -8,6 +8,7 @@ on:
     # head checks as PRs targeting the default branch. Without this pattern,
     # downstream stack heads have no CI run for Loopkeeper to attest.
     branches: [main, master, "codex/**"]
+    # Keep the exact-head trigger visible on every stacked PR head.
 
 # A fresh push supersedes the in-flight run for the same PR: the old result
 # says nothing about the head anyone can review.

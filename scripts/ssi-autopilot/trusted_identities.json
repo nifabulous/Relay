@@ -818,5 +818,165 @@
       "rmb.co.bw"
     ],
     "settlement_terms_published": false
+  },
+  "AGCAAM22": {
+    "name": "ACBA Bank OJSC",
+    "country": "AM",
+    "domains": [
+      "acba.am"
+    ],
+    "settlement_terms_published": false
+  },
+  "INJSAM22": {
+    "name": "Inecobank CJSC",
+    "country": "AM",
+    "domains": [
+      "inecobank.am"
+    ],
+    "settlement_terms_published": false
+  },
+  "IBAZAZ2X": {
+    "name": "International Bank of Azerbaijan OJSC (ABB)",
+    "country": "AZ",
+    "domains": [
+      "abb-bank.az"
+    ],
+    "settlement_terms_published": false
+  },
+  "CRTUGE22": {
+    "name": "JSC Cartu Bank",
+    "country": "GE",
+    "domains": [
+      "cartubank.ge"
+    ],
+    "settlement_terms_published": false
+  },
+  "TEBAGE22": {
+    "name": "JSC Terabank",
+    "country": "GE",
+    "domains": [
+      "terabank.ge"
+    ],
+    "settlement_terms_published": false
+  },
+  "LBRTGE22": {
+    "name": "JSC Liberty Bank",
+    "country": "GE",
+    "domains": [
+      "libertybank.ge"
+    ],
+    "settlement_terms_published": false
+  },
+  "ASCJKG22": {
+    "name": "Bank of Asia CJSC",
+    "country": "KG",
+    "domains": [
+      "bankasia.kg"
+    ],
+    "settlement_terms_published": false
+  },
+  "EJSATJ22": {
+    "name": "Bank Eskhata",
+    "country": "TJ",
+    "domains": [
+      "eskhata.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "SPRBTJ22": {
+    "name": "Spitamen Bank CJSC",
+    "country": "TJ",
+    "domains": [
+      "spitamenbank.tj"
+    ],
+    "settlement_terms_published": false
+  },
+  "KICBKG22": {
+    "name": "Kyrgyz Investment and Credit Bank",
+    "country": "KG",
+    "domains": [
+      "kicb.net"
+    ],
+    "settlement_terms_published": false
+  },
+  "ARMCAM22": {
+    "name": "Araratbank OJSC",
+    "country": "AM",
+    "domains": [
+      "araratbank.am"
+    ],
+    "settlement_terms_published": false
+  },
+  "ACABAZ22": {
+    "name": "AccessBank CJSC",
+    "country": "AZ",
+    "domains": [
+      "accessbank.az"
+    ],
+    "settlement_terms_published": false
+  },
+  "UBAZAZ22": {
+    "name": "Unibank CB",
+    "country": "AZ",
+    "domains": [
+      "unibank.az"
+    ],
+    "settlement_terms_published": false
+  },
+  "UZHOUZ22": {
+    "name": "Ipoteka Bank JSC",
+    "country": "UZ",
+    "domains": [
+      "ipotekabank.uz"
+    ],
+    "settlement_terms_published": false
+  },
+  "INIPUZ22": {
+    "name": "JSIC Bank Ipak Yuli",
+    "country": "UZ",
+    "domains": [
+      "ipakyulibank.uz"
+    ],
+    "settlement_terms_published": false
+  },
+  "UJSIUZ22": {
+    "name": "Uzbek Industrial and Construction Bank (Uzpromstroybank)",
+    "country": "UZ",
+    "domains": [
+      "sqb.uz"
+    ],
+    "settlement_terms_published": false
+  },
+  "SEYBLKLX": {
+    "name": "Seylan Bank PLC",
+    "country": "LK",
+    "domains": [
+      "seylan.lk"
+    ],
+    "settlement_terms_published": false
+  },
+  "BARCTZTZ": {
+    "name": "ABSA BANK TANZANIA LIMITED",
+    "country": "TZ",
+    "domains": [
+      "absa.co.tz"
+    ],
+    "settlement_terms_published": false
+  },
+  "FIRNNANX": {
+    "name": "FIRST NATIONAL BANK OF NAMIBIA LIMITED",
+    "country": "NA",
+    "domains": [
+      "fnbnamibia.com.na"
+    ],
+    "settlement_terms_published": false
+  },
+  "HBLILKLX": {
+    "name": "HATTON NATIONAL BANK PLC",
+    "country": "LK",
+    "domains": [
+      "hnb.lk"
+    ],
+    "settlement_terms_published": false
   }
 }
