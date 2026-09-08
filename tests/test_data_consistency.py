@@ -2905,6 +2905,16 @@ class TestFinlandSsiCoverage:
     def test_finland_banks_have_seeded_ssi_records(self):
         manifest_expected = _manifest_seedable_coverage("finland")
         generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in FINLAND_SSI_COVERAGE}
+# ---- autopilot-generated coverage tests: united-states ----
+UNITED_STATES_SSI_COVERAGE = [
+    ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
+]
+
+class TestUnitedStatesSsiCoverage:
+
+    def test_united_states_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("united-states")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in UNITED_STATES_SSI_COVERAGE}
         assert generated_expected == manifest_expected
         seeded = {}
         for record in SSI_RECORDS:
@@ -2925,3 +2935,15 @@ class TestFinlandSsiCoverage:
     def test_finland_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("finland", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: finland ----
+    def test_united_states_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("united-states")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"united-states SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_united_states_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("united-states", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: united-states ----
