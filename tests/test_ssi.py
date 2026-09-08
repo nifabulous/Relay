@@ -397,7 +397,9 @@ class TestAllSSIAccountsArePlaceholders:
             assert row[7] is None, f"{row[0]}/{row[2]}: bic_only row has a charge code"
             assert row[8] is None, f"{row[0]}/{row[2]}: bic_only row has a value date"
             assert row[12] is None, f"{row[0]}/{row[2]}: bic_only row names a verifier"
-            assert len(row) == 14, f"{row[0]}/{row[2]}: expected 14 fields, got {len(row)}"
+            assert len(row) in {14, 15}, f"{row[0]}/{row[2]}: unexpected field count {len(row)}"
+            if len(row) == 15:
+                assert row[14] is False, f"{row[0]}/{row[2]}: bic_only row marked as inferred"
 
     def test_no_real_ibans_in_notes(self):
         """
