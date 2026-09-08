@@ -1010,5 +1010,13 @@
       "sidianbank.co.ke"
     ],
     "settlement_terms_published": false
+  },
+  "FIRNZAJJ": {
+    "name": "FirstRand Bank (FNB)",
+    "country": "ZA",
+    "domains": [
+      "fnb.co.za"
+    ],
+    "settlement_terms_published": false
   }
 }
