@@ -33,4 +33,5 @@ def test_wave26_mask_preserves_route_account_identity():
     assert {key: seeded[key] for key in actual} == actual
     assert evidence["masking"]["raw_accounts_committed"] is False
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
+    assert trusted["DNBAUS33"]["settlement_terms_published"] is False
     assert trusted["DNBAGB2L"]["settlement_terms_published"] is False
