@@ -26,4 +26,5 @@ def test_wave27_mask_preserves_route_account_identity():
             assert (actual[left_key] == actual[right_key]) == (left_fp == right_fp)
     assert evidence["masking"]["raw_accounts_committed"] is False
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
+    assert trusted["DNBAUS33"]["settlement_terms_published"] is False
     assert trusted["DNBAFIHX"]["settlement_terms_published"] is False
