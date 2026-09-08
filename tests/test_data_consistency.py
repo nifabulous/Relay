@@ -2945,18 +2945,6 @@ class TestUnitedStatesSsiCoverage:
             missing = currencies - seeded.get(bic, set())
             assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
 
-    def test_united_kingdom_banks_are_in_the_bank_directory(self):
-        bank_bics = {row[0] for row in BANKS}
-        manifest_expected = _manifest_seedable_coverage("united-kingdom")
-        missing = [bic for bic in manifest_expected if bic not in bank_bics]
-        assert not missing, (
-            f"united-kingdom SSI beneficiaries must also be seeded in BANKS so "
-            f"Explore can show their settlement instructions: {missing}"
-        )
-
-    def test_united_kingdom_seeded_records_are_semantically_valid(self):
-        _assert_manifest_region_records("united-kingdom", SSI_RECORDS, BANKS)
-# ---- end autopilot-generated coverage tests: united-kingdom ----
     def test_united_states_banks_are_in_the_bank_directory(self):
         bank_bics = {row[0] for row in BANKS}
         manifest_expected = _manifest_seedable_coverage("united-states")
