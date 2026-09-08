@@ -72,5 +72,50 @@
       "currency": "TRY",
       "reason": "Domestic rail terms are not published as international SHA/spot settlement terms; omitted until a rail-specific representation exists."
     }
-  ]
+  ],
+  "source_snapshot": {
+    "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+    "source_sha256": "6605342271bfacf7caa42776695c2c3e983391cbccedc670aaa93a78ddb0c7e8",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract from the cited source; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 7,
+    "route_keys": [
+      [
+        "AED",
+        "ABDIAEAD"
+      ],
+      [
+        "CNY",
+        "CZCBCN2X"
+      ],
+      [
+        "EUR",
+        "IRVTUS3N"
+      ],
+      [
+        "EUR",
+        "KTAGDEFF"
+      ],
+      [
+        "GBP",
+        "SCBLGB2L"
+      ],
+      [
+        "SAR",
+        "BJAZSAJE"
+      ],
+      [
+        "USD",
+        "IRVTUS3N"
+      ]
+    ]
+  },
+  "scope": {
+    "advertised_route_count": 7,
+    "excluded_domestic_routes": [
+      "TRY"
+    ],
+    "exclusion_reason": "The source lists TRY domestic EFT details without a published correspondent/account route; it is outside this SSI admission scope."
+  }
 }
