@@ -10,16 +10,387 @@
     "retrieval_status": "official document indexed; direct fetch returned 403 in bounded capture",
     "bic_aliases": {
       "PNBPUS3NNYC": "PNBPUS33"
-    }
+    },
+    "route_count": 34,
+    "route_keys": [
+      [
+        "AUD",
+        "ANZBAU3M"
+      ],
+      [
+        "CAD",
+        "TDOMCATTTOR"
+      ],
+      [
+        "CHF",
+        "UBSWCHZH80A"
+      ],
+      [
+        "CNY",
+        "BKCHCNBJS00"
+      ],
+      [
+        "CNY",
+        "SCBLHKHH"
+      ],
+      [
+        "DKK",
+        "DABADKKK"
+      ],
+      [
+        "DKK",
+        "DABANO22"
+      ],
+      [
+        "DKK",
+        "NDEADKKK"
+      ],
+      [
+        "EUR",
+        "BSCHESMM"
+      ],
+      [
+        "EUR",
+        "COBADEFF"
+      ],
+      [
+        "EUR",
+        "DEUTDEFF"
+      ],
+      [
+        "EUR",
+        "GENODEFF"
+      ],
+      [
+        "EUR",
+        "SOGEFRPP"
+      ],
+      [
+        "GBP",
+        "LOYDGB2L"
+      ],
+      [
+        "GBP",
+        "MIDLGB22"
+      ],
+      [
+        "HKD",
+        "BKCHHKHH"
+      ],
+      [
+        "HKD",
+        "WUBAHKHH"
+      ],
+      [
+        "JPY",
+        "BOTKJPJT"
+      ],
+      [
+        "JPY",
+        "MHCBJPJT"
+      ],
+      [
+        "NZD",
+        "ANZBNZ22"
+      ],
+      [
+        "SEK",
+        "ESSESESS"
+      ],
+      [
+        "SEK",
+        "NDEASESS"
+      ],
+      [
+        "SGD",
+        "DBSSSGSG"
+      ],
+      [
+        "SGD",
+        "OCBCSGSG"
+      ],
+      [
+        "SGD",
+        "UOVBSGSG"
+      ],
+      [
+        "USD",
+        "BKTRUS33"
+      ],
+      [
+        "USD",
+        "BOFAUS3N"
+      ],
+      [
+        "USD",
+        "CHASUS33"
+      ],
+      [
+        "USD",
+        "CITIUS33"
+      ],
+      [
+        "USD",
+        "COBADEFF"
+      ],
+      [
+        "USD",
+        "IRVTUS3N"
+      ],
+      [
+        "USD",
+        "MRMDUS33"
+      ],
+      [
+        "USD",
+        "PNBPUS33"
+      ],
+      [
+        "USD",
+        "SCBLUS33"
+      ]
+    ]
   },
   "routes": [
     {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "correspondent": "Australia & New Zealand Banking Group Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "TDOMCATTTOR",
+      "correspondent": "Toronto-Dominion Bank",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG (Union Bank of Switzerland)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHCNBJS00",
+      "correspondent": "Bank of China (Shanghai)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "SCBLHKHH",
+      "correspondent": "Standard Chartered Bank (Hong Kong)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DABADKKK",
+      "correspondent": "Danske Bank A/S",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DABANO22",
+      "correspondent": "Danske Bank A/S",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "NDEADKKK",
+      "correspondent": "Nordea Bank Danmark A/S",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BSCHESMM",
+      "correspondent": "Santander Central Hispano (BSCH)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "correspondent": "Commerzbank AG",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "correspondent": "Deutsche Bank AG",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "GENODEFF",
+      "correspondent": "Deutsche Genossenschaftsbank / DZ Bank AG",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SOGEFRPP",
+      "correspondent": "Societe Generale",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "LOYDGB2L",
+      "correspondent": "Lloyds TSB Bank plc",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "MIDLGB22",
+      "correspondent": "HSBC Bank plc",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "BKCHHKHH",
+      "correspondent": "Bank of China (Hong Kong)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "WUBAHKHH",
+      "correspondent": "Wing Lung Bank Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJT",
+      "correspondent": "Bank of Tokyo-Mitsubishi UFJ Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "MHCBJPJT",
+      "correspondent": "Mizuho Corporate Bank Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22",
+      "correspondent": "Australia & New Zealand Banking Group Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "ESSESESS",
+      "correspondent": "Skandinaviska Enskilda Banken AB (publ)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "NDEASESS",
+      "correspondent": "Nordea Bank AB (publ)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "DBSSSGSG",
+      "correspondent": "DBS Bank Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "OCBCSGSG",
+      "correspondent": "Oversea-Chinese Banking Corporation",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "UOVBSGSG",
+      "correspondent": "United Overseas Bank Ltd.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKTRUS33",
+      "correspondent": "Deutsche Bank Trust Company Americas",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3N",
+      "correspondent": "Bank of America N.A. (New York)",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33",
+      "correspondent": "JPMorgan Chase Bank N.A.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33",
+      "correspondent": "Citibank N.A.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "COBADEFF",
+      "correspondent": "Commerzbank AG",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "correspondent": "Bank of New York Mellon",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MRMDUS33",
+      "correspondent": "HSBC Bank USA, N.A.",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
       "currency": "USD",
       "int_bic": "PNBPUS33",
-      "source_bic": "PNBPUS3NNYC",
       "correspondent": "Wells Fargo Bank N.A. (printed PNBPUS3NNYC, normalized)",
       "bic_only": true,
       "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "correspondent": "Standard Chartered Bank",
+      "bic_only": true,
+      "terms_inferred": false
     }
-  ]
+  ],
+  "route_count": 34,
+  "manifest_admitted_record_digest": "16a2f3e90e7a985f414d95f4c9bd424531419322821cd1f9b733bfc33635159b"
 }
