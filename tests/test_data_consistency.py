@@ -2856,3 +2856,40 @@ class TestNamibiaWave1SsiCoverage:
     def test_namibia_wave1_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("namibia-wave1", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: namibia-wave1 ----
+
+
+# ---- autopilot-generated coverage tests: north-east-africa ----
+NORTH_EAST_AFRICA_SSI_COVERAGE = [
+    ("FBNINGLAXXX", "First Bank of Nigeria", {"USD", "GBP", "EUR"}),
+    ("ZEIBNGLAXXX", "Zenith Bank", {"USD", "GBP", "EUR"}),
+    ("NBKEKENXXXX", "NATIONAL BANK OF KENYA LTD.", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "INR", "KES", "NOK", "SEK", "TZS", "UGX", "USD", "ZAR"}),
+    ("SBICKENXXXX", "STANBIC BANK KENYA LIMITED", {"AED", "AUD", "BIF", "CAD", "CHF", "CNY", "EUR", "GBP", "GHS", "INR", "JPY", "KES", "MUR", "RWF", "SEK", "SSP", "TZS", "UGX", "USD", "ZAR"}),
+    ("SBMKKENAXXX", "SBM BANK (KENYA) LIMITED", {"AUD", "CAD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("SIDNKENAXXX", "SIDIAN BANK LIMITED", {"AUD", "CAD", "EUR", "GBP", "JPY", "KES", "RWF", "TZS", "UGX", "USD", "ZAR"}),
+]
+
+class TestNorthEastAfricaSsiCoverage:
+
+    def test_north_east_africa_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("north-east-africa")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in NORTH_EAST_AFRICA_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_north_east_africa_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("north-east-africa")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"north-east-africa SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_north_east_africa_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("north-east-africa", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: north-east-africa ----
