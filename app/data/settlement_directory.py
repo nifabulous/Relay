@@ -27,6 +27,11 @@ from typing import Optional
 # chips_uid: 4-digit CHIPS participant number (The Clearing House)
 # aba: 9-digit ABA routing number (Fedwire)
 SETTLEMENT_DIRECTORY = {
+    "DNBAUS33": {
+        "bank_name": "DNB Bank ASA New York Branch",
+        "chips_uid": "",
+        "aba": "026005610",
+    },
     "CITIUS33": {
         "bank_name": "Citibank N.A. New York",
         "chips_uid": "0008",
