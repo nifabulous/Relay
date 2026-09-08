@@ -1,0 +1,25 @@
+{
+  "source": "https://www.kasikornbank.com/th/applyforservices/applyforserviceform/globalinward_091158.pdf",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "KASITHBK",
+  "source_snapshot": {
+    "source": "https://www.kasikornbank.com/th/applyforservices/applyforserviceform/globalinward_091158.pdf",
+    "captured_at": "2026-09-08",
+    "extraction": "official Global Inward Form alias extract; account values omitted",
+    "raw_accounts_committed": false,
+    "retrieval_status": "official document indexed; direct fetch returned 403 in bounded capture",
+    "bic_aliases": {
+      "PNBPUS3NNYC": "PNBPUS33"
+    }
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33",
+      "source_bic": "PNBPUS3NNYC",
+      "correspondent": "Wells Fargo Bank N.A. (printed PNBPUS3NNYC, normalized)",
+      "bic_only": true,
+      "terms_inferred": false
+    }
+  ]
+}
