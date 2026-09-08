@@ -259,6 +259,14 @@
     ],
     "settlement_terms_published": true
   },
+  "DNBAFIHX": {
+    "name": "DNB Bank ASA, Helsinki Branch",
+    "country": "FI",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": true
+  },
   "DNEXJPJT": {
     "name": "Daiwa Next Bank, Ltd.",
     "country": "JP",
