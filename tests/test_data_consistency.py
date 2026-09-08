@@ -1926,7 +1926,7 @@ class TestWestAfricaSsiCoverage:
 
 # ---- autopilot-generated coverage tests: eastern-europe ----
 EASTERN_EUROPE_SSI_COVERAGE = [
-    ("BTRLRO22XXX", "Banca Transilvania", {"USD", "EUR", "GBP", "RON", "HUF", "AUD", "CAD", "CHF", "DKK", "JPY", "NOK", "PLN", "SEK", "TRY"}),
+    ("BTRLRO22XXX", "Banca Transilvania", {"AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "MDL", "NOK", "PLN", "SEK", "USD"}),
 ]
 
 class TestEasternEuropeSsiCoverage:
@@ -1954,8 +1954,6 @@ class TestEasternEuropeSsiCoverage:
     def test_eastern_europe_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("eastern-europe", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: eastern-europe ----
-
-
 # ---- autopilot-generated coverage tests: singapore ----
 SINGAPORE_SSI_COVERAGE = [
     ("OCBCSGSGXXX", "Oversea-Chinese Banking Corporation Limited", {"USD"}),

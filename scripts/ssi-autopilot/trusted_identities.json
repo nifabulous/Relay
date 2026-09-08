@@ -947,6 +947,14 @@
     ],
     "settlement_terms_published": false
   },
+  "BTRLRO22": {
+    "name": "Banca Transilvania",
+    "country": "RO",
+    "domains": [
+      "bancatransilvania.ro"
+    ],
+    "settlement_terms_published": true
+  },
   "SEYBLKLX": {
     "name": "Seylan Bank PLC",
     "country": "LK",
