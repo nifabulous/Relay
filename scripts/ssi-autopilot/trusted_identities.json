@@ -15,6 +15,14 @@
     ],
     "settlement_terms_published": false
   },
+  "DEYATRIS": {
+    "name": "Destek Yatırım Bankası A.Ş.",
+    "country": "TR",
+    "domains": [
+      "destekbank.com"
+    ],
+    "settlement_terms_published": true
+  },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",

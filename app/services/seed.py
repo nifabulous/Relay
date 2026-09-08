@@ -169,6 +169,7 @@ BANKS = [
     ("CEPANCNMXXX", "Banque de Nouvelle-Calédonie", "NC", "Nouméa", "XPF"),
     ("BOSPFJFJXXX", "Bank of South Pacific", "FJ", "Suva", "FJD"),
     ("YAPITRISXXX", "Yapi ve Kredi Bankasi A.S.", "TR", "Istanbul", "TRY"),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "TR", "Istanbul", "TRY"),
     ("IVESZAJJXXX", "Investec Bank", "ZA", "Johannesburg", "ZAR"),
     ("GIBAATWGXXX", "Erste Group Bank AG", "AT", "Vienna", "EUR"),
     ("PNBPUS33XXX", "Wells Fargo Bank N.A.", "US", "New York", "USD"),
@@ -4047,6 +4048,16 @@ SSI_RECORDS = [
      "IVESZAJJXXX", "Investec Bank",
      "ACCT-91001171", "ACCT-91001172", "SHA", "spot",
      "Source: https://www.mbank.pl/pdf/msp-korporacje/aktualnosci/lista-korespondentow-mbank-w-walutach-obcych.pdf. " + _SSI_REAL_NOTE, None, "unverified"),
+# ---- Turkey + Israel (autopilot: DestekBank current SSI) ----
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "USD", "IRVTUS3NXXX", "The Bank of New York Mellon", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "EUR", "IRVTUS3NXXX", "The Bank of New York Mellon", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "EUR", "KTAGDEFFXXX", "KT Bank AG", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "GBP", "SCBLGB2LXXX", "Standard Chartered Bank, London", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "SAR", "BJAZSAJEXXX", "Bank AlJazira", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "CNY", "CZCBCN2XXXX", "Zhejiang Chouzhou Commercial Bank Co. Ltd., Hangzhou", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "AED", "ABDIAEADXXX", "Abu Dhabi Islamic Bank", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", "TRY", "DEYATRISXXX", "Direct to DestekBank via Turkey Domestic Payment System", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf (as of 2025-11-30). " + _SSI_REAL_NOTE, "2025-11-30", "archived", None, False, True),
+
 # ---- Turkey + Israel (autopilot: Akbank, Yapi Kredi) ----
     ("AKBKTRISXXX", "Akbank T.A.S.", "USD",
      "SCBLUS33XXX", "Standard Chartered Bank, New York",

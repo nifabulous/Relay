@@ -311,7 +311,7 @@
         "IL"
       ],
       "masked_block": 91001000,
-      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "note": "2026-09-08 research: Destek Yatırım Bankası A.Ş. (DEYATRIS) publishes an eight-route SSI list in its November 2025 corporate presentation covering USD/EUR/GBP/SAR/CNY/AED/TRY; published account identifiers are masked into the reserved Turkey block and charge/value terms are marked inferred. Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
       "banks": [
         {
           "bic8": "AKBKTRIS",
@@ -346,6 +346,139 @@
             "NOK",
             "DKK"
           ]
+        },
+        {
+          "bic8": "DEYATRIS",
+          "name": "Destek Yatırım Bankası A.Ş.",
+          "country": "TR",
+          "currencies": [
+            "AED",
+            "CNY",
+            "EUR",
+            "GBP",
+            "SAR",
+            "TRY",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "destekbank.com"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AED",
+              "correspondent": "Abu Dhabi Islamic Bank",
+              "int_bic": "ABDIAEAD",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "CNY",
+              "correspondent": "Zhejiang Chouzhou Commercial Bank Co. Ltd., Hangzhou",
+              "int_bic": "CZCBCN2X",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "The Bank of New York Mellon",
+              "int_bic": "IRVTUS3N",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "KT Bank AG",
+              "int_bic": "KTAGDEFF",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Standard Chartered Bank, London",
+              "int_bic": "SCBLGB2L",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "SAR",
+              "correspondent": "Bank AlJazira",
+              "int_bic": "BJAZSAJE",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "TRY",
+              "correspondent": "Direct to DestekBank via Turkey Domestic Payment System",
+              "int_bic": "DEYATRIS",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "The Bank of New York Mellon",
+              "int_bic": "IRVTUS3N",
+              "nostro": "ACCT-91001099",
+              "with_an": "ACCT-91001099",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+              "as_of": "2025-11-30",
+              "status": "archived",
+              "bic_only": false,
+              "terms_inferred": true
+            }
+          ],
+          "admitted_record_digest": "252e7b974f5d26067f9bfa3aacfdcea7ed27a6c091c1a54443c897ab7e62c97d"
         }
       ],
       "forbidden_bics": []
