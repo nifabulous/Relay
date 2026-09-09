@@ -1758,6 +1758,7 @@ class TestBangladeshSsiCoverage:
 # ---- autopilot-generated coverage tests: thailand ----
 THAILAND_SSI_COVERAGE = [
     ("SICOTHBKXXX", "Siam Commercial Bank", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "AUD", "CAD", "CHF", "DKK", "NZD", "SEK"}),
+    ("UOVBTHBKXXX", "United Overseas Bank (Thai) Public Company Limited", {"AUD", "CAD", "CHF", "CNH", "CNY", "DKK", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "MYR", "NOK", "NZD", "SEK", "SGD", "THB", "USD"}),
 ]
 
 class TestThailandSsiCoverage:
@@ -1785,8 +1786,6 @@ class TestThailandSsiCoverage:
     def test_thailand_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("thailand", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: thailand ----
-
-
 # ---- autopilot-generated coverage tests: andean ----
 ANDEAN_SSI_COVERAGE = [
     ("CAFECOBBXXX", "Banco Davivienda S.A.", {"EUR", "USD"}),
