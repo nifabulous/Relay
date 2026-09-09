@@ -689,6 +689,7 @@ class TestFrancophoneAfricaSsiCoverage:
 # listed MNORMXMM must never appear.
 LATAM_SSI_COVERAGE = [
     ("MENOMXMTXXX", "Banorte", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
+    ("BBDEBRSPXXX", "Banco Bradesco", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "MXN", "NOK", "NZD", "SEK", "SGD", "USD", "ZAR"}),
 ]
 
 
