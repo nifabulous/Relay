@@ -1019,6 +1019,14 @@
     ],
     "settlement_terms_published": false
   },
+  "DNBANOKK": {
+    "name": "DNB Bank ASA",
+    "country": "NO",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
   "DNBAUS33": {
     "name": "DNB Bank ASA New York Branch",
     "country": "US",
