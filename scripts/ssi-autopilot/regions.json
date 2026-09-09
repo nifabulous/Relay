@@ -2504,7 +2504,7 @@
         "VN"
       ],
       "masked_block": 91001700,
-      "note": "2026-08-19 research: no Vietnamese bank publishes account-level SSI. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only — NOT SEEDABLE. All 8 BICs verified correct.",
+      "note": "2026-09-08 research: Vikki Digital Bank Limited publishes an account-backed nostro appendix dated 2026-06-30 with AUD/EUR/GBP/JPY/NZD/SGD/USD routes; published account numbers are masked into the reserved Vietnam block and charge/value terms are marked inferred. Vietcombank, VietinBank, BIDV (SSI page states 35 foreign-currency accounts but refers to contact centers), Techcombank, ACB, Sacombank (correspondents WITH BICs but no accounts, archived 2011-2012), MB Bank (~800 correspondents, names only), and VPBank publish beneficiary BIC or correspondent names only — NOT SEEDABLE. All 9 BICs verified correct.",
       "banks": [
         {
           "bic8": "BFTVVNVX",
@@ -2607,6 +2607,212 @@
             "VND"
           ],
           "seedable": false
+        },
+        {
+          "bic8": "EACBVNVX",
+          "name": "Vikki Digital Bank Limited",
+          "country": "VN",
+          "currencies": [
+            "AUD",
+            "EUR",
+            "GBP",
+            "JPY",
+            "NZD",
+            "SGD",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "vikkibank.vn"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AUD",
+              "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+              "int_bic": "ANZBAU3M",
+              "nostro": "ACCT-91001701",
+              "with_an": "ACCT-91001701",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "UniCredit Bank AG (HypoVereinsbank), Munich",
+              "int_bic": "HYVEDEMM",
+              "nostro": "ACCT-91001702",
+              "with_an": "ACCT-91001702",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+              "int_bic": "OCBCSGSG",
+              "nostro": "ACCT-91001703",
+              "with_an": "ACCT-91001703",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+              "int_bic": "SMBCJPJT",
+              "nostro": "ACCT-91001704",
+              "with_an": "ACCT-91001704",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "NZD",
+              "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+              "int_bic": "ANZBNZ22058",
+              "nostro": "ACCT-91001705",
+              "with_an": "ACCT-91001705",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "SGD",
+              "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+              "int_bic": "OCBCSGSG",
+              "nostro": "ACCT-91001708",
+              "with_an": "ACCT-91001708",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JPMorgan Chase Bank, N.A., New York",
+              "int_bic": "CHASUS33",
+              "nostro": "ACCT-91001706",
+              "with_an": "ACCT-91001706",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "KB Kookmin Bank, Korea",
+              "int_bic": "CZNBKRSE",
+              "nostro": "ACCT-91001707",
+              "with_an": "ACCT-91001707",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+              "as_of": "2026-06-30",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            }
+          ],
+          "admitted_record_digest": "6762ec2dbb34d5a61066ce9dd21ac65d91fc4f9628b71a15d8365226bb51da39",
+          "source_snapshot": {
+            "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+            "source_sha256": "99211465a1fdeac27a5c69d15619cc4d1846604a28c30a8ae490571a9df807eb",
+            "captured_at": "2026-09-08",
+            "extraction": "redacted route-field extract; account values omitted",
+            "raw_accounts_committed": false,
+            "routes": [
+              {
+                "currency": "AUD",
+                "int_bic": "ANZBAU3M",
+                "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+                "nostro_mask": "ACCT-91001701",
+                "with_an_mask": "ACCT-91001701",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "HYVEDEMM",
+                "correspondent": "UniCredit Bank AG (HypoVereinsbank), Munich",
+                "nostro_mask": "ACCT-91001702",
+                "with_an_mask": "ACCT-91001702",
+                "terms_inferred": true
+              },
+              {
+                "currency": "GBP",
+                "int_bic": "OCBCSGSG",
+                "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+                "nostro_mask": "ACCT-91001703",
+                "with_an_mask": "ACCT-91001703",
+                "terms_inferred": true
+              },
+              {
+                "currency": "JPY",
+                "int_bic": "SMBCJPJT",
+                "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+                "nostro_mask": "ACCT-91001704",
+                "with_an_mask": "ACCT-91001704",
+                "terms_inferred": true
+              },
+              {
+                "currency": "NZD",
+                "int_bic": "ANZBNZ22058",
+                "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+                "nostro_mask": "ACCT-91001705",
+                "with_an_mask": "ACCT-91001705",
+                "terms_inferred": true
+              },
+              {
+                "currency": "SGD",
+                "int_bic": "OCBCSGSG",
+                "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+                "nostro_mask": "ACCT-91001708",
+                "with_an_mask": "ACCT-91001708",
+                "terms_inferred": true
+              },
+              {
+                "currency": "USD",
+                "int_bic": "CHASUS33",
+                "correspondent": "JPMorgan Chase Bank, N.A., New York",
+                "nostro_mask": "ACCT-91001706",
+                "with_an_mask": "ACCT-91001706",
+                "terms_inferred": true
+              },
+              {
+                "currency": "USD",
+                "int_bic": "CZNBKRSE",
+                "correspondent": "KB Kookmin Bank, Korea",
+                "nostro_mask": "ACCT-91001707",
+                "with_an_mask": "ACCT-91001707",
+                "terms_inferred": true
+              }
+            ]
+          }
         }
       ],
       "forbidden_bics": []
