@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from app.services.ssi_importer import (
+    canonicalize_bic11,
     detect_and_parse,
     import_ssi_file,
     load_ssi_rows,
@@ -230,6 +231,10 @@ class TestValidateSSIRow:
 
 
 class TestLoadSSIRows:
+    def test_bic8_and_bic11_forms_share_one_composite_identity(self):
+        assert canonicalize_bic11("IRVTUS3N") == "IRVTUS3NXXX"
+        assert canonicalize_bic11(" irvtus3nxxx ") == "IRVTUS3NXXX"
+
     def test_inserts_new_records(self, db_session):
         """Fresh rows with no matching composite key get inserted."""
         from app.models import SSI

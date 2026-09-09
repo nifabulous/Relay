@@ -7,7 +7,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _load():
     manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
-    evidence = json.loads((ROOT / "scripts/ssi-autopilot/evidence/ssi-wave22-deyatris-2026-02-02.json").read_text())
+    evidence_path = ROOT / "scripts/ssi-autopilot/evidence/ssi-wave22-deyatris-2025-11-30.json"
+    evidence = json.loads(evidence_path.read_text())
+    assert evidence_path.stem.endswith(evidence["as_of"])
     bank = next(bank for region in manifest["regions"] for bank in region["banks"] if bank["bic8"] == "DEYATRIS")
     return bank, evidence
 
