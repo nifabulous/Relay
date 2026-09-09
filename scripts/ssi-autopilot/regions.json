@@ -414,7 +414,7 @@
         "ZA"
       ],
       "masked_block": 91001200,
-      "note": "2026-08-16 research: no beneficiary SSI lists published by any of the four banks (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
+      "note": "2026-09-08 research: FirstRand Bank (FNB) now has five availability-only currency/correspondent rows from its live Forex FAQs page (USD, GBP, AUD, EUR, CHF); no account numbers, with-an instructions, charges, or value dates are published, so these rows remain non-routable. Nedbank, Standard Bank of South Africa, and Absa publish no beneficiary SSI lists (SARB routes inbound ZAR directly to the beneficiary); NOT SEEDABLE. SBICZAJJ is uncorroborated — the real Standard Bank SA BIC is SBZAZAJJ — and SBICUS44 is not in any registry, so both are forbidden.",
       "banks": [
         {
           "bic8": "NEDSZAJJ",
@@ -424,7 +424,8 @@
             "USD",
             "EUR",
             "ZAR"
-          ]
+          ],
+          "seedable": false
         },
         {
           "bic8": "SBZAZAJJ",
@@ -434,7 +435,8 @@
             "USD",
             "EUR",
             "ZAR"
-          ]
+          ],
+          "seedable": false
         },
         {
           "bic8": "ABSAZAJJ",
@@ -444,22 +446,97 @@
             "USD",
             "EUR",
             "ZAR"
-          ]
+          ],
+          "seedable": false
         },
         {
           "bic8": "FIRNZAJJ",
           "name": "FirstRand Bank (FNB)",
           "country": "ZA",
           "currencies": [
-            "USD",
+            "AUD",
+            "CHF",
             "EUR",
-            "ZAR"
-          ]
+            "GBP",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "fnb.co.za"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AUD",
+              "correspondent": "Australia and New Zealand Banking Group Ltd - Melbourne",
+              "int_bic": "ANZBAU3M",
+              "source": "https://www.fnb.co.za/forex/understanding-forex/",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "Union Bank of Switzerland - Zurich",
+              "int_bic": "UBSWCHZH80A",
+              "source": "https://www.fnb.co.za/forex/understanding-forex/",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank AG - Frankfurt",
+              "int_bic": "DEUTDEFF",
+              "source": "https://www.fnb.co.za/forex/understanding-forex/",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Lloyds TSB Bank PLC - London",
+              "int_bic": "LOYDGB2L",
+              "source": "https://www.fnb.co.za/forex/understanding-forex/",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JP Morgan Chase Bank - New York",
+              "int_bic": "CHASUS33",
+              "source": "https://www.fnb.co.za/forex/understanding-forex/",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": true,
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null
+            }
+          ],
+          "admitted_record_digest": "6c2f24be65511f1b341230c396bcbe6801b2a6b977b44198f446485aa95a81ba"
         }
       ],
       "forbidden_bics": [
-        "SBICZAJJ",
-        "SBICUS44"
+        "SBICUS44",
+        "SBICZAJJ"
       ]
     },
     {
