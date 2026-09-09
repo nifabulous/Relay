@@ -73,6 +73,7 @@ def test_wave21_source_and_mask_equivalence_are_auditable():
             assert (actual[left_key] == actual[right_key]) == (left_fp == right_fp)
     assert evidence["source_snapshot"]["source_sha256"] == evidence["source_sha256"]
     assert evidence["source_snapshot"]["raw_accounts_committed"] is False
+    assert evidence["masking"]["namespace"] == "beneficiary_bic"
     aliases = evidence["source_snapshot"]["bic_aliases"]
     assert aliases == {
         "SCBLDEFX": "SCBLDEFFXXX",
@@ -82,6 +83,58 @@ def test_wave21_source_and_mask_equivalence_are_auditable():
     assert set(aliases.values()) <= route_bics
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
     assert trusted["FNNBTRIS"]["settlement_terms_published"] is False
+
+
+def test_wave21_source_matches_independent_attestation_fixture():
+    bank, evidence = _load()
+    attestation = json.loads(
+        (ROOT / "tests/fixtures/ssi_wave21_source_attestation.json").read_text()
+    )
+    assert attestation["beneficiary_bic"] == evidence["beneficiary_bic"] == "FNNBTRIS"
+    assert attestation["source"] == evidence["source"]
+    assert attestation["source_sha256"] == evidence["source_sha256"]
+    expected_route_keys = {tuple(key) for key in attestation["route_keys"]}
+    evidence_route_keys = {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
+    manifest_route_keys = {
+        (record["currency"], record["int_bic"]) for record in bank["admitted_records"]
+    }
+    assert evidence_route_keys == manifest_route_keys == expected_route_keys
+    assert len(expected_route_keys) == 31
+
+
+def test_turkey_mask_namespace_is_beneficiary_scoped():
+    qnb_bank, qnb_evidence = _load()
+    manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
+    destek_bank = next(
+        bank
+        for region in manifest["regions"]
+        for bank in region["banks"]
+        if bank["bic8"] == "DEYATRIS"
+    )
+    destek_evidence = json.loads(
+        (ROOT / "scripts/ssi-autopilot/evidence/ssi-wave22-deyatris-2026-02-02.json").read_text()
+    )
+    assert qnb_evidence["masking"]["namespace"] == destek_evidence["masking"]["namespace"] == "beneficiary_bic"
+    qnb_masks = {
+        (route["nostro_mask"], route["with_an_mask"]): (
+            route["nostro_fingerprint"],
+            route["with_an_fingerprint"],
+        )
+        for route in qnb_evidence["routes"]
+    }
+    destek_masks = {
+        (route["nostro_mask"], route["with_an_mask"]): (
+            route["nostro_fingerprint"],
+            route["with_an_fingerprint"],
+        )
+        for route in destek_evidence["routes"]
+    }
+    collisions = set(qnb_masks) & set(destek_masks)
+    assert collisions
+    assert all(qnb_masks[mask] != destek_masks[mask] for mask in collisions)
+    assert {record["nostro"] for record in qnb_bank["admitted_records"]} & {
+        record["nostro"] for record in destek_bank["admitted_records"]
+    }
 
 
 def test_wave21_inferred_routes_are_excluded_by_the_selection_guard():

@@ -25,9 +25,11 @@ def test_wave22_mask_preserves_route_account_identity():
         for right_key, right_fp in fingerprints.items():
             assert (actual[left_key] == actual[right_key]) == (left_fp == right_fp)
     assert evidence["masking"]["raw_accounts_committed"] is False
+    assert evidence["masking"]["namespace"] == "beneficiary_bic"
     assert "TRY" not in actual
     assert evidence["excluded_routes"][0]["currency"] == "TRY"
-    assert evidence["scope"]["advertised_route_count"] == len(actual)
+    assert evidence["scope"]["advertised_route_count"] == len(actual) == 7
+    assert evidence["source_snapshot"]["route_count"] == len(actual)
     assert evidence["scope"]["excluded_domestic_routes"] == ["TRY"]
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
     assert trusted["DEYATRIS"]["settlement_terms_published"] is False

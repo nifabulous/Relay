@@ -7,6 +7,7 @@
   "masking": {
     "algorithm": "sequential token per normalized source account",
     "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "namespace": "beneficiary_bic",
     "raw_accounts_committed": false
   },
   "routes": [
