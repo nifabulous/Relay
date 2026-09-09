@@ -2930,6 +2930,7 @@ TURKEY_ISRAEL_SSI_COVERAGE = [
     ("AKBKTRISXXX", "Akbank T.A.S.", {"USD", "EUR", "GBP", "CHF", "AUD", "JPY", "SEK", "NOK", "DKK", "SAR"}),
     ("YAPITRISXXX", "Yapı ve Kredi Bankası", {"USD", "EUR", "GBP", "CHF", "AUD", "CAD", "JPY", "SEK", "NOK", "DKK"}),
     ("FNNBTRISXXX", "QNB A.Ş.", {"AED", "AUD", "CAD", "CHF", "CNH", "DKK", "EUR", "GBP", "JPY", "NOK", "PLN", "QAR", "RUB", "SAR", "SEK", "USD", "ZAR"}),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", {"AED", "CNY", "EUR", "GBP", "SAR", "USD"}),
 ]
 
 class TestTurkeyIsraelSsiCoverage:
