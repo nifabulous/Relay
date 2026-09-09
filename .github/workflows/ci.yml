@@ -170,6 +170,15 @@ jobs:
       - name: Run the complete local verification gate
         run: scripts/verify_before_push.sh origin/main
 
+      # Payment routes must be checked against the cited source, not only
+      # against PR-authored evidence copies.  This single trusted job fetches
+      # the redacted QNB table, verifies its normalized digest, and checks all
+      # 31 currency/BIC route keys without retaining account values.
+      - name: Verify live SSI source attestation
+        run: >-
+          python scripts/ssi-autopilot/verify_source_attestation.py
+          scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json
+
   # The normal matrix intentionally uses the base install, so the optional
   # provider package is not imported there. This job installs the exact AI
   # extra used by Vercel and exercises the real OpenAI Responses request
