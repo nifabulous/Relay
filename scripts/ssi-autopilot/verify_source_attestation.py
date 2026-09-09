@@ -22,7 +22,6 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
 _BIC = re.compile(r"^[A-Z0-9]{8}(?:[A-Z0-9]{3})?$")
 _VIEWSTATE = re.compile(rb'<input type="hidden" name="__VIEWSTATE"[^>]*>')
