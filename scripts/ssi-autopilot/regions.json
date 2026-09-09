@@ -311,7 +311,7 @@
         "IL"
       ],
       "masked_block": 91001000,
-      "note": "2026-08-16 research: Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "note": "2026-09-08 research: QNB A.Ş. (FNNBTRIS) publishes a current Nostro Account table with 31 account-backed routes across USD/EUR/GBP/AUD/CHF/JPY/CAD/SAR/SEK/DKK/NOK/ZAR/PLN/RUB/QAR/CNH/AED; published account numbers are masked into the reserved Turkey block and charge/value terms are marked inferred. Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
       "banks": [
         {
           "bic8": "AKBKTRIS",
@@ -346,6 +346,701 @@
             "NOK",
             "DKK"
           ]
+        },
+        {
+          "bic8": "FNNBTRIS",
+          "name": "QNB A.Ş.",
+          "country": "TR",
+          "currencies": [
+            "AED",
+            "AUD",
+            "CAD",
+            "CHF",
+            "CNH",
+            "DKK",
+            "EUR",
+            "GBP",
+            "JPY",
+            "NOK",
+            "PLN",
+            "QAR",
+            "RUB",
+            "SAR",
+            "SEK",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "qnb.com.tr"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AED",
+              "correspondent": "Commercial Bank International PJSC, Dubai",
+              "int_bic": "CLBIAEAD",
+              "nostro": "ACCT-91001029",
+              "with_an": "ACCT-91001029",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "AUD",
+              "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+              "int_bic": "ANZBAU3M",
+              "nostro": "ACCT-91001027",
+              "with_an": "ACCT-91001027",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "AUD",
+      "correspondent": "JPMorgan Chase Bank, N.A., London",
+              "int_bic": "CHASGB2L",
+              "nostro": "ACCT-91001005",
+              "with_an": "ACCT-91001005",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "CAD",
+              "correspondent": "Bank of Montreal, Toronto",
+              "int_bic": "BOFMCAT2",
+              "nostro": "ACCT-91001013",
+              "with_an": "ACCT-91001013",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "Zürcher Kantonalbank, Zürich",
+              "int_bic": "ZKBKCHZZ",
+              "nostro": "ACCT-91001004",
+              "with_an": "ACCT-91001004",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "CNH",
+              "correspondent": "ICBC Turkey Bank A.Ş., Istanbul",
+              "int_bic": "ICBKTRISXXX",
+              "nostro": "ACCT-91001028",
+              "with_an": "ACCT-91001028",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "DKK",
+              "correspondent": "Nordea Bank Danmark A/S",
+              "int_bic": "NDEADKKK",
+              "nostro": "ACCT-91001018",
+              "with_an": "ACCT-91001018",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "ING Belgium SA/NV",
+              "int_bic": "BBRUBEBBXXX",
+              "nostro": "ACCT-91001011",
+              "with_an": "ACCT-91001011",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "HSBC Continental Europe SA",
+              "int_bic": "CCFRFRPPXXX",
+              "nostro": "ACCT-91001008",
+              "with_an": "ACCT-91001008",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "J.P. Morgan AG, Frankfurt",
+              "int_bic": "CHASDEFX",
+              "nostro": "ACCT-91001022",
+              "with_an": "ACCT-91001022",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Commerzbank AG",
+              "int_bic": "COBADEFF",
+              "nostro": "ACCT-91001017",
+              "with_an": "ACCT-91001017",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank AG, Frankfurt",
+              "int_bic": "DEUTDEFFXXX",
+              "nostro": "ACCT-91001006",
+              "with_an": "ACCT-91001006",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Bank of New York, Frankfurt",
+              "int_bic": "IRVTDEFX",
+              "nostro": "ACCT-91001016",
+              "with_an": "ACCT-91001016",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Standard Chartered Bank (Germany) GmbH",
+              "int_bic": "SCBLDEFFXXX",
+              "nostro": "ACCT-91001009",
+              "with_an": "ACCT-91001009",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Société Générale, Paris",
+              "int_bic": "SOGEFRPP",
+              "nostro": "ACCT-91001001",
+              "with_an": "ACCT-91001001",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Standard Chartered Bank, London",
+              "int_bic": "SCBLGB2L",
+              "nostro": "ACCT-91001002",
+              "with_an": "ACCT-91001002",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "MUFG Bank Ltd., Tokyo",
+              "int_bic": "BOTKJPJT",
+              "nostro": "ACCT-91001023",
+              "with_an": "ACCT-91001023",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "NOK",
+              "correspondent": "Nordea Bank, Oslo",
+              "int_bic": "NDEANOKK",
+              "nostro": "ACCT-91001021",
+              "with_an": "ACCT-91001021",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "PLN",
+              "correspondent": "mBank SA",
+              "int_bic": "BREXPLPW",
+              "nostro": "ACCT-91001030",
+              "with_an": "ACCT-91001030",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "QAR",
+              "correspondent": "Qatar National Bank",
+              "int_bic": "QNBAQAQAXXX",
+              "nostro": "ACCT-91001031",
+              "with_an": "ACCT-91001031",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "RUB",
+              "correspondent": "Isbank Joint Stock Company, Moscow",
+              "int_bic": "ISBKRUMMXXX",
+              "nostro": "ACCT-91001012",
+              "with_an": "ACCT-91001012",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "SAR",
+              "correspondent": "The Saudi National Commercial Bank",
+              "int_bic": "NCBKSAJE",
+              "nostro": "ACCT-91001025",
+              "with_an": "ACCT-91001025",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "SEK",
+              "correspondent": "Skandinaviska Enskilda Banken, Stockholm",
+              "int_bic": "ESSESESS",
+              "nostro": "ACCT-91001019",
+              "with_an": "ACCT-91001019",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Bank of America N.A., New York",
+              "int_bic": "BOFAUS3N",
+              "nostro": "ACCT-91001024",
+              "with_an": "ACCT-91001024",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JP Morgan Chase Bank NA, New York",
+              "int_bic": "CHASUS33",
+              "nostro": "ACCT-91001020",
+              "with_an": "ACCT-91001020",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Citibank NA, New York",
+              "int_bic": "CITIUS33",
+              "nostro": "ACCT-91001015",
+              "with_an": "ACCT-91001015",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "The Bank of New York Mellon, New York",
+              "int_bic": "IRVTUS3N",
+              "nostro": "ACCT-91001026",
+              "with_an": "ACCT-91001026",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Mashreqbank Psc., New York Branch",
+              "int_bic": "MSHQUS33XXX",
+              "nostro": "ACCT-91001007",
+              "with_an": "ACCT-91001007",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Wells Fargo Bank NA, New York",
+              "int_bic": "PNBPUS33XXX",
+              "nostro": "ACCT-91001010",
+              "with_an": "ACCT-91001010",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Standard Chartered Bank, New York",
+              "int_bic": "SCBLUS33",
+              "nostro": "ACCT-91001014",
+              "with_an": "ACCT-91001014",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "ZAR",
+              "correspondent": "ABSA Bank Ltd., Johannesburg",
+              "int_bic": "ABSAZAJJ",
+              "nostro": "ACCT-91001003",
+              "with_an": "ACCT-91001003",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            }
+          ],
+          "admitted_record_digest": "8d3d8b1063f25dd7ff9e69aa053a296ac3ca86af75863532d8294d6b2c744e68",
+          "source_snapshot": {
+            "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+            "source_sha256": "b0fed6d2abd084153b7f35028566608691382f1526344892a109729bac08b7fc",
+            "captured_at": "2026-09-08",
+            "extraction": "HTML table extraction; account values omitted after hashing",
+            "raw_accounts_committed": false,
+            "bic_aliases": {
+              "SCBLDEFX": "SCBLDEFFXXX",
+              "PNBPUS3NNYC": "PNBPUS33XXX"
+            },
+            "routes": [
+              {
+                "currency": "AED",
+                "int_bic": "CLBIAEAD",
+                "correspondent": "Commercial Bank International PJSC, Dubai",
+                "nostro_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a",
+                "with_an_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a"
+              },
+              {
+                "currency": "AUD",
+                "int_bic": "ANZBAU3M",
+                "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+                "nostro_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8",
+                "with_an_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8"
+              },
+              {
+                "currency": "AUD",
+                "int_bic": "CHASGB2L",
+                "correspondent": "JPMorgan Chase Bank, N.A., London",
+                "nostro_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
+                "with_an_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b"
+              },
+              {
+                "currency": "CAD",
+                "int_bic": "BOFMCAT2",
+                "correspondent": "Bank of Montreal, Toronto",
+                "nostro_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80",
+                "with_an_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80"
+              },
+              {
+                "currency": "CHF",
+                "int_bic": "ZKBKCHZZ",
+                "correspondent": "Zürcher Kantonalbank, Zürich",
+                "nostro_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f",
+                "with_an_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f"
+              },
+              {
+                "currency": "CNH",
+                "int_bic": "ICBKTRISXXX",
+                "correspondent": "ICBC Turkey Bank A.Ş., Istanbul",
+                "nostro_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087",
+                "with_an_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087"
+              },
+              {
+                "currency": "DKK",
+                "int_bic": "NDEADKKK",
+                "correspondent": "Nordea Bank Danmark A/S",
+                "nostro_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e",
+                "with_an_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "BBRUBEBBXXX",
+                "correspondent": "ING Belgium SA/NV",
+                "nostro_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90",
+                "with_an_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "CCFRFRPPXXX",
+                "correspondent": "HSBC Continental Europe SA",
+                "nostro_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32",
+                "with_an_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "CHASDEFX",
+                "correspondent": "J.P. Morgan AG, Frankfurt",
+                "nostro_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b",
+                "with_an_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "COBADEFF",
+                "correspondent": "Commerzbank AG",
+                "nostro_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5",
+                "with_an_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "DEUTDEFFXXX",
+                "correspondent": "Deutsche Bank AG, Frankfurt",
+                "nostro_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b",
+                "with_an_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "IRVTDEFX",
+                "correspondent": "Bank of New York, Frankfurt",
+                "nostro_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f",
+                "with_an_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "SCBLDEFFXXX",
+                "correspondent": "Standard Chartered Bank (Germany) GmbH",
+                "nostro_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d",
+                "with_an_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d"
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "SOGEFRPP",
+                "correspondent": "Société Générale, Paris",
+                "nostro_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85",
+                "with_an_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85"
+              },
+              {
+                "currency": "GBP",
+                "int_bic": "SCBLGB2L",
+                "correspondent": "Standard Chartered Bank, London",
+                "nostro_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605",
+                "with_an_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605"
+              },
+              {
+                "currency": "JPY",
+                "int_bic": "BOTKJPJT",
+                "correspondent": "MUFG Bank Ltd., Tokyo",
+                "nostro_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
+                "with_an_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed"
+              },
+              {
+                "currency": "NOK",
+                "int_bic": "NDEANOKK",
+                "correspondent": "Nordea Bank, Oslo",
+                "nostro_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38",
+                "with_an_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38"
+              },
+              {
+                "currency": "PLN",
+                "int_bic": "BREXPLPW",
+                "correspondent": "mBank SA",
+                "nostro_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
+                "with_an_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e"
+              },
+              {
+                "currency": "QAR",
+                "int_bic": "QNBAQAQAXXX",
+                "correspondent": "Qatar National Bank",
+                "nostro_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574",
+                "with_an_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574"
+              },
+              {
+                "currency": "RUB",
+                "int_bic": "ISBKRUMMXXX",
+                "correspondent": "Isbank Joint Stock Company, Moscow",
+                "nostro_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64",
+                "with_an_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64"
+              },
+              {
+                "currency": "SAR",
+                "int_bic": "NCBKSAJE",
+                "correspondent": "The Saudi National Commercial Bank",
+                "nostro_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410",
+                "with_an_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410"
+              },
+              {
+                "currency": "SEK",
+                "int_bic": "ESSESESS",
+                "correspondent": "Skandinaviska Enskilda Banken, Stockholm",
+                "nostro_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95",
+                "with_an_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "BOFAUS3N",
+                "correspondent": "Bank of America N.A., New York",
+                "nostro_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004",
+                "with_an_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "CHASUS33",
+                "correspondent": "JP Morgan Chase Bank NA, New York",
+                "nostro_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3",
+                "with_an_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "CITIUS33",
+                "correspondent": "Citibank NA, New York",
+                "nostro_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e",
+                "with_an_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "IRVTUS3N",
+                "correspondent": "The Bank of New York Mellon, New York",
+                "nostro_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330",
+                "with_an_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "MSHQUS33XXX",
+                "correspondent": "Mashreqbank Psc., New York Branch",
+                "nostro_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69",
+                "with_an_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "PNBPUS33XXX",
+                "correspondent": "Wells Fargo Bank NA, New York",
+                "nostro_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b",
+                "with_an_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b"
+              },
+              {
+                "currency": "USD",
+                "int_bic": "SCBLUS33",
+                "correspondent": "Standard Chartered Bank, New York",
+                "nostro_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3",
+                "with_an_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3"
+              },
+              {
+                "currency": "ZAR",
+                "int_bic": "ABSAZAJJ",
+                "correspondent": "ABSA Bank Ltd., Johannesburg",
+                "nostro_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca",
+                "with_an_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca"
+              }
+            ]
+          }
         }
       ],
       "forbidden_bics": []

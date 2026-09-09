@@ -15,6 +15,14 @@
     ],
     "settlement_terms_published": false
   },
+  "FNNBTRIS": {
+    "name": "QNB A.Ş.",
+    "country": "TR",
+    "domains": [
+      "qnb.com.tr"
+    ],
+    "settlement_terms_published": false
+  },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",
