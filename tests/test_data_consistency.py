@@ -2932,6 +2932,7 @@ NORDICS_POLAND_SSI_COVERAGE = [
     ("BREXPLPWXXX", "mBank", {"USD", "EUR", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "TRY", "ZAR"}),
     ("BPKOPLPWXXX", "PKO Bank Polski", {"USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"}),
     ("DNBANOKKXXX", "DNB Bank ASA", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("DNBASESXXXX", "DNB Bank Sweden", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
 ]
 
 class TestNordicsPolandSsiCoverage:
