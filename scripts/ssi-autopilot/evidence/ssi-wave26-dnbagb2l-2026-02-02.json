@@ -1,0 +1,276 @@
+{
+  "source": "https://content.dnb.no/docs/9553985/ssi-london-02-02-2026.pdf",
+  "source_sha256": "ee955eb5cf677f8cc11c1dbe328d835e573105be809dc1403c0036aab057eb4d",
+  "as_of": "2026-02-02",
+  "beneficiary_bic": "DNBAGB2L",
+  "region_masked_block": 91005100,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "CBDUAEAD",
+      "nostro_fingerprint": "4f6182f93186a29c7be047aa6a78a307853c17a440ccc0939c1b41de8c9355ca",
+      "with_an_fingerprint": "4f6182f93186a29c7be047aa6a78a307853c17a440ccc0939c1b41de8c9355ca",
+      "nostro_mask": "ACCT-91005110",
+      "with_an_mask": "ACCT-91005110"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "nostro_fingerprint": "0754cfb34f8342e46ed3595dec53945bd72b9204db5b5507d7b4d2270b491b17",
+      "with_an_fingerprint": "0754cfb34f8342e46ed3595dec53945bd72b9204db5b5507d7b4d2270b491b17",
+      "nostro_mask": "ACCT-91005106",
+      "with_an_mask": "ACCT-91005106"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "ROYCCAT2",
+      "nostro_fingerprint": "bbe2e2ea9d6b7920374ce91a7674fa6ccdd234388f8d7f1f4e6a9eb64bdc6eb7",
+      "with_an_fingerprint": "bbe2e2ea9d6b7920374ce91a7674fa6ccdd234388f8d7f1f4e6a9eb64bdc6eb7",
+      "nostro_mask": "ACCT-91005104",
+      "with_an_mask": "ACCT-91005104"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "nostro_fingerprint": "8d1de6f292300cebea03ad638178a04dbc594344410b3a3d0a4e4810c1e5dd4f",
+      "with_an_fingerprint": "8d1de6f292300cebea03ad638178a04dbc594344410b3a3d0a4e4810c1e5dd4f",
+      "nostro_mask": "ACCT-91005111",
+      "with_an_mask": "ACCT-91005111"
+    },
+    {
+      "currency": "CZK",
+      "int_bic": "GIBACZPX",
+      "nostro_fingerprint": "5c5fe13fbb2787cfd7c5a68758e242e372a052aa3c7c7a1f80812174ec5de0d5",
+      "with_an_fingerprint": "5c5fe13fbb2787cfd7c5a68758e242e372a052aa3c7c7a1f80812174ec5de0d5",
+      "nostro_mask": "ACCT-91005112",
+      "with_an_mask": "ACCT-91005112"
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DNBADKKX",
+      "nostro_fingerprint": "4b0eb39658a272ef0d5ee717bf824aadc0e318cb9cad6be3ee9ebef40365862e",
+      "with_an_fingerprint": "4b0eb39658a272ef0d5ee717bf824aadc0e318cb9cad6be3ee9ebef40365862e",
+      "nostro_mask": "ACCT-91005118",
+      "with_an_mask": "ACCT-91005118"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DNBANOKK",
+      "nostro_fingerprint": "9c5c1c9bc626ba5ca8a9e45f63b11e69787be1e424e4b55ffff9dbad3cec4b73",
+      "with_an_fingerprint": "9c5c1c9bc626ba5ca8a9e45f63b11e69787be1e424e4b55ffff9dbad3cec4b73",
+      "nostro_mask": "ACCT-91005117",
+      "with_an_mask": "ACCT-91005117"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "HSBCHKHHHKH",
+      "nostro_fingerprint": "245ef22b68a5e2155baf32c77d6d1134e99e08206d5853719b831093edb4b4cb",
+      "with_an_fingerprint": "245ef22b68a5e2155baf32c77d6d1134e99e08206d5853719b831093edb4b4cb",
+      "nostro_mask": "ACCT-91005102",
+      "with_an_mask": "ACCT-91005102"
+    },
+    {
+      "currency": "HUF",
+      "int_bic": "UBRTHUHB",
+      "nostro_fingerprint": "6a4ffd9c82d4d51602fbb3ea8e00c080f00a034308c9a6659d16ee6f4a370582",
+      "with_an_fingerprint": "6a4ffd9c82d4d51602fbb3ea8e00c080f00a034308c9a6659d16ee6f4a370582",
+      "nostro_mask": "ACCT-91005113",
+      "with_an_mask": "ACCT-91005113"
+    },
+    {
+      "currency": "ISK",
+      "int_bic": "GLITISRE",
+      "nostro_fingerprint": "c7cc437924eac9d1b74f529bddfdf4f070266a66e69b9cc35b9f7009ec92e981",
+      "with_an_fingerprint": "c7cc437924eac9d1b74f529bddfdf4f070266a66e69b9cc35b9f7009ec92e981",
+      "nostro_mask": "ACCT-91005114",
+      "with_an_mask": "ACCT-91005114"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJT",
+      "nostro_fingerprint": "48f9cd4572f8454f26cad5a87fea3e51d84f6ed834c727b10bced945ca9e4291",
+      "with_an_fingerprint": "48f9cd4572f8454f26cad5a87fea3e51d84f6ed834c727b10bced945ca9e4291",
+      "nostro_mask": "ACCT-91005107",
+      "with_an_mask": "ACCT-91005107"
+    },
+    {
+      "currency": "MXN",
+      "int_bic": "CITIMXMMCVT",
+      "nostro_fingerprint": "b57421c89e84375e3f2422fb6ae0bd5363be2a5e2a34ab21f4b1e81c0a0e4d7e",
+      "with_an_fingerprint": "b57421c89e84375e3f2422fb6ae0bd5363be2a5e2a34ab21f4b1e81c0a0e4d7e",
+      "nostro_mask": "ACCT-91005103",
+      "with_an_mask": "ACCT-91005103"
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKK",
+      "nostro_fingerprint": "516971c664be205f817d293729238f38f70b2ba9325764f143d4d84d63acf34d",
+      "with_an_fingerprint": "516971c664be205f817d293729238f38f70b2ba9325764f143d4d84d63acf34d",
+      "nostro_mask": "ACCT-91005115",
+      "with_an_mask": "ACCT-91005115"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22058",
+      "nostro_fingerprint": "0754cfb34f8342e46ed3595dec53945bd72b9204db5b5507d7b4d2270b491b17",
+      "with_an_fingerprint": "0754cfb34f8342e46ed3595dec53945bd72b9204db5b5507d7b4d2270b491b17",
+      "nostro_mask": "ACCT-91005106",
+      "with_an_mask": "ACCT-91005106"
+    },
+    {
+      "currency": "PLN",
+      "int_bic": "BPKOPLPW",
+      "nostro_fingerprint": "e1da1278bae61795866aabca0efe0b6b952f84f737df2543f01b7b9a253429b7",
+      "with_an_fingerprint": "e1da1278bae61795866aabca0efe0b6b952f84f737df2543f01b7b9a253429b7",
+      "nostro_mask": "ACCT-91005119",
+      "with_an_mask": "ACCT-91005119"
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "SABBSARI",
+      "nostro_fingerprint": "a91672196dea45c0213b33e1e9df3fffd5641397a7d5b9d5ab00c860db41c46a",
+      "with_an_fingerprint": "a91672196dea45c0213b33e1e9df3fffd5641397a7d5b9d5ab00c860db41c46a",
+      "nostro_mask": "ACCT-91005120",
+      "with_an_mask": "ACCT-91005120"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "DNBASESX",
+      "nostro_fingerprint": "768110359d9370205a9b2317a8c3e7c96a8d5b48145b5847498726fece2553ae",
+      "with_an_fingerprint": "768110359d9370205a9b2317a8c3e7c96a8d5b48145b5847498726fece2553ae",
+      "nostro_mask": "ACCT-91005116",
+      "with_an_mask": "ACCT-91005116"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "HSBCSGSG",
+      "nostro_fingerprint": "ffbba611f96cfdb626d8248f86d1191573fb8ac3dca4aa965ccb7b0f0982d2c3",
+      "with_an_fingerprint": "ffbba611f96cfdb626d8248f86d1191573fb8ac3dca4aa965ccb7b0f0982d2c3",
+      "nostro_mask": "ACCT-91005105",
+      "with_an_mask": "ACCT-91005105"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "HSBCTHBK",
+      "nostro_fingerprint": "e9bfe48b82ab7b3ad142aea50c7504b88f88fa1d9ad8e7fd1be80effbc1d3fe0",
+      "with_an_fingerprint": "e9bfe48b82ab7b3ad142aea50c7504b88f88fa1d9ad8e7fd1be80effbc1d3fe0",
+      "nostro_mask": "ACCT-91005101",
+      "with_an_mask": "ACCT-91005101"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_fingerprint": "146b4fa1207128ee93326730033c56ceb8f3b42ca48de41e32d05882635c2ded",
+      "with_an_fingerprint": "146b4fa1207128ee93326730033c56ceb8f3b42ca48de41e32d05882635c2ded",
+      "nostro_mask": "ACCT-91005109",
+      "with_an_mask": "ACCT-91005109"
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "SBZAZAJJ",
+      "nostro_fingerprint": "08e42d18b66872b0457a435e184f4d95b3cba6a64bdd3a3628752cbd550e549e",
+      "with_an_fingerprint": "08e42d18b66872b0457a435e184f4d95b3cba6a64bdd3a3628752cbd550e549e",
+      "nostro_mask": "ACCT-91005108",
+      "with_an_mask": "ACCT-91005108"
+    }
+  ],
+  "source_snapshot": {
+    "source": "https://content.dnb.no/docs/9553985/ssi-london-02-02-2026.pdf",
+    "source_sha256": "ee955eb5cf677f8cc11c1dbe328d835e573105be809dc1403c0036aab057eb4d",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract from the cited source; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 21,
+    "route_keys": [
+      [
+        "AED",
+        "CBDUAEAD"
+      ],
+      [
+        "AUD",
+        "ANZBAU3M"
+      ],
+      [
+        "CAD",
+        "ROYCCAT2"
+      ],
+      [
+        "CHF",
+        "UBSWCHZH80A"
+      ],
+      [
+        "CZK",
+        "GIBACZPX"
+      ],
+      [
+        "DKK",
+        "DNBADKKX"
+      ],
+      [
+        "EUR",
+        "DNBANOKK"
+      ],
+      [
+        "HKD",
+        "HSBCHKHHHKH"
+      ],
+      [
+        "HUF",
+        "UBRTHUHB"
+      ],
+      [
+        "ISK",
+        "GLITISRE"
+      ],
+      [
+        "JPY",
+        "BOTKJPJT"
+      ],
+      [
+        "MXN",
+        "CITIMXMMCVT"
+      ],
+      [
+        "NOK",
+        "DNBANOKK"
+      ],
+      [
+        "NZD",
+        "ANZBNZ22058"
+      ],
+      [
+        "PLN",
+        "BPKOPLPW"
+      ],
+      [
+        "SAR",
+        "SABBSARI"
+      ],
+      [
+        "SEK",
+        "DNBASESX"
+      ],
+      [
+        "SGD",
+        "HSBCSGSG"
+      ],
+      [
+        "THB",
+        "HSBCTHBK"
+      ],
+      [
+        "USD",
+        "IRVTUS3N"
+      ],
+      [
+        "ZAR",
+        "SBZAZAJJ"
+      ]
+    ]
+  }
+}

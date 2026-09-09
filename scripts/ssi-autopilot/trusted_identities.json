@@ -1051,6 +1051,38 @@
     ],
     "settlement_terms_published": false
   },
+  "DNBANOKK": {
+    "name": "DNB Bank ASA",
+    "country": "NO",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
+  "DNBASESX": {
+    "name": "DNB Bank Sweden",
+    "country": "SE",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
+  "DNBAGB2L": {
+    "name": "DNB Bank ASA London Branch",
+    "country": "GB",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
+  "DNBAFIHX": {
+    "name": "DNB Bank ASA, Helsinki Branch",
+    "country": "FI",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
   "DNBAUS33": {
     "name": "DNB Bank ASA New York Branch",
     "country": "US",

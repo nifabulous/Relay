@@ -3023,6 +3023,105 @@ class TestVietnamSsiCoverage:
 # ---- end autopilot-generated coverage tests: vietnam ----
 
 
+# ---- autopilot-generated coverage tests: nordics-poland ----
+NORDICS_POLAND_SSI_COVERAGE = [
+    ("BREXPLPWXXX", "mBank", {"USD", "EUR", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "TRY", "ZAR"}),
+    ("BPKOPLPWXXX", "PKO Bank Polski", {"USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"}),
+    ("DNBANOKKXXX", "DNB Bank ASA", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("DNBASESXXXX", "DNB Bank Sweden", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+]
+
+class TestNordicsPolandSsiCoverage:
+
+    def test_nordics_poland_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("nordics-poland")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in NORDICS_POLAND_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_nordics_poland_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("nordics-poland")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"nordics-poland SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_nordics_poland_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("nordics-poland", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: nordics-poland ----
+
+
+# ---- autopilot-generated coverage tests: united-kingdom ----
+UNITED_KINGDOM_SSI_COVERAGE = [
+    ("DNBAGB2LXXX", "DNB Bank ASA London Branch", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "HKD", "HUF", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
+]
+
+class TestUnitedKingdomSsiCoverage:
+
+    def test_united_kingdom_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("united-kingdom")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in UNITED_KINGDOM_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_united_kingdom_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("united-kingdom")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"united-kingdom SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_united_kingdom_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("united-kingdom", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: united-kingdom ----
+
+
+# ---- autopilot-generated coverage tests: finland ----
+FINLAND_SSI_COVERAGE = [
+    ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+]
+
+class TestFinlandSsiCoverage:
+
+    def test_finland_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("finland")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in FINLAND_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_finland_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("finland")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"finland SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_finland_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("finland", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: finland ----
+
+
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
