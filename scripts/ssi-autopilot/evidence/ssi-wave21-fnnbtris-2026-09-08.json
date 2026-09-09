@@ -1,6 +1,6 @@
 {
   "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
-  "source_sha256": "b0fed6d2abd084153b7f35028566608691382f1526344892a109729bac08b7fc",
+  "source_sha256": "a8b677c7c517d75225632344364cd83ec0016944d4d2b84e9438958acb1529c3",
   "as_of": "2026-09-08",
   "beneficiary_bic": "FNNBTRIS",
   "region_masked_block": 91001000,
@@ -293,9 +293,10 @@
   ],
   "source_snapshot": {
     "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
-    "source_sha256": "b0fed6d2abd084153b7f35028566608691382f1526344892a109729bac08b7fc",
+    "source_sha256": "a8b677c7c517d75225632344364cd83ec0016944d4d2b84e9438958acb1529c3",
     "captured_at": "2026-09-08",
     "extraction": "HTML table extraction; account values omitted after hashing",
+    "hash_normalization": "SHA-256 after removing the per-request ASP.NET __VIEWSTATE field",
     "raw_accounts_committed": false,
     "bic_aliases": {
       "SCBLDEFX": "SCBLDEFFXXX",

@@ -1,3 +1,5 @@
+import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -8,6 +10,15 @@ from app.services.seed import SSI_RECORDS
 from app.services.ssi_importer import canonicalize_bic11, ssi_composite_key
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_source_attestation_module():
+    path = ROOT / "scripts/ssi-autopilot/verify_source_attestation.py"
+    spec = importlib.util.spec_from_file_location("ssi_source_attestation", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 def _row_to_ssi(row):
@@ -94,6 +105,7 @@ def test_wave21_source_matches_independent_attestation_fixture():
     assert attestation["beneficiary_bic"] == evidence["beneficiary_bic"] == "FNNBTRIS"
     assert attestation["source"] == evidence["source"]
     assert attestation["source_sha256"] == evidence["source_sha256"]
+    assert attestation["hash_normalization"] == evidence["source_snapshot"]["hash_normalization"]
     expected_route_keys = {tuple(key) for key in attestation["route_keys"]}
     evidence_route_keys = {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
     manifest_route_keys = {
@@ -101,6 +113,20 @@ def test_wave21_source_matches_independent_attestation_fixture():
     }
     assert evidence_route_keys == manifest_route_keys == expected_route_keys
     assert len(expected_route_keys) == 31
+
+
+def test_wave21_source_attestation_strips_dynamic_state_and_extracts_routes():
+    attestation = _load_source_attestation_module()
+    html = (
+        b'<input type="hidden" name="__VIEWSTATE" value="request-specific" />'
+        b'<table><tr><td>USD</td><td>IRVTUS3N</td></tr>'
+        b'<tr><td>EUR</td><td>CHASDEFX</td></tr></table>'
+    )
+    assert attestation._route_keys(html) == {("USD", "IRVTUS3N"), ("EUR", "CHASDEFX")}
+    assert hashlib.sha256(attestation._canonical_source_bytes(html)).hexdigest() == hashlib.sha256(
+        b'<table><tr><td>USD</td><td>IRVTUS3N</td></tr>'
+        b'<tr><td>EUR</td><td>CHASDEFX</td></tr></table>'
+    ).hexdigest()
 
 
 def test_wave21_evidence_manifest_and_seed_share_canonical_bic_keys():

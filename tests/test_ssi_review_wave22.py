@@ -35,3 +35,11 @@ def test_wave22_mask_preserves_route_account_identity():
     assert evidence["scope"]["excluded_domestic_routes"] == ["TRY"]
     trusted = json.loads((ROOT / "scripts/ssi-autopilot/trusted_identities.json").read_text())
     assert trusted["DEYATRIS"]["settlement_terms_published"] is False
+
+
+def test_wave22_manifest_description_matches_admitted_route_count():
+    manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
+    region = next(region for region in manifest["regions"] if region["name"] == "turkey-israel")
+    note = region["note"].lower()
+    assert "destek" in note and "seven-route" in note
+    assert "eight-route" not in note
