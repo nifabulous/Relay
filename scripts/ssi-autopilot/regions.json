@@ -7022,7 +7022,7 @@
         "CZ"
       ],
       "masked_block": 91002400,
-      "note": "2026-08-19 research: only Banca Transilvania (BTRLRO22, correspondent list archived 2013-02-27, the only regional bank publishing full nostro numbers; 23 records) is seedable. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none — NOT SEEDABLE. CZK row (KOMBCZPP) had no account, not seeded.",
+      "note": "2026-09-08 research: Banca Transilvania's live English correspondent list publishes 20 current rows across AUD/CAD/CHF/CZK/DKK/EUR/GBP/HUF/JPY/MDL/NOK/PLN/SEK/USD, including masked account-backed terms and the required AUD/JPY intermediaries. The live list replaces the archived 2013 coverage and adds current CZK and MDL rows. BCR (BIC is RNCBROBU, not RZBRROBU which is Raiffeisen), BRD, OTP, Erste HU, K&H, Komercni banka, CSOB, and Ceska sporitelna publish correspondent lists without account numbers or none — NOT SEEDABLE.",
       "banks": [
         {
           "bic8": "RNCBROBU",
@@ -7041,21 +7041,477 @@
           "name": "Banca Transilvania",
           "country": "RO",
           "currencies": [
-            "USD",
-            "EUR",
-            "GBP",
-            "RON",
-            "HUF",
             "AUD",
             "CAD",
             "CHF",
+            "CZK",
             "DKK",
+            "EUR",
+            "GBP",
+            "HUF",
             "JPY",
+            "MDL",
             "NOK",
             "PLN",
             "SEK",
-            "TRY"
-          ]
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "bancatransilvania.ro"
+          ],
+          "admitted_records": [
+            {
+              "currency": "AUD",
+              "correspondent": "Deutsche Bank AG, Frankfurt am Main via Australia and New Zealand Banking Group Limited, Melbourne",
+              "int_bic": "ANZBAU3M",
+              "nostro": "ACCT-91002401",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "CAD",
+              "correspondent": "National Bank of Canada, Montreal",
+              "int_bic": "BNDCCAMM",
+              "nostro": "ACCT-91002402",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "UBS Switzerland AG, Zurich",
+              "int_bic": "UBSWCHZH80A",
+              "nostro": "ACCT-91002403",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "CZK",
+              "correspondent": "Komercni Banka AS, Prague",
+              "int_bic": "KOMBCZPP",
+              "nostro": "ACCT-91002404",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "DKK",
+              "correspondent": "Danske Bank A/S, Copenhagen",
+              "int_bic": "DABADKKK",
+              "nostro": "ACCT-91002405",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "ING Belgium SA/NV",
+              "int_bic": "BBRUBEBB",
+              "nostro": "ACCT-91002410",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Intesa Sanpaolo SpA, Milan",
+              "int_bic": "BCITITMM",
+              "nostro": "ACCT-91002409",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Banca Transilvania SA, Cluj-Napoca (direct via T2 for commercial payments)",
+              "int_bic": "BTRLRO22",
+              "nostro": "ACCT-91002411",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Commerzbank AG, Frankfurt am Main",
+              "int_bic": "COBADEFF",
+              "nostro": "ACCT-91002406",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Deutsche Bank AG, Frankfurt am Main",
+              "int_bic": "DEUTDEFF",
+              "nostro": "ACCT-91002408",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "UniCredit SpA, Milan",
+              "int_bic": "UNCRITMM",
+              "nostro": "ACCT-91002407",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Barclays Bank PLC, London",
+              "int_bic": "BARCGB22",
+              "nostro": "ACCT-91002412",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "HUF",
+              "correspondent": "OTP Bank Plc, Budapest",
+              "int_bic": "OTPVHUHB",
+              "nostro": "ACCT-91002413",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Tokyo",
+              "int_bic": "DEUTJPJT",
+              "nostro": "ACCT-91002414",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "MDL",
+              "correspondent": "Victoriabank S.A., Chisinau",
+              "int_bic": "VICBMD2X",
+              "nostro": "ACCT-91002415",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "NOK",
+              "correspondent": "Nordea Bank Norge ASA, Oslo",
+              "int_bic": "NDEANOKK",
+              "nostro": "ACCT-91002416",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "PLN",
+              "correspondent": "Bank Pekao SA, Warsaw",
+              "int_bic": "PKOPPLPW",
+              "nostro": "ACCT-91002417",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "SEK",
+              "correspondent": "Nordea Bank AB (publ), Stockholm",
+              "int_bic": "NDEASESS",
+              "nostro": "ACCT-91002418",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Deutsche Bank Trust Company Americas, New York",
+              "int_bic": "BKTRUS33",
+              "nostro": "ACCT-91002420",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Citibank N.A., New York",
+              "int_bic": "CITIUS33",
+              "nostro": "ACCT-91002419",
+              "with_an": "ACCT-91002499",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "terms_inferred": true,
+              "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+              "as_of": "2026-09-08",
+              "status": "unverified",
+              "bic_only": false
+            }
+          ],
+          "admitted_record_digest": "5c6640ba284bcae2baa78777a327ab4b9ec0b351d650e2848d1ceea52530753f",
+          "source_snapshot": {
+            "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+            "source_route_digest": "09f7ccbe162bba7cd64e9c0f69eeb1be7bb369a1687215d052f2c847da5064b1",
+            "captured_at": "2026-09-08",
+            "extraction": "committed redacted route-field extract from the cited list; raw accounts omitted",
+            "raw_accounts_committed": false,
+            "routes": [
+              {
+                "currency": "AUD",
+                "int_bic": "ANZBAU3M",
+                "correspondent": "Deutsche Bank AG, Frankfurt am Main via Australia and New Zealand Banking Group Limited, Melbourne",
+                "nostro_mask": "ACCT-91002401",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "CAD",
+                "int_bic": "BNDCCAMM",
+                "correspondent": "National Bank of Canada, Montreal",
+                "nostro_mask": "ACCT-91002402",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "CHF",
+                "int_bic": "UBSWCHZH80A",
+                "correspondent": "UBS Switzerland AG, Zurich",
+                "nostro_mask": "ACCT-91002403",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "CZK",
+                "int_bic": "KOMBCZPP",
+                "correspondent": "Komercni Banka AS, Prague",
+                "nostro_mask": "ACCT-91002404",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "DKK",
+                "int_bic": "DABADKKK",
+                "correspondent": "Danske Bank A/S, Copenhagen",
+                "nostro_mask": "ACCT-91002405",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "BBRUBEBB",
+                "correspondent": "ING Belgium SA/NV",
+                "nostro_mask": "ACCT-91002410",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "BCITITMM",
+                "correspondent": "Intesa Sanpaolo SpA, Milan",
+                "nostro_mask": "ACCT-91002409",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "BTRLRO22",
+                "correspondent": "Banca Transilvania SA, Cluj-Napoca (direct via T2 for commercial payments)",
+                "nostro_mask": "ACCT-91002411",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "COBADEFF",
+                "correspondent": "Commerzbank AG, Frankfurt am Main",
+                "nostro_mask": "ACCT-91002406",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "DEUTDEFF",
+                "correspondent": "Deutsche Bank AG, Frankfurt am Main",
+                "nostro_mask": "ACCT-91002408",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "EUR",
+                "int_bic": "UNCRITMM",
+                "correspondent": "UniCredit SpA, Milan",
+                "nostro_mask": "ACCT-91002407",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "GBP",
+                "int_bic": "BARCGB22",
+                "correspondent": "Barclays Bank PLC, London",
+                "nostro_mask": "ACCT-91002412",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "HUF",
+                "int_bic": "OTPVHUHB",
+                "correspondent": "OTP Bank Plc, Budapest",
+                "nostro_mask": "ACCT-91002413",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "JPY",
+                "int_bic": "DEUTJPJT",
+                "correspondent": "Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Tokyo",
+                "nostro_mask": "ACCT-91002414",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "MDL",
+                "int_bic": "VICBMD2X",
+                "correspondent": "Victoriabank S.A., Chisinau",
+                "nostro_mask": "ACCT-91002415",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "NOK",
+                "int_bic": "NDEANOKK",
+                "correspondent": "Nordea Bank Norge ASA, Oslo",
+                "nostro_mask": "ACCT-91002416",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "PLN",
+                "int_bic": "PKOPPLPW",
+                "correspondent": "Bank Pekao SA, Warsaw",
+                "nostro_mask": "ACCT-91002417",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "SEK",
+                "int_bic": "NDEASESS",
+                "correspondent": "Nordea Bank AB (publ), Stockholm",
+                "nostro_mask": "ACCT-91002418",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "USD",
+                "int_bic": "BKTRUS33",
+                "correspondent": "Deutsche Bank Trust Company Americas, New York",
+                "nostro_mask": "ACCT-91002420",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              },
+              {
+                "currency": "USD",
+                "int_bic": "CITIUS33",
+                "correspondent": "Citibank N.A., New York",
+                "nostro_mask": "ACCT-91002419",
+                "with_an_mask": "ACCT-91002499",
+                "terms_inferred": true
+              }
+            ]
+          }
         },
         {
           "bic8": "BRDEROBU",
