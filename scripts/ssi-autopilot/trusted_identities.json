@@ -1043,6 +1043,14 @@
     ],
     "settlement_terms_published": false
   },
+  "DNBAFIHX": {
+    "name": "DNB Bank ASA, Helsinki Branch",
+    "country": "FI",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
   "DNBAUS33": {
     "name": "DNB Bank ASA New York Branch",
     "country": "US",
