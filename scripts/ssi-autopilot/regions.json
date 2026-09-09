@@ -784,6 +784,7 @@
           ],
           "seedable": true,
           "source_domains": [
+            "firstrand.co.za",
             "fnb.co.za"
           ],
           "admitted_records": [
