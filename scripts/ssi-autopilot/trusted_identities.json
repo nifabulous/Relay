@@ -1026,5 +1026,13 @@
       "dnb.no"
     ],
     "settlement_terms_published": false
+  },
+  "KASITHBK": {
+    "name": "Kasikornbank",
+    "country": "TH",
+    "domains": [
+      "kasikornbank.com"
+    ],
+    "settlement_terms_published": false
   }
 }
