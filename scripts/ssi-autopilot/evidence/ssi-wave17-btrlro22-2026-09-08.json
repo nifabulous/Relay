@@ -1,0 +1,341 @@
+{
+  "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+  "source_route_digest": "09f7ccbe162bba7cd64e9c0f69eeb1be7bb369a1687215d052f2c847da5064b1",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "BTRLRO22",
+  "masking": {
+    "raw_accounts_committed": false,
+    "equality": "route masks are a redacted one-to-one source-account map"
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "correspondent": "Deutsche Bank AG, Frankfurt am Main via Australia and New Zealand Banking Group Limited, Melbourne",
+      "nostro_mask": "ACCT-91002401",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BNDCCAMM",
+      "correspondent": "National Bank of Canada, Montreal",
+      "nostro_mask": "ACCT-91002402",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS Switzerland AG, Zurich",
+      "nostro_mask": "ACCT-91002403",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CZK",
+      "int_bic": "KOMBCZPP",
+      "correspondent": "Komercni Banka AS, Prague",
+      "nostro_mask": "ACCT-91002404",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DABADKKK",
+      "correspondent": "Danske Bank A/S, Copenhagen",
+      "nostro_mask": "ACCT-91002405",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BBRUBEBB",
+      "correspondent": "ING Belgium SA/NV",
+      "nostro_mask": "ACCT-91002410",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BCITITMM",
+      "correspondent": "Intesa Sanpaolo SpA, Milan",
+      "nostro_mask": "ACCT-91002409",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BTRLRO22",
+      "correspondent": "Banca Transilvania SA, Cluj-Napoca (direct via T2 for commercial payments)",
+      "nostro_mask": "ACCT-91002411",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "correspondent": "Commerzbank AG, Frankfurt am Main",
+      "nostro_mask": "ACCT-91002406",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "correspondent": "Deutsche Bank AG, Frankfurt am Main",
+      "nostro_mask": "ACCT-91002408",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "UNCRITMM",
+      "correspondent": "UniCredit SpA, Milan",
+      "nostro_mask": "ACCT-91002407",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BARCGB22",
+      "correspondent": "Barclays Bank PLC, London",
+      "nostro_mask": "ACCT-91002412",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HUF",
+      "int_bic": "OTPVHUHB",
+      "correspondent": "OTP Bank Plc, Budapest",
+      "nostro_mask": "ACCT-91002413",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "DEUTJPJT",
+      "correspondent": "Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Tokyo",
+      "nostro_mask": "ACCT-91002414",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "MDL",
+      "int_bic": "VICBMD2X",
+      "correspondent": "Victoriabank S.A., Chisinau",
+      "nostro_mask": "ACCT-91002415",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "NDEANOKK",
+      "correspondent": "Nordea Bank Norge ASA, Oslo",
+      "nostro_mask": "ACCT-91002416",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PLN",
+      "int_bic": "PKOPPLPW",
+      "correspondent": "Bank Pekao SA, Warsaw",
+      "nostro_mask": "ACCT-91002417",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "NDEASESS",
+      "correspondent": "Nordea Bank AB (publ), Stockholm",
+      "nostro_mask": "ACCT-91002418",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKTRUS33",
+      "correspondent": "Deutsche Bank Trust Company Americas, New York",
+      "nostro_mask": "ACCT-91002420",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33",
+      "correspondent": "Citibank N.A., New York",
+      "nostro_mask": "ACCT-91002419",
+      "with_an_mask": "ACCT-91002499",
+      "terms_inferred": true
+    }
+  ],
+  "source_snapshot": {
+    "source": "https://www.bancatransilvania.ro/en/lista-bancilor-corespondente",
+    "source_route_digest": "09f7ccbe162bba7cd64e9c0f69eeb1be7bb369a1687215d052f2c847da5064b1",
+    "captured_at": "2026-09-08",
+    "extraction": "committed redacted route-field extract from the cited list; raw accounts omitted",
+    "raw_accounts_committed": false,
+    "routes": [
+      {
+        "currency": "AUD",
+        "int_bic": "ANZBAU3M",
+        "correspondent": "Deutsche Bank AG, Frankfurt am Main via Australia and New Zealand Banking Group Limited, Melbourne",
+        "nostro_mask": "ACCT-91002401",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "BNDCCAMM",
+        "correspondent": "National Bank of Canada, Montreal",
+        "nostro_mask": "ACCT-91002402",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A",
+        "correspondent": "UBS Switzerland AG, Zurich",
+        "nostro_mask": "ACCT-91002403",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "KOMBCZPP",
+        "correspondent": "Komercni Banka AS, Prague",
+        "nostro_mask": "ACCT-91002404",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "DABADKKK",
+        "correspondent": "Danske Bank A/S, Copenhagen",
+        "nostro_mask": "ACCT-91002405",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BBRUBEBB",
+        "correspondent": "ING Belgium SA/NV",
+        "nostro_mask": "ACCT-91002410",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BCITITMM",
+        "correspondent": "Intesa Sanpaolo SpA, Milan",
+        "nostro_mask": "ACCT-91002409",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BTRLRO22",
+        "correspondent": "Banca Transilvania SA, Cluj-Napoca (direct via T2 for commercial payments)",
+        "nostro_mask": "ACCT-91002411",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "correspondent": "Commerzbank AG, Frankfurt am Main",
+        "nostro_mask": "ACCT-91002406",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFF",
+        "correspondent": "Deutsche Bank AG, Frankfurt am Main",
+        "nostro_mask": "ACCT-91002408",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNCRITMM",
+        "correspondent": "UniCredit SpA, Milan",
+        "nostro_mask": "ACCT-91002407",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "BARCGB22",
+        "correspondent": "Barclays Bank PLC, London",
+        "nostro_mask": "ACCT-91002412",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OTPVHUHB",
+        "correspondent": "OTP Bank Plc, Budapest",
+        "nostro_mask": "ACCT-91002413",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "DEUTJPJT",
+        "correspondent": "Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Tokyo",
+        "nostro_mask": "ACCT-91002414",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "MDL",
+        "int_bic": "VICBMD2X",
+        "correspondent": "Victoriabank S.A., Chisinau",
+        "nostro_mask": "ACCT-91002415",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "NDEANOKK",
+        "correspondent": "Nordea Bank Norge ASA, Oslo",
+        "nostro_mask": "ACCT-91002416",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "PKOPPLPW",
+        "correspondent": "Bank Pekao SA, Warsaw",
+        "nostro_mask": "ACCT-91002417",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "NDEASESS",
+        "correspondent": "Nordea Bank AB (publ), Stockholm",
+        "nostro_mask": "ACCT-91002418",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BKTRUS33",
+        "correspondent": "Deutsche Bank Trust Company Americas, New York",
+        "nostro_mask": "ACCT-91002420",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CITIUS33",
+        "correspondent": "Citibank N.A., New York",
+        "nostro_mask": "ACCT-91002419",
+        "with_an_mask": "ACCT-91002499",
+        "terms_inferred": true
+      }
+    ]
+  }
+}

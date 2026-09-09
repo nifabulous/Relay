@@ -955,6 +955,14 @@
     ],
     "settlement_terms_published": false
   },
+  "BTRLRO22": {
+    "name": "Banca Transilvania",
+    "country": "RO",
+    "domains": [
+      "bancatransilvania.ro"
+    ],
+    "settlement_terms_published": false
+  },
   "SEYBLKLX": {
     "name": "Seylan Bank PLC",
     "country": "LK",
@@ -1024,6 +1032,23 @@
     "country": "US",
     "domains": [
       "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
+  "KASITHBK": {
+    "name": "Kasikornbank",
+    "country": "TH",
+    "domains": [
+      "kasikornbank.com"
+    ],
+    "settlement_terms_published": false
+  },
+  "FIRNZAJJ": {
+    "name": "FirstRand Bank (FNB)",
+    "country": "ZA",
+    "domains": [
+      "firstrand.co.za",
+      "fnb.co.za"
     ],
     "settlement_terms_published": false
   }
