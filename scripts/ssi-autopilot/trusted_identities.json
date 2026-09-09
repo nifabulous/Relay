@@ -1035,6 +1035,14 @@
     ],
     "settlement_terms_published": false
   },
+  "DNBAGB2L": {
+    "name": "DNB Bank ASA London Branch",
+    "country": "GB",
+    "domains": [
+      "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
   "DNBAUS33": {
     "name": "DNB Bank ASA New York Branch",
     "country": "US",
