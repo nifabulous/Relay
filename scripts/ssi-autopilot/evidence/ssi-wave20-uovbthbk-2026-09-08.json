@@ -1,0 +1,373 @@
+{
+  "source": "https://www.uob.co.th/business-en/transact/remittance/standard-settlement-instructions.page",
+  "source_sha256": "049f0c4f40022ecd5d051630e55a20e352eb638ee579ee59ae1d896d6e7182d1",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "UOVBTHBK",
+  "masking": {
+    "raw_accounts_committed": false,
+    "equality": "route masks are a redacted one-to-one source-account map"
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "NATAAU33033",
+      "correspondent": "National Australia Bank Ltd., Melbourne",
+      "nostro_mask": "ACCT-91002101",
+      "with_an_mask": "ACCT-91002101",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "CIBCCATT",
+      "correspondent": "Canadian Imperial Bank of Commerce, Toronto",
+      "nostro_mask": "ACCT-91002102",
+      "with_an_mask": "ACCT-91002102",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG, Zurich",
+      "nostro_mask": "ACCT-91002103",
+      "with_an_mask": "ACCT-91002103",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNH",
+      "int_bic": "ICBKTHBKCLR",
+      "correspondent": "Industrial and Commercial Bank of China (Thai) PCL.",
+      "nostro_mask": "ACCT-91002106",
+      "with_an_mask": "ACCT-91002106",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNH",
+      "int_bic": "UBHKHKHH",
+      "correspondent": "Industrial and Commercial Bank of China (Asia) Limited, Hong Kong",
+      "nostro_mask": "ACCT-91002105",
+      "with_an_mask": "ACCT-91002105",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ICBKTHBKCLR",
+      "correspondent": "Industrial and Commercial Bank of China (Thai) PCL.",
+      "nostro_mask": "ACCT-91002104",
+      "with_an_mask": "ACCT-91002104",
+      "terms_inferred": true
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DABADKKK",
+      "correspondent": "Danske Bank A/S, Copenhagen",
+      "nostro_mask": "ACCT-91002107",
+      "with_an_mask": "ACCT-91002107",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "correspondent": "Deutsche Bank AG",
+      "nostro_mask": "ACCT-91002108",
+      "with_an_mask": "ACCT-91002108",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BARCGB22",
+      "correspondent": "Barclays Bank Plc, London",
+      "nostro_mask": "ACCT-91002109",
+      "with_an_mask": "ACCT-91002109",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "UOVBHKHH",
+      "correspondent": "United Overseas Bank Ltd., Hong Kong",
+      "nostro_mask": "ACCT-91002110",
+      "with_an_mask": "ACCT-91002110",
+      "terms_inferred": true
+    },
+    {
+      "currency": "IDR",
+      "int_bic": "BBIJIDJA",
+      "correspondent": "PT Bank UOB Indonesia, Jakarta",
+      "nostro_mask": "ACCT-91002111",
+      "with_an_mask": "ACCT-91002111",
+      "terms_inferred": true
+    },
+    {
+      "currency": "INR",
+      "int_bic": "UOVBINBB",
+      "correspondent": "United Overseas Bank Limited, Mumbai",
+      "nostro_mask": "ACCT-91002112",
+      "with_an_mask": "ACCT-91002112",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJT",
+      "correspondent": "MUFG Bank Ltd., Tokyo",
+      "nostro_mask": "ACCT-91002114",
+      "with_an_mask": "ACCT-91002114",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "MHCBJPJT",
+      "correspondent": "Mizuho Bank Ltd., Tokyo",
+      "nostro_mask": "ACCT-91002113",
+      "with_an_mask": "ACCT-91002113",
+      "terms_inferred": true
+    },
+    {
+      "currency": "MYR",
+      "int_bic": "UOVBMYKL",
+      "correspondent": "United Overseas Bank (Malaysia) Berhad, Kuala Lumpur",
+      "nostro_mask": "ACCT-91002115",
+      "with_an_mask": "ACCT-91002115",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "NDEANOKK",
+      "correspondent": "Nordea Bank Norge, Oslo",
+      "nostro_mask": "ACCT-91002116",
+      "with_an_mask": "ACCT-91002116",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22058",
+      "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+      "nostro_mask": "ACCT-91002117",
+      "with_an_mask": "ACCT-91002117",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "DABASESX",
+      "correspondent": "Danske Bank A/S, Sweden",
+      "nostro_mask": "ACCT-91002118",
+      "with_an_mask": "ACCT-91002118",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "UOVBSGSG",
+      "correspondent": "United Overseas Bank Limited, Singapore",
+      "nostro_mask": "ACCT-91002119",
+      "with_an_mask": "ACCT-91002119",
+      "terms_inferred": true
+    },
+    {
+      "currency": "THB",
+      "int_bic": "BOTHTHBP",
+      "correspondent": "Bank of Thailand",
+      "nostro_mask": "ACCT-91002120",
+      "with_an_mask": "ACCT-91002120",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33",
+      "correspondent": "JPMorgan Chase Bank N.A., New York",
+      "nostro_mask": "ACCT-91002121",
+      "with_an_mask": "ACCT-91002121",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "correspondent": "Bank of New York, New York",
+      "nostro_mask": "ACCT-91002122",
+      "with_an_mask": "ACCT-91002122",
+      "terms_inferred": true
+    }
+  ],
+  "source_snapshot": {
+    "source": "https://www.uob.co.th/business-en/transact/remittance/standard-settlement-instructions.page",
+    "source_sha256": "049f0c4f40022ecd5d051630e55a20e352eb638ee579ee59ae1d896d6e7182d1",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract; account values omitted",
+    "raw_accounts_committed": false,
+    "routes": [
+      {
+        "currency": "AUD",
+        "int_bic": "NATAAU33033",
+        "correspondent": "National Australia Bank Ltd., Melbourne",
+        "nostro_mask": "ACCT-91002101",
+        "with_an_mask": "ACCT-91002101",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "CIBCCATT",
+        "correspondent": "Canadian Imperial Bank of Commerce, Toronto",
+        "nostro_mask": "ACCT-91002102",
+        "with_an_mask": "ACCT-91002102",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A",
+        "correspondent": "UBS AG, Zurich",
+        "nostro_mask": "ACCT-91002103",
+        "with_an_mask": "ACCT-91002103",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CNH",
+        "int_bic": "ICBKTHBKCLR",
+        "correspondent": "Industrial and Commercial Bank of China (Thai) PCL.",
+        "nostro_mask": "ACCT-91002106",
+        "with_an_mask": "ACCT-91002106",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CNH",
+        "int_bic": "UBHKHKHH",
+        "correspondent": "Industrial and Commercial Bank of China (Asia) Limited, Hong Kong",
+        "nostro_mask": "ACCT-91002105",
+        "with_an_mask": "ACCT-91002105",
+        "terms_inferred": true
+      },
+      {
+        "currency": "CNY",
+        "int_bic": "ICBKTHBKCLR",
+        "correspondent": "Industrial and Commercial Bank of China (Thai) PCL.",
+        "nostro_mask": "ACCT-91002104",
+        "with_an_mask": "ACCT-91002104",
+        "terms_inferred": true
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "DABADKKK",
+        "correspondent": "Danske Bank A/S, Copenhagen",
+        "nostro_mask": "ACCT-91002107",
+        "with_an_mask": "ACCT-91002107",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFF",
+        "correspondent": "Deutsche Bank AG",
+        "nostro_mask": "ACCT-91002108",
+        "with_an_mask": "ACCT-91002108",
+        "terms_inferred": true
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "BARCGB22",
+        "correspondent": "Barclays Bank Plc, London",
+        "nostro_mask": "ACCT-91002109",
+        "with_an_mask": "ACCT-91002109",
+        "terms_inferred": true
+      },
+      {
+        "currency": "HKD",
+        "int_bic": "UOVBHKHH",
+        "correspondent": "United Overseas Bank Ltd., Hong Kong",
+        "nostro_mask": "ACCT-91002110",
+        "with_an_mask": "ACCT-91002110",
+        "terms_inferred": true
+      },
+      {
+        "currency": "IDR",
+        "int_bic": "BBIJIDJA",
+        "correspondent": "PT Bank UOB Indonesia, Jakarta",
+        "nostro_mask": "ACCT-91002111",
+        "with_an_mask": "ACCT-91002111",
+        "terms_inferred": true
+      },
+      {
+        "currency": "INR",
+        "int_bic": "UOVBINBB",
+        "correspondent": "United Overseas Bank Limited, Mumbai",
+        "nostro_mask": "ACCT-91002112",
+        "with_an_mask": "ACCT-91002112",
+        "terms_inferred": true
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "BOTKJPJT",
+        "correspondent": "MUFG Bank Ltd., Tokyo",
+        "nostro_mask": "ACCT-91002114",
+        "with_an_mask": "ACCT-91002114",
+        "terms_inferred": true
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "MHCBJPJT",
+        "correspondent": "Mizuho Bank Ltd., Tokyo",
+        "nostro_mask": "ACCT-91002113",
+        "with_an_mask": "ACCT-91002113",
+        "terms_inferred": true
+      },
+      {
+        "currency": "MYR",
+        "int_bic": "UOVBMYKL",
+        "correspondent": "United Overseas Bank (Malaysia) Berhad, Kuala Lumpur",
+        "nostro_mask": "ACCT-91002115",
+        "with_an_mask": "ACCT-91002115",
+        "terms_inferred": true
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "NDEANOKK",
+        "correspondent": "Nordea Bank Norge, Oslo",
+        "nostro_mask": "ACCT-91002116",
+        "with_an_mask": "ACCT-91002116",
+        "terms_inferred": true
+      },
+      {
+        "currency": "NZD",
+        "int_bic": "ANZBNZ22058",
+        "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+        "nostro_mask": "ACCT-91002117",
+        "with_an_mask": "ACCT-91002117",
+        "terms_inferred": true
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "DABASESX",
+        "correspondent": "Danske Bank A/S, Sweden",
+        "nostro_mask": "ACCT-91002118",
+        "with_an_mask": "ACCT-91002118",
+        "terms_inferred": true
+      },
+      {
+        "currency": "SGD",
+        "int_bic": "UOVBSGSG",
+        "correspondent": "United Overseas Bank Limited, Singapore",
+        "nostro_mask": "ACCT-91002119",
+        "with_an_mask": "ACCT-91002119",
+        "terms_inferred": true
+      },
+      {
+        "currency": "THB",
+        "int_bic": "BOTHTHBP",
+        "correspondent": "Bank of Thailand",
+        "nostro_mask": "ACCT-91002120",
+        "with_an_mask": "ACCT-91002120",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank N.A., New York",
+        "nostro_mask": "ACCT-91002121",
+        "with_an_mask": "ACCT-91002121",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3N",
+        "correspondent": "Bank of New York, New York",
+        "nostro_mask": "ACCT-91002122",
+        "with_an_mask": "ACCT-91002122",
+        "terms_inferred": true
+      }
+    ]
+  }
+}

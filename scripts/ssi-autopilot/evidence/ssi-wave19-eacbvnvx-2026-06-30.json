@@ -1,0 +1,149 @@
+{
+  "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+  "source_sha256": "99211465a1fdeac27a5c69d15619cc4d1846604a28c30a8ae490571a9df807eb",
+  "as_of": "2026-06-30",
+  "beneficiary_bic": "EACBVNVX",
+  "masking": {
+    "raw_accounts_committed": false,
+    "equality": "route masks are a redacted one-to-one source-account map"
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+      "nostro_mask": "ACCT-91001701",
+      "with_an_mask": "ACCT-91001701",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "HYVEDEMM",
+      "correspondent": "UniCredit Bank AG (HypoVereinsbank), Munich",
+      "nostro_mask": "ACCT-91001702",
+      "with_an_mask": "ACCT-91001702",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "OCBCSGSG",
+      "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+      "nostro_mask": "ACCT-91001703",
+      "with_an_mask": "ACCT-91001703",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SMBCJPJT",
+      "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+      "nostro_mask": "ACCT-91001704",
+      "with_an_mask": "ACCT-91001704",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22058",
+      "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+      "nostro_mask": "ACCT-91001705",
+      "with_an_mask": "ACCT-91001705",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "OCBCSGSG",
+      "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+      "nostro_mask": "ACCT-91001708",
+      "with_an_mask": "ACCT-91001708",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33",
+      "correspondent": "JPMorgan Chase Bank, N.A., New York",
+      "nostro_mask": "ACCT-91001706",
+      "with_an_mask": "ACCT-91001706",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CZNBKRSE",
+      "correspondent": "KB Kookmin Bank, Korea",
+      "nostro_mask": "ACCT-91001707",
+      "with_an_mask": "ACCT-91001707",
+      "terms_inferred": true
+    }
+  ],
+  "source_snapshot": {
+    "source": "https://vikkibank.vn/ngan-hang-dai-ly/",
+    "source_sha256": "99211465a1fdeac27a5c69d15619cc4d1846604a28c30a8ae490571a9df807eb",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract; account values omitted",
+    "raw_accounts_committed": false,
+    "routes": [
+      {
+        "currency": "AUD",
+        "int_bic": "ANZBAU3M",
+        "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
+        "nostro_mask": "ACCT-91001701",
+        "with_an_mask": "ACCT-91001701",
+        "terms_inferred": true
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HYVEDEMM",
+        "correspondent": "UniCredit Bank AG (HypoVereinsbank), Munich",
+        "nostro_mask": "ACCT-91001702",
+        "with_an_mask": "ACCT-91001702",
+        "terms_inferred": true
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "OCBCSGSG",
+        "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+        "nostro_mask": "ACCT-91001703",
+        "with_an_mask": "ACCT-91001703",
+        "terms_inferred": true
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "SMBCJPJT",
+        "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+        "nostro_mask": "ACCT-91001704",
+        "with_an_mask": "ACCT-91001704",
+        "terms_inferred": true
+      },
+      {
+        "currency": "NZD",
+        "int_bic": "ANZBNZ22058",
+        "correspondent": "ANZ Bank New Zealand Limited, Wellington",
+        "nostro_mask": "ACCT-91001705",
+        "with_an_mask": "ACCT-91001705",
+        "terms_inferred": true
+      },
+      {
+        "currency": "SGD",
+        "int_bic": "OCBCSGSG",
+        "correspondent": "Oversea-Chinese Banking Corporation Limited, Singapore",
+        "nostro_mask": "ACCT-91001708",
+        "with_an_mask": "ACCT-91001708",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank, N.A., New York",
+        "nostro_mask": "ACCT-91001706",
+        "with_an_mask": "ACCT-91001706",
+        "terms_inferred": true
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CZNBKRSE",
+        "correspondent": "KB Kookmin Bank, Korea",
+        "nostro_mask": "ACCT-91001707",
+        "with_an_mask": "ACCT-91001707",
+        "terms_inferred": true
+      }
+    ]
+  }
+}

@@ -15,6 +15,22 @@
     ],
     "settlement_terms_published": false
   },
+  "FNNBTRIS": {
+    "name": "QNB A.Ş.",
+    "country": "TR",
+    "domains": [
+      "qnb.com.tr"
+    ],
+    "settlement_terms_published": false
+  },
+  "DEYATRIS": {
+    "name": "Destek Yatırım Bankası A.Ş.",
+    "country": "TR",
+    "domains": [
+      "destekbank.com"
+    ],
+    "settlement_terms_published": false
+  },
   "CMBCCNBS": {
     "name": "China Merchants Bank",
     "country": "CN",
@@ -36,6 +52,14 @@
     "country": "SG",
     "domains": [
       "uob.com.sg"
+    ],
+    "settlement_terms_published": false
+  },
+  "UOVBTHBK": {
+    "name": "United Overseas Bank (Thai) Public Company Limited",
+    "country": "TH",
+    "domains": [
+      "uob.co.th"
     ],
     "settlement_terms_published": false
   },
@@ -202,6 +226,14 @@
       "ebl.com.bd"
     ],
     "settlement_terms_published": true
+  },
+  "EACBVNVX": {
+    "name": "Vikki Digital Bank Limited",
+    "country": "VN",
+    "domains": [
+      "vikkibank.vn"
+    ],
+    "settlement_terms_published": false
   },
   "CAFECOBB": {
     "name": "Banco Davivienda S.A.",
@@ -955,14 +987,6 @@
     ],
     "settlement_terms_published": false
   },
-  "BTRLRO22": {
-    "name": "Banca Transilvania",
-    "country": "RO",
-    "domains": [
-      "bancatransilvania.ro"
-    ],
-    "settlement_terms_published": false
-  },
   "SEYBLKLX": {
     "name": "Seylan Bank PLC",
     "country": "LK",
@@ -1032,6 +1056,14 @@
     "country": "US",
     "domains": [
       "dnb.no"
+    ],
+    "settlement_terms_published": false
+  },
+  "BTRLRO22": {
+    "name": "Banca Transilvania",
+    "country": "RO",
+    "domains": [
+      "bancatransilvania.ro"
     ],
     "settlement_terms_published": false
   },

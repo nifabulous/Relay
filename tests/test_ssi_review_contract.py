@@ -14,6 +14,7 @@ from pathlib import Path
 from app.models import SSI
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import SSI_RECORDS
+from app.services.ssi_importer import canonicalize_bic11
 
 _MANIFEST_PATH = (
     Path(__file__).resolve().parents[1]
@@ -24,8 +25,7 @@ _MANIFEST_PATH = (
 
 
 def _bic11(value):
-    value = value.strip().upper()
-    return value if len(value) == 11 else value + "XXX"
+    return canonicalize_bic11(value)
 
 
 def _manifest_contract():

@@ -1,0 +1,122 @@
+{
+  "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+  "source_sha256": "6605342271bfacf7caa42776695c2c3e983391cbccedc670aaa93a78ddb0c7e8",
+  "as_of": "2025-11-30",
+  "beneficiary_bic": "DEYATRIS",
+  "region_masked_block": 91001000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "namespace": "beneficiary_bic",
+    "raw_accounts_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "ABDIAEAD",
+      "nostro_fingerprint": "6ccadc0603c34fff4595d343470160d119394930d6b8de97b98668a8376eeb92",
+      "with_an_fingerprint": "6ccadc0603c34fff4595d343470160d119394930d6b8de97b98668a8376eeb92",
+      "nostro_mask": "ACCT-91001005",
+      "with_an_mask": "ACCT-91001005"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "CZCBCN2X",
+      "nostro_fingerprint": "0594a347b125e87f4af770d83a374afc7eee2f0ceb52afa484af19bbf8fe7fc4",
+      "with_an_fingerprint": "0594a347b125e87f4af770d83a374afc7eee2f0ceb52afa484af19bbf8fe7fc4",
+      "nostro_mask": "ACCT-91001002",
+      "with_an_mask": "ACCT-91001002"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "IRVTUS3N",
+      "nostro_fingerprint": "e75ce795b147a3ab8cbb5e307417c5998ac8e53fb85f30f8ec29ef2253d74a7c",
+      "with_an_fingerprint": "e75ce795b147a3ab8cbb5e307417c5998ac8e53fb85f30f8ec29ef2253d74a7c",
+      "nostro_mask": "ACCT-91001003",
+      "with_an_mask": "ACCT-91001003"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "KTAGDEFF",
+      "nostro_fingerprint": "42cb4533ee83cc8a4048db968b687ad4359b2b9dcf21c60a92275aa393da0bf5",
+      "with_an_fingerprint": "42cb4533ee83cc8a4048db968b687ad4359b2b9dcf21c60a92275aa393da0bf5",
+      "nostro_mask": "ACCT-91001006",
+      "with_an_mask": "ACCT-91001006"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_fingerprint": "a2eb3dc04d20ffef59d16d43e0392efd51917549bf5e1d087a945c23c6d44369",
+      "with_an_fingerprint": "a2eb3dc04d20ffef59d16d43e0392efd51917549bf5e1d087a945c23c6d44369",
+      "nostro_mask": "ACCT-91001001",
+      "with_an_mask": "ACCT-91001001"
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "BJAZSAJE",
+      "nostro_fingerprint": "d4099883188dfecfabf8e14424a2f106ce96a0a7c0176566eba6773042b41d83",
+      "with_an_fingerprint": "d4099883188dfecfabf8e14424a2f106ce96a0a7c0176566eba6773042b41d83",
+      "nostro_mask": "ACCT-91001007",
+      "with_an_mask": "ACCT-91001007"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_fingerprint": "9ec1e3fbdf60fbd130cdccc312f8791c82dfffe8e8f401ce0b689bdef5d723e4",
+      "with_an_fingerprint": "9ec1e3fbdf60fbd130cdccc312f8791c82dfffe8e8f401ce0b689bdef5d723e4",
+      "nostro_mask": "ACCT-91001004",
+      "with_an_mask": "ACCT-91001004"
+    }
+  ],
+  "excluded_routes": [
+    {
+      "currency": "TRY",
+      "reason": "Domestic rail terms are not published as international SHA/spot settlement terms; omitted until a rail-specific representation exists."
+    }
+  ],
+  "source_snapshot": {
+    "source": "https://www.destekbank.com/files/destekbank-corporate-presentation-november.pdf",
+    "source_sha256": "6605342271bfacf7caa42776695c2c3e983391cbccedc670aaa93a78ddb0c7e8",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted route-field extract from the cited source; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 7,
+    "route_keys": [
+      [
+        "AED",
+        "ABDIAEAD"
+      ],
+      [
+        "CNY",
+        "CZCBCN2X"
+      ],
+      [
+        "EUR",
+        "IRVTUS3N"
+      ],
+      [
+        "EUR",
+        "KTAGDEFF"
+      ],
+      [
+        "GBP",
+        "SCBLGB2L"
+      ],
+      [
+        "SAR",
+        "BJAZSAJE"
+      ],
+      [
+        "USD",
+        "IRVTUS3N"
+      ]
+    ]
+  },
+  "scope": {
+    "advertised_route_count": 7,
+    "excluded_domestic_routes": [
+      "TRY"
+    ],
+    "exclusion_reason": "The source lists TRY domestic EFT details without a published correspondent/account route; it is outside this SSI admission scope."
+  }
+}

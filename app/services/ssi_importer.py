@@ -78,19 +78,47 @@ class SSIImportResult:
 # ---------------------------------------------------------------------------
 
 
+def canonicalize_bic11(value: str) -> str:
+    """Return the canonical 11-character BIC identity.
+
+    BIC-8 identifies the primary office; the persisted SSI identity uses the
+    equivalent BIC-11 form with an ``XXX`` branch suffix.  Keeping this rule
+    in one public helper lets importers, audits, and review fixtures compare
+    the same route key without relying on exact source formatting.
+    """
+    cleaned = value.strip().upper().replace(" ", "")
+    bic = BIC(cleaned)
+    if not bic.is_valid:
+        raise ValueError(f"Invalid BIC: {value!r}")
+    normalized = str(bic)
+    return normalized.ljust(11, "X") if len(normalized) == 8 else normalized
+
+
 def _normalize_bic(value: str) -> Optional[str]:
     """Validate + normalize a BIC to 11 chars. Returns None if invalid."""
     if not value:
         return None
-    v = value.strip().upper().replace(" ", "")
     try:
-        bic = BIC(v)
-        if not bic.is_valid:
-            return None
-        s = str(bic)
-        return s.ljust(11, "X") if len(s) == 8 else s
+        return canonicalize_bic11(value)
     except Exception:
         return None
+
+
+def ssi_composite_key(
+    beneficiary_bic: str, currency: str, intermediary_bic: str
+) -> tuple[str, str, str]:
+    """Return the stored SSI identity, including beneficiary scope.
+
+    Masked account tokens are intentionally not global identifiers.  Every
+    consumer that resolves an SSI must retain this beneficiary/currency/
+    intermediary tuple so equal-looking redacted accounts from two banks
+    cannot be conflated.
+    """
+    return (
+        canonicalize_bic11(beneficiary_bic),
+        currency.strip().upper(),
+        canonicalize_bic11(intermediary_bic),
+    )
 
 
 def validate_ssi_row(raw: dict) -> tuple[Optional[dict], list[str]]:
@@ -275,12 +303,18 @@ def load_ssi_rows(session: Session, rows: List[dict]) -> SSIImportResult:
             result.errors.append(SSIRowError(row_number=i, raw=raw, errors=errors))
             continue
 
-        # Lookup existing by composite key
+        # Lookup existing by the beneficiary-scoped composite key.  Account
+        # masks are redacted display values and are never used as identities.
+        identity = ssi_composite_key(
+            normalized["beneficiary_bic"],
+            normalized["currency"],
+            normalized["intermediary_bic"],
+        )
         existing = session.execute(
             select(SSI).where(
-                SSI.beneficiary_bic == normalized["beneficiary_bic"],
-                SSI.currency == normalized["currency"],
-                SSI.intermediary_bic == normalized["intermediary_bic"],
+                SSI.beneficiary_bic == identity[0],
+                SSI.currency == identity[1],
+                SSI.intermediary_bic == identity[2],
             )
         ).scalar_one_or_none()
 

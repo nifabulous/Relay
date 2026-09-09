@@ -689,7 +689,6 @@ class TestFrancophoneAfricaSsiCoverage:
 # listed MNORMXMM must never appear.
 LATAM_SSI_COVERAGE = [
     ("MENOMXMTXXX", "Banorte", {"USD", "EUR", "CAD", "GBP", "CHF", "JPY", "SEK", "AUD", "NOK"}),
-    ("BBDEBRSPXXX", "Banco Bradesco", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JPY", "MXN", "NOK", "NZD", "SEK", "SGD", "USD", "ZAR"}),
 ]
 
 
@@ -1760,6 +1759,7 @@ class TestBangladeshSsiCoverage:
 THAILAND_SSI_COVERAGE = [
     ("KASITHBKXXX", "Kasikornbank", {"AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "JPY", "NZD", "SEK", "SGD", "USD"}),
     ("SICOTHBKXXX", "Siam Commercial Bank", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "AUD", "CAD", "CHF", "DKK", "NZD", "SEK"}),
+    ("UOVBTHBKXXX", "United Overseas Bank (Thai) Public Company Limited", {"AUD", "CAD", "CHF", "CNH", "CNY", "DKK", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "MYR", "NOK", "NZD", "SEK", "SGD", "THB", "USD"}),
 ]
 
 class TestThailandSsiCoverage:
@@ -1954,6 +1954,8 @@ class TestEasternEuropeSsiCoverage:
     def test_eastern_europe_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("eastern-europe", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: eastern-europe ----
+
+
 # ---- autopilot-generated coverage tests: singapore ----
 SINGAPORE_SSI_COVERAGE = [
     ("OCBCSGSGXXX", "Oversea-Chinese Banking Corporation Limited", {"USD"}),
@@ -2954,6 +2956,71 @@ class TestSouthernAfricaSsiCoverage:
     def test_southern_africa_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("southern-africa", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: southern-africa ----
+
+# ---- autopilot-generated coverage tests: turkey-israel ----
+TURKEY_ISRAEL_SSI_COVERAGE = [
+    ("AKBKTRISXXX", "Akbank T.A.S.", {"USD", "EUR", "GBP", "CHF", "AUD", "JPY", "SEK", "NOK", "DKK", "SAR"}),
+    ("YAPITRISXXX", "Yapı ve Kredi Bankası", {"USD", "EUR", "GBP", "CHF", "AUD", "CAD", "JPY", "SEK", "NOK", "DKK"}),
+    ("FNNBTRISXXX", "QNB A.Ş.", {"AED", "AUD", "CAD", "CHF", "CNH", "DKK", "EUR", "GBP", "JPY", "NOK", "PLN", "QAR", "RUB", "SAR", "SEK", "USD", "ZAR"}),
+    ("DEYATRISXXX", "Destek Yatırım Bankası A.Ş.", {"AED", "CNY", "EUR", "GBP", "SAR", "USD"}),
+]
+
+class TestTurkeyIsraelSsiCoverage:
+
+    def test_turkey_israel_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("turkey-israel")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in TURKEY_ISRAEL_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_turkey_israel_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("turkey-israel")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"turkey-israel SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_turkey_israel_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("turkey-israel", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: turkey-israel ----
+
+# ---- autopilot-generated coverage tests: vietnam ----
+VIETNAM_SSI_COVERAGE = [
+    ("EACBVNVXXXX", "Vikki Digital Bank Limited", {"AUD", "EUR", "GBP", "JPY", "NZD", "SGD", "USD"}),
+]
+
+class TestVietnamSsiCoverage:
+
+    def test_vietnam_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("vietnam")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in VIETNAM_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_vietnam_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("vietnam")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"vietnam SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_vietnam_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("vietnam", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: vietnam ----
 
 
 # ---- autopilot-generated coverage tests: united-states ----
