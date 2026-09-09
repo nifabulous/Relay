@@ -1,0 +1,27 @@
+{
+  "source": "https://www.fnb.co.za/forex/understanding-forex/",
+  "source_sha256": "7281bafe89d2985b23838fb2d8d56ac5177ef78d81ee6c878e9cbd246f203db0",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "FIRNZAJJ",
+  "source_snapshot": {
+    "source": "https://www.fnb.co.za/forex/understanding-forex/",
+    "source_sha256": "7281bafe89d2985b23838fb2d8d56ac5177ef78d81ee6c878e9cbd246f203db0",
+    "captured_at": "2026-09-08",
+    "extraction": "redacted correspondent table extract; no account values published",
+    "raw_accounts_committed": false,
+    "routes": [
+      {"currency": "AUD", "int_bic": "ANZBAU3M", "correspondent": "Australia and New Zealand Banking Group Ltd - Melbourne"},
+      {"currency": "CHF", "int_bic": "UBSWCHZH80A", "correspondent": "Union Bank of Switzerland - Zurich"},
+      {"currency": "EUR", "int_bic": "DEUTDEFF", "correspondent": "Deutsche Bank AG - Frankfurt"},
+      {"currency": "GBP", "int_bic": "LOYDGB2L", "correspondent": "Lloyds TSB Bank PLC - London"},
+      {"currency": "USD", "int_bic": "CHASUS33", "correspondent": "JP Morgan Chase Bank - New York"}
+    ]
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "ANZBAU3M", "correspondent": "Australia and New Zealand Banking Group Ltd - Melbourne", "bic_only": true, "terms_inferred": false},
+    {"currency": "CHF", "int_bic": "UBSWCHZH80A", "correspondent": "Union Bank of Switzerland - Zurich", "bic_only": true, "terms_inferred": false},
+    {"currency": "EUR", "int_bic": "DEUTDEFF", "correspondent": "Deutsche Bank AG - Frankfurt", "bic_only": true, "terms_inferred": false},
+    {"currency": "GBP", "int_bic": "LOYDGB2L", "correspondent": "Lloyds TSB Bank PLC - London", "bic_only": true, "terms_inferred": false},
+    {"currency": "USD", "int_bic": "CHASUS33", "correspondent": "JP Morgan Chase Bank - New York", "bic_only": true, "terms_inferred": false}
+  ]
+}

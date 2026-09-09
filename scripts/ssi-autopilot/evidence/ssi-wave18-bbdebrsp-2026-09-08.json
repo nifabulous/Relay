@@ -1,0 +1,42 @@
+{
+  "source": "https://banco.bradesco/html/pessoajuridica/solucoes-integradas/comercio-exterior/produtos-financeiros/canal-bancario.shtm",
+  "source_sha256": "72f604740434c39b44784e645474695414280975b7cad0a58f010df6ef59d499",
+  "as_of": "2026-09-08",
+  "beneficiary_bic": "BBDEBRSP",
+  "source_snapshot": {
+    "source": "https://banco.bradesco/html/pessoajuridica/solucoes-integradas/comercio-exterior/produtos-financeiros/canal-bancario.shtm",
+    "source_sha256": "72f604740434c39b44784e645474695414280975b7cad0a58f010df6ef59d499",
+    "captured_at": "2026-09-08",
+    "extraction": "HTML correspondent list extract; raw account values omitted",
+    "raw_accounts_committed": false,
+    "route_count": 24,
+    "bic_only_route_count": 23,
+    "account_backed_route_keys": ["JPY:BOTKJPJT"],
+    "routes": [
+      {"currency": "AED", "int_bic": "ADCBAEAA", "correspondent": "Abu Dhabi Commercial Bank, Abu Dhabi", "bic_only": true, "has_account_data": false},
+      {"currency": "AUD", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "CAD", "int_bic": "BOFMCAT2", "correspondent": "Bank of Montreal, Toronto", "bic_only": true, "has_account_data": false},
+      {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "correspondent": "Zuercher Kantonalbank, Zurich", "bic_only": true, "has_account_data": false},
+      {"currency": "CNY", "int_bic": "SCBLHKHH", "correspondent": "Standard Chartered Bank (Hong Kong) Limited, Hong Kong", "bic_only": true, "has_account_data": false},
+      {"currency": "DKK", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "EUR", "int_bic": "CAIXESBB", "correspondent": "CaixaBank, Barcelona", "bic_only": true, "has_account_data": false},
+      {"currency": "EUR", "int_bic": "CHASDEFX", "correspondent": "J.P. Morgan SE, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "EUR", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "EUR", "int_bic": "GENODEFF", "correspondent": "DZ Bank AG Deutsche Zentral-Genossenschaftsbank, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "EUR", "int_bic": "SOLADEST", "correspondent": "Landesbank Baden-Wuerttemberg, Stuttgart", "bic_only": true, "has_account_data": false},
+      {"currency": "GBP", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "JPY", "int_bic": "BOTKJPJT", "correspondent": "MUFG Bank Ltd, Tokyo", "bic_only": false, "has_account_data": true, "terms_inferred": true},
+      {"currency": "MXN", "int_bic": "BMSXMXMM", "correspondent": "Banco Santander (Mexico) S.A., Mexico", "bic_only": true, "has_account_data": false},
+      {"currency": "NOK", "int_bic": "DNBANOKK", "correspondent": "DNB Bank ASA, Oslo", "bic_only": true, "has_account_data": false},
+      {"currency": "NZD", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "SEK", "int_bic": "ESSESESS", "correspondent": "Skandinaviska Enskilda Banken AB, Stockholm", "bic_only": true, "has_account_data": false},
+      {"currency": "SGD", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false},
+      {"currency": "USD", "int_bic": "BOFAUS3N", "correspondent": "Bank of America, N.A., New York", "bic_only": true, "has_account_data": false},
+      {"currency": "USD", "int_bic": "CHASUS33", "correspondent": "JPMorgan Chase Bank N.A., New York", "bic_only": true, "has_account_data": false},
+      {"currency": "USD", "int_bic": "CITIUS33", "correspondent": "Citibank N.A., New York", "bic_only": true, "has_account_data": false},
+      {"currency": "USD", "int_bic": "IRVTUS3N", "correspondent": "The Bank of New York Mellon, New York", "bic_only": true, "has_account_data": false},
+      {"currency": "USD", "int_bic": "SCBLUS33", "correspondent": "Standard Chartered Bank, New York", "bic_only": true, "has_account_data": false},
+      {"currency": "ZAR", "int_bic": "COBADEFF", "correspondent": "Commerzbank AG, Frankfurt", "bic_only": true, "has_account_data": false}
+    ]
+  }
+}
