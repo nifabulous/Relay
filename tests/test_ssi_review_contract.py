@@ -172,10 +172,13 @@ def test_batch5_beneficiaries_are_in_bank_directory_and_ledger_is_complete():
     """Batch-5 routes must resolve to every canonical beneficiary in BANKS."""
     ledger = json.loads(_BATCH5_LEDGER_PATH.read_text(encoding="utf-8"))
     ledger_bics = {row[0] for row in ledger}
+    ledger_names = {row[0]: row[1] for row in ledger}
     bank_bics = {row[0] for row in BANKS}
+    bank_names = {row[0]: row[1] for row in BANKS}
 
     assert len(ledger_bics) == 20
     assert ledger_bics <= bank_bics
+    assert {bic: bank_names[bic] for bic in ledger_bics} == ledger_names
     assert sum(len(row[-1]) for row in ledger) == 458
 
 
