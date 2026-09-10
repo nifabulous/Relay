@@ -6,122 +6,151 @@
   "region_masked_block": 91002000,
   "masking": {
     "algorithm": "sequential token per normalized source account",
-    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
     "raw_accounts_committed": false,
-    "namespace": "beneficiary_bic"
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
   },
   "routes": [
     {
       "currency": "AED",
       "int_bic": "SCBLAEADXXX",
-      "nostro_fingerprint": "9bea333254a6af888515bea0d4a8d234c429012af685811a5c2839a034bac3af",
-      "with_an_fingerprint": "9bea333254a6af888515bea0d4a8d234c429012af685811a5c2839a034bac3af",
       "nostro_mask": "ACCT-91002001",
-      "with_an_mask": "ACCT-91002001"
+      "with_an_mask": "ACCT-91002001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "AUD",
       "int_bic": "COBADEFFXXX",
-      "nostro_fingerprint": "dd9d4de11141de3ed901ca2f67bcf1a9b4552767619af11ec0f24a68cf4ba08d",
-      "with_an_fingerprint": "dd9d4de11141de3ed901ca2f67bcf1a9b4552767619af11ec0f24a68cf4ba08d",
       "nostro_mask": "ACCT-91002002",
-      "with_an_mask": "ACCT-91002002"
+      "with_an_mask": "ACCT-91002002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "CAD",
       "int_bic": "BNDCCAMMINT",
-      "nostro_fingerprint": "c892b57165ba1dfff49c85376b664bf2ce6ae361a02d306b01e94218b18fa9ad",
-      "with_an_fingerprint": "c892b57165ba1dfff49c85376b664bf2ce6ae361a02d306b01e94218b18fa9ad",
       "nostro_mask": "ACCT-91002003",
-      "with_an_mask": "ACCT-91002003"
+      "with_an_mask": "ACCT-91002003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "CHF",
       "int_bic": "COBADEFFXXX",
-      "nostro_fingerprint": "51343a4d50f7075c7a434df78177c7a4c7f7eac620c964c5ac4a7f7aa758d142",
-      "with_an_fingerprint": "51343a4d50f7075c7a434df78177c7a4c7f7eac620c964c5ac4a7f7aa758d142",
       "nostro_mask": "ACCT-91002004",
-      "with_an_mask": "ACCT-91002004"
+      "with_an_mask": "ACCT-91002004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "CNY",
       "int_bic": "SCBLHKHHXXX",
-      "nostro_fingerprint": "e357eb18d11eaaf86cff7f43369b25a6be66bde442bfabacc41e2b20db9abba6",
-      "with_an_fingerprint": "e357eb18d11eaaf86cff7f43369b25a6be66bde442bfabacc41e2b20db9abba6",
       "nostro_mask": "ACCT-91002005",
-      "with_an_mask": "ACCT-91002005"
+      "with_an_mask": "ACCT-91002005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "EUR",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": "c54252e3038902369a2f7c4bb823432da37c5e6b28d45e91b43acbc323f4ced3",
-      "with_an_fingerprint": "c54252e3038902369a2f7c4bb823432da37c5e6b28d45e91b43acbc323f4ced3",
       "nostro_mask": "ACCT-91002006",
-      "with_an_mask": "ACCT-91002006"
+      "with_an_mask": "ACCT-91002006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "EUR",
       "int_bic": "SCBLDEFF",
-      "nostro_fingerprint": "b0be92d78d924d8eb7386822c1c6a5bb3a4a8d38f1d65f92057bd6b8845c4437",
-      "with_an_fingerprint": "b0be92d78d924d8eb7386822c1c6a5bb3a4a8d38f1d65f92057bd6b8845c4437",
       "nostro_mask": "ACCT-91002007",
-      "with_an_mask": "ACCT-91002007"
+      "with_an_mask": "ACCT-91002007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "GBP",
       "int_bic": "SCBLGB2L",
-      "nostro_fingerprint": "0eeee900c9d96a7fd38b62c2217c2e66bedf34e0a91844a030a1add5338b3a8b",
-      "with_an_fingerprint": "0eeee900c9d96a7fd38b62c2217c2e66bedf34e0a91844a030a1add5338b3a8b",
       "nostro_mask": "ACCT-91002008",
-      "with_an_mask": "ACCT-91002008"
+      "with_an_mask": "ACCT-91002008",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "HKD",
       "int_bic": "SCBLHKHH",
-      "nostro_fingerprint": "b8d225abbc8a5f1365eb4bbb55c2cba57856ba8655a491a9b85f31bd451dedd0",
-      "with_an_fingerprint": "b8d225abbc8a5f1365eb4bbb55c2cba57856ba8655a491a9b85f31bd451dedd0",
       "nostro_mask": "ACCT-91002009",
-      "with_an_mask": "ACCT-91002009"
+      "with_an_mask": "ACCT-91002009",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "JPY",
       "int_bic": "SCBLJPJTXXX",
-      "nostro_fingerprint": "8a41f9232497de0aeecd8d580204c517ec541fb2aaedb5fb7a2b532a4c4bfe03",
-      "with_an_fingerprint": "8a41f9232497de0aeecd8d580204c517ec541fb2aaedb5fb7a2b532a4c4bfe03",
       "nostro_mask": "ACCT-91002010",
-      "with_an_mask": "ACCT-91002010"
+      "with_an_mask": "ACCT-91002010",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "SGD",
       "int_bic": "SCBLSG22",
-      "nostro_fingerprint": "f72e20f4214592c9a227ad2301ab8290e11bc16850edcc3281379c7ae87418fa",
-      "with_an_fingerprint": "f72e20f4214592c9a227ad2301ab8290e11bc16850edcc3281379c7ae87418fa",
       "nostro_mask": "ACCT-91002011",
-      "with_an_mask": "ACCT-91002011"
+      "with_an_mask": "ACCT-91002011",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "USD",
       "int_bic": "MSHQUS33",
-      "nostro_fingerprint": "0cae8c8b8b62aca4107f9c3804595aa96de00781729d77430da36a18ba60d632",
-      "with_an_fingerprint": "0cae8c8b8b62aca4107f9c3804595aa96de00781729d77430da36a18ba60d632",
       "nostro_mask": "ACCT-91002012",
-      "with_an_mask": "ACCT-91002012"
+      "with_an_mask": "ACCT-91002012",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "USD",
       "int_bic": "PNBPUS33",
-      "nostro_fingerprint": "5cb71500dc074d365c010dd5b830fc8c1485662be5d404ac1b79d895762b89d2",
-      "with_an_fingerprint": "5cb71500dc074d365c010dd5b830fc8c1485662be5d404ac1b79d895762b89d2",
       "nostro_mask": "ACCT-91002013",
-      "with_an_mask": "ACCT-91002013"
+      "with_an_mask": "ACCT-91002013",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "USD",
       "int_bic": "SCBLUS33",
-      "nostro_fingerprint": "460c8c9fea377f581e2110e24167974e68578ad5895bdea26bc01ded47269ee0",
-      "with_an_fingerprint": "460c8c9fea377f581e2110e24167974e68578ad5895bdea26bc01ded47269ee0",
       "nostro_mask": "ACCT-91002014",
-      "with_an_mask": "ACCT-91002014"
+      "with_an_mask": "ACCT-91002014",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     }
   ],
   "scope": {

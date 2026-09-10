@@ -6,138 +6,171 @@
   "region_masked_block": 91001800,
   "masking": {
     "algorithm": "sequential token per normalized source account",
-    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
     "raw_accounts_committed": false,
-    "namespace": "beneficiary_bic"
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
   },
   "routes": [
     {
       "currency": "AED",
       "int_bic": "ABDIAEAD",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "CHF",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "CNY",
       "int_bic": "BOHZCNBJ",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "CNY",
       "int_bic": "CZCBCN2X",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "EUR",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "EUR",
       "int_bic": "SCBLDEFF",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "GBP",
       "int_bic": "SCBLGB2L",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "JPY",
       "int_bic": "SCBLJPJT",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "SAR",
       "int_bic": "BJAZSAJE",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "SAR",
       "int_bic": "RIBLSARI",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "CZCBCN2X",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "HANYUS33",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "KOEXKRSE",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "MSHQUS33",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     },
     {
       "currency": "USD",
       "int_bic": "SCBLUS33",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     }
   ],
   "scope": {

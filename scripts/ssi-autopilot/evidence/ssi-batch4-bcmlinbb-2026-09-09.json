@@ -6,74 +6,91 @@
   "region_masked_block": 91002000,
   "masking": {
     "algorithm": "sequential token per normalized source account",
-    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
     "raw_accounts_committed": false,
-    "namespace": "beneficiary_bic"
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
   },
   "routes": [
     {
       "currency": "AED",
       "int_bic": "BOMLAEAD",
-      "nostro_fingerprint": "c0934589843cea16d9aefb72cf342b669bdbfbf3e5bc02146c6207aedb1db60b",
-      "with_an_fingerprint": "c0934589843cea16d9aefb72cf342b669bdbfbf3e5bc02146c6207aedb1db60b",
       "nostro_mask": "ACCT-91002001",
-      "with_an_mask": "ACCT-91002001"
+      "with_an_mask": "ACCT-91002001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "AUD",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": "84e4b1493ff4f33f18b3d78c680a06dead668b0964f3ba0e25fd3a7c1d920fca",
-      "with_an_fingerprint": "84e4b1493ff4f33f18b3d78c680a06dead668b0964f3ba0e25fd3a7c1d920fca",
       "nostro_mask": "ACCT-91002002",
-      "with_an_mask": "ACCT-91002002"
+      "with_an_mask": "ACCT-91002002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "CAD",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": "02c063e66648886f3556d4047dd43be309f2fec9a1d528dd924573b2a4ece9a2",
-      "with_an_fingerprint": "02c063e66648886f3556d4047dd43be309f2fec9a1d528dd924573b2a4ece9a2",
       "nostro_mask": "ACCT-91002003",
-      "with_an_mask": "ACCT-91002003"
+      "with_an_mask": "ACCT-91002003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "EUR",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": "3756bd1cffc02b409ec97ed6df54f1eefcf2824c0112664bbc84439b4e9bc526",
-      "with_an_fingerprint": "3756bd1cffc02b409ec97ed6df54f1eefcf2824c0112664bbc84439b4e9bc526",
       "nostro_mask": "ACCT-91002004",
-      "with_an_mask": "ACCT-91002004"
+      "with_an_mask": "ACCT-91002004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "GBP",
       "int_bic": "COBADEFF",
-      "nostro_fingerprint": "f67b64259b5d1f939982f841f6209f9b8b11d625bd8759bd01876275ad5763e3",
-      "with_an_fingerprint": "f67b64259b5d1f939982f841f6209f9b8b11d625bd8759bd01876275ad5763e3",
       "nostro_mask": "ACCT-91002005",
-      "with_an_mask": "ACCT-91002005"
+      "with_an_mask": "ACCT-91002005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "JPY",
       "int_bic": "BKIDJPJT",
-      "nostro_fingerprint": "0d101e2b2d13286293317b24e3f761a2872ec242846b816cd35c10a8e3ee2246",
-      "with_an_fingerprint": "0d101e2b2d13286293317b24e3f761a2872ec242846b816cd35c10a8e3ee2246",
       "nostro_mask": "ACCT-91002006",
-      "with_an_mask": "ACCT-91002006"
+      "with_an_mask": "ACCT-91002006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "SGD",
       "int_bic": "BKIDSGSG",
-      "nostro_fingerprint": "fa8f03dc8bfd9e2abd6445720503471ba68486e8e5503bf068f1713ce7d5231d",
-      "with_an_fingerprint": "fa8f03dc8bfd9e2abd6445720503471ba68486e8e5503bf068f1713ce7d5231d",
       "nostro_mask": "ACCT-91002007",
-      "with_an_mask": "ACCT-91002007"
+      "with_an_mask": "ACCT-91002007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
     },
     {
       "currency": "USD",
       "int_bic": "MSHQUS33",
-      "nostro_fingerprint": null,
-      "with_an_fingerprint": null,
       "nostro_mask": null,
-      "with_an_mask": null
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
     }
   ],
   "scope": {

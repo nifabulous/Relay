@@ -131,6 +131,10 @@ def test_compact_generated_sources_match_independent_evidence():
                 assert record["as_of"] == evidence["as_of"]
                 assert record["nostro"] == route["nostro_mask"]
                 assert record["with_an"] == route["with_an_mask"]
+                assert record["charge_code"] == route["charge_code"]
+                assert record["value_date"] == route["value_date"]
+                assert record["status"] == route["status"]
+                assert record["terms_inferred"] is route["terms_inferred"]
                 is_bic_only = (
                     route["nostro_mask"] is None and route["with_an_mask"] is None
                 )
@@ -407,6 +411,12 @@ def test_batch4_evidence_scope_counts_reconcile():
         ), path.name
         assert evidence["source_snapshot"]["route_count"] == scope["included_route_count"]
         assert all(route.get("reason") for route in excluded), path.name
+        assert evidence["masking"]["account_equality_artifact_committed"] is False
+        assert all(
+            "nostro_fingerprint" not in route
+            and "with_an_fingerprint" not in route
+            for route in evidence["routes"]
+        ), path.name
 
         if path.name == "ssi-batch4-barbaead-2026-09-09.json":
             included_rows = {route["source_row"] for route in evidence["routes"]}
