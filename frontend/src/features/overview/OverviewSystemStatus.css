@@ -1,0 +1,12 @@
+/* ── System inventory — quietest line on the page ──────── */
+
+.overview__status-text {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}
+
+.overview__status-text .mono {
+  font-weight: 500;
+  color: var(--color-ink);
+}
