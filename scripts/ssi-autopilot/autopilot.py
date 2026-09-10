@@ -141,8 +141,76 @@ def country_from_bic(bic: str) -> str:
 
 
 # ── Manifest ─────────────────────────────────────────────────────────────────
+def _expand_compact_manifest(manifest: dict) -> dict:
+    """Expand review-sized bank rows into the committed manifest shape.
+
+    Large generated bank objects are stored as compact, pipe-delimited rows so
+    forge APIs can expose a complete patch.  Expansion happens at the single
+    manifest boundary, preserving the existing ``admitted_records`` contract
+    for all callers and keeping the source values lossless.
+    """
+    compact_file_cache: dict[str, dict] = {}
+    for region in manifest.get("regions", []):
+        for bank in region.get("banks", []):
+            groups = bank.pop("compact_records", None)
+            compact_filename = bank.pop("compact_records_file", None)
+            if groups is None and compact_filename:
+                if compact_filename not in compact_file_cache:
+                    compact_path = REGIONS_FILE.parent / compact_filename
+                    compact_file_cache[compact_filename] = json.loads(
+                        compact_path.read_text(encoding="utf-8")
+                    )
+                groups = compact_file_cache[compact_filename].get(bank["bic8"])
+                if groups is None:
+                    raise ValueError(
+                        f"{region['name']}/{bank['bic8']}: compact file "
+                        f"{compact_filename} has no matching bank"
+                    )
+            if groups is None:
+                continue
+            records = []
+            for group_index, group in enumerate(groups):
+                required = {
+                    "source", "as_of", "status", "charge_code", "value_date",
+                    "bic_only", "terms_inferred", "rows",
+                }
+                missing = required - set(group)
+                if missing:
+                    raise ValueError(
+                        f"{region['name']}/{bank['bic8']}: compact group "
+                        f"{group_index} missing {sorted(missing)}"
+                    )
+                for row_index, packed in enumerate(group["rows"]):
+                    fields = packed.split("|", 4)
+                    if len(fields) != 5:
+                        raise ValueError(
+                            f"{region['name']}/{bank['bic8']}: compact row "
+                            f"{group_index}/{row_index} has {len(fields)} fields"
+                        )
+                    currency, correspondent, int_bic, nostro_suffix, with_an_suffix = fields
+                    if int_bic.endswith("!"):
+                        int_bic = int_bic[:-1] + "XXX"
+                    record = {
+                        "currency": currency,
+                        "correspondent": correspondent,
+                        "int_bic": int_bic,
+                        "nostro": f"ACCT-{nostro_suffix}" if nostro_suffix else None,
+                        "with_an": f"ACCT-{with_an_suffix}" if with_an_suffix else None,
+                        "charge_code": group["charge_code"],
+                        "value_date": group["value_date"],
+                        "source": group["source"],
+                        "as_of": group["as_of"],
+                        "status": group["status"],
+                        "terms_inferred": group["terms_inferred"],
+                        "bic_only": group["bic_only"],
+                    }
+                    records.append(record)
+            bank["admitted_records"] = records
+    return manifest
+
+
 def load_manifest() -> dict:
-    return json.loads(REGIONS_FILE.read_text())
+    return _expand_compact_manifest(json.loads(REGIONS_FILE.read_text()))
 
 
 def get_region(manifest: dict, name: str) -> dict:
@@ -1142,9 +1210,59 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
 
 
 # ── Fold verification ────────────────────────────────────────────────────────
+_SOURCE_CONSTANTS: dict[str, str] = {}
+
+
+def _expand_batch4_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-4 ledgers without executing seed.py."""
+    groups = []
+    for index in range(1, 4):
+        path = REPO_ROOT / "app" / "services" / f"seed_ssi_batch4_{index}.json"
+        groups.extend(json.loads(path.read_text(encoding="utf-8")))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    source + real_note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
+    _SOURCE_CONSTANTS.clear()
+    for assignment in tree.body:
+        if not (isinstance(assignment, ast.Assign) and len(assignment.targets) == 1):
+            continue
+        target = assignment.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        try:
+            value = ast.literal_eval(assignment.value)
+        except (ValueError, SyntaxError):
+            continue
+        if isinstance(value, str):
+            _SOURCE_CONSTANTS[target.id] = value
     for node in tree.body:
         if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)):
             continue
@@ -1154,6 +1272,14 @@ def _ssi_rows(source: str) -> list[tuple]:
         lines = source.encode("utf-8").splitlines(keepends=True)
         rows = []
         for element in node.value.elts:
+            if (
+                isinstance(element, ast.Starred)
+                and isinstance(element.value, ast.Call)
+                and isinstance(element.value.func, ast.Name)
+                and element.value.func.id == "_ssi_batch4_records"
+            ):
+                rows.extend(_expand_batch4_source_rows())
+                continue
             if not isinstance(element, ast.Tuple):
                 continue
             fields = []
@@ -1180,13 +1306,14 @@ def _literal(text: str):
     except (ValueError, SyntaxError):
         if "_SSI_REAL_NOTE" in text:
             prefix = text.split("+", 1)[0].strip()
-            try:
-                value = ast.literal_eval(prefix)
-            except (ValueError, SyntaxError):
-                pass
-            else:
-                if isinstance(value, str) and value.startswith("Source:"):
-                    return value + "Sourced from bank-published SSI page. Verify current values before use."
+            value = _SOURCE_CONSTANTS.get(prefix)
+            if value is None:
+                try:
+                    value = ast.literal_eval(prefix)
+                except (ValueError, SyntaxError):
+                    value = None
+            if isinstance(value, str) and value.startswith("Source:"):
+                return value + "Sourced from bank-published SSI page. Verify current values before use."
         return text
 
 
@@ -1562,6 +1689,14 @@ def cmd_verify(_args: argparse.Namespace) -> None:
         # flag (a bank-level list with no account numbers).
         expected = (5,) if name == "BANKS" else (10, 12, 13, 14, 15)
         for i, e in enumerate(elts):
+            if (
+                name == "SSI_RECORDS"
+                and isinstance(e, ast.Starred)
+                and isinstance(e.value, ast.Call)
+                and isinstance(e.value.func, ast.Name)
+                and e.value.func.id == "_ssi_batch4_records"
+            ):
+                continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
                 got = len(e.elts) if isinstance(e, ast.Tuple) else type(e).__name__
                 problems.append(

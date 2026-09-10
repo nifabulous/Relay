@@ -1,0 +1,105 @@
+{
+  "source": "https://www.bharatbank.bank.in/nostro_details.html",
+  "source_sha256": "0d21b3a208316c5e6f20433bb576a08e958d9824fecad37f7378d4053834e1a6",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "BCMLINBB",
+  "region_masked_block": 91002000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEAD",
+      "nostro_mask": "ACCT-91002001",
+      "with_an_mask": "ACCT-91002001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002002",
+      "with_an_mask": "ACCT-91002002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002003",
+      "with_an_mask": "ACCT-91002003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002004",
+      "with_an_mask": "ACCT-91002004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002005",
+      "with_an_mask": "ACCT-91002005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BKIDJPJT",
+      "nostro_mask": "ACCT-91002006",
+      "with_an_mask": "ACCT-91002006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "BKIDSGSG",
+      "nostro_mask": "ACCT-91002007",
+      "with_an_mask": "ACCT-91002007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 8,
+    "included_route_count": 8,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 8,
+    "retrieved": "2026-09-10"
+  }
+}

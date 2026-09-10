@@ -1,0 +1,288 @@
+{
+  "source": "https://www.siblbd.com/remittance/NOSTRO-Account",
+  "source_sha256": "eb0d157bcc47e1a38de4175846c7fafe30e5346b93aa7c0fa67bfe187b0a9987",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "SOIVBDDH",
+  "region_masked_block": 91001800,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "ABDIAEAD",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "COBADEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BOHZCNBJ",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "CZCBCN2X",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJT",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "BJAZSAJE",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "RIBLSARI",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "COBADEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CZCBCN2X",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "HANYUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "KOEXKRSE",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 33,
+    "included_route_count": 16,
+    "excluded_routes": [
+      {
+        "source_row": 1,
+        "currency": "ACU",
+        "int_bic": "MSHQINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 12,
+        "currency": "ACU",
+        "int_bic": "MEZNPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 13,
+        "currency": "ACU",
+        "int_bic": "NPBBNPKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 15,
+        "currency": "ACU",
+        "int_bic": "MUCBPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 18,
+        "currency": "ACU",
+        "int_bic": "SCBLINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 21,
+        "currency": "ACU",
+        "int_bic": "ABBLINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 22,
+        "currency": "ACU",
+        "int_bic": "HDFCINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 23,
+        "currency": "ACU",
+        "int_bic": "MSHQINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 25,
+        "currency": "ACU",
+        "int_bic": "AXISINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 26,
+        "currency": "ACU",
+        "int_bic": "BHUBBTBT",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 27,
+        "currency": "ACU",
+        "int_bic": "BSONINCC",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 28,
+        "currency": "ACU",
+        "int_bic": "SUMTPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 29,
+        "currency": "ACU",
+        "int_bic": "UBININBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 30,
+        "currency": "USD",
+        "int_bic": "MSHQUS33",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 31,
+        "currency": "USD",
+        "int_bic": "SCBLUS33",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 32,
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 33,
+        "currency": "ACU",
+        "int_bic": "INDBINBB",
+        "reason": "non-ISO ACU settlement unit"
+      }
+    ]
+  },
+  "source_snapshot": {
+    "route_count": 16,
+    "retrieved": "2026-09-10"
+  }
+}

@@ -6,6 +6,7 @@ review can verify them even when GitHub truncates the large seed/manifest
 patches.
 """
 
+import importlib.util
 import json
 import re
 from collections import defaultdict
@@ -24,12 +25,27 @@ _MANIFEST_PATH = (
 )
 
 
+def _load_autopilot():
+    spec = importlib.util.spec_from_file_location(
+        "ssi_autopilot_for_review", _MANIFEST_PATH.parent / "autopilot.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_manifest():
+    """Read the production manifest through its compact-row expansion boundary."""
+    return _load_autopilot().load_manifest()
+
+
 def _bic11(value):
     return canonicalize_bic11(value)
 
 
 def _manifest_contract():
-    manifest = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest = _load_manifest()
     expected = {}
     for region in manifest["regions"]:
         for bank in region["banks"]:
@@ -65,6 +81,68 @@ def _canonical_note(record):
         f"{citation}. Sourced from bank-published SSI page. "
         "Verify current values before use."
     )
+
+
+def test_compact_generated_sources_match_independent_evidence():
+    """Expansion is checked against sidecars, not a digest it produces itself."""
+    raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    compact_banks = {
+        bank["bic8"]
+        for region in raw["regions"]
+        for bank in region["banks"]
+        if "compact_records_file" in bank
+    }
+    assert len(compact_banks) == 26
+
+    evidence_dir = _MANIFEST_PATH.parent / "evidence"
+    evidence_by_bic = {
+        evidence["beneficiary_bic"]: evidence
+        for path in evidence_dir.glob("ssi-batch4-*.json")
+        for evidence in [json.loads(path.read_text(encoding="utf-8"))]
+    }
+    assert compact_banks == set(evidence_by_bic)
+
+    def canonical_evidence_bic(value):
+        bic = value.strip().upper()
+        assert len(bic) in (8, 11), value
+        return bic if len(bic) == 11 else bic + "XXX"
+
+    expanded = _load_manifest()
+    for region in expanded["regions"]:
+        for bank in region["banks"]:
+            if bank["bic8"] not in compact_banks:
+                continue
+            evidence = evidence_by_bic[bank["bic8"]]
+            expected = {}
+            for route in evidence["routes"]:
+                key = (route["currency"].upper(), canonical_evidence_bic(route["int_bic"]))
+                assert key not in expected, key
+                expected[key] = route
+
+            records = bank["admitted_records"]
+            assert len(records) == evidence["scope"]["included_route_count"]
+            actual = {}
+            for record in records:
+                key = (record["currency"].upper(), canonical_evidence_bic(record["int_bic"]))
+                assert key not in actual, key
+                actual[key] = record
+                route = expected[key]
+                assert record["source"] == evidence["source"]
+                assert record["as_of"] == evidence["as_of"]
+                assert record["nostro"] == route["nostro_mask"]
+                assert record["with_an"] == route["with_an_mask"]
+                assert record["charge_code"] == route["charge_code"]
+                assert record["value_date"] == route["value_date"]
+                assert record["status"] == route["status"]
+                assert record["terms_inferred"] is route["terms_inferred"]
+                is_bic_only = (
+                    route["nostro_mask"] is None and route["with_an_mask"] is None
+                )
+                assert record["bic_only"] is is_bic_only
+                if is_bic_only:
+                    assert record["charge_code"] is None
+                    assert record["value_date"] is None
+            assert set(actual) == set(expected)
 
 
 def _row_object(row):
@@ -273,7 +351,7 @@ def test_manifest_exclusions_and_extra_rows_are_fail_closed():
 
 
 def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
-    """The 215-row Asia-Pacific expansion has no unlisted seed identities."""
+    """The 238-row Asia-Pacific expansion has no unlisted seed identities."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -288,7 +366,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 215
+    assert len(expected_keys) == 238
     assert actual_keys == expected_keys
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
@@ -296,7 +374,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
 
 
 def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
-    """The 323-row Europe expansion preserves its exclusion semantics."""
+    """The 342-row Europe expansion preserves its exclusion semantics."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -311,12 +389,40 @@ def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 323
+    assert len(expected_keys) == 342
     assert actual_keys == expected_keys
     assert all(key[0][:8] != key[2][:8] for key in actual_keys)
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
     )
+
+
+def test_batch4_evidence_scope_counts_reconcile():
+    """Every batch-4 source route is either admitted or explicitly excluded."""
+    evidence_dir = _MANIFEST_PATH.parent / "evidence"
+    evidence_files = sorted(evidence_dir.glob("ssi-batch4-*.json"))
+    assert len(evidence_files) == 26
+    for path in evidence_files:
+        evidence = json.loads(path.read_text(encoding="utf-8"))
+        scope = evidence["scope"]
+        excluded = scope["excluded_routes"]
+        assert scope["advertised_route_count"] == (
+            scope["included_route_count"] + len(excluded)
+        ), path.name
+        assert evidence["source_snapshot"]["route_count"] == scope["included_route_count"]
+        assert all(route.get("reason") for route in excluded), path.name
+        assert evidence["masking"]["account_equality_artifact_committed"] is False
+        assert all(
+            "nostro_fingerprint" not in route
+            and "with_an_fingerprint" not in route
+            for route in evidence["routes"]
+        ), path.name
+
+        if path.name == "ssi-batch4-barbaead-2026-09-09.json":
+            included_rows = {route["source_row"] for route in evidence["routes"]}
+            excluded_rows = {route["source_row"] for route in excluded}
+            assert included_rows.isdisjoint(excluded_rows)
+            assert included_rows | excluded_rows == set(range(1, scope["advertised_route_count"] + 1))
 
 
 def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):

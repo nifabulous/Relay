@@ -36,26 +36,20 @@ def _node_source(lines, node):
 def _seed_ssi_rows():
     """(bic, raw_note_source_text, as_of, status) for every SSI_RECORDS row.
 
-    Parsed once per session; every provenance test iterates the same tuples."""
-    import ast
-    from pathlib import Path
+    Parsed once per session; every provenance test iterates the same tuples.
+    Batch-4 rows are intentionally expanded by the seed module so this helper
+    validates the same runtime values used by the importer."""
+    from app.services.seed import SSI_RECORDS
 
-    src = (Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py").read_text()
-    lines = src.splitlines(keepends=True)
-    tree = ast.parse(src)
-    rows = []
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
-            for element in node.value.elts:
-                note = _node_source(lines, element.elts[9])
-                rows.append((
-                    ast.literal_eval(element.elts[0]),
-                    note,
-                    ast.literal_eval(element.elts[10]) if len(element.elts) > 10 else None,
-                    ast.literal_eval(element.elts[11]) if len(element.elts) > 11 else None,
-                ))
-            break
-    return tuple(rows)
+    return tuple(
+        (
+            row[0],
+            row[9],
+            row[10] if len(row) > 10 else None,
+            row[11] if len(row) > 11 else None,
+        )
+        for row in SSI_RECORDS
+    )
 
 
 def _utc_today() -> str:
@@ -651,6 +645,7 @@ class TestSSIProvenanceIsConsistentWithItsSource:
         offenders = [
             (ast.literal_eval(e.elts[0]), governing.get(e.lineno, "")[:90])
             for e in rows
+            if isinstance(e, ast.Tuple)
             if ast.literal_eval(e.elts[11]) in ("published", "unverified")
             and re.search(r"archiv|wayback|snapshot", governing.get(e.lineno, ""), re.I)
         ]
@@ -913,7 +908,7 @@ class TestNonIllustrativeRowsCiteASource:
             (bic, status, note[:70])
             for bic, note, _as_of, status in rows()
             if status in ("published", "unverified", "archived")
-            and "_SSI_REAL_NOTE" not in note
+            and not note.startswith("Source:")
         ]
         assert not bad, (
             f"{len(bad)} row(s) claim a bank source without citing one: {bad[:3]}"

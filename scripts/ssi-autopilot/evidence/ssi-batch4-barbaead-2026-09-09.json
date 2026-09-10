@@ -1,0 +1,164 @@
+{
+  "source": "https://www.bankofbarodauae.ae/business-banking/treasury-banking",
+  "source_sha256": "50efce626ca153f9fea650760e85a0e55ea8a8262820b54cc31a000ea6c0c65b",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "BARBAEAD",
+  "region_masked_block": 91001600,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "source_row": 1,
+      "currency": "AED",
+      "int_bic": "CBAUAEAA",
+      "nostro_mask": "ACCT-91001601",
+      "with_an_mask": "ACCT-91001601",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 2,
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "nostro_mask": "ACCT-91001602",
+      "with_an_mask": "ACCT-91001602",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 3,
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": "ACCT-91001603",
+      "with_an_mask": "ACCT-91001603",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 4,
+      "currency": "GBP",
+      "int_bic": "BARBGB2L",
+      "nostro_mask": "ACCT-91001604",
+      "with_an_mask": "ACCT-91001604",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 5,
+      "currency": "INR",
+      "int_bic": "BARBINBB",
+      "nostro_mask": "ACCT-91001605",
+      "with_an_mask": "ACCT-91001605",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 7,
+      "currency": "JPY",
+      "int_bic": "BOTKJPJT",
+      "nostro_mask": "ACCT-91001606",
+      "with_an_mask": "ACCT-91001606",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 8,
+      "currency": "KWD",
+      "int_bic": "NBOKKWKW",
+      "nostro_mask": "ACCT-91001607",
+      "with_an_mask": "ACCT-91001607",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 9,
+      "currency": "QAR",
+      "int_bic": "QNBAQAQA",
+      "nostro_mask": "ACCT-91001608",
+      "with_an_mask": "ACCT-91001608",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 10,
+      "currency": "SAR",
+      "int_bic": "RIBLSARI",
+      "nostro_mask": "ACCT-91001609",
+      "with_an_mask": "ACCT-91001609",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 11,
+      "currency": "SGD",
+      "int_bic": "SCBLSG22",
+      "nostro_mask": "ACCT-91001610",
+      "with_an_mask": "ACCT-91001610",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 12,
+      "currency": "USD",
+      "int_bic": "BARBUS33",
+      "nostro_mask": "ACCT-91001611",
+      "with_an_mask": "ACCT-91001611",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "source_row": 13,
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_mask": "ACCT-91001612",
+      "with_an_mask": "ACCT-91001612",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 13,
+    "included_route_count": 12,
+    "excluded_routes": [
+      {
+        "source_row": 6,
+        "currency": "INR",
+        "int_bic": "BARBINBB",
+        "reason": "duplicate currency/intermediary route"
+      }
+    ]
+  },
+  "source_snapshot": {
+    "route_count": 12,
+    "retrieved": "2026-09-10"
+  }
+}

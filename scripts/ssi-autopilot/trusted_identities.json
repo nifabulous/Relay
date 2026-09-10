@@ -1115,5 +1115,161 @@
       "fnb.co.za"
     ],
     "settlement_terms_published": false
+  },
+  "DOHBQAQA": {
+    "name": "Doha Bank",
+    "country": "QA",
+    "domains": ["dohabank.com.qa"],
+    "settlement_terms_published": false
+  },
+  "BOTKNL2X": {
+    "name": "MUFG Bank (Europe) N.V., Amsterdam",
+    "country": "NL",
+    "domains": ["mufgemea.com"],
+    "settlement_terms_published": false
+  },
+  "BOTKDEDX": {
+    "name": "MUFG Bank (Europe) N.V., Germany Branch",
+    "country": "DE",
+    "domains": ["mufgemea.com"],
+    "settlement_terms_published": false
+  },
+  "NBFUAEAF": {
+    "name": "National Bank of Fujairah",
+    "country": "AE",
+    "domains": ["nbf.ae"],
+    "settlement_terms_published": false
+  },
+  "BARBAEAD": {
+    "name": "Bank of Baroda UAE",
+    "country": "AE",
+    "domains": ["bankofbarodauae.ae"],
+    "settlement_terms_published": false
+  },
+  "JONBJOAX": {
+    "name": "Jordan Ahli Bank",
+    "country": "JO",
+    "domains": ["ahli.com"],
+    "settlement_terms_published": false
+  },
+  "AJIBJOAX": {
+    "name": "Arab Jordan Investment Bank",
+    "country": "JO",
+    "domains": ["ajib.com"],
+    "settlement_terms_published": false
+  },
+  "EXBKBDDH": {
+    "name": "Export Import Bank of Bangladesh",
+    "country": "BD",
+    "domains": ["eximbankbd.com"],
+    "settlement_terms_published": false
+  },
+  "SOIVBDDH": {
+    "name": "Social Islami Bank PLC",
+    "country": "BD",
+    "domains": ["siblbd.com"],
+    "settlement_terms_published": false
+  },
+  "MEZNPKKA": {
+    "name": "Meezan Bank Limited",
+    "country": "PK",
+    "domains": ["meezanbank.com"],
+    "settlement_terms_published": false
+  },
+  "UCBAINBB": {
+    "name": "UCO Bank",
+    "country": "IN",
+    "domains": ["uco.bank.in"],
+    "settlement_terms_published": false
+  },
+  "MAHBINBB": {
+    "name": "Bank of Maharashtra",
+    "country": "IN",
+    "domains": ["bankofmaharashtra.bank.in"],
+    "settlement_terms_published": false
+  },
+  "FDRLINBB": {
+    "name": "The Federal Bank Ltd",
+    "country": "IN",
+    "domains": ["federal.bank.in"],
+    "settlement_terms_published": false
+  },
+  "IOBAINBB": {
+    "name": "Indian Overseas Bank",
+    "country": "IN",
+    "domains": ["iob.bank.in"],
+    "settlement_terms_published": false
+  },
+  "SRCBINBB": {
+    "name": "Saraswat Co-operative Bank",
+    "country": "IN",
+    "domains": ["saraswat.bank.in"],
+    "settlement_terms_published": false
+  },
+  "SIDDNPKA": {
+    "name": "Siddhartha Bank Limited",
+    "country": "NP",
+    "domains": ["siddharthabank.com"],
+    "settlement_terms_published": false
+  },
+  "UBBSBGSF": {
+    "name": "United Bulgarian Bank AD",
+    "country": "BG",
+    "domains": ["ubb.bg"],
+    "settlement_terms_published": false
+  },
+  "PBANUA2X": {
+    "name": "PrivatBank JSC",
+    "country": "UA",
+    "domains": ["privatbank.ua"],
+    "settlement_terms_published": false
+  },
+  "POALILIT": {
+    "name": "Bank of Jerusalem",
+    "country": "IL",
+    "domains": ["bankjerusalem.co.il"],
+    "settlement_terms_published": false
+  },
+  "HDFCBHBM": {
+    "name": "HDFC Bank Ltd - Bahrain",
+    "country": "BH",
+    "domains": ["hdfcbankbahrain.com"],
+    "settlement_terms_published": false
+  },
+  "YESBINBB": {
+    "name": "YES Bank Limited",
+    "country": "IN",
+    "domains": ["yes.bank.in"],
+    "settlement_terms_published": false
+  },
+  "PSIBINBB": {
+    "name": "Punjab & Sind Bank",
+    "country": "IN",
+    "domains": ["punjabandsind.bank.in"],
+    "settlement_terms_published": false
+  },
+  "SVCBINBB": {
+    "name": "SVC Cooperative Bank Ltd",
+    "country": "IN",
+    "domains": ["svc.bank.in"],
+    "settlement_terms_published": false
+  },
+  "BCMLINBB": {
+    "name": "Bharat Cooperative Bank (Mumbai) Ltd",
+    "country": "IN",
+    "domains": ["bharatbank.bank.in"],
+    "settlement_terms_published": false
+  },
+  "CSYBIN55": {
+    "name": "CSB Bank Limited",
+    "country": "IN",
+    "domains": ["csb.bank.in"],
+    "settlement_terms_published": false
+  },
+  "INDBINBB": {
+    "name": "IndusInd Bank Limited",
+    "country": "IN",
+    "domains": ["indusind.com"],
+    "settlement_terms_published": false
   }
 }

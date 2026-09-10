@@ -10,6 +10,7 @@ major corridors; treat confidence levels as advisory.
 import hashlib
 import json
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,7 @@ BANKS = [
     ("IVESZAJJXXX", "Investec Bank", "ZA", "Johannesburg", "ZAR"),
     ("GIBAATWGXXX", "Erste Group Bank AG", "AT", "Vienna", "EUR"),
     ("PNBPUS33XXX", "Wells Fargo Bank N.A.", "US", "New York", "USD"),
+    ("BKIDUS33XXX", "Bank of India New York", "US", "New York", "USD"),
     ("NBPLPLPWXXX", "Narodowy Bank Polski", "PL", "Warsaw", "PLN"),
     ("BOFMCAT2XXX", "Bank of Montreal", "CA", "Toronto", "CAD"),
     ("DBSSSGSGXXX", "DBS Bank", "SG", "Singapore", "SGD"),
@@ -431,6 +433,30 @@ BANKS = [
     ("ACABAZ22XXX", "AccessBank CJSC", "AZ", "Baku", "AZN"),
     ("ARMCAM22XXX", "Araratbank OJSC", "AM", "Yerevan", "AMD"),
     ("UBAZAZ22XXX", "Unibank CB", "AZ", "Baku", "AZN"),
+    # ---- SSI expansion batch 4 destination banks ----
+    ("BOTKNL2XXXX", "MUFG Bank (Europe) N.V., Amsterdam", "NL", "Amsterdam", "EUR"),
+    ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", "DE", "Frankfurt", "EUR"),
+    ("NBFUAEAFXXX", "National Bank of Fujairah", "AE", "Fujairah", "AED"),
+    ("BARBAEADXXX", "Bank of Baroda UAE", "AE", "Dubai", "AED"),
+    ("JONBJOAXXXX", "Jordan Ahli Bank", "JO", "Amman", "JOD"),
+    ("AJIBJOAXXXX", "Arab Jordan Investment Bank", "JO", "Amman", "JOD"),
+    ("EXBKBDDHXXX", "Export Import Bank of Bangladesh", "BD", "Dhaka", "BDT"),
+    ("SOIVBDDHXXX", "Social Islami Bank PLC", "BD", "Dhaka", "BDT"),
+    ("MEZNPKKAXXX", "Meezan Bank Limited", "PK", "Karachi", "PKR"),
+    ("UCBAINBBXXX", "UCO Bank", "IN", "Mumbai", "INR"),
+    ("MAHBINBBXXX", "Bank of Maharashtra", "IN", "Pune", "INR"),
+    ("FDRLINBBXXX", "The Federal Bank Ltd", "IN", "Kochi", "INR"),
+    ("IOBAINBBXXX", "Indian Overseas Bank", "IN", "Chennai", "INR"),
+    ("SRCBINBBXXX", "Saraswat Co-operative Bank", "IN", "Mumbai", "INR"),
+    ("SIDDNPKAXXX", "Siddhartha Bank Limited", "NP", "Kathmandu", "NPR"),
+    ("UBBSBGSFXXX", "United Bulgarian Bank AD", "BG", "Sofia", "BGN"),
+    ("PBANUA2XXXX", "PrivatBank JSC", "UA", "Kyiv", "UAH"),
+    ("HDFCBHBMXXX", "HDFC Bank Ltd - Bahrain", "BH", "Manama", "BHD"),
+    ("PSIBINBBXXX", "Punjab & Sind Bank", "IN", "New Delhi", "INR"),
+    ("SVCBINBBXXX", "SVC Cooperative Bank Ltd", "IN", "Mumbai", "INR"),
+    ("BCMLINBBXXX", "Bharat Cooperative Bank (Mumbai) Ltd", "IN", "Mumbai", "INR"),
+    ("CSYBIN55XXX", "CSB Bank Limited", "IN", "Thrissur", "INR"),
+    ("INDBINBBXXX", "IndusInd Bank Limited", "IN", "Mumbai", "INR"),
 ]
 
 # (destination_currency, destination_country, intermediary_bic,
@@ -658,7 +684,54 @@ def _merge_seed_citation(existing_notes: str | None, source_notes: str) -> str:
     merged = f"{source_notes}\n{existing}"
     return bounded(merged)
 
+
+# Batch 4 data lives in bounded JSON ledgers so the complete generated diff remains reviewable.
+_SSI_BATCH4_DATA_FILES = (
+    "seed_ssi_batch4_1.json",
+    "seed_ssi_batch4_2.json",
+    "seed_ssi_batch4_3.json",
+)
+
+
+def _load_ssi_batch4_groups():
+    groups = []
+    for filename in _SSI_BATCH4_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH4_GROUPS = _load_ssi_batch4_groups()
+
+def _ssi_batch4_records():
+    """Expand the review-sized batch-4 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH4_GROUPS:
+        note = source + _SSI_REAL_NOTE
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 4 (bank-published routes; masked) ----
+    # SSI batch 4 rows begin
+    *_ssi_batch4_records(),
+    # SSI batch 4 rows end
     # ---- DNB Bank ASA Helsinki Branch (current 2026-02-02 SSI) ----
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "AUD", "ANZBAU3MXXX", "ANZ Banking Group Limited Melbourne", "ACCT-91005316", "ACCT-91005316", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "CAD", "ROYCCAT2XXX", "Royal Bank of Canada Toronto", "ACCT-91005311", "ACCT-91005311", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),

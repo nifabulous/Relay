@@ -1713,10 +1713,10 @@ def test_revise_still_refuses_identity_and_currency_metadata_changes(tmp_path, m
 
 # ── Change: negative recording without registry enrollment ──────────────────
 
-def _negative_bank_payload(bic="DEUTDEFF", country="DE", **overrides):
+def _negative_bank_payload(bic="BNPAFRPP", country="FR", **overrides):
     bank = {
         "bic8": bic,
-        "name": "Deutsche Bank AG",
+        "name": "BNP Paribas",
         "country": country,
         "currencies": ["EUR"],
         "seedable": False,
@@ -1761,7 +1761,7 @@ def test_negative_recording_still_requires_consistency(tmp_path, monkeypatch):
     path.write_bytes(json.dumps(MANIFEST, indent=2).encode() + b"\n")
     monkeypatch.setattr(autopilot, "REGIONS_FILE", path)
 
-    wrong_country = _negative_bank_payload(country="FR")
+    wrong_country = _negative_bank_payload(bic="DEUTDEFF", country="FR")
     with pytest.raises(ValueError, match="does not match the BIC's country"):
         autopilot.admit_candidates(wrong_country, allow_unregistered_negative=True)
 

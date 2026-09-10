@@ -1,0 +1,75 @@
+{
+  "source": "https://www.bankjerusalem.co.il/media/3070/ssi-set-details.pdf",
+  "source_sha256": "34a7a9540e30006435d76e9633b4346f564654ae401606c86c2b0106d8a0e1be",
+  "as_of": "2019-01-01",
+  "beneficiary_bic": "POALILIT",
+  "region_masked_block": 91001000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91001001",
+      "with_an_mask": "ACCT-91001001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "LOYDGB2L",
+      "nostro_mask": "ACCT-91001002",
+      "with_an_mask": "ACCT-91001002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "DABASESX",
+      "nostro_mask": "ACCT-91001003",
+      "with_an_mask": "ACCT-91001003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_mask": "ACCT-91001004",
+      "with_an_mask": "ACCT-91001004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "IDBLILIT",
+      "nostro_mask": "ACCT-91001005",
+      "with_an_mask": "ACCT-91001005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 5,
+    "included_route_count": 5,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 5,
+    "retrieved": "2026-09-10"
+  }
+}

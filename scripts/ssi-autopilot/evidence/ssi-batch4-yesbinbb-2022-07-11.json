@@ -1,0 +1,154 @@
+{
+  "source": "https://www.yes.bank.in/content/published/api/v1.1/assets/CONTB8C73CA6A3294D5F8829EF2BA183F929/native/currentaccount_form4.pdf",
+  "source_sha256": "9f5ade2b9326376e0af2ec9363cf320369333dffbf9b18d891ddd7d9b98abf58",
+  "as_of": "2022-07-11",
+  "beneficiary_bic": "YESBINBB",
+  "region_masked_block": 91002000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "ADCBAEAA",
+      "nostro_mask": "ACCT-91002001",
+      "with_an_mask": "ACCT-91002001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "CIBCCATT",
+      "nostro_mask": "ACCT-91002002",
+      "with_an_mask": "ACCT-91002002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "SOLADEST",
+      "nostro_mask": "ACCT-91002003",
+      "with_an_mask": "ACCT-91002003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNH",
+      "int_bic": "HSBCHKHHHKH",
+      "nostro_mask": "ACCT-91002004",
+      "with_an_mask": "ACCT-91002004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "HSBCCNSH",
+      "nostro_mask": "ACCT-91002005",
+      "with_an_mask": "ACCT-91002005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": "ACCT-91002006",
+      "with_an_mask": "ACCT-91002006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SOLADEST",
+      "nostro_mask": "ACCT-91002007",
+      "with_an_mask": "ACCT-91002007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "MIDLGB22",
+      "nostro_mask": "ACCT-91002008",
+      "with_an_mask": "ACCT-91002008",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_mask": "ACCT-91002009",
+      "with_an_mask": "ACCT-91002009",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBLHKHH",
+      "nostro_mask": "ACCT-91002010",
+      "with_an_mask": "ACCT-91002010",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJT",
+      "nostro_mask": "ACCT-91002011",
+      "with_an_mask": "ACCT-91002011",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 14,
+    "included_route_count": 11,
+    "excluded_routes": [
+      {
+        "source_row": 2,
+        "currency": "AUD",
+        "int_bic": "ANZBAU3M",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 9,
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 13,
+        "currency": "INR",
+        "int_bic": "YESB0000001",
+        "reason": "malformed or domestic routing identifier"
+      }
+    ]
+  },
+  "source_snapshot": {
+    "route_count": 11,
+    "retrieved": "2026-09-10"
+  }
+}
