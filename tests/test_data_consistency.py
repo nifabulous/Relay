@@ -20,6 +20,7 @@ have not been verified yet: verify and PROMOTE them to the directory rather
 than letting the list grow.
 """
 
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -44,7 +45,13 @@ _SSI_MANIFEST_PATH = (
 
 def _load_ssi_manifest():
     """Load the committed admission ledger used by the generated checks."""
-    return json.loads(_SSI_MANIFEST_PATH.read_text(encoding="utf-8"))
+    spec = importlib.util.spec_from_file_location(
+        "ssi_autopilot_for_consistency", _SSI_MANIFEST_PATH.parent / "autopilot.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module.load_manifest()
 
 
 def _manifest_region(region_name):

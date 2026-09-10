@@ -6,6 +6,7 @@ review can verify them even when GitHub truncates the large seed/manifest
 patches.
 """
 
+import importlib.util
 import json
 import re
 from collections import defaultdict
@@ -24,12 +25,27 @@ _MANIFEST_PATH = (
 )
 
 
+def _load_autopilot():
+    spec = importlib.util.spec_from_file_location(
+        "ssi_autopilot_for_review", _MANIFEST_PATH.parent / "autopilot.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_manifest():
+    """Read the production manifest through its compact-row expansion boundary."""
+    return _load_autopilot().load_manifest()
+
+
 def _bic11(value):
     return canonicalize_bic11(value)
 
 
 def _manifest_contract():
-    manifest = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest = _load_manifest()
     expected = {}
     for region in manifest["regions"]:
         for bank in region["banks"]:
@@ -65,6 +81,31 @@ def _canonical_note(record):
         f"{citation}. Sourced from bank-published SSI page. "
         "Verify current values before use."
     )
+
+
+def test_compact_generated_sources_expand_losslessly():
+    """The forge-visible compact form must preserve every admitted record."""
+    raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    compact_keys = {
+        (region["name"], bank["bic8"])
+        for region in raw["regions"]
+        for bank in region["banks"]
+        if "compact_records" in bank
+    }
+    assert len(compact_keys) == 26
+
+    autopilot = _load_autopilot()
+    expanded = autopilot.load_manifest()
+    for region_name, bic8 in compact_keys:
+        bank = next(
+            bank
+            for region in expanded["regions"]
+            if region["name"] == region_name
+            for bank in region["banks"]
+            if bank["bic8"] == bic8
+        )
+        assert bank["admitted_records"]
+        assert autopilot.record_digest(bank["admitted_records"]) == bank["admitted_record_digest"]
 
 
 def _row_object(row):
