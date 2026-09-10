@@ -1,0 +1,33 @@
+[
+  {
+    "source": "https://www.primebank.com.bd/assets/aml-kyc-file/1745310017_Standard-Settlement-Instruction(SSI)-as-of-22-April-2025.pdf",
+    "as_of": "2025-04-22",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Emirates NBD Dubai|EBILAEAD|91001801|91001801",
+      "CHF|Zuercher Kantonalbank Zurich|ZKBKCHZZ80A|91001802|91001802",
+      "CNY|Shanghai Pudong Development Bank|SPDBCNSH140|91001803|91001803",
+      "EUR|Intesa Sanpaolo Milan|BCITITMM|91001804|91001804",
+      "EUR|Citibank London|CITIGB2L|91001805|91001805",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91001806|91001806",
+      "GBP|Standard Chartered London|SCBLGB2L|91001807|91001807",
+      "JPY|MUFG Tokyo|BOTKJPJT|91001808|91001808",
+      "JPY|Sumitomo Mitsui Tokyo|SMBCJPJT|91001809|91001809",
+      "SAR|Saudi National Bank Jeddah|NCBKSAJE|91001810|91001810",
+      "SGD|Standard Chartered Singapore|SCBLSG22|91001811|91001811",
+      "USD|JPMorgan Chase New York|CHASUS33|91001812|91001812",
+      "USD|Citibank New York|CITIUS33|91001813|91001813",
+      "USD|Commerzbank Frankfurt|COBADEFF|91001814|91001814",
+      "USD|Kookmin Bank Seoul|CZNBKRSE|91001815|91001815",
+      "USD|Habib American Bank New York|HANYUS33|91001816|91001816",
+      "USD|ICICI Hong Kong|ICICHKHH|91001817|91001817",
+      "USD|KEB Hana Seoul|KOEXKRSE|91001818|91001818",
+      "USD|Mashreq New York|MSHQUS33|91001819|91001819",
+      "USD|Standard Chartered New York|SCBLUS33|91001820|91001820"
+    ]
+  }
+]

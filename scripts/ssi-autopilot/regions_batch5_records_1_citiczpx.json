@@ -1,0 +1,35 @@
+[
+  {
+    "source": "https://www.citibank.com/icg/sa/emea/czech/assets/docs/Citibank-Prague-SSI-2023.pdf",
+    "as_of": "2025-10-01",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AUD|Citibank Sydney|CITIAU2X|91002401|91002401",
+      "BGN|Citibank Sofia|CITIBGSF|91002402|91002402",
+      "CAD|Citibank Canada Toronto|CITICATT|91002403|91002403",
+      "CHF|Citibank London|CITIGB2L|91002404|91002404",
+      "CNY|Citibank Hong Kong|CITIHKHX|91002405|91002405",
+      "CZK|Czech National Bank|CNBACZPP|91002406|91002406",
+      "DKK|Nordea Denmark|NDEADKKK|91002407|91002407",
+      "EUR|Citibank Europe Dublin|CITIIE2X|91002408|91002408",
+      "GBP|Citibank London|CITIGB2L|91002409|91002409",
+      "HKD|Citibank Hong Kong|CITIHKHX|91002410|91002410",
+      "HUF|Citibank Budapest|CITIHUHX|91002411|91002411",
+      "JPY|Citibank Japan|CITIJPJT|91002412|91002412",
+      "KZT|Citibank Kazakhstan|CITIKZKA|91002413|91002413",
+      "MXN|Citibank London|CITIGB2L|91002414|91002414",
+      "NOK|DNB Oslo|DNBANOKK|91002415|91002415",
+      "NZD|Citibank London|CITIGB2L|91002416|91002416",
+      "PLN|Bank Handlowy Warsaw|CITIPLPX|91002417|91002417",
+      "RON|Citibank Bucharest|CITIROBU|91002418|91002418",
+      "SEK|Handelsbanken Stockholm|HANDSESS|91002419|91002419",
+      "TRY|Citibank Istanbul|CITITRIX|91002420|91002420",
+      "USD|Citibank New York|CITIUS33|91002421|91002421",
+      "ZAR|Citibank Johannesburg|CITIZAJX|91002422|91002422"
+    ]
+  }
+]

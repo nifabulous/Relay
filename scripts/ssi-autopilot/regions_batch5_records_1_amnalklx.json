@@ -1,0 +1,32 @@
+[
+  {
+    "source": "https://www.amanabank.lk/ta/business/treasury/nostro-accounts.html",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Standard Chartered UAE|SCBLAEAD|91003901|91003901",
+      "AUD|Standard Chartered Singapore|SCBLSG22|91003902|91003902",
+      "CNY|Standard Chartered Shanghai|SCBLCNSXSHA|91003903|91003903",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91003904|91003904",
+      "GBP|Standard Chartered London|SCBLGB2L|91003905|91003905",
+      "INR|Indian Overseas Bank Chennai|IOBAINBB|91003906|91003906",
+      "INR|Standard Chartered Mumbai|SCBLINBB|91003907|91003907",
+      "JPY|Standard Chartered Japan|SCBLJPJT|91003908|91003908",
+      "MYR|Bank Islam Malaysia|BIMBMYKL|91003909|91003909",
+      "MYR|Maybank Malaysia|MBBEMYKL|91003910|91003910",
+      "SAR|Bank Al-Bilad|ALBISARI|91003911|91003911",
+      "SAR|Bank Al-Jazira|BJAZSAJE|91003912|91003912",
+      "SGD|Standard Chartered Singapore|SCBLSG22|91003913|91003913",
+      "USD|Bank Islam Malaysia|BIMBMYKL|91003914|91003914",
+      "USD|Bank Al-Jazira|BJAZSAJE|91003915|91003915",
+      "USD|Kookmin Bank Seoul|CZNBKRSE|91003916|91003916",
+      "USD|Habib American Bank New York|HANYUS33|91003917|91003917",
+      "USD|Mashreq New York|MSHQUS33|91003918|91003918",
+      "USD|Standard Chartered New York|SCBLUS33|91003919|91003919"
+    ]
+  }
+]

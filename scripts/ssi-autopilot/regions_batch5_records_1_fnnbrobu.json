@@ -1,0 +1,29 @@
+[
+  {
+    "source": "https://www.nexentbank.ro/upload/media/document/0001/07/cd432bda825e9cf5027f2c59474aae7753bb6772.pdf",
+    "as_of": "2025-07-11",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AUD|ANZ Melbourne|ANZBAU3M|91002401|91002401",
+      "CAD|Toronto-Dominion Bank|TDOMCATTTOR|91002402|91002402",
+      "CHF|Zuercher Kantonalbank|ZKBKCHZZ80A|91002403|91002403",
+      "DKK|Danske Bank Copenhagen|DABADKKK|91002404|91002404",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91002405|91002405",
+      "EUR|CEB NV|FBHLNL2A|91002406|91002406",
+      "EUR|Raiffeisen Austria|RZBAATWW|91002407|91002407",
+      "GBP|Barclays London|BARCGB22|91002408|91002408",
+      "HUF|MKB Bank Budapest|MKKBHUHB|91002409|91002409",
+      "JPY|Sumitomo Mitsui Tokyo|SMBCJPJT|91002410|91002410",
+      "NOK|DNB Oslo|DNBANOKK|91002411|91002411",
+      "PLN|PKO Bank Polski|BPKOPLPW|91002412|91002412",
+      "RON|Nexent Bank Romania|NBORROBU|91002413|91002413",
+      "SEK|Swedbank Stockholm|SWEDSESS|91002414|91002414",
+      "TRY|Turkiye Garanti Bankasi|TGBATRIS|91002415|91002415",
+      "USD|Bank of New York Mellon|IRVTUS3N|91002416|91002416"
+    ]
+  }
+]

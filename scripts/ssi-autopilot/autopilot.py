@@ -152,6 +152,17 @@ def _expand_compact_manifest(manifest: dict) -> dict:
     compact_file_cache: dict[str, dict] = {}
     for region in manifest.get("regions", []):
         for bank in region.get("banks", []):
+            manifest_filename = bank.pop("manifest_file", None)
+            if manifest_filename:
+                manifest_path = REGIONS_FILE.parent / manifest_filename
+                external_bank = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if external_bank.get("bic8") != bank.get("bic8"):
+                    raise ValueError(
+                        f"{region['name']}/{bank.get('bic8')}: manifest file "
+                        f"{manifest_filename} has a different BIC"
+                    )
+                bank.clear()
+                bank.update(external_bank)
             groups = bank.pop("compact_records", None)
             compact_filename = bank.pop("compact_records_file", None)
             if groups is None and compact_filename:
@@ -161,6 +172,9 @@ def _expand_compact_manifest(manifest: dict) -> dict:
                         compact_path.read_text(encoding="utf-8")
                     )
                 groups = compact_file_cache[compact_filename].get(bank["bic8"])
+                if isinstance(groups, str):
+                    shard_path = REGIONS_FILE.parent / groups
+                    groups = json.loads(shard_path.read_text(encoding="utf-8"))
                 if groups is None:
                     raise ValueError(
                         f"{region['name']}/{bank['bic8']}: compact file "

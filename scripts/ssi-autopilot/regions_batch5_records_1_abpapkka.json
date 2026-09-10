@@ -1,0 +1,36 @@
+[
+  {
+    "source": "https://www.abl.com/business-banking/accounts/home-remittances/essential-information-swift-and-nostro-codes-and-iban-generation/",
+    "as_of": "2025-12-15",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Emirates NBD Dubai|EBILAEAD|91003301|91003301",
+      "AED|Standard Chartered Dubai|SCBLAEAD|91003302|91003302",
+      "AUD|JPMorgan Sydney|CHASAU2X|91003303|91003303",
+      "CAD|Standard Chartered Frankfurt|SCBLDEFF|91003304|91003304",
+      "CHF|UBS Zurich|UBSWCHZH80A|91003305|91003305",
+      "CNY|Bank of China Karachi|BKCHPKKA|91003306|91003306",
+      "CNY|JPMorgan Shanghai|CHASCNSH|91003307|91003307",
+      "CNY|ICBC Karachi|ICBKPKKA|91003308|91003308",
+      "EUR|JPMorgan Frankfurt|CHASDEFX|91003309|91003309",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91003310|91003310",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91003311|91003311",
+      "GBP|Standard Chartered London|SCBLGB2L|91003312|91003312",
+      "JPY|JPMorgan Tokyo|CHASJPJT|91003313|91003313",
+      "JPY|National Bank of Pakistan Tokyo|NBPAJPJT|91003314|91003314",
+      "SAR|Bank Albilad|ALBISARI|91003315|91003315",
+      "SAR|Banque Saudi Fransi|BSFRSARI|91003316|91003316",
+      "SEK|Nordea Stockholm|NDEASESS|91003317|91003317",
+      "SGD|Habib Bank Singapore|HABBSGSG|91003318|91003318",
+      "SGD|Standard Chartered Singapore|SCBLSG22|91003319|91003319",
+      "USD|JPMorgan Chase New York|CHASUS33|91003320|91003320",
+      "USD|Citibank New York|CITIUS33|91003321|91003321",
+      "USD|Mashreq New York|MSHQUS33|91003322|91003322",
+      "USD|Standard Chartered New York|SCBLUS33|91003323|91003323"
+    ]
+  }
+]

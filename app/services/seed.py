@@ -250,7 +250,6 @@ BANKS = [
     ("NBCBGB2LXXX", "U.S. Bank London", "GB", "London", "GBP"),
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
-    ("NDEAFIHHXXX", "Nordea Bank Finland", "FI", "Helsinki", "EUR"),
     ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
     ("LOYDGB2LXXX", "Lloyds Banking Group", "GB", "London", "GBP"),
     # ---- Access Bank Nigeria (destination) ----
@@ -466,6 +465,7 @@ BANKS = [
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
     ("SONEPKKAXXX", "Soneri Bank Limited", "PK", "Karachi", "PKR"),
     ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", "NL", "Amsterdam", "EUR"),
+    ("NDEAFIHHXXX", "Nordea Bank Finland", "FI", "Helsinki", "EUR"),
     ("NDEANOKKXXX", "Nordea Bank Abp, Oslo", "NO", "Oslo", "NOK"),
     ("NDEADKKKXXX", "Nordea Denmark", "DK", "Copenhagen", "DKK"),
     ("DNBANOKXXXX", "DNB Carnegie", "NO", "Oslo", "NOK"),

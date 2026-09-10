@@ -1,0 +1,21 @@
+{
+  "bic8": "JAKAINBB",
+  "name": "The Jammu and Kashmir Bank Ltd.",
+  "country": "IN",
+  "currencies": [
+    "AUD",
+    "CAD",
+    "CHF",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SAR",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "jkb.bank.in"
+  ],
+  "admitted_record_digest": "201d24a6a2b4b17dfb1b05deb90ddfcf1887720a8447d23ce6aee69db3a45826",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

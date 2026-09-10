@@ -1,0 +1,24 @@
+{
+  "bic8": "CNRBINBB",
+  "name": "Canara Bank",
+  "country": "IN",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CHF",
+    "EUR",
+    "GBP",
+    "HKD",
+    "JPY",
+    "SEK",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "canarabank.bank.in"
+  ],
+  "admitted_record_digest": "7500fc6804937ed4c7b79ee5eaf39a5e7e4e87c2fafe6db9e5bb5243a668aebb",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

@@ -1,0 +1,24 @@
+{
+  "bic8": "ASCMPKKA",
+  "name": "Askari Bank Limited",
+  "country": "PK",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SAR",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "askari.tdfclient.com"
+  ],
+  "admitted_record_digest": "5ecd75c26ac0f123e5c6fc2b79157e62f36e4c2d4e977dc30f0bab96db13e158",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

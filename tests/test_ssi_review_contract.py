@@ -47,6 +47,22 @@ def _load_manifest():
     return _load_autopilot().load_manifest()
 
 
+def _load_raw_manifest():
+    """Read the raw manifest and expand review-sized bank shards."""
+    manifest = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    for region in manifest["regions"]:
+        for index, bank in enumerate(region["banks"]):
+            filename = bank.get("manifest_file")
+            if not filename:
+                continue
+            shard = json.loads(
+                (_MANIFEST_PATH.parent / filename).read_text(encoding="utf-8")
+            )
+            assert shard["bic8"] == bank["bic8"]
+            region["banks"][index] = shard
+    return manifest
+
+
 def _bic11(value):
     return canonicalize_bic11(value)
 
@@ -92,7 +108,7 @@ def _canonical_note(record):
 
 def test_compact_generated_sources_match_independent_evidence():
     """Expansion is checked against sidecars, not a digest it produces itself."""
-    raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    raw = _load_raw_manifest()
     compact_banks = {
         bank["bic8"]
         for region in raw["regions"]
@@ -172,7 +188,7 @@ def test_batch5_manifest_and_compact_ledger_have_exact_route_parity():
             currency, intermediary_bic, *_ = packed.split("|", 3)
             expected.add((beneficiary_bic, currency, _bic11(intermediary_bic)))
 
-    raw_manifest = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    raw_manifest = _load_raw_manifest()
     batch5_bics = {
         bank["bic8"]
         for region in raw_manifest["regions"]

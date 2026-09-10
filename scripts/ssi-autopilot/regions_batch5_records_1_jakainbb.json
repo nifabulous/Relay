@@ -1,0 +1,23 @@
+[
+  {
+    "source": "https://jkb.bank.in/deposits/remittance-abroad",
+    "as_of": "2026-08-28",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AUD|ANZ Melbourne|ANZBAU3M|91002001|91002001",
+      "CAD|Commerzbank Frankfurt|COBADEFF|91002002|91002002",
+      "CHF|Commerzbank Frankfurt|COBADEFF|91002003|91002003",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91002004|91002004",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91002005|91002005",
+      "GBP|Standard Chartered London|SCBLGB2L|91002006|91002006",
+      "JPY|MUFG Tokyo|BOTKJPJT|91002007|91002007",
+      "SAR|National Commercial Bank Jeddah|NCBKSAJE|91002008|91002008",
+      "USD|Mashreq New York|MSHQUS33|91002009|91002009",
+      "USD|Standard Chartered New York|SCBLUS33|91002010|91002010"
+    ]
+  }
+]

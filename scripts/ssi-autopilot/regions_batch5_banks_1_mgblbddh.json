@@ -1,0 +1,22 @@
+{
+  "bic8": "MGBLBDDH",
+  "name": "Meghna Bank PLC",
+  "country": "BD",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SAR",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "meghnabank.com.bd"
+  ],
+  "admitted_record_digest": "7760b92926db524d0d036fc228b5787e40133cc11f359e49b79e2e2f9ed66a8d",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

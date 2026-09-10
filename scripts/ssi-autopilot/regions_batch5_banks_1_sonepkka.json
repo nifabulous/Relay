@@ -1,0 +1,23 @@
+{
+  "bic8": "SONEPKKA",
+  "name": "Soneri Bank Limited",
+  "country": "PK",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "soneri-bank.nyc3.cdn.digitaloceanspaces.com"
+  ],
+  "admitted_record_digest": "6393f57f4b57cd5621617f36e530d190b7d35d359bafa8447f07f23a31bc5904",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

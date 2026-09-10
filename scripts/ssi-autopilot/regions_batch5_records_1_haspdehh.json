@@ -1,0 +1,35 @@
+[
+  {
+    "source": "https://www.haspa.de/en/home/international-relations/bank-for-cover-payments.html",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": null,
+    "value_date": null,
+    "bic_only": true,
+    "terms_inferred": false,
+    "rows": [
+      "AUD|ANZ Melbourne|ANZBAU3M||",
+      "CAD|CIBC Toronto|CIBCCATT||",
+      "CHF|UBS Switzerland|UBSWCHZH80A||",
+      "CNY|Bank of China Frankfurt|BKCHDEFF||",
+      "CZK|Raiffeisen Bank International Vienna|RZBAATWW||",
+      "DKK|Danske Bank Copenhagen|DABADKKK||",
+      "EUR|Deutsche Bank Frankfurt|DEUTDEFF||",
+      "GBP|Lloyds Bank London|LOYDGB2L||",
+      "HKD|Hang Seng Bank Hong Kong|HASEHKHH||",
+      "HUF|MKB Bank Budapest|MKKBHUHB||",
+      "JPY|JPMorgan Chase Frankfurt|CHASDEFX||",
+      "NOK|DNB Bank Oslo|DNBANOKK||",
+      "NZD|ANZ New Zealand|ANZBNZ22||",
+      "PLN|Erste Bank Polska Warsaw|WBKPPLPP||",
+      "SEK|Swedbank Stockholm|SWEDSESS||",
+      "SGD|DBS Singapore|DBSSSGSG||",
+      "THB|Siam Commercial Bank|SICOTHBK||",
+      "TRY|Isbank Istanbul|ISBKTRIS||",
+      "USD|JPMorgan Chase New York|CHASUS33||",
+      "USD|Bank of New York Mellon|IRVTUS3N||",
+      "USD|Wells Fargo New York|PNBPUS33||",
+      "ZAR|Absa Johannesburg|ABSAZAJJ||"
+    ]
+  }
+]

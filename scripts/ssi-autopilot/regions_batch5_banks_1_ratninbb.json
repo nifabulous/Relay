@@ -1,0 +1,25 @@
+{
+  "bic8": "RATNINBB",
+  "name": "RBL Bank Limited",
+  "country": "IN",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CHF",
+    "DKK",
+    "EUR",
+    "GBP",
+    "HKD",
+    "JPY",
+    "NZD",
+    "SEK",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "rblbank.com"
+  ],
+  "admitted_record_digest": "70d262b00e94552006a420d6b25de7ae2759566e52787e2f676a48ef1c8fa49d",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

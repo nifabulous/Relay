@@ -1,0 +1,27 @@
+{
+  "bic8": "FNNBROBU",
+  "name": "Nexent Bank N.V. Amsterdam Bucharest Branch",
+  "country": "RO",
+  "currencies": [
+    "AUD",
+    "CAD",
+    "CHF",
+    "DKK",
+    "EUR",
+    "GBP",
+    "HUF",
+    "JPY",
+    "NOK",
+    "PLN",
+    "RON",
+    "SEK",
+    "TRY",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "nexentbank.ro"
+  ],
+  "admitted_record_digest": "61e06b57c55312abd599c73a2c3372192779baa3fb2f3f439850d0d097f1e023",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

@@ -1,0 +1,26 @@
+{
+  "bic8": "DEUTNL2A",
+  "name": "Deutsche Bank AG, Amsterdam",
+  "country": "NL",
+  "currencies": [
+    "AED",
+    "AUD",
+    "BGN",
+    "CAD",
+    "GBP",
+    "MXN",
+    "NOK",
+    "NZD",
+    "PLN",
+    "QAR",
+    "RON",
+    "RUB",
+    "ZAR"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "corporates.db.com"
+  ],
+  "admitted_record_digest": "b2cf96aa71c4b0b801c350203027ad5c3721ae250c39e013f8b414cc9023dda4",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

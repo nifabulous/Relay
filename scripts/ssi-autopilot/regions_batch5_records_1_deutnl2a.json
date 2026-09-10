@@ -1,0 +1,26 @@
+[
+  {
+    "source": "https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-DEUTNL2A-FFT-July-2025.pdf",
+    "as_of": "2025-07-01",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Deutsche Bank Frankfurt|DEUTDEFF|91003401|91003401",
+      "AUD|Deutsche Bank Frankfurt|DEUTDEFF|91003402|91003402",
+      "BGN|Deutsche Bank Frankfurt|DEUTDEFF|91003403|91003403",
+      "CAD|Royal Bank of Canada|ROYCCAT2|91003404|91003404",
+      "GBP|Deutsche Bank London|DEUTGB2L|91003405|91003405",
+      "MXN|Deutsche Bank Frankfurt|DEUTDEFF|91003406|91003406",
+      "NOK|DNB Oslo|DNBANOKK|91003407|91003407",
+      "NZD|Deutsche Bank Frankfurt|DEUTDEFF|91003408|91003408",
+      "PLN|Deutsche Bank Poland|DEUTPLPX|91003409|91003409",
+      "QAR|Deutsche Bank Frankfurt|DEUTDEFF|91003410|91003410",
+      "RON|Deutsche Bank Frankfurt|DEUTDEFF|91003411|91003411",
+      "RUB|Deutsche Bank Frankfurt|DEUTDEFF|91003412|91003412",
+      "ZAR|Deutsche Bank Frankfurt|DEUTDEFF|91003413|91003413"
+    ]
+  }
+]

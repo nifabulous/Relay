@@ -1,0 +1,21 @@
+{
+  "bic8": "HDFCHKHH",
+  "name": "HDFC Bank Limited Hong Kong",
+  "country": "HK",
+  "currencies": [
+    "AUD",
+    "CHF",
+    "EUR",
+    "GBP",
+    "HKD",
+    "INR",
+    "JPY",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "hdfcbankhongkong.com"
+  ],
+  "admitted_record_digest": "14541bcf2117d6831802723634d5acff4a0218d80d6317b216fc39b9239b8e42",
+  "compact_records_file": "regions_batch5_records_1.json"
+}
