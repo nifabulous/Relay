@@ -175,7 +175,14 @@
   "scope": {
     "advertised_route_count": 21,
     "included_route_count": 20,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 6,
+        "currency": "HKD",
+        "int_bic": "BOFAHKH",
+        "reason": "malformed or domestic routing identifier"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 20,

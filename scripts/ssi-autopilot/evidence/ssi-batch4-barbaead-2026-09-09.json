@@ -111,7 +111,14 @@
   "scope": {
     "advertised_route_count": 13,
     "included_route_count": 12,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 6,
+        "currency": "INR",
+        "int_bic": "BARBINBB",
+        "reason": "duplicate currency/intermediary route"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 12,

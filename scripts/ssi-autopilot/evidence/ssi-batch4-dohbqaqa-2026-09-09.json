@@ -423,7 +423,50 @@
   "scope": {
     "advertised_route_count": 58,
     "included_route_count": 51,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 2,
+        "currency": "BHD",
+        "int_bic": "NBOBBHBM",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 13,
+        "currency": "EUR",
+        "int_bic": "DEUTDEFF",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 37,
+        "currency": "SAR",
+        "int_bic": "NCBKSAJE",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 44,
+        "currency": "OMR",
+        "int_bic": "BSHROMRU",
+        "reason": "unconfirmed transposed Sohar BIC"
+      },
+      {
+        "source_row": 51,
+        "currency": "AED",
+        "int_bic": "EBILAEAD",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 52,
+        "currency": "AED",
+        "int_bic": "FGBMAEAA",
+        "reason": "forbidden intermediary BIC"
+      },
+      {
+        "source_row": 56,
+        "currency": "USD",
+        "int_bic": "CITIUS33",
+        "reason": "already present in seed"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 51,

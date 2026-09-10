@@ -215,7 +215,20 @@
   "scope": {
     "advertised_route_count": 27,
     "included_route_count": 25,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 1,
+        "currency": "ACU",
+        "int_bic": "SCBLBDDX",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 2,
+        "currency": "ACU",
+        "int_bic": "SCBLINBB",
+        "reason": "non-ISO ACU settlement unit"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 25,

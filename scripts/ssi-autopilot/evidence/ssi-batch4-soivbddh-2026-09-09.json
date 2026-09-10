@@ -143,7 +143,110 @@
   "scope": {
     "advertised_route_count": 33,
     "included_route_count": 16,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 1,
+        "currency": "ACU",
+        "int_bic": "MSHQINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 12,
+        "currency": "ACU",
+        "int_bic": "MEZNPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 13,
+        "currency": "ACU",
+        "int_bic": "NPBBNPKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 15,
+        "currency": "ACU",
+        "int_bic": "MUCBPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 18,
+        "currency": "ACU",
+        "int_bic": "SCBLINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 21,
+        "currency": "ACU",
+        "int_bic": "ABBLINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 22,
+        "currency": "ACU",
+        "int_bic": "HDFCINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 23,
+        "currency": "ACU",
+        "int_bic": "MSHQINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 25,
+        "currency": "ACU",
+        "int_bic": "AXISINBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 26,
+        "currency": "ACU",
+        "int_bic": "BHUBBTBT",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 27,
+        "currency": "ACU",
+        "int_bic": "BSONINCC",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 28,
+        "currency": "ACU",
+        "int_bic": "SUMTPKKA",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 29,
+        "currency": "ACU",
+        "int_bic": "UBININBB",
+        "reason": "non-ISO ACU settlement unit"
+      },
+      {
+        "source_row": 30,
+        "currency": "USD",
+        "int_bic": "MSHQUS33",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 31,
+        "currency": "USD",
+        "int_bic": "SCBLUS33",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 32,
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "reason": "duplicate currency/intermediary route"
+      },
+      {
+        "source_row": 33,
+        "currency": "ACU",
+        "int_bic": "INDBINBB",
+        "reason": "non-ISO ACU settlement unit"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 16,

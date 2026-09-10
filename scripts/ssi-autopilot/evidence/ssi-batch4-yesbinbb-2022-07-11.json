@@ -103,7 +103,26 @@
   "scope": {
     "advertised_route_count": 14,
     "included_route_count": 11,
-    "excluded_routes": []
+    "excluded_routes": [
+      {
+        "source_row": 2,
+        "currency": "AUD",
+        "int_bic": "ANZBAU3M",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 9,
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "reason": "already present in seed"
+      },
+      {
+        "source_row": 13,
+        "currency": "INR",
+        "int_bic": "YESB0000001",
+        "reason": "malformed or domestic routing identifier"
+      }
+    ]
   },
   "source_snapshot": {
     "route_count": 11,

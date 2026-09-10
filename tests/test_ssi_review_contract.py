@@ -273,7 +273,7 @@ def test_manifest_exclusions_and_extra_rows_are_fail_closed():
 
 
 def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
-    """The 215-row Asia-Pacific expansion has no unlisted seed identities."""
+    """The 238-row Asia-Pacific expansion has no unlisted seed identities."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -288,7 +288,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 215
+    assert len(expected_keys) == 238
     assert actual_keys == expected_keys
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
@@ -296,7 +296,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
 
 
 def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
-    """The 323-row Europe expansion preserves its exclusion semantics."""
+    """The 342-row Europe expansion preserves its exclusion semantics."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -311,12 +311,28 @@ def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 323
+    assert len(expected_keys) == 342
     assert actual_keys == expected_keys
     assert all(key[0][:8] != key[2][:8] for key in actual_keys)
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
     )
+
+
+def test_batch4_evidence_scope_counts_reconcile():
+    """Every batch-4 source route is either admitted or explicitly excluded."""
+    evidence_dir = _MANIFEST_PATH.parent / "evidence"
+    evidence_files = sorted(evidence_dir.glob("ssi-batch4-*.json"))
+    assert len(evidence_files) == 26
+    for path in evidence_files:
+        evidence = json.loads(path.read_text(encoding="utf-8"))
+        scope = evidence["scope"]
+        excluded = scope["excluded_routes"]
+        assert scope["advertised_route_count"] == (
+            scope["included_route_count"] + len(excluded)
+        ), path.name
+        assert evidence["source_snapshot"]["route_count"] == scope["included_route_count"]
+        assert all(route.get("reason") for route in excluded), path.name
 
 
 def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
