@@ -21,7 +21,6 @@ than letting the list grow.
 """
 
 import importlib.util
-import json
 import re
 from pathlib import Path
 
