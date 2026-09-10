@@ -334,6 +334,12 @@ def test_batch4_evidence_scope_counts_reconcile():
         assert evidence["source_snapshot"]["route_count"] == scope["included_route_count"]
         assert all(route.get("reason") for route in excluded), path.name
 
+        if path.name == "ssi-batch4-barbaead-2026-09-09.json":
+            included_rows = {route["source_row"] for route in evidence["routes"]}
+            excluded_rows = {route["source_row"] for route in excluded}
+            assert included_rows.isdisjoint(excluded_rows)
+            assert included_rows | excluded_rows == set(range(1, scope["advertised_route_count"] + 1))
+
 
 def test_wave4_seed_rows_stay_out_of_ssi_settlement_selection(db_session_clean):
     """BIC-only and inferred wave-4 rows cannot reach the DB selector."""
