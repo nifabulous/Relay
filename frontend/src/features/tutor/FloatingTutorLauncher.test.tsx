@@ -172,6 +172,22 @@ describe("FloatingTutorLauncher — unavailable deployment", () => {
     expect(screen.getByRole("status")).toBeVisible();
   });
 
+  it("keeps the unavailable notice compact without losing its full explanation", async () => {
+    server.use(
+      http.get("/api/tutor/availability", () => HttpResponse.json({ available: false })),
+    );
+    render(<FloatingTutorLauncher />);
+    const pill = await screen.findByRole("button", { name: /tutor/i });
+    const status = await screen.findByRole("status");
+
+    expect(status).toHaveTextContent("Tutor unavailable");
+    expect(screen.getByText(
+      "The tutor is not available in this deployment. Everything else in Relay works as usual.",
+      { selector: ".tutor-fab__reason-description" },
+    )).toBeInTheDocument();
+    expect(pill).toHaveAccessibleDescription(/not available in this deployment/i);
+  });
+
   it("asks availability once per mount, not per render", async () => {
     // The probe is unmetered but not free; one request per page is the budget.
     let calls = 0;

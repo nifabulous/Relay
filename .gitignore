@@ -66,3 +66,8 @@ _to_delete/
 # result files into a commit or workspace archive.
 /scripts/ssi-autopilot/results/*
 !/scripts/ssi-autopilot/results/candidates-pakistan.json
+
+# Design-QA captures are working evidence for a single comparison run, not a
+# reviewable artifact. They are megabytes of PNG and go stale the moment the
+# page changes; design-qa.md records what they showed.
+/artifacts/

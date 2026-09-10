@@ -1,0 +1,166 @@
+/* ── Learning Pulse ─────────────────────────────────────── */
+.overview__pulse {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-5) var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-region);
+}
+
+.overview__pulse-heading {
+  margin-bottom: var(--space-1);
+}
+
+.overview__pulse-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  min-height: 52px;
+}
+
+.overview__pulse-row:first-of-type {
+  border-top: 0;
+}
+
+/* Icon discs — project-owned glyphs in bounded tiles; tone tints reinforce
+   but never carry meaning alone. */
+.overview__pulse-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+  color: var(--color-ink-muted);
+}
+
+.overview__pulse-icon--streak {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.overview__pulse-icon--reviews {
+  border-color: var(--color-action-border);
+  background: var(--color-action-surface);
+  color: var(--color-action);
+}
+
+.overview__pulse-icon--badges {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.overview__pulse-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.overview__pulse-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.overview__progress-count,
+.overview__pulse-value {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.overview__pulse-percentage {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.overview__pulse-row-text {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  min-width: 0;
+}
+
+.overview__pulse-hint {
+  color: var(--color-ink-muted);
+}
+
+.overview__review-due {
+  color: var(--color-action);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.overview__badges {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.overview__badge {
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-full);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+/* Progress meter — structural border keeps a 0% bar visible on canvas. */
+.overview__progress-bar {
+  display: block;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.overview__progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-action);
+  border-radius: var(--radius-full);
+}
+
+/* Status footer — dot + text, never colour alone. */
+.overview__pulse-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.overview__pulse-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+}
+
+.overview__pulse-dot--ok {
+  background: var(--color-success);
+}
+
+.overview__pulse-dot--waiting {
+  background: var(--color-warning);
+}

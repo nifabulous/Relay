@@ -7,6 +7,7 @@ import {
   dueReviews,
   practicedToday,
   displayStreak,
+  dayScore,
   dayKey,
   addDays,
 } from "./practiceStore";
@@ -104,6 +105,42 @@ describe("displayStreak / practicedToday", () => {
     const state = recordDrill(defaultPracticeState, "2026-08-09", [{ questionId: "q1", correct: true }]);
     expect(practicedToday(state, "2026-08-09")).toBe(true);
     expect(practicedToday(state, "2026-08-10")).toBe(false);
+  });
+});
+
+describe("dayScore", () => {
+  it("is null on a day with no recorded drill", () => {
+    expect(dayScore(defaultPracticeState, "2026-08-09")).toBeNull();
+  });
+
+  it("reports the single drill's score", () => {
+    const state = recordDrill(defaultPracticeState, "2026-08-09", [
+      { questionId: "q1", correct: true },
+      { questionId: "q2", correct: false },
+    ]);
+    expect(dayScore(state, "2026-08-09")).toEqual({ correct: 1, total: 2 });
+  });
+
+  // recordDrill prepends a record per drill instead of merging, and "Practice
+  // again" is an offered path. Reading only the newest record would report a
+  // perfect first drill followed by a bad second one as the whole day's score.
+  it("sums every drill taken on the same day", () => {
+    let state = recordDrill(defaultPracticeState, "2026-08-09", [
+      { questionId: "q1", correct: true },
+      { questionId: "q2", correct: true },
+    ]);
+    state = recordDrill(state, "2026-08-09", [
+      { questionId: "q3", correct: false },
+      { questionId: "q4", correct: false },
+    ]);
+    expect(dayScore(state, "2026-08-09")).toEqual({ correct: 2, total: 4 });
+  });
+
+  it("does not mix days", () => {
+    let state = recordDrill(defaultPracticeState, "2026-08-09", [{ questionId: "q1", correct: true }]);
+    state = recordDrill(state, "2026-08-10", [{ questionId: "q2", correct: false }]);
+    expect(dayScore(state, "2026-08-09")).toEqual({ correct: 1, total: 1 });
+    expect(dayScore(state, "2026-08-10")).toEqual({ correct: 0, total: 1 });
   });
 });
 

@@ -223,3 +223,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Keep the complete reason in the accessibility tree without letting the
+   deployment note become a second, full-width floating panel. */
+.tutor-fab__reason-description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -23,6 +23,191 @@ function renderPage(options: { basename?: string; initialEntries?: string[] } = 
 }
 
 describe("PreparePaymentPage form accessibility", () => {
+  it("renders route context from a valid beneficiary BIC", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.json({
+        bic: "GTBINGLAXXX",
+        found: true,
+        bank: {
+          bic: "GTBINGLAXXX",
+          bank_name: "Guaranty Trust Bank",
+          country_code: "NG",
+          country_currency: "NGN",
+        },
+      })),
+      http.get("/api/ssi", () => HttpResponse.json({
+        beneficiary_bic: "GTBINGLAXXX",
+        currency: "ALL",
+        instructions: [
+          {
+            beneficiary_bic: "GTBINGLAXXX",
+            beneficiary_bank_name: "Guaranty Trust Bank",
+            currency: "USD",
+            intermediary_bic: "CITIUS33XXX",
+            intermediary_bank_name: "Citibank",
+            intermediary_account: "ACCT-1",
+            beneficiary_account: "ACCT-2",
+            charge_code: "SHA",
+            value_date: "spot",
+          },
+        ],
+        disclaimer: "SIMULATION",
+      })),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    expect(await within(context).findAllByText("Guaranty Trust Bank")).not.toHaveLength(0);
+    expect(within(context).getByText("GTBINGLAXXX")).toBeVisible();
+    expect(within(context).getByText("Published currencies")).toBeVisible();
+    expect(within(context).getByText("USD")).toBeVisible();
+    expect(within(context).getByText("Route preview")).toBeVisible();
+    expect(within(context).getByText("Illustrative route — run checks to evaluate it.")).toBeVisible();
+  });
+
+  // The panel has five distinct branches — loading, lookup error, retry,
+  // not-found, and settlement-instruction failure. A green suite that only
+  // exercises the happy path says nothing about whether a learner whose bank
+  // lookup fails can still use the form, which is the whole point of keeping
+  // the failure non-blocking.
+  it("keeps the form usable and offers a retry when the bank lookup fails", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.error()),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    const alert = await within(context).findByRole("alert");
+    expect(alert).toHaveTextContent("Bank context could not be loaded. The form is still usable.");
+    expect(within(context).getByRole("button", { name: /retry bank lookup/i })).toBeVisible();
+
+    // The route preview stays, and says why it is not bank-specific.
+    expect(within(context).getByText("Bank context unavailable — route remains illustrative.")).toBeVisible();
+
+    // The failure is confined to the aside: the form itself still works.
+    expect(screen.getByRole("button", { name: /run payment checks/i })).toBeEnabled();
+  });
+
+  it("replaces the error with real bank context when retry succeeds", async () => {
+    let attempt = 0;
+    server.use(
+      http.get("/api/lookup", () => {
+        attempt += 1;
+        if (attempt === 1) return HttpResponse.error();
+        return HttpResponse.json({
+          bic: "GTBINGLAXXX",
+          found: true,
+          bank: {
+            bic: "GTBINGLAXXX",
+            bank_name: "Guaranty Trust Bank",
+            country_code: "NG",
+            country_currency: "NGN",
+          },
+        });
+      }),
+    );
+
+    const { user } = renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    await within(context).findByRole("alert");
+
+    await user.click(within(context).getByRole("button", { name: /retry bank lookup/i }));
+
+    expect(await within(context).findAllByText("Guaranty Trust Bank")).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(within(context).queryByRole("alert")).toBeNull();
+    });
+    expect(within(context).queryByRole("button", { name: /retry bank lookup/i })).toBeNull();
+  });
+
+  it("reports an unknown BIC without inventing bank details", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.json({ bic: "ZZZZZZ99XXX", found: false })),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=ZZZZZZ99XXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    await waitFor(() => {
+      expect(context).toHaveTextContent(/no bank profile was found for/i);
+    });
+
+    // No beneficiary-bank block and no currency pills. Asserted by region
+    // rather than by text: "Beneficiary bank" is also the route preview's
+    // generic placeholder for the final hop, so the bare string is present
+    // either way and would make this assertion pass for the wrong reason.
+    expect(within(context).queryByRole("region", { name: "Beneficiary bank" })).toBeNull();
+    expect(within(context).queryByRole("region", { name: "Published currencies" })).toBeNull();
+    expect(within(context).queryByText("Guaranty Trust Bank")).toBeNull();
+    expect(within(context).getByText("No bank profile found — route remains illustrative.")).toBeVisible();
+  });
+
+  it("names the published-currency state instead of implying none exist", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.json({
+        bic: "GTBINGLAXXX",
+        found: true,
+        bank: {
+          bic: "GTBINGLAXXX",
+          bank_name: "Guaranty Trust Bank",
+          country_code: "NG",
+          country_currency: "NGN",
+        },
+      })),
+      http.get("/api/ssi", () => HttpResponse.error()),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    // A failed SSI read must not read as "this bank publishes nothing" — that
+    // is a different fact, and the learner would draw a different conclusion.
+    await waitFor(() => {
+      expect(context).toHaveTextContent("Published settlement currencies could not be loaded.");
+    });
+    expect(context).not.toHaveTextContent("No published settlement currencies are on file for this bank.");
+  });
+
+  it("distinguishes a bank with no published instructions from a failed read", async () => {
+    server.use(
+      http.get("/api/lookup", () => HttpResponse.json({
+        bic: "GTBINGLAXXX",
+        found: true,
+        bank: {
+          bic: "GTBINGLAXXX",
+          bank_name: "Guaranty Trust Bank",
+          country_code: "NG",
+          country_currency: "NGN",
+        },
+      })),
+      http.get("/api/ssi", () => HttpResponse.json({
+        beneficiary_bic: "GTBINGLAXXX",
+        currency: "ALL",
+        instructions: [],
+        disclaimer: "SIMULATION",
+      })),
+    );
+
+    renderPage({ initialEntries: ["/operate/prepare?bic=GTBINGLAXXX"] });
+
+    const context = await screen.findByRole("region", { name: "Route context" });
+    await waitFor(() => {
+      expect(context).toHaveTextContent("No published settlement currencies are on file for this bank.");
+    });
+    expect(context).not.toHaveTextContent("Published settlement currencies could not be loaded.");
+  });
+
+  it("asks for a BIC before showing bank route context", () => {
+    renderPage();
+
+    const context = screen.getByRole("region", { name: "Route context" });
+    expect(context).toHaveTextContent(/enter a beneficiary bic to load bank context/i);
+    expect(context).toHaveTextContent(/route preview/i);
+  });
+
   it("separates accepted currency input from rail and SSI coverage", () => {
     renderPage();
 

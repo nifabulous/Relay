@@ -156,6 +156,31 @@ export function practicedToday(state: PracticeState, day: string): boolean {
 }
 
 /**
+ * The score for a given day, or null when nothing was drilled that day.
+ *
+ * `recordDrill` prepends one record per drill rather than merging, so a
+ * learner who takes the "Practice again" path leaves several records for the
+ * same day. The day's score is their sum: reading only the newest record would
+ * report a second 0/5 attempt as the whole day's result and tell a learner who
+ * has answered nine questions correctly that they got none right.
+ */
+export function dayScore(
+  state: PracticeState,
+  day: string,
+): { correct: number; total: number } | null {
+  let correct = 0;
+  let total = 0;
+  let found = false;
+  for (const record of state.history) {
+    if (record.day !== day) continue;
+    found = true;
+    correct += record.correct;
+    total += record.total;
+  }
+  return found ? { correct, total } : null;
+}
+
+/**
  * The streak to DISPLAY today: a streak whose last practice day is before
  * yesterday is already broken even though no drill has recorded it yet.
  */

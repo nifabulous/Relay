@@ -4,6 +4,7 @@ import {
   formatDuration,
   formatDurationAriaLabel,
   isModuleUnlocked,
+  getNextModule,
   getPrerequisiteChain,
 } from "./curriculum";
 import { loadProgress } from "../../lib/persistence/storage";
@@ -11,8 +12,9 @@ import { useState, useCallback } from "react";
 import { CASE_CATALOG } from "./cases/caseCatalog";
 import { loadCaseSession } from "./cases/caseStore";
 import { selectDominantCase } from "./cases/selectDominantCase";
-import { loadPracticeState, dueReviews, practicedToday, displayStreak, dayKey } from "./practice/practiceStore";
-import { LearnCaseLaunchpad } from "./LearnCaseLaunchpad";
+import { loadPracticeState, dueReviews, practicedToday, displayStreak, dayKey, dayScore } from "./practice/practiceStore";
+import { LearnCaseLaunchpad, LearnSecondaryCases } from "./LearnCaseLaunchpad";
+import { Icon } from "../../design-system/coss/icon";
 import "./LearnPage.css";
 
 export function LearnIndexPage() {
@@ -33,6 +35,9 @@ export function LearnIndexPage() {
     })).map((entry, index) => ({ ...entry, index })),
   );
   const dominantCase = selectDominantCase(caseEntries);
+  const secondaryCases = caseEntries.filter((entry) => entry !== dominantCase);
+  const nextModuleId = getNextModule(completed)?.id;
+  const todayDrill = dayScore(practice, today);
 
   const isComplete = useCallback((id: string) => completed.includes(id), [completed]);
 
@@ -46,65 +51,81 @@ export function LearnIndexPage() {
       <LearnCaseLaunchpad
         entries={caseEntries}
         dominant={dominantCase}
-        practice={{ doneToday, reviewsDue, streak }}
+        practice={{ doneToday, reviewsDue, streak, todayDrill }}
+        showSecondary={false}
       />
 
-      <div className="learn-page__progress">
-        <span className="mono">{completed.length} / {CURRICULUM.length}</span>
-        <span>modules completed</span>
-        <div className="learn-page__progress-bar">
-          <div className="learn-page__progress-fill"
-            style={{ width: `${(completed.length / CURRICULUM.length) * 100}%` }} />
+      <section id="technical-labs" className="learn-labs" aria-labelledby="technical-labs-title">
+        <div className="learn-labs__header">
+          <div>
+            <h2 id="technical-labs-title">Technical labs</h2>
+            <p className="measure">
+              Self-paced modules covering identifiers, schemes, messaging, and tracking.
+            </p>
+          </div>
+          <div className="learn-labs__progress" aria-label={`${completed.length} of ${CURRICULUM.length} modules complete`}>
+            <span className="mono">{completed.length} / {CURRICULUM.length}</span>
+            <span>complete</span>
+          </div>
         </div>
-      </div>
 
-      <div id="technical-labs" className="learn-page__section-heading">
-        <h2>Technical labs</h2>
-        <p className="measure">
-          Self-paced reference modules covering identifiers, schemes, messaging,
-          and tracking. Start the case above to put these together in practice.
-        </p>
-      </div>
+        <div className="learn-labs__table">
+          {/* Column captions for the visual grid only — each row states its
+              own status in text, so this adds nothing for a screen reader. */}
+          <div className="learn-labs__table-head" aria-hidden="true">
+            <span>Module</span>
+            <span>Status</span>
+          </div>
+          <ol className="learn-curriculum" aria-label="Curriculum modules">
+            {CURRICULUM.map((mod, index) => {
+              const unlocked = isModuleUnlocked(mod.id, completed);
+              const complete = isComplete(mod.id);
+              const isNext = mod.id === nextModuleId;
+              const status = complete ? "Completed" : isNext ? "Next module" : unlocked ? "Available" : "Locked";
+              return (
+                <li key={mod.id} className={[
+                  "learn-module",
+                  !unlocked && "learn-module--locked",
+                  complete && "learn-module--complete",
+                ].filter(Boolean).join(" ")}>
+                  <div className="learn-module__num" aria-hidden="true">{complete ? "✓" : index + 1}</div>
+                  <div className="learn-module__body">
+                    {unlocked ? (
+                      <Link to={mod.href} className="learn-module__title">{mod.title}</Link>
+                    ) : (
+                      <span className="learn-module__title learn-module__title--locked">{mod.title}</span>
+                    )}
+                    <p className="learn-module__subtitle">{mod.subtitle}</p>
+                    <div className="learn-module__meta">
+                      <span
+                        className="learn-module__duration"
+                        aria-label={formatDurationAriaLabel(mod.duration)}
+                      >
+                        {formatDuration(mod.duration)}
+                      </span>
+                      {!unlocked && (
+                        <span className="learn-module__locked-reason">
+                          Complete first: {getPrerequisiteChain(mod.id)
+                            .filter((p) => !completed.includes(p))
+                            .map((p) => getModuleTitle(p))
+                            .join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`learn-module__status learn-module__status--${status.toLowerCase().replaceAll(" ", "-")}`}>
+                    <Icon name={complete ? "checkCircle" : unlocked ? "arrowRight" : "clock"} size={18} />
+                    <span>{status}</span>
+                  </div>
+                  <Icon name="chevronRight" size={18} className="learn-module__arrow" />
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </section>
 
-      <ol className="learn-curriculum" aria-label="Curriculum modules">
-        {CURRICULUM.map((mod, index) => {
-          const unlocked = isModuleUnlocked(mod.id, completed);
-          const complete = isComplete(mod.id);
-          return (
-            <li key={mod.id} className={[
-              "learn-module",
-              !unlocked && "learn-module--locked",
-              complete && "learn-module--complete",
-            ].filter(Boolean).join(" ")}>
-              <div className="learn-module__num">{complete ? "✓" : index + 1}</div>
-              <div className="learn-module__body">
-                {unlocked ? (
-                  <Link to={mod.href} className="learn-module__title">{mod.title}</Link>
-                ) : (
-                  <span className="learn-module__title learn-module__title--locked">{mod.title}</span>
-                )}
-                <p className="learn-module__subtitle">{mod.subtitle}</p>
-                <div className="learn-module__meta">
-                  <span
-                    className="learn-module__duration"
-                    aria-label={formatDurationAriaLabel(mod.duration)}
-                  >
-                    {formatDuration(mod.duration)}
-                  </span>
-                  {!unlocked && (
-                    <span className="learn-module__locked-reason">
-                      Complete first: {getPrerequisiteChain(mod.id)
-                        .filter((p) => !completed.includes(p))
-                        .map((p) => getModuleTitle(p))
-                        .join(", ")}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      {secondaryCases.length > 0 && <LearnSecondaryCases entries={secondaryCases} />}
     </div>
   );
 }
