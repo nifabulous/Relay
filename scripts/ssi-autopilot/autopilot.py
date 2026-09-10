@@ -1142,9 +1142,25 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
 
 
 # ── Fold verification ────────────────────────────────────────────────────────
+_SOURCE_CONSTANTS: dict[str, str] = {}
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
+    _SOURCE_CONSTANTS.clear()
+    for assignment in tree.body:
+        if not (isinstance(assignment, ast.Assign) and len(assignment.targets) == 1):
+            continue
+        target = assignment.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        try:
+            value = ast.literal_eval(assignment.value)
+        except (ValueError, SyntaxError):
+            continue
+        if isinstance(value, str):
+            _SOURCE_CONSTANTS[target.id] = value
     for node in tree.body:
         if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)):
             continue
@@ -1180,13 +1196,14 @@ def _literal(text: str):
     except (ValueError, SyntaxError):
         if "_SSI_REAL_NOTE" in text:
             prefix = text.split("+", 1)[0].strip()
-            try:
-                value = ast.literal_eval(prefix)
-            except (ValueError, SyntaxError):
-                pass
-            else:
-                if isinstance(value, str) and value.startswith("Source:"):
-                    return value + "Sourced from bank-published SSI page. Verify current values before use."
+            value = _SOURCE_CONSTANTS.get(prefix)
+            if value is None:
+                try:
+                    value = ast.literal_eval(prefix)
+                except (ValueError, SyntaxError):
+                    value = None
+            if isinstance(value, str) and value.startswith("Source:"):
+                return value + "Sourced from bank-published SSI page. Verify current values before use."
         return text
 
 
