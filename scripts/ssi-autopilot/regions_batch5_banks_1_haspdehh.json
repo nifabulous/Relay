@@ -1,0 +1,33 @@
+{
+  "bic8": "HASPDEHH",
+  "name": "Hamburger Sparkasse AG",
+  "country": "DE",
+  "currencies": [
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "CZK",
+    "DKK",
+    "EUR",
+    "GBP",
+    "HKD",
+    "HUF",
+    "JPY",
+    "NOK",
+    "NZD",
+    "PLN",
+    "SEK",
+    "SGD",
+    "THB",
+    "TRY",
+    "USD",
+    "ZAR"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "haspa.de"
+  ],
+  "admitted_record_digest": "c8156e3e1ce291b1c774317b8630626d5a0063849d782f066ad60043425e5ec6",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

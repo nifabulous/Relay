@@ -1,0 +1,32 @@
+[
+  {
+    "source": "https://soneri-bank.nyc3.cdn.digitaloceanspaces.com/wp-content/uploads/2023/08/26092615/Nostro-account-details-1.pdf",
+    "as_of": "2023-08-26",
+    "status": "archived",
+    "charge_code": null,
+    "value_date": null,
+    "bic_only": true,
+    "terms_inferred": false,
+    "rows": [
+      "AED|Mashreq Dubai|BOMLAEAD||",
+      "AUD|JPMorgan Chase Sydney|CHASAU2X||",
+      "CAD|Standard Chartered Frankfurt|SCBLDEFF||",
+      "CHF|HBL Zurich|HBZUCHZZ||",
+      "CNY|Industrial Commercial Bank China|ICBKPKKA||",
+      "CNY|Standard Chartered China|SCBLCNSX||",
+      "EUR|JPMorgan Chase Frankfurt|CHASDEFX||",
+      "EUR|Commerzbank Frankfurt|COBADEFF||",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF||",
+      "GBP|JPMorgan Chase London|CHASGB2L||",
+      "GBP|Standard Chartered London|SCBLGB2L||",
+      "JPY|JPMorgan Chase Tokyo|CHASJPJT||",
+      "JPY|National Bank Pakistan Tokyo|NBPAJPJT||",
+      "SGD|Habib Bank Singapore|HABBSGSG||",
+      "USD|JPMorgan Chase New York|CHASUS33||",
+      "USD|Citibank New York|CITIUS33||",
+      "USD|Habib American Bank New York|HANYUS33||",
+      "USD|Mashreq New York|MSHQUS33||",
+      "USD|Standard Chartered New York|SCBLUS33||"
+    ]
+  }
+]

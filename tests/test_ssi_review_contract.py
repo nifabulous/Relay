@@ -14,7 +14,7 @@ from pathlib import Path
 
 from app.models import SSI
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
-from app.services.seed import SSI_RECORDS
+from app.services.seed import BANKS, SSI_RECORDS
 from app.services.ssi_importer import canonicalize_bic11
 
 _MANIFEST_PATH = (
@@ -23,6 +23,13 @@ _MANIFEST_PATH = (
     / "ssi-autopilot"
     / "regions.json"
 )
+_BATCH5_LEDGER_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "app"
+    / "services"
+    / "seed_ssi_batch5_1.json"
+)
+_BATCH5_MANIFEST_FILE = "regions_batch5_records_1.json"
 
 
 def _load_autopilot():
@@ -38,6 +45,22 @@ def _load_autopilot():
 def _load_manifest():
     """Read the production manifest through its compact-row expansion boundary."""
     return _load_autopilot().load_manifest()
+
+
+def _load_raw_manifest():
+    """Read the raw manifest and expand review-sized bank shards."""
+    manifest = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    for region in manifest["regions"]:
+        for index, bank in enumerate(region["banks"]):
+            filename = bank.get("manifest_file")
+            if not filename:
+                continue
+            shard = json.loads(
+                (_MANIFEST_PATH.parent / filename).read_text(encoding="utf-8")
+            )
+            assert shard["bic8"] == bank["bic8"]
+            region["banks"][index] = shard
+    return manifest
 
 
 def _bic11(value):
@@ -85,19 +108,19 @@ def _canonical_note(record):
 
 def test_compact_generated_sources_match_independent_evidence():
     """Expansion is checked against sidecars, not a digest it produces itself."""
-    raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+    raw = _load_raw_manifest()
     compact_banks = {
         bank["bic8"]
         for region in raw["regions"]
         for bank in region["banks"]
         if "compact_records_file" in bank
     }
-    assert len(compact_banks) == 26
+    assert len(compact_banks) == 46
 
     evidence_dir = _MANIFEST_PATH.parent / "evidence"
     evidence_by_bic = {
         evidence["beneficiary_bic"]: evidence
-        for path in evidence_dir.glob("ssi-batch4-*.json")
+        for path in evidence_dir.glob("ssi-batch[45]-*.json")
         for evidence in [json.loads(path.read_text(encoding="utf-8"))]
     }
     assert compact_banks == set(evidence_by_bic)
@@ -143,6 +166,49 @@ def test_compact_generated_sources_match_independent_evidence():
                     assert record["charge_code"] is None
                     assert record["value_date"] is None
             assert set(actual) == set(expected)
+
+
+def test_batch5_beneficiaries_are_in_bank_directory_and_ledger_is_complete():
+    """Batch-5 routes must resolve to every canonical beneficiary in BANKS."""
+    ledger = json.loads(_BATCH5_LEDGER_PATH.read_text(encoding="utf-8"))
+    ledger_bics = {row[0] for row in ledger}
+    ledger_names = {row[0]: row[1] for row in ledger}
+    bank_bics = {row[0] for row in BANKS}
+    bank_names = {row[0]: row[1] for row in BANKS}
+
+    assert len(ledger_bics) == 20
+    assert ledger_bics <= bank_bics
+    assert {bic: bank_names[bic] for bic in ledger_bics} == ledger_names
+    assert sum(len(row[-1]) for row in ledger) == 458
+
+
+def test_batch5_manifest_and_compact_ledger_have_exact_route_parity():
+    """The review-sized batch-5 ledger expands to the manifest's exact keys."""
+    ledger = json.loads(_BATCH5_LEDGER_PATH.read_text(encoding="utf-8"))
+    expected = set()
+    for beneficiary_bic, *_metadata, packed_rows in ledger:
+        for packed in packed_rows:
+            currency, intermediary_bic, *_ = packed.split("|", 3)
+            expected.add((beneficiary_bic, currency, _bic11(intermediary_bic)))
+
+    raw_manifest = _load_raw_manifest()
+    batch5_bics = {
+        bank["bic8"]
+        for region in raw_manifest["regions"]
+        for bank in region["banks"]
+        if bank.get("compact_records_file") == _BATCH5_MANIFEST_FILE
+    }
+    manifest = _load_manifest()
+    actual = {
+        (bank["bic8"] + "XXX", record["currency"], _bic11(record["int_bic"]))
+        for region in manifest["regions"]
+        for bank in region["banks"]
+        if bank["bic8"] in batch5_bics
+        for record in bank["admitted_records"]
+    }
+
+    assert len(expected) == 458
+    assert actual == expected
 
 
 def _row_object(row):
@@ -555,7 +621,7 @@ def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
         if bank.get("seedable", True) and bank.get("admitted_records")
     }
     keys = {key for key in expected if key[0] in beneficiary_bics}
-    assert len(keys) == 180
+    assert len(keys) == 199
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
         _, bank, record = expected[key]

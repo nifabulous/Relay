@@ -1,0 +1,27 @@
+[
+  {
+    "source": "https://www.meghnabank.com.bd/public/images/737761_SSI%20List_Meghna%20Bank%20PLC.pdf",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Mashreq Dubai|BOMLAEAD|91001801|91001801",
+      "AUD|Kookmin Bank Seoul|CZNBKRSE|91001802|91001802",
+      "CAD|Kookmin Bank Seoul|CZNBKRSE|91001803|91001803",
+      "CNY|Agricultural Bank of China|ABOCCNBJ300|91001804|91001804",
+      "EUR|BPER Banca Italy|BPMOIT22|91001805|91001805",
+      "EUR|Sonali Bank UK London|BSONGB2L|91001806|91001806",
+      "GBP|Sonali Bank UK London|BSONGB2L|91001807|91001807",
+      "GBP|Kookmin Bank Seoul|CZNBKRSE|91001808|91001808",
+      "JPY|National Bank of Pakistan Tokyo|NBPAJPJT|91001809|91001809",
+      "SAR|Bank Aljazira Saudi Arabia|BJAZSAJE|91001810|91001810",
+      "USD|Sonali Bank UK London|BSONGB2L|91001811|91001811",
+      "USD|Kookmin Bank Seoul|CZNBKRSE|91001812|91001812",
+      "USD|Habib American Bank New York|HANYUS33|91001813|91001813",
+      "USD|Mashreq New York|MSHQUS33|91001814|91001814"
+    ]
+  }
+]

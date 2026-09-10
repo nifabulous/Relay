@@ -1,0 +1,16 @@
+{
+  "bic8": "NKGSINBB",
+  "name": "NKGSB Co-operative Bank Ltd.",
+  "country": "IN",
+  "currencies": [
+    "EUR",
+    "GBP",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "nkgsb.bank.in"
+  ],
+  "admitted_record_digest": "5e82634c8bc52b7cf6096852cd1f0d42b04d42f5687349bf5664582c506bf049",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

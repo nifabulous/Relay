@@ -1,0 +1,36 @@
+[
+  {
+    "source": "https://askari.tdfclient.com/business/cib/financial-institutions-division-fid",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Mashreq Dubai|BOMLAEAD|91003301|91003301",
+      "AUD|Citibank London|CITIGB2L|91003302|91003302",
+      "CAD|Standard Chartered London|SCBLGB2L|91003303|91003303",
+      "CHF|Habib Bank Zurich|HBZUCHZZ|91003304|91003304",
+      "CNY|Bank of China Pakistan|BKCHPKKA|91003305|91003305",
+      "CNY|ICBC Pakistan|ICBKPKKA|91003306|91003306",
+      "CNY|Standard Chartered China|SCBLCNSX|91003307|91003307",
+      "EUR|Banco de Sabadell|BSABESBB|91003308|91003308",
+      "EUR|Citibank London|CITIGB22|91003309|91003309",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91003310|91003310",
+      "EUR|UniCredit Munich|HYVEDEMM|91003311|91003311",
+      "EUR|National Bank of Pakistan Frankfurt|NBPADEFF|91003312|91003312",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91003313|91003313",
+      "GBP|Standard Chartered London|SCBLGB2L|91003314|91003314",
+      "JPY|National Bank of Pakistan Tokyo|NBPAJPJT|91003315|91003315",
+      "JPY|Standard Chartered Tokyo|SCBLJPJT|91003316|91003316",
+      "SAR|National Bank of Pakistan Saudi Arabia|NBPASARI|91003317|91003317",
+      "SAR|Saudi National Bank|NCBKSAJE|91003318|91003318",
+      "SGD|Standard Chartered Singapore|SCBLSG22|91003319|91003319",
+      "USD|JPMorgan Chase New York|CHASUS33|91003320|91003320",
+      "USD|Citibank New York|CITIUS33|91003321|91003321",
+      "USD|Mashreq New York|MSHQUS33|91003322|91003322",
+      "USD|Standard Chartered New York|SCBLUS33|91003323|91003323"
+    ]
+  }
+]

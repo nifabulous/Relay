@@ -152,6 +152,17 @@ def _expand_compact_manifest(manifest: dict) -> dict:
     compact_file_cache: dict[str, dict] = {}
     for region in manifest.get("regions", []):
         for bank in region.get("banks", []):
+            manifest_filename = bank.pop("manifest_file", None)
+            if manifest_filename:
+                manifest_path = REGIONS_FILE.parent / manifest_filename
+                external_bank = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if external_bank.get("bic8") != bank.get("bic8"):
+                    raise ValueError(
+                        f"{region['name']}/{bank.get('bic8')}: manifest file "
+                        f"{manifest_filename} has a different BIC"
+                    )
+                bank.clear()
+                bank.update(external_bank)
             groups = bank.pop("compact_records", None)
             compact_filename = bank.pop("compact_records_file", None)
             if groups is None and compact_filename:
@@ -161,6 +172,9 @@ def _expand_compact_manifest(manifest: dict) -> dict:
                         compact_path.read_text(encoding="utf-8")
                     )
                 groups = compact_file_cache[compact_filename].get(bank["bic8"])
+                if isinstance(groups, str):
+                    shard_path = REGIONS_FILE.parent / groups
+                    groups = json.loads(shard_path.read_text(encoding="utf-8"))
                 if groups is None:
                     raise ValueError(
                         f"{region['name']}/{bank['bic8']}: compact file "
@@ -1247,6 +1261,38 @@ def _expand_batch4_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _expand_batch5_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-5 ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch5_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    source + real_note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
@@ -1276,9 +1322,13 @@ def _ssi_rows(source: str) -> list[tuple]:
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id == "_ssi_batch4_records"
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records"}
             ):
-                rows.extend(_expand_batch4_source_rows())
+                rows.extend(
+                    _expand_batch4_source_rows()
+                    if element.value.func.id == "_ssi_batch4_records"
+                    else _expand_batch5_source_rows()
+                )
                 continue
             if not isinstance(element, ast.Tuple):
                 continue
@@ -1694,7 +1744,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
                 and isinstance(e, ast.Starred)
                 and isinstance(e.value, ast.Call)
                 and isinstance(e.value.func, ast.Name)
-                and e.value.func.id == "_ssi_batch4_records"
+                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records"}
             ):
                 continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:

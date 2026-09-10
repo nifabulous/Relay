@@ -1,0 +1,22 @@
+{
+  "bic8": "PRBLBDDH",
+  "name": "Prime Bank PLC",
+  "country": "BD",
+  "currencies": [
+    "AED",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SAR",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "primebank.com.bd"
+  ],
+  "admitted_record_digest": "b8e66798623a1d3dc1583f63c4138a04125629bba9914ff67d145abaa3c7c3e7",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

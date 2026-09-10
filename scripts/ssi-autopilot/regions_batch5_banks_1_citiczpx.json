@@ -1,0 +1,35 @@
+{
+  "bic8": "CITICZPX",
+  "name": "Citibank Europe plc, organizační složka",
+  "country": "CZ",
+  "currencies": [
+    "AUD",
+    "BGN",
+    "CAD",
+    "CHF",
+    "CNY",
+    "CZK",
+    "DKK",
+    "EUR",
+    "GBP",
+    "HKD",
+    "HUF",
+    "JPY",
+    "KZT",
+    "MXN",
+    "NOK",
+    "NZD",
+    "PLN",
+    "RON",
+    "SEK",
+    "TRY",
+    "USD",
+    "ZAR"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "citibank.com"
+  ],
+  "admitted_record_digest": "d197741a3ea4cd884029b092a8e8633f34f7cbd29c9149bfc10b088026527c68",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

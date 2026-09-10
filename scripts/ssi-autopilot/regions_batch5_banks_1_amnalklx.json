@@ -1,0 +1,24 @@
+{
+  "bic8": "AMNALKLX",
+  "name": "Amana Bank PLC",
+  "country": "LK",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CNY",
+    "EUR",
+    "GBP",
+    "INR",
+    "JPY",
+    "MYR",
+    "SAR",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "amanabank.lk"
+  ],
+  "admitted_record_digest": "42cb3e6fc54b0977dd1485fe3c6bfb052a43657adcf2b65cefe94de4f8923897",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

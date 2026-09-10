@@ -1,0 +1,428 @@
+{
+  "source": "https://www.nordea.com/sites/default/files/2025-12/standard-settlement-instructions-nordea-bank-abp-effective-jan-1-2026.pdf",
+  "as_of": "2026-01-01",
+  "beneficiary_bic": "NDEADKKK",
+  "region_masked_block": 91005000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "SCBLAEAD",
+      "nostro_mask": "ACCT-91005001",
+      "with_an_mask": "ACCT-91005001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CTBAAU2S",
+      "nostro_mask": "ACCT-91005002",
+      "with_an_mask": "ACCT-91005002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "BDT",
+      "int_bic": "SCBLBDDX",
+      "nostro_mask": "ACCT-91005003",
+      "with_an_mask": "ACCT-91005003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "BGN",
+      "int_bic": "UNCRBGSF",
+      "nostro_mask": "ACCT-91005004",
+      "with_an_mask": "ACCT-91005004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "BHD",
+      "int_bic": "SCBLBHBM",
+      "nostro_mask": "ACCT-91005005",
+      "with_an_mask": "ACCT-91005005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "ROYCCAT2",
+      "nostro_mask": "ACCT-91005006",
+      "with_an_mask": "ACCT-91005006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "nostro_mask": "ACCT-91005007",
+      "with_an_mask": "ACCT-91005007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNH",
+      "int_bic": "SCBLHKHH",
+      "nostro_mask": "ACCT-91005008",
+      "with_an_mask": "ACCT-91005008",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHCNBJS00",
+      "nostro_mask": "ACCT-91005009",
+      "with_an_mask": "ACCT-91005009",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CZK",
+      "int_bic": "CEKOCZPP",
+      "nostro_mask": "ACCT-91005010",
+      "with_an_mask": "ACCT-91005010",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "NDEADKKK",
+      "nostro_mask": "ACCT-91005011",
+      "with_an_mask": "ACCT-91005011",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EGP",
+      "int_bic": "CIBEEGCX",
+      "nostro_mask": "ACCT-91005012",
+      "with_an_mask": "ACCT-91005012",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "NDEAFIHH",
+      "nostro_mask": "ACCT-91005013",
+      "with_an_mask": "ACCT-91005013",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BARCGB22",
+      "nostro_mask": "ACCT-91005014",
+      "with_an_mask": "ACCT-91005014",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBLHKHH",
+      "nostro_mask": "ACCT-91005015",
+      "with_an_mask": "ACCT-91005015",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HUF",
+      "int_bic": "BACXHUHB",
+      "nostro_mask": "ACCT-91005016",
+      "with_an_mask": "ACCT-91005016",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "IDR",
+      "int_bic": "SCBLIDJX",
+      "nostro_mask": "ACCT-91005017",
+      "with_an_mask": "ACCT-91005017",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "ILS",
+      "int_bic": "LUMIILIT",
+      "nostro_mask": "ACCT-91005018",
+      "with_an_mask": "ACCT-91005018",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "INR",
+      "int_bic": "SCBLINBB",
+      "nostro_mask": "ACCT-91005019",
+      "with_an_mask": "ACCT-91005019",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "ISK",
+      "int_bic": "GLITISRE",
+      "nostro_mask": "ACCT-91005020",
+      "with_an_mask": "ACCT-91005020",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "MHCBJPJT",
+      "nostro_mask": "ACCT-91005021",
+      "with_an_mask": "ACCT-91005021",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "KES",
+      "int_bic": "BARCKENX",
+      "nostro_mask": "ACCT-91005022",
+      "with_an_mask": "ACCT-91005022",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "KRW",
+      "int_bic": "KOEXKRSE",
+      "nostro_mask": "ACCT-91005023",
+      "with_an_mask": "ACCT-91005023",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "KWD",
+      "int_bic": "NBOKKWKW",
+      "nostro_mask": "ACCT-91005024",
+      "with_an_mask": "ACCT-91005024",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "KZT",
+      "int_bic": "HSBKKZKX",
+      "nostro_mask": "ACCT-91005025",
+      "with_an_mask": "ACCT-91005025",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "LKR",
+      "int_bic": "HSBCLKLX",
+      "nostro_mask": "ACCT-91005026",
+      "with_an_mask": "ACCT-91005026",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "MAD",
+      "int_bic": "SGMBMAMC",
+      "nostro_mask": "ACCT-91005027",
+      "with_an_mask": "ACCT-91005027",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "MXN",
+      "int_bic": "BMSXMXMM",
+      "nostro_mask": "ACCT-91005028",
+      "with_an_mask": "ACCT-91005028",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "NDEANOKK",
+      "nostro_mask": "ACCT-91005029",
+      "with_an_mask": "ACCT-91005029",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ASBBNZ2A",
+      "nostro_mask": "ACCT-91005030",
+      "with_an_mask": "ACCT-91005030",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PEN",
+      "int_bic": "BCONPEPL",
+      "nostro_mask": "ACCT-91005031",
+      "with_an_mask": "ACCT-91005031",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PHP",
+      "int_bic": "SCBLPHMM",
+      "nostro_mask": "ACCT-91005032",
+      "with_an_mask": "ACCT-91005032",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PKR",
+      "int_bic": "HABBPKKA",
+      "nostro_mask": "ACCT-91005033",
+      "with_an_mask": "ACCT-91005033",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PLN",
+      "int_bic": "PKOPPLPW",
+      "nostro_mask": "ACCT-91005034",
+      "with_an_mask": "ACCT-91005034",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "QAR",
+      "int_bic": "QNBAQAQA",
+      "nostro_mask": "ACCT-91005035",
+      "with_an_mask": "ACCT-91005035",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "DBSSSGSG",
+      "nostro_mask": "ACCT-91005036",
+      "with_an_mask": "ACCT-91005036",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "THB",
+      "int_bic": "SCBLTHBX",
+      "nostro_mask": "ACCT-91005037",
+      "with_an_mask": "ACCT-91005037",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "TND",
+      "int_bic": "STBKTNTT",
+      "nostro_mask": "ACCT-91005038",
+      "with_an_mask": "ACCT-91005038",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "TRY",
+      "int_bic": "ISBKTRIS",
+      "nostro_mask": "ACCT-91005039",
+      "with_an_mask": "ACCT-91005039",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3N",
+      "nostro_mask": "ACCT-91005040",
+      "with_an_mask": "ACCT-91005040",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "SBZAZAJJ",
+      "nostro_mask": "ACCT-91005041",
+      "with_an_mask": "ACCT-91005041",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "included_route_count": 41
+  }
+}

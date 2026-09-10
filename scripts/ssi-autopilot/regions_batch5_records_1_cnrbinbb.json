@@ -1,0 +1,37 @@
+[
+  {
+    "source": "https://www.canarabank.bank.in/swift",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Abu Dhabi Commercial Bank|ADCBAEAA|91002001|91002001",
+      "AED|Mashreq Dubai|BOMLAEAD|91002002|91002002",
+      "AUD|ANZ Melbourne|ANZBAU3M|91002003|91002003",
+      "CAD|Bank of Montreal|BOFMCAM2|91002004|91002004",
+      "CHF|Zuercher Kantonalbank|ZKBKCHZZ80A|91002005|91002005",
+      "EUR|Barclays Frankfurt|BARCDEFF|91002006|91002006",
+      "EUR|HSBC Continental Europe|CCFRFRPP|91002007|91002007",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91002008|91002008",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91002009|91002009",
+      "GBP|Barclays London|BARCGB22|91002010|91002010",
+      "GBP|Canara Bank London|CNRBGB2L|91002011|91002011",
+      "GBP|HSBC London|MIDLGB22|91002012|91002012",
+      "HKD|Standard Chartered Hong Kong|SCBLHKHH|91002013|91002013",
+      "JPY|Bank of America Tokyo|BOFAJPJX|91002014|91002014",
+      "JPY|Sumitomo Mitsui Tokyo|SMBCJPJT|91002015|91002015",
+      "SEK|SEB Stockholm|ESSESESS|91002016|91002016",
+      "SGD|OCBC Singapore|OCBCSGSG|91002017|91002017",
+      "USD|Bank of America New York|BOFAUS3N|91002018|91002018",
+      "USD|JPMorgan Chase New York|CHASUS33|91002019|91002019",
+      "USD|Citibank New York|CITIUS33|91002020|91002020",
+      "USD|Bank of New York Mellon|IRVTUS3N|91002021|91002021",
+      "USD|HSBC New York|MRMDUS33|91002022|91002022",
+      "USD|Wells Fargo New York|PNBPUS33|91002023|91002023",
+      "USD|Standard Chartered New York|SCBLUS33|91002024|91002024"
+    ]
+  }
+]

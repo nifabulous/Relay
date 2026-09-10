@@ -1,0 +1,25 @@
+{
+  "bic8": "ABPAPKKA",
+  "name": "Allied Bank Limited",
+  "country": "PK",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "JPY",
+    "SAR",
+    "SEK",
+    "SGD",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "abl.com"
+  ],
+  "admitted_record_digest": "553f28c5fa52ef01de2d8c9e4f60aa3d9fa925b8bca6505c47e794e65b25e3c4",
+  "compact_records_file": "regions_batch5_records_1.json"
+}

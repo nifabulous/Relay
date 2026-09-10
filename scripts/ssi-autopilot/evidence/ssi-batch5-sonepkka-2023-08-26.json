@@ -1,0 +1,208 @@
+{
+  "source": "https://soneri-bank.nyc3.cdn.digitaloceanspaces.com/wp-content/uploads/2023/08/26092615/Nostro-account-details-1.pdf",
+  "as_of": "2023-08-26",
+  "beneficiary_bic": "SONEPKKA",
+  "region_masked_block": 91003300,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEAD",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CHASAU2X",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "HBZUCHZZ",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ICBKPKKA",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "SCBLCNSX",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CHASDEFX",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CHASGB2L",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "CHASJPJT",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "NBPAJPJT",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "HABBSGSG",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "HANYUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "archived",
+      "terms_inferred": false
+    }
+  ],
+  "scope": {
+    "included_route_count": 19
+  }
+}

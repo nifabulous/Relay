@@ -1,0 +1,28 @@
+[
+  {
+    "source": "https://webasset.rblbank.com/pdfs/CorporateInstitutionalBanking/20130123_SSI_REVISED.pdf",
+    "as_of": "2013-01-23",
+    "status": "archived",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AED|Mashreq Dubai|BOMLAEAD|91002001|91002001",
+      "AUD|ANZ Melbourne|ANZBAU3M|91002002|91002002",
+      "AUD|Westpac Sydney|WPACAU2S|91002003|91002003",
+      "CHF|UBS Switzerland|UBSWCHZH80A|91002004|91002004",
+      "DKK|Commerzbank Frankfurt|COBADEFF|91002005|91002005",
+      "EUR|Commerzbank Frankfurt|COBADEFF|91002006|91002006",
+      "EUR|Standard Chartered Frankfurt|SCBLDEFF|91002007|91002007",
+      "GBP|Standard Chartered London|SCBLGB2L|91002008|91002008",
+      "HKD|Axis Bank Hong Kong|AXISHKHH|91002009|91002009",
+      "JPY|State Bank of India Tokyo|SBINJPJT|91002010|91002010",
+      "NZD|Westpac New Zealand|WPACNZ2W|91002011|91002011",
+      "SEK|Commerzbank Frankfurt|COBADEFF|91002012|91002012",
+      "SGD|DBS Singapore|DBSSSGSG|91002013|91002013",
+      "USD|Wells Fargo New York|PNBPUS33|91002014|91002014",
+      "USD|Standard Chartered New York|SCBLUS33|91002015|91002015"
+    ]
+  }
+]

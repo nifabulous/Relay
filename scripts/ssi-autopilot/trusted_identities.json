@@ -1271,5 +1271,25 @@
     "country": "IN",
     "domains": ["indusind.com"],
     "settlement_terms_published": false
+  },
+  "HASPDEHH": {"name": "Hamburger Sparkasse AG", "country": "DE", "domains": ["haspa.de"], "settlement_terms_published": false},
+  "FNNBROBU": {"name": "Nexent Bank N.V. Amsterdam Bucharest Branch", "country": "RO", "domains": ["nexentbank.ro"], "settlement_terms_published": false},
+  "RATNINBB": {"name": "RBL Bank Limited", "country": "IN", "domains": ["rblbank.com"], "settlement_terms_published": false},
+  "CITICZPX": {"name": "Citibank Europe plc, organizační složka", "country": "CZ", "domains": ["citibank.com"], "settlement_terms_published": false},
+  "CNRBINBB": {"name": "Canara Bank", "country": "IN", "domains": ["canarabank.bank.in"], "settlement_terms_published": false},
+  "ASCMPKKA": {"name": "Askari Bank Limited", "country": "PK", "domains": ["askari.tdfclient.com"], "settlement_terms_published": false},
+  "SONEPKKA": {"name": "Soneri Bank Limited", "country": "PK", "domains": ["soneri-bank.nyc3.cdn.digitaloceanspaces.com"], "settlement_terms_published": false},
+  "DEUTNL2A": {"name": "Deutsche Bank AG, Amsterdam", "country": "NL", "domains": ["corporates.db.com"], "settlement_terms_published": false},
+  "NDEAFIHH": {"name": "Nordea Bank Abp", "country": "FI", "domains": ["nordea.com"], "settlement_terms_published": false},
+  "NDEANOKK": {"name": "Nordea Bank Abp, filial i Norge", "country": "NO", "domains": ["nordea.com"], "settlement_terms_published": false},
+  "NDEADKKK": {"name": "Nordea Danmark, filial af Nordea Bank Abp, Finland", "country": "DK", "domains": ["nordea.com"], "settlement_terms_published": false},
+  "DNBANOKX": {"name": "DNB Carnegie", "country": "NO", "domains": ["dnb.no"], "settlement_terms_published": false},
+  "DNBADEHX": {"name": "DNB Bank ASA, Hamburg Branch", "country": "DE", "domains": ["dnb.no"], "settlement_terms_published": false},
+  "PRBLBDDH": {"name": "Prime Bank PLC", "country": "BD", "domains": ["primebank.com.bd"], "settlement_terms_published": false},
+  "MGBLBDDH": {"name": "Meghna Bank PLC", "country": "BD", "domains": ["meghnabank.com.bd"], "settlement_terms_published": false},
+  "JAKAINBB": {"name": "The Jammu and Kashmir Bank Ltd.", "country": "IN", "domains": ["jkb.bank.in"], "settlement_terms_published": false},
+  "HDFCHKHH": {"name": "HDFC Bank Limited Hong Kong", "country": "HK", "domains": ["hdfcbankhongkong.com"], "settlement_terms_published": false},
+  "NKGSINBB": {"name": "NKGSB Co-operative Bank Ltd.", "country": "IN", "domains": ["nkgsb.bank.in"], "settlement_terms_published": false},
+  "ABPAPKKA": {"name": "Allied Bank Limited", "country": "PK", "domains": ["abl.com"], "settlement_terms_published": false},
+  "AMNALKLX": {"name": "Amana Bank PLC", "country": "LK", "domains": ["amanabank.lk"], "settlement_terms_published": false}
   }
-}

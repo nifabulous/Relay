@@ -1,0 +1,21 @@
+[
+  {
+    "source": "https://www.hdfcbankhongkong.com/nostro-account",
+    "as_of": "2026-09-10",
+    "status": "unverified",
+    "charge_code": "SHA",
+    "value_date": "spot",
+    "bic_only": false,
+    "terms_inferred": true,
+    "rows": [
+      "AUD|ANZ Melbourne|ANZBAU3M|91003001|91003001",
+      "CHF|UBS Zurich|UBSWCHZH80A|91003002|91003002",
+      "EUR|JPMorgan Frankfurt|CHASDEFX|91003003|91003003",
+      "GBP|JPMorgan Chase London|CHASGB2L|91003004|91003004",
+      "HKD|Standard Chartered Hong Kong|SCBLHKHH|91003005|91003005",
+      "INR|HDFC Bank India|HDFCINBB|91003006|91003006",
+      "JPY|JPMorgan Tokyo|CHASJPJT|91003007|91003007",
+      "USD|JPMorgan Chase New York|CHASUS33|91003008|91003008"
+    ]
+  }
+]
