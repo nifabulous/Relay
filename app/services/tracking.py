@@ -45,6 +45,36 @@ STATUS_RETURNED = "RETURNED"
 
 TERMINAL_STATUSES = {STATUS_CREDITED, STATUS_REJECTED, STATUS_RETURNED}
 
+# ── gpi status → ISO 20022 pacs.002 TransactionStatus ──────────────────────
+#
+# CBPR+ retired MT199 gpi status updates in favour of pacs.002; a learner who
+# has seen the gpi tracker needs the code the same event carries on FINplus.
+#
+# RETURNED is deliberately unmapped. A return is a pacs.004 PaymentReturn — a
+# fresh message sending the funds back — not a status on the original
+# instruction. Folding it into RJCT would contradict module 14, which teaches
+# reject (pacs.002) vs return (pacs.004) vs recall (camt.056) as three
+# different things. None means "no pacs.002 status applies", not "unknown".
+ISO_TRANSACTION_STATUS = {
+    STATUS_INITIATED: "PDNG",     # pending: received, not yet accepted
+    STATUS_ACCEPTED: "ACSP",      # accepted, settlement in process
+    STATUS_IN_PROGRESS: "ACSP",
+    STATUS_FORWARDED: "ACSP",
+    STATUS_CREDITED: "ACSC",      # accepted, settlement completed
+    STATUS_REJECTED: "RJCT",
+    STATUS_RETURNED: None,
+}
+
+
+def iso_transaction_status(status: str) -> Optional[str]:
+    """The pacs.002 TransactionStatus for a gpi timeline status, if one applies.
+
+    Returns None for a status that has no pacs.002 equivalent (a return) and
+    for any status this module does not define.
+    """
+    return ISO_TRANSACTION_STATUS.get(status)
+
+
 
 def generate_uetr() -> str:
     """Generate a UETR — a UUID v4 per SWIFT gpi spec (field 121 of MT103)."""

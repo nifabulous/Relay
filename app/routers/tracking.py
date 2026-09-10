@@ -16,6 +16,7 @@ from ..services.tracking import (
     generate_timeline,
     generate_uetr,
     get_payment_status,
+    iso_transaction_status,
 )
 from ._shared import _TRACKING_DISCLAIMER
 
@@ -147,6 +148,7 @@ def _build_track_response(uetr: str, status: dict) -> TrackPaymentResponse:
     return TrackPaymentResponse(
         uetr=uetr,
         current_status=status["current_status"],
+        iso_transaction_status=iso_transaction_status(status["current_status"]),
         is_terminal=status["is_terminal"],
         event_count=status["event_count"],
         sent_amount=status["sent_amount"],

@@ -347,6 +347,14 @@ class PaymentEventInfo(BaseModel):
 class TrackPaymentResponse(BaseModel):
     uetr: str
     current_status: str
+    iso_transaction_status: Optional[str] = Field(
+        None,
+        description=(
+            "ISO 20022 pacs.002 TransactionStatus for the current gpi status. "
+            "Null when no pacs.002 status applies — a RETURNED payment is a "
+            "pacs.004 PaymentReturn, not a rejection."
+        ),
+    )
     is_terminal: bool
     event_count: int
     sent_amount: Optional[str] = None

@@ -84,7 +84,11 @@ INSTANT_RAILS = {
     "sepa instant", "sct inst", "rtp", "fednow", "instant",
 }
 
-DEFAULT_LAG_BY_CURRENCY = {"USD": 2, "EUR": 1, "GBP": 0, "JPY": 2, "NGN": 0, "KES": 0}
+# Fallback lag when the caller names no scheme, or names one this table does
+# not know. GBP is T+2 like any other spot cross-border instruction: CHAPS is
+# reached by naming CHAPS, not by paying in sterling. Defaulting GBP to T+0
+# quietly told every learner that sterling settles same-day.
+DEFAULT_LAG_BY_CURRENCY = {"USD": 2, "EUR": 1, "GBP": 2, "JPY": 2, "NGN": 0, "KES": 0}
 
 
 @dataclass

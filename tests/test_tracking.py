@@ -962,3 +962,92 @@ class TestScheduledTrackConcurrency:
         assert sorted(result["event_count"] for result in results) == [2, 3]
         with SessionLocal() as session:
             assert len(tracking_module.get_visible_timeline(session, uetr, now=start)) == 3
+
+
+from app.services.tracking import iso_transaction_status  # noqa: E402
+
+
+class TestIso20022TransactionStatus:
+    """
+    gpi timeline status -> ISO 20022 pacs.002 TransactionStatus.
+
+    Relay teaches the reject/return/recall distinction explicitly
+    (curriculum.ts:234 — "Distinguish a reject (pacs.002) from a return
+    (pacs.004) and a recall (camt.056)"), so the mapping has to hold that
+    line: a return is not a rejection with a different label.
+    """
+
+    def test_in_flight_states_map_to_acsp(self):
+        from app.services.tracking import (
+            STATUS_ACCEPTED,
+            STATUS_FORWARDED,
+            STATUS_IN_PROGRESS,
+            iso_transaction_status,
+        )
+
+        for status in (STATUS_ACCEPTED, STATUS_IN_PROGRESS, STATUS_FORWARDED):
+            assert iso_transaction_status(status) == "ACSP", status
+
+    def test_credited_maps_to_acsc(self):
+        from app.services.tracking import STATUS_CREDITED, iso_transaction_status
+
+        assert iso_transaction_status(STATUS_CREDITED) == "ACSC"
+
+    def test_initiated_maps_to_pdng(self):
+        from app.services.tracking import STATUS_INITIATED, iso_transaction_status
+
+        assert iso_transaction_status(STATUS_INITIATED) == "PDNG"
+
+    def test_rejected_maps_to_rjct(self):
+        from app.services.tracking import STATUS_REJECTED, iso_transaction_status
+
+        assert iso_transaction_status(STATUS_REJECTED) == "RJCT"
+
+    def test_returned_has_no_transaction_status(self):
+        """
+        A return is a pacs.004 PaymentReturn — a new message settling funds
+        back — not a pacs.002 status on the original. Mapping it to RJCT
+        would teach the opposite of module 14.
+        """
+        from app.services.tracking import STATUS_RETURNED, iso_transaction_status
+
+        assert iso_transaction_status(STATUS_RETURNED) is None
+
+    def test_unknown_status_is_unmapped_rather_than_guessed(self):
+        from app.services.tracking import iso_transaction_status
+
+        assert iso_transaction_status("NOT_A_STATUS") is None
+
+    def test_every_defined_status_is_considered(self):
+        """
+        A new STATUS_* constant must be given a mapping decision, including
+        the decision that it has none. This fails on an unreviewed addition.
+        """
+        from app.services import tracking
+
+        defined = {
+            v for k, v in vars(tracking).items()
+            if k.startswith("STATUS_") and isinstance(v, str)
+        }
+        assert defined == set(tracking.ISO_TRANSACTION_STATUS)
+
+    def test_track_response_carries_the_iso_status(self, client):
+        """The mapping is only worth having if a learner can see it."""
+        create = client.post("/api/track/create", json={
+            "originator_bic": "BOFAUS3NXXX",
+            "originator_name": "Bank of America",
+            "beneficiary_bic": "GTBINGLAXXX",
+            "beneficiary_name": "Guaranty Trust Bank",
+            "currency": "USD",
+            "amount": 5000.00,
+            "intermediary_bics": ["CITIUS33XXX"],
+            "intermediary_names": ["Citibank N.A."],
+        })
+        assert create.status_code in (200, 201), create.text
+        uetr = create.json()["uetr"]
+
+        body = client.get(f"/api/track/{uetr}").json()
+        assert body["iso_transaction_status"] == iso_transaction_status(
+            body["current_status"]
+        )
+        assert body["iso_transaction_status"] in {"PDNG", "ACSP", "ACSC", "RJCT", None}
