@@ -1,0 +1,128 @@
+{
+  "source": "https://csb.bank.in/list-correspondent-banks",
+  "source_sha256": "fa00a78d4193057d2cb78ca74dd6c81dd573a38ffcc6cfecb3a67783fb4edb73",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "CSYBIN55",
+  "region_masked_block": 91002000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic"
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEAD",
+      "nostro_fingerprint": "16eb66f8a72d9b62c9885262644b2478bb9c309d5357dba15ec9cc322e931e2f",
+      "with_an_fingerprint": "16eb66f8a72d9b62c9885262644b2478bb9c309d5357dba15ec9cc322e931e2f",
+      "nostro_mask": "ACCT-91002001",
+      "with_an_mask": "ACCT-91002001"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "SCBLSG22",
+      "nostro_fingerprint": "3ab68b2ff57c353c31928d4aae250084c86563774dc3c14f38c17e7171b79a99",
+      "with_an_fingerprint": "3ab68b2ff57c353c31928d4aae250084c86563774dc3c14f38c17e7171b79a99",
+      "nostro_mask": "ACCT-91002002",
+      "with_an_mask": "ACCT-91002002"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAT2",
+      "nostro_fingerprint": "1abb78beb99b276108bb6e36b251aea37bff604d414704f65b6633db0225ac2f",
+      "with_an_fingerprint": "1abb78beb99b276108bb6e36b251aea37bff604d414704f65b6633db0225ac2f",
+      "nostro_mask": "ACCT-91002003",
+      "with_an_mask": "ACCT-91002003"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": "8ca53be43a002e3b9a0d7a94afc02428b803ed456195e2f62489b477063311c8",
+      "with_an_fingerprint": "8ca53be43a002e3b9a0d7a94afc02428b803ed456195e2f62489b477063311c8",
+      "nostro_mask": "ACCT-91002004",
+      "with_an_mask": "ACCT-91002004"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CCFRFRPP",
+      "nostro_fingerprint": "37dfb2c2e217d1882f3a491392cc39d2c09b26af595d6178da37641dfc5b7430",
+      "with_an_fingerprint": "37dfb2c2e217d1882f3a491392cc39d2c09b26af595d6178da37641dfc5b7430",
+      "nostro_mask": "ACCT-91002005",
+      "with_an_mask": "ACCT-91002005"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": "1abee71df0721a910bfa0108400bd36451a5129dbf2ff092b2c6be2cb4836824",
+      "with_an_fingerprint": "1abee71df0721a910bfa0108400bd36451a5129dbf2ff092b2c6be2cb4836824",
+      "nostro_mask": "ACCT-91002006",
+      "with_an_mask": "ACCT-91002006"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_fingerprint": "02f069a37d7d76b7a99d75f7d145e85fa1eaf2048dd889f4debe6947336d6b31",
+      "with_an_fingerprint": "02f069a37d7d76b7a99d75f7d145e85fa1eaf2048dd889f4debe6947336d6b31",
+      "nostro_mask": "ACCT-91002007",
+      "with_an_mask": "ACCT-91002007"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_fingerprint": "e7cd7156b1b9e45c48b57313dcd9132bdcb7e19fa22a96f07f87bb4b9e9be5db",
+      "with_an_fingerprint": "e7cd7156b1b9e45c48b57313dcd9132bdcb7e19fa22a96f07f87bb4b9e9be5db",
+      "nostro_mask": "ACCT-91002008",
+      "with_an_mask": "ACCT-91002008"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SBINJPJT",
+      "nostro_fingerprint": "99745da020971b3bc46c69d17d78047ece54068c52ae2830c98d54bb84e8a4d8",
+      "with_an_fingerprint": "99745da020971b3bc46c69d17d78047ece54068c52ae2830c98d54bb84e8a4d8",
+      "nostro_mask": "ACCT-91002009",
+      "with_an_mask": "ACCT-91002009"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "SCBLSG22",
+      "nostro_fingerprint": "2d98fdc9567d38b5a4c397468b919e52948a6209aa12d07cd869ec87aa147c0a",
+      "with_an_fingerprint": "2d98fdc9567d38b5a4c397468b919e52948a6209aa12d07cd869ec87aa147c0a",
+      "nostro_mask": "ACCT-91002010",
+      "with_an_mask": "ACCT-91002010"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_fingerprint": "c156473eb1cc31c574e659bc4c435faadb38cc776098935353c7c92f4f6d7453",
+      "with_an_fingerprint": "c156473eb1cc31c574e659bc4c435faadb38cc776098935353c7c92f4f6d7453",
+      "nostro_mask": "ACCT-91002011",
+      "with_an_mask": "ACCT-91002011"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MRMDUS33",
+      "nostro_fingerprint": "c497a2170c1cab37fcea815a01bd3b38ef9abbc285350c7aff9a0ffe833b99fe",
+      "with_an_fingerprint": "c497a2170c1cab37fcea815a01bd3b38ef9abbc285350c7aff9a0ffe833b99fe",
+      "nostro_mask": "ACCT-91002012",
+      "with_an_mask": "ACCT-91002012"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_fingerprint": "d278f9e4a581e816d5848b2b6689926d01cfcdbb24779211b729e7f96ec093b0",
+      "with_an_fingerprint": "d278f9e4a581e816d5848b2b6689926d01cfcdbb24779211b729e7f96ec093b0",
+      "nostro_mask": "ACCT-91002013",
+      "with_an_mask": "ACCT-91002013"
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 13,
+    "included_route_count": 13,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 13,
+    "retrieved": "2026-09-10"
+  }
+}

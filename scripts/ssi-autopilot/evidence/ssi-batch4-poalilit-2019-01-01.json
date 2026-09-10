@@ -1,0 +1,64 @@
+{
+  "source": "https://www.bankjerusalem.co.il/media/3070/ssi-set-details.pdf",
+  "source_sha256": "34a7a9540e30006435d76e9633b4346f564654ae401606c86c2b0106d8a0e1be",
+  "as_of": "2019-01-01",
+  "beneficiary_bic": "POALILIT",
+  "region_masked_block": 91001000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic"
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "nostro_fingerprint": "d1e8ac7b2d4c3d25a091d151d768c5aa29db516ce7b973d588a8232946fac66b",
+      "with_an_fingerprint": "d1e8ac7b2d4c3d25a091d151d768c5aa29db516ce7b973d588a8232946fac66b",
+      "nostro_mask": "ACCT-91001001",
+      "with_an_mask": "ACCT-91001001"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "LOYDGB2L",
+      "nostro_fingerprint": "008835c19161122fd4382fe328ae1aba4c1da5be22b4cd20770e29f1c2a9fdd3",
+      "with_an_fingerprint": "008835c19161122fd4382fe328ae1aba4c1da5be22b4cd20770e29f1c2a9fdd3",
+      "nostro_mask": "ACCT-91001002",
+      "with_an_mask": "ACCT-91001002"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "DABASESX",
+      "nostro_fingerprint": "68a7acc6b0ea95446aab3d2db4c984b4704e832be044559fe34b671136d7a690",
+      "with_an_fingerprint": "68a7acc6b0ea95446aab3d2db4c984b4704e832be044559fe34b671136d7a690",
+      "nostro_mask": "ACCT-91001003",
+      "with_an_mask": "ACCT-91001003"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_fingerprint": "82f2de3d2f1ee26183236809be43407bd8a9e85806abe822087c5d69948374c6",
+      "with_an_fingerprint": "82f2de3d2f1ee26183236809be43407bd8a9e85806abe822087c5d69948374c6",
+      "nostro_mask": "ACCT-91001004",
+      "with_an_mask": "ACCT-91001004"
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "IDBLILIT",
+      "nostro_fingerprint": "b177f5cf933e9744b2f01b628da74217365cc93c6e8050de9cb33140dc109bb2",
+      "with_an_fingerprint": "b177f5cf933e9744b2f01b628da74217365cc93c6e8050de9cb33140dc109bb2",
+      "nostro_mask": "ACCT-91001005",
+      "with_an_mask": "ACCT-91001005"
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 5,
+    "included_route_count": 5,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 5,
+    "retrieved": "2026-09-10"
+  }
+}

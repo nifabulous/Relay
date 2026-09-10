@@ -1,0 +1,96 @@
+{
+  "source": "https://www.svc.bank.in/nostro-account",
+  "source_sha256": "421fbd4a2fb299024d3876c2741d3381e64a63b4cac96b97357cdb93766d4901",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "SVCBINBB",
+  "region_masked_block": 91002000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic"
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "ABINAEAA",
+      "nostro_fingerprint": "9c4b8e8f8d5ac8bb629dc2808c46999b3dde343ac5b8afba89094c8b9b670f20",
+      "with_an_fingerprint": "9c4b8e8f8d5ac8bb629dc2808c46999b3dde343ac5b8afba89094c8b9b670f20",
+      "nostro_mask": "ACCT-91002001",
+      "with_an_mask": "ACCT-91002001"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "SBINAU2S",
+      "nostro_fingerprint": "2e761ec86e611107d6c4deddb3277895d3b1d85a401211f34af54eff086dd240",
+      "with_an_fingerprint": "2e761ec86e611107d6c4deddb3277895d3b1d85a401211f34af54eff086dd240",
+      "nostro_mask": "ACCT-91002002",
+      "with_an_mask": "ACCT-91002002"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": "301a73b3f8c52b39dd327e361f7f4f0d6bb9a58f37a4c07d52f5ff6a2b8beb3a",
+      "with_an_fingerprint": "301a73b3f8c52b39dd327e361f7f4f0d6bb9a58f37a4c07d52f5ff6a2b8beb3a",
+      "nostro_mask": "ACCT-91002003",
+      "with_an_mask": "ACCT-91002003"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": "0bc7ad82ac164124be4da608f929dbad3bdf902a5d77860d4db130c2e243e6b2",
+      "with_an_fingerprint": "0bc7ad82ac164124be4da608f929dbad3bdf902a5d77860d4db130c2e243e6b2",
+      "nostro_mask": "ACCT-91002004",
+      "with_an_mask": "ACCT-91002004"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": "89369ece7e5d1fb814c4a4a5f2d0d798ec485e7f32cd1286aa4d85d1b276c019",
+      "with_an_fingerprint": "89369ece7e5d1fb814c4a4a5f2d0d798ec485e7f32cd1286aa4d85d1b276c019",
+      "nostro_mask": "ACCT-91002005",
+      "with_an_mask": "ACCT-91002005"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BKIDJPJT",
+      "nostro_fingerprint": "ef1a280286a728b4869649bbbeac5748559267bd8db7918fc9500e74a02adc53",
+      "with_an_fingerprint": "ef1a280286a728b4869649bbbeac5748559267bd8db7918fc9500e74a02adc53",
+      "nostro_mask": "ACCT-91002006",
+      "with_an_mask": "ACCT-91002006"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKIDUS33",
+      "nostro_fingerprint": "e03a1def4028c8fe77145f0e078462d71d726f182a5d3427d4b40321a8c137e2",
+      "with_an_fingerprint": "e03a1def4028c8fe77145f0e078462d71d726f182a5d3427d4b40321a8c137e2",
+      "nostro_mask": "ACCT-91002007",
+      "with_an_mask": "ACCT-91002007"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33XXX",
+      "nostro_fingerprint": "808501d773a31d39488b55c3157094fba8c26456e7b6b11d2800ce582cbbcd8c",
+      "with_an_fingerprint": "808501d773a31d39488b55c3157094fba8c26456e7b6b11d2800ce582cbbcd8c",
+      "nostro_mask": "ACCT-91002008",
+      "with_an_mask": "ACCT-91002008"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33",
+      "nostro_fingerprint": "b1590d1933feebfc6685ea1a6863fb0ed33b901e324213b91f14bd0151a1a65a",
+      "with_an_fingerprint": "b1590d1933feebfc6685ea1a6863fb0ed33b901e324213b91f14bd0151a1a65a",
+      "nostro_mask": "ACCT-91002009",
+      "with_an_mask": "ACCT-91002009"
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 9,
+    "included_route_count": 9,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 9,
+    "retrieved": "2026-09-10"
+  }
+}

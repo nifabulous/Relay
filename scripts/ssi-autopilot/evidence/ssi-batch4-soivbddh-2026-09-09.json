@@ -1,0 +1,152 @@
+{
+  "source": "https://www.siblbd.com/remittance/NOSTRO-Account",
+  "source_sha256": "eb0d157bcc47e1a38de4175846c7fafe30e5346b93aa7c0fa67bfe187b0a9987",
+  "as_of": "2026-09-09",
+  "beneficiary_bic": "SOIVBDDH",
+  "region_masked_block": 91001800,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic"
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "ABDIAEAD",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BOHZCNBJ",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "CZCBCN2X",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJT",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "BJAZSAJE",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "RIBLSARI",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "COBADEFF",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CZCBCN2X",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "HANYUS33",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "KOEXKRSE",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_fingerprint": null,
+      "with_an_fingerprint": null,
+      "nostro_mask": null,
+      "with_an_mask": null
+    }
+  ],
+  "scope": {
+    "advertised_route_count": 33,
+    "included_route_count": 16,
+    "excluded_routes": []
+  },
+  "source_snapshot": {
+    "route_count": 16,
+    "retrieved": "2026-09-10"
+  }
+}
