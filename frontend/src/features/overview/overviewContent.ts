@@ -115,7 +115,7 @@ export function buildPlan(input: {
   if (input.reviewsDue > 0) {
     plan.push({
       key: "reviews",
-      label: `Review ${input.reviewsDue} missed question${input.reviewsDue === 1 ? "" : "s"}`,
+      label: `Review ${input.reviewsDue} question${input.reviewsDue === 1 ? "" : "s"} due for review`,
       to: "/learn/practice",
       state: "Due",
     });

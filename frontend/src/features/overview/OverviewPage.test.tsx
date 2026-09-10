@@ -7,6 +7,7 @@ import { selectPrimaryAction, type OverviewContext } from "./selectPrimaryAction
 import { OverviewPage } from "./OverviewPage";
 import { server } from "../../test/server";
 import { saveProgress } from "../../lib/persistence/storage";
+import { buildPlan } from "./overviewContent";
 
 function renderOverviewPage() {
   const queryClient = new QueryClient({
@@ -119,6 +120,20 @@ describe("OverviewPage", () => {
 
     expect(screen.queryByRole("heading", { name: /learning backup/i })).toBeNull();
     expect(document.querySelector(".overview__learner-data")).toBeNull();
+  });
+});
+
+describe("Overview plan wording", () => {
+  it("describes due reviews without claiming how they became due", () => {
+    const plan = buildPlan({
+      reviewsDue: 2,
+      practiceDone: false,
+      nextModuleTitle: null,
+      nextModuleHref: null,
+      curriculumComplete: false,
+    });
+
+    expect(plan[0]?.label).toBe("Review 2 questions due for review");
   });
 });
 
