@@ -1,0 +1,148 @@
+{
+  "source": "https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-DEUTNL2A-FFT-July-2025.pdf",
+  "as_of": "2025-07-01",
+  "beneficiary_bic": "DEUTNL2A",
+  "region_masked_block": 91003400,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003401",
+      "with_an_mask": "ACCT-91003401",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003402",
+      "with_an_mask": "ACCT-91003402",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "BGN",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003403",
+      "with_an_mask": "ACCT-91003403",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "ROYCCAT2",
+      "nostro_mask": "ACCT-91003404",
+      "with_an_mask": "ACCT-91003404",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "DEUTGB2L",
+      "nostro_mask": "ACCT-91003405",
+      "with_an_mask": "ACCT-91003405",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "MXN",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003406",
+      "with_an_mask": "ACCT-91003406",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKK",
+      "nostro_mask": "ACCT-91003407",
+      "with_an_mask": "ACCT-91003407",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003408",
+      "with_an_mask": "ACCT-91003408",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "PLN",
+      "int_bic": "DEUTPLPX",
+      "nostro_mask": "ACCT-91003409",
+      "with_an_mask": "ACCT-91003409",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "QAR",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003410",
+      "with_an_mask": "ACCT-91003410",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "RON",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003411",
+      "with_an_mask": "ACCT-91003411",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "RUB",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003412",
+      "with_an_mask": "ACCT-91003412",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": "ACCT-91003413",
+      "with_an_mask": "ACCT-91003413",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "included_route_count": 13
+  }
+}

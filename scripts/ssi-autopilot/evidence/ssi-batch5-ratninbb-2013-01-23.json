@@ -1,0 +1,168 @@
+{
+  "source": "https://webasset.rblbank.com/pdfs/CorporateInstitutionalBanking/20130123_SSI_REVISED.pdf",
+  "as_of": "2013-01-23",
+  "beneficiary_bic": "RATNINBB",
+  "region_masked_block": 91002000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEAD",
+      "nostro_mask": "ACCT-91002001",
+      "with_an_mask": "ACCT-91002001",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "nostro_mask": "ACCT-91002002",
+      "with_an_mask": "ACCT-91002002",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "WPACAU2S",
+      "nostro_mask": "ACCT-91002003",
+      "with_an_mask": "ACCT-91002003",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "nostro_mask": "ACCT-91002004",
+      "with_an_mask": "ACCT-91002004",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002005",
+      "with_an_mask": "ACCT-91002005",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002006",
+      "with_an_mask": "ACCT-91002006",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFF",
+      "nostro_mask": "ACCT-91002007",
+      "with_an_mask": "ACCT-91002007",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2L",
+      "nostro_mask": "ACCT-91002008",
+      "with_an_mask": "ACCT-91002008",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "AXISHKHH",
+      "nostro_mask": "ACCT-91002009",
+      "with_an_mask": "ACCT-91002009",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SBINJPJT",
+      "nostro_mask": "ACCT-91002010",
+      "with_an_mask": "ACCT-91002010",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "WPACNZ2W",
+      "nostro_mask": "ACCT-91002011",
+      "with_an_mask": "ACCT-91002011",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "COBADEFF",
+      "nostro_mask": "ACCT-91002012",
+      "with_an_mask": "ACCT-91002012",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "DBSSSGSG",
+      "nostro_mask": "ACCT-91002013",
+      "with_an_mask": "ACCT-91002013",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33",
+      "nostro_mask": "ACCT-91002014",
+      "with_an_mask": "ACCT-91002014",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33",
+      "nostro_mask": "ACCT-91002015",
+      "with_an_mask": "ACCT-91002015",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "archived",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "included_route_count": 15
+  }
+}

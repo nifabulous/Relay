@@ -1,0 +1,238 @@
+{
+  "source": "https://www.haspa.de/en/home/international-relations/bank-for-cover-payments.html",
+  "as_of": "2026-09-10",
+  "beneficiary_bic": "HASPDEHH",
+  "region_masked_block": 91005200,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3M",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "CIBCCATT",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHDEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "CZK",
+      "int_bic": "RZBAATWW",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "DABADKKK",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFF",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "LOYDGB2L",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "HASEHKHH",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "HUF",
+      "int_bic": "MKKBHUHB",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "CHASDEFX",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKK",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "PLN",
+      "int_bic": "WBKPPLPP",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "SWEDSESS",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "DBSSSGSG",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "THB",
+      "int_bic": "SICOTHBK",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "TRY",
+      "int_bic": "ISBKTRIS",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3N",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "ABSAZAJJ",
+      "nostro_mask": null,
+      "with_an_mask": null,
+      "charge_code": null,
+      "value_date": null,
+      "status": "unverified",
+      "terms_inferred": false
+    }
+  ],
+  "scope": {
+    "included_route_count": 22
+  }
+}

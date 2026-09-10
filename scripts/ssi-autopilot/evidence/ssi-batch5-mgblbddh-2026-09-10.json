@@ -1,0 +1,158 @@
+{
+  "source": "https://www.meghnabank.com.bd/public/images/737761_SSI%20List_Meghna%20Bank%20PLC.pdf",
+  "as_of": "2026-09-10",
+  "beneficiary_bic": "MGBLBDDH",
+  "region_masked_block": 91001800,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "Masked account tokens preserve source equality within this beneficiary namespace; no account-derived equality artifact is committed.",
+    "raw_accounts_committed": false,
+    "namespace": "beneficiary_bic",
+    "account_equality_artifact_committed": false
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEAD",
+      "nostro_mask": "ACCT-91001801",
+      "with_an_mask": "ACCT-91001801",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CZNBKRSE",
+      "nostro_mask": "ACCT-91001802",
+      "with_an_mask": "ACCT-91001802",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "CZNBKRSE",
+      "nostro_mask": "ACCT-91001803",
+      "with_an_mask": "ACCT-91001803",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ABOCCNBJ300",
+      "nostro_mask": "ACCT-91001804",
+      "with_an_mask": "ACCT-91001804",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BPMOIT22",
+      "nostro_mask": "ACCT-91001805",
+      "with_an_mask": "ACCT-91001805",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BSONGB2L",
+      "nostro_mask": "ACCT-91001806",
+      "with_an_mask": "ACCT-91001806",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BSONGB2L",
+      "nostro_mask": "ACCT-91001807",
+      "with_an_mask": "ACCT-91001807",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CZNBKRSE",
+      "nostro_mask": "ACCT-91001808",
+      "with_an_mask": "ACCT-91001808",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "NBPAJPJT",
+      "nostro_mask": "ACCT-91001809",
+      "with_an_mask": "ACCT-91001809",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "BJAZSAJE",
+      "nostro_mask": "ACCT-91001810",
+      "with_an_mask": "ACCT-91001810",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BSONGB2L",
+      "nostro_mask": "ACCT-91001811",
+      "with_an_mask": "ACCT-91001811",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CZNBKRSE",
+      "nostro_mask": "ACCT-91001812",
+      "with_an_mask": "ACCT-91001812",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "HANYUS33",
+      "nostro_mask": "ACCT-91001813",
+      "with_an_mask": "ACCT-91001813",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33",
+      "nostro_mask": "ACCT-91001814",
+      "with_an_mask": "ACCT-91001814",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "status": "unverified",
+      "terms_inferred": true
+    }
+  ],
+  "scope": {
+    "included_route_count": 14
+  }
+}

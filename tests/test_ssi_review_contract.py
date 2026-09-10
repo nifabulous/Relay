@@ -92,12 +92,12 @@ def test_compact_generated_sources_match_independent_evidence():
         for bank in region["banks"]
         if "compact_records_file" in bank
     }
-    assert len(compact_banks) == 26
+    assert len(compact_banks) == 46
 
     evidence_dir = _MANIFEST_PATH.parent / "evidence"
     evidence_by_bic = {
         evidence["beneficiary_bic"]: evidence
-        for path in evidence_dir.glob("ssi-batch4-*.json")
+        for path in evidence_dir.glob("ssi-batch[45]-*.json")
         for evidence in [json.loads(path.read_text(encoding="utf-8"))]
     }
     assert compact_banks == set(evidence_by_bic)
@@ -555,7 +555,7 @@ def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
         if bank.get("seedable", True) and bank.get("admitted_records")
     }
     keys = {key for key in expected if key[0] in beneficiary_bics}
-    assert len(keys) == 180
+    assert len(keys) == 199
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
         _, bank, record = expected[key]

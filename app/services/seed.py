@@ -457,6 +457,26 @@ BANKS = [
     ("BCMLINBBXXX", "Bharat Cooperative Bank (Mumbai) Ltd", "IN", "Mumbai", "INR"),
     ("CSYBIN55XXX", "CSB Bank Limited", "IN", "Thrissur", "INR"),
     ("INDBINBBXXX", "IndusInd Bank Limited", "IN", "Mumbai", "INR"),
+    # ---- SSI expansion batch 5 beneficiaries ----
+    ("HASPDEHHXXX", "Hamburger Sparkasse AG", "DE", "Hamburg", "EUR"),
+    ("FNNBROBUXXX", "Nexent Bank N.V. Amsterdam Bucharest Branch", "RO", "Bucharest", "RON"),
+    ("RATNINBBXXX", "RBL Bank Limited", "IN", "Mumbai", "INR"),
+    ("CITICZPXXXX", "Citibank Europe plc, organizacni slozka", "CZ", "Prague", "CZK"),
+    ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
+    ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
+    ("SONEPKKAXXX", "Soneri Bank Limited", "PK", "Karachi", "PKR"),
+    ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", "NL", "Amsterdam", "EUR"),
+    ("NDEANOKKXXX", "Nordea Bank Abp, Oslo", "NO", "Oslo", "NOK"),
+    ("NDEADKKKXXX", "Nordea Denmark", "DK", "Copenhagen", "DKK"),
+    ("DNBANOKXXXX", "DNB Carnegie", "NO", "Oslo", "NOK"),
+    ("DNBADEHXXXX", "DNB Bank ASA, Hamburg Branch", "DE", "Hamburg", "EUR"),
+    ("PRBLBDDHXXX", "Prime Bank PLC", "BD", "Dhaka", "BDT"),
+    ("MGBLBDDHXXX", "Meghna Bank PLC", "BD", "Dhaka", "BDT"),
+    ("JAKAINBBXXX", "The Jammu and Kashmir Bank Ltd.", "IN", "Srinagar", "INR"),
+    ("HDFCHKHHXXX", "HDFC Bank Limited Hong Kong", "HK", "Hong Kong", "HKD"),
+    ("NKGSINBBXXX", "NKGSB Co-operative Bank Ltd.", "IN", "Mumbai", "INR"),
+    ("ABPAPKKAXXX", "Allied Bank Limited", "PK", "Lahore", "PKR"),
+    ("AMNALKLXXXX", "Amana Bank PLC", "LK", "Colombo", "LKR"),
 ]
 
 # (destination_currency, destination_country, intermediary_bic,
@@ -703,6 +723,19 @@ def _load_ssi_batch4_groups():
 
 _SSI_BATCH4_GROUPS = _load_ssi_batch4_groups()
 
+_SSI_BATCH5_DATA_FILES = ("seed_ssi_batch5_1.json",)
+
+
+def _load_ssi_batch5_groups():
+    groups = []
+    for filename in _SSI_BATCH5_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH5_GROUPS = _load_ssi_batch5_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -727,7 +760,34 @@ def _ssi_batch4_records():
             ))
     return expanded
 
+
+def _ssi_batch5_records():
+    """Expand the review-sized batch-5 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH5_GROUPS:
+        note = source + _SSI_REAL_NOTE
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 5 (bank-published routes; masked) ----
+    *_ssi_batch5_records(),
     # ---- SSI expansion batch 4 (bank-published routes; masked) ----
     # SSI batch 4 rows begin
     *_ssi_batch4_records(),
