@@ -83,29 +83,62 @@ def _canonical_note(record):
     )
 
 
-def test_compact_generated_sources_expand_losslessly():
-    """The forge-visible compact form must preserve every admitted record."""
+def test_compact_generated_sources_match_independent_evidence():
+    """Expansion is checked against sidecars, not a digest it produces itself."""
     raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
-    compact_keys = {
-        (region["name"], bank["bic8"])
+    compact_banks = {
+        bank["bic8"]
         for region in raw["regions"]
         for bank in region["banks"]
-        if "compact_records" in bank
+        if "compact_records_file" in bank
     }
-    assert len(compact_keys) == 26
+    assert len(compact_banks) == 26
 
-    autopilot = _load_autopilot()
-    expanded = autopilot.load_manifest()
-    for region_name, bic8 in compact_keys:
-        bank = next(
-            bank
-            for region in expanded["regions"]
-            if region["name"] == region_name
-            for bank in region["banks"]
-            if bank["bic8"] == bic8
-        )
-        assert bank["admitted_records"]
-        assert autopilot.record_digest(bank["admitted_records"]) == bank["admitted_record_digest"]
+    evidence_dir = _MANIFEST_PATH.parent / "evidence"
+    evidence_by_bic = {
+        evidence["beneficiary_bic"]: evidence
+        for path in evidence_dir.glob("ssi-batch4-*.json")
+        for evidence in [json.loads(path.read_text(encoding="utf-8"))]
+    }
+    assert compact_banks == set(evidence_by_bic)
+
+    def canonical_evidence_bic(value):
+        bic = value.strip().upper()
+        assert len(bic) in (8, 11), value
+        return bic if len(bic) == 11 else bic + "XXX"
+
+    expanded = _load_manifest()
+    for region in expanded["regions"]:
+        for bank in region["banks"]:
+            if bank["bic8"] not in compact_banks:
+                continue
+            evidence = evidence_by_bic[bank["bic8"]]
+            expected = {}
+            for route in evidence["routes"]:
+                key = (route["currency"].upper(), canonical_evidence_bic(route["int_bic"]))
+                assert key not in expected, key
+                expected[key] = route
+
+            records = bank["admitted_records"]
+            assert len(records) == evidence["scope"]["included_route_count"]
+            actual = {}
+            for record in records:
+                key = (record["currency"].upper(), canonical_evidence_bic(record["int_bic"]))
+                assert key not in actual, key
+                actual[key] = record
+                route = expected[key]
+                assert record["source"] == evidence["source"]
+                assert record["as_of"] == evidence["as_of"]
+                assert record["nostro"] == route["nostro_mask"]
+                assert record["with_an"] == route["with_an_mask"]
+                is_bic_only = (
+                    route["nostro_mask"] is None and route["with_an_mask"] is None
+                )
+                assert record["bic_only"] is is_bic_only
+                if is_bic_only:
+                    assert record["charge_code"] is None
+                    assert record["value_date"] is None
+            assert set(actual) == set(expected)
 
 
 def _row_object(row):

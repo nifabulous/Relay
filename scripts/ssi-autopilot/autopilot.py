@@ -149,9 +149,23 @@ def _expand_compact_manifest(manifest: dict) -> dict:
     manifest boundary, preserving the existing ``admitted_records`` contract
     for all callers and keeping the source values lossless.
     """
+    compact_file_cache: dict[str, dict] = {}
     for region in manifest.get("regions", []):
         for bank in region.get("banks", []):
             groups = bank.pop("compact_records", None)
+            compact_filename = bank.pop("compact_records_file", None)
+            if groups is None and compact_filename:
+                if compact_filename not in compact_file_cache:
+                    compact_path = REGIONS_FILE.parent / compact_filename
+                    compact_file_cache[compact_filename] = json.loads(
+                        compact_path.read_text(encoding="utf-8")
+                    )
+                groups = compact_file_cache[compact_filename].get(bank["bic8"])
+                if groups is None:
+                    raise ValueError(
+                        f"{region['name']}/{bank['bic8']}: compact file "
+                        f"{compact_filename} has no matching bank"
+                    )
             if groups is None:
                 continue
             records = []
@@ -1199,35 +1213,15 @@ def validate_results(results: dict, manifest: dict) -> list[str]:
 _SOURCE_CONSTANTS: dict[str, str] = {}
 
 
-def _expand_batch4_source_rows(tree: ast.AST) -> list[tuple[str, ...]]:
-    """Read the compact batch-4 ledger without executing seed.py."""
-    groups_node = next(
-        (
-            node.value
-            for node in tree.body
-            if isinstance(node, ast.Assign)
-            and len(node.targets) == 1
-            and isinstance(node.targets[0], ast.Name)
-            and node.targets[0].id == "_SSI_BATCH4_GROUPS"
-        ),
-        None,
-    )
-    if not isinstance(groups_node, ast.List):
-        return []
-
-    def resolve(node: ast.AST):
-        if isinstance(node, ast.Constant):
-            return node.value
-        if isinstance(node, ast.Name):
-            return _SOURCE_CONSTANTS[node.id]
-        if isinstance(node, (ast.List, ast.Tuple)):
-            return [resolve(item) for item in node.elts]
-        raise ValueError(f"unsupported compact seed expression: {ast.dump(node)}")
-
+def _expand_batch4_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-4 ledgers without executing seed.py."""
+    groups = []
+    for index in range(1, 4):
+        path = REPO_ROOT / "app" / "services" / f"seed_ssi_batch4_{index}.json"
+        groups.extend(json.loads(path.read_text(encoding="utf-8")))
     rows: list[tuple[str, ...]] = []
     real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
-    for group_node in groups_node.elts:
-        group = resolve(group_node)
+    for group in groups:
         (
             beneficiary_bic, beneficiary_name, source, as_of, status,
             charge_code, value_date, verified_by, bic_only, terms_inferred,
@@ -1284,7 +1278,7 @@ def _ssi_rows(source: str) -> list[tuple]:
                 and isinstance(element.value.func, ast.Name)
                 and element.value.func.id == "_ssi_batch4_records"
             ):
-                rows.extend(_expand_batch4_source_rows(tree))
+                rows.extend(_expand_batch4_source_rows())
                 continue
             if not isinstance(element, ast.Tuple):
                 continue

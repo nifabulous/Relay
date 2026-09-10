@@ -1,0 +1,216 @@
+{
+  "PSIBINBB": [
+    {
+      "source": "https://punjabandsind.bank.in/content/nostro-details",
+      "as_of": "2026-09-09",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Mashreq Bank Dubai|BOMLAEAD|91002001|91002001",
+        "AUD|State Bank of India, Sydney|SBINAU2S|91002002|91002002",
+        "CAD|Canadian Imperial Bank of Commerce, Toronto|CIBCCATT|91002003|91002003",
+        "EUR|Citi Bank, Frankfurt|CITIDEFF|91002004|91002004",
+        "GBP|Citi Bank, London|CITIGB2L|91002005|91002005",
+        "JPY|Mizuho Bank, Tokyo|MHCBJPJT|91002006|91002006",
+        "USD|Citi Bank, New York|CITIUS33|91002007|91002007",
+        "USD|Standard Chartered Bank, New York|SCBLUS33|91002008|91002008"
+      ]
+    }
+  ],
+  "SIDDNPKA": [
+    {
+      "source": "https://siddharthabank.com/assets/backend/uploads/Other%20uploads/SSI/Nostro%20Account%20%28SSI%29.pdf",
+      "as_of": "2023-12-06",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|MashreqBank Dubai|BOMLAEAD|91004401|91004401",
+        "AUD|Commerzbank Frankfurt|COBADEFF|91004402|91004402",
+        "AUD|Standard Chartered Singapore|SCBLSG22|91004403|91004403",
+        "CAD|Commerzbank Frankfurt|COBADEFF|91004404|91004404",
+        "CHF|Commerzbank Frankfurt|COBADEFF|91004405|91004405",
+        "CNY|Standard Chartered China|SCBLCNSX|91004406|91004406",
+        "EUR|Commerzbank Frankfurt|COBADEFF|91004407|91004407",
+        "GBP|Commerzbank Frankfurt|COBADEFF|91004408|91004408",
+        "GBP|Standard Chartered London|SCBLGB2L|91004409|91004409",
+        "INR|Axis Bank India|AXISINBB|91004410|91004410",
+        "INR|HDFC Bank India|HDFCINBB|91004411|91004411",
+        "INR|ICICI Bank India|ICICINBB|91004412|91004412",
+        "INR|Standard Chartered India|SCBLINBB|91004413|91004413",
+        "JPY|Commerzbank Frankfurt|COBADEFF|91004414|91004414",
+        "JPY|Standard Chartered Tokyo|SCBLJPJT|91004415|91004415",
+        "SGD|Commerzbank Frankfurt|COBADEFF|91004416|91004416",
+        "USD|Banco do Brasil Tokyo|BRASJPJT|91004417|91004417",
+        "USD|Commerzbank Frankfurt|COBADEFF|91004418|91004418",
+        "USD|Kookmin Korea|CZNBKRSE|91004419|91004419",
+        "USD|ICICI Hong Kong|ICICHKHH|91004420|91004420",
+        "USD|Korea Exchange Bank Seoul|KOEXKRSE|91004421|91004421",
+        "USD|MashreqBank New York|MSHQUS33|91004422|91004422",
+        "USD|Standard Chartered New York|SCBLUS33|91004423|91004423"
+      ]
+    }
+  ],
+  "SOIVBDDH": [
+    {
+      "source": "https://www.siblbd.com/remittance/NOSTRO-Account",
+      "as_of": "2026-09-09",
+      "status": "unverified",
+      "charge_code": null,
+      "value_date": null,
+      "bic_only": true,
+      "terms_inferred": false,
+      "rows": [
+        "AED|Abu Dhabi Islamic Bank|ABDIAEAD||",
+        "CHF|Commerzbank Frankfurt|COBADEFF||",
+        "CNY|Bank of Huzhou China|BOHZCNBJ||",
+        "CNY|Zhejiang Chouzhou Commercial Bank China|CZCBCN2X||",
+        "EUR|Commerzbank Frankfurt|COBADEFF||",
+        "EUR|Standard Chartered Frankfurt|SCBLDEFF||",
+        "GBP|Standard Chartered London|SCBLGB2L||",
+        "JPY|Standard Chartered Tokyo|SCBLJPJT||",
+        "SAR|Bank Al Jazira Saudi Arabia|BJAZSAJE||",
+        "SAR|Riyad Bank Saudi Arabia|RIBLSARI||",
+        "USD|Commerzbank Frankfurt|COBADEFF||",
+        "USD|Zhejiang Chouzhou Commercial Bank China|CZCBCN2X||",
+        "USD|Habib American Bank USA|HANYUS33||",
+        "USD|Korea Exchange Bank|KOEXKRSE||",
+        "USD|Mashreq Bank New York|MSHQUS33||",
+        "USD|Standard Chartered New York|SCBLUS33||"
+      ]
+    }
+  ],
+  "SRCBINBB": [
+    {
+      "source": "https://www.saraswat.bank.in/content.aspx?id=Overseas-(Nostro)-Account",
+      "as_of": "2026-09-09",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Standard Chartered Bank DIFC Building 1, 3rd Floor, P.O. Box 999, Dubai, UAE.|SCBLAEAD!|91002001|91002001",
+        "AUD|Commerzbank AG. Frankfurt|COBADEFF!|91002002|91002002",
+        "CAD|National Bank of Canada 600, Rue De La Gauchetiere Quest, 5th Floor, Montreal, Quebec, Canada.|BNDCCAMMINT|91002003|91002003",
+        "CHF|Commerzbank AG. Frankfurt AM Main Germany|COBADEFF!|91002004|91002004",
+        "CNY|Standard Chartered Bank (Hong Kong) Ltd|SCBLHKHH!|91002005|91002005",
+        "EUR|Commerzbank AG 60326 Frankfurt AM Main, Frankfurt, Deutschland.|COBADEFF|91002006|91002006",
+        "EUR|Standard Chartered Bank (Germany) GMBH, Franklinstrasse 46-48, 60486, Frankfurt / Main, Germany.|SCBLDEFF|91002007|91002007",
+        "GBP|Standard Chartered Bank 1 Basinghall Avenue, London EC2V 5DD, U.K .|SCBLGB2L|91002008|91002008",
+        "HKD|Standard Chartered Bank 7, F Standard Chartered Tower, 388, Kwun Tong Road, Kwun Tong, Hong Kong.|SCBLHKHH|91002009|91002009",
+        "JPY|Standard Chartered Bank 21st Floor, Sanno Park Tower, 2-11-1 Nagatacho, Chiyoda- Ku, Tokyo-100-6155, Japan.|SCBLJPJT!|91002010|91002010",
+        "SGD|Standard Chartered Bank (Singapore) Limited 8, Marina Boulevard 27-01, Marina Bay Financial centre, Singapore 01898.|SCBLSG22|91002011|91002011",
+        "USD|Mashreq Bank 50, Broadway Suite 1500, New York 10004 USA.|MSHQUS33|91002012|91002012",
+        "USD|Wells Fargo Bank N.A. 11 Penn Plaza, 4th Floor, New York, USA, N.Y 10001.|PNBPUS33|91002013|91002013",
+        "USD|Standard Chartered Bank One Medison Avenue, New York NY10010-3603 U.S.A.|SCBLUS33|91002014|91002014"
+      ]
+    }
+  ],
+  "SVCBINBB": [
+    {
+      "source": "https://www.svc.bank.in/nostro-account",
+      "as_of": "2026-09-09",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Arab Bank for Investment and Foreign Trade, Abu Dhabi|ABINAEAA|91002001|91002001",
+        "AUD|State Bank of India, Sydney|SBINAU2S|91002002|91002002",
+        "CHF|Commerzbank AG, Frankfurt|COBADEFF|91002003|91002003",
+        "EUR|Commerzbank AG, Frankfurt|COBADEFF|91002004|91002004",
+        "GBP|Commerzbank AG, Frankfurt|COBADEFF|91002005|91002005",
+        "JPY|Bank of India, Tokyo|BKIDJPJT|91002006|91002006",
+        "USD|Bank of India, New York|BKIDUS33|91002007|91002007",
+        "USD|Mashreq Bank PSC, New York|MSHQUS33!|91002008|91002008",
+        "USD|Wells Fargo Bank N.A., New York|PNBPUS33|91002009|91002009"
+      ]
+    }
+  ],
+  "UBBSBGSF": [
+    {
+      "source": "https://www.ubb.bg/attachments/Tab/923/download_bg/List-of-nostro-accounts.pdf",
+      "as_of": "2019-01-01",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AUD|Australia and New Zealand Banking Group|ANZBAU3M|91003601|91003601",
+        "CAD|Canadian Imperial Bank of Commerce|CIBCCATT|91003602|91003602",
+        "CHF|Credit Suisse Zurich|CRESCHZZ80A|91003603|91003603",
+        "DKK|Danske Bank Copenhagen|DABADKKK|91003604|91003604",
+        "EUR|KBC Bank NV|KREDBEBB|91003605|91003605",
+        "GBP|Lloyds Bank London|LOYDGB2L|91003606|91003606",
+        "JPY|MUFG Bank Tokyo|BOTKJPJT|91003607|91003607",
+        "NOK|Danske Bank Trondheim|DABANO22|91003608|91003608",
+        "RON|Raiffeisen Bank Romania|RZBRROBU|91003609|91003609",
+        "RUB|Rosbank Moscow|RSBNRUMM|91003610|91003610",
+        "SEK|SEB Stockholm|ESSESESS|91003611|91003611",
+        "TRY|Garanti BBVA|TGBATRIS|91003612|91003612",
+        "USD|Bank of New York Mellon New York|IRVTUS3N|91003613|91003613"
+      ]
+    }
+  ],
+  "UCBAINBB": [
+    {
+      "source": "https://www.uco.bank.in/en/treasury-branch-mumbai-accounts",
+      "as_of": "2026-04-09",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|MASHREQ BANK, DUBAI|BOMLAEAD!|91002001|91002001",
+        "AUD|ANZ, MELBOURNE|ANZBAU3M!|91002002|91002002",
+        "CAD|TORONTO DOMINION, TORONTO|TDOMCATTTOR|91002003|91002003",
+        "CHF|UBS AG, ZURICH|UBSWCHZH80A|91002004|91002004",
+        "EUR|JP MORGAN CHASE FRANKFURT|CHASDEFX!|91002005|91002005",
+        "EUR|BANCA POPOLARE DI SONDRIO|POSOIT22!|91002006|91002006",
+        "EUR|STANDARD CHARTERED BANK, FFT|SCBLDEFF|91002007|91002007",
+        "EUR|UNICREDIT S.P.A. MILANO|UNCRITMM!|91002008|91002008",
+        "GBP|STANDARD CHARTERED BANK, LONDON|SCBLGB2L!|91002009|91002009",
+        "HKD|UCO BANK, HONGKONG|UCBAHKHH!|91002010|91002010",
+        "JPY|STATE BANK OF INDIA,TOKYO|SBINJPJT!|91002011|91002011",
+        "SGD|UCO BANK, SINGAPORE|UCBASGSG!|91002012|91002012",
+        "USD|JP MORGAN CHASE NEW YORK|CHASUS33!|91002013|91002013",
+        "USD|CITIBANK, NY|CITIUS33!|91002014|91002014",
+        "USD|WELLS FARGO, NY|PNBPUS33!|91002015|91002015",
+        "USD|STANDARD CHARTERED BANK, NY|SCBLUS33!|91002016|91002016"
+      ]
+    }
+  ],
+  "YESBINBB": [
+    {
+      "source": "https://www.yes.bank.in/content/published/api/v1.1/assets/CONTB8C73CA6A3294D5F8829EF2BA183F929/native/currentaccount_form4.pdf",
+      "as_of": "2022-07-11",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|ADCB Bank Ltd, UAE|ADCBAEAA|91002001|91002001",
+        "CAD|Canadian Imperial Bank of Commerce, Toronto|CIBCCATT|91002002|91002002",
+        "CHF|Landesbank Baden-Wuerttemberg, Germany|SOLADEST|91002003|91002003",
+        "CNH|HSBC Hong Kong|HSBCHKHHHKH|91002004|91002004",
+        "CNY|HSBC China|HSBCCNSH|91002005|91002005",
+        "EUR|Standard Chartered Bank Frankfurt|SCBLDEFF|91002006|91002006",
+        "EUR|Landesbank Baden-Wuerttemberg, Stuttgart|SOLADEST|91002007|91002007",
+        "GBP|HSBC Bank PLC|MIDLGB22|91002008|91002008",
+        "GBP|Standard Chartered Bank London|SCBLGB2L|91002009|91002009",
+        "HKD|Standard Chartered Bank Hong Kong|SCBLHKHH|91002010|91002010",
+        "JPY|MUFG Bank Tokyo|BOTKJPJT|91002011|91002011"
+      ]
+    }
+  ]
+}
