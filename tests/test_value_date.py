@@ -101,3 +101,81 @@ class TestCurrencyDefaultLag:
         result = calculate_value_date(MONDAY_MORNING, "EUR")
 
         assert result.business_days == 1
+
+
+class TestHolidayCalendarCoverage:
+    """
+    HOLIDAYS.get(currency, []) returns an empty set for any currency the
+    table does not list, so the calculation silently treats every weekday as
+    a settlement day. The value date is then presented with exactly the same
+    confidence as one computed against real holiday data.
+    """
+
+    # Wed 2026-12-23: T+2 lands on Fri 2026-12-25, a holiday in most markets.
+    BEFORE_CHRISTMAS = datetime(2026, 12, 23, 9, 0)
+
+    def test_known_currency_rolls_over_the_holiday(self):
+        """Control: USD has holiday data and behaves correctly."""
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "USD")
+
+        assert result.value_date.isoformat() == "2026-12-28"
+        assert "2026-12-25" in result.skipped_holidays
+        assert result.holiday_calendar_available is True
+
+    def test_unknown_currency_declares_its_calendar_missing(self):
+        """
+        CHF is not in HOLIDAYS. The result may not imply a verified
+        settlement date — it has to say the calendar is unavailable.
+        """
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "CHF")
+
+        assert result.holiday_calendar_available is False
+        assert "holiday calendar" in result.explanation.lower()
+        assert "CHF" in result.explanation
+
+    def test_known_currency_does_not_carry_the_caveat(self):
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "USD")
+
+        assert "holiday calendar" not in result.explanation.lower()
+
+    def test_every_lag_currency_has_holiday_data(self):
+        """
+        A currency given a settlement lag but no holiday calendar produces a
+        confident answer from half the inputs. Adding one without the other
+        should fail here.
+        """
+        from app.services.value_date import DEFAULT_LAG_BY_CURRENCY, HOLIDAYS
+
+        missing = sorted(set(DEFAULT_LAG_BY_CURRENCY) - set(HOLIDAYS))
+        assert missing == [], missing
+
+    def test_instant_rail_on_an_unknown_currency_still_flags_the_gap(self):
+        """
+        An instant rail settles same-day regardless, so the calendar does not
+        change the answer — but the field must still report the truth rather
+        than defaulting to True.
+        """
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "CHF", scheme="RTP")
+
+        assert result.value_date == self.BEFORE_CHRISTMAS.date()
+        assert result.holiday_calendar_available is False
+
+
+class TestValueDateEndpointCoverageFlag:
+    def test_endpoint_reports_a_missing_calendar(self, client):
+        body = client.post("/api/value-date", json={
+            "send_datetime": "2026-12-23T09:00:00",
+            "currency": "CHF",
+        }).json()
+
+        assert body["holiday_calendar_available"] is False
+        assert "holiday calendar" in body["explanation"].lower()
+
+    def test_endpoint_reports_a_present_calendar(self, client):
+        body = client.post("/api/value-date", json={
+            "send_datetime": "2026-12-23T09:00:00",
+            "currency": "USD",
+        }).json()
+
+        assert body["holiday_calendar_available"] is True
+        assert body["value_date"] == "2026-12-28"

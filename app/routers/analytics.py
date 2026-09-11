@@ -200,6 +200,7 @@ def value_date_endpoint(request: ValueDateRequest):
         settlement_type=r.settlement_type,
         business_days=r.business_days,
         skipped_holidays=r.skipped_holidays,
+        holiday_calendar_available=r.holiday_calendar_available,
         explanation=r.explanation,
         disclaimer=_VALUE_DATE_DISCLAIMER,
     )

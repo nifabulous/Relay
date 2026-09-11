@@ -77,7 +77,7 @@ Pick by appetite. No hard dependencies between these items.
 | 3.2 | Fix dead `fee_type` data path | Payments | `fee_calculator.py:48` — either implement pct or drop the field |
 | 3.3 | ~~Unify fee logic (tracking → `simulate_fees`)~~ ✅ Done | Payments | Tracking deducts via the shared `get_lift_fee` lookup; a data-consistency test also pins corridor/SSI/settlement-directory agreement |
 | 3.4 | Expand MT103 STP checker + relabel | Payments | Validate field 23B; note 50A/F, 59F, 71F/G; relabel as "12-rule primer" |
-| 3.5 | Fix value-date holiday fallback + GBP default | Payments | `value_date.py:154` empty set for unsupported currencies |
+| 3.5 | ~~Fix value-date holiday fallback + GBP default~~ ✅ Done | Payments | GBP (and NGN/KES) default lag fixed in PR #96. The holiday fallback no longer passes silently: a currency absent from `HOLIDAYS` now reports `holiday_calendar_available: false` and says so in the explanation, instead of returning a value date that ignores public holidays with the same confidence as a verified one |
 | 3.6 | Clarify sanctions threshold drift | Payments | `screening.py:152` — threshold gets stricter (lower) per hop; comment intent |
 | 3.7 | ~~MOD-97 visual step-through explainer~~ ✅ Done | Education | Shipped in Lab 2 with a step-by-step remainder view and digit-flip exercise |
 | 3.8 | ~~Enrich Lab 5 (SSI) into a real lesson~~ ✅ Done | Education | Now a guided lesson: worked example, decision points, capstone link |

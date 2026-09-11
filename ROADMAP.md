@@ -133,10 +133,10 @@ The next contribution slice is content-led rather than a rebuild:
 4. Align the legacy backend module catalogue and badge bridge with the Relay curriculum (the
    backend still carries legacy IDs such as `fees`, `fx`, `settlement`, `mt103`, and `cases`)
 
-**Phase B — Domain accuracy (2 hours):**
-5. Map gpi statuses to ISO 20022 TransactionStatus codes (ACSP/ACSC/PDNG/RJCT)
-6. Fix GBP value-date default to T+2 for non-CHAPS
-7. Fix 23B→CdtDbtInd mapping + add GrpHdr mandatory elements
+**Phase B — Domain accuracy:**
+5. ~~Map gpi statuses to ISO 20022 TransactionStatus codes (ACSP/ACSC/PDNG/RJCT)~~ ✅ Done (PR #96 — `ISO_TRANSACTION_STATUS` on the tracking response. `RETURNED` is deliberately unmapped: a return is a pacs.004, not a pacs.002 status, per module 14)
+6. ~~Fix GBP value-date default to T+2 for non-CHAPS~~ ✅ Done (PR #96 — and NGN/KES carried the same defect, also fixed. A guard now rejects any zero entry in `DEFAULT_LAG_BY_CURRENCY`, because same-day settlement is a property of a rail, not of a currency)
+7. ~~Fix 23B→CdtDbtInd mapping + add GrpHdr mandatory elements~~ ✅ Done (PR #96 — GrpHdr now carries all four mandatory elements in schema order. `CdtDbtInd` was the wrong target: pacs.008's `CdtTrfTxInf` has no such element. The real defect, already recorded in the reframe design spec, was that 23B was emitted as `PmtTpInf/LclInstrm/Prtry`; service levels now map to `SvcLvl/Prtry` and CRED to nothing)
 
 **Phase C — Assessment integrity (product change):**
 8. ~~Gate at least one checkpoint per lab on a correct answer, not just interaction~~ ✅ Done (Lab 3 decision drill, Lab 5 decision points; all other labs already had a correct-answer gate)
