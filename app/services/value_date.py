@@ -84,7 +84,17 @@ INSTANT_RAILS = {
     "sepa instant", "sct inst", "rtp", "fednow", "instant",
 }
 
-DEFAULT_LAG_BY_CURRENCY = {"USD": 2, "EUR": 1, "GBP": 0, "JPY": 2, "NGN": 0, "KES": 0}
+# Fallback lag when the caller names no scheme, or names one this table does
+# not know.
+#
+# No entry here may be 0. Same-day settlement is a property of a rail, not of
+# a currency: CHAPS, NIBSS Instant, Pesalink and M-Pesa all reach T+0 through
+# SCHEME_LAGS by being named. Defaulting GBP, NGN or KES to 0 told every
+# learner that sterling, naira and shilling settle same-day wherever they are
+# sent, which is exactly the inference an unspecified cross-border
+# instruction must not invite. A currency the table does not list falls to
+# the same T+2 spot default via .get(currency, 2).
+DEFAULT_LAG_BY_CURRENCY = {"USD": 2, "EUR": 1, "GBP": 2, "JPY": 2, "NGN": 2, "KES": 2}
 
 
 @dataclass

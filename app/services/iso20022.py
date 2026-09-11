@@ -3,9 +3,11 @@ MT103 -> ISO 20022 (pacs.008) translator and structured-field validator.
 
 EDUCATIONAL PRIMER. The generated XML is illustrative: it shows the real
 pacs.008 element hierarchy and namespace but is NOT validated against the
-official ISO 20022 XSD, and omits many mandatory production elements
-(GrpHdr detail, SttlmInf, ChrgsInf breakdowns). Production ISO 20022
-validation engines run far more rules than the four here.
+official ISO 20022 XSD. GrpHdr now carries its four mandatory elements
+(MsgId, CreDtTm, NbOfTxs, SttlmInf/SttlmMtd) in schema order, but other
+production detail is still omitted (ChrgsInf breakdowns, structured
+postal addresses, regulatory reporting). Production ISO 20022 validation
+engines run far more rules than the four here.
 
 Context: SWIFT's CBPR+ cross-border coexistence period ended 22 November
 2025. MT103 / MT202(COV) were retired for cross-border payment instructions
@@ -16,6 +18,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from .validator import validate_bic
@@ -89,7 +92,7 @@ def translate_mt103_to_pacs008(message: dict) -> Pacs008TranslateResult:
         ("20", "Sender's Reference", "PmtId/InstrId", "Instruction Identification", tx_ref),
         ("20", "Sender's Reference", "PmtId/EndToEndId", "End-to-End Identification", tx_ref),
         ("121", "UETR", "PmtId/UETR", "UETR", uetr),
-        ("23B", "Bank Operation Code", "PmtTpInf", "Payment Type Information", op_code),
+        _bank_op_code_row(op_code),
         ("32A", "Value Date", "IntrBkSttlmDt", "Interbank Settlement Date", value_date),
         ("32A", "Settled Amount", "IntrBkSttlmAmt", "Interbank Settlement Amount", amount_str),
         ("32A", "Settlement Currency", "IntrBkSttlmAmt/@Ccy", "Settlement Currency", currency),
@@ -109,12 +112,42 @@ def translate_mt103_to_pacs008(message: dict) -> Pacs008TranslateResult:
     ]
 
     xml = _build_xml(
+        cre_dt_tm=_creation_datetime(),
         tx_ref=tx_ref, uetr=uetr, op_code=op_code, value_date=value_date, currency=currency,
         amount_str=amount_str, instructed_ccy=instructed_ccy, charge_iso=charge_iso,
         o_name=o_name, o_bic=o_bic, o_acct=o_acct,
         b_name=b_name, b_bic=b_bic, b_acct=b_acct, remittance=remittance,
     )
     return Pacs008TranslateResult(mapping=mapping, xml=xml)
+
+
+# MT 23B values that carry a service level a pacs.008 can hold. CRED is
+# absent on purpose: FIToFICstmrCdtTrf already means "normal credit
+# transfer", so emitting CRED would populate a field no real sender fills.
+SERVICE_LEVEL_OP_CODES = frozenset({"SPAY", "SPRI", "SSTD"})
+
+_NO_ISO_TARGET = "Not carried in pacs.008 (implied by the message type)"
+
+
+def _bank_op_code_row(op_code: str):
+    """Crosswalk row for MT 23B.
+
+    A service level maps to PmtTpInf/SvcLvl/Prtry. Everything else — CRED,
+    and any code this module does not recognise — is shown with no target
+    rather than being given a plausible-looking one.
+    """
+    if op_code in SERVICE_LEVEL_OP_CODES:
+        return ("23B", "Bank Operation Code", "PmtTpInf/SvcLvl/Prtry", "Service Level", op_code)
+    return ("23B", "Bank Operation Code", "—", _NO_ISO_TARGET, op_code)
+
+
+def _creation_datetime() -> str:
+    """GrpHdr/CreDtTm — when this message was created, to the second.
+
+    Seconds precision and an explicit offset match what CBPR+ senders emit;
+    microseconds are legal but noisy in a teaching artefact.
+    """
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def _sub(parent: ET.Element, tag: str, text: str = "") -> ET.Element:
@@ -130,9 +163,18 @@ def _build_xml(**f) -> str:
     doc = ET.Element(f"{{{ns}}}Document")
     cdt = _sub(doc, f"{{{ns}}}FIToFICstmrCdtTrf")
 
+    # GrpHdr is an xs:sequence: MsgId, CreDtTm, NbOfTxs, SttlmInf. Order is
+    # part of validity, so these are emitted in schema order.
     grp = _sub(cdt, f"{{{ns}}}GrpHdr")
     _sub(grp, f"{{{ns}}}MsgId", f["tx_ref"])
+    _sub(grp, f"{{{ns}}}CreDtTm", f["cre_dt_tm"])
     _sub(grp, f"{{{ns}}}NbOfTxs", "1")
+    # SttlmMtd INDA: the instructed agent's account is debited. A cover
+    # payment would carry COVE and a separate pacs.009; that is module 4's
+    # serial-vs-cover decision, not something this crosswalk can infer from
+    # an MT103 alone.
+    sttlm_inf = _sub(grp, f"{{{ns}}}SttlmInf")
+    _sub(sttlm_inf, f"{{{ns}}}SttlmMtd", "INDA")
 
     tx = _sub(cdt, f"{{{ns}}}CdtTrfTxInf")
     pmtid = _sub(tx, f"{{{ns}}}PmtId")
@@ -141,10 +183,12 @@ def _build_xml(**f) -> str:
     if f["uetr"]:
         _sub(pmtid, f"{{{ns}}}UETR", f["uetr"])
 
-    if f["op_code"]:
+    # Only a recognised service level produces PmtTpInf. LclInstrm is a local
+    # clearing instrument and is the wrong home for a cross-border 23B.
+    if f["op_code"] in SERVICE_LEVEL_OP_CODES:
         pmttypinf = _sub(tx, f"{{{ns}}}PmtTpInf")
-        lclinstrm = _sub(pmttypinf, f"{{{ns}}}LclInstrm")
-        _sub(lclinstrm, f"{{{ns}}}Prtry", f["op_code"])
+        svclvl = _sub(pmttypinf, f"{{{ns}}}SvcLvl")
+        _sub(svclvl, f"{{{ns}}}Prtry", f["op_code"])
 
     if f["instructed_ccy"]:
         instd = _sub(tx, f"{{{ns}}}InstdAmt", f["amount_str"])
