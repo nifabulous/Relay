@@ -594,6 +594,16 @@ BANKS = [
     ("BSCHARBAXXX", "Banco Santander Río / Santander Argentina S.A.", "AR", "Buenos Aires", "ARS"),
     ("ITAUCLRMXXX", "Banco Itaú Chile", "CL", "Santiago", "CLP"),
     ("BOSUARBAXXX", "Banco Macro S.A.", "AR", "Buenos Aires", "ARS"),
+    ("NABMMWMWXXX", "National Bank of Malawi PLC", "MW", "Lilongwe", "MWK"),
+    ("BANIBOLXXXX", "Banco BISA S.A.", "BO", "La Paz", "BOB"),
+    ("BNBOBOLXXXX", "Banco Nacional de Bolivia S.A.", "BO", "La Paz", "BOB"),
+    ("BBDFNIMAXXX", "Banco de Finanzas S.A.", "NI", "Managua", "NIO"),
+    ("BOEOBO22XXX", "Banco Económico S.A.", "BO", "Santa Cruz", "BOB"),
+    ("HIMANPKAXXX", "Himalayan Bank Limited", "NP", "Kathmandu", "NPR"),
+    ("RBBANPKAXXX", "Rastriya Banijya Bank Limited", "NP", "Kathmandu", "NPR"),
+    ("BBKUKWKWXXX", "Bank of Bahrain and Kuwait B.S.C., Kuwait Branch", "KW", "Kuwait City", "KWD"),
+    ("CBQAQAQAXXX", "The Commercial Bank (P.S.Q.C.)", "QA", "Doha", "QAR"),
+    ("COMBKWKWXXX", "Commercial Bank of Kuwait K.P.S.C.", "KW", "Kuwait City", "KWD"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -967,6 +977,13 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_90.json",
     "seed_ssi_batch6_91.json",
     "seed_ssi_batch6_92.json",
+    "seed_ssi_batch6_93.json",
+    "seed_ssi_batch6_94.json",
+    "seed_ssi_batch6_95.json",
+    "seed_ssi_batch6_96.json",
+    "seed_ssi_batch6_97.json",
+    "seed_ssi_batch6_98.json",
+    "seed_ssi_batch6_99.json",
 )
 
 

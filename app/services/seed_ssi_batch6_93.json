@@ -1,0 +1,25 @@
+[
+  [
+    "NABMMWMWXXX",
+    "National Bank of Malawi PLC",
+    "Source: https://www.natbank.co.mw/about-us/correspondent-banks (official correspondent banks page, accessed 2026-09-12). BIC-level list; the page publishes no correspondent account numbers. The SADC-RTGS entry is omitted because it has no BIC. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|",
+      "GBP|DEUTGB2L|Deutsche Bank AG, London|",
+      "GBP|CITIGB2L|Citibank, London|",
+      "CNY|BKCHZAJJ|Bank of China, Johannesburg|",
+      "USD|CITIUS33|Citibank NA, New York|",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|",
+      "ZAR|ABSAZAJJ|Absa Bank, Johannesburg|",
+      "ZAR|SBZAZAJJ|Standard Bank of South Africa, Johannesburg|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|"
+    ]
+  ]
+]
