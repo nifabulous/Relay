@@ -1291,5 +1291,19 @@
   "HDFCHKHH": {"name": "HDFC Bank Limited Hong Kong", "country": "HK", "domains": ["hdfcbankhongkong.com"], "settlement_terms_published": false},
   "NKGSINBB": {"name": "NKGSB Co-operative Bank Ltd.", "country": "IN", "domains": ["nkgsb.bank.in"], "settlement_terms_published": false},
   "ABPAPKKA": {"name": "Allied Bank Limited", "country": "PK", "domains": ["abl.com"], "settlement_terms_published": false},
-  "AMNALKLX": {"name": "Amana Bank PLC", "country": "LK", "domains": ["amanabank.lk"], "settlement_terms_published": false}
+  "AMNALKLX": {"name": "Amana Bank PLC", "country": "LK", "domains": ["amanabank.lk"], "settlement_terms_published": false},
+  "HBUKGB4B": {"name": "HSBC UK Bank plc", "country": "GB", "domains": ["business.hsbc.uk"], "settlement_terms_published": false},
+  "BPMOIT22": {"name": "BPER Banca S.p.A.", "country": "IT", "domains": ["group.bper.it"], "settlement_terms_published": false},
+  "DEUTMYKL": {"name": "Deutsche Bank Malaysia Berhad", "country": "MY", "domains": ["corporates.db.com"], "settlement_terms_published": false},
+  "DEUTPHMM": {"name": "Deutsche Bank AG Manila", "country": "PH", "domains": ["corporates.db.com"], "settlement_terms_published": false},
+  "DEUTKRSE": {"name": "Deutsche Bank AG Seoul", "country": "KR", "domains": ["corporates.db.com"], "settlement_terms_published": false},
+  "HDFCINAA": {"name": "HDFC Bank Limited GIFT City", "country": "IN", "domains": ["hdfcgiftcity.bank.in"], "settlement_terms_published": false},
+  "GOSKPLPW": {"name": "Bank Gospodarstwa Krajowego", "country": "PL", "domains": ["en.bgk.pl"], "settlement_terms_published": false},
+  "KMBLNPKA": {"name": "Kumari Bank Limited", "country": "NP", "domains": ["kumaribank.com"], "settlement_terms_published": false},
+  "ORFBUZ22": {"name": "PJSCB Orient Finance", "country": "UZ", "domains": ["ofb.uz"], "settlement_terms_published": false},
+  "SDBLBDDH": {"name": "Standard Islami Bank PLC", "country": "BD", "domains": ["standardbankbd.com"], "settlement_terms_published": false},
+  "CIBLBDDH": {"name": "City Bank PLC", "country": "BD", "domains": ["citybankplc.com"], "settlement_terms_published": false},
+  "CBININBB": {"name": "Central Bank of India", "country": "IN", "domains": ["centralbank.bank.in"], "settlement_terms_published": false},
+  "IDIBINBB": {"name": "Indian Bank", "country": "IN", "domains": ["indianbank.bank.in"], "settlement_terms_published": false},
+  "PRVUNPKA": {"name": "Prabhu Bank Limited", "country": "NP", "domains": ["prabhubank.com"], "settlement_terms_published": false}
   }

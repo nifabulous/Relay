@@ -617,7 +617,8 @@
             "KRW"
           ],
           "seedable": false
-        }
+        },
+        {"bic8":"DEUTKRSE","manifest_file":"regions_batch6_banks_1_deutkrse.json"}
       ],
       "forbidden_bics": [
         "KOCBKRSE",
@@ -2782,7 +2783,8 @@
           "admitted_record_digest": "87d7b21440b88d6b0912acc976f9d3efe54b022e5cfef3640e4823e0b102ff01"
         },
         {"bic8":"DNBANOKX","manifest_file":"regions_batch5_banks_1_dnbanokx.json"},
-        {"bic8":"NDEANOKK","manifest_file":"regions_batch5_banks_1_ndeanokk.json"}
+        {"bic8":"NDEANOKK","manifest_file":"regions_batch5_banks_1_ndeanokk.json"},
+        {"bic8":"GOSKPLPW","manifest_file":"regions_batch6_banks_1_goskplpw.json"}
       ],
       "forbidden_bics": [
         "SBAKNOBB"
@@ -4106,7 +4108,8 @@
             "CHF",
             "SEK"
           ]
-        }
+        },
+        {"bic8":"DEUTPHMM","manifest_file":"regions_batch6_banks_1_deutphmm.json"}
       ],
       "forbidden_bics": [
         "BPIPPHMM",
@@ -5670,7 +5673,7 @@
             "EUR",
             "BDT"
           ],
-          "seedable": false
+          "manifest_file": "regions_batch6_banks_1_ciblbddh.json"
         },
         {
           "bic8": "BRAKBDDH",
@@ -5918,7 +5921,8 @@
         {"bic8":"EXBKBDDH","name":"Export Import Bank of Bangladesh","country":"BD","currencies":["CAD","CHF","CNY","EUR","GBP","HKD","JPY","SAR","USD"],"seedable":true,"source_domains":["eximbankbd.com"],"admitted_record_digest":"bc028c56ab0385f248142c0437d314b682984fc19df54db7b03445326f3cac82","compact_records_file":"regions_batch4_records_1.json"},
         {"bic8":"SOIVBDDH","name":"Social Islami Bank PLC","country":"BD","currencies":["AED","CHF","CNY","EUR","GBP","JPY","SAR","USD"],"seedable":true,"source_domains":["siblbd.com"],"admitted_record_digest":"89ce4044ed032d1f2d7a84eac3fa75d652281d8a7db9c41eca9702025145dcf6","compact_records_file":"regions_batch4_records_3.json"},
         {"bic8":"MGBLBDDH","manifest_file":"regions_batch5_banks_1_mgblbddh.json"},
-        {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"}
+        {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"},
+        {"bic8":"SDBLBDDH","manifest_file":"regions_batch6_banks_1_sdblbddh.json"}
       ],
       "forbidden_bics": [
         "AGRABDDH",
@@ -6053,7 +6057,8 @@
             "MYR"
           ],
           "seedable": false
-        }
+        },
+        {"bic8":"DEUTMYKL","manifest_file":"regions_batch6_banks_1_deutmykl.json"}
       ],
       "forbidden_bics": []
     },
@@ -7424,7 +7429,10 @@
         {"bic8":"CNRBINBB","manifest_file":"regions_batch5_banks_1_cnrbinbb.json"},
         {"bic8":"JAKAINBB","manifest_file":"regions_batch5_banks_1_jakainbb.json"},
         {"bic8":"NKGSINBB","manifest_file":"regions_batch5_banks_1_nkgsinbb.json"},
-        {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"}
+        {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"},
+        {"bic8":"HDFCINAA","manifest_file":"regions_batch6_banks_1_hdfcinaa.json"},
+        {"bic8":"CBININBB","manifest_file":"regions_batch6_banks_1_cbininbb.json"},
+        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"}
       ],
       "forbidden_bics": []
     },
@@ -14881,7 +14889,8 @@
           "admitted_record_digest": "bea1e9b11f6f3ca25f69fa245940a7e476912f7d173b9f2cda0a12caf20f8eb0"
         },
         {"bic8":"BOTKNL2X","name":"MUFG Bank (Europe) N.V., Amsterdam","country":"NL","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","MYR","NOK","NZD","PLN","QAR","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"44e3a2039fc7258c5a44601f638682a3385e9ea5b90aea97c370e12ac951c743","compact_records_file":"regions_batch4_records_1.json"},
-        {"bic8":"DEUTNL2A","manifest_file":"regions_batch5_banks_1_deutnl2a.json"}
+        {"bic8":"DEUTNL2A","manifest_file":"regions_batch5_banks_1_deutnl2a.json"},
+        {"bic8":"BPMOIT22","manifest_file":"regions_batch6_banks_1_bpmoit22.json"}
       ]
     },
     {
@@ -24539,7 +24548,9 @@
           ],
           "admitted_record_digest": "02306ed84320c27cc5cdd27223eccb3c9dac3efd544d5632e0185095e7080bdd"
         },
-        {"bic8":"SIDDNPKA","name":"Siddhartha Bank Limited","country":"NP","currencies":["AED","AUD","CAD","CHF","CNY","EUR","GBP","INR","JPY","SGD","USD"],"seedable":true,"source_domains":["siddharthabank.com"],"admitted_record_digest":"bf7cb8b87f1a5da704a799f7fe172d461392b63fb0e2f767d9ebcbd7b9b9f4cb","compact_records_file":"regions_batch4_records_3.json"}
+        {"bic8":"SIDDNPKA","name":"Siddhartha Bank Limited","country":"NP","currencies":["AED","AUD","CAD","CHF","CNY","EUR","GBP","INR","JPY","SGD","USD"],"seedable":true,"source_domains":["siddharthabank.com"],"admitted_record_digest":"bf7cb8b87f1a5da704a799f7fe172d461392b63fb0e2f767d9ebcbd7b9b9f4cb","compact_records_file":"regions_batch4_records_3.json"},
+        {"bic8":"KMBLNPKA","manifest_file":"regions_batch6_banks_1_kmblnpka.json"},
+        {"bic8":"PRVUNPKA","manifest_file":"regions_batch6_banks_1_prvunpka.json"}
       ]
     },
     {
@@ -35055,7 +35066,8 @@
             }
           ],
           "admitted_record_digest": "9887574d0ca877fdd5ad6fc65ef77208a46b72e706545fee3d26e86ab7a24f9a"
-        }
+        },
+        {"bic8":"ORFBUZ22","manifest_file":"regions_batch6_banks_1_orfbuz22.json"}
       ]
     },
     {
@@ -36462,7 +36474,8 @@
             }
           ],
           "admitted_record_digest": "322b9fd9facee9624816ae859958f3383355097e36962a8f3d4625a2c0de2e45"
-        }
+        },
+        {"bic8":"HBUKGB4B","manifest_file":"regions_batch6_banks_1_hbukgb4b.json"}
       ]
     },
     {

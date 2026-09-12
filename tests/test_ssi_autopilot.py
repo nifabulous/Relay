@@ -12,7 +12,7 @@ import autopilot  # noqa: E402
 MANIFEST = autopilot.load_manifest()
 
 
-def sample_results(region_name="southeast-asia", **overrides):
+def sample_results(region_name="southeast-asia", include_admitted=False, **overrides):
     results = {
         "region": region_name,
         "banks": [
@@ -36,6 +36,18 @@ def sample_results(region_name="southeast-asia", **overrides):
             }
         ],
     }
+    if include_admitted:
+        # Commit-path fixtures must include every admitted bank in the region;
+        # the smaller default fixture is intentionally used by fold unit tests.
+        region = next(r for r in MANIFEST["regions"] if r["name"] == region_name)
+        for bank in region["banks"]:
+            admitted = bank.get("admitted_records")
+            if admitted:
+                results["banks"].append({
+                    "bic": bank["bic8"],
+                    "name": bank["name"],
+                    "records": [dict(record) for record in admitted],
+                })
     results.update(overrides)
     return results
 
@@ -781,7 +793,7 @@ def test_commit_refuses_when_unrelated_paths_are_already_staged(monkeypatch, tmp
     monkeypatch.setattr(autopilot, "verify_fold", lambda *a, **k: [])
 
     results = tmp_path / "r.json"
-    results.write_text(json.dumps(sample_results()))
+    results.write_text(json.dumps(sample_results(include_admitted=True)))
 
     with pytest.raises(SystemExit) as exc:
         autopilot.cmd_commit(argparse.Namespace(
@@ -814,7 +826,7 @@ def test_commit_limits_the_commit_to_its_own_paths(monkeypatch, tmp_path):
         "R", (), {"returncode": 0, "stdout": "", "stderr": ""})())
 
     results = tmp_path / "r.json"
-    results.write_text(json.dumps(sample_results()))
+    results.write_text(json.dumps(sample_results(include_admitted=True)))
     autopilot.cmd_commit(argparse.Namespace(
         results=str(results), label=None, source=None, dry_run=False))
 
@@ -1236,7 +1248,7 @@ def test_task5_commit_owns_manifest(tmp_path, monkeypatch):
     monkeypatch.setattr(autopilot, "write_state", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "read_state", lambda: {"commits_since_pr": 0, "regions_since_pr": [], "last_pr": None})
     result = tmp_path / "r.json"
-    result.write_text(json.dumps(sample_results()))
+    result.write_text(json.dumps(sample_results(include_admitted=True)))
     seed.write_text("SSI_RECORDS = [('changed',)]\n")
     tests.write_text("changed tests\n")
     manifest.write_text('{"changed": true}\n')

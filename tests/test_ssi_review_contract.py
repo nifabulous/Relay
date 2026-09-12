@@ -417,7 +417,7 @@ def test_manifest_exclusions_and_extra_rows_are_fail_closed():
 
 
 def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
-    """The 238-row Asia-Pacific expansion has no unlisted seed identities."""
+    """The 294-row Asia-Pacific expansion has no unlisted seed identities."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -432,7 +432,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 238
+    assert len(expected_keys) == 294
     assert actual_keys == expected_keys
     assert all(
         not _is_routable_ssi(_row_object(seed[key][0])) for key in actual_keys
