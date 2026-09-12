@@ -197,7 +197,7 @@ class TestComparisonFailsClosed:
         attestation = _module()
         evidence = self._evidence(attestation.account_fingerprint("890-0045-140"))
 
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(attestation.UnreadableSource) as excinfo:
             attestation.compare(evidence, b"%PDF-1.7 binary bytes, no table here")
 
         message = str(excinfo.value).lower()
@@ -212,7 +212,7 @@ class TestComparisonFailsClosed:
         """
         attestation = _module()
 
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(attestation.EvidenceWithoutRoutes) as excinfo:
             attestation.compare(
                 {
                     "source_sha256": "x",
@@ -227,7 +227,7 @@ class TestComparisonFailsClosed:
     def test_the_same_refusal_covers_an_evidence_file_missing_the_key_entirely(self):
         attestation = _module()
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(attestation.EvidenceWithoutRoutes):
             attestation.compare(
                 {"source_sha256": "x", "source_snapshot": {"bic_aliases": {}}},
                 b"%PDF-1.7",
@@ -408,7 +408,7 @@ class TestAcceptingAChangeCannotBreakMaskEquality:
             ]
         )
 
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(attestation.MaskEqualityBroken) as excinfo:
             attestation._apply_accepted_changes(
                 evidence, source, {("AUD", "CHASGB2L")}
             )
@@ -629,6 +629,46 @@ class TestAnEmptyCellIsNotAnAccount:
             )
 
         assert evidence["routes"][0]["nostro_fingerprint"] == fingerprint
+
+
+class TestRefusalsAreOrdinaryExceptions:
+    """
+    Every refusal was a SystemExit subclass, which put it outside
+    `except Exception` — so the sweep's handler, written so one bad source
+    could not end the run, could not see a refusal at all. Ending the process
+    is a command-line concern and lives in `main` now.
+    """
+
+    def test_an_attestation_error_is_catchable_as_exception(self):
+        attestation = _module()
+
+        assert issubclass(attestation.AttestationError, Exception)
+        assert not issubclass(attestation.AttestationError, SystemExit)
+
+    def test_every_refusal_type_derives_from_the_base(self):
+        attestation = _module()
+
+        for name in (
+            "UnreadableSource",
+            "EvidenceWithoutRoutes",
+            "EvidenceWithoutFingerprints",
+            "MaskEqualityBroken",
+            "DuplicateRouteKey",
+            "SourceTooLarge",
+            "UnsupportedSourceScheme",
+            "DigestMismatch",
+            "RouteKeysChanged",
+            "AccountChanged",
+        ):
+            assert issubclass(getattr(attestation, name), attestation.AttestationError)
+
+    def test_a_refusal_is_caught_by_a_plain_except_exception(self):
+        attestation = _module()
+
+        try:
+            raise attestation.UnreadableSource("boom")
+        except Exception as exc:  # noqa: BLE001 - that is the point
+            assert "boom" in str(exc)
 
 
 class TestFetchesAreBounded:

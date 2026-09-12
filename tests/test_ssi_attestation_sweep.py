@@ -211,6 +211,49 @@ class TestSweepClassification:
         assert results[0]["status"] == "fetch-failed"
         assert results[1]["status"] == "verified"
 
+    def test_an_oversized_source_does_not_end_the_sweep(self, tmp_path):
+        """
+        `SourceTooLarge` used to derive from `SystemExit`, so it sailed past
+        `except Exception` and killed the run — one hostile or broken citation
+        could deny results for every remaining file.
+        """
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        big = _write(tmp_path, "a-big.json", _evidence(sweep, source))
+        fine = _write(tmp_path, "b-fine.json", _evidence(sweep, source))
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if len(calls) == 1:
+                raise sweep.attestation.SourceTooLarge("source sent too much")
+            return source
+
+        results = sweep.sweep([big, fine], fetch=fetch)
+
+        assert len(results) == 2
+        assert results[0]["status"] == "fetch-failed"
+        assert "too much" in results[0]["detail"]
+        assert results[1]["status"] == "verified"
+
+    def test_an_unsupported_scheme_does_not_end_the_sweep(self, tmp_path):
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        bad = _write(tmp_path, "a-bad-scheme.json", _evidence(sweep, source))
+        fine = _write(tmp_path, "b-fine.json", _evidence(sweep, source))
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if len(calls) == 1:
+                raise sweep.attestation.UnsupportedSourceScheme("not http")
+            return source
+
+        results = sweep.sweep([bad, fine], fetch=fetch)
+
+        assert results[0]["status"] == "fetch-failed"
+        assert results[1]["status"] == "verified"
+
     def test_files_without_a_digest_are_skipped_as_unattested(self, tmp_path):
         sweep = _module()
         source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])

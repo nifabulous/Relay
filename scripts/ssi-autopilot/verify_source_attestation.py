@@ -70,15 +70,20 @@ ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
 
-class AttestationError(SystemExit):
+class AttestationError(Exception):
     """Base for every refusal.
 
-    Subclasses SystemExit so the command-line behaviour and exit codes are
-    unchanged, while callers that need to tell one refusal from another — the
-    sweep, above all — can catch precisely instead of matching on message
-    text. A sweep that cannot distinguish "this source is a PDF" from "this
-    evidence file is malformed" reports a schema defect as a benign format
-    limitation.
+    An ordinary Exception, deliberately. This subclassed SystemExit so the
+    command line kept its exit codes for free, and that inheritance quietly
+    put every refusal outside `except Exception` — the sweep's own handler,
+    written to keep one bad source from ending the run, could not see a
+    refusal at all. `main` converts these to an exit code instead, which is
+    the one place that actually wants to end the process.
+
+    Callers that need to tell one refusal from another — the sweep, above all
+    — catch these precisely rather than matching on message text. A sweep that
+    cannot distinguish "this source is a PDF" from "this evidence file is
+    malformed" reports a schema defect as a benign format limitation.
     """
 
 
@@ -108,6 +113,18 @@ class SourceTooLarge(AttestationError):
 
 class UnsupportedSourceScheme(AttestationError):
     """The citation is not an http(s) URL."""
+
+
+class DigestMismatch(AttestationError):
+    """The cited page no longer hashes to the committed digest."""
+
+
+class RouteKeysChanged(AttestationError):
+    """A correspondent was added, removed or re-pointed."""
+
+
+class AccountChanged(AttestationError):
+    """An account moved underneath an unchanged route key."""
 
 
 class _TableParser(HTMLParser):
@@ -588,18 +605,18 @@ def verify(evidence_path: Path, record_dir: Path | None = None) -> dict:
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     report = compare(evidence, _fetch(evidence["source"]))
     if not report["digest_matches"]:
-        raise SystemExit(
+        raise DigestMismatch(
             f"source digest mismatch: expected {evidence['source_sha256']}, "
             f"got {report['source_sha256']}"
         )
     if not report["route_keys"]["match"]:
-        raise SystemExit(
+        raise RouteKeysChanged(
             "source route-key mismatch:\n"
             f"  missing={report['route_keys']['missing']}\n"
             f"  unexpected={report['route_keys']['unexpected']}"
         )
     if report["fingerprints"]["changed"]:
-        raise SystemExit(
+        raise AccountChanged(
             "source account mismatch on an unchanged route key:\n"
             f"  changed={report['fingerprints']['changed']}\n"
             "The correspondent is the same but its account moved. Re-check the "
@@ -673,10 +690,17 @@ def reverify(
 
 def main() -> int:
     args = parse_args()
-    if args.refresh:
-        result = reverify(args.evidence, args.record, args.accepted)
-    else:
-        result = verify(args.evidence, args.record)
+    try:
+        if args.refresh:
+            result = reverify(args.evidence, args.record, args.accepted)
+        else:
+            result = verify(args.evidence, args.record)
+    except AttestationError as exc:
+        # Ending the process is a command-line concern, so it lives here
+        # rather than in the exception hierarchy, where it made every refusal
+        # invisible to ordinary error handling.
+        print(str(exc), file=sys.stderr)
+        return 1
     print(json.dumps(result, sort_keys=True))
     return 0
 
