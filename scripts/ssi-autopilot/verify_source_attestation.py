@@ -160,9 +160,18 @@ def _canonical_source_bytes(source_html: bytes) -> bytes:
 
 
 def _expected_routes(evidence: dict) -> set[tuple[str, str]]:
-    if "routes" in evidence:
+    if evidence.get("routes"):
         return {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
-    return {tuple(route) for route in evidence["route_keys"]}
+    if evidence.get("route_keys"):
+        return {tuple(route) for route in evidence["route_keys"]}
+    # An evidence file with a digest but no routes pins a page while recording
+    # nothing about what the page said. Comparing it would return "verified"
+    # over an empty set, which is the most misleading answer available.
+    raise SystemExit(
+        "evidence records no routes and no route_keys: its digest can be "
+        "verified, but there is nothing to check the source against. Capture "
+        "the routes before treating this file as an attestation."
+    )
 
 
 def _aliases(evidence: dict) -> dict[str, str]:

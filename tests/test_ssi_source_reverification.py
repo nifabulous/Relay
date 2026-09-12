@@ -198,15 +198,34 @@ class TestComparisonFailsClosed:
         assert "extract" in message
         assert "0" in message or "no route" in message
 
-    def test_an_evidence_file_with_no_routes_does_not_trip_the_guard(self):
+    def test_evidence_recording_no_routes_refuses_instead_of_verifying_nothing(self):
+        """
+        `ssi-wave18-bbdebrsp` pins a digest and records no routes at all.
+        Comparing it would report a clean match over an empty set — the most
+        misleading answer the tool could give.
+        """
         attestation = _module()
 
-        report = attestation.compare(
-            {"source_sha256": "x", "routes": [], "source_snapshot": {"bic_aliases": {}}},
-            b"%PDF-1.7",
-        )
+        with pytest.raises(SystemExit) as excinfo:
+            attestation.compare(
+                {
+                    "source_sha256": "x",
+                    "routes": [],
+                    "source_snapshot": {"bic_aliases": {}},
+                },
+                b"%PDF-1.7",
+            )
 
-        assert report["fingerprints"]["checked"] == 0
+        assert "no routes" in str(excinfo.value).lower()
+
+    def test_the_same_refusal_covers_an_evidence_file_missing_the_key_entirely(self):
+        attestation = _module()
+
+        with pytest.raises(SystemExit):
+            attestation.compare(
+                {"source_sha256": "x", "source_snapshot": {"bic_aliases": {}}},
+                b"%PDF-1.7",
+            )
 
     def test_compare_never_returns_a_raw_account(self):
         attestation = _module()
