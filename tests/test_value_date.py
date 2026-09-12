@@ -6,6 +6,7 @@ common case for a cross-border instruction: the sender knows the currency
 long before the rail is chosen.
 """
 
+import dataclasses
 from datetime import datetime
 
 from app.services.value_date import calculate_value_date
@@ -179,3 +180,67 @@ class TestValueDateEndpointCoverageFlag:
 
         assert body["holiday_calendar_available"] is True
         assert body["value_date"] == "2026-12-28"
+
+
+class TestCalendarFlagCannotFailOpen:
+    """
+    A field whose entire purpose is to flag missing data must not default to
+    "data present". Both constructors are required to state what is known.
+    """
+
+    def test_result_requires_an_explicit_calendar_flag(self):
+        from app.services.value_date import ValueDateResult
+
+        fields = ValueDateResult.__dataclass_fields__
+        f = fields["holiday_calendar_available"]
+        assert f.default is dataclasses.MISSING, "must not default"
+        assert f.default_factory is dataclasses.MISSING, "must not default"
+
+    def test_response_requires_an_explicit_calendar_flag(self):
+        from app.schemas import ValueDateResponse
+
+        assert ValueDateResponse.model_fields["holiday_calendar_available"].is_required()
+
+
+class TestInstantRailCalendarCaveat:
+    """
+    The flag and the explanation have to agree. An instant result that
+    reports holiday_calendar_available=False while saying nothing about it
+    is the same "looks verified" problem one layer down.
+    """
+
+    BEFORE_CHRISTMAS = datetime(2026, 12, 23, 9, 0)
+
+    def test_instant_on_unknown_currency_explains_the_missing_calendar(self):
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "CHF", scheme="RTP")
+
+        assert result.holiday_calendar_available is False
+        assert "holiday calendar" in result.explanation.lower()
+        assert "CHF" in result.explanation
+
+    def test_instant_caveat_does_not_imply_a_different_value_date(self):
+        """
+        Same-day settlement does not depend on the calendar, so the caveat
+        must not suggest the date is in doubt — only that the calendar is.
+        """
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "CHF", scheme="RTP")
+
+        assert result.value_date == self.BEFORE_CHRISTMAS.date()
+        assert "does not affect" in result.explanation.lower()
+
+    def test_instant_on_known_currency_carries_no_caveat(self):
+        result = calculate_value_date(self.BEFORE_CHRISTMAS, "USD", scheme="FedNow")
+
+        assert result.holiday_calendar_available is True
+        assert "holiday calendar" not in result.explanation.lower()
+
+    def test_flag_and_explanation_agree_on_every_path(self):
+        """One rule, checked across instant and non-instant alike."""
+        cases = [
+            ("CHF", None), ("CHF", "RTP"), ("CHF", "SWIFT"),
+            ("USD", None), ("USD", "FedNow"), ("GBP", "CHAPS"),
+        ]
+        for currency, scheme in cases:
+            r = calculate_value_date(self.BEFORE_CHRISTMAS, currency, scheme=scheme)
+            mentions = "holiday calendar" in r.explanation.lower()
+            assert mentions is (not r.holiday_calendar_available), (currency, scheme)
