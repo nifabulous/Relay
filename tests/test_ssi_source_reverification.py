@@ -631,6 +631,105 @@ class TestAnEmptyCellIsNotAnAccount:
         assert evidence["routes"][0]["nostro_fingerprint"] == fingerprint
 
 
+class TestRefusalMessagesCarryNoSourceContent:
+    """
+    The sweep copies exception messages into `detail`, which both renderers
+    print. Any source-derived text in a refusal therefore reaches CI logs from
+    the one command that promises never to print account values.
+    """
+
+    def test_an_unreadable_account_names_the_route_not_the_cell(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "SECRET-CELL-TEXT", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource) as excinfo:
+            attestation.route_fingerprints(source, {})
+
+        message = str(excinfo.value)
+        assert "SECRET-CELL-TEXT" not in message
+        assert "SECRETCELLTEXT" not in message
+        assert "IRVTUS3N" in message
+        assert "no digits" in message
+
+    def test_an_empty_cell_says_so_categorically(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource) as excinfo:
+            attestation.route_fingerprints(source, {})
+
+        assert "empty" in str(excinfo.value)
+
+
+class TestMaskEqualityIsCheckedPerField:
+    """
+    Comparing the combined (nostro, with_an) tuples hid a real mismatch: two
+    routes sharing a nostro_mask while their nostro fingerprints differ
+    compare unequal as pairs whenever the with_an fields also differ, so the
+    pair looked consistent while one mask asserted an equality that was false.
+    """
+
+    def test_a_shared_nostro_mask_with_different_nostro_accounts_is_caught(self):
+        attestation = _module()
+        evidence = {
+            "routes": [
+                {
+                    "currency": "AUD",
+                    "int_bic": "CHASGB2L",
+                    "nostro_mask": "ACCT-91001005",
+                    "with_an_mask": "ACCT-91001111",
+                    "nostro_fingerprint": "aa" * 32,
+                    "with_an_fingerprint": "bb" * 32,
+                },
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    # same nostro mask, different nostro account
+                    "nostro_mask": "ACCT-91001005",
+                    "with_an_mask": "ACCT-91002222",
+                    "nostro_fingerprint": "cc" * 32,
+                    "with_an_fingerprint": "dd" * 32,
+                },
+            ]
+        }
+
+        with pytest.raises(attestation.MaskEqualityBroken) as excinfo:
+            attestation._assert_mask_equality(evidence)
+
+        assert "nostro_mask" in str(excinfo.value)
+
+    def test_a_consistent_pair_passes(self):
+        attestation = _module()
+        evidence = {
+            "routes": [
+                {
+                    "currency": "AUD",
+                    "int_bic": "CHASGB2L",
+                    "nostro_mask": "ACCT-91001005",
+                    "with_an_mask": "ACCT-91001005",
+                    "nostro_fingerprint": "aa" * 32,
+                    "with_an_fingerprint": "aa" * 32,
+                },
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_mask": "ACCT-91001029",
+                    "with_an_mask": "ACCT-91001029",
+                    "nostro_fingerprint": "bb" * 32,
+                    "with_an_fingerprint": "bb" * 32,
+                },
+            ]
+        }
+
+        attestation._assert_mask_equality(evidence)
+
+    def test_the_committed_wave21_evidence_satisfies_the_stricter_check(self):
+        """The real file must still pass once the check is per field."""
+        attestation = _module()
+
+        attestation._assert_mask_equality(json.loads(EVIDENCE.read_text()))
+
+
 class TestRefusalsAreOrdinaryExceptions:
     """
     Every refusal was a SystemExit subclass, which put it outside

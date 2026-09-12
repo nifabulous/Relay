@@ -211,13 +211,20 @@ def _account_cell(value: str, key: tuple[str, str]) -> str:
     comparison agree with it. Every account carries at least one digit.
     """
     normalized = re.sub(r"[^A-Z0-9]", "", value.upper())
-    if not normalized or not any(character.isdigit() for character in normalized):
-        raise UnreadableSource(
-            f"route {key} has no readable account: the cell before the "
-            f"intermediary BIC normalizes to {normalized!r}, which cannot be "
-            "an account number. The route cannot be attested."
-        )
-    return value
+    if not normalized:
+        reason = "the cell before the intermediary BIC is empty"
+    elif not any(character.isdigit() for character in normalized):
+        reason = "the cell before the intermediary BIC contains no digits"
+    else:
+        return value
+    # The reason is categorical on purpose. An earlier version quoted the
+    # offending cell, and the sweep copies exception messages into `detail`,
+    # which both renderers print — so source-derived content would have
+    # reached CI logs from the one command that promises never to print it.
+    raise UnreadableSource(
+        f"route {key} has no readable account: {reason}. The route cannot "
+        "be attested."
+    )
 
 
 def _route_keys(source_html: bytes) -> set[tuple[str, str]]:
@@ -559,27 +566,29 @@ def _assert_mask_equality(evidence: dict) -> None:
         for route in evidence.get("routes", [])
         if "nostro_mask" in route and "with_an_mask" in route
     ]
+    # Each account field is checked on its own. Comparing the combined
+    # (nostro, with_an) tuples hid a real mismatch: two routes sharing a
+    # nostro_mask while their nostro fingerprints differ compare unequal as
+    # pairs whenever the with_an fields also differ, so the pair looked
+    # consistent while one mask asserted an equality that was false.
+    fields = (("nostro_mask", "nostro_fingerprint"), ("with_an_mask", "with_an_fingerprint"))
     for index, left in enumerate(routes):
         for right in routes[index + 1 :]:
-            masks_equal = (left["nostro_mask"], left["with_an_mask"]) == (
-                right["nostro_mask"],
-                right["with_an_mask"],
-            )
-            accounts_equal = (
-                left["nostro_fingerprint"],
-                left["with_an_fingerprint"],
-            ) == (right["nostro_fingerprint"], right["with_an_fingerprint"])
-            if masks_equal == accounts_equal:
-                continue
-            left_key = (left["currency"], left["int_bic"])
-            right_key = (right["currency"], right["int_bic"])
-            action = "split" if masks_equal else "merged"
-            raise MaskEqualityBroken(
-                f"refusing the change: {left_key} and {right_key} would have "
-                f"{'the same mask but different accounts' if masks_equal else 'different masks but the same account'}. "
-                f"Masks record account equality, so their masks must be {action} "
-                "first — in the evidence, the manifest and the seed together."
-            )
+            for mask_field, fingerprint_field in fields:
+                masks_equal = left[mask_field] == right[mask_field]
+                accounts_equal = left[fingerprint_field] == right[fingerprint_field]
+                if masks_equal == accounts_equal:
+                    continue
+                left_key = (left["currency"], left["int_bic"])
+                right_key = (right["currency"], right["int_bic"])
+                action = "split" if masks_equal else "merged"
+                raise MaskEqualityBroken(
+                    f"refusing the change: {left_key} and {right_key} would "
+                    f"have {'the same ' + mask_field + ' but different accounts' if masks_equal else 'different ' + mask_field + ' but the same account'}. "
+                    f"Masks record account equality, so these masks must be "
+                    f"{action} first — in the evidence, the manifest and the "
+                    "seed together."
+                )
 
 
 def _write_record(
