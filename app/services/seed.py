@@ -574,6 +574,8 @@ BANKS = [
     ("NAPAPAPAXXX", "Banco Nacional de Panama", "PA", "Panama City", "PAB"),
     ("GLBLPAPAXXX", "Global Bank Corporation", "PA", "Panama City", "PAB"),
     ("BPPRPRSXXXX", "Banco Popular de Puerto Rico", "PR", "San Juan", "USD"),
+    ("BPBIBGSFXXX", "Eurobank Bulgaria AD", "BG", "Sofia", "BGN"),
+    ("ATTIGRAAXXX", "CrediaBank S.A.", "GR", "Athens", "EUR"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -926,6 +928,9 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_68.json",
     "seed_ssi_batch6_69.json",
     "seed_ssi_batch6_70.json",
+    "seed_ssi_batch6_71.json",
+    "seed_ssi_batch6_72.json",
+    "seed_ssi_batch6_73.json",
 )
 
 
