@@ -1,0 +1,30 @@
+[
+  [
+    "NBSBSKBXXXX",
+    "National Bank of Slovakia",
+    "Source: https://nbs.sk/en/monetary-policy/monetary-policy-implementation/financial-markets/cross-border-payments-2/list-of-correspondent-banks/ (official list of correspondent banks for commercial payments, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|RSBKAU2S|Reserve Bank of Australia, Sydney|",
+      "CAD|BCANCAW2|Bank of Canada, Ottawa|",
+      "CZK|CNBACZPP|Ceská národní banka, Prague|",
+      "DKK|DKNBDKKK|Danmarks Nationalbank, Copenhagen|",
+      "EUR|MARKDEFF|Deutsche Bundesbank, Frankfurt|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "EUR|ABNANL2A|ABN AMRO Bank, Amsterdam|",
+      "GBP|BKENGB2L|Bank of England, London|",
+      "CHF|SNBZCHZZ|Swiss National Bank, Zurich|",
+      "JPY|BOJPJPJT|Bank of Japan, Tokyo|",
+      "NOK|NBHKNOKK|Norges Bank, Oslo|",
+      "PLN|DEUTPLPX|Deutsche Bank Polska, Warsaw|",
+      "SEK|RIKSSESS|Sveriges Riksbank, Stockholm|",
+      "USD|CITIUS33|Citibank, New York|"
+    ]
+  ]
+]
