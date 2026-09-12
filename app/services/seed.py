@@ -499,6 +499,7 @@ BANKS = [
     ("ICBKTRISXXX", "ICBC Turkey Bank Anonim Şirketi", "TR", "Istanbul", "TRY"),
     ("BSDISMSDXXX", "Banca Sammarinese di Investimento S.p.A.", "SM", "Rovereta", "EUR"),
     ("STSPAT2GXXX", "Steiermärkische Bank und Sparkassen AG", "AT", "Graz", "EUR"),
+    ("CBLUCH22XXX", "Cornèr Banca SA", "CH", "Lugano", "CHF"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -826,6 +827,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_22.json",
     "seed_ssi_batch6_23.json",
     "seed_ssi_batch6_24.json",
+    "seed_ssi_batch6_25.json",
 )
 
 
