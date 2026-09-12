@@ -416,6 +416,227 @@ class TestAcceptingAChangeCannotBreakMaskEquality:
         assert evidence["routes"][0]["nostro_mask"] == "ACCT-91001005"
 
 
+class TestEveryCommittedFingerprintIsChecked:
+    """
+    A route carries its fingerprint twice — once in `routes`, once in
+    `source_snapshot.routes` — and each entry carries a nostro and a with_an
+    value. Checking one of the four and reporting "verified" leaves three
+    fields a hand can edit freely.
+    """
+
+    def _evidence(self, attestation, **tamper):
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        outer = {
+            "currency": "USD",
+            "int_bic": "IRVTUS3N",
+            "nostro_fingerprint": fingerprint,
+            "with_an_fingerprint": fingerprint,
+            "nostro_mask": "ACCT-91001029",
+            "with_an_mask": "ACCT-91001029",
+        }
+        inner = dict(outer)
+        outer.update(tamper.get("outer", {}))
+        inner.update(tamper.get("inner", {}))
+        return {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}, "routes": [inner]},
+            "routes": [outer],
+        }
+
+    def _source(self):
+        return _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+    def test_an_untampered_file_still_verifies(self):
+        attestation = _module()
+
+        report = attestation.compare(self._evidence(attestation), self._source())
+
+        assert report["match"] is True
+
+    def test_a_tampered_with_an_fingerprint_is_caught(self):
+        attestation = _module()
+        evidence = self._evidence(attestation, outer={"with_an_fingerprint": "de" * 32})
+
+        report = attestation.compare(evidence, self._source())
+
+        assert report["match"] is False
+        assert report["fingerprints"]["changed"]
+
+    def test_a_tampered_snapshot_copy_is_caught(self):
+        attestation = _module()
+        evidence = self._evidence(attestation, inner={"nostro_fingerprint": "ad" * 32})
+
+        report = attestation.compare(evidence, self._source())
+
+        assert report["match"] is False
+
+    def test_route_keys_only_evidence_cannot_claim_a_verified_comparison(self):
+        """
+        The legacy shape carries route keys and no fingerprints at all. It
+        used to compare clean with zero fingerprints checked, which is the
+        three-check contract quietly reduced to two.
+        """
+        attestation = _module()
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "bic_aliases": {},
+            "route_keys": [["USD", "IRVTUS3N"]],
+        }
+
+        with pytest.raises(attestation.EvidenceWithoutFingerprints):
+            attestation.compare(evidence, self._source())
+
+    def test_partially_fingerprinted_evidence_is_refused_too(self):
+        attestation = _module()
+        evidence = self._evidence(attestation)
+        evidence["routes"].append({"currency": "EUR", "int_bic": "CHASDEFX"})
+
+        with pytest.raises(attestation.EvidenceWithoutFingerprints):
+            attestation.compare(evidence, self._source())
+
+
+class TestMaskEqualitySurvivesAnAcceptedChange:
+    """
+    Masks encode account equality in both directions. The first version of
+    this guard only caught a route *joining* another route's account; a route
+    *leaving* a shared account left the masks claiming an equality the
+    fingerprints no longer had.
+    """
+
+    def _evidence(self, attestation, shared="111-111"):
+        shared_fp = attestation.account_fingerprint(shared)
+        routes = [
+            {
+                "currency": "AUD",
+                "int_bic": "CHASGB2L",
+                "nostro_fingerprint": shared_fp,
+                "with_an_fingerprint": shared_fp,
+                "nostro_mask": "ACCT-91001005",
+                "with_an_mask": "ACCT-91001005",
+            },
+            {
+                "currency": "USD",
+                "int_bic": "IRVTUS3N",
+                "nostro_fingerprint": shared_fp,
+                "with_an_fingerprint": shared_fp,
+                "nostro_mask": "ACCT-91001005",
+                "with_an_mask": "ACCT-91001005",
+            },
+        ]
+        return {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}, "routes": [dict(r) for r in routes]},
+            "routes": routes,
+        }
+
+    def test_a_route_leaving_a_shared_account_is_refused(self):
+        """AUD moves off the account it shared with USD. The mask must split."""
+        attestation = _module()
+        evidence = self._evidence(attestation)
+        source = _html(
+            [
+                ["JPMorgan", "AUD", "999-999", "CHASGB2L"],
+                ["BNY Mellon", "USD", "111-111", "IRVTUS3N"],
+            ]
+        )
+
+        with pytest.raises(attestation.MaskEqualityBroken) as excinfo:
+            attestation._apply_accepted_changes(
+                evidence, source, {("AUD", "CHASGB2L")}
+            )
+
+        assert "mask" in str(excinfo.value).lower()
+
+    def test_a_route_joining_another_account_is_still_refused(self):
+        attestation = _module()
+        evidence = self._evidence(attestation)
+        evidence["routes"][1]["nostro_fingerprint"] = attestation.account_fingerprint("222-222")
+        evidence["routes"][1]["with_an_fingerprint"] = evidence["routes"][1]["nostro_fingerprint"]
+        evidence["routes"][1]["nostro_mask"] = "ACCT-91001029"
+        evidence["routes"][1]["with_an_mask"] = "ACCT-91001029"
+        source = _html(
+            [
+                ["JPMorgan", "AUD", "222-222", "CHASGB2L"],
+                ["BNY Mellon", "USD", "222-222", "IRVTUS3N"],
+            ]
+        )
+
+        with pytest.raises(attestation.MaskEqualityBroken):
+            attestation._apply_accepted_changes(
+                evidence, source, {("AUD", "CHASGB2L")}
+            )
+
+    def test_a_singleton_moving_to_another_unique_account_is_allowed(self):
+        attestation = _module()
+        evidence = self._evidence(attestation)
+        evidence["routes"][1]["nostro_fingerprint"] = attestation.account_fingerprint("222-222")
+        evidence["routes"][1]["with_an_fingerprint"] = evidence["routes"][1]["nostro_fingerprint"]
+        evidence["routes"][1]["nostro_mask"] = "ACCT-91001029"
+        evidence["routes"][1]["with_an_mask"] = "ACCT-91001029"
+        source = _html(
+            [
+                ["JPMorgan", "AUD", "333-333", "CHASGB2L"],
+                ["BNY Mellon", "USD", "222-222", "IRVTUS3N"],
+            ]
+        )
+
+        applied = attestation._apply_accepted_changes(
+            evidence, source, {("AUD", "CHASGB2L")}
+        )
+
+        assert applied == [{"currency": "AUD", "int_bic": "CHASGB2L"}]
+
+
+class TestRefreshLeavesNoUnrecordedState:
+    """
+    The whole point is that a changed digest carries its justification. If the
+    evidence is written and the record then fails, the repository holds
+    exactly the unrecorded refresh this tooling exists to prevent.
+    """
+
+    def test_a_failing_record_write_leaves_the_evidence_untouched(
+        self, tmp_path, monkeypatch
+    ):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "stale-digest",
+            "source_snapshot": {"bic_aliases": {}, "captured_at": "2020-01-01"},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                    "nostro_mask": "ACCT-91001029",
+                    "with_an_mask": "ACCT-91001029",
+                }
+            ],
+        }
+        path = tmp_path / "evidence.json"
+        path.write_text(json.dumps(evidence), encoding="utf-8")
+        before = path.read_text(encoding="utf-8")
+
+        monkeypatch.setattr(attestation, "_fetch", lambda url: source)
+
+        def explode(*args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(attestation, "_write_record", explode)
+
+        with pytest.raises(OSError):
+            attestation.reverify(path, tmp_path / "records", [])
+
+        assert path.read_text(encoding="utf-8") == before, (
+            "the digest was rewritten even though its record could not be written"
+        )
+
+
 class TestArgumentGuards:
     """A refresh that leaves no record is the defect this change exists to fix."""
 

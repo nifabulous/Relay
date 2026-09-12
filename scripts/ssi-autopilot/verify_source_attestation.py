@@ -43,6 +43,7 @@ import argparse
 import datetime
 import hashlib
 import json
+import os
 import re
 import sys
 from html.parser import HTMLParser
@@ -56,6 +57,34 @@ _VIEWSTATE = re.compile(rb'<input type="hidden" name="__VIEWSTATE"[^>]*>')
 RECORD_SCHEMA = 1
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
+
+
+class AttestationError(SystemExit):
+    """Base for every refusal.
+
+    Subclasses SystemExit so the command-line behaviour and exit codes are
+    unchanged, while callers that need to tell one refusal from another — the
+    sweep, above all — can catch precisely instead of matching on message
+    text. A sweep that cannot distinguish "this source is a PDF" from "this
+    evidence file is malformed" reports a schema defect as a benign format
+    limitation.
+    """
+
+
+class UnreadableSource(AttestationError):
+    """The extractor could not read the fetched source at all."""
+
+
+class EvidenceWithoutRoutes(AttestationError):
+    """The evidence pins a digest but records nothing to compare against."""
+
+
+class EvidenceWithoutFingerprints(AttestationError):
+    """The evidence records routes but not the accounts behind them."""
+
+
+class MaskEqualityBroken(AttestationError):
+    """A change would leave masks and fingerprints disagreeing about equality."""
 
 
 class _TableParser(HTMLParser):
@@ -167,7 +196,7 @@ def _expected_routes(evidence: dict) -> set[tuple[str, str]]:
     # An evidence file with a digest but no routes pins a page while recording
     # nothing about what the page said. Comparing it would return "verified"
     # over an empty set, which is the most misleading answer available.
-    raise SystemExit(
+    raise EvidenceWithoutRoutes(
         "evidence records no routes and no route_keys: its digest can be "
         "verified, but there is nothing to check the source against. Capture "
         "the routes before treating this file as an attestation."
@@ -198,7 +227,7 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     # at all. Saying so is the honest answer — reporting wholesale drift would
     # send someone hunting for a change that never happened.
     if expected and not actual:
-        raise SystemExit(
+        raise UnreadableSource(
             f"extracted 0 routes from {len(source_bytes)} bytes while the evidence "
             f"expects {len(expected)}. The route extractor reads HTML tables; this "
             "source is probably a PDF or a script-rendered page. Its digest can "
@@ -208,21 +237,49 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     unexpected = sorted(actual - expected)
 
     live = route_fingerprints(source_bytes, aliases)
+    routes = evidence.get("routes", [])
+
+    # Route-key-only evidence predates fingerprint capture. Comparing it
+    # checks zero accounts while reporting a clean match, which is the
+    # three-check contract silently reduced to two — and it is exactly the
+    # shape an account move hides in.
+    unfingerprinted = [
+        (route["currency"], route["int_bic"])
+        for route in routes
+        if "nostro_fingerprint" not in route or "with_an_fingerprint" not in route
+    ]
+    if expected and (not routes or unfingerprinted):
+        raise EvidenceWithoutFingerprints(
+            "evidence records no account fingerprints for "
+            f"{sorted(unfingerprinted) if unfingerprinted else 'any route'}. "
+            "Its digest and route keys can be checked; its accounts cannot, so "
+            "no comparison over it may be reported as verified."
+        )
+
+    # A fingerprint is committed in four places per route: nostro and with_an,
+    # each duplicated into source_snapshot.routes. Checking one leaves three
+    # fields a hand can edit without the verifier noticing.
+    snapshot = {
+        (route["currency"], route["int_bic"]): route
+        for route in evidence.get("source_snapshot", {}).get("routes", [])
+    }
     changed: list[dict[str, str]] = []
     matched = 0
-    for route in evidence.get("routes", []):
+    for route in routes:
         key = (route["currency"], route["int_bic"])
-        if "nostro_fingerprint" not in route:
-            raise SystemExit(
-                f"evidence route {key} carries no nostro_fingerprint; refusing to "
-                "report a verified comparison over an unverifiable route"
-            )
-        if live.get(key) == route["nostro_fingerprint"]:
+        committed = {route["nostro_fingerprint"], route["with_an_fingerprint"]}
+        mirror = snapshot.get(key)
+        if mirror is not None:
+            committed |= {
+                mirror.get("nostro_fingerprint"),
+                mirror.get("with_an_fingerprint"),
+            }
+        if committed == {live.get(key)}:
             matched += 1
         else:
             changed.append({"currency": key[0], "int_bic": key[1]})
 
-    checked = len(evidence.get("routes", []))
+    checked = len(routes)
     return {
         "source_sha256": digest,
         "digest_matches": digest == evidence.get("source_sha256"),
@@ -255,35 +312,57 @@ def _apply_accepted_changes(
     live = route_fingerprints(source_bytes, _aliases(evidence))
     applied: list[dict[str, str]] = []
     blocks = [evidence.get("routes", []), evidence.get("source_snapshot", {}).get("routes", [])]
-    masks = {
-        (route["currency"], route["int_bic"]): route.get("nostro_mask")
-        for route in evidence.get("routes", [])
-    }
     for key in sorted(accepted):
         if key not in live:
-            raise SystemExit(f"cannot accept {key}: the live page has no such route")
-        # Masks encode account equality. A move onto an account another route
-        # already uses has to merge the two masks, which is a data decision
-        # this tool will not make silently.
-        collisions = sorted(
-            other
-            for other, fingerprint in live.items()
-            if other != key and fingerprint == live[key] and masks.get(other) != masks.get(key)
-        )
-        if collisions:
-            raise SystemExit(
-                f"refusing to accept {key}: its new account is also used by "
-                f"{collisions}, whose mask differs. Masks record account "
-                "equality, so these routes must share one mask before the "
-                "fingerprint is re-pointed."
-            )
+            raise AttestationError(f"cannot accept {key}: the live page has no such route")
         for block in blocks:
             for route in block:
                 if (route["currency"], route["int_bic"]) == key:
                     route["nostro_fingerprint"] = live[key]
                     route["with_an_fingerprint"] = live[key]
         applied.append({"currency": key[0], "int_bic": key[1]})
+    _assert_mask_equality(evidence)
     return applied
+
+
+def _assert_mask_equality(evidence: dict) -> None:
+    """Masks record account equality; check that in both directions.
+
+    Two routes share a mask exactly when they share an account. An accepted
+    change can break that either way: a route joining another route's account
+    needs the two masks merged, and a route leaving a shared account needs the
+    mask split. Guarding only the first leaves the second silently wrong —
+    masks still claiming an equality the fingerprints no longer have.
+
+    Re-masking is a data decision with consequences in the manifest and the
+    seed, so this refuses rather than doing it.
+    """
+    routes = [
+        route
+        for route in evidence.get("routes", [])
+        if "nostro_mask" in route and "with_an_mask" in route
+    ]
+    for index, left in enumerate(routes):
+        for right in routes[index + 1 :]:
+            masks_equal = (left["nostro_mask"], left["with_an_mask"]) == (
+                right["nostro_mask"],
+                right["with_an_mask"],
+            )
+            accounts_equal = (
+                left["nostro_fingerprint"],
+                left["with_an_fingerprint"],
+            ) == (right["nostro_fingerprint"], right["with_an_fingerprint"])
+            if masks_equal == accounts_equal:
+                continue
+            left_key = (left["currency"], left["int_bic"])
+            right_key = (right["currency"], right["int_bic"])
+            action = "split" if masks_equal else "merged"
+            raise MaskEqualityBroken(
+                f"refusing the change: {left_key} and {right_key} would have "
+                f"{'the same mask but different accounts' if masks_equal else 'different masks but the same account'}. "
+                f"Masks record account equality, so their masks must be {action} "
+                "first — in the evidence, the manifest and the seed together."
+            )
 
 
 def _write_record(
@@ -320,14 +399,16 @@ def _write_record(
 
 
 def _refresh_digest(evidence_path: Path, evidence: dict, digest: str) -> None:
+    """Rewrite the evidence atomically, so a failed write leaves the old file."""
     evidence["source_sha256"] = digest
     snapshot = evidence.get("source_snapshot")
     if snapshot is not None:
         snapshot["source_sha256"] = digest
         snapshot["captured_at"] = datetime.date.today().isoformat()
-    evidence_path.write_text(
-        json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
+    payload = json.dumps(evidence, indent=2, ensure_ascii=False) + "\n"
+    temporary = evidence_path.with_suffix(evidence_path.suffix + ".tmp")
+    temporary.write_text(payload, encoding="utf-8")
+    os.replace(temporary, evidence_path)
 
 
 def _parse_route(value: str) -> tuple[str, str]:
@@ -442,12 +523,18 @@ def reverify(
             "once you have confirmed the change at the source."
         )
 
-    _refresh_digest(evidence_path, evidence, report["source_sha256"])
+    # The record is written first, and the evidence only after it lands. The
+    # failure this ordering rules out is the one the whole change exists to
+    # prevent: a refreshed digest sitting in the repository with nothing
+    # recording why it moved. The inverse failure — a record naming a digest
+    # the evidence never took — is inert, because coverage is checked from the
+    # evidence outwards.
     written = None
     if record_dir is not None:
         written = _write_record(
             record_dir, evidence_path, evidence, previous_digest, report, applied
         )
+    _refresh_digest(evidence_path, evidence, report["source_sha256"])
     return {
         "evidence": str(evidence_path),
         "previous_source_sha256": previous_digest,

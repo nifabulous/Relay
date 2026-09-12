@@ -61,32 +61,51 @@ attestation = _load_attestation()
 
 
 def _classify(evidence: dict, source_bytes: bytes) -> tuple[str, bool, str]:
-    """Return (status, routes_checked, detail) for a source that was fetched."""
+    """Return (status, routes_checked, detail) for a source that was fetched.
+
+    Each refusal is caught by type. Matching on message text conflated a
+    source the extractor cannot parse with an evidence file that is missing
+    fields — reporting a schema defect as a benign PDF limitation, which is
+    the kind of miscount that makes a survey worse than no survey.
+    """
     try:
         report = attestation.compare(evidence, source_bytes)
-    except SystemExit as exc:
-        message = str(exc)
-        if "no routes and no route_keys" in message:
-            return "no-routes", False, "evidence records no routes"
+    except attestation.EvidenceWithoutRoutes:
+        return "no-routes", False, "evidence records no routes"
+    except attestation.EvidenceWithoutFingerprints:
+        return (
+            "no-fingerprints",
+            False,
+            "evidence records routes but not the accounts behind them",
+        )
+    except attestation.UnreadableSource:
         return (
             "unreadable",
             False,
             "extractor reads HTML tables; this source is not one",
         )
+    except attestation.AttestationError as exc:
+        return "error", False, str(exc).splitlines()[0][:80]
 
-    if report["fingerprints"]["changed"]:
-        moved = [
-            f"{route['currency']}/{route['int_bic']}"
-            for route in report["fingerprints"]["changed"]
-        ]
-        return "accounts-changed", True, "accounts moved: " + ", ".join(moved)
+    # More than one category can change at once, and reporting only the more
+    # severe one hides the rest.
+    problems = []
     if not report["route_keys"]["match"]:
         keys = report["route_keys"]
-        return (
-            "routes-changed",
-            True,
-            f"{keys['actual']} of {keys['expected']} route keys matched",
+        problems.append(f"{keys['actual']} of {keys['expected']} route keys matched")
+    if report["fingerprints"]["changed"]:
+        moved = ", ".join(
+            f"{route['currency']}/{route['int_bic']}"
+            for route in report["fingerprints"]["changed"]
         )
+        problems.append(f"accounts moved: {moved}")
+    if problems:
+        status = (
+            "accounts-changed"
+            if report["fingerprints"]["changed"]
+            else "routes-changed"
+        )
+        return status, True, "; ".join(problems)
     return (
         "verified",
         True,

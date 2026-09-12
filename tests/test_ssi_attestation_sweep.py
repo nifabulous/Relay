@@ -99,6 +99,47 @@ class TestSweepClassification:
         assert result["status"] == "unreadable"
         assert result["routes_checked"] is False
 
+    def test_missing_fingerprints_are_not_reported_as_an_unreadable_source(
+        self, tmp_path
+    ):
+        """
+        The legacy evidence shape records routes but no accounts. Catching
+        every refusal by message text filed that under "this source is a PDF",
+        turning a schema gap into a format limitation and miscounting the
+        survey it feeds.
+        """
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = _evidence(sweep, source)
+        evidence["routes"] = [{"currency": "USD", "int_bic": "IRVTUS3N"}]
+        path = _write(tmp_path, "legacy.json", evidence)
+
+        (result,) = sweep.sweep([path], fetch=lambda url: source)
+
+        assert result["status"] == "no-fingerprints"
+        assert result["digest"] == "match"
+
+    def test_route_and_account_changes_are_reported_together(self, tmp_path):
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = _evidence(sweep, source)
+        fingerprint = evidence["routes"][0]["nostro_fingerprint"]
+        evidence["routes"].append(
+            {
+                "currency": "EUR",
+                "int_bic": "CHASDEFX",
+                "nostro_fingerprint": fingerprint,
+                "with_an_fingerprint": fingerprint,
+            }
+        )
+        path = _write(tmp_path, "both.json", evidence)
+        moved = _table([["Bank of Example", "USD", "111-9999-222", "IRVTUS3N"]])
+
+        (result,) = sweep.sweep([path], fetch=lambda url: moved)
+
+        assert "route keys matched" in result["detail"]
+        assert "accounts moved" in result["detail"]
+
     def test_evidence_without_routes_is_called_out_separately(self, tmp_path):
         sweep = _module()
         pdf = b"%PDF-1.7"
