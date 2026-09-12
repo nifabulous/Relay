@@ -1,0 +1,23 @@
+[
+  [
+    "CBMVMVMVXXX",
+    "Commercial Bank of Maldives Private Limited",
+    "Source: https://www.cbmmv.com/correspond-banks.html (official correspondent banks page, accessed 2026-09-12). Account numbers are masked synthetic values derived from the published correspondent list. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|MSHQUS33|Mashreqbank PSC, New York|91009620",
+      "USD|DBSSSGSG|DBS Bank, Singapore|91009621",
+      "USD|OCBCSGSG|OCBC Bank, Singapore|91009622",
+      "EUR|OCBCSGSG|OCBC Bank, Singapore|91009623",
+      "EUR|SOLADEST|Landesbank Baden-Wuerttemberg, Stuttgart|91009624",
+      "SGD|OCBCSGSG|OCBC Bank, Singapore|91009625",
+      "GBP|OCBCSGSG|OCBC Bank, Singapore|91009626"
+    ]
+  ]
+]
