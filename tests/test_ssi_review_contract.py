@@ -440,7 +440,7 @@ def test_asia_pacific_wave4_has_exact_manifest_admitted_keys():
 
 
 def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
-    """The 342-row Europe expansion preserves its exclusion semantics."""
+    """The 355-row Europe expansion preserves its exclusion semantics."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -455,7 +455,7 @@ def test_europe_uncovered_wave4_has_exact_admitted_keys_and_no_self_hops():
     }
     expected_keys = {key for key in expected if key[0] in beneficiary_bics}
     actual_keys = {key for key in seed if key[0] in beneficiary_bics}
-    assert len(expected_keys) == 342
+    assert len(expected_keys) == 355
     assert actual_keys == expected_keys
     assert all(key[0][:8] != key[2][:8] for key in actual_keys)
     assert all(

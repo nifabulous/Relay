@@ -2028,6 +2028,7 @@ class TestSingaporeSsiCoverage:
 # ---- autopilot-generated coverage tests: indonesia ----
 INDONESIA_SSI_COVERAGE = [
     ("BBUKIDJAXXX", "PT Bank KB Bukopin Tbk", {"AUD", "EUR", "GBP", "HKD", "JPY", "MYR", "SGD", "USD"}),
+    ("BDINIDJAXXX", "Bank Danamon Indonesia", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "NZD", "SAR", "SEK", "SGD", "THB", "USD"}),
 ]
 
 class TestIndonesiaSsiCoverage:
@@ -2305,6 +2306,11 @@ WESTERN_EUROPE_SSI_COVERAGE = [
     ('BOTKNL2XXXX', 'MUFG Bank (Europe) N.V., Amsterdam', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MAD', 'MXN', 'MYR', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
     ('DEUTNL2AXXX', 'Deutsche Bank AG, Amsterdam', {'AED', 'AUD', 'BGN', 'CAD', 'GBP', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RUB', 'ZAR'}),
     ('BPMOIT22XXX', 'BPER Banca S.p.A.', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'ISK', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ('RZBAATWWXXX', 'Raiffeisen Bank International AG', {'AED', 'ALL', 'AUD', 'BAM', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('RLNWATWWXXX', 'Raiffeisenlandesbank Niederösterreich-Wien AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('OBKLAT2LXXX', 'Oberbank AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
+    ('VKBLAT2LXXX', 'Volkskreditbank AG', {'AED', 'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('ICRAITRRXXX', 'ICCREA Banca S.p.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ISK', 'JPY', 'MAD', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
 ]
 
 class TestWesternEuropeSsiCoverage:
@@ -2445,6 +2451,7 @@ EUROPE_WAVE2_SSI_COVERAGE = [
     ('CECBBGSFXXX', 'CENTRAL COOPERATIVE BANK PLC', {'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'JPY', 'MKD', 'NOK', 'PLN', 'RON', 'RUB', 'SEK', 'TRY', 'USD'}),
     ('HEBACY2NXXX', 'HELLENIC BANK PUBLIC COMPANY LTD.', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP'}),
     ('UBBSBGSFXXX', 'United Bulgarian Bank AD', {'AUD', 'CAD', 'CHF', 'DKK', 'EUR', 'GBP', 'JPY', 'NOK', 'RON', 'RUB', 'SEK', 'TRY', 'USD'}),
+    ('UNCRBGSFXXX', 'UniCredit Bulbank AD', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'PLN', 'RSD', 'RON', 'SEK', 'TRY', 'USD'}),
 ]
 
 class TestEuropeWave2SsiCoverage:
@@ -2643,6 +2650,7 @@ EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
     ('TBTUBA22XXX', 'NLB Banka d.d., Sarajevo', {'AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'MKD', 'NOK', 'RSD', 'SEK', 'TRY', 'USD'}),
     ('UGASUAUKXXX', 'Ukrgasbank JSC', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD', 'XAG', 'XAU', 'XPD', 'XPT'}),
     ('PBANUA2XXXX', 'PrivatBank JSC', {'AUD', 'BYN', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'GEL', 'JPY', 'KZT', 'NOK', 'PLN', 'RUB', 'SEK', 'USD'}),
+    ('OTPVUAUKXXX', 'OTP Bank JSC Ukraine', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD'}),
 ]
 
 class TestEuropeUncoveredWave4SsiCoverage:
@@ -3224,6 +3232,7 @@ class TestUnitedStatesSsiCoverage:
 GERMANY_SSI_COVERAGE = [
     ('DNBADEHXXXX', 'DNB Bank ASA, Hamburg Branch', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
     ('HASPDEHHXXX', 'Hamburger Sparkasse AG', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('AKBKDEFFXXX', 'Akbank AG', {'CHF', 'GBP', 'JPY', 'PLN', 'TRY', 'USD'}),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
 ]
 

@@ -11045,7 +11045,8 @@
             }
           ],
           "admitted_record_digest": "697d37270d31a110503c0fcdcf2690556689a01d07febfa513ae68cd28137533"
-        }
+        },
+        {"bic8":"BDINIDJA","manifest_file":"regions_batch6_banks_3_bdinidja.json"}
       ]
     },
     {
@@ -14880,7 +14881,12 @@
         },
         {"bic8":"BOTKNL2X","name":"MUFG Bank (Europe) N.V., Amsterdam","country":"NL","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","MYR","NOK","NZD","PLN","QAR","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"44e3a2039fc7258c5a44601f638682a3385e9ea5b90aea97c370e12ac951c743","compact_records_file":"regions_batch4_records_1.json"},
         {"bic8":"DEUTNL2A","manifest_file":"regions_batch5_banks_1_deutnl2a.json"},
-        {"bic8":"BPMOIT22","manifest_file":"regions_batch6_banks_1_bpmoit22.json"}
+        {"bic8":"BPMOIT22","manifest_file":"regions_batch6_banks_1_bpmoit22.json"},
+        {"bic8":"RZBAATWW","manifest_file":"regions_batch6_banks_3_rzbaatww.json"},
+        {"bic8":"RLNWATWW","manifest_file":"regions_batch6_banks_3_rlnwatww.json"},
+        {"bic8":"OBKLAT2L","manifest_file":"regions_batch6_banks_3_obklat2l.json"},
+        {"bic8":"VKBLAT2L","manifest_file":"regions_batch6_banks_3_vkblat2l.json"},
+        {"bic8":"ICRAITRR","manifest_file":"regions_batch6_banks_3_icraitrr.json"}
       ]
     },
     {
@@ -17996,7 +18002,8 @@
           ],
           "admitted_record_digest": "61b068c3640b490cee12f079d41bc70bc665c720e530e5f2ed9f5bc2fd38943a"
         },
-        {"bic8":"UBBSBGSF","name":"United Bulgarian Bank AD","country":"BG","currencies":["AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","RON","RUB","SEK","TRY","USD"],"seedable":true,"source_domains":["ubb.bg"],"admitted_record_digest":"f5f725c938e82e56b0f5971be5caea5a171a3c0f679b80926ce2575a0c48eec7","compact_records_file":"regions_batch4_records_3.json"}
+        {"bic8":"UBBSBGSF","name":"United Bulgarian Bank AD","country":"BG","currencies":["AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","RON","RUB","SEK","TRY","USD"],"seedable":true,"source_domains":["ubb.bg"],"admitted_record_digest":"f5f725c938e82e56b0f5971be5caea5a171a3c0f679b80926ce2575a0c48eec7","compact_records_file":"regions_batch4_records_3.json"},
+        {"bic8":"UNCRBGSF","manifest_file":"regions_batch6_banks_3_uncrbgsf.json"}
       ]
     },
     {
@@ -29353,7 +29360,8 @@
           ],
           "admitted_record_digest": "5a51acfe4808494d2dbca319d728127f9cf953a27c35c812384c2f1b2de5887c"
         },
-        {"bic8":"PBANUA2X","name":"PrivatBank JSC","country":"UA","currencies":["AUD","BYN","CHF","CNY","CZK","DKK","EUR","GBP","GEL","JPY","KZT","NOK","PLN","RUB","SEK","USD"],"seedable":true,"source_domains":["privatbank.ua"],"admitted_record_digest":"efd3fd8a0c0afeaf95d06b5b52dab84ffe1c968809a08c788165a82f529126a7","compact_records_file":"regions_batch4_records_2.json"}
+        {"bic8":"PBANUA2X","name":"PrivatBank JSC","country":"UA","currencies":["AUD","BYN","CHF","CNY","CZK","DKK","EUR","GBP","GEL","JPY","KZT","NOK","PLN","RUB","SEK","USD"],"seedable":true,"source_domains":["privatbank.ua"],"admitted_record_digest":"efd3fd8a0c0afeaf95d06b5b52dab84ffe1c968809a08c788165a82f529126a7","compact_records_file":"regions_batch4_records_2.json"},
+        {"bic8":"OTPVUAUK","manifest_file":"regions_batch6_banks_3_otpvuauk.json"}
       ]
     },
     {
@@ -37129,7 +37137,7 @@
         {"bic8":"NDEAFIHH","manifest_file":"regions_batch5_banks_1_ndeafihh.json"}
       ]
     },
-    {"name":"germany","label":"Germany SSI (MUFG Bank Europe Germany Branch)","countries":["DE"],"masked_block":91005200,"note":"2026-09-10 bank-published SSI research: MUFG Bank (Europe) N.V. Germany Branch publishes account-bearing correspondent instructions dated December 2025. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"BOTKDEDX","name":"MUFG Bank (Europe) N.V., Germany Branch","country":"DE","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","NOK","NZD","PLN","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"6dd5439281b6cfb144f50b874b50cfe430ec1d27d4f15dc0798677283b992e73","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"DNBADEHX","manifest_file":"regions_batch5_banks_1_dnbadehx.json"},{"bic8":"HASPDEHH","manifest_file":"regions_batch5_banks_1_haspdehh.json"}]},
+    {"name":"germany","label":"Germany SSI (MUFG Bank Europe Germany Branch)","countries":["DE"],"masked_block":91005200,"note":"2026-09-10 bank-published SSI research: MUFG Bank (Europe) N.V. Germany Branch publishes account-bearing correspondent instructions dated December 2025. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"BOTKDEDX","name":"MUFG Bank (Europe) N.V., Germany Branch","country":"DE","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","NOK","NZD","PLN","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"6dd5439281b6cfb144f50b874b50cfe430ec1d27d4f15dc0798677283b992e73","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"DNBADEHX","manifest_file":"regions_batch5_banks_1_dnbadehx.json"},{"bic8":"HASPDEHH","manifest_file":"regions_batch5_banks_1_haspdehh.json"},{"bic8":"AKBKDEFF","manifest_file":"regions_batch6_banks_3_akbkdeff.json"}]},
     {"name":"jordan","label":"Jordan SSI (Jordan Ahli Bank and AJIB)","countries":["JO"],"masked_block":91005500,"note":"2026-09-10 bank-published SSI research: Jordan Ahli Bank April 2026 and Arab Jordan Investment Bank November 2024 SSI documents publish account-bearing correspondent instructions. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"AJIBJOAX","name":"Arab Jordan Investment Bank","country":"JO","currencies":["AED","AUD","BHD","CAD","CHF","CNY","DKK","EUR","GBP","JOD","JPY","KWD","QAR","SAR","SEK","SGD","USD"],"seedable":true,"source_domains":["ajib.com"],"admitted_record_digest":"bfe7962ceef10c354eda0fc1df69565f6462465e708dde7f3b84bb195e113ebd","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"JONBJOAX","name":"Jordan Ahli Bank","country":"JO","currencies":["AED","AUD","CAD","CHF","DKK","EUR","GBP","JPY","KWD","NOK","OMR","QAR","SAR","SEK","USD"],"seedable":true,"source_domains":["ahli.com"],"admitted_record_digest":"341249c537dcc5e9da890de14f388202d7eb14f83139e896f8ac68519d9f6b59","compact_records_file":"regions_batch4_records_2.json"}]}
   ]
 }

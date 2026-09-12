@@ -1310,5 +1310,14 @@
   "MIDLAM22": {"name": "HSBC Bank Armenia cjsc", "country": "AM", "domains": ["hsbc.am"], "settlement_terms_published": false},
   "ANIKAM22": {"name": "ID BANK CJSC", "country": "AM", "domains": ["idbank.am"], "settlement_terms_published": false},
   "ARMJAM22": {"name": "VTB Bank (Armenia) CJSC", "country": "AM", "domains": ["vtb.am"], "settlement_terms_published": false},
-  "WPACAU2S": {"name": "Westpac Banking Corporation", "country": "AU", "domains": ["westpac.com.au"], "settlement_terms_published": false}
+  "WPACAU2S": {"name": "Westpac Banking Corporation", "country": "AU", "domains": ["westpac.com.au"], "settlement_terms_published": false},
+  "RZBAATWW": {"name": "Raiffeisen Bank International AG", "country": "AT", "domains": ["rbinternational.com"], "settlement_terms_published": false},
+  "RLNWATWW": {"name": "Raiffeisenlandesbank Niederösterreich-Wien AG", "country": "AT", "domains": ["privatebanking-raiffeisen.at"], "settlement_terms_published": false},
+  "OBKLAT2L": {"name": "Oberbank AG", "country": "AT", "domains": ["oberbank.com"], "settlement_terms_published": false},
+  "VKBLAT2L": {"name": "Volkskreditbank AG", "country": "AT", "domains": ["vkb-bank.at"], "settlement_terms_published": false},
+  "UNCRBGSF": {"name": "UniCredit Bulbank AD", "country": "BG", "domains": ["unicreditbulbank.bg"], "settlement_terms_published": false},
+  "ICRAITRR": {"name": "ICCREA Banca S.p.A.", "country": "IT", "domains": ["iccreabanca.it"], "settlement_terms_published": false},
+  "BDINIDJA": {"name": "Bank Danamon Indonesia", "country": "ID", "domains": ["danamon.co.id"], "settlement_terms_published": false},
+  "OTPVUAUK": {"name": "OTP Bank JSC Ukraine", "country": "UA", "domains": ["otpbank.com.ua"], "settlement_terms_published": false},
+  "AKBKDEFF": {"name": "Akbank AG", "country": "DE", "domains": ["akbank.de"], "settlement_terms_published": false}
   }

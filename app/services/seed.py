@@ -496,6 +496,13 @@ BANKS = [
     ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", "AM", "Yerevan", "AMD"),
     ("ANIKAM22XXX", "ID BANK CJSC", "AM", "Yerevan", "AMD"),
     ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", "AM", "Yerevan", "AMD"),
+    ("RLNWATWWXXX", "Raiffeisenlandesbank Niederösterreich-Wien AG", "AT", "Vienna", "EUR"),
+    ("OBKLAT2LXXX", "Oberbank AG", "AT", "Linz", "EUR"),
+    ("VKBLAT2LXXX", "Volkskreditbank AG", "AT", "Linz", "EUR"),
+    ("UNCRBGSFXXX", "UniCredit Bulbank AD", "BG", "Sofia", "BGN"),
+    ("ICRAITRRXXX", "ICCREA Banca S.p.A.", "IT", "Rome", "EUR"),
+    ("OTPVUAUKXXX", "OTP Bank JSC Ukraine", "UA", "Kyiv", "UAH"),
+    ("AKBKDEFFXXX", "Akbank AG", "DE", "Eschborn", "EUR"),
 ]
 
 # (destination_currency, destination_country, intermediary_bic,
@@ -755,7 +762,11 @@ def _load_ssi_batch5_groups():
 
 _SSI_BATCH5_GROUPS = _load_ssi_batch5_groups()
 
-_SSI_BATCH6_DATA_FILES = ("seed_ssi_batch6_1.json", "seed_ssi_batch6_2.json")
+_SSI_BATCH6_DATA_FILES = (
+    "seed_ssi_batch6_1.json",
+    "seed_ssi_batch6_2.json",
+    "seed_ssi_batch6_3.json",
+)
 
 
 def _load_ssi_batch6_groups():
