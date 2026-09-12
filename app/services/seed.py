@@ -581,6 +581,7 @@ BANKS = [
     ("HBBAMEPGXXX", "Hipotekarna Banka AD Podgorica", "ME", "Podgorica", "EUR"),
     ("ERBKCY2NXXX", "Eurobank Cyprus Ltd", "CY", "Nicosia", "EUR"),
     ("NBSBSKBXXXX", "National Bank of Slovakia", "SK", "Bratislava", "EUR"),
+    ("BNBTBTBTXXX", "Bhutan National Bank Limited", "BT", "Thimphu", "BTN"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -941,6 +942,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_76.json",
     "seed_ssi_batch6_77.json",
     "seed_ssi_batch6_78.json",
+    "seed_ssi_batch6_79.json",
 )
 
 
