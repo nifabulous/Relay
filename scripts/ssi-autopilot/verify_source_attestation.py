@@ -182,6 +182,19 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     actual = {
         (currency, aliases.get(bic, bic)) for currency, bic in _route_keys(source_bytes)
     }
+    # Extracting nothing from a source that should hold routes means the
+    # extractor did not understand the format, not that every correspondent
+    # changed at once. The route extractor reads HTML tables; several evidence
+    # files cite PDFs, whose digests verify while their routes cannot be read
+    # at all. Saying so is the honest answer — reporting wholesale drift would
+    # send someone hunting for a change that never happened.
+    if expected and not actual:
+        raise SystemExit(
+            f"extracted 0 routes from {len(source_bytes)} bytes while the evidence "
+            f"expects {len(expected)}. The route extractor reads HTML tables; this "
+            "source is probably a PDF or a script-rendered page. Its digest can "
+            "still be verified, but its routes and accounts cannot."
+        )
     missing = sorted(expected - actual)
     unexpected = sorted(actual - expected)
 

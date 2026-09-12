@@ -160,14 +160,53 @@ class TestComparisonFailsClosed:
         assert report["fingerprints"]["changed"] == []
         assert report["match"] is True
 
-    def test_a_missing_route_is_reported_rather_than_ignored(self):
+    def test_a_partially_changed_page_is_reported_route_by_route(self):
+        """One route gone, others intact: a report, not a refusal."""
+        attestation = _module()
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = self._evidence(fingerprint)
+        evidence["routes"].append(
+            {
+                "currency": "EUR",
+                "int_bic": "CHASDEFX",
+                "nostro_fingerprint": fingerprint,
+                "with_an_fingerprint": fingerprint,
+            }
+        )
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+        report = attestation.compare(evidence, source)
+
+        assert report["route_keys"]["missing"] == [("EUR", "CHASDEFX")]
+        assert report["match"] is False
+
+    def test_a_source_the_extractor_cannot_read_refuses_rather_than_reports(self):
+        """
+        Extracting nothing from a page that should hold routes means the
+        extractor did not understand the format — waves 22-28 cite PDFs, not
+        HTML tables. Reporting that as "every route changed" would be a
+        confident lie, and would send someone hunting for drift that is not
+        there.
+        """
         attestation = _module()
         evidence = self._evidence(attestation.account_fingerprint("890-0045-140"))
 
-        report = attestation.compare(evidence, _html([["Nothing", "here"]]))
+        with pytest.raises(SystemExit) as excinfo:
+            attestation.compare(evidence, b"%PDF-1.7 binary bytes, no table here")
 
-        assert report["route_keys"]["match"] is False
-        assert report["match"] is False
+        message = str(excinfo.value).lower()
+        assert "extract" in message
+        assert "0" in message or "no route" in message
+
+    def test_an_evidence_file_with_no_routes_does_not_trip_the_guard(self):
+        attestation = _module()
+
+        report = attestation.compare(
+            {"source_sha256": "x", "routes": [], "source_snapshot": {"bic_aliases": {}}},
+            b"%PDF-1.7",
+        )
+
+        assert report["fingerprints"]["checked"] == 0
 
     def test_compare_never_returns_a_raw_account(self):
         attestation = _module()
