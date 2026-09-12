@@ -479,6 +479,16 @@ BANKS = [
     ("NOBIBA22XXX", "Nova Banka AD Banja Luka", "BA", "Banja Luka", "BAM"),
     ("ABRKEGCAXXX", "Al Baraka Bank Egypt", "EG", "Cairo", "EGP"),
     ("PRIEKENXXXX", "Prime Bank Limited Kenya", "KE", "Nairobi", "KES"),
+    ("FCIBAGAGXXX", "CIBC Caribbean Bank (Barbados) Limited - Antigua", "AG", "St. John's", "XCD"),
+    ("FCIBBSNSXXX", "CIBC Caribbean Bank (Bahamas) Limited", "BS", "Nassau", "BSD"),
+    ("FCIBBBBBXXX", "CIBC Caribbean Bank (Barbados) Limited", "BB", "Bridgetown", "BBD"),
+    ("FCIBVGVGXXX", "CIBC Caribbean Bank (Cayman) Limited - British Virgin Islands", "VG", "Road Town", "USD"),
+    ("FCIBKYKYXXX", "CIBC Caribbean Bank (Cayman) Limited", "KY", "George Town", "KYD"),
+    ("FCIBJMKNXXX", "CIBC Caribbean Bank (Jamaica) Limited", "JM", "Kingston", "JMD"),
+    ("FCIBKNSKXXX", "CIBC Caribbean Bank (Barbados) Limited - St. Kitts & Nevis", "KN", "Basseterre", "XCD"),
+    ("FCIBLCLCXXX", "CIBC Caribbean Bank (Barbados) Limited - St. Lucia", "LC", "Castries", "XCD"),
+    ("FCIBTCGPXXX", "CIBC Caribbean Bank (Bahamas) Limited - Turks & Caicos Islands", "TC", "Providenciales", "USD"),
+    ("FCIBTTP2XXX", "CIBC Caribbean Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -796,6 +806,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_12.json",
     "seed_ssi_batch6_13.json",
     "seed_ssi_batch6_14.json",
+    "seed_ssi_batch6_15.json",
 )
 
 
