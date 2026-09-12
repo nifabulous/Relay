@@ -1,0 +1,30 @@
+[
+  [
+    "BNTBBMHMXXX",
+    "The Bank of N.T. Butterfield & Son Limited",
+    "Source: https://www.butterfieldgroup.com/sites/default/files/documents/203716_WEB-SSI-BERMUDA-2024.pdf (accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|NATAAU33|National Australia Bank, Melbourne (cover: BNY Mellon New York)|91006140",
+      "CAD|CIBCCATT|Canadian Imperial Bank of Commerce, Toronto|91006141",
+      "CHF|UBSWCHZH80A|UBS AG, Zurich (cover: Barclays London)|91006142",
+      "DKK|NDEADKKK|Nordea, Copenhagen (cover: Barclays London)|91006143",
+      "EUR|BARCDEFF|Barclays Bank Ireland PLC, Frankfurt Branch|91006144",
+      "GBP|BARCGB22|Barclays PLC, London|91006145",
+      "HKD|HASEHKHH|Hang Seng Bank Limited, Hong Kong (cover: BNY Mellon New York)|91006146",
+      "JPY|BOTKJPJT|MUFG Bank Ltd., Tokyo|91006147",
+      "NOK|DNBANOKK|Den Norske Bank, Oslo|91006148",
+      "NZD|ANZBNZ22|Australia & New Zealand Bank, Auckland (cover: BNY Mellon New York)|91006149",
+      "SEK|ESSESESS|SEB, Stockholm (cover: Barclays London)|91006150",
+      "SGD|DBSSSGSG|Development Bank Singapore (cover: BNY Mellon New York)|91006151",
+      "USD|IRVTUS3N|BNY Mellon New York (ABA 021000018)|91006152",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|91006153"
+    ]
+  ]
+]

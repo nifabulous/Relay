@@ -466,6 +466,7 @@ BANKS = [
     ("UGBIROBUXXX", "Garanti Bank S.A.", "RO", "Bucharest", "RON"),
     ("INGBPLPWXXX", "ING Bank Slaski S.A.", "PL", "Katowice", "PLN"),
     ("ICSMSMSMXXX", "Banca Centrale della Repubblica di San Marino", "SM", "San Marino", "EUR"),
+    ("BNTBBMHMXXX", "The Bank of N.T. Butterfield & Son Limited", "BM", "Hamilton", "BMD"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -779,6 +780,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_8.json",
     "seed_ssi_batch6_9.json",
     "seed_ssi_batch6_10.json",
+    "seed_ssi_batch6_11.json",
 )
 
 
