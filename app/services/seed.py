@@ -501,6 +501,7 @@ BANKS = [
     ("STSPAT2GXXX", "Steiermärkische Bank und Sparkassen AG", "AT", "Graz", "EUR"),
     ("CBLUCH22XXX", "Cornèr Banca SA", "CH", "Lugano", "CHF"),
     ("ESSLDE66XXX", "Kreissparkasse Esslingen-Nuertingen", "DE", "Esslingen", "EUR"),
+    ("RZOOAT2LXXX", "Raiffeisenlandesbank Oberoesterreich AG", "AT", "Linz", "EUR"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -830,6 +831,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_24.json",
     "seed_ssi_batch6_25.json",
     "seed_ssi_batch6_26.json",
+    "seed_ssi_batch6_27.json",
 )
 
 
