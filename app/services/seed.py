@@ -460,6 +460,7 @@ BANKS = [
     ("HASPDEHHXXX", "Hamburger Sparkasse AG", "DE", "Hamburg", "EUR"),
     ("FNNBROBUXXX", "Nexent Bank N.V. Amsterdam Bucharest Branch", "RO", "Bucharest", "RON"),
     ("RATNINBBXXX", "RBL Bank Limited", "IN", "Mumbai", "INR"),
+    ("CCRTIT2TBDB", "Banca di Bologna", "IT", "Bologna", "EUR"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -766,6 +767,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_1.json",
     "seed_ssi_batch6_2.json",
     "seed_ssi_batch6_3.json",
+    "seed_ssi_batch6_4.json",
 )
 
 

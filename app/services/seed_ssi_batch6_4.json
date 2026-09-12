@@ -1,0 +1,50 @@
+[
+  [
+    "CCRTIT2TBDB",
+    "Banca di Bologna",
+    "Source: https://www.bancadibologna.it/media/8439/ssi-banca-di-bologna-c-esteri.pdf (as of 2026-09-12) BIC-level list — no account numbers published; not a selectable settlement instruction. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|CCRTIT2T|TARGET2 and EBA STEP 2 Indirect Participant|"
+    ]
+  ],
+  [
+    "CCRTIT2TBDB",
+    "Banca di Bologna",
+    "Source: https://www.bancadibologna.it/media/8439/ssi-banca-di-bologna-c-esteri.pdf (as of 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|WPACAU2S|Westpac Banking Corporation, Sydney|91005416",
+      "CAD|ROYCCAT2|The Royal Bank of Canada, Toronto|91005417",
+      "CHF|UBSWCHZH80A|U.B.S. AG, Zurich|91005418",
+      "CZK|KOMBCZPP|Komercni Banka, Prague|91005419",
+      "DKK|NDEADKKK|Nordea Bank Danmark A/S, Copenhagen|91005420",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91005421",
+      "HKD|CHASHKHH|JPMorgan Chase Bank, Hong Kong|91005422",
+      "HUF|IRVTUS3N|The Bank of New York Mellon, New York|91005423",
+      "ISK|IRVTUS3N|The Bank of New York Mellon, New York|91005424",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91005425",
+      "NOK|DNBANOKK|DNB Bank, Oslo|91005426",
+      "NZD|IRVTUS3N|The Bank of New York Mellon, New York|91005427",
+      "PLN|WBKPPLPP|Bank Zachodni WBK S.A., Warsaw|91005428",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken, Stockholm|91005429",
+      "TRY|IRVTUS3N|The Bank of New York Mellon, New York|91005430",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91005431",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91005432",
+      "USD|PNBPUS33|Wells Fargo Bank N.A., New York|91005433",
+      "ZAR|SBZAZAJJ|Standard Bank of South Africa, Johannesburg|91005434"
+    ]
+  ]
+]
