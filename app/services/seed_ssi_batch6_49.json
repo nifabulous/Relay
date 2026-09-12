@@ -1,0 +1,34 @@
+[
+  [
+    "IFICBDDHXXX",
+    "IFIC Bank PLC",
+    "Source: https://www.ificbank.com.bd/public/assets/aboutus/correspondent/1684317921_SSI_List_2023.pdf (official SSI list, 2023). ",
+    "2023-05-17",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|SCBLUS33|Standard Chartered, New York|91008600",
+      "USD|MSHQUS33|Mashreq Bank, New York|91008601",
+      "USD|SCBLGB2L|Standard Chartered, London|91008602",
+      "USD|CITIUS33|Citibank, New York|91008603",
+      "USD|CHASUS33|JPMorgan Chase, New York|91008604",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|91008605",
+      "USD|BSONGB2L|Bank of Nova Scotia, London|91008606",
+      "USD|HANYUS33|Habib American Bank, New York|91008607",
+      "USD|CZCBCN2X|China Zheshang Bank, Hangzhou|91008608",
+      "GBP|SCBLGB2L|Standard Chartered, London|91008609",
+      "GBP|BSONGB2L|Bank of Nova Scotia, London|91008610",
+      "CHF|HBZUCHZZ|Habib Bank AG Zurich|91008611",
+      "JPY|SCBLJPJT|Standard Chartered, Tokyo|91008612",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91008613",
+      "EUR|CHASDEFX|JPMorgan Chase, Frankfurt|91008614",
+      "EUR|BSONGB2L|Bank of Nova Scotia, London|91008615",
+      "CNY|CZCBCN2X|China Zheshang Bank, Hangzhou|91008616",
+      "AUD|CHASAU2X|JPMorgan Chase, Sydney|91008617"
+    ]
+  ]
+]

@@ -552,6 +552,10 @@ BANKS = [
     ("ETHNGRAAXXX", "National Bank of Greece S.A.", "GR", "Athens", "EUR"),
     ("PIRBGRAAXXX", "Piraeus Bank S.A.", "GR", "Athens", "EUR"),
     ("ACLBKHPPXXX", "ACLEDA Bank Plc", "KH", "Phnom Penh", "KHR"),
+    ("PINBIDJAXXX", "PaninBank", "ID", "Jakarta", "IDR"),
+    ("BKSIBDDHXXX", "BASIC Bank PLC", "BD", "Dhaka", "BDT"),
+    ("MTBLBDDHXXX", "Mutual Trust Bank PLC", "BD", "Dhaka", "BDT"),
+    ("IFICBDDHXXX", "IFIC Bank PLC", "BD", "Dhaka", "BDT"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -882,6 +886,10 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_43.json",
     "seed_ssi_batch6_44.json",
     "seed_ssi_batch6_45.json",
+    "seed_ssi_batch6_46.json",
+    "seed_ssi_batch6_47.json",
+    "seed_ssi_batch6_48.json",
+    "seed_ssi_batch6_49.json",
 )
 
 

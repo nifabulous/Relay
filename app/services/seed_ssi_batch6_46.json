@@ -1,0 +1,34 @@
+[
+  [
+    "PINBIDJAXXX",
+    "PaninBank",
+    "Source: https://www.panin.co.id/en/business/layanan-trade-finance/bank-koresponden (official correspondent bank page, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|ANZ Bank, Melbourne|91008300",
+      "EUR|BBRUBEBB|ING Belgium, Brussels|91008301",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91008302",
+      "EUR|SCBLDEFF|Standard Chartered, Frankfurt|91008303",
+      "CAD|TDOMCATT|Toronto-Dominion Bank, Toronto|91008304",
+      "HKD|SCBLHKHH|Standard Chartered, Hong Kong|91008305",
+      "CNY|ICBKIDJA|Industrial and Commercial Bank of China Indonesia, Jakarta|91008306",
+      "USD|BKCHIDJA|Bank of China (Hong Kong) Jakarta|91008307",
+      "USD|UOVBSGSG|United Overseas Bank, Singapore|91008308",
+      "USD|CITIUS33|Citibank, New York|91008309",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91008310",
+      "USD|SCBLUS33|Standard Chartered, New York|91008311",
+      "JPY|MHCBJPJT|Mizuho Bank, Tokyo|91008312",
+      "NZD|ANZBNZ22|ANZ Bank New Zealand, Auckland|91008313",
+      "SGD|UOVBSGSG|United Overseas Bank, Singapore|91008314",
+      "SGD|SCBLSGSG|Standard Chartered, Singapore|91008315",
+      "SGD|OCBCSGSG|OCBC Bank, Singapore|91008316",
+      "CHF|CRESCHZZ80A|Credit Suisse, Zurich|91008317"
+    ]
+  ]
+]
