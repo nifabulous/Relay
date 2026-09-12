@@ -1,0 +1,40 @@
+[
+  [
+    "ACLBKHPPXXX",
+    "ACLEDA Bank Plc",
+    "Source: https://www.acledasecurities.com.kh/kh/eng/bp_correspondent (official correspondent bank instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|IRVTUS3N|The Bank of New York Mellon, New York|91008200",
+      "CNY|BKCHKHPPCLR|Bank of China (Hong Kong), Phnom Penh|91008201",
+      "CNY|ICBKCNBJ|Industrial and Commercial Bank of China, Beijing|91008202",
+      "CNY|ICBKCNBJSZN|Industrial and Commercial Bank of China, Shenzhen|91008203",
+      "EUR|BREDFRPP|BRED Banque Populaire, Paris|91008204",
+      "EUR|SOGEFRPP|Societe Generale, Paris|91008205",
+      "EUR|SCBLDEFF|Standard Chartered, Frankfurt|91008206",
+      "GBP|SCBLGB2L|Standard Chartered, London|91008207",
+      "JPY|SMBCJPJT|SMBC, Tokyo|91008208",
+      "SGD|UOVBSGSG|United Overseas Bank, Singapore|91008209",
+      "THB|BKKBTHBK|Bangkok Bank, Bangkok|91008210",
+      "THB|KRTHTHBK|Krung Thai Bank, Bangkok|91008211",
+      "THB|SICOTHBK|Siam Commercial Bank, Bangkok|91008212",
+      "THB|UOVBTHBK|United Overseas Bank (Thai), Bangkok|91008213",
+      "USD|BKKBTHBK|Bangkok Bank, Bangkok|91008214",
+      "USD|BOFAUS3N|Bank of America, New York|91008215",
+      "USD|KOEXKRSE|Korea Exchange Bank, Seoul|91008216",
+      "USD|CZNBKRSE|Shinhan Bank, Seoul|91008217",
+      "USD|CHASUS33|JPMorgan Chase, New York|91008218",
+      "USD|SCBLUS33|Standard Chartered, New York|91008219",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91008220",
+      "USD|UOVBSGSG|United Overseas Bank, Singapore|91008221",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|91008222",
+      "VND|VBAAVNVX|Vietnam Bank for Agriculture and Rural Development, Hanoi|91008223"
+    ]
+  ]
+]
