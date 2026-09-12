@@ -507,6 +507,17 @@ BANKS = [
     ("TZBBBA22XXX", "ZiraatBank BH dd Sarajevo", "BA", "Sarajevo", "BAM"),
     ("BEASSGSGXXX", "Bank of East Asia, Singapore Branch", "SG", "Singapore", "SGD"),
     ("TATRSKBXXXX", "Tatra banka, a.s.", "SK", "Bratislava", "EUR"),
+    ("BNTBKYKYXXX", "Butterfield Bank (Cayman) Limited", "KY", "George Town", "KYD"),
+    ("FCTTTTPSXXX", "First Citizens Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
+    ("RBGLGYGGXXX", "Republic Bank (Guyana) Limited", "GY", "Georgetown", "GYD"),
+    ("RBNKTTPXXXX", "Republic Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
+    ("JNCBJMKXXXX", "National Commercial Bank Jamaica Limited", "JM", "Kingston", "JMD"),
+    ("FILBJMKNXXX", "First Global Bank Limited", "JM", "Kingston", "JMD"),
+    ("BDCCCWCUXXX", "Banco di Caribe N.V. Curacao", "CW", "Willemstad", "ANG"),
+    ("BDCCAWAWXXX", "Banco di Caribe Aruba N.V.", "AW", "Oranjestad", "AWG"),
+    ("BDCCBQBNXXX", "Banco di Caribe Bonaire N.V.", "BQ", "Kralendijk", "USD"),
+    ("BDCCSXSMXXX", "Banco di Caribe St. Maarten N.V.", "SX", "Philipsburg", "ANG"),
+    ("CDIBTWTPXXX", "KGI Bank Co., Ltd.", "TW", "Taipei", "TWD"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -843,6 +854,8 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_31.json",
     "seed_ssi_batch6_32.json",
     "seed_ssi_batch6_33.json",
+    "seed_ssi_batch6_34.json",
+    "seed_ssi_batch6_35.json",
 )
 
 

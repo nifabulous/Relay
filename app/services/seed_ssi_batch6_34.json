@@ -1,0 +1,209 @@
+[
+  [
+    "BNTBKYKYXXX",
+    "Butterfield Bank (Cayman) Limited",
+    "Source: https://www.butterfieldgroup.com/sites/butterfield-corp/files/2025-11/CAYMAN%20Standard%20Settlement%20Instructions%20September%202025.pdf (Standard Settlement Instructions, September 2025). ",
+    "2025-09-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|IRVTUS3N|The Bank of New York Mellon, New York (cover NAB NATAAU33)|91006842",
+      "CAD|CIBCCATT|Canadian Imperial Bank of Commerce, Toronto|91006843",
+      "CHF|BARCGB22|Barclays Bank PLC, London|91006844",
+      "DKK|BARCGB22|Barclays Bank PLC, London|91006845",
+      "EUR|BARCDEFF|Barclays Bank Ireland/Frankfurt|91006846",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91006847",
+      "HKD|IRVTUS3N|The Bank of New York Mellon, New York|91006848",
+      "JPY|IRVTUS3N|The Bank of New York Mellon, New York|91006849",
+      "NOK|BNTBBMHM|Butterfield Bank (Bermuda) Limited|91006850",
+      "NZD|IRVTUS3N|The Bank of New York Mellon, New York|91006851",
+      "SEK|BARCGB22|Barclays Bank PLC, London|91006852",
+      "SGD|IRVTUS3N|The Bank of New York Mellon, New York|91006853",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006854",
+      "ZAR|BNTBBMHM|Butterfield Bank (Bermuda) Limited|91006855"
+    ]
+  ],
+  [
+    "FCTTTTPSXXX",
+    "First Citizens Bank (Trinidad and Tobago) Limited",
+    "Source: https://www.firstcitizensgroup.com/tt/business-banking/correspondent-banks/ (official correspondent banks page, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|PNBPUS33|PNC Bank, New York|91006856",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006857",
+      "CAD|TDOMCATT|Toronto-Dominion Bank, Toronto|91006858",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|91006859",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91006860",
+      "GBP|LOYDGB2L|Lloyds Bank PLC, London|91006861",
+      "GYD|RBGLGYGG|Republic Bank (Guyana) Limited|91006862",
+      "EUR|BARCDEFF|Barclays Bank, Frankfurt|91006863",
+      "EUR|LOYDGB2L|Lloyds Bank, London|91006864",
+      "XCD|BOSLLCLC|Bank of Saint Lucia International Limited|91006865",
+      "JMD|JNCBJMKX|National Commercial Bank Jamaica Limited|91006866",
+      "JPY|IRVTUS3N|The Bank of New York Mellon, New York|91006867",
+      "BBD|FCTTBBBB|First Citizens Bank (Barbados) Limited|91006868"
+    ]
+  ],
+  [
+    "RBGLGYGGXXX",
+    "Republic Bank (Guyana) Limited",
+    "Source: https://www.republicguyana.com/node/1019 (official international wire instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006869",
+      "USD|BOFAUS3N|Bank of America, New York|91006870",
+      "CAD|CIBCCATT|Canadian Imperial Bank of Commerce, Toronto|91006871",
+      "CAD|TDOMCATTTOR|Toronto-Dominion Bank, Toronto|91006872",
+      "GYD|RBNKTTPX|Republic Bank (Trinidad and Tobago) Limited|91006873",
+      "BBD|BNBABBBB|CIBC FirstCaribbean International Bank, Barbados|91006874",
+      "XCD|NCBGGDGD|Grenada Co-operative Bank Limited|91006875",
+      "EUR|BOFAGB22|Bank of America, London|91006876",
+      "GBP|BOFAGB22|Bank of America, London|91006877"
+    ]
+  ],
+  [
+    "RBNKTTPXXXX",
+    "Republic Bank (Trinidad and Tobago) Limited",
+    "Source: https://www.republictt.com/commercial/transferring-funds (official international transfer instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3N|Bank of America, New York|91006878",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006879",
+      "CAD|TDOMCATTTOR|Toronto-Dominion Bank, Toronto|91006880",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91006881",
+      "GBP|LOYDGB2L|Lloyds Bank PLC, London|91006882",
+      "EUR|BARCGB22|Barclays Bank PLC, London|91006883",
+      "EUR|LOYDDEBB|Lloyds Bank GmbH, Frankfurt|91006884"
+    ]
+  ],
+  [
+    "JNCBJMKXXXX",
+    "National Commercial Bank Jamaica Limited",
+    "Source: https://www.jncb.com/getmedia/98d1133a-8e1e-400a-894a-c3998e30332d/NCB-Wire-Transfer-Instructions.pdf (official wire transfer instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006885",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91006886",
+      "EUR|BARCGB22|Barclays Bank PLC, London|91006887",
+      "CAD|TDOMCATT|Toronto-Dominion Bank, Toronto|91006888"
+    ]
+  ],
+  [
+    "FILBJMKNXXX",
+    "First Global Bank Limited",
+    "Source: https://firstglobal-bank.com/personal-banking/wire-transfers/ (official wire transfer instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91006889",
+      "CAD|CITIGB2L|Citibank N.A., London|91006890",
+      "GBP|CITIGB2L|Citibank N.A., London|91006891",
+      "EUR|CITIGB2L|Citibank N.A., London|91006892"
+    ]
+  ],
+  [
+    "BDCCCWCUXXX",
+    "Banco di Caribe N.V. Curacao",
+    "Source: https://www.bancodicaribe.com/support/swift-codes (official SWIFT/correspondent instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2L|Credit Suisse AG, London|91006893",
+      "EUR|CRASGB2L|Credit Suisse AG, London|91006894",
+      "GBP|CRASGB2L|Credit Suisse AG, London|91006895",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006896"
+    ]
+  ],
+  [
+    "BDCCAWAWXXX",
+    "Banco di Caribe Aruba N.V.",
+    "Source: https://www.bancodicaribe.com/support/swift-codes (official SWIFT/correspondent instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2L|Credit Suisse AG, London|91006897",
+      "EUR|CRASGB2L|Credit Suisse AG, London|91006898",
+      "GBP|CRASGB2L|Credit Suisse AG, London|91006899",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006900"
+    ]
+  ],
+  [
+    "BDCCBQBNXXX",
+    "Banco di Caribe Bonaire N.V.",
+    "Source: https://www.bancodicaribe.com/support/swift-codes (official SWIFT/correspondent instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2L|Credit Suisse AG, London|91006901",
+      "EUR|CRASGB2L|Credit Suisse AG, London|91006902",
+      "GBP|CRASGB2L|Credit Suisse AG, London|91006903",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006904"
+    ]
+  ],
+  [
+    "BDCCSXSMXXX",
+    "Banco di Caribe St. Maarten N.V.",
+    "Source: https://www.bancodicaribe.com/support/swift-codes (official SWIFT/correspondent instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2L|Credit Suisse AG, London|91006905",
+      "EUR|CRASGB2L|Credit Suisse AG, London|91006906",
+      "GBP|CRASGB2L|Credit Suisse AG, London|91006907",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006908"
+    ]
+  ]
+]
