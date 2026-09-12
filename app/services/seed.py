@@ -463,6 +463,7 @@ BANKS = [
     ("CCRTIT2TBDB", "Banca di Bologna", "IT", "Bologna", "EUR"),
     ("BFRILI22XXX", "Bank Frick AG", "LI", "Balzers", "CHF"),
     ("JERSILITXXX", "Bank of Jerusalem Ltd", "IL", "Jerusalem", "ILS"),
+    ("UGBIROBUXXX", "Garanti Bank S.A.", "RO", "Bucharest", "RON"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -774,6 +775,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_6.json",
     "seed_ssi_batch6_7.json",
     "seed_ssi_batch6_8.json",
+    "seed_ssi_batch6_9.json",
 )
 
 

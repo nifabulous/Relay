@@ -1,0 +1,30 @@
+[
+  [
+    "UGBIROBUXXX",
+    "Garanti Bank S.A.",
+    "Source: https://www.garantibbva.ro/wp-content/uploads/2023/05/Garanti_Bank_SSI_03_2022.pdf (as of 2022-03-01). ",
+    "2022-03-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "CAD|COBADEFF|Commerzbank AG, Frankfurt/Main|91006101",
+      "CHF|COBADEFF|Commerzbank AG, Frankfurt/Main|91006102",
+      "EUR|BBVAESMM|Banco Bilbao Vizcaya Argentaria SA, Madrid|91006103",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt/Main|91006104",
+      "EUR|BBRUBEBB|ING Belgium NV, Brussels|91006105",
+      "GBP|RBOSGB2L|Royal Bank of Scotland, London|91006106",
+      "HUF|COBADEFF|Commerzbank AG, Frankfurt/Main|91006107",
+      "JPY|COBADEFF|Commerzbank AG, Frankfurt/Main|91006108",
+      "NOK|COBADEFF|Commerzbank AG, Frankfurt/Main|91006109",
+      "PLN|BPKOPLPW|Bank Pekao SA, Warsaw|91006110",
+      "RON|NBORROBU|National Bank of Romania, Bucharest|91006111",
+      "SEK|COBADEFF|Commerzbank AG, Frankfurt/Main|91006112",
+      "TRY|TGBATRIS|Türkiye Garanti Bankası AS, Istanbul|91006113",
+      "USD|PNBPUS33|Wells Fargo Bank NA, New York|91006114"
+    ]
+  ]
+]
