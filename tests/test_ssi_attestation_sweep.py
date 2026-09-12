@@ -120,6 +120,13 @@ class TestSweepClassification:
         assert result["digest"] == "match"
 
     def test_route_and_account_changes_are_reported_together(self, tmp_path):
+        """
+        A route that vanished and a different route whose account moved are
+        two findings, and both belong in the detail. An earlier version of
+        this test got its second finding for free from a bug — an absent
+        route was counted as an account move — so it passed while encoding
+        the miscount it should have caught.
+        """
         sweep = _module()
         source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
         evidence = _evidence(sweep, source)
@@ -133,12 +140,31 @@ class TestSweepClassification:
             }
         )
         path = _write(tmp_path, "both.json", evidence)
+        # USD is still listed but its account moved; EUR is gone entirely.
         moved = _table([["Bank of Example", "USD", "111-9999-222", "IRVTUS3N"]])
 
         (result,) = sweep.sweep([path], fetch=lambda url: moved)
 
         assert "route keys matched" in result["detail"]
-        assert "accounts moved" in result["detail"]
+        assert "accounts moved: USD/IRVTUS3N" in result["detail"]
+        assert "CHASDEFX" not in result["detail"].split("accounts moved")[1]
+
+    def test_a_changed_digest_is_never_reported_as_verified(self, tmp_path):
+        """
+        Routes and accounts intact but the bytes moved: the first of three
+        checks failed, so "verified" would be false on its own definition.
+        """
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = _evidence(sweep, source)
+        evidence["source_sha256"] = "0" * 64
+        path = _write(tmp_path, "moved-bytes.json", evidence)
+
+        (result,) = sweep.sweep([path], fetch=lambda url: source)
+
+        assert result["digest"] == "changed"
+        assert result["status"] == "digest-changed"
+        assert result["status"] != "verified"
 
     def test_evidence_without_routes_is_called_out_separately(self, tmp_path):
         sweep = _module()

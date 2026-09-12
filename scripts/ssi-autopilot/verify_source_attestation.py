@@ -87,6 +87,10 @@ class MaskEqualityBroken(AttestationError):
     """A change would leave masks and fingerprints disagreeing about equality."""
 
 
+class DuplicateRouteKey(AttestationError):
+    """The source lists one currency/BIC twice with conflicting accounts."""
+
+
 class _TableParser(HTMLParser):
     """Extract table cell text without retaining the source document."""
 
@@ -177,9 +181,27 @@ def route_fingerprints(
         if not indexes or indexes[-1] == 0:
             continue
         bic = _compact(row[indexes[-1]])
-        fingerprints[(currency, aliases.get(bic, bic))] = account_fingerprint(
-            row[indexes[-1] - 1]
-        )
+        key = (currency, aliases.get(bic, bic))
+        fingerprint = account_fingerprint(row[indexes[-1] - 1])
+        # A dict would let the last row win, so a source listing one route
+        # twice with different accounts would collapse to whichever came
+        # last, and evidence holding that account would verify clean while a
+        # second, conflicting instruction sat on the page unread.
+        #
+        # An exactly repeated row says the same thing twice and is no
+        # ambiguity, so only a conflict is refused. A page that really does
+        # carry two accounts per route — a plain and a securitisation
+        # account, say — needs the extractor taught which is which, since
+        # that is the nostro/with_an distinction the schema already has.
+        if key in fingerprints and fingerprints[key] != fingerprint:
+            raise DuplicateRouteKey(
+                f"source lists {key} more than once with different accounts. "
+                "Which one is the settlement instruction cannot be decided "
+                "here; if the page carries a plain and a securitisation "
+                "account per route, the extractor has to tell them apart "
+                "before this source can be attested."
+            )
+        fingerprints[key] = fingerprint
     return fingerprints
 
 
@@ -264,9 +286,16 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
         for route in evidence.get("source_snapshot", {}).get("routes", [])
     }
     changed: list[dict[str, str]] = []
+    checked = 0
     matched = 0
     for route in routes:
         key = (route["currency"], route["int_bic"])
+        # A route the source no longer carries has no account to compare.
+        # Counting it as an account move reports one defect twice and inflates
+        # every account-change total built on top of this.
+        if key not in live:
+            continue
+        checked += 1
         committed = {route["nostro_fingerprint"], route["with_an_fingerprint"]}
         mirror = snapshot.get(key)
         if mirror is not None:
@@ -274,12 +303,10 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
                 mirror.get("nostro_fingerprint"),
                 mirror.get("with_an_fingerprint"),
             }
-        if committed == {live.get(key)}:
+        if committed == {live[key]}:
             matched += 1
         else:
             changed.append({"currency": key[0], "int_bic": key[1]})
-
-    checked = len(routes)
     return {
         "source_sha256": digest,
         "digest_matches": digest == evidence.get("source_sha256"),

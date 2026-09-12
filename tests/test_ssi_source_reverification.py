@@ -416,6 +416,135 @@ class TestAcceptingAChangeCannotBreakMaskEquality:
         assert evidence["routes"][0]["nostro_mask"] == "ACCT-91001005"
 
 
+class TestDuplicateRouteKeys:
+    """
+    Route keys live in a set and fingerprints in a dict, so a source listing
+    one currency/BIC twice silently collapses to whichever row came last. An
+    evidence file holding that last account then verifies clean while the
+    source carries a second, conflicting settlement instruction.
+    """
+
+    def test_two_rows_with_the_same_key_and_different_accounts_are_refused(self):
+        attestation = _module()
+        html = _html(
+            [
+                ["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"],
+                ["Bank of Example", "USD", "111-9999-222", "IRVTUS3N"],
+            ]
+        )
+
+        with pytest.raises(attestation.DuplicateRouteKey) as excinfo:
+            attestation.route_fingerprints(html, {})
+
+        assert "USD" in str(excinfo.value)
+        assert "IRVTUS3N" in str(excinfo.value)
+
+    def test_an_exactly_repeated_row_carries_no_ambiguity_and_is_allowed(self):
+        """
+        A page rendering one instruction twice says the same thing twice.
+        Refusing it would be a false alarm; only a conflict is a conflict.
+        """
+        attestation = _module()
+        html = _html(
+            [
+                ["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"],
+                ["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"],
+            ]
+        )
+
+        assert attestation.route_fingerprints(html, {}) == {
+            ("USD", "IRVTUS3N"): attestation.account_fingerprint("890-0045-140"),
+        }
+
+    def test_the_conflict_is_caught_through_compare_too(self):
+        attestation = _module()
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                }
+            ],
+        }
+        html = _html(
+            [
+                ["Bank of Example", "USD", "111-9999-222", "IRVTUS3N"],
+                ["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"],
+            ]
+        )
+
+        with pytest.raises(attestation.DuplicateRouteKey):
+            attestation.compare(evidence, html)
+
+
+class TestMissingRoutesAreNotAccountMoves:
+    """
+    An absent route key has no live fingerprint to compare. Counting it as an
+    account move reports one defect twice and inflates the account-change
+    count the sweep summarises.
+    """
+
+    def test_an_absent_route_is_a_route_mismatch_only(self):
+        attestation = _module()
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                },
+                {
+                    "currency": "EUR",
+                    "int_bic": "CHASDEFX",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                },
+            ],
+        }
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+        report = attestation.compare(evidence, source)
+
+        assert report["route_keys"]["missing"] == [("EUR", "CHASDEFX")]
+        assert report["fingerprints"]["changed"] == []
+        assert report["fingerprints"]["checked"] == 1
+        assert report["match"] is False
+
+    def test_a_present_route_whose_account_moved_is_still_an_account_change(self):
+        attestation = _module()
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": attestation.account_fingerprint("890-0045-140"),
+                    "with_an_fingerprint": attestation.account_fingerprint("890-0045-140"),
+                }
+            ],
+        }
+        source = _html([["Bank of Example", "USD", "111-9999-222", "IRVTUS3N"]])
+
+        report = attestation.compare(evidence, source)
+
+        assert report["fingerprints"]["changed"] == [
+            {"currency": "USD", "int_bic": "IRVTUS3N"}
+        ]
+
+
 class TestEveryCommittedFingerprintIsChecked:
     """
     A route carries its fingerprint twice — once in `routes`, once in
