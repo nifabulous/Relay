@@ -608,6 +608,15 @@ BANKS = [
     ("ORBACWCUXXX", "Orco Bank N.V. - Curaçao", "CW", "Willemstad", "USD"),
     ("ORBASXSMXXX", "Orco Bank N.V. - Sint Maarten", "SX", "Philipsburg", "USD"),
     ("ORBABQBNXXX", "Orco Bank N.V. - Bonaire", "BQ", "Kralendijk", "USD"),
+    ("ORINUGKAXXX", "I&M Bank (Uganda) Limited", "UG", "Kampala", "UGX"),
+    ("CBGHGHACXXX", "Consolidated Bank Ghana Limited", "GH", "Accra", "GHS"),
+    ("FAMCGHACXXX", "First Atlantic Bank Limited", "GH", "Accra", "GHS"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "GH", "Accra", "GHS"),
+    ("FIDTNGLAXXX", "Fidelity Bank Plc", "NG", "Lagos", "NGN"),
+    ("NAMENGLAXXX", "Sterling Bank Limited", "NG", "Lagos", "NGN"),
+    ("CADIKHPPXXX", "Canadia Bank PLC", "KH", "Phnom Penh", "KHR"),
+    ("MEGAIDJAXXX", "PT Bank Mega Tbk", "ID", "Jakarta", "IDR"),
+    ("MDBLBDDHXXX", "Midland Bank PLC", "BD", "Dhaka", "BDT"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -990,6 +999,9 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_99.json",
     "seed_ssi_batch6_100.json",
     "seed_ssi_batch6_101.json",
+    "seed_ssi_batch6_102.json",
+    "seed_ssi_batch6_103.json",
+    "seed_ssi_batch6_104.json",
 )
 
 

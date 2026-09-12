@@ -1,0 +1,99 @@
+[
+  [
+    "CBGHGHACXXX",
+    "Consolidated Bank Ghana Limited",
+    "Source: https://cbg.com.gh/assets/standard-settlement-instruction-update.pdf (official Standard Settlement Instruction update, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "GHS|BAGHGHAC|Bank of Ghana, Accra|91011000",
+      "USD|BAGHGHAC|Bank of Ghana, Accra|91011001",
+      "GBP|BAGHGHAC|Bank of Ghana, Accra|91011002",
+      "EUR|BAGHGHAC|Bank of Ghana, Accra|91011003",
+      "USD|COBADEFF|Commerzbank, Frankfurt|91011004",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011005",
+      "USD|GHIBGB2L|Ghana International Bank, London|91011006",
+      "GBP|GHIBGB2L|Ghana International Bank, London|91011007",
+      "EUR|GHIBGB2L|Ghana International Bank, London|91011008",
+      "USD|BHFBDEFF|ODDO BHF, Frankfurt|91011009",
+      "EUR|BHFBDEFF|ODDO BHF, Frankfurt|91011010",
+      "USD|CITIUS33|Citibank N.A., New York|91011011"
+    ]
+  ],
+  [
+    "FAMCGHACXXX",
+    "First Atlantic Bank Limited",
+    "Source: https://firstatlanticbank.com.gh/downloads/forms/general/Correspondent-Bank-Transfer-Details.pdf (official correspondent-bank transfer form, accessed 2026-09-12). BIC-level list; the form does not publish correspondent account numbers.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|",
+      "GBP|GHIBGB2L|Ghana International Bank, London|",
+      "EUR|GHIBGB2L|Ghana International Bank, London|",
+      "USD|GHIBGB2L|Ghana International Bank, London|"
+    ]
+  ],
+  [
+    "ABNGGHACXXX",
+    "Access Bank (Ghana) Plc",
+    "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (official global trade correspondent details, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91011020",
+      "GBP|CITIGB2L|Citibank N.A., London|91011021",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011022",
+      "GBP|COBADEFF|Commerzbank, Frankfurt|91011023"
+    ]
+  ],
+  [
+    "FIDTNGLAXXX",
+    "Fidelity Bank Plc",
+    "Source: https://www.fidelitybank.ng/documents/FIDELITY-BANK-DETAILS-FOR-SWIFT-TRANSFERS-2025.pdf (official SWIFT transfer instructions, accessed 2026-09-12). Published account and IBAN values are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "GBP|CITIGB2L|Citibank N.A., London|91011030",
+      "EUR|CITIGB2L|Citibank N.A., London|91011031",
+      "USD|CITIUS33|Citibank N.A., New York|91011032"
+    ]
+  ],
+  [
+    "NAMENGLAXXX",
+    "Sterling Bank Limited",
+    "Source: https://sterling.ng/faqs/ and https://sterling.ng/diaspora/ (official transfer and diaspora instructions, accessed 2026-09-12). Published account and IBAN values are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91011040",
+      "GBP|CITIGB2L|Citibank N.A., London|91011041",
+      "EUR|CITIGB2L|Citibank N.A., London|91011042"
+    ]
+  ]
+]
