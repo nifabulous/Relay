@@ -1,0 +1,27 @@
+[
+  [
+    "HBBAMEPGXXX",
+    "Hipotekarna Banka AD Podgorica",
+    "Source: https://hercegnovi.me/downloads/obrasci/Instrukcije%20za%20uplatu%20iz%20inostranstva2025.pdf (official incoming transfer instructions, 2025). BIC-level list; no correspondent account numbers published. ",
+    "2025-01-01",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|POSOIT22|Banco BPM, Milan|",
+      "EUR|BYLADEMM|Bayerische Landesbank, Munich|",
+      "EUR|GIBAATWG|Erste Group Bank, Vienna|",
+      "EUR|BCITITMM|Intesa Sanpaolo, Milan|",
+      "EUR|KTAGDEFF|Kreissparkasse Traunstein|",
+      "EUR|SOLADEST|Banco de Sabadell|",
+      "EUR|RZBAATWW|Raiffeisen Bank International, Vienna|",
+      "USD|GIBAATWG|Erste Group Bank, Vienna|",
+      "USD|RZBAATWW|Raiffeisen Bank International, Vienna|",
+      "GBP|RZBAATWW|Raiffeisen Bank International, Vienna|",
+      "CHF|RZBAATWW|Raiffeisen Bank International, Vienna|"
+    ]
+  ]
+]

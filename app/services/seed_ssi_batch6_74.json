@@ -1,0 +1,38 @@
+[
+  [
+    "BKONMUMUXXX",
+    "Bank One Limited",
+    "Source: https://bankone.mu/international/wp-content/files/sites/4/2025/01/BANKONE-SSI-2024.pdf (official SSI list, January 2025). ",
+    "2025-01-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|ADCBAEAA|Abu Dhabi Commercial Bank, Abu Dhabi|91009400",
+      "AED|BOMLAEAD|Bank Muscat, Dubai|91009401",
+      "AUD|CITIGB2L|Citibank, London|91009402",
+      "CAD|CITIGB2L|Citibank, London|91009403",
+      "EUR|CITIGB2L|Citibank, London|91009404",
+      "GBP|CITIGB2L|Citibank, London|91009405",
+      "CHF|CHASGB2L|JPMorgan Chase, London|91009406",
+      "CNY|BKCHZAJJ|Bank of China, Johannesburg|91009407",
+      "EUR|CHASDEFX|JPMorgan Chase, Frankfurt|91009408",
+      "GBP|CHASGB2L|JPMorgan Chase, London|91009409",
+      "INR|STCBINBX|State Bank of India, Mumbai|91009410",
+      "JPY|SMBCJPJT|SMBC, Tokyo|91009411",
+      "JPY|CITIJPJT|Citibank, Tokyo|91009412",
+      "JPY|MHCBJPJT|Mizuho Bank, Tokyo|91009413",
+      "KES|IMBLKENA|I&M Bank, Nairobi|91009414",
+      "MGA|CLMDMGMG|Mauritius Commercial Bank, Antananarivo|91009415",
+      "SGD|DBSSSGSG|DBS Bank, Singapore|91009416",
+      "TZS|CORUTZTZ|CRDB Bank, Dar es Salaam|91009417",
+      "UGX|ORINUGKA|Orient Bank, Kampala|91009418",
+      "USD|CITIUS33|Citibank, New York|91009419",
+      "USD|CHASUS33|JPMorgan Chase, New York|91009420",
+      "ZAR|SBZAZAJJ|Standard Bank, Johannesburg|91009421"
+    ]
+  ]
+]
