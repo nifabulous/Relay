@@ -1,0 +1,32 @@
+[
+  [
+    "TATRSKBXXXX",
+    "Tatra banka, a.s.",
+    "Source: https://www.tatrabanka.sk/files/archiv/en/about/important-documents/Standard_Settlement_Instructions_for_FX_MM_and_Derivative_Transactions.pdf (official SSI table, as of 1 May 2023). ",
+    "2023-05-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group Limited, Melbourne|91006826",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91006827",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91006828",
+      "CZK|RZBCCZPP|Raiffeisenbank a.s., Prague|91006829",
+      "DKK|DABADKKK|Danske Bank A/S, Copenhagen|91006830",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91006831",
+      "HUF|UBRTHUHB|Raiffeisen Bank Zrt., Budapest|91006832",
+      "JPY|BOTKJPJT|MUFG Bank Ltd., Tokyo|91006833",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91006834",
+      "PLN|PKOPPLPW|Bank Polska Kasa Opieki SA, Warsaw|91006835",
+      "RON|RZBRROBU|Raiffeisen Bank S.A., Bucharest|91006836",
+      "RUB|RZBMRUMM|AO Raiffeisenbank, Moscow|91006837",
+      "SEK|HANDSESS|Svenska Handelsbanken AB, Stockholm|91006838",
+      "TRY|TGBATRIS|Turkiye Garanti Bankasi A.S., Istanbul|91006839",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006840",
+      "ZAR|SBZAZAJJ|The Standard Bank of South Africa Limited, Johannesburg|91006841"
+    ]
+  ]
+]
