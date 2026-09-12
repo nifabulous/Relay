@@ -2,18 +2,45 @@
 """Independently attest a redacted HTML SSI evidence sidecar.
 
 This command deliberately fetches the cited source at verification time.  It
-keeps account numbers in memory only, records only the source digest and
-currency/BIC route keys, and fails closed if either the source bytes or the
-extracted route set differs from the committed evidence.
+keeps account numbers in memory only, records only the source digest, the
+currency/BIC route keys and the account fingerprints, and fails closed if any
+of the three differs from the committed evidence.
+
+Three checks, in increasing strength:
+
+*   the canonical source digest, which detects any change to the page;
+*   the currency/BIC route keys, which detect a correspondent being added,
+    removed or re-pointed;
+*   the account fingerprints, which detect an account moving underneath an
+    unchanged route key.
+
+The third check exists because the first two cannot replace it.  Wave 21's
+``AUD``/``CHASGB2L`` account changed at the source while its currency and BIC
+stayed put: the route-key check passed, the digest check failed, and the
+digest was re-recorded as a routine refresh.  A digest whose only remedy is
+"edit the expected value" is not a trust anchor, so refreshing one now
+requires re-deriving every fingerprint from the live page and leaving a
+re-verification record behind.
 
 Usage:
+    # Verify (this is what CI runs)
     python scripts/ssi-autopilot/verify_source_attestation.py \
-        tests/fixtures/ssi_wave21_source_attestation.json
+        scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json
+
+    # Re-record a digest after the page was re-rendered but says the same thing
+    python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+        --refresh --record scripts/ssi-autopilot/evidence/reverification
+
+    # Accept a genuine account change at the source, deliberately and on the record
+    python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+        --refresh --accept-account-change AUD:CHASGB2L \
+        --record scripts/ssi-autopilot/evidence/reverification
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import re
@@ -25,6 +52,10 @@ from urllib.request import Request, urlopen
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
 _BIC = re.compile(r"^[A-Z0-9]{8}(?:[A-Z0-9]{3})?$")
 _VIEWSTATE = re.compile(rb'<input type="hidden" name="__VIEWSTATE"[^>]*>')
+
+RECORD_SCHEMA = 1
+ROOT = Path(__file__).resolve().parents[2]
+TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
 
 class _TableParser(HTMLParser):
@@ -55,22 +86,72 @@ class _TableParser(HTMLParser):
             self._row = None
 
 
-def _route_keys(source_html: bytes) -> set[tuple[str, str]]:
+def _rows(source_html: bytes) -> list[list[str]]:
     parser = _TableParser()
     parser.feed(source_html.decode("utf-8", errors="replace"))
+    return parser.rows
+
+
+def _compact(cell: str) -> str:
+    """The page renders some BICs with internal spaces, e.g. `CITI US 33`."""
+    return re.sub(r"\s+", "", cell.upper())
+
+
+def _bic_indexes(row: list[str]) -> list[int]:
+    return [index for index, cell in enumerate(row) if _BIC.fullmatch(_compact(cell))]
+
+
+def _currency(row: list[str]) -> str | None:
+    return next((cell.upper() for cell in row if _CURRENCY.fullmatch(cell.upper())), None)
+
+
+def account_fingerprint(value: str) -> str:
+    """SHA-256 over the account with punctuation removed and letters upper-cased.
+
+    Recovered from the wave-21 evidence rather than designed here: the
+    committed fingerprints predate any code that produced them, so the
+    derivation is pinned by a golden vector in the tests.  Note that this is
+    an unsalted hash of a short, public account string and is therefore
+    reversible by brute force; it redacts the account from the repository, it
+    does not make a private value safe to publish.
+    """
+    return hashlib.sha256(re.sub(r"[^A-Z0-9]", "", value.upper()).encode()).hexdigest()
+
+
+def _route_keys(source_html: bytes) -> set[tuple[str, str]]:
     routes: set[tuple[str, str]] = set()
-    for row in parser.rows:
-        currency = next((cell.upper() for cell in row if _CURRENCY.fullmatch(cell.upper())), None)
+    for row in _rows(source_html):
+        currency = _currency(row)
         if currency is None:
             continue
-        bics = []
-        for cell in row:
-            compact = re.sub(r"\s+", "", cell.upper())
-            if _BIC.fullmatch(compact):
-                bics.append(compact)
+        bics = [_compact(row[index]) for index in _bic_indexes(row)]
         if bics:
             routes.add((currency, bics[-1]))
     return routes
+
+
+def route_fingerprints(
+    source_html: bytes, aliases: dict[str, str]
+) -> dict[tuple[str, str], str]:
+    """Map each route key to the fingerprint of the account beside it.
+
+    The account is the cell immediately before the intermediary BIC, which is
+    how every row on the source page is laid out.  Account values are hashed
+    as they are read and never returned.
+    """
+    fingerprints: dict[tuple[str, str], str] = {}
+    for row in _rows(source_html):
+        currency = _currency(row)
+        if currency is None:
+            continue
+        indexes = _bic_indexes(row)
+        if not indexes or indexes[-1] == 0:
+            continue
+        bic = _compact(row[indexes[-1]])
+        fingerprints[(currency, aliases.get(bic, bic))] = account_fingerprint(
+            row[indexes[-1] - 1]
+        )
+    return fingerprints
 
 
 def _canonical_source_bytes(source_html: bytes) -> bytes:
@@ -78,46 +159,292 @@ def _canonical_source_bytes(source_html: bytes) -> bytes:
     return _VIEWSTATE.sub(b"", source_html)
 
 
-def verify(evidence_path: Path) -> dict[str, object]:
-    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-    request = Request(
-        evidence["source"],
-        headers={"User-Agent": "Relay SSI source attestation/1"},
-    )
+def _expected_routes(evidence: dict) -> set[tuple[str, str]]:
+    if "routes" in evidence:
+        return {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
+    return {tuple(route) for route in evidence["route_keys"]}
+
+
+def _aliases(evidence: dict) -> dict[str, str]:
+    snapshot = evidence.get("source_snapshot", {})
+    return snapshot.get("bic_aliases", evidence.get("bic_aliases", {}))
+
+
+def compare(evidence: dict, source_bytes: bytes) -> dict:
+    """Compare committed evidence against fetched source bytes.
+
+    Pure: no network, no filesystem, and no raw account value in the result.
+    """
+    digest = hashlib.sha256(_canonical_source_bytes(source_bytes)).hexdigest()
+    aliases = _aliases(evidence)
+
+    expected = _expected_routes(evidence)
+    actual = {
+        (currency, aliases.get(bic, bic)) for currency, bic in _route_keys(source_bytes)
+    }
+    missing = sorted(expected - actual)
+    unexpected = sorted(actual - expected)
+
+    live = route_fingerprints(source_bytes, aliases)
+    changed: list[dict[str, str]] = []
+    matched = 0
+    for route in evidence.get("routes", []):
+        key = (route["currency"], route["int_bic"])
+        if "nostro_fingerprint" not in route:
+            raise SystemExit(
+                f"evidence route {key} carries no nostro_fingerprint; refusing to "
+                "report a verified comparison over an unverifiable route"
+            )
+        if live.get(key) == route["nostro_fingerprint"]:
+            matched += 1
+        else:
+            changed.append({"currency": key[0], "int_bic": key[1]})
+
+    checked = len(evidence.get("routes", []))
+    return {
+        "source_sha256": digest,
+        "digest_matches": digest == evidence.get("source_sha256"),
+        "route_keys": {
+            "expected": len(expected),
+            "actual": len(actual),
+            "missing": missing,
+            "unexpected": unexpected,
+            "match": not missing and not unexpected,
+        },
+        "fingerprints": {
+            "checked": checked,
+            "matched": matched,
+            "changed": changed,
+        },
+        "match": not missing and not unexpected and not changed,
+    }
+
+
+def _fetch(source: str) -> bytes:
+    request = Request(source, headers={"User-Agent": "Relay SSI source attestation/1"})
     with urlopen(request, timeout=30) as response:
-        source_bytes = response.read()
-    source_sha256 = hashlib.sha256(_canonical_source_bytes(source_bytes)).hexdigest()
-    if source_sha256 != evidence["source_sha256"]:
+        return response.read()
+
+
+def _apply_accepted_changes(
+    evidence: dict, source_bytes: bytes, accepted: set[tuple[str, str]]
+) -> list[dict[str, str]]:
+    """Re-point the named routes at the account the page serves now."""
+    live = route_fingerprints(source_bytes, _aliases(evidence))
+    applied: list[dict[str, str]] = []
+    blocks = [evidence.get("routes", []), evidence.get("source_snapshot", {}).get("routes", [])]
+    masks = {
+        (route["currency"], route["int_bic"]): route.get("nostro_mask")
+        for route in evidence.get("routes", [])
+    }
+    for key in sorted(accepted):
+        if key not in live:
+            raise SystemExit(f"cannot accept {key}: the live page has no such route")
+        # Masks encode account equality. A move onto an account another route
+        # already uses has to merge the two masks, which is a data decision
+        # this tool will not make silently.
+        collisions = sorted(
+            other
+            for other, fingerprint in live.items()
+            if other != key and fingerprint == live[key] and masks.get(other) != masks.get(key)
+        )
+        if collisions:
+            raise SystemExit(
+                f"refusing to accept {key}: its new account is also used by "
+                f"{collisions}, whose mask differs. Masks record account "
+                "equality, so these routes must share one mask before the "
+                "fingerprint is re-pointed."
+            )
+        for block in blocks:
+            for route in block:
+                if (route["currency"], route["int_bic"]) == key:
+                    route["nostro_fingerprint"] = live[key]
+                    route["with_an_fingerprint"] = live[key]
+        applied.append({"currency": key[0], "int_bic": key[1]})
+    return applied
+
+
+def _write_record(
+    directory: Path,
+    evidence_path: Path,
+    evidence: dict,
+    previous_digest: str,
+    report: dict,
+    accepted: list[dict[str, str]],
+) -> Path:
+    verified_at = datetime.date.today().isoformat()
+    record = {
+        "schema": RECORD_SCHEMA,
+        "evidence": evidence_path.resolve().relative_to(ROOT).as_posix(),
+        "source": evidence["source"],
+        "verified_at": verified_at,
+        "previous_source_sha256": previous_digest,
+        "source_sha256": report["source_sha256"],
+        "digest_changed": previous_digest != report["source_sha256"],
+        "route_keys": {
+            "expected": report["route_keys"]["expected"],
+            "actual": report["route_keys"]["actual"],
+            "match": report["route_keys"]["match"],
+        },
+        "fingerprints": report["fingerprints"],
+        "accepted_account_changes": accepted,
+        "raw_accounts_committed": False,
+        "tool": TOOL,
+    }
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{evidence_path.stem}-reverified-{verified_at}.json"
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def _refresh_digest(evidence_path: Path, evidence: dict, digest: str) -> None:
+    evidence["source_sha256"] = digest
+    snapshot = evidence.get("source_snapshot")
+    if snapshot is not None:
+        snapshot["source_sha256"] = digest
+        snapshot["captured_at"] = datetime.date.today().isoformat()
+    evidence_path.write_text(
+        json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+
+def _parse_route(value: str) -> tuple[str, str]:
+    currency, _, bic = value.partition(":")
+    if not currency or not bic:
+        raise argparse.ArgumentTypeError(
+            f"expected CURRENCY:BIC (for example AUD:CHASGB2L), got {value!r}"
+        )
+    return currency.upper(), bic.upper()
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("evidence", type=Path)
+    parser.add_argument(
+        "--record",
+        type=Path,
+        help="directory to write the re-verification record into",
+    )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="re-record the source digest once every route and fingerprint matches",
+    )
+    parser.add_argument(
+        "--accept-account-change",
+        type=_parse_route,
+        action="append",
+        default=[],
+        metavar="CURRENCY:BIC",
+        dest="accepted",
+        help="accept that this route's account moved at the source",
+    )
+    return parser
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse and validate, so an invalid combination fails before any fetch."""
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.refresh and args.record is None:
+        parser.error(
+            "--refresh requires --record: a digest may only change alongside the "
+            "record of the re-verification that justified it"
+        )
+    if args.accepted and not args.refresh:
+        parser.error("--accept-account-change only applies with --refresh")
+    return args
+
+
+def verify(evidence_path: Path, record_dir: Path | None = None) -> dict:
+    """Fetch the cited source and fail closed on any difference."""
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    report = compare(evidence, _fetch(evidence["source"]))
+    if not report["digest_matches"]:
         raise SystemExit(
             f"source digest mismatch: expected {evidence['source_sha256']}, "
-            f"got {source_sha256}"
+            f"got {report['source_sha256']}"
         )
-
-    aliases = evidence.get("source_snapshot", {}).get("bic_aliases", evidence.get("bic_aliases", {}))
-    actual = {(currency, aliases.get(bic, bic)) for currency, bic in _route_keys(source_bytes)}
-    if "routes" in evidence:
-        expected = {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
-    else:
-        expected = {tuple(route) for route in evidence["route_keys"]}
-    if actual != expected:
+    if not report["route_keys"]["match"]:
         raise SystemExit(
             "source route-key mismatch:\n"
-            f"  missing={sorted(expected - actual)}\n"
-            f"  unexpected={sorted(actual - expected)}"
+            f"  missing={report['route_keys']['missing']}\n"
+            f"  unexpected={report['route_keys']['unexpected']}"
+        )
+    if report["fingerprints"]["changed"]:
+        raise SystemExit(
+            "source account mismatch on an unchanged route key:\n"
+            f"  changed={report['fingerprints']['changed']}\n"
+            "The correspondent is the same but its account moved. Re-check the "
+            "page, then re-run with --refresh --accept-account-change."
+        )
+    written = None
+    if record_dir is not None:
+        written = _write_record(
+            record_dir, evidence_path, evidence, evidence["source_sha256"], report, []
         )
     return {
         "source": evidence["source"],
-        "source_sha256": source_sha256,
-        "route_count": len(actual),
+        "source_sha256": report["source_sha256"],
+        "route_count": report["route_keys"]["actual"],
+        "fingerprints_matched": report["fingerprints"]["matched"],
+        "record": str(written) if written else None,
+        "raw_accounts_committed": False,
+    }
+
+
+def reverify(
+    evidence_path: Path,
+    record_dir: Path | None,
+    accepted: list[tuple[str, str]],
+) -> dict:
+    """Re-derive every check from the live page, then record what was seen."""
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    previous_digest = evidence["source_sha256"]
+    source_bytes = _fetch(evidence["source"])
+
+    applied = _apply_accepted_changes(evidence, source_bytes, set(accepted))
+    report = compare(evidence, source_bytes)
+
+    if not report["route_keys"]["match"]:
+        raise SystemExit(
+            "refusing to refresh: source route-key mismatch:\n"
+            f"  missing={report['route_keys']['missing']}\n"
+            f"  unexpected={report['route_keys']['unexpected']}"
+        )
+    if report["fingerprints"]["changed"]:
+        raise SystemExit(
+            "refusing to refresh: an account moved on an unchanged route key:\n"
+            f"  changed={report['fingerprints']['changed']}\n"
+            "Accept each one explicitly with --accept-account-change CURRENCY:BIC "
+            "once you have confirmed the change at the source."
+        )
+
+    _refresh_digest(evidence_path, evidence, report["source_sha256"])
+    written = None
+    if record_dir is not None:
+        written = _write_record(
+            record_dir, evidence_path, evidence, previous_digest, report, applied
+        )
+    return {
+        "evidence": str(evidence_path),
+        "previous_source_sha256": previous_digest,
+        "source_sha256": report["source_sha256"],
+        "route_count": report["route_keys"]["actual"],
+        "fingerprints_matched": report["fingerprints"]["matched"],
+        "accepted_account_changes": applied,
+        "record": str(written) if written else None,
         "raw_accounts_committed": False,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("evidence", type=Path)
-    args = parser.parse_args()
-    print(json.dumps(verify(args.evidence), sort_keys=True))
+    args = parse_args()
+    if args.refresh:
+        result = reverify(args.evidence, args.record, args.accepted)
+    else:
+        result = verify(args.evidence, args.record)
+    print(json.dumps(result, sort_keys=True))
     return 0
 
 

@@ -1,0 +1,27 @@
+{
+  "accepted_account_changes": [
+    {
+      "currency": "AUD",
+      "int_bic": "CHASGB2L"
+    }
+  ],
+  "digest_changed": false,
+  "evidence": "scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json",
+  "fingerprints": {
+    "changed": [],
+    "checked": 31,
+    "matched": 31
+  },
+  "previous_source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
+  "raw_accounts_committed": false,
+  "route_keys": {
+    "actual": 31,
+    "expected": 31,
+    "match": true
+  },
+  "schema": 1,
+  "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+  "source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
+  "tool": "scripts/ssi-autopilot/verify_source_attestation.py",
+  "verified_at": "2026-09-12"
+}

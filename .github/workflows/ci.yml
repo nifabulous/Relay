@@ -172,8 +172,13 @@ jobs:
 
       # Payment routes must be checked against the cited source, not only
       # against PR-authored evidence copies.  This single trusted job fetches
-      # the redacted QNB table, verifies its normalized digest, and checks all
-      # 31 currency/BIC route keys without retaining account values.
+      # the redacted QNB table and checks three things without retaining any
+      # account value: the normalized digest, all 31 currency/BIC route keys,
+      # and the account fingerprint behind each route.  The third check exists
+      # because wave 21's AUD/CHASGB2L account moved under an unchanged route
+      # key, which the first two cannot distinguish from a re-render.  A
+      # failure here is not licence to re-record the digest by hand: see
+      # "Re-verifying a cited source" in scripts/ssi-autopilot/SKILL.md.
       - name: Verify live SSI source attestation
         run: >-
           python scripts/ssi-autopilot/verify_source_attestation.py
