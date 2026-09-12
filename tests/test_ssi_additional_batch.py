@@ -18,11 +18,16 @@ _ADDITIONAL_BICS = {
     "CBININBBXXX",
     "IDIBINBBXXX",
     "PRVUNPKAXXX",
+    "CCEYLKLXXXX",
+    "MIDLAM22XXX",
+    "ANIKAM22XXX",
+    "ARMJAM22XXX",
+    "WPACAU2SXXX",
 }
 
 
 def test_additional_batch_has_new_beneficiaries_and_routes():
     rows = [row for row in SSI_RECORDS if row[0] in _ADDITIONAL_BICS]
     assert {row[0] for row in rows} == _ADDITIONAL_BICS
-    assert len(rows) >= 200
+    assert len(rows) >= 250
     assert all("Source: http" in row[9] for row in rows)

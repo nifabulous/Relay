@@ -2516,6 +2516,7 @@ SOUTHASIA_MEKONG_WAVE3_SSI_COVERAGE = [
     ("SEYBLKLXXXX", "Seylan Bank PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "USD"}),
     ("HBLILKLXXXX", "HATTON NATIONAL BANK PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "THB", "USD"}),
     ('AMNALKLXXXX', 'Amana Bank PLC', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'MYR', 'SAR', 'SGD', 'USD'}),
+    ('CCEYLKLXXXX', 'Commercial Bank of Ceylon PLC', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'INR', 'JPY', 'NOK', 'NZD', 'SEK', 'SGD', 'USD'}),
 ]
 
 class TestSouthasiaMekongWave3SsiCoverage:
@@ -2789,6 +2790,9 @@ CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("ACABAZ22XXX", "AccessBank CJSC", {"EUR", "GBP", "RUB", "TRY", "USD"}),
     ("ARMCAM22XXX", "Araratbank OJSC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "USD"}),
     ("UBAZAZ22XXX", "Unibank CB", {"EUR", "GBP", "GEL", "RUB", "USD"}),
+    ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "USD"}),
+    ("ANIKAM22XXX", "ID BANK CJSC", {"AED", "BYN", "CNY", "EUR", "GBP", "GEL", "JPY", "RUB", "USD"}),
+    ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", {"AMD", "EUR", "RUB", "USD"}),
 ]
 
 class TestCaucasusWave5SsiCoverage:

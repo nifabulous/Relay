@@ -1,0 +1,29 @@
+{
+  "bic8": "WPACAU2S",
+  "name": "Westpac Banking Corporation",
+  "country": "AU",
+  "currencies": [
+    "CNH"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "westpac.com.au"
+  ],
+  "admitted_records": [
+    {
+      "currency": "CNH",
+      "correspondent": "Bank of China, Hong Kong",
+      "int_bic": "BKCHHKHHXXX",
+      "source": "https://www.westpac.com.au/content/dam/public/wbc/documents/pdf/cb/foreigncurrencyaccount.pdf?appAction=exit",
+      "as_of": "2025-10-10",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91001499",
+      "with_an": "ACCT-91001499",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    }
+  ],
+  "admitted_record_digest": "128a6bb84ee0d0dac96162508e513b871c33d0d797ee444d79629f2e6841fc01"
+}

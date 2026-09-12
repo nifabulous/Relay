@@ -492,6 +492,10 @@ BANKS = [
     ("CBININBBXXX", "Central Bank of India", "IN", "Mumbai", "INR"),
     ("IDIBINBBXXX", "Indian Bank", "IN", "Chennai", "INR"),
     ("PRVUNPKAXXX", "Prabhu Bank Limited", "NP", "Kathmandu", "NPR"),
+    ("CCEYLKLXXXX", "Commercial Bank of Ceylon PLC", "LK", "Colombo", "LKR"),
+    ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", "AM", "Yerevan", "AMD"),
+    ("ANIKAM22XXX", "ID BANK CJSC", "AM", "Yerevan", "AMD"),
+    ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", "AM", "Yerevan", "AMD"),
 ]
 
 # (destination_currency, destination_country, intermediary_bic,
@@ -751,7 +755,7 @@ def _load_ssi_batch5_groups():
 
 _SSI_BATCH5_GROUPS = _load_ssi_batch5_groups()
 
-_SSI_BATCH6_DATA_FILES = ("seed_ssi_batch6_1.json",)
+_SSI_BATCH6_DATA_FILES = ("seed_ssi_batch6_1.json", "seed_ssi_batch6_2.json")
 
 
 def _load_ssi_batch6_groups():

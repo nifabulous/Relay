@@ -1300,8 +1300,10 @@ def _expand_batch5_source_rows() -> list[tuple[str, ...]]:
 
 def _expand_batch6_source_rows() -> list[tuple[str, ...]]:
     """Read the bounded batch-6 ledger without executing seed.py."""
-    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch6_1.json"
-    groups = json.loads(path.read_text(encoding="utf-8"))
+    data_dir = REPO_ROOT / "app" / "services"
+    groups = []
+    for path in sorted(data_dir.glob("seed_ssi_batch6_*.json")):
+        groups.extend(json.loads(path.read_text(encoding="utf-8")))
     rows: list[tuple[str, ...]] = []
     real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
     for group in groups:

@@ -58,17 +58,7 @@
           ],
           "seedable": false
         },
-        {
-          "bic8": "WPACAU2S",
-          "name": "Westpac",
-          "country": "AU",
-          "currencies": [
-            "USD",
-            "EUR",
-            "AUD"
-          ],
-          "seedable": false
-        },
+        {"bic8":"WPACAU2S","manifest_file":"regions_batch6_banks_2_wpacau2s.json"},
         {
           "bic8": "NATAAU33",
           "name": "National Australia Bank",
@@ -20816,7 +20806,8 @@
           ],
           "admitted_record_digest": "a8f54d3e9865f6cd075f2f627383a581a9435792d82453cdff902a171f20efea"
         },
-        {"bic8":"AMNALKLX","manifest_file":"regions_batch5_banks_1_amnalklx.json"}
+        {"bic8":"AMNALKLX","manifest_file":"regions_batch5_banks_1_amnalklx.json"},
+        {"bic8":"CCEYLKLX","manifest_file":"regions_batch6_banks_2_cceylklx.json"}
       ]
     },
     {
@@ -33996,7 +33987,10 @@
             }
           ],
           "admitted_record_digest": "142dcd9cb8040a1fa8e277efadb438cc23c5ee1f5a2bf67f061e331ba6c17fa4"
-        }
+        },
+        {"bic8":"MIDLAM22","manifest_file":"regions_batch6_banks_2_midlam22.json"},
+        {"bic8":"ANIKAM22","manifest_file":"regions_batch6_banks_2_anikam22.json"},
+        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"}
       ]
     },
     {

@@ -621,7 +621,7 @@ def test_wave6_sri_lanka_africa_rows_have_record_level_provenance():
         if bank.get("seedable", True) and bank.get("admitted_records")
     }
     keys = {key for key in expected if key[0] in beneficiary_bics}
-    assert len(keys) == 199
+    assert len(keys) == 233
     assert {key for key in seed if key[0] in beneficiary_bics} == keys
     for key in keys:
         _, bank, record = expected[key]
@@ -691,7 +691,7 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
     expected_counts = {
         "europe-remaining-wave5": 69,
         "africa-wave5": 49,
-        "caucasus-wave5": 164,
+        "caucasus-wave5": 189,
     }
     for region in manifest["regions"]:
         if region["name"] not in region_names:
@@ -718,8 +718,8 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         assert all(key[0][:8] not in forbidden for key in actual)
 
 
-def test_wave6_caucasus_additions_explain_the_164_record_total():
-    """Three later banks add 30 records to the original 134-row region."""
+def test_wave6_caucasus_additions_explain_the_189_record_total():
+    """Six later banks add 55 records to the original 134-row region."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -737,11 +737,14 @@ def test_wave6_caucasus_additions_explain_the_164_record_total():
         "ACABAZ22XXX": 14,
         "ARMCAM22XXX": 10,
         "UBAZAZ22XXX": 6,
+        "MIDLAM22XXX": 11,
+        "ANIKAM22XXX": 10,
+        "ARMJAM22XXX": 4,
     }
     assert {
         bic: sum(key[0] == bic for key in keys) for bic in added_counts
     } == added_counts
-    assert sum(added_counts.values()) == 30
+    assert sum(added_counts.values()) == 55
     assert len(keys) - sum(added_counts.values()) == 134
-    assert len(keys) == 164
+    assert len(keys) == 189
     assert {key for key in seed if key[0] in region_bics} == keys

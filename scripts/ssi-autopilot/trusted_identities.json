@@ -1305,5 +1305,10 @@
   "CIBLBDDH": {"name": "City Bank PLC", "country": "BD", "domains": ["citybankplc.com"], "settlement_terms_published": false},
   "CBININBB": {"name": "Central Bank of India", "country": "IN", "domains": ["centralbank.bank.in"], "settlement_terms_published": false},
   "IDIBINBB": {"name": "Indian Bank", "country": "IN", "domains": ["indianbank.bank.in"], "settlement_terms_published": false},
-  "PRVUNPKA": {"name": "Prabhu Bank Limited", "country": "NP", "domains": ["prabhubank.com"], "settlement_terms_published": false}
+  "PRVUNPKA": {"name": "Prabhu Bank Limited", "country": "NP", "domains": ["prabhubank.com"], "settlement_terms_published": false},
+  "CCEYLKLX": {"name": "Commercial Bank of Ceylon PLC", "country": "LK", "domains": ["combank.lk"], "settlement_terms_published": false},
+  "MIDLAM22": {"name": "HSBC Bank Armenia cjsc", "country": "AM", "domains": ["hsbc.am"], "settlement_terms_published": false},
+  "ANIKAM22": {"name": "ID BANK CJSC", "country": "AM", "domains": ["idbank.am"], "settlement_terms_published": false},
+  "ARMJAM22": {"name": "VTB Bank (Armenia) CJSC", "country": "AM", "domains": ["vtb.am"], "settlement_terms_published": false},
+  "WPACAU2S": {"name": "Westpac Banking Corporation", "country": "AU", "domains": ["westpac.com.au"], "settlement_terms_published": false}
   }
