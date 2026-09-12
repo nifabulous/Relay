@@ -1,0 +1,183 @@
+[
+  [
+    "SBBLBBBBXXX",
+    "Sagicor Bank (Barbados) Limited",
+    "Source: https://www.sagicor.bank/incomingwires (official incoming wire settlement instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91006930",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006931",
+      "CAD|BNDCCAMMINT|National Bank of Canada, Montreal|91006932",
+      "EUR|BOFAGB22|Bank of America, London|91006933",
+      "GBP|BOFAGB22|Bank of America, London|91006934"
+    ]
+  ],
+  [
+    "ARUBAWAXXXX",
+    "Aruba Bank N.V.",
+    "Source: https://www.arubabank.com/Corporate/Banking/Business-Services/Funds-Transfer-Services (official correspondent bank table, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91006935",
+      "EUR|BBRUBEBB|ING Bank, Brussels|91006937",
+      "CAD|BBRUBEBB|ING Bank, Brussels|91006938",
+      "GBP|BBRUBEBB|ING Bank, Brussels|91006939",
+      "JPY|BBRUBEBB|ING Bank, Brussels|91006940",
+      "CHF|BBRUBEBB|ING Bank, Brussels|91006941",
+      "ANG|MCBKCWCU|MCB, Willemstad, Curacao|91006942",
+      "AWG|MCBKCWCU|MCB, Willemstad, Curacao|91006943"
+    ]
+  ],
+  [
+    "BCRICRSJXXX",
+    "Banco de Costa Rica",
+    "Source: https://www.bancobcr.com/wps/portal/bcr/bancobcr/empresas/comercio_exterior (official correspondent bank list, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|BSCHESMM|Banco Santander S.A., Madrid|91006944",
+      "EUR|BBVAESMM|BBVA Banco Bilbao Vizcaya Argentaria S.A., Madrid|91006945",
+      "EUR|CAIXESBB|CaixaBank S.A., Spain|91006946",
+      "USD|COSRPAPA|Banco Internacional de Costa Rica S.A., Panama|91006947",
+      "USD|CAIXESBB|CaixaBank S.A., Spain|91006990",
+      "USD|BOFAUS3M|Bank of America, Miami|91006948",
+      "USD|CITIUS33|Citibank N.A., New York|91006949",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006950",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006951"
+    ]
+  ],
+  [
+    "CEFXBRSPXXX",
+    "Caixa Economica Federal",
+    "Source: https://www.caixa.gov.br/voce/ordem-de-pagamento-internacional/recebimentos-via-bancos-correspondentes/Paginas/default.aspx (official correspondent bank instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91006952",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006953",
+      "USD|BOFAUS3M|Bank of America, Miami|91006954",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91006955",
+      "EUR|CITIGB2L|Citibank N.A., London|91006984",
+      "CHF|CITIGB2L|Citibank N.A., London|91006985",
+      "GBP|CITIGB2L|Citibank N.A., London|91006986",
+      "AUD|CITIGB2L|Citibank N.A., London|91006987",
+      "CAD|CITIGB2L|Citibank N.A., London|91006988",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006989"
+    ]
+  ],
+  [
+    "BSCHBRSPXXX",
+    "Banco Santander (Brasil) S.A.",
+    "Source: https://www.santander.com.br/portal/wps/script/templates/GCMRequest.do?hc_location=ufi&page=8615 (official payment instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006956",
+      "EUR|BSCHESMM|Banco Santander S.A., Madrid|91006957",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91006958",
+      "GBP|RBOSGB2L|Royal Bank of Scotland PLC, London|91006959",
+      "AUD|CTBAAU2S|Commonwealth Bank of Australia, Sydney|91006960",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91006961",
+      "CHF|CRESCHZZ80A|Credit Suisse AG, Zurich|91006962"
+    ]
+  ],
+  [
+    "BFRPARBAXXX",
+    "BBVA Argentina S.A.",
+    "Source: https://www.bbva.com.ar/personas/productos/comex/instrucciones-para-recibir-fondos-del-exterior.html (official incoming funds instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006963",
+      "EUR|BBVAESMM|BBVA Madrid|91006964",
+      "DKK|DABADKKK|Danske Bank A/S, Copenhagen|91006965",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91006966",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken, Stockholm|91006967",
+      "CAD|BOFMCAM2|Bank of Montreal, Montreal|91006968",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91006969",
+      "GBP|MIDLGB22|HSBC Bank, London|91006970",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91006971"
+    ]
+  ],
+  [
+    "BAMCSVSSXXX",
+    "BAC El Salvador",
+    "Source: https://ayuda.baccredomatic.com/transferencias_bancarias/recibir_dinero/recibir-transferencias-internacionales (official BAC international transfer instructions, El Salvador, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91006972",
+      "USD|BOFAUS3M|Bank of America, Miami|91006973",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91006974"
+    ]
+  ],
+  [
+    "AMCNGTGTXXX",
+    "BAC Guatemala",
+    "Source: https://ayuda.baccredomatic.com/transferencias_bancarias/recibir_dinero/recibir-transferencias-internacionales (official BAC international transfer instructions, Guatemala, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91006975",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91006976"
+    ]
+  ],
+  [
+    "BPRHHNTEXXX",
+    "Banco Promerica, S.A.",
+    "Source: https://www.bancopromerica.com/quienes-somos/bancos-corresponsales/ (official correspondent bank page, accessed 2026-09-12; beneficiary BIC normalized from BPRHNTE to the valid Honduras code BPRHHNTE). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91006982",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006983"
+    ]
+  ]
+]

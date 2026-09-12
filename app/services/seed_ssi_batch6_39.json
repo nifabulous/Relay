@@ -1,0 +1,34 @@
+[
+  [
+    "HABAEE2XXXX",
+    "Swedbank AS Estonia",
+    "Source: https://www.swedbank.ee/static/pdf/private/d2d/payments/info_intpay_corrbanks_eng.pdf (official correspondent bank list, updated 1 December 2025). ",
+    "2025-12-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group, Melbourne|91007012",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91007013",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich (via Swedbank Sweden)|91007014",
+      "CNY|ICBKCNBJ|Industrial and Commercial Bank of China, Beijing|91007015",
+      "CZK|CEKOCZPP|Ceskoslovenska obchodni banka, Prague (via Swedbank Sweden)|91007016",
+      "DKK|JYBADKKK|Jyske Bank, Copenhagen|91007017",
+      "GBP|NWBKGB2L|NatWest, London|91007018",
+      "HKD|HSBCHKHHHKH|The Hongkong and Shanghai Banking Corporation, Hong Kong|91007019",
+      "HUF|OTPVHUHB|OTP Bank, Budapest (via Swedbank Sweden)|91007020",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91007021",
+      "NOK|SWEDNOKK|Swedbank, Oslo|91007022",
+      "PLN|PKOPPLPW|Bank Pekao, Warsaw|91007023",
+      "RON|BRDEROBU|BRD-Groupe Societe Generale, Bucharest (via Swedbank Sweden)|91007024",
+      "SEK|SWEDSESS|Swedbank, Stockholm|91007025",
+      "SGD|DBSSSGSG|DBS Bank, Singapore (via Swedbank Sweden)|91007026",
+      "TRY|TGBATRIS093|Turkiye Garanti Bankasi, Istanbul|91007027",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|91007028",
+      "ZAR|ABSAZAJJ|Absa Bank, Johannesburg (via Swedbank Sweden)|91007029"
+    ]
+  ]
+]
