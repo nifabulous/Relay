@@ -3406,7 +3406,7 @@
             {
               "currency": "EUR",
               "correspondent": "Standard Chartered AG Frankfurt, Am Main, Germany",
-              "int_bic": "SCBLDEFX",
+              "int_bic": "SCBLDEFF",
               "nostro": "ACCT-91001361",
               "with_an": "ACCT-91001361",
               "charge_code": "SHA",
@@ -3628,7 +3628,7 @@
               "bic_only": false
             }
           ],
-          "admitted_record_digest": "1900a08e4f4c5809204c15f33b3436ed122ac7dcb961053566ce2bbc081925be"
+          "admitted_record_digest": "48e1ce64b2d41f38178e6f3c4fe6a16db4a96ac313627f7495a2c658b20a22f5"
         },
         {
           "bic8": "SBMKKENA",
@@ -3722,7 +3722,7 @@
             {
               "currency": "EUR",
               "correspondent": "Standard Chartered Bank AG, Frankfurt am Main (published settlement: CP,FX)",
-              "int_bic": "SCBLDEFX",
+              "int_bic": "SCBLDEFF",
               "nostro": "ACCT-91001367",
               "with_an": "ACCT-91001367",
               "charge_code": "SHA",
@@ -3832,7 +3832,7 @@
               "bic_only": false
             }
           ],
-          "admitted_record_digest": "6375a2a6c93ec2c1ec20be1368f6c2073196e1a6c843e0bec79d5c1ec1121b64"
+          "admitted_record_digest": "b381c3a7a13bf81e2f5c071afc02742b2088276d88d3b10604e13d8a90fb94bf"
         },
         {
           "bic8": "SIDNKENA",
