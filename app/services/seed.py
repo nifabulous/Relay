@@ -495,6 +495,7 @@ BANKS = [
     ("AEBAGRAAXXX", "Aegean Baltic Bank S.A.", "GR", "Maroussi", "EUR"),
     ("DELUFR22LCH", "Banque Delubac & Cie", "FR", "Paris", "EUR"),
     ("AFRIKENXXXX", "Bank of Africa Kenya Limited", "KE", "Nairobi", "KES"),
+    ("BBRUBEBB010", "ING Belgium S.A./N.V., Brussels", "BE", "Brussels", "EUR"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -818,6 +819,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_18.json",
     "seed_ssi_batch6_19.json",
     "seed_ssi_batch6_20.json",
+    "seed_ssi_batch6_21.json",
 )
 
 
