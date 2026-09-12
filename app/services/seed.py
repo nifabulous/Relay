@@ -570,6 +570,10 @@ BANKS = [
     ("CECBMK22XXX", "Central Cooperative Bank AD Skopje", "MK", "Skopje", "MKD"),
     ("MNBAMEPGXXX", "NLB Banka Podgorica", "ME", "Podgorica", "EUR"),
     ("AZMNMEPGXXX", "Adriatic Bank AD Podgorica", "ME", "Podgorica", "EUR"),
+    ("BGNBPYPXXXX", "Banco GNB Paraguay S.A.", "PY", "Asuncion", "PYG"),
+    ("NAPAPAPAXXX", "Banco Nacional de Panama", "PA", "Panama City", "PAB"),
+    ("GLBLPAPAXXX", "Global Bank Corporation", "PA", "Panama City", "PAB"),
+    ("BPPRPRSXXXX", "Banco Popular de Puerto Rico", "PR", "San Juan", "USD"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -918,6 +922,10 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_62.json",
     "seed_ssi_batch6_63.json",
     "seed_ssi_batch6_66.json",
+    "seed_ssi_batch6_67.json",
+    "seed_ssi_batch6_68.json",
+    "seed_ssi_batch6_69.json",
+    "seed_ssi_batch6_70.json",
 )
 
 
