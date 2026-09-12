@@ -604,6 +604,10 @@ BANKS = [
     ("BBKUKWKWXXX", "Bank of Bahrain and Kuwait B.S.C., Kuwait Branch", "KW", "Kuwait City", "KWD"),
     ("CBQAQAQAXXX", "The Commercial Bank (P.S.Q.C.)", "QA", "Doha", "QAR"),
     ("COMBKWKWXXX", "Commercial Bank of Kuwait K.P.S.C.", "KW", "Kuwait City", "KWD"),
+    ("FCTTBBBBXXX", "First Citizens Bank (Barbados) Limited", "BB", "Bridgetown", "BBD"),
+    ("ORBACWCUXXX", "Orco Bank N.V. - Curaçao", "CW", "Willemstad", "USD"),
+    ("ORBASXSMXXX", "Orco Bank N.V. - Sint Maarten", "SX", "Philipsburg", "USD"),
+    ("ORBABQBNXXX", "Orco Bank N.V. - Bonaire", "BQ", "Kralendijk", "USD"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -984,6 +988,8 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_97.json",
     "seed_ssi_batch6_98.json",
     "seed_ssi_batch6_99.json",
+    "seed_ssi_batch6_100.json",
+    "seed_ssi_batch6_101.json",
 )
 
 
