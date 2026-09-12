@@ -477,6 +477,8 @@ BANKS = [
     ("SMFDIE2DXXX", "Sumitomo Mitsui Finance Dublin Limited", "IE", "Dublin", "EUR"),
     ("MHCBSGSGXXX", "Mizuho Bank, Ltd. Singapore Branch", "SG", "Singapore", "SGD"),
     ("NOBIBA22XXX", "Nova Banka AD Banja Luka", "BA", "Banja Luka", "BAM"),
+    ("ABRKEGCAXXX", "Al Baraka Bank Egypt", "EG", "Cairo", "EGP"),
+    ("PRIEKENXXXX", "Prime Bank Limited Kenya", "KE", "Nairobi", "KES"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -793,6 +795,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_11.json",
     "seed_ssi_batch6_12.json",
     "seed_ssi_batch6_13.json",
+    "seed_ssi_batch6_14.json",
 )
 
 
