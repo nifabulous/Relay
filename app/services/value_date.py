@@ -107,6 +107,16 @@ class ValueDateResult:
     value_date: date
     settlement_type: str
     business_days: int
+    # False when this currency has no entry in HOLIDAYS. The value date is
+    # then computed against weekends only, so it may fall on a public
+    # holiday. Reported rather than hidden: an unverified settlement date
+    # and a verified one must not look identical.
+    #
+    # Deliberately required. A field whose purpose is to flag missing data
+    # must not default to "data present" — a constructor that forgets it
+    # would reintroduce exactly the confident-answer-from-partial-inputs
+    # behaviour this field exists to prevent.
+    holiday_calendar_available: bool
     skipped_holidays: List[str] = field(default_factory=list)
     explanation: str = ""
 
@@ -167,7 +177,19 @@ def calculate_value_date(
     currency = currency.strip().upper()
     cut_off_str, tz, note = CUT_OFFS.get(currency, CUT_OFFS["DEFAULT"])
     cut_h, cut_m = (int(x) for x in cut_off_str.split(":"))
+    holiday_calendar_available = currency in HOLIDAYS
     holidays = set(HOLIDAYS.get(currency, []))
+    calendar_caveat = (
+        f"No holiday calendar on file for {currency} — weekends are applied "
+        f"but public holidays are not, so this value date is unverified"
+    )
+    # An instant rail settles same-day whatever the calendar says, so the
+    # gap is real but harmless here. Saying so keeps the flag and the
+    # explanation consistent without implying the date is in doubt.
+    instant_calendar_caveat = (
+        f"No holiday calendar on file for {currency}, which does not affect "
+        f"same-day instant settlement"
+    )
     lag, settlement_type, is_instant = _resolve_lag(currency, scheme)
 
     trade_date = send_datetime.date()
@@ -184,10 +206,12 @@ def calculate_value_date(
             settlement_type=settlement_type,
             business_days=0,
             skipped_holidays=[],
+            holiday_calendar_available=holiday_calendar_available,
             explanation=(
                 f"Sent {trade_date.isoformat()} via instant rail ({scheme}). "
                 f"Settles immediately — value date is the same day, regardless of "
                 f"weekend or holiday."
+                + ("" if holiday_calendar_available else f" {instant_calendar_caveat}.")
             ),
         )
 
@@ -234,6 +258,9 @@ def calculate_value_date(
         names = ", ".join(skipped)
         parts.append(f"Skipped holidays: {names}")
 
+    if not holiday_calendar_available:
+        parts.append(calendar_caveat)
+
     explanation = ". ".join(parts) + "."
 
     return ValueDateResult(
@@ -246,5 +273,6 @@ def calculate_value_date(
         settlement_type=settlement_type,
         business_days=lag,
         skipped_holidays=skipped,
+        holiday_calendar_available=holiday_calendar_available,
         explanation=explanation,
     )

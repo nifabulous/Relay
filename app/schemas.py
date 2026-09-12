@@ -545,6 +545,14 @@ class ValueDateResponse(BaseModel):
     settlement_type: str
     business_days: int
     skipped_holidays: List[str] = Field(default_factory=list)
+    holiday_calendar_available: bool = Field(
+        ...,
+        description=(
+            "False when no holiday calendar is on file for this currency. "
+            "Weekends are still applied, but public holidays are not, so the "
+            "value date is unverified rather than wrong-by-omission."
+        ),
+    )
     explanation: str
     disclaimer: str
 
