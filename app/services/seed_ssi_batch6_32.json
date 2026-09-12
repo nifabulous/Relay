@@ -1,0 +1,28 @@
+[
+  [
+    "BEASSGSGXXX",
+    "Bank of East Asia, Singapore Branch",
+    "Source: https://www.hkbea.com.sg/pdf/en/standard-settlement-instructions.pdf (Standard Settlement Instructions, February 2026). ",
+    "2026-02-01",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|CTBAAU2S|Commonwealth Bank of Australia, Sydney|91006813",
+      "EUR|CAIXESBB|CaixaBank, Valencia|91006814",
+      "GBP|LOYDGB2L|Lloyds Bank, London|91006815",
+      "HKD|BEASHKHH|The Bank of East Asia, Hong Kong|91006816",
+      "SGD|MASGSGSG|Monetary Authority of Singapore|91006817",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006818",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|91006819",
+      "CNY|ICBKSGSGCLR|Industrial and Commercial Bank of China, Singapore (via ICBC Asia Hong Kong)|91006820",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006821",
+      "NZD|ANZBNZ22|ANZ Bank New Zealand, Auckland|91006822",
+      "THB|SICOTHBK|Siam Commercial Bank, Bangkok|91006823",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91006824"
+    ]
+  ]
+]

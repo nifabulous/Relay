@@ -504,6 +504,8 @@ BANKS = [
     ("RZOOAT2LXXX", "Raiffeisenlandesbank Oberoesterreich AG", "AT", "Linz", "EUR"),
     ("AGRIPLPRXXX", "Credit Agricole Bank Polska S.A.", "PL", "Warsaw", "PLN"),
     ("TSIDTNTTXXX", "Tunisian Saudi Bank", "TN", "Tunis", "TND"),
+    ("TZBBBA22XXX", "ZiraatBank BH dd Sarajevo", "BA", "Sarajevo", "BAM"),
+    ("BEASSGSGXXX", "Bank of East Asia, Singapore Branch", "SG", "Singapore", "SGD"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -836,6 +838,9 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_27.json",
     "seed_ssi_batch6_28.json",
     "seed_ssi_batch6_29.json",
+    "seed_ssi_batch6_30.json",
+    "seed_ssi_batch6_31.json",
+    "seed_ssi_batch6_32.json",
 )
 
 
