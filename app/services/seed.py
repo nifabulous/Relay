@@ -768,6 +768,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_2.json",
     "seed_ssi_batch6_3.json",
     "seed_ssi_batch6_4.json",
+    "seed_ssi_batch6_5.json",
 )
 
 
