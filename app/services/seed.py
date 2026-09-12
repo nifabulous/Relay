@@ -584,6 +584,16 @@ BANKS = [
     ("BNBTBTBTXXX", "Bhutan National Bank Limited", "BT", "Thimphu", "BTN"),
     ("MALBMVMVXXX", "Bank of Maldives PLC", "MV", "Male", "MVR"),
     ("CBMVMVMVXXX", "Commercial Bank of Maldives Private Limited", "MV", "Male", "MVR"),
+    ("MCBLMVMVXXX", "The Mauritius Commercial Bank (Maldives) Private Limited", "MV", "Male", "MVR"),
+    ("NMBBNPKAXXX", "NMB Bank Limited", "NP", "Kathmandu", "NPR"),
+    ("CBAFKENXXXX", "NCBA Bank Kenya PLC", "KE", "Nairobi", "KES"),
+    ("KCOOKENAXXX", "The Co-operative Bank of Kenya Ltd", "KE", "Nairobi", "KES"),
+    ("NDBSLKLXXXX", "National Development Bank PLC", "LK", "Colombo", "LKR"),
+    ("NTBCLKLXXXX", "Nations Trust Bank PLC", "LK", "Colombo", "LKR"),
+    ("MADVMVMVXXX", "Maldives Islamic Bank PLC", "MV", "Male", "MVR"),
+    ("BSCHARBAXXX", "Banco Santander Río / Santander Argentina S.A.", "AR", "Buenos Aires", "ARS"),
+    ("ITAUCLRMXXX", "Banco Itaú Chile", "CL", "Santiago", "CLP"),
+    ("BOSUARBAXXX", "Banco Macro S.A.", "AR", "Buenos Aires", "ARS"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -947,6 +957,16 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_79.json",
     "seed_ssi_batch6_80.json",
     "seed_ssi_batch6_81.json",
+    "seed_ssi_batch6_82.json",
+    "seed_ssi_batch6_83.json",
+    "seed_ssi_batch6_84.json",
+    "seed_ssi_batch6_85.json",
+    "seed_ssi_batch6_87.json",
+    "seed_ssi_batch6_88.json",
+    "seed_ssi_batch6_89.json",
+    "seed_ssi_batch6_90.json",
+    "seed_ssi_batch6_91.json",
+    "seed_ssi_batch6_92.json",
 )
 
 

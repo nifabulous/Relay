@@ -1,0 +1,43 @@
+[
+  [
+    "NDBSLKLXXXX",
+    "National Development Bank PLC",
+    "Source: https://www.ndbbank.com/wholesale-banking/transaction-banking/correspondent-banking (official correspondent banking page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. Malformed source spellings for the Hong Kong and Stockholm rows are omitted rather than inferred. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|ADCBAEAA|Abu Dhabi Commercial Bank PJSC|91009800",
+      "AED|BOMLAEAD|Mashreqbank PSC|91009801",
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group|91009802",
+      "CAD|COBADEFF|Commerzbank AG|91009803",
+      "CHF|ZKBKCHZZ|Zuercher Kantonalbank, Zurich|91009804",
+      "CNY|PCBCCNBJ|China Construction Bank Corporation|91009805",
+      "CNY|BKCHLKLX|Bank of China, Colombo|91009806",
+      "CNH|HSBCHKHH|Hongkong and Shanghai Banking Corporation|91009807",
+      "DKK|NDEADKKK|Nordea Bank Denmark|91009808",
+      "EUR|CITIGB2L|Citibank NA, London|91009809",
+      "EUR|COBADEFF|Commerzbank AG|91009810",
+      "EUR|HYVEDEMM|UniCredit Bank AG|91009811",
+      "GBP|CITIGB2L|Citibank NA, London|91009812",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91009813",
+      "NOK|NDEANOKK|Nordea Bank Norge, Oslo|91009814",
+      "NZD|ANZBNZ22|Australia and New Zealand Banking Group|91009815",
+      "SAR|RIBLSARI|Riyad Bank|91009816",
+      "SGD|DBSSSGSG|DBS Bank|91009817",
+      "SGD|SCBLSGSG|Standard Chartered Bank, Singapore|91009818",
+      "USD|CITIUS33|Citibank NA, New York|91009819",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91009820",
+      "USD|HANYUS33|Habib American Bank, New York|91009821",
+      "USD|MRMDUS33|HSBC Bank USA, New York|91009822",
+      "USD|CHASUS33|JPMorgan Chase, New York|91009823",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91009824",
+      "USD|CZNBKRSE|Kookmin Bank, Seoul|91009825",
+      "INR|IDIBINBB|Indian Bank|91009826"
+    ]
+  ]
+]

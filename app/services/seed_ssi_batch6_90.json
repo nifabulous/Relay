@@ -1,0 +1,44 @@
+[
+  [
+    "BSCHARBAXXX",
+    "Banco Santander Río / Santander Argentina S.A.",
+    "Source: https://www.santander.com.ar/empresas/comercio-exterior/instrucciones-recibir-fondos-exterior (official international funds instructions and linked bank PDFs, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; legacy Wells Fargo PNBPUS3NNYC is normalized to the canonical PNBPUS33 BIC. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91010000",
+      "USD|PNBPUS33|Wells Fargo Bank N.A., New York|91010001",
+      "USD|BOFAUS3N|Bank of America N.A., New York|91010002",
+      "EUR|BSCHESMM|Banco Santander, Madrid|91010003",
+      "EUR|UNCRITMM|UniCredit, Milan|91010004",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91010005"
+    ]
+  ],
+  [
+    "BSCHARBAXXX",
+    "Banco Santander Río / Santander Argentina S.A.",
+    "Source: https://www.santander.com.ar/empresas/comercio-exterior/instrucciones-recibir-fondos-exterior (official international funds instructions and linked bank PDFs, accessed 2026-09-12). The source table publishes correspondent BICs but no account numbers for these currencies. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "GBP|ABBYGB2L|Santander UK PLC, London|",
+      "CHF|UBSWCHZH80A|UBS AG, Zurich|",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|",
+      "JPY|BOTKJPJT|Bank of Tokyo-Mitsubishi UFJ, Tokyo|",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken, Stockholm|",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|",
+      "CNH|BSCHHKHH|Banco Santander, Hong Kong|"
+    ]
+  ]
+]
