@@ -712,6 +712,90 @@ class TestFetchesAreBounded:
         assert attestation.MAX_SOURCE_BYTES > 0
 
 
+class TestFetchesCannotReachInward:
+    """
+    These URLs come from evidence files and are fetched by CI. A citation that
+    redirects is still a request this process makes, so validating only the
+    URL that was typed leaves the redirect target unchecked.
+    """
+
+    def test_a_loopback_citation_is_refused(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.BlockedSourceAddress):
+            attestation._assert_fetchable("http://127.0.0.1/nostro")
+
+    def test_localhost_by_name_is_refused_too(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.BlockedSourceAddress):
+            attestation._assert_fetchable("http://localhost/nostro")
+
+    def test_a_private_range_is_refused(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.BlockedSourceAddress):
+            attestation._assert_fetchable("https://10.0.0.1/nostro")
+
+    def test_link_local_metadata_addresses_are_refused(self):
+        """The cloud metadata endpoint is the classic SSRF destination."""
+        attestation = _module()
+
+        with pytest.raises(attestation.BlockedSourceAddress):
+            attestation._assert_fetchable("http://169.254.169.254/latest/meta-data/")
+
+    def test_a_non_http_scheme_is_refused_before_any_lookup(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.UnsupportedSourceScheme):
+            attestation._assert_fetchable("file:///etc/passwd")
+
+    def test_a_redirect_target_is_validated_not_just_the_first_url(self):
+        attestation = _module()
+        handler = attestation._ValidatingRedirectHandler()
+
+        with pytest.raises(attestation.BlockedSourceAddress):
+            handler.redirect_request(
+                None, None, 302, "Found", {}, "http://127.0.0.1/internal"
+            )
+
+
+class TestReadsHaveAWallClockDeadline:
+    """
+    A byte cap bounds how much a server may send; it does not bound how long
+    it may take to send it. A slow drip stays under the cap indefinitely and
+    burns the CI job instead.
+    """
+
+    def test_an_expired_deadline_aborts_the_read(self):
+        import io
+        import time
+
+        attestation = _module()
+
+        with pytest.raises(attestation.SourceTimeout):
+            attestation._read_bounded(
+                io.BytesIO(b"x" * 5000),
+                limit=1_000_000,
+                deadline=time.monotonic() - 1,
+            )
+
+    def test_a_live_deadline_allows_a_normal_read(self):
+        import io
+        import time
+
+        attestation = _module()
+
+        assert attestation._read_bounded(
+            io.BytesIO(b"x" * 900), limit=1000, deadline=time.monotonic() + 30
+        ) == b"x" * 900
+
+    def test_the_budget_is_declared_rather_than_implicit(self):
+        attestation = _module()
+
+        assert attestation.MAX_SOURCE_SECONDS > 0
+
+
 class TestARouteKeyWithoutAnExtractableAccount:
     """
     The two extractors can disagree. `_route_keys` accepts any row carrying a

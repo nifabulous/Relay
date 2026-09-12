@@ -278,6 +278,25 @@ Extending coverage to a PDF source means writing an extractor for it. Until
 then, `--refresh` on a non-HTML source can only re-record a digest whose
 meaning nobody has checked, which is the practice this tooling exists to end.
 
+### What the fetcher will and will not do
+
+Cited sources are fetched by CI from URLs written in evidence files, so the
+fetcher treats those URLs as untrusted input rather than as configuration:
+
+- **http(s) only**, checked before any lookup.
+- **Public addresses only.** A citation resolving to loopback, a private
+  range, or the link-local metadata address is refused. Redirect targets are
+  checked the same way — validating only the URL that was typed leaves the
+  actual destination unchecked, which is the whole of the protection.
+- **Bounded in bytes and in time.** A source over `MAX_SOURCE_BYTES` is
+  refused rather than truncated, because a short read produces a wrong digest
+  with nothing to say so. A separate wall-clock budget stops a slow drip that
+  stays under the byte cap from holding the job open.
+
+The address check resolves the name and inspects what it gets, so a host that
+answers differently on the next lookup can still slip past. It raises the cost
+of that trick; it is not a proof, and should not be described as one.
+
 ### On the fingerprints themselves
 
 `account_fingerprint` is an unsalted SHA-256 over the account with

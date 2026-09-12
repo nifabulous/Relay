@@ -48,14 +48,17 @@ from __future__ import annotations
 import argparse
 import datetime
 import hashlib
+import ipaddress
 import json
 import os
 import re
+import socket
 import sys
+import time
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
 _BIC = re.compile(r"^[A-Z0-9]{8}(?:[A-Z0-9]{3})?$")
@@ -66,6 +69,9 @@ RECORD_SCHEMA = 1
 # the largest cited source (a 1.3MB corporate presentation) many times over,
 # small enough that one misbehaving host cannot take the sweep down with it.
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
+# A byte cap bounds how much a server may send, not how long it may take. A
+# slow drip stays under the cap indefinitely and burns the CI job instead.
+MAX_SOURCE_SECONDS = 60
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
@@ -113,6 +119,14 @@ class SourceTooLarge(AttestationError):
 
 class UnsupportedSourceScheme(AttestationError):
     """The citation is not an http(s) URL."""
+
+
+class BlockedSourceAddress(AttestationError):
+    """The citation resolves somewhere this process has no business reaching."""
+
+
+class SourceTimeout(AttestationError):
+    """The source took longer than the per-source budget allows."""
 
 
 class DigestMismatch(AttestationError):
@@ -407,7 +421,9 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     }
 
 
-def _read_bounded(response, limit: int = MAX_SOURCE_BYTES) -> bytes:
+def _read_bounded(
+    response, limit: int = MAX_SOURCE_BYTES, deadline: float | None = None
+) -> bytes:
     """Read at most `limit` bytes, refusing rather than truncating.
 
     A timeout bounds how long a server may take, not how much it may send. The
@@ -419,6 +435,13 @@ def _read_bounded(response, limit: int = MAX_SOURCE_BYTES) -> bytes:
     chunks: list[bytes] = []
     total = 0
     while True:
+        if deadline is not None and time.monotonic() > deadline:
+            raise SourceTimeout(
+                f"source exceeded the {MAX_SOURCE_SECONDS}s budget while still "
+                "under the byte limit. A socket timeout bounds each read, not "
+                "the whole transfer, so a slow drip would otherwise hold the "
+                "job open indefinitely."
+            )
         chunk = response.read(65536)
         if not chunk:
             break
@@ -433,17 +456,70 @@ def _read_bounded(response, limit: int = MAX_SOURCE_BYTES) -> bytes:
     return b"".join(chunks)
 
 
-def _fetch(source: str) -> bytes:
-    scheme = urlparse(source).scheme.lower()
+def _assert_fetchable(url: str) -> None:
+    """Refuse a URL that is not a public http(s) destination.
+
+    These URLs come from evidence files and are fetched by CI, so the scheme
+    is not an author's to widen, and neither is the address. A citation that
+    resolves to loopback, a private range, or the link-local metadata address
+    turns this verifier into a request-forwarder for whoever wrote the
+    evidence file.
+
+    This resolves the name and checks the addresses it gets. A host that
+    answers differently on the next lookup can still slip past — the check and
+    the connection are separate moments — so this raises the cost of that
+    trick rather than making it impossible. Worth saying plainly instead of
+    calling it SSRF-proof.
+    """
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
     if scheme not in {"http", "https"}:
         raise UnsupportedSourceScheme(
             f"refusing to fetch {scheme or 'a schemeless URL'!r}: a cited "
             "source must be an http(s) URL. This runs in CI against URLs taken "
             "from evidence files, so the scheme is not the author's to widen."
         )
+    host = parsed.hostname
+    if not host:
+        raise UnsupportedSourceScheme(f"refusing to fetch {url!r}: no host")
+    for family, _, _, _, address in socket.getaddrinfo(host, None):
+        candidate = ipaddress.ip_address(address[0])
+        if (
+            candidate.is_private
+            or candidate.is_loopback
+            or candidate.is_link_local
+            or candidate.is_reserved
+            or candidate.is_multicast
+            or candidate.is_unspecified
+        ):
+            raise BlockedSourceAddress(
+                f"refusing to fetch {url!r}: {host} resolves to {candidate}, "
+                "which is not a public address. A cited settlement table lives "
+                "on the open internet; anything else is this process being "
+                "pointed somewhere by the evidence file it is checking."
+            )
+
+
+class _ValidatingRedirectHandler(HTTPRedirectHandler):
+    """Check every redirect target, not only the URL that was typed.
+
+    Validating the first URL and then letting the opener follow a `Location`
+    header anywhere leaves the actual destination unchecked, which is the
+    whole of the protection.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _assert_fetchable(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _fetch(source: str) -> bytes:
+    _assert_fetchable(source)
     request = Request(source, headers={"User-Agent": "Relay SSI source attestation/1"})
-    with urlopen(request, timeout=30) as response:  # noqa: S310 - scheme checked above
-        return _read_bounded(response)
+    opener = build_opener(_ValidatingRedirectHandler)
+    deadline = time.monotonic() + MAX_SOURCE_SECONDS
+    with opener.open(request, timeout=30) as response:  # noqa: S310 - validated above
+        return _read_bounded(response, deadline=deadline)
 
 
 def _apply_accepted_changes(
