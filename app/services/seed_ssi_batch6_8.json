@@ -1,0 +1,35 @@
+[
+  [
+    "DFCCLKLXXXX",
+    "DFCC Bank",
+    "Source: https://s3.ap-southeast-1.amazonaws.com/dfcc.lk/wp-content/uploads/2024/12/20102629/Updated-SSI-as-of-28.11.24.pdf (as of 2024-11-28). ",
+    "2024-11-28",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|BOMLAEAD|MashreqBank PSC, Dubai|91006001",
+      "AUD|CHASAU2X|JPMorgan Chase Bank, Sydney|91006002",
+      "AUD|SCBLSG22|Standard Chartered Bank, Singapore|91006003",
+      "CAD|COBADEFF|Commerzbank AG, Frankfurt|91006004",
+      "CAD|CHASCATTCTS|JPMorgan Chase Bank, Toronto|91006005",
+      "CHF|ZKBKCHZZ80A|Zürcher Kantonalbank, Zürich|91006006",
+      "CNY|BKCHLKLX|Bank of China Limited, Colombo|91006007",
+      "EUR|SCBLDEFX|Standard Chartered Bank AG, Frankfurt|91006008",
+      "EUR|HYVEDEMM|UniCredit Bank GmbH, Munich|91006009",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91006010",
+      "GBP|BCEYGB2L|Bank of Ceylon (UK) Ltd, London|91006011",
+      "INR|HDFCINBB|HDFC Bank Ltd, Mumbai|91006012",
+      "INR|BCEYIN5M|Bank of Ceylon, Chennai|91006013",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91006014",
+      "SGD|SCBLSG22|Standard Chartered Bank, Singapore|91006015",
+      "SGD|OCBCSGSG|Oversea-Chinese Banking Corporation, Singapore|91006016",
+      "USD|CZNBKRSE|Kookmin Bank, Seoul|91006017",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006018",
+      "USD|OCBCSGSG|Oversea-Chinese Banking Corporation, Singapore|91006019"
+    ]
+  ]
+]
