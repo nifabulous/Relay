@@ -227,7 +227,15 @@ python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
 `--refresh` requires `--record`. The record names the old and new digest, the
 route counts, the per-route fingerprint results and `raw_accounts_committed:
 false`. A test asserts the committed digest is one some record reports having
-seen, so a hand-edited digest fails offline with no network needed.
+seen, so a digest edited silently fails offline with no network needed.
+
+Be precise about what that buys. A record is ordinary repository content — not
+signed, not chained — so someone can edit the digest to a value an existing
+record already names, or write a matching record. The offline test enforces
+consistency, not provenance. **The authority on what the source says today is
+the live check CI runs on every pull request**; the record's value is that it
+makes a falsifiable claim you can re-run, where a refreshed digest used to
+carry no claim at all.
 
 ### Accepting a genuine account change
 
@@ -290,8 +298,9 @@ fingerprint as a redaction of a value that would matter if disclosed.
   URL and as-of date.
 - **Never hand-edit a `source_sha256`.** Refresh it with
   `verify_source_attestation.py --refresh --record`, which re-derives every
-  route key and account fingerprint from the live page first. A digest
-  changed by hand proves nothing and a test rejects it.
+  route key and account fingerprint from the live page first. A digest changed
+  by hand proves nothing; a silent change is rejected offline, and the live CI
+  check is what establishes the source content either way.
 - **One commit per region**, `type(scope): description`.
 - The validator is authoritative: a region whose results fail validation is
   never committed.

@@ -292,9 +292,24 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
         key = (route["currency"], route["int_bic"])
         # A route the source no longer carries has no account to compare.
         # Counting it as an account move reports one defect twice and inflates
-        # every account-change total built on top of this.
-        if key not in live:
+        # every account-change total built on top of this. It is already
+        # reported as a route-key mismatch.
+        if key not in actual:
             continue
+        # But a route the source *does* still carry, whose account could not
+        # be read, is a different thing entirely. The two extractors can
+        # disagree — route keys need only a currency and a BIC, while an
+        # account needs a cell before the BIC to live in — and skipping the
+        # route here would let its account go unchecked while everything
+        # reported clean. Silence about an account is the one answer this
+        # tool must never give.
+        if key not in live:
+            raise UnreadableSource(
+                f"route {key} is present in the source but its account could "
+                "not be read: the account is taken from the cell before the "
+                "intermediary BIC, and this row has none. The route cannot be "
+                "attested, so no comparison over it may be reported as clean."
+            )
         checked += 1
         committed = {route["nostro_fingerprint"], route["with_an_fingerprint"]}
         mirror = snapshot.get(key)
@@ -322,7 +337,18 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
             "matched": matched,
             "changed": changed,
         },
-        "match": not missing and not unexpected and not changed,
+        # Reported separately because the refresh path deliberately accepts a
+        # changed digest once the routes and accounts behind it are proven
+        # unchanged. Every other caller wants `match`, which is the answer to
+        # "did all three checks pass" and must not be true while the bytes the
+        # digest pins have moved.
+        "routes_and_accounts_match": not missing and not unexpected and not changed,
+        "match": (
+            digest == evidence.get("source_sha256")
+            and not missing
+            and not unexpected
+            and not changed
+        ),
     }
 
 
@@ -537,13 +563,13 @@ def reverify(
     report = compare(evidence, source_bytes)
 
     if not report["route_keys"]["match"]:
-        raise SystemExit(
+        raise AttestationError(
             "refusing to refresh: source route-key mismatch:\n"
             f"  missing={report['route_keys']['missing']}\n"
             f"  unexpected={report['route_keys']['unexpected']}"
         )
     if report["fingerprints"]["changed"]:
-        raise SystemExit(
+        raise AttestationError(
             "refusing to refresh: an account moved on an unchanged route key:\n"
             f"  changed={report['fingerprints']['changed']}\n"
             "Accept each one explicitly with --accept-account-change CURRENCY:BIC "

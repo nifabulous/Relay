@@ -17,7 +17,10 @@ These tests pin the three things that close that hole:
 1. the account fingerprint derivation, so a fingerprint is reproducible by
    anyone holding the page rather than being an unexplained committed string;
 2. a comparison that fails on a changed account even when route keys match;
-3. a committed digest being reachable only through a re-verification record.
+3. a committed digest being accompanied by a re-verification record, so a
+   silent edit fails offline — repository consistency, not proof the tool
+   ran; see TestCommittedDigestIsCoveredByARecord for what that does and does
+   not establish.
 """
 
 import importlib.util
@@ -158,7 +161,10 @@ class TestComparisonFailsClosed:
 
         assert report["route_keys"]["match"] is True
         assert report["fingerprints"]["changed"] == []
-        assert report["match"] is True
+        # This fixture carries a placeholder digest, so the assertion is about
+        # routes and accounts. `match` additionally requires the digest, and
+        # TestCompareMatchAccountsForTheDigest covers that.
+        assert report["routes_and_accounts_match"] is True
 
     def test_a_partially_changed_page_is_reported_route_by_route(self):
         """One route gone, others intact: a report, not a refusal."""
@@ -240,8 +246,21 @@ class TestComparisonFailsClosed:
 
 class TestCommittedDigestIsCoveredByARecord:
     """
-    The anchor. A digest may only be the one some re-verification record
-    reports having seen on the live page.
+    Repository consistency, and only that.
+
+    These assert that a committed digest is accompanied by a record claiming
+    the checks were run against it — so a digest edited silently, with no
+    record, fails offline with no network needed.
+
+    What they do not establish: that the tool produced either file. A record
+    is ordinary repository content, so a hand can edit the digest to one an
+    existing record already names, or write a matching record outright. There
+    is no signature and no append-only chain here.
+
+    The authority on what the source says today is the live check CI runs on
+    every pull request. The record's value is that it makes a falsifiable,
+    reproducible claim — re-run the tool and find out — where previously a
+    refreshed digest carried no claim at all.
     """
 
     def _records(self):
@@ -262,9 +281,11 @@ class TestCommittedDigestIsCoveredByARecord:
 
         assert covering, (
             "No re-verification record names the committed source digest "
-            f"{evidence['source_sha256'][:12]}. A digest may only be changed by "
-            "running verify_source_attestation.py --refresh --record, which "
-            "re-derives every route fingerprint from the live page first."
+            f"{evidence['source_sha256'][:12]}. Refresh it by running "
+            "verify_source_attestation.py --refresh --record, which re-derives "
+            "every route fingerprint from the live page first. This check "
+            "enforces that a digest change is accompanied by its record; the "
+            "live check CI runs is what establishes the source content itself."
         )
 
     def test_the_covering_record_reports_a_clean_comparison(self):
@@ -545,6 +566,120 @@ class TestMissingRoutesAreNotAccountMoves:
         ]
 
 
+class TestARouteKeyWithoutAnExtractableAccount:
+    """
+    The two extractors can disagree. `_route_keys` accepts any row carrying a
+    currency and a BIC; `route_fingerprints` needs a cell *before* the BIC to
+    read the account from, so a row whose BIC sits first yields a route key
+    and no fingerprint.
+
+    Skipping such a route — which is what the missing-route fix did — lets the
+    route-key check pass while that route's account goes unchecked. Silence
+    about an account is the one thing this tool must never do.
+    """
+
+    def _evidence(self, attestation):
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        return {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                }
+            ],
+        }
+
+    def test_a_present_route_with_no_readable_account_is_refused(self):
+        attestation = _module()
+        # BIC first, so there is no cell before it to read an account from.
+        source = _html([["IRVTUS3N", "USD", "890-0045-140"]])
+
+        assert ("USD", "IRVTUS3N") in attestation._route_keys(source)
+        assert ("USD", "IRVTUS3N") not in attestation.route_fingerprints(source, {})
+
+        with pytest.raises(attestation.UnreadableSource) as excinfo:
+            attestation.compare(self._evidence(attestation), source)
+
+        assert "IRVTUS3N" in str(excinfo.value)
+
+    def test_a_genuinely_absent_route_is_still_only_a_route_mismatch(self):
+        """The missing-route fix has to survive: absent is not unreadable."""
+        attestation = _module()
+        evidence = self._evidence(attestation)
+        evidence["routes"].append(
+            {
+                "currency": "EUR",
+                "int_bic": "CHASDEFX",
+                "nostro_fingerprint": attestation.account_fingerprint("890-0045-140"),
+                "with_an_fingerprint": attestation.account_fingerprint("890-0045-140"),
+            }
+        )
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+        report = attestation.compare(evidence, source)
+
+        assert report["route_keys"]["missing"] == [("EUR", "CHASDEFX")]
+        assert report["fingerprints"]["changed"] == []
+
+
+class TestCompareMatchAccountsForTheDigest:
+    """
+    `match` is the public answer to "did this verify". Returning true while
+    the digest differs contradicts the three-check contract in the one field
+    a future caller is most likely to read on its own.
+    """
+
+    def _evidence(self, attestation, source, digest=None):
+        import hashlib
+
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        return {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": digest
+            or hashlib.sha256(
+                attestation._canonical_source_bytes(source)
+            ).hexdigest(),
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                }
+            ],
+        }
+
+    def test_match_is_true_only_when_all_three_checks_pass(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+        report = attestation.compare(self._evidence(attestation, source), source)
+
+        assert report["digest_matches"] is True
+        assert report["routes_and_accounts_match"] is True
+        assert report["match"] is True
+
+    def test_a_changed_digest_makes_match_false_even_with_intact_routes(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = self._evidence(attestation, source, digest="0" * 64)
+
+        report = attestation.compare(evidence, source)
+
+        assert report["digest_matches"] is False
+        assert report["routes_and_accounts_match"] is True, (
+            "the refresh path needs this narrower answer, which is why it is "
+            "reported separately rather than folded into match"
+        )
+        assert report["match"] is False
+
+
 class TestEveryCommittedFingerprintIsChecked:
     """
     A route carries its fingerprint twice — once in `routes`, once in
@@ -581,7 +716,7 @@ class TestEveryCommittedFingerprintIsChecked:
 
         report = attestation.compare(self._evidence(attestation), self._source())
 
-        assert report["match"] is True
+        assert report["routes_and_accounts_match"] is True
 
     def test_a_tampered_with_an_fingerprint_is_caught(self):
         attestation = _module()
