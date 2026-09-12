@@ -564,6 +564,10 @@ BANKS = [
     ("HPBZHR2XXXX", "Hrvatska postanska banka", "HR", "Zagreb", "EUR"),
     ("HAABHR22XXX", "Addiko Bank d.d. Zagreb", "HR", "Zagreb", "EUR"),
     ("RZBHHR2XXXX", "Raiffeisenbank Austria d.d.", "HR", "Zagreb", "EUR"),
+    ("UBKSBA22XXX", "Union banka d.d. Sarajevo", "BA", "Sarajevo", "BAM"),
+    ("RAZBBA22XXX", "NLB Banka a.d. Banja Luka", "BA", "Banja Luka", "BAM"),
+    ("TTXBMK2XXXX", "TTK Banka AD Skopje", "MK", "Skopje", "MKD"),
+    ("CECBMK22XXX", "Central Cooperative Bank AD Skopje", "MK", "Skopje", "MKD"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -906,6 +910,10 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_56.json",
     "seed_ssi_batch6_57.json",
     "seed_ssi_batch6_58.json",
+    "seed_ssi_batch6_59.json",
+    "seed_ssi_batch6_60.json",
+    "seed_ssi_batch6_61.json",
+    "seed_ssi_batch6_62.json",
 )
 
 

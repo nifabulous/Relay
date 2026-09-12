@@ -1,0 +1,34 @@
+[
+  [
+    "TTXBMK2XXXX",
+    "TTK Banka AD Skopje",
+    "Source: https://www.ttk.com.mk/ (official correspondent-bank instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|GENODEFF|Deutsche Apotheker- und Aerztebank, Dusseldorf|",
+      "USD|GENODEFF|Deutsche Apotheker- und Aerztebank, Dusseldorf|",
+      "EUR|UNCRITMM|UniCredit, Milan|",
+      "EUR|HAABHR22|Addiko Bank, Zagreb|",
+      "USD|HAABHR22|Addiko Bank, Zagreb|",
+      "EUR|PBZGHR2X|Privredna banka Zagreb|",
+      "GBP|PBZGHR2X|Privredna banka Zagreb|",
+      "CHF|PBZGHR2X|Privredna banka Zagreb|",
+      "AUD|PBZGHR2X|Privredna banka Zagreb|",
+      "CAD|PBZGHR2X|Privredna banka Zagreb|",
+      "EUR|PRCBDEFF|ProCredit Bank, Frankfurt|",
+      "USD|KOBSMK2X|Komercijalna Banka, Skopje|",
+      "GBP|KOBSMK2X|Komercijalna Banka, Skopje|",
+      "CAD|KOBSMK2X|Komercijalna Banka, Skopje|",
+      "SEK|KOBSMK2X|Komercijalna Banka, Skopje|",
+      "DKK|KOBSMK2X|Komercijalna Banka, Skopje|",
+      "USD|STOBMK2X|Stopanska Banka, Skopje|",
+      "USD|INSBMK22|International Bank of Skopje|"
+    ]
+  ]
+]
