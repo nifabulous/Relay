@@ -461,6 +461,7 @@ BANKS = [
     ("FNNBROBUXXX", "Nexent Bank N.V. Amsterdam Bucharest Branch", "RO", "Bucharest", "RON"),
     ("RATNINBBXXX", "RBL Bank Limited", "IN", "Mumbai", "INR"),
     ("CCRTIT2TBDB", "Banca di Bologna", "IT", "Bologna", "EUR"),
+    ("BFRILI22XXX", "Bank Frick AG", "LI", "Balzers", "CHF"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -769,6 +770,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_3.json",
     "seed_ssi_batch6_4.json",
     "seed_ssi_batch6_5.json",
+    "seed_ssi_batch6_6.json",
 )
 
 

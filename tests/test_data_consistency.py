@@ -251,6 +251,11 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Bank Frick's published USD SSI lists Convera USA and United Texas Bank;
+    # neither BIC currently has a verified CHIPS/ABA identifier in the local
+    # directory, so keep the sourced routes explicitly exempt for now.
+    "TGBPUS3W",
+    "UNTXUS44",
     # American Express Bank (ComBank Ceylon's published USD SSI). CHIPS/ABA
     # not verifiable from the source. Verify and promote to
     # SETTLEMENT_DIRECTORY before removing.
