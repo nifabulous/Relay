@@ -491,6 +491,7 @@ BANKS = [
     ("FCIBTTP2XXX", "CIBC Caribbean Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("ALJSUAUKXXX", "JSC Bank Alliance", "UA", "Kyiv", "UAH"),
     ("SMBCMYKLXXX", "Sumitomo Mitsui Banking Corporation Malaysia Berhad", "MY", "Kuala Lumpur", "MYR"),
+    ("GTBIKENAXXX", "Guaranty Trust Bank (Kenya) Limited", "KE", "Nairobi", "KES"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
@@ -810,6 +811,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_14.json",
     "seed_ssi_batch6_15.json",
     "seed_ssi_batch6_16.json",
+    "seed_ssi_batch6_17.json",
 )
 
 

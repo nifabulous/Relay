@@ -1,0 +1,29 @@
+[
+  [
+    "GTBIKENAXXX",
+    "Guaranty Trust Bank (Kenya) Limited",
+    "Source: https://gtbank-kenya.files.svdcdn.com/production/general/GTBank-Kenya-Corresponding-Banking-Partners.pdf (Correspondents Bank Accounts, 2024-08-13; accessed 2026-09-12). ",
+    "2024-08-13",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006464",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91006465",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91006466",
+      "ZAR|SBZAZAJJ|Standard Bank of South Africa Ltd, Johannesburg|91006467",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91006468",
+      "CNY|SCBLCNSX|Standard Chartered Bank (China), Shanghai|91006469",
+      "INR|SCBLINBB|Standard Chartered Bank (India), Chennai|91006470",
+      "EUR|GTBIGB2L|Guaranty Trust Bank (UK) Ltd, London|91006471",
+      "USD|GTBIGB2L|Guaranty Trust Bank (UK) Ltd, London|91006472",
+      "GBP|GTBIGB2L|Guaranty Trust Bank (UK) Ltd, London|91006473",
+      "RWF|GTBIRWRK|Guaranty Trust Bank (Rwanda) Ltd|91006474",
+      "UGX|GTBIUGKA|Guaranty Trust Bank (Uganda) Ltd|91006475",
+      "KES|CBKEKENX|Central Bank of Kenya|91006476"
+    ]
+  ]
+]
