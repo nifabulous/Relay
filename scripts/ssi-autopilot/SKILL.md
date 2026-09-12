@@ -244,6 +244,32 @@ account collides with another route's: masks encode account equality, so a
 newly-shared account needs its mask merged rather than only its fingerprint
 replaced.
 
+### What the extractor can read
+
+Route and fingerprint extraction reads **HTML tables**, and reads them in the
+shape the QNB page uses: a row per route, with the account in the cell
+immediately before the intermediary BIC.
+
+Most cited sources are not that. Waves 22-28 cite PDFs; several batch-4
+sources are PDFs or script-rendered pages. For those the digest still
+verifies — it is a byte hash and does not care about format — but routes and
+accounts cannot be checked at all.
+
+The tool refuses rather than guesses in two cases, because both would
+otherwise produce a confident falsehood:
+
+- **Nothing extracted from a source the evidence says holds routes.** An
+  empty extraction compared against a full evidence file looks identical to
+  every correspondent changing at once. The first run of this sweep reported
+  39 and 42 simultaneous route changes on files whose bytes had not moved.
+- **Evidence that records no routes at all.** An empty expected set makes
+  every comparison pass, so a file recording nothing about its source would
+  report as the best-verified file in the set.
+
+Extending coverage to a PDF source means writing an extractor for it. Until
+then, `--refresh` on a non-HTML source can only re-record a digest whose
+meaning nobody has checked, which is the practice this tooling exists to end.
+
 ### On the fingerprints themselves
 
 `account_fingerprint` is an unsalted SHA-256 over the account with

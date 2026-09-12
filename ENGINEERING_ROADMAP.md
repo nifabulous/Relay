@@ -67,6 +67,59 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
 
 ---
 
+## 🔲 SSI source attestation — measured state
+
+Swept on 2026-09-12 with `scripts/ssi-autopilot/sweep_source_attestations.py`
+over all 60 evidence files. The numbers below are measured, not estimated;
+re-run the sweep rather than trusting them after any length of time.
+
+Of the 60 files, 38 carry a digest and 22 never captured one. For the 38,
+two independent questions matter — did the bytes move, and could anything
+about the contents be checked:
+
+| Did the source bytes move? | Files |
+|---|---|
+| Digest still matches | 17 |
+| Digest **changed** since capture | 19 |
+| Source did not answer (one `404`, one dropped connection) | 2 |
+
+| What could actually be checked? | Files |
+|---|---|
+| Route keys **and** account fingerprints, both verified | **1** |
+| Nothing — routes live in a PDF the extractor cannot read | 34 |
+| Nothing — the evidence records no routes at all | 1 |
+| Nothing — the source did not answer | 2 |
+
+The single fully-verified file is wave 21, which is also the only one CI
+checks. Its `AUD`/`CHASGB2L` account had moved at the source and was
+re-pointed on the record; the other 30 routes re-derived exactly.
+
+What this costs: for 59 of 60 files the strongest available claim is "the
+bytes at this URL hashed to X when someone looked", and for 19 of them that
+claim is already false. No learner-visible data is wrong — every account in
+the product is an `ACCT-` placeholder and the masks are unchanged — but the
+evidence does not currently support the confidence its shape implies.
+
+Ordered by what actually buys the most:
+
+1. **Dead citation.** `ssi-batch4-yesbinbb` cites a Yes Bank PDF that now
+   returns `404`. A citation that cannot be fetched attests nothing; either
+   re-source it or mark the record unverifiable.
+2. **A PDF extractor.** 34 files are unreadable only because the routes live
+   in a PDF. This is the single change that would move the most files from
+   "bytes unchanged" to "instructions unchanged".
+3. **Re-verify the 19 changed digests** once an extractor exists, so a
+   changed digest can be triaged instead of merely noted.
+4. **`ssi-wave18-bbdebrsp`** pins a digest and records no routes. Capture the
+   routes or drop the file's claim to being evidence.
+5. **Salt the account fingerprints.** `account_fingerprint` is an unsalted
+   SHA-256 over a short account string, so it is brute-forceable. The sources
+   are public pages, so nothing secret leaks, but `raw_accounts_committed:
+   false` reads stronger than it is. Changing the scheme rewrites all 60
+   files, so it wants its own change.
+
+---
+
 ## 🔲 Backlog — Tier 3 (Domain Fidelity & Depth)
 
 Pick by appetite. No hard dependencies between these items.
