@@ -617,6 +617,16 @@ BANKS = [
     ("CADIKHPPXXX", "Canadia Bank PLC", "KH", "Phnom Penh", "KHR"),
     ("MEGAIDJAXXX", "PT Bank Mega Tbk", "ID", "Jakarta", "IDR"),
     ("MDBLBDDHXXX", "Midland Bank PLC", "BD", "Dhaka", "BDT"),
+    ("BACRIT22XXX", "Credito Emiliano S.p.A. (Credem)", "IT", "Reggio Emilia", "EUR"),
+    ("CIVIIT2CXXX", "Civibank S.p.A.", "IT", "Cividale del Friuli", "EUR"),
+    ("ZABAHR2XXXX", "Zagrebačka banka d.d.", "HR", "Zagreb", "EUR"),
+    ("NCBGGDGDXXX", "Republic Bank (Grenada) Limited", "GD", "St. George's", "XCD"),
+    ("PRHRDOSDXXX", "Banco Múltiple Promerica, S.A. (Dominican Republic)", "DO", "Santo Domingo", "DOP"),
+    ("BPRCGTGCXXX", "Banco Promerica Guatemala, S.A.", "GT", "Guatemala City", "GTQ"),
+    ("BPRASVSSXXX", "Banco Promerica El Salvador, S.A.", "SV", "San Salvador", "USD"),
+    ("BPRWRWRWXXX", "BPR Bank Rwanda PLC", "RW", "Kigali", "RWF"),
+    ("PABSLKLXXXX", "Pan Asia Banking Corporation PLC", "LK", "Colombo", "LKR"),
+    ("EBBKEGCXXXX", "HSBC Bank Egypt S.A.E.", "EG", "Cairo", "EGP"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -1002,6 +1012,10 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_102.json",
     "seed_ssi_batch6_103.json",
     "seed_ssi_batch6_104.json",
+    "seed_ssi_batch6_105.json",
+    "seed_ssi_batch6_106.json",
+    "seed_ssi_batch6_107.json",
+    "seed_ssi_batch6_108.json",
 )
 
 
