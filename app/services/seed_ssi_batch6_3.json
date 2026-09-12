@@ -344,6 +344,7 @@
     true,
     [
       "CHF|AKBKTRIS|Akbank T.A.S., Istanbul|91005270",
+      "EUR|AKBKDEFF|Akbank AG, Eschborn (direct via TARGET2)|91006458",
       "GBP|MIDLGB22|HSBC Bank Plc, London|91005271",
       "JPY|AKBKTRIS|Akbank T.A.S., Istanbul|91005272",
       "PLN|INGBPLPW|ING Bank Slaski SA, Katowice|91005273",
