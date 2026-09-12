@@ -19,8 +19,8 @@ These tests pin the three things that close that hole:
 2. a comparison that fails on a changed account even when route keys match;
 3. a committed digest being accompanied by a re-verification record, so a
    silent edit fails offline — repository consistency, not proof the tool
-   ran; see TestCommittedDigestIsCoveredByARecord for what that does and does
-   not establish.
+   ran; see TestRepositoryConsistencyBetweenDigestAndRecord for what that does
+   and does not establish.
 """
 
 import importlib.util
@@ -244,7 +244,7 @@ class TestComparisonFailsClosed:
         assert "1119999222" not in blob
 
 
-class TestCommittedDigestIsCoveredByARecord:
+class TestRepositoryConsistencyBetweenDigestAndRecord:
     """
     Repository consistency, and only that.
 
@@ -564,6 +564,112 @@ class TestMissingRoutesAreNotAccountMoves:
         assert report["fingerprints"]["changed"] == [
             {"currency": "USD", "int_bic": "IRVTUS3N"}
         ]
+
+
+class TestAnEmptyCellIsNotAnAccount:
+    """
+    `account_fingerprint("")` is a perfectly valid SHA-256. So is the
+    fingerprint of a cell holding only punctuation, or a correspondent's name.
+    Nothing downstream can tell those apart from a real account, so an
+    accepted change could commit the hash of a missing account and every
+    later comparison would agree with it.
+    """
+
+    def test_an_empty_account_cell_is_refused(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource):
+            attestation.route_fingerprints(source, {})
+
+    def test_a_punctuation_only_cell_is_refused(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "-- / --", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource):
+            attestation.route_fingerprints(source, {})
+
+    def test_a_cell_with_no_digits_is_refused(self):
+        """A correspondent name where the account should be."""
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "Head Office", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource):
+            attestation.route_fingerprints(source, {})
+
+    def test_a_real_account_still_reads(self):
+        attestation = _module()
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+
+        assert attestation.route_fingerprints(source, {}) == {
+            ("USD", "IRVTUS3N"): attestation.account_fingerprint("890-0045-140"),
+        }
+
+    def test_accepting_a_change_cannot_commit_an_empty_account(self):
+        attestation = _module()
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = {
+            "source": "https://example.invalid/nostro",
+            "source_sha256": "unused",
+            "source_snapshot": {"bic_aliases": {}},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                }
+            ],
+        }
+        source = _html([["Bank of Example", "USD", "", "IRVTUS3N"]])
+
+        with pytest.raises(attestation.UnreadableSource):
+            attestation._apply_accepted_changes(
+                evidence, source, {("USD", "IRVTUS3N")}
+            )
+
+        assert evidence["routes"][0]["nostro_fingerprint"] == fingerprint
+
+
+class TestFetchesAreBounded:
+    """
+    The sweep points this fetcher at 60 third-party URLs. A timeout bounds how
+    long a server may take, not how much it may send, so one source streaming
+    without end could exhaust the worker and take the whole sweep with it.
+    """
+
+    def test_a_response_over_the_limit_is_refused(self):
+        import io
+
+        attestation = _module()
+
+        with pytest.raises(attestation.SourceTooLarge):
+            attestation._read_bounded(io.BytesIO(b"x" * 5000), limit=1000)
+
+    def test_a_response_under_the_limit_is_returned_whole(self):
+        import io
+
+        attestation = _module()
+
+        assert attestation._read_bounded(io.BytesIO(b"x" * 900), limit=1000) == b"x" * 900
+
+    def test_the_limit_is_exact_rather_than_approximate(self):
+        import io
+
+        attestation = _module()
+
+        assert len(attestation._read_bounded(io.BytesIO(b"x" * 1000), limit=1000)) == 1000
+
+    def test_a_non_http_scheme_is_refused_before_any_request(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.UnsupportedSourceScheme):
+            attestation._fetch("file:///etc/passwd")
+
+    def test_the_default_limit_is_declared_rather_than_implicit(self):
+        attestation = _module()
+
+        assert attestation.MAX_SOURCE_BYTES > 0
 
 
 class TestARouteKeyWithoutAnExtractableAccount:

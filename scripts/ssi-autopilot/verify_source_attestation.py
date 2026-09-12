@@ -18,9 +18,15 @@ The third check exists because the first two cannot replace it.  Wave 21's
 ``AUD``/``CHASGB2L`` account changed at the source while its currency and BIC
 stayed put: the route-key check passed, the digest check failed, and the
 digest was re-recorded as a routine refresh.  A digest whose only remedy is
-"edit the expected value" is not a trust anchor, so refreshing one now
-requires re-deriving every fingerprint from the live page and leaving a
-re-verification record behind.
+"edit the expected value" is not a trust anchor, so ``--refresh`` re-derives
+every fingerprint from the live page first and leaves a re-verification
+record behind.
+
+That record is repository content, not a signature: it makes the refresh a
+falsifiable claim anyone can re-run, and an offline test catches a digest
+changed without one.  It does not prove this tool produced either file.  What
+establishes the source content is this command, run against the live page --
+which is what CI does on every pull request.
 
 Usage:
     # Verify (this is what CI runs)
@@ -48,6 +54,7 @@ import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
@@ -55,6 +62,10 @@ _BIC = re.compile(r"^[A-Z0-9]{8}(?:[A-Z0-9]{3})?$")
 _VIEWSTATE = re.compile(rb'<input type="hidden" name="__VIEWSTATE"[^>]*>')
 
 RECORD_SCHEMA = 1
+# A settlement table is a page or a PDF, not a stream. Generous enough for
+# the largest cited source (a 1.3MB corporate presentation) many times over,
+# small enough that one misbehaving host cannot take the sweep down with it.
+MAX_SOURCE_BYTES = 25 * 1024 * 1024
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
@@ -89,6 +100,14 @@ class MaskEqualityBroken(AttestationError):
 
 class DuplicateRouteKey(AttestationError):
     """The source lists one currency/BIC twice with conflicting accounts."""
+
+
+class SourceTooLarge(AttestationError):
+    """The source sent more bytes than a settlement table plausibly needs."""
+
+
+class UnsupportedSourceScheme(AttestationError):
+    """The citation is not an http(s) URL."""
 
 
 class _TableParser(HTMLParser):
@@ -151,6 +170,25 @@ def account_fingerprint(value: str) -> str:
     return hashlib.sha256(re.sub(r"[^A-Z0-9]", "", value.upper()).encode()).hexdigest()
 
 
+def _account_cell(value: str, key: tuple[str, str]) -> str:
+    """Refuse a cell that cannot be an account before it is ever hashed.
+
+    An empty string hashes to a perfectly valid SHA-256, and so does a cell
+    holding only punctuation or a correspondent's name. Nothing downstream can
+    tell those from a real account, so accepting one would let a refresh
+    commit the fingerprint of a missing account and have every later
+    comparison agree with it. Every account carries at least one digit.
+    """
+    normalized = re.sub(r"[^A-Z0-9]", "", value.upper())
+    if not normalized or not any(character.isdigit() for character in normalized):
+        raise UnreadableSource(
+            f"route {key} has no readable account: the cell before the "
+            f"intermediary BIC normalizes to {normalized!r}, which cannot be "
+            "an account number. The route cannot be attested."
+        )
+    return value
+
+
 def _route_keys(source_html: bytes) -> set[tuple[str, str]]:
     routes: set[tuple[str, str]] = set()
     for row in _rows(source_html):
@@ -182,7 +220,7 @@ def route_fingerprints(
             continue
         bic = _compact(row[indexes[-1]])
         key = (currency, aliases.get(bic, bic))
-        fingerprint = account_fingerprint(row[indexes[-1] - 1])
+        fingerprint = account_fingerprint(_account_cell(row[indexes[-1] - 1], key))
         # A dict would let the last row win, so a source listing one route
         # twice with different accounts would collapse to whichever came
         # last, and evidence holding that account would verify clean while a
@@ -352,10 +390,43 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     }
 
 
+def _read_bounded(response, limit: int = MAX_SOURCE_BYTES) -> bytes:
+    """Read at most `limit` bytes, refusing rather than truncating.
+
+    A timeout bounds how long a server may take, not how much it may send. The
+    sweep points this at 60 third-party URLs, so one source streaming without
+    end would exhaust the worker and take the whole run with it. Truncating
+    instead would be worse than failing: a short read produces a digest that
+    is simply wrong, with nothing to say so.
+    """
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = response.read(65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            raise SourceTooLarge(
+                f"source sent more than {limit} bytes. A settlement table is a "
+                "page or a PDF, not a stream; refusing rather than hashing a "
+                "truncated read, which would produce a wrong digest silently."
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 def _fetch(source: str) -> bytes:
+    scheme = urlparse(source).scheme.lower()
+    if scheme not in {"http", "https"}:
+        raise UnsupportedSourceScheme(
+            f"refusing to fetch {scheme or 'a schemeless URL'!r}: a cited "
+            "source must be an http(s) URL. This runs in CI against URLs taken "
+            "from evidence files, so the scheme is not the author's to widen."
+        )
     request = Request(source, headers={"User-Agent": "Relay SSI source attestation/1"})
-    with urlopen(request, timeout=30) as response:
-        return response.read()
+    with urlopen(request, timeout=30) as response:  # noqa: S310 - scheme checked above
+        return _read_bounded(response)
 
 
 def _apply_accepted_changes(
