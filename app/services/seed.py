@@ -556,6 +556,10 @@ BANKS = [
     ("BKSIBDDHXXX", "BASIC Bank PLC", "BD", "Dhaka", "BDT"),
     ("MTBLBDDHXXX", "Mutual Trust Bank PLC", "BD", "Dhaka", "BDT"),
     ("IFICBDDHXXX", "IFIC Bank PLC", "BD", "Dhaka", "BDT"),
+    ("BNZWOMRXXXX", "Bank Nizwa", "OM", "Muscat", "OMR"),
+    ("CABSZWHAXXX", "CABS Bank Limited", "ZW", "Harare", "USD"),
+    ("STBLZWHXXXX", "TN CyberTech Bank", "ZW", "Harare", "USD"),
+    ("BAIMMUMUXXX", "BCP Bank (Mauritius) Ltd", "MU", "Port Louis", "MUR"),
     # ---- SSI expansion batch 6 beneficiaries ----
     ("HBUKGB4BXXX", "HSBC UK Bank plc", "GB", "London", "GBP"),
     ("BPMOIT22XXX", "BPER Banca S.p.A.", "IT", "Modena", "EUR"),
@@ -890,6 +894,10 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_47.json",
     "seed_ssi_batch6_48.json",
     "seed_ssi_batch6_49.json",
+    "seed_ssi_batch6_51.json",
+    "seed_ssi_batch6_52.json",
+    "seed_ssi_batch6_53.json",
+    "seed_ssi_batch6_54.json",
 )
 
 

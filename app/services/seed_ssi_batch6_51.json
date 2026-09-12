@@ -1,0 +1,29 @@
+[
+  [
+    "BNZWOMRXXXX",
+    "Bank Nizwa",
+    "Source: https://www.banknizwa.om/media/2722/ssi-list-bank-nizwa-new_july.pdf (official SSI list, July issue). ",
+    "2024-07-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|BOMLAEAD|Bank Muscat, Dubai|91008800",
+      "BHD|AUBBBHBM|Ahli United Bank, Manama|91008801",
+      "EUR|BARCGB22|Barclays Bank, London|91008802",
+      "GBP|BARCGB22|Barclays Bank, London|91008803",
+      "INR|AXISINBB|Axis Bank, Mumbai|91008804",
+      "JOD|JDIBJOAM|Jordan Dubai Islamic Bank, Amman|91008805",
+      "JPY|SCBLHKHH|Standard Chartered, Hong Kong|91008806",
+      "KWD|BKMEKWKW|Boubyan Bank, Kuwait|91008807",
+      "PKR|MEZNPKKA|Meezan Bank, Karachi|91008808",
+      "QAR|DOHBQAQA|Doha Bank, Doha|91008809",
+      "SAR|BJAZSAJE|Bank Aljazira, Jeddah|91008810",
+      "USD|SCBLUS33|Standard Chartered, New York|91008811",
+      "ZAR|ABSAZAJJ|Absa Bank, Johannesburg|91008812"
+    ]
+  ]
+]
