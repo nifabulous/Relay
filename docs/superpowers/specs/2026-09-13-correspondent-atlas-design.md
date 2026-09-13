@@ -1,7 +1,7 @@
 # Correspondent Atlas — design spec
 
 **Date:** 2026-09-13
-**Status:** approved design, not yet planned
+**Status:** review changes applied; engineering re-review required before implementation
 **Surface:** Relay Explore — new page at `/app/explore/atlas`
 **Supersedes:** nothing. Extends the Explore workspace.
 
@@ -64,7 +64,7 @@ project does not hold and cannot derive.
 | **published** | **0** |
 
 Nothing in the corpus has earned `published`. The atlas states that as a datum, never
-as hardcoded copy — see AC-B5.
+as hardcoded copy — see AC-B3a.
 
 ### Can: network position
 
@@ -116,9 +116,9 @@ Canada, Spain and Singapore go dark not because they lack correspondent banking 
 because nothing collected for them asserts a settlement instruction. This is the most
 informative single interaction in the feature.
 
-Note the 103 versus 102: the country count is derived from BIC positions 5–6 and
-includes one code that does not resolve in ISO 3166-1, so 103 countries are counted and
-102 can be drawn. See Open questions.
+Note the 103 versus 102: the beneficiary-country count is derived from
+`beneficiary_bic` positions 5–6 and includes one code that does not resolve in ISO
+3166-1, so 103 countries are counted and 102 can be drawn. See Resolved data anomaly.
 
 ---
 
@@ -134,6 +134,8 @@ includes one code that does not resolve in ISO 3166-1, so 103 countries are coun
 | D6 | Coverage is a **separate always-on frame** | Folding coverage into evidence conflates "we did not look" with "we looked and the source was weak". |
 | D7 | **Live endpoint**, computed per request | Startup cache goes stale on `/api/import/ssi`. A static artifact introduces DB-vs-artifact drift. |
 | D8 | **Map plus synced table**, both views | Map-only fails accessibility and hides institution-level facts. Table-only loses the geography that makes the spoke view legible. |
+| D9 | Unresolvable BIC country codes are a **visible coverage datum** | A footnote hides a corpus defect. Silently dropping the row makes the map look more complete than the source data. |
+| D10 | Visual direction is an **editorial instrument**, rendered with D3/SVG | A cinematic MapCN/MapLibre treatment adds motion, glow and map-product conventions that imply traffic or live flow. A hosted basemap adds visual noise, provider cost and attribution without helping the country-first question. |
 
 ### D5 in detail — why evidence cannot sit on a hub node
 
@@ -158,14 +160,22 @@ evidence. That kills the single blended map and forces two views.
 
 ## Backend
 
-New `app/routers/atlas.py`, logic in `app/services/atlas.py`. Read-only, no auth gate
-(consistent with `/api/ssi`). No caching layer — none exists in `app/` today and none
-is warranted at this size.
+New `app/routers/atlas.py`, typed response models in `app/schemas.py`, and aggregation
+logic in `app/services/atlas.py`. Register the router in `app/main.py`. Read-only, no
+auth gate (consistent with `/api/ssi`). No caching layer — none exists in `app/` today
+and none is warranted at this size.
 
-### `GET /api/atlas/network`
+### `GET /api/atlas/network?scope=all|settleable`
+
+`scope` defaults to `all`. `settleable` applies `SSI.bic_only.is_(False)` before every
+aggregate. The endpoint recomputes the entire response for the selected scope; the
+frontend must not derive filtered distinct counts from the unfiltered rollups. That is
+mathematically impossible for hub reach because the same beneficiary bank may appear
+behind several correspondents.
 
 ```jsonc
 {
+  "scope": "all",
   "totals": {
     "ssi_rows": 3952,
     "beneficiary_banks": 251,          // the denominator; required, never omitted
@@ -177,7 +187,9 @@ is warranted at this size.
       { "status": "archived",     "bic_only": false, "count": 503  },
       { "status": "archived",     "bic_only": true,  "count": 209  },
       { "status": "illustrative", "bic_only": false, "count": 12   },
-      { "status": "published",    "bic_only": false, "count": 0    }
+      { "status": "illustrative", "bic_only": true,  "count": 0    },
+      { "status": "published",    "bic_only": false, "count": 0    },
+      { "status": "published",    "bic_only": true,  "count": 0    }
     ]
   },
   "spokes": [
@@ -188,11 +200,16 @@ is warranted at this size.
         { "status": "unverified", "bic_only": true,  "count": 1   }
       ] }
   ],
+  "hub_countries": [
+    { "iso2": "US", "banks_served": 223, "currencies": 15,
+      "correspondents": 36 }
+  ],
   "hubs": [
     { "bic": "CITIUS33XXX", "name": "Citibank N.A.", "iso2": "US",
       "banks_served": 108, "currencies": 3 }
   ],
-  "observed_bic_country_codes": ["AE", "AL", "..."],
+  "observed_beneficiary_country_codes": ["AE", "AL", "..."],
+  "observed_intermediary_country_codes": ["AE", "AL", "..."],
   "disclaimer": "<_ATLAS_DISCLAIMER>"
 }
 ```
@@ -206,23 +223,109 @@ Contract rules, each with a test:
 3. **`banks_served` and reach figures are distinct counts, never sums.** A country's
    correspondents overlap in whom they serve; summing double-counts and manufactures a
    volume-shaped number.
-4. **No geography in the response.** `iso2` only — no coordinates, no ISO numeric, no
+4. **The settleability scope is applied before aggregation.** `scope=settleable` cannot
+   be produced by subtracting `bic_only` row counts from unfiltered distinct counts.
+5. **`hub_countries` and `hubs` are separate grains.** The map renders one
+   `hub_countries` circle per country. The table renders institution-level `hubs`.
+   `hub_countries.banks_served` and `.currencies` are independently distinct-counted
+   from rows, never summed from `hubs`.
+6. **No geography in the response.** `iso2` only — no coordinates, no ISO numeric, no
    topology keys. Map keying is a rendering concern. This also avoids depending on
    `pycountry`, which is present in the venv but **undeclared**, arriving transitively
    via `schwifty`.
-5. **`observed_bic_country_codes` is raw.** The backend reports what it saw; the
-   frontend, which owns the ISO table, decides what is unresolvable.
-6. **Every status key is emitted at zero.** A missing key reads as not-applicable; a
-   zero reads as checked.
+7. **Observed country-code lists are raw, role-specific, and corpus-wide.** The backend
+   reports what it saw in beneficiary and intermediary BICs separately, and **never
+   filters these lists by scope**. The frontend, which owns the ISO table, decides what
+   is unresolvable in each view.
 
-### `GET /api/atlas/country/{iso2}`
+   Scope-independence is load-bearing, not incidental. Subtracting the scoped `spokes`
+   from the corpus-wide observed list is what lets the map tell a **never-collected**
+   country apart from one that is collected but has nothing in the selected scope. Under
+   `scope=settleable` those are 21 different countries, including Canada and Spain, and
+   rendering them identically to France would repeat at the map level the conflation the
+   country endpoint's `collected` field exists to prevent. No new payload field is
+   needed; scope-filtering these lists would destroy the distinction.
+8. **The status cross-tab is complete.** Emit the Cartesian product of
+   `SSI_STATUSES` and both `bic_only` values, including zeroes. A missing pair reads as
+   not-applicable; a zero reads as checked.
 
-Drill-down: which correspondents reach banks in this country, from where, in which
-currencies, at what evidence tier. Links out to `BankDetailRoute`.
+### `GET /api/atlas/country/{iso2}?scope=all|settleable`
 
-`iso2` is constrained to exactly two alpha characters at the boundary, mirroring the
-Tier-0 `max_length` hardening. SQLAlchemy parameterises, so this is input hygiene
-rather than injection defence.
+Drill-down: which correspondents reach banks in this beneficiary country, from where,
+in which currencies, and on the strength of which spoke-side disclosures. Links out to
+`BankDetailRoute` by beneficiary BIC.
+
+```jsonc
+{
+  "scope": "all",
+  "iso2": "IN",
+  "collected": true,                 // corpus-wide, NEVER scope-filtered
+  "in_scope":   { "beneficiary_banks": 24, "beneficiary_banks_total": 251,
+                  "rows": 366, "ssi_rows_total": 3952 },
+  "all_scopes": { "beneficiary_banks": 24, "beneficiary_banks_total": 251,
+                  "rows": 366, "ssi_rows_total": 3952 },
+  "correspondents": [
+    {
+      "bic": "CHASUS33XXX",
+      "name": "JPMorgan Chase NY",
+      "iso2": "US",
+      "beneficiary_banks": 18,
+      "currencies": ["USD"],
+      "disclosures": [
+        {
+          "beneficiary_bic": "HDFCINBBXXX",
+          "beneficiary_bank_name": "HDFC Bank Ltd",
+          "status": "unverified",
+          "bic_only": false,
+          "row_count": 1
+        }
+      ]
+    }
+  ],
+  "disclaimer": "<_ATLAS_DISCLAIMER>"
+}
+```
+
+`disclosures` stays attached to the beneficiary bank that published the source. The
+correspondent object has no aggregate `evidence` field. Arrays use deterministic order:
+correspondents by `beneficiary_banks DESC, name ASC`, currencies alphabetically, and
+disclosures by beneficiary bank name then BIC.
+
+Every count is paired with its own denominator inside its own block, so clause 2 holds
+structurally rather than by convention. `in_scope` is filtered by the selected scope;
+`all_scopes` is corpus-wide. Under `scope=all` the two blocks are identical, which is
+the correct and uninteresting case. The country response is safe to render on its own:
+it never depends on a previously cached network response to explain “24 of 251 banks.”
+
+**`collected` is corpus-wide and MUST NOT be scope-filtered.** It answers one question:
+does the corpus hold any row for this country. Deriving it from the scoped relation
+would make Canada report `collected: false` under `scope=settleable` — Canada has 2
+banks and 15 rows collected, all of them `bic_only`, so the scoped count is zero while
+the corpus count is not. Reporting that as “not collected” asserts nobody looked, which
+is the “we did not look” versus “we looked and the source was weak” conflation D6 exists
+to prevent. Returning `404` had the same defect in a different costume; moving to `200`
+without splitting the field would carry it across.
+
+The split is what lets the drill-down explain the feature's headline interaction. A
+country that leaves the map under `scope=settleable` must be able to say the true and
+far more useful thing:
+
+> Canada — 15 rows collected, none of them settlement instructions.
+
+not
+
+> No rows collected for Canada.
+
+A recognized ISO2 the corpus has never seen returns the same shape with
+`collected: false`, zeroes in both blocks, the correct denominators in each, and an
+empty `correspondents` array — “No rows collected for France”, which is then true.
+
+`iso2` is uppercased and constrained with FastAPI `Path(min_length=2, max_length=2,
+pattern="^[A-Za-z]{2}$")`, mirroring the Tier-0 boundary hardening. Every well-formed
+code returns `200` whether or not the selected scope contains rows; only malformed path
+input returns `422`. Geographic resolution remains the frontend's responsibility under
+contract rule 7. SQLAlchemy parameterises, so this is input hygiene rather than
+injection defence.
 
 ### `_ATLAS_DISCLAIMER`
 
@@ -251,14 +354,14 @@ Measured on `swift_routing.db`, 3,952 rows:
 73% of the cost. Fine now. The fix, when it is needed, is a persisted country column
 written on insert — not a cache.
 
-- **AC-B10** — a test asserts the SSI row count is below 20,000, failing with a message
-  pointing at this section.
-
-  A prose note saying "revisit at ~20k rows" is something nobody re-reads. Given you
-  land waves continuously, the threshold will arrive during ordinary work, and the
-  signal should be a failing test that explains itself rather than a slow endpoint
-  someone eventually notices. The test asserts corpus size, not query duration —
-  timing assertions are flaky on shared CI runners and would be the wrong instrument.
+Do not make corpus growth fail a correctness test. Row count is only a proxy for
+latency, and a threshold test would block a valid SSI import without proving the atlas
+is slow. Add `scripts/benchmark_atlas.py` instead. It records the row count, per-query
+timings, total timing, database engine, and query plans against a named database. The
+implementation PR records the current baseline and a synthetic 20,000-row run. The
+review trigger is either a measured total above 150 ms on the reference machine or a
+query-plan change; CI still guards the number of SQL statements so an N+1 regression
+cannot hide behind runner variance.
 
 ---
 
@@ -269,12 +372,12 @@ written on insert — not a cache.
 ```
 frontend/src/features/explore/atlas/
   AtlasPage.tsx        route: view + filter state, URL-synced
-  AtlasMap.tsx         SVG choropleth + hub circles (d3-geo projection)
+  AtlasMap.tsx         SVG choropleth + one aggregate circle per hub country
   AtlasTable.tsx       ranked table, selection synced with the map
   AtlasPanel.tsx       country / institution detail -> BankDetailRoute
   atlasEncoding.ts     pure: hatch bands, scales, denominators
   isoNumeric.ts        ISO2 -> topology feature id
-  atlasTypes.ts
+  atlasSchemas.ts      strict Zod schemas + inferred types
 ```
 
 Lazy route, same pattern as the other Explore pages. The bundle gate sums only the
@@ -286,14 +389,100 @@ and record the chunk anyway.
 Add `d3-geo`, `d3-scale`, `topojson-client`. Do **not** add `world-atlas`: the package
 is 8.2 MB unpacked (110m, 50m and 10m resolutions, countries and land) for one file.
 
-Vendor `countries-110m.json` as a static asset served from the app's own origin —
-39 KB gzip, cacheable, fetched by the atlas route on demand. No third-party CDN in the
-page load and no CSP question.
+Vendor `countries-110m.json` under
+`frontend/src/features/explore/atlas/assets/` beside its source/hash record and ISC
+license notice. Import it with Vite's explicit URL form:
+
+```ts
+import topologyUrl from "./assets/countries-110m.json?url";
+```
+
+The file is larger than Vite's inline threshold, so the production build emits it with
+a content-hashed name under `app/static/relay/assets/`. Its browser URL therefore lives
+under `/app/assets/`, the only Relay asset path mounted by `app/main.py`. Do not place
+it in `frontend/public/`: that directory does not exist, and Vite would copy the file
+to `/app/atlas/...`, where the SPA catch-all returns `index.html` with status 200.
+
+The atlas fetches `topologyUrl` on demand and rejects a non-JSON content type, malformed
+JSON, or an object without the expected `countries` topology. Those failures enter the
+table-plus-map-unavailable state in AC-F15. No third-party CDN participates in the page
+load and no new FastAPI static mount is required.
+
+Record the exact `world-atlas` release/source URL and SHA-256 against the **vendored
+source bytes**, not the build filename. Geography provenance is part of the feature
+contract, not an undocumented build step. The build's filename hash is cache identity;
+the recorded SHA-256 is the auditable provenance check.
 
 Measured unpacked sizes: `d3-geo` 227 KB, `d3-scale` 174 KB, `topojson-client` 68 KB.
 These tree-shake (the atlas needs `geoNaturalEarth1`, `geoPath`, `geoCentroid`,
 `scaleSqrt`, `scaleLinear`, `feature`); unpacked size is not bundled size and the real
 chunk figure must be measured at implementation, not estimated here.
+
+MapCN is useful reference material, not a dependency. Its attractive primitives sit on
+MapLibre and are strongest when the product needs pan-and-zoom basemaps, terrain,
+markers or animated arcs. This atlas needs none of those in v1. Using it as the core
+would trade exact SVG control for a larger rendering stack and tempt the interface
+toward movement and route lines the corpus cannot substantiate. MapLibre remains the
+right upgrade path only if a later layer needs tiled geography or city-level detail.
+
+### Visual direction — editorial instrument
+
+The atlas should feel like a carefully edited reference plate inside Relay, not a
+generic consumer map and not a network-operations dashboard. The selected direction is
+quiet, precise and typographic. Data earns the contrast; chrome recedes.
+
+**Composition**
+
+- A compact title and scope statement sit above the instrument. The governing caveat
+  — observed SSI relationships, not payment volume — remains visible without becoming
+  a warning banner.
+- A narrow metric rail establishes the sample before the map: beneficiary banks,
+  correspondents, and drawable countries, each with its denominator or scope.
+- On wide screens the map owns roughly two thirds of the work area and the ranked table
+  owns one third. Selection opens detail in the table/panel column instead of covering
+  the geography with a floating card.
+- On narrow screens the text-equivalent table comes first. The map follows as an
+  exploratory enhancement; no interaction requires precise pointer input.
+
+**Graphic language**
+
+- Use `geoNaturalEarth1` with a fixed initial world extent. The complete world remains
+  visible on load; v1 has no slippy-map controls, terrain, streets, labels, or tiles.
+- Ocean is the page canvas. Land is a quiet surface with hairline borders. There is no
+  decorative graticule, shadow, bevel, glow, or texture beyond the evidence hatch.
+- The sequential country ramp is derived from Relay's action/surface tokens and
+  checked in both light and dark themes. Never-collected land stays visibly neutral;
+  selected geography uses the action edge plus a non-colour cue.
+- Hub circles are crisp translucent marks with a solid outline. They do not pulse,
+  travel, or emit arcs. The absence of animation is semantic: the data is a collected
+  network position, not live movement.
+- Use `Instrument Sans` for interface text and `IBM Plex Mono` for counts, BICs,
+  percentages and compact labels. Do not introduce a display face solely for this
+  page; the editorial character comes from scale, spacing and alignment.
+- Legends read as small explanatory sentences with endpoints and denominators, not as
+  detached colour swatches. Tooltips are compact evidence cards, never the only place
+  a value can be read.
+
+**Interaction and motion**
+
+- Hover/focus links map and table; click/Enter pins the same selection and updates the
+  URL. Escape clears it. Focus order follows the table, not SVG path order.
+- View and settleability changes use the existing control motion only. Map marks may
+  cross-fade within the standard duration token; paths do not fly, morph across the
+  globe, or animate along routes.
+- Respect `prefers-reduced-motion` by removing the cross-fade. Information order and
+  selection feedback remain unchanged.
+
+Direction **A — Editorial instrument** is the **author's proposal**, with B (cinematic
+MapCN network) and C (hosted MapLibre map product) argued against on the grounds in D10.
+
+Provenance note: an earlier revision recorded Direction A as selected by the user in the
+visual companion. No such selection appears in the design conversation, where the
+companion was never started and the choices put to the user were about measure, job,
+spine, evidence channel, coverage, delivery and hub treatment — not visual direction.
+The claim is withdrawn rather than restated. If that choice was made elsewhere, cite
+where and this reverts to a decision; until then it is a proposal that has not been
+reviewed.
 
 ### Two views
 
@@ -317,22 +506,27 @@ accepted rather than solved.
 
 | channel | encodes |
 |---|---|
-| circle area | banks reached, as a share of the collected denominator |
-| circle fill depth | currency breadth |
+| one circle per hub country | country-level network position |
+| circle area | distinct beneficiary banks reached by correspondents in that country, as a share of the collected denominator |
+| circle fill depth | distinct currency breadth across correspondents in that country |
 
 **No evidence channel, at all.** The panel states why in one line and lists the
 disclosing banks' evidence spread, which is the true statement.
 
 Known limitation: circles sit at country centroids, so the US mark dominates
 mid-continent, Europe overlaps, and small financial centres get circles larger than
-their landmass. More seriously, **country aggregation hides the institution-level
-finding** — the US shows 15 currencies because 36 institutions collectively span 15,
-which is not the Citi-versus-Commerzbank story. That story lives in the table. The hub
-map is the weaker half of this feature and is shipped as a secondary read, not as the
-payoff.
+their landmass. Render one circle per country from `hub_countries`; rendering one per
+institution would put 36 US marks at the exact same coordinate and make the visible
+result depend on DOM order. Country aggregation still hides the institution-level
+finding — the US shows 15 currencies because 36 institutions collectively span 15,
+which is not the Citi-versus-Commerzbank story. That story lives in the synced table,
+which ranks the `hubs` array. The hub map is the weaker half of this feature and is
+shipped as a secondary read, not as the payoff.
 
-**Settleability filter** is orthogonal to the view. It filters rows; both views
-recompute. Countries do not dim, they leave.
+**Settleability filter** is orthogonal to the view. It changes the URL and refetches
+`/api/atlas/network` with the selected `scope`; both views receive recomputed distinct
+counts. Countries do not dim, they leave. The React Query key includes the scope so
+all and settleable results cannot overwrite each other.
 
 ### The synced table is the accessibility answer
 
@@ -356,6 +550,12 @@ AtlasHubSchema = z.object({
 `.strict()` makes a hub object arriving with an `evidence` key a **parse failure**, not
 a silently-unrendered field. D5 becomes impossible to reintroduce.
 
+The network envelope, `spokes`, `hub_countries`, and `hubs` are all required. The app's
+HTTP client calls `schema.parse()` on a successful response, so a missing section is a
+contract failure and renders the full error state. Partial rendering is reserved for
+independent resources: if atlas data loads but `countries-110m.json` does not, the
+ranked table survives and `AsyncRegion.partialNote` states that the map is unavailable.
+
 Clause 2 gets the same treatment, but at the **type** level rather than one component's
 props. `beneficiaryBanksTotal` is a required field on the shared parsed-payload type
 that `AtlasMap`, `AtlasTable` and `AtlasPanel` all thread through, so no consumer can
@@ -369,7 +569,19 @@ table is what a screen-reader user gets instead of the map. See AC-F3 and AC-F9.
 Always on, not dismissible, not filterable. States the collected countries against the
 map's own feature count, and gives never-collected countries a visibly distinct
 treatment from collected-but-thin ones. A blank country must never read as "no
-correspondent banking here".
+correspondent banking here". It also states how many observed BIC country codes could
+not be mapped and lists those codes with their reviewed reasons (D9).
+
+Under a non-default scope the frame distinguishes three states, not two: never
+collected, collected but nothing in the selected scope, and collected and in scope
+(AC-F12b). "Collected but out of scope" is the 21-country set the settleability filter
+removes; it is the most informative thing the frame can say, and collapsing it into
+"never collected" throws it away.
+
+Every tooltip, panel, and table cell that shows a derived count carries its denominator
+in the same accessible text. Examples: “24 of 251 collected beneficiary banks” and
+“52 archived of 366 collected rows (14%).” A percentage is not a substitute for the
+sample size.
 
 ### Layer seam (D2)
 
@@ -380,16 +592,81 @@ entry, not a refactor. Anything more is speculative.
 
 ---
 
+## What already exists
+
+| Sub-problem | Existing code | Reuse decision |
+|---|---|---|
+| Request-scoped database access | `app/db.py:get_db` | Reuse in the atlas router; no new session lifecycle. |
+| SSI source of truth and constraints | `app/models.py:SSI` | Query directly; do not create an atlas persistence model. |
+| Shared public-response disclaimers | `app/routers/_shared.py` | Add an atlas-specific constant beside `_SSI_DISCLAIMER`. |
+| Typed HTTP failures and Zod validation | `frontend/src/api/client.ts:apiRequest` | Reuse; strict schema failure becomes the full atlas error state. |
+| Query cache identity | `frontend/src/api/queryKeys.ts:apiKeys` | Extend with scope-aware atlas keys. |
+| Loading, empty, error, and partial UI | `frontend/src/design-system/AsyncRegion.tsx` | Reuse; partial is only for the independently fetched topology asset. |
+| Explore routing and discovery | `App.tsx`, `ExplorePage.tsx`, `CommandSearch.tsx` | Extend the existing lazy-route and destination patterns. |
+| Bank drill-down | `frontend/src/features/explore/BankDetailRoute.tsx` | Link beneficiary BICs to the existing route; do not build a second bank page. |
+| Route telemetry redaction | `frontend/src/observability.ts` | Add static atlas paths and a parameterised country route. |
+
+No existing code computes the required country and institution distinct-count rollups.
+That logic belongs in one new service module shared by both atlas endpoints.
+
+---
+
+## Architecture and data flow
+
+```text
+URL state: view=spoke|hub, scope=all|settleable, selected=<id>
+              │
+              ├──────── React Query key includes scope
+              │                    │
+              │                    ▼
+              │       GET /api/atlas/network?scope=...
+              │                    │
+              │      Atlas router + strict response model
+              │                    │
+              │                    ▼
+              │              atlas service
+              │          filter SSI rows first
+              │        ┌───────────┼────────────┐
+              │        ▼           ▼            ▼
+              │      spokes   hub_countries    hubs
+              │        └───────────┼────────────┘
+              │                    ▼
+              │        strict feature-local Zod parse
+              │                    │
+              ├────────────────────┼───────────────┐
+              ▼                    ▼               ▼
+        coverage frame        synced table     map renderer
+                                                   │
+                                     countries-110m.json
+                                      independent fetch
+
+Map selection ───────────────► URL selected state ◄──────── Table selection
+Country panel ───────────────► /api/atlas/country/{iso2}?scope=...
+Beneficiary row ─────────────► /app/explore/banks/{bic}
+```
+
+The API payload is atomic. A malformed or incomplete network envelope is an error. The
+topology is a separate static request, so its failure can degrade to table-only without
+pretending the map is complete.
+
+---
+
 ## Integration points
 
-A new Explore page must be registered in four places. Verified 2026-09-13:
+The implementation crosses the following existing registration and contract seams.
+Verified 2026-09-13:
 
 | # | File | What |
 |---|---|---|
-| 1 | `frontend/src/app-shell/App.tsx` | lazy import + `<Route path="explore/atlas">`, alongside `explore/banks`, `explore/schemes`, `explore/glossary` |
-| 2 | `frontend/src/features/explore/ExplorePage.tsx` | category card on the Explore index |
-| 3 | `frontend/src/features/explore/search/CommandSearch.tsx` | destination entry |
-| 4 | `frontend/src/observability.ts` | route allowlist |
+| 1 | `app/main.py` | import and include the atlas router |
+| 2 | `app/schemas.py` | strict network and country response models; forbid unexpected fields |
+| 3 | `app/routers/_shared.py` | add `_ATLAS_DISCLAIMER` and export it |
+| 4 | `frontend/src/api/queryKeys.ts` | add network and country keys including `scope` |
+| 5 | `frontend/src/app-shell/App.tsx` | lazy import + `<Route path="explore/atlas">`, alongside `explore/banks`, `explore/schemes`, `explore/glossary` |
+| 6 | `frontend/src/features/explore/ExplorePage.tsx` | category card on the Explore index |
+| 7 | `frontend/src/features/explore/search/CommandSearch.tsx` | destination entry |
+| 8 | `frontend/src/observability.ts` | allowlist `/app/explore/atlas`, `/api/atlas/network`, and parameterise `/api/atlas/country/:iso2` without logging the raw code |
+| 9 | `frontend/src/features/explore/atlas/assets/` | topology source asset, source/SHA-256 record, ISC license notice, and Vite `?url` import that emits beneath the existing `/app/assets` mount |
 
 ---
 
@@ -404,27 +681,50 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 - **AC-B2** *(clause 1)* — reach and `banks_served` are distinct counts. Fixture with deliberately
   overlapping correspondents asserts the result is not the sum.
 - **AC-B3** — `by_status_and_tier` entries sum to `totals.ssi_rows`.
+- **AC-B3a** — `by_status_and_tier` contains exactly the Cartesian product of
+  `SSI_STATUSES` and `{false, true}`, including zero-count pairs. The expected set and
+  count are derived from `SSI_STATUSES`; neither the service nor the test hardcodes
+  eight or repeats the status literals. This also proves `published: 0` remains a datum
+  when the corpus has no published rows; frontend copy never hardcodes that number.
 - **AC-B4** *(D5)* — every `hubs` object fails a schema check if it carries an
-  `evidence` key.
-- **AC-B5** — every status appears in `by_status_and_tier` even at count zero, so
-  `published: 0` is always a datum. No frontend copy hardcodes the number.
-- **AC-B6** — `/api/atlas/country/{iso2}` rejects any value that is not exactly two
+  `evidence` key. The Pydantic response models forbid extra fields rather than silently
+  dropping them.
+- **AC-B5** — `/api/atlas/country/{iso2}` rejects values that are not exactly two
   alpha characters.
-- **AC-B7** — the response carries `_ATLAS_DISCLAIMER`; a test asserts it is not
+- **AC-B6** — the response carries `_ATLAS_DISCLAIMER`; a test asserts it is not
   `_SSI_DISCLAIMER`.
-- **AC-B8** *(clause 1)* — the response contains no coordinates, no ISO numeric codes
+- **AC-B7** *(clause 1)* — the response contains no coordinates, no ISO numeric codes
   and no topology keys.
-- **AC-B9** *(clause 1)* — no field in the response schema admits a monetary or value
+- **AC-B8** *(clause 1)* — no field in the response schema admits a monetary or value
   unit. A test enumerates the response keys against an allowlist, so adding an
   amount-shaped field to the payload is a deliberate act that fails a test, not an
   oversight.
-- **AC-B10** — corpus-size threshold assertion against the **seeded** corpus, so an
-  oversized import inside another test cannot trip it. Defined in full under
-  Performance, listed here so this section is the complete checklist.
+- **AC-B9** — `scope=settleable` applies the row filter before every aggregate.
+  A fixture with overlapping correspondents proves filtered hub reach and currency
+  breadth are recomputed as distinct counts, not derived by subtraction or summation.
+- **AC-B10** — `hub_countries` contains at most one object per ISO2. Its reach and
+  currency breadth match direct distinct-count SQL and are not sums of institution
+  rollups.
+- **AC-B11** — country drill-down ordering is deterministic and every disclosure stays
+  attached to its beneficiary bank. `in_scope` and `all_scopes` each carry their own
+  required denominators. Every well-formed ISO2 returns `200`; malformed codes return
+  `422`.
+- **AC-B11a** *(D6)* — `collected` is corpus-wide and never scope-filtered. The test
+  asserts a country whose rows are wholly `bic_only` returns `collected: true` with
+  `in_scope.rows == 0` and `all_scopes.rows > 0` under `scope=settleable`, and that a
+  country absent from the corpus returns `collected: false` with zeroes in both blocks.
+
+  Without this the drill-down cannot distinguish "nobody looked" from "we looked and
+  found only availability rows" — and the second is the answer to the feature's most
+  informative interaction.
+- **AC-B12** — the network request executes a fixed number of SQL statements independent
+  of result size. `scripts/benchmark_atlas.py` records the current and synthetic
+  20,000-row baselines; timing is evidence in the PR, not a flaky CI assertion.
 
 ### Frontend
 
-- **AC-F1** *(clause 1)* — every code in `observed_bic_country_codes` either resolves to
+- **AC-F1** *(clause 1)* — every code in both role-specific observed-country arrays
+  either resolves to
   a feature that **exists in `countries-110m.json`**, or appears in an explicit
   `KNOWN_UNRESOLVABLE` allowlist carrying a one-line reason per entry. The allowlist
   starts with `EB` and its open question. Any code that is neither fails the test.
@@ -454,6 +754,9 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 
 - **AC-F6** — table and map stay synced: selecting in either highlights the other, and
   the table reflects the active view and filter.
+- **AC-F6a** — changing settleability updates the URL, uses a scope-specific React Query
+  key, and requests the matching backend scope. No client code derives filtered hub
+  distinct counts from the unfiltered payload.
 - **AC-F7** *(D6)* — the coverage frame is present in every view and filter state and
   cannot be dismissed.
 - **AC-F8** — axe passes on the atlas route.
@@ -477,14 +780,31 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   scales rather than per-channel, because the per-channel form is what let the hub
   fill-depth scale slip through the first pass.
 
-  Hatch bands are exempt: a percentage of a country's own rows is self-denominating.
+  Hatch bands are exempt from a scale-range legend because their thresholds are fixed
+  percentages. They are not exempt from AC-F10a's numerator-and-denominator text.
+- **AC-F10a** *(clause 2)* — every derived count and percentage in tooltips, panels, and
+  table cells renders its numerator and denominator in the same accessible text.
+  Archived share, for example, renders “52 archived of 366 collected rows (14%),” not
+  a bare percentage.
 - **AC-F11** *(clause 1)* — no rendered numeric in any atlas component carries a
-  currency symbol or value unit. Component-level assertion complementing AC-B9's
+  currency symbol or value unit. Component-level assertion complementing AC-B8's
   payload-level one.
 - **AC-F12** *(D6)* — never-collected countries are visually distinct from
   collected-but-thin ones, and the legend names both. AC-F7 covers the frame's
   presence; this covers its substance — a blank country must never read as "no
   correspondent banking here".
+- **AC-F12b** *(D6)* — under a non-default scope the map renders **three** coverage
+  states, not two: never collected, collected but nothing in this scope, and collected
+  and in scope. The legend names all three. Derived by subtracting scoped `spokes` from
+  the corpus-wide observed list (contract rule 7).
+
+  AC-F12 covers two states because `scope=all` only has two. The moment a scope filter
+  is applied, a country like Canada — 2 banks, 15 rows, none settleable — becomes a
+  third thing, and drawing it like France repeats at the map level the defect AC-B11a
+  fixes at the panel level.
+- **AC-F12a** *(D9)* — observed but unresolvable beneficiary or intermediary BIC
+  country codes are shown in the corresponding view's coverage frame with their reason;
+  they are not silently counted as never-collected.
 - **AC-F13** *(D2)* — the render loop and the legend iterate a layer descriptor list.
   A test adds a second, inert descriptor and asserts both that it renders and that its
   attribution appears separately from the first layer's. An untested seam closes at the
@@ -497,32 +817,55 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 
 - **AC-F14** — a failed `/api/atlas/network` renders `AsyncRegion`'s error state with
   retry. No map is drawn.
-- **AC-F15** — a response that parses but is missing `spokes` or `hubs` renders the
-  surviving view with `AsyncRegion`'s `partialNote` naming what is absent. A half-drawn
-  map must announce itself, because a map that looks complete and is not is this
-  feature's defining failure mode — the same one AC-F1 guards at the data layer.
+- **AC-F15** — a successful atlas response with a failed topology-asset request renders
+  the ranked table and `AsyncRegion`'s `partialNote` naming the unavailable map. The
+  topology request is considered failed on a non-2xx response, non-JSON content type,
+  malformed JSON, or a JSON value without the expected `countries` topology. This
+  explicitly catches the SPA-index-as-200 failure mode. A network payload missing
+  `spokes`, `hub_countries`, or `hubs` fails strict parsing and renders the full error
+  state; it never becomes a half-drawn map.
 
   `partialNote` already exists on `AsyncRegion` and is currently used by no page; the
-  atlas is its first consumer.
+  atlas is its first consumer for this genuinely independent-resource failure.
+- **AC-F16** — the hub map renders one circle per `hub_countries` entry. Two
+  institution hubs sharing an ISO2 produce one map circle and two table rows, so DOM
+  order cannot hide an institution.
+- **AC-F17** — the vendored source topology bytes match the recorded SHA-256 and expose
+  the retained source and license notice in the layer attribution. A production-build
+  test verifies the `?url` import resolves beneath `/app/assets/` and that FastAPI serves
+  the emitted file as JSON rather than returning the SPA index.
+- **AC-F18** *(D10)* — the initial view uses `geoNaturalEarth1` and fits the complete
+  world without pan/zoom controls. The production dependency graph contains no
+  MapLibre, Mapbox, MapTiler, Leaflet, or MapCN runtime package.
+- **AC-F19** *(D10)* — component and E2E assertions cover the deterministic visual
+  contracts: wide versus narrow map/table order, metric rail presence, selected and
+  never-collected non-colour cues, hatch legend text, and the one-circle-per-country
+  rule in an overlapping European fixture. Pixel-baseline comparison is not introduced
+  in v1; T7 records human visual review across the full matrix.
+- **AC-F20** *(D10)* — map marks render no route arcs, pulsing states, or perpetual
+  animation. With `prefers-reduced-motion: reduce`, view/filter changes preserve all
+  information and selection feedback with transition duration removed.
 
 ### E2E
 
 - **AC-E1** — the atlas route loads and renders a map.
-- **AC-E2** — toggling settleability changes the displayed counts.
+- **AC-E2** — toggling settleability changes the URL, sends the new API scope, and
+  changes the displayed counts after the scoped response arrives.
 - **AC-E3** — clicking a country opens the panel; the panel links into
   `BankDetailRoute`.
 
 ---
 
-## Out of scope for v1
+## NOT in scope for v1
 
 External scale layer (seam only, no data). Drawn edges or arcs on the map. Animation.
-Institution city coordinates. Any volume, value or market-share figure. Learning gates,
+Institution city coordinates. Pixel-diff screenshot infrastructure. Any volume, value
+or market-share figure. Learning gates,
 progress or badges — this is Explore and it stays ungated.
 
 ---
 
-## Open questions
+## Resolved data anomaly
 
 **`EDBBEB22XXX` — European Depositary Bank SA.** Six rows (USD, EUR, GBP, JPY, AUD,
 CAD). BIC positions 5–6 hold `EB`, which does not resolve in ISO 3166-1, so the bank
@@ -533,9 +876,10 @@ validate_bic("EDBBEB22XXX") -> (True, 'EDBBEB22XXX', 'EB', [])
 ```
 
 Whether `EB` is a reserved SWIFT code or a defective seed row is a domain question that
-cannot be settled from the repository; it needs a source check. Either way AC-F1
-surfaces it automatically, which is an argument for rendering the unresolvable-codes
-report as a visible v1 element rather than a footnote.
+cannot be settled from the repository; it needs a source check. V1 does not guess. It
+keeps the row in non-geographic totals, excludes it from geometry, and names `EB` in the
+visible unresolvable-codes report with that reason (D9, AC-F12a). Source verification is
+deferred without hiding the anomaly.
 
 ---
 
@@ -543,17 +887,120 @@ report as a visible v1 element rather than a footnote.
 
 | Risk | Clause | Mitigation |
 |---|---|---|
-| A value or volume figure reaches the render | 1 | AC-B9 at the payload, AC-F11 at the component. The primary risk, so it is guarded at both layers. |
+| A value or volume figure reaches the render | 1 | AC-B8 at the payload, AC-F11 at the component. The primary risk, so it is guarded at both layers. |
 | A reader takes reach for market share | 2 | Denominator is a required field on the shared payload type: AC-F3 (map), AC-F9 (table and panel) |
 | Choropleth darkness read as an absolute | 2 | AC-F10 — legend states its actual scale range, read from data |
 | A reader takes collection shape for world structure | 2 | D6 coverage frame, always on and never dismissible: AC-F7 for presence, AC-F12 for the never-collected vs thin distinction |
 | Evidence attribution regresses in a later change | D5 | AC-B4 and AC-F2 make it a parse failure, not a review question |
 | Silent blank countries | 1 | AC-F1 asserts against the topology, with unresolvable codes named in a reviewed allowlist rather than silently absent |
-| A partial load reads as a complete map | 1 | AC-F15 — a missing section renders `partialNote` naming what is absent |
+| A partial load reads as a complete map | 1 | AC-F15 — the only partial state is API data without topology; missing API sections fail closed |
+| Institution circles at the same centroid hide one another | 1 | Map uses `hub_countries`; institution `hubs` remain separate table rows (AC-B10, AC-F16) |
+| A client derives filtered reach from non-decomposable totals | 1 | Scope is applied before aggregation and is part of the API and query-cache key (AC-B9, AC-F6a) |
 | The layer seam closes at the first refactor | D2 | AC-F13 renders a second inert descriptor and asserts its separate attribution |
-| A **dimensionless** composite score is added later | 1 | **Not fully guarded.** AC-B9 and AC-F11 catch currency symbols and value units. A blended "importance index" over reach and currency breadth would carry neither, pass both, and still assert something no row entails. The control is review discipline, not a test. Recorded because a guard with a known hole is safer than one believed complete. |
+| Scoped emptiness reported as never-collected | 2 | `collected` is corpus-wide (AC-B11a); the map renders a distinct third state under a scope filter (AC-F12b). Canada under `scope=settleable` is the canonical case. |
+| A **dimensionless** composite score is added later | 1 | **Not fully guarded.** AC-B8 and AC-F11 catch currency symbols and value units. A blended "importance index" over reach and currency breadth would carry neither, pass both, and still assert something no row entails. The control is review discipline, not a test. Recorded because a guard with a known hole is safer than one believed complete. |
 | Hub map read as the primary finding | — | Shipped as a secondary read; the institution-level story lives in the table |
-| Query cost as the corpus grows | — | Threshold asserted, not just noted — see Performance |
+| Query cost as the corpus grows | — | Fixed SQL-count test plus reproducible benchmark at current and 20k-row corpora — see Performance |
+
+---
+
+## Implementation Tasks
+
+Each step ends green before the next begins. Structural contract work lands before UI
+rendering so the frontend cannot accidentally grow around an unstable payload.
+
+1. [ ] **T1 — Contract fixtures and backend schemas**
+   - Add representative overlapping-correspondent fixtures for both scopes.
+   - Define strict Pydantic network and country response models in `app/schemas.py`.
+   - Write failing contract tests for AC-B1–B11 before service code.
+2. [ ] **T2 — Aggregation service and router**
+   - Implement scope filtering once, then compute totals, spokes, `hub_countries`, and
+     institution `hubs` from that filtered relation.
+   - Implement deterministic country drill-down and register the router in `app/main.py`.
+   - Add the fixed-SQL-count assertion and benchmark script (AC-B12).
+3. [ ] **T3 — Frontend contracts and query state**
+   - Add strict feature-local Zod schemas and scope-aware query keys.
+   - Make view, scope, and selection URL-owned. Back/forward restores the same atlas.
+   - Cover schema rejection, scope isolation, and denominator helpers with Vitest.
+4. [ ] **T4 — Topology asset and pure encodings**
+   - Vendor the pinned asset, source/hash record, and license notice in the feature's
+     `assets/` directory; import the JSON with `?url`.
+   - Verify a production build emits the asset beneath `/app/assets/` and FastAPI serves
+     JSON bytes at that URL instead of the SPA index.
+   - Implement ISO2-to-feature resolution, the reviewed unresolvable allowlist, hatch
+     thresholds, scale domains, and accessible numerator/denominator strings as pure code.
+5. [ ] **T5 — Table, map, and panel**
+   - Build the table first as the complete semantic representation.
+   - Add the spoke choropleth and country-aggregated hub circles over the same selection
+     model. Then add the panel and `BankDetailRoute` links.
+6. [ ] **T6 — Discovery, observability, and end-to-end coverage**
+   - Register the page in all integration points above.
+   - Run unit, component, accessibility, responsive, E2E, bundle, and benchmark checks.
+7. [ ] **T7 — Visual QA evidence**
+   - Review spoke and hub views at 390, 768, 1024, and 1440 pixels in light and dark
+     themes, including selected, never-collected, hatch-heavy, and overlapping-Europe
+     fixtures.
+   - Attach screenshots and a completed checklist to the implementation review. This is
+     human design verification, not a new pixel-baseline test subsystem.
+
+### Execution lanes
+
+```text
+Lane A: backend fixtures/schemas → service/router → backend tests/benchmark
+Lane B: topology asset provenance → ISO mapping/encoding tests
+                                  ↘
+Lane C (after backend contract): frontend schemas/state → table → map/panel
+                                  ↓
+Final lane: route/search/observability integration → E2E + bundle verification → visual QA
+```
+
+Lanes A and B can run in parallel. Lane C may use the agreed JSON fixtures while the
+service is implemented, but final integration waits for Lane A. Route and observability
+files stay in the final lane to avoid merge conflicts across frontend work.
+
+### Test coverage map
+
+```text
+BACKEND CODE PATHS                              FRONTEND USER FLOWS
+/api/atlas/network                             /app/explore/atlas
+├── scope=all [unit + API]                     ├── API loading → complete view [component]
+├── scope=settleable [unit + API]              ├── API error → retry, no map [component]
+├── invalid scope → 422 [API]                  ├── topology error → table + note [component]
+├── empty corpus → zero cross-tab [unit]       ├── spoke ↔ hub URL state [component + E2E]
+├── overlapping hubs → distinct reach [unit]  ├── scope toggle refetches [component + E2E]
+└── fixed SQL statement count [unit]           ├── map ↔ table selection [component]
+                                                ├── country → panel [component + E2E]
+/api/atlas/country/{iso2}                      ├── beneficiary → BankDetailRoute [E2E]
+├── malformed code → 422 [API]                 ├── keyboard-only full flow [component]
+├── never collected → 200, collected:false     ├── 390/768/1024/1440 layouts [E2E]
+├── scoped-empty → collected:true [API+UI]     ├── three coverage states under scope [E2E]
+├── paired in_scope/all_scopes totals [API]    ├── uncollected country truthfully named [E2E]
+├── both scopes [unit + API]                   └── axe + readable text equivalent [E2E]
+└── deterministic disclosure order [unit]
+
+STATIC/CONTRACT PATHS
+├── topology hash + feature ids [unit]
+├── known-unresolvable reporting [unit]
+├── forbidden hub evidence [Pydantic + Zod]
+├── required denominators [typecheck + component]
+└── all data-driven domains and labels [unit]
+```
+
+### Failure modes registry
+
+| Path | Production failure | Test | Handling | User-visible result |
+|---|---|---|---|---|
+| Network request | timeout, 5xx, malformed JSON, or strict-schema failure | AC-F14 | React Query error + retry | Clear full-region error; no map |
+| Topology request | missing/corrupt asset or hash mismatch | AC-F15, AC-F17 | isolate from data request | Complete table plus map-unavailable note |
+| Scope change | stale all-scope data overwrites settleable response | AC-F6a | scope in query key; request cancellation | Latest URL state wins |
+| Hub aggregation | overlapping correspondents are summed | AC-B2, AC-B9, AC-B10 | distinct SQL counts | Correct reach with denominator |
+| Geometry join | ISO numeric string loses leading zero | AC-F1 | string-keyed lookup + allowlist | No silent blank country |
+| Country drill-down | scoped emptiness reported as never-collected | AC-B11a, AC-F12b | corpus-wide `collected` plus paired `in_scope`/`all_scopes` blocks | "15 rows collected, none of them settlement instructions" |
+| Country drill-down | malformed code, or a code the corpus has never seen | AC-B5, AC-B11 | boundary validation plus corpus-wide `collected` | 422 for malformed input; "No rows collected for France" for a genuinely uncollected country |
+| Map selection | stacked institution circles hide rows | AC-F16 | one country circle; institutions in table | Deterministic map and complete table |
+| Evidence display | source quality is attributed to a hub | AC-B4, AC-F2 | strict backend and frontend schemas | Contract error, never misleading evidence |
+
+No listed path has a silent failure with neither a test nor recovery behavior.
 
 ---
 
@@ -584,3 +1031,37 @@ SELECT SUBSTR(beneficiary_bic,5,2) cc, COUNT(*) rows,
        SUM(CASE WHEN status='archived' THEN 1 ELSE 0 END) arch
 FROM ssi GROUP BY 1;
 ```
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; governing product decisions were already approved |
+| Codex Review | `/codex review` | Independent 2nd opinion | 1 | CHANGES APPLIED | Found the unreachable topology path, unsupported pixel-baseline scope, empty-country contract conflict, overstated verdict, and duplicated hardcoded status assertion |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | SUPERSEDED | Initial clear was invalidated by the later repository-backed review; re-run required on this revision |
+| Design Review | `/plan-design-review` | UI/UX gaps | 0 | NOT RUN | Unjustified skip. The visual-direction section is the largest block added since the last engineering pass and no design review has seen it. Direction A is recorded as an **author proposal**, not a user decision — see note below. |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not required for this end-user Explore feature |
+
+**VERDICT:** RE-REVIEW REQUIRED — do not begin implementation. Engineering re-review is
+required for the contract changes, and a design review has never run against the
+visual-direction section. This revision routes the
+topology through Vite's existing `/app/assets/` mount, separates corpus-wide
+`collected` from scoped counts so a country that leaves the map can still explain
+itself, makes never-collected countries an
+explicit successful response, removes the unplanned pixel-baseline subsystem, derives
+the complete status cross-tab from `SSI_STATUSES`, and narrows the claims in this
+report. Engineering review must confirm those changes before the status returns to
+implementation-ready.
+
+### Deferred, non-blocking issues
+
+- `EB` remains unclassified until its source is checked. D9 defines truthful behavior
+  meanwhile; implementation does not depend on guessing its meaning.
+- A future dimensionless composite score cannot be prohibited structurally by the
+  current payload allowlist. The documented control is review discipline; no composite
+  ships in v1.
+- Direction A is an unreviewed author proposal. The visual-direction section has not
+  been through `/plan-design-review`, and the user decision previously cited for it
+  could not be located.
+- Pixel-diff screenshot infrastructure is deferred. T7 requires human visual evidence
+  for v1 without pretending the repository already has a stable baseline workflow.
