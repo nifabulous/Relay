@@ -124,6 +124,7 @@ BANKS = [
     ("NBOFBHBMXXX", "National Bank of Bahrain", "BH", "Manama", "BHD"),
     ("NBOOOMRXXXX", "National Bank of Oman", "OM", "Muscat", "OMR"),
     ("JGBAJOA0XXX", "Jordan Kuwait Bank", "JO", "Amman", "JOD"),
+    ("TIBKYESAXXX", "Tadhamon Bank", "YE", "Sana'a", "YER"),
     ("POALILITXXX", "Bank Hapoalim", "IL", "Tel Aviv", "ILS"),
     ("LUMIILITXXX", "Bank Leumi", "IL", "Tel Aviv", "ILS"),
     ("TGBTTR2IXXX", "Garanti BBVA", "TR", "Istanbul", "TRY"),
@@ -1087,6 +1088,21 @@ def _load_ssi_batch7_groups():
 
 _SSI_BATCH7_GROUPS = _load_ssi_batch7_groups()
 
+
+_SSI_BATCH13_DATA_FILES = ("seed_ssi_batch13_1.json",)
+
+
+def _load_ssi_batch13_groups():
+    groups = []
+    for filename in _SSI_BATCH13_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH13_GROUPS = _load_ssi_batch13_groups()
+
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1205,7 +1221,31 @@ def _ssi_batch7_records():
             ))
     return expanded
 
+
+def _ssi_batch13_records():
+    """Expand Tadhamon Bank's bank-published correspondent instructions."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH13_GROUPS:
+        note = f"Source: {source} (as of {as_of}) {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 13 (Tadhamon Bank correspondent instructions) ----
+    *_ssi_batch13_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
     *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
