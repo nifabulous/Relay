@@ -1,0 +1,17 @@
+{
+  "source_url": "https://www.axis.bank.in/forex/send-money-abroad/partner-banks",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {"raw_accounts_committed": false, "settlement_terms_published": false},
+  "routes": [
+    {"currency": "AUD", "int_bic": "CHASAU2XXXX"},
+    {"currency": "AUD", "int_bic": "ANZBAU3MXXX"},
+    {"currency": "CAD", "int_bic": "CHASCATTXXX"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A"},
+    {"currency": "DKK", "int_bic": "NDEADKKKXXX"},
+    {"currency": "NZD", "int_bic": "BKNZNZ22XXX"},
+    {"currency": "SAR", "int_bic": "AAALSARIXXX"},
+    {"currency": "SEK", "int_bic": "NDEASESSXXX"},
+    {"currency": "THB", "int_bic": "SCBLTHBXXXX"},
+    {"currency": "ZAR", "int_bic": "FIRNZAJJXXX"}
+  ]
+}
