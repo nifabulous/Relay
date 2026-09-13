@@ -256,6 +256,8 @@ BANKS = [
     ("NBCBGB2LXXX", "U.S. Bank London", "GB", "London", "GBP"),
     # ---- East West Bank (incoming foreign-currency wire SSI) ----
     ("EWBKUS66XXX", "East West Bank", "US", "Pasadena", "USD"),
+    # ---- FundBank Ltd (incoming foreign-currency wire SSI) ----
+    ("CAYIKYKYXXX", "FundBank Ltd", "KY", "Grand Cayman", "USD"),
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
@@ -3181,6 +3183,30 @@ SSI_RECORDS = [
      None, None, None, None,
      "Source: https://www.eastwestbank.com/content/dam/ewb-dotcom/docs/incomingwireinstructions_currencies/IncomingWireInstructions_GBP.pdf (revision 2019-02; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
      "2019-02-01", "unverified", None, True, False),
+
+    # ====================================================================
+    # REAL SSI DATA — FundBank Ltd (CAYIKYKY)
+    # Source: FundBank's official Incoming Wire Instructions PDF. The
+    # single-hop correspondent BICs are retained as availability-only rows;
+    # published intermediary account values are intentionally withheld and
+    # beneficiary accounts are customer-specific placeholders.
+    # ====================================================================
+
+    ("CAYIKYKYXXX", "FundBank Ltd", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     None, None, None, None,
+     "Source: https://www.fundbank.com/wp-content/uploads/2026/03/FB-Incoming-Wire-Instructions-Banking-Services.pdf (retrieved 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. The source prints an intermediary account, but it is intentionally withheld; beneficiary account is customer-specific. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CAYIKYKYXXX", "FundBank Ltd", "GBP",
+     "IRVTGB2XXXX", "The Bank of New York Mellon, London",
+     None, None, None, None,
+     "Source: https://www.fundbank.com/wp-content/uploads/2026/03/FB-Incoming-Wire-Instructions-Banking-Services.pdf (retrieved 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. The source prints an intermediary account, but it is intentionally withheld; beneficiary account is customer-specific. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CAYIKYKYXXX", "FundBank Ltd", "EUR",
+     "IRVTDEFXXXX", "The Bank of New York Mellon, Frankfurt",
+     None, None, None, None,
+     "Source: https://www.fundbank.com/wp-content/uploads/2026/03/FB-Incoming-Wire-Instructions-Banking-Services.pdf (retrieved 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. The source prints an intermediary account, but it is intentionally withheld; beneficiary account is customer-specific. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
 
     # ====================================================================
     # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
