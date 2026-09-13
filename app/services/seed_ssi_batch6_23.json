@@ -1,0 +1,30 @@
+[
+  [
+    "BSDISMSDXXX",
+    "Banca Sammarinese di Investimento S.p.A.",
+    "Source: https://www.bsi.sm/en/correspondent-banks.php (Standard Settlement Instructions; accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|DEUTDEFFXXX|Deutsche Bank A.G., Frankfurt|91006603",
+      "EUR|RZBAATWWXXX|Raiffeisen Bank International AG, Vienna|91006604",
+      "EUR|CIPBITMMXXX|BFF Bank S.p.A., Milan|91006605",
+      "EUR|POSOIT22XXX|Banca Popolare di Sondrio, Sondrio|91006606",
+      "USD|DEUTUS33XXX|Deutsche Bank A.G., New York|91006607",
+      "USD|RZBAATWWXXX|Raiffeisen Bank International AG, Vienna|91006608",
+      "USD|CIPBITMMXXX|BFF Bank S.p.A., Milan|91006609",
+      "USD|POSOIT22XXX|Banca Popolare di Sondrio, Sondrio|91006610",
+      "GBP|RZBAATWWXXX|Raiffeisen Bank International, Vienna|91006611",
+      "GBP|CIPBITMMXXX|BFF Bank S.p.A., Milan|91006612",
+      "GBP|POSOIT22XXX|Banca Popolare di Sondrio, Sondrio|91006613",
+      "CHF|RZBAATWWXXX|Raiffeisen Bank International, Vienna|91006614",
+      "CHF|CIPBITMMXXX|BFF Bank S.p.A., Milan|91006615",
+      "CNY|POSOIT22XXX|Banca Popolare di Sondrio, Sondrio|91006616"
+    ]
+  ]
+]

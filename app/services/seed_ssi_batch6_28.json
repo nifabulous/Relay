@@ -1,0 +1,29 @@
+[
+  [
+    "AGRIPLPRXXX",
+    "Credit Agricole Bank Polska S.A.",
+    "Source: https://www.credit-agricole.pl/o-banku/english-info (Standard settlement instructions; accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|BSUIFRPP|Credit Agricole CIB, Montrouge (via NATAAU33)|91006713",
+      "CAD|BSUIFRPP|Credit Agricole CIB, Montrouge (via ROYCCAT2)|91006714",
+      "CHF|BSUIFRPP|Credit Agricole CIB, Montrouge (via UBSWCHZH80A)|91006715",
+      "CZK|BSUIFRPP|Credit Agricole CIB, Montrouge (via RZBCCZPP)|91006716",
+      "DKK|BSUIFRPP|Credit Agricole CIB, Montrouge (via DABADKKK)|91006717",
+      "EUR|BSUIFRPP|Credit Agricole CIB, Montrouge|91006718",
+      "GBP|BSUIFRPP|Credit Agricole CIB, Montrouge (via NWBKGB2L)|91006719",
+      "HUF|BSUIFRPP|Credit Agricole CIB, Montrouge (via UBRTHUHB)|91006720",
+      "JPY|BSUIFRPP|Credit Agricole CIB, Montrouge (via BOTKJPJT)|91006721",
+      "NOK|BSUIFRPP|Credit Agricole CIB, Montrouge (via DNBANOKK)|91006722",
+      "RON|BSUIFRPP|Credit Agricole CIB, Montrouge (via BACXROBU)|91006723",
+      "SEK|BSUIFRPP|Credit Agricole CIB, Montrouge (via ESSESESS)|91006724",
+      "TRY|BSUIFRPP|Credit Agricole CIB, Montrouge (via TEBUTRIS930)|91006725"
+    ]
+  ]
+]

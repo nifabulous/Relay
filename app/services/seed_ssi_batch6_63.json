@@ -1,0 +1,35 @@
+[
+  [
+    "MNBAMEPGXXX",
+    "NLB Banka Podgorica",
+    "Source: https://www.nlb.me/content/dam/nlb/nlb-podgorica/podgorica-documents/stanovnistvo/savjeti-i-alati/analiza-finansijskih-trzista/Lista%20korespondentskih%20banaka%2003.04.2026..pdf (official correspondent-bank list, 2026-04-03). BIC-level list; no correspondent account numbers published. ",
+    "2026-04-03",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|BKAUATWW|UniCredit Bank Austria, Vienna|",
+      "EUR|RAZBBA22|NLB Banka Banja Luka|",
+      "EUR|TBTUBA22|NLB Banka Sarajevo|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "EUR|HYVEDEMM|UniCredit Bank, Munich|",
+      "EUR|BCITITMM|Intesa Sanpaolo, Milan|",
+      "EUR|TUTNMK22|NLB Banka Skopje|",
+      "EUR|KOBBRSBG|Komercijalna Banka, Belgrade|",
+      "RSD|KOBBRSBG|Komercijalna Banka, Belgrade|",
+      "AUD|LJBASI2X|NLB d.d. Ljubljana|",
+      "CAD|LJBASI2X|NLB d.d. Ljubljana|",
+      "DKK|LJBASI2X|NLB d.d. Ljubljana|",
+      "JPY|LJBASI2X|NLB d.d. Ljubljana|",
+      "NOK|LJBASI2X|NLB d.d. Ljubljana|",
+      "SEK|LJBASI2X|NLB d.d. Ljubljana|",
+      "CHF|LJBASI2X|NLB d.d. Ljubljana|",
+      "GBP|LJBASI2X|NLB d.d. Ljubljana|",
+      "USD|LJBASI2X|NLB d.d. Ljubljana|",
+      "EUR|LJBASI2X|NLB d.d. Ljubljana|"
+    ]
+  ]
+]

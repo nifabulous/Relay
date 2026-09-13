@@ -1,0 +1,28 @@
+[
+  [
+    "BBKUKWKWXXX",
+    "Bank of Bahrain and Kuwait B.S.C., Kuwait Branch",
+    "Source: https://bbkonline.com.kw/wp-content/uploads/2024/05/correspondentbanks.pdf (official correspondent-bank SSI PDF, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; the source’s SCBLDEFX spelling is normalized to SCBLDEFF. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "KWD|CBKUKWKW|Central Bank of Kuwait, Kuwait|91010500",
+      "BHD|BBKUBHBM|Bank of Bahrain and Kuwait, Manama|91010501",
+      "AED|SCBLAEAD|Standard Chartered Bank, Dubai|91010502",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91010503",
+      "GBP|MIDLGB22|HSBC Bank plc, London|91010504",
+      "INR|BBKUINBB|Bank of Bahrain and Kuwait, Mumbai|91010505",
+      "OMR|BMUSOMRX|Bank Muscat SAOG, Ruwi|91010506",
+      "QAR|QNBAQAQA|Qatar National Bank, Doha|91010507",
+      "CHF|SCBLGB2L|Standard Chartered Bank, London|91010508",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91010509",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91010510",
+      "SAR|BSFRSARIRYD|Banque Saudi Fransi, Riyadh|91010511"
+    ]
+  ]
+]

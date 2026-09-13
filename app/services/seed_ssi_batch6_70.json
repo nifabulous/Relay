@@ -1,0 +1,21 @@
+[
+  [
+    "BPPRPRSXXXX",
+    "Banco Popular de Puerto Rico",
+    "Source: https://resourcecenter.popular.com/en/help/accounts/transfers/intermediary-banks/ (official intermediary-bank instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|BOFAUS6S|Bank of America, Concord|",
+      "USD|CITIUS33|Citibank, New York|",
+      "USD|CHASUS33|JPMorgan Chase, New York|",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "EUR|BKBKESMM|KCB Bank Kenya, Nairobi|"
+    ]
+  ]
+]

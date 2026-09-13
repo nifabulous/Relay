@@ -1,0 +1,35 @@
+[
+  [
+    "KCOOKENAXXX",
+    "The Co-operative Bank of Kenya Ltd",
+    "Source: https://www.co-opbank.co.ke/money-transfer/swift-transfers/ (official SWIFT transfer correspondent table, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|CITIUS33|Citibank NA, New York|",
+      "AED|BOMLAEAD|Mashreqbank PSC, Dubai City|",
+      "AUD|SCBLGB2L|Standard Chartered Bank, London|",
+      "CAD|CITIGB2L|Citibank, London|",
+      "CHF|CAIXESBB|CaixaBank, Spain|",
+      "CNY|BKCHCNBJS00|Bank of China, Shanghai|",
+      "DKK|DEUTGB2L|Deutsche Bank AG, London|",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "INR|ICICINBB|ICICI Bank, Mumbai|",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|",
+      "KES|CBKEKENX|Central Bank of Kenya, Nairobi|",
+      "NOK|DEUTGB2L|Deutsche Bank AG, London|",
+      "RWF|CBKEKENX|Central Bank of Kenya, Nairobi|",
+      "SEK|DEUTGB2L|Deutsche Bank AG, London|",
+      "TZS|CBKEKENX|Central Bank of Kenya, Nairobi|",
+      "UGX|SBICUGKX|Stanbic Bank Uganda, Kampala|",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|"
+    ]
+  ]
+]

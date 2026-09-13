@@ -1,0 +1,26 @@
+[
+  [
+    "BROUUYMMXXX",
+    "Banco de la Republica Oriental del Uruguay",
+    "Source: https://www.brou.com.uy/personas/servicios/giros-transferencias/recibir-exterior (official incoming international transfer instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|BOFAUS3N|Bank of America, New York|",
+      "USD|CITIUS33|Citibank N.A., New York|",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "EUR|BSCHESMM|Banco Santander S.A., Madrid|",
+      "EUR|CAIXESBB|CaixaBank S.A., Spain|",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|"
+    ]
+  ]
+]

@@ -1,0 +1,39 @@
+[
+  [
+    "ORINUGKAXXX",
+    "I&M Bank (Uganda) Limited",
+    "Source: https://www.imbankgroup.com/ug/funds-transfer/swift-transfers/ (official SWIFT correspondent table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; the source's MRWRWRWXXX spelling is normalized to the valid I&M Rwanda BIC IMRWRWRWXXX.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|SCBLAEAD|Standard Chartered, Dubai|91010900",
+      "AUD|SCBLGB2L|Standard Chartered Bank, London|91010901",
+      "CAD|CITIGB2L|Citibank London|91010902",
+      "CHF|HBZUCHZZ|Habib Bank AG Zurich|91010903",
+      "TZS|IMBLTZTZ|I&M Bank Ltd Dar es Salaam|91010904",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91010905",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91010906",
+      "EUR|CHASDEFX|J.P. Morgan Chase, Frankfurt|91010907",
+      "GBP|CITIGB2L|Citibank N.A., London|91010908",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91010909",
+      "GBP|CHASGB2L|J.P. Morgan Chase, London|91010910",
+      "INR|ICICINBB|ICICI Bank Limited, Mumbai|91010911",
+      "INR|HDFCINBB|HDFC Bank, Mumbai|91010912",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91010913",
+      "USD|CITIUS33|Citibank N.A., New York|91010914",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91010915",
+      "USD|CHASUS33|J.P. Morgan Chase, New York|91010916",
+      "ZAR|SBZAZAJJ|Standard Bank of South Africa, Johannesburg|91010917",
+      "MUR|BKONMUMU|Bank One, Port Louis|91010918",
+      "KES|CBKEKENX|Central Bank of Kenya, Nairobi|91010919",
+      "CNY|SCBLHKHH|Standard Chartered Bank, Hong Kong|91010920",
+      "UGX|DFCUUGKA|DFCU Bank Ltd, Kampala|91010921",
+      "RWF|IMRWRWRW|I&M Bank Rwanda, Kigali|91010922"
+    ]
+  ]
+]

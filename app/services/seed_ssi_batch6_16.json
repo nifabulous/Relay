@@ -1,0 +1,59 @@
+[
+  [
+    "ALJSUAUKXXX",
+    "JSC Bank Alliance",
+    "Source: https://bankalliance.ua/pages/institutions/SSI_18.04.2025_Eng.pdf (Standard Settlement Instructions for MM and FX Deals, 2025-04-18; accessed 2026-09-12). ",
+    "2025-04-18",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|IRVTUS3N|Bank of New York Mellon, New York (via First Ukrainian International Bank)|91006426",
+      "USD|CHASUS33|JPMorgan Chase Bank, N.A., New York (via State Export-Import Bank of Ukraine)|91006427",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt (via First Ukrainian International Bank)|91006428",
+      "EUR|RZBAATWW|Raiffeisen Bank International AG, Vienna (via State Export-Import Bank of Ukraine)|91006429",
+      "EUR|POSOIT22|Banco Popolare di Sondrio, Italy|91006430",
+      "CHF|CRESCHZZ80A|Credit Suisse (Schweiz) AG, Zurich (via State Export-Import Bank of Ukraine)|91006431",
+      "GBP|COBADEFF|Commerzbank AG, Frankfurt (via Bank Pivdennyi)|91006433",
+      "GBP|CHASGB2L|J.P. Morgan Chase Bank N.A., London (via Ukrgasbank)|91006434",
+      "PLN|RZBAATWW|Raiffeisen Bank International AG, Vienna (via State Export-Import Bank of Ukraine)|91006435",
+      "PLN|BPKOPLPW|PKO Bank Polski SA, Warsaw (via State Export-Import Bank of Ukraine)|91006436",
+      "PLN|BREXPLPW|mBank SA, Warsaw (via Ukrgasbank)|91006437",
+      "CAD|COBADEFF|Commerzbank AG, Frankfurt (via Ukrgasbank)|91006439",
+      "CZK|RZBAATWW|Raiffeisen Bank International AG, Vienna (via State Export-Import Bank of Ukraine)|91006440",
+      "GEL|BAGAGE22|JSC Bank of Georgia, Tbilisi|91006441",
+      "HUF|OTPVHUHB|OTP Bank PLC, Budapest|91006442",
+      "CNY|RZBAATWW|Raiffeisen Bank International AG, Vienna (via State Export-Import Bank of Ukraine)|91006443",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo (via State Export-Import Bank of Ukraine)|91006444",
+      "JPY|COBADEFF|Commerzbank AG, Frankfurt (via Bank Pivdennyi)|91006445"
+    ]
+  ],
+  [
+    "SMBCMYKLXXX",
+    "Sumitomo Mitsui Banking Corporation Malaysia Berhad",
+    "Source: https://www.smbc.co.jp/asia/malaysia/standard_settlement_instructions.pdf (Standard Settlement Instructions, 2026-01-01; accessed 2026-09-12). ",
+    "2026-01-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "JPY|SMBCJPJT|SMBC Tokyo|91006446",
+      "SGD|SMBCSGSG|SMBC Singapore|91006447",
+      "USD|SMBCUS33|SMBC New York|91006448",
+      "THB|SMBCTHBK|SMBC Bangkok|91006449",
+      "HKD|SMBCHKHH|SMBC Hong Kong|91006450",
+      "EUR|DEUTDEFF|Deutsche Bank AG|91006451",
+      "AUD|ANZBAU3M|ANZ Bank|91006452",
+      "GBP|SMBCGB2L|SMBC Bank International plc|91006453",
+      "IDR|SUNIIDJA|PT Bank SMBC Indonesia Tbk|91006454",
+      "CNY|BKCHMYKL|Bank of China (Malaysia) Berhad|91006455",
+      "SEK|NDEASESS|Nordea Bank Abp|91006456"
+    ]
+  ]
+]

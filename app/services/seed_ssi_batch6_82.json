@@ -1,0 +1,24 @@
+[
+  [
+    "MCBLMVMVXXX",
+    "The Mauritius Commercial Bank (Maldives) Private Limited",
+    "Source: https://mcb.mv/about-us/our-correspondents (official correspondent banks page, accessed 2026-09-12). BIC-level list; the page does not publish correspondent account numbers. The SGD row is omitted because no intermediary BIC is published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|SOGEFRPP|Societe Generale, Paris|",
+      "USD|CITIUS33|Citibank, New York|",
+      "GBP|LOYDGB2L|Lloyds Bank, London|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|",
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group, Melbourne|",
+      "JPY|AEIBJPJX|American Express Bank, Tokyo|",
+      "MUR|MCBLMUMU|The Mauritius Commercial Bank, Port Louis|",
+      "CHF|UBSWCHZH|UBS AG, Switzerland|"
+    ]
+  ]
+]

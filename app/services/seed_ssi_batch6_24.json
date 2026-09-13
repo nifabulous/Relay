@@ -1,0 +1,25 @@
+[
+  [
+    "STSPAT2GXXX",
+    "Steiermärkische Bank und Sparkassen AG",
+    "Source: https://cdn.erstegroup.com/content/dam/at/spk-steiermaerkische/steiermaerkische.com/Financial%20Institutions/SSI-Stmk-Spk.pdf (Standard Settlement Instructions, January 2023 edition; accessed 2026-09-12). ",
+    "2023-01-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|GIBAATWG|Erste Group Bank AG, Vienna|91006617",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|91006618",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91006619",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zürich|91006620",
+      "USD|PNBPUS33|Wells Fargo Bank N.A., New York (printed PNBPUS3NNYC; normalized)|91006621",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91006622",
+      "BAM|ABSBBA22|Sparkasse Bank dd Bosna i Hercegovina, Sarajevo|91006623",
+      "RSD|GIBARS22|Erste Bank AD, Novi Sad|91006624",
+      "MKD|INSBMK22|Sparkasse Bank AD, Skopje|91006625"
+    ]
+  ]
+]

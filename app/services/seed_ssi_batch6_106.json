@@ -1,0 +1,76 @@
+[
+  [
+    "NCBGGDGDXXX",
+    "Republic Bank (Grenada) Limited",
+    "Source: https://www.republicgrenada.com/commercial/transferring-funds (official international-transfer correspondent page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91011200",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91011201",
+      "CAD|TDOMCATT|Toronto-Dominion Bank, Toronto|91011202",
+      "GBP|LOYDGB2LIOC|Lloyds TSB, London|91011203",
+      "EUR|LOYDGB2LIOC|Lloyds TSB, London|91011204",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011205"
+    ]
+  ],
+  [
+    "PRHRDOSDXXX",
+    "Banco Múltiple Promerica, S.A. (Dominican Republic)",
+    "Source: https://www.promerica.com.do/banca-corporativa/servicios-internacionales/bancos-corresponsales/ (official correspondent-bank page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91011210",
+      "USD|CHASUS33|J.P. Morgan Chase, New York|91011211",
+      "EUR|CHASDEFX|J.P. Morgan AG, Frankfurt|91011212",
+      "EUR|BOFAES2X|Bank of America, Spain|91011213"
+    ]
+  ],
+  [
+    "BPRCGTGCXXX",
+    "Banco Promerica Guatemala, S.A.",
+    "Source: https://www.bancopromerica.com.gt/media/770983/ruta-para-recibir-transferencias-del-exterior.pdf (official incoming-transfer instructions, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; unsupported TBNAUS33 USD route omitted.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91011220",
+      "USD|CHASUS33|J.P. Morgan Chase, New York|91011221",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011222",
+      "EUR|BOFAGB22|Bank of America, London|91011223",
+      "EUR|BSCHESMM|Banco Santander, Madrid|91011224"
+    ]
+  ],
+  [
+    "BPRASVSSXXX",
+    "Banco Promerica El Salvador, S.A.",
+    "Source: https://promerica.com.sv/banca-de-personas/internacional/bancos-corresponsales/ (official correspondent-bank page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; unsupported TBNAUS33 USD route omitted.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91011230",
+      "USD|CHASUS33|J.P. Morgan Chase, New York|91011231",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011232"
+    ]
+  ]
+]

@@ -1,0 +1,36 @@
+[
+  [
+    "ICBKTRISXXX",
+    "ICBC Turkey Bank Anonim Şirketi",
+    "Source: https://www.icbc.com.tr/en/international-relations/detail/SSI-Standard-Settlement-Instructions/352/951/0 (SSI Standard Settlement Instructions page; accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|ICBKAEAA|Industrial and Commercial Bank of China Ltd, Abu Dhabi Branch|91006583",
+      "AUD|ICBKAU2S|ICBC Sydney Branch|91006584",
+      "CAD|CIBCCATTXXX|Canadian Imperial Bank of Commerce, Toronto|91006585",
+      "CHF|ICBKCNBJXXX|The Industrial and Commercial Bank of China, Beijing|91006586",
+      "CHF|BCGECHGGXXX|Banque Cantonale de Geneve, Geneva|91006587",
+      "EUR|ICBKCNBJXXX|The Industrial and Commercial Bank of China, Beijing|91006588",
+      "EUR|ICBKDEFFXXX|Industrial and Commercial Bank of China Ltd, Frankfurt Branch|91006589",
+      "EUR|COBADEFFXXX|Commerzbank AG, Frankfurt|91006590",
+      "EUR|BARCDEFF|Barclays Bank Ireland PLC Frankfurt Branch|91006591",
+      "GBP|ICBKCNBJXXX|The Industrial and Commercial Bank of China, Beijing|91006592",
+      "GBP|ICBKGB2LXXX|ICBC (London) PLC, London|91006593",
+      "HKD|UBHKHKHHXXX|Industrial and Commercial Bank of China (Asia) Ltd, Hong Kong|91006594",
+      "JPY|ICBKJPJTXXX|The Industrial and Commercial Bank of China, Tokyo|91006595",
+      "CNY|CMBCCNBSRMB|China Merchants Bank Co., Ltd., Shenzhen (RMB clearing)|91006596",
+      "CNY|ICBKCNBJXXX|The Industrial and Commercial Bank of China, Beijing|91006597",
+      "CNY|ICBKSGSGCLR|The Industrial and Commercial Bank of China Ltd, Singapore Branch|91006598",
+      "CNY|ICBKLULCXXX|The Industrial and Commercial Bank of China, Luxembourg|91006599",
+      "USD|ICBKCNBJXXX|The Industrial and Commercial Bank of China, Beijing|91006600",
+      "USD|CHASUS33XXX|J.P. Morgan Chase N.A., New York|91006601",
+      "USD|PNBPUS33XXX|Wells Fargo Bank, N.A., New York (printed PNBPUS3NNYC; normalized)|91006602"
+    ]
+  ]
+]

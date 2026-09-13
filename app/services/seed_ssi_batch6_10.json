@@ -1,0 +1,50 @@
+[
+  [
+    "INGBPLPWXXX",
+    "ING Bank Slaski S.A.",
+    "Source: https://en.ing.pl/wholesale/correspondent-banking (accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|CTBAAU2S|Commonwealth Bank of Australia, Sydney|91006120",
+      "CAD|BOFMCAM2|Bank of Montreal, Montreal|91006121",
+      "CHF|UBSWCHZH|UBS AG, Zurich|91006122",
+      "CZK|INGBCZPP|ING Bank N.V., Prague Branch|91006123",
+      "DKK|NDEADKKK|Nordea Bank Danmark A/S, Copenhagen|91006124",
+      "EUR|INGBNL2A|ING Bank N.V., Amsterdam|91006125",
+      "GBP|RBOSGB2L|The Royal Bank of Scotland Plc, Edinburgh|91006126",
+      "HUF|INGBHUHB|ING Bank Rt., Budapest|91006127",
+      "JPY|MHCBJPJT|Mizuho Corporate Bank Ltd., Tokyo|91006128",
+      "NOK|DNBANOKK|DNB NOR Bank ASA, Oslo|91006129",
+      "PLN|NBPLPLPW|National Bank of Poland, Warsaw|91006130",
+      "RON|INGBROBU|ING Bank N.V., Bucharest Branch|91006131",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken AB, Stockholm|91006132",
+      "TRY|INGBTRIS|ING Bank A.S., Istanbul|91006133",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006134",
+      "ZAR|FIRNZAJJ|FirstRand Bank Ltd., Johannesburg|91006135"
+    ]
+  ],
+  [
+    "ICSMSMSMXXX",
+    "Banca Centrale della Repubblica di San Marino",
+    "Source: https://www.bcsm.sm/en/functions/statutory-functions/payment-system/ssi (accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91006136",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|91006137",
+      "CHF|KREDBEBB|KBC Bank NV, Brussels|91006138",
+      "GBP|BKENGB2L|Bank of England, London|91006139"
+    ]
+  ]
+]

@@ -1,0 +1,43 @@
+[
+  [
+    "CBAFKENXXXX",
+    "NCBA Bank Kenya PLC",
+    "Source: https://ncbagroup.com/ke/for-corporate/financial-institutions/ (official correspondent bank table, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. The source prints SCBLDEFX for the German Standard Chartered row; normalized here to the valid SCBLDEFF BIC. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AED|EBILAEAD|Emirates NBD, UAE|",
+      "CAD|SCBLGB2L|Standard Chartered Bank, London|",
+      "CHF|CRESCHZZ80A|Credit Suisse, Switzerland|",
+      "CNY|BKCHCNBJ300|Bank of China, Shanghai|",
+      "EUR|COBADEFF|Commerzbank, Germany|",
+      "EUR|NATXFRPP|Natixis, Paris|",
+      "EUR|BHFBDEFF|ODDO-BHF Bank AG, Frankfurt|",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Germany|",
+      "GBP|CITIGB2L|Citibank, London|",
+      "AUD|CITIGB2L|Citibank, London|",
+      "GBP|CHASGB2L|JPMorgan Chase Bank, London|",
+      "DKK|CHASGB2L|JPMorgan Chase Bank, London|",
+      "NOK|CHASGB2L|JPMorgan Chase Bank, London|",
+      "SEK|CHASGB2L|JPMorgan Chase Bank, London|",
+      "HKD|SCBLHKHH|Standard Chartered Bank, Hong Kong|",
+      "INR|HDFCINBB|HDFC Bank, India|",
+      "JPY|BOTKJPJT|MUFG, Japan|",
+      "RWF|BKIGRWRW|Bank of Kigali, Rwanda|",
+      "RWF|CBAFRWRW|NCBA Rwanda|",
+      "SSP|IVOJSSJB|Ivory Bank PLC, South Sudan|",
+      "THB|BKKBTHBK|Bangkok Bank, Thailand|",
+      "TZS|CBAFTZTZ|NCBA Tanzania|",
+      "UGX|CBAFUGKA|NCBA Uganda|",
+      "USD|CITIUS33|Citibank, New York|",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "ZAR|ABSAZAJJ|Absa Bank, South Africa|"
+    ]
+  ]
+]

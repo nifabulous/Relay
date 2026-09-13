@@ -1,0 +1,117 @@
+[
+  [
+    "GAFRKENAXXX",
+    "Gulf African Bank Limited",
+    "Source: https://gulfafricanbank.com/correspondent-banks/ (official correspondent-bank table, accessed 2026-09-12). Published account/IBAN values are masked with synthetic ACCT values; beneficiary BIC GAFRKENA is confirmed in the SWIFT participant directory.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|BOMLAEAD|Mashreq Bank, Dubai|91011400",
+      "EUR|CRASGB2L|Crown Agents Bank, Sutton|91011401",
+      "AED|ABDIAEAD|Abu Dhabi Islamic Bank, Abu Dhabi|91011402",
+      "CAD|CRASGB2L|Crown Agents Bank, Sutton|91011403",
+      "CHF|CRASGB2L|Crown Agents Bank, Sutton|91011404",
+      "CNY|BKCHZAJJ|Bank of China, Johannesburg|91011405",
+      "GBP|CRASGB2L|Crown Agents Bank, Sutton|91011406",
+      "INR|MSHQINBB|Mashreqbank, Mumbai|91011407",
+      "JPY|CRASGB2L|Crown Agents Bank, Sutton|91011408",
+      "SAR|BMUSSARI|Bank Muscat, Riyadh|91011409",
+      "ZAR|ABSAZAJJ|Absa Bank, Johannesburg|91011411"
+    ]
+  ],
+  [
+    "BKIGRWRWXXX",
+    "BANK OF KIGALI PLC",
+    "Source: https://bk.rw/personal/correspondent-banks (official correspondent-bank page, accessed 2026-09-12). Additional BIC-level routes; no correspondent account numbers are published.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "UGX|SBICUGKX|Stanbic Bank Uganda, Kampala|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|"
+    ]
+  ],
+  [
+    "ZEBLGHACXXX",
+    "Zenith Bank (Ghana) Limited",
+    "Source: https://www.zenithbank.com.gh/tools-resources/swiftpay-payment-solution/ (official SwiftPay correspondent instructions, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank, New York|91011420",
+      "USD|CHASUS33|JPMorgan Chase, New York|91011421",
+      "USD|CITIGB2L|Citibank, London|91011422",
+      "EUR|CITIGB2L|Citibank, London|91011423",
+      "GBP|CITIGB2L|Citibank, London|91011424"
+    ]
+  ],
+  [
+    "NIBGGHACXXX",
+    "National Investment Bank Limited",
+    "Source: https://www.nib-ghana.com/wp-content/uploads/2022/10/2013-NIB-annual-report.compressed.pdf (official annual report correspondent instructions, accessed 2026-09-12). Archived published account numbers are masked with synthetic ACCT values; the source's EUR SCBLDFEFX typo is omitted.",
+    "2013-12-31",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CHASUS33|JPMorgan Chase, New York|91011430",
+      "GBP|GHIBGB2L|Ghana International Bank, London|91011431",
+      "USD|GHIBGB2L|Ghana International Bank, London|91011432",
+      "EUR|GHIBGB2L|Ghana International Bank, London|91011433",
+      "EUR|BHFBDEFF|ODDO BHF, Frankfurt|91011434",
+      "USD|SCBLUS33|Standard Chartered, New York|91011435"
+    ]
+  ],
+  [
+    "PUBKGHACXXX",
+    "Prudential Bank Limited",
+    "Source: https://www.prudentialbank.com.gh/business/trade/correspondent-banks (official correspondent-bank page, accessed 2026-09-12). The page supports USD/EUR/GBP; only currency-to-correspondent mappings explicit in the page are retained. Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank, New York|91011440",
+      "EUR|CITIDEFF|Citibank, Frankfurt|91011441",
+      "GBP|CITIGB2L|Citibank, London|91011442",
+      "EUR|BHFBDEFF|ODDO BHF, Frankfurt|91011443"
+    ]
+  ],
+  [
+    "ICITNGLAXXX",
+    "Unity Bank PLC",
+    "Source: https://unityng.com/domiciliary-transfer/ (official domiciliary-transfer page, accessed 2026-09-12). Published correspondent account numbers are masked with synthetic ACCT values; one-hop SSI rows retain the explicit ODDO BHF correspondent.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BHFBDEFF|ODDO BHF, Frankfurt|91011450",
+      "GBP|BHFBDEFF|ODDO BHF, Frankfurt|91011451",
+      "EUR|BHFBDEFF|ODDO BHF, Frankfurt|91011452"
+    ]
+  ]
+]

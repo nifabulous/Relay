@@ -1,0 +1,28 @@
+[
+  [
+    "BPKOPLPWXXX",
+    "PKO Bank Polski SA",
+    "Source: https://www.pkobp.pl/en/international-banking/correspondent-banks-full-list (as of 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91005501",
+      "EUR|KREDBEBB|KBC Bank NV, Brussels|91005502",
+      "EUR|HELADEFF|Helaba Landesbank Hessen-Thüringen, Frankfurt|91005503",
+      "EUR|GENODEFF|DZ Bank AG, Frankfurt|91005504",
+      "EUR|CCFRFRPP|HSBC France, Paris|91005505",
+      "GBP|MIDLGB22|HSBC Bank PLC, London|91005506",
+      "JPY|MHCBJPJT|Mizuho Bank Ltd, Tokyo|91005507",
+      "MXN|BOFAGB22|Bank of America, London|91005508",
+      "RUB|RZBAATWW|Raiffeisen Bank International AG, Vienna|91005509",
+      "USD|CHASUS33|JPMorgan Chase Bank NA, New York|91005510",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91005511",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91005512"
+    ]
+  ]
+]

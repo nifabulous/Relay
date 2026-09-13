@@ -1,0 +1,104 @@
+{
+  "bic8": "AKBKDEFF",
+  "name": "Akbank AG",
+  "country": "DE",
+  "currencies": [
+    "CHF",
+    "GBP",
+    "JPY",
+    "PLN",
+    "TRY",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "akbank.de"
+  ],
+  "admitted_records": [
+    {
+      "currency": "CHF",
+      "correspondent": "Akbank T.A.S., Istanbul",
+      "int_bic": "AKBKTRISXXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005270",
+      "with_an": "ACCT-91005270",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "GBP",
+      "correspondent": "HSBC Bank Plc, London",
+      "int_bic": "MIDLGB22XXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005271",
+      "with_an": "ACCT-91005271",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "JPY",
+      "correspondent": "Akbank T.A.S., Istanbul",
+      "int_bic": "AKBKTRISXXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005272",
+      "with_an": "ACCT-91005272",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "PLN",
+      "correspondent": "ING Bank Slaski SA, Katowice",
+      "int_bic": "INGBPLPWXXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005273",
+      "with_an": "ACCT-91005273",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "TRY",
+      "correspondent": "Akbank T.A.S., Istanbul",
+      "int_bic": "AKBKTRISXXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005274",
+      "with_an": "ACCT-91005274",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Citibank N.A., New York",
+      "int_bic": "CITIUS33XXX",
+      "source": "https://www.akbank.de/en/financial-institutions/Pages/Standard-Settlement-Instructions.aspx",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91005275",
+      "with_an": "ACCT-91005275",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    }
+  ],
+  "admitted_record_digest": "9f260138cbcf5625fb43eaebd1cd1dd432282ac126b0ae6eedfbc0826fcd9402"
+}

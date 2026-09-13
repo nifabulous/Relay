@@ -1,0 +1,99 @@
+[
+  [
+    "BRRDDOSDXXX",
+    "Banco de Reservas de la República Dominicana",
+    "Source: https://banreservas.com/gubernamental/negocios-internacionales/transferencias-internacionales/ (official international-transfer page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; PNBPUS3NNYC and CITIGBL2 source spellings are normalized.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank, New York|91011300",
+      "USD|CHASUS33|JPMorgan Chase, New York|91011301",
+      "USD|BOFAUS3M|Bank of America, Miami|91011302",
+      "USD|PNBPUS33|Wells Fargo, New York|91011303",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91011304",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91011305",
+      "EUR|CAIXESBB|CaixaBank, Barcelona|91011306",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011307",
+      "EUR|UNCRITMM|UniCredit, Milan|91011308",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91011309",
+      "EUR|CITIGB2L|Citibank, London|91011310",
+      "EUR|BKBKESMM|Bankinter, Madrid|91011311",
+      "EUR|BSCHESMM|Banco Santander, Madrid|91011312",
+      "GBP|DEUTDEFF|Deutsche Bank, Frankfurt|91011313",
+      "CAD|DEUTDEFF|Deutsche Bank, Frankfurt|91011314",
+      "SEK|DEUTDEFF|Deutsche Bank, Frankfurt|91011315",
+      "CHF|DEUTDEFF|Deutsche Bank, Frankfurt|91011316",
+      "CNY|BKCHCNBJ110|Bank of China, Beijing|91011317"
+    ]
+  ],
+  [
+    "BCBHDOSDXXX",
+    "Banco Múltiple BHD S.A.",
+    "Source: https://static.bhd.com.do/INSTRUCTIVORECIBIR_TRANSFERENCIAS_INTERNACIONALES_27825fc868.pdf (official international-transfer instructions, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; PNBPUS3NNYC is normalized to PNBPUS33.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|PNBPUS33|Wells Fargo, New York|91011320",
+      "USD|BOFAUS3M|Bank of America, Miami|91011321",
+      "USD|CITIUS33|Citibank, New York|91011322",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91011323",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91011324",
+      "USD|COBADEFF|Commerzbank, Frankfurt|91011325",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91011326",
+      "EUR|BSABESBB|Banco de Sabadell, Barcelona|91011327",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011328"
+    ]
+  ],
+  [
+    "NOSCDOSDXXX",
+    "Scotiabank República Dominicana",
+    "Source: https://do.scotiabank.com/banca-corporativa/bancos-corresponsales.html (official correspondent-bank page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|91011340",
+      "USD|CHASUS33|JPMorgan Chase, New York|91011341",
+      "EUR|BBRUBEBB|ING Belgium, Brussels|91011342",
+      "EUR|CITIGB2L|Citibank, London|91011343",
+      "CAD|NOSCCATT|Bank of Nova Scotia, Toronto|91011344"
+    ]
+  ],
+  [
+    "AGROGTGCXXX",
+    "Banco Agromercantil de Guatemala, S.A.",
+    "Source: https://assets.ctfassets.net/d8tspqmagn8z/3jJCGU2aJYbyPelR5vagHu/90d7d96cb7f38a68d234c014041a0a15/Instrucciones_recepci__n_transferencias-2.pdf (official international-transfer instructions, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; PNBPUS3NNYC is normalized to PNBPUS33.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|PNBPUS33|Wells Fargo, New York|91011350",
+      "USD|CHASUS33|JPMorgan Chase, New York|91011351",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91011352",
+      "USD|BOFAUS3M|Bank of America, Miami|91011353",
+      "USD|CITIUS33|Citibank, New York|91011354",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91011355",
+      "USD|SCBLUS33|Standard Chartered, New York|91011356",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011357",
+      "EUR|CITIDEFF|Citibank, Frankfurt|91011358"
+    ]
+  ]
+]

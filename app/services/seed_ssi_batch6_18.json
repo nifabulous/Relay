@@ -1,0 +1,39 @@
+[
+  [
+    "AEBAGRAAXXX",
+    "Aegean Baltic Bank S.A.",
+    "Source: https://www.aegeanbalticbank.com/sites/default/files/inline-files/ABBank-SSI-List.pdf (Standard Settlement Instructions, Jan. 2026; accessed 2026-09-12). ",
+    "2026-01-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|AEBAGRAA|Aegean Baltic Bank S.A., direct member of TARGET2|91006477",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91006478",
+      "USD|CHASUS33|J.P. Morgan Chase Bank, New York|91006479",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006480",
+      "GBP|DEUTGB2L|Deutsche Bank AG, London|91006481",
+      "AED|CHASDEFX|J.P. Morgan SE, Frankfurt|91006482",
+      "AED|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006483",
+      "AUD|CHASDEFX|J.P. Morgan SE, Frankfurt|91006484",
+      "AUD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006485",
+      "CAD|CHASDEFX|J.P. Morgan SE, Frankfurt|91006486",
+      "CAD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006487",
+      "CHF|CHASDEFX|J.P. Morgan SE, Frankfurt|91006488",
+      "CHF|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006489",
+      "HKD|CHASDEFX|J.P. Morgan SE, Frankfurt|91006490",
+      "HKD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006491",
+      "JPY|CHASDEFX|J.P. Morgan SE, Frankfurt|91006492",
+      "JPY|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006493",
+      "NOK|CHASDEFX|J.P. Morgan SE, Frankfurt|91006494",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91006495",
+      "SEK|CHASDEFX|J.P. Morgan SE, Frankfurt|91006496",
+      "SEK|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006497",
+      "SGD|CHASDEFX|J.P. Morgan SE, Frankfurt|91006498",
+      "SGD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006499"
+    ]
+  ]
+]

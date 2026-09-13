@@ -1,0 +1,30 @@
+[
+  [
+    "DELUFR22LCH",
+    "Banque Delubac & Cie",
+    "Source: https://www.delubac.com/metiers/banque-des-entreprises/services-bancaires-internationaux/ (SSI table accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006500",
+      "CAD|KREDBEBB|KBC Bank NV, Brussels|91006501",
+      "CHF|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006502",
+      "CHF|KREDBEBB|KBC Bank NV, Brussels|91006503",
+      "EUR|SOGEFRPP|Société Générale, Paris|91006504",
+      "EUR|KREDBEBB|KBC Bank NV, Brussels|91006505",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006506",
+      "EUR|DELUFR22LCH|Banque Delubac & Cie, Paris (via TARGET2)|91006507",
+      "GBP|KREDBEBB|KBC Bank NV, Brussels|91006508",
+      "GBP|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006509",
+      "JPY|KREDBEBB|KBC Bank NV, Brussels|91006510",
+      "TRY|CAYTTRIS|Aktif Yatirim Bankasi AS, Istanbul|91006511",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006512",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91006513"
+    ]
+  ]
+]

@@ -1,0 +1,21 @@
+[
+  [
+    "CABSZWHAXXX",
+    "CABS Bank Limited",
+    "Source: https://www.cabs.co.zw/corporate-banking/transactional-services/trade-international-payments (official international payments instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|ECOCFRPP|Ecobank, Paris|",
+      "EUR|ECOCFRPP|Ecobank, Paris|",
+      "GBP|ECOCFRPP|Ecobank, Paris|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|",
+      "BWP|FIRNBWGX|First National Bank Botswana, Gaborone|"
+    ]
+  ]
+]

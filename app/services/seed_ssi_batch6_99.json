@@ -1,0 +1,41 @@
+[
+  [
+    "COMBKWKWXXX",
+    "Commercial Bank of Kuwait K.P.S.C.",
+    "Source: https://www.cbk.com/media/55212301-1084-4252-b19f-dfb988f15b0f/YmyorA/CorporateBanking/STANDARD%20SETTLEMENT%20INSTRUCTION.pdf (official Standard Settlement Instruction PDF linked from the bank’s corporate banking site, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; the source’s SCBLDEFX spelling is normalized to SCBLDEFF. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|SCBLAEAD|Standard Chartered Bank|91010700",
+      "AUD|WPACAU2S|Westpac, Melbourne|91010701",
+      "BHD|BBKUBHBM|Bank of Bahrain and Kuwait, Manama|91010702",
+      "CAD|BOFMCAT2|Bank of Montreal, Montreal|91010703",
+      "CHF|CRESCHZZ80A|Credit Suisse (Schweiz), Zurich|91010704",
+      "CNY|ABOCAEAD|Agricultural Bank of China, Dubai|91010705",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|91010706",
+      "EGP|NBEGEGCX595|National Bank of Egypt, Cairo|91010707",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91010708",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91010709",
+      "EUR|UNCRITMM|UniCredit, Milan|91010710",
+      "EUR|BNPAFRPP|BNP Paribas, Paris|91010711",
+      "GBP|LOYDGB2L|Lloyds, London|91010712",
+      "INR|SBININBB|State Bank of India, Mumbai|91010713",
+      "JOD|ARABJOAX|Arab Bank, Amman|91010714",
+      "JPY|SMBCJPJT|SMBC, Tokyo|91010715",
+      "NOK|DNBANOKK|DNB, Oslo|91010716",
+      "OMR|NBOMOMRX|National Bank of Oman, Muscat|91010717",
+      "QAR|CBQAQAQA|Commercial Bank Qatar, Doha|91010718",
+      "SAR|NBOKSAJE|National Bank of Kuwait, Jeddah|91010719",
+      "SGD|SCBLSGSG|Standard Chartered Bank, Singapore|91010720",
+      "SEK|ESSESESS|SEB, Stockholm|91010721",
+      "USD|CITIUS33|Citibank, New York|91010722",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91010723",
+      "USD|CHASUS33|JPMorgan Chase, New York|91010724"
+    ]
+  ]
+]

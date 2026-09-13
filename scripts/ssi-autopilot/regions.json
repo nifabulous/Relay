@@ -58,17 +58,7 @@
           ],
           "seedable": false
         },
-        {
-          "bic8": "WPACAU2S",
-          "name": "Westpac",
-          "country": "AU",
-          "currencies": [
-            "USD",
-            "EUR",
-            "AUD"
-          ],
-          "seedable": false
-        },
+        {"bic8":"WPACAU2S","manifest_file":"regions_batch6_banks_2_wpacau2s.json"},
         {
           "bic8": "NATAAU33",
           "name": "National Australia Bank",
@@ -617,7 +607,8 @@
             "KRW"
           ],
           "seedable": false
-        }
+        },
+        {"bic8":"DEUTKRSE","manifest_file":"regions_batch6_banks_1_deutkrse.json"}
       ],
       "forbidden_bics": [
         "KOCBKRSE",
@@ -2782,7 +2773,8 @@
           "admitted_record_digest": "87d7b21440b88d6b0912acc976f9d3efe54b022e5cfef3640e4823e0b102ff01"
         },
         {"bic8":"DNBANOKX","manifest_file":"regions_batch5_banks_1_dnbanokx.json"},
-        {"bic8":"NDEANOKK","manifest_file":"regions_batch5_banks_1_ndeanokk.json"}
+        {"bic8":"NDEANOKK","manifest_file":"regions_batch5_banks_1_ndeanokk.json"},
+        {"bic8":"GOSKPLPW","manifest_file":"regions_batch6_banks_1_goskplpw.json"}
       ],
       "forbidden_bics": [
         "SBAKNOBB"
@@ -3414,7 +3406,7 @@
             {
               "currency": "EUR",
               "correspondent": "Standard Chartered AG Frankfurt, Am Main, Germany",
-              "int_bic": "SCBLDEFX",
+              "int_bic": "SCBLDEFF",
               "nostro": "ACCT-91001361",
               "with_an": "ACCT-91001361",
               "charge_code": "SHA",
@@ -3636,7 +3628,7 @@
               "bic_only": false
             }
           ],
-          "admitted_record_digest": "1900a08e4f4c5809204c15f33b3436ed122ac7dcb961053566ce2bbc081925be"
+          "admitted_record_digest": "48e1ce64b2d41f38178e6f3c4fe6a16db4a96ac313627f7495a2c658b20a22f5"
         },
         {
           "bic8": "SBMKKENA",
@@ -3730,7 +3722,7 @@
             {
               "currency": "EUR",
               "correspondent": "Standard Chartered Bank AG, Frankfurt am Main (published settlement: CP,FX)",
-              "int_bic": "SCBLDEFX",
+              "int_bic": "SCBLDEFF",
               "nostro": "ACCT-91001367",
               "with_an": "ACCT-91001367",
               "charge_code": "SHA",
@@ -3840,7 +3832,7 @@
               "bic_only": false
             }
           ],
-          "admitted_record_digest": "6375a2a6c93ec2c1ec20be1368f6c2073196e1a6c843e0bec79d5c1ec1121b64"
+          "admitted_record_digest": "b381c3a7a13bf81e2f5c071afc02742b2088276d88d3b10604e13d8a90fb94bf"
         },
         {
           "bic8": "SIDNKENA",
@@ -4106,7 +4098,8 @@
             "CHF",
             "SEK"
           ]
-        }
+        },
+        {"bic8":"DEUTPHMM","manifest_file":"regions_batch6_banks_1_deutphmm.json"}
       ],
       "forbidden_bics": [
         "BPIPPHMM",
@@ -5670,7 +5663,7 @@
             "EUR",
             "BDT"
           ],
-          "seedable": false
+          "manifest_file": "regions_batch6_banks_1_ciblbddh.json"
         },
         {
           "bic8": "BRAKBDDH",
@@ -5918,7 +5911,8 @@
         {"bic8":"EXBKBDDH","name":"Export Import Bank of Bangladesh","country":"BD","currencies":["CAD","CHF","CNY","EUR","GBP","HKD","JPY","SAR","USD"],"seedable":true,"source_domains":["eximbankbd.com"],"admitted_record_digest":"bc028c56ab0385f248142c0437d314b682984fc19df54db7b03445326f3cac82","compact_records_file":"regions_batch4_records_1.json"},
         {"bic8":"SOIVBDDH","name":"Social Islami Bank PLC","country":"BD","currencies":["AED","CHF","CNY","EUR","GBP","JPY","SAR","USD"],"seedable":true,"source_domains":["siblbd.com"],"admitted_record_digest":"89ce4044ed032d1f2d7a84eac3fa75d652281d8a7db9c41eca9702025145dcf6","compact_records_file":"regions_batch4_records_3.json"},
         {"bic8":"MGBLBDDH","manifest_file":"regions_batch5_banks_1_mgblbddh.json"},
-        {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"}
+        {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"},
+        {"bic8":"SDBLBDDH","manifest_file":"regions_batch6_banks_1_sdblbddh.json"}
       ],
       "forbidden_bics": [
         "AGRABDDH",
@@ -6053,7 +6047,8 @@
             "MYR"
           ],
           "seedable": false
-        }
+        },
+        {"bic8":"DEUTMYKL","manifest_file":"regions_batch6_banks_1_deutmykl.json"}
       ],
       "forbidden_bics": []
     },
@@ -7424,7 +7419,10 @@
         {"bic8":"CNRBINBB","manifest_file":"regions_batch5_banks_1_cnrbinbb.json"},
         {"bic8":"JAKAINBB","manifest_file":"regions_batch5_banks_1_jakainbb.json"},
         {"bic8":"NKGSINBB","manifest_file":"regions_batch5_banks_1_nkgsinbb.json"},
-        {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"}
+        {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"},
+        {"bic8":"HDFCINAA","manifest_file":"regions_batch6_banks_1_hdfcinaa.json"},
+        {"bic8":"CBININBB","manifest_file":"regions_batch6_banks_1_cbininbb.json"},
+        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"}
       ],
       "forbidden_bics": []
     },
@@ -11047,7 +11045,8 @@
             }
           ],
           "admitted_record_digest": "697d37270d31a110503c0fcdcf2690556689a01d07febfa513ae68cd28137533"
-        }
+        },
+        {"bic8":"BDINIDJA","manifest_file":"regions_batch6_banks_3_bdinidja.json"}
       ]
     },
     {
@@ -14881,7 +14880,13 @@
           "admitted_record_digest": "bea1e9b11f6f3ca25f69fa245940a7e476912f7d173b9f2cda0a12caf20f8eb0"
         },
         {"bic8":"BOTKNL2X","name":"MUFG Bank (Europe) N.V., Amsterdam","country":"NL","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","MYR","NOK","NZD","PLN","QAR","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"44e3a2039fc7258c5a44601f638682a3385e9ea5b90aea97c370e12ac951c743","compact_records_file":"regions_batch4_records_1.json"},
-        {"bic8":"DEUTNL2A","manifest_file":"regions_batch5_banks_1_deutnl2a.json"}
+        {"bic8":"DEUTNL2A","manifest_file":"regions_batch5_banks_1_deutnl2a.json"},
+        {"bic8":"BPMOIT22","manifest_file":"regions_batch6_banks_1_bpmoit22.json"},
+        {"bic8":"RZBAATWW","manifest_file":"regions_batch6_banks_3_rzbaatww.json"},
+        {"bic8":"RLNWATWW","manifest_file":"regions_batch6_banks_3_rlnwatww.json"},
+        {"bic8":"OBKLAT2L","manifest_file":"regions_batch6_banks_3_obklat2l.json"},
+        {"bic8":"VKBLAT2L","manifest_file":"regions_batch6_banks_3_vkblat2l.json"},
+        {"bic8":"ICRAITRR","manifest_file":"regions_batch6_banks_3_icraitrr.json"}
       ]
     },
     {
@@ -17997,7 +18002,8 @@
           ],
           "admitted_record_digest": "61b068c3640b490cee12f079d41bc70bc665c720e530e5f2ed9f5bc2fd38943a"
         },
-        {"bic8":"UBBSBGSF","name":"United Bulgarian Bank AD","country":"BG","currencies":["AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","RON","RUB","SEK","TRY","USD"],"seedable":true,"source_domains":["ubb.bg"],"admitted_record_digest":"f5f725c938e82e56b0f5971be5caea5a171a3c0f679b80926ce2575a0c48eec7","compact_records_file":"regions_batch4_records_3.json"}
+        {"bic8":"UBBSBGSF","name":"United Bulgarian Bank AD","country":"BG","currencies":["AUD","CAD","CHF","DKK","EUR","GBP","JPY","NOK","RON","RUB","SEK","TRY","USD"],"seedable":true,"source_domains":["ubb.bg"],"admitted_record_digest":"f5f725c938e82e56b0f5971be5caea5a171a3c0f679b80926ce2575a0c48eec7","compact_records_file":"regions_batch4_records_3.json"},
+        {"bic8":"UNCRBGSF","manifest_file":"regions_batch6_banks_3_uncrbgsf.json"}
       ]
     },
     {
@@ -20807,7 +20813,8 @@
           ],
           "admitted_record_digest": "a8f54d3e9865f6cd075f2f627383a581a9435792d82453cdff902a171f20efea"
         },
-        {"bic8":"AMNALKLX","manifest_file":"regions_batch5_banks_1_amnalklx.json"}
+        {"bic8":"AMNALKLX","manifest_file":"regions_batch5_banks_1_amnalklx.json"},
+        {"bic8":"CCEYLKLX","manifest_file":"regions_batch6_banks_2_cceylklx.json"}
       ]
     },
     {
@@ -24539,7 +24546,9 @@
           ],
           "admitted_record_digest": "02306ed84320c27cc5cdd27223eccb3c9dac3efd544d5632e0185095e7080bdd"
         },
-        {"bic8":"SIDDNPKA","name":"Siddhartha Bank Limited","country":"NP","currencies":["AED","AUD","CAD","CHF","CNY","EUR","GBP","INR","JPY","SGD","USD"],"seedable":true,"source_domains":["siddharthabank.com"],"admitted_record_digest":"bf7cb8b87f1a5da704a799f7fe172d461392b63fb0e2f767d9ebcbd7b9b9f4cb","compact_records_file":"regions_batch4_records_3.json"}
+        {"bic8":"SIDDNPKA","name":"Siddhartha Bank Limited","country":"NP","currencies":["AED","AUD","CAD","CHF","CNY","EUR","GBP","INR","JPY","SGD","USD"],"seedable":true,"source_domains":["siddharthabank.com"],"admitted_record_digest":"bf7cb8b87f1a5da704a799f7fe172d461392b63fb0e2f767d9ebcbd7b9b9f4cb","compact_records_file":"regions_batch4_records_3.json"},
+        {"bic8":"KMBLNPKA","manifest_file":"regions_batch6_banks_1_kmblnpka.json"},
+        {"bic8":"PRVUNPKA","manifest_file":"regions_batch6_banks_1_prvunpka.json"}
       ]
     },
     {
@@ -29351,7 +29360,8 @@
           ],
           "admitted_record_digest": "5a51acfe4808494d2dbca319d728127f9cf953a27c35c812384c2f1b2de5887c"
         },
-        {"bic8":"PBANUA2X","name":"PrivatBank JSC","country":"UA","currencies":["AUD","BYN","CHF","CNY","CZK","DKK","EUR","GBP","GEL","JPY","KZT","NOK","PLN","RUB","SEK","USD"],"seedable":true,"source_domains":["privatbank.ua"],"admitted_record_digest":"efd3fd8a0c0afeaf95d06b5b52dab84ffe1c968809a08c788165a82f529126a7","compact_records_file":"regions_batch4_records_2.json"}
+        {"bic8":"PBANUA2X","name":"PrivatBank JSC","country":"UA","currencies":["AUD","BYN","CHF","CNY","CZK","DKK","EUR","GBP","GEL","JPY","KZT","NOK","PLN","RUB","SEK","USD"],"seedable":true,"source_domains":["privatbank.ua"],"admitted_record_digest":"efd3fd8a0c0afeaf95d06b5b52dab84ffe1c968809a08c788165a82f529126a7","compact_records_file":"regions_batch4_records_2.json"},
+        {"bic8":"OTPVUAUK","manifest_file":"regions_batch6_banks_3_otpvuauk.json"}
       ]
     },
     {
@@ -33985,7 +33995,10 @@
             }
           ],
           "admitted_record_digest": "142dcd9cb8040a1fa8e277efadb438cc23c5ee1f5a2bf67f061e331ba6c17fa4"
-        }
+        },
+        {"bic8":"MIDLAM22","manifest_file":"regions_batch6_banks_2_midlam22.json"},
+        {"bic8":"ANIKAM22","manifest_file":"regions_batch6_banks_2_anikam22.json"},
+        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"}
       ]
     },
     {
@@ -35055,7 +35068,8 @@
             }
           ],
           "admitted_record_digest": "9887574d0ca877fdd5ad6fc65ef77208a46b72e706545fee3d26e86ab7a24f9a"
-        }
+        },
+        {"bic8":"ORFBUZ22","manifest_file":"regions_batch6_banks_1_orfbuz22.json"}
       ]
     },
     {
@@ -36462,7 +36476,8 @@
             }
           ],
           "admitted_record_digest": "322b9fd9facee9624816ae859958f3383355097e36962a8f3d4625a2c0de2e45"
-        }
+        },
+        {"bic8":"HBUKGB4B","manifest_file":"regions_batch6_banks_1_hbukgb4b.json"}
       ]
     },
     {
@@ -37122,7 +37137,7 @@
         {"bic8":"NDEAFIHH","manifest_file":"regions_batch5_banks_1_ndeafihh.json"}
       ]
     },
-    {"name":"germany","label":"Germany SSI (MUFG Bank Europe Germany Branch)","countries":["DE"],"masked_block":91005200,"note":"2026-09-10 bank-published SSI research: MUFG Bank (Europe) N.V. Germany Branch publishes account-bearing correspondent instructions dated December 2025. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"BOTKDEDX","name":"MUFG Bank (Europe) N.V., Germany Branch","country":"DE","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","NOK","NZD","PLN","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"6dd5439281b6cfb144f50b874b50cfe430ec1d27d4f15dc0798677283b992e73","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"DNBADEHX","manifest_file":"regions_batch5_banks_1_dnbadehx.json"},{"bic8":"HASPDEHH","manifest_file":"regions_batch5_banks_1_haspdehh.json"}]},
+    {"name":"germany","label":"Germany SSI (MUFG Bank Europe Germany Branch)","countries":["DE"],"masked_block":91005200,"note":"2026-09-10 bank-published SSI research: MUFG Bank (Europe) N.V. Germany Branch publishes account-bearing correspondent instructions dated December 2025. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"BOTKDEDX","name":"MUFG Bank (Europe) N.V., Germany Branch","country":"DE","currencies":["AED","AUD","BHD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","INR","JPY","KWD","KZT","MAD","MXN","NOK","NZD","PLN","RON","RSD","RUB","SAR","SEK","SGD","THB","TRY","USD","ZAR"],"seedable":true,"source_domains":["mufgemea.com"],"admitted_record_digest":"6dd5439281b6cfb144f50b874b50cfe430ec1d27d4f15dc0798677283b992e73","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"DNBADEHX","manifest_file":"regions_batch5_banks_1_dnbadehx.json"},{"bic8":"HASPDEHH","manifest_file":"regions_batch5_banks_1_haspdehh.json"},{"bic8":"AKBKDEFF","manifest_file":"regions_batch6_banks_3_akbkdeff.json"}]},
     {"name":"jordan","label":"Jordan SSI (Jordan Ahli Bank and AJIB)","countries":["JO"],"masked_block":91005500,"note":"2026-09-10 bank-published SSI research: Jordan Ahli Bank April 2026 and Arab Jordan Investment Bank November 2024 SSI documents publish account-bearing correspondent instructions. Account values are represented only by reserved ACCT placeholders; settlement terms are inferred as SHA/spot and rows remain unverified.","forbidden_bics":[],"banks":[{"bic8":"AJIBJOAX","name":"Arab Jordan Investment Bank","country":"JO","currencies":["AED","AUD","BHD","CAD","CHF","CNY","DKK","EUR","GBP","JOD","JPY","KWD","QAR","SAR","SEK","SGD","USD"],"seedable":true,"source_domains":["ajib.com"],"admitted_record_digest":"bfe7962ceef10c354eda0fc1df69565f6462465e708dde7f3b84bb195e113ebd","compact_records_file":"regions_batch4_records_1.json"},{"bic8":"JONBJOAX","name":"Jordan Ahli Bank","country":"JO","currencies":["AED","AUD","CAD","CHF","DKK","EUR","GBP","JPY","KWD","NOK","OMR","QAR","SAR","SEK","USD"],"seedable":true,"source_domains":["ahli.com"],"admitted_record_digest":"341249c537dcc5e9da890de14f388202d7eb14f83139e896f8ac68519d9f6b59","compact_records_file":"regions_batch4_records_2.json"}]}
   ]
 }

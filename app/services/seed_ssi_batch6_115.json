@@ -1,0 +1,94 @@
+[
+  [
+    "BARBKENAXXX",
+    "Bank of Baroda (Kenya) Limited",
+    "Source: https://www.bankofbarodakenya.co.ke/treasury/correspondent-banks (official correspondent-bank table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BARBUS33XXX|Bank of Baroda, New York|91011600",
+      "GBP|BARBGB2LXXX|Bank of Baroda, London|91011601",
+      "EUR|BARBBEBBXXX|Bank of Baroda, Brussels|91011602",
+      "JPY|BKIDJPJTXXX|Bank of India, Tokyo|91011603",
+      "AUD|BARBAU2SXXX|Bank of Baroda, Sydney|91011604",
+      "CAD|BOFMCAT2XXX|Bank of Montreal, Toronto|91011605",
+      "CHF|UBSWCHZH80A|UBS Switzerland, Zurich|91011606",
+      "INR|BARBINBBXXX|Bank of Baroda, Mumbai|91011607"
+    ]
+  ],
+  [
+    "CONKKENAXXX",
+    "Consolidated Bank of Kenya Limited",
+    "Source: https://www.consolidated-bank.com/pdf/CORRESPONDENT%20BANK%20DETAILS.pdf (official correspondent-bank details, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2LXXX|Crown Agents Bank, London|91011610",
+      "GBP|CRASGB2LXXX|Crown Agents Bank, London|91011611",
+      "EUR|BHFBDEFF500|ODDO BHF, Frankfurt|91011612"
+    ]
+  ],
+  [
+    "SBMKKENAXXX",
+    "SBM Bank (Kenya) Limited",
+    "Source: https://www.sbmbank.co.ke/treasury/correspondent-banking (official correspondent-bank table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; existing routes are omitted.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "MUR|STCBMUMUXXX|State Bank of Mauritius, Port Louis|91011620",
+      "ZAR|FIRNZAJJXXX|FirstRand Bank, Johannesburg|91011621",
+      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa, Johannesburg|91011622",
+      "UGX|SBICUGKXXXX|Stanbic Bank Uganda, Kampala|91011623",
+      "TZS|CORUTZTZXXX|CRDB Bank, Dar es Salaam|91011624"
+    ]
+  ],
+  [
+    "IMBLTZTZXXX",
+    "I&M Bank (T) Limited",
+    "Source: https://imbank.co.tz/funds-transfer/swift-transfers/ (official SWIFT transfer table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; existing routes are omitted.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "TZS|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011630",
+      "JPY|IMBLKENAXXX|I&M Bank Kenya, Nairobi|91011631",
+      "RWF|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011632",
+      "UGX|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011633"
+    ]
+  ],
+  [
+    "MIEKKENAXXX",
+    "Middle East Bank Kenya Limited",
+    "Source: https://mebkenya.com/sites/default/files/mebk_standard_settlement_instructions_2020_august.pdf (official SSI PDF, archived 2020-08-01; accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
+    "2020-08-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CRASGB2LXXX|Crown Agents Bank, London|91011640",
+      "EUR|SOGEFRPPXXX|Société Générale, Paris|91011641"
+    ]
+  ]
+]
