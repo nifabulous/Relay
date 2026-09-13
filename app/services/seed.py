@@ -1206,6 +1206,12 @@ def _ssi_batch7_records():
     return expanded
 
 SSI_RECORDS = [
+    # ---- SSI expansion wave 9 (Bank of Jerusalem additional routes) ----
+    ("JERSILITXXX", "Bank of Jerusalem Ltd", "DKK", "IRVTUS3NXXX", "The Bank of New York Mellon, New York, New York", "ACCT-91001095", "ACCT-91001095", "SHA", "spot", "Source: https://www.bankjerusalem.co.il/media/4116/standart-settlement-instructions.pdf (as of 2026-09-13). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-13", "unverified", None, False, True),
+    ("JERSILITXXX", "Bank of Jerusalem Ltd", "HKD", "IDBLILITXXX", "Israel Discount Bank Limited, Tel Aviv", "ACCT-91001096", "ACCT-91001096", "SHA", "spot", "Source: https://www.bankjerusalem.co.il/media/4116/standart-settlement-instructions.pdf (as of 2026-09-13). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-13", "unverified", None, False, True),
+    ("JERSILITXXX", "Bank of Jerusalem Ltd", "ILS", "IDBLILITXXX", "Israel Discount Bank Limited, Tel Aviv", "ACCT-91001097", "ACCT-91001097", "SHA", "spot", "Source: https://www.bankjerusalem.co.il/media/4116/standart-settlement-instructions.pdf (as of 2026-09-13). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-13", "unverified", None, False, True),
+    ("JERSILITXXX", "Bank of Jerusalem Ltd", "NZD", "IDBLILITXXX", "Israel Discount Bank Limited, Tel Aviv", "ACCT-91001098", "ACCT-91001098", "SHA", "spot", "Source: https://www.bankjerusalem.co.il/media/4116/standart-settlement-instructions.pdf (as of 2026-09-13). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-13", "unverified", None, False, True),
+    ("JERSILITXXX", "Bank of Jerusalem Ltd", "ZAR", "IDBLILITXXX", "Israel Discount Bank Limited, Tel Aviv", "ACCT-91001099", "ACCT-91001099", "SHA", "spot", "Source: https://www.bankjerusalem.co.il/media/4116/standart-settlement-instructions.pdf (as of 2026-09-13). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-13", "unverified", None, False, True),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
     *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
