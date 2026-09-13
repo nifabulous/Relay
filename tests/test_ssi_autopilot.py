@@ -11,8 +11,207 @@ import autopilot  # noqa: E402
 
 MANIFEST = autopilot.load_manifest()
 
+_COMMIT_DEUTPHMM_RECORDS = [
+    {
+        "currency": "AUD",
+        "correspondent": "Published correspondent NATAAU33",
+        "int_bic": "NATAAU33",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000701",
+        "with_an": "ACCT-91000701",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "CNH",
+        "correspondent": "Published correspondent DEUTHKHH",
+        "int_bic": "DEUTHKHH",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000702",
+        "with_an": "ACCT-91000702",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "EUR",
+        "correspondent": "Published correspondent DEUTDEFF",
+        "int_bic": "DEUTDEFF",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000703",
+        "with_an": "ACCT-91000703",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "GBP",
+        "correspondent": "Published correspondent DEUTGB2L",
+        "int_bic": "DEUTGB2L",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000704",
+        "with_an": "ACCT-91000704",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "HKD",
+        "correspondent": "Published correspondent DEUTHKHH",
+        "int_bic": "DEUTHKHH",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000705",
+        "with_an": "ACCT-91000705",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "JPY",
+        "correspondent": "Published correspondent DEUTJPJT",
+        "int_bic": "DEUTJPJT",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000706",
+        "with_an": "ACCT-91000706",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "SGD",
+        "correspondent": "Published correspondent DEUTSGSG",
+        "int_bic": "DEUTSGSG",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000707",
+        "with_an": "ACCT-91000707",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "THB",
+        "correspondent": "Published correspondent DEUTTHBK",
+        "int_bic": "DEUTTHBK",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000708",
+        "with_an": "ACCT-91000708",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "USD",
+        "correspondent": "Published correspondent DEUTPHMM",
+        "int_bic": "DEUTPHMM",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000709",
+        "with_an": "ACCT-91000709",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "USD",
+        "correspondent": "Published correspondent DEUTUS33",
+        "int_bic": "DEUTUS33",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000710",
+        "with_an": "ACCT-91000710",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "PHP",
+        "correspondent": "Published correspondent DEUTPHMM",
+        "int_bic": "DEUTPHMM",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000711",
+        "with_an": "ACCT-91000711",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "CHF",
+        "correspondent": "Published correspondent UBSWCHZH80A",
+        "int_bic": "UBSWCHZH80A",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000712",
+        "with_an": "ACCT-91000712",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "CAD",
+        "correspondent": "Published correspondent ROYCCAT2",
+        "int_bic": "ROYCCAT2",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000713",
+        "with_an": "ACCT-91000713",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+    {
+        "currency": "DKK",
+        "correspondent": "Published correspondent DABADKKK",
+        "int_bic": "DABADKKK",
+        "source": "https://corporates.db.com/files/documents/legal-resources/db-manila.pdf",
+        "as_of": "2025-02-03",
+        "status": "unverified",
+        "bic_only": False,
+        "terms_inferred": True,
+        "nostro": "ACCT-91000714",
+        "with_an": "ACCT-91000714",
+        "charge_code": "SHA",
+        "value_date": "spot",
+    },
+]
 
-def sample_results(region_name="southeast-asia", include_admitted=False, **overrides):
+
+def sample_results(region_name="southeast-asia", include_commit_fixture=False, **overrides):
     results = {
         "region": region_name,
         "banks": [
@@ -36,18 +235,12 @@ def sample_results(region_name="southeast-asia", include_admitted=False, **overr
             }
         ],
     }
-    if include_admitted:
-        # Commit-path fixtures must include every admitted bank in the region;
-        # the smaller default fixture is intentionally used by fold unit tests.
-        region = next(r for r in MANIFEST["regions"] if r["name"] == region_name)
-        for bank in region["banks"]:
-            admitted = bank.get("admitted_records")
-            if admitted:
-                results["banks"].append({
-                    "bic": bank["bic8"],
-                    "name": bank["name"],
-                    "records": [dict(record) for record in admitted],
-                })
+    if include_commit_fixture:
+        results["banks"].append({
+            "bic": "DEUTPHMM",
+            "name": "Deutsche Bank AG Manila",
+            "records": [dict(record) for record in _COMMIT_DEUTPHMM_RECORDS],
+        })
     results.update(overrides)
     return results
 
@@ -55,6 +248,28 @@ def sample_results(region_name="southeast-asia", include_admitted=False, **overr
 # ── Validator: happy path ────────────────────────────────────────────────────
 def test_valid_results_pass():
     assert autopilot.validate_results(sample_results(), MANIFEST) == []
+
+
+def test_batch6_manifest_routes_match_canonical_seed_keys():
+    """Manifest-width BICs must resolve to the exact seeded route identity."""
+    from app.services.seed import SSI_RECORDS
+
+    seeded = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    services_dir = Path(__file__).resolve().parents[1] / "app" / "services"
+    for path in sorted(services_dir.glob("seed_ssi_batch6_*.json")):
+        for group in json.loads(path.read_text(encoding="utf-8")):
+            beneficiary = group[0]
+            for packed in group[-1]:
+                currency, intermediary, _name, _account = packed.split("|", 3)
+                canonical = autopilot._canonical_bic11(
+                    intermediary, f"{path.name} intermediary BIC"
+                )
+                assert (beneficiary, currency, canonical) in seeded, (
+                    path.name,
+                    beneficiary,
+                    currency,
+                    canonical,
+                )
 
 
 def test_trusted_identity_must_state_whether_settlement_terms_were_published(monkeypatch):
@@ -793,7 +1008,7 @@ def test_commit_refuses_when_unrelated_paths_are_already_staged(monkeypatch, tmp
     monkeypatch.setattr(autopilot, "verify_fold", lambda *a, **k: [])
 
     results = tmp_path / "r.json"
-    results.write_text(json.dumps(sample_results(include_admitted=True)))
+    results.write_text(json.dumps(sample_results(include_commit_fixture=True)))
 
     with pytest.raises(SystemExit) as exc:
         autopilot.cmd_commit(argparse.Namespace(
@@ -826,7 +1041,7 @@ def test_commit_limits_the_commit_to_its_own_paths(monkeypatch, tmp_path):
         "R", (), {"returncode": 0, "stdout": "", "stderr": ""})())
 
     results = tmp_path / "r.json"
-    results.write_text(json.dumps(sample_results(include_admitted=True)))
+    results.write_text(json.dumps(sample_results(include_commit_fixture=True)))
     autopilot.cmd_commit(argparse.Namespace(
         results=str(results), label=None, source=None, dry_run=False))
 
@@ -1248,7 +1463,7 @@ def test_task5_commit_owns_manifest(tmp_path, monkeypatch):
     monkeypatch.setattr(autopilot, "write_state", lambda *a, **k: None)
     monkeypatch.setattr(autopilot, "read_state", lambda: {"commits_since_pr": 0, "regions_since_pr": [], "last_pr": None})
     result = tmp_path / "r.json"
-    result.write_text(json.dumps(sample_results(include_admitted=True)))
+    result.write_text(json.dumps(sample_results(include_commit_fixture=True)))
     seed.write_text("SSI_RECORDS = [('changed',)]\n")
     tests.write_text("changed tests\n")
     manifest.write_text('{"changed": true}\n')

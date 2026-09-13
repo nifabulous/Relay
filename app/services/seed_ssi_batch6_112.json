@@ -25,22 +25,6 @@
     ]
   ],
   [
-    "BKIGRWRWXXX",
-    "BANK OF KIGALI PLC",
-    "Source: https://bk.rw/personal/correspondent-banks (official correspondent-bank page, accessed 2026-09-12). Additional BIC-level routes; no correspondent account numbers are published.",
-    "2026-09-12",
-    "unverified",
-    null,
-    null,
-    null,
-    true,
-    false,
-    [
-      "UGX|SBICUGKX|Stanbic Bank Uganda, Kampala|",
-      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|"
-    ]
-  ],
-  [
     "ZEBLGHACXXX",
     "Zenith Bank (Ghana) Limited",
     "Source: https://www.zenithbank.com.gh/tools-resources/swiftpay-payment-solution/ (official SwiftPay correspondent instructions, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",

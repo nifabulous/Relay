@@ -39,43 +39,6 @@
     ]
   ],
   [
-    "SBMKKENAXXX",
-    "SBM Bank (Kenya) Limited",
-    "Source: https://www.sbmbank.co.ke/treasury/correspondent-banking (official correspondent-bank table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; existing routes are omitted.",
-    "2026-09-12",
-    "unverified",
-    "SHA",
-    "spot",
-    null,
-    false,
-    true,
-    [
-      "MUR|STCBMUMUXXX|State Bank of Mauritius, Port Louis|91011620",
-      "ZAR|FIRNZAJJXXX|FirstRand Bank, Johannesburg|91011621",
-      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa, Johannesburg|91011622",
-      "UGX|SBICUGKXXXX|Stanbic Bank Uganda, Kampala|91011623",
-      "TZS|CORUTZTZXXX|CRDB Bank, Dar es Salaam|91011624"
-    ]
-  ],
-  [
-    "IMBLTZTZXXX",
-    "I&M Bank (T) Limited",
-    "Source: https://imbank.co.tz/funds-transfer/swift-transfers/ (official SWIFT transfer table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; existing routes are omitted.",
-    "2026-09-12",
-    "unverified",
-    "SHA",
-    "spot",
-    null,
-    false,
-    true,
-    [
-      "TZS|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011630",
-      "JPY|IMBLKENAXXX|I&M Bank Kenya, Nairobi|91011631",
-      "RWF|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011632",
-      "UGX|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|91011633"
-    ]
-  ],
-  [
     "MIEKKENAXXX",
     "Middle East Bank Kenya Limited",
     "Source: https://mebkenya.com/sites/default/files/mebk_standard_settlement_instructions_2020_august.pdf (official SSI PDF, archived 2020-08-01; accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",

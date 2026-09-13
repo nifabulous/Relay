@@ -2,7 +2,6 @@
 
 from app.services.seed import SSI_RECORDS
 
-
 _ADDITIONAL_BICS = {
     "HBUKGB4BXXX",
     "BPMOIT22XXX",

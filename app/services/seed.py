@@ -821,6 +821,9 @@ _SSI_NOTE = (
 _SSI_REAL_NOTE = (
     "Sourced from bank-published SSI page. Verify current values before use."
 )
+_SSI_BIC_ONLY_NOTE = (
+    "BIC-level list — no account numbers published; not a selectable settlement instruction."
+)
 
 _ENBD_BIC_ONLY_SOURCE = (
     "https://www.emiratesnbd.com/-/media/enbd/files/others/fees-and-"
@@ -960,7 +963,6 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_18.json",
     "seed_ssi_batch6_19.json",
     "seed_ssi_batch6_20.json",
-    "seed_ssi_batch6_21.json",
     "seed_ssi_batch6_22.json",
     "seed_ssi_batch6_23.json",
     "seed_ssi_batch6_24.json",
@@ -1123,7 +1125,18 @@ def _ssi_batch6_records():
         charge_code, value_date, verified_by, bic_only, terms_inferred,
         packed_rows,
     ) in _SSI_BATCH6_GROUPS:
-        note = source + _SSI_REAL_NOTE
+        if bic_only:
+            # Batch-6 ledgers carry source-specific explanations after the
+            # citation. Keep the persisted note canonical so every BIC-only
+            # route clearly states that it is availability metadata only.
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
         for packed in packed_rows:
             currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
             if len(intermediary_bic) == 8:
