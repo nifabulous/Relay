@@ -1,0 +1,17 @@
+{
+  "source_url": "https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf",
+  "source_effective_date": "2025-09-01",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "CHASGB2LXXX"},
+    {"currency": "CHF", "int_bic": "CHASGB2LXXX"},
+    {"currency": "JPY", "int_bic": "CHASGB2LXXX"},
+    {"currency": "NZD", "int_bic": "CHASGB2LXXX"},
+    {"currency": "SEK", "int_bic": "CHASGB2LXXX"},
+    {"currency": "USD", "int_bic": "CHASUS33XXX"}
+  ]
+}

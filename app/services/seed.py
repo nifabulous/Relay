@@ -254,6 +254,8 @@ BANKS = [
     # ---- U.S. Bank ----
     ("USBKUS44XXX", "U.S. Bank National Association", "US", "Minneapolis", "USD"),
     ("NBCBGB2LXXX", "U.S. Bank London", "GB", "London", "GBP"),
+    # ---- Synovus Bank (incoming wire SSI) ----
+    ("FICOUS44XXX", "Synovus Bank", "US", "Birmingham", "USD"),
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
@@ -3258,6 +3260,44 @@ SSI_RECORDS = [
      "BOMLAEADXXX", "Mashreqbank Dubai",
      "ACCT-37438", "ACCT-66163", "SHA", "spot",
      "Source: TMB Bank nostro remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Synovus Bank (FICOUS44)
+    # Source: Synovus incoming wire Standard Settlement Instructions PDF.
+    # The source publishes correspondent BICs but no account numbers or
+    # settlement terms, so these rows are informational BIC-only records.
+    # ====================================================================
+
+    ("FICOUS44XXX", "Synovus Bank", "AUD",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
+    ("FICOUS44XXX", "Synovus Bank", "CHF",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
+    ("FICOUS44XXX", "Synovus Bank", "JPY",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
+    ("FICOUS44XXX", "Synovus Bank", "NZD",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
+    ("FICOUS44XXX", "Synovus Bank", "SEK",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
+    ("FICOUS44XXX", "Synovus Bank", "USD",
+     "CHASUS33XXX", "J.P. Morgan Chase Bank N.A., New York",
+     None, None, None, None,
+     "Source: https://www.synovus.com/-/media/files/personal/bank/incoming-wire-instructions-effective-090125.pdf (effective 2025-09-01; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. Settlement terms are also not published. " + _SSI_REAL_NOTE,
+     "2025-09-01", "unverified", None, True, False),
 
     # ====================================================================
     # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
