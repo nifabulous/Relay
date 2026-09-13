@@ -135,6 +135,12 @@ Note the 103 versus 102: the beneficiary-country count is derived from
 | D7 | **Live endpoint**, computed per request | Startup cache goes stale on `/api/import/ssi`. A static artifact introduces DB-vs-artifact drift. |
 | D8 | **Map plus synced table**, both views | Map-only fails accessibility and hides institution-level facts. Table-only loses the geography that makes the spoke view legible. |
 | D9 | Unresolvable BIC country codes are a **visible coverage datum** | A footnote hides a corpus defect. Silently dropping the row makes the map look more complete than the source data. |
+| D14 | Hub circle fill is **flat**; currency breadth moves to the table | Translucent overlapping marks sum to a value that encodes nothing, and the European hubs overlap heavily. Channel destruction where the data matters most. |
+| D15 | The hub table is **two-tier** (country aggregate + institutions) | The map is country-grain and an institution-only table has no row for the aggregate a sighted user reads. Text-equivalence fails without it. |
+| D16 | `black` theme gets a **distinct land surface** | A shipped third theme where canvas is #000000 and surface #18181b. "Ocean is the canvas" dissolves the map in it. |
+| D11 | The data ramp is **neutral ink**; blue stays action-only | A blue ramp breaks DESIGN.md:28 and makes a blue selected edge invisible against a blue fill. Amending DESIGN.md to carve out data encoding was considered and rejected: it weakens the rule for every future surface, and this is the first feature to ask. |
+| D12 | **Hub is the default view** | Spoke shows collection coverage; hub shows the star that justified the feature. Landing on the weaker read and hoping for a toggle is not a default, it is a hope. |
+| D13 | The hub map **survives DESIGN.md:138** | The ranked table states reach better, but cannot state *where* hubs cluster. The map carries a spatial fact the comparison cannot, which is the test rule 138 actually sets. |
 | D10 | Visual direction is an **editorial instrument**, rendered with D3/SVG | A cinematic MapCN/MapLibre treatment adds motion, glow and map-product conventions that imply traffic or live flow. A hosted basemap adds visual noise, provider cost and attribution without helping the country-first question. |
 
 ### D5 in detail — why evidence cannot sit on a hub node
@@ -436,8 +442,29 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
 - A compact title and scope statement sit above the instrument. The governing caveat
   — observed SSI relationships, not payment volume — remains visible without becoming
   a warning banner.
+- **The two controls sit above the work area, left-aligned, as segmented controls.**
+  View: "Who gets reached" / "Who does the reaching", defaulting to the latter (D12).
+  Scope: "All collected rows" / "Settlement instructions only", defaulting to the
+  former. Neither label uses the word "settleable" — it is a coined term from the
+  schema, not language a learner reads.
+- **The coverage frame sits directly beneath the map, above the legend, spanning the
+  map column.** It is a distinct element, never folded into the metric rail. The rail
+  already carries "drawable countries", and collapsing the two destroys the three-state
+  distinction AC-F12b depends on.
+- **The concentration finding appears in the interface, not only in this document.**
+  Fourteen institutions carry a network of 251 banks; 374 correspondents appear exactly
+  once. That is the lesson, it is entailed by the rows, and it currently lives nowhere
+  a user can see. One line in the title block.
 - A narrow metric rail establishes the sample before the map: beneficiary banks,
-  correspondents, and drawable countries, each with its denominator or scope.
+  correspondents, and drawable countries, each with its denominator or scope. **The
+  rail is figures on a ruled band, not cards** — DESIGN.md:90 allows a card only when
+  the surface is independently selectable, movable or meaningfully bounded, and
+  DESIGN.md:132 forbids a mosaic of equal cards. Four equal boxes is that mosaic.
+- **The dominant action is selecting an institution or country** (DESIGN.md Principle
+  1). Everything else on the plate orients or filters. The ranked table is where that
+  action is easiest, which is why it is a peer of the map rather than an appendix.
+- The page states its own coverage before its data, so a reader who leaves after five
+  seconds leaves with the sample, not with a false impression of the world.
 - On wide screens the map owns roughly two thirds of the work area and the ranked table
   owns one third. Selection opens detail in the table/panel column instead of covering
   the geography with a floating card.
@@ -448,11 +475,25 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
 
 - Use `geoNaturalEarth1` with a fixed initial world extent. The complete world remains
   visible on load; v1 has no slippy-map controls, terrain, streets, labels, or tiles.
-- Ocean is the page canvas. Land is a quiet surface with hairline borders. There is no
-  decorative graticule, shadow, bevel, glow, or texture beyond the evidence hatch.
-- The sequential country ramp is derived from Relay's action/surface tokens and
-  checked in both light and dark themes. Never-collected land stays visibly neutral;
-  selected geography uses the action edge plus a non-colour cue.
+- Ocean is the page canvas in light and dark. Land is a quiet surface with hairline
+  borders. There is no decorative graticule, shadow, bevel, glow, or texture beyond the
+  evidence hatch.
+- **`black` theme gets its own land treatment.** Relay ships three themes, not two:
+  `tokens.css:262` defines `:root[data-theme="black"]` with `--color-canvas: #000000`
+  and `--color-surface: #18181b` — a 1.18:1 canvas-to-land step. "Ocean is the canvas"
+  dissolves the map entirely there. In `black`, land lifts to an explicit surface step
+  with a perceptible boundary and hairlines strengthen. The neutral ramp needs no
+  special case: `--color-ink-strong` is already `#f3f4f6` in that theme, so the ramp
+  inverts correctly on its own. Every visual assertion covers three themes.
+- **The sequential country ramp is neutral ink, never blue.** DESIGN.md:28 reserves
+  `--color-action` `#3157D5` for "Primary actions, selected navigation, links,
+  progress." A blue data ramp spends the product's one reserved colour on decoration
+  and, worse, makes selection invisible: a blue selected edge against a blue fill is
+  no edge at all. The ramp runs light neutral to `--color-ink-strong` `#16233D`;
+  `#3157D5` keeps its single job. Checked in both light and dark themes.
+- Never-collected land stays visibly neutral and distinct from the ramp's light end.
+  Selected geography uses the action edge **plus** a non-colour cue, per DESIGN.md's
+  rule that status is never carried by colour alone.
 - Hub circles are crisp translucent marks with a solid outline. They do not pulse,
   travel, or emit arcs. The absence of animation is semantic: the data is a collected
   network position, not live movement.
@@ -467,6 +508,18 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
 
 - Hover/focus links map and table; click/Enter pins the same selection and updates the
   URL. Escape clears it. Focus order follows the table, not SVG path order.
+- **The map SVG is `aria-hidden` with a text alternative naming the table.** Its 177
+  paths are not individually focusable. The table already carries every value the map
+  encodes, so exposing both duplicates the content and turns the map into a 177-stop
+  keyboard trap between the toggles and the data.
+- **Selection never requires hitting a country.** Every country reachable on the map is
+  reachable in the table, and the table row is the 44×44px target (DESIGN.md:121).
+  Malta is roughly two pixels wide at 390px; a design that requires tapping it is a
+  design that excludes phones. Map hit areas are enlarged where geometry allows, but
+  the table is the guaranteed path, not the fallback.
+- **Below 768px the table becomes a labeled record list** (DESIGN.md:124), not a
+  horizontally scrolling table. It is simultaneously the narrow-screen-first element
+  and the accessibility equivalent, so it is the one component that cannot degrade.
 - View and settleability changes use the existing control motion only. Map marks may
   cross-fade within the standard duration token; paths do not fly, morph across the
   globe, or animate along routes.
@@ -483,6 +536,17 @@ spine, evidence channel, coverage, delivery and hub treatment — not visual dir
 The claim is withdrawn rather than restated. If that choice was made elsewhere, cite
 where and this reverts to a decision; until then it is a proposal that has not been
 reviewed.
+
+**Design-system alignment.** Colours come from the named tokens in
+`frontend/src/design-system/tokens.css`, not from new hexes: `--color-action`
+(selection and controls only), `--color-ink-strong` (ramp dark end and primary text),
+`--color-ink`, `--color-ink-muted`, `--color-canvas`, `--color-surface`,
+`--color-border`, `--color-border-strong`.
+
+The map is a component type DESIGN.md:88 does not list. Adding it to that vocabulary
+is a DESIGN.md change, not an atlas change, and is out of scope here — but the
+implementer should expect the component to define every state DESIGN.md:92-98 requires
+of a shared component, because it will become one.
 
 ### Two views
 
@@ -508,7 +572,13 @@ accepted rather than solved.
 |---|---|
 | one circle per hub country | country-level network position |
 | circle area | distinct beneficiary banks reached by correspondents in that country, as a share of the collected denominator |
-| circle fill depth | distinct currency breadth across correspondents in that country |
+
+**Circle fill is flat, and encodes nothing beyond identity.** An earlier revision put
+currency breadth on fill depth. Translucent marks that overlap — and the European hubs
+overlap heavily — sum to a third, darker value that encodes nothing while looking like
+data. Overlap is not a layout nuisance there, it is channel destruction, and it lands
+exactly where the hubs are. Currency breadth lives in the table, where it is legible
+and sortable.
 
 **No evidence channel, at all.** The panel states why in one line and lists the
 disclosing banks' evidence spread, which is the true statement.
@@ -520,13 +590,62 @@ institution would put 36 US marks at the exact same coordinate and make the visi
 result depend on DOM order. Country aggregation still hides the institution-level
 finding — the US shows 15 currencies because 36 institutions collectively span 15,
 which is not the Citi-versus-Commerzbank story. That story lives in the synced table,
-which ranks the `hubs` array. The hub map is the weaker half of this feature and is
-shipped as a secondary read, not as the payoff.
+which ranks the `hubs` array.
+
+**Hub is the default view.** The feature's thesis is the star — 14 institutions
+carrying a network of 251 banks — and landing on the spoke view shows collection
+coverage instead, which is the less interesting of the two. An earlier revision called
+the hub map "the weaker half, shipped as a secondary read"; that is withdrawn. It
+cannot be both the default and a secondary read. What survives from that assessment is
+narrower and still true: the hub *map* carries less of the finding than the hub
+*table* does, so on arrival the table is doing the explanatory work and the map is
+doing the spatial work.
+
+**Why the hub map survives DESIGN.md:138** ("No chart when the payment route or a
+direct value comparison communicates the point better"). The ranked table states reach
+and currency breadth better than any circle. What it cannot state is *where* the hubs
+are: that they cluster in the US, Germany, the UK, Japan and Switzerland, and that
+almost nothing in the global south appears. That is a spatial fact, and a table of
+country codes does not communicate it. The rule is satisfied because the map carries
+something the comparison cannot, not because the map is prettier. Recorded here so a
+later reviewer re-testing rule 138 finds the argument instead of re-litigating it.
 
 **Settleability filter** is orthogonal to the view. It changes the URL and refetches
 `/api/atlas/network` with the selected `scope`; both views receive recomputed distinct
 counts. Countries do not dim, they leave. The React Query key includes the scope so
 all and settleable results cannot overwrite each other.
+
+### Table specification
+
+The document called this a "ranked table" repeatedly without naming a column. It is the
+accessibility surface, so it is the one component that cannot be left to the implementer.
+
+**Spoke view** — one row per country: country, beneficiary banks (with denominator),
+rows, archived share as numerator-of-denominator plus percent, coverage state.
+
+**Hub view — two tiers (D15).** Country aggregate rows carrying `banks_served` and
+`currencies` with their denominators, with institution rows grouped beneath and
+expandable. The map renders country grain and an institution-grain table alone would
+mean the aggregate a sighted user reads — "US: 223 banks" — exists in no row at all.
+That is the number AC-F9 was written to protect, so an institution-only table leaves
+that AC guarding a cell that does not exist.
+
+Default sort is reach descending; sort is user-controllable and lives in the URL beside
+view, scope and selection. Below 768px the table becomes a labeled record list using the
+`data-label` pattern already shipped in `SchemeTable.tsx:57`, not a horizontally
+scrolling table.
+
+### Ramp binning
+
+The distribution is heavily skewed — 52% of correspondents serve exactly one bank — so a
+linear ramp renders a near-uniformly pale world and communicates nothing. Use quantile
+binning with five steps, and state the method as well as the range in the legend. AC-F10
+required the range; the method is the decision that determines whether the map says
+anything at all.
+
+Zero-count categories render as text ("0 published"), never as an empty legend swatch.
+An empty colour band reads as a rendering bug, which is the opposite of the rigor the
+zero is there to demonstrate.
 
 ### The synced table is the accessibility answer
 
@@ -666,7 +785,9 @@ Verified 2026-09-13:
 | 6 | `frontend/src/features/explore/ExplorePage.tsx` | category card on the Explore index |
 | 7 | `frontend/src/features/explore/search/CommandSearch.tsx` | destination entry |
 | 8 | `frontend/src/observability.ts` | allowlist `/app/explore/atlas`, `/api/atlas/network`, and parameterise `/api/atlas/country/:iso2` without logging the raw code |
-| 9 | `frontend/src/features/explore/atlas/assets/` | topology source asset, source/SHA-256 record, ISC license notice, and Vite `?url` import that emits beneath the existing `/app/assets` mount |
+| 9 | `frontend/src/features/tutor/` | publish atlas context via `usePublishTutorContext`, matching the other Explore routes |
+| 10 | `frontend/src/features/explore/BankDetailRoute.tsx` | reciprocal "network position" link back into the atlas, so the drill-down is not one-way |
+| 11 | `frontend/src/features/explore/atlas/assets/` | topology source asset, source/SHA-256 record, ISC license notice, and Vite `?url` import that emits beneath the existing `/app/assets` mount |
 
 ---
 
@@ -759,7 +880,10 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   distinct counts from the unfiltered payload.
 - **AC-F7** *(D6)* — the coverage frame is present in every view and filter state and
   cannot be dismissed.
-- **AC-F8** — axe passes on the atlas route.
+- **AC-F8** — axe passes on the atlas route. **Axe is a floor, not coverage for this
+  feature**: a choropleth with no text equivalent passes it trivially, and every
+  accessibility failure this spec guards against (AC-F9, AC-F12b, AC-F24, AC-F26) is
+  invisible to it. A green axe run is not evidence the atlas is accessible.
 - **AC-F9** *(clause 2)* — `AtlasTable` and `AtlasPanel` cannot render a reach figure
   without its denominator, enforced by the same required field as AC-F3.
 
@@ -771,8 +895,8 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 
 - **AC-F10** *(clause 2)* — **every data-driven scale** states its actual range in the
   legend, read from the data and never hardcoded. That is all three: the choropleth
-  fill (beneficiary banks), the hub circle area (reach), and the hub circle fill depth
-  (currency breadth).
+  fill (beneficiary banks) and the hub circle area (reach). Fill depth is no longer a
+  scale — see D14.
 
   A scale's meaning lives entirely in its domain, and every one of these domains shifts
   as waves land. "Dark" otherwise means "large relative to whatever today's maximum
@@ -798,6 +922,13 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   and in scope. The legend names all three. Derived by subtracting scoped `spokes` from
   the corpus-wide observed list (contract rule 7).
 
+  **The three states are stated as text in the coverage frame, not only drawn.** The
+  frame gives the count in each state and makes the out-of-scope set enumerable. An
+  earlier revision required only the map and legend, which made the feature's own
+  headline interaction — 21 countries leaving — a purely visual assertion. A table of
+  the countries that remain cannot say "Canada left". That is the D6 conflation
+  reproduced one layer up, and it is exactly the failure this AC exists to prevent.
+
   AC-F12 covers two states because `scope=all` only has two. The moment a scope filter
   is applied, a country like Canada — 2 banks, 15 rows, none settleable — becomes a
   third thing, and drawing it like France repeats at the map level the defect AC-B11a
@@ -813,7 +944,95 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   The second descriptor is a **test fixture only**. No second layer, and no external
   data, ships in v1 — see Out of scope.
 
+### Loading, empty and default states
+
+DESIGN.md Principle 7 requires five states on every async region. Error, partial and
+success were specified; loading and empty were not, and the panel column had no
+default at all.
+
+**Loading.** Two independent requests — the atlas payload and the topology asset. The
+metric rail and the map skeleton resolve separately: the rail shows its own loading
+state and fills first, the map region holds a neutral land silhouette (no fill ramp,
+no hatch) until the payload lands. Never show a coloured map that is about to change
+colour; a fill that shifts under the reader looks like data changing, not loading.
+
+**Empty.** A reachable state, not a hypothetical: `seed_if_empty` can fail and
+`/health` then reports `degraded`. Zero rows renders the frame, the legend and the
+neutral world with an explicit statement that no rows are loaded, plus the one relevant
+action (retry). It must never render as a world where nothing was ever collected —
+that is the D6 conflation again, arriving through an infrastructure failure instead of
+a scope filter.
+
+**Panel default.** One third of the work area has nothing in it before a selection.
+It carries the current view's top-ranked entry, labelled as a default rather than a
+selection, so the column teaches what selection produces instead of sitting blank.
+
+- **AC-F21** *(D11)* — no atlas fill, ramp stop, or hatch resolves to `--color-action`
+  or any blue in its family. A test asserts the choropleth ramp endpoints against the
+  neutral tokens, and that the selected-country treatment is the only element using the
+  action colour. Blue means action; DESIGN.md:28 is the contract.
+- **AC-F22** *(D12)* — the hub view is the default on first load with no URL state, and
+  the ranked table is populated on arrival.
+- **AC-F23** — the metric rail renders as figures on a ruled band with no per-metric
+  card border, background fill, or shadow (DESIGN.md:90, :132).
+- **AC-F24** — the map SVG is `aria-hidden="true"` and carries no focusable descendants;
+  a text alternative names the table as the equivalent. An axe run plus a keyboard walk
+  assert that tabbing from the toggles reaches the table without traversing geometry.
+- **AC-F25** — every country present in the current view is selectable from the table,
+  and each table row meets the 44×44px target. No assertion depends on hitting map
+  geometry.
+- **AC-F26** — below 768px the table renders as a labeled record list, not a scrolling
+  table (DESIGN.md:124).
+
+- **AC-F30** *(D16)* — every visual assertion covers three themes: light, dark and
+  `black`. In `black`, land renders as an explicit surface step against the canvas with
+  a measured boundary, not as canvas-coloured land.
+- **AC-F31** *(D15)* — the hub table renders country aggregate rows whose
+  `banks_served` and `currencies` match the map's circles, with institution rows grouped
+  beneath. Every value visible on the map exists in a table row.
+- **AC-F32** *(D14)* — hub circle fill is flat; no scale maps to fill opacity or depth.
+- **AC-F33** — the choropleth uses quantile binning with a stated step count, and the
+  legend names the method as well as the range.
+- **AC-F34** — sort key and direction live in the URL alongside view, scope and
+  selection, and back/forward restores them.
+- **AC-F35** — reduced motion is honoured through **both** paths: the
+  `prefers-reduced-motion` media query and Relay's in-app `[data-reduced-motion="true"]`
+  flag (`theme.ts:103`, `global.css:212`). Testing only the media query leaves the
+  in-app preference unverified.
+- **AC-F36** — the atlas publishes tutor context via `usePublishTutorContext`, as
+  `ExplorePage`, `LearnModulePage` and `TrackingPage` already do. Without it the tutor
+  goes context-blind on a new Explore route.
+- **AC-F37** — zero-count evidence categories render as text, never as an empty legend
+  swatch.
+- **AC-F38** — search resolves a country or correspondent into the same selection state
+  the map and table produce, and the result is reachable by keyboard alone.
+- **AC-F39** — the atlas map satisfies DESIGN.md's **geographic instrument** contract:
+  synced text equivalent carrying every encoded value, marks out of the accessibility
+  tree, no reserved colour on a data scale, selection reachable without hitting geometry.
+
+### Loading, empty and default states
+
+- **AC-F27** — while either request is outstanding the map renders neutral land with no
+  ramp and no hatch, and the metric rail shows its own loading state. No coloured fill
+  is drawn that a completed load would then change.
+- **AC-F28** — a zero-row corpus renders the frame, legend and neutral world with an
+  explicit "no rows loaded" statement and a retry action. It never renders as a world
+  where nothing was collected.
+- **AC-F29** — before any selection the panel shows the current view's top-ranked entry,
+  labelled as a default rather than as a selection.
+
 ### Error and partial states
+
+`AsyncRegion`'s `partial` branch renders `partialNote` as a `<p role="note">` with **no
+retry control** — retry exists only on the `error` branch. So the table-plus-no-map state
+is not recoverable in place. Either the atlas adds its own retry affordance beside the
+note, or the spec states that reload is the recovery. It must not claim "reuse
+AsyncRegion" and leave the user stranded.
+
+The country panel is a second async region with its own fetch, and DESIGN.md Principle 7
+applies to it too: it needs loading, empty, error, success and partial states of its own.
+On a failed country fetch the selection stays in the URL and the panel offers retry; the
+map and table selection do not reset.
 
 - **AC-F14** — a failed `/api/atlas/network` renders `AsyncRegion`'s error state with
   retry. No map is drawn.
@@ -857,6 +1076,10 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 ---
 
 ## NOT in scope for v1
+
+Atlas search and the DESIGN.md geographic-instrument entry were considered out of scope
+during the design review and pulled back in — see T9 and D10. What follows is what
+stayed out.
 
 External scale layer (seam only, no data). Drawn edges or arcs on the map. Animation.
 Institution city coordinates. Pixel-diff screenshot infrastructure. Any volume, value
@@ -942,6 +1165,28 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
      fixtures.
    - Attach screenshots and a completed checklist to the implementation review. This is
      human design verification, not a new pixel-baseline test subsystem.
+
+8. [ ] **T8 (P1) — Design-review corrections, folded into T4/T5**
+   - Neutral ink ramp with quantile binning; `--color-action` reserved for selection
+     only (AC-F21, AC-F33).
+   - Hub default view; two-tier hub table; flat circle fill (AC-F22, AC-F31, AC-F32).
+   - Three themes including `black` land surface (AC-F30).
+   - Loading, empty and panel-default states; country-panel async states (AC-F27–F29).
+   - Coverage frame states its three counts as text (AC-F12b).
+   - `aria-hidden` map, table-only selection path, record list below 768px
+     (AC-F24–F26).
+   - Both reduced-motion paths; tutor context; zero-count legend text
+     (AC-F35–F37).
+9. [ ] **T9 (P1) — Atlas search**
+   - Type-ahead over countries and correspondents, resolving into the same selection
+     model as the map and table. Extends `CommandSearch` rather than adding a second
+     search surface.
+   - DESIGN.md:81 makes Explore search-first; a reference instrument over 251 banks and
+     102 countries without it does not match the workspace it lives in.
+10. [ ] **T10 (P2) — Reciprocal link and discovery**
+   - "Network position" link on `BankDetailRoute` back into the atlas.
+   - Concentration finding (14 hubs / 374 single-appearance correspondents) in the
+     title block.
 
 ### Execution lanes
 
@@ -1036,32 +1281,18 @@ FROM ssi GROUP BY 1;
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; governing product decisions were already approved |
-| Codex Review | `/codex review` | Independent 2nd opinion | 1 | CHANGES APPLIED | Found the unreachable topology path, unsupported pixel-baseline scope, empty-country contract conflict, overstated verdict, and duplicated hardcoded status assertion |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | SUPERSEDED | Initial clear was invalidated by the later repository-backed review; re-run required on this revision |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | NOT RUN | Unjustified skip. The visual-direction section is the largest block added since the last engineering pass and no design review has seen it. Direction A is recorded as an **author proposal**, not a user decision — see note below. |
-| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not required for this end-user Explore feature |
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; governing product decisions were approved during design |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | UNAVAILABLE | Codex aborted: `Error loading config.toml: data did not match any variant of untagged enum FeatureToml in features.multi_agent_v2`. Local config fault, not auth. Outside voices ran `[single-model]` |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | STALE | CLEAR at 2026-09-13T17:21Z against commit 1ab9478. The plan has changed materially since — contract split of `collected`, three-state coverage, two-tier table, new async states. Re-run required |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | ISSUES OPEN | score 6/10 → 8/10, 11 decisions, 1 unresolved. 7 passes plus an independent Claude design subagent |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not required for an end-user Explore feature |
 
-**VERDICT:** RE-REVIEW REQUIRED — do not begin implementation. Engineering re-review is
-required for the contract changes, and a design review has never run against the
-visual-direction section. This revision routes the
-topology through Vite's existing `/app/assets/` mount, separates corpus-wide
-`collected` from scoped counts so a country that leaves the map can still explain
-itself, makes never-collected countries an
-explicit successful response, removes the unplanned pixel-baseline subsystem, derives
-the complete status cross-tab from `SSI_STATUSES`, and narrows the claims in this
-report. Engineering review must confirm those changes before the status returns to
-implementation-ready.
+**Pass scores:** Info Arch 5→8 · States 3→9 · Journey 4→7 · AI Slop 8→9 · Design System 4→9 · Responsive/A11y 5→9 · Decisions 11 resolved, 1 deferred.
 
-### Deferred, non-blocking issues
+**OUTSIDE VOICE:** An independent Claude design subagent found five issues this review's own passes missed, each verified against the repo before acting: a third shipped theme (`tokens.css:262`, `data-theme="black"`) in which the map's figure-ground collapses; `AsyncRegion`'s partial branch having no retry control; an in-app `[data-reduced-motion="true"]` path separate from the media query; the `data-label` record-list pattern already shipped in `SchemeTable.tsx`; and `usePublishTutorContext` being consumed by every other Explore route. It also found two defects in acceptance criteria written during the preceding engineering review — AC-F9 protecting a value with no table row, and AC-F12b making the feature's headline interaction sighted-only.
 
-- `EB` remains unclassified until its source is checked. D9 defines truthful behavior
-  meanwhile; implementation does not depend on guessing its meaning.
-- A future dimensionless composite score cannot be prohibited structurally by the
-  current payload allowlist. The documented control is review discipline; no composite
-  ships in v1.
-- Direction A is an unreviewed author proposal. The visual-direction section has not
-  been through `/plan-design-review`, and the user decision previously cited for it
-  could not be located.
-- Pixel-diff screenshot infrastructure is deferred. T7 requires human visual evidence
-  for v1 without pretending the repository already has a stable baseline workflow.
+**VERDICT:** DESIGN REVIEWED, NOT CLEARED TO IMPLEMENT. The design contract violations are closed and DESIGN.md itself was corrected (stale three-theme text, new geographic-instrument component entry). Engineering review must re-run: this revision changed the payload grain consumed by the table, added six interaction states, and pulled search into scope.
+
+**UNRESOLVED DECISIONS:**
+- Overlapping hub circles in Europe still corrupt the area channel. Removing fill depth (D14) fixed additive opacity, but two overlapping circles of different sizes remain hard to read by area, and no mitigation is specified. Deferred rather than solved; the ranked table carries the same values exactly.
+- `EB` / `EDBBEB22XXX` remains unclassified pending a source check (carried from prior review).
