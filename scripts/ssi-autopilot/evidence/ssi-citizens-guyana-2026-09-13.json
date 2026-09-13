@@ -1,0 +1,16 @@
+{
+  "beneficiary_bic": "CBGIGYGGXXX",
+  "source_url": "https://citizensbankgy.com/foreign-exchange/wire-transfer/",
+  "identity_crosscheck_url": "https://epaguyana.org/download/application-form-for-transport-of-crude-oil-by-oil-tankers/?filename=Application-Form-for-Transport-of-Crude-Oil-by-Oil-Tankers-1.pdf&ind=0&refresh=6860c261998321751171681&wpdmdl=858",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "routes": [
+    {"currency": "USD", "int_bic": "IRVTUS3NXXX"},
+    {"currency": "EUR", "int_bic": "CRASGB2LXXX"},
+    {"currency": "GBP", "int_bic": "CRASGB2LXXX"},
+    {"currency": "CAD", "int_bic": "CRASGB2LXXX"}
+  ]
+}

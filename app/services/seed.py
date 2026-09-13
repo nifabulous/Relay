@@ -517,6 +517,7 @@ BANKS = [
     ("BNTBKYKYXXX", "Butterfield Bank (Cayman) Limited", "KY", "George Town", "KYD"),
     ("FCTTTTPSXXX", "First Citizens Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("RBGLGYGGXXX", "Republic Bank (Guyana) Limited", "GY", "Georgetown", "GYD"),
+    ("CBGIGYGGXXX", "Citizens Bank Guyana Inc.", "GY", "Georgetown", "GYD"),
     ("RBNKTTPXXXX", "Republic Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("JNCBJMKXXXX", "National Commercial Bank Jamaica Limited", "JM", "Kingston", "JMD"),
     ("FILBJMKNXXX", "First Global Bank Limited", "JM", "Kingston", "JMD"),
@@ -3458,6 +3459,34 @@ SSI_RECORDS = [
      "CITIUS33XXX", "Citibank N.A. New York",
      "ACCT-91000015", "ACCT-00576", "SHA", "spot",
      "Source: UBA Guinea SWIFT Codes PDF. ABA 021000089. " + _SSI_REAL_NOTE, None, "archived"),
+
+    # ====================================================================
+    # REAL SSI DATA — Citizens Bank Guyana Inc. (CBGIGYGG)
+    # Source: current Citizens Bank Guyana wire-transfer instructions. The
+    # published correspondent BICs are retained as availability-only rows;
+    # source account values are intentionally withheld.
+    # ====================================================================
+
+    ("CBGIGYGGXXX", "Citizens Bank Guyana Inc.", "USD",
+     "IRVTUS3NXXX", "The Bank of New York Mellon, New York",
+     None, None, None, None,
+     "Source: https://citizensbankgy.com/foreign-exchange/wire-transfer/ (current wire instructions; accessed 2026-09-13). Beneficiary BIC CBGIGYGG is cross-checked in the evidence fixture. BIC-level list — no account numbers published; not a selectable settlement instruction. Source account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CBGIGYGGXXX", "Citizens Bank Guyana Inc.", "EUR",
+     "CRASGB2LXXX", "Crown Agents Bank Limited, Sutton",
+     None, None, None, None,
+     "Source: https://citizensbankgy.com/foreign-exchange/wire-transfer/ (current wire instructions; accessed 2026-09-13). Beneficiary BIC CBGIGYGG is cross-checked in the evidence fixture. BIC-level list — no account numbers published; not a selectable settlement instruction. Source account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CBGIGYGGXXX", "Citizens Bank Guyana Inc.", "GBP",
+     "CRASGB2LXXX", "Crown Agents Bank Limited, Sutton",
+     None, None, None, None,
+     "Source: https://citizensbankgy.com/foreign-exchange/wire-transfer/ (current wire instructions; accessed 2026-09-13). Beneficiary BIC CBGIGYGG is cross-checked in the evidence fixture. BIC-level list — no account numbers published; not a selectable settlement instruction. Source account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CBGIGYGGXXX", "Citizens Bank Guyana Inc.", "CAD",
+     "CRASGB2LXXX", "Crown Agents Bank Limited, Sutton",
+     None, None, None, None,
+     "Source: https://citizensbankgy.com/foreign-exchange/wire-transfer/ (current wire instructions; accessed 2026-09-13). Beneficiary BIC CBGIGYGG is cross-checked in the evidence fixture. BIC-level list — no account numbers published; not a selectable settlement instruction. Source account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
 
     # ====================================================================
     # FRANCOPHONE WEST/CENTRAL AFRICA — BIC-level correspondent lists
