@@ -1,0 +1,11 @@
+{
+  "source_url": "https://ifscgift.canarabank.bank.in/nostro-account-details",
+  "source_last_updated": "2026-02-18",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {"raw_accounts_committed": false, "settlement_terms_published": false},
+  "routes": [
+    {"currency": "USD", "int_bic": "CHASUS33XXX"},
+    {"currency": "EUR", "int_bic": "CITIIE2XXXX"},
+    {"currency": "JPY", "int_bic": "MHCBJPJTXXX"}
+  ]
+}

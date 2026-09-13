@@ -540,6 +540,7 @@ BANKS = [
     ("DHBLBDDHXXX", "Dhaka Bank PLC", "BD", "Dhaka", "BDT"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
+    ("CNRBINAAXXX", "Canara Bank IBU Gift City", "IN", "Gandhinagar", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
     ("SONEPKKAXXX", "Soneri Bank Limited", "PK", "Karachi", "PKR"),
     ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", "NL", "Amsterdam", "EUR"),
@@ -3258,6 +3259,25 @@ SSI_RECORDS = [
      "BOMLAEADXXX", "Mashreqbank Dubai",
      "ACCT-37438", "ACCT-66163", "SHA", "spot",
      "Source: TMB Bank nostro remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Canara Bank IBU Gift City (CNRBINAAXXX)
+    # Source: ifscgift.canarabank.bank.in Nostro Account Details page
+    # Last updated 2026-02-18; account values are masked below.
+    # ====================================================================
+
+    ("CNRBINAAXXX", "Canara Bank IBU Gift City", "USD",
+     "CHASUS33XXX", "JP Morgan Chase, New York",
+     "ACCT-91013001", "ACCT-91013001", "SHA", "spot",
+     "Source: https://ifscgift.canarabank.bank.in/nostro-account-details (as of 2026-02-18; accessed 2026-09-13). " + _SSI_REAL_NOTE, None, "unverified"),
+    ("CNRBINAAXXX", "Canara Bank IBU Gift City", "EUR",
+     "CITIIE2XXXX", "Citi Bank Europe PLC, Dublin",
+     "ACCT-91013002", "ACCT-91013002", "SHA", "spot",
+     "Source: https://ifscgift.canarabank.bank.in/nostro-account-details (as of 2026-02-18; accessed 2026-09-13). " + _SSI_REAL_NOTE, None, "unverified"),
+    ("CNRBINAAXXX", "Canara Bank IBU Gift City", "JPY",
+     "MHCBJPJTXXX", "Mizuho Bank Ltd., Tokyo",
+     "ACCT-91013003", "ACCT-91013003", "SHA", "spot",
+     "Source: https://ifscgift.canarabank.bank.in/nostro-account-details (as of 2026-02-18; accessed 2026-09-13). " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ====================================================================
     # REAL SSI DATA — IDFC FIRST Bank India (IDFBINBBMUM)
