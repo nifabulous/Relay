@@ -48,17 +48,18 @@ from __future__ import annotations
 import argparse
 import datetime
 import hashlib
+import http.client
 import ipaddress
 import json
 import os
 import re
 import socket
+import ssl
 import sys
 import time
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.parse import urljoin, urlparse
 
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
 _BIC = re.compile(r"^[A-Z0-9]{8}(?:[A-Z0-9]{3})?$")
@@ -72,6 +73,7 @@ MAX_SOURCE_BYTES = 25 * 1024 * 1024
 # A byte cap bounds how much a server may send, not how long it may take. A
 # slow drip stays under the cap indefinitely and burns the CI job instead.
 MAX_SOURCE_SECONDS = 60
+MAX_REDIRECTS = 5
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
@@ -135,6 +137,14 @@ class CredentialsInSourceUrl(AttestationError):
 
 class MalformedSourceUrl(AttestationError):
     """The citation cannot be parsed as a URL at all."""
+
+
+class TooManyRedirects(AttestationError):
+    """The citation redirected further than a published page reasonably would."""
+
+
+class SourceUnavailable(AttestationError):
+    """The source answered, but not with the page."""
 
 
 class DigestMismatch(AttestationError):
@@ -496,7 +506,7 @@ def redact_url(url: str) -> str:
     return f"{parsed.scheme}://{host}{port}{parsed.path}{suffix}"
 
 
-def _assert_fetchable(url: str) -> None:
+def _assert_fetchable(url: str) -> tuple:
     """Refuse a URL that is not a public http(s) destination.
 
     These URLs come from evidence files and are fetched by CI, so the scheme
@@ -505,11 +515,10 @@ def _assert_fetchable(url: str) -> None:
     turns this verifier into a request-forwarder for whoever wrote the
     evidence file.
 
-    This resolves the name and checks the addresses it gets. A host that
-    answers differently on the next lookup can still slip past — the check and
-    the connection are separate moments — so this raises the cost of that
-    trick rather than making it impossible. Worth saying plainly instead of
-    calling it SSRF-proof.
+    Returns the parsed URL and the address that was validated, so the caller
+    connects to that address instead of resolving a second time. Checking one
+    answer and then connecting to whatever the next lookup returns is the
+    rebinding hole; pinning what was checked closes it.
     """
     try:
         parsed = urlparse(url)
@@ -534,7 +543,8 @@ def _assert_fetchable(url: str) -> None:
     host = parsed.hostname
     if not host:
         raise UnsupportedSourceScheme("refusing to fetch a URL with no host")
-    for family, _, _, _, address in socket.getaddrinfo(host, None):
+    resolved: list[str] = []
+    for _, _, _, _, address in socket.getaddrinfo(host, None):
         candidate = ipaddress.ip_address(address[0])
         if (
             candidate.is_private
@@ -551,28 +561,104 @@ def _assert_fetchable(url: str) -> None:
                 "this process being pointed somewhere by the evidence file it "
                 "is checking."
             )
+        resolved.append(str(candidate))
+    if not resolved:
+        raise BlockedSourceAddress(
+            f"refusing to fetch {redact_url(url)}: the host resolves to nothing"
+        )
+    # Return the address that was checked so the caller connects to *it*
+    # rather than resolving again. Checking one answer and connecting to
+    # whatever the next lookup returns is the rebinding hole.
+    return parsed, resolved[0]
 
 
-class _ValidatingRedirectHandler(HTTPRedirectHandler):
-    """Check every redirect target, not only the URL that was typed.
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Connect to a validated address while keeping the hostname for TLS.
 
-    Validating the first URL and then letting the opener follow a `Location`
-    header anywhere leaves the actual destination unchecked, which is the
-    whole of the protection.
+    The certificate is still checked against the name in the citation, and SNI
+    still sends that name; only the address the socket dials is pinned.
     """
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        _assert_fetchable(newurl)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+    def __init__(self, host: str, address: str, **kwargs) -> None:
+        super().__init__(host, **kwargs)
+        self._address = address
+
+    def connect(self) -> None:
+        self.sock = socket.create_connection((self._address, self.port), self.timeout)
+        self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
+
+
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    """The same pinning without TLS. The Host header still names the site."""
+
+    def __init__(self, host: str, address: str, **kwargs) -> None:
+        super().__init__(host, **kwargs)
+        self._address = address
+
+    def connect(self) -> None:
+        self.sock = socket.create_connection((self._address, self.port), self.timeout)
+
+
+def _open_pinned(parsed, address: str):
+    """Build a connection dialing `address` while presenting the real host."""
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    if parsed.scheme == "https":
+        return _PinnedHTTPSConnection(
+            parsed.hostname,
+            address,
+            port=port,
+            timeout=30,
+            context=ssl.create_default_context(),
+        )
+    return _PinnedHTTPConnection(parsed.hostname, address, port=port, timeout=30)
 
 
 def _fetch(source: str) -> bytes:
-    _assert_fetchable(source)
-    request = Request(source, headers={"User-Agent": "Relay SSI source attestation/1"})
-    opener = build_opener(_ValidatingRedirectHandler)
+    """Fetch the cited page, validating and pinning every hop.
+
+    Redirects are followed here rather than by an opener, because every hop
+    has to be re-validated and re-pinned. A handler that only inspects the
+    `Location` header still lets the library resolve the name again, which is
+    the moment a rebinding host is waiting for.
+    """
     deadline = time.monotonic() + MAX_SOURCE_SECONDS
-    with opener.open(request, timeout=30) as response:  # noqa: S310 - validated above
-        return _read_bounded(response, deadline=deadline)
+    url = source
+    for _ in range(MAX_REDIRECTS + 1):
+        parsed, address = _assert_fetchable(url)
+        target = parsed.path or "/"
+        if parsed.query:
+            target = f"{target}?{parsed.query}"
+        connection = _open_pinned(parsed, address)
+        try:
+            connection.request(
+                "GET",
+                target,
+                headers={
+                    "Host": parsed.netloc,
+                    "User-Agent": "Relay SSI source attestation/1",
+                    "Accept": "*/*",
+                },
+            )
+            response = connection.getresponse()
+            if response.status in {301, 302, 303, 307, 308}:
+                location = response.getheader("Location")
+                if not location:
+                    raise SourceUnavailable(
+                        f"{redact_url(url)} answered {response.status} with no "
+                        "Location header"
+                    )
+                url = urljoin(url, location)
+                continue
+            if response.status != 200:
+                raise SourceUnavailable(
+                    f"{redact_url(url)} answered {response.status}"
+                )
+            return _read_bounded(response, deadline=deadline)
+        finally:
+            connection.close()
+    raise TooManyRedirects(
+        f"{redact_url(source)} redirected more than {MAX_REDIRECTS} times"
+    )
 
 
 def _apply_accepted_changes(

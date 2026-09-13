@@ -948,14 +948,88 @@ class TestFetchesCannotReachInward:
         with pytest.raises(attestation.UnsupportedSourceScheme):
             attestation._assert_fetchable("file:///etc/passwd")
 
-    def test_a_redirect_target_is_validated_not_just_the_first_url(self):
+    def test_validation_returns_the_address_it_checked(self):
+        """The caller must dial what was validated, not resolve again."""
         attestation = _module()
-        handler = attestation._ValidatingRedirectHandler()
 
-        with pytest.raises(attestation.BlockedSourceAddress):
-            handler.redirect_request(
-                None, None, 302, "Found", {}, "http://127.0.0.1/internal"
-            )
+        parsed, address = attestation._assert_fetchable("http://8.8.8.8/nostro")
+
+        assert address == "8.8.8.8"
+        assert parsed.hostname == "8.8.8.8"
+
+    def test_the_connection_dials_the_pinned_address_and_keeps_the_hostname(self):
+        """
+        Pinning only changes which address the socket dials. TLS still checks
+        the certificate against the name in the citation.
+        """
+        attestation = _module()
+
+        connection = attestation._PinnedHTTPSConnection(
+            "bank.example", "198.51.100.7", port=443
+        )
+
+        assert connection._address == "198.51.100.7"
+        assert connection.host == "bank.example"
+
+    def test_a_redirect_to_a_blocked_address_is_refused_mid_chain(self):
+        """
+        The redirect is followed here rather than by an opener precisely so
+        each hop is re-validated and re-pinned. A handler that inspects only
+        the Location header still lets the library resolve the name again,
+        which is the moment a rebinding host waits for.
+        """
+        attestation = _module()
+
+        class _Response:
+            status = 302
+
+            def getheader(self, name):
+                return "http://127.0.0.1/internal"
+
+        class _Connection:
+            def request(self, *args, **kwargs):
+                return None
+
+            def getresponse(self):
+                return _Response()
+
+            def close(self):
+                return None
+
+        original = attestation._open_pinned
+        attestation._open_pinned = lambda parsed, address: _Connection()
+        try:
+            with pytest.raises(attestation.BlockedSourceAddress):
+                attestation._fetch("http://8.8.8.8/start")
+        finally:
+            attestation._open_pinned = original
+
+    def test_a_redirect_loop_is_bounded(self):
+        attestation = _module()
+
+        class _Response:
+            status = 302
+
+            def getheader(self, name):
+                return "http://8.8.8.8/again"
+
+        class _Connection:
+            def request(self, *args, **kwargs):
+                return None
+
+            def getresponse(self):
+                return _Response()
+
+            def close(self):
+                return None
+
+        original = attestation._open_pinned
+        attestation._open_pinned = lambda parsed, address: _Connection()
+        try:
+            with pytest.raises(attestation.TooManyRedirects):
+                attestation._fetch("http://8.8.8.8/start")
+        finally:
+            attestation._open_pinned = original
 
 
 class TestReadsHaveAWallClockDeadline:

@@ -293,9 +293,18 @@ fetcher treats those URLs as untrusted input rather than as configuration:
   with nothing to say so. A separate wall-clock budget stops a slow drip that
   stays under the byte cap from holding the job open.
 
-The address check resolves the name and inspects what it gets, so a host that
-answers differently on the next lookup can still slip past. It raises the cost
-of that trick; it is not a proof, and should not be described as one.
+The address check resolves the name once and the fetcher then **connects to
+the address it validated**, rather than letting the library resolve a second
+time. That closes DNS rebinding: checking one answer and dialling whatever the
+next lookup returns was the gap. TLS still verifies the certificate against
+the name in the citation, and the `Host` header still names the site — only
+the address the socket dials is pinned.
+
+Redirects are followed by the fetcher itself, not by an opener, because every
+hop has to be re-validated and re-pinned. A handler that inspects the
+`Location` header still hands the name back to the library to resolve, which
+is the moment a rebinding host waits for. The chain is bounded at
+`MAX_REDIRECTS`.
 
 ### On the fingerprints themselves
 
