@@ -254,6 +254,8 @@ BANKS = [
     # ---- U.S. Bank ----
     ("USBKUS44XXX", "U.S. Bank National Association", "US", "Minneapolis", "USD"),
     ("NBCBGB2LXXX", "U.S. Bank London", "GB", "London", "GBP"),
+    # ---- Old National Bank (incoming wire SSI) ----
+    ("OLNAUS44XXX", "Old National Bank", "US", "Evansville", "USD"),
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
@@ -3312,6 +3314,29 @@ SSI_RECORDS = [
      "HSBCHKHHXXX", "HSBC Hong Kong",
      "ACCT-52623", "ACCT-26310", "SHA", "spot",
      "Source: IDFC FIRST Bank inward remittance page. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Old National Bank (OLNAUS44)
+    # Source: Old National Bank incoming wire instructions, revised
+    # February 2026. Account identifiers are masked and terms remain
+    # explicitly inferred until treasury verification.
+    # ====================================================================
+
+    ("OLNAUS44XXX", "Old National Bank", "EUR",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     "ACCT-91016001", "ACCT-91016002", "SHA", "spot",
+     "Source: https://www.oldnational.com/496c1c/globalassets/onb-site/onb-documents/onb-business/onb-business-tmic/incoming-wire-instructions.pdf (revision February 2026; accessed 2026-09-13). Published correspondent/account values are masked; charge and value-date terms are not published, so settlement terms remain inferred. " + _SSI_REAL_NOTE,
+     "2026-02-01", "unverified", None, False, True),
+    ("OLNAUS44XXX", "Old National Bank", "GBP",
+     "CHASGB2LXXX", "J.P. Morgan Chase Bank N.A., London",
+     "ACCT-91016003", "ACCT-91016004", "SHA", "spot",
+     "Source: https://www.oldnational.com/496c1c/globalassets/onb-site/onb-documents/onb-business/onb-business-tmic/incoming-wire-instructions.pdf (revision February 2026; accessed 2026-09-13). Published correspondent/account values are masked; charge and value-date terms are not published, so settlement terms remain inferred. " + _SSI_REAL_NOTE,
+     "2026-02-01", "unverified", None, False, True),
+    ("OLNAUS44XXX", "Old National Bank", "CAD",
+     "CIBCCATTXXX", "Canadian Imperial Bank of Commerce, Toronto",
+     "ACCT-91016005", "ACCT-91016006", "SHA", "spot",
+     "Source: https://www.oldnational.com/496c1c/globalassets/onb-site/onb-documents/onb-business/onb-business-tmic/incoming-wire-instructions.pdf (revision February 2026; accessed 2026-09-13). Published correspondent/account values are masked; charge and value-date terms are not published, so settlement terms remain inferred. " + _SSI_REAL_NOTE,
+     "2026-02-01", "unverified", None, False, True),
 
     # ====================================================================
     # REAL SSI DATA — Bank of Kigali (BKRWRWRW)

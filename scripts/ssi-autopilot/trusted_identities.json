@@ -1326,5 +1326,6 @@
   "MPBLPKKA": {"name": "Habib Metropolitan Bank Limited", "country": "PK", "domains": ["habibmetro.com"], "settlement_terms_published": false},
   "JSBLPKKA": {"name": "JS Bank Limited", "country": "PK", "domains": ["jsbl.com"], "settlement_terms_published": false},
   "HAJCAZ22": {"name": "Xalq Bank Open Joint-Stock Company", "country": "AZ", "domains": ["xalqbank.az"], "settlement_terms_published": false},
-  "KVBLINBB": {"name": "Karur Vysya Bank Limited", "country": "IN", "domains": ["kvb.bank.in"], "settlement_terms_published": false}
+  "KVBLINBB": {"name": "Karur Vysya Bank Limited", "country": "IN", "domains": ["kvb.bank.in"], "settlement_terms_published": false},
+  "OLNAUS44": {"name": "Old National Bank", "country": "US", "domains": ["oldnational.com"], "settlement_terms_published": false}
 }
