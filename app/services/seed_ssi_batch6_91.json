@@ -1,0 +1,31 @@
+[
+  [
+    "ITAUCLRMXXX",
+    "Banco Itaú Chile",
+    "Source: https://banco.itau.cl/wps/wcm/connect/96e0ab8b-9dfb-493e-9df4-cef02552f14f/SSI%2B2013.pdf?MOD=AJPERES (official SSI PDF, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3N|Bank of America N.A.|91010100",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas|91010101",
+      "USD|CITIUS33|Citibank N.A.|91010102",
+      "EUR|DEUTDEFF|Deutsche Bank AG|91010103",
+      "EUR|COBADEFF|Commerzbank AG|91010104",
+      "JPY|BOTKJPJT|Bank of Tokyo-Mitsubishi UFJ|91010105",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken|91010106",
+      "CHF|CRESCHZZ|Credit Suisse|91010107",
+      "GBP|RBOSGB2L|Royal Bank of Scotland|91010108",
+      "CAD|BOFMCAT2|Bank of Montreal|91010109",
+      "AUD|NATAAU33|National Australia Bank|91010110",
+      "NZD|BKNZNZ22|Bank of New Zealand|91010111",
+      "ZAR|SCBLZAJJ|Standard Chartered Bank, Johannesburg|91010112",
+      "NOK|COBADEFF|Commerzbank AG|91010113",
+      "DKK|COBADEFF|Commerzbank AG|91010114"
+    ]
+  ]
+]

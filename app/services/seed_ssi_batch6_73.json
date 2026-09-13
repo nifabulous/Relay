@@ -1,0 +1,30 @@
+[
+  [
+    "UBBSBGSFXXX",
+    "United Bulgarian Bank AD",
+    "Source: https://www.ubb.bg/attachments/Tab/923/download_en/List-of-main-correspondent-banks-for-payments-UBB-SSI-12-2024.pdf (official correspondent-bank SSI list, December 2024). BIC-level list; no correspondent account numbers published. ",
+    "2024-12-01",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|KREDBEBB|KBC Bank, Brussels|",
+      "CAD|KREDBEBB|KBC Bank, Brussels|",
+      "CHF|KREDBEBB|KBC Bank, Brussels|",
+      "DKK|KREDBEBB|KBC Bank, Brussels|",
+      "GBP|KREDBEBB|KBC Bank, Brussels|",
+      "JPY|KREDBEBB|KBC Bank, Brussels|",
+      "NOK|KREDBEBB|KBC Bank, Brussels|",
+      "PLN|KREDBEBB|KBC Bank, Brussels|",
+      "SEK|KREDBEBB|KBC Bank, Brussels|",
+      "USD|KREDBEBB|KBC Bank, Brussels|",
+      "RON|KREDBEBB|KBC Bank, Brussels|",
+      "TRY|KREDBEBB|KBC Bank, Brussels|",
+      "CZK|CEKOCZPP|Ceskoslovenska Obchodni Banka, Prague|",
+      "HUF|OKHBHUHB|OTP Bank, Budapest|"
+    ]
+  ]
+]

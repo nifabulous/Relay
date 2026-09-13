@@ -1,0 +1,28 @@
+[
+  [
+    "UBKSBA22XXX",
+    "Union banka d.d. Sarajevo",
+    "Source: https://unionbank.ba/en/correspondent-banks (official correspondent-bank list, valid 2025-01-21). BIC-level list; no correspondent account numbers published. ",
+    "2025-01-21",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|PBZGHR2X|Privredna banka Zagreb|",
+      "CAD|PBZGHR2X|Privredna banka Zagreb|",
+      "CHF|PBZGHR2X|Privredna banka Zagreb|",
+      "DKK|PBZGHR2X|Privredna banka Zagreb|",
+      "GBP|PBZGHR2X|Privredna banka Zagreb|",
+      "NOK|PBZGHR2X|Privredna banka Zagreb|",
+      "EUR|PBZGHR2X|Privredna banka Zagreb|",
+      "EUR|KTAGDEFF|Kreissparkasse Traunstein|",
+      "EUR|SOLADEST|Banco de Sabadell|",
+      "EUR|BYLADEMM|Bayerische Landesbank|",
+      "EUR|HPBZHR2X|Hrvatska postanska banka|",
+      "USD|SOLADEST|Banco de Sabadell|"
+    ]
+  ]
+]

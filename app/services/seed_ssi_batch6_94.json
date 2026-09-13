@@ -1,0 +1,52 @@
+[
+  [
+    "BANIBOLXXXX",
+    "Banco BISA S.A.",
+    "Source: https://sjoven.bisa.com/assets/upload/files/bancos_corresponsales.pdf (official correspondent bank PDF linked from Banco BISA international transfers page, accessed 2026-09-12). BIC-level list; routing/ABA identifiers are published but correspondent account numbers are not. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|BOFAUS3M|Bank of America, Miami|",
+      "USD|COBADEFF|Commerzbank, Frankfurt|",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|",
+      "USD|CHASUS33|JPMorgan Chase, New York|",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "EUR|BPMOIT22|BPER Banca, Modena|",
+      "EUR|BBVAESMM|BBVA, Madrid|",
+      "EUR|CAIXESBB|CaixaBank, Valencia|",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "EUR|CHASDEFX|JPMorgan Chase SE, Frankfurt|",
+      "CHF|COBADEFF|Commerzbank, Frankfurt|",
+      "JPY|COBADEFF|Commerzbank, Frankfurt|",
+      "CNY|COBADEFF|Commerzbank, Frankfurt|",
+      "CNY|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "CNY|CHASHKHH|JPMorgan Chase, Hong Kong|"
+    ]
+  ],
+  [
+    "BNBOBOLXXXX",
+    "Banco Nacional de Bolivia S.A.",
+    "Source: https://www.bnb.com.bo/portalBNB/Documentos/TransferenciaExterior/BANCOS_CORRESPONSALES_BNB_USD.pdf and https://www.bnb.com.bo/PortalBNB/Documentos/TransferenciaExterior/BANCOS_CORRESPONSALES_BNB_EUR.pdf (official correspondent bank PDFs, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. The EUR BBVA row is omitted because the source provides no BIC. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|BOFAUS3N|Bank of America, New York|91010200",
+      "USD|CHASUS33|JPMorgan Chase, New York|91010201",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91010202",
+      "USD|COBADEFF|Commerzbank, Frankfurt|91010203",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91010204",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91010205"
+    ]
+  ]
+]

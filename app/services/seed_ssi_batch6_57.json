@@ -1,0 +1,32 @@
+[
+  [
+    "HAABHR22XXX",
+    "Addiko Bank d.d. Zagreb",
+    "Source: https://www.addiko.hr/static/uploads/SSI_Addiko-Bank-dd-Zagreb_10_December-2025-Commercial-payments.pdf (official commercial SSI table, 2025-12-10). ",
+    "2025-12-10",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|CITIIE2X|Citibank Europe, Dublin|91009000",
+      "BAM|HAABBA22|Addiko Bank Sarajevo|91009001",
+      "CAD|CITIIE2X|Citibank Europe, Dublin|91009002",
+      "CHF|CITIIE2X|Citibank Europe, Dublin|91009003",
+      "CZK|CITIIE2X|Citibank Europe, Dublin|91009004",
+      "DKK|COBADEFF|Commerzbank, Frankfurt|91009005",
+      "GBP|COBADEFF|Commerzbank, Frankfurt|91009006",
+      "HKD|COBADEFF|Commerzbank, Frankfurt|91009007",
+      "HUF|COBADEFF|Commerzbank, Frankfurt|91009008",
+      "JPY|CITIIE2X|Citibank Europe, Dublin|91009009",
+      "NOK|DNBANOKK|DNB Bank, Oslo|91009010",
+      "PLN|COBADEFF|Commerzbank, Frankfurt|91009011",
+      "RON|CITIIE2X|Citibank Europe, Dublin|91009012",
+      "RSD|HAABRSBG|Addiko Bank Serbia|91009013",
+      "SEK|CITIIE2X|Citibank Europe, Dublin|91009014",
+      "USD|CITIUS33|Citibank, New York|91009015"
+    ]
+  ]
+]

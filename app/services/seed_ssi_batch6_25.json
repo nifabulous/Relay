@@ -1,0 +1,42 @@
+[
+  [
+    "CBLUCH22XXX",
+    "Cornèr Banca SA",
+    "Source: https://www.corner.ch/export/sites/cornerbancaCH/.galleries/pdf/en/relazioni_banche/standard_settlement_instructions.pdf (Standard Settlement Instructions effective 2025-11-05; accessed 2026-09-12). ",
+    "2025-11-05",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|NBADAEAA|First Abu Dhabi Bank, Abu Dhabi|91006626",
+      "AUD|CHASAU2XXXX|JPMorgan Chase Bank, Sydney|91006627",
+      "BHD|UBSWCHZH80A|UBS AG, Zürich (via NBOBBHBM)|91006628",
+      "CAD|BOFMCAM2|Bank of Montreal, Montreal|91006629",
+      "CNY|ICBKLULC|ICBC, Luxembourg (via UBHKHKHH and ICBKSGSGCLR)|91006630",
+      "CZK|KOMBCZPP|Komerční banka, Prague|91006631",
+      "DKK|DNBADKKX|DNB Bank ASA Denmark branch, Copenhagen|91006632",
+      "EUR|BBRUBEBB010|ING Belgium, Brussels|91006633",
+      "GBP|CHASGB2L|JPMorgan Chase Bank, London|91006634",
+      "HKD|DHBKHKHH|DBS Bank, Hong Kong|91006635",
+      "HUF|CIBHHUHB|CIB Bank, Budapest|91006636",
+      "ILS|UBSWCHZH80A|UBS AG, Zürich (via LUMIILITBSC)|91006637",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91006638",
+      "KWD|UBSWCHZH80A|UBS AG, Zürich (via NBOKKWKW)|91006639",
+      "MXN|UBSWCHZH80A|UBS AG, Zürich (via CITIMXMMCVT)|91006640",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91006641",
+      "NZD|UBSWCHZH80A|UBS AG, Zürich (via ANZBNZ22)|91006642",
+      "OMR|NBADAEAA|First Abu Dhabi Bank, Abu Dhabi (via printed NBADOMRX)|91006643",
+      "PLN|BPKOPLPW|PKO Bank Polski, Warsaw|91006644",
+      "RON|BRDEROBU|BRD - Groupe Société Générale, Bucharest|91006645",
+      "SEK|HANDSESS|Svenska Handelsbanken, Stockholm|91006646",
+      "SGD|DBSSSGSG|DBS Bank, Singapore|91006647",
+      "THB|UBSWCHZH80A|UBS AG, Zürich (via SCBLTHBX)|91006648",
+      "TRY|AKBKTRIS|Akbank, Istanbul|91006649",
+      "USD|IRVTUS3N|Bank of New York Mellon, New York|91006650",
+      "ZAR|ABSAZAJJ|ABSA Bank, Johannesburg|91006651"
+    ]
+  ]
+]

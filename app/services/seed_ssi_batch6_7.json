@@ -1,0 +1,28 @@
+[
+  [
+    "JERSILITXXX",
+    "Bank of Jerusalem Ltd",
+    "Source: https://www.bankjerusalem.co.il/media/5318/ssi-boj-july23.pdf (as of 2023-07-14). ",
+    "2023-07-14",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|IRVTUS3N|The Bank of New York Mellon, New York|91005901",
+      "AUD|CRESCHZZ80A|Credit Suisse (Schweiz) AG, Zurich|91005902",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91005903",
+      "CHF|IRVTUS3N|The Bank of New York Mellon, New York|91005904",
+      "CHF|CRESCHZZ80A|Credit Suisse (Schweiz) AG, Zurich|91005905",
+      "GBP|IRVTUS3N|The Bank of New York Mellon, New York|91005906",
+      "GBP|CRESCHZZ80A|Credit Suisse (Schweiz) AG, Zurich|91005907",
+      "EUR|IRVTDEFX|The Bank of New York Mellon, Frankfurt|91005908",
+      "EUR|CRESCHZZ80A|Credit Suisse (Schweiz) AG, Zurich|91005909",
+      "JPY|IRVTUS3N|The Bank of New York Mellon, New York|91005910",
+      "SEK|IRVTUS3N|The Bank of New York Mellon, New York|91005911",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91005912"
+    ]
+  ]
+]

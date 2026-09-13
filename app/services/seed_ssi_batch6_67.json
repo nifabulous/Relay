@@ -1,0 +1,26 @@
+[
+  [
+    "BGNBPYPXXXX",
+    "Banco GNB Paraguay S.A.",
+    "Source: https://www.bancognb.com.py/public/media/comex/GNB-instrucciones-recepcion-transferencias-internacionales.pdf?v=19.12.22 (official international transfer instructions, 2022-12-19). BIC-level list; no correspondent account numbers published. ",
+    "2022-12-19",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "USD|CHASUS33|JPMorgan Chase, New York|",
+      "USD|BOFAUS3N|Bank of America, New York|",
+      "USD|CITIUS33|Citibank, New York|",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|",
+      "EUR|BBVAESMM|BBVA, Madrid|",
+      "GBP|BOFAGB22|Bank of America, London|",
+      "CHF|BOFAGB22|Bank of America, London|",
+      "JPY|BOFAGB22|Bank of America, London|",
+      "CAD|BOFAGB22|Bank of America, London|"
+    ]
+  ]
+]

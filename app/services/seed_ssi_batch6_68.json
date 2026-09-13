@@ -1,0 +1,23 @@
+[
+  [
+    "NAPAPAPAXXX",
+    "Banco Nacional de Panama",
+    "Source: https://www.banconal.com.pa/wp-content/uploads/2025/12/Transferencia_internacional_2025-3.pdf (official international transfer instructions, 2025). BIC-level list; no correspondent account numbers published. ",
+    "2025-12-01",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|CHASUS33|JPMorgan Chase, New York|",
+      "USD|CITIUS33|Citibank, New York|",
+      "USD|BOFAUS3M|Bank of America, Miami|",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "EUR|CHASDEFX|JPMorgan Chase, Frankfurt|",
+      "EUR|BBVAESMM|BBVA, Madrid|",
+      "EUR|BSCHESMM|Banco Santander, Madrid|"
+    ]
+  ]
+]

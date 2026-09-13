@@ -1,0 +1,35 @@
+[
+  [
+    "ATTIGRAAXXX",
+    "CrediaBank S.A.",
+    "Source: https://www.crediabank.com/media/1vfbbda4/crediabank-standard-settlement-instructions-ssis-sept-2025.pdf (official SSI list, September 2025). ",
+    "2025-09-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|DEUTDEFF|Deutsche Bank, Frankfurt|91009300",
+      "CHF|DEUTDEFF|Deutsche Bank, Frankfurt|91009301",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91009302",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91009303",
+      "AED|DEUTDEFF|Deutsche Bank, Frankfurt|91009304",
+      "CNY|DEUTDEFF|Deutsche Bank, Frankfurt|91009305",
+      "DKK|DEUTDEFF|Deutsche Bank, Frankfurt|91009306",
+      "HKD|DEUTDEFF|Deutsche Bank, Frankfurt|91009307",
+      "PLN|DEUTDEFF|Deutsche Bank, Frankfurt|91009308",
+      "SGD|DEUTDEFF|Deutsche Bank, Frankfurt|91009309",
+      "TRY|DEUTDEFF|Deutsche Bank, Frankfurt|91009310",
+      "ZAR|DEUTDEFF|Deutsche Bank, Frankfurt|91009311",
+      "GBP|DEUTDEFF|Deutsche Bank, Frankfurt|91009312",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|91009313",
+      "JPY|SMBCJPJT|SMBC, Tokyo|91009314",
+      "NOK|DNBANOKK|DNB Bank, Oslo|91009315",
+      "SEK|DEUTDEFF|Deutsche Bank, Frankfurt|91009316",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91009317",
+      "USD|CHASUS33|JPMorgan Chase, New York|91009318"
+    ]
+  ]
+]

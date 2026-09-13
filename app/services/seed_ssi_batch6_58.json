@@ -1,0 +1,35 @@
+[
+  [
+    "RZBHHR2XXXX",
+    "Raiffeisenbank Austria d.d.",
+    "Source: https://www.rba.hr/content/dam/rbi/retail/eu/hr/documents/business-entities/standard-settlement-instruction-for-fx-and-mm-deals/standard-settlement-instruction-fx-and-mm-deals.pdf.coredownload.inline.pdf (official FX/MM SSI table, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|ANZ Bank, Melbourne|91009100",
+      "BAM|RZBABA2S|Raiffeisen Bank Bosnia|91009101",
+      "CAD|RZBAATWW|Raiffeisen Bank International, Vienna|91009102",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91009103",
+      "CHF|POFICHBE|PostFinance, Bern|91009104",
+      "CZK|RZBCCZPP|Raiffeisenbank, Prague|91009105",
+      "DKK|NDEADKKK|Nordea, Copenhagen|91009106",
+      "EUR|RZBAATWW|Raiffeisen Bank International, Vienna|91009107",
+      "GBP|BARCGB22|Barclays, London|91009108",
+      "HUF|UBRTHUHB|UniCredit Bank Hungary, Budapest|91009109",
+      "JPY|MHCBJPJT|Mizuho Bank, Tokyo|91009110",
+      "NOK|NDEANOKK|Nordea, Oslo|91009111",
+      "NZD|RZBAATWW|Raiffeisen Bank International, Vienna|91009112",
+      "PLN|PKOPPLPW|PKO Bank Polski, Warsaw|91009113",
+      "RON|RZBRROBU|Raiffeisen Bank Romania, Bucharest|91009114",
+      "RSD|RZBSRSBG|Raiffeisen Bank Serbia, Belgrade|91009115",
+      "RUB|RZBAATWW|Raiffeisen Bank International, Vienna|91009116",
+      "SEK|NDEASESS|Nordea, Stockholm|91009117",
+      "USD|SCBLUS33|Standard Chartered, New York|91009118"
+    ]
+  ]
+]

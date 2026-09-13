@@ -1,0 +1,123 @@
+{
+  "bic8": "ANIKAM22",
+  "name": "ID BANK CJSC",
+  "country": "AM",
+  "currencies": [
+    "AED",
+    "BYN",
+    "CNY",
+    "EUR",
+    "GBP",
+    "GEL",
+    "JPY",
+    "RUB",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "idbank.am"
+  ],
+  "admitted_records": [
+    {
+      "currency": "EUR",
+      "correspondent": "Commerzbank AG",
+      "int_bic": "COBADEFFXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Raiffeisen Bank International AG",
+      "int_bic": "RZBAATWWXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "RUB",
+      "correspondent": "AO Raiffeisenbank, Moscow",
+      "int_bic": "RZBMRUMMXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "GBP",
+      "correspondent": "Commerzbank AG",
+      "int_bic": "COBADEFFXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "correspondent": "Sumitomo Mitsui Banking Corporation",
+      "int_bic": "SMBCJPJTXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "AED",
+      "correspondent": "Mashreqbank PSC",
+      "int_bic": "BOMLAEADXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "GEL",
+      "correspondent": "JSC Bank of Georgia",
+      "int_bic": "BAGAGE22XXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "BYN",
+      "correspondent": "Paritetbank OJSC",
+      "int_bic": "POISBY2XXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "correspondent": "China Construction Bank, Ningbo",
+      "int_bic": "PCBCCNBJNPX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "correspondent": "Zhejiang Chouzhou Commercial Bank",
+      "int_bic": "CZCBCN2XXXX",
+      "source": "https://idbank.am/en/information/helpfull-information/contentfooter/requisites/",
+      "as_of": "2026-04-28",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    }
+  ],
+  "admitted_record_digest": "d49ff2e2b0daced5a42ec94d1160d99b2849dc1dc093d0ccf1f7ba1d912133d8"
+}

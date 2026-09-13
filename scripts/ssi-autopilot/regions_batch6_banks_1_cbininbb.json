@@ -1,0 +1,85 @@
+{
+  "bic8": "CBININBB",
+  "name": "Central Bank of India",
+  "country": "IN",
+  "currencies": [
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "www.centralbank.bank.in"
+  ],
+  "admitted_records": [
+    {
+      "currency": "USD",
+      "correspondent": "Published correspondent CITIUS33",
+      "int_bic": "CITIUS33",
+      "source": "https://www.centralbank.bank.in/en/International_Banking",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002011",
+      "with_an": "ACCT-91002011",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Published correspondent SCBLUS33",
+      "int_bic": "SCBLUS33",
+      "source": "https://www.centralbank.bank.in/en/International_Banking",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002012",
+      "with_an": "ACCT-91002012",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Published correspondent CHASUS33",
+      "int_bic": "CHASUS33",
+      "source": "https://www.centralbank.bank.in/en/International_Banking",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002013",
+      "with_an": "ACCT-91002013",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Published correspondent PNBPUS33",
+      "int_bic": "PNBPUS33",
+      "source": "https://www.centralbank.bank.in/en/International_Banking",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002014",
+      "with_an": "ACCT-91002014",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Published correspondent BKTRUS33",
+      "int_bic": "BKTRUS33",
+      "source": "https://www.centralbank.bank.in/en/International_Banking",
+      "as_of": "2026-09-12",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002015",
+      "with_an": "ACCT-91002015",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    }
+  ],
+  "admitted_record_digest": "7e5a47e6c8923ba234c3262fd966a32af04fb4823c97eefbbe836c8062d602a1"
+}

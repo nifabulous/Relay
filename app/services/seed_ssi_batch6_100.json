@@ -1,0 +1,24 @@
+[
+  [
+    "FCTTBBBBXXX",
+    "First Citizens Bank (Barbados) Limited",
+    "Source: https://www.firstcitizensgroup.com/bb/personal-banking/banking-services/correspondent-banks/ (official incoming telegraphic transfer correspondent page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "BBD|CBABBBBB|Central Bank of Barbados|91010800",
+      "CAD|BOFMCAT2|Bank of Montreal, Toronto|91010801",
+      "ECD|NOSCKNSK|Bank of Nova Scotia, St. Kitts|91010802",
+      "EUR|CITIGB2L|Citibank, London|91010803",
+      "GBP|CITIGB2L|Citibank, London|91010804",
+      "TTD|FCTTTTPS|First Citizens Bank, Trinidad|91010805",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91010806",
+      "USD|CITIUS33|Citibank, New York|91010807"
+    ]
+  ]
+]

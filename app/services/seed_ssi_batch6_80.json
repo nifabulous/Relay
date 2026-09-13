@@ -1,0 +1,29 @@
+[
+  [
+    "MALBMVMVXXX",
+    "Bank of Maldives PLC",
+    "Source: https://www.bankofmaldives.com.mv/storage/file/766/10968/instruction-form-for-inward-remittance-en.pdf (official inward remittance instruction form, accessed 2026-09-12). Account numbers are masked synthetic values derived from the published correspondent list. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|MSHQUS33|Mashreqbank PSC, New York|91009600",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91009601",
+      "USD|HANYUS33|Habib American Bank, New York|91009602",
+      "USD|OCBCSGSG|OCBC Bank, Singapore|91009603",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91009604",
+      "EUR|CAIXESBB|CaixaBank, Spain|91009605",
+      "EUR|OCBCSGSG|OCBC Bank, Singapore|91009606",
+      "SGD|OCBCSGSG|OCBC Bank, Singapore|91009607",
+      "CNY|OCBCSGSG|OCBC Bank, Singapore|91009608",
+      "CNY|BKCHLKLX|Bank of China, Colombo|91009609",
+      "CNY|ICBKCNBJ|Industrial and Commercial Bank of China, Beijing|91009610",
+      "AED|BOMLAEAD|Mashreqbank PSC, Dubai|91009611",
+      "LKR|HBLILKLX|Hatton National Bank PLC, Colombo|91009612"
+    ]
+  ]
+]

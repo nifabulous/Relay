@@ -1,0 +1,19 @@
+[
+  [
+    "BOSUARBAXXX",
+    "Banco Macro S.A.",
+    "Source: https://www.macro.com.ar/empresas/comex/pagos/ordenes-de-pago (official international payment instructions and linked SSI PDFs, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|"
+    ]
+  ]
+]

@@ -1,0 +1,38 @@
+[
+  [
+    "NMBBNPKAXXX",
+    "NMB Bank Limited",
+    "Source: https://nmb.com.np/correspondent-banking (official correspondent banking page, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "USD|MSHQUS33|Mashreq Bank PSC, New York|",
+      "USD|ICICHKHHCLR|ICICI Bank, Hong Kong|",
+      "USD|COBADEFF|Commerzbank AG, Frankfurt|",
+      "USD|CZNBKRSE|Kookmin Bank, Seoul|",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "GBP|COBADEFF|Commerzbank AG, Frankfurt|",
+      "AUD|COBADEFF|Commerzbank AG, Frankfurt|",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|",
+      "JPY|COBADEFF|Commerzbank AG, Frankfurt|",
+      "CAD|COBADEFF|Commerzbank AG, Frankfurt|",
+      "SGD|COBADEFF|Commerzbank AG, Frankfurt|",
+      "AED|BOMLAEAD|Mashreqbank PSC, Dubai|",
+      "CNY|SCBLCNSXIMN|Standard Chartered Bank, Xiamen|",
+      "INR|SCBLINBB|Standard Chartered Bank, Mumbai|",
+      "INR|HDFCINBB|HDFC Bank, Mumbai|",
+      "INR|AXISINBB|Axis Bank, Mumbai|",
+      "INR|YESBINBBDEL|Yes Bank, Delhi|",
+      "INR|MSHQINBB|Mashreqbank, Mumbai|",
+      "INR|DOHBINBB|Doha Bank, Mumbai|"
+    ]
+  ]
+]

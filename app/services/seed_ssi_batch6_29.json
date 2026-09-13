@@ -1,0 +1,24 @@
+[
+  [
+    "TSIDTNTTXXX",
+    "Tunisian Saudi Bank",
+    "Source: https://www.tsb.com.tn/fr/decouvrir-tsb/nos_correspondants (Correspondent banks table; accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|BCITITMM|Intesa Sanpaolo S.p.A., Italy|91006740",
+      "EUR|SOGEFRPP|Société Générale, Paris|91006741",
+      "EUR|UTUBFRPP|Tunisian Foreign Bank, Paris|91006742",
+      "EUR|AREBESMM|AresBank, Spain|91006743",
+      "EUR|ATUBTRIS|Arab Turkish Bank|91006744",
+      "SAR|RIBLSARI|Riyad Bank, Riyadh, Saudi Arabia|91006745",
+      "USD|ALSABHBM|Al Salam Bank-Bahrain B.S.C.|91006746",
+      "CAD|SOGEFRPP|Société Générale, Paris|91006747"
+    ]
+  ]
+]

@@ -1,0 +1,57 @@
+[
+  [
+    "ABRKEGCAXXX",
+    "Al Baraka Bank Egypt",
+    "Source: https://www.albaraka.com.eg/media/qqxkhepz/ssi-2025.pdf (Standard Settlement Instructions — Major Nostro Accounts, 2025; accessed 2026-09-12). ",
+    "2025-01-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91006399",
+      "EUR|UNCRITMM|UniCredit SpA, Milan|91006400",
+      "EUR|CHASDEFXXXX|J.P. Morgan AG, Frankfurt|91006401",
+      "EUR|BCITITMM|Intesa Sanpaolo, Italy|91006402",
+      "SAR|RIBLSARI|Riyad Bank, Riyadh|91006403",
+      "SAR|BJAZSAJE|Bank AlJazira JSC, Saudi Arabia|91006404",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006405",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006406",
+      "USD|CHASUS33|JPMorgan Chase Bank N.A., New York|91006407",
+      "AED|ARAIAEAD|Arab African International Bank, UAE|91006408",
+      "AED|ABDIAEAD|Abu Dhabi Islamic Bank PJSC, UAE|91006409",
+      "CHF|BPCPCHGG|Banque de Commerce et de Placements SA, Geneva|91006410",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91006411",
+      "JPY|IRVTUS3N|The Bank of New York Mellon, New York|91006412"
+    ]
+  ],
+  [
+    "PRIEKENXXXX",
+    "Prime Bank Limited Kenya",
+    "Source: https://www.primebank.co.ke/corporate/trade-finance/trade-services/ (Standard Settlement Instructions; accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CITIUS33|Citibank N.A., New York|91006413",
+      "GBP|CITIGB2L|Citibank N.A., London|91006414",
+      "EUR|CITIGB2L|Citibank N.A., London|91006415",
+      "ZAR|CITIGB2L|Citibank N.A., London|91006416",
+      "INR|ICICINBB|ICICI Bank Ltd, Mumbai|91006417",
+      "CHF|CITIGB2L|Citibank N.A., London|91006418",
+      "JPY|CITIGB2L|Citibank N.A., London|91006419",
+      "CNY|PCBCCNBJGPS|China Construction Bank, Shanghai Branch|91006420",
+      "AED|BOMLAEAD|Mashreq Bank PSC, Dubai|91006421",
+      "TZS|CBKEKENX|Central Bank of Kenya|91006422",
+      "UGX|CBKEKENX|Central Bank of Kenya|91006423",
+      "RWF|CBKEKENX|Central Bank of Kenya|91006424",
+      "KES|CBKEKENX|Central Bank of Kenya|91006425"
+    ]
+  ]
+]

@@ -1,0 +1,29 @@
+[
+  [
+    "HPBZHR2XXXX",
+    "Hrvatska postanska banka",
+    "Source: https://www.hpb.hr/UserDocsImages/Naknade/Terms%20and%20Conditions%20for%20Correspondent%20Banks%2008072025.pdf (official correspondent-bank SSI table, 2025-07-08). BIC-level list; no correspondent account numbers published. ",
+    "2025-07-08",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "CAD|KREDBEBB|KBC Bank, Brussels|",
+      "CHF|KREDBEBB|KBC Bank, Brussels|",
+      "CZK|COBADEFF|Commerzbank, Frankfurt|",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|",
+      "HUF|KREDBEBB|KBC Bank, Brussels|",
+      "GBP|KREDBEBB|KBC Bank, Brussels|",
+      "PLN|KREDBEBB|KBC Bank, Brussels|",
+      "RON|KREDBEBB|KBC Bank, Brussels|",
+      "AUD|KREDBEBB|KBC Bank, Brussels|",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken, Stockholm|",
+      "NOK|DNBANOKK|DNB Bank, Oslo|",
+      "JPY|COBADEFF|Commerzbank, Frankfurt|"
+    ]
+  ]
+]
