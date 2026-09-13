@@ -1,0 +1,30 @@
+{
+  "source_url": "https://www.europeandepositarybank.com/media/u2bo52r0/edb-ssi-01042026.pdf",
+  "source_effective_date": "2026-04-01",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "routes": [
+    {"currency": "EUR", "int_bic": "BILLLULLXXX"},
+    {"currency": "USD", "int_bic": "CITIUS33XXX"},
+    {"currency": "GBP", "int_bic": "CITIGB2LXXX"},
+    {"currency": "CHF", "int_bic": "UBSWCHZH80A"},
+    {"currency": "AUD", "int_bic": "CITIAU2XXXX"},
+    {"currency": "CAD", "int_bic": "CITIGB2LXXX"},
+    {"currency": "CZK", "int_bic": "UBSWCHZH80A"},
+    {"currency": "DKK", "int_bic": "UBSWCHZH80A"},
+    {"currency": "HKD", "int_bic": "CITIGB2LXXX"},
+    {"currency": "HUF", "int_bic": "UBSWCHZH80A"},
+    {"currency": "JPY", "int_bic": "CITIGB2LXXX"},
+    {"currency": "MXN", "int_bic": "UBSWCHZH80A"},
+    {"currency": "NOK", "int_bic": "UBSWCHZH80A"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22XXX"},
+    {"currency": "PLN", "int_bic": "PKOPPLPWXXX"},
+    {"currency": "SEK", "int_bic": "ESSESESSXXX"},
+    {"currency": "SGD", "int_bic": "UBSWSGSGXXX"},
+    {"currency": "TRY", "int_bic": "TEBUTRIS930"},
+    {"currency": "ZAR", "int_bic": "FIRNZAJJXXX"}
+  ]
+}
