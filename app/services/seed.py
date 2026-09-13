@@ -254,6 +254,8 @@ BANKS = [
     # ---- U.S. Bank ----
     ("USBKUS44XXX", "U.S. Bank National Association", "US", "Minneapolis", "USD"),
     ("NBCBGB2LXXX", "U.S. Bank London", "GB", "London", "GBP"),
+    # ---- East West Bank (incoming foreign-currency wire SSI) ----
+    ("EWBKUS66XXX", "East West Bank", "US", "Pasadena", "USD"),
     # ---- Nordea + Lloyds + DBS (from Saxo Bank SSI) ----
     ("NADADKKKXXX", "Nordea Bank Danmark", "DK", "Copenhagen", "DKK"),
     ("NDEASESSXXX", "Nordea Bank Sweden", "SE", "Stockholm", "SEK"),
@@ -3166,6 +3168,19 @@ SSI_RECORDS = [
      "IRVTUS3NXXX", "BNY Mellon cross-ccy",
      "ACCT-58552", "ACCT-21513", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — East West Bank (EWBKUS66)
+    # Source: East West Bank's official currency-specific incoming-wire PDFs.
+    # These publish correspondent BICs but no account numbers, charges, or
+    # value dates; keep them as availability-only BIC records.
+    # ====================================================================
+
+    ("EWBKUS66XXX", "East West Bank", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     None, None, None, None,
+     "Source: https://www.eastwestbank.com/content/dam/ewb-dotcom/docs/incomingwireinstructions_currencies/IncomingWireInstructions_GBP.pdf (revision 2019-02; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2019-02-01", "unverified", None, True, False),
 
     # ====================================================================
     # REAL SSI DATA — Global IME Bank Ltd Nepal (GLBBNPKA)
