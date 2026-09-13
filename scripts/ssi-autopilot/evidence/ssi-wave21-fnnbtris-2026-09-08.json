@@ -33,8 +33,8 @@
       "currency": "AUD",
       "int_bic": "CHASGB2L",
       "correspondent": "JPMorgan Chase Bank, N.A., London",
-      "nostro_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
-      "with_an_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
+      "nostro_fingerprint": "91664870842bc478f2d366a44116ffdecc068dca115d022a44c77390d418e9b1",
+      "with_an_fingerprint": "91664870842bc478f2d366a44116ffdecc068dca115d022a44c77390d418e9b1",
       "nostro_mask": "ACCT-91001005",
       "with_an_mask": "ACCT-91001005"
     },
@@ -321,8 +321,8 @@
         "currency": "AUD",
         "int_bic": "CHASGB2L",
         "correspondent": "JPMorgan Chase Bank, N.A., London",
-        "nostro_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
-        "with_an_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b"
+        "nostro_fingerprint": "91664870842bc478f2d366a44116ffdecc068dca115d022a44c77390d418e9b1",
+        "with_an_fingerprint": "91664870842bc478f2d366a44116ffdecc068dca115d022a44c77390d418e9b1"
       },
       {
         "currency": "CAD",

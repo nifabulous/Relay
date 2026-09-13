@@ -184,6 +184,127 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    `autopilot.py maybe-pr --every N` — it pushes the branch and opens the PR
    to `main`. Then continue the loop for the next region.
 
+## Re-verifying a cited source
+
+A committed `source_sha256` is a trust anchor: every offline check treats the
+cited page as unchanged because the digest says so. That anchor is only worth
+something if changing it costs more than editing a string.
+
+`verify_source_attestation.py` runs three checks against the live page, and
+each one catches something the others cannot:
+
+| Check | Catches | Misses |
+|---|---|---|
+| Canonical digest | any byte change to the page | says nothing about *what* changed |
+| Route keys | a correspondent added, removed or re-pointed | an account moving under an unchanged currency/BIC |
+| Account fingerprints | an account moving | a change to prose outside the table |
+
+The third check was added after wave 21 proved the gap is real. The source's
+`AUD`/`CHASGB2L` account changed, the digest changed with it, and the digest
+was re-recorded as a routine refresh — because currency and BIC were
+untouched, the route-key check passed the whole time.
+
+### Verifying (what CI runs)
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE
+```
+
+Fails closed on any of the three. A red `Verify live SSI source attestation`
+step means the page moved; it does not tell you the digest is stale.
+
+### Refreshing a digest
+
+Never hand-edit `source_sha256`. Refresh it through the tool, which re-derives
+every route key and fingerprint from the live page first and refuses if any
+differ:
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+    --refresh --record scripts/ssi-autopilot/evidence/reverification
+```
+
+`--refresh` requires `--record`. The record names the old and new digest, the
+route counts, the per-route fingerprint results and `raw_accounts_committed:
+false`. A test asserts the committed digest is one some record reports having
+seen, so a digest edited silently fails offline with no network needed.
+
+Be precise about what that buys. A record is ordinary repository content — not
+signed, not chained — so someone can edit the digest to a value an existing
+record already names, or write a matching record. The offline test enforces
+consistency, not provenance. **The authority on what the source says today is
+the live check CI runs on every pull request**; the record's value is that it
+makes a falsifiable claim you can re-run, where a refreshed digest used to
+carry no claim at all.
+
+### Accepting a genuine account change
+
+When an account really has moved at the source, say so explicitly:
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+    --refresh --accept-account-change AUD:CHASGB2L \
+    --record scripts/ssi-autopilot/evidence/reverification
+```
+
+Each accepted route is listed in the record. Check first whether the new
+account collides with another route's: masks encode account equality, so a
+newly-shared account needs its mask merged rather than only its fingerprint
+replaced.
+
+### What the extractor can read
+
+Route and fingerprint extraction reads **HTML tables**, and reads them in the
+shape the QNB page uses: a row per route, with the account in the cell
+immediately before the intermediary BIC.
+
+Most cited sources are not that. Waves 22-28 cite PDFs; several batch-4
+sources are PDFs or script-rendered pages. For those the digest still
+verifies — it is a byte hash and does not care about format — but routes and
+accounts cannot be checked at all.
+
+The tool refuses rather than guesses in two cases, because both would
+otherwise produce a confident falsehood:
+
+- **Nothing extracted from a source the evidence says holds routes.** An
+  empty extraction compared against a full evidence file looks identical to
+  every correspondent changing at once. The first run of this sweep reported
+  39 and 42 simultaneous route changes on files whose bytes had not moved.
+- **Evidence that records no routes at all.** An empty expected set makes
+  every comparison pass, so a file recording nothing about its source would
+  report as the best-verified file in the set.
+
+Extending coverage to a PDF source means writing an extractor for it. Until
+then, `--refresh` on a non-HTML source can only re-record a digest whose
+meaning nobody has checked, which is the practice this tooling exists to end.
+
+### What the fetcher will and will not do
+
+Cited sources are fetched by CI from URLs written in evidence files, so the
+fetcher treats those URLs as untrusted input rather than as configuration:
+
+- **http(s) only**, checked before any lookup.
+- **Public addresses only.** A citation resolving to loopback, a private
+  range, or the link-local metadata address is refused. Redirect targets are
+  checked the same way — validating only the URL that was typed leaves the
+  actual destination unchecked, which is the whole of the protection.
+- **Bounded in bytes and in time.** A source over `MAX_SOURCE_BYTES` is
+  refused rather than truncated, because a short read produces a wrong digest
+  with nothing to say so. A separate wall-clock budget stops a slow drip that
+  stays under the byte cap from holding the job open.
+
+The address check resolves the name and inspects what it gets, so a host that
+answers differently on the next lookup can still slip past. It raises the cost
+of that trick; it is not a proof, and should not be described as one.
+
+### On the fingerprints themselves
+
+`account_fingerprint` is an unsalted SHA-256 over the account with
+punctuation stripped and letters upper-cased. It keeps account numbers out of
+the repository; it does **not** make them secret. A short account string is
+brute-forceable, and these sources are public pages. Do not treat a
+fingerprint as a redaction of a value that would matter if disclosed.
+
 ## Hard rules (never violate, whatever the model is asked)
 
 - **No real account numbers, ever.** Anything that looks like a real account
@@ -194,6 +315,11 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
   own BIC as a correspondent.
 - **Source citation per record.** Every record's note carries its bank-published
   URL and as-of date.
+- **Never hand-edit a `source_sha256`.** Refresh it with
+  `verify_source_attestation.py --refresh --record`, which re-derives every
+  route key and account fingerprint from the live page first. A digest changed
+  by hand proves nothing; a silent change is rejected offline, and the live CI
+  check is what establishes the source content either way.
 - **One commit per region**, `type(scope): description`.
 - The validator is authoritative: a region whose results fail validation is
   never committed.

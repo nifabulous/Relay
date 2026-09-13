@@ -67,6 +67,66 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
 
 ---
 
+## 🔲 SSI source attestation — measured state
+
+Swept on 2026-09-12 with `scripts/ssi-autopilot/sweep_source_attestations.py`
+across all 60 evidence files, three times. Re-run it rather than trusting
+these numbers after any length of time — and note that several bank hosts are
+flaky (`SSL: UNEXPECTED_EOF`, `502`, dropped connections), so counts move
+between runs. What follows separates what held every run from what did not.
+
+**Stable across runs — 45 files:**
+
+| | Files |
+|---|---|
+| Verified end to end: digest, route keys and account fingerprints | **1** |
+| No digest was ever captured — the citation is a URL and a promise | 22 |
+| Routes live in a PDF the extractor cannot read | 21 |
+| Evidence pins a digest but records no routes at all | 1 |
+
+**Varies by network luck — the remaining 15.** Every run put these 15 into
+one of two buckets: the source answered and its evidence turned out to record
+routes but no account fingerprints (10-12 per run), or the source did not
+answer (3-5 per run). A file that will not fetch cannot be classified
+further, which is why the split moves and the total does not.
+
+Digest state moves for the same reason: 17 matched every run, while
+`changed` plus `did not answer` was always 21.
+
+The single verified file is wave 21, the only one CI checks. Its
+`AUD`/`CHASGB2L` account had moved at the source and was re-pointed on the
+record; the other 30 routes re-derive exactly.
+
+For 59 of 60 files the strongest available claim is "the bytes at this URL
+hashed to X when someone looked", and for most of those it is already false.
+**No learner-visible data is wrong** — every account in the product is an
+`ACCT-` placeholder and no mask changed — but the evidence does not support
+the confidence its shape implies.
+
+Ordered by what each actually buys:
+
+1. **Capture fingerprints for the ~12 readable files.** These already pass
+   route extraction, so no new tooling is needed — the accounts simply were
+   never recorded. Cheapest real gain available, and it is what lets the
+   account-move check protect more than one file.
+2. **Dead and flaky citations.** `ssi-batch4-yesbinbb` returns a permanent
+   `404`; `bcmlinbb`, `fdrlinbb`, `iobainbb` and `psibinbb` fail
+   intermittently on TLS or gateway errors. A citation that cannot be fetched
+   attests nothing — re-source the dead one, and decide whether the flaky
+   hosts need a cached snapshot.
+3. **A PDF extractor**, which moves the 21 unreadable files.
+4. **Triage the changed digests** once an extractor exists, so a changed
+   digest can be resolved instead of merely noted.
+5. **`ssi-wave18-bbdebrsp`** pins a digest and records no routes. Capture
+   them or drop the file's claim to being evidence.
+6. **Salt the account fingerprints.** `account_fingerprint` is an unsalted
+   SHA-256 over a short account string, so it is brute-forceable. The sources
+   are public pages, so nothing secret leaks, but `raw_accounts_committed:
+   false` reads stronger than it is. Changing the scheme rewrites all 60
+   files, so it wants its own change.
+
+---
+
 ## 🔲 Backlog — Tier 3 (Domain Fidelity & Depth)
 
 Pick by appetite. No hard dependencies between these items.
