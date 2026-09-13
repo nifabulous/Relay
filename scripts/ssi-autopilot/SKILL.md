@@ -184,6 +184,173 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
    `autopilot.py maybe-pr --every N` — it pushes the branch and opens the PR
    to `main`. Then continue the loop for the next region.
 
+## Re-verifying a cited source
+
+A committed `source_sha256` is a trust anchor: every offline check treats the
+cited page as unchanged because the digest says so. That anchor is only worth
+something if changing it costs more than editing a string.
+
+`verify_source_attestation.py` runs three checks against the live page, and
+each one catches something the others cannot:
+
+| Check | Catches | Misses |
+|---|---|---|
+| Canonical digest | any byte change to the page | says nothing about *what* changed |
+| Route keys | a correspondent added, removed or re-pointed | an account moving under an unchanged currency/BIC |
+| Account fingerprints | an account moving | a change to prose outside the table |
+
+The third check was added after wave 21 proved the gap is real. The source's
+`AUD`/`CHASGB2L` account changed, the digest changed with it, and the digest
+was re-recorded as a routine refresh — because currency and BIC were
+untouched, the route-key check passed the whole time.
+
+### Verifying (what CI runs)
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE
+```
+
+Fails closed on any of the three. A red `Verify live SSI source attestation`
+step means the page moved; it does not tell you the digest is stale.
+
+### Refreshing a digest
+
+Never hand-edit `source_sha256`. Refresh it through the tool, which re-derives
+every route key and fingerprint from the live page first and refuses if any
+differ:
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+    --refresh --record scripts/ssi-autopilot/evidence/reverification
+```
+
+`--refresh` requires `--record`. The record names the old and new digest, the
+route counts, the per-route fingerprint results and `raw_accounts_committed:
+false`. A test asserts the committed digest is one some record reports having
+seen, so a digest edited silently fails offline with no network needed.
+
+Two separate checks stand behind that record, and they establish different
+things:
+
+- **The offline test** asserts a committed digest is named by some record. It
+  catches a digest changed silently, and nothing more: both files are ordinary
+  repository content, so a contributor who also writes a matching record
+  passes it. That is consistency, not provenance.
+- **CI corroborates the record** (`--check-record`). The runner fetches the
+  page itself and rebuilds the record's claims — digest, route counts, every
+  fingerprint result — and fails when the committed record says something the
+  live source does not support. A hand-written record asserting checks that
+  were never run disagrees with one the tool produced.
+
+That second check is where provenance actually comes from: the runner is the
+one party a pull request author cannot edit. It writes nothing and needs no
+permissions.
+
+What neither check establishes is history. `verified_at`,
+`previous_source_sha256` and `accepted_account_changes` describe a moment that
+has passed, and a runner checking today cannot re-derive what the digest was
+yesterday. Corroboration covers every claim a record makes about the *current*
+source, which is the part that would have to be false for a refresh to be
+hiding something.
+
+### Accepting a genuine account change
+
+When an account really has moved at the source, say so explicitly:
+
+```
+python scripts/ssi-autopilot/verify_source_attestation.py EVIDENCE \
+    --refresh --accept-account-change AUD:CHASGB2L \
+    --record scripts/ssi-autopilot/evidence/reverification
+```
+
+Each accepted route is listed in the record. Check first whether the new
+account collides with another route's: masks encode account equality, so a
+newly-shared account needs its mask merged rather than only its fingerprint
+replaced.
+
+### What the extractor can read
+
+Route and fingerprint extraction reads **HTML tables**, and reads them in the
+shape the QNB page uses: a row per route, with the account in the cell
+immediately before the intermediary BIC.
+
+Most cited sources are not that. Waves 22-28 cite PDFs; several batch-4
+sources are PDFs or script-rendered pages. For those the digest still
+verifies — it is a byte hash and does not care about format — but routes and
+accounts cannot be checked at all.
+
+The tool refuses rather than guesses in two cases, because both would
+otherwise produce a confident falsehood:
+
+- **Nothing extracted from a source the evidence says holds routes.** An
+  empty extraction compared against a full evidence file looks identical to
+  every correspondent changing at once. The first run of this sweep reported
+  39 and 42 simultaneous route changes on files whose bytes had not moved.
+- **Evidence that records no routes at all.** An empty expected set makes
+  every comparison pass, so a file recording nothing about its source would
+  report as the best-verified file in the set.
+
+Extending coverage to a PDF source means writing an extractor for it. Until
+then, `--refresh` on a non-HTML source can only re-record a digest whose
+meaning nobody has checked, which is the practice this tooling exists to end.
+
+### What the fetcher will and will not do
+
+Cited sources are fetched by CI from URLs written in evidence files, so the
+fetcher treats those URLs as untrusted input rather than as configuration:
+
+- **http(s) only**, checked before any lookup.
+- **Public addresses only.** A citation resolving to loopback, a private
+  range, or the link-local metadata address is refused. Redirect targets are
+  checked the same way — validating only the URL that was typed leaves the
+  actual destination unchecked, which is the whole of the protection.
+- **Bounded in bytes and in time.** A source over `MAX_SOURCE_BYTES` is
+  refused rather than truncated, because a short read produces a wrong digest
+  with nothing to say so. A separate wall-clock budget stops a slow drip that
+  stays under the byte cap from holding the job open.
+
+The address check resolves the name once and the fetcher then **connects to
+the address it validated**, rather than letting the library resolve a second
+time. That closes DNS rebinding: checking one answer and dialling whatever the
+next lookup returns was the gap. TLS still verifies the certificate against
+the name in the citation, and the `Host` header still names the site — only
+the address the socket dials is pinned.
+
+Redirects are followed by the fetcher itself, not by an opener, because every
+hop has to be re-validated and re-pinned. A handler that inspects the
+`Location` header still hands the name back to the library to resolve, which
+is the moment a rebinding host waits for. The chain is bounded at
+`MAX_REDIRECTS`.
+
+### On the fingerprints themselves
+
+Two schemes exist, named per evidence file in `masking.fingerprint_scheme`:
+
+| Scheme | Derivation | Cost to recover one account |
+|---|---|---|
+| `sha256-v0` | bare SHA-256 over the normalized account | minutes — 10^10 candidates is a dictionary search |
+| `scrypt-v1` | scrypt n=2^14 r=8 p=1, committed per-file salt | ~11 CPU-years on one core, memory-hard |
+
+**The salt is committed on purpose.** A key held outside the repository would
+make fingerprints unreproducible by anyone but its holder, and reproducibility
+by a third party is the property this whole mechanism exists to provide. A
+committed salt still defeats precomputed tables and stops two evidence files
+being correlated by their fingerprints, while leaving anyone who holds the
+cited page able to check every value.
+
+Neither scheme makes an account secret, and the sources are public pages. A
+fingerprint redacts an account from *this repository*; `scrypt-v1` makes
+recovering one expensive rather than instant. That is a large increase in
+cost, not impregnability.
+
+**Migration is one-way and needs the source.** A fingerprint cannot be
+reversed, so moving a file to `scrypt-v1` means re-deriving every account from
+the cited page with `--refresh --migrate-fingerprints --record`. That works
+only where the extractor can read the source, so wave 21 is migrated and the
+seven PDF-sourced files keep `sha256-v0` until an extractor for their format
+exists. Naming the scheme per file is the honest alternative to implying they
+are all on the new one.
+
 ## Hard rules (never violate, whatever the model is asked)
 
 - **No real account numbers, ever.** Anything that looks like a real account
@@ -194,6 +361,11 @@ Run from the autopilot worktree: `.claude/worktrees/ssi-autopilot` on branch
   own BIC as a correspondent.
 - **Source citation per record.** Every record's note carries its bank-published
   URL and as-of date.
+- **Never hand-edit a `source_sha256`.** Refresh it with
+  `verify_source_attestation.py --refresh --record`, which re-derives every
+  route key and account fingerprint from the live page first. A digest changed
+  by hand proves nothing; a silent change is rejected offline, and the live CI
+  check is what establishes the source content either way.
 - **One commit per region**, `type(scope): description`.
 - The validator is authoritative: a region whose results fail validation is
   never committed.

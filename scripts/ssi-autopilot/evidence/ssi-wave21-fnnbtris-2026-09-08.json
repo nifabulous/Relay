@@ -8,15 +8,18 @@
     "algorithm": "sequential token per normalized source account",
     "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
     "namespace": "beneficiary_bic",
-    "raw_accounts_committed": false
+    "raw_accounts_committed": false,
+    "fingerprint_scheme": "scrypt-v1",
+    "fingerprint_salt": "51c4f61da424225a84895aa93b4d9915",
+    "fingerprint_note": "scrypt n=2**14 r=8 p=1 over the normalized account. The salt is committed so anyone holding the cited page can reproduce these; it raises the cost of recovering an account, it does not make one secret."
   },
   "routes": [
     {
       "currency": "AED",
       "int_bic": "CLBIAEAD",
       "correspondent": "Commercial Bank International PJSC, Dubai",
-      "nostro_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a",
-      "with_an_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a",
+      "nostro_fingerprint": "f56a6c2cefdecdace0f2f88a24298c7eb67f049ff3572dbd1a35ea05c4fb4099",
+      "with_an_fingerprint": "f56a6c2cefdecdace0f2f88a24298c7eb67f049ff3572dbd1a35ea05c4fb4099",
       "nostro_mask": "ACCT-91001029",
       "with_an_mask": "ACCT-91001029"
     },
@@ -24,8 +27,8 @@
       "currency": "AUD",
       "int_bic": "ANZBAU3M",
       "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
-      "nostro_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8",
-      "with_an_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8",
+      "nostro_fingerprint": "babaf4567cae9d0fcf7486828d9ddf47f75399b10ceb9c0c1a39b5ef611adadd",
+      "with_an_fingerprint": "babaf4567cae9d0fcf7486828d9ddf47f75399b10ceb9c0c1a39b5ef611adadd",
       "nostro_mask": "ACCT-91001027",
       "with_an_mask": "ACCT-91001027"
     },
@@ -33,8 +36,8 @@
       "currency": "AUD",
       "int_bic": "CHASGB2L",
       "correspondent": "JPMorgan Chase Bank, N.A., London",
-      "nostro_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
-      "with_an_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
+      "nostro_fingerprint": "a6af6d30bdceea8f8e0ed8378ab39c22c91325780834222f8e1afcec95fc30d2",
+      "with_an_fingerprint": "a6af6d30bdceea8f8e0ed8378ab39c22c91325780834222f8e1afcec95fc30d2",
       "nostro_mask": "ACCT-91001005",
       "with_an_mask": "ACCT-91001005"
     },
@@ -42,8 +45,8 @@
       "currency": "CAD",
       "int_bic": "BOFMCAT2",
       "correspondent": "Bank of Montreal, Toronto",
-      "nostro_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80",
-      "with_an_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80",
+      "nostro_fingerprint": "fd08321a3e188fcdc20fcf7935f18c01f48163708156f6f1420f46d0d571a8f7",
+      "with_an_fingerprint": "fd08321a3e188fcdc20fcf7935f18c01f48163708156f6f1420f46d0d571a8f7",
       "nostro_mask": "ACCT-91001013",
       "with_an_mask": "ACCT-91001013"
     },
@@ -51,8 +54,8 @@
       "currency": "CHF",
       "int_bic": "ZKBKCHZZ",
       "correspondent": "Zürcher Kantonalbank, Zürich",
-      "nostro_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f",
-      "with_an_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f",
+      "nostro_fingerprint": "9e4abe2ea0007f064248bb48a7cc4310e3a1aa3a832b6ab87df25beec7e8bf42",
+      "with_an_fingerprint": "9e4abe2ea0007f064248bb48a7cc4310e3a1aa3a832b6ab87df25beec7e8bf42",
       "nostro_mask": "ACCT-91001004",
       "with_an_mask": "ACCT-91001004"
     },
@@ -60,8 +63,8 @@
       "currency": "CNH",
       "int_bic": "ICBKTRISXXX",
       "correspondent": "ICBC Turkey Bank A.Ş., Istanbul",
-      "nostro_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087",
-      "with_an_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087",
+      "nostro_fingerprint": "214c4825f1a65f19cea1afa5a104d5b961c63385ac37cc72b2ac45a7e6353d92",
+      "with_an_fingerprint": "214c4825f1a65f19cea1afa5a104d5b961c63385ac37cc72b2ac45a7e6353d92",
       "nostro_mask": "ACCT-91001028",
       "with_an_mask": "ACCT-91001028"
     },
@@ -69,8 +72,8 @@
       "currency": "DKK",
       "int_bic": "NDEADKKK",
       "correspondent": "Nordea Bank Danmark A/S",
-      "nostro_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e",
-      "with_an_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e",
+      "nostro_fingerprint": "97f9f9278ca27a53856fc9a7ffc780c2a82195d6a6e07de2152518ca190f557d",
+      "with_an_fingerprint": "97f9f9278ca27a53856fc9a7ffc780c2a82195d6a6e07de2152518ca190f557d",
       "nostro_mask": "ACCT-91001018",
       "with_an_mask": "ACCT-91001018"
     },
@@ -78,8 +81,8 @@
       "currency": "EUR",
       "int_bic": "BBRUBEBBXXX",
       "correspondent": "ING Belgium SA/NV",
-      "nostro_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90",
-      "with_an_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90",
+      "nostro_fingerprint": "1d942acb801cc173f1ac87f1c04396caa79e10d1d251d7afdcbd13b28aef58c9",
+      "with_an_fingerprint": "1d942acb801cc173f1ac87f1c04396caa79e10d1d251d7afdcbd13b28aef58c9",
       "nostro_mask": "ACCT-91001011",
       "with_an_mask": "ACCT-91001011"
     },
@@ -87,8 +90,8 @@
       "currency": "EUR",
       "int_bic": "CCFRFRPPXXX",
       "correspondent": "HSBC Continental Europe SA",
-      "nostro_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32",
-      "with_an_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32",
+      "nostro_fingerprint": "26100d5235200d3577931d27d68c30275ba71c575b2c9f734ea3cf224f11ae10",
+      "with_an_fingerprint": "26100d5235200d3577931d27d68c30275ba71c575b2c9f734ea3cf224f11ae10",
       "nostro_mask": "ACCT-91001008",
       "with_an_mask": "ACCT-91001008"
     },
@@ -96,8 +99,8 @@
       "currency": "EUR",
       "int_bic": "CHASDEFX",
       "correspondent": "J.P. Morgan AG, Frankfurt",
-      "nostro_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b",
-      "with_an_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b",
+      "nostro_fingerprint": "04e64098548e1cd01a98c104e2fbebdbe50163ae25252795374ca9d2fe4c743e",
+      "with_an_fingerprint": "04e64098548e1cd01a98c104e2fbebdbe50163ae25252795374ca9d2fe4c743e",
       "nostro_mask": "ACCT-91001022",
       "with_an_mask": "ACCT-91001022"
     },
@@ -105,8 +108,8 @@
       "currency": "EUR",
       "int_bic": "COBADEFF",
       "correspondent": "Commerzbank AG",
-      "nostro_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5",
-      "with_an_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5",
+      "nostro_fingerprint": "3c7a013e40ea113235a2874b497adc6801bb1f1d95a0cefd12beeeaaccb82f67",
+      "with_an_fingerprint": "3c7a013e40ea113235a2874b497adc6801bb1f1d95a0cefd12beeeaaccb82f67",
       "nostro_mask": "ACCT-91001017",
       "with_an_mask": "ACCT-91001017"
     },
@@ -114,8 +117,8 @@
       "currency": "EUR",
       "int_bic": "DEUTDEFFXXX",
       "correspondent": "Deutsche Bank AG, Frankfurt",
-      "nostro_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b",
-      "with_an_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b",
+      "nostro_fingerprint": "b92b53579b80f45b26b15f67cc7d836c84027134f2e418379b121c4cac8a9e1a",
+      "with_an_fingerprint": "b92b53579b80f45b26b15f67cc7d836c84027134f2e418379b121c4cac8a9e1a",
       "nostro_mask": "ACCT-91001006",
       "with_an_mask": "ACCT-91001006"
     },
@@ -123,8 +126,8 @@
       "currency": "EUR",
       "int_bic": "IRVTDEFX",
       "correspondent": "Bank of New York, Frankfurt",
-      "nostro_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f",
-      "with_an_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f",
+      "nostro_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb",
+      "with_an_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb",
       "nostro_mask": "ACCT-91001016",
       "with_an_mask": "ACCT-91001016"
     },
@@ -132,8 +135,8 @@
       "currency": "EUR",
       "int_bic": "SCBLDEFFXXX",
       "correspondent": "Standard Chartered Bank (Germany) GmbH",
-      "nostro_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d",
-      "with_an_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d",
+      "nostro_fingerprint": "68304faf95587492c051b179ec273b04cf4bf403576e8895180feeec1167c506",
+      "with_an_fingerprint": "68304faf95587492c051b179ec273b04cf4bf403576e8895180feeec1167c506",
       "nostro_mask": "ACCT-91001009",
       "with_an_mask": "ACCT-91001009"
     },
@@ -141,8 +144,8 @@
       "currency": "EUR",
       "int_bic": "SOGEFRPP",
       "correspondent": "Société Générale, Paris",
-      "nostro_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85",
-      "with_an_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85",
+      "nostro_fingerprint": "41b87d73f8ffd6f249954ad149c30e8af0dbe8c5dc6818fc6ed5c5a97c97b78b",
+      "with_an_fingerprint": "41b87d73f8ffd6f249954ad149c30e8af0dbe8c5dc6818fc6ed5c5a97c97b78b",
       "nostro_mask": "ACCT-91001001",
       "with_an_mask": "ACCT-91001001"
     },
@@ -150,8 +153,8 @@
       "currency": "GBP",
       "int_bic": "SCBLGB2L",
       "correspondent": "Standard Chartered Bank, London",
-      "nostro_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605",
-      "with_an_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605",
+      "nostro_fingerprint": "13ad934726382df07528f0afe7fcb9a5d83ed49a7ee1786fd7273b744607e76a",
+      "with_an_fingerprint": "13ad934726382df07528f0afe7fcb9a5d83ed49a7ee1786fd7273b744607e76a",
       "nostro_mask": "ACCT-91001002",
       "with_an_mask": "ACCT-91001002"
     },
@@ -159,8 +162,8 @@
       "currency": "JPY",
       "int_bic": "BOTKJPJT",
       "correspondent": "MUFG Bank Ltd., Tokyo",
-      "nostro_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
-      "with_an_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
+      "nostro_fingerprint": "d936debaeb41a05b572e2c530dd3ab237c20eaf58d8651b147c94351223b7448",
+      "with_an_fingerprint": "d936debaeb41a05b572e2c530dd3ab237c20eaf58d8651b147c94351223b7448",
       "nostro_mask": "ACCT-91001023",
       "with_an_mask": "ACCT-91001023"
     },
@@ -168,8 +171,8 @@
       "currency": "NOK",
       "int_bic": "NDEANOKK",
       "correspondent": "Nordea Bank, Oslo",
-      "nostro_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38",
-      "with_an_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38",
+      "nostro_fingerprint": "be8043e0b67aed589a0f3fc4d5d533a1718749bab16be27ef024e1604775be1f",
+      "with_an_fingerprint": "be8043e0b67aed589a0f3fc4d5d533a1718749bab16be27ef024e1604775be1f",
       "nostro_mask": "ACCT-91001021",
       "with_an_mask": "ACCT-91001021"
     },
@@ -177,8 +180,8 @@
       "currency": "PLN",
       "int_bic": "BREXPLPW",
       "correspondent": "mBank SA",
-      "nostro_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
-      "with_an_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
+      "nostro_fingerprint": "e5a4b6bfab8b55ff5f7ff2fdeba831d91fa99ff48fd80503e702976e3d6399ee",
+      "with_an_fingerprint": "e5a4b6bfab8b55ff5f7ff2fdeba831d91fa99ff48fd80503e702976e3d6399ee",
       "nostro_mask": "ACCT-91001030",
       "with_an_mask": "ACCT-91001030"
     },
@@ -186,8 +189,8 @@
       "currency": "QAR",
       "int_bic": "QNBAQAQAXXX",
       "correspondent": "Qatar National Bank",
-      "nostro_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574",
-      "with_an_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574",
+      "nostro_fingerprint": "97b049020e7f1bf2302c69163967ad9121ab4bc19450cae45a892e3bb078a9ba",
+      "with_an_fingerprint": "97b049020e7f1bf2302c69163967ad9121ab4bc19450cae45a892e3bb078a9ba",
       "nostro_mask": "ACCT-91001031",
       "with_an_mask": "ACCT-91001031"
     },
@@ -195,8 +198,8 @@
       "currency": "RUB",
       "int_bic": "ISBKRUMMXXX",
       "correspondent": "Isbank Joint Stock Company, Moscow",
-      "nostro_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64",
-      "with_an_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64",
+      "nostro_fingerprint": "cccbecbfa512fe360d03052f2deca751bde0c7425e62ab4e289eb7c7ddbc196b",
+      "with_an_fingerprint": "cccbecbfa512fe360d03052f2deca751bde0c7425e62ab4e289eb7c7ddbc196b",
       "nostro_mask": "ACCT-91001012",
       "with_an_mask": "ACCT-91001012"
     },
@@ -204,8 +207,8 @@
       "currency": "SAR",
       "int_bic": "NCBKSAJE",
       "correspondent": "The Saudi National Commercial Bank",
-      "nostro_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410",
-      "with_an_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410",
+      "nostro_fingerprint": "24196d1c91cd893afb96a47d7bd37facd5577641802486ddc851887a71bc62e1",
+      "with_an_fingerprint": "24196d1c91cd893afb96a47d7bd37facd5577641802486ddc851887a71bc62e1",
       "nostro_mask": "ACCT-91001025",
       "with_an_mask": "ACCT-91001025"
     },
@@ -213,8 +216,8 @@
       "currency": "SEK",
       "int_bic": "ESSESESS",
       "correspondent": "Skandinaviska Enskilda Banken, Stockholm",
-      "nostro_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95",
-      "with_an_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95",
+      "nostro_fingerprint": "9ee2d529a03dfc4026cbe6865bd37c2c1cf7bd962b8dc4624cad9739882369ee",
+      "with_an_fingerprint": "9ee2d529a03dfc4026cbe6865bd37c2c1cf7bd962b8dc4624cad9739882369ee",
       "nostro_mask": "ACCT-91001019",
       "with_an_mask": "ACCT-91001019"
     },
@@ -222,8 +225,8 @@
       "currency": "USD",
       "int_bic": "BOFAUS3N",
       "correspondent": "Bank of America N.A., New York",
-      "nostro_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004",
-      "with_an_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004",
+      "nostro_fingerprint": "0a94df76da66661fbb036cc2b32615da15e8e0e83e8205ade5f8bed01394acbd",
+      "with_an_fingerprint": "0a94df76da66661fbb036cc2b32615da15e8e0e83e8205ade5f8bed01394acbd",
       "nostro_mask": "ACCT-91001024",
       "with_an_mask": "ACCT-91001024"
     },
@@ -231,8 +234,8 @@
       "currency": "USD",
       "int_bic": "CHASUS33",
       "correspondent": "JP Morgan Chase Bank NA, New York",
-      "nostro_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3",
-      "with_an_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3",
+      "nostro_fingerprint": "91141daf852a8515607a939b52b044b10b4f8898bf24455c43422e2cf95b2ee6",
+      "with_an_fingerprint": "91141daf852a8515607a939b52b044b10b4f8898bf24455c43422e2cf95b2ee6",
       "nostro_mask": "ACCT-91001020",
       "with_an_mask": "ACCT-91001020"
     },
@@ -240,8 +243,8 @@
       "currency": "USD",
       "int_bic": "CITIUS33",
       "correspondent": "Citibank NA, New York",
-      "nostro_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e",
-      "with_an_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e",
+      "nostro_fingerprint": "c0c7f29335fe159a201fb7d0e633be64d3666b3b4d7fd02e2becfca37456a3e3",
+      "with_an_fingerprint": "c0c7f29335fe159a201fb7d0e633be64d3666b3b4d7fd02e2becfca37456a3e3",
       "nostro_mask": "ACCT-91001015",
       "with_an_mask": "ACCT-91001015"
     },
@@ -249,8 +252,8 @@
       "currency": "USD",
       "int_bic": "IRVTUS3N",
       "correspondent": "The Bank of New York Mellon, New York",
-      "nostro_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330",
-      "with_an_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330",
+      "nostro_fingerprint": "f1386afbab5e5dc8b4d1d7f40ef05ba62242e7538b3ec2a16d6543cbd8d8f64d",
+      "with_an_fingerprint": "f1386afbab5e5dc8b4d1d7f40ef05ba62242e7538b3ec2a16d6543cbd8d8f64d",
       "nostro_mask": "ACCT-91001026",
       "with_an_mask": "ACCT-91001026"
     },
@@ -258,8 +261,8 @@
       "currency": "USD",
       "int_bic": "MSHQUS33XXX",
       "correspondent": "Mashreqbank Psc., New York Branch",
-      "nostro_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69",
-      "with_an_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69",
+      "nostro_fingerprint": "a44db01e0361e2ca141807c8d4ef9ee2d8f73cf2f9eb4a23dd7f302a3da21c54",
+      "with_an_fingerprint": "a44db01e0361e2ca141807c8d4ef9ee2d8f73cf2f9eb4a23dd7f302a3da21c54",
       "nostro_mask": "ACCT-91001007",
       "with_an_mask": "ACCT-91001007"
     },
@@ -267,8 +270,8 @@
       "currency": "USD",
       "int_bic": "PNBPUS33XXX",
       "correspondent": "Wells Fargo Bank NA, New York",
-      "nostro_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b",
-      "with_an_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b",
+      "nostro_fingerprint": "2c5720d7243bea4dcf0f679168d42dbcc6af89ba526f0eecb8ecd3f08d94bce9",
+      "with_an_fingerprint": "2c5720d7243bea4dcf0f679168d42dbcc6af89ba526f0eecb8ecd3f08d94bce9",
       "nostro_mask": "ACCT-91001010",
       "with_an_mask": "ACCT-91001010"
     },
@@ -276,8 +279,8 @@
       "currency": "USD",
       "int_bic": "SCBLUS33",
       "correspondent": "Standard Chartered Bank, New York",
-      "nostro_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3",
-      "with_an_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3",
+      "nostro_fingerprint": "25712f8d65a3027e9c82ff4468543a5d0d3c83c72212fbdda1d906ac418a5b63",
+      "with_an_fingerprint": "25712f8d65a3027e9c82ff4468543a5d0d3c83c72212fbdda1d906ac418a5b63",
       "nostro_mask": "ACCT-91001014",
       "with_an_mask": "ACCT-91001014"
     },
@@ -285,8 +288,8 @@
       "currency": "ZAR",
       "int_bic": "ABSAZAJJ",
       "correspondent": "ABSA Bank Ltd., Johannesburg",
-      "nostro_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca",
-      "with_an_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca",
+      "nostro_fingerprint": "d2efdb14c7a9d8513ea2f0e6406bc6399915e051ea91898f4a809d7bec6e4022",
+      "with_an_fingerprint": "d2efdb14c7a9d8513ea2f0e6406bc6399915e051ea91898f4a809d7bec6e4022",
       "nostro_mask": "ACCT-91001003",
       "with_an_mask": "ACCT-91001003"
     }
@@ -294,7 +297,7 @@
   "source_snapshot": {
     "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
     "source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
-    "captured_at": "2026-09-12",
+    "captured_at": "2026-09-13",
     "extraction": "HTML table extraction; account values omitted after hashing",
     "hash_normalization": "SHA-256 after removing the per-request ASP.NET __VIEWSTATE field",
     "raw_accounts_committed": false,
@@ -307,218 +310,218 @@
         "currency": "AED",
         "int_bic": "CLBIAEAD",
         "correspondent": "Commercial Bank International PJSC, Dubai",
-        "nostro_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a",
-        "with_an_fingerprint": "f677f592dce5845eb0afadb53df145803fe9b6dfa731f5e134f12c62e94eb78a"
+        "nostro_fingerprint": "f56a6c2cefdecdace0f2f88a24298c7eb67f049ff3572dbd1a35ea05c4fb4099",
+        "with_an_fingerprint": "f56a6c2cefdecdace0f2f88a24298c7eb67f049ff3572dbd1a35ea05c4fb4099"
       },
       {
         "currency": "AUD",
         "int_bic": "ANZBAU3M",
         "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne",
-        "nostro_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8",
-        "with_an_fingerprint": "a0d46baaffd2ba401c78c51956c9f09b82d7ccfb48389ba64ac6257798b37be8"
+        "nostro_fingerprint": "babaf4567cae9d0fcf7486828d9ddf47f75399b10ceb9c0c1a39b5ef611adadd",
+        "with_an_fingerprint": "babaf4567cae9d0fcf7486828d9ddf47f75399b10ceb9c0c1a39b5ef611adadd"
       },
       {
         "currency": "AUD",
         "int_bic": "CHASGB2L",
         "correspondent": "JPMorgan Chase Bank, N.A., London",
-        "nostro_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b",
-        "with_an_fingerprint": "a0dd86fff2fd6e5b3d5debc8ae45ed0d0a7f1440ac1ae9a1748c958f9b17462b"
+        "nostro_fingerprint": "a6af6d30bdceea8f8e0ed8378ab39c22c91325780834222f8e1afcec95fc30d2",
+        "with_an_fingerprint": "a6af6d30bdceea8f8e0ed8378ab39c22c91325780834222f8e1afcec95fc30d2"
       },
       {
         "currency": "CAD",
         "int_bic": "BOFMCAT2",
         "correspondent": "Bank of Montreal, Toronto",
-        "nostro_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80",
-        "with_an_fingerprint": "0abebd5cdd81552118765b69cff0f3b826988aead8bd1aa589005e0e53317d80"
+        "nostro_fingerprint": "fd08321a3e188fcdc20fcf7935f18c01f48163708156f6f1420f46d0d571a8f7",
+        "with_an_fingerprint": "fd08321a3e188fcdc20fcf7935f18c01f48163708156f6f1420f46d0d571a8f7"
       },
       {
         "currency": "CHF",
         "int_bic": "ZKBKCHZZ",
         "correspondent": "Zürcher Kantonalbank, Zürich",
-        "nostro_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f",
-        "with_an_fingerprint": "92e965745ae2f6685162cfc1c86f392ab03d83d802874870d604c1118c52419f"
+        "nostro_fingerprint": "9e4abe2ea0007f064248bb48a7cc4310e3a1aa3a832b6ab87df25beec7e8bf42",
+        "with_an_fingerprint": "9e4abe2ea0007f064248bb48a7cc4310e3a1aa3a832b6ab87df25beec7e8bf42"
       },
       {
         "currency": "CNH",
         "int_bic": "ICBKTRISXXX",
         "correspondent": "ICBC Turkey Bank A.Ş., Istanbul",
-        "nostro_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087",
-        "with_an_fingerprint": "fa42b2661410935ef350f90557b99455efc9ff46a00e4541d0163b34118ed087"
+        "nostro_fingerprint": "214c4825f1a65f19cea1afa5a104d5b961c63385ac37cc72b2ac45a7e6353d92",
+        "with_an_fingerprint": "214c4825f1a65f19cea1afa5a104d5b961c63385ac37cc72b2ac45a7e6353d92"
       },
       {
         "currency": "DKK",
         "int_bic": "NDEADKKK",
         "correspondent": "Nordea Bank Danmark A/S",
-        "nostro_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e",
-        "with_an_fingerprint": "187d7e11db57303cc9f564470d0c0666ba4b892b9f5399adea915125fd2c3c4e"
+        "nostro_fingerprint": "97f9f9278ca27a53856fc9a7ffc780c2a82195d6a6e07de2152518ca190f557d",
+        "with_an_fingerprint": "97f9f9278ca27a53856fc9a7ffc780c2a82195d6a6e07de2152518ca190f557d"
       },
       {
         "currency": "EUR",
         "int_bic": "BBRUBEBBXXX",
         "correspondent": "ING Belgium SA/NV",
-        "nostro_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90",
-        "with_an_fingerprint": "6b324bc23b9827f1b4df55f4ac9877e9158c585924078495b1273a78f548dc90"
+        "nostro_fingerprint": "1d942acb801cc173f1ac87f1c04396caa79e10d1d251d7afdcbd13b28aef58c9",
+        "with_an_fingerprint": "1d942acb801cc173f1ac87f1c04396caa79e10d1d251d7afdcbd13b28aef58c9"
       },
       {
         "currency": "EUR",
         "int_bic": "CCFRFRPPXXX",
         "correspondent": "HSBC Continental Europe SA",
-        "nostro_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32",
-        "with_an_fingerprint": "31084f3d6856b3184e8f0f19e0604d861b6a4022c968315f50452d6c3ba99a32"
+        "nostro_fingerprint": "26100d5235200d3577931d27d68c30275ba71c575b2c9f734ea3cf224f11ae10",
+        "with_an_fingerprint": "26100d5235200d3577931d27d68c30275ba71c575b2c9f734ea3cf224f11ae10"
       },
       {
         "currency": "EUR",
         "int_bic": "CHASDEFX",
         "correspondent": "J.P. Morgan AG, Frankfurt",
-        "nostro_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b",
-        "with_an_fingerprint": "2b14f5b6cf5a5cdbf78e146de643680191dc2e4d333d62f24ec0fb6138639f4b"
+        "nostro_fingerprint": "04e64098548e1cd01a98c104e2fbebdbe50163ae25252795374ca9d2fe4c743e",
+        "with_an_fingerprint": "04e64098548e1cd01a98c104e2fbebdbe50163ae25252795374ca9d2fe4c743e"
       },
       {
         "currency": "EUR",
         "int_bic": "COBADEFF",
         "correspondent": "Commerzbank AG",
-        "nostro_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5",
-        "with_an_fingerprint": "bc2178cf7b38a5dd77f558595291acb6b79ae9ed65366fce1293c184bf551af5"
+        "nostro_fingerprint": "3c7a013e40ea113235a2874b497adc6801bb1f1d95a0cefd12beeeaaccb82f67",
+        "with_an_fingerprint": "3c7a013e40ea113235a2874b497adc6801bb1f1d95a0cefd12beeeaaccb82f67"
       },
       {
         "currency": "EUR",
         "int_bic": "DEUTDEFFXXX",
         "correspondent": "Deutsche Bank AG, Frankfurt",
-        "nostro_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b",
-        "with_an_fingerprint": "9eae07f6e749255789fa27c956b7125cb172aa27f5ca0db1c743eb6cbad05e9b"
+        "nostro_fingerprint": "b92b53579b80f45b26b15f67cc7d836c84027134f2e418379b121c4cac8a9e1a",
+        "with_an_fingerprint": "b92b53579b80f45b26b15f67cc7d836c84027134f2e418379b121c4cac8a9e1a"
       },
       {
         "currency": "EUR",
         "int_bic": "IRVTDEFX",
         "correspondent": "Bank of New York, Frankfurt",
-        "nostro_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f",
-        "with_an_fingerprint": "c47aa9cf80943f5126a5353ea11c11753749096b7a4939641136fbb9ce06da2f"
+        "nostro_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb",
+        "with_an_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb"
       },
       {
         "currency": "EUR",
         "int_bic": "SCBLDEFFXXX",
         "correspondent": "Standard Chartered Bank (Germany) GmbH",
-        "nostro_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d",
-        "with_an_fingerprint": "c7c0d89eb81799c1a5caba9205c99195be5fb2aadd50ceb715063e67f45d270d"
+        "nostro_fingerprint": "68304faf95587492c051b179ec273b04cf4bf403576e8895180feeec1167c506",
+        "with_an_fingerprint": "68304faf95587492c051b179ec273b04cf4bf403576e8895180feeec1167c506"
       },
       {
         "currency": "EUR",
         "int_bic": "SOGEFRPP",
         "correspondent": "Société Générale, Paris",
-        "nostro_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85",
-        "with_an_fingerprint": "bd82a797332ddf7c81cd528f17e6a6665d0624b00a4e85225ba94b6ecb4edc85"
+        "nostro_fingerprint": "41b87d73f8ffd6f249954ad149c30e8af0dbe8c5dc6818fc6ed5c5a97c97b78b",
+        "with_an_fingerprint": "41b87d73f8ffd6f249954ad149c30e8af0dbe8c5dc6818fc6ed5c5a97c97b78b"
       },
       {
         "currency": "GBP",
         "int_bic": "SCBLGB2L",
         "correspondent": "Standard Chartered Bank, London",
-        "nostro_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605",
-        "with_an_fingerprint": "a34f62abdbe2e07a149e260dacb42bb3fa17ff712bdbe647eb2ae82039be5605"
+        "nostro_fingerprint": "13ad934726382df07528f0afe7fcb9a5d83ed49a7ee1786fd7273b744607e76a",
+        "with_an_fingerprint": "13ad934726382df07528f0afe7fcb9a5d83ed49a7ee1786fd7273b744607e76a"
       },
       {
         "currency": "JPY",
         "int_bic": "BOTKJPJT",
         "correspondent": "MUFG Bank Ltd., Tokyo",
-        "nostro_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed",
-        "with_an_fingerprint": "07ac1bcd5b4686e4a1c8bc0bf9cd3c160428c1db649c615da47b5a71476fe6ed"
+        "nostro_fingerprint": "d936debaeb41a05b572e2c530dd3ab237c20eaf58d8651b147c94351223b7448",
+        "with_an_fingerprint": "d936debaeb41a05b572e2c530dd3ab237c20eaf58d8651b147c94351223b7448"
       },
       {
         "currency": "NOK",
         "int_bic": "NDEANOKK",
         "correspondent": "Nordea Bank, Oslo",
-        "nostro_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38",
-        "with_an_fingerprint": "a1f383117d51377ecbf18627da0f846c0d6fb3c98a18b36ba239880250823c38"
+        "nostro_fingerprint": "be8043e0b67aed589a0f3fc4d5d533a1718749bab16be27ef024e1604775be1f",
+        "with_an_fingerprint": "be8043e0b67aed589a0f3fc4d5d533a1718749bab16be27ef024e1604775be1f"
       },
       {
         "currency": "PLN",
         "int_bic": "BREXPLPW",
         "correspondent": "mBank SA",
-        "nostro_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e",
-        "with_an_fingerprint": "080a4dad99bd55a59000260c6b8ca9e370a6e929065ba2634dd95dbed1abc11e"
+        "nostro_fingerprint": "e5a4b6bfab8b55ff5f7ff2fdeba831d91fa99ff48fd80503e702976e3d6399ee",
+        "with_an_fingerprint": "e5a4b6bfab8b55ff5f7ff2fdeba831d91fa99ff48fd80503e702976e3d6399ee"
       },
       {
         "currency": "QAR",
         "int_bic": "QNBAQAQAXXX",
         "correspondent": "Qatar National Bank",
-        "nostro_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574",
-        "with_an_fingerprint": "871112ad0e28ae1942fc6e9d38d1e39fe7d938e32c33e0aa45326bc719c87574"
+        "nostro_fingerprint": "97b049020e7f1bf2302c69163967ad9121ab4bc19450cae45a892e3bb078a9ba",
+        "with_an_fingerprint": "97b049020e7f1bf2302c69163967ad9121ab4bc19450cae45a892e3bb078a9ba"
       },
       {
         "currency": "RUB",
         "int_bic": "ISBKRUMMXXX",
         "correspondent": "Isbank Joint Stock Company, Moscow",
-        "nostro_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64",
-        "with_an_fingerprint": "8921fe01d57d18daefd594703caf565b71f348eca34ec8a87d2597785514ce64"
+        "nostro_fingerprint": "cccbecbfa512fe360d03052f2deca751bde0c7425e62ab4e289eb7c7ddbc196b",
+        "with_an_fingerprint": "cccbecbfa512fe360d03052f2deca751bde0c7425e62ab4e289eb7c7ddbc196b"
       },
       {
         "currency": "SAR",
         "int_bic": "NCBKSAJE",
         "correspondent": "The Saudi National Commercial Bank",
-        "nostro_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410",
-        "with_an_fingerprint": "a4c168182da0c6d088a61ef84f2590e16dc0fc4ec2182c2204d23bfc75268410"
+        "nostro_fingerprint": "24196d1c91cd893afb96a47d7bd37facd5577641802486ddc851887a71bc62e1",
+        "with_an_fingerprint": "24196d1c91cd893afb96a47d7bd37facd5577641802486ddc851887a71bc62e1"
       },
       {
         "currency": "SEK",
         "int_bic": "ESSESESS",
         "correspondent": "Skandinaviska Enskilda Banken, Stockholm",
-        "nostro_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95",
-        "with_an_fingerprint": "db52695613f3bae1f66b9e6387bd60ce058ce59197d9936e71e56b21cbec0e95"
+        "nostro_fingerprint": "9ee2d529a03dfc4026cbe6865bd37c2c1cf7bd962b8dc4624cad9739882369ee",
+        "with_an_fingerprint": "9ee2d529a03dfc4026cbe6865bd37c2c1cf7bd962b8dc4624cad9739882369ee"
       },
       {
         "currency": "USD",
         "int_bic": "BOFAUS3N",
         "correspondent": "Bank of America N.A., New York",
-        "nostro_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004",
-        "with_an_fingerprint": "ae205cb789b6f54092284784b16afce5be4c19fae37504f607e7b6702ce2d004"
+        "nostro_fingerprint": "0a94df76da66661fbb036cc2b32615da15e8e0e83e8205ade5f8bed01394acbd",
+        "with_an_fingerprint": "0a94df76da66661fbb036cc2b32615da15e8e0e83e8205ade5f8bed01394acbd"
       },
       {
         "currency": "USD",
         "int_bic": "CHASUS33",
         "correspondent": "JP Morgan Chase Bank NA, New York",
-        "nostro_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3",
-        "with_an_fingerprint": "b83ec2bcac51b26b069a31387a6fa24a838c0c8d723a10e7e1d64e9d473440f3"
+        "nostro_fingerprint": "91141daf852a8515607a939b52b044b10b4f8898bf24455c43422e2cf95b2ee6",
+        "with_an_fingerprint": "91141daf852a8515607a939b52b044b10b4f8898bf24455c43422e2cf95b2ee6"
       },
       {
         "currency": "USD",
         "int_bic": "CITIUS33",
         "correspondent": "Citibank NA, New York",
-        "nostro_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e",
-        "with_an_fingerprint": "95b059ff54e69b93910ce784889b6dc1e7c09c51a9dffaba97c7e48349d4ed4e"
+        "nostro_fingerprint": "c0c7f29335fe159a201fb7d0e633be64d3666b3b4d7fd02e2becfca37456a3e3",
+        "with_an_fingerprint": "c0c7f29335fe159a201fb7d0e633be64d3666b3b4d7fd02e2becfca37456a3e3"
       },
       {
         "currency": "USD",
         "int_bic": "IRVTUS3N",
         "correspondent": "The Bank of New York Mellon, New York",
-        "nostro_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330",
-        "with_an_fingerprint": "7cc40177d5ec1b4c3bd2ad03be3f907d4af4a39b5175a8680eb5ba062dd6d330"
+        "nostro_fingerprint": "f1386afbab5e5dc8b4d1d7f40ef05ba62242e7538b3ec2a16d6543cbd8d8f64d",
+        "with_an_fingerprint": "f1386afbab5e5dc8b4d1d7f40ef05ba62242e7538b3ec2a16d6543cbd8d8f64d"
       },
       {
         "currency": "USD",
         "int_bic": "MSHQUS33XXX",
         "correspondent": "Mashreqbank Psc., New York Branch",
-        "nostro_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69",
-        "with_an_fingerprint": "4b37ae8ee3bd7cd880dd6c4fb5db41a2cd23de95612f95e995e7584d31b29f69"
+        "nostro_fingerprint": "a44db01e0361e2ca141807c8d4ef9ee2d8f73cf2f9eb4a23dd7f302a3da21c54",
+        "with_an_fingerprint": "a44db01e0361e2ca141807c8d4ef9ee2d8f73cf2f9eb4a23dd7f302a3da21c54"
       },
       {
         "currency": "USD",
         "int_bic": "PNBPUS33XXX",
         "correspondent": "Wells Fargo Bank NA, New York",
-        "nostro_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b",
-        "with_an_fingerprint": "01ea17ba882d153da0d06fe3520b900da8fc070012b65072357617c180a3845b"
+        "nostro_fingerprint": "2c5720d7243bea4dcf0f679168d42dbcc6af89ba526f0eecb8ecd3f08d94bce9",
+        "with_an_fingerprint": "2c5720d7243bea4dcf0f679168d42dbcc6af89ba526f0eecb8ecd3f08d94bce9"
       },
       {
         "currency": "USD",
         "int_bic": "SCBLUS33",
         "correspondent": "Standard Chartered Bank, New York",
-        "nostro_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3",
-        "with_an_fingerprint": "87bd6d55c5437a8c8a0f73ca5fb3c76d6b797aa1d3d614ba4e337d3d90c2a5e3"
+        "nostro_fingerprint": "25712f8d65a3027e9c82ff4468543a5d0d3c83c72212fbdda1d906ac418a5b63",
+        "with_an_fingerprint": "25712f8d65a3027e9c82ff4468543a5d0d3c83c72212fbdda1d906ac418a5b63"
       },
       {
         "currency": "ZAR",
         "int_bic": "ABSAZAJJ",
         "correspondent": "ABSA Bank Ltd., Johannesburg",
-        "nostro_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca",
-        "with_an_fingerprint": "ae2f3102f72aecd2c86f37645f35016ce45df9925f70d6d650a713a2ba83ecca"
+        "nostro_fingerprint": "d2efdb14c7a9d8513ea2f0e6406bc6399915e051ea91898f4a809d7bec6e4022",
+        "with_an_fingerprint": "d2efdb14c7a9d8513ea2f0e6406bc6399915e051ea91898f4a809d7bec6e4022"
       }
     ]
   }
