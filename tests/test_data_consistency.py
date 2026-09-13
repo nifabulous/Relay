@@ -263,6 +263,11 @@ UNVERIFIED_US_CLEARERS = {
     # Bank of India New York is published as a correspondent in the SVC table,
     # but no public CHIPS/ABA identifier was verified for this legacy BIC.
     "BKIDUS33",
+    # Grasshopper's official FX instructions identify Pacific Coast Bankers'
+    # Bank (PCBBUS66) as its USD intermediary but do not publish a CHIPS/ABA
+    # identifier for the BIC; keep the sourced route informational until one
+    # is independently verified.
+    "PCBBUS66",
 }
 
 
@@ -3211,6 +3216,7 @@ class TestFinlandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("GRNOUS33XXX", "Grasshopper Bank, National Association", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "JPY", "MXN", "NOK", "NZD", "PHP", "PLN", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
 ]
 
 class TestUnitedStatesSsiCoverage:
@@ -3238,8 +3244,6 @@ class TestUnitedStatesSsiCoverage:
     def test_united_states_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("united-states", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: united-states ----
-
-
 # ---- autopilot-generated coverage tests: germany ----
 GERMANY_SSI_COVERAGE = [
     ('DNBADEHXXXX', 'DNB Bank ASA, Hamburg Branch', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),

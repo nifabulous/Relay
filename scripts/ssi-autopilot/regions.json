@@ -36142,6 +36142,77 @@
             }
           ],
           "admitted_record_digest": "c9ffdf4181d6c3e90252eb84ea8cee8bfdd4f59f8b790c4defbad1dc7595618d"
+        },
+        {
+          "bic8": "GRNOUS33",
+          "name": "Grasshopper Bank, National Association",
+          "country": "US",
+          "currencies": [
+            "AED",
+            "AUD",
+            "CAD",
+            "CHF",
+            "CNY",
+            "CZK",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "HUF",
+            "ILS",
+            "JPY",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PHP",
+            "PLN",
+            "SAR",
+            "SEK",
+            "SGD",
+            "THB",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": ["grasshopper.bank"],
+          "compact_records": [
+            {
+              "source": "https://support.grasshopper.bank/hc/en-us/article_attachments/4406541628308",
+              "as_of": "2026-09-13",
+              "status": "unverified",
+              "charge_code": null,
+              "value_date": null,
+              "bic_only": true,
+              "terms_inferred": false,
+              "rows": [
+                "AED|Abu Dhabi Commercial Bank PSJC, Abu Dhabi|ADCBAEAA||",
+                "AUD|Bank of America, Sydney|BOFAAUSX||",
+                "CAD|Bank of Montreal, Toronto|BOFMCAT2||",
+                "CHF|UBS AG, Zurich|UBSWCHZH80A||",
+                "CNY|Bank of America NA, Hong Kong|BOFAHKHX||",
+                "CZK|Komercni Banka AS, Prague|KOMBCZPP||",
+                "DKK|Danske Bank, Copenhagen|DABADKKK||",
+                "EUR|Bank of America NA, London|BOFAGB22||",
+                "GBP|Bank of America NA, London|BOFAGB22||",
+                "HKD|Bank of America NA, Hong Kong|BOFAHKHX||",
+                "HUF|UniCredit Bank Hungary ZRT, Budapest|BACXHUHB||",
+                "ILS|Bank Leumi Le Israel BM, Tel-aviv|LUMIILIT||",
+                "JPY|Bank of America NA, Tokyo|BOFAJPJX||",
+                "MXN|BBVA Bancomer S.A., Mexico City|BCMRMXMMCOR||",
+                "NOK|DNB Nor Bank ASA, Oslo|DNBANOKK||",
+                "NZD|ANZ National Bank, Wellington|ANZBNZ22||",
+                "PHP|Bank of America NA, Manila|BOFAPH2X||",
+                "PLN|Powszechna Kasa Oszczednosci Bank, Warsaw|BPKOPLPW||",
+                "SAR|National Commercial Bank, Jeddah|NCBKSAJE||",
+                "SEK|Svenska Handelsbanken, Stockholm|HANDSESS||",
+                "SGD|Bank of America NA, Singapore|BOFASG2X||",
+                "THB|Bank of America NA, Bangkok|BOFATH2X||",
+                "USD|Pacific Coast Bankers' Bank, Walnut Creek|PCBBUS66||",
+                "ZAR|Nedbank, Johannesburg|NEDSZAJJ||"
+              ]
+            }
+          ],
+          "admitted_record_digest": "12c91c39c69570ff3eb10d8ec3c8eb1ea6d81cc3ed0849c4d66a239748de74a6"
         }
       ]
     },
