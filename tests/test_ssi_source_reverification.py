@@ -688,6 +688,48 @@ class TestSourceUrlsAreRedacted:
         assert "s3cr3t" not in str(excinfo.value)
 
 
+class TestRedactionIsTotal:
+    """
+    Redaction runs while a result is being built, outside the sweep's per-file
+    handler. A throw there ends a sixty-file run over one bad citation, so
+    this function may never raise — whether a URL is usable is a different
+    question, asked by _assert_fetchable.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://bank.example:99999/n",  # port out of range
+            "http://[oops/n",  # unclosed IPv6 bracket
+            "",
+            "not a url at all",
+            "://",
+        ],
+    )
+    def test_no_input_makes_redaction_raise(self, url):
+        attestation = _module()
+
+        assert isinstance(attestation.redact_url(url), str)
+
+    def test_an_unparseable_url_is_not_echoed_back(self):
+        attestation = _module()
+
+        assert attestation.redact_url("http://[oops/n?token=s3cr3t") == (
+            "<unparseable source URL>"
+        )
+
+    def test_an_empty_citation_says_so(self):
+        attestation = _module()
+
+        assert attestation.redact_url("") == "<no source URL>"
+
+    def test_fetching_a_malformed_url_refuses_with_its_own_type(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.MalformedSourceUrl):
+            attestation._assert_fetchable("https://bank.example:99999/n")
+
+
 class TestRefusalMessagesCarryNoSourceContent:
     """
     The sweep copies exception messages into `detail`, which both renderers

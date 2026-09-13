@@ -35,6 +35,10 @@ This sweep reports, per file, what could actually be established:
     second time as an account move.
 ``unattested``
     no digest was ever captured; the citation is a URL and a promise.
+``invalid-url``
+    the citation is not a usable URL — unparseable, or carrying credentials.
+    Nothing was fetched, and the fix is in the evidence file rather than a
+    retry.
 ``fetch-failed``
     the source did not answer.  A 404 means the citation is dead; several of
     these hosts also fail intermittently on TLS or gateway errors, so counts
@@ -164,6 +168,25 @@ def sweep(
             continue
         try:
             source_bytes = fetcher(evidence["source"])
+        except attestation.MalformedSourceUrl:
+            # Distinct from a source that did not answer: nothing was ever
+            # asked. The citation itself is the defect, and it is fixed in the
+            # evidence file rather than by retrying.
+            result.update(
+                digest="unknown",
+                status="invalid-url",
+                detail="the citation cannot be parsed as a URL",
+            )
+            results.append(result)
+            continue
+        except attestation.CredentialsInSourceUrl:
+            result.update(
+                digest="unknown",
+                status="invalid-url",
+                detail="the citation carries credentials and was not fetched",
+            )
+            results.append(result)
+            continue
         except Exception as exc:  # noqa: BLE001 - one dead source must not end the sweep
             result.update(
                 digest="unknown",

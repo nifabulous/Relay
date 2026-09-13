@@ -267,6 +267,46 @@ class TestSweepClassification:
         assert result["digest"] == "absent"
 
 
+class TestMalformedCitationsDoNotEndTheSweep:
+    def test_a_malformed_url_is_classified_and_the_run_continues(self, tmp_path):
+        """
+        redact_url() is called while building each result, before the fetch
+        handler. A throw there ended the whole run over one bad citation.
+        """
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        bad = _evidence(sweep, source)
+        bad["source"] = "https://bank.example:99999/nostro"
+        first = _write(tmp_path, "a-bad.json", bad)
+        second = _write(tmp_path, "b-good.json", _evidence(sweep, source))
+
+        results = sweep.sweep(
+            [first, second],
+            fetch=lambda url: sweep.attestation._fetch(url)
+            if "99999" in url
+            else source,
+        )
+
+        assert len(results) == 2
+        assert results[0]["status"] == "invalid-url"
+        assert results[0]["source"] == "<unparseable source URL>"
+        assert results[1]["status"] == "verified"
+
+    def test_a_credentialed_citation_is_invalid_rather_than_unreachable(self, tmp_path):
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = _evidence(sweep, source)
+        evidence["source"] = "https://user:pw@bank.example/nostro"
+        path = _write(tmp_path, "creds.json", evidence)
+
+        (result,) = sweep.sweep(
+            [path], fetch=lambda url: sweep.attestation._fetch(url)
+        )
+
+        assert result["status"] == "invalid-url"
+        assert "pw" not in json.dumps(result)
+
+
 class TestSweepNeverLeaksUrlSecrets:
     def test_a_query_string_is_not_rendered_into_results(self, tmp_path):
         sweep = _module()

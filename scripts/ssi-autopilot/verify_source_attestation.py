@@ -133,6 +133,10 @@ class CredentialsInSourceUrl(AttestationError):
     """The citation carries userinfo, which has no place in a public page URL."""
 
 
+class MalformedSourceUrl(AttestationError):
+    """The citation cannot be parsed as a URL at all."""
+
+
 class DigestMismatch(AttestationError):
     """The cited page no longer hashes to the committed digest."""
 
@@ -475,9 +479,19 @@ def redact_url(url: str) -> str:
     a citation carrying a token in its query string would be copied into both
     by the command that exists to keep secrets out of them.
     """
-    parsed = urlparse(url)
-    host = parsed.hostname or ""
-    port = f":{parsed.port}" if parsed.port else ""
+    if not url:
+        return "<no source URL>"
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        port = f":{parsed.port}" if parsed.port else ""
+    except ValueError:
+        # A bad port or an unclosed IPv6 bracket makes urlparse's properties
+        # raise. This function is called while building a result, outside the
+        # sweep's per-file handler, so raising here would end a sixty-file run
+        # over one malformed citation. Redaction is a rendering concern and
+        # must be total; whether the URL is usable is _assert_fetchable's job.
+        return "<unparseable source URL>"
     suffix = "?…" if parsed.query else ""
     return f"{parsed.scheme}://{host}{port}{parsed.path}{suffix}"
 
@@ -497,8 +511,14 @@ def _assert_fetchable(url: str) -> None:
     trick rather than making it impossible. Worth saying plainly instead of
     calling it SSRF-proof.
     """
-    parsed = urlparse(url)
-    scheme = parsed.scheme.lower()
+    try:
+        parsed = urlparse(url)
+        scheme = parsed.scheme.lower()
+        _ = parsed.port  # raises on a malformed port before anything else runs
+    except ValueError as exc:
+        raise MalformedSourceUrl(
+            "refusing to fetch a citation that cannot be parsed as a URL"
+        ) from exc
     if scheme not in {"http", "https"}:
         raise UnsupportedSourceScheme(
             f"refusing to fetch {scheme or 'a schemeless URL'!r}: a cited "
