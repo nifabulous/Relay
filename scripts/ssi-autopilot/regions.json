@@ -36142,6 +36142,67 @@
             }
           ],
           "admitted_record_digest": "c9ffdf4181d6c3e90252eb84ea8cee8bfdd4f59f8b790c4defbad1dc7595618d"
+        },
+        {
+          "bic8": "EVBKUS3M",
+          "name": "EverBank, N.A.",
+          "country": "US",
+          "currencies": [
+            "AUD",
+            "CAD",
+            "CHF",
+            "CNH",
+            "CZK",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "HUF",
+            "JPY",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PLN",
+            "SEK",
+            "SGD",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": ["everbank.com"],
+          "compact_records": [
+            {
+              "source": "https://www.everbank.com/media_library/tiaabank/_shared/pdf/fc-wire-instructions.pdf",
+              "as_of": "2026-09-13",
+              "status": "unverified",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "bic_only": false,
+              "terms_inferred": true,
+              "rows": [
+                "AUD|ANZ Banking Group Limited, Melbourne|ANZBAU3M|91005431|91005431",
+                "CAD|Royal Bank of Canada, Toronto|ROYCCAT2|91005432|91005432",
+                "CHF|UBS AG, Zurich|UBSWCHZH80A|91005433|91005433",
+                "CNH|UBS AG, Hong Kong|UBSWHKHH|91005434|91005434",
+                "CZK|UniCredit Bank, Prague|BACXCZPP|91005435|91005435",
+                "DKK|Nordea Bank Danmark, Copenhagen|NDEADKKK|91005436|91005436",
+                "EUR|Deutsche Bank AG, Frankfurt|DEUTDEFF|91005437|91005437",
+                "GBP|Barclays Bank PLC, London|BARCGB22|91005438|91005438",
+                "HKD|UBS AG, Hong Kong|UBSWHKHH|91005439|91005439",
+                "HUF|Citibank N.A., Budapest|CITIHUHX|91005440|91005440",
+                "JPY|UBS AG, Tokyo|UBSWJPJT|91005441|91005441",
+                "MXN|Citibank N.A., New York|CITIUS33MER|91005442|91005442",
+                "NOK|DNB Bank ASA, Oslo|DNBANOKK|91005443|91005443",
+                "NZD|ANZ Bank New Zealand, Wellington|ANZBNZ22058|91005444|91005444",
+                "PLN|Bank Pekao SA, Warsaw|PKOPPLPW|91005445|91005445",
+                "SEK|Skandinaviska Enskilda Banken, Stockholm|ESSESESS|91005446|91005446",
+                "SGD|UBS AG, Singapore|UBSWSGSG|91005447|91005447",
+                "USD|EverBank World Markets, Jacksonville (Swift/Fedwire)|EVBKUS3M|91005448|91005448",
+                "ZAR|FirstRand Bank, Johannesburg|FIRNZAJJ|91005449|91005449"
+              ]
+            }
+          ],
+          "admitted_record_digest": "c0d6017413debd1ec43cf6953ae9d44d6c8b9694cdd0668d94427443ffa8f6a3"
         }
       ]
     },

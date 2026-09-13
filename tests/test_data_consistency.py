@@ -263,6 +263,9 @@ UNVERIFIED_US_CLEARERS = {
     # Bank of India New York is published as a correspondent in the SVC table,
     # but no public CHIPS/ABA identifier was verified for this legacy BIC.
     "BKIDUS33",
+    # EverBank's direct USD SSI is published with its SWIFT BIC, but no
+    # public CHIPS/ABA identifier is provided in the source instructions.
+    "EVBKUS3M",
 }
 
 
@@ -3211,6 +3214,7 @@ class TestFinlandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("EVBKUS3MXXX", "EverBank, N.A.", {"AUD", "CAD", "CHF", "CNH", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "USD", "ZAR"}),
 ]
 
 class TestUnitedStatesSsiCoverage:
