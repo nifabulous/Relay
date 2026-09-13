@@ -7422,7 +7422,8 @@
         {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"},
         {"bic8":"HDFCINAA","manifest_file":"regions_batch6_banks_1_hdfcinaa.json"},
         {"bic8":"CBININBB","manifest_file":"regions_batch6_banks_1_cbininbb.json"},
-        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"}
+        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"},
+        {"bic8":"KVBLINBB","manifest_file":"regions_batch7_banks_kvblinbb.json"}
       ],
       "forbidden_bics": []
     },
@@ -13965,7 +13966,12 @@
         {"bic8":"MEZNPKKA","name":"Meezan Bank Limited","country":"PK","currencies":["AED","AUD","CAD","CHF","CNY","DKK","EUR","GBP","HKD","JPY","MYR","NOK","SAR","SEK","SGD","THB","USD"],"seedable":true,"source_domains":["meezanbank.com"],"admitted_record_digest":"a60f1c1cd81eb6a73c2a41fc63ad63621d50eefc65a9e41465cd619ba0f43c74","compact_records_file":"regions_batch4_records_2.json"},
         {"bic8":"ABPAPKKA","manifest_file":"regions_batch5_banks_1_abpapkka.json"},
         {"bic8":"ASCMPKKA","manifest_file":"regions_batch5_banks_1_ascmpkka.json"},
-        {"bic8":"SONEPKKA","manifest_file":"regions_batch5_banks_1_sonepkka.json"}
+        {"bic8":"SONEPKKA","manifest_file":"regions_batch5_banks_1_sonepkka.json"},
+        {"bic8":"BPUNPKKA","manifest_file":"regions_batch7_banks_bpunpkka.json"},
+        {"bic8":"KHYBPKKA","manifest_file":"regions_batch7_banks_khybpkka.json"},
+        {"bic8":"BKIPPKKA","manifest_file":"regions_batch7_banks_bkippkka.json"},
+        {"bic8":"MPBLPKKA","manifest_file":"regions_batch7_banks_mpblpkka.json"},
+        {"bic8":"JSBLPKKA","manifest_file":"regions_batch7_banks_jsblpkka.json"}
       ]
     },
     {
@@ -33998,7 +34004,8 @@
         },
         {"bic8":"MIDLAM22","manifest_file":"regions_batch6_banks_2_midlam22.json"},
         {"bic8":"ANIKAM22","manifest_file":"regions_batch6_banks_2_anikam22.json"},
-        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"}
+        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"},
+        {"bic8":"HAJCAZ22","manifest_file":"regions_batch7_banks_hajcaz22.json"}
       ]
     },
     {

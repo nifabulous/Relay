@@ -691,7 +691,7 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
     expected_counts = {
         "europe-remaining-wave5": 69,
         "africa-wave5": 49,
-        "caucasus-wave5": 189,
+        "caucasus-wave5": 220,
     }
     for region in manifest["regions"]:
         if region["name"] not in region_names:
@@ -718,8 +718,8 @@ def test_wave5_manifest_rejects_unlisted_and_forbidden_beneficiaries():
         assert all(key[0][:8] not in forbidden for key in actual)
 
 
-def test_wave6_caucasus_additions_explain_the_189_record_total():
-    """Six later banks add 55 records to the original 134-row region."""
+def test_wave6_caucasus_additions_explain_the_220_record_total():
+    """Six later banks plus Xalq Bank add 86 records to the original 134-row region."""
     manifest, expected = _manifest_contract()
     seed = _seed_index()
     region = next(
@@ -740,11 +740,12 @@ def test_wave6_caucasus_additions_explain_the_189_record_total():
         "MIDLAM22XXX": 11,
         "ANIKAM22XXX": 10,
         "ARMJAM22XXX": 4,
+        "HAJCAZ22XXX": 31,
     }
     assert {
         bic: sum(key[0] == bic for key in keys) for bic in added_counts
     } == added_counts
-    assert sum(added_counts.values()) == 55
+    assert sum(added_counts.values()) == 86
     assert len(keys) - sum(added_counts.values()) == 134
-    assert len(keys) == 189
+    assert len(keys) == 220
     assert {key for key in seed if key[0] in region_bics} == keys

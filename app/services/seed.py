@@ -94,6 +94,11 @@ BANKS = [
     ("UWCBTWTPXXX", "Cathay United Bank", "TW", "Taipei", "TWD"),
     ("CITYBDDHXXX", "Citibank Bangladesh", "BD", "Dhaka", "BDT"),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "PK", "Karachi", "PKR"),
+    ("BPUNPKKAXXX", "The Bank of Punjab", "PK", "Lahore", "PKR"),
+    ("KHYBPKKAXXX", "The Bank of Khyber", "PK", "Peshawar", "PKR"),
+    ("BKIPPKKAXXX", "BankIslami Pakistan Limited", "PK", "Karachi", "PKR"),
+    ("MPBLPKKAXXX", "Habib Metropolitan Bank Limited", "PK", "Karachi", "PKR"),
+    ("JSBLPKKAXXX", "JS Bank Limited", "PK", "Karachi", "PKR"),
     ("HABBPKKAXXX", "Habib Bank", "PK", "Karachi", "PKR"),
     ("UNILPKKAXXX", "UBL", "PK", "Karachi", "PKR"),
     ("MUCBPKKAXXX", "MCB Bank", "PK", "Karachi", "PKR"),
@@ -126,6 +131,7 @@ BANKS = [
     ("ZKBATR2SXXX", "Ziraat Bankasi", "TR", "Ankara", "TRY"),
     # ---- Asia ----
     ("HDFCINBBXXX", "HDFC Bank", "IN", "Mumbai", "INR"),
+    ("KVBLINBBXXX", "Karur Vysya Bank Limited", "IN", "Karur", "INR"),
     ("ICICINBBXXX", "ICICI Bank", "IN", "Mumbai", "INR"),
     ("SBININBBXXX", "State Bank of India", "IN", "Mumbai", "INR"),
     ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
@@ -432,6 +438,7 @@ BANKS = [
     ("ACABAZ22XXX", "AccessBank CJSC", "AZ", "Baku", "AZN"),
     ("ARMCAM22XXX", "Araratbank OJSC", "AM", "Yerevan", "AMD"),
     ("UBAZAZ22XXX", "Unibank CB", "AZ", "Baku", "AZN"),
+    ("HAJCAZ22XXX", "Xalq Bank Open Joint-Stock Company", "AZ", "Baku", "AZN"),
     # ---- SSI expansion batch 4 destination banks ----
     ("BOTKNL2XXXX", "MUFG Bank (Europe) N.V., Amsterdam", "NL", "Amsterdam", "EUR"),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", "DE", "Frankfurt", "EUR"),
@@ -1067,6 +1074,19 @@ def _load_ssi_batch6_groups():
 
 _SSI_BATCH6_GROUPS = _load_ssi_batch6_groups()
 
+_SSI_BATCH7_DATA_FILES = ("seed_ssi_batch7_1.json",)
+
+
+def _load_ssi_batch7_groups():
+    groups = []
+    for filename in _SSI_BATCH7_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH7_GROUPS = _load_ssi_batch7_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1152,7 +1172,42 @@ def _ssi_batch6_records():
             ))
     return expanded
 
+
+def _ssi_batch7_records():
+    """Expand the review-sized batch-7 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH7_GROUPS:
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
+    *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
     *_ssi_batch6_records(),
     # ---- SSI expansion batch 5 (bank-published routes; masked) ----
