@@ -248,9 +248,17 @@ Measured on `swift_routing.db`, 3,952 rows:
 | **total** | **32.5 ms** |
 
 `substr(intermediary_bic, 5, 2)` cannot use an index, which is why the hub rollup is
-73% of the cost. Fine now. **Revisit at roughly 20k rows**, where this approach starts
-to dominate response time; the fix at that point is a persisted country column on
-insert, not a cache.
+73% of the cost. Fine now. The fix, when it is needed, is a persisted country column
+written on insert — not a cache.
+
+- **AC-B10** — a test asserts the SSI row count is below 20,000, failing with a message
+  pointing at this section.
+
+  A prose note saying "revisit at ~20k rows" is something nobody re-reads. Given you
+  land waves continuously, the threshold will arrive during ordinary work, and the
+  signal should be a failing test that explains itself rather than a slow endpoint
+  someone eventually notices. The test asserts corpus size, not query duration —
+  timing assertions are flaky on shared CI runners and would be the wrong instrument.
 
 ---
 
@@ -348,8 +356,13 @@ AtlasHubSchema = z.object({
 `.strict()` makes a hub object arriving with an `evidence` key a **parse failure**, not
 a silently-unrendered field. D5 becomes impossible to reintroduce.
 
-Likewise `AtlasMap` takes `beneficiaryBanksTotal` as a required, non-optional prop, so
-a reach figure without its denominator cannot be constructed.
+Clause 2 gets the same treatment, but at the **type** level rather than one component's
+props. `beneficiaryBanksTotal` is a required field on the shared parsed-payload type
+that `AtlasMap`, `AtlasTable` and `AtlasPanel` all thread through, so no consumer can
+construct a reach figure without its denominator.
+
+Putting it on `AtlasMap` alone would protect the map and leave the table bare — and the
+table is what a screen-reader user gets instead of the map. See AC-F3 and AC-F9.
 
 ### Coverage frame (D6)
 
@@ -382,42 +395,115 @@ A new Explore page must be registered in four places. Verified 2026-09-13:
 
 ## Acceptance criteria
 
+Each AC names the invariant clause or decision it enforces. Clause 1 is *entailment*,
+clause 2 is *mandatory denominator*; see Governing invariant.
+
 ### Backend
 
 - **AC-B1** — `/api/atlas/network` totals match direct SQL counts.
-- **AC-B2** — reach and `banks_served` are distinct counts. Fixture with deliberately
+- **AC-B2** *(clause 1)* — reach and `banks_served` are distinct counts. Fixture with deliberately
   overlapping correspondents asserts the result is not the sum.
 - **AC-B3** — `by_status_and_tier` entries sum to `totals.ssi_rows`.
-- **AC-B4** — every `hubs` object fails a schema check if it carries an `evidence` key.
+- **AC-B4** *(D5)* — every `hubs` object fails a schema check if it carries an
+  `evidence` key.
 - **AC-B5** — every status appears in `by_status_and_tier` even at count zero, so
   `published: 0` is always a datum. No frontend copy hardcodes the number.
 - **AC-B6** — `/api/atlas/country/{iso2}` rejects any value that is not exactly two
   alpha characters.
 - **AC-B7** — the response carries `_ATLAS_DISCLAIMER`; a test asserts it is not
   `_SSI_DISCLAIMER`.
-- **AC-B8** — the response contains no coordinates, no ISO numeric codes and no
-  topology keys.
+- **AC-B8** *(clause 1)* — the response contains no coordinates, no ISO numeric codes
+  and no topology keys.
+- **AC-B9** *(clause 1)* — no field in the response schema admits a monetary or value
+  unit. A test enumerates the response keys against an allowlist, so adding an
+  amount-shaped field to the payload is a deliberate act that fails a test, not an
+  oversight.
+- **AC-B10** — corpus-size threshold assertion against the **seeded** corpus, so an
+  oversized import inside another test cannot trip it. Defined in full under
+  Performance, listed here so this section is the complete checklist.
 
 ### Frontend
 
-- **AC-F1** — every code in `observed_bic_country_codes` resolves to a feature that
-  **exists in `countries-110m.json`**, not merely to a number.
+- **AC-F1** *(clause 1)* — every code in `observed_bic_country_codes` either resolves to
+  a feature that **exists in `countries-110m.json`**, or appears in an explicit
+  `KNOWN_UNRESOLVABLE` allowlist carrying a one-line reason per entry. The allowlist
+  starts with `EB` and its open question. Any code that is neither fails the test.
 
   This is the load-bearing test. `world-atlas` feature ids are zero-padded strings
   (`"008"`, `"036"`, `"050"`); an integer-keyed lookup silently renders every country
   with an ISO numeric below 100 as blank — Bangladesh, Australia, Azerbaijan, Bahrain,
   Armenia and others. A map that looks complete and is not is the failure mode this
-  feature cannot afford. The same test surfaces `EDBBEB22XXX` (see Open questions).
+  feature cannot afford.
 
-- **AC-F2** — a hub object carrying `evidence` fails Zod parse.
-- **AC-F3** — `AtlasMap` cannot be constructed without `beneficiaryBanksTotal`.
+  The allowlist form matters: asserting bare resolution would make the suite red on
+  current data, and the only ways to green it are weakening the test or deleting a row.
+  An allowlist keeps the anomaly visible, reviewable and countable instead.
+
+- **AC-F2** *(D5)* — a hub object carrying `evidence` fails Zod parse.
+- **AC-F3** *(clause 2)* — `AtlasMap` cannot be constructed without
+  `beneficiaryBanksTotal`.
 - **AC-F4** — hatch bands assert at their boundaries: 24, 25, 74, 75.
-- **AC-F5** — the settleability filter removes exactly the 21-country set listed above.
+- **AC-F5** — the settleability filter drops a country whose rows are wholly
+  `bic_only` and keeps one holding both tiers. Asserted against a **fixture**, not
+  against the live corpus.
+
+  The 21-country list in "What the data can and cannot say" is a dated observation, not
+  a test oracle. Asserting it directly would turn the first settleable row for Botswana
+  into a red suite — a false alarm, and false alarms train people to update fixtures
+  without reading them.
+
 - **AC-F6** — table and map stay synced: selecting in either highlights the other, and
   the table reflects the active view and filter.
-- **AC-F7** — the coverage frame is present in every view and filter state and cannot be
-  dismissed.
+- **AC-F7** *(D6)* — the coverage frame is present in every view and filter state and
+  cannot be dismissed.
 - **AC-F8** — axe passes on the atlas route.
+- **AC-F9** *(clause 2)* — `AtlasTable` and `AtlasPanel` cannot render a reach figure
+  without its denominator, enforced by the same required field as AC-F3.
+
+  This is not a repeat of AC-F3. The table is what a screen-reader user gets *instead
+  of* the map (see "The synced table is the accessibility answer"), so enforcing the
+  denominator on the map alone protects it exactly where it is least needed and drops
+  it where it matters most. A bare `223` in a ranked column is the easiest place in the
+  whole feature to read reach as market share.
+
+- **AC-F10** *(clause 2)* — **every data-driven scale** states its actual range in the
+  legend, read from the data and never hardcoded. That is all three: the choropleth
+  fill (beneficiary banks), the hub circle area (reach), and the hub circle fill depth
+  (currency breadth).
+
+  A scale's meaning lives entirely in its domain, and every one of these domains shifts
+  as waves land. "Dark" otherwise means "large relative to whatever today's maximum
+  happens to be" — an aggregate with no stated denominator. Stated as a rule over all
+  scales rather than per-channel, because the per-channel form is what let the hub
+  fill-depth scale slip through the first pass.
+
+  Hatch bands are exempt: a percentage of a country's own rows is self-denominating.
+- **AC-F11** *(clause 1)* — no rendered numeric in any atlas component carries a
+  currency symbol or value unit. Component-level assertion complementing AC-B9's
+  payload-level one.
+- **AC-F12** *(D6)* — never-collected countries are visually distinct from
+  collected-but-thin ones, and the legend names both. AC-F7 covers the frame's
+  presence; this covers its substance — a blank country must never read as "no
+  correspondent banking here".
+- **AC-F13** *(D2)* — the render loop and the legend iterate a layer descriptor list.
+  A test adds a second, inert descriptor and asserts both that it renders and that its
+  attribution appears separately from the first layer's. An untested seam closes at the
+  first refactor.
+
+  The second descriptor is a **test fixture only**. No second layer, and no external
+  data, ships in v1 — see Out of scope.
+
+### Error and partial states
+
+- **AC-F14** — a failed `/api/atlas/network` renders `AsyncRegion`'s error state with
+  retry. No map is drawn.
+- **AC-F15** — a response that parses but is missing `spokes` or `hubs` renders the
+  surviving view with `AsyncRegion`'s `partialNote` naming what is absent. A half-drawn
+  map must announce itself, because a map that looks complete and is not is this
+  feature's defining failure mode — the same one AC-F1 guards at the data layer.
+
+  `partialNote` already exists on `AsyncRegion` and is currently used by no page; the
+  atlas is its first consumer.
 
 ### E2E
 
@@ -455,14 +541,19 @@ report as a visible v1 element rather than a footnote.
 
 ## Risks
 
-| Risk | Mitigation |
-|---|---|
-| A reader takes collection shape for world structure | D6 coverage frame, always on, never dismissible |
-| A reader takes reach for market share | Denominator carried in the payload; AC-F3 makes it structurally required |
-| Evidence attribution regresses in a later change | AC-B4 and AC-F2 make it a parse failure, not a review question |
-| Silent blank countries | AC-F1 asserts against the topology, not against a number |
-| Hub map read as the primary finding | Shipped as a secondary read; the institution-level story lives in the table |
-| Query cost as the corpus grows | Threshold recorded at ~20k rows; fix is a persisted country column, not a cache |
+| Risk | Clause | Mitigation |
+|---|---|---|
+| A value or volume figure reaches the render | 1 | AC-B9 at the payload, AC-F11 at the component. The primary risk, so it is guarded at both layers. |
+| A reader takes reach for market share | 2 | Denominator is a required field on the shared payload type: AC-F3 (map), AC-F9 (table and panel) |
+| Choropleth darkness read as an absolute | 2 | AC-F10 — legend states its actual scale range, read from data |
+| A reader takes collection shape for world structure | 2 | D6 coverage frame, always on and never dismissible: AC-F7 for presence, AC-F12 for the never-collected vs thin distinction |
+| Evidence attribution regresses in a later change | D5 | AC-B4 and AC-F2 make it a parse failure, not a review question |
+| Silent blank countries | 1 | AC-F1 asserts against the topology, with unresolvable codes named in a reviewed allowlist rather than silently absent |
+| A partial load reads as a complete map | 1 | AC-F15 — a missing section renders `partialNote` naming what is absent |
+| The layer seam closes at the first refactor | D2 | AC-F13 renders a second inert descriptor and asserts its separate attribution |
+| A **dimensionless** composite score is added later | 1 | **Not fully guarded.** AC-B9 and AC-F11 catch currency symbols and value units. A blended "importance index" over reach and currency breadth would carry neither, pass both, and still assert something no row entails. The control is review discipline, not a test. Recorded because a guard with a known hole is safer than one believed complete. |
+| Hub map read as the primary finding | — | Shipped as a secondary read; the institution-level story lives in the table |
+| Query cost as the corpus grows | — | Threshold asserted, not just noted — see Performance |
 
 ---
 
