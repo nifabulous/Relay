@@ -1319,5 +1319,12 @@
   "ICRAITRR": {"name": "ICCREA Banca S.p.A.", "country": "IT", "domains": ["iccreabanca.it"], "settlement_terms_published": false},
   "BDINIDJA": {"name": "Bank Danamon Indonesia", "country": "ID", "domains": ["danamon.co.id"], "settlement_terms_published": false},
   "OTPVUAUK": {"name": "OTP Bank JSC Ukraine", "country": "UA", "domains": ["otpbank.com.ua"], "settlement_terms_published": false},
-  "AKBKDEFF": {"name": "Akbank AG", "country": "DE", "domains": ["akbank.de"], "settlement_terms_published": false}
-  }
+  "AKBKDEFF": {"name": "Akbank AG", "country": "DE", "domains": ["akbank.de"], "settlement_terms_published": false},
+  "BPUNPKKA": {"name": "The Bank of Punjab", "country": "PK", "domains": ["bop.com.pk"], "settlement_terms_published": false},
+  "KHYBPKKA": {"name": "The Bank of Khyber", "country": "PK", "domains": ["bok.com.pk"], "settlement_terms_published": false},
+  "BKIPPKKA": {"name": "BankIslami Pakistan Limited", "country": "PK", "domains": ["bankislami.com.pk"], "settlement_terms_published": false},
+  "MPBLPKKA": {"name": "Habib Metropolitan Bank Limited", "country": "PK", "domains": ["habibmetro.com"], "settlement_terms_published": false},
+  "JSBLPKKA": {"name": "JS Bank Limited", "country": "PK", "domains": ["jsbl.com"], "settlement_terms_published": false},
+  "HAJCAZ22": {"name": "Xalq Bank Open Joint-Stock Company", "country": "AZ", "domains": ["xalqbank.az"], "settlement_terms_published": false},
+  "KVBLINBB": {"name": "Karur Vysya Bank Limited", "country": "IN", "domains": ["kvb.bank.in"], "settlement_terms_published": false}
+}

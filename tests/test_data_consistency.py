@@ -1868,6 +1868,7 @@ INDIA_SSI_COVERAGE = [
     ('HDFCINAAXXX', 'HDFC Bank Limited GIFT City', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'USD'}),
     ('CBININBBXXX', 'Central Bank of India', {'USD'}),
     ('IDIBINBBXXX', 'Indian Bank', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
+    ('KVBLINBBXXX', 'Karur Vysya Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'SGD', 'USD'}),
 ]
 
 class TestIndiaSsiCoverage:
@@ -2239,6 +2240,11 @@ PAKISTAN_SSI_COVERAGE = [
     ('ABPAPKKAXXX', 'Allied Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SEK', 'SGD', 'USD'}),
     ('ASCMPKKAXXX', 'Askari Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
     ('SONEPKKAXXX', 'Soneri Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SGD', 'USD'}),
+    ('BPUNPKKAXXX', 'The Bank of Punjab', {'AED', 'AUD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('KHYBPKKAXXX', 'The Bank of Khyber', {'AED', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('BKIPPKKAXXX', 'BankIslami Pakistan Limited', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('MPBLPKKAXXX', 'Habib Metropolitan Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'SEK', 'SGD', 'THB', 'USD'}),
+    ('JSBLPKKAXXX', 'JS Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'SGD', 'USD'}),
 ]
 
 class TestPakistanSsiCoverage:
@@ -2806,6 +2812,7 @@ CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "USD"}),
     ("ANIKAM22XXX", "ID BANK CJSC", {"AED", "BYN", "CNY", "EUR", "GBP", "GEL", "JPY", "RUB", "USD"}),
     ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", {"AMD", "EUR", "RUB", "USD"}),
+    ("HAJCAZ22XXX", "Xalq Bank Open Joint-Stock Company", {"AED", "AZN", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
 ]
 
 class TestCaucasusWave5SsiCoverage:
