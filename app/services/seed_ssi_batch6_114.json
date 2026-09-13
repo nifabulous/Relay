@@ -1,0 +1,36 @@
+[
+  [
+    "SDBLBDDH102",
+    "Standard Bank PLC",
+    "Source: https://www.standardbankbd.com/SblSSI.php and https://standardbankbd.com/Content/Files/ID/SBL%20Nostro%20Accounts.pdf (official Standard Settlement Instructions and Nostro Accounts pages, accessed 2026-09-12). ACU is represented as USD for the repository's payment-route model; published account numbers are masked with synthetic ACCT values and the duplicate ICICI USD row is retained once.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|ABBLINBB|AB Bank Limited, Mumbai|91011500",
+      "USD|AXISINBB|Axis Bank Limited, Mumbai|91011501",
+      "USD|BNBTBTBT|Bhutan National Bank, Thimphu|91011502",
+      "USD|MPBLPKKA|Habib Metropolitan Bank, Karachi|91011503",
+      "USD|ICICINBB|ICICI Bank Limited, Mumbai|91011504",
+      "USD|NPBBNPKA|Nepal Bangladesh Bank, Kathmandu|91011505",
+      "USD|NIBPPKKA|NIB Bank Limited, Karachi|91011506",
+      "USD|SCBLINBB|Standard Chartered Bank, Mumbai|91011507",
+      "AUD|WPACAU2S|Westpac Banking Corporation, Sydney|91011508",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91011509",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91011510",
+      "GBP|MSHQGB2L|MashreqBank, London|91011511",
+      "GBP|BSONGB2L|Sonali Bank (UK), London|91011512",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91011513",
+      "SAR|AAALSARI|Saudi Hollandi Bank, Riyadh|91011514",
+      "USD|HANYUS33|Habib American Bank, New York|91011515",
+      "USD|ICICHKHH|ICICI Bank Limited, Hong Kong|91011516",
+      "USD|MSHQUS33|MashreqBank, New York|91011517",
+      "USD|BSONGB2L|Sonali Bank (UK), London|91011518",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91011519"
+    ]
+  ]
+]
