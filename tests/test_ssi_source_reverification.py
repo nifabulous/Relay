@@ -631,6 +631,63 @@ class TestAnEmptyCellIsNotAnAccount:
         assert evidence["routes"][0]["nostro_fingerprint"] == fingerprint
 
 
+class TestSourceUrlsAreRedacted:
+    """
+    An evidence URL is untrusted input: an author writes it, CI fetches it,
+    and both the diagnostics and the JSON results are printed. A citation
+    carrying a token in its query string would be copied into logs by the
+    command whose whole purpose is keeping secrets out of them.
+    """
+
+    def test_a_query_string_never_survives_redaction(self):
+        attestation = _module()
+
+        redacted = attestation.redact_url(
+            "https://bank.example/nostro?token=s3cr3t&x=1"
+        )
+
+        assert "s3cr3t" not in redacted
+        assert "token" not in redacted
+        assert redacted.startswith("https://bank.example/nostro")
+
+    def test_userinfo_never_survives_redaction(self):
+        attestation = _module()
+
+        redacted = attestation.redact_url("https://user:pw@bank.example/nostro")
+
+        assert "pw" not in redacted
+        assert "user" not in redacted
+        assert redacted == "https://bank.example/nostro"
+
+    def test_a_fragment_never_survives_redaction(self):
+        attestation = _module()
+
+        assert "#" not in attestation.redact_url("https://bank.example/n#frag")
+
+    def test_an_ordinary_citation_is_left_readable(self):
+        attestation = _module()
+
+        assert attestation.redact_url(
+            "https://www.qnb.com.tr/en/popup-en/nostro-account"
+        ) == "https://www.qnb.com.tr/en/popup-en/nostro-account"
+
+    def test_a_citation_carrying_credentials_is_refused_outright(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.CredentialsInSourceUrl) as excinfo:
+            attestation._assert_fetchable("https://user:pw@bank.example/nostro")
+
+        assert "pw" not in str(excinfo.value)
+
+    def test_a_blocked_address_message_carries_no_query_string(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.BlockedSourceAddress) as excinfo:
+            attestation._assert_fetchable("http://127.0.0.1/nostro?token=s3cr3t")
+
+        assert "s3cr3t" not in str(excinfo.value)
+
+
 class TestRefusalMessagesCarryNoSourceContent:
     """
     The sweep copies exception messages into `detail`, which both renderers

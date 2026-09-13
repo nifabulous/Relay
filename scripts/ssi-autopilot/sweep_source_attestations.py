@@ -153,7 +153,7 @@ def sweep(
         evidence = json.loads(path.read_text(encoding="utf-8"))
         result = {
             "file": path.name,
-            "source": evidence.get("source", ""),
+            "source": attestation.redact_url(evidence.get("source", "")),
             "digest": "absent",
             "status": "unattested",
             "routes_checked": False,

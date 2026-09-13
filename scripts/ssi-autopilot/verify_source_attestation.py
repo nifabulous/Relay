@@ -129,6 +129,10 @@ class SourceTimeout(AttestationError):
     """The source took longer than the per-source budget allows."""
 
 
+class CredentialsInSourceUrl(AttestationError):
+    """The citation carries userinfo, which has no place in a public page URL."""
+
+
 class DigestMismatch(AttestationError):
     """The cited page no longer hashes to the committed digest."""
 
@@ -463,6 +467,21 @@ def _read_bounded(
     return b"".join(chunks)
 
 
+def redact_url(url: str) -> str:
+    """Scheme, host and path only — never userinfo, query or fragment.
+
+    Evidence URLs are untrusted input: an author chooses them and CI fetches
+    them. Diagnostics and results are printed to logs and rendered as JSON, so
+    a citation carrying a token in its query string would be copied into both
+    by the command that exists to keep secrets out of them.
+    """
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    port = f":{parsed.port}" if parsed.port else ""
+    suffix = "?…" if parsed.query else ""
+    return f"{parsed.scheme}://{host}{port}{parsed.path}{suffix}"
+
+
 def _assert_fetchable(url: str) -> None:
     """Refuse a URL that is not a public http(s) destination.
 
@@ -486,9 +505,15 @@ def _assert_fetchable(url: str) -> None:
             "source must be an http(s) URL. This runs in CI against URLs taken "
             "from evidence files, so the scheme is not the author's to widen."
         )
+    if parsed.username or parsed.password:
+        raise CredentialsInSourceUrl(
+            f"refusing to fetch {redact_url(url)}: the citation carries "
+            "userinfo. A published settlement table needs no credentials, and "
+            "a URL that arrives with them would put them in CI logs."
+        )
     host = parsed.hostname
     if not host:
-        raise UnsupportedSourceScheme(f"refusing to fetch {url!r}: no host")
+        raise UnsupportedSourceScheme("refusing to fetch a URL with no host")
     for family, _, _, _, address in socket.getaddrinfo(host, None):
         candidate = ipaddress.ip_address(address[0])
         if (
@@ -500,10 +525,11 @@ def _assert_fetchable(url: str) -> None:
             or candidate.is_unspecified
         ):
             raise BlockedSourceAddress(
-                f"refusing to fetch {url!r}: {host} resolves to {candidate}, "
-                "which is not a public address. A cited settlement table lives "
-                "on the open internet; anything else is this process being "
-                "pointed somewhere by the evidence file it is checking."
+                f"refusing to fetch {redact_url(url)}: {host} resolves to "
+                f"{candidate}, which is not a public address. A cited "
+                "settlement table lives on the open internet; anything else is "
+                "this process being pointed somewhere by the evidence file it "
+                "is checking."
             )
 
 
@@ -603,7 +629,7 @@ def _write_record(
     record = {
         "schema": RECORD_SCHEMA,
         "evidence": evidence_path.resolve().relative_to(ROOT).as_posix(),
-        "source": evidence["source"],
+        "source": redact_url(evidence["source"]),
         "verified_at": verified_at,
         "previous_source_sha256": previous_digest,
         "source_sha256": report["source_sha256"],
@@ -713,7 +739,7 @@ def verify(evidence_path: Path, record_dir: Path | None = None) -> dict:
             record_dir, evidence_path, evidence, evidence["source_sha256"], report, []
         )
     return {
-        "source": evidence["source"],
+        "source": redact_url(evidence["source"]),
         "source_sha256": report["source_sha256"],
         "route_count": report["route_keys"]["actual"],
         "fingerprints_matched": report["fingerprints"]["matched"],

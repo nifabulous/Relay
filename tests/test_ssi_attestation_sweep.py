@@ -267,6 +267,20 @@ class TestSweepClassification:
         assert result["digest"] == "absent"
 
 
+class TestSweepNeverLeaksUrlSecrets:
+    def test_a_query_string_is_not_rendered_into_results(self, tmp_path):
+        sweep = _module()
+        source = _table([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        evidence = _evidence(sweep, source)
+        evidence["source"] = "https://bank.example/nostro?token=s3cr3t"
+        path = _write(tmp_path, "tokened.json", evidence)
+
+        blob = json.dumps(sweep.sweep([path], fetch=lambda url: source))
+
+        assert "s3cr3t" not in blob
+        assert "bank.example/nostro" in blob
+
+
 class TestSweepNeverLeaksAccounts:
     def test_results_carry_no_raw_account_value(self, tmp_path):
         sweep = _module()

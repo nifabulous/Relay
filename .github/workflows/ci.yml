@@ -179,10 +179,13 @@ jobs:
       # key, which the first two cannot distinguish from a re-render.  A
       # failure here is not licence to re-record the digest by hand: see
       # "Re-verifying a cited source" in scripts/ssi-autopilot/SKILL.md.
+      # Deliberately one line. A folded scalar split the evidence path onto a
+      # continuation line, and every truncated view of this patch -- reviewers
+      # and humans alike -- saw a command invoked with no argument at all.
+      # The step was correct and read as broken, repeatedly. Keep it on one
+      # line so no truncation can hide the argument.
       - name: Verify live SSI source attestation
-        run: >-
-          python scripts/ssi-autopilot/verify_source_attestation.py
-          scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json
+        run: python scripts/ssi-autopilot/verify_source_attestation.py scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json
 
   # The normal matrix intentionally uses the base install, so the optional
   # provider package is not imported there. This job installs the exact AI
