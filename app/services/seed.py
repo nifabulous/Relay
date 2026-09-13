@@ -281,6 +281,8 @@ BANKS = [
     ("SBZAZAJJXXX", "Standard Bank South Africa Johannesburg", "ZA", "Johannesburg", "ZAR"),
     # ---- ICICI Bank UK PLC (destination) ----
     ("ICICGB2LXXX", "ICICI Bank UK PLC", "GB", "London", "GBP"),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "HK", "Hong Kong", "HKD"),
+    ("ICICDEFFXXX", "ICICI Bank Limited, Germany", "DE", "Frankfurt", "EUR"),
     # ---- SBI branches (from SBI Nostro SSI PDF) ----
     ("SBINGB2LXXX", "State Bank of India London", "GB", "London", "GBP"),
     ("SBINJPJTXXX", "State Bank of India Tokyo", "JP", "Tokyo", "JPY"),
@@ -2868,6 +2870,64 @@ SSI_RECORDS = [
      "ADCBAEAAXXX", "Abu Dhabi Commercial Bank",
      "ACCT-05119", "ACCT-24021", "SHA", "spot",
      "Source: ICICI Bank UK Nostro PDF. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — ICICI Bank Limited, Hong Kong (ICICHKHH)
+    # Source: ICICI Bank Hong Kong's official Correspondent Bank Details PDF.
+    # The published correspondent BICs are retained as availability-only
+    # rows; account values are intentionally withheld.
+    # ====================================================================
+
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "USD",
+     "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "GBP",
+     "NWBKGB2LXXX", "National Westminster Bank plc, London",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "EUR",
+     "ICICDEFFXXX", "ICICI Bank Limited, Germany",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "INR",
+     "ICICINBBXXX", "ICICI Bank Limited, Mumbai",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "AUD",
+     "CTBAAU2SXXX", "Commonwealth Bank, Sydney",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "JPY",
+     "BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi UFJ, Tokyo",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "SGD",
+     "DBSSSGSGXXX", "DBS Bank Ltd, Singapore",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "NZD",
+     "WPACNZ2WXXX", "Westpac Banking Corporation, Wellington",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "CAD",
+     "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "AED",
+     "NBADAEAAXXX", "First Abu Dhabi Bank, UAE",
+     None, None, None, None,
+     "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
 
     # ====================================================================
     # REAL SSI DATA — HDFC Bank India (HDFCINBB)
