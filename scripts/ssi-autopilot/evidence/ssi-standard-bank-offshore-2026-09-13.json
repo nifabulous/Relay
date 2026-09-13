@@ -1,0 +1,50 @@
+{
+  "source_url": "https://international.standardbank.com/international/personal/about-us/routing-information",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "banks": {
+    "SBICIMDXXXX": {
+      "name": "Standard Bank Isle of Man Limited",
+      "routes": [
+        {"currency": "GBP", "int_bic": "LOYDGB2LXXX"},
+        {"currency": "EUR", "int_bic": "CITIGB2LXXX"},
+        {"currency": "USD", "int_bic": "CITIUS33XXX"},
+        {"currency": "AED", "int_bic": "BBMEAEADXXX"},
+        {"currency": "AUD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "CAD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "CHF", "int_bic": "CITIGB2LXXX"},
+        {"currency": "DKK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "HKD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "JPY", "int_bic": "CITIGB2LXXX"},
+        {"currency": "NOK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "NZD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "SEK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "SGD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "ZAR", "int_bic": "SBZAZAJJXXX"}
+      ]
+    },
+    "SBICJESHXXX": {
+      "name": "Standard Bank Jersey Limited",
+      "routes": [
+        {"currency": "GBP", "int_bic": "LOYDGB2LXXX"},
+        {"currency": "EUR", "int_bic": "CITIGB2LXXX"},
+        {"currency": "USD", "int_bic": "CITIUS33XXX"},
+        {"currency": "AED", "int_bic": "BBMEAEADXXX"},
+        {"currency": "AUD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "CAD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "CHF", "int_bic": "CITIGB2LXXX"},
+        {"currency": "DKK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "HKD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "JPY", "int_bic": "CITIGB2LXXX"},
+        {"currency": "NOK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "NZD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "SEK", "int_bic": "CITIGB2LXXX"},
+        {"currency": "SGD", "int_bic": "CITIGB2LXXX"},
+        {"currency": "ZAR", "int_bic": "SBZAZAJJXXX"}
+      ]
+    }
+  }
+}
