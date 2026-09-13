@@ -152,6 +152,7 @@ BANKS = [
     ("SCBLGB2LXXX", "Standard Chartered London", "GB", "London", "GBP"),
     ("SCBLHKHHXXX", "Standard Chartered Hong Kong", "HK", "Hong Kong", "HKD"),
     ("SCBLSGSGXXX", "Standard Chartered Singapore", "SG", "Singapore", "SGD"),
+    ("SCBLSG22XXX", "Standard Chartered Bank Singapore Limited", "SG", "Singapore", "SGD"),
     ("SCBLBDDXXXX", "Standard Chartered Bangladesh", "BD", "Dhaka", "BDT"),
     ("SCBLPKKXXXX", "Standard Chartered Pakistan", "PK", "Karachi", "PKR"),
     # Country clearing banks (from published SSIs)
@@ -283,6 +284,8 @@ BANKS = [
     ("ICICGB2LXXX", "ICICI Bank UK PLC", "GB", "London", "GBP"),
     ("ICICHKHHXXX", "ICICI Bank Limited, Hong Kong", "HK", "Hong Kong", "HKD"),
     ("ICICDEFFXXX", "ICICI Bank Limited, Germany", "DE", "Frankfurt", "EUR"),
+    ("CATHUS6LXXX", "Cathay Bank", "US", "Los Angeles", "USD"),
+    ("CATHHKHHXXX", "Cathay Bank Hong Kong Branch", "HK", "Hong Kong", "HKD"),
     # ---- SBI branches (from SBI Nostro SSI PDF) ----
     ("SBINGB2LXXX", "State Bank of India London", "GB", "London", "GBP"),
     ("SBINJPJTXXX", "State Bank of India Tokyo", "JP", "Tokyo", "JPY"),
@@ -2927,6 +2930,54 @@ SSI_RECORDS = [
      "NBADAEAAXXX", "First Abu Dhabi Bank, UAE",
      None, None, None, None,
      "Source: https://www.icicibank.hk/content/dam/icicibank/icici-assets/hk/Correspondent%20Bank%20Details-1.pdf (accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+
+    # ====================================================================
+    # REAL SSI DATA — Cathay Bank (CATHUS6L)
+    # Source: Cathay Bank's currency-specific incoming-wire PDFs. Current
+    # single-hop routes are retained as availability-only rows; account
+    # values are intentionally withheld.
+    # ====================================================================
+
+    ("CATHUS6LXXX", "Cathay Bank", "AUD",
+     "ANZBAU3MXXX", "Australia and New Zealand Banking Group, Melbourne",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/AUD.pdf (effective 2026-02-04; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "CAD",
+     "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/CAD.pdf (effective 2026-04-17; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "GBP",
+     "SCBLGB2LXXX", "Standard Chartered Bank, London",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/GBP.pdf (effective 2026-07-10; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "HKD",
+     "CATHHKHHXXX", "Cathay Bank, Hong Kong Branch",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/HKD.pdf (effective 2020-09-04; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "CNY",
+     "CATHHKHHXXX", "Cathay Bank, Hong Kong Branch",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/CNY.pdf (effective 2020-09-04; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "SGD",
+     "SCBLSG22XXX", "Standard Chartered Bank, Singapore Limited",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/SGD.pdf (effective 2021-06-10; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "JPY",
+     "BOTKJPJTXXX", "MUFG Bank, Tokyo",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/JPY.pdf (effective 2020-09-04; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
+     "2026-09-13", "unverified", None, True, False),
+    ("CATHUS6LXXX", "Cathay Bank", "NZD",
+     "ANZBNZ22058", "ANZ Bank New Zealand Limited, Wellington",
+     None, None, None, None,
+     "Source: https://www.cathaybank.com/currency/NZD.pdf (effective 2020-09-04; accessed 2026-09-13). BIC-level list — no account numbers published; not a selectable settlement instruction. PDF account values are intentionally withheld. " + _SSI_REAL_NOTE,
      "2026-09-13", "unverified", None, True, False),
 
     # ====================================================================

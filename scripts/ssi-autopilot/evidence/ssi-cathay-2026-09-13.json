@@ -1,0 +1,25 @@
+{
+  "beneficiary_bic": "CATHUS6LXXX",
+  "source_url": "https://www.cathaybank.com/business/checking/incoming-wire",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "ANZBAU3MXXX", "source_url": "https://www.cathaybank.com/currency/AUD.pdf", "effective_date": "2026-02-04"},
+    {"currency": "CAD", "int_bic": "ROYCCAT2XXX", "source_url": "https://www.cathaybank.com/currency/CAD.pdf", "effective_date": "2026-04-17"},
+    {"currency": "GBP", "int_bic": "SCBLGB2LXXX", "source_url": "https://www.cathaybank.com/currency/GBP.pdf", "effective_date": "2026-07-10"},
+    {"currency": "HKD", "int_bic": "CATHHKHHXXX", "source_url": "https://www.cathaybank.com/currency/HKD.pdf", "effective_date": "2020-09-04"},
+    {"currency": "CNY", "int_bic": "CATHHKHHXXX", "source_url": "https://www.cathaybank.com/currency/CNY.pdf", "effective_date": "2020-09-04"},
+    {"currency": "SGD", "int_bic": "SCBLSG22XXX", "source_url": "https://www.cathaybank.com/currency/SGD.pdf", "effective_date": "2021-06-10"},
+    {"currency": "JPY", "int_bic": "BOTKJPJTXXX", "source_url": "https://www.cathaybank.com/currency/JPY.pdf", "effective_date": "2020-09-04"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22058", "source_url": "https://www.cathaybank.com/currency/NZD.pdf", "effective_date": "2020-09-04"}
+  ],
+  "omitted_routes": {
+    "USD": "The official USD PDF has no intermediary bank; it is a domestic-wire instruction.",
+    "EUR": "The official EUR PDF prints SCBLDEFX, intentionally omitted pending canonical BIC verification.",
+    "MXN": "The official MXN PDF uses a BBVA-to-Wells Fargo multi-hop chain.",
+    "CHF": "The official CHF PDF uses a UBS-to-Wells Fargo multi-hop chain."
+  }
+}
