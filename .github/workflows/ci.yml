@@ -187,6 +187,16 @@ jobs:
       - name: Verify live SSI source attestation
         run: python scripts/ssi-autopilot/verify_source_attestation.py scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json
 
+      # A committed re-verification record is written by whoever opened the
+      # pull request, so on its own it shows that two files in the same tree
+      # agree -- not that any check was ever run. This step rebuilds the
+      # record's claims from the live page on the runner, which is the one
+      # party a pull request author cannot edit, and fails when the committed
+      # record says something the source does not support. It writes nothing
+      # and needs no permissions.
+      - name: Corroborate the SSI re-verification record
+        run: python scripts/ssi-autopilot/verify_source_attestation.py scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json --check-record scripts/ssi-autopilot/evidence/reverification
+
   # The normal matrix intentionally uses the base install, so the optional
   # provider package is not imported there. This job installs the exact AI
   # extra used by Vercel and exercises the real OpenAI Responses request

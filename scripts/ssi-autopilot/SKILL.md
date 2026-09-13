@@ -229,13 +229,29 @@ route counts, the per-route fingerprint results and `raw_accounts_committed:
 false`. A test asserts the committed digest is one some record reports having
 seen, so a digest edited silently fails offline with no network needed.
 
-Be precise about what that buys. A record is ordinary repository content — not
-signed, not chained — so someone can edit the digest to a value an existing
-record already names, or write a matching record. The offline test enforces
-consistency, not provenance. **The authority on what the source says today is
-the live check CI runs on every pull request**; the record's value is that it
-makes a falsifiable claim you can re-run, where a refreshed digest used to
-carry no claim at all.
+Two separate checks stand behind that record, and they establish different
+things:
+
+- **The offline test** asserts a committed digest is named by some record. It
+  catches a digest changed silently, and nothing more: both files are ordinary
+  repository content, so a contributor who also writes a matching record
+  passes it. That is consistency, not provenance.
+- **CI corroborates the record** (`--check-record`). The runner fetches the
+  page itself and rebuilds the record's claims — digest, route counts, every
+  fingerprint result — and fails when the committed record says something the
+  live source does not support. A hand-written record asserting checks that
+  were never run disagrees with one the tool produced.
+
+That second check is where provenance actually comes from: the runner is the
+one party a pull request author cannot edit. It writes nothing and needs no
+permissions.
+
+What neither check establishes is history. `verified_at`,
+`previous_source_sha256` and `accepted_account_changes` describe a moment that
+has passed, and a runner checking today cannot re-derive what the digest was
+yesterday. Corroboration covers every claim a record makes about the *current*
+source, which is the part that would have to be false for a refresh to be
+hiding something.
 
 ### Accepting a genuine account change
 

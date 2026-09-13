@@ -147,6 +147,10 @@ class SourceUnavailable(AttestationError):
     """The source answered, but not with the page."""
 
 
+class RecordNotCorroborated(AttestationError):
+    """The committed record disagrees with what the live source says now."""
+
+
 class DigestMismatch(AttestationError):
     """The cited page no longer hashes to the committed digest."""
 
@@ -787,6 +791,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="directory to write the re-verification record into",
     )
     parser.add_argument(
+        "--check-record",
+        type=Path,
+        dest="check_record",
+        help="re-derive the record from the live source and compare it to the "
+        "committed one; this is what CI runs",
+    )
+    parser.add_argument(
         "--refresh",
         action="store_true",
         help="re-record the source digest once every route and fingerprint matches",
@@ -814,6 +825,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.accepted and not args.refresh:
         parser.error("--accept-account-change only applies with --refresh")
+    if args.check_record is not None and (args.refresh or args.record):
+        parser.error("--check-record verifies an existing record; it writes nothing")
     return args
 
 
@@ -905,10 +918,110 @@ def reverify(
     }
 
 
+def _corroborable(record: dict) -> dict:
+    """The parts of a record a runner can establish for itself.
+
+    `verified_at`, `previous_source_sha256`, `digest_changed` and
+    `accepted_account_changes` are claims about a moment that has passed — a
+    runner checking today cannot re-derive what the digest was yesterday. What
+    it can check is whether everything the record says about the *current*
+    source is true, which is the part that would have to be false for a
+    refresh to be hiding something.
+    """
+    return {
+        "schema": record.get("schema"),
+        "evidence": record.get("evidence"),
+        "source": record.get("source"),
+        "source_sha256": record.get("source_sha256"),
+        "route_keys": record.get("route_keys"),
+        "fingerprints": record.get("fingerprints"),
+        "raw_accounts_committed": record.get("raw_accounts_committed"),
+        "tool": record.get("tool"),
+    }
+
+
+def check_record(evidence_path: Path, record_dir: Path) -> dict:
+    """Re-derive the record from the live source and compare it to the committed one.
+
+    This is what makes a record mean something. The offline test can only
+    establish that a digest and a record agree with each other, and both are
+    files a contributor writes. Here the runner fetches the page itself and
+    rebuilds the claim, so a record asserting checks that were never run
+    disagrees with one that was.
+    """
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    relative = evidence_path.resolve().relative_to(ROOT).as_posix()
+    report = compare(evidence, _fetch(evidence["source"]))
+
+    if not report["digest_matches"]:
+        raise DigestMismatch(
+            f"source digest mismatch: expected {evidence['source_sha256']}, "
+            f"got {report['source_sha256']}"
+        )
+    if not report["routes_and_accounts_match"]:
+        raise RecordNotCorroborated(
+            "the live source no longer matches the committed evidence: "
+            f"missing={report['route_keys']['missing']} "
+            f"unexpected={report['route_keys']['unexpected']} "
+            f"changed={report['fingerprints']['changed']}"
+        )
+
+    committed = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(record_dir.glob("*.json"))
+        if json.loads(path.read_text(encoding="utf-8")).get("evidence") == relative
+        and json.loads(path.read_text(encoding="utf-8")).get("source_sha256")
+        == evidence["source_sha256"]
+    ]
+    if not committed:
+        raise RecordNotCorroborated(
+            f"no re-verification record covers the digest committed for "
+            f"{relative}. A digest may only arrive with the record of the "
+            "re-verification that produced it."
+        )
+
+    expected = _corroborable(
+        {
+            "schema": RECORD_SCHEMA,
+            "evidence": relative,
+            "source": redact_url(evidence["source"]),
+            "source_sha256": report["source_sha256"],
+            "route_keys": {
+                "expected": report["route_keys"]["expected"],
+                "actual": report["route_keys"]["actual"],
+                "match": report["route_keys"]["match"],
+            },
+            "fingerprints": report["fingerprints"],
+            "raw_accounts_committed": False,
+            "tool": TOOL,
+        }
+    )
+    for record in committed:
+        if _corroborable(record) == expected:
+            return {
+                "evidence": relative,
+                "source_sha256": report["source_sha256"],
+                "corroborated": True,
+                "records_examined": len(committed),
+            }
+
+    differences = {
+        key: {"record": _corroborable(committed[0]).get(key), "live": value}
+        for key, value in expected.items()
+        if _corroborable(committed[0]).get(key) != value
+    }
+    raise RecordNotCorroborated(
+        "the committed record does not match what the live source says now:\n"
+        + json.dumps(differences, indent=2, sort_keys=True)
+    )
+
+
 def main() -> int:
     args = parse_args()
     try:
-        if args.refresh:
+        if args.check_record is not None:
+            result = check_record(args.evidence, args.check_record)
+        elif args.refresh:
             result = reverify(args.evidence, args.record, args.accepted)
         else:
             result = verify(args.evidence, args.record)

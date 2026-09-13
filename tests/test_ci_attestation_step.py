@@ -24,15 +24,20 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/ci.yml"
 STEP = "Verify live SSI source attestation"
+CORROBORATE = "Corroborate the SSI re-verification record"
 
 
-def _attestation_command() -> list[str]:
+def _command(name: str) -> list[str]:
     workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
     for job in workflow["jobs"].values():
         for step in job.get("steps", []):
-            if step.get("name") == STEP:
+            if step.get("name") == name:
                 return shlex.split(step["run"])
-    raise AssertionError(f"no {STEP!r} step in {WORKFLOW}")
+    raise AssertionError(f"no {name!r} step in {WORKFLOW}")
+
+
+def _attestation_command() -> list[str]:
+    return _command(STEP)
 
 
 def test_the_workflow_still_has_the_attestation_step():
@@ -100,3 +105,53 @@ def test_the_step_is_a_single_line_so_truncation_cannot_hide_the_argument():
     )
     assert "verify_source_attestation.py" in run_line
     assert ".json" in run_line
+
+
+class TestTheCorroborationStep:
+    """
+    The step that makes a record mean something: the runner rebuilds the
+    record's claims from the live page, so a record asserting checks that were
+    never run disagrees with one that was.
+    """
+
+    def test_the_workflow_corroborates_the_record(self):
+        command = _command(CORROBORATE)
+
+        assert "--check-record" in command
+
+    def test_it_points_at_the_committed_record_directory(self):
+        command = _command(CORROBORATE)
+        directory = ROOT / command[command.index("--check-record") + 1]
+
+        assert directory.is_dir()
+        assert list(directory.glob("*.json")), "no records to corroborate"
+
+    def test_it_parses_and_writes_nothing(self):
+        command = _command(CORROBORATE)
+        spec = importlib.util.spec_from_file_location(
+            "ssi_source_attestation",
+            ROOT / "scripts/ssi-autopilot/verify_source_attestation.py",
+        )
+        attestation = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(attestation)
+
+        args = attestation.parse_args(command[2:])
+
+        assert args.check_record is not None
+        assert args.refresh is False
+        assert args.record is None, "corroboration must never write a record"
+
+    def test_corroboration_and_refresh_are_mutually_exclusive(self):
+        spec = importlib.util.spec_from_file_location(
+            "ssi_source_attestation",
+            ROOT / "scripts/ssi-autopilot/verify_source_attestation.py",
+        )
+        attestation = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(attestation)
+
+        with pytest.raises(SystemExit):
+            attestation.parse_args(
+                ["evidence.json", "--check-record", "records", "--refresh"]
+            )

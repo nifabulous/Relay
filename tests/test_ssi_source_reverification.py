@@ -1435,3 +1435,120 @@ class TestArgumentGuards:
 
         assert args.refresh is False
         assert args.record is None
+
+
+class TestCiCorroboratesTheRecord:
+    """
+    The step that turns a record from a claim into evidence.
+
+    The offline test can only establish that a digest and a record agree with
+    each other, and a contributor writes both. Here the runner fetches the
+    page itself and rebuilds the record's claims, so a record asserting checks
+    that were never run disagrees with one that was. The runner is the one
+    party a pull request author cannot edit.
+    """
+
+    def _setup(self, tmp_path, attestation, monkeypatch):
+        source = _html([["Bank of Example", "USD", "890-0045-140", "IRVTUS3N"]])
+        import hashlib
+
+        digest = hashlib.sha256(
+            attestation._canonical_source_bytes(source)
+        ).hexdigest()
+        fingerprint = attestation.account_fingerprint("890-0045-140")
+        evidence = {
+            "source": "https://bank.example/nostro",
+            "source_sha256": digest,
+            "source_snapshot": {"bic_aliases": {}, "captured_at": "2026-09-13"},
+            "routes": [
+                {
+                    "currency": "USD",
+                    "int_bic": "IRVTUS3N",
+                    "nostro_fingerprint": fingerprint,
+                    "with_an_fingerprint": fingerprint,
+                    "nostro_mask": "ACCT-91001029",
+                    "with_an_mask": "ACCT-91001029",
+                }
+            ],
+        }
+        evidence_path = tmp_path / "evidence.json"
+        evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+        monkeypatch.setattr(attestation, "_fetch", lambda url: source)
+        monkeypatch.setattr(attestation, "ROOT", tmp_path)
+        return evidence_path, digest
+
+    def test_a_record_the_tool_produced_is_corroborated(self, tmp_path, monkeypatch):
+        attestation = _module()
+        evidence_path, _ = self._setup(tmp_path, attestation, monkeypatch)
+        records = tmp_path / "records"
+
+        attestation.reverify(evidence_path, records, [])
+        result = attestation.check_record(evidence_path, records)
+
+        assert result["corroborated"] is True
+
+    def test_a_missing_record_fails_corroboration(self, tmp_path, monkeypatch):
+        attestation = _module()
+        evidence_path, _ = self._setup(tmp_path, attestation, monkeypatch)
+        empty = tmp_path / "records"
+        empty.mkdir()
+
+        with pytest.raises(attestation.RecordNotCorroborated) as excinfo:
+            attestation.check_record(evidence_path, empty)
+
+        assert "no re-verification record" in str(excinfo.value)
+
+    def test_a_record_claiming_checks_that_were_not_run_fails(
+        self, tmp_path, monkeypatch
+    ):
+        """
+        A hand-written record is the whole attack the offline test cannot see:
+        it names the right digest and asserts whatever its author likes.
+        """
+        attestation = _module()
+        evidence_path, digest = self._setup(tmp_path, attestation, monkeypatch)
+        records = tmp_path / "records"
+        attestation.reverify(evidence_path, records, [])
+
+        forged = next(records.glob("*.json"))
+        record = json.loads(forged.read_text())
+        record["fingerprints"] = {"checked": 99, "matched": 99, "changed": []}
+        forged.write_text(json.dumps(record), encoding="utf-8")
+
+        with pytest.raises(attestation.RecordNotCorroborated) as excinfo:
+            attestation.check_record(evidence_path, records)
+
+        assert "does not match what the live source says" in str(excinfo.value)
+
+    def test_a_record_understating_the_routes_also_fails(self, tmp_path, monkeypatch):
+        attestation = _module()
+        evidence_path, _ = self._setup(tmp_path, attestation, monkeypatch)
+        records = tmp_path / "records"
+        attestation.reverify(evidence_path, records, [])
+
+        forged = next(records.glob("*.json"))
+        record = json.loads(forged.read_text())
+        record["route_keys"] = {"expected": 0, "actual": 0, "match": True}
+        forged.write_text(json.dumps(record), encoding="utf-8")
+
+        with pytest.raises(attestation.RecordNotCorroborated):
+            attestation.check_record(evidence_path, records)
+
+    def test_historical_fields_are_not_required_to_match(self, tmp_path, monkeypatch):
+        """
+        A runner checking today cannot re-derive what the digest was
+        yesterday, so `verified_at` and `previous_source_sha256` are outside
+        what corroboration can honestly assert.
+        """
+        attestation = _module()
+        evidence_path, _ = self._setup(tmp_path, attestation, monkeypatch)
+        records = tmp_path / "records"
+        attestation.reverify(evidence_path, records, [])
+
+        path = next(records.glob("*.json"))
+        record = json.loads(path.read_text())
+        record["verified_at"] = "1999-01-01"
+        record["previous_source_sha256"] = "ff" * 32
+        path.write_text(json.dumps(record), encoding="utf-8")
+
+        assert attestation.check_record(evidence_path, records)["corroborated"] is True
