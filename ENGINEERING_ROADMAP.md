@@ -119,11 +119,14 @@ Ordered by what each actually buys:
    digest can be resolved instead of merely noted.
 5. **`ssi-wave18-bbdebrsp`** pins a digest and records no routes. Capture
    them or drop the file's claim to being evidence.
-6. **Salt the account fingerprints.** `account_fingerprint` is an unsalted
-   SHA-256 over a short account string, so it is brute-forceable. The sources
-   are public pages, so nothing secret leaks, but `raw_accounts_committed:
-   false` reads stronger than it is. Changing the scheme rewrites all 60
-   files, so it wants its own change.
+6. ~~**Salt the account fingerprints.**~~ ✅ Done — `scrypt-v1` (scrypt
+   n=2^14, committed per-file salt) replaces the unsalted SHA-256. The salt is
+   committed so a third party can still reproduce every fingerprint, which a
+   keyed construction would have destroyed. **Only wave 21 is migrated:** a
+   fingerprint cannot be reversed, so migration re-derives accounts from the
+   cited page, and the seven PDF-sourced files keep `sha256-v0` until an
+   extractor for their format exists. `masking.fingerprint_scheme` names which
+   is which.
 
 ---
 

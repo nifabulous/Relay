@@ -53,6 +53,7 @@ import ipaddress
 import json
 import os
 import re
+import secrets
 import socket
 import ssl
 import sys
@@ -74,6 +75,29 @@ MAX_SOURCE_BYTES = 25 * 1024 * 1024
 # slow drip stays under the cap indefinitely and burns the CI job instead.
 MAX_SOURCE_SECONDS = 60
 MAX_REDIRECTS = 5
+
+# Fingerprint derivations, by name.
+#
+# `sha256-v0` is a bare SHA-256 over the normalized account. It is what the
+# committed evidence has always used, and it is dictionary-searchable: a
+# ten-digit account is 10^10 candidates, which is minutes of work. The source
+# pages are public, so nothing secret leaks -- but "raw_accounts_committed:
+# false" implied a redaction it was not providing.
+#
+# `scrypt-v1` keeps the one property that matters -- anyone holding the cited
+# page can still reproduce every fingerprint, because the salt is committed
+# alongside them -- while making the search expensive. At n=2^14 a single
+# derivation costs about 35ms and 16MB, so verifying 31 routes takes about a
+# second and sweeping 10^10 candidates costs roughly eleven CPU-years on one
+# core. scrypt is memory-hard, so that does not parallelise away cheaply.
+#
+# This is a large increase in cost, not impregnability, and it should not be
+# described as more than that.
+LEGACY_SCHEME = "sha256-v0"
+CURRENT_SCHEME = "scrypt-v1"
+SCRYPT_N = 2**14
+SCRYPT_R = 8
+SCRYPT_P = 1
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = "scripts/ssi-autopilot/verify_source_attestation.py"
 
@@ -151,6 +175,10 @@ class RecordNotCorroborated(AttestationError):
     """The committed record disagrees with what the live source says now."""
 
 
+class UnknownFingerprintScheme(AttestationError):
+    """The evidence names a fingerprint derivation this tool does not implement."""
+
+
 class DigestMismatch(AttestationError):
     """The cited page no longer hashes to the committed digest."""
 
@@ -210,17 +238,52 @@ def _currency(row: list[str]) -> str | None:
     return next((cell.upper() for cell in row if _CURRENCY.fullmatch(cell.upper())), None)
 
 
-def account_fingerprint(value: str) -> str:
-    """SHA-256 over the account with punctuation removed and letters upper-cased.
+def account_fingerprint(
+    value: str, scheme: str = LEGACY_SCHEME, salt: str = ""
+) -> str:
+    """Fingerprint an account under the named scheme.
 
-    Recovered from the wave-21 evidence rather than designed here: the
-    committed fingerprints predate any code that produced them, so the
-    derivation is pinned by a golden vector in the tests.  Note that this is
-    an unsalted hash of a short, public account string and is therefore
-    reversible by brute force; it redacts the account from the repository, it
-    does not make a private value safe to publish.
+    Normalization is shared: punctuation removed, letters upper-cased. It was
+    recovered from the wave-21 evidence rather than designed here, since the
+    committed fingerprints predate any code that produced them, and a golden
+    vector pins it.
+
+    Neither scheme makes an account secret. The cited pages are public, so a
+    fingerprint redacts the account from *this repository* and nothing more.
+    `scrypt-v1` makes recovering one expensive rather than instant; it does
+    not make it impossible, and saying otherwise would repeat the overclaim
+    this tooling exists to correct.
     """
-    return hashlib.sha256(re.sub(r"[^A-Z0-9]", "", value.upper()).encode()).hexdigest()
+    normalized = re.sub(r"[^A-Z0-9]", "", value.upper()).encode()
+    if scheme == LEGACY_SCHEME:
+        return hashlib.sha256(normalized).hexdigest()
+    if scheme == CURRENT_SCHEME:
+        if not salt:
+            raise UnknownFingerprintScheme(
+                f"{CURRENT_SCHEME} needs a committed salt; without one its "
+                "fingerprints cannot be reproduced by anyone else"
+            )
+        return hashlib.scrypt(
+            normalized,
+            salt=salt.encode(),
+            n=SCRYPT_N,
+            r=SCRYPT_R,
+            p=SCRYPT_P,
+            dklen=32,
+        ).hex()
+    raise UnknownFingerprintScheme(
+        f"evidence names fingerprint scheme {scheme!r}, which this tool does "
+        "not implement. Refusing rather than guessing a derivation."
+    )
+
+
+def _scheme_of(evidence: dict) -> tuple[str, str]:
+    """The scheme and salt this evidence file's fingerprints were made with."""
+    masking = evidence.get("masking", {})
+    return (
+        masking.get("fingerprint_scheme", LEGACY_SCHEME),
+        masking.get("fingerprint_salt", ""),
+    )
 
 
 def _account_cell(value: str, key: tuple[str, str]) -> str:
@@ -262,7 +325,10 @@ def _route_keys(source_html: bytes) -> set[tuple[str, str]]:
 
 
 def route_fingerprints(
-    source_html: bytes, aliases: dict[str, str]
+    source_html: bytes,
+    aliases: dict[str, str],
+    scheme: str = LEGACY_SCHEME,
+    salt: str = "",
 ) -> dict[tuple[str, str], str]:
     """Map each route key to the fingerprint of the account beside it.
 
@@ -280,7 +346,9 @@ def route_fingerprints(
             continue
         bic = _compact(row[indexes[-1]])
         key = (currency, aliases.get(bic, bic))
-        fingerprint = account_fingerprint(_account_cell(row[indexes[-1] - 1], key))
+        fingerprint = account_fingerprint(
+            _account_cell(row[indexes[-1] - 1], key), scheme, salt
+        )
         # A dict would let the last row win, so a source listing one route
         # twice with different accounts would collapse to whichever came
         # last, and evidence holding that account would verify clean while a
@@ -356,7 +424,8 @@ def compare(evidence: dict, source_bytes: bytes) -> dict:
     missing = sorted(expected - actual)
     unexpected = sorted(actual - expected)
 
-    live = route_fingerprints(source_bytes, aliases)
+    scheme, salt = _scheme_of(evidence)
+    live = route_fingerprints(source_bytes, aliases, scheme, salt)
     routes = evidence.get("routes", [])
 
     # Route-key-only evidence predates fingerprint capture. Comparing it
@@ -665,11 +734,51 @@ def _fetch(source: str) -> bytes:
     )
 
 
+def migrate_fingerprints(evidence: dict, source_bytes: bytes) -> dict:
+    """Re-derive every fingerprint under the current scheme.
+
+    Only possible where the accounts can still be read from the cited source.
+    A fingerprint is one-way, so an evidence file whose source is a PDF this
+    extractor cannot parse keeps its legacy fingerprints until an extractor
+    for that format exists — there is nothing to re-derive them from. Saying
+    which files are on which scheme is the honest alternative to pretending
+    they are all on the new one.
+    """
+    salt = secrets.token_hex(16)
+    live = route_fingerprints(source_bytes, _aliases(evidence), CURRENT_SCHEME, salt)
+    blocks = [
+        evidence.get("routes", []),
+        evidence.get("source_snapshot", {}).get("routes", []),
+    ]
+    for block in blocks:
+        for route in block:
+            key = (route["currency"], route["int_bic"])
+            if key not in live:
+                raise UnreadableSource(
+                    f"cannot migrate {key}: its account is not readable from "
+                    "the live source, and a fingerprint cannot be reversed to "
+                    "recover it"
+                )
+            route["nostro_fingerprint"] = live[key]
+            route["with_an_fingerprint"] = live[key]
+    masking = evidence.setdefault("masking", {})
+    masking["fingerprint_scheme"] = CURRENT_SCHEME
+    masking["fingerprint_salt"] = salt
+    masking["fingerprint_note"] = (
+        "scrypt n=2**14 r=8 p=1 over the normalized account. The salt is "
+        "committed so anyone holding the cited page can reproduce these; it "
+        "raises the cost of recovering an account, it does not make one secret."
+    )
+    _assert_mask_equality(evidence)
+    return {"scheme": CURRENT_SCHEME, "routes": len(live)}
+
+
 def _apply_accepted_changes(
     evidence: dict, source_bytes: bytes, accepted: set[tuple[str, str]]
 ) -> list[dict[str, str]]:
     """Re-point the named routes at the account the page serves now."""
-    live = route_fingerprints(source_bytes, _aliases(evidence))
+    scheme, salt = _scheme_of(evidence)
+    live = route_fingerprints(source_bytes, _aliases(evidence), scheme, salt)
     applied: list[dict[str, str]] = []
     blocks = [evidence.get("routes", []), evidence.get("source_snapshot", {}).get("routes", [])]
     for key in sorted(accepted):
@@ -791,6 +900,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="directory to write the re-verification record into",
     )
     parser.add_argument(
+        "--migrate-fingerprints",
+        action="store_true",
+        help="re-derive every fingerprint under the current scheme from the "
+        "live page; only possible where the accounts can still be read",
+    )
+    parser.add_argument(
         "--check-record",
         type=Path,
         dest="check_record",
@@ -827,6 +942,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--accept-account-change only applies with --refresh")
     if args.check_record is not None and (args.refresh or args.record):
         parser.error("--check-record verifies an existing record; it writes nothing")
+    if args.migrate_fingerprints and not (args.refresh and args.record):
+        parser.error(
+            "--migrate-fingerprints rewrites every fingerprint, so it requires "
+            "--refresh and --record like any other change to the evidence"
+        )
     return args
 
 
@@ -871,12 +991,16 @@ def reverify(
     evidence_path: Path,
     record_dir: Path | None,
     accepted: list[tuple[str, str]],
+    migrate: bool = False,
 ) -> dict:
     """Re-derive every check from the live page, then record what was seen."""
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     previous_digest = evidence["source_sha256"]
     source_bytes = _fetch(evidence["source"])
 
+    migrated = None
+    if migrate:
+        migrated = migrate_fingerprints(evidence, source_bytes)
     applied = _apply_accepted_changes(evidence, source_bytes, set(accepted))
     report = compare(evidence, source_bytes)
 
@@ -913,6 +1037,7 @@ def reverify(
         "route_count": report["route_keys"]["actual"],
         "fingerprints_matched": report["fingerprints"]["matched"],
         "accepted_account_changes": applied,
+        "migrated": migrated,
         "record": str(written) if written else None,
         "raw_accounts_committed": False,
     }
@@ -1022,7 +1147,9 @@ def main() -> int:
         if args.check_record is not None:
             result = check_record(args.evidence, args.check_record)
         elif args.refresh:
-            result = reverify(args.evidence, args.record, args.accepted)
+            result = reverify(
+                args.evidence, args.record, args.accepted, args.migrate_fingerprints
+            )
         else:
             result = verify(args.evidence, args.record)
     except AttestationError as exc:

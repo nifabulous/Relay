@@ -1552,3 +1552,82 @@ class TestCiCorroboratesTheRecord:
         path.write_text(json.dumps(record), encoding="utf-8")
 
         assert attestation.check_record(evidence_path, records)["corroborated"] is True
+
+
+class TestFingerprintSchemes:
+    """
+    `sha256-v0` is dictionary-searchable: a ten-digit account is 10^10
+    candidates, which is minutes of work, so `raw_accounts_committed: false`
+    implied a redaction it was not providing. `scrypt-v1` keeps the property
+    that mattered — anyone holding the cited page can still reproduce every
+    fingerprint, because the salt is committed — while making the search cost
+    roughly eleven CPU-years per account on one core.
+
+    That is a large increase in cost, not impregnability. These pin the
+    behaviour, not a security claim.
+    """
+
+    def test_the_legacy_scheme_is_still_reproducible(self):
+        import hashlib
+
+        attestation = _module()
+
+        assert attestation.account_fingerprint("5201-85 650 44") == (
+            hashlib.sha256(b"52018565044").hexdigest()
+        )
+
+    def test_the_current_scheme_is_deterministic_for_a_given_salt(self):
+        attestation = _module()
+
+        first = attestation.account_fingerprint("890-0045-140", "scrypt-v1", "pepper")
+        second = attestation.account_fingerprint("8900045140", "scrypt-v1", "pepper")
+
+        assert first == second
+
+    def test_a_different_salt_gives_a_different_fingerprint(self):
+        """Two evidence files cannot be correlated by their fingerprints."""
+        attestation = _module()
+
+        assert attestation.account_fingerprint(
+            "890-0045-140", "scrypt-v1", "salt-a"
+        ) != attestation.account_fingerprint("890-0045-140", "scrypt-v1", "salt-b")
+
+    def test_the_current_scheme_refuses_to_run_without_a_salt(self):
+        """An uncommitted salt means nobody else can reproduce the result."""
+        attestation = _module()
+
+        with pytest.raises(attestation.UnknownFingerprintScheme):
+            attestation.account_fingerprint("890-0045-140", "scrypt-v1", "")
+
+    def test_an_unknown_scheme_refuses_rather_than_guessing(self):
+        attestation = _module()
+
+        with pytest.raises(attestation.UnknownFingerprintScheme):
+            attestation.account_fingerprint("890-0045-140", "sha3-v9", "x")
+
+    def test_wave21_is_on_the_current_scheme_with_a_committed_salt(self):
+        evidence = json.loads(EVIDENCE.read_text())
+        masking = evidence["masking"]
+
+        assert masking["fingerprint_scheme"] == "scrypt-v1"
+        assert len(masking["fingerprint_salt"]) >= 32
+
+    def test_wave21_fingerprints_reproduce_from_the_committed_salt(self):
+        """
+        The whole point of committing the salt: a third party can still check
+        this, which a keyed construction would have made impossible.
+        """
+        attestation = _module()
+        evidence = json.loads(EVIDENCE.read_text())
+        scheme, salt = attestation._scheme_of(evidence)
+
+        assert scheme == "scrypt-v1"
+        assert salt
+        # Equal accounts must still land on equal fingerprints, or the mask
+        # invariant loses its meaning.
+        attestation._assert_mask_equality(evidence)
+
+    def test_evidence_with_no_scheme_named_is_read_as_legacy(self):
+        attestation = _module()
+
+        assert attestation._scheme_of({}) == ("sha256-v0", "")

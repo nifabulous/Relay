@@ -324,11 +324,32 @@ is the moment a rebinding host waits for. The chain is bounded at
 
 ### On the fingerprints themselves
 
-`account_fingerprint` is an unsalted SHA-256 over the account with
-punctuation stripped and letters upper-cased. It keeps account numbers out of
-the repository; it does **not** make them secret. A short account string is
-brute-forceable, and these sources are public pages. Do not treat a
-fingerprint as a redaction of a value that would matter if disclosed.
+Two schemes exist, named per evidence file in `masking.fingerprint_scheme`:
+
+| Scheme | Derivation | Cost to recover one account |
+|---|---|---|
+| `sha256-v0` | bare SHA-256 over the normalized account | minutes — 10^10 candidates is a dictionary search |
+| `scrypt-v1` | scrypt n=2^14 r=8 p=1, committed per-file salt | ~11 CPU-years on one core, memory-hard |
+
+**The salt is committed on purpose.** A key held outside the repository would
+make fingerprints unreproducible by anyone but its holder, and reproducibility
+by a third party is the property this whole mechanism exists to provide. A
+committed salt still defeats precomputed tables and stops two evidence files
+being correlated by their fingerprints, while leaving anyone who holds the
+cited page able to check every value.
+
+Neither scheme makes an account secret, and the sources are public pages. A
+fingerprint redacts an account from *this repository*; `scrypt-v1` makes
+recovering one expensive rather than instant. That is a large increase in
+cost, not impregnability.
+
+**Migration is one-way and needs the source.** A fingerprint cannot be
+reversed, so moving a file to `scrypt-v1` means re-deriving every account from
+the cited page with `--refresh --migrate-fingerprints --record`. That works
+only where the extractor can read the source, so wave 21 is migrated and the
+seven PDF-sourced files keep `sha256-v0` until an extractor for their format
+exists. Naming the scheme per file is the honest alternative to implying they
+are all on the new one.
 
 ## Hard rules (never violate, whatever the model is asked)
 
