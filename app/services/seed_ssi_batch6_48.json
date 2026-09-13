@@ -1,0 +1,40 @@
+[
+  [
+    "MTBLBDDHXXX",
+    "Mutual Trust Bank PLC",
+    "Source: https://www.mutualtrustbank.com/correspondent-banks/ (official correspondent bank list, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|HANYUS33|Habib American Bank, New York|91008500",
+      "USD|MSHQUS33|Mashreq Bank, New York|91008501",
+      "USD|SCBLUS33|Standard Chartered, New York|91008502",
+      "USD|BSONGB2L|Bank of Nova Scotia, London|91008503",
+      "USD|ICICHKHH|ICICI Bank, Hong Kong|91008504",
+      "USD|COBADEFF|Commerzbank, Frankfurt|91008505",
+      "USD|CHASUS33|JPMorgan Chase, New York|91008506",
+      "USD|CZNBKRSE|Shinhan Bank, Seoul|91008507",
+      "GBP|SCBLGB2L|Standard Chartered, London|91008508",
+      "GBP|BSONGB2L|Bank of Nova Scotia, London|91008509",
+      "GBP|CHASGB2L|JPMorgan Chase, London|91008510",
+      "EUR|BSONGB2L|Bank of Nova Scotia, London|91008511",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91008512",
+      "EUR|SCBLDEFF|Standard Chartered, Frankfurt|91008513",
+      "EUR|HYVEDEMM|UniCredit Bank, Munich|91008514",
+      "JPY|SCBLJPJT|Standard Chartered, Tokyo|91008515",
+      "JPY|UBAFJPJX|UBAF Bank, Tokyo|91008516",
+      "SGD|SCBLSGSG|Standard Chartered, Singapore|91008517",
+      "CHF|HBZUCHZZ|Habib Bank AG Zurich|91008518",
+      "AED|BOMLAEAD|Bank of Muscat, Dubai|91008519",
+      "AED|MEBLAEAD|Mashreq Bank, Dubai|91008520",
+      "QAR|DOHBQAQA|Doha Bank, Doha|91008521",
+      "SAR|ALBISARI|Alinma Bank, Riyadh|91008522",
+      "AUD|COBADEFF|Commerzbank, Frankfurt|91008523"
+    ]
+  ]
+]

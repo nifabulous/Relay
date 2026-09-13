@@ -1,0 +1,25 @@
+[
+  [
+    "BFRILI22XXX",
+    "Bank Frick AG",
+    "Source: https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-2025-09.pdf (as of 2025-09-01) BIC-level list — no account numbers published; not a selectable settlement instruction. ",
+    "2025-09-01",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|UBSWCHZH80A|UBS Switzerland AG, Zurich|",
+      "CHF|SNBZCHZZ|SIX Interbank Clearing Ltd, Zurich|",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|",
+      "EUR|BFRILI22|Target2 clearing-Deutsche Bundesbank, Frankfurt|",
+      "EUR|SECGDEFF|SECB Swiss Euro Clearing Bank GmbH, Frankfurt|",
+      "GBP|UBSWCHZH80A|UBS Switzerland AG, Zurich|",
+      "USD|UNTXUS44|United Texas Bank, Dallas|",
+      "USD|TGBPUS3W|Convera USA, Denver|",
+      "USD|UBSWCHZH80A|UBS Switzerland AG, Zurich|"
+    ]
+  ]
+]

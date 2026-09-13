@@ -1,0 +1,23 @@
+[
+  [
+    "AZMNMEPGXXX",
+    "Adriatic Bank AD Podgorica",
+    "Source: https://www.adriaticbank.com/storage/investment-banking-attachments/Payment-instructions-for-incoming-transfers-Adriatic-Bank-AD-EUR-ADR...-1.pdf (official payment instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|KTAGDEFF|Kreissparkasse Traunstein|",
+      "EUR|SOLADEST|Banco de Sabadell, Barcelona|",
+      "EUR|BPMOIT22|BPER Banca, Modena|",
+      "GBP|SOLADEST|Banco de Sabadell, Barcelona|",
+      "CHF|SOLADEST|Banco de Sabadell, Barcelona|",
+      "USD|SOLADEST|Banco de Sabadell, Barcelona|",
+      "AED|BOMLAEAD|Bank Muscat, Dubai|"
+    ]
+  ]
+]

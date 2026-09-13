@@ -1,0 +1,39 @@
+[
+  [
+    "BMISEGCXXXX",
+    "Banque Misr",
+    "Source: https://banquemisr.com/-/media/Files/SSI-List-for-Web-Publishing.pdf and https://www.banquemisr.com/CONTACT-US/Regional-and-Foreign-Branches (official SSI list and bank page confirming BMISEGCXXXX, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; MRMDUS33 is omitted because it is not in the repository's approved US clearer set.",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|BCAIAEAAXXX|Banque Misr UAE Branch, Abu Dhabi|91011400",
+      "AED|BOMLAEADXXX|Mashreq Bank, Dubai|91011401",
+      "AUD|IRVTUS3N|The Bank of New York Mellon, New York|91011402",
+      "CAD|BOFMCAM2XXX|Bank of Montreal, Toronto|91011403",
+      "CHF|ZKBKCHZZ80A|Zurich Cantonal Bank, Zurich|91011404",
+      "CNY|SCBLCNSXSHA|Standard Chartered Bank, Shanghai|91011405",
+      "DKK|DEUTDEFF|Deutsche Bank, Frankfurt|91011406",
+      "EUR|DEUTDEFFXXX|Deutsche Bank, Frankfurt|91011407",
+      "EUR|COBADEFFXXX|Commerzbank, Frankfurt|91011408",
+      "GBP|MIDLGB22XXX|HSBC Bank, London|91011409",
+      "GBP|SCBLGB2LXXX|Standard Chartered Bank, London|91011410",
+      "JPY|SMBCJPJTXXX|Sumitomo Mitsui Banking Corporation, Tokyo|91011411",
+      "KWD|NBOKKWKWXXX|National Bank of Kuwait, Kuwait City|91011412",
+      "NOK|NDEANOKKXXX|Nordea Bank Danmark, Copenhagen|91011413",
+      "SAR|NCBKSAJEXXX|Saudi National Bank, Riyadh|91011414",
+      "SAR|RIBLSARIXXX|Riyad Bank, Riyadh|91011415",
+      "SAR|RJHISARIXXX|Al Rajhi Bank, Riyadh|91011416",
+      "SEK|ESSESESSXXX|Skandinaviska Enskilda Banken, Stockholm|91011417",
+      "USD|CITIUS33XXX|Citibank, New York|91011418",
+      "USD|CHASUS33DDA|JPMorgan Chase, New York|91011419",
+      "USD|SCBLUS33XXX|Standard Chartered Bank, New York|91011420",
+      "USD|IRVTUS3NXXX|The Bank of New York Mellon, New York|91011421",
+      "USD|BKTRUS33XXX|Deutsche Bank Trust Company Americas, New York|91011422"
+    ]
+  ]
+]

@@ -1,0 +1,31 @@
+[
+  [
+    "DHBLBDDHXXX",
+    "Dhaka Bank PLC",
+    "Source: https://dhakabank.com.bd/global-trade-services/ (official Global Trade Services SSI table, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CHASUS33|J.P. Morgan, New York|91007030",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91007031",
+      "USD|MSHQUS33|Mashreq Bank, New York|91007032",
+      "USD|HANYUS33|Habib American Bank, New York|91007033",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|91007034",
+      "AUD|COBADEFF|Commerzbank AG, Frankfurt|91007035",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91007036",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91007037",
+      "EUR|UNCRITMM|UniCredit S.p.A., Milan|91007038",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91007039",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|91007040",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91007041",
+      "CAD|COBADEFF|Commerzbank AG, Frankfurt|91007042",
+      "SAR|RJHISARI|Riyad Bank, Riyadh|91007043",
+      "CNY|ABOCCNBJ090|Agricultural Bank of China, Shanghai|91007044"
+    ]
+  ]
+]

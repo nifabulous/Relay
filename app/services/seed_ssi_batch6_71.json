@@ -1,0 +1,36 @@
+[
+  [
+    "BPBIBGSFXXX",
+    "Eurobank Bulgaria AD",
+    "Source: https://www.postbank.bg/-/media/Eurobank-Bulgaria-SSI082025MAIN.pdf?hash=6611E4A73676692E0DE28DAFB051E240&la=en (official SSI list, August 2025). ",
+    "2025-08-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|91009200",
+      "EUR|IRVTDEFX|The Bank of New York Mellon, Frankfurt|91009201",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91009202",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91009203",
+      "USD|CHASUS33|JPMorgan Chase, New York|91009204",
+      "GBP|IRVTGB2X|The Bank of New York Mellon, London|91009205",
+      "GBP|DEUTDEFF|Deutsche Bank, Frankfurt|91009206",
+      "CHF|POFICHBE|PostFinance, Bern|91009207",
+      "CHF|DEUTDEFF|Deutsche Bank, Frankfurt|91009208",
+      "AUD|ERBKGRAA|Eurobank, Athens|91009209",
+      "CAD|ERBKGRAA|Eurobank, Athens|91009210",
+      "CNY|ERBKGRAA|Eurobank, Athens|91009211",
+      "DKK|ERBKGRAA|Eurobank, Athens|91009212",
+      "JPY|ERBKGRAA|Eurobank, Athens|91009213",
+      "NOK|ERBKGRAA|Eurobank, Athens|91009214",
+      "PLN|ERBKGRAA|Eurobank, Athens|91009215",
+      "RON|ERBKGRAA|Eurobank, Athens|91009216",
+      "RSD|ERBKGRAA|Eurobank, Athens|91009217",
+      "SEK|ERBKGRAA|Eurobank, Athens|91009218",
+      "TRY|ERBKGRAA|Eurobank, Athens|91009219"
+    ]
+  ]
+]

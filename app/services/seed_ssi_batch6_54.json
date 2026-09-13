@@ -1,0 +1,41 @@
+[
+  [
+    "BAIMMUMUXXX",
+    "BCP Bank (Mauritius) Ltd",
+    "Source: https://bcpbank.mu/sites/default/files/2025-08/SSI%20BCP%20BANK%20(%20MAURITIUS)%20LTD%20-%202025.pdf (official SSI list, August 2025). BIC-level list; no correspondent account numbers published. ",
+    "2025-08-01",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AED|NBADAEAA|First Abu Dhabi Bank, Abu Dhabi|",
+      "AUD|NATXFRPP|NATIXIS, Paris|",
+      "CAD|BNDCCAMMINT|National Bank of Canada, Montreal|",
+      "CHF|NATXFRPP|NATIXIS, Paris|",
+      "CNY|BKCHMUMU|Bank of China (Mauritius), Port Louis|",
+      "CNY|NATXFRPP|NATIXIS, Paris|",
+      "DKK|NATXFRPP|NATIXIS, Paris|",
+      "EUR|NATXFRPP|NATIXIS, Paris|",
+      "EUR|CAIXESBB|CaixaBank, Barcelona|",
+      "EUR|BCPOMAMCCIB|BCP Bank, Casablanca|",
+      "GBP|NATXFRPP|NATIXIS, Paris|",
+      "GBP|BCPOMAMCCIB|BCP Bank, Casablanca|",
+      "HKD|NATXFRPP|NATIXIS, Paris|",
+      "INR|IDFBINBB|IDFC First Bank, Mumbai|",
+      "INR|STCBINBX|State Bank of India, Mumbai|",
+      "JPY|SMBCJPJT|SMBC, Tokyo|",
+      "JPY|NATXFRPP|NATIXIS, Paris|",
+      "MAD|BCPOMAMC|BCP Bank, Casablanca|",
+      "NZD|NATXFRPP|NATIXIS, Paris|",
+      "SGD|NATXFRPP|NATIXIS, Singapore|",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "USD|NATXFRPP|NATIXIS, Paris|",
+      "USD|BCPOMAMCCIB|BCP Bank, Casablanca|",
+      "XOF|ATCICIAB|Atlantic Business International, Abidjan|",
+      "ZAR|SBZAZAJJ|Standard Bank, Johannesburg|"
+    ]
+  ]
+]

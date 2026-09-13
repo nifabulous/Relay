@@ -251,6 +251,11 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Bank Frick's published USD SSI lists Convera USA and United Texas Bank;
+    # neither BIC currently has a verified CHIPS/ABA identifier in the local
+    # directory, so keep the sourced routes explicitly exempt for now.
+    "TGBPUS3W",
+    "UNTXUS44",
     # American Express Bank (ComBank Ceylon's published USD SSI). CHIPS/ABA
     # not verifiable from the source. Verify and promote to
     # SETTLEMENT_DIRECTORY before removing.
@@ -1702,6 +1707,7 @@ class TestEuropeSsiCoverage:
 # ---- autopilot-generated coverage tests: southeast-asia ----
 SOUTHEAST_ASIA_SSI_COVERAGE = [
     ("BOPIPHMMXXX", "Bank of the Philippine Islands", {"USD", "EUR", "GBP", "JPY", "SGD", "HKD", "CAD", "CHF", "SEK"}),
+    ("DEUTPHMMXXX", "Deutsche Bank AG Manila", {"AUD", "CAD", "CHF", "CNH", "DKK", "EUR", "GBP", "HKD", "JPY", "PHP", "SGD", "THB", "USD"}),
 ]
 
 class TestSoutheastAsiaSsiCoverage:
@@ -1739,6 +1745,8 @@ BANGLADESH_SSI_COVERAGE = [
     ('SOIVBDDHXXX', 'Social Islami Bank PLC', {'AED', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
     ('MGBLBDDHXXX', 'Meghna Bank PLC', {'AED', 'AUD', 'CAD', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
     ('PRBLBDDHXXX', 'Prime Bank PLC', {'AED', 'CNY', 'CHF', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
+    ('SDBLBDDHXXX', 'Standard Islami Bank PLC', {'AUD', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('CIBLBDDHXXX', 'City Bank PLC', {'EUR', 'GBP', 'USD'}),
 ]
 
 class TestBangladeshSsiCoverage:
@@ -1857,6 +1865,9 @@ INDIA_SSI_COVERAGE = [
     ('JAKAINBBXXX', 'The Jammu and Kashmir Bank Ltd.', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
     ('NKGSINBBXXX', 'NKGSB Co-operative Bank Ltd.', {'EUR', 'GBP', 'USD'}),
     ('RATNINBBXXX', 'RBL Bank Limited', {'AED', 'AUD', 'CHF', 'DKK', 'EUR', 'GBP', 'HKD', 'JPY', 'NZD', 'SEK', 'SGD', 'USD'}),
+    ('HDFCINAAXXX', 'HDFC Bank Limited GIFT City', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'USD'}),
+    ('CBININBBXXX', 'Central Bank of India', {'USD'}),
+    ('IDIBINBBXXX', 'Indian Bank', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
 ]
 
 class TestIndiaSsiCoverage:
@@ -2022,6 +2033,7 @@ class TestSingaporeSsiCoverage:
 # ---- autopilot-generated coverage tests: indonesia ----
 INDONESIA_SSI_COVERAGE = [
     ("BBUKIDJAXXX", "PT Bank KB Bukopin Tbk", {"AUD", "EUR", "GBP", "HKD", "JPY", "MYR", "SGD", "USD"}),
+    ("BDINIDJAXXX", "Bank Danamon Indonesia", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "NZD", "SAR", "SEK", "SGD", "THB", "USD"}),
 ]
 
 class TestIndonesiaSsiCoverage:
@@ -2298,6 +2310,12 @@ WESTERN_EUROPE_SSI_COVERAGE = [
     ('CRBAGRAAXXX', 'ALPHA BANK S.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'HKD', 'JPY', 'NOK'}),
     ('BOTKNL2XXXX', 'MUFG Bank (Europe) N.V., Amsterdam', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MAD', 'MXN', 'MYR', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
     ('DEUTNL2AXXX', 'Deutsche Bank AG, Amsterdam', {'AED', 'AUD', 'BGN', 'CAD', 'GBP', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RUB', 'ZAR'}),
+    ('BPMOIT22XXX', 'BPER Banca S.p.A.', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'ISK', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ('RZBAATWWXXX', 'Raiffeisen Bank International AG', {'AED', 'ALL', 'AUD', 'BAM', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('RLNWATWWXXX', 'Raiffeisenlandesbank Niederösterreich-Wien AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('OBKLAT2LXXX', 'Oberbank AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
+    ('VKBLAT2LXXX', 'Volkskreditbank AG', {'AED', 'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('ICRAITRRXXX', 'ICCREA Banca S.p.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ISK', 'JPY', 'MAD', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
 ]
 
 class TestWesternEuropeSsiCoverage:
@@ -2438,6 +2456,7 @@ EUROPE_WAVE2_SSI_COVERAGE = [
     ('CECBBGSFXXX', 'CENTRAL COOPERATIVE BANK PLC', {'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'JPY', 'MKD', 'NOK', 'PLN', 'RON', 'RUB', 'SEK', 'TRY', 'USD'}),
     ('HEBACY2NXXX', 'HELLENIC BANK PUBLIC COMPANY LTD.', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP'}),
     ('UBBSBGSFXXX', 'United Bulgarian Bank AD', {'AUD', 'CAD', 'CHF', 'DKK', 'EUR', 'GBP', 'JPY', 'NOK', 'RON', 'RUB', 'SEK', 'TRY', 'USD'}),
+    ('UNCRBGSFXXX', 'UniCredit Bulbank AD', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'PLN', 'RSD', 'RON', 'SEK', 'TRY', 'USD'}),
 ]
 
 class TestEuropeWave2SsiCoverage:
@@ -2509,6 +2528,7 @@ SOUTHASIA_MEKONG_WAVE3_SSI_COVERAGE = [
     ("SEYBLKLXXXX", "Seylan Bank PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "USD"}),
     ("HBLILKLXXXX", "HATTON NATIONAL BANK PLC", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "NOK", "NZD", "SAR", "SEK", "SGD", "THB", "USD"}),
     ('AMNALKLXXXX', 'Amana Bank PLC', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'MYR', 'SAR', 'SGD', 'USD'}),
+    ('CCEYLKLXXXX', 'Commercial Bank of Ceylon PLC', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'INR', 'JPY', 'NOK', 'NZD', 'SEK', 'SGD', 'USD'}),
 ]
 
 class TestSouthasiaMekongWave3SsiCoverage:
@@ -2585,6 +2605,8 @@ ASIA_PACIFIC_WAVE4_SSI_COVERAGE = [
     ('PPCBKHPPXXX', 'Phnom Penh Commercial Bank PLC', {'JPY', 'KRW', 'SGD', 'THB', 'USD'}),
     ('TBOMMNUBXXX', 'Transport and Development Bank LLC (TransBank)', {'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'RUB', 'SGD', 'TRY', 'USD'}),
     ('SIDDNPKAXXX', 'Siddhartha Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'SGD', 'USD'}),
+    ('KMBLNPKAXXX', 'Kumari Bank Limited', {'AED', 'AUD', 'CAD', 'CNY', 'DKK', 'EUR', 'GBP', 'INR', 'JPY', 'USD'}),
+    ('PRVUNPKAXXX', 'Prabhu Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'KRW', 'SAR', 'USD'}),
 ]
 
 class TestAsiaPacificWave4SsiCoverage:
@@ -2633,6 +2655,7 @@ EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
     ('TBTUBA22XXX', 'NLB Banka d.d., Sarajevo', {'AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'MKD', 'NOK', 'RSD', 'SEK', 'TRY', 'USD'}),
     ('UGASUAUKXXX', 'Ukrgasbank JSC', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD', 'XAG', 'XAU', 'XPD', 'XPT'}),
     ('PBANUA2XXXX', 'PrivatBank JSC', {'AUD', 'BYN', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'GEL', 'JPY', 'KZT', 'NOK', 'PLN', 'RUB', 'SEK', 'USD'}),
+    ('OTPVUAUKXXX', 'OTP Bank JSC Ukraine', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD'}),
 ]
 
 class TestEuropeUncoveredWave4SsiCoverage:
@@ -2780,6 +2803,9 @@ CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("ACABAZ22XXX", "AccessBank CJSC", {"EUR", "GBP", "RUB", "TRY", "USD"}),
     ("ARMCAM22XXX", "Araratbank OJSC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "GEL", "USD"}),
     ("UBAZAZ22XXX", "Unibank CB", {"EUR", "GBP", "GEL", "RUB", "USD"}),
+    ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "USD"}),
+    ("ANIKAM22XXX", "ID BANK CJSC", {"AED", "BYN", "CNY", "EUR", "GBP", "GEL", "JPY", "RUB", "USD"}),
+    ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", {"AMD", "EUR", "RUB", "USD"}),
 ]
 
 class TestCaucasusWave5SsiCoverage:
@@ -2842,6 +2868,7 @@ UZBEKISTAN_WAVE6_SSI_COVERAGE = [
     ("UZHOUZ22XXX", "Ipoteka Bank JSC", {"CHF", "CNY", "EUR", "RUB", "USD"}),
     ("INIPUZ22XXX", "JSIC Bank Ipak Yuli", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "USD"}),
     ("UJSIUZ22XXX", "Uzbek Industrial and Construction Bank (Uzpromstroybank)", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
+    ("ORFBUZ22XXX", "PJSCB Orient Finance", {"AED", "CHF", "CNY", "EUR", "KZT", "RUB", "USD"}),
 ]
 
 class TestUzbekistanWave6SsiCoverage:
@@ -3078,6 +3105,7 @@ NORDICS_POLAND_SSI_COVERAGE = [
     ("DNBASESXXXX", "DNB Bank Sweden", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
     ('DNBANOKXXXX', 'DNB Carnegie', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
     ('NDEANOKKXXX', 'Nordea Bank Abp, filial i Norge', {'AED', 'AUD', 'BDT', 'BGN', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'KZT', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ('GOSKPLPWXXX', 'Bank Gospodarstwa Krajowego', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),
 ]
 
 class TestNordicsPolandSsiCoverage:
@@ -3110,6 +3138,7 @@ class TestNordicsPolandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-kingdom ----
 UNITED_KINGDOM_SSI_COVERAGE = [
     ("DNBAGB2LXXX", "DNB Bank ASA London Branch", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "HKD", "HUF", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("HBUKGB4BXXX", "HSBC UK Bank plc", {'AED', 'ALL', 'AUD', 'BDT', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CZK', 'DKK', 'DZD', 'EGP', 'EUR', 'FJD', 'GHS', 'HKD', 'HUF', 'ILS', 'INR', 'JOD', 'JPY', 'KES', 'KWD', 'KZT', 'LKR', 'MAD', 'MOP', 'MUR', 'MXN', 'NAD', 'NOK', 'NZD', 'OMR', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'RSD', 'SAR', 'SEK', 'SGD', 'SZL', 'THB', 'TND', 'TRY', 'UGX', 'USD', 'ZAR', 'ZMW'}),
 ]
 
 class TestUnitedKingdomSsiCoverage:
@@ -3208,6 +3237,7 @@ class TestUnitedStatesSsiCoverage:
 GERMANY_SSI_COVERAGE = [
     ('DNBADEHXXXX', 'DNB Bank ASA, Hamburg Branch', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
     ('HASPDEHHXXX', 'Hamburger Sparkasse AG', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
+    ('AKBKDEFFXXX', 'Akbank AG', {'CHF', 'GBP', 'JPY', 'PLN', 'TRY', 'USD'}),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
 ]
 

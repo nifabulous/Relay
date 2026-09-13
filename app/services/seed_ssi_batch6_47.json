@@ -1,0 +1,23 @@
+[
+  [
+    "BKSIBDDHXXX",
+    "BASIC Bank PLC",
+    "Source: https://www.basicbanklimited.com/en/page-details/correspondent-banks (official correspondent bank list, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|CAYTTRIS|Caydirbank, Istanbul|91008400",
+      "USD|CITIUS33|Citibank, New York|91008401",
+      "USD|HANYUS33|Habib American Bank, New York|91008402",
+      "USD|CZNBKRSE|Shinhan Bank, Seoul|91008403",
+      "USD|BSONGB2L|Bank of Nova Scotia, London|91008404",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91008405",
+      "GBP|BSONGB2L|Bank of Nova Scotia, London|91008406"
+    ]
+  ]
+]

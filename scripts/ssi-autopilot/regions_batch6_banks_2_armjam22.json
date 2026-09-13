@@ -1,0 +1,58 @@
+{
+  "bic8": "ARMJAM22",
+  "name": "VTB Bank (Armenia) CJSC",
+  "country": "AM",
+  "currencies": [
+    "AMD",
+    "EUR",
+    "RUB",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "vtb.am"
+  ],
+  "admitted_records": [
+    {
+      "currency": "RUB",
+      "correspondent": "VTB Bank, Moscow",
+      "int_bic": "VTBRRUMMXXX",
+      "source": "https://www.vtb.am/am/about-bank/corespondent-banks",
+      "as_of": "2024-11-27",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "AMD",
+      "correspondent": "VTB Bank, Moscow",
+      "int_bic": "VTBRRUMMXXX",
+      "source": "https://www.vtb.am/am/about-bank/corespondent-banks",
+      "as_of": "2024-11-27",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "correspondent": "VTB Bank (Europe) SE, Frankfurt",
+      "int_bic": "OWHBDEFFXXX",
+      "source": "https://www.vtb.am/am/about-bank/corespondent-banks",
+      "as_of": "2024-11-27",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "correspondent": "Citibank N.A., New York",
+      "int_bic": "CITIUS33XXX",
+      "source": "https://www.vtb.am/am/about-bank/corespondent-banks",
+      "as_of": "2024-11-27",
+      "status": "unverified",
+      "bic_only": true,
+      "terms_inferred": false
+    }
+  ],
+  "admitted_record_digest": "053e53440d02361b2323843945849b26d625489c4f792d229b3f579648bfc149"
+}

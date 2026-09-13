@@ -1,0 +1,37 @@
+[
+  [
+    "CDIBTWTPXXX",
+    "KGI Bank Co., Ltd.",
+    "Source: https://www.kgibank.com.tw/zh-tw/-/media/files/kgib/fx/remittance-instruction.pdf (official remittance instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group, Melbourne|91006909",
+      "NZD|ANZBNZ22058|ANZ Bank New Zealand, Wellington|91006910",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|91006911",
+      "SEK|NDEASESS|Nordea Bank, Sweden|91006912",
+      "SEK|COBADEFF|Commerzbank, Frankfurt|91006913",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91006914",
+      "SGD|DBSSSGSG|DBS Bank, Singapore|91006915",
+      "CNH|BKCHTWTP888|Bank of China, Taipei|91006916",
+      "CNH|HSBCHKHHHKH|The Hongkong and Shanghai Banking Corporation, Hong Kong|91006917",
+      "THB|ICBCTHBK|Mega International Commercial Bank, Taiwan|91006918",
+      "EUR|IRVTDEFX|The Bank of New York Mellon, Frankfurt|91006919",
+      "EUR|CHASDEFX|JPMorgan Chase Bank, Frankfurt|91006920",
+      "USD|PNBPUS33|Wells Fargo Bank, New York|91006921",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91006922",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|91006923",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|91006924",
+      "GBP|MIDLGB22|HSBC Bank, London|91006925",
+      "HKD|SCBLHKHH|Standard Chartered Bank, Hong Kong|91006926",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91006927",
+      "JPY|CHASJPJT|JPMorgan Chase Bank, Tokyo|91006928",
+      "ZAR|SBZAZAJJ|The Standard Bank of South Africa, Johannesburg|91006929"
+    ]
+  ]
+]

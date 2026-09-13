@@ -1,0 +1,25 @@
+[
+  [
+    "GLBLPAPAXXX",
+    "Global Bank Corporation",
+    "Source: https://www.globalbank.com.pa/transferencias-internacionales (official international transfer instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|CITIUS33|Citibank, New York|",
+      "USD|CHASUS33|JPMorgan Chase, New York|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "EUR|CHASGB2L|JPMorgan Chase, London|",
+      "GBP|CHASGB2L|JPMorgan Chase, London|",
+      "CHF|CHASGB2L|JPMorgan Chase, London|",
+      "CAD|CHASGB2L|JPMorgan Chase, London|",
+      "AUD|CHASGB2L|JPMorgan Chase, London|",
+      "JPY|CHASGB2L|JPMorgan Chase, London|"
+    ]
+  ]
+]

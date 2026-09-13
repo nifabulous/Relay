@@ -1,0 +1,25 @@
+[
+  [
+    "STBLZWHXXXX",
+    "TN CyberTech Bank",
+    "Source: https://www.tncybertechbank.co.zw/for-business/international/payments (official international payments instructions, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|ECOCFRPP|Ecobank, Paris|",
+      "USD|AFXMEGCA|Access Bank, Cairo|",
+      "USD|FIRNZAJJ|FirstRand Bank, Johannesburg|",
+      "EUR|ECOCFRPP|Ecobank, Paris|",
+      "EUR|FIRNZAJJ|FirstRand Bank, Johannesburg|",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|",
+      "ZAR|ABSAZAJJ|Absa Bank, Johannesburg|",
+      "BWP|FIRNBWGX|First National Bank Botswana, Gaborone|",
+      "GBP|FIRNZAJJ|FirstRand Bank, Johannesburg|"
+    ]
+  ]
+]

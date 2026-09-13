@@ -1,0 +1,19 @@
+[
+  [
+    "BPRWRWRWXXX",
+    "BPR Bank Rwanda PLC",
+    "Source: https://bpr.rw/products/swift-transfer-service (official SWIFT transfer service page, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "GBP|DEUTDEFF|Deutsche Bank, Frankfurt|"
+    ]
+  ]
+]

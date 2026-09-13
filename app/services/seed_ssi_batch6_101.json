@@ -1,0 +1,53 @@
+[
+  [
+    "ORBACWCUXXX",
+    "Orco Bank N.V. - Curaçao branch (Willemstad)",
+    "Source: https://www.orcobank.com/Personal/Services/Assisted-Services/International-Transfers (official international-transfer correspondent list, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. Source's PNBPUS3NNYC spelling is normalized to PNBPUS33.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "USD|BOFAUS3M|Bank of America Merrill Lynch, Miami|",
+      "EUR|BBRUBEBB|ING Bank, Brussels|"
+    ]
+  ],
+  [
+    "ORBASXSMXXX",
+    "Orco Bank N.V. - Sint Maarten branch (Philipsburg)",
+    "Source: https://www.orcobank.com/Personal/Services/Assisted-Services/International-Transfers (official international-transfer correspondent list, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. Source's PNBPUS3NNYC spelling is normalized to PNBPUS33.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "USD|BOFAUS3M|Bank of America Merrill Lynch, Miami|",
+      "EUR|BBRUBEBB|ING Bank, Brussels|"
+    ]
+  ],
+  [
+    "ORBABQBNXXX",
+    "Orco Bank N.V. - Bonaire branch (Kralendijk)",
+    "Source: https://www.orcobank.com/Personal/Services/Assisted-Services/International-Transfers (official international-transfer correspondent list, accessed 2026-09-12). BIC-level list; no correspondent account numbers are published. Source's PNBPUS3NNYC spelling is normalized to PNBPUS33.",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|PNBPUS33|Wells Fargo Bank, New York|",
+      "USD|BOFAUS3M|Bank of America Merrill Lynch, Miami|",
+      "EUR|BBRUBEBB|ING Bank, Brussels|"
+    ]
+  ]
+]

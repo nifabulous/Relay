@@ -1,0 +1,31 @@
+[
+  [
+    "KENBHR22XXX",
+    "KentBank d.d.",
+    "Source: https://kentbank.hr/18375/kentbank_standard-settlement-instructions-ssi (official SSI table, valid 2024-09-01). ",
+    "2024-09-01",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008900",
+      "CAD|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008901",
+      "CZK|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008902",
+      "DKK|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008903",
+      "HUF|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008904",
+      "JPY|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008905",
+      "NOK|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008906",
+      "CHF|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008907",
+      "CHF|RZBHHR2X|Raiffeisenbank Austria Croatia, Zagreb|91008908",
+      "GBP|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008909",
+      "PLN|PBZGHR2X|Privredna banka Zagreb, Zagreb|91008910",
+      "SEK|RZBHHR2X|Raiffeisenbank Austria Croatia, Zagreb|91008911",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91008912",
+      "TRY|TVBATR2A|Turkiye Vakiflar Bankasi, Istanbul|91008913",
+      "EUR|SOLADEST|Banco de Sabadell, Barcelona|91008914"
+    ]
+  ]
+]

@@ -1,0 +1,30 @@
+[
+  [
+    "CECBMK22XXX",
+    "Central Cooperative Bank AD Skopje",
+    "Source: https://www.ccbank.mk/international_correspondents.aspx (official international correspondents list, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CAD|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "CHF|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "DKK|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "EUR|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "GBP|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "JPY|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "NOK|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "SEK|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "USD|CECBBGSF|Central Cooperative Bank, Sofia|",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|",
+      "EUR|RZBAATWW|Raiffeisen Bank International, Vienna|",
+      "EUR|BKAUATWW|UniCredit Bank Austria, Vienna|",
+      "EUR|KREDBEBB|KBC Bank, Brussels|",
+      "USD|RZBAATWW|Raiffeisen Bank International, Vienna|"
+    ]
+  ]
+]

@@ -1,0 +1,135 @@
+{
+  "bic8": "MIDLAM22",
+  "name": "HSBC Bank Armenia cjsc",
+  "country": "AM",
+  "currencies": [
+    "AED",
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "HKD",
+    "JPY",
+    "RUB",
+    "USD"
+  ],
+  "seedable": true,
+  "source_domains": [
+    "hsbc.am"
+  ],
+  "admitted_records": [
+    {
+      "currency": "GBP",
+      "correspondent": "HSBC Bank plc",
+      "int_bic": "MIDLGB22XXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "EUR",
+      "correspondent": "HSBC France",
+      "int_bic": "CCFRFRPPXXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "USD",
+      "correspondent": "HSBC Bank USA, New York",
+      "int_bic": "MRMDUS33XXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "HKD",
+      "correspondent": "HSBC Hong Kong",
+      "int_bic": "HSBCHKHHHKH",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "AED",
+      "correspondent": "HSBC Bank Middle East, Dubai",
+      "int_bic": "BBMEAEADXXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CHF",
+      "correspondent": "Credit Suisse First Boston, Zurich",
+      "int_bic": "CRESCHZZ80A",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CAD",
+      "correspondent": "HSBC Bank Canada",
+      "int_bic": "HKBCCATTXXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "RUB",
+      "correspondent": "OOO HSBC Bank (RR), Moscow",
+      "int_bic": "BLICRUMMXXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "AUD",
+      "correspondent": "HSBC Bank Australia",
+      "int_bic": "HKBAAU2SMEL",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "JPY",
+      "correspondent": "HSBC Hong Kong, Japan",
+      "int_bic": "HSBCJPJTXXX",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    },
+    {
+      "currency": "CNY",
+      "correspondent": "HSBC Hong Kong",
+      "int_bic": "HSBCHKHHHKH",
+      "source": "https://www.hsbc.am/content/dam/hsbc/hbam/docs/en/important-information/bank-requisites.pdf",
+      "as_of": "2016-12-19",
+      "status": "archived",
+      "bic_only": true,
+      "terms_inferred": false
+    }
+  ],
+  "admitted_record_digest": "f9b01cd963ff1bb026e0221440a3b1052a57ded55fa14bc7e1ed283ae5977eac"
+}

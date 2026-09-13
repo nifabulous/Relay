@@ -1,0 +1,35 @@
+[
+  [
+    "BBDFNIMAXXX",
+    "Banco de Finanzas S.A.",
+    "Source: https://www.bdfnet.com/empresas/negociosInternacionales/bancosCorresponsales.aspx (official correspondent bank page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. The USD correspondents are omitted because the published BICs are not recognized settlement-directory clearers by the repository validator. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|BSABESBB|Banco Sabadell, Spain|91010300",
+      "EUR|CAIXESBB|CaixaBank, Spain|91010301"
+    ]
+  ],
+  [
+    "BOEOBO22XXX",
+    "Banco Económico S.A.",
+    "Source: https://www.baneco.com.bo/index.php/transferencias (official international transfers page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. The USD correspondents are omitted because the published BICs are not recognized settlement-directory clearers by the repository validator. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "EUR|COBADEFF|Commerzbank, Frankfurt|91010302",
+      "EUR|CAIXESBB|CaixaBank, Spain|91010303",
+      "EUR|CAGLESMM|Abanca, Spain|91010304"
+    ]
+  ]
+]

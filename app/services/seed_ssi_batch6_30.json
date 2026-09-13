@@ -1,0 +1,34 @@
+[
+  [
+    "DEUTNL2AXXX",
+    "Deutsche Bank AG, Amsterdam",
+    "Source: https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-overview-DEUTNL2A-Januari-2025.pdf (SSI overview dated 10 January 2025). ",
+    "2025-01-10",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "CHF|CRESCHZZ80A|Credit Suisse AG, Zurich|91006748",
+      "CHF|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006749",
+      "CNY|DEUTHKHH|Deutsche Bank AG, Hong Kong|91006750",
+      "CZK|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006751",
+      "DKK|DABADKKK|Danske Bank A/S, Copenhagen|91006752",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006753",
+      "HKD|DEUTHKHH|Deutsche Bank AG, Hong Kong|91006754",
+      "HUF|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006755",
+      "ILS|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006756",
+      "JPY|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006757",
+      "KWD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006758",
+      "MAD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006759",
+      "SAR|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006760",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken AB, Stockholm|91006761",
+      "SGD|DEUTSGSG|Deutsche Bank AG, Singapore|91006762",
+      "THB|DEUTTHBK|Deutsche Bank AG, Bangkok|91006763",
+      "TRY|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91006764",
+      "USD|DEUTUS33|Deutsche Bank AG, New York|91006765"
+    ]
+  ]
+]

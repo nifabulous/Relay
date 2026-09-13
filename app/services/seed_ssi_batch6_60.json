@@ -1,0 +1,37 @@
+[
+  [
+    "RAZBBA22XXX",
+    "NLB Banka a.d. Banja Luka",
+    "Source: https://www.nlb-rs.ba/privreda/platni-promet/platni-promet-sa-inostranstvom (official correspondent-bank list, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|BKAUATWW|UniCredit Bank Austria, Vienna|",
+      "EUR|RZBAATWW|Raiffeisen Bank International, Vienna|",
+      "EUR|TUTNMK22|NLB Banka Skopje|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "EUR|HYVEDEMM|UniCredit Bank, Munich|",
+      "EUR|COBADEFF|Commerzbank, Frankfurt|",
+      "EUR|CONARS22|NLB Komercijalna Banka, Belgrade|",
+      "EUR|MNBAMEPG|NLB Banka Podgorica|",
+      "EUR|LJBASI2X|NLB d.d. Ljubljana|",
+      "AUD|LJBASI2X|NLB d.d. Ljubljana|",
+      "CAD|LJBASI2X|NLB d.d. Ljubljana|",
+      "CHF|LJBASI2X|NLB d.d. Ljubljana|",
+      "DKK|LJBASI2X|NLB d.d. Ljubljana|",
+      "GBP|LJBASI2X|NLB d.d. Ljubljana|",
+      "HRK|LJBASI2X|NLB d.d. Ljubljana|",
+      "HUF|LJBASI2X|NLB d.d. Ljubljana|",
+      "JPY|LJBASI2X|NLB d.d. Ljubljana|",
+      "NOK|LJBASI2X|NLB d.d. Ljubljana|",
+      "SEK|LJBASI2X|NLB d.d. Ljubljana|",
+      "USD|LJBASI2X|NLB d.d. Ljubljana|",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|"
+    ]
+  ]
+]

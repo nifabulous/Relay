@@ -1,0 +1,31 @@
+[
+  [
+    "BNBTBTBTXXX",
+    "Bhutan National Bank Limited",
+    "Source: https://bnb.bt/correspondent-banks/ (official correspondent banks page, accessed 2026-09-12). BIC-level list; no correspondent account numbers published. ",
+    "2026-09-12",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|SCBLSG22|Standard Chartered Bank, Singapore|",
+      "EUR|SCBLDEFF|Standard Chartered Bank, Frankfurt|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "INR|AXISINBB035|Axis Bank, Siliguri|",
+      "INR|HDFCINBB|HDFC Bank, Siliguri|",
+      "INR|ICICINBB|ICICI Bank, Mumbai|",
+      "INR|IBKLINBB|IDBI Bank, Siliguri|",
+      "INR|SCBLINBB|Standard Chartered Bank, Mumbai|",
+      "INR|SBININBB|State Bank of India, Hasimara|",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|",
+      "USD|BALBBDDH008|Bank Asia, Dhaka|",
+      "USD|EXTHTHBK|Export-Import Bank of Thailand, Bangkok|",
+      "USD|KASITHBK|Kasikornbank, Bangkok|",
+      "USD|SDBLBDDH102|Standard Islami Bank, Dhaka|",
+      "USD|SCBLUS33|Standard Chartered Bank, New York|"
+    ]
+  ]
+]

@@ -1,0 +1,37 @@
+[
+  [
+    "CGDIPTPLXXX",
+    "Caixa Geral de Depositos S.A.",
+    "Source: https://www.cgd.pt/English/International-Activity-CGD/International-Services/Services-Business-Individuals/Documents/Main-Settlement-Banks.pdf (official Main Settlement Banks SSI, June 2026). ",
+    "2026-06-01",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|CTBAAU2S|Commonwealth Bank of Australia, Sydney|91006991",
+      "CAD|BOFMCAM2|Bank of Montreal, Montreal|91006992",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91006993",
+      "CNY|BNULMOMX|Banco Nacional Ultramarino, Macau (via BKCHMOMX)|91006994",
+      "CZK|GIBACZPX|Ceska Sporitelna, Prague|91006995",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|91006996",
+      "GBP|LOYDGB2L|Lloyds Bank, London|91006997",
+      "GBP|NWBKGB2L|NatWest, London|91006998",
+      "HKD|CITIHKHX|Citibank, Hong Kong|91006999",
+      "HUF|OTPVHUHB|OTP Bank, Budapest|91007000",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91007001",
+      "MOP|BNULMOMX|Banco Nacional Ultramarino, Macau|91007002",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91007003",
+      "NZD|ASBBNZ2A|ASB Bank, Auckland|91007004",
+      "PLN|BPKOPLPWTDH|PKO Bank Polski, Warsaw|91007005",
+      "RON|RZBAATWW|Raiffeisen Bank International, Vienna (via RZBRROBU)|91007006",
+      "SEK|SWEDSESS|Swedbank, Stockholm|91007007",
+      "SGD|DBSSSGSG|DBS Bank, Singapore|91007008",
+      "USD|CITIUS33|Citibank N.A., New York|91007009",
+      "USD|BOFAUS3N|Bank of America, New York|91007010",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|91007011"
+    ]
+  ]
+]

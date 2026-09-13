@@ -1,0 +1,42 @@
+[
+  [
+    "ETHNGRAAXXX",
+    "National Bank of Greece S.A.",
+    "Source: https://www.nbg.gr/-/jssmedia/Files/Footer/Financial-Institutions/STANDARD-SETTLEMENT-INSTRUCTIONS.pdf (official Standard Settlement Instructions, accessed 2026-09-12). ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|ANZ Bank, Melbourne|91008000",
+      "AUD|CTBAAU2S|Commonwealth Bank, Sydney|91008001",
+      "CAD|BOFMCAM2|Bank of Montreal, Toronto|91008002",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91008003",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|91008004",
+      "DKK|NDEADKKK|Nordea, Copenhagen|91008005",
+      "GBP|LOYDGB2L|Lloyds Bank, London|91008006",
+      "GBP|NWBKGB2L|NatWest, London|91008007",
+      "GBP|BARCGB22|Barclays, London|91008008",
+      "GBP|MIDLGB22|HSBC Bank, London|91008009",
+      "HKD|HSBCHKHH|HSBC Hong Kong|91008010",
+      "JPY|BOTKJPJT|MUFG Bank, Tokyo|91008011",
+      "JPY|MHCBJPJT|Mizuho Bank, Tokyo|91008012",
+      "JPY|SMBCJPJT|SMBC, Tokyo|91008013",
+      "NOK|DNBANOKK|DNB Bank, Oslo|91008014",
+      "PLN|DEUTDEFF|Deutsche Bank, Frankfurt|91008015",
+      "RON|BRDEROBU|BRD - Groupe Societe Generale, Bucharest|91008016",
+      "SEK|NDEASESS|Nordea, Stockholm|91008017",
+      "SEK|ESSESESS|SEB, Stockholm|91008018",
+      "SGD|BOFASG2X|Bank of America, Singapore|91008019",
+      "TRY|FNNBTRIS|Finansbank, Istanbul|91008020",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91008021",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91008022",
+      "USD|CITIUS33|Citibank, New York|91008023",
+      "USD|CHASUS33|JPMorgan Chase, New York|91008024",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|91008025"
+    ]
+  ]
+]

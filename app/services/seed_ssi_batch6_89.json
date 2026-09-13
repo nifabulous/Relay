@@ -1,0 +1,18 @@
+[
+  [
+    "MADVMVMVXXX",
+    "Maldives Islamic Bank PLC",
+    "Source: https://mib.com.mv/contact-us (official correspondent details page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values. ",
+    "2026-09-12",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|MSHQUS33|Mashreq Bank PSC, New York|91009900",
+      "USD|HANYUS33|Habib American Bank, New York|91009901"
+    ]
+  ]
+]

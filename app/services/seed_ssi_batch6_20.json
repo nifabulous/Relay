@@ -1,0 +1,20 @@
+[
+  [
+    "AFRIKENXXXX",
+    "Bank of Africa Kenya Limited",
+    "Source: https://boakenya.com/correspondent-banking/transfer-of-funds-to-boa-kenya/ (Transfer of Funds to BOA Kenya; accessed 2026-09-12). ",
+    "2026-09-12",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "KES|CBKEKENX|Central Bank of Kenya, Nairobi (RTGS)|91006514",
+      "EUR|BSUIFRPP|Crédit Agricole CIB, Paris|91006515",
+      "USD|CITIUS33|Citibank N.A., New York|91006516",
+      "GBP|CITIGB2L|Citibank N.A., London|91006517"
+    ]
+  ]
+]
