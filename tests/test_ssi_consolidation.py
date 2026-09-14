@@ -50,7 +50,20 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         119,
         120,
         121,
+        122,
+        123,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        133,
     ]
+    assert [
+        pr for payload in payloads for pr in payload.get("superseded_prs", [])
+    ] == [124]
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
 

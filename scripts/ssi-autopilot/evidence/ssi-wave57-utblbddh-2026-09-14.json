@@ -1,0 +1,48 @@
+{
+  "source": "https://new.uttarabank-bd.com/service/standard-settlement-instruction",
+  "as_of": "2026-09-14",
+  "beneficiary_bic": "UTBLBDDH",
+  "region_masked_block": 91001800,
+  "source_snapshot": {
+    "source": "https://new.uttarabank-bd.com/service/standard-settlement-instruction",
+    "captured_at": "2026-09-14",
+    "extraction": "Official Uttara Bank correspondent network table; ACU/ACUD settlement-unit entries were excluded because they are not ISO currency routes. Published account values are masked into the Bangladesh region block.",
+    "raw_accounts_committed": false,
+    "retrieval_status": "Official page indexed; direct fetch returned 403 in bounded capture",
+    "route_count": 17,
+    "bic_only_route_count": 10,
+    "account_backed_route_keys": [
+      "AED:ADCBAEAA",
+      "CHF:HBZUCHZZ",
+      "CNY:SCBLCNSXSHA",
+      "CNY:CZCBCN2X",
+      "EUR:CRBAGRAA",
+      "SAR:RJHISARI",
+      "USD:CZCBCN2X"
+    ],
+    "route_keys": [
+      "AED:ADCBAEAA",
+      "CHF:HBZUCHZZ",
+      "CNY:SCBLCNSXSHA",
+      "CNY:CZCBCN2X",
+      "EUR:CRBAGRAA",
+      "EUR:COBADEFF",
+      "EUR:AEIBDEFX",
+      "EUR:CRITITMMDIR",
+      "GBP:SCBLGB2L",
+      "SAR:RJHISARI",
+      "SGD:SCBLSG22XXX",
+      "USD:COBADEFF",
+      "USD:HANYUS33",
+      "USD:MSHQUS33",
+      "USD:SCBLUS33",
+      "USD:CZCBCN2X",
+      "JPY:SCBLJPJT"
+    ]
+  },
+  "masking": {
+    "algorithm": "sequential token per published account within the beneficiary namespace",
+    "equality": "same published account maps to the same synthetic token; raw account values are not committed",
+    "raw_accounts_committed": false
+  }
+}
