@@ -1794,6 +1794,20 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
     )
 
 
+def test_consolidation_ledger_validator_rejects_noncanonical_row_shape(tmp_path):
+    production = (
+        Path(__file__).resolve().parents[1]
+        / "app"
+        / "services"
+        / "seed_ssi_consolidation_1_1.json"
+    )
+    payload = json.loads(production.read_text())
+    payload["ssi_records"][0].pop()
+
+    with pytest.raises(ValueError, match="expected 15 fields"):
+        autopilot._validate_consolidation_payload(payload, tmp_path / "bad-ledger.json")
+
+
 def test_pakistan_candidate_evidence_preserves_inferred_terms():
     """Candidate provenance must survive unchanged into the admission ledger."""
     candidate_path = Path(__file__).resolve().parents[1] / (
