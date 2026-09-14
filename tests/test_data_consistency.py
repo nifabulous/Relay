@@ -251,6 +251,9 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Wells Fargo's source-published legacy BIC8. The SSI remains unverified
+    # and non-routable until a public CHIPS/ABA mapping is corroborated.
+    "PNBPUS3N",
     # Bank Frick's published USD SSI lists Convera USA and United Texas Bank;
     # neither BIC currently has a verified CHIPS/ABA identifier in the local
     # directory, so keep the sourced routes explicitly exempt for now.

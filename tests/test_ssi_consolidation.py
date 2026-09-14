@@ -60,6 +60,17 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         130,
         131,
         133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
     ]
     assert [
         pr for payload in payloads for pr in payload.get("superseded_prs", [])
@@ -92,3 +103,29 @@ def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
         and row[3] == "IRVTUS3NXXX"
         for row in SSI_RECORDS
     )
+
+
+def test_final_batch_applies_the_reviewed_payment_data_corrections():
+    final = _payloads()[-1]["ssi_records"]
+
+    assert not any(row[3] == "PNBPUS33XXX" for row in final)
+    corrected_wells_fargo = [row for row in final if row[3] == "PNBPUS3NXXX"]
+    assert corrected_wells_fargo
+    assert all(row[4] == "Wells Fargo Bank N.A., New York" for row in corrected_wells_fargo)
+
+    iob_dkk = [row for row in final if row[0] == "IOBAINBBXXX" and row[2] == "DKK"]
+    assert iob_dkk
+    assert all(row[3].startswith("DABADKKK") for row in iob_dkk)
+    assert all("Danske Bank" in row[4] for row in iob_dkk)
+
+
+def test_masked_account_comments_are_resolved_in_the_final_batch():
+    final = _payloads()[-1]["ssi_records"]
+    enbd = [row for row in final if row[0] == "EBILAEADXXX"]
+    assert enbd
+    assert all(row[5:9] == [None, None, None, None] for row in enbd)
+    assert all(row[13] is True and row[14] is False for row in enbd)
+
+    axis = [row for row in final if row[0] == "AXISINBBXXX"]
+    assert axis
+    assert all(row[6] is None for row in axis)
