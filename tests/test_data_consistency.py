@@ -3308,3 +3308,35 @@ class TestJordanSsiCoverage:
     def test_jordan_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("jordan", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: jordan ----
+
+
+# ---- autopilot-generated coverage tests: luxembourg-wave1 ----
+LUXEMBOURG_WAVE1_SSI_COVERAGE = [
+    ("BCEELULLXXX", "Banque et Caisse d'Epargne de l'Etat, Luxembourg", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD", "HUF", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "TRY", "USD", "ZAR"}),
+]
+
+class TestLuxembourgWave1SsiCoverage:
+
+    def test_luxembourg_wave1_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("luxembourg-wave1")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in LUXEMBOURG_WAVE1_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_luxembourg_wave1_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("luxembourg-wave1")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"luxembourg-wave1 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_luxembourg_wave1_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("luxembourg-wave1", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: luxembourg-wave1 ----
