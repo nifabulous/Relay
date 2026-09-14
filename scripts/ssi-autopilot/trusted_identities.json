@@ -1327,5 +1327,6 @@
   "JSBLPKKA": {"name": "JS Bank Limited", "country": "PK", "domains": ["jsbl.com"], "settlement_terms_published": false},
   "HAJCAZ22": {"name": "Xalq Bank Open Joint-Stock Company", "country": "AZ", "domains": ["xalqbank.az"], "settlement_terms_published": false},
   "KVBLINBB": {"name": "Karur Vysya Bank Limited", "country": "IN", "domains": ["kvb.bank.in"], "settlement_terms_published": false},
-  "EVBKUS3M": {"name": "EverBank, N.A.", "country": "US", "domains": ["everbank.com"], "settlement_terms_published": false}
+  "EVBKUS3M": {"name": "EverBank, N.A.", "country": "US", "domains": ["everbank.com"], "settlement_terms_published": false},
+  "KLARCH22": {"name": "Bivial AG", "country": "CH", "domains": ["bivial.com"], "settlement_terms_published": false}
 }

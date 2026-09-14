@@ -14892,7 +14892,8 @@
         {"bic8":"RLNWATWW","manifest_file":"regions_batch6_banks_3_rlnwatww.json"},
         {"bic8":"OBKLAT2L","manifest_file":"regions_batch6_banks_3_obklat2l.json"},
         {"bic8":"VKBLAT2L","manifest_file":"regions_batch6_banks_3_vkblat2l.json"},
-        {"bic8":"ICRAITRR","manifest_file":"regions_batch6_banks_3_icraitrr.json"}
+        {"bic8":"ICRAITRR","manifest_file":"regions_batch6_banks_3_icraitrr.json"},
+        {"bic8":"KLARCH22","manifest_file":"regions_batch33_banks_1_klarch22.json"}
       ]
     },
     {

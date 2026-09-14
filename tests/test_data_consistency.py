@@ -2313,18 +2313,19 @@ class TestJapanSsiCoverage:
 
 # ---- autopilot-generated coverage tests: western-europe ----
 WESTERN_EUROPE_SSI_COVERAGE = [
-    ('AREBESMMXXX', 'ARESBANK, S.A.', {'GBP', 'KWD', 'USD'}),
-    ('BAPPIT22XXX', 'BANCO BPM SPA', {'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'HUF', 'ILS', 'JPY', 'USD'}),
-    ('CCRTIT2TXXX', 'CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.', {'CAD', 'CHF', 'EUR', 'GBP', 'USD'}),
-    ('CRBAGRAAXXX', 'ALPHA BANK S.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'HKD', 'JPY', 'NOK'}),
-    ('BOTKNL2XXXX', 'MUFG Bank (Europe) N.V., Amsterdam', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MAD', 'MXN', 'MYR', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('DEUTNL2AXXX', 'Deutsche Bank AG, Amsterdam', {'AED', 'AUD', 'BGN', 'CAD', 'GBP', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RUB', 'ZAR'}),
-    ('BPMOIT22XXX', 'BPER Banca S.p.A.', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'ISK', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
-    ('RZBAATWWXXX', 'Raiffeisen Bank International AG', {'AED', 'ALL', 'AUD', 'BAM', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('RLNWATWWXXX', 'Raiffeisenlandesbank Niederösterreich-Wien AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('OBKLAT2LXXX', 'Oberbank AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
-    ('VKBLAT2LXXX', 'Volkskreditbank AG', {'AED', 'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('ICRAITRRXXX', 'ICCREA Banca S.p.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ISK', 'JPY', 'MAD', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ("AREBESMMXXX", "ARESBANK, S.A.", {"GBP", "KWD", "USD"}),
+    ("BAPPIT22XXX", "BANCO BPM SPA", {"CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HUF", "ILS", "JPY", "USD"}),
+    ("CCRTIT2TXXX", "CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.", {"CAD", "CHF", "EUR", "GBP", "USD"}),
+    ("CRBAGRAAXXX", "ALPHA BANK S.A.", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "HKD", "JPY", "NOK"}),
+    ("BOTKNL2XXXX", "MUFG Bank (Europe) N.V., Amsterdam", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "MYR", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", {"AED", "AUD", "BGN", "CAD", "GBP", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RUB", "ZAR"}),
+    ("BPMOIT22XXX", "BPER Banca S.p.A.", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("RZBAATWWXXX", "Raiffeisen Bank International AG", {"AED", "ALL", "AUD", "BAM", "BHD", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("RLNWATWWXXX", "Raiffeisenlandesbank Niederösterreich-Wien AG", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("OBKLAT2LXXX", "Oberbank AG", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "SAR", "SEK", "SGD", "TRY", "USD", "ZAR"}),
+    ("VKBLAT2LXXX", "Volkskreditbank AG", {"AED", "AUD", "BGN", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("ICRAITRRXXX", "ICCREA Banca S.p.A.", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ISK", "JPY", "MAD", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("KLARCH22XXX", "Bivial AG", {"AED", "AUD", "CAD", "CZK", "DKK", "GBP", "HKD", "HUF", "JPY", "MXN", "NOK", "PLN", "SEK", "SGD", "TRY", "USD", "ZAR"}),
 ]
 
 class TestWesternEuropeSsiCoverage:
@@ -2352,8 +2353,6 @@ class TestWesternEuropeSsiCoverage:
     def test_western_europe_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("western-europe", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: western-europe ----
-
-
 # ---- autopilot-generated coverage tests: mauritius ----
 MAURITIUS_SSI_COVERAGE = [
     ("AFBLMUMUXXX", "AfrAsia Bank Limited", {"AED", "BWP", "CAD", "CNY", "EUR", "GBP", "GHS", "HKD", "IDR", "INR", "JPY", "KES", "MUR", "NAD", "NGN", "RWF", "THB", "TZS", "UGX", "USD", "XAF", "XOF", "ZAR", "ZMW"}),

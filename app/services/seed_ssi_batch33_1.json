@@ -1,0 +1,33 @@
+[
+  [
+    "KLARCH22XXX",
+    "Bivial AG",
+    "https://www.bivial.com/correspondent-banks",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|CHASDEFX|J.P. Morgan SE, Frankfurt (via First Abu Dhabi Bank PJSC)|91003421",
+      "AUD|CHASGB2L|JPMorgan Chase Bank, N.A., London (via Australia and New Zealand Banking Group Limited)|91003422",
+      "CAD|CHASGB2L|JPMorgan Chase Bank, N.A., London (via Royal Bank of Canada)|91003423",
+      "CZK|CHASGB2L|JPMorgan Chase Bank, N.A., London (via Ceskoslovenska Obchodni Banka)|91003424",
+      "DKK|CHASDEFX|J.P. Morgan SE, Frankfurt (via Nordea Denmark)|91003425",
+      "GBP|CHASGB2L|JPMorgan Chase Bank, N.A., London|91003426",
+      "HKD|CHASDEFX|J.P. Morgan SE, Frankfurt (via JPMorgan Chase Bank, N.A., Hong Kong)|91003427",
+      "HUF|CHASDEFX|J.P. Morgan SE, Frankfurt (via UniCredit Bank Hungary)|91003428",
+      "JPY|CHASDEFX|J.P. Morgan SE, Frankfurt (via JPMorgan Chase Bank, N.A., Tokyo)|91003429",
+      "MXN|CHASDEFX|J.P. Morgan SE, Frankfurt (via Banco Santander Mexico)|91003430",
+      "NOK|CHASDEFX|J.P. Morgan SE, Frankfurt (via Nordea Bank Norway)|91003431",
+      "PLN|CHASDEFX|J.P. Morgan SE, Frankfurt (via mBank)|91003432",
+      "SEK|CHASDEFX|J.P. Morgan SE, Frankfurt (via Nordea Bank Sweden)|91003433",
+      "SGD|CHASGB2L|JPMorgan Chase Bank, N.A., London (via Oversea-Chinese Banking Corporation)|91003434",
+      "TRY|CHASDEFX|J.P. Morgan SE, Frankfurt (via JPMorgan Chase Bank, N.A., Istanbul)|91003435",
+      "USD|CHASGB2L|JPMorgan Chase Bank, N.A., London (via JPMorgan Chase Bank, N.A., New York)|91003436",
+      "ZAR|CHASDEFX|J.P. Morgan SE, Frankfurt (via Standard Bank of South Africa)|91003437"
+    ]
+  ]
+]
