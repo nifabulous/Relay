@@ -2768,6 +2768,7 @@ AFRICA_WAVE5_SSI_COVERAGE = [
     ("ABYSETAAXXX", "Bank of Abyssinia", {"AED", "EUR", "GBP", "USD"}),
     ("AZAMZMLUXXX", "Access Bank Zambia Limited", {"GBP", "USD", "ZAR"}),
     ("FIRNBWGXXXX", "First National Bank of Botswana Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "GHS", "HKD", "INR", "JPY", "KES", "LSL", "MUR", "MWK", "NAD", "NGN", "NOK", "NZD", "SEK", "SGD", "SZL", "THB", "UGX", "USD", "ZMW"}),
+    ("UNTDETAAXXX", "Hibret Bank S.C.", {"AED", "EUR", "GBP", "JPY", "USD"}),
 ]
 
 class TestAfricaWave5SsiCoverage:
@@ -2795,8 +2796,6 @@ class TestAfricaWave5SsiCoverage:
     def test_africa_wave5_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("africa-wave5", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: africa-wave5 ----
-
-
 # ---- autopilot-generated coverage tests: caucasus-wave5 ----
 CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("AGCAAM22XXX", "ACBA Bank OJSC", {"AED", "CHF", "CNY", "EUR", "GBP", "GEL", "RUB", "USD"}),

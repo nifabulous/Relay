@@ -1,0 +1,30 @@
+[
+  [
+    "UNTDETAAXXX",
+    "Hibret Bank S.C.",
+    "Source: https://www.hibretbank.com.et/trade-finance-services/correspondent-banks/ (as of 2026-09-13) BIC-level list — no account numbers published; not a selectable settlement instruction.",
+    "2026-09-13",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AED|BABELBBE|Bank of Beirut S.A.L., Beirut|",
+      "EUR|COBADEFF|Commerz Bank A.G., Frankfurt|",
+      "EUR|UNCRITMM|UniCredit SpA, Milan|",
+      "EUR|BHFBDEFF|ODDO BHF, Frankfurt|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "GBP|BRBAGB2L|Bank of Beirut (UK) Ltd., London|",
+      "JPY|COBADEFF|Commerz Bank A.G., Frankfurt|",
+      "USD|CITIUS33|City Bank N.A., New York|",
+      "USD|COBADEFF|Commerz Bank A.G., Frankfurt|",
+      "USD|SCBLGB2L|Standard Chartered Bank, London|",
+      "USD|BRBAGB2L|Bank of Beirut (UK) Ltd., London|",
+      "USD|MRINDJDJ|Bank of Africa-Mer Rouge, Djibouti|",
+      "USD|CACDDJDJ|CAC International Bank, Djibouti|",
+      "USD|EXTNDJJD|EXIM Djibouti|"
+    ]
+  ]
+]
