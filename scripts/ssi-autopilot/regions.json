@@ -35816,7 +35816,17 @@
           ],
           "admitted_record_digest": "23aa8cb4924bc5592f3e3c8ccd8d91b69170fdb6480736ad5fbb8b5e86ec1806"
         },
-        {"bic8":"NDEADKKK","manifest_file":"regions_batch5_banks_1_ndeadkkk.json"}
+        {"bic8":"NDEADKKK","manifest_file":"regions_batch5_banks_1_ndeadkkk.json"},
+        {
+          "bic8":"SPNODK22",
+          "name":"Spar Nord Bank A/S",
+          "country":"DK",
+          "currencies":["AED","AUD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","JPY","NOK","NZD","PLN","RON","SEK","SGD","THB","TRY","USD","ZAR"],
+          "seedable":true,
+          "source_domains":["sparnord.dk"],
+          "admitted_record_digest":"1f0ef1c99b9f6616537b382c6d0371238d40d80454bb98a5341a24e1c9b83875",
+          "compact_records_file":"regions_batch21_records_spnodk22.json"
+        }
       ]
     },
     {

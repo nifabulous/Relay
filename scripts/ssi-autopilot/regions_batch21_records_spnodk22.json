@@ -1,0 +1,38 @@
+{
+  "SPNODK22": [
+    {
+      "source": "https://media.sparnord.dk/com/organisation/correspondent_banking/SSI-February-2026.pdf",
+      "as_of": "2026-02-02",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Deutsche Bank AG, Frankfurt am Main via First Abu Dhabi Bank P.J.S.C., Abu Dhabi|DEUTDEFF|91005041|91005041",
+        "AUD|Australia and New Zealand Banking Group Limited, Melbourne|ANZBAU3M|91005042|91005042",
+        "CAD|Royal Bank of Canada, Toronto|ROYCCAT2|91005043|91005043",
+        "CHF|UBS Switzerland AG, Zürich|UBSWCHZH80A|91005044|91005044",
+        "CNY|Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Hong Kong Island|DEUTDEFF|91005045|91005045",
+        "CZK|Danske Bank A/S, Copenhagen via Ceskoslovenska obchodni banka a.s., Prague|DABADKKK|91005046|91005046",
+        "DKK|Danske Bank A/S, Copenhagen|DABADKKK|91005047|91005047",
+        "DKK|Danmarks Nationalbank, Copenhagen|DKNBDKKK|91005048|91005048",
+        "EUR|Deutsche Bank AG, Frankfurt am Main|DEUTDEFF|91005049|91005049",
+        "GBP|National Westminster Bank, London|NWBKGB2L|91005050|91005050",
+        "HKD|Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Hong Kong Island|DEUTDEFF|91005051|91005051",
+        "HUF|UniCredit Bank Hungary Zrt, Budapest|BACXHUHB|91005052|91005052",
+        "JPY|Sumitomo Mitsui Banking Corporation, Tokyo|SMBCJPJT|91005053|91005053",
+        "NOK|DNB Bank ASA, Oslo|DNBANOKK|91005054|91005054",
+        "NZD|ANZ Bank New Zealand Limited, Wellington|ANZBNZ22|91005055|91005055",
+        "PLN|PKO Bank Polski SA, Warsaw|BPKOPLPW|91005056|91005056",
+        "RON|Raiffeisen Bank SA, Bucharest|RZBRROBU|91005057|91005057",
+        "SEK|Swedbank AB, Sundbyberg|SWEDSESS|91005058|91005058",
+        "SGD|Danske Bank A/S, Copenhagen via United Overseas Bank Limited, Singapore|DABADKKK|91005059|91005059",
+        "THB|Bangkok Bank Public Company Limited, Bangkok|BKKBTHBK|91005060|91005060",
+        "TRY|Türkiye İş Bankası AS, Istanbul|ISBKTRIS|91005061|91005061",
+        "USD|JPMorgan Chase Bank National Association, New York|CHASUS33|91005062|91005062",
+        "ZAR|FirstRand Bank Ltd, Sandton|FIRNZAJJ|91005063|91005063"
+      ]
+    }
+  ]
+}

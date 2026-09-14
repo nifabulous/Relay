@@ -1,0 +1,39 @@
+[
+  [
+    "SPNODK22XXX",
+    "Spar Nord Bank A/S",
+    "https://media.sparnord.dk/com/organisation/correspondent_banking/SSI-February-2026.pdf",
+    "2026-02-02",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main via First Abu Dhabi Bank P.J.S.C., Abu Dhabi|91005041",
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group Limited, Melbourne|91005042",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91005043",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zürich|91005044",
+      "CNY|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Hong Kong Island|91005045",
+      "CZK|DABADKKK|Danske Bank A/S, Copenhagen via Ceskoslovenska obchodni banka a.s., Prague|91005046",
+      "DKK|DABADKKK|Danske Bank A/S, Copenhagen|91005047",
+      "DKK|DKNBDKKK|Danmarks Nationalbank, Copenhagen|91005048",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main|91005049",
+      "GBP|NWBKGB2L|National Westminster Bank, London|91005050",
+      "HKD|DEUTDEFF|Deutsche Bank AG, Frankfurt am Main via Deutsche Bank AG, Hong Kong Island|91005051",
+      "HUF|BACXHUHB|UniCredit Bank Hungary Zrt, Budapest|91005052",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|91005053",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91005054",
+      "NZD|ANZBNZ22|ANZ Bank New Zealand Limited, Wellington|91005055",
+      "PLN|BPKOPLPW|PKO Bank Polski SA, Warsaw|91005056",
+      "RON|RZBRROBU|Raiffeisen Bank SA, Bucharest|91005057",
+      "SEK|SWEDSESS|Swedbank AB, Sundbyberg|91005058",
+      "SGD|DABADKKK|Danske Bank A/S, Copenhagen via United Overseas Bank Limited, Singapore|91005059",
+      "THB|BKKBTHBK|Bangkok Bank Public Company Limited, Bangkok|91005060",
+      "TRY|ISBKTRIS|Türkiye İş Bankası AS, Istanbul|91005061",
+      "USD|CHASUS33|JPMorgan Chase Bank National Association, New York|91005062",
+      "ZAR|FIRNZAJJ|FirstRand Bank Ltd, Sandton|91005063"
+    ]
+  ]
+]
