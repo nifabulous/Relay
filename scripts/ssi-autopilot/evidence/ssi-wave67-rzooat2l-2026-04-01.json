@@ -1,0 +1,57 @@
+{
+  "source": "https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf",
+  "as_of": "2026-04-01",
+  "beneficiary": {
+    "bic": "RZOOAT2LXXX",
+    "name": "Raiffeisenlandesbank Oberoesterreich AG",
+    "country": "AT"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "route_count": 5,
+    "advertised_route_count": 32,
+    "extraction": "Authorized Correspondent Banks and Settlement Instructions effective 1 April 2026.",
+    "excluded_routes": [
+      "Twenty-seven currency/correspondent pairs already exist in the older commercial-payments SSI ledger for this beneficiary.",
+      "EUR via Target self-routing RZOOAT2L is a direct TARGET route and is omitted."
+    ]
+  },
+  "routes": [
+    {
+      "currency": "CNY",
+      "int_bic": "ICBKSGSGCLR",
+      "correspondent": "Industrial and Commercial Bank of China (Singapore)",
+      "nostro_mask": "ACCT-91003426",
+      "with_an_mask": "ACCT-91003426"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt (non-TARGET)",
+      "nostro_mask": "ACCT-91003429",
+      "with_an_mask": "ACCT-91003429"
+    },
+    {
+      "currency": "INR",
+      "int_bic": "ICICINBBNRI",
+      "correspondent": "ICICI Bank Limited, Mumbai",
+      "nostro_mask": "ACCT-91003435",
+      "with_an_mask": "ACCT-91003435"
+    },
+    {
+      "currency": "MYR",
+      "int_bic": "HBMBMYKLXXX",
+      "correspondent": "HSBC Bank, Kuala Lumpur via Raiffeisen Bank International AG, Vienna",
+      "nostro_mask": "ACCT-91003439",
+      "with_an_mask": "ACCT-91003440"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon, New York",
+      "nostro_mask": "ACCT-91003459",
+      "with_an_mask": "ACCT-91003459"
+    }
+  ],
+  "normalization_note": "Published account values are masked into the reserved western-europe block. Multi-hop rows retain both account masks, terms_inferred=true, and all rows remain unverified until independently confirmed."
+}

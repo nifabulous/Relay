@@ -1,0 +1,21 @@
+[
+  [
+    "RZOOAT2LXXX",
+    "Raiffeisenlandesbank Oberoesterreich AG",
+    "https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf",
+    "2026-04-01",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "CNY|ICBKSGSGCLR|Industrial and Commercial Bank of China (Singapore)|91003426|91003426",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt (non-TARGET)|91003429|91003429",
+      "INR|ICICINBBNRI|ICICI Bank Limited, Mumbai|91003435|91003435",
+      "MYR|HBMBMYKL|HSBC Bank, Kuala Lumpur via Raiffeisen Bank International AG, Vienna|91003439|91003440",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|91003459|91003459"
+    ]
+  ]
+]

@@ -1108,6 +1108,19 @@ def _load_ssi_batch9_groups():
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
 
+_SSI_BATCH36_DATA_FILES = ("seed_ssi_batch36_1.json",)
+
+
+def _load_ssi_batch36_groups():
+    groups = []
+    for filename in _SSI_BATCH36_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH36_GROUPS = _load_ssi_batch36_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1257,7 +1270,41 @@ def _ssi_batch9_records():
             ))
     return expanded
 
+
+def _ssi_batch36_records():
+    """Expand Raiffeisenlandesbank Oberoesterreich's treasury SSI table."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH36_GROUPS:
+        if bic_only:
+            note = (
+                f"Source: {source} (as of {as_of}) {_SSI_BIC_ONLY_NOTE} "
+                f"{_SSI_REAL_NOTE}"
+            )
+        else:
+            note = f"Source: {source} (as of {as_of}). {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, nostro_suffix, with_an_suffix = packed.split("|", 4)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            nostro = f"ACCT-{nostro_suffix}" if nostro_suffix else None
+            with_an = f"ACCT-{with_an_suffix}" if with_an_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else nostro,
+                None if bic_only else with_an,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 36 (Raiffeisenlandesbank Oberoesterreich routes; masked) ----
+    *_ssi_batch36_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
     *_ssi_batch9_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----

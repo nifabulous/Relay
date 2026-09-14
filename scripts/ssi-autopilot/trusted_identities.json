@@ -23,6 +23,12 @@
     ],
     "settlement_terms_published": false
   },
+  "RZOOAT2L": {
+    "name": "Raiffeisenlandesbank Oberoesterreich AG",
+    "country": "AT",
+    "domains": ["raiffeisen.at"],
+    "settlement_terms_published": false
+  },
   "DEYATRIS": {
     "name": "Destek Yatırım Bankası A.Ş.",
     "country": "TR",
