@@ -2201,12 +2201,13 @@ class TestCanadaSsiCoverage:
 
 # ---- autopilot-generated coverage tests: gulf ----
 GULF_SSI_COVERAGE = [
-    ('EBILAEADXXX', 'Emirates NBD Bank (P.J.S.C.)', {'BHD', 'EUR', 'GBP', 'KWD', 'OMR', 'QAR', 'SAR', 'USD'}),
-    ('NBOKKWKWXXX', 'National Bank of Kuwait (S.A.K.P.)', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'INR', 'JOD', 'JPY', 'KRW', 'KWD', 'LKR', 'NOK', 'OMR', 'PHP', 'PKR', 'QAR', 'SAR', 'SEK', 'SGD', 'USD'}),
-    ('BARBAEADXXX', 'Bank of Baroda UAE', {'AED', 'CHF', 'EUR', 'GBP', 'INR', 'JPY', 'KWD', 'QAR', 'SAR', 'SGD', 'USD'}),
-    ('DOHBQAQAXXX', 'Doha Bank', {'AED', 'AUD', 'BDT', 'CAD', 'CHF', 'CNY', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'IDR', 'INR', 'JOD', 'JPY', 'KWD', 'LKR', 'MAD', 'NOK', 'NPR', 'NZD', 'PHP', 'PKR', 'SAR', 'SEK', 'SGD', 'TND', 'TRY', 'USD', 'ZAR'}),
-    ('HDFCBHBMXXX', 'HDFC Bank Ltd - Bahrain', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'EUR', 'GBP', 'INR', 'JPY', 'QAR', 'SGD', 'USD'}),
-    ('NBFUAEAFXXX', 'National Bank of Fujairah', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'INR', 'JOD', 'JPY', 'KES', 'KWD', 'LKR', 'MAD', 'NOK', 'OMR', 'PKR', 'PLN', 'QAR', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'XAG', 'XAU', 'XPD', 'XPT', 'ZAR'}),
+    ("EBILAEADXXX", "Emirates NBD Bank (P.J.S.C.)", {"BHD", "EUR", "GBP", "KWD", "OMR", "QAR", "SAR", "USD"}),
+    ("NBOKKWKWXXX", "National Bank of Kuwait (S.A.K.P.)", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "DKK", "EGP", "EUR", "GBP", "HKD", "INR", "JOD", "JPY", "KRW", "KWD", "LKR", "NOK", "OMR", "PHP", "PKR", "QAR", "SAR", "SEK", "SGD", "USD"}),
+    ("BARBAEADXXX", "Bank of Baroda UAE", {"AED", "CHF", "EUR", "GBP", "INR", "JPY", "KWD", "QAR", "SAR", "SGD", "USD"}),
+    ("DOHBQAQAXXX", "Doha Bank", {"AED", "AUD", "BDT", "CAD", "CHF", "CNY", "DKK", "EGP", "EUR", "GBP", "HKD", "IDR", "INR", "JOD", "JPY", "KWD", "LKR", "MAD", "NOK", "NPR", "NZD", "PHP", "PKR", "SAR", "SEK", "SGD", "TND", "TRY", "USD", "ZAR"}),
+    ("HDFCBHBMXXX", "HDFC Bank Ltd - Bahrain", {"AED", "AUD", "BHD", "CAD", "CHF", "EUR", "GBP", "INR", "JPY", "QAR", "SGD", "USD"}),
+    ("BNZWOMRXXXX", "Bank Nizwa", {"AED", "CAD", "EUR", "GBP", "INR", "JOD", "JPY", "KWD", "QAR", "SAR", "USD"}),
+    ("NBFUAEAFXXX", "National Bank of Fujairah", {"AED", "AUD", "BHD", "CAD", "CHF", "CNH", "CNY", "DKK", "EUR", "GBP", "HKD", "INR", "JOD", "JPY", "KES", "KWD", "LKR", "MAD", "NOK", "OMR", "PKR", "PLN", "QAR", "SAR", "SEK", "SGD", "TRY", "USD", "XAG", "XAU", "XPD", "XPT", "ZAR"}),
 ]
 
 class TestGulfSsiCoverage:
@@ -2234,8 +2235,6 @@ class TestGulfSsiCoverage:
     def test_gulf_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("gulf", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: gulf ----
-
-
 # ---- autopilot-generated coverage tests: pakistan ----
 PAKISTAN_SSI_COVERAGE = [
     ('ALFHPKKAXXX', 'Bank Alfalah Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'SEK', 'SGD', 'USD'}),

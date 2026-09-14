@@ -1,0 +1,27 @@
+{
+  "BNZWOMRX": [
+    {
+      "source": "https://www.banknizwa.om/media/4423/bank-nizwa-ssi-list-august-2024.pdf",
+      "as_of": "2024-08-01",
+      "status": "archived",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Abu Dhabi Commercial Bank, Abu Dhabi|ADCBAEAA|91001630|91001630",
+        "CAD|National Bank of Canada, Canada|BNDCCAMM|91001633|91001633",
+        "EUR|Standard Chartered Bank, Frankfurt|SCBLDEFF|91001635|91001635",
+        "GBP|Standard Chartered Bank, London|SCBLGB2L|91001636|91001636",
+        "INR|HDFC Bank, India|HDFCINBB|91001638|91001638",
+        "JOD|Jordan Islamic Bank, Jordan|JIBAJOAM|91001639|91001639",
+        "JPY|Standard Chartered Bank, Tokyo (via Hong Kong)|SCBLJPJT|91001641|91001641",
+        "KWD|Kuwait Finance House, Kuwait|KFHOKWKW|91001642|91001642",
+        "QAR|Qatar Islamic Bank, Qatar|QISBQAQA|91001645|91001645",
+        "SAR|Saudi Awwal Bank, Saudi Arabia|SABBSARI|91001647|91001647",
+        "USD|JPMorgan Chase, U.S.A.|CHASUS33|91001649|91001649",
+        "USD|Mashreq Bank, U.S.A.|MSHQUS33|91001650|91001650"
+      ]
+    }
+  ]
+}
