@@ -747,6 +747,14 @@
     ],
     "settlement_terms_published": false
   },
+  "USALALTR": {
+    "name": "Intesa Sanpaolo Bank Albania",
+    "country": "AL",
+    "domains": [
+      "intesasanpaolobank.al"
+    ],
+    "settlement_terms_published": false
+  },
   "TBTUBA22": {
     "name": "NLB Banka d.d., Sarajevo",
     "country": "BA",
@@ -1311,6 +1319,7 @@
   "ANIKAM22": {"name": "ID BANK CJSC", "country": "AM", "domains": ["idbank.am"], "settlement_terms_published": false},
   "ARMJAM22": {"name": "VTB Bank (Armenia) CJSC", "country": "AM", "domains": ["vtb.am"], "settlement_terms_published": false},
   "WPACAU2S": {"name": "Westpac Banking Corporation", "country": "AU", "domains": ["westpac.com.au"], "settlement_terms_published": false},
+  "HAABAT2K": {"name": "Austrian Anadi Bank AG", "country": "AT", "domains": ["anadibank.com"], "settlement_terms_published": true},
   "RZBAATWW": {"name": "Raiffeisen Bank International AG", "country": "AT", "domains": ["rbinternational.com"], "settlement_terms_published": false},
   "RLNWATWW": {"name": "Raiffeisenlandesbank Niederösterreich-Wien AG", "country": "AT", "domains": ["privatebanking-raiffeisen.at"], "settlement_terms_published": false},
   "OBKLAT2L": {"name": "Oberbank AG", "country": "AT", "domains": ["oberbank.com"], "settlement_terms_published": false},

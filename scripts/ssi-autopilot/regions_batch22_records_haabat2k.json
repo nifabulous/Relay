@@ -1,0 +1,29 @@
+{
+  "HAABAT2K": [
+    {
+      "source": "https://anadibank.com/media/467/download?attachment=",
+      "as_of": "2024-06-10",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AUD|Raiffeisen Bank International AG, Vienna (Field 56: ANZBAU3M)|RZBAATWW|91003421|91003421",
+        "CAD|Raiffeisen Bank International AG, Vienna (Field 56: CIBCCATT)|RZBAATWW|91003422|91003422",
+        "CHF|UBS AG, Zürich|UBSWCHZH80A|91003423|91003423",
+        "CZK|Raiffeisen Bank International AG, Vienna (Field 56: RZBCCZPP)|RZBAATWW|91003424|91003424",
+        "DKK|Raiffeisen Bank International AG, Vienna (Field 56: NDEADKKK)|RZBAATWW|91003425|91003425",
+        "EUR|Raiffeisen Bank International AG, Vienna|RZBAATWW|91003426|91003426",
+        "GBP|Raiffeisen Bank International AG, Vienna (Field 56: BARCGB22)|RZBAATWW|91003427|91003427",
+        "HUF|Raiffeisen Bank International AG, Vienna (Field 56: UBRTHUHB)|RZBAATWW|91003428|91003428",
+        "JPY|Raiffeisen Bank International AG, Vienna (Field 56: BOTKJPJT)|RZBAATWW|91003429|91003429",
+        "NOK|Raiffeisen Bank International AG, Vienna (Field 56: DNBANOKK)|RZBAATWW|91003430|91003430",
+        "PLN|Raiffeisen Bank International AG, Vienna (Field 56: BPKOPLPW)|RZBAATWW|91003431|91003431",
+        "SEK|Raiffeisen Bank International AG, Vienna (Field 56: ESSESESS)|RZBAATWW|91003432|91003432",
+        "USD|Raiffeisen Bank International AG, Vienna (Field 56: SCBLUS33)|RZBAATWW|91003433|91003433",
+        "ZAR|Raiffeisen Bank International AG, Vienna (Field 56: ABSAZAJJ)|RZBAATWW|91003434|91003434"
+      ]
+    }
+  ]
+}

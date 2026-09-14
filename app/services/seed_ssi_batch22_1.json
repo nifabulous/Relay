@@ -1,0 +1,30 @@
+[
+  [
+    "HAABAT2KXXX",
+    "Austrian Anadi Bank AG",
+    "https://anadibank.com/media/467/download?attachment=",
+    "2024-06-10",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: ANZBAU3M)|91003421",
+      "CAD|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: CIBCCATT)|91003422",
+      "CHF|UBSWCHZH80A|UBS AG, Zürich|91003423",
+      "CZK|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: RZBCCZPP)|91003424",
+      "DKK|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: NDEADKKK)|91003425",
+      "EUR|RZBAATWW|Raiffeisen Bank International AG, Vienna|91003426",
+      "GBP|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: BARCGB22)|91003427",
+      "HUF|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: UBRTHUHB)|91003428",
+      "JPY|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: BOTKJPJT)|91003429",
+      "NOK|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: DNBANOKK)|91003430",
+      "PLN|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: BPKOPLPW)|91003431",
+      "SEK|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: ESSESESS)|91003432",
+      "USD|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: SCBLUS33)|91003433",
+      "ZAR|RZBAATWW|Raiffeisen Bank International AG, Vienna (Field 56: ABSAZAJJ)|91003434"
+    ]
+  ]
+]
