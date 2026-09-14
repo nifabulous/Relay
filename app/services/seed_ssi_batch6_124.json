@@ -1,0 +1,23 @@
+[
+  [
+    "INDBINBBXXX",
+    "IndusInd Bank Limited",
+    "Source: https://www.indusind.com/in/en/corporate/product-and-solution/financial-institutions-and-correspondent-banking/nostro-list.html (as of 2026-09-14).",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "CAD|IRVTUS3N|Bank Of New York Mellon, New York|91002020",
+      "CAD|BOFACATT|BANK OF AMERICA (BOFA) CANADA BRANCH, Toronto|91002021",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|91002022",
+      "EUR|BARCDEFF|BARCLAYS BANK IRELAND PLC, Frankfurt|91002023",
+      "USD|BOFAUS3N|Bank of America NA, New York|91002024",
+      "USD|IRVTUS3N|Bank Of Newyork Mellon, New York|91002025",
+      "USD|CHASUS33|JP Morgan Chase Bank, New York|91002026"
+    ]
+  ]
+]
