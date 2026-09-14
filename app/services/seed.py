@@ -1148,7 +1148,10 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_3_3.json",
     "seed_ssi_consolidation_3_4.json",
     "seed_ssi_consolidation_3_5.json",
-    "seed_ssi_consolidation_4.json",
+    "seed_ssi_consolidation_4_1.json",
+    "seed_ssi_consolidation_4_2.json",
+    "seed_ssi_consolidation_4_3.json",
+    "seed_ssi_consolidation_4_4.json",
 )
 
 

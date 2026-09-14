@@ -14,6 +14,16 @@ def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
 
 
+def _batch_records(batch):
+    prefix = f"seed_ssi_consolidation_{batch}_"
+    return [
+        row
+        for path, payload in zip(LEDGERS, _payloads())
+        if path.name.startswith(prefix)
+        for row in payload["ssi_records"]
+    ]
+
+
 def _row_to_ssi(row):
     provenance = list(row[10:])
     return SSI(
@@ -145,7 +155,7 @@ def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
 
 
 def test_final_batch_applies_the_reviewed_payment_data_corrections():
-    final = _payloads()[-1]["ssi_records"]
+    final = _batch_records(4)
 
     assert not any(row[3] == "PNBPUS33XXX" for row in final)
     corrected_wells_fargo = [row for row in final if row[3] == "PNBPUS3NXXX"]
@@ -159,7 +169,7 @@ def test_final_batch_applies_the_reviewed_payment_data_corrections():
 
 
 def test_masked_account_comments_are_resolved_in_the_final_batch():
-    final = _payloads()[-1]["ssi_records"]
+    final = _batch_records(4)
     enbd = [row for row in final if row[0] == "EBILAEADXXX"]
     assert enbd
     assert all(row[5:9] == [None, None, None, None] for row in enbd)
