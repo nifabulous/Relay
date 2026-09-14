@@ -1511,13 +1511,64 @@ def _expand_batch32_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _validate_consolidation_payload(payload: object, path: Path) -> list[list]:
+    """Validate the external ledger before its rows enter verifier comparisons."""
+    allowed_keys = {"source_prs", "superseded_prs", "banks", "ssi_records"}
+    if not isinstance(payload, dict) or set(payload) - allowed_keys:
+        raise ValueError(f"{path}: invalid consolidation ledger object")
+    source_prs = payload.get("source_prs")
+    if (
+        not isinstance(source_prs, list)
+        or any(not isinstance(pr, int) or pr < 1 for pr in source_prs)
+        or len(source_prs) != len(set(source_prs))
+    ):
+        raise ValueError(f"{path}.source_prs: expected a list")
+    banks = payload.get("banks")
+    if not isinstance(banks, list):
+        raise ValueError(f"{path}.banks: expected a list")
+    seen_bics = set()
+    for index, bank in enumerate(banks):
+        if not isinstance(bank, list) or len(bank) != 5 or not all(
+            isinstance(value, str) and value.strip() for value in bank
+        ):
+            raise ValueError(f"{path}.banks[{index}]: expected five strings")
+        if not re.fullmatch(r"[A-Z0-9]{11}", bank[0]) or bank[0] in seen_bics:
+            raise ValueError(f"{path}.banks[{index}]: invalid or duplicate BIC")
+        seen_bics.add(bank[0])
+    records = payload.get("ssi_records")
+    if not isinstance(records, list):
+        raise ValueError(f"{path}.ssi_records: expected a list")
+    seen = set()
+    for index, record in enumerate(records):
+        if not isinstance(record, list) or len(record) != 15:
+            raise ValueError(f"{path}.ssi_records[{index}]: expected 15 fields")
+        if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
+            raise ValueError(f"{path}.ssi_records[{index}]: missing route identity")
+        if not re.fullmatch(r"[A-Z0-9]{11}", record[0]) or not re.fullmatch(
+            r"[A-Z0-9]{11}", record[3]
+        ):
+            raise ValueError(f"{path}.ssi_records[{index}]: expected canonical BIC11 values")
+        if record[11] != "unverified" or record[12] is not None:
+            raise ValueError(f"{path}.ssi_records[{index}]: must remain unverified")
+        if not isinstance(record[13], bool) or not isinstance(record[14], bool):
+            raise ValueError(f"{path}.ssi_records[{index}]: invalid safety flags")
+        if record[13] and any(record[pos] is not None for pos in range(5, 9)):
+            raise ValueError(f"{path}.ssi_records[{index}]: BIC-only row has settlement fields")
+        key = (record[0], record[2], record[3])
+        if key in seen:
+            raise ValueError(f"{path}.ssi_records[{index}]: duplicate route key")
+        seen.add(key)
+    return records
+
+
 def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
-    """Read consolidated SSI ledgers without executing seed.py."""
+    """Read and validate consolidated ledgers without executing seed.py."""
     rows: list[tuple[str, ...]] = []
     services = REPO_ROOT / "app" / "services"
     for path in sorted(services.glob("seed_ssi_consolidation_*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
-        rows.extend(tuple(repr(value) for value in record) for record in payload["ssi_records"])
+        records = _validate_consolidation_payload(payload, path)
+        rows.extend(tuple(repr(value) for value in record) for record in records)
     return rows
 
 
