@@ -1,0 +1,20 @@
+[
+  [
+    "AXISINBBXXX",
+    "Axis Bank",
+    "Source: https://www.axisbank.com/docs/default-source/default-document-library/nostro-details95005bbabe576bf08df9ff0a000b8c1c.pdf (as of 2026-09-14). ",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    false,
+    [
+      "AUD|ANZBAU3M|Australia and New Zealand Bank, Melbourne|91002097",
+      "CAD|BOFMCAT2|Bank of Montreal, Canada|91002098",
+      "CHF|ZKBKCHZZ80A|Zuercher Kantonal Bank, Zurich|91002099",
+      "JPY|MHCBJPJT|Mizuho Bank, Ltd. Tokyo|91002000"
+    ]
+  ]
+]
