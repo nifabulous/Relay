@@ -1799,7 +1799,7 @@ def test_consolidation_ledger_validator_rejects_noncanonical_row_shape(tmp_path)
         Path(__file__).resolve().parents[1]
         / "app"
         / "services"
-        / "seed_ssi_consolidation_1.json"
+        / "seed_ssi_consolidation_1_1.json"
     )
     payload = json.loads(production.read_text())
     payload["ssi_records"][0].pop()
