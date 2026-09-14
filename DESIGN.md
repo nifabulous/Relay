@@ -94,7 +94,7 @@ Desktop uses a persistent left rail and top bar. Mobile uses a four-item bottom 
 
 Feature code uses shared components for navigation, buttons, form controls, panels, status, tables, mobile record lists, timelines, steppers, route diagrams, geographic instruments, alerts, skeletons, and empty states.
 
-A **geographic instrument** renders data onto real topology. It is not a chart in the sense line 138 restricts: it earns its place only when position itself carries a fact a direct value comparison cannot state. It must pair with a synced text equivalent that carries every value the geometry encodes, keep its own marks out of the accessibility tree, and never take a reserved colour for a data scale. Selection is reachable without hitting geometry.
+A **geographic instrument** renders data onto real topology. It is not a chart in the sense the anti-template rule below restricts: it earns its place only when position itself carries a fact a direct value comparison cannot state. It must pair with a synced text equivalent that carries every value the geometry encodes, keep its own marks out of the accessibility tree, and never take a reserved colour for a data scale. Selection is reachable without hitting geometry.
 
 Cards are allowed only when the surface is independently selectable, movable, or meaningfully bounded. Layout grouping alone does not justify a card.
 

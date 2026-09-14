@@ -112,13 +112,36 @@ Filtering to settleable removes **21 countries** from the map:
 BW CA CL CO EE ES ET GR LT MN MT MW MZ NA PE PY RS SG SI UY ZM
 ```
 
-Canada, Spain and Singapore go dark not because they lack correspondent banking but
-because nothing collected for them asserts a settlement instruction. This is the most
-informative single interaction in the feature.
+Canada, Spain and Singapore change state not because they lack correspondent banking but
+because nothing collected for them asserts a settlement instruction.
 
-Note the 103 versus 102: the beneficiary-country count is derived from
-`beneficiary_bic` positions 5–6 and includes one code that does not resolve in ISO
-3166-1, so 103 countries are counted and 102 can be drawn. See Resolved data anomaly.
+**That set is beneficiary-side, and hub is the default view.** The hub-side removal set is
+different and much less striking — nine countries, `AZ CI CM DJ LS MW NG SZ ZM`, taking
+hub countries from 102 to 93. A user who lands on the default view and flips the scope
+toggle sees those nine, not Canada and Spain. Two decisions taken in different rounds
+(hub-as-default, and the settleability narrative) each assumed the other's opposite.
+
+So the claim is view-qualified: this is the most informative interaction **in spoke view**,
+and the coverage frame always names the role-specific set for the view actually on screen.
+
+**Coverage is role-specific, and every headline figure above is beneficiary-side.**
+
+| role | countries observed | unresolvable | drawable |
+|---|---|---|---|
+| beneficiary (spoke) | 103 | 1 (`EB`) | 102 |
+| intermediary (hub) | 102 | 0 | 102 |
+| union of both roles | **126** | 1 | 125 |
+
+Twenty-three countries appear **only** as correspondents and never as beneficiaries:
+`AT BE BY CH DJ EG FJ FR HU IE LS LU MA MO MY NC NZ OM PT RU SS SZ TN`.
+
+The 103-versus-102 coincidence is worth naming: 103 beneficiary countries minus `EB`
+equals 102, and the intermediary count is *also* 102. Those are two different 102s. An
+earlier revision's prose read as if one explained the other.
+
+"Drawable countries" in the metric rail is therefore **view-scoped**, and in hub view the
+unresolvable-codes report is empty — which AC-F37 requires be stated as text rather than
+rendered as a blank.
 
 ---
 
@@ -140,7 +163,7 @@ Note the 103 versus 102: the beneficiary-country count is derived from
 | D16 | `black` theme gets a **distinct land surface** | A shipped third theme where canvas is #000000 and surface #18181b. "Ocean is the canvas" dissolves the map in it. |
 | D11 | The data ramp is **neutral ink**; blue stays action-only | A blue ramp breaks DESIGN.md:28 and makes a blue selected edge invisible against a blue fill. Amending DESIGN.md to carve out data encoding was considered and rejected: it weakens the rule for every future surface, and this is the first feature to ask. |
 | D12 | **Hub is the default view** | Spoke shows collection coverage; hub shows the star that justified the feature. Landing on the weaker read and hoping for a toggle is not a default, it is a hope. |
-| D13 | The hub map **survives DESIGN.md:138** | The ranked table states reach better, but cannot state *where* hubs cluster. The map carries a spatial fact the comparison cannot, which is the test rule 138 actually sets. |
+| D13 | The hub map **survives DESIGN.md:147** | The ranked table states reach better, but cannot state *where* hubs cluster. The map carries a spatial fact the comparison cannot, which is the test rule 138 actually sets. |
 | D10 | Visual direction is an **editorial instrument**, rendered with D3/SVG | A cinematic MapCN/MapLibre treatment adds motion, glow and map-product conventions that imply traffic or live flow. A hosted basemap adds visual noise, provider cost and attribution without helping the country-first question. |
 
 ### D5 in detail — why evidence cannot sit on a hub node
@@ -392,15 +415,19 @@ and record the chunk anyway.
 
 ### Dependencies
 
-Add `d3-geo`, `d3-scale`, `topojson-client`. Do **not** add `world-atlas`: the package
+Add `d3-geo`, `d3-scale`, `topojson-client`, **and their type packages**
+`@types/d3-geo`, `@types/d3-scale`, `@types/topojson-client` as devDependencies. None of
+the three ships bundled types, and `tsc --noEmit` runs as part of `npm run build` under
+TypeScript 7, so the build fails without them. `CommandSearch.tsx` also types destinations
+as a union of `"bank" | "scheme" | "glossary"` and needs an atlas member. Do **not** add `world-atlas`: the package
 is 8.2 MB unpacked (110m, 50m and 10m resolutions, countries and land) for one file.
 
-Vendor `countries-110m.json` under
+Vendor `countries-50m.json` under
 `frontend/src/features/explore/atlas/assets/` beside its source/hash record and ISC
 license notice. Import it with Vite's explicit URL form:
 
 ```ts
-import topologyUrl from "./assets/countries-110m.json?url";
+import topologyUrl from "./assets/countries-50m.json?url";
 ```
 
 The file is larger than Vite's inline threshold, so the production build emits it with
@@ -408,6 +435,20 @@ a content-hashed name under `app/static/relay/assets/`. Its browser URL therefor
 under `/app/assets/`, the only Relay asset path mounted by `app/main.py`. Do not place
 it in `frontend/public/`: that directory does not exist, and Vite would copy the file
 to `/app/atlas/...`, where the SPA catch-all returns `index.html` with status 200.
+
+**50m, not 110m — the lower resolution cannot draw six countries in the corpus.**
+`countries-110m.json` carries 177 features and drops small states. Measured against the
+corpus, that silently omits Hong Kong (6 beneficiary banks, 35 correspondents),
+Singapore (2 / 26), Bahrain (1 / 9), Mauritius (3 / 5), Malta (2 / 1) and Macao (0 / 1).
+Singapore and Hong Kong are the **8th and 10th hub countries by reach** — 92 and 81
+banks served. A correspondent-banking atlas that cannot draw them is not credible, and
+hub is the default view. 50m carries 241 features and has all six.
+
+The cost is 236 KB gzip against 110m's 39 KB. It is a separate cacheable asset fetch on
+a lazily-loaded route, not part of the JS chunk and not counted by the eager-shell gate.
+
+Three 50m features carry **no `id`** (`N. Cyprus`, `Somaliland`, `Kosovo`). Any lookup
+keyed on `feature.id` must handle `undefined` rather than assuming every feature has one.
 
 The atlas fetches `topologyUrl` on demand and rejects a non-JSON content type, malformed
 JSON, or an object without the expected `countries` topology. Those failures enter the
@@ -457,9 +498,9 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
   a user can see. One line in the title block.
 - A narrow metric rail establishes the sample before the map: beneficiary banks,
   correspondents, and drawable countries, each with its denominator or scope. **The
-  rail is figures on a ruled band, not cards** — DESIGN.md:90 allows a card only when
+  rail is figures on a ruled band, not cards** — DESIGN.md:99 allows a card only when
   the surface is independently selectable, movable or meaningfully bounded, and
-  DESIGN.md:132 forbids a mosaic of equal cards. Four equal boxes is that mosaic.
+  DESIGN.md:141 forbids a mosaic of equal cards. Four equal boxes is that mosaic.
 - **The dominant action is selecting an institution or country** (DESIGN.md Principle
   1). Everything else on the plate orients or filters. The ranked table is where that
   action is easiest, which is why it is a peer of the map rather than an appendix.
@@ -508,16 +549,16 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
 
 - Hover/focus links map and table; click/Enter pins the same selection and updates the
   URL. Escape clears it. Focus order follows the table, not SVG path order.
-- **The map SVG is `aria-hidden` with a text alternative naming the table.** Its 177
+- **The map SVG is `aria-hidden` with a text alternative naming the table.** Its 241
   paths are not individually focusable. The table already carries every value the map
-  encodes, so exposing both duplicates the content and turns the map into a 177-stop
+  encodes, so exposing both duplicates the content and turns the map into a 241-stop
   keyboard trap between the toggles and the data.
 - **Selection never requires hitting a country.** Every country reachable on the map is
-  reachable in the table, and the table row is the 44×44px target (DESIGN.md:121).
+  reachable in the table, and the table row is the 44×44px target (DESIGN.md:130).
   Malta is roughly two pixels wide at 390px; a design that requires tapping it is a
   design that excludes phones. Map hit areas are enlarged where geometry allows, but
   the table is the guaranteed path, not the fallback.
-- **Below 768px the table becomes a labeled record list** (DESIGN.md:124), not a
+- **Below 768px the table becomes a labeled record list** (DESIGN.md:133), not a
   horizontally scrolling table. It is simultaneously the narrow-screen-first element
   and the accessibility equivalent, so it is the one component that cannot degrade.
 - View and settleability changes use the existing control motion only. Map marks may
@@ -543,10 +584,10 @@ reviewed.
 `--color-ink`, `--color-ink-muted`, `--color-canvas`, `--color-surface`,
 `--color-border`, `--color-border-strong`.
 
-The map is a component type DESIGN.md:88 does not list. Adding it to that vocabulary
-is a DESIGN.md change, not an atlas change, and is out of scope here — but the
-implementer should expect the component to define every state DESIGN.md:92-98 requires
-of a shared component, because it will become one.
+DESIGN.md:95 and :97 now define **geographic instrument** as a component type, added
+during this feature's design review. The atlas map is the first one, so it must define
+every state DESIGN.md:101-107 requires of a shared component. An earlier revision called
+this "out of scope here"; that was true before the entry existed and is false now.
 
 ### Two views
 
@@ -601,7 +642,7 @@ narrower and still true: the hub *map* carries less of the finding than the hub
 *table* does, so on arrival the table is doing the explanatory work and the map is
 doing the spatial work.
 
-**Why the hub map survives DESIGN.md:138** ("No chart when the payment route or a
+**Why the hub map survives DESIGN.md:147** ("No chart when the payment route or a
 direct value comparison communicates the point better"). The ranked table states reach
 and currency breadth better than any circle. What it cannot state is *where* the hubs
 are: that they cluster in the US, Germany, the UK, Japan and Switzerland, and that
@@ -612,7 +653,13 @@ later reviewer re-testing rule 138 finds the argument instead of re-litigating i
 
 **Settleability filter** is orthogonal to the view. It changes the URL and refetches
 `/api/atlas/network` with the selected `scope`; both views receive recomputed distinct
-counts. Countries do not dim, they leave. The React Query key includes the scope so
+counts. **Out-of-scope countries do not vanish and do not dim: they render in a third,
+distinct coverage treatment** (AC-F12b). An earlier revision said "they leave", which
+contradicted the three-state rule and would have re-created at the map level the exact
+conflation the country endpoint's `collected` split removes — a country with 15
+collected rows and none settleable drawn identically to one nobody ever looked at. The
+moment survives as a visible change of state, which the reader can actually read.
+The React Query key includes the scope so
 all and settleable results cannot overwrite each other.
 
 ### Table specification
@@ -635,13 +682,27 @@ view, scope and selection. Below 768px the table becomes a labeled record list u
 `data-label` pattern already shipped in `SchemeTable.tsx:57`, not a horizontally
 scrolling table.
 
-### Ramp binning
+### Binning — stated per view, because the two distributions differ
 
-The distribution is heavily skewed — 52% of correspondents serve exactly one bank — so a
-linear ramp renders a near-uniformly pale world and communicates nothing. Use quantile
-binning with five steps, and state the method as well as the range in the legend. AC-F10
-required the range; the method is the decision that determines whether the map says
-anything at all.
+An earlier revision mandated 5-step quantile binning for both views and justified it with
+"52% of correspondents serve exactly one bank". That is a **hub-side** statistic over 713
+correspondents, used to justify binning a **spoke-side** variable over 103 countries. Wrong
+variable. Measured, the two distributions need different treatments:
+
+| view | measure | n | range | quintile breaks | verdict |
+|---|---|---|---|---|---|
+| hub | banks reached per country | 102 | 1–223 | `[1, 4, 13, 36]` | bins cleanly, use 5 |
+| spoke | beneficiary banks per country | 103 | 1–24 | `[1, 2, 2, 3]` | **degenerate** — duplicate breaks, 2 of 5 bins empty by construction, 75 of 103 countries hold 1 or 2 |
+
+**Spoke view encodes `rows`, not distinct banks.** Rows range 1–366 and bin cleanly;
+distinct banks range 1–24 and do not. Five quantile bins on `rows`.
+
+**Hub circles use five discrete sizes, not continuous area.** Continuous `scaleSqrt` over
+reach cannot separate its own top ranks: Germany at 169 and Britain at 166 differ by
+**0.78% of maximum radius**, invisible at any size, while the 22 countries at reach 1
+render **2.7px** against a 40px United States. Discrete sizes keyed to the hub quantile
+breaks make rank differences readable and give the tail a floor. The legend states the
+breaks.
 
 Zero-count categories render as text ("0 published"), never as an empty legend swatch.
 An empty colour band reads as a rendering bug, which is the opposite of the rigor the
@@ -672,7 +733,7 @@ a silently-unrendered field. D5 becomes impossible to reintroduce.
 The network envelope, `spokes`, `hub_countries`, and `hubs` are all required. The app's
 HTTP client calls `schema.parse()` on a successful response, so a missing section is a
 contract failure and renders the full error state. Partial rendering is reserved for
-independent resources: if atlas data loads but `countries-110m.json` does not, the
+independent resources: if atlas data loads but `countries-50m.json` does not, the
 ranked table survives and `AsyncRegion.partialNote` states that the map is unavailable.
 
 Clause 2 gets the same treatment, but at the **type** level rather than one component's
@@ -756,7 +817,7 @@ URL state: view=spoke|hub, scope=all|settleable, selected=<id>
               ▼                    ▼               ▼
         coverage frame        synced table     map renderer
                                                    │
-                                     countries-110m.json
+                                      countries-50m.json
                                       independent fetch
 
 Map selection ───────────────► URL selected state ◄──────── Table selection
@@ -787,7 +848,7 @@ Verified 2026-09-13:
 | 8 | `frontend/src/observability.ts` | allowlist `/app/explore/atlas`, `/api/atlas/network`, and parameterise `/api/atlas/country/:iso2` without logging the raw code |
 | 9 | `frontend/src/features/tutor/` | publish atlas context via `usePublishTutorContext`, matching the other Explore routes |
 | 10 | `frontend/src/features/explore/BankDetailRoute.tsx` | reciprocal "network position" link back into the atlas, so the drill-down is not one-way |
-| 11 | `frontend/src/features/explore/atlas/assets/` | topology source asset, source/SHA-256 record, ISC license notice, and Vite `?url` import that emits beneath the existing `/app/assets` mount |
+| 11 | `frontend/src/features/explore/atlas/assets/` | 50m topology source asset, source/SHA-256 record, ISC license notice, and Vite `?url` import that emits beneath the existing `/app/assets` mount |
 
 ---
 
@@ -846,7 +907,7 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 
 - **AC-F1** *(clause 1)* — every code in both role-specific observed-country arrays
   either resolves to
-  a feature that **exists in `countries-110m.json`**, or appears in an explicit
+  a feature that **exists in `countries-50m.json`**, or appears in an explicit
   `KNOWN_UNRESOLVABLE` allowlist carrying a one-line reason per entry. The allowlist
   starts with `EB` and its open question. Any code that is neither fails the test.
 
@@ -919,8 +980,13 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   correspondent banking here".
 - **AC-F12b** *(D6)* — under a non-default scope the map renders **three** coverage
   states, not two: never collected, collected but nothing in this scope, and collected
-  and in scope. The legend names all three. Derived by subtracting scoped `spokes` from
-  the corpus-wide observed list (contract rule 7).
+  and in scope. The legend names all three.
+
+  **The rule is symmetric across both views.** Spoke states derive from subtracting the
+  scoped `spokes` from `observed_beneficiary_country_codes`; hub states derive from
+  subtracting the scoped `hub_countries` from `observed_intermediary_country_codes`
+  (contract rule 7). One rule, two views. Hub is the default view, so an asymmetry here
+  would land on the first thing anyone sees.
 
   **The three states are stated as text in the coverage frame, not only drawn.** The
   frame gives the count in each state and makes the out-of-scope set enumerable. An
@@ -974,7 +1040,7 @@ selection, so the column teaches what selection produces instead of sitting blan
 - **AC-F22** *(D12)* — the hub view is the default on first load with no URL state, and
   the ranked table is populated on arrival.
 - **AC-F23** — the metric rail renders as figures on a ruled band with no per-metric
-  card border, background fill, or shadow (DESIGN.md:90, :132).
+  card border, background fill, or shadow (DESIGN.md:99, :132).
 - **AC-F24** — the map SVG is `aria-hidden="true"` and carries no focusable descendants;
   a text alternative names the table as the equivalent. An axe run plus a keyboard walk
   assert that tabbing from the toggles reaches the table without traversing geometry.
@@ -982,7 +1048,7 @@ selection, so the column teaches what selection produces instead of sitting blan
   and each table row meets the 44×44px target. No assertion depends on hitting map
   geometry.
 - **AC-F26** — below 768px the table renders as a labeled record list, not a scrolling
-  table (DESIGN.md:124).
+  table (DESIGN.md:133).
 
 - **AC-F30** *(D16)* — every visual assertion covers three themes: light, dark and
   `black`. In `black`, land renders as an explicit surface step against the canvas with
@@ -1002,8 +1068,47 @@ selection, so the column teaches what selection produces instead of sitting blan
 - **AC-F36** — the atlas publishes tutor context via `usePublishTutorContext`, as
   `ExplorePage`, `LearnModulePage` and `TrackingPage` already do. Without it the tutor
   goes context-blind on a new Explore route.
+- **AC-F48** — hub view renders 102 country groups **collapsed by default** over 713
+  institutions. Expanding a group reveals its institutions; no more than one group's rows
+  are in the DOM per expansion. Without this the default view is an 815-row list, and
+  below 768px AC-F26 turns it into an 815-item record list on a 390px phone.
+- **AC-F49** *(D10)* — the concentration finding renders in the title block: 14
+  institutions carrying 251 banks, 374 correspondents appearing once. The Visual direction
+  section mandates it and nothing tested it.
+- **AC-F47** *(clause 1)* — the spoke legend states what the fill actually measures:
+  "Darker = more settlement-instruction rows we found published, not more correspondent
+  banking." The ranking (IN 24, PK 8, LK 8, NP 7, KE 7, NG 6) is a map of which banks
+  publish nostro pages, and nothing else in the spec guards that reading. The coverage
+  frame explains the blank countries; this explains the dark ones.
 - **AC-F37** — zero-count evidence categories render as text, never as an empty legend
   swatch.
+- **AC-F40** — the vendored topology is `countries-50m.json`, and a test asserts that
+  Hong Kong, Singapore, Bahrain, Mauritius, Malta and Macao all resolve to features that
+  exist in it. `KNOWN_UNRESOLVABLE` contains `EB` and nothing else; a real country
+  appearing in that allowlist fails the test.
+- **AC-F42** — searching a country outside the current scope selects it: the map shows
+  its third-state treatment and the panel states the corpus-wide fact ("15 rows
+  collected, none of them settlement instructions"). Search never returns empty for a
+  country the corpus holds, and never silently widens the scope the user set.
+- **AC-F43** — the country query key includes `scope`, so a superseded request cannot
+  overwrite a current-scope response. Asserted with two in-flight requests resolving out
+  of order.
+- **AC-F44** — the two-tier hub table's country groups expand and collapse by keyboard
+  with the state announced, not by pointer alone.
+- **AC-F45** *(REGRESSION, critical)* — the **parameterised** `/api/atlas/country/:iso2`
+  branch is inserted before the `/api/*` catch-all, and `/api/track/*`,
+  `/app/explore/banks/:bic`, `/app/learn/:moduleId` and `/app/learn/cases/:caseId` still
+  canonicalize identically afterwards; an unknown `/api/*` still redacts.
+
+  An earlier revision aimed this AC at adding a member to the `STATIC_RELAY_PATHS` `Set`,
+  which is provably vacuous — Set membership cannot change another member's behaviour.
+  Branch ordering is where the real regression risk lives.
+- **AC-F46** — map geometry renders once and does not re-render on hover or selection.
+  Selection and hover are expressed as a class or data attribute on the container and
+  resolved in CSS, so a hover touches one node rather than reconciling all 241 paths.
+  The two-tier grouping of `hubs` under `hub_countries` is memoised for the same reason.
+- **AC-F41** — topology features without an `id` (`N. Cyprus`, `Somaliland`, `Kosovo`)
+  render as never-collected land and never throw. The lookup handles `undefined`.
 - **AC-F38** — search resolves a country or correspondent into the same selection state
   the map and table produce, and the result is reachable by keyboard alone.
 - **AC-F39** — the atlas map satisfies DESIGN.md's **geographic instrument** contract:
@@ -1026,8 +1131,15 @@ selection, so the column teaches what selection produces instead of sitting blan
 `AsyncRegion`'s `partial` branch renders `partialNote` as a `<p role="note">` with **no
 retry control** — retry exists only on the `error` branch. So the table-plus-no-map state
 is not recoverable in place. Either the atlas adds its own retry affordance beside the
-note, or the spec states that reload is the recovery. It must not claim "reuse
-AsyncRegion" and leave the user stranded.
+note. **The atlas adds one**, because the topology fetch is independently retryable and a
+reload to recover a cached-asset miss is a bad trade. An earlier revision left this as a
+fork ("either... or..."), which the Failure modes registry then contradicted by asserting
+no path lacks recovery behaviour.
+
+`AsyncStatus` also has **seven** members, not the five DESIGN.md Principle 7 names:
+`idle`, `loading`, `empty`, `error`, `success`, `partial`, `unavailable`. The atlas uses
+`unavailable` for the degraded-topology case only if its hardcoded copy fits; otherwise it
+stays on `partial` with the added retry.
 
 The country panel is a second async region with its own fetch, and DESIGN.md Principle 7
 applies to it too: it needs loading, empty, error, success and partial states of its own.
@@ -1135,7 +1247,7 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
 1. [ ] **T1 — Contract fixtures and backend schemas**
    - Add representative overlapping-correspondent fixtures for both scopes.
    - Define strict Pydantic network and country response models in `app/schemas.py`.
-   - Write failing contract tests for AC-B1–B11 before service code.
+   - Write failing contract tests for AC-B1–B12, including AC-B3a and AC-B11a, before service code.
 2. [ ] **T2 — Aggregation service and router**
    - Implement scope filtering once, then compute totals, spokes, `hub_countries`, and
      institution `hubs` from that filtered relation.
@@ -1159,7 +1271,19 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
 6. [ ] **T6 — Discovery, observability, and end-to-end coverage**
    - Register the page in all integration points above.
    - Run unit, component, accessibility, responsive, E2E, bundle, and benchmark checks.
-7. [ ] **T7 — Visual QA evidence**
+   - **State the atlas E2E skip policy.** `playwright.config.ts` defines 7 projects, so
+     every atlas spec runs 6 times on Chromium. The viewport-scoped specs (map/table order,
+     390/768/1024/1440 layouts) run in their own viewport project and skip elsewhere.
+     CLAUDE.md treats the intentional-skip count as a maintained invariant, so the rule
+     goes in the known-issues note, not a number.
+   - **Documentation seam.** `README.md:45`, `README.md:77` and `CLAUDE.md:9` all say
+     **27 API endpoints**; the atlas adds two.
+7. [ ] **T7 — Visual QA evidence** (depends on T6 **and T10**)
+   - **Three** themes: light, dark and `black` (AC-F30). Two is not enough; D16 exists
+     because the map dissolves in the third.
+   - Fixtures must include the three coverage states (AC-F12b), the two-tier table
+     (AC-F31), and the title-block concentration line (AC-F49) — all added after T7 was
+     first written. T10 carries the title block, so T7 cannot sign off before it.
    - Review spoke and hub views at 390, 768, 1024, and 1440 pixels in light and dark
      themes, including selected, never-collected, hatch-heavy, and overlapping-Europe
      fixtures.
@@ -1177,16 +1301,30 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
      (AC-F24–F26).
    - Both reduced-motion paths; tutor context; zero-count legend text
      (AC-F35–F37).
-9. [ ] **T9 (P1) — Atlas search**
-   - Type-ahead over countries and correspondents, resolving into the same selection
-     model as the map and table. Extends `CommandSearch` rather than adding a second
-     search surface.
-   - DESIGN.md:81 makes Explore search-first; a reference instrument over 251 banks and
+9. [ ] **T9 (P1) — Atlas-local search**
+   - Type-ahead **inside the atlas page**, over the already-loaded payload. No shared
+     `CommandSearch` change, no second index, no fetch from another route.
+   - Scoped down from "extends CommandSearch": that version was one bullet carrying an
+     index over 713 correspondents plus 126 countries, with no decision about where the
+     index lives or whether a shared component would fetch `/api/atlas/network` while the
+     user is on the bank directory. A P1 one-liner should not have shell-wide blast radius.
+   - DESIGN.md:87 makes Explore search-first; a reference instrument over 251 banks and
      102 countries without it does not match the workspace it lives in.
 10. [ ] **T10 (P2) — Reciprocal link and discovery**
    - "Network position" link on `BankDetailRoute` back into the atlas.
    - Concentration finding (14 hubs / 374 single-appearance correspondents) in the
      title block.
+
+11. [ ] **T11 (P0/P1) — Engineering-review corrections**
+   - **P0** Vendor `countries-50m.json`; 110m cannot draw HK, SG, BH, MU, MT or MO
+     (AC-F40). Handle features with no `id` (AC-F41).
+   - **P1** Out-of-scope countries render a third state rather than vanishing, and the
+     rule applies to both views (AC-F12b).
+   - **P1** Search selects out-of-scope countries; the panel states the corpus fact
+     (AC-F42). Scope in the country query key (AC-F43).
+   - **P1 REGRESSION** `observability.ts` — existing Relay paths still redact (AC-F45).
+   - **P2** Static geometry, class-based selection, memoised grouping (AC-F46).
+   - **P2** Two-tier table groups expand by keyboard (AC-F44).
 
 ### Execution lanes
 
@@ -1198,6 +1336,22 @@ Lane C (after backend contract): frontend schemas/state → table → map/panel
                                   ↓
 Final lane: route/search/observability integration → E2E + bundle verification → visual QA
 ```
+
+With T8–T11 folded in, the lanes are unchanged in shape but heavier:
+
+| Step | Modules touched | Depends on |
+|---|---|---|
+| T1, T2 (contract, service) | `app/routers/`, `app/services/`, `app/schemas.py` | — |
+| T4, T11-P0 (topology, encodings) | `atlas/assets/`, `atlas/atlasEncoding.ts`, `atlas/isoNumeric.ts` | — |
+| T3 (frontend contracts, state) | `atlas/atlasSchemas.ts`, `api/queryKeys.ts` | T1 contract agreed |
+| T5, T8, T9 (table, map, panel, search) | `atlas/*.tsx` | T3, T4 |
+| T6, T10, T11-regression (integration) | `App.tsx`, `ExplorePage.tsx`, `CommandSearch.tsx`, `observability.ts`, `BankDetailRoute.tsx`, tutor | T5 |
+| T7 (visual QA) | — | T6 |
+
+Lane A: T1 → T2 (sequential, shared `app/`).
+Lane B: T4 → T11-P0 (independent, pure encoding and assets).
+Lane C: T3 → T5/T8/T9 (waits on the T1 contract; may start against agreed fixtures).
+Final lane: T6, T10, T11-regression → T7.
 
 Lanes A and B can run in parallel. Lane C may use the agreed JSON fixtures while the
 service is implemented, but final integration waits for Lane A. Route and observability
@@ -1245,7 +1399,9 @@ STATIC/CONTRACT PATHS
 | Map selection | stacked institution circles hide rows | AC-F16 | one country circle; institutions in table | Deterministic map and complete table |
 | Evidence display | source quality is attributed to a hub | AC-B4, AC-F2 | strict backend and frontend schemas | Contract error, never misleading evidence |
 
-No listed path has a silent failure with neither a test nor recovery behavior.
+No listed path has a silent failure with neither a test nor recovery behavior. That
+sentence was previously false: the topology-partial path had no decided recovery, because
+the Dependencies section left it as a fork. It now has one — a retry beside the note.
 
 ---
 
@@ -1281,18 +1437,54 @@ FROM ssi GROUP BY 1;
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; governing product decisions were approved during design |
-| Codex Review | `/codex review` | Independent 2nd opinion | 0 | UNAVAILABLE | Codex aborted: `Error loading config.toml: data did not match any variant of untagged enum FeatureToml in features.multi_agent_v2`. Local config fault, not auth. Outside voices ran `[single-model]` |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | STALE | CLEAR at 2026-09-13T17:21Z against commit 1ab9478. The plan has changed materially since — contract split of `collected`, three-state coverage, two-tier table, new async states. Re-run required |
-| Design Review | `/plan-design-review` | UI/UX gaps | 1 | ISSUES OPEN | score 6/10 → 8/10, 11 decisions, 1 unresolved. 7 passes plus an independent Claude design subagent |
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; product decisions were taken during design |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | UNAVAILABLE | Codex failed twice on a local config fault, not auth — see below |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 2 | ISSUES OPEN | 27 issues, 0 critical gaps, 2 deferred. Prior CLEAR (1ab9478) superseded |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | ISSUES OPEN | score 6/10 → 8/10, 11 decisions |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not required for an end-user Explore feature |
 
-**Pass scores:** Info Arch 5→8 · States 3→9 · Journey 4→7 · AI Slop 8→9 · Design System 4→9 · Responsive/A11y 5→9 · Decisions 11 resolved, 1 deferred.
+**Sections:** Step 0 complexity check triggered (~11 new files, 11 integration points);
+scope accepted as-is. Architecture 2 · Code Quality 2 · Tests 3 gaps + 1 mandatory
+regression · Performance 2 · Outside voice 17.
 
-**OUTSIDE VOICE:** An independent Claude design subagent found five issues this review's own passes missed, each verified against the repo before acting: a third shipped theme (`tokens.css:262`, `data-theme="black"`) in which the map's figure-ground collapses; `AsyncRegion`'s partial branch having no retry control; an in-app `[data-reduced-motion="true"]` path separate from the media query; the `data-label` record-list pattern already shipped in `SchemeTable.tsx`; and `usePublishTutorContext` being consumed by every other Explore route. It also found two defects in acceptance criteria written during the preceding engineering review — AC-F9 protecting a value with no table row, and AC-F12b making the feature's headline interaction sighted-only.
+**CODEX:** Never ran. `~/.codex/config.toml:383` carries a `codex-router`-managed
+`[features].multi_agent_v2` inline table whose shape does not match the installed Codex
+build, so every `codex exec` dies at config load: `data did not match any variant of
+untagged enum FeatureToml`. `gstack-codex-probe` still reports `CODEX_MODE: ready`, so
+skills fall back silently. Fix: update Codex, set `multi_agent_v2 = true`, or delete the
+managed block. No cross-model coverage on this plan.
 
-**VERDICT:** DESIGN REVIEWED, NOT CLEARED TO IMPLEMENT. The design contract violations are closed and DESIGN.md itself was corrected (stale three-theme text, new geographic-instrument component entry). Engineering review must re-run: this revision changed the payload grain consumed by the table, added six interaction states, and pulled search into scope.
+**OUTSIDE VOICE (Claude subagent):** 17 findings, every checkable claim verified against
+the repo and the corpus before action. The three that changed the design:
+
+- Continuous circle area cannot separate the hub view's own top ranks. Germany (169) and
+  Britain (166) differ by **0.78% of maximum radius**; the 22 countries at reach 1 render
+  **2.7px** against a 40px United States. Hub now uses five discrete sizes on the quantile
+  breaks.
+- Spoke quintile breaks are `[1.0, 2.0, 2.0, 3.0]` — duplicate thresholds, two of five
+  bins empty by construction, 75 of 103 countries holding 1 or 2. The binning method had
+  been justified with a hub-side statistic applied to a spoke-side variable. Spoke now
+  encodes `rows` (1–366), which bins cleanly.
+- The settleability narrative is beneficiary-side while hub is the default view. The
+  hub-side removal set is nine countries (`AZ CI CM DJ LS MW NG SZ ZM`), not the famous
+  21. The claim is now view-qualified.
+
+It also caught five stale cross-references created by this session's own edits: AC-F1 still
+naming `countries-110m.json` after the 50m decision, "177 paths" against AC-F46's 241,
+eight DESIGN.md citations shifted by the DESIGN.md edits, T1's frozen AC range, and a
+paragraph calling the geographic-instrument entry "out of scope" after it had been added.
+
+**CROSS-MODEL TENSION** — *the hub map.* The outside voice argued for shipping table-first
+with no map, on the evidence above. Presented to the user with that evidence; the decision
+was to keep the map and fix all three channels. Recorded rather than re-argued.
+
+**VERDICT:** NOT CLEARED. 27 findings folded in and the plan is materially stronger, but
+two items remain open and both sit in the default view. Neither is hard to close; neither
+is closed.
 
 **UNRESOLVED DECISIONS:**
-- Overlapping hub circles in Europe still corrupt the area channel. Removing fill depth (D14) fixed additive opacity, but two overlapping circles of different sizes remain hard to read by area, and no mitigation is specified. Deferred rather than solved; the ranked table carries the same values exactly.
-- `EB` / `EDBBEB22XXX` remains unclassified pending a source check (carried from prior review).
+- European hub circles still occlude one another. Discrete sizes fix rank legibility, not
+  overlap, and Germany, Britain, Switzerland, Norway, Sweden, France, the Netherlands and
+  Luxembourg all cluster there. No mitigation is specified.
+- `EB` / `EDBBEB22XXX` remains unclassified pending a source check. `validate_bic` accepts
+  a country position no ISO table resolves.
