@@ -1433,6 +1433,48 @@ def _expand_batch9_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _expand_batch26_source_rows() -> list[tuple[str, ...]]:
+    """Read Uttara Bank's current settlement-instruction ledger."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch26_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    bic_only_note = (
+        "BIC-level list — no account numbers published; not a selectable settlement instruction."
+    )
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(
+                intermediary_bic,
+                "batch26 intermediary BIC",
+            )
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            note = (
+                f"Source: {source} (as of {as_of}) {bic_only_note} {real_note}"
+                if bic_only
+                else f"Source: {source} (as of {as_of}). {real_note}"
+            )
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
@@ -1462,7 +1504,7 @@ def _ssi_rows(source: str) -> list[tuple]:
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch9_records"}
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch9_records", "_ssi_batch26_records"}
             ):
                 rows.extend({
                     "_ssi_batch4_records": _expand_batch4_source_rows,
@@ -1470,6 +1512,7 @@ def _ssi_rows(source: str) -> list[tuple]:
                     "_ssi_batch6_records": _expand_batch6_source_rows,
                     "_ssi_batch7_records": _expand_batch7_source_rows,
                     "_ssi_batch9_records": _expand_batch9_source_rows,
+                    "_ssi_batch26_records": _expand_batch26_source_rows,
                 }[element.value.func.id]())
                 continue
             if not isinstance(element, ast.Tuple):
@@ -1886,7 +1929,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
                 and isinstance(e, ast.Starred)
                 and isinstance(e.value, ast.Call)
                 and isinstance(e.value.func, ast.Name)
-                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch9_records"}
+                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch9_records", "_ssi_batch26_records"}
             ):
                 continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:

@@ -1,0 +1,47 @@
+[
+  [
+    "UTBLBDDHXXX",
+    "Uttara Bank PLC.",
+    "https://new.uttarabank-bd.com/service/standard-settlement-instruction",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|ADCBAEAA|Abu Dhabi Commercial Bank, Abu Dhabi|91001892",
+      "CHF|HBZUCHZZ|Habib Bank AG Zurich, Zurich|91001893",
+      "CNY|SCBLCNSXSHA|Standard Chartered Bank (China) Limited, Shanghai|91001894",
+      "CNY|CZCBCN2X|Zhejiang Chouzhou Commercial Bank Co., Ltd, Hangzhou|91001895",
+      "EUR|CRBAGRAA|Alpha Bank S.A., Athens|91001896",
+      "SAR|RJHISARI|Al Rajhi Bank, Riyadh|91001897",
+      "USD|CZCBCN2X|Zhejiang Chouzhou Commercial Bank Co., Ltd, Hangzhou|91001898"
+    ]
+  ],
+  [
+    "UTBLBDDHXXX",
+    "Uttara Bank PLC.",
+    "https://new.uttarabank-bd.com/service/standard-settlement-instruction",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    true,
+    false,
+    [
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|",
+      "EUR|AEIBDEFX|Standard Chartered Bank (Germany), Frankfurt|",
+      "EUR|CRITITMMDIR|UniCredit S.p.A., Milan|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "SGD|SCBLSG22XXX|Standard Chartered Bank (Singapore), Singapore|",
+      "USD|COBADEFF|Commerzbank AG, Frankfurt|",
+      "USD|HANYUS33|Habib American Bank, New York|",
+      "USD|MSHQUS33|Mashreq Bank PSC, New York|",
+      "USD|SCBLUS33|Standard Chartered Bank N.Y., New York|",
+      "JPY|SCBLJPJT|Standard Chartered Bank (Japan), Tokyo|"
+    ]
+  ]
+]

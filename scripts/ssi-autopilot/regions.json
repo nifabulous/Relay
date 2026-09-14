@@ -5912,7 +5912,8 @@
         {"bic8":"SOIVBDDH","name":"Social Islami Bank PLC","country":"BD","currencies":["AED","CHF","CNY","EUR","GBP","JPY","SAR","USD"],"seedable":true,"source_domains":["siblbd.com"],"admitted_record_digest":"89ce4044ed032d1f2d7a84eac3fa75d652281d8a7db9c41eca9702025145dcf6","compact_records_file":"regions_batch4_records_3.json"},
         {"bic8":"MGBLBDDH","manifest_file":"regions_batch5_banks_1_mgblbddh.json"},
         {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"},
-        {"bic8":"SDBLBDDH","manifest_file":"regions_batch6_banks_1_sdblbddh.json"}
+        {"bic8":"SDBLBDDH","manifest_file":"regions_batch6_banks_1_sdblbddh.json"},
+        {"bic8":"UTBLBDDH","name":"Uttara Bank PLC.","country":"BD","currencies":["AED","CHF","CNY","EUR","GBP","JPY","SAR","SGD","USD"],"seedable":true,"source_domains":["new.uttarabank-bd.com"],"admitted_record_digest":"3f8c418eb5b7286731edf6846bbd4eb3ef2c0b57a164cf2c3a929d7a94eb46a7","compact_records_file":"regions_batch26_records_utblbddh.json"}
       ],
       "forbidden_bics": [
         "AGRABDDH",

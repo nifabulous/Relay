@@ -113,6 +113,7 @@ BANKS = [
     ("MEZNPAKAXXX", "Meezan Bank", "PK", "Karachi", "PKR"),
     ("AGBKBDDHXXX", "Agrani Bank", "BD", "Dhaka", "BDT"),
     ("EBLDBDDHXXX", "Eastern Bank PLC", "BD", "Dhaka", "BDT"),
+    ("UTBLBDDHXXX", "Uttara Bank PLC.", "BD", "Dhaka", "BDT"),
     ("SICOTHBKXXX", "Siam Commercial Bank", "TH", "Bangkok", "THB"),
     ("UOVBTHBKXXX", "United Overseas Bank (Thai) Public Company Limited", "TH", "Bangkok", "THB"),
     ("COMBLKLXXXX", "Commercial Bank of Ceylon", "LK", "Colombo", "LKR"),
@@ -1108,6 +1109,19 @@ def _load_ssi_batch9_groups():
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
 
+_SSI_BATCH26_DATA_FILES = ("seed_ssi_batch26_1.json",)
+
+
+def _load_ssi_batch26_groups():
+    groups = []
+    for filename in _SSI_BATCH26_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH26_GROUPS = _load_ssi_batch26_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1257,7 +1271,38 @@ def _ssi_batch9_records():
             ))
     return expanded
 
+
+def _ssi_batch26_records():
+    """Expand Uttara Bank's bank-published settlement-instruction table."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH26_GROUPS:
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            note = (
+                f"Source: {source} (as of {as_of}) {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+                if bic_only
+                else f"Source: {source} (as of {as_of}). {_SSI_REAL_NOTE}"
+            )
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 26 (Uttara Bank Bangladesh; masked) ----
+    *_ssi_batch26_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
     *_ssi_batch9_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----

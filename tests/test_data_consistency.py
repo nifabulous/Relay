@@ -1742,14 +1742,15 @@ class TestSoutheastAsiaSsiCoverage:
 
 # ---- autopilot-generated coverage tests: bangladesh ----
 BANGLADESH_SSI_COVERAGE = [
-    ('AGBKBDDHXXX', 'Agrani Bank PLC', {'AED', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
-    ('EBLDBDDHXXX', 'Eastern Bank PLC', {'AED', 'AUD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
-    ('EXBKBDDHXXX', 'Export Import Bank of Bangladesh', {'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'USD'}),
-    ('SOIVBDDHXXX', 'Social Islami Bank PLC', {'AED', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
-    ('MGBLBDDHXXX', 'Meghna Bank PLC', {'AED', 'AUD', 'CAD', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
-    ('PRBLBDDHXXX', 'Prime Bank PLC', {'AED', 'CNY', 'CHF', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
-    ('SDBLBDDHXXX', 'Standard Islami Bank PLC', {'AUD', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
-    ('CIBLBDDHXXX', 'City Bank PLC', {'EUR', 'GBP', 'USD'}),
+    ("AGBKBDDHXXX", "Agrani Bank PLC", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "JPY", "SAR", "SGD", "USD"}),
+    ("CIBLBDDHXXX", "City Bank PLC", {"EUR", "GBP", "USD"}),
+    ("EBLDBDDHXXX", "Eastern Bank PLC", {"AED", "AUD", "CHF", "CNY", "EUR", "GBP", "JPY", "SAR", "SGD", "USD"}),
+    ("EXBKBDDHXXX", "Export Import Bank of Bangladesh", {"CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "SAR", "USD"}),
+    ("SOIVBDDHXXX", "Social Islami Bank PLC", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "SAR", "USD"}),
+    ("MGBLBDDHXXX", "Meghna Bank PLC", {"AED", "AUD", "CAD", "CNY", "EUR", "GBP", "JPY", "SAR", "USD"}),
+    ("PRBLBDDHXXX", "Prime Bank PLC", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "SAR", "SGD", "USD"}),
+    ("SDBLBDDHXXX", "Standard Islami Bank PLC", {"AUD", "EUR", "GBP", "JPY", "SAR", "USD"}),
+    ("UTBLBDDHXXX", "Uttara Bank PLC.", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "SAR", "SGD", "USD"}),
 ]
 
 class TestBangladeshSsiCoverage:
@@ -1777,8 +1778,6 @@ class TestBangladeshSsiCoverage:
     def test_bangladesh_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("bangladesh", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: bangladesh ----
-
-
 # ---- autopilot-generated coverage tests: thailand ----
 THAILAND_SSI_COVERAGE = [
     ("KASITHBKXXX", "Kasikornbank", {"AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "JPY", "NZD", "SEK", "SGD", "USD"}),
