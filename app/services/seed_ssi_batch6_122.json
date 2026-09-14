@@ -1,0 +1,33 @@
+[
+  [
+    "ICICINBBXXX",
+    "ICICI Bank",
+    "Source: https://www.icicibank.com/nri-banking/money_transfer/corespndnt-bnk-list (as of 2026-09-14). ",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    false,
+    [
+      "AUD|CHASAU2XXXX|J.P. Morgan Chase, Sydney|91002097",
+      "AUD|NATAAU33033|National Australia Bank, Melbourne|91002098",
+      "BHD|AUBBBHBMXXX|Ahli United Bank B.S.C., Manama|91002099",
+      "CAD|ROYCCAT2XXX|Royal Bank of Canada, Toronto|91002000",
+      "CHF|UBSWCHZH80A|UBS Zurich|91002097",
+      "DKK|DABADKKKXXX|Den Danske Bank, Copenhagen|91002098",
+      "KWD|BRGNKWKWXXX|Burgan Bank, Kuwait|91002099",
+      "NOK|DNBANOKKXXX|DNB NOR Bank ASA, Oslo|91002000",
+      "NZD|ANZBNZ22XXX|ANZ National Bank Limited, Auckland|91002097",
+      "PLN|BREXPLPWXXX|mBank, Poland|91002098",
+      "QAR|CBQAQAQAXXX|Commercial Bank of Qatar, Doha|91002099",
+      "SAR|RIBLSARIXXX|Riyad Bank, Riyadh|91002000",
+      "SEK|NDEASESSXXX|Nordea Bank Sweden AB, Stockholm|91002097",
+      "THB|SICOTHBKXXX|Siam Commercial Bank, Thailand|91002098",
+      "USD|BOFAUS3NXXX|Bank of America, New York|91002099",
+      "USD|PNBPUS33XXX|Wells Fargo Bank N.A., New York (printed PNBPUS3NNYC, normalized)|91002000",
+      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa Limited|91002097"
+    ]
+  ]
+]
