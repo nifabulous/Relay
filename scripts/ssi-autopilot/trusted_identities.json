@@ -1,4 +1,10 @@
 {
+  "JKBAJOAM": {
+    "name": "Jordan Kuwait Bank",
+    "country": "JO",
+    "domains": ["jkb.com"],
+    "settlement_terms_published": false
+  },
   "ALFHPKKA": {
     "name": "Bank Alfalah Limited",
     "country": "PK",
