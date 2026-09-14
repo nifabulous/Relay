@@ -1,0 +1,50 @@
+[
+  [
+    "HDFCINBBXXX",
+    "HDFC Bank",
+    "Source: https://www.hdfc.bank.in/remittance/services/list-of-correspondent-bank-accounts-for-foreign-currency-remittances (as of 2026-09-14).",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    false,
+    [
+      "BHD|AUBBBHBMXXX|Ahli United Bank B.S.C.|91002097",
+      "CHF|UBSWCHZH80A|UBS AG|91002098",
+      "DKK|NDEADKKKXXX|Nordea Bank Danmark A/S|91002099",
+      "KWD|BKMEKWKWXXX|Ahli United Bank K.S.C.P|91002000",
+      "QAR|CBQAQAQAXXX|The Commercial Bank of Qatar Q.S.C|91002097",
+      "SAR|SABBSARIXXX|The Saudi British Bank, Riyadh|91002098",
+      "SAR|NCBKSAJEXXX|National Commercial Bank, Saudi Arabia|91002099",
+      "SEK|NDEASESSXXX|Nordea Bank AB (Publ)|91002000",
+      "TRY|CAYTTRISXXX|Aktif Yatirim Bankasi A.S|91002097"
+    ]
+  ],
+  [
+    "HDFCINBBXXX",
+    "HDFC Bank",
+    "Source: https://www.hdfc.bank.in/remittance/services/list-of-correspondent-bank-accounts-for-foreign-currency-remittances (as of 2026-09-14) BIC-level list — no account numbers published; not a selectable settlement instruction.",
+    "2026-09-14",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|ANZBAU3MXXX|Australia and New Zealand Banking Group Limited|",
+      "CAD|TDOMCATTTOR|Toronto-Dominion Bank|",
+      "CNH|BOFAHKHX|Bank of America, N.A. Hong Kong Branch|",
+      "KRW|BOFAKR2X|Bank of America, N.A. Seoul|",
+      "MYR|BOFAMY2X|Bank of America, Malaysia Berhad|",
+      "NOK|NDEANOKKXXX|Nordea Bank Norge ASA|",
+      "NZD|ANZBNZ22058|ANZ National Bank Limited|",
+      "OMR|BMUSOMRXXXX|BankMuscat SAOG|",
+      "RUB|IMBKRUMMXXX|AO UniCredit Bank|",
+      "THB|BOFATH2X|Bank of America, N.A. Bangkok|",
+      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa Limited|"
+    ]
+  ]
+]
