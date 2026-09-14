@@ -2875,6 +2875,7 @@ UZBEKISTAN_WAVE6_SSI_COVERAGE = [
     ("UZHOUZ22XXX", "Ipoteka Bank JSC", {"CHF", "CNY", "EUR", "RUB", "USD"}),
     ("INIPUZ22XXX", "JSIC Bank Ipak Yuli", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "USD"}),
     ("UJSIUZ22XXX", "Uzbek Industrial and Construction Bank (Uzpromstroybank)", {"AED", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
+    ("ASACUZ22XXX", "Asia Alliance Bank", {"AMD", "CHF", "CNY", "EUR", "GBP", "JPY", "KZT", "RUB", "TRY", "USD"}),
     ("ORFBUZ22XXX", "PJSCB Orient Finance", {"AED", "CHF", "CNY", "EUR", "KZT", "RUB", "USD"}),
 ]
 

@@ -35076,6 +35076,58 @@
           ],
           "admitted_record_digest": "9887574d0ca877fdd5ad6fc65ef77208a46b72e706545fee3d26e86ab7a24f9a"
         },
+        {
+          "bic8": "ASACUZ22",
+          "name": "Asia Alliance Bank",
+          "country": "UZ",
+          "currencies": [
+            "AMD",
+            "CHF",
+            "CNY",
+            "EUR",
+            "GBP",
+            "JPY",
+            "KZT",
+            "RUB",
+            "TRY",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "aab.uz"
+          ],
+          "admitted_records": [
+            {"currency":"USD","correspondent":"The Bank of New York Mellon New York","int_bic":"IRVTUS3N","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004872","with_an":"ACCT-91004872","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Commerzbank AG Frankfurt","int_bic":"COBADEFF","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004873","with_an":"ACCT-91004873","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"GBP","correspondent":"Commerzbank AG Frankfurt","int_bic":"COBADEFF","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004874","with_an":"ACCT-91004874","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"CHF","correspondent":"Commerzbank AG Frankfurt","int_bic":"COBADEFF","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004875","with_an":"ACCT-91004875","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"JPY","correspondent":"Commerzbank AG Frankfurt","int_bic":"COBADEFF","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004876","with_an":"ACCT-91004876","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Landesbank Baden-Württemberg Stuttgart","int_bic":"SOLADEST","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004877","with_an":"ACCT-91004877","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"UniCredit S.p.A. Milan","int_bic":"UNCRITMM","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004878","with_an":"ACCT-91004878","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"ODDO BHF SE Frankfurt","int_bic":"BHFBDEFF","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004879","with_an":"ACCT-91004879","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Raiffeisen Bank International AG Vienna","int_bic":"RZBAATWW","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004880","with_an":"ACCT-91004880","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"CNY","correspondent":"Agricultural Bank of China","int_bic":"ABOCCNBJ","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004881","with_an":"ACCT-91004881","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"Kookmin Bank Seoul","int_bic":"CZNBKRSE","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004882","with_an":"ACCT-91004882","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Kookmin Bank Seoul","int_bic":"CZNBKRSE","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004883","with_an":"ACCT-91004883","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RUB","correspondent":"Asia-Invest Bank Moscow","int_bic":"ASIJRUMM","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004884","with_an":"ACCT-91004884","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"CNY","correspondent":"Asia-Invest Bank Moscow","int_bic":"ASIJRUMM","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004885","with_an":"ACCT-91004885","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"Asia-Invest Bank Moscow","int_bic":"ASIJRUMM","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004886","with_an":"ACCT-91004886","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Asia-Invest Bank Moscow","int_bic":"ASIJRUMM","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004887","with_an":"ACCT-91004887","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"TRY","correspondent":"Aktif Yatırım Bankası Istanbul","int_bic":"CAYTTRIS","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004888","with_an":"ACCT-91004888","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RUB","correspondent":"Priorbank Minsk","int_bic":"PJCBBY2X","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004889","with_an":"ACCT-91004889","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Priorbank Minsk","int_bic":"PJCBBY2X","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004890","with_an":"ACCT-91004890","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RUB","correspondent":"Eurasian Bank Almaty","int_bic":"EURIKZKA","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004891","with_an":"ACCT-91004891","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"KZT","correspondent":"Eurasian Bank Almaty","int_bic":"EURIKZKA","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004892","with_an":"ACCT-91004892","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"AMD","correspondent":"Converse Bank Yerevan","int_bic":"COVBAM22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004893","with_an":"ACCT-91004893","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RUB","correspondent":"Converse Bank Yerevan","int_bic":"COVBAM22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004894","with_an":"ACCT-91004894","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"Bank of Georgia Tbilisi","int_bic":"BAGAGE22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004895","with_an":"ACCT-91004895","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"JSC Asakabank Tashkent","int_bic":"ASBKUZ22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004896","with_an":"ACCT-91004896","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"JSC Asakabank Tashkent","int_bic":"ASBKUZ22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004897","with_an":"ACCT-91004897","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"Uzbek Industrial and Construction Bank","int_bic":"UJSIUZ22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004898","with_an":"ACCT-91004898","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Ipak Yuli Bank","int_bic":"INIPUZ22","source":"https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf","as_of":"2026-08-13","status":"unverified","nostro":"ACCT-91004899","with_an":"ACCT-91004899","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false}
+          ],
+          "admitted_record_digest": "46ca631f7ea071f0f773efa0ede0a2e13e8fccd67eb2e447f2444d056958f9d7"
+        },
         {"bic8":"ORFBUZ22","manifest_file":"regions_batch6_banks_1_orfbuz22.json"}
       ]
     },
