@@ -1,0 +1,44 @@
+{
+  "MASHAEAD": [
+    {
+      "source": "https://www.mashreq.com/en/international-banking/home/our-sectors/sectors/financial-institution/standard-settlement-instruction/",
+      "as_of": "2026-09-14",
+      "status": "unverified",
+      "charge_code": null,
+      "value_date": null,
+      "bic_only": true,
+      "terms_inferred": false,
+      "rows": [
+        "AED|Central Bank of the UAE, Abu Dhabi|CBAUAEAAXXX||",
+        "AUD|ANZ Banking Group, Melbourne|ANZBAU3MXXX||",
+        "CAD|Royal Bank of Canada, Toronto|ROYCCAT2XXX||",
+        "CHF|Credit Suisse AG, Zurich|CRESCHZZ80A||",
+        "CNY|Bank of China, Hong Kong (RMB clearing)|BKCHHKHH838||",
+        "DKK|Danske Bank A/S, Copenhagen|DABADKKKXXX||",
+        "EGP|Mashreq Bank, Cairo|MSHQEGCAXXX||",
+        "EUR|Banco Santander, Madrid|BSCHESMMXXX||",
+        "EUR|Citibank N.A., Dublin|CITIIE2XXXX||",
+        "EUR|Mashreqbank PSC, London|MSHQGB2LXXX||",
+        "INR|Mashreq Bank, Mumbai|MSHQINBBXXX||",
+        "JOD|Housing Bank for Trade and Finance, Amman|HBHOJOAXXXX||",
+        "JPY|Mizuho Corporate Bank, Tokyo|MHCBJPJTXXX||",
+        "KRW|KEB Hana Bank, Seoul|KOEXKRSEXXX||",
+        "KWD|Mashreqbank PSC, Kuwait|MSHQKWKWXXX||",
+        "LKR|Bank of Ceylon, Colombo|BCEYLKLXXXX||",
+        "MAD|Attijariwafa Bank, Casablanca|BCMAMAMCXXX||",
+        "NOK|Nordea Bank Norge, Oslo|NDEANOKKXXX||",
+        "NZD|ANZ Bank New Zealand, Wellington|ANZBNZZZXXX||",
+        "PHP|Banco de Oro Unibank, Manila|BNORPHMMXXX||",
+        "PKR|MCB Bank, Karachi|MUCBPKKAXXX||",
+        "QAR|Mashreqbank PSC, Doha|MSHQQAQAXXX||",
+        "SEK|Skandinaviska Enskilda Banken, Stockholm|ESSESESSXXX||",
+        "SGD|United Overseas Bank, Singapore|UOVBSGSGXXX||",
+        "THB|Siam Commercial Bank, Bangkok|SICOTHBKXXX||",
+        "TND|Amen Bank, Tunis|CFCTTNTTXXX||",
+        "XAG|JPMorgan Chase Bank, London|CHASGB2LBUL||",
+        "XAU|JPMorgan Chase Bank, London|CHASGB2LBUL||",
+        "ZAR|Standard Bank of South Africa, Johannesburg|SBZAZAJJXXX||"
+      ]
+    }
+  ]
+}
