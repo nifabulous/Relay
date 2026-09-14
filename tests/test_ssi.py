@@ -489,7 +489,12 @@ class TestSSIModel:
             assert row.value_date is None
 
     def test_enbd_bic_only_coverage_matches_the_charges_pdf(self, db_session_clean):
-        """Persisted ENBD coverage must match the reviewed BIC-only source."""
+        """Persisted ENBD BIC-only coverage must match the reviewed source.
+
+        The live SSI page adds account-backed routes alongside the older
+        charges-PDF availability rows, so this assertion intentionally scopes
+        itself to the BIC-only subset.
+        """
         from sqlalchemy import select
 
         from app.models import SSI
@@ -497,8 +502,9 @@ class TestSSIModel:
         rows = db_session_clean.execute(
             select(SSI).where(SSI.beneficiary_bic == "EBILAEADXXX")
         ).scalars().all()
-        assert rows
-        assert {row.currency for row in rows} == {
+        bic_only_rows = [row for row in rows if row.bic_only]
+        assert bic_only_rows
+        assert {row.currency for row in bic_only_rows} == {
             "BHD", "EUR", "GBP", "KWD", "OMR", "QAR", "SAR", "USD"
         }
         assert all(
@@ -510,7 +516,7 @@ class TestSSIModel:
             and row.status == "unverified"
             and row.as_of == "2026-05-01"
             and row.notes.startswith("Source: https://www.emiratesnbd.com/")
-            for row in rows
+            for row in bic_only_rows
         )
 
     def test_ssi_query_by_bic_and_currency(self, db_session_clean):
