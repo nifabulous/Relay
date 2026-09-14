@@ -1,0 +1,50 @@
+[
+  [
+    "NBOKGB2LXXX",
+    "National Bank of Kuwait (International) PLC",
+    "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+    "2019-05-13",
+    "archived",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|NBOKAEAD|National Bank of Kuwait SAKP, Dubai City|91005121",
+      "AUD|ANZBAU3M|Australia and New Zealand Banking Group Limited, Melbourne|91005122",
+      "BHD|NBOKBHBMFCB|National Bank of Kuwait SAKP, Manama|91005123",
+      "CAD|BOFMCAM2|Bank of Montreal, Montréal|91005124",
+      "CHF|ZKBKCHZZ80A|Zürcher Kantonalbank, Zürich|91005125",
+      "DKK|DABADKKK|Danske Bank A/S, Copenhagen|91005126",
+      "EUR|BARCDEFF|Barclays Bank Ireland PLC, Frankfurt|91005127",
+      "GBP|MIDLGB22|HSBC Bank plc, London|91005128",
+      "HKD|SCBLHKHH|Standard Chartered Bank (Hong Kong) Limited, Hong Kong|91005129",
+      "JOD|NBOKJOAM|National Bank of Kuwait SAKP, Amman|91005130",
+      "JPY|MHCBJPJT|Mizuho Bank Ltd, Tokyo|91005131",
+      "KWD|NBOKKWKW|National Bank of Kuwait SAKP, Kuwait City|91005132",
+      "NOK|DABANO22|Danske Bank A/S, Trondheim|91005133",
+      "NZD|ANZBNZ22|ANZ Bank New Zealand Limited, Wellington|91005134",
+      "QAR|IBOQQAQA|International Bank of Qatar (Q.S.C.), Doha|91005135",
+      "SAR|NBOKSAJE|National Bank of Kuwait SAKP, Jeddah|91005136",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken AB, Stockholm|91005137",
+      "SGD|SCBLSG22|Standard Chartered Bank (Singapore) Limited, Singapore|91005138",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas, New York|91005139"
+    ]
+  ],
+  [
+    "NBOKGB2LXXX",
+    "National Bank of Kuwait (International) PLC",
+    "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+    "2019-05-13",
+    "archived",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "GBP|NBOKGB2L|National Bank of Kuwait (International) PLC, London|"
+    ]
+  ]
+]

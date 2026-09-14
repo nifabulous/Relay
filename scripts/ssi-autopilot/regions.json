@@ -36545,7 +36545,8 @@
           ],
           "admitted_record_digest": "322b9fd9facee9624816ae859958f3383355097e36962a8f3d4625a2c0de2e45"
         },
-        {"bic8":"HBUKGB4B","manifest_file":"regions_batch6_banks_1_hbukgb4b.json"}
+        {"bic8":"HBUKGB4B","manifest_file":"regions_batch6_banks_1_hbukgb4b.json"},
+        {"bic8":"NBOKGB2L","name":"National Bank of Kuwait (International) PLC","country":"GB","currencies":["AED","AUD","BHD","CAD","CHF","DKK","EUR","GBP","HKD","JOD","JPY","KWD","NOK","NZD","QAR","SAR","SEK","SGD","USD"],"seedable":true,"source_domains":["nbk.com"],"admitted_record_digest":"4e1f8ea6beacc079b354c30e610e5f2ff544926c4268b8ef5564d150d182d1b5","compact_records_file":"regions_batch25_records_nbokgb2l.json"}
       ]
     },
     {

@@ -1,0 +1,44 @@
+{
+  "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+  "source_sha256": "dc14a5da8c5b669ab812497ebcfea24ca87d5449b3c7f4958aa5a55d5b6d3027",
+  "as_of": "2019-05-13",
+  "beneficiary_bic": "NBOKGB2L",
+  "region_masked_block": 91005100,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "distinct source accounts receive distinct tokens; the GBP NBOK International row publishes only a BIC and sort code, so it remains BIC-only",
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+    "captured_at": "2026-09-14",
+    "pdf_creation_date": "2019-05-13",
+    "extraction": "official National Bank of Kuwait International London Standard Settlement Instructions PDF",
+    "retrieval_status": "official PDF retrieved successfully",
+    "route_count": 20,
+    "bic_only_route_count": 1,
+    "account_backed_route_count": 19
+  },
+  "routes": [
+    {"currency": "AED", "int_bic": "NBOKAEAD", "source_account_fingerprint": "be5618fb2e8578e9f7de1c41dc79665fa98de2bc232a0913e83384a08466c726", "nostro_mask": "ACCT-91005121", "with_an_mask": "ACCT-91005121"},
+    {"currency": "AUD", "int_bic": "ANZBAU3M", "source_account_fingerprint": "6792a1e51a17c364e5c32b30ef5a6ff887d2ea3237d140a2c837504bb7b87557", "nostro_mask": "ACCT-91005122", "with_an_mask": "ACCT-91005122"},
+    {"currency": "BHD", "int_bic": "NBOKBHBMFCB", "source_account_fingerprint": "07423a37e3d2b3c9a42a9926b3580ce654f2bc0fe8fc636bbf9b0495f6e6437f", "nostro_mask": "ACCT-91005123", "with_an_mask": "ACCT-91005123"},
+    {"currency": "CAD", "int_bic": "BOFMCAM2", "source_account_fingerprint": "71ac4c028dc6d3a0190beb082919eaac674e9ff9e8e4ab12d7ece50abc029693", "nostro_mask": "ACCT-91005124", "with_an_mask": "ACCT-91005124"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "source_account_fingerprint": "dbdc252e186c9b66ac1fa1ae9228ab6e8d4529e7cf5a3f0788018cd8e801de7f", "nostro_mask": "ACCT-91005125", "with_an_mask": "ACCT-91005125"},
+    {"currency": "DKK", "int_bic": "DABADKKK", "source_account_fingerprint": "e367ddb632b368416026ad240bcfff0f218f9a4c4f691f5ea2ff0ee8e1cb601a", "nostro_mask": "ACCT-91005126", "with_an_mask": "ACCT-91005126"},
+    {"currency": "EUR", "int_bic": "BARCDEFF", "source_account_fingerprint": "19b7d2335e6359f02a6b960339ccb164d4aff9bbd185ec5abb5eb6be112fdadd", "nostro_mask": "ACCT-91005127", "with_an_mask": "ACCT-91005127"},
+    {"currency": "GBP", "int_bic": "MIDLGB22", "source_account_fingerprint": "30cb7a58a5f07883a2feb427d4ae4cb50a5b22679ac809cef0206aa6a1f867f4", "nostro_mask": "ACCT-91005128", "with_an_mask": "ACCT-91005128"},
+    {"currency": "GBP", "int_bic": "NBOKGB2L", "bic_only": true, "has_account_data": false},
+    {"currency": "HKD", "int_bic": "SCBLHKHH", "source_account_fingerprint": "72dee751ff0f41316011b3f6e068f6306693e159c8224417a6fd6b02f738a837", "nostro_mask": "ACCT-91005129", "with_an_mask": "ACCT-91005129"},
+    {"currency": "JOD", "int_bic": "NBOKJOAM", "source_account_fingerprint": "4067040cc5081908b5fd7dee758f8d49b4cd210b531226a76338534fe175a7eb", "nostro_mask": "ACCT-91005130", "with_an_mask": "ACCT-91005130"},
+    {"currency": "JPY", "int_bic": "MHCBJPJT", "source_account_fingerprint": "f6e4cb15e712f3995b6a43f210ecc9c5d9e53b9c26d203e6dd691a13d715b699", "nostro_mask": "ACCT-91005131", "with_an_mask": "ACCT-91005131"},
+    {"currency": "KWD", "int_bic": "NBOKKWKW", "source_account_fingerprint": "634bb117f237c409400832cbc67df8d589722dcdc8760220487cc253ebd273a8", "nostro_mask": "ACCT-91005132", "with_an_mask": "ACCT-91005132"},
+    {"currency": "NOK", "int_bic": "DABANO22", "source_account_fingerprint": "b755ded620c8097588241bcda1c5465fd2e422ea54519b5e6e0d79713591324a", "nostro_mask": "ACCT-91005133", "with_an_mask": "ACCT-91005133"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22", "source_account_fingerprint": "da1e4134fc4879dce47ad5b0e084e99bb10dc9b0308635511234d01a9c23c4a0", "nostro_mask": "ACCT-91005134", "with_an_mask": "ACCT-91005134"},
+    {"currency": "QAR", "int_bic": "IBOQQAQA", "source_account_fingerprint": "a2b07b8c123f32793520a4d94a5c424e65f09c38ffd4ba7783b33f4e3430953d", "nostro_mask": "ACCT-91005135", "with_an_mask": "ACCT-91005135"},
+    {"currency": "SAR", "int_bic": "NBOKSAJE", "source_account_fingerprint": "56655cbea464835beda79e15cdb00654a743a2a73c466a54c6b2be9be0f6a3c6", "nostro_mask": "ACCT-91005136", "with_an_mask": "ACCT-91005136"},
+    {"currency": "SEK", "int_bic": "ESSESESS", "source_account_fingerprint": "59df4d31181cff8a47f2597bb9ae7ba55d5fb1b0e3993b9566e6b1a08507cfdd", "nostro_mask": "ACCT-91005137", "with_an_mask": "ACCT-91005137"},
+    {"currency": "SGD", "int_bic": "SCBLSG22", "source_account_fingerprint": "7a18839ce82a1c028e550eedef46df6603bb3bc03707b87c7557f2cdd54f735f", "nostro_mask": "ACCT-91005138", "with_an_mask": "ACCT-91005138"},
+    {"currency": "USD", "int_bic": "BKTRUS33", "source_account_fingerprint": "eac4b9ecf53f754c99dfd37dabceaec0dfefd2c566c95870bbd55c0daca12617", "nostro_mask": "ACCT-91005139", "with_an_mask": "ACCT-91005139"}
+  ]
+}

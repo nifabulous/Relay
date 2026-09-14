@@ -3148,7 +3148,8 @@ class TestNordicsPolandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-kingdom ----
 UNITED_KINGDOM_SSI_COVERAGE = [
     ("DNBAGB2LXXX", "DNB Bank ASA London Branch", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "HKD", "HUF", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
-    ("HBUKGB4BXXX", "HSBC UK Bank plc", {'AED', 'ALL', 'AUD', 'BDT', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CZK', 'DKK', 'DZD', 'EGP', 'EUR', 'FJD', 'GHS', 'HKD', 'HUF', 'ILS', 'INR', 'JOD', 'JPY', 'KES', 'KWD', 'KZT', 'LKR', 'MAD', 'MOP', 'MUR', 'MXN', 'NAD', 'NOK', 'NZD', 'OMR', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'RSD', 'SAR', 'SEK', 'SGD', 'SZL', 'THB', 'TND', 'TRY', 'UGX', 'USD', 'ZAR', 'ZMW'}),
+    ("HBUKGB4BXXX", "HSBC UK Bank plc", {"AED", "ALL", "AUD", "BDT", "BHD", "BWP", "CAD", "CHF", "CNH", "CZK", "DKK", "DZD", "EGP", "EUR", "FJD", "GHS", "HKD", "HUF", "ILS", "INR", "JOD", "JPY", "KES", "KWD", "KZT", "LKR", "MAD", "MOP", "MUR", "MXN", "NAD", "NOK", "NZD", "OMR", "PEN", "PHP", "PKR", "PLN", "QAR", "RON", "RSD", "SAR", "SEK", "SGD", "SZL", "THB", "TND", "TRY", "UGX", "USD", "ZAR", "ZMW"}),
+    ("NBOKGB2LXXX", "National Bank of Kuwait (International) PLC", {"AED", "AUD", "BHD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "JOD", "JPY", "KWD", "NOK", "NZD", "QAR", "SAR", "SEK", "SGD", "USD"}),
 ]
 
 class TestUnitedKingdomSsiCoverage:
@@ -3176,8 +3177,6 @@ class TestUnitedKingdomSsiCoverage:
     def test_united_kingdom_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("united-kingdom", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: united-kingdom ----
-
-
 # ---- autopilot-generated coverage tests: finland ----
 FINLAND_SSI_COVERAGE = [
     ('NDEAFIHHXXX', 'Nordea Bank Abp', {'AED', 'AUD', 'BDT', 'BGN', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'KZT', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),

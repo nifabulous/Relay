@@ -1,0 +1,46 @@
+{
+  "NBOKGB2L": [
+    {
+      "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+      "as_of": "2019-05-13",
+      "status": "archived",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|National Bank of Kuwait SAKP, Dubai City|NBOKAEAD|91005121|91005121",
+        "AUD|Australia and New Zealand Banking Group Limited, Melbourne|ANZBAU3M|91005122|91005122",
+        "BHD|National Bank of Kuwait SAKP, Manama|NBOKBHBMFCB|91005123|91005123",
+        "CAD|Bank of Montreal, Montréal|BOFMCAM2|91005124|91005124",
+        "CHF|Zürcher Kantonalbank, Zürich|ZKBKCHZZ80A|91005125|91005125",
+        "DKK|Danske Bank A/S, Copenhagen|DABADKKK|91005126|91005126",
+        "EUR|Barclays Bank Ireland PLC, Frankfurt|BARCDEFF|91005127|91005127",
+        "GBP|HSBC Bank plc, London|MIDLGB22|91005128|91005128",
+        "HKD|Standard Chartered Bank (Hong Kong) Limited, Hong Kong|SCBLHKHH|91005129|91005129",
+        "JOD|National Bank of Kuwait SAKP, Amman|NBOKJOAM|91005130|91005130",
+        "JPY|Mizuho Bank Ltd, Tokyo|MHCBJPJT|91005131|91005131",
+        "KWD|National Bank of Kuwait SAKP, Kuwait City|NBOKKWKW|91005132|91005132",
+        "NOK|Danske Bank A/S, Trondheim|DABANO22|91005133|91005133",
+        "NZD|ANZ Bank New Zealand Limited, Wellington|ANZBNZ22|91005134|91005134",
+        "QAR|International Bank of Qatar (Q.S.C.), Doha|IBOQQAQA|91005135|91005135",
+        "SAR|National Bank of Kuwait SAKP, Jeddah|NBOKSAJE|91005136|91005136",
+        "SEK|Skandinaviska Enskilda Banken AB, Stockholm|ESSESESS|91005137|91005137",
+        "SGD|Standard Chartered Bank (Singapore) Limited, Singapore|SCBLSG22|91005138|91005138",
+        "USD|Deutsche Bank Trust Company Americas, New York|BKTRUS33|91005139|91005139"
+      ]
+    },
+    {
+      "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+      "as_of": "2019-05-13",
+      "status": "archived",
+      "charge_code": null,
+      "value_date": null,
+      "bic_only": true,
+      "terms_inferred": false,
+      "rows": [
+        "GBP|National Bank of Kuwait (International) PLC, London|NBOKGB2L||"
+      ]
+    }
+  ]
+}
