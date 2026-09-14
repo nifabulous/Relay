@@ -1,0 +1,334 @@
+{
+  "source": "https://croatiabanka.hr/media/ha0b5vnn/ssi-croatia-banka-022024-web.pdf",
+  "source_sha256": "cbeff304a9c7d2536dad712e71f2f14a32c4a0fbc70c393a5af9918ea155f5df",
+  "as_of": "2024-02-01",
+  "beneficiary_bic": "CROAHR2X",
+  "masking": {
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "source": "https://croatiabanka.hr/media/ha0b5vnn/ssi-croatia-banka-022024-web.pdf",
+    "captured_at": "2024-02-01",
+    "extraction": "PDF Standard Settlement Instructions table; no account values published",
+    "raw_accounts_committed": false,
+    "route_count": 45,
+    "bic_only_route_count": 45,
+    "routes": [
+      {
+        "currency": "AUD",
+        "int_bic": "HAABHR22",
+        "correspondent": "Addiko Bank d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "RZBHHR2X",
+        "correspondent": "Raiffeisenbank Austria d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "BAM",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "HAABHR22",
+        "correspondent": "Addiko Bank d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "RZBHHR2X",
+        "correspondent": "Raiffeisenbank Austria d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "HAABHR22",
+        "correspondent": "Addiko Bank d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "SOGEFRPP",
+        "correspondent": "Société Générale, Paris",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "RZBHHR2X",
+        "correspondent": "Raiffeisenbank Austria d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "HPBZHR2X",
+        "correspondent": "Hrvatska Poštanska banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HAABHR22",
+        "correspondent": "Addiko Bank d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb, Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BCITITMM",
+        "correspondent": "Intesa Sanpaolo S.p.A., Milano",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "SOGEFRPP",
+        "correspondent": "Société Générale, Paris",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNCRITMM",
+        "correspondent": "UniCredit S.p.A., Milano",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBHHR2X",
+        "correspondent": "Raiffeisenbank Austria d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "PBZGHR2X",
+        "correspondent": "Privredna banka Zagreb d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "ZABAHR2X",
+        "correspondent": "Zagrebačka banka d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "HAABHR22",
+        "correspondent": "Addiko Bank d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "ESBCHR22",
+        "correspondent": "Erste&Steiermärkische Bank d.d., Rijeka",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBHHR2X",
+        "correspondent": "Raiffeisenbank Austria d.d., Zagreb",
+        "bic_only": true,
+        "has_account_data": false
+      }
+    ]
+  }
+}

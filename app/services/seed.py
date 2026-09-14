@@ -1133,7 +1133,10 @@ def _load_ssi_batch32_groups():
 
 _SSI_BATCH32_GROUPS = _load_ssi_batch32_groups()
 
-_SSI_CONSOLIDATION_DATA_FILES = ("seed_ssi_consolidation_1.json",)
+_SSI_CONSOLIDATION_DATA_FILES = (
+    "seed_ssi_consolidation_1.json",
+    "seed_ssi_consolidation_2.json",
+)
 
 
 def _load_ssi_consolidation_data():

@@ -7,7 +7,11 @@ from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import BANKS, SSI_RECORDS
 
 ROOT = Path(__file__).resolve().parents[1]
-LEDGER = ROOT / "app" / "services" / "seed_ssi_consolidation_1.json"
+LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
+
+
+def _payloads():
+    return [json.loads(path.read_text()) for path in LEDGERS]
 
 
 def _row_to_ssi(row):
@@ -32,26 +36,36 @@ def _row_to_ssi(row):
 
 
 def test_consolidated_ledger_has_unique_bank_and_route_keys():
-    payload = json.loads(LEDGER.read_text())
+    payloads = _payloads()
     bank_bics = [bank[0] for bank in BANKS]
     route_keys = [(row[0], row[2], row[3]) for row in SSI_RECORDS]
 
-    assert payload["source_prs"] == list(range(103, 113))
+    assert [pr for payload in payloads for pr in payload["source_prs"]] == [
+        *range(103, 113),
+        113,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+    ]
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
 
 
 def test_consolidated_rows_are_informational_until_independently_verified():
-    payload = json.loads(LEDGER.read_text())
-    assert payload["ssi_records"]
-    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in payload["ssi_records"])
+    records = [row for payload in _payloads() for row in payload["ssi_records"]]
+    assert records
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
 
 
 def test_consolidated_rows_cannot_leak_through_the_production_selector(db_session_clean):
-    payload = json.loads(LEDGER.read_text())
     new_bics_by_pair = {}
-    for row in payload["ssi_records"]:
-        new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
+    for payload in _payloads():
+        for row in payload["ssi_records"]:
+            new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
 
     for (beneficiary_bic, currency), new_bics in new_bics_by_pair.items():
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)

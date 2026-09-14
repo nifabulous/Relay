@@ -266,6 +266,10 @@ UNVERIFIED_US_CLEARERS = {
     # EverBank's direct USD SSI is published with its SWIFT BIC, but no
     # public CHIPS/ABA identifier is provided in the source instructions.
     "EVBKUS3M",
+    # Grasshopper's published FX instructions identify Pacific Coast Bankers'
+    # Bank, but do not publish a CHIPS/ABA identifier for this BIC. The row is
+    # informational and remains blocked by the shared routing predicate.
+    "PCBBUS66",
 }
 
 

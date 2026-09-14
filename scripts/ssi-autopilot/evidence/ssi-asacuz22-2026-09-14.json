@@ -1,0 +1,56 @@
+{
+  "source": "https://aab.uz/upload/medialibrary/2e3/232pbtjep1mg7pmbgw033ostd5pgbfhg.pdf",
+  "as_of": "2026-08-13",
+  "retrieved_on": "2026-09-14",
+  "published_label": "Asia Alliance Bank correspondent bank list, updated 13 August 2026",
+  "beneficiary_bic": "ASACUZ22",
+  "region": "uzbekistan-wave6",
+  "region_masked_block": 91004800,
+  "scope": {
+    "included_route_count": 28,
+    "source_route_count": 33,
+    "omitted_route_count": 5
+  },
+  "masking": {
+    "algorithm": "reserved sequential token per admitted source route",
+    "raw_accounts_committed": false,
+    "source_accounts_published": true,
+    "settlement_terms_published": false
+  },
+  "normalization": [
+    "Printed TRL was normalized to ISO TRY and printed RMB to ISO CNY.",
+    "Only rows with an explicit intermediary BIC and a source account were admitted.",
+    "Five otherwise eligible source rows were omitted because the reserved Uzbekistan mask block had 28 remaining tokens; omitted rows remain in the source PDF and are not inferred.",
+    "SHA/spot are conservative application metadata because the source does not publish charge or value-date terms."
+  ],
+  "routes": [
+    {"currency":"USD","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91004872","with_an_mask":"ACCT-91004872"},
+    {"currency":"EUR","int_bic":"COBADEFF","nostro_mask":"ACCT-91004873","with_an_mask":"ACCT-91004873"},
+    {"currency":"GBP","int_bic":"COBADEFF","nostro_mask":"ACCT-91004874","with_an_mask":"ACCT-91004874"},
+    {"currency":"CHF","int_bic":"COBADEFF","nostro_mask":"ACCT-91004875","with_an_mask":"ACCT-91004875"},
+    {"currency":"JPY","int_bic":"COBADEFF","nostro_mask":"ACCT-91004876","with_an_mask":"ACCT-91004876"},
+    {"currency":"EUR","int_bic":"SOLADEST","nostro_mask":"ACCT-91004877","with_an_mask":"ACCT-91004877"},
+    {"currency":"EUR","int_bic":"UNCRITMM","nostro_mask":"ACCT-91004878","with_an_mask":"ACCT-91004878"},
+    {"currency":"EUR","int_bic":"BHFBDEFF","nostro_mask":"ACCT-91004879","with_an_mask":"ACCT-91004879"},
+    {"currency":"EUR","int_bic":"RZBAATWW","nostro_mask":"ACCT-91004880","with_an_mask":"ACCT-91004880"},
+    {"currency":"CNY","int_bic":"ABOCCNBJ","nostro_mask":"ACCT-91004881","with_an_mask":"ACCT-91004881"},
+    {"currency":"USD","int_bic":"CZNBKRSE","nostro_mask":"ACCT-91004882","with_an_mask":"ACCT-91004882"},
+    {"currency":"EUR","int_bic":"CZNBKRSE","nostro_mask":"ACCT-91004883","with_an_mask":"ACCT-91004883"},
+    {"currency":"RUB","int_bic":"ASIJRUMM","nostro_mask":"ACCT-91004884","with_an_mask":"ACCT-91004884"},
+    {"currency":"CNY","int_bic":"ASIJRUMM","nostro_mask":"ACCT-91004885","with_an_mask":"ACCT-91004885"},
+    {"currency":"USD","int_bic":"ASIJRUMM","nostro_mask":"ACCT-91004886","with_an_mask":"ACCT-91004886"},
+    {"currency":"EUR","int_bic":"ASIJRUMM","nostro_mask":"ACCT-91004887","with_an_mask":"ACCT-91004887"},
+    {"currency":"TRY","int_bic":"CAYTTRIS","nostro_mask":"ACCT-91004888","with_an_mask":"ACCT-91004888"},
+    {"currency":"RUB","int_bic":"PJCBBY2X","nostro_mask":"ACCT-91004889","with_an_mask":"ACCT-91004889"},
+    {"currency":"EUR","int_bic":"PJCBBY2X","nostro_mask":"ACCT-91004890","with_an_mask":"ACCT-91004890"},
+    {"currency":"RUB","int_bic":"EURIKZKA","nostro_mask":"ACCT-91004891","with_an_mask":"ACCT-91004891"},
+    {"currency":"KZT","int_bic":"EURIKZKA","nostro_mask":"ACCT-91004892","with_an_mask":"ACCT-91004892"},
+    {"currency":"AMD","int_bic":"COVBAM22","nostro_mask":"ACCT-91004893","with_an_mask":"ACCT-91004893"},
+    {"currency":"RUB","int_bic":"COVBAM22","nostro_mask":"ACCT-91004894","with_an_mask":"ACCT-91004894"},
+    {"currency":"USD","int_bic":"BAGAGE22","nostro_mask":"ACCT-91004895","with_an_mask":"ACCT-91004895"},
+    {"currency":"EUR","int_bic":"ASBKUZ22","nostro_mask":"ACCT-91004896","with_an_mask":"ACCT-91004896"},
+    {"currency":"USD","int_bic":"ASBKUZ22","nostro_mask":"ACCT-91004897","with_an_mask":"ACCT-91004897"},
+    {"currency":"USD","int_bic":"UJSIUZ22","nostro_mask":"ACCT-91004898","with_an_mask":"ACCT-91004898"},
+    {"currency":"EUR","int_bic":"INIPUZ22","nostro_mask":"ACCT-91004899","with_an_mask":"ACCT-91004899"}
+  ]
+}
