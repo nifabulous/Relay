@@ -22458,6 +22458,7 @@
           ],
           "admitted_record_digest": "4f2e576908c788027862233162629f1b49e011e0a2b36b28b9a867e579f8c662"
         },
+        {"bic8":"CHKHMNUB","name":"Chinggis Khaan Bank","country":"MN","currencies":["CAD","CHF","CNY","EUR","GBP","JPY","KRW","USD"],"seedable":true,"source_domains":["ckbank.mn"],"admitted_record_digest":"3aaa6258b17b1b897ade03f4442e436037d0086b6c39f0faaa0a4dd5d1dae92d","compact_records_file":"regions_batch31_records_chkhmnub.json"},
         {
           "bic8": "CAXBMNUB",
           "name": "XacBank JSC",

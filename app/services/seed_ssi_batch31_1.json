@@ -1,0 +1,10 @@
+[
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20USD%20from%20USA%20new.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["USD|CZNBKRSE|Kookmin Bank, Seoul|91004491"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20EUR%20update.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["EUR|TJSCRUMM|Transkapitalbank, Moscow|91004492"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/80a28cee-a34c-4cf2-ace9-cff7329ab978/SSI%20sample%20CNY.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["CNY|BKCHCNBJ880|Bank of China, Hohhot|91004493"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20JPY%20update.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["JPY|SABRRUMM|Sberbank of Russia, Moscow|91004494"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20GBP%20update.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["GBP|CZNBKRSE|Kookmin Bank, Seoul|91004495"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20CHF%20update.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["CHF|TJSCRUMM|Transkapitalbank, Moscow|91004496"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20CAD%20update.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["CAD|TJSCRUMM|Transkapitalbank, Moscow|91004497"]],
+  ["CHKHMNUBXXX", "Chinggis Khaan Bank", "https://www.ckbank.mn/files/80a28cee-a34c-4cf2-ace9-cff7329ab978/SSI%20sample%20KRW.pdf", "2026-09-14", "unverified", "SHA", "spot", null, false, true, ["KRW|CZNBKRSE|Kookmin Bank, Seoul|91004498"]]
+]

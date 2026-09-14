@@ -2601,21 +2601,22 @@ class TestSouthernAfricaWave3SsiCoverage:
 
 # ---- autopilot-generated coverage tests: asia-pacific-wave4 ----
 ASIA_PACIFIC_WAVE4_SSI_COVERAGE = [
-    ('ABAAKHPPXXX', 'Advanced Bank of Asia Limited', {'AUD', 'CAD', 'CNY', 'EUR', 'GBP', 'JPY', 'SGD', 'THB', 'USD', 'VND'}),
-    ('ADBLNPKAXXX', 'Agricultural Development Bank Ltd.', {'AED', 'AUD', 'GBP', 'INR', 'JPY', 'USD'}),
-    ('BAIDBNBBXXX', 'Baiduri Bank Berhad', {'AED', 'AUD', 'BND', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'IDR', 'INR', 'JPY', 'MYR', 'NZD', 'PHP', 'SAR', 'SGD', 'THB', 'USD'}),
-    ('BKCHBNBBXXX', 'Bank of China (Hong Kong) Limited, Brunei Branch', {'AUD', 'BND', 'CAD', 'CHF', 'DKK', 'EUR', 'GBP', 'JPY', 'NOK', 'NZD', 'SEK', 'SGD', 'THB', 'USD', 'ZAR'}),
-    ('CAXBMNUBXXX', 'XacBank JSC', {'AUD', 'CAD', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'KRW', 'SGD', 'USD'}),
-    ('CTZNNPKAXXX', 'Citizens Bank International Limited', {'CNY', 'EUR', 'USD'}),
-    ('EVBLNPKAXXX', 'Everest Bank Ltd.', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'USD'}),
-    ('FTCCKHPPXXX', 'Foreign Trade Bank of Cambodia', {'AUD', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'THB', 'USD'}),
-    ('LXBLNPKAXXX', 'Laxmi Sunrise Bank Limited', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'USD'}),
-    ('NARBNPKAXXX', 'Nabil Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'SGD', 'USD'}),
-    ('PPCBKHPPXXX', 'Phnom Penh Commercial Bank PLC', {'JPY', 'KRW', 'SGD', 'THB', 'USD'}),
-    ('TBOMMNUBXXX', 'Transport and Development Bank LLC (TransBank)', {'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'RUB', 'SGD', 'TRY', 'USD'}),
-    ('SIDDNPKAXXX', 'Siddhartha Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'SGD', 'USD'}),
-    ('KMBLNPKAXXX', 'Kumari Bank Limited', {'AED', 'AUD', 'CAD', 'CNY', 'DKK', 'EUR', 'GBP', 'INR', 'JPY', 'USD'}),
-    ('PRVUNPKAXXX', 'Prabhu Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'INR', 'JPY', 'KRW', 'SAR', 'USD'}),
+    ("ABAAKHPPXXX", "Advanced Bank of Asia Limited", {"AUD", "CAD", "CNY", "EUR", "GBP", "JPY", "SGD", "THB", "USD", "VND"}),
+    ("ADBLNPKAXXX", "Agricultural Development Bank Ltd.", {"AED", "AUD", "GBP", "INR", "JPY", "USD"}),
+    ("BAIDBNBBXXX", "Baiduri Bank Berhad", {"AED", "AUD", "BND", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "MYR", "NZD", "PHP", "SAR", "SGD", "THB", "USD"}),
+    ("BKCHBNBBXXX", "Bank of China (Hong Kong) Limited, Brunei Branch", {"AUD", "BND", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "NZD", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("CHKHMNUBXXX", "Chinggis Khaan Bank", {"CAD", "CHF", "CNY", "EUR", "GBP", "JPY", "KRW", "USD"}),
+    ("CAXBMNUBXXX", "XacBank JSC", {"AUD", "CAD", "CNY", "EUR", "GBP", "HKD", "JPY", "KRW", "SGD", "USD"}),
+    ("CTZNNPKAXXX", "Citizens Bank International Limited", {"CNY", "EUR", "USD"}),
+    ("EVBLNPKAXXX", "Everest Bank Ltd.", {"AED", "AUD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("FTCCKHPPXXX", "Foreign Trade Bank of Cambodia", {"AUD", "CNY", "EUR", "GBP", "HKD", "JPY", "SGD", "THB", "USD"}),
+    ("LXBLNPKAXXX", "Laxmi Sunrise Bank Limited", {"AED", "AUD", "CNY", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("NARBNPKAXXX", "Nabil Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "INR", "JPY", "SGD", "USD"}),
+    ("PPCBKHPPXXX", "Phnom Penh Commercial Bank PLC", {"JPY", "KRW", "SGD", "THB", "USD"}),
+    ("TBOMMNUBXXX", "Transport and Development Bank LLC (TransBank)", {"CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "SGD", "TRY", "USD"}),
+    ("SIDDNPKAXXX", "Siddhartha Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "INR", "JPY", "SGD", "USD"}),
+    ("KMBLNPKAXXX", "Kumari Bank Limited", {"AED", "AUD", "CAD", "CNY", "DKK", "EUR", "GBP", "INR", "JPY", "USD"}),
+    ("PRVUNPKAXXX", "Prabhu Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "INR", "JPY", "KRW", "SAR", "USD"}),
 ]
 
 class TestAsiaPacificWave4SsiCoverage:
@@ -2643,8 +2644,6 @@ class TestAsiaPacificWave4SsiCoverage:
     def test_asia_pacific_wave4_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("asia-pacific-wave4", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: asia-pacific-wave4 ----
-
-
 # ---- autopilot-generated coverage tests: europe-uncovered-wave4 ----
 EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
     ('CABARS22XXX', 'Halkbank a.d. Beograd', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'SEK', 'TRY', 'USD'}),

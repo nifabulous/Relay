@@ -1,0 +1,44 @@
+{
+  "CHKHMNUB": [
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20USD%20from%20USA%20new.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["USD|Kookmin Bank, Seoul|CZNBKRSE|91004491|91004491"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20EUR%20update.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["EUR|Transkapitalbank, Moscow|TJSCRUMM|91004492|91004492"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/80a28cee-a34c-4cf2-ace9-cff7329ab978/SSI%20sample%20CNY.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["CNY|Bank of China, Hohhot|BKCHCNBJ880|91004493|91004493"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20JPY%20update.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["JPY|Sberbank of Russia, Moscow|SABRRUMM|91004494|91004494"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20GBP%20update.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["GBP|Kookmin Bank, Seoul|CZNBKRSE|91004495|91004495"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20CHF%20update.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["CHF|Transkapitalbank, Moscow|TJSCRUMM|91004496|91004496"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/a809edd7-d876-4fe3-b880-168321cb2951/SSI%20sample%20CAD%20update.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["CAD|Transkapitalbank, Moscow|TJSCRUMM|91004497|91004497"]
+    },
+    {
+      "source": "https://www.ckbank.mn/files/80a28cee-a34c-4cf2-ace9-cff7329ab978/SSI%20sample%20KRW.pdf",
+      "as_of": "2026-09-14", "status": "unverified", "charge_code": "SHA", "value_date": "spot", "bic_only": false, "terms_inferred": true,
+      "rows": ["KRW|Kookmin Bank, Seoul|CZNBKRSE|91004498|91004498"]
+    }
+  ]
+}
