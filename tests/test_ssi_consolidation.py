@@ -53,10 +53,11 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     ]
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
-    assert {LEDGER.name} == set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
     seeded_rows = set(SSI_RECORDS)
     assert all(
         len(row) == 15 and tuple(row) in seeded_rows
+        for payload in payloads
         for row in payload["ssi_records"]
     )
 
@@ -84,23 +85,25 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector(db_sessio
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
         assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
 
-    db_session_clean.add(SSI(
-        beneficiary_bic="FICOUS44XXX",
-        beneficiary_bank_name="Synovus Bank",
-        currency="USD",
-        intermediary_bic="BOFAUS3NXXX",
-        intermediary_bank_name="Bank of America, New York",
-        intermediary_account="123456789",
-        beneficiary_account="987654321",
-        charge_code="SHA",
-        value_date="spot",
-        notes="Source: selector control.",
-        as_of="2026-09-14",
-        status="published",
-        verified_by="Treasury Operations",
-        bic_only=False,
-        terms_inferred=False,
-    ))
+    db_session_clean.add(
+        SSI(
+            beneficiary_bic="FICOUS44XXX",
+            beneficiary_bank_name="Synovus Bank",
+            currency="USD",
+            intermediary_bic="BOFAUS3NXXX",
+            intermediary_bank_name="Bank of America, New York",
+            intermediary_account="123456789",
+            beneficiary_account="987654321",
+            charge_code="SHA",
+            value_date="spot",
+            notes="Source: selector control.",
+            as_of="2026-09-14",
+            status="published",
+            verified_by="Treasury Operations",
+            bic_only=False,
+            terms_inferred=False,
+        )
+    )
     db_session_clean.commit()
     assert [
         suggestion.bic
