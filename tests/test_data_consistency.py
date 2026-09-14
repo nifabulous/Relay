@@ -2647,24 +2647,25 @@ class TestAsiaPacificWave4SsiCoverage:
 
 # ---- autopilot-generated coverage tests: europe-uncovered-wave4 ----
 EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
-    ('CABARS22XXX', 'Halkbank a.d. Beograd', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'SEK', 'TRY', 'USD'}),
-    ('CBVILT2XXXX', 'AB SEB bankas', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'ISK', 'JPY', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
-    ('EEUHEE2XXXX', 'AS SEB Pank', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'PLN', 'RON', 'SEK', 'TRY', 'USD'}),
-    ('EMPOALTRXXX', 'ABI Bank sh.a.', {'ALL', 'EUR', 'GBP', 'USD'}),
-    ('EXSKSKBXXXX', 'EXIMBANKA SR', {'CZK', 'EUR', 'GBP', 'HUF', 'PLN', 'USD'}),
-    ('HABALV22XXX', 'Swedbank AS', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'ZAR'}),
-    ('INDULT2XXXX', 'AS Citadele banka, Lithuanian branch', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),
-    ('KOBSMK2XXXX', 'Komercijalna Banka AD Skopje', {'AUD', 'CAD', 'CHF', 'DKK', 'EUR', 'GBP', 'JPY', 'NOK', 'RSD', 'SEK', 'USD'}),
-    ('LJBASI2XXXX', 'NLB d.d., Ljubljana', {'AUD', 'BAM', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'MKD', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RSD', 'SEK', 'TRY', 'USD', 'ZAR'}),
-    ('NBMDMD2XXXX', 'National Bank of Moldova', {'EUR', 'GBP', 'JPY', 'RON', 'USD'}),
-    ('OTPVHR2XXXX', 'OTP banka d.d.', {'AUD', 'BAM', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'RON', 'RSD', 'SEK', 'TRY', 'USD'}),
-    ('PARXLV22XXX', 'AS Citadele banka', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),
-    ('SBSLHR2XXXX', 'Slatinska Banka d.d.', {'AUD', 'BAM', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),
-    ('STOBMK2XXXX', 'Stopanska Banka AD Skopje', {'AUD', 'CAD', 'CHF', 'DKK', 'EUR', 'GBP', 'JPY', 'NOK', 'SEK', 'USD'}),
-    ('TBTUBA22XXX', 'NLB Banka d.d., Sarajevo', {'AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'MKD', 'NOK', 'RSD', 'SEK', 'TRY', 'USD'}),
-    ('UGASUAUKXXX', 'Ukrgasbank JSC', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD', 'XAG', 'XAU', 'XPD', 'XPT'}),
-    ('PBANUA2XXXX', 'PrivatBank JSC', {'AUD', 'BYN', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'GEL', 'JPY', 'KZT', 'NOK', 'PLN', 'RUB', 'SEK', 'USD'}),
-    ('OTPVUAUKXXX', 'OTP Bank JSC Ukraine', {'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'HUF', 'JPY', 'PLN', 'SEK', 'USD'}),
+    ("CABARS22XXX", "Halkbank a.d. Beograd", {"AUD", "CAD", "CHF", "EUR", "GBP", "SEK", "TRY", "USD"}),
+    ("CBVILT2XXXX", "AB SEB bankas", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "ISK", "JPY", "KZT", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "SAR", "SEK", "SGD", "TRY", "USD", "ZAR"}),
+    ("EEUHEE2XXXX", "AS SEB Pank", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "PLN", "RON", "SEK", "TRY", "USD"}),
+    ("EMPOALTRXXX", "ABI Bank sh.a.", {"ALL", "EUR", "GBP", "USD"}),
+    ("EXSKSKBXXXX", "EXIMBANKA SR", {"CZK", "EUR", "GBP", "HUF", "PLN", "USD"}),
+    ("HABALV22XXX", "Swedbank AS", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "ZAR"}),
+    ("INDULT2XXXX", "AS Citadele banka, Lithuanian branch", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("KOBSMK2XXXX", "Komercijalna Banka AD Skopje", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "RSD", "SEK", "USD"}),
+    ("LJBASI2XXXX", "NLB d.d., Ljubljana", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "MKD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "SEK", "TRY", "USD", "ZAR"}),
+    ("NBMDMD2XXXX", "National Bank of Moldova", {"EUR", "GBP", "JPY", "RON", "USD"}),
+    ("OTPVHR2XXXX", "OTP banka d.d.", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "RSD", "SEK", "TRY", "USD"}),
+    ("PARXLV22XXX", "AS Citadele banka", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("SBSLHR2XXXX", "Slatinska Banka d.d.", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("STOBMK2XXXX", "Stopanska Banka AD Skopje", {"AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("TBTUBA22XXX", "NLB Banka d.d., Sarajevo", {"AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "MKD", "NOK", "RSD", "SEK", "TRY", "USD"}),
+    ("UGASUAUKXXX", "Ukrgasbank JSC", {"CAD", "CHF", "CNY", "CZK", "EUR", "GBP", "HUF", "JPY", "PLN", "SEK", "USD", "XAG", "XAU", "XPD", "XPT"}),
+    ("PBANUA2XXXX", "PrivatBank JSC", {"AUD", "BYN", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "GEL", "JPY", "KZT", "NOK", "PLN", "RUB", "SEK", "USD"}),
+    ("OTPVUAUKXXX", "OTP Bank JSC Ukraine", {"CAD", "CHF", "CNY", "CZK", "EUR", "GBP", "HUF", "JPY", "PLN", "SEK", "USD"}),
+    ("CROAHR2XXXX", "Croatia banka d.d.", {"AUD", "BAM", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "PLN", "SEK", "USD"}),
 ]
 
 class TestEuropeUncoveredWave4SsiCoverage:
@@ -2692,8 +2693,6 @@ class TestEuropeUncoveredWave4SsiCoverage:
     def test_europe_uncovered_wave4_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("europe-uncovered-wave4", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: europe-uncovered-wave4 ----
-
-
 # ---- autopilot-generated coverage tests: west-central-africa-wave4 ----
 WEST_CENTRAL_AFRICA_WAVE4_SSI_COVERAGE = [
     ("BSAHBJBJXXX", "BSIC Benin", {"EUR", "USD"}),

@@ -402,6 +402,7 @@ BANKS = [
     ("FTCCKHPPXXX", "Foreign Trade Bank of Cambodia", "KH", "Phnom Penh", "KHR"),
     ("PPCBKHPPXXX", "Phnom Penh Commercial Bank PLC", "KH", "Phnom Penh", "KHR"),
     ("CABARS22XXX", "Halkbank a.d. Beograd", "RS", "Belgrade", "RSD"),
+    ("CROAHR2XXXX", "Croatia banka d.d.", "HR", "Zagreb", "EUR"),
     ("SBSLHR2XXXX", "Slatinska Banka d.d.", "HR", "Slatina", "HRK"),
     ("OTPVHR2XXXX", "OTP banka d.d.", "HR", "Zagreb", "HRK"),
     ("EXSKSKBXXXX", "EXIMBANKA SR", "SK", "Bratislava", "EUR"),
@@ -1108,6 +1109,19 @@ def _load_ssi_batch9_groups():
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
 
+_SSI_BATCH17_DATA_FILES = ("seed_ssi_batch17_1.json",)
+
+
+def _load_ssi_batch17_groups():
+    groups = []
+    for filename in _SSI_BATCH17_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH17_GROUPS = _load_ssi_batch17_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1257,7 +1271,42 @@ def _ssi_batch9_records():
             ))
     return expanded
 
+
+def _ssi_batch17_records():
+    """Expand Croatia banka's BIC-only settlement-instruction list."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH17_GROUPS:
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 17 (Croatia banka BIC-only routes) ----
+    *_ssi_batch17_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
     *_ssi_batch9_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
