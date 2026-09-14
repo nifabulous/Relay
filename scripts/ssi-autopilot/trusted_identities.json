@@ -1305,6 +1305,7 @@
   "CIBLBDDH": {"name": "City Bank PLC", "country": "BD", "domains": ["citybankplc.com"], "settlement_terms_published": false},
   "CBININBB": {"name": "Central Bank of India", "country": "IN", "domains": ["centralbank.bank.in"], "settlement_terms_published": false},
   "IDIBINBB": {"name": "Indian Bank", "country": "IN", "domains": ["indianbank.bank.in"], "settlement_terms_published": false},
+  "ESFAINBB": {"name": "ESAF Small Finance Bank Limited", "country": "IN", "domains": ["esaf.bank.in"], "settlement_terms_published": false},
   "PRVUNPKA": {"name": "Prabhu Bank Limited", "country": "NP", "domains": ["prabhubank.com"], "settlement_terms_published": false},
   "CCEYLKLX": {"name": "Commercial Bank of Ceylon PLC", "country": "LK", "domains": ["combank.lk"], "settlement_terms_published": false},
   "MIDLAM22": {"name": "HSBC Bank Armenia cjsc", "country": "AM", "domains": ["hsbc.am"], "settlement_terms_published": false},
