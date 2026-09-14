@@ -3277,10 +3277,13 @@ class TestGermanySsiCoverage:
     def test_germany_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("germany", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: germany ----
+
+
 # ---- autopilot-generated coverage tests: jordan ----
 JORDAN_SSI_COVERAGE = [
     ("AJIBJOAXXXX", "Arab Jordan Investment Bank", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "JOD", "JPY", "KWD", "QAR", "SAR", "SEK", "SGD", "USD"}),
     ("JONBJOAXXXX", "Jordan Ahli Bank", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "JPY", "KWD", "NOK", "OMR", "QAR", "SAR", "SEK", "USD"}),
+    ("JGBAJOA0XXX", "Jordan Kuwait Bank", {"AED", "AUD", "CAD", "CHF", "CNY", "EGP", "EUR", "GBP", "JPY", "KWD", "OMR", "QAR", "SAR", "TND", "TRY", "USD"}),
 ]
 
 class TestJordanSsiCoverage:

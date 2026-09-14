@@ -1,0 +1,48 @@
+{
+  "JGBAJOA0": [
+    {
+      "source": "https://www.jkb.com/en/international-banking-services",
+      "as_of": "2026-09-14",
+      "status": "unverified",
+      "charge_code": null,
+      "value_date": null,
+      "bic_only": true,
+      "terms_inferred": false,
+      "rows": [
+        "AED|Mashreq Bank PSC|BOMLAEAD||",
+        "AED|Commercial Bank of Dubai PSC|CBDUAEAD||",
+        "AUD|The Bank of New York Mellon|IRVTUS3N||",
+        "CAD|The Bank of New York Mellon|IRVTUS3N||",
+        "CHF|Zürcher Kantonalbank|ZKBKCHZZ||",
+        "EGP|National Bank of Egypt|NBEGEGCX||",
+        "EUR|UniCredit Bank GmbH (Hypo Vereinsbank)|HYVEDEMM||",
+        "EUR|Société Générale SA|SOGEFRPP||",
+        "EUR|Intesa Sanpaolo SPA|BCITITMM||",
+        "EUR|Banco Bilbao Vizcaya Argentaria SA|BBVAESMM||",
+        "EUR|UniCredit SPA|UNCRITMM||",
+        "EUR|The Bank of New York Mellon|IRVTDEFX||",
+        "EUR|Deutsche Bank AG, Frankfurt|DEUTDEFF||",
+        "GBP|HSBC Bank PLC|MIDLGB22||",
+        "GBP|The Bank of New York Mellon|IRVTGB2X||",
+        "GBP|Jordan International Bank PLC|JIBKGB2L||",
+        "GBP|Standard Chartered Bank|SCBLGB2L||",
+        "JPY|MUFG Bank Ltd.|BOTKJPJT||",
+        "KWD|Burgan Bank KPSC|BRGNKWKW||",
+        "KWD|National Bank of Kuwait SAKP|NBOKKWKW||",
+        "OMR|Bank Muscat SAOG|BMUSOMRX||",
+        "QAR|The Commercial Bank (P.S.Q.C)|CBQAQAQA||",
+        "SAR|The Saudi National Bank|NCBKSAJE||",
+        "SAR|Arab National Bank|ARNBSARI||",
+        "SAR|Banque Saudi Fransi|BSFRSARI||",
+        "TND|Tunis International Bank|TUIBTNTT||",
+        "USD|JPMorgan Chase Bank|CHASUS33||",
+        "USD|The Bank of New York Mellon|IRVTUS3N||",
+        "USD|Citibank NA|CITIUS33||",
+        "USD|Deutsche Bank AG, New York|DEUTUS33||",
+        "AED|First Abu Dhabi Bank|NBADAEAA||",
+        "CNY|Standard Chartered Bank (Hong Kong) LTD|SCBLHKHH||",
+        "TRY|Burgan Bank A.S.|TEKFTRIS||"
+      ]
+    }
+  ]
+}
