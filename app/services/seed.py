@@ -1132,6 +1132,23 @@ def _load_ssi_batch32_groups():
 
 
 _SSI_BATCH32_GROUPS = _load_ssi_batch32_groups()
+
+_SSI_CONSOLIDATION_DATA_FILES = ("seed_ssi_consolidation_1.json",)
+
+
+def _load_ssi_consolidation_data():
+    banks = []
+    records = []
+    for filename in _SSI_CONSOLIDATION_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+        banks.extend(tuple(bank) for bank in payload["banks"])
+        records.extend(tuple(record) for record in payload["ssi_records"])
+    return banks, records
+
+
+_SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
+BANKS.extend(_SSI_CONSOLIDATED_BANKS)
 _SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
 
 def _ssi_batch4_records():
@@ -1341,7 +1358,14 @@ def _ssi_batch32_records():
             ))
     return expanded
 
+
+def _ssi_consolidation_records():
+    """Return review-preserving rows consolidated from superseded SSI PRs."""
+    return list(_SSI_CONSOLIDATED_RECORDS)
+
 SSI_RECORDS = [
+    # ---- Consolidated SSI review queue (PRs 103-112) ----
+    *_ssi_consolidation_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----

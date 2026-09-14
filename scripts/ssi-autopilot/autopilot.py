@@ -1511,6 +1511,16 @@ def _expand_batch32_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
+    """Read consolidated SSI ledgers without executing seed.py."""
+    rows: list[tuple[str, ...]] = []
+    services = REPO_ROOT / "app" / "services"
+    for path in sorted(services.glob("seed_ssi_consolidation_*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        rows.extend(tuple(repr(value) for value in record) for record in payload["ssi_records"])
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
@@ -1540,7 +1550,7 @@ def _ssi_rows(source: str) -> list[tuple]:
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records"}
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records"}
             ):
                 rows.extend({
                     "_ssi_batch4_records": _expand_batch4_source_rows,
@@ -1550,6 +1560,7 @@ def _ssi_rows(source: str) -> list[tuple]:
                     "_ssi_batch9_records": _expand_batch9_source_rows,
                     "_ssi_batch32_records": _expand_batch32_source_rows,
                     "_ssi_batch8_records": _expand_batch8_source_rows,
+                    "_ssi_consolidation_records": _expand_consolidation_source_rows,
                 }[element.value.func.id]())
                 continue
             if not isinstance(element, ast.Tuple):
@@ -1966,7 +1977,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
                 and isinstance(e, ast.Starred)
                 and isinstance(e.value, ast.Call)
                 and isinstance(e.value.func, ast.Name)
-                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records"}
+                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records"}
             ):
                 continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:
