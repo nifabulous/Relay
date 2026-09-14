@@ -29367,6 +29367,36 @@
           "admitted_record_digest": "5a51acfe4808494d2dbca319d728127f9cf953a27c35c812384c2f1b2de5887c"
         },
         {"bic8":"PBANUA2X","name":"PrivatBank JSC","country":"UA","currencies":["AUD","BYN","CHF","CNY","CZK","DKK","EUR","GBP","GEL","JPY","KZT","NOK","PLN","RUB","SEK","USD"],"seedable":true,"source_domains":["privatbank.ua"],"admitted_record_digest":"efd3fd8a0c0afeaf95d06b5b52dab84ffe1c968809a08c788165a82f529126a7","compact_records_file":"regions_batch4_records_2.json"},
+        {
+          "bic8": "NCBAALTX",
+          "name": "Banka Kombëtare Tregtare SH.A.",
+          "country": "AL",
+          "currencies": [
+            "AUD",
+            "CAD",
+            "CHF",
+            "EUR",
+            "GBP",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "bkt.com.al"
+          ],
+          "admitted_records": [
+            {"currency":"AUD","correspondent":"Commonwealth Bank of Australia Sydney","int_bic":"CTBAAU2S","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"CAD","correspondent":"Canadian Imperial Bank of Commerce Toronto","int_bic":"CIBCCATT","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"CHF","correspondent":"Credit Suisse AG Zurich","int_bic":"CRESCHZZ80A","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"EUR","correspondent":"Deutsche Bank AG Frankfurt am Main","int_bic":"DEUTDEFF","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"EUR","correspondent":"Commerzbank AG Frankfurt am Main","int_bic":"COBADEFF","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"EUR","correspondent":"Intesa Sanpaolo S.p.A. Milan","int_bic":"BCITITMM","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"EUR","correspondent":"Banca Monte dei Paschi di Siena S.p.A. Siena","int_bic":"PASCITMM","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"EUR","correspondent":"Alpha Bank AE Athens","int_bic":"CRBAGRAA","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"GBP","correspondent":"Deutsche Bank AG Frankfurt am Main","int_bic":"DEUTDEFF","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null},
+            {"currency":"USD","correspondent":"Deutsche Bank Trust Company Americas New York","int_bic":"BKTRUS33","source":"https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf","as_of":"2018-07-01","status":"unverified","bic_only":true,"nostro":null,"with_an":null,"charge_code":null,"value_date":null}
+          ],
+          "admitted_record_digest": "a85f6d4db480991486d8aad551e39946120857c427ede2e6f84f8b337f49c29a"
+        },
         {"bic8":"OTPVUAUK","manifest_file":"regions_batch6_banks_3_otpvuauk.json"}
       ]
     },

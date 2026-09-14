@@ -1,0 +1,26 @@
+[
+  [
+    "NCBAALTXXXX",
+    "Banka Kombëtare Tregtare SH.A.",
+    "Source: https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf (as of 2018-07-01) BIC-level list — no account numbers published; not a selectable settlement instruction.",
+    "2018-07-01",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AUD|CTBAAU2S|Commonwealth Bank of Australia Sydney|",
+      "CAD|CIBCCATT|Canadian Imperial Bank of Commerce Toronto|",
+      "CHF|CRESCHZZ80A|Credit Suisse AG Zurich|",
+      "EUR|DEUTDEFF|Deutsche Bank AG Frankfurt am Main|",
+      "EUR|COBADEFF|Commerzbank AG Frankfurt am Main|",
+      "EUR|BCITITMM|Intesa Sanpaolo S.p.A. Milan|",
+      "EUR|PASCITMM|Banca Monte dei Paschi di Siena S.p.A. Siena|",
+      "EUR|CRBAGRAA|Alpha Bank AE Athens|",
+      "GBP|DEUTDEFF|Deutsche Bank AG Frankfurt am Main|",
+      "USD|BKTRUS33|Deutsche Bank Trust Company Americas New York|"
+    ]
+  ]
+]

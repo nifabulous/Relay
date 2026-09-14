@@ -2648,6 +2648,7 @@ EUROPE_UNCOVERED_WAVE4_SSI_COVERAGE = [
     ('CBVILT2XXXX', 'AB SEB bankas', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'ISK', 'JPY', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
     ('EEUHEE2XXXX', 'AS SEB Pank', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'PLN', 'RON', 'SEK', 'TRY', 'USD'}),
     ('EMPOALTRXXX', 'ABI Bank sh.a.', {'ALL', 'EUR', 'GBP', 'USD'}),
+    ('NCBAALTXXXX', 'Banka Kombëtare Tregtare SH.A.', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'USD'}),
     ('EXSKSKBXXXX', 'EXIMBANKA SR', {'CZK', 'EUR', 'GBP', 'HUF', 'PLN', 'USD'}),
     ('HABALV22XXX', 'Swedbank AS', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'ZAR'}),
     ('INDULT2XXXX', 'AS Citadele banka, Lithuanian branch', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),

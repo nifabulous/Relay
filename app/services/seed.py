@@ -432,6 +432,7 @@ BANKS = [
     ("UZHOUZ22XXX", "Ipoteka Bank JSC", "UZ", "Tashkent", "UZS"),
     ("INIPUZ22XXX", "JSIC Bank Ipak Yuli", "UZ", "Tashkent", "UZS"),
     ("UJSIUZ22XXX", "Uzbek Industrial and Construction Bank (Uzpromstroybank)", "UZ", "Tashkent", "UZS"),
+    ("NCBAALTXXXX", "Banka Kombëtare Tregtare SH.A.", "AL", "Tirana", "ALL"),
     ("SEYBLKLXXXX", "Seylan Bank PLC", "LK", "Colombo", "LKR"),
     ("BARCTZTZXXX", "ABSA BANK TANZANIA LIMITED", "TZ", "Dar es Salaam", "TZS"),
     ("FIRNNANXXXX", "FIRST NATIONAL BANK OF NAMIBIA LIMITED", "NA", "Windhoek", "NAD"),
@@ -1087,6 +1088,19 @@ def _load_ssi_batch7_groups():
 
 _SSI_BATCH7_GROUPS = _load_ssi_batch7_groups()
 
+_SSI_BATCH15_DATA_FILES = ("seed_ssi_batch15_1.json",)
+
+
+def _load_ssi_batch15_groups():
+    groups = []
+    for filename in _SSI_BATCH15_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH15_GROUPS = _load_ssi_batch15_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1205,7 +1219,35 @@ def _ssi_batch7_records():
             ))
     return expanded
 
+
+def _ssi_batch15_records():
+    """Expand the review-sized batch-15 BIC-only ledger into seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH15_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
 SSI_RECORDS = [
+    # ---- SSI expansion batch 15 (BKT Albania correspondent mappings; BIC-only) ----
+    *_ssi_batch15_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
     *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
