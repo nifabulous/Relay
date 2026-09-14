@@ -3246,10 +3246,11 @@ class TestUnitedStatesSsiCoverage:
 
 # ---- autopilot-generated coverage tests: germany ----
 GERMANY_SSI_COVERAGE = [
-    ('DNBADEHXXXX', 'DNB Bank ASA, Hamburg Branch', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
-    ('HASPDEHHXXX', 'Hamburger Sparkasse AG', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('AKBKDEFFXXX', 'Akbank AG', {'CHF', 'GBP', 'JPY', 'PLN', 'TRY', 'USD'}),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("DNBADEHXXXX", "DNB Bank ASA, Hamburg Branch", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("HASPDEHHXXX", "Hamburger Sparkasse AG", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("AKBKDEFFXXX", "Akbank AG", {"CHF", "GBP", "JPY", "PLN", "TRY", "USD"}),
+    ("GENODEFFXXX", "DZ BANK AG Deutsche Zentral-Genossenschaftsbank, Frankfurt am Main", {"AED", "AUD", "BWP", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JOD", "JPY", "KRW", "MAD", "MXN", "NAD", "NOK", "NZD", "PHP", "PLN", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
 ]
 
 class TestGermanySsiCoverage:
