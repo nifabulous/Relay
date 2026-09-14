@@ -7422,6 +7422,7 @@
         {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"},
         {"bic8":"HDFCINAA","manifest_file":"regions_batch6_banks_1_hdfcinaa.json"},
         {"bic8":"CBININBB","manifest_file":"regions_batch6_banks_1_cbininbb.json"},
+        {"bic8":"ESFAINBB","manifest_file":"regions_batch63_banks_esfainbb.json"},
         {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"},
         {"bic8":"KVBLINBB","manifest_file":"regions_batch7_banks_kvblinbb.json"}
       ],

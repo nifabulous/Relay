@@ -1,0 +1,19 @@
+[
+  [
+    "ESFAINBBXXX",
+    "ESAF Small Finance Bank Limited",
+    "Source: https://www.esaf.bank.in/wp-content/uploads/2025/08/CORRESPONDENT-BANKS-AS-ON-01-07-2025.pdf (as of 2025-07-01).",
+    "2025-07-01",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|MSHQUS33|Mashreq Bank, New York|91002097",
+      "AED|BOMLAEAD|Mashreq Bank, Dubai|91002098",
+      "EUR|SOLADEST|Landesbank Baden-Württemberg, Frankfurt|91002099"
+    ]
+  ]
+]

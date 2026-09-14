@@ -1,0 +1,53 @@
+{
+  "bic8": "ESFAINBB",
+  "name": "ESAF Small Finance Bank Limited",
+  "country": "IN",
+  "currencies": ["AED", "EUR", "USD"],
+  "seedable": true,
+  "source_domains": ["esaf.bank.in"],
+  "admitted_records": [
+    {
+      "currency": "USD",
+      "correspondent": "Mashreq Bank, New York",
+      "int_bic": "MSHQUS33XXX",
+      "source": "https://www.esaf.bank.in/wp-content/uploads/2025/08/CORRESPONDENT-BANKS-AS-ON-01-07-2025.pdf",
+      "as_of": "2025-07-01",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002097",
+      "with_an": "ACCT-91002097",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "AED",
+      "correspondent": "Mashreq Bank, Dubai",
+      "int_bic": "BOMLAEADXXX",
+      "source": "https://www.esaf.bank.in/wp-content/uploads/2025/08/CORRESPONDENT-BANKS-AS-ON-01-07-2025.pdf",
+      "as_of": "2025-07-01",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002098",
+      "with_an": "ACCT-91002098",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    },
+    {
+      "currency": "EUR",
+      "correspondent": "Landesbank Baden-Württemberg, Frankfurt",
+      "int_bic": "SOLADESTXXX",
+      "source": "https://www.esaf.bank.in/wp-content/uploads/2025/08/CORRESPONDENT-BANKS-AS-ON-01-07-2025.pdf",
+      "as_of": "2025-07-01",
+      "status": "unverified",
+      "bic_only": false,
+      "terms_inferred": true,
+      "nostro": "ACCT-91002099",
+      "with_an": "ACCT-91002099",
+      "charge_code": "SHA",
+      "value_date": "spot"
+    }
+  ],
+  "admitted_record_digest": "4e9bc3065ad5589b6a0d93a7cfe267b162155edfef1a36c755ba0e33484f3925"
+}

@@ -1,0 +1,22 @@
+{
+  "source_url": "https://www.esaf.bank.in/wp-content/uploads/2025/08/CORRESPONDENT-BANKS-AS-ON-01-07-2025.pdf",
+  "retrieved_on": "2026-09-14",
+  "source_snapshot": {
+    "published_as_of": "2025-07-01",
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false,
+    "published_route_count": 11,
+    "admitted_route_count": 3
+  },
+  "beneficiary": {
+    "bic": "ESFAINBBXXX",
+    "name": "ESAF Small Finance Bank Limited",
+    "address": "ESAF Bhavan, Mannuthy, Thrissur, Kerala, India"
+  },
+  "routes": [
+    {"currency": "AED", "int_bic": "BOMLAEADXXX", "account_mask": "ACCT-91002098"},
+    {"currency": "EUR", "int_bic": "SOLADESTXXX", "account_mask": "ACCT-91002099"},
+    {"currency": "USD", "int_bic": "MSHQUS33XXX", "account_mask": "ACCT-91002097"}
+  ],
+  "normalization_note": "The official schedule publishes eleven account-backed correspondent rows. This admission takes the three routes that fit the remaining India-region mask slots; published account identifiers are not committed and are represented by reserved ACCT placeholders. SHA and spot are inferred because the schedule does not publish settlement terms."
+}
