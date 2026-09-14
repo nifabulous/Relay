@@ -1548,8 +1548,8 @@ def _validate_consolidation_payload(payload: object, path: Path) -> list[list]:
             r"[A-Z0-9]{11}", record[3]
         ):
             raise ValueError(f"{path}.ssi_records[{index}]: expected canonical BIC11 values")
-        if record[11] != "unverified" or record[12] is not None:
-            raise ValueError(f"{path}.ssi_records[{index}]: must remain unverified")
+        if record[11] not in {"unverified", "archived"} or record[12] is not None:
+            raise ValueError(f"{path}.ssi_records[{index}]: must remain non-published")
         if not isinstance(record[13], bool) or not isinstance(record[14], bool):
             raise ValueError(f"{path}.ssi_records[{index}]: invalid safety flags")
         if record[13] and any(record[pos] is not None for pos in range(5, 9)):
