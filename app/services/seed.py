@@ -1134,9 +1134,20 @@ def _load_ssi_batch32_groups():
 _SSI_BATCH32_GROUPS = _load_ssi_batch32_groups()
 
 _SSI_CONSOLIDATION_DATA_FILES = (
-    "seed_ssi_consolidation_1.json",
-    "seed_ssi_consolidation_2.json",
-    "seed_ssi_consolidation_3.json",
+    "seed_ssi_consolidation_1_1.json",
+    "seed_ssi_consolidation_1_2.json",
+    "seed_ssi_consolidation_1_3.json",
+    "seed_ssi_consolidation_2_1.json",
+    "seed_ssi_consolidation_2_2.json",
+    "seed_ssi_consolidation_2_3.json",
+    "seed_ssi_consolidation_2_4.json",
+    "seed_ssi_consolidation_2_5.json",
+    "seed_ssi_consolidation_2_6.json",
+    "seed_ssi_consolidation_3_1.json",
+    "seed_ssi_consolidation_3_2.json",
+    "seed_ssi_consolidation_3_3.json",
+    "seed_ssi_consolidation_3_4.json",
+    "seed_ssi_consolidation_3_5.json",
     "seed_ssi_consolidation_4.json",
 )
 
@@ -1144,11 +1155,52 @@ _SSI_CONSOLIDATION_DATA_FILES = (
 def _load_ssi_consolidation_data():
     banks = []
     records = []
+    seen_bics = set()
+    seen_routes = set()
     for filename in _SSI_CONSOLIDATION_DATA_FILES:
         with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
             payload = json.load(handle)
-        banks.extend(tuple(bank) for bank in payload["banks"])
-        records.extend(tuple(record) for record in payload["ssi_records"])
+        allowed_keys = {"source_prs", "superseded_prs", "banks", "ssi_records"}
+        if not isinstance(payload, dict) or set(payload) - allowed_keys:
+            raise ValueError(f"{filename}: invalid consolidation ledger object")
+        source_prs = payload.get("source_prs")
+        if (
+            not isinstance(source_prs, list)
+            or any(not isinstance(pr, int) or pr < 1 for pr in source_prs)
+            or len(source_prs) != len(set(source_prs))
+        ):
+            raise ValueError(f"{filename}.source_prs: expected a list")
+        if not isinstance(payload.get("banks"), list):
+            raise ValueError(f"{filename}.banks: expected a list")
+        if not isinstance(payload.get("ssi_records"), list):
+            raise ValueError(f"{filename}.ssi_records: expected a list")
+        for index, bank in enumerate(payload["banks"]):
+            if not isinstance(bank, list) or len(bank) != 5 or not all(
+                isinstance(value, str) and value.strip() for value in bank
+            ):
+                raise ValueError(f"{filename}.banks[{index}]: expected five strings")
+            if len(bank[0]) != 11 or not bank[0].isalnum() or bank[0] in seen_bics:
+                raise ValueError(f"{filename}.banks[{index}]: invalid or duplicate BIC")
+            seen_bics.add(bank[0])
+            banks.append(tuple(bank))
+        for index, record in enumerate(payload["ssi_records"]):
+            if not isinstance(record, list) or len(record) != 15:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected 15 fields")
+            if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
+            if len(record[0]) != 11 or len(record[3]) != 11:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
+            if record[11] not in {"unverified", "archived"} or record[12] is not None:
+                raise ValueError(f"{filename}.ssi_records[{index}]: must remain non-published")
+            if not isinstance(record[13], bool) or not isinstance(record[14], bool):
+                raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
+            if record[13] and any(record[pos] is not None for pos in range(5, 9)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            route_key = (record[0], record[2], record[3])
+            if route_key in seen_routes:
+                raise ValueError(f"{filename}.ssi_records[{index}]: duplicate route key")
+            seen_routes.add(route_key)
+            records.append(tuple(record))
     return banks, records
 
 
