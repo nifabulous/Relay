@@ -35816,7 +35816,8 @@
           ],
           "admitted_record_digest": "23aa8cb4924bc5592f3e3c8ccd8d91b69170fdb6480736ad5fbb8b5e86ec1806"
         },
-        {"bic8":"NDEADKKK","manifest_file":"regions_batch5_banks_1_ndeadkkk.json"}
+        {"bic8":"NDEADKKK","manifest_file":"regions_batch5_banks_1_ndeadkkk.json"},
+        {"bic8":"ALBADKKK","manifest_file":"regions_batch34_banks_1_albadkkk.json"}
       ]
     },
     {

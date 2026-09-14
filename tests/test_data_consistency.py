@@ -2980,7 +2980,8 @@ class TestNorthEastAfricaSsiCoverage:
 # ---- autopilot-generated coverage tests: denmark ----
 DENMARK_SSI_COVERAGE = [
     ("DNBADKKXXXX", "DNB Bank ASA, Copenhagen Branch", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
-    ('NDEADKKKXXX', 'Nordea Danmark, filial af Nordea Bank Abp, Finland', {'AED', 'AUD', 'BDT', 'BGN', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'KZT', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ("NDEADKKKXXX", "Nordea Danmark, filial af Nordea Bank Abp, Finland", {"AED", "AUD", "BDT", "BGN", "BHD", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EGP", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "KZT", "LKR", "MAD", "MXN", "NOK", "NZD", "PEN", "PHP", "PKR", "PLN", "QAR", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("ALBADKKKXXX", "AL Sydbank A/S", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
 ]
 
 class TestDenmarkSsiCoverage:
@@ -3008,7 +3009,6 @@ class TestDenmarkSsiCoverage:
     def test_denmark_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("denmark", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: denmark ----
-
 # ---- autopilot-generated coverage tests: southern-africa ----
 SOUTHERN_AFRICA_SSI_COVERAGE = [
     ("FIRNZAJJXXX", "FirstRand Bank (FNB)", {"AUD", "CHF", "EUR", "GBP", "USD"}),

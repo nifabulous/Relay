@@ -1,0 +1,40 @@
+[
+  [
+    "ALBADKKKXXX",
+    "AL Sydbank A/S",
+    "https://www.al-bank.dk/en/documents/om-banken/corporate-governance/standard-settlement-instructions",
+    "2025-12-16",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    true,
+    false,
+    [
+      "AUD|DABADKKK|Danske Bank, Copenhagen|",
+      "CAD|DABADKKK|Danske Bank, Copenhagen|",
+      "CHF|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "CNY|ABOCCNBJ090|Agricultural Bank of China Ltd., Shanghai|",
+      "CZK|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "DKK|DABADKKK|Danske Bank, Copenhagen|",
+      "DKK|NDEADKKK|Nordea Bank Denmark, Copenhagen|",
+      "DKK|DKNBDKKK|Danmarks Nationalbank, Copenhagen|",
+      "EUR|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "GBP|NWBKGB2L|National Westminster Bank, London|",
+      "HKD|DABADKKK|Danske Bank, Copenhagen|",
+      "HUF|DABADKKK|Danske Bank, Copenhagen|",
+      "INR|SCBLINBB|Standard Chartered Bank, Mumbai|",
+      "JPY|DABADKKK|Danske Bank, Copenhagen|",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|",
+      "NZD|ASBBNZ2A|ASB Bank, Auckland|",
+      "PLN|BPKOPLPW|PKO Bank Polski SA, Warszawa|",
+      "RON|DABADKKK|Danske Bank, Copenhagen|",
+      "SEK|SWEDSESS|Swedbank, Stockholm|",
+      "SGD|DABADKKK|Danske Bank, Copenhagen|",
+      "THB|BKKBTHBK|Bangkok Bank, Bangkok|",
+      "TRY|DEUTDEFF|Deutsche Bank, Frankfurt|",
+      "USD|CHASUS33|JPMorgan Chase Bank, New York|",
+      "ZAR|FIRNZAJJ|FirstRand Bank Ltd., Johannesburg|"
+    ]
+  ]
+]
