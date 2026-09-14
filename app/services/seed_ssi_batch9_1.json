@@ -1,0 +1,35 @@
+[
+  [
+    "EVBKUS3MXXX",
+    "EverBank, N.A.",
+    "https://www.everbank.com/media_library/tiaabank/_shared/pdf/fc-wire-instructions.pdf",
+    "2026-09-13",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AUD|ANZBAU3M|ANZ Banking Group Limited, Melbourne|91005431",
+      "CAD|ROYCCAT2|Royal Bank of Canada, Toronto|91005432",
+      "CHF|UBSWCHZH80A|UBS AG, Zurich|91005433",
+      "CNH|UBSWHKHH|UBS AG, Hong Kong|91005434",
+      "CZK|BACXCZPP|UniCredit Bank, Prague|91005435",
+      "DKK|NDEADKKK|Nordea Bank Danmark, Copenhagen|91005436",
+      "EUR|DEUTDEFF|Deutsche Bank AG, Frankfurt|91005437",
+      "GBP|BARCGB22|Barclays Bank PLC, London|91005438",
+      "HKD|UBSWHKHH|UBS AG, Hong Kong|91005439",
+      "HUF|CITIHUHX|Citibank N.A., Budapest|91005440",
+      "JPY|UBSWJPJT|UBS AG, Tokyo|91005441",
+      "MXN|CITIUS33MER|Citibank N.A., New York|91005442",
+      "NOK|DNBANOKK|DNB Bank ASA, Oslo|91005443",
+      "NZD|ANZBNZ22058|ANZ Bank New Zealand, Wellington|91005444",
+      "PLN|PKOPPLPW|Bank Pekao SA, Warsaw|91005445",
+      "SEK|ESSESESS|Skandinaviska Enskilda Banken, Stockholm|91005446",
+      "SGD|UBSWSGSG|UBS AG, Singapore|91005447",
+      "USD|EVBKUS3M|EverBank World Markets, Jacksonville (Swift/Fedwire)|91005448",
+      "ZAR|FIRNZAJJ|FirstRand Bank, Johannesburg|91005449"
+    ]
+  ]
+]
