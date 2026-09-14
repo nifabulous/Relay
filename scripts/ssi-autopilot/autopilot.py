@@ -1392,6 +1392,41 @@ def _expand_batch7_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _expand_batch16_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-16 ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch16_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        note = f"{source.rstrip()} {real_note}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(
+                intermediary_bic,
+                "batch16 intermediary BIC",
+            )
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
@@ -1421,13 +1456,14 @@ def _ssi_rows(source: str) -> list[tuple]:
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records"}
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch16_records"}
             ):
                 rows.extend({
                     "_ssi_batch4_records": _expand_batch4_source_rows,
                     "_ssi_batch5_records": _expand_batch5_source_rows,
                     "_ssi_batch6_records": _expand_batch6_source_rows,
                     "_ssi_batch7_records": _expand_batch7_source_rows,
+                    "_ssi_batch16_records": _expand_batch16_source_rows,
                 }[element.value.func.id]())
                 continue
             if not isinstance(element, ast.Tuple):
@@ -1844,7 +1880,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
                 and isinstance(e, ast.Starred)
                 and isinstance(e.value, ast.Call)
                 and isinstance(e.value.func, ast.Name)
-                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records"}
+                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch16_records"}
             ):
                 continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:

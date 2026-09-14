@@ -39,7 +39,6 @@
             "ZAR",
             "SGD",
             "HKD",
-            "CHF",
             "NOK",
             "SEK",
             "DKK",
@@ -14892,6 +14891,48 @@
         {"bic8":"RLNWATWW","manifest_file":"regions_batch6_banks_3_rlnwatww.json"},
         {"bic8":"OBKLAT2L","manifest_file":"regions_batch6_banks_3_obklat2l.json"},
         {"bic8":"VKBLAT2L","manifest_file":"regions_batch6_banks_3_vkblat2l.json"},
+        {
+          "bic8": "RZOOAT2L",
+          "name": "Raiffeisenlandesbank Oberoesterreich AG",
+          "country": "AT",
+          "currencies": [
+            "AED",
+            "CNY",
+            "EUR",
+            "ILS",
+            "INR",
+            "KWD",
+            "MXN",
+            "MYR",
+            "RSD",
+            "RUB",
+            "SAR",
+            "SGD",
+            "TRY",
+            "USD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "raiffeisen.at"
+          ],
+          "admitted_records": [
+            {"currency":"AED","correspondent":"UBS Switzerland AG (via Standard Chartered Bank Dubai)","int_bic":"UBSWCHZH80A","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003421","with_an":"ACCT-91003421","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"CNY","correspondent":"Industrial and Commercial Bank of China Singapore","int_bic":"ICBKSGSGCLR","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003422","with_an":"ACCT-91003422","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"EUR","correspondent":"Commerzbank AG Frankfurt (non-TARGET)","int_bic":"COBADEFF","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003424","with_an":"ACCT-91003424","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"ILS","correspondent":"UBS Switzerland AG (via Bank Leumi Tel-Aviv)","int_bic":"UBSWCHZH80A","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003425","with_an":"ACCT-91003425","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"INR","correspondent":"ICICI Bank Limited Mumbai","int_bic":"ICICINBBNRI","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003426","with_an":"ACCT-91003426","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"KWD","correspondent":"The Bank of New York Mellon New York (via National Bank of Kuwait)","int_bic":"IRVTUS3N","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003427","with_an":"ACCT-91003427","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"MYR","correspondent":"Raiffeisen Bank International AG Vienna (via HSBC Bank Kuala Lumpur)","int_bic":"RZBAATWW","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003428","with_an":"ACCT-91003428","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"MXN","correspondent":"The Bank of New York Mellon New York (via BBVA Bancomer Mexico)","int_bic":"IRVTUS3N","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003429","with_an":"ACCT-91003429","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RUB","correspondent":"Raiffeisen Bank International AG Vienna (via AO Raiffeisenbank Moscow)","int_bic":"RZBAATWW","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003430","with_an":"ACCT-91003430","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"RSD","correspondent":"Raiffeisen Bank International AG Vienna (via Raiffeisenbank Belgrade)","int_bic":"RZBAATWW","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003431","with_an":"ACCT-91003431","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"SAR","correspondent":"UBS Switzerland AG (via The Saudi National Bank)","int_bic":"UBSWCHZH80A","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003432","with_an":"ACCT-91003432","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"SGD","correspondent":"The Bank of New York Mellon New York (via DBS Bank Singapore)","int_bic":"IRVTUS3N","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003433","with_an":"ACCT-91003433","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"TRY","correspondent":"The Bank of New York Mellon New York (via Turkiye Garanti Bankasi Istanbul)","int_bic":"IRVTUS3N","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003434","with_an":"ACCT-91003434","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false},
+            {"currency":"USD","correspondent":"The Bank of New York Mellon New York","int_bic":"IRVTUS3N","source":"https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf","as_of":"2026-04-01","status":"unverified","nostro":"ACCT-91003435","with_an":"ACCT-91003435","charge_code":"SHA","value_date":"spot","terms_inferred":true,"bic_only":false}
+          ],
+          "admitted_record_digest": "c0474d397da8ad94f2113f6c879f89ca577ec364fb7bd6f55c21830ad4781c76"
+        },
         {"bic8":"ICRAITRR","manifest_file":"regions_batch6_banks_3_icraitrr.json"}
       ]
     },

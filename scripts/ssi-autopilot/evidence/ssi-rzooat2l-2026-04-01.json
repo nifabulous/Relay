@@ -1,0 +1,41 @@
+{
+  "source": "https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf",
+  "as_of": "2026-04-01",
+  "retrieved_on": "2026-09-14",
+  "published_label": "Authorized Correspondent Banks and Settlement Instructions, effective 1 April 2026",
+  "beneficiary_bic": "RZOOAT2L",
+  "region": "western-europe",
+  "region_masked_block": 91003400,
+  "scope": {
+    "included_route_count": 14,
+    "source_route_count": 35,
+    "new_route_count": 14,
+    "previously_seeded_route_count": 21
+  },
+  "masking": {
+    "algorithm": "reserved sequential token per normalized source account",
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "normalization": [
+    "Only current-document currency/intermediary combinations absent from the archived 2025 batch were admitted, preventing duplicate beneficiary/currency/intermediary keys; the reserved 91003423 token remains unused for the already-seeded CHF combination.",
+    "Multi-hop rows retain the final account-with-institution BIC in int_bic and identify the published intermediary in the correspondent label.",
+    "SHA/spot are conservative application metadata because the treasury PDF publishes accounts but no charge/value terms."
+  ],
+  "routes": [
+    {"currency":"AED","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91003421","with_an_mask":"ACCT-91003421"},
+    {"currency":"CNY","int_bic":"ICBKSGSGCLR","nostro_mask":"ACCT-91003422","with_an_mask":"ACCT-91003422"},
+    {"currency":"EUR","int_bic":"COBADEFF","nostro_mask":"ACCT-91003424","with_an_mask":"ACCT-91003424"},
+    {"currency":"ILS","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91003425","with_an_mask":"ACCT-91003425"},
+    {"currency":"INR","int_bic":"ICICINBBNRI","nostro_mask":"ACCT-91003426","with_an_mask":"ACCT-91003426"},
+    {"currency":"KWD","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91003427","with_an_mask":"ACCT-91003427"},
+    {"currency":"MYR","int_bic":"RZBAATWW","nostro_mask":"ACCT-91003428","with_an_mask":"ACCT-91003428"},
+    {"currency":"MXN","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91003429","with_an_mask":"ACCT-91003429"},
+    {"currency":"RUB","int_bic":"RZBAATWW","nostro_mask":"ACCT-91003430","with_an_mask":"ACCT-91003430"},
+    {"currency":"RSD","int_bic":"RZBAATWW","nostro_mask":"ACCT-91003431","with_an_mask":"ACCT-91003431"},
+    {"currency":"SAR","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91003432","with_an_mask":"ACCT-91003432"},
+    {"currency":"SGD","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91003433","with_an_mask":"ACCT-91003433"},
+    {"currency":"TRY","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91003434","with_an_mask":"ACCT-91003434"},
+    {"currency":"USD","int_bic":"IRVTUS3N","nostro_mask":"ACCT-91003435","with_an_mask":"ACCT-91003435"}
+  ]
+}

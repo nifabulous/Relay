@@ -1,0 +1,30 @@
+[
+  [
+    "RZOOAT2LXXX",
+    "Raiffeisenlandesbank Oberoesterreich AG",
+    "Source: https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf (as of 2026-04-01). ",
+    "2026-04-01",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|UBSWCHZH80A|UBS Switzerland AG (via Standard Chartered Bank Dubai)|91003421",
+      "CNY|ICBKSGSGCLR|Industrial and Commercial Bank of China Singapore|91003422",
+      "EUR|COBADEFF|Commerzbank AG Frankfurt (non-TARGET)|91003424",
+      "ILS|UBSWCHZH80A|UBS Switzerland AG (via Bank Leumi Tel-Aviv)|91003425",
+      "INR|ICICINBBNRI|ICICI Bank Limited Mumbai|91003426",
+      "KWD|IRVTUS3N|The Bank of New York Mellon New York (via National Bank of Kuwait)|91003427",
+      "MYR|RZBAATWW|Raiffeisen Bank International AG Vienna (via HSBC Bank Kuala Lumpur)|91003428",
+      "MXN|IRVTUS3N|The Bank of New York Mellon New York (via BBVA Bancomer Mexico)|91003429",
+      "RUB|RZBAATWW|Raiffeisen Bank International AG Vienna (via AO Raiffeisenbank Moscow)|91003430",
+      "RSD|RZBAATWW|Raiffeisen Bank International AG Vienna (via Raiffeisenbank Belgrade)|91003431",
+      "SAR|UBSWCHZH80A|UBS Switzerland AG (via The Saudi National Bank)|91003432",
+      "SGD|IRVTUS3N|The Bank of New York Mellon New York (via DBS Bank Singapore)|91003433",
+      "TRY|IRVTUS3N|The Bank of New York Mellon New York (via Turkiye Garanti Bankasi Istanbul)|91003434",
+      "USD|IRVTUS3N|The Bank of New York Mellon New York|91003435"
+    ]
+  ]
+]
