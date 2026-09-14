@@ -5910,6 +5910,7 @@
         },
         {"bic8":"EXBKBDDH","name":"Export Import Bank of Bangladesh","country":"BD","currencies":["CAD","CHF","CNY","EUR","GBP","HKD","JPY","SAR","USD"],"seedable":true,"source_domains":["eximbankbd.com"],"admitted_record_digest":"bc028c56ab0385f248142c0437d314b682984fc19df54db7b03445326f3cac82","compact_records_file":"regions_batch4_records_1.json"},
         {"bic8":"SOIVBDDH","name":"Social Islami Bank PLC","country":"BD","currencies":["AED","CHF","CNY","EUR","GBP","JPY","SAR","USD"],"seedable":true,"source_domains":["siblbd.com"],"admitted_record_digest":"89ce4044ed032d1f2d7a84eac3fa75d652281d8a7db9c41eca9702025145dcf6","compact_records_file":"regions_batch4_records_3.json"},
+        {"bic8":"MBLBBDDH","name":"Mercantile Bank PLC","country":"BD","currencies":["AED","CNY","EUR","GBP","JPY","SAR","USD"],"seedable":true,"source_domains":["mblbd.com"],"admitted_record_digest":"824b4ec17831cc44eb785781028cc693c1c54990d657c3487306470a6818364a","compact_records_file":"regions_batch30_records_mblbbddh.json"},
         {"bic8":"MGBLBDDH","manifest_file":"regions_batch5_banks_1_mgblbddh.json"},
         {"bic8":"PRBLBDDH","manifest_file":"regions_batch5_banks_1_prblbddh.json"},
         {"bic8":"SDBLBDDH","manifest_file":"regions_batch6_banks_1_sdblbddh.json"}

@@ -1,0 +1,22 @@
+{
+  "MBLBBDDH": [
+    {
+      "source": "https://www.mblbd.com/home/standard_settlement",
+      "as_of": "2026-09-14",
+      "status": "unverified",
+      "charge_code": "SHA",
+      "value_date": "spot",
+      "bic_only": false,
+      "terms_inferred": true,
+      "rows": [
+        "AED|Mashreq Bank PSC, UAE|BOMLAEAD|91001813|91001813",
+        "CNY|Bank of Huzhou Co., Ltd., Huzhou, China|BKHZCNBH|91001814|91001814",
+        "EUR|Commerz Bank, Frankfurt|COBADEFF|91001811|91001811",
+        "GBP|Standard Chartered Bank, London|SCBLGB2L|91001810|91001810",
+        "JPY|Standard Chartered Bank, Tokyo|SCBLJPJT|91001812|91001812",
+        "SAR|Emirates NBD Bank (P.J.S.C.), Saudi Arabia|EBILSARI|91001815|91001815",
+        "USD|J.P. Morgan Chase Bank N.A.|CHASUS33|91001809|91001809"
+      ]
+    }
+  ]
+}

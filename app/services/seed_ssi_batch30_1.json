@@ -1,0 +1,23 @@
+[
+  [
+    "MBLBBDDHXXX",
+    "Mercantile Bank PLC",
+    "https://www.mblbd.com/home/standard_settlement",
+    "2026-09-14",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "USD|CHASUS33|J.P. Morgan Chase Bank N.A.|91001809",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|91001810",
+      "EUR|COBADEFF|Commerz Bank, Frankfurt|91001811",
+      "JPY|SCBLJPJT|Standard Chartered Bank, Tokyo|91001812",
+      "AED|BOMLAEAD|Mashreq Bank PSC, UAE|91001813",
+      "CNY|BKHZCNBH|Bank of Huzhou Co., Ltd., Huzhou, China|91001814",
+      "SAR|EBILSARI|Emirates NBD Bank (P.J.S.C.), Saudi Arabia|91001815"
+    ]
+  ]
+]
