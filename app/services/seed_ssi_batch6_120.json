@@ -1,0 +1,22 @@
+[
+  [
+    "IOBAINBBXXX",
+    "Indian Overseas Bank",
+    "Source: https://www.iob.bank.in/en/nostro (as of 2026-08-06) BIC-level list — no account numbers published; not a selectable settlement instruction. ",
+    "2026-08-06",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CAD|BOFMCAT2|Bank of Montreal, Canada|",
+      "DKK|DABADKKK|Deutsche Bank AG, Frankfurt (credit-only route)|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "HKD|IOBAHKHH|Indian Overseas Bank, Hong Kong|",
+      "JPY|SMBCJPJT|Sumitomo Mitsui Banking Corporation, Tokyo|",
+      "NOK|DNBANOKK|Den Norske Bank ASA, Oslo|"
+    ]
+  ]
+]
