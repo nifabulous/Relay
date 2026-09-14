@@ -1855,7 +1855,7 @@ INDIA_SSI_COVERAGE = [
     ("BARBINBBXXX", "Bank of Baroda", {"EUR", "GBP", "JPY", "USD"}),
     ("BCMLINBBXXX", "Bharat Cooperative Bank (Mumbai) Ltd", {"AED", "AUD", "CAD", "EUR", "GBP", "JPY", "SGD", "USD"}),
     ("CSYBIN55XXX", "CSB Bank Limited", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "SGD", "USD"}),
-    ("FDRLINBBXXX", "The Federal Bank Ltd", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "JPY", "NOK", "NZD", "SAR", "SGD", "USD"}),
+    ("FDRLINBBXXX", "The Federal Bank Ltd", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "JPY", "NOK", "NZD", "SAR", "SGD", "USD", "AUD"}),
     ("INDBINBBXXX", "IndusInd Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "JPY", "NOK", "NZD", "QAR", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
     ("IOBAINBBXXX", "Indian Overseas Bank", {"AED", "AUD", "CHF", "DKK", "EUR", "NZD", "SEK", "SGD", "USD"}),
     ("MAHBINBBXXX", "Bank of Maharashtra", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
