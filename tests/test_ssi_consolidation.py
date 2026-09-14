@@ -2,9 +2,19 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base
 from app.models import SSI
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
-from app.services.seed import _SSI_CONSOLIDATION_DATA_FILES, BANKS, SSI_RECORDS
+from app.services.seed import (
+    _SSI_CONSOLIDATION_DATA_FILES,
+    BANKS,
+    SSI_RECORDS,
+    seed_if_empty,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
@@ -12,6 +22,19 @@ LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json
 
 def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
+
+
+def _production_seeded_session():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine, future=True)()
+    seed_if_empty(session)
+    return engine, session
 
 
 def _row_to_ssi(row):
@@ -43,6 +66,7 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     assert [pr for payload in payloads for pr in payload["source_prs"]] == list(
         range(103, 113)
     )
+    assert sum(len(payload["ssi_records"]) for payload in payloads) == 110
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
     assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
@@ -60,7 +84,8 @@ def test_consolidated_rows_are_informational_until_independently_verified():
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
 
 
-def test_consolidated_rows_cannot_leak_through_the_production_selector(db_session_clean):
+def test_consolidated_rows_cannot_leak_through_the_production_selector():
+    engine, db_session_clean = _production_seeded_session()
     new_bics_by_pair = {}
     for payload in _payloads():
         for row in payload["ssi_records"]:
@@ -72,6 +97,7 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector(db_sessio
             SSI.currency == currency,
             SSI.intermediary_bic.in_(new_bics),
         ).all()
+        assert persisted
         assert {row.intermediary_bic for row in persisted} == new_bics
         assert all(not _is_routable_ssi(row) for row in persisted)
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
@@ -99,6 +125,8 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector(db_sessio
         suggestion.bic
         for suggestion in suggest_from_ssi(db_session_clean, "FICOUS44XXX", "USD", "US")
     ] == ["BOFAUS3NXXX"]
+    db_session_clean.close()
+    engine.dispose()
 
 
 def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
