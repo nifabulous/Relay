@@ -73,7 +73,6 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         134,
         135,
         136,
-        137,
         138,
         139,
         140,
@@ -84,7 +83,7 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     ]
     assert [
         pr for payload in payloads for pr in payload.get("superseded_prs", [])
-    ] == [124]
+    ] == [124, 137]
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
     assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
@@ -170,11 +169,9 @@ def test_final_batch_applies_the_reviewed_payment_data_corrections():
 
 def test_masked_account_comments_are_resolved_in_the_final_batch():
     final = _batch_records(4)
-    enbd = [row for row in final if row[0] == "EBILAEADXXX"]
-    assert enbd
-    assert all(row[5:9] == [None, None, None, None] for row in enbd)
-    assert all(row[13] is True and row[14] is False for row in enbd)
+    assert not any(row[0] == "EBILAEADXXX" for row in final)
 
     axis = [row for row in final if row[0] == "AXISINBBXXX"]
     assert axis
-    assert all(row[6] is None for row in axis)
+    assert all(row[5:9] == [None, None, None, None] for row in axis)
+    assert all(row[13] is True and row[14] is False for row in axis)

@@ -1,5 +1,6 @@
 {
-  "source_prs": [134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144],
+  "source_prs": [134, 135, 136, 138, 139, 140, 141, 142, 143, 144],
+  "superseded_prs": [137],
   "banks": [
     ["ALBADKKKXXX", "AL Sydbank A/S", "DK", "Aabenraa", "DKK"],
     ["JKBAJOAMXXX", "Jordan Kuwait Bank", "JO", "Amman", "JOD"],
