@@ -1109,6 +1109,17 @@ def _load_ssi_batch9_groups():
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
 
+_SSI_BATCH8_DATA_FILES = ("seed_ssi_batch8_1.json",)
+
+
+def _load_ssi_batch8_groups():
+    groups = []
+    for filename in _SSI_BATCH8_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
 _SSI_BATCH32_DATA_FILES = ("seed_ssi_batch32_1.json",)
 
 
@@ -1121,6 +1132,70 @@ def _load_ssi_batch32_groups():
 
 
 _SSI_BATCH32_GROUPS = _load_ssi_batch32_groups()
+
+_SSI_CONSOLIDATION_DATA_FILES = (
+    "seed_ssi_consolidation_1_1.json",
+    "seed_ssi_consolidation_1_2.json",
+    "seed_ssi_consolidation_1_3.json",
+    "seed_ssi_consolidation_1_4.json",
+)
+
+
+def _load_ssi_consolidation_data():
+    banks = []
+    records = []
+    seen_bics = set()
+    seen_routes = set()
+    for filename in _SSI_CONSOLIDATION_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+        allowed_keys = {"source_prs", "superseded_prs", "banks", "ssi_records"}
+        if not isinstance(payload, dict) or set(payload) - allowed_keys:
+            raise ValueError(f"{filename}: invalid consolidation ledger object")
+        source_prs = payload.get("source_prs")
+        if (
+            not isinstance(source_prs, list)
+            or any(not isinstance(pr, int) or pr < 1 for pr in source_prs)
+            or len(source_prs) != len(set(source_prs))
+        ):
+            raise ValueError(f"{filename}.source_prs: expected a list")
+        if not isinstance(payload.get("banks"), list):
+            raise ValueError(f"{filename}.banks: expected a list")
+        if not isinstance(payload.get("ssi_records"), list):
+            raise ValueError(f"{filename}.ssi_records: expected a list")
+        for index, bank in enumerate(payload["banks"]):
+            if not isinstance(bank, list) or len(bank) != 5 or not all(
+                isinstance(value, str) and value.strip() for value in bank
+            ):
+                raise ValueError(f"{filename}.banks[{index}]: expected five strings")
+            if len(bank[0]) != 11 or not bank[0].isalnum() or bank[0] in seen_bics:
+                raise ValueError(f"{filename}.banks[{index}]: invalid or duplicate BIC")
+            seen_bics.add(bank[0])
+            banks.append(tuple(bank))
+        for index, record in enumerate(payload["ssi_records"]):
+            if not isinstance(record, list) or len(record) != 15:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected 15 fields")
+            if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
+            if len(record[0]) != 11 or len(record[3]) != 11:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
+            if record[11] != "unverified" or record[12] is not None:
+                raise ValueError(f"{filename}.ssi_records[{index}]: must remain unverified")
+            if not isinstance(record[13], bool) or not isinstance(record[14], bool):
+                raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
+            if record[13] and any(record[pos] is not None for pos in range(5, 9)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            route_key = (record[0], record[2], record[3])
+            if route_key in seen_routes:
+                raise ValueError(f"{filename}.ssi_records[{index}]: duplicate route key")
+            seen_routes.add(route_key)
+            records.append(tuple(record))
+    return banks, records
+
+
+_SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
+BANKS.extend(_SSI_CONSOLIDATED_BANKS)
+_SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
 
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
@@ -1272,6 +1347,39 @@ def _ssi_batch9_records():
     return expanded
 
 
+def _ssi_batch8_records():
+    """Expand the review-sized batch-8 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH8_GROUPS:
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 def _ssi_batch32_records():
     """Expand the ESAF Small Finance Bank SSI ledger into canonical seed tuples."""
     expanded = []
@@ -1296,11 +1404,20 @@ def _ssi_batch32_records():
             ))
     return expanded
 
+
+def _ssi_consolidation_records():
+    """Return review-preserving rows consolidated from superseded SSI PRs."""
+    return list(_SSI_CONSOLIDATED_RECORDS)
+
 SSI_RECORDS = [
+    # ---- Consolidated SSI review queue (PRs 103-112) ----
+    *_ssi_consolidation_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
     *_ssi_batch9_records(),
+    # ---- SSI expansion batch 8 (Commercial Bank of Kuwait routes) ----
+    *_ssi_batch8_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
     *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
