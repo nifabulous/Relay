@@ -273,6 +273,22 @@ def test_final_batch_applies_the_reviewed_payment_data_corrections():
     assert all("Danske Bank" in row[4] for row in iob_dkk)
 
 
+def test_jkb_evidence_route_count_matches_the_consolidated_seed():
+    evidence = json.loads(
+        (
+            ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-wave68-jkbajoam-2026-09-14.json"
+        ).read_text()
+    )
+    evidence_keys = {(route["currency"], route["int_bic"]) for route in evidence["routes"]}
+    seeded_keys = {
+        (row[2], row[3]) for row in _batch_records(4) if row[0] == evidence["beneficiary"]["bic"]
+    }
+
+    assert evidence["source_snapshot"]["route_count"] == 33
+    assert len(evidence["routes"]) == len(evidence_keys) == 33
+    assert seeded_keys == evidence_keys
+
+
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(4)
     assert len(records) == 123
