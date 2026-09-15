@@ -325,7 +325,10 @@ def test_existing_database_is_idempotently_backfilled_with_the_fourth_batch():
             country_currency="USD",
         )
     )
+    prior_catalog_row = _row_to_ssi(_batch_records(1)[0])
+    db_session.add(prior_catalog_row)
     db_session.commit()
+    assert db_session.query(SSI).count() == 1
 
     first_result = seed_if_empty(db_session)
     final_keys = {(row[0], row[2], row[3]) for row in _batch_records(4)}

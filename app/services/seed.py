@@ -9004,6 +9004,15 @@ def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     )
 
 
+def _find_existing_ssi_by_route_key(session, beneficiary_bic, currency, intermediary_bic):
+    """Find one catalog row without using table emptiness as an upgrade gate."""
+    return session.query(SSI).filter(
+        SSI.beneficiary_bic == beneficiary_bic,
+        SSI.currency == currency,
+        SSI.intermediary_bic == intermediary_bic,
+    ).one_or_none()
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {
@@ -9090,11 +9099,12 @@ def seed_if_empty(session) -> dict:
             terms_inferred = provenance[4]
         else:
             terms_inferred = False
-        existing = session.query(SSI).filter(
-            SSI.beneficiary_bic == ben_bic,
-            SSI.currency == ccy,
-            SSI.intermediary_bic == int_bic,
-        ).one_or_none()
+        existing = _find_existing_ssi_by_route_key(
+            session,
+            ben_bic,
+            ccy,
+            int_bic,
+        )
         if existing is None:
             seeded = SSI(
                 beneficiary_bic=ben_bic,
