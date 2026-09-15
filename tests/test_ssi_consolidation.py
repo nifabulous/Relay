@@ -119,9 +119,13 @@ def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}
     batch_ledgers = _batch_ledgers(2)
     batch_payloads = _batch_payloads(2)
+    configured_batch_names = {
+        name
+        for name in _SSI_CONSOLIDATION_DATA_FILES
+        if name.startswith("seed_ssi_consolidation_2_")
+    }
 
-    assert {path.name for path in batch_ledgers} == expected_names
-    assert expected_names <= set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert {path.name for path in batch_ledgers} == configured_batch_names == expected_names
     assert not (ROOT / "app" / "services" / "seed_ssi_consolidation_2.json").exists()
     assert sum(len(payload["ssi_records"]) for payload in batch_payloads) == 236
     assert all(tuple(bank) in BANKS for payload in batch_payloads for bank in payload["banks"])
