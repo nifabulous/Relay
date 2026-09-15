@@ -326,9 +326,15 @@ def test_existing_database_is_idempotently_backfilled_with_the_fourth_batch():
         )
     )
     prior_catalog_row = _row_to_ssi(_batch_records(1)[0])
+    corrected_source_row = next(row for row in _batch_records(4) if not row[13])
+    corrected_route = _row_to_ssi(corrected_source_row)
+    corrected_route.intermediary_bank_name = "Operator-corrected intermediary name"
+    corrected_route.intermediary_account = "REAL-INTERMEDIARY-ACCOUNT"
+    corrected_route.beneficiary_account = "REAL-BENEFICIARY-ACCOUNT"
     db_session.add(prior_catalog_row)
+    db_session.add(corrected_route)
     db_session.commit()
-    assert db_session.query(SSI).count() == 1
+    assert db_session.query(SSI).count() == 2
 
     first_result = seed_if_empty(db_session)
     final_keys = {(row[0], row[2], row[3]) for row in _batch_records(4)}
@@ -342,6 +348,18 @@ def test_existing_database_is_idempotently_backfilled_with_the_fourth_batch():
     assert first_result["ssi"] >= len(final_keys)
     assert persisted_keys == final_keys
     assert second_result["ssi"] == 0
+    persisted_correction = (
+        db_session.query(SSI)
+        .filter(
+            SSI.beneficiary_bic == corrected_route.beneficiary_bic,
+            SSI.currency == corrected_route.currency,
+            SSI.intermediary_bic == corrected_route.intermediary_bic,
+        )
+        .one()
+    )
+    assert persisted_correction.intermediary_bank_name == ("Operator-corrected intermediary name")
+    assert persisted_correction.intermediary_account == "REAL-INTERMEDIARY-ACCOUNT"
+    assert persisted_correction.beneficiary_account == "REAL-BENEFICIARY-ACCOUNT"
     assert db_session.query(Bank).filter(Bank.bic == existing_bic).one().bank_name == (
         "Operator-maintained bank name"
     )
