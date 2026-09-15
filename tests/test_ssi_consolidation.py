@@ -2,9 +2,19 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base
 from app.models import SSI
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
-from app.services.seed import _SSI_CONSOLIDATION_DATA_FILES, BANKS, SSI_RECORDS
+from app.services.seed import (
+    _SSI_CONSOLIDATION_DATA_FILES,
+    BANKS,
+    SSI_RECORDS,
+    seed_if_empty,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
@@ -14,14 +24,30 @@ def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
 
 
-def _batch_records(batch):
+def _batch_ledgers(batch):
     prefix = f"seed_ssi_consolidation_{batch}_"
-    return [
-        row
-        for path, payload in zip(LEDGERS, _payloads())
-        if path.name.startswith(prefix)
-        for row in payload["ssi_records"]
-    ]
+    return [path for path in LEDGERS if path.name.startswith(prefix)]
+
+
+def _batch_payloads(batch):
+    return [json.loads(path.read_text()) for path in _batch_ledgers(batch)]
+
+
+def _batch_records(batch):
+    return [row for payload in _batch_payloads(batch) for row in payload["ssi_records"]]
+
+
+def _production_seeded_session():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine, future=True)()
+    seed_if_empty(session)
+    return engine, session
 
 
 def _row_to_ssi(row):
@@ -81,9 +107,8 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         143,
         144,
     ]
-    assert [
-        pr for payload in payloads for pr in payload.get("superseded_prs", [])
-    ] == [124, 137]
+    assert [pr for payload in payloads for pr in payload.get("superseded_prs", [])] == [124, 137]
+    assert len(_batch_records(1)) == 110
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
     assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
@@ -95,24 +120,91 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     )
 
 
+def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
+    expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}
+    batch_ledgers = _batch_ledgers(2)
+    batch_payloads = _batch_payloads(2)
+
+    assert {path.name for path in batch_ledgers} == expected_names
+    assert expected_names <= set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert not (ROOT / "app" / "services" / "seed_ssi_consolidation_2.json").exists()
+    assert sum(len(payload["ssi_records"]) for payload in batch_payloads) == 236
+    assert all(tuple(bank) in BANKS for payload in batch_payloads for bank in payload["banks"])
+    assert all(
+        tuple(row) in SSI_RECORDS for payload in batch_payloads for row in payload["ssi_records"]
+    )
+
+
 def test_consolidated_rows_are_informational_until_independently_verified():
     records = [row for payload in _payloads() for row in payload["ssi_records"]]
     assert records
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
 
 
-def test_consolidated_rows_cannot_leak_through_the_production_selector(db_session_clean):
+def test_masked_accounts_are_not_reused_by_different_beneficiaries():
+    account_owners = {}
+    for payload in _payloads():
+        for row in payload["ssi_records"]:
+            for account in row[5:7]:
+                if account:
+                    previous_owner = account_owners.setdefault(account, row[0])
+                    assert previous_owner == row[0], (
+                        f"{account} is shared by {previous_owner} and {row[0]}"
+                    )
+
+
+def test_third_consolidation_batch_is_loaded_and_fails_closed():
+    records = _batch_records(3)
+    assert len(records) == 168
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+    engine, db_session_clean = _production_seeded_session()
+    for beneficiary_bic, currency in {(row[0], row[2]) for row in records}:
+        new_bics = {row[3] for row in records if row[0] == beneficiary_bic and row[2] == currency}
+        persisted = (
+            db_session_clean.query(SSI)
+            .filter(
+                SSI.beneficiary_bic == beneficiary_bic,
+                SSI.currency == currency,
+                SSI.intermediary_bic.in_(new_bics),
+            )
+            .all()
+        )
+        assert {row.intermediary_bic for row in persisted} == new_bics
+        selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
+        assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
+    db_session_clean.close()
+    engine.dispose()
+
+
+def test_spuerkeess_evidence_does_not_commit_account_fingerprints():
+    evidence_path = (
+        ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-wave55-bceelull-2026-01-12.json"
+    )
+    evidence = json.loads(evidence_path.read_text())
+
+    assert evidence["masking"]["source_account_fingerprints_committed"] is False
+    assert all("source_account_fingerprint" not in route for route in evidence["routes"])
+
+
+def test_consolidated_rows_cannot_leak_through_the_production_selector():
+    engine, db_session_clean = _production_seeded_session()
     new_bics_by_pair = {}
     for payload in _payloads():
         for row in payload["ssi_records"]:
             new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
 
     for (beneficiary_bic, currency), new_bics in new_bics_by_pair.items():
-        persisted = db_session_clean.query(SSI).filter(
-            SSI.beneficiary_bic == beneficiary_bic,
-            SSI.currency == currency,
-            SSI.intermediary_bic.in_(new_bics),
-        ).all()
+        persisted = (
+            db_session_clean.query(SSI)
+            .filter(
+                SSI.beneficiary_bic == beneficiary_bic,
+                SSI.currency == currency,
+                SSI.intermediary_bic.in_(new_bics),
+            )
+            .all()
+        )
+        assert persisted
         assert {row.intermediary_bic for row in persisted} == new_bics
         assert all(not _is_routable_ssi(row) for row in persisted)
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
@@ -142,13 +234,13 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector(db_sessio
         suggestion.bic
         for suggestion in suggest_from_ssi(db_session_clean, "FICOUS44XXX", "USD", "US")
     ] == ["BOFAUS3NXXX"]
+    db_session_clean.close()
+    engine.dispose()
 
 
 def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
     assert not any(
-        row[0] == "COMBKWKWXXX"
-        and row[2] == "AUD"
-        and row[3] == "IRVTUS3NXXX"
+        row[0] == "COMBKWKWXXX" and row[2] == "AUD" and row[3] == "IRVTUS3NXXX"
         for row in SSI_RECORDS
     )
 
@@ -156,6 +248,7 @@ def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
 def test_final_batch_applies_the_reviewed_payment_data_corrections():
     final = _batch_records(4)
 
+    assert len(final) == 123
     assert not any(row[3] == "PNBPUS33XXX" for row in final)
     corrected_wells_fargo = [row for row in final if row[3] == "PNBPUS3NXXX"]
     assert corrected_wells_fargo

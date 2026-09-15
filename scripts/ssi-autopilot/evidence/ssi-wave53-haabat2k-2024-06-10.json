@@ -19,20 +19,20 @@
     "bic_only_route_count": 0,
     "account_backed_route_count": 14,
     "routes": [
-      {"currency":"AUD","int_bic":"RZBAATWW","field56":"ANZBAU3M","nostro_mask":"ACCT-91003421","with_an_mask":"ACCT-91003421"},
-      {"currency":"CAD","int_bic":"RZBAATWW","field56":"CIBCCATT","nostro_mask":"ACCT-91003422","with_an_mask":"ACCT-91003422"},
-      {"currency":"CHF","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91003423","with_an_mask":"ACCT-91003423"},
-      {"currency":"CZK","int_bic":"RZBAATWW","field56":"RZBCCZPP","nostro_mask":"ACCT-91003424","with_an_mask":"ACCT-91003424"},
-      {"currency":"DKK","int_bic":"RZBAATWW","field56":"NDEADKKK","nostro_mask":"ACCT-91003425","with_an_mask":"ACCT-91003425"},
-      {"currency":"EUR","int_bic":"RZBAATWW","nostro_mask":"ACCT-91003426","with_an_mask":"ACCT-91003426"},
-      {"currency":"GBP","int_bic":"RZBAATWW","field56":"BARCGB22","nostro_mask":"ACCT-91003427","with_an_mask":"ACCT-91003427"},
-      {"currency":"HUF","int_bic":"RZBAATWW","field56":"UBRTHUHB","nostro_mask":"ACCT-91003428","with_an_mask":"ACCT-91003428"},
-      {"currency":"JPY","int_bic":"RZBAATWW","field56":"BOTKJPJT","nostro_mask":"ACCT-91003429","with_an_mask":"ACCT-91003429"},
-      {"currency":"NOK","int_bic":"RZBAATWW","field56":"DNBANOKK","nostro_mask":"ACCT-91003430","with_an_mask":"ACCT-91003430"},
-      {"currency":"PLN","int_bic":"RZBAATWW","field56":"BPKOPLPW","nostro_mask":"ACCT-91003431","with_an_mask":"ACCT-91003431"},
-      {"currency":"SEK","int_bic":"RZBAATWW","field56":"ESSESESS","nostro_mask":"ACCT-91003432","with_an_mask":"ACCT-91003432"},
-      {"currency":"USD","int_bic":"RZBAATWW","field56":"SCBLUS33","nostro_mask":"ACCT-91003433","with_an_mask":"ACCT-91003433"},
-      {"currency":"ZAR","int_bic":"RZBAATWW","field56":"ABSAZAJJ","nostro_mask":"ACCT-91003434","with_an_mask":"ACCT-91003434"}
+      {"currency":"AUD","int_bic":"RZBAATWW","field56":"ANZBAU3M","nostro_mask":"ACCT-91023421","with_an_mask":"ACCT-91023421"},
+      {"currency":"CAD","int_bic":"RZBAATWW","field56":"CIBCCATT","nostro_mask":"ACCT-91023422","with_an_mask":"ACCT-91023422"},
+      {"currency":"CHF","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91023423","with_an_mask":"ACCT-91023423"},
+      {"currency":"CZK","int_bic":"RZBAATWW","field56":"RZBCCZPP","nostro_mask":"ACCT-91023424","with_an_mask":"ACCT-91023424"},
+      {"currency":"DKK","int_bic":"RZBAATWW","field56":"NDEADKKK","nostro_mask":"ACCT-91023425","with_an_mask":"ACCT-91023425"},
+      {"currency":"EUR","int_bic":"RZBAATWW","nostro_mask":"ACCT-91023426","with_an_mask":"ACCT-91023426"},
+      {"currency":"GBP","int_bic":"RZBAATWW","field56":"BARCGB22","nostro_mask":"ACCT-91023427","with_an_mask":"ACCT-91023427"},
+      {"currency":"HUF","int_bic":"RZBAATWW","field56":"UBRTHUHB","nostro_mask":"ACCT-91023428","with_an_mask":"ACCT-91023428"},
+      {"currency":"JPY","int_bic":"RZBAATWW","field56":"BOTKJPJT","nostro_mask":"ACCT-91023429","with_an_mask":"ACCT-91023429"},
+      {"currency":"NOK","int_bic":"RZBAATWW","field56":"DNBANOKK","nostro_mask":"ACCT-91023430","with_an_mask":"ACCT-91023430"},
+      {"currency":"PLN","int_bic":"RZBAATWW","field56":"BPKOPLPW","nostro_mask":"ACCT-91023431","with_an_mask":"ACCT-91023431"},
+      {"currency":"SEK","int_bic":"RZBAATWW","field56":"ESSESESS","nostro_mask":"ACCT-91023432","with_an_mask":"ACCT-91023432"},
+      {"currency":"USD","int_bic":"RZBAATWW","field56":"SCBLUS33","nostro_mask":"ACCT-91023433","with_an_mask":"ACCT-91023433"},
+      {"currency":"ZAR","int_bic":"RZBAATWW","field56":"ABSAZAJJ","nostro_mask":"ACCT-91023434","with_an_mask":"ACCT-91023434"}
     ]
   }
 }
