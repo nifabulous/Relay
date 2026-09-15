@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
-from app.models import SSI
+from app.models import SSI, Bank
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
@@ -303,6 +303,46 @@ def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
         assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
     db_session_clean.close()
+    engine.dispose()
+
+
+def test_existing_database_is_idempotently_backfilled_with_the_fourth_batch():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(bind=engine)
+    db_session = sessionmaker(bind=engine, future=True)()
+    existing_bic = BANKS[0][0]
+    db_session.add(
+        Bank(
+            bic=existing_bic,
+            bank_name="Operator-maintained bank name",
+            country_code="ZZ",
+            city="Operator-maintained city",
+            country_currency="USD",
+        )
+    )
+    db_session.commit()
+
+    first_result = seed_if_empty(db_session)
+    final_keys = {(row[0], row[2], row[3]) for row in _batch_records(4)}
+    persisted_keys = {
+        (row.beneficiary_bic, row.currency, row.intermediary_bic)
+        for row in db_session.query(SSI).all()
+        if (row.beneficiary_bic, row.currency, row.intermediary_bic) in final_keys
+    }
+    second_result = seed_if_empty(db_session)
+
+    assert first_result["ssi"] >= len(final_keys)
+    assert persisted_keys == final_keys
+    assert second_result["ssi"] == 0
+    assert db_session.query(Bank).filter(Bank.bic == existing_bic).one().bank_name == (
+        "Operator-maintained bank name"
+    )
+    db_session.close()
     engine.dispose()
 
 

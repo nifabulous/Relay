@@ -258,7 +258,7 @@ def _select_routable_ssi_rows(
     session: Session,
     beneficiary_bic_11: str,
     settlement_currency: str,
-) -> list[SSI]:
+) -> list:
     """Load SSI candidates through the same gates used by live suggestions."""
     candidates = [
         beneficiary_bic_11,
