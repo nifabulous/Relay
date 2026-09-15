@@ -129,9 +129,13 @@ def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}
     batch_ledgers = _batch_ledgers(2)
     batch_payloads = _batch_payloads(2)
+    configured_batch_names = {
+        name
+        for name in _SSI_CONSOLIDATION_DATA_FILES
+        if name.startswith("seed_ssi_consolidation_2_")
+    }
 
-    assert {path.name for path in batch_ledgers} == expected_names
-    assert expected_names <= set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert {path.name for path in batch_ledgers} == configured_batch_names == expected_names
     assert not (ROOT / "app" / "services" / "seed_ssi_consolidation_2.json").exists()
     assert sum(len(payload["ssi_records"]) for payload in batch_payloads) == 236
     assert all(tuple(bank) in BANKS for payload in batch_payloads for bank in payload["banks"])
@@ -182,14 +186,17 @@ def test_third_consolidation_batch_is_loaded_and_fails_closed():
     engine.dispose()
 
 
-def test_spuerkeess_evidence_does_not_commit_account_fingerprints():
-    evidence_path = (
-        ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-wave55-bceelull-2026-01-12.json"
-    )
-    evidence = json.loads(evidence_path.read_text())
+def test_consolidation_evidence_does_not_commit_account_fingerprints():
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    evidence_names = [
+        "ssi-wave55-bceelull-2026-01-12.json",
+        "ssi-wave56-nbokgb2l-2019-05-13.json",
+    ]
 
-    assert evidence["masking"]["source_account_fingerprints_committed"] is False
-    assert all("source_account_fingerprint" not in route for route in evidence["routes"])
+    for evidence_name in evidence_names:
+        evidence = json.loads((evidence_dir / evidence_name).read_text())
+        assert evidence["masking"]["source_account_fingerprints_committed"] is False
+        assert all("source_account_fingerprint" not in route for route in evidence["routes"])
 
 
 def test_consolidated_rows_cannot_leak_through_the_production_selector():
