@@ -272,6 +272,31 @@ def test_final_batch_applies_the_reviewed_payment_data_corrections():
     assert all("Danske Bank" in row[4] for row in iob_dkk)
 
 
+def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
+    records = _batch_records(4)
+    assert len(records) == 123
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+    engine, db_session_clean = _production_seeded_session()
+    for beneficiary_bic, currency in {(row[0], row[2]) for row in records}:
+        new_bics = {row[3] for row in records if row[0] == beneficiary_bic and row[2] == currency}
+        persisted = (
+            db_session_clean.query(SSI)
+            .filter(
+                SSI.beneficiary_bic == beneficiary_bic,
+                SSI.currency == currency,
+                SSI.intermediary_bic.in_(new_bics),
+            )
+            .all()
+        )
+        assert {row.intermediary_bic for row in persisted} == new_bics
+        assert all(not _is_routable_ssi(row) for row in persisted)
+        selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
+        assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
+    db_session_clean.close()
+    engine.dispose()
+
+
 def test_masked_account_comments_are_resolved_in_the_final_batch():
     final = _batch_records(4)
     assert not any(row[0] == "EBILAEADXXX" for row in final)
