@@ -1,7 +1,7 @@
 # Correspondent Atlas — design spec
 
 **Date:** 2026-09-13
-**Status:** review changes applied; engineering re-review required before implementation
+**Status:** approved design; engineering-cleared; implementation-ready
 **Surface:** Relay Explore — new page at `/app/explore/atlas`
 **Supersedes:** nothing. Extends the Explore workspace.
 
@@ -31,7 +31,7 @@ column, it does not render. No amount moved, no market share, no verification th
 rows do not carry.
 
 **Mandatory denominator** blocks the subtler failure: a true count read as a world
-share. "US correspondents reach 223 banks" is true. Rendered as circle area with no
+share. "US correspondents reach 223 banks" is true. Rendered as a dark country fill with no
 denominator, it reads as market position. The denominator is 251 — the banks we have
 collected — and it travels with the number in the payload, not as UI copy that can be
 dropped.
@@ -128,16 +128,19 @@ and the coverage frame always names the role-specific set for the view actually 
 
 | role | countries observed | unresolvable | drawable |
 |---|---|---|---|
-| beneficiary (spoke) | 103 | 1 (`EB`) | 102 |
+| beneficiary (spoke) | 103 | 0 | 103 |
 | intermediary (hub) | 102 | 0 | 102 |
-| union of both roles | **126** | 1 | 125 |
+| union of both roles | **125** | 0 | 125 |
 
-Twenty-three countries appear **only** as correspondents and never as beneficiaries:
-`AT BE BY CH DJ EG FJ FR HU IE LS LU MA MO MY NC NZ OM PT RU SS SZ TN`.
+Twenty-two countries appear **only** as correspondents and never as beneficiaries:
+`AT BE BY CH DJ EG FJ FR HU IE LS MA MO MY NC NZ OM PT RU SS SZ TN`.
 
-The 103-versus-102 coincidence is worth naming: 103 beneficiary countries minus `EB`
-equals 102, and the intermediary count is *also* 102. Those are two different 102s. An
-earlier revision's prose read as if one explained the other.
+These figures assume T0's correction of the invalid `EDBBEB22XXX` seed key to
+`WBWCLULLXXX`. The number of beneficiary countries remains 103 because Luxembourg
+replaces the pseudo-country `EB`; the union falls from 126 to 125 because Luxembourg
+already occurs on the intermediary side. The dated database snapshot still contains
+the old key until T0 runs, so reproduction must apply that correction before comparing
+these geographic counts.
 
 "Drawable countries" in the metric rail is therefore **view-scoped**, and in hub view the
 unresolvable-codes report is empty — which AC-F37 requires be stated as text rather than
@@ -158,13 +161,14 @@ rendered as a blank.
 | D7 | **Live endpoint**, computed per request | Startup cache goes stale on `/api/import/ssi`. A static artifact introduces DB-vs-artifact drift. |
 | D8 | **Map plus synced table**, both views | Map-only fails accessibility and hides institution-level facts. Table-only loses the geography that makes the spoke view legible. |
 | D9 | Unresolvable BIC country codes are a **visible coverage datum** | A footnote hides a corpus defect. Silently dropping the row makes the map look more complete than the source data. |
-| D14 | Hub circle fill is **flat**; currency breadth moves to the table | Translucent overlapping marks sum to a value that encodes nothing, and the European hubs overlap heavily. Channel destruction where the data matters most. |
+| D14 | Hub view is a **five-bin country choropleth** of distinct beneficiary banks reached | Proportional or discrete centroid circles collide across Europe and obscure small financial centres. A country fill removes the collision class; currency breadth stays in the table. |
 | D15 | The hub table is **two-tier** (country aggregate + institutions) | The map is country-grain and an institution-only table has no row for the aggregate a sighted user reads. Text-equivalence fails without it. |
 | D16 | `black` theme gets a **distinct land surface** | A shipped third theme where canvas is #000000 and surface #18181b. "Ocean is the canvas" dissolves the map in it. |
 | D11 | The data ramp is **neutral ink**; blue stays action-only | A blue ramp breaks DESIGN.md:28 and makes a blue selected edge invisible against a blue fill. Amending DESIGN.md to carve out data encoding was considered and rejected: it weakens the rule for every future surface, and this is the first feature to ask. |
 | D12 | **Hub is the default view** | Spoke shows collection coverage; hub shows the star that justified the feature. Landing on the weaker read and hoping for a toggle is not a default, it is a hope. |
 | D13 | The hub map **survives DESIGN.md:147** | The ranked table states reach better, but cannot state *where* hubs cluster. The map carries a spatial fact the comparison cannot, which is the test rule 138 actually sets. |
 | D10 | Visual direction is an **editorial instrument**, rendered with D3/SVG | A cinematic MapCN/MapLibre treatment adds motion, glow and map-product conventions that imply traffic or live flow. A hosted basemap adds visual noise, provider cost and attribution without helping the country-first question. |
+| D17 | Correct `EDBBEB22XXX` to `WBWCLULLXXX` before atlas aggregation | Treating `EB` as a SWIFT pseudo-country is contradicted by EDB's own SSI and SWIFT directory evidence. Shipping an allowlist would preserve a known seed and validator defect. |
 
 ### D5 in detail — why evidence cannot sit on a hub node
 
@@ -254,8 +258,8 @@ Contract rules, each with a test:
    volume-shaped number.
 4. **The settleability scope is applied before aggregation.** `scope=settleable` cannot
    be produced by subtracting `bic_only` row counts from unfiltered distinct counts.
-5. **`hub_countries` and `hubs` are separate grains.** The map renders one
-   `hub_countries` circle per country. The table renders institution-level `hubs`.
+5. **`hub_countries` and `hubs` are separate grains.** The map styles one country
+   feature per `hub_countries` entry. The table renders institution-level `hubs`.
    `hub_countries.banks_served` and `.currencies` are independently distinct-counted
    from rows, never summed from `hubs`.
 6. **No geography in the response.** `iso2` only — no coordinates, no ISO numeric, no
@@ -401,8 +405,9 @@ cannot hide behind runner variance.
 ```
 frontend/src/features/explore/atlas/
   AtlasPage.tsx        route: view + filter state, URL-synced
-  AtlasMap.tsx         SVG choropleth + one aggregate circle per hub country
+  AtlasMap.tsx         SVG country choropleth for both views
   AtlasTable.tsx       ranked table, selection synced with the map
+  AtlasSearch.tsx      payload-local country/correspondent type-ahead
   AtlasPanel.tsx       country / institution detail -> BankDetailRoute
   atlasEncoding.ts     pure: hatch bands, scales, denominators
   isoNumeric.ts        ISO2 -> topology feature id
@@ -418,9 +423,10 @@ and record the chunk anyway.
 Add `d3-geo`, `d3-scale`, `topojson-client`, **and their type packages**
 `@types/d3-geo`, `@types/d3-scale`, `@types/topojson-client` as devDependencies. None of
 the three ships bundled types, and `tsc --noEmit` runs as part of `npm run build` under
-TypeScript 7, so the build fails without them. `CommandSearch.tsx` also types destinations
-as a union of `"bank" | "scheme" | "glossary"` and needs an atlas member. Do **not** add `world-atlas`: the package
-is 8.2 MB unpacked (110m, 50m and 10m resolutions, countries and land) for one file.
+TypeScript 7, so the build fails without them. Atlas search is feature-local and does
+not change `CommandSearch.tsx` or make the shell fetch atlas data. Do **not** add
+`world-atlas`: the package is 8.2 MB unpacked (110m, 50m and 10m resolutions, countries
+and land) for one file.
 
 Vendor `countries-50m.json` under
 `frontend/src/features/explore/atlas/assets/` beside its source/hash record and ISC
@@ -461,8 +467,8 @@ contract, not an undocumented build step. The build's filename hash is cache ide
 the recorded SHA-256 is the auditable provenance check.
 
 Measured unpacked sizes: `d3-geo` 227 KB, `d3-scale` 174 KB, `topojson-client` 68 KB.
-These tree-shake (the atlas needs `geoNaturalEarth1`, `geoPath`, `geoCentroid`,
-`scaleSqrt`, `scaleLinear`, `feature`); unpacked size is not bundled size and the real
+These tree-shake (the atlas needs `geoNaturalEarth1`, `geoPath`,
+`scaleQuantile`, `scaleLinear`, `feature`); unpacked size is not bundled size and the real
 chunk figure must be measured at implementation, not estimated here.
 
 MapCN is useful reference material, not a dependency. Its attractive primitives sit on
@@ -531,13 +537,14 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
   progress." A blue data ramp spends the product's one reserved colour on decoration
   and, worse, makes selection invisible: a blue selected edge against a blue fill is
   no edge at all. The ramp runs light neutral to `--color-ink-strong` `#16233D`;
-  `#3157D5` keeps its single job. Checked in both light and dark themes.
+  `#3157D5` keeps its single job. Checked in light, dark, and `black` themes.
 - Never-collected land stays visibly neutral and distinct from the ramp's light end.
   Selected geography uses the action edge **plus** a non-colour cue, per DESIGN.md's
   rule that status is never carried by colour alone.
-- Hub circles are crisp translucent marks with a solid outline. They do not pulse,
-  travel, or emit arcs. The absence of animation is semantic: the data is a collected
-  network position, not live movement.
+- Hub countries use the same neutral five-bin fill grammar as the spoke view, keyed to
+  distinct beneficiary banks reached. There is no centroid-symbol layer to collide,
+  pulse, travel, or emit arcs. The absence of animation is semantic: the data is a
+  collected network position, not live movement.
 - Use `Instrument Sans` for interface text and `IBM Plex Mono` for counts, BICs,
   percentages and compact labels. Do not introduce a display face solely for this
   page; the editorial character comes from scale, spacing and alignment.
@@ -567,16 +574,12 @@ quiet, precise and typographic. Data earns the contrast; chrome recedes.
 - Respect `prefers-reduced-motion` by removing the cross-fade. Information order and
   selection feedback remain unchanged.
 
-Direction **A — Editorial instrument** is the **author's proposal**, with B (cinematic
+Direction **A — Editorial instrument** is the **user-approved direction**, with B (cinematic
 MapCN network) and C (hosted MapLibre map product) argued against on the grounds in D10.
 
-Provenance note: an earlier revision recorded Direction A as selected by the user in the
-visual companion. No such selection appears in the design conversation, where the
-companion was never started and the choices put to the user were about measure, job,
-spine, evidence channel, coverage, delivery and hub treatment — not visual direction.
-The claim is withdrawn rather than restated. If that choice was made elsewhere, cite
-where and this reverts to a decision; until then it is a proposal that has not been
-reviewed.
+The user selected A in the visual companion on 2026-09-15. The companion compared the
+country-fill hub view with displaced circles and a Europe inset; that approval closes
+the default-view overlap decision rather than merely confirming the general mood.
 
 **Design-system alignment.** Colours come from the named tokens in
 `frontend/src/design-system/tokens.css`, not from new hexes: `--color-action`
@@ -595,7 +598,7 @@ this "out of scope here"; that was true before the entry existed and is false no
 
 | channel | encodes |
 |---|---|
-| country fill, sequential single hue | beneficiary banks collected there |
+| country fill, five neutral quantile bins | SSI rows collected there in the active scope |
 | hatch density, 3 bands | archived share of that country's rows |
 
 Bands: none below 25%, light 25–74%, heavy 75% and above. The data supports the
@@ -611,27 +614,23 @@ accepted rather than solved.
 
 | channel | encodes |
 |---|---|
-| one circle per hub country | country-level network position |
-| circle area | distinct beneficiary banks reached by correspondents in that country, as a share of the collected denominator |
+| country fill, five neutral quantile bins | distinct beneficiary banks reached by correspondents in that country, as a share of the collected denominator |
 
-**Circle fill is flat, and encodes nothing beyond identity.** An earlier revision put
-currency breadth on fill depth. Translucent marks that overlap — and the European hubs
-overlap heavily — sum to a third, darker value that encodes nothing while looking like
-data. Overlap is not a layout nuisance there, it is channel destruction, and it lands
-exactly where the hubs are. Currency breadth lives in the table, where it is legible
-and sortable.
+**There is no hub-symbol layer.** An earlier revision put reach on country-centroid
+circles and currency breadth on fill depth. In Europe those marks collide and sum to a
+third, darker value that encodes nothing while looking like data. The approved country
+fill removes that failure class at every viewport. Currency breadth lives in the table,
+where it is legible and sortable.
 
 **No evidence channel, at all.** The panel states why in one line and lists the
 disclosing banks' evidence spread, which is the true statement.
 
-Known limitation: circles sit at country centroids, so the US mark dominates
-mid-continent, Europe overlaps, and small financial centres get circles larger than
-their landmass. Render one circle per country from `hub_countries`; rendering one per
-institution would put 36 US marks at the exact same coordinate and make the visible
-result depend on DOM order. Country aggregation still hides the institution-level
-finding — the US shows 15 currencies because 36 institutions collectively span 15,
-which is not the Citi-versus-Commerzbank story. That story lives in the synced table,
-which ranks the `hubs` array.
+Known limitation: a country fill makes small financial centres hard to hit or even see
+at phone width. Selection therefore never depends on map geometry; the synced table is
+the guaranteed interaction and text equivalent. Country aggregation also hides the
+institution-level finding — the US shows 15 currencies because 36 institutions
+collectively span 15, which is not the Citi-versus-Commerzbank story. That story lives
+in the table, which ranks the `hubs` array.
 
 **Hub is the default view.** The feature's thesis is the star — 14 institutions
 carrying a network of 251 banks — and landing on the spoke view shows collection
@@ -644,7 +643,7 @@ doing the spatial work.
 
 **Why the hub map survives DESIGN.md:147** ("No chart when the payment route or a
 direct value comparison communicates the point better"). The ranked table states reach
-and currency breadth better than any circle. What it cannot state is *where* the hubs
+and currency breadth better than any fill. What it cannot state is *where* the hubs
 are: that they cluster in the US, Germany, the UK, Japan and Switzerland, and that
 almost nothing in the global south appears. That is a spatial fact, and a table of
 country codes does not communicate it. The rule is satisfied because the map carries
@@ -691,18 +690,16 @@ variable. Measured, the two distributions need different treatments:
 
 | view | measure | n | range | quintile breaks | verdict |
 |---|---|---|---|---|---|
-| hub | banks reached per country | 102 | 1–223 | `[1, 4, 13, 36]` | bins cleanly, use 5 |
+| hub | banks reached per country | 102 | 1–223 | `[1, 4, 13, 36]` | bins cleanly, use 5 fills |
 | spoke | beneficiary banks per country | 103 | 1–24 | `[1, 2, 2, 3]` | **degenerate** — duplicate breaks, 2 of 5 bins empty by construction, 75 of 103 countries hold 1 or 2 |
 
 **Spoke view encodes `rows`, not distinct banks.** Rows range 1–366 and bin cleanly;
 distinct banks range 1–24 and do not. Five quantile bins on `rows`.
 
-**Hub circles use five discrete sizes, not continuous area.** Continuous `scaleSqrt` over
-reach cannot separate its own top ranks: Germany at 169 and Britain at 166 differ by
-**0.78% of maximum radius**, invisible at any size, while the 22 countries at reach 1
-render **2.7px** against a 40px United States. Discrete sizes keyed to the hub quantile
-breaks make rank differences readable and give the tail a floor. The legend states the
-breaks.
+**Hub view uses five discrete country fills, not symbol area.** Quantile bins keyed to
+the hub breaks preserve geographic identity without allowing neighbouring marks to
+occlude one another. The legend states the measured range, the breaks, and the required
+beneficiary-bank denominator. No radius calculation exists in v1.
 
 Zero-count categories render as text ("0 published"), never as an empty legend swatch.
 An empty colour band reads as a rendering bug, which is the opposite of the rigor the
@@ -782,7 +779,7 @@ entry, not a refactor. Anything more is speculative.
 | Typed HTTP failures and Zod validation | `frontend/src/api/client.ts:apiRequest` | Reuse; strict schema failure becomes the full atlas error state. |
 | Query cache identity | `frontend/src/api/queryKeys.ts:apiKeys` | Extend with scope-aware atlas keys. |
 | Loading, empty, error, and partial UI | `frontend/src/design-system/AsyncRegion.tsx` | Reuse; partial is only for the independently fetched topology asset. |
-| Explore routing and discovery | `App.tsx`, `ExplorePage.tsx`, `CommandSearch.tsx` | Extend the existing lazy-route and destination patterns. |
+| Explore routing and discovery | `App.tsx`, `ExplorePage.tsx` | Extend the existing lazy-route and index-card patterns; search stays inside the atlas. |
 | Bank drill-down | `frontend/src/features/explore/BankDetailRoute.tsx` | Link beneficiary BICs to the existing route; do not build a second bank page. |
 | Route telemetry redaction | `frontend/src/observability.ts` | Add static atlas paths and a parameterised country route. |
 
@@ -844,7 +841,7 @@ Verified 2026-09-13:
 | 4 | `frontend/src/api/queryKeys.ts` | add network and country keys including `scope` |
 | 5 | `frontend/src/app-shell/App.tsx` | lazy import + `<Route path="explore/atlas">`, alongside `explore/banks`, `explore/schemes`, `explore/glossary` |
 | 6 | `frontend/src/features/explore/ExplorePage.tsx` | category card on the Explore index |
-| 7 | `frontend/src/features/explore/search/CommandSearch.tsx` | destination entry |
+| 7 | `frontend/src/features/explore/atlas/AtlasSearch.tsx` | payload-local country and correspondent search; no shell-wide index change |
 | 8 | `frontend/src/observability.ts` | allowlist `/app/explore/atlas`, `/api/atlas/network`, and parameterise `/api/atlas/country/:iso2` without logging the raw code |
 | 9 | `frontend/src/features/tutor/` | publish atlas context via `usePublishTutorContext`, matching the other Explore routes |
 | 10 | `frontend/src/features/explore/BankDetailRoute.tsx` | reciprocal "network position" link back into the atlas, so the drill-down is not one-way |
@@ -858,6 +855,18 @@ Each AC names the invariant clause or decision it enforces. Clause 1 is *entailm
 clause 2 is *mandatory denominator*; see Governing invariant.
 
 ### Backend
+
+- **AC-B0** *(D17, prerequisite)* — the seed directory and all six European
+  Depositary Bank SSI rows use `WBWCLULLXXX`; `EDBBEB22XXX` appears only as the old key
+  in `SEED_BIC_ALIASES`. `validate_bic("EDBBEB22XXX")` is invalid after the `EB`
+  fallback is removed. The alias migration updates an old beneficiary key in place so
+  operator fields survive. If both keys exist for the same currency/intermediary tuple,
+  it keeps the operator-modified row over a machine-owned row, removes a duplicate only
+  when both snapshots are demonstrably seed-owned, and raises a clear conflict without
+  committing when both were operator-modified. Populated, collision, rollback, and
+  second-run fixtures prove the old key disappears on success, canonical keys exist
+  exactly once, no operator edit is silently lost, migrated machine-owned rows receive
+  a fingerprint for the canonical snapshot, and rollout is idempotent.
 
 - **AC-B1** — `/api/atlas/network` totals match direct SQL counts.
 - **AC-B2** *(clause 1)* — reach and `banks_served` are distinct counts. Fixture with deliberately
@@ -908,8 +917,9 @@ clause 2 is *mandatory denominator*; see Governing invariant.
 - **AC-F1** *(clause 1)* — every code in both role-specific observed-country arrays
   either resolves to
   a feature that **exists in `countries-50m.json`**, or appears in an explicit
-  `KNOWN_UNRESOLVABLE` allowlist carrying a one-line reason per entry. The allowlist
-  starts with `EB` and its open question. Any code that is neither fails the test.
+  `KNOWN_UNRESOLVABLE` allowlist carrying a one-line reason per entry. The allowlist is
+  empty after T0. Any code that is neither fails the test; a future entry requires a
+  cited reason and explicit review.
 
   This is the load-bearing test. `world-atlas` feature ids are zero-padded strings
   (`"008"`, `"036"`, `"050"`); an integer-keyed lookup silently renders every country
@@ -917,9 +927,9 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   Armenia and others. A map that looks complete and is not is the failure mode this
   feature cannot afford.
 
-  The allowlist form matters: asserting bare resolution would make the suite red on
-  current data, and the only ways to green it are weakening the test or deleting a row.
-  An allowlist keeps the anomaly visible, reviewable and countable instead.
+  The allowlist form remains because future source data can contain a genuine
+  non-geographic code. It is an exception register, not a home for defects already
+  disproved by primary evidence.
 
 - **AC-F2** *(D5)* — a hub object carrying `evidence` fails Zod parse.
 - **AC-F3** *(clause 2)* — `AtlasMap` cannot be constructed without
@@ -955,9 +965,9 @@ clause 2 is *mandatory denominator*; see Governing invariant.
   whole feature to read reach as market share.
 
 - **AC-F10** *(clause 2)* — **every data-driven scale** states its actual range in the
-  legend, read from the data and never hardcoded. That is all three: the choropleth
-  fill (beneficiary banks) and the hub circle area (reach). Fill depth is no longer a
-  scale — see D14.
+  legend, read from the data and never hardcoded. That is both choropleth fills: spoke
+  SSI rows in the active scope and hub beneficiary-bank reach. Currency breadth is not
+  a map scale — see D14.
 
   A scale's meaning lives entirely in its domain, and every one of these domains shifts
   as waves land. "Dark" otherwise means "large relative to whatever today's maximum
@@ -1040,7 +1050,7 @@ selection, so the column teaches what selection produces instead of sitting blan
 - **AC-F22** *(D12)* — the hub view is the default on first load with no URL state, and
   the ranked table is populated on arrival.
 - **AC-F23** — the metric rail renders as figures on a ruled band with no per-metric
-  card border, background fill, or shadow (DESIGN.md:99, :132).
+  card border, background fill, or shadow (DESIGN.md:99).
 - **AC-F24** — the map SVG is `aria-hidden="true"` and carries no focusable descendants;
   a text alternative names the table as the equivalent. An axe run plus a keyboard walk
   assert that tabbing from the toggles reaches the table without traversing geometry.
@@ -1054,9 +1064,10 @@ selection, so the column teaches what selection produces instead of sitting blan
   `black`. In `black`, land renders as an explicit surface step against the canvas with
   a measured boundary, not as canvas-coloured land.
 - **AC-F31** *(D15)* — the hub table renders country aggregate rows whose
-  `banks_served` and `currencies` match the map's circles, with institution rows grouped
+  `banks_served` and `currencies` match the map's country fills, with institution rows grouped
   beneath. Every value visible on the map exists in a table row.
-- **AC-F32** *(D14)* — hub circle fill is flat; no scale maps to fill opacity or depth.
+- **AC-F32** *(D14)* — hub reach maps to exactly five neutral country-fill bins; no
+  centroid circle or other data-bound symbol layer renders.
 - **AC-F33** — the choropleth uses quantile binning with a stated step count, and the
   legend names the method as well as the range.
 - **AC-F34** — sort key and direction live in the URL alongside view, scope and
@@ -1076,16 +1087,17 @@ selection, so the column teaches what selection produces instead of sitting blan
   institutions carrying 251 banks, 374 correspondents appearing once. The Visual direction
   section mandates it and nothing tested it.
 - **AC-F47** *(clause 1)* — the spoke legend states what the fill actually measures:
-  "Darker = more settlement-instruction rows we found published, not more correspondent
-  banking." The ranking (IN 24, PK 8, LK 8, NP 7, KE 7, NG 6) is a map of which banks
-  publish nostro pages, and nothing else in the spec guards that reading. The coverage
+  "Darker = more SSI rows we collected in this scope, not more correspondent
+  banking." The dated row ranking (IN 366, LK 156, PK 145, NO 122, NP 111, AE 106)
+  is a map of which sources contribute SSI rows, and nothing else in the spec guards
+  that reading. The coverage
   frame explains the blank countries; this explains the dark ones.
 - **AC-F37** — zero-count evidence categories render as text, never as an empty legend
   swatch.
 - **AC-F40** — the vendored topology is `countries-50m.json`, and a test asserts that
   Hong Kong, Singapore, Bahrain, Mauritius, Malta and Macao all resolve to features that
-  exist in it. `KNOWN_UNRESOLVABLE` contains `EB` and nothing else; a real country
-  appearing in that allowlist fails the test.
+  exist in it. `KNOWN_UNRESOLVABLE` is empty after T0; a real country appearing in that
+  allowlist fails the test.
 - **AC-F42** — searching a country outside the current scope selects it: the map shows
   its third-state treatment and the panel states the corpus-wide fact ("15 rows
   collected, none of them settlement instructions"). Search never returns empty for a
@@ -1158,9 +1170,10 @@ map and table selection do not reset.
 
   `partialNote` already exists on `AsyncRegion` and is currently used by no page; the
   atlas is its first consumer for this genuinely independent-resource failure.
-- **AC-F16** — the hub map renders one circle per `hub_countries` entry. Two
-  institution hubs sharing an ISO2 produce one map circle and two table rows, so DOM
-  order cannot hide an institution.
+- **AC-F16** — the hub map applies one data-bound fill to the country feature for each
+  `hub_countries` entry and renders no data-bound symbol overlay. Two institution hubs
+  sharing an ISO2 produce one country aggregate and two table rows; DOM order cannot
+  hide an institution or create a darker overlap value.
 - **AC-F17** — the vendored source topology bytes match the recorded SHA-256 and expose
   the retained source and license notice in the layer attribution. A production-build
   test verifies the `?url` import resolves beneath `/app/assets/` and that FastAPI serves
@@ -1170,9 +1183,9 @@ map and table selection do not reset.
   MapLibre, Mapbox, MapTiler, Leaflet, or MapCN runtime package.
 - **AC-F19** *(D10)* — component and E2E assertions cover the deterministic visual
   contracts: wide versus narrow map/table order, metric rail presence, selected and
-  never-collected non-colour cues, hatch legend text, and the one-circle-per-country
-  rule in an overlapping European fixture. Pixel-baseline comparison is not introduced
-  in v1; T7 records human visual review across the full matrix.
+  never-collected non-colour cues, hatch legend text, and the absence of a hub symbol
+  layer in a dense-European fixture. Pixel-baseline comparison is not introduced in v1;
+  T7 records human visual review across the full matrix.
 - **AC-F20** *(D10)* — map marks render no route arcs, pulsing states, or perpetual
   animation. With `prefers-reduced-motion: reduce`, view/filter changes preserve all
   information and selection feedback with transition duration removed.
@@ -1200,21 +1213,32 @@ progress or badges — this is Explore and it stays ungated.
 
 ---
 
-## Resolved data anomaly
+## Resolved data anomaly and prerequisite correction
 
 **`EDBBEB22XXX` — European Depositary Bank SA.** Six rows (USD, EUR, GBP, JPY, AUD,
-CAD). BIC positions 5–6 hold `EB`, which does not resolve in ISO 3166-1, so the bank
-cannot be placed on any map. The project's own validator accepts it:
+CAD). BIC positions 5–6 hold `EB`, which does not resolve in ISO 3166-1. The project's
+validator currently accepts it through a one-code fallback:
 
 ```
 validate_bic("EDBBEB22XXX") -> (True, 'EDBBEB22XXX', 'EB', [])
 ```
 
-Whether `EB` is a reserved SWIFT code or a defective seed row is a domain question that
-cannot be settled from the repository; it needs a source check. V1 does not guess. It
-keeps the row in non-geographic totals, excludes it from geometry, and names `EB` in the
-visible unresolvable-codes report with that reason (D9, AC-F12a). Source verification is
-deferred without hiding the anomaly.
+The source check is complete. European Depositary Bank's published SSI names its BIC as
+`WBWCLULL`, and SWIFT's published directory lists the same institution in Munsbach,
+Luxembourg under `WBWCLULL`. `EDBBEB22XXX` is therefore a defective seed key, not a
+valid pseudo-country BIC.
+
+Primary evidence:
+
+- European Depositary Bank SSI: `https://www.europeandepositarybank.com/media/5uuc1cj5/edb-ssi-march-2023.pdf`
+- SWIFT directory: `https://www.swift.com/swift-resource/234421/download/1000`
+
+T0 corrects the bank and six beneficiary rows to normalized `WBWCLULLXXX`, adds
+`EDBBEB22XXX -> WBWCLULLXXX` to the existing seed alias rollout, removes the validator's
+`EB` exception and its test skip, hardens beneficiary-alias reconciliation to preserve
+operator-owned rows, and adds the populated-database regression in AC-B0.
+Atlas work does not begin against the defective key. D9 remains as the product rule for
+future genuinely unresolvable source codes; the initial allowlist is empty.
 
 ---
 
@@ -1229,12 +1253,13 @@ deferred without hiding the anomaly.
 | Evidence attribution regresses in a later change | D5 | AC-B4 and AC-F2 make it a parse failure, not a review question |
 | Silent blank countries | 1 | AC-F1 asserts against the topology, with unresolvable codes named in a reviewed allowlist rather than silently absent |
 | A partial load reads as a complete map | 1 | AC-F15 — the only partial state is API data without topology; missing API sections fail closed |
-| Institution circles at the same centroid hide one another | 1 | Map uses `hub_countries`; institution `hubs` remain separate table rows (AC-B10, AC-F16) |
+| Dense hub geography becomes unreadable | 1 | Hub uses country fills with no symbol overlay; institution `hubs` remain separate table rows (D14, AC-F16) |
 | A client derives filtered reach from non-decomposable totals | 1 | Scope is applied before aggregation and is part of the API and query-cache key (AC-B9, AC-F6a) |
 | The layer seam closes at the first refactor | D2 | AC-F13 renders a second inert descriptor and asserts its separate attribution |
 | Scoped emptiness reported as never-collected | 2 | `collected` is corpus-wide (AC-B11a); the map renders a distinct third state under a scope filter (AC-F12b). Canada under `scope=settleable` is the canonical case. |
-| A **dimensionless** composite score is added later | 1 | **Not fully guarded.** AC-B8 and AC-F11 catch currency symbols and value units. A blended "importance index" over reach and currency breadth would carry neither, pass both, and still assert something no row entails. The control is review discipline, not a test. Recorded because a guard with a known hole is safer than one believed complete. |
-| Hub map read as the primary finding | — | Shipped as a secondary read; the institution-level story lives in the table |
+| A **dimensionless** composite score is added later | 1 | AC-B8 enumerates response keys against an allowlist; any new score-shaped field fails until the governing invariant and schema are deliberately reviewed. AC-F11 independently rejects unapproved rendered numerics. |
+| Hub country fill is mistaken for the complete institution story | — | The table is the primary numeric explanation and exposes institutions grouped beneath each mapped country; the map supplies spatial context (D13, D15) |
+| Seed BIC correction leaves stale rows, duplicates, or loses an operator edit | D17 | Ownership-aware alias rollout plus populated/collision/rollback/idempotence coverage in AC-B0; T0 gates atlas work |
 | Query cost as the corpus grows | — | Fixed SQL-count test plus reproducible benchmark at current and 20k-row corpora — see Performance |
 
 ---
@@ -1243,6 +1268,17 @@ deferred without hiding the anomaly.
 
 Each step ends green before the next begins. Structural contract work lands before UI
 rendering so the frontend cannot accidentally grow around an unstable payload.
+
+0. [ ] **T0 — Correct the European Depositary Bank BIC (blocking prerequisite)**
+   - Change the bank and six SSI seed rows from `EDBBEB22XXX` to `WBWCLULLXXX`, backed
+     by the primary sources above.
+   - Add the old-to-canonical key to `SEED_BIC_ALIASES`, remove the validator's `EB`
+     pseudo-country fallback and the corresponding `test_ssi.py` skip.
+   - Make beneficiary alias reconciliation ownership-aware as defined by AC-B0; an
+     ambiguous operator/operator collision fails atomically instead of choosing a row.
+   - Add AC-B0's fresh/populated/collision/rollback/idempotence regression coverage.
+     Confirm the post-correction role counts: beneficiary 103 drawable, intermediary
+     102 drawable, union 125, and 22 intermediary-only countries.
 
 1. [ ] **T1 — Contract fixtures and backend schemas**
    - Add representative overlapping-correspondent fixtures for both scopes.
@@ -1266,7 +1302,7 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
      thresholds, scale domains, and accessible numerator/denominator strings as pure code.
 5. [ ] **T5 — Table, map, and panel**
    - Build the table first as the complete semantic representation.
-   - Add the spoke choropleth and country-aggregated hub circles over the same selection
+   - Add the spoke and hub country choropleths over the same selection
      model. Then add the panel and `BankDetailRoute` links.
 6. [ ] **T6 — Discovery, observability, and end-to-end coverage**
    - Register the page in all integration points above.
@@ -1284,16 +1320,16 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
    - Fixtures must include the three coverage states (AC-F12b), the two-tier table
      (AC-F31), and the title-block concentration line (AC-F49) — all added after T7 was
      first written. T10 carries the title block, so T7 cannot sign off before it.
-   - Review spoke and hub views at 390, 768, 1024, and 1440 pixels in light and dark
-     themes, including selected, never-collected, hatch-heavy, and overlapping-Europe
-     fixtures.
+   - Review spoke and hub views at 390, 768, 1024, and 1440 pixels in all three themes,
+     including selected, never-collected, hatch-heavy, and dense-Europe fixtures.
    - Attach screenshots and a completed checklist to the implementation review. This is
      human design verification, not a new pixel-baseline test subsystem.
 
 8. [ ] **T8 (P1) — Design-review corrections, folded into T4/T5**
    - Neutral ink ramp with quantile binning; `--color-action` reserved for selection
      only (AC-F21, AC-F33).
-   - Hub default view; two-tier hub table; flat circle fill (AC-F22, AC-F31, AC-F32).
+   - Hub default view; two-tier hub table; five-bin hub country fill with no symbol
+     overlay (AC-F22, AC-F31, AC-F32).
    - Three themes including `black` land surface (AC-F30).
    - Loading, empty and panel-default states; country-panel async states (AC-F27–F29).
    - Coverage frame states its three counts as text (AC-F12b).
@@ -1305,7 +1341,7 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
    - Type-ahead **inside the atlas page**, over the already-loaded payload. No shared
      `CommandSearch` change, no second index, no fetch from another route.
    - Scoped down from "extends CommandSearch": that version was one bullet carrying an
-     index over 713 correspondents plus 126 countries, with no decision about where the
+     index over 713 correspondents plus 125 countries, with no decision about where the
      index lives or whether a shared component would fetch `/api/atlas/network` while the
      user is on the bank directory. A P1 one-liner should not have shell-wide blast radius.
    - DESIGN.md:87 makes Explore search-first; a reference instrument over 251 banks and
@@ -1329,6 +1365,8 @@ rendering so the frontend cannot accidentally grow around an unstable payload.
 ### Execution lanes
 
 ```text
+Gate:   T0 seed/validator correction → populated-database regression
+                                      ↓
 Lane A: backend fixtures/schemas → service/router → backend tests/benchmark
 Lane B: topology asset provenance → ISO mapping/encoding tests
                                   ↘
@@ -1341,15 +1379,17 @@ With T8–T11 folded in, the lanes are unchanged in shape but heavier:
 
 | Step | Modules touched | Depends on |
 |---|---|---|
-| T1, T2 (contract, service) | `app/routers/`, `app/services/`, `app/schemas.py` | — |
-| T4, T11-P0 (topology, encodings) | `atlas/assets/`, `atlas/atlasEncoding.ts`, `atlas/isoNumeric.ts` | — |
+| T0 (BIC correction) | `app/services/seed.py`, `app/services/validator.py`, seed/validator tests | — |
+| T1, T2 (contract, service) | `app/routers/`, `app/services/`, `app/schemas.py` | T0 |
+| T4, T11-P0 (topology, encodings) | `atlas/assets/`, `atlas/atlasEncoding.ts`, `atlas/isoNumeric.ts` | T0 |
 | T3 (frontend contracts, state) | `atlas/atlasSchemas.ts`, `api/queryKeys.ts` | T1 contract agreed |
 | T5, T8, T9 (table, map, panel, search) | `atlas/*.tsx` | T3, T4 |
-| T6, T10, T11-regression (integration) | `App.tsx`, `ExplorePage.tsx`, `CommandSearch.tsx`, `observability.ts`, `BankDetailRoute.tsx`, tutor | T5 |
+| T6, T10, T11-regression (integration) | `App.tsx`, `ExplorePage.tsx`, `observability.ts`, `BankDetailRoute.tsx`, tutor | T5 |
 | T7 (visual QA) | — | T6 |
 
-Lane A: T1 → T2 (sequential, shared `app/`).
-Lane B: T4 → T11-P0 (independent, pure encoding and assets).
+T0 is a gate because the API contract and ISO resolution tests must not crystallise the
+known bad key. After it passes, Lane A is T1 → T2 (sequential, shared `app/`).
+Lane B is T4 → T11-P0 (independent, pure encoding and assets).
 Lane C: T3 → T5/T8/T9 (waits on the T1 contract; may start against agreed fixtures).
 Final lane: T6, T10, T11-regression → T7.
 
@@ -1378,6 +1418,7 @@ BACKEND CODE PATHS                              FRONTEND USER FLOWS
 └── deterministic disclosure order [unit]
 
 STATIC/CONTRACT PATHS
+├── EDB old BIC → canonical key [seed rollout + validator]
 ├── topology hash + feature ids [unit]
 ├── known-unresolvable reporting [unit]
 ├── forbidden hub evidence [Pydantic + Zod]
@@ -1396,7 +1437,7 @@ STATIC/CONTRACT PATHS
 | Geometry join | ISO numeric string loses leading zero | AC-F1 | string-keyed lookup + allowlist | No silent blank country |
 | Country drill-down | scoped emptiness reported as never-collected | AC-B11a, AC-F12b | corpus-wide `collected` plus paired `in_scope`/`all_scopes` blocks | "15 rows collected, none of them settlement instructions" |
 | Country drill-down | malformed code, or a code the corpus has never seen | AC-B5, AC-B11 | boundary validation plus corpus-wide `collected` | 422 for malformed input; "No rows collected for France" for a genuinely uncollected country |
-| Map selection | stacked institution circles hide rows | AC-F16 | one country circle; institutions in table | Deterministic map and complete table |
+| Hub rendering | neighbouring symbols occlude countries | AC-F16, AC-F32 | country fill only; institutions in table | Deterministic geography and complete table |
 | Evidence display | source quality is attributed to a hub | AC-B4, AC-F2 | strict backend and frontend schemas | Contract error, never misleading evidence |
 
 No listed path has a silent failure with neither a test nor recovery behavior. That
@@ -1439,52 +1480,47 @@ FROM ssi GROUP BY 1;
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | Not run; product decisions were taken during design |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | UNAVAILABLE | Codex failed twice on a local config fault, not auth — see below |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 2 | ISSUES OPEN | 27 issues, 0 critical gaps, 2 deferred. Prior CLEAR (1ab9478) superseded |
-| Design Review | `/plan-design-review` | UI/UX gaps | 1 | ISSUES OPEN | score 6/10 → 8/10, 11 decisions |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 3 | CLEAR | Final pass closed the topology route, visual-overlap, BIC, contract, migration, and regression gaps |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 + visual companion | CLEAR | Editorial instrument approved; country-fill hub option A selected 2026-09-15 |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not required for an end-user Explore feature |
 
-**Sections:** Step 0 complexity check triggered (~11 new files, 11 integration points);
-scope accepted as-is. Architecture 2 · Code Quality 2 · Tests 3 gaps + 1 mandatory
-regression · Performance 2 · Outside voice 17.
+**Scope:** Complexity check triggered (~11 new files, 11 integration points) and was
+accepted as-is. The implementation is split by a blocking data-correction gate and
+three lanes with explicit ownership. T0 prevents the API and ISO contract from being
+built around a known-invalid seed key.
 
 **CODEX:** Never ran. `~/.codex/config.toml:383` carries a `codex-router`-managed
 `[features].multi_agent_v2` inline table whose shape does not match the installed Codex
 build, so every `codex exec` dies at config load: `data did not match any variant of
-untagged enum FeatureToml`. `gstack-codex-probe` still reports `CODEX_MODE: ready`, so
-skills fall back silently. Fix: update Codex, set `multi_agent_v2 = true`, or delete the
-managed block. No cross-model coverage on this plan.
+untagged enum FeatureToml`. This affects cross-model coverage, not the repository or
+the plan's executable contracts.
 
-**OUTSIDE VOICE (Claude subagent):** 17 findings, every checkable claim verified against
-the repo and the corpus before action. The three that changed the design:
+**Final engineering pass:**
 
-- Continuous circle area cannot separate the hub view's own top ranks. Germany (169) and
-  Britain (166) differ by **0.78% of maximum radius**; the 22 countries at reach 1 render
-  **2.7px** against a 40px United States. Hub now uses five discrete sizes on the quantile
-  breaks.
-- Spoke quintile breaks are `[1.0, 2.0, 2.0, 3.0]` — duplicate thresholds, two of five
-  bins empty by construction, 75 of 103 countries holding 1 or 2. The binning method had
-  been justified with a hub-side statistic applied to a spoke-side variable. Spoke now
-  encodes `rows` (1–366), which bins cleanly.
-- The settleability narrative is beneficiary-side while hub is the default view. The
-  hub-side removal set is nine countries (`AZ CI CM DJ LS MW NG SZ ZM`), not the famous
-  21. The claim is now view-qualified.
+- The approved hub country-fill design removes the European centroid-collision class;
+  AC-F16/F19/F32 and T5/T7/T8 enforce the absence of a symbol overlay.
+- Primary-source verification resolved `EDBBEB22XXX` as a seed and validator defect.
+  D17, AC-B0 and T0 specify the canonical key, alias rollout, collision handling,
+  idempotence, and post-correction geographic counts.
+- The topology is imported through Vite's `?url` path beneath the existing
+  `/app/assets/` mount, with content-type and schema validation guarding SPA-index
+  responses.
+- Country drill-down distinguishes malformed, never-collected, and scoped-empty inputs;
+  every aggregate carries its denominator, and all scope-sensitive distinct counts are
+  recomputed server-side.
+- Visual regression scope is component/E2E assertions plus a human screenshot matrix;
+  pixel-baseline infrastructure is explicitly deferred.
+- The performance gate is a fixed SQL-statement assertion plus a reproducible current
+  and 20,000-row benchmark, with a measured review threshold rather than a flaky CI
+  wall-clock assertion.
 
-It also caught five stale cross-references created by this session's own edits: AC-F1 still
-naming `countries-110m.json` after the 50m decision, "177 paths" against AC-F46's 241,
-eight DESIGN.md citations shifted by the DESIGN.md edits, T1's frozen AC range, and a
-paragraph calling the geographic-instrument entry "out of scope" after it had been added.
+**Completion summary:** Scope accepted as-is. Architecture: 2 findings closed. Code
+quality: 1 finding closed. Tests: coverage map produced, 1 migration-safety gap closed.
+Performance: no new issue. NOT in scope and existing-code reuse are recorded. No
+follow-up TODO was proposed because both blockers were folded into this plan. Failure
+modes: 0 critical gaps. Parallelisation: three lanes after one sequential gate.
 
-**CROSS-MODEL TENSION** — *the hub map.* The outside voice argued for shipping table-first
-with no map, on the evidence above. Presented to the user with that evidence; the decision
-was to keep the map and fix all three channels. Recorded rather than re-argued.
+**VERDICT:** ENG CLEARED — implementation-ready. T0 is the first implementation task,
+not an open design decision.
 
-**VERDICT:** NOT CLEARED. 27 findings folded in and the plan is materially stronger, but
-two items remain open and both sit in the default view. Neither is hard to close; neither
-is closed.
-
-**UNRESOLVED DECISIONS:**
-- European hub circles still occlude one another. Discrete sizes fix rank legibility, not
-  overlap, and Germany, Britain, Switzerland, Norway, Sweden, France, the Netherlands and
-  Luxembourg all cluster there. No mitigation is specified.
-- `EB` / `EDBBEB22XXX` remains unclassified pending a source check. `validate_bic` accepts
-  a country position no ISO table resolves.
+NO UNRESOLVED DECISIONS
