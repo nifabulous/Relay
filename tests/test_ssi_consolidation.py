@@ -98,6 +98,11 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         133,
     ]
     assert [pr for payload in payloads for pr in payload.get("superseded_prs", [])] == [124]
+    assert [len(payload["ssi_records"]) for payload in _batch_payloads(1)] == [
+        40,
+        40,
+        30,
+    ]
     assert len(_batch_records(1)) == 110
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
