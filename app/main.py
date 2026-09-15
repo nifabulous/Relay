@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI):
     try:
         with SessionLocal() as session:
             inserted = seed_if_empty(session)
-            if inserted["banks"] or inserted["corridor_rules"]:
+            if any(inserted.values()):
                 app.state.seeded = inserted
                 logger.info("Seed data loaded: %s", inserted)
     except Exception as e:

@@ -1149,6 +1149,10 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_3_3.json",
     "seed_ssi_consolidation_3_4.json",
     "seed_ssi_consolidation_3_5.json",
+    "seed_ssi_consolidation_4_1.json",
+    "seed_ssi_consolidation_4_2.json",
+    "seed_ssi_consolidation_4_3.json",
+    "seed_ssi_consolidation_4_4.json",
 )
 
 
@@ -9000,6 +9004,70 @@ def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     )
 
 
+def _find_existing_ssi_by_route_key(session, beneficiary_bic, currency, intermediary_bic):
+    """Find one catalog row without using table emptiness as an upgrade gate."""
+    return session.query(SSI).filter(
+        SSI.beneficiary_bic == beneficiary_bic,
+        SSI.currency == currency,
+        SSI.intermediary_bic == intermediary_bic,
+    ).one_or_none()
+
+
+def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
+    """Insert every missing consolidated route into an existing SSI catalog.
+
+    This upgrade is intentionally keyed per route and never gated on table
+    emptiness. Existing rows are left for the normal reconciliation pass,
+    which preserves operator-maintained settlement fields.
+    """
+    inserted = 0
+    for row in _SSI_CONSOLIDATED_RECORDS:
+        (
+            ben_bic,
+            ben_name,
+            ccy,
+            int_bic,
+            int_name,
+            int_acct,
+            ben_acct,
+            charge,
+            vdate,
+            notes,
+            as_of,
+            status,
+            verified_by,
+            bic_only,
+            terms_inferred,
+        ) = row
+        if (ben_bic, ccy, int_bic) not in source_keys:
+            continue
+        if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
+            continue
+        seeded = SSI(
+            beneficiary_bic=ben_bic,
+            beneficiary_bank_name=ben_name,
+            currency=ccy,
+            intermediary_bic=int_bic,
+            intermediary_bank_name=int_name,
+            intermediary_account=int_acct,
+            beneficiary_account=ben_acct,
+            charge_code=charge,
+            value_date=vdate,
+            notes=notes,
+            as_of=as_of,
+            status=status,
+            verified_by=verified_by,
+            bic_only=bic_only,
+            terms_inferred=terms_inferred,
+        )
+        seeded.seed_fingerprint = _seed_fingerprint(seeded)
+        session.add(seeded)
+        inserted += 1
+    if inserted:
+        session.flush()
+    return inserted
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {
@@ -9050,6 +9118,8 @@ def seed_if_empty(session) -> dict:
             )
             inserted["corridor_rules"] += 1
 
+    inserted["ssi"] += _backfill_missing_consolidated_ssis(session, source_keys)
+
     for row in SSI_RECORDS:
         # 12-field rows carry provenance; a 13th names the verifier, which
         # "published" requires. All three stay optional so a hand-written
@@ -9086,11 +9156,12 @@ def seed_if_empty(session) -> dict:
             terms_inferred = provenance[4]
         else:
             terms_inferred = False
-        existing = session.query(SSI).filter(
-            SSI.beneficiary_bic == ben_bic,
-            SSI.currency == ccy,
-            SSI.intermediary_bic == int_bic,
-        ).one_or_none()
+        existing = _find_existing_ssi_by_route_key(
+            session,
+            ben_bic,
+            ccy,
+            int_bic,
+        )
         if existing is None:
             seeded = SSI(
                 beneficiary_bic=ben_bic,
