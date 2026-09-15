@@ -206,6 +206,9 @@ def _has_usable_ssi_accounts(row: SSI) -> bool:
 def _is_routable_ssi(row: SSI) -> bool:
     """Return whether an SSI is safe to use as an executable route.
 
+    This is the final production safety gate used by ``suggest_from_ssi``;
+    seed provenance flags and account placeholders cannot bypass it.
+
     ``/api/ssi`` deliberately exposes the full catalog, including historical
     and illustrative records.  Routing is narrower: only a currently
     published, dated instruction with a named verifier, complete settlement
@@ -257,6 +260,9 @@ def suggest_from_ssi(
     This is the authoritative path: an SSI names the exact correspondent the
     beneficiary bank wants its funds routed through. The corridor table below
     is only a heuristic fallback for banks whose SSIs we don't carry.
+
+    Every returned row must pass both the production SQL prefilter and the
+    final ``_is_routable_ssi`` safety gate below.
 
     Matches the SSI table the same way /api/ssi does: exact 11-char BIC, then
     the 8-char prefix, then the 6-char bank code.

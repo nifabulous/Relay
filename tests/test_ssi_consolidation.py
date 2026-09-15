@@ -278,7 +278,15 @@ def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
     assert len(records) == 123
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
 
-    engine, db_session_clean = _production_seeded_session()
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(bind=engine)
+    db_session_clean = sessionmaker(bind=engine, future=True)()
+    seed_if_empty(db_session_clean)
     for beneficiary_bic, currency in {(row[0], row[2]) for row in records}:
         new_bics = {row[3] for row in records if row[0] == beneficiary_bic and row[2] == currency}
         persisted = (
