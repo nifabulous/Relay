@@ -1144,6 +1144,11 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_2_4.json",
     "seed_ssi_consolidation_2_5.json",
     "seed_ssi_consolidation_2_6.json",
+    "seed_ssi_consolidation_3_1.json",
+    "seed_ssi_consolidation_3_2.json",
+    "seed_ssi_consolidation_3_3.json",
+    "seed_ssi_consolidation_3_4.json",
+    "seed_ssi_consolidation_3_5.json",
 )
 
 
@@ -1185,8 +1190,8 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
             if len(record[0]) != 11 or len(record[3]) != 11:
                 raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
-            if record[11] != "unverified" or record[12] is not None:
-                raise ValueError(f"{filename}.ssi_records[{index}]: must remain unverified")
+            if record[11] not in {"unverified", "archived"} or record[12] is not None:
+                raise ValueError(f"{filename}.ssi_records[{index}]: must remain non-published")
             if not isinstance(record[13], bool) or not isinstance(record[14], bool):
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):

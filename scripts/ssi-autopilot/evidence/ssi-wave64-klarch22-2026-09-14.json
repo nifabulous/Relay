@@ -1,0 +1,38 @@
+{
+  "source_url": "https://www.bivial.com/correspondent-banks",
+  "retrieved_on": "2026-09-14",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false,
+    "route_count": 17,
+    "omitted_rows": [
+      "CHF: the page shows the beneficiary's own BIC with no account number",
+      "EUR: SECB Swiss Euro Clearing Bank is listed without an account number"
+    ]
+  },
+  "beneficiary": {
+    "bic": "KLARCH22XXX",
+    "name": "Bivial AG",
+    "address": "Industriestrasse 24, CH-6300 Zug, Switzerland"
+  },
+  "routes": [
+    {"currency":"AED","int_bic":"CHASDEFX"},
+    {"currency":"AUD","int_bic":"CHASGB2L"},
+    {"currency":"CAD","int_bic":"CHASGB2L"},
+    {"currency":"CZK","int_bic":"CHASGB2L"},
+    {"currency":"DKK","int_bic":"CHASDEFX"},
+    {"currency":"GBP","int_bic":"CHASGB2L"},
+    {"currency":"HKD","int_bic":"CHASDEFX"},
+    {"currency":"HUF","int_bic":"CHASDEFX"},
+    {"currency":"JPY","int_bic":"CHASDEFX"},
+    {"currency":"MXN","int_bic":"CHASDEFX"},
+    {"currency":"NOK","int_bic":"CHASDEFX"},
+    {"currency":"PLN","int_bic":"CHASDEFX"},
+    {"currency":"SEK","int_bic":"CHASDEFX"},
+    {"currency":"SGD","int_bic":"CHASGB2L"},
+    {"currency":"TRY","int_bic":"CHASDEFX"},
+    {"currency":"USD","int_bic":"CHASGB2L"},
+    {"currency":"ZAR","int_bic":"CHASDEFX"}
+  ],
+  "normalization_note": "The live SSI table publishes account-backed correspondent rows plus a second correspondent hop for several currencies. Account values are masked into the reserved ACCT-91013421 through ACCT-91013437 range; CHF and EUR are omitted because no account number is published. SHA and spot are retained as inferred terms because the page does not publish settlement terms."
+}

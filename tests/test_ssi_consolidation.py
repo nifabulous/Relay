@@ -86,7 +86,18 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         119,
         120,
         121,
+        122,
+        123,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        133,
     ]
+    assert [pr for payload in payloads for pr in payload.get("superseded_prs", [])] == [124]
     assert [len(payload["ssi_records"]) for payload in _batch_payloads(1)] == [
         20,
         20,
@@ -128,6 +139,55 @@ def test_consolidated_rows_are_informational_until_independently_verified():
     records = [row for payload in _payloads() for row in payload["ssi_records"]]
     assert records
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+
+def test_masked_accounts_are_not_reused_by_different_beneficiaries():
+    account_owners = {}
+    for payload in _payloads():
+        for row in payload["ssi_records"]:
+            for account in row[5:7]:
+                if account:
+                    previous_owner = account_owners.setdefault(account, row[0])
+                    assert previous_owner == row[0], (
+                        f"{account} is shared by {previous_owner} and {row[0]}"
+                    )
+
+
+def test_third_consolidation_batch_is_loaded_and_fails_closed():
+    records = _batch_records(3)
+    assert len(records) == 168
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+    engine, db_session_clean = _production_seeded_session()
+    for beneficiary_bic, currency in {(row[0], row[2]) for row in records}:
+        new_bics = {row[3] for row in records if row[0] == beneficiary_bic and row[2] == currency}
+        persisted = (
+            db_session_clean.query(SSI)
+            .filter(
+                SSI.beneficiary_bic == beneficiary_bic,
+                SSI.currency == currency,
+                SSI.intermediary_bic.in_(new_bics),
+            )
+            .all()
+        )
+        assert {row.intermediary_bic for row in persisted} == new_bics
+        selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
+        assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
+    db_session_clean.close()
+    engine.dispose()
+
+
+def test_consolidation_evidence_does_not_commit_account_fingerprints():
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    evidence_names = [
+        "ssi-wave55-bceelull-2026-01-12.json",
+        "ssi-wave56-nbokgb2l-2019-05-13.json",
+    ]
+
+    for evidence_name in evidence_names:
+        evidence = json.loads((evidence_dir / evidence_name).read_text())
+        assert evidence["masking"]["source_account_fingerprints_committed"] is False
+        assert all("source_account_fingerprint" not in route for route in evidence["routes"])
 
 
 def test_consolidated_rows_cannot_leak_through_the_production_selector():
