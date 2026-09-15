@@ -203,6 +203,16 @@ def _has_usable_ssi_accounts(row: SSI) -> bool:
     )
 
 
+def _has_routable_ssi_provenance(row: SSI) -> bool:
+    """Require independently verified, current provenance for live routing."""
+    return (
+        row.status == "published"
+        and _has_usable_text(row.as_of)
+        and _has_usable_text(row.verified_by)
+        and _has_usable_text(row.notes)
+    )
+
+
 def _is_routable_ssi(row: SSI) -> bool:
     """Return whether an SSI is safe to use as an executable route.
 
@@ -219,10 +229,7 @@ def _is_routable_ssi(row: SSI) -> bool:
         not row.bic_only
         and not row.terms_inferred
         and not _has_unstructured_multi_hop_label(row.intermediary_bank_name)
-        and row.status == "published"
-        and _has_usable_text(row.as_of)
-        and _has_usable_text(row.verified_by)
-        and _has_usable_text(row.notes)
+        and _has_routable_ssi_provenance(row)
         # Keep the account gate in this shared predicate, not only in the
         # SQL-backed selectors, so direct callers cannot promote placeholders.
         and accounts_are_usable
@@ -245,6 +252,31 @@ def _ssi_routing_filters() -> tuple:
         SSI.charge_code.isnot(None),
         SSI.value_date.isnot(None),
     )
+
+
+def _select_routable_ssi_rows(
+    session: Session,
+    beneficiary_bic_11: str,
+    settlement_currency: str,
+) -> list[SSI]:
+    """Load SSI candidates through the same gates used by live suggestions."""
+    candidates = [
+        beneficiary_bic_11,
+        beneficiary_bic_11[:8] + "XXX",
+        beneficiary_bic_11[:6] + "XXXXX",
+    ]
+    for candidate in candidates:
+        candidate_rows = session.execute(
+            select(SSI).where(
+                SSI.beneficiary_bic == candidate,
+                SSI.currency == settlement_currency,
+                *_ssi_routing_filters(),
+            )
+        ).scalars().all()
+        routable_rows = [row for row in candidate_rows if _is_routable_ssi(row)]
+        if routable_rows:
+            return routable_rows
+    return []
 
 
 def suggest_from_ssi(
@@ -270,23 +302,11 @@ def suggest_from_ssi(
     suggestions: list[IntermediarySuggestion] = []
     seen: set[str] = set()
 
-    candidates = [
+    rows = _select_routable_ssi_rows(
+        session,
         beneficiary_bic_11,
-        beneficiary_bic_11[:8] + "XXX",
-        beneficiary_bic_11[:6] + "XXXXX",
-    ]
-    rows: list = []
-    for cand in candidates:
-        candidate_rows = session.execute(
-            select(SSI).where(
-                SSI.beneficiary_bic == cand,
-                SSI.currency == settlement_currency,
-                *_ssi_routing_filters(),
-            )
-        ).scalars().all()
-        rows = [row for row in candidate_rows if _is_routable_ssi(row)]
-        if rows:
-            break
+        settlement_currency,
+    )
 
     corridor = f"{settlement_currency}->{destination_country or '??'}"
     for r in rows:
