@@ -24,6 +24,19 @@ def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
 
 
+def _batch_ledgers(batch):
+    prefix = f"seed_ssi_consolidation_{batch}_"
+    return [path for path in LEDGERS if path.name.startswith(prefix)]
+
+
+def _batch_payloads(batch):
+    return [json.loads(path.read_text()) for path in _batch_ledgers(batch)]
+
+
+def _batch_records(batch):
+    return [row for payload in _batch_payloads(batch) for row in payload["ssi_records"]]
+
+
 def _production_seeded_session():
     engine = create_engine(
         "sqlite://",
@@ -63,11 +76,24 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     bank_bics = [bank[0] for bank in BANKS]
     route_keys = [(row[0], row[2], row[3]) for row in SSI_RECORDS]
 
-    assert [pr for payload in payloads for pr in payload["source_prs"]] == list(
-        range(103, 113)
-    )
-    assert [len(payload["ssi_records"]) for payload in payloads] == [20, 20, 40, 30]
-    assert sum(len(payload["ssi_records"]) for payload in payloads) == 110
+    assert [pr for payload in payloads for pr in payload["source_prs"]] == [
+        *range(103, 113),
+        113,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+    ]
+    assert [len(payload["ssi_records"]) for payload in _batch_payloads(1)] == [
+        20,
+        20,
+        40,
+        30,
+    ]
+    assert len(_batch_records(1)) == 110
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
     assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
@@ -76,6 +102,25 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
         len(row) == 15 and tuple(row) in seeded_rows
         for payload in payloads
         for row in payload["ssi_records"]
+    )
+
+
+def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
+    expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}
+    batch_ledgers = _batch_ledgers(2)
+    batch_payloads = _batch_payloads(2)
+    configured_batch_names = {
+        name
+        for name in _SSI_CONSOLIDATION_DATA_FILES
+        if name.startswith("seed_ssi_consolidation_2_")
+    }
+
+    assert {path.name for path in batch_ledgers} == configured_batch_names == expected_names
+    assert not (ROOT / "app" / "services" / "seed_ssi_consolidation_2.json").exists()
+    assert sum(len(payload["ssi_records"]) for payload in batch_payloads) == 236
+    assert all(tuple(bank) in BANKS for payload in batch_payloads for bank in payload["banks"])
+    assert all(
+        tuple(row) in SSI_RECORDS for payload in batch_payloads for row in payload["ssi_records"]
     )
 
 
@@ -93,34 +138,40 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector():
             new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
 
     for (beneficiary_bic, currency), new_bics in new_bics_by_pair.items():
-        persisted = db_session_clean.query(SSI).filter(
-            SSI.beneficiary_bic == beneficiary_bic,
-            SSI.currency == currency,
-            SSI.intermediary_bic.in_(new_bics),
-        ).all()
+        persisted = (
+            db_session_clean.query(SSI)
+            .filter(
+                SSI.beneficiary_bic == beneficiary_bic,
+                SSI.currency == currency,
+                SSI.intermediary_bic.in_(new_bics),
+            )
+            .all()
+        )
         assert persisted
         assert {row.intermediary_bic for row in persisted} == new_bics
         assert all(not _is_routable_ssi(row) for row in persisted)
         selected = suggest_from_ssi(db_session_clean, beneficiary_bic, currency, None)
         assert new_bics.isdisjoint(suggestion.bic for suggestion in selected)
 
-    db_session_clean.add(SSI(
-        beneficiary_bic="FICOUS44XXX",
-        beneficiary_bank_name="Synovus Bank",
-        currency="USD",
-        intermediary_bic="BOFAUS3NXXX",
-        intermediary_bank_name="Bank of America, New York",
-        intermediary_account="123456789",
-        beneficiary_account="987654321",
-        charge_code="SHA",
-        value_date="spot",
-        notes="Source: selector control.",
-        as_of="2026-09-14",
-        status="published",
-        verified_by="Treasury Operations",
-        bic_only=False,
-        terms_inferred=False,
-    ))
+    db_session_clean.add(
+        SSI(
+            beneficiary_bic="FICOUS44XXX",
+            beneficiary_bank_name="Synovus Bank",
+            currency="USD",
+            intermediary_bic="BOFAUS3NXXX",
+            intermediary_bank_name="Bank of America, New York",
+            intermediary_account="123456789",
+            beneficiary_account="987654321",
+            charge_code="SHA",
+            value_date="spot",
+            notes="Source: selector control.",
+            as_of="2026-09-14",
+            status="published",
+            verified_by="Treasury Operations",
+            bic_only=False,
+            terms_inferred=False,
+        )
+    )
     db_session_clean.commit()
     assert [
         suggestion.bic
@@ -132,8 +183,6 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector():
 
 def test_commercial_bank_aud_location_mismatch_was_not_consolidated():
     assert not any(
-        row[0] == "COMBKWKWXXX"
-        and row[2] == "AUD"
-        and row[3] == "IRVTUS3NXXX"
+        row[0] == "COMBKWKWXXX" and row[2] == "AUD" and row[3] == "IRVTUS3NXXX"
         for row in SSI_RECORDS
     )
