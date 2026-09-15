@@ -9013,6 +9013,61 @@ def _find_existing_ssi_by_route_key(session, beneficiary_bic, currency, intermed
     ).one_or_none()
 
 
+def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
+    """Insert every missing consolidated route into an existing SSI catalog.
+
+    This upgrade is intentionally keyed per route and never gated on table
+    emptiness. Existing rows are left for the normal reconciliation pass,
+    which preserves operator-maintained settlement fields.
+    """
+    inserted = 0
+    for row in _SSI_CONSOLIDATED_RECORDS:
+        (
+            ben_bic,
+            ben_name,
+            ccy,
+            int_bic,
+            int_name,
+            int_acct,
+            ben_acct,
+            charge,
+            vdate,
+            notes,
+            as_of,
+            status,
+            verified_by,
+            bic_only,
+            terms_inferred,
+        ) = row
+        if (ben_bic, ccy, int_bic) not in source_keys:
+            continue
+        if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
+            continue
+        seeded = SSI(
+            beneficiary_bic=ben_bic,
+            beneficiary_bank_name=ben_name,
+            currency=ccy,
+            intermediary_bic=int_bic,
+            intermediary_bank_name=int_name,
+            intermediary_account=int_acct,
+            beneficiary_account=ben_acct,
+            charge_code=charge,
+            value_date=vdate,
+            notes=notes,
+            as_of=as_of,
+            status=status,
+            verified_by=verified_by,
+            bic_only=bic_only,
+            terms_inferred=terms_inferred,
+        )
+        seeded.seed_fingerprint = _seed_fingerprint(seeded)
+        session.add(seeded)
+        inserted += 1
+    if inserted:
+        session.flush()
+    return inserted
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {
@@ -9062,6 +9117,8 @@ def seed_if_empty(session) -> dict:
                 )
             )
             inserted["corridor_rules"] += 1
+
+    inserted["ssi"] += _backfill_missing_consolidated_ssis(session, source_keys)
 
     for row in SSI_RECORDS:
         # 12-field rows carry provenance; a 13th names the verifier, which
