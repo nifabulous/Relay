@@ -176,14 +176,17 @@ def test_third_consolidation_batch_is_loaded_and_fails_closed():
     engine.dispose()
 
 
-def test_spuerkeess_evidence_does_not_commit_account_fingerprints():
-    evidence_path = (
-        ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-wave55-bceelull-2026-01-12.json"
-    )
-    evidence = json.loads(evidence_path.read_text())
+def test_consolidation_evidence_does_not_commit_account_fingerprints():
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    evidence_names = [
+        "ssi-wave55-bceelull-2026-01-12.json",
+        "ssi-wave56-nbokgb2l-2019-05-13.json",
+    ]
 
-    assert evidence["masking"]["source_account_fingerprints_committed"] is False
-    assert all("source_account_fingerprint" not in route for route in evidence["routes"])
+    for evidence_name in evidence_names:
+        evidence = json.loads((evidence_dir / evidence_name).read_text())
+        assert evidence["masking"]["source_account_fingerprints_committed"] is False
+        assert all("source_account_fingerprint" not in route for route in evidence["routes"])
 
 
 def test_consolidated_rows_cannot_leak_through_the_production_selector():
