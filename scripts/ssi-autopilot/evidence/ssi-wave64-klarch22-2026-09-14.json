@@ -34,5 +34,5 @@
     {"currency":"USD","int_bic":"CHASGB2L"},
     {"currency":"ZAR","int_bic":"CHASDEFX"}
   ],
-  "normalization_note": "The live SSI table publishes account-backed correspondent rows plus a second correspondent hop for several currencies. Account values are masked into the reserved ACCT-91003421 through ACCT-91003437 range; CHF and EUR are omitted because no account number is published. SHA and spot are retained as inferred terms because the page does not publish settlement terms."
+  "normalization_note": "The live SSI table publishes account-backed correspondent rows plus a second correspondent hop for several currencies. Account values are masked into the reserved ACCT-91013421 through ACCT-91013437 range; CHF and EUR are omitted because no account number is published. SHA and spot are retained as inferred terms because the page does not publish settlement terms."
 }

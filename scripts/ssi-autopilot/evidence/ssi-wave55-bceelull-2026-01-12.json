@@ -6,7 +6,8 @@
   "region_masked_block": 91005600,
   "masking": {
     "algorithm": "sequential token per normalized source account",
-    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "equality": "equal source accounts share one token during in-memory normalization; no account-derived fingerprints are committed",
+    "source_account_fingerprints_committed": false,
     "raw_accounts_committed": false
   },
   "source_snapshot": {
@@ -20,26 +21,26 @@
     "account_backed_route_count": 21
   },
   "routes": [
-    {"currency": "AUD", "int_bic": "ANZBAU3M", "source_account_fingerprint": "171419d13d8cf4bcbff3ebc5f513e4e3e63e0453986fda994ae13fd912e208bc", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
-    {"currency": "CAD", "int_bic": "ROYCCAT2", "source_account_fingerprint": "d2be3c7a79af6a0bf49f6cb72f99d83825625e734ab0455ba01cbe2b4dab4bf8", "nostro_mask": "ACCT-91005602", "with_an_mask": "ACCT-91005602"},
-    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "source_account_fingerprint": "380cb76dca9a0bcdb8a5f56b159dd4b56b7178c30a239a6c959d2c37df26b22e", "nostro_mask": "ACCT-91005603", "with_an_mask": "ACCT-91005603"},
-    {"currency": "CNY", "int_bic": "BKCHLULL", "source_account_fingerprint": "79ab234556a5b2f901075a3afd710719c205b46abb1f76cb9dbaed9f205dded0", "nostro_mask": "ACCT-91005604", "with_an_mask": "ACCT-91005604"},
-    {"currency": "CZK", "int_bic": "KOMBCZPP", "source_account_fingerprint": "d4112c2624d63ec1edb2c2f0ddafdd3a9de51484014c61d9d1ee1b78b0200c46", "nostro_mask": "ACCT-91005605", "with_an_mask": "ACCT-91005605"},
-    {"currency": "DKK", "int_bic": "DABADKKK", "source_account_fingerprint": "00e33188dd677b1e58edbd9369952166b1e8c389f8281e013a744578000c1061", "nostro_mask": "ACCT-91005606", "with_an_mask": "ACCT-91005606"},
-    {"currency": "GBP", "int_bic": "BARCGB22", "source_account_fingerprint": "351cc4f1587d90a9f090d8a1346b6cd804ee3fb384bcb78b1ab763608572bcce", "nostro_mask": "ACCT-91005607", "with_an_mask": "ACCT-91005607"},
-    {"currency": "HKD", "int_bic": "CITIHKHX", "source_account_fingerprint": "d1f150dbce5c27c640b60e92cec91a9b3dc3b09782804165fb69dfffc57746a1", "nostro_mask": "ACCT-91005608", "with_an_mask": "ACCT-91005608"},
-    {"currency": "HUF", "int_bic": "IRVTUS3N", "source_account_fingerprint": "a239e1096e9198119c06a56ee69fd738782fe666d1e51dc3ada8a1150361c3bf", "nostro_mask": "ACCT-91005609", "with_an_mask": "ACCT-91005609"},
-    {"currency": "ISK", "int_bic": "NBIIISRE", "source_account_fingerprint": "4965a5572a2095ec30bd363f1d6f070f76d81c04ffb11f35db12786af8644428", "nostro_mask": "ACCT-91005610", "with_an_mask": "ACCT-91005610"},
-    {"currency": "JPY", "int_bic": "BOTKJPJT", "source_account_fingerprint": "67e37d27e116caa00d33dcda699e656eac5958179b08ea81de782706670c5f58", "nostro_mask": "ACCT-91005611", "with_an_mask": "ACCT-91005611"},
-    {"currency": "MXN", "int_bic": "IRVTUS3N", "source_account_fingerprint": "57f5ef363c997507a1de8dbb445d6b18a0efe1e5c1bac3391ef4ebd8a76099c0", "nostro_mask": "ACCT-91005612", "with_an_mask": "ACCT-91005612"},
-    {"currency": "NOK", "int_bic": "NDEANOKK", "source_account_fingerprint": "6a80ac70e2d51cbcba63177b5267ab61887f17f721fd798aa9dc33bbb0227cf8", "nostro_mask": "ACCT-91005613", "with_an_mask": "ACCT-91005613"},
-    {"currency": "NZD", "int_bic": "ANZBNZ22058", "source_account_fingerprint": "171419d13d8cf4bcbff3ebc5f513e4e3e63e0453986fda994ae13fd912e208bc", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
-    {"currency": "PLN", "int_bic": "PKOPPLPW", "source_account_fingerprint": "727a633c98dfdf3c0b286ac2352531f8ef5da4b35d147eac529434f83b5070e1", "nostro_mask": "ACCT-91005614", "with_an_mask": "ACCT-91005614"},
-    {"currency": "RON", "int_bic": "IRVTUS3N", "source_account_fingerprint": "bfc60837ed36c1c46f4188b53c31b2b2f22e1b885a4eb9ba98f907ce4afa42fc", "nostro_mask": "ACCT-91005615", "with_an_mask": "ACCT-91005615"},
-    {"currency": "SEK", "int_bic": "HANDSESS", "source_account_fingerprint": "6b601f942e58af37238676799ac0db210071d5ccd78aa9cce4fe9fe607f0f9d0", "nostro_mask": "ACCT-91005616", "with_an_mask": "ACCT-91005616"},
-    {"currency": "SGD", "int_bic": "CITIHKHX", "source_account_fingerprint": "7506a7d712691e1c05c9f76f7e7533a85269f3258a506e46809c37ab1a417b96", "nostro_mask": "ACCT-91005617", "with_an_mask": "ACCT-91005617"},
-    {"currency": "TRY", "int_bic": "IRVTUS3N", "source_account_fingerprint": "09d4e8e516771b6376d335ac25e7a3fa6d1f9ffe3e3e60830f3e1d1836540e9b", "nostro_mask": "ACCT-91005618", "with_an_mask": "ACCT-91005618"},
-    {"currency": "USD", "int_bic": "CITIUS33", "source_account_fingerprint": "17a6f01fb5c8b5f32f3ee788fa47c65a50dfeb8ec1e5ba4b89bc113a9f8e4a90", "nostro_mask": "ACCT-91005619", "with_an_mask": "ACCT-91005619"},
-    {"currency": "ZAR", "int_bic": "IRVTUS3N", "source_account_fingerprint": "3af52c55589da2b96f3e7bf5bbc056e56787454af17e23fd515080eb4e02a564", "nostro_mask": "ACCT-91005620", "with_an_mask": "ACCT-91005620"}
+    {"currency": "AUD", "int_bic": "ANZBAU3M", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
+    {"currency": "CAD", "int_bic": "ROYCCAT2", "nostro_mask": "ACCT-91005602", "with_an_mask": "ACCT-91005602"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "nostro_mask": "ACCT-91005603", "with_an_mask": "ACCT-91005603"},
+    {"currency": "CNY", "int_bic": "BKCHLULL", "nostro_mask": "ACCT-91005604", "with_an_mask": "ACCT-91005604"},
+    {"currency": "CZK", "int_bic": "KOMBCZPP", "nostro_mask": "ACCT-91005605", "with_an_mask": "ACCT-91005605"},
+    {"currency": "DKK", "int_bic": "DABADKKK", "nostro_mask": "ACCT-91005606", "with_an_mask": "ACCT-91005606"},
+    {"currency": "GBP", "int_bic": "BARCGB22", "nostro_mask": "ACCT-91005607", "with_an_mask": "ACCT-91005607"},
+    {"currency": "HKD", "int_bic": "CITIHKHX", "nostro_mask": "ACCT-91005608", "with_an_mask": "ACCT-91005608"},
+    {"currency": "HUF", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005609", "with_an_mask": "ACCT-91005609"},
+    {"currency": "ISK", "int_bic": "NBIIISRE", "nostro_mask": "ACCT-91005610", "with_an_mask": "ACCT-91005610"},
+    {"currency": "JPY", "int_bic": "BOTKJPJT", "nostro_mask": "ACCT-91005611", "with_an_mask": "ACCT-91005611"},
+    {"currency": "MXN", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005612", "with_an_mask": "ACCT-91005612"},
+    {"currency": "NOK", "int_bic": "NDEANOKK", "nostro_mask": "ACCT-91005613", "with_an_mask": "ACCT-91005613"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22058", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
+    {"currency": "PLN", "int_bic": "PKOPPLPW", "nostro_mask": "ACCT-91005614", "with_an_mask": "ACCT-91005614"},
+    {"currency": "RON", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005615", "with_an_mask": "ACCT-91005615"},
+    {"currency": "SEK", "int_bic": "HANDSESS", "nostro_mask": "ACCT-91005616", "with_an_mask": "ACCT-91005616"},
+    {"currency": "SGD", "int_bic": "CITIHKHX", "nostro_mask": "ACCT-91005617", "with_an_mask": "ACCT-91005617"},
+    {"currency": "TRY", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005618", "with_an_mask": "ACCT-91005618"},
+    {"currency": "USD", "int_bic": "CITIUS33", "nostro_mask": "ACCT-91005619", "with_an_mask": "ACCT-91005619"},
+    {"currency": "ZAR", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005620", "with_an_mask": "ACCT-91005620"}
   ]
 }
