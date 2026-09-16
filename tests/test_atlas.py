@@ -19,6 +19,12 @@ def _country_code(bic):
     return bic[4:6].upper()
 
 
+def test_atlas_service_defers_type_annotations():
+    from app.services import atlas
+
+    assert atlas._snapshot.__annotations__["return"] == "list[SSI]"
+
+
 def test_network_returns_complete_scoped_contract(client, db_session_clean):
     response = client.get("/api/atlas/network")
 

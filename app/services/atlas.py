@@ -5,6 +5,8 @@ Python. This keeps the scope filter in one place, makes distinct-count semantics
 obvious, and gives the performance test a fixed one-query database boundary.
 """
 
+from __future__ import annotations
+
 from collections import Counter, defaultdict
 from typing import Iterable
 
