@@ -289,6 +289,50 @@ def test_jkb_evidence_route_count_matches_the_consolidated_seed():
     assert seeded_keys == evidence_keys
 
 
+def test_every_route_evidence_file_matches_the_seeded_catalog():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    seeded_keys = {(bic11(row[0]), row[2], bic11(row[3])) for row in SSI_RECORDS}
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    checked_files = []
+
+    for path in sorted(evidence_dir.glob("*.json")):
+        evidence = json.loads(path.read_text())
+        beneficiary = evidence.get("beneficiary")
+        beneficiary_bic = (
+            beneficiary.get("bic") if isinstance(beneficiary, dict) else None
+        ) or evidence.get("beneficiary_bic")
+        routes = evidence.get("routes")
+        if not beneficiary_bic or not isinstance(routes, list):
+            continue
+
+        route_keys = [
+            (bic11(beneficiary_bic), route["currency"].upper(), bic11(route["int_bic"]))
+            for route in routes
+        ]
+        assert len(route_keys) == len(set(route_keys)), path.name
+        assert set(route_keys) <= seeded_keys, path.name
+
+        for section_name, count_name in (
+            ("source_snapshot", "route_count"),
+            ("source_snapshot", "new_route_count"),
+            ("scope", "included_route_count"),
+            ("scope", "new_route_count"),
+        ):
+            section = evidence.get(section_name)
+            if isinstance(section, dict) and count_name in section:
+                assert section[count_name] == len(routes), (
+                    path.name,
+                    section_name,
+                    count_name,
+                )
+        checked_files.append(path.name)
+
+    assert len(checked_files) == 77
+
+
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(4)
     assert len(records) == 123

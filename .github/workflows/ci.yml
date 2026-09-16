@@ -88,7 +88,7 @@ jobs:
           tests/test_ssi_consolidation.py::test_existing_database_is_idempotently_backfilled_with_the_fourth_batch
           -q
 
-  ssi-jkb-evidence-integrity:
+  ssi-evidence-integrity:
     runs-on: ubuntu-latest
 
     steps:
@@ -106,10 +106,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Verify JKB evidence and seed route counts
+      - name: Verify every SSI evidence route against the seeded catalog
         run: >-
           python -m pytest
-          tests/test_ssi_consolidation.py::test_jkb_evidence_route_count_matches_the_consolidated_seed
+          tests/test_ssi_consolidation.py::test_every_route_evidence_file_matches_the_seeded_catalog
           -q
 
   # The Codex automation scripts are shell, so pytest cannot reach them. This
