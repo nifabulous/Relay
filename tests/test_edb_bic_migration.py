@@ -35,7 +35,11 @@ def test_edb_seed_and_validator_use_the_published_bic():
 def test_seed_rollout_rekeys_old_edb_rows_and_preserves_operator_fields(monkeypatch):
     import app.services.seed as seed_module
 
-    source = next(row for row in seed_module.SSI_RECORDS if row[0] == CANONICAL_BIC)
+    source = next(
+        row
+        for row in seed_module.SSI_RECORDS
+        if row[0] == CANONICAL_BIC and (len(row) <= 13 or not row[13])
+    )
     legacy = (OLD_BIC, *source[1:])
     canonical = (CANONICAL_BIC, *source[1:])
     monkeypatch.setattr(
@@ -83,7 +87,11 @@ def test_seed_rollout_rekeys_old_edb_rows_and_preserves_operator_fields(monkeypa
 def test_seed_rollout_rejects_two_operator_owned_alias_rows_atomically(monkeypatch):
     import app.services.seed as seed_module
 
-    source = next(row for row in seed_module.SSI_RECORDS if row[0] == CANONICAL_BIC)
+    source = next(
+        row
+        for row in seed_module.SSI_RECORDS
+        if row[0] == CANONICAL_BIC and (len(row) <= 13 or not row[13])
+    )
     monkeypatch.setattr(seed_module, "BANKS", ())
     monkeypatch.setattr(seed_module, "SSI_RECORDS", (source,))
     monkeypatch.setattr(seed_module, "CORRIDOR_RULES", ())

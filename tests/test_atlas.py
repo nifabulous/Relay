@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -11,17 +11,30 @@ from app.schemas import SSI_STATUSES
 from app.services.atlas import build_country, build_network
 
 
-def test_network_returns_complete_scoped_contract(client):
+def _seed_rows(session):
+    return list(session.execute(select(SSI)).scalars())
+
+
+def _in_scope(row, scope):
+    return scope == "all" or not row.bic_only
+
+
+def _country_code(bic):
+    return bic[4:6].upper()
+
+
+def test_network_returns_complete_scoped_contract(client, db_session_clean):
     response = client.get("/api/atlas/network")
 
     assert response.status_code == 200
     body = response.json()
+    rows = _seed_rows(db_session_clean)
     assert body["scope"] == "all"
-    assert body["totals"]["ssi_rows"] == 7083
-    assert body["totals"]["beneficiary_banks"] == 451
-    assert body["totals"]["correspondents"] == 960
+    assert body["totals"]["ssi_rows"] == len(rows)
+    assert body["totals"]["beneficiary_banks"] == len({row.beneficiary_bic for row in rows})
+    assert body["totals"]["correspondents"] == len({row.intermediary_bic for row in rows})
     assert len(body["by_status_and_tier"]) == len(SSI_STATUSES) * 2
-    assert sum(item["count"] for item in body["by_status_and_tier"]) == 7083
+    assert sum(item["count"] for item in body["by_status_and_tier"]) == len(rows)
     assert body["hub_countries"]
     assert body["hubs"]
     assert all("evidence" not in item for item in body["hubs"])
@@ -39,48 +52,56 @@ def test_network_returns_complete_scoped_contract(client):
     }
 
 
-def test_network_recomputes_settleable_rollups(client):
+def test_network_recomputes_settleable_rollups(client, db_session_clean):
     response = client.get("/api/atlas/network", params={"scope": "settleable"})
 
     assert response.status_code == 200
     body = response.json()
+    rows = [row for row in _seed_rows(db_session_clean) if not row.bic_only]
     assert body["scope"] == "settleable"
-    assert body["totals"]["ssi_rows"] == 4967
-    assert body["totals"]["beneficiary_banks"] == 329
-    assert body["totals"]["correspondents"] < 960
+    assert body["totals"]["ssi_rows"] == len(rows)
+    assert body["totals"]["beneficiary_banks"] == len({row.beneficiary_bic for row in rows})
+    assert body["totals"]["correspondents"] == len({row.intermediary_bic for row in rows})
 
 
-def test_country_unknown_well_formed_code_is_an_explicit_empty(client):
+def test_country_unknown_well_formed_code_is_an_explicit_empty(client, db_session_clean):
     response = client.get("/api/atlas/country/AD")
 
     assert response.status_code == 200
     body = response.json()
+    rows = _seed_rows(db_session_clean)
     assert body["iso2"] == "AD"
     assert body["collected"] is False
     assert body["in_scope"] == {
         "beneficiary_banks": 0,
-        "beneficiary_banks_total": 451,
+        "beneficiary_banks_total": len({row.beneficiary_bic for row in rows}),
         "rows": 0,
-        "ssi_rows_total": 7083,
+        "ssi_rows_total": len(rows),
     }
     assert body["correspondents"] == []
 
 
-def test_country_scope_keeps_corpus_fact_and_uses_scoped_denominators(client):
+def test_country_scope_keeps_corpus_fact_and_uses_scoped_denominators(
+    client, db_session_clean
+):
     response = client.get("/api/atlas/country/CA", params={"scope": "settleable"})
 
     assert response.status_code == 200
     body = response.json()
+    rows = _seed_rows(db_session_clean)
+    settleable_rows = [row for row in rows if not row.bic_only]
+    country_rows = [row for row in rows if _country_code(row.beneficiary_bic) == "CA"]
+    scoped_country_rows = [row for row in country_rows if not row.bic_only]
     assert body["collected"] is True
     assert body["in_scope"] == {
-        "beneficiary_banks": 0,
-        "beneficiary_banks_total": 329,
-        "rows": 0,
-        "ssi_rows_total": 4967,
+        "beneficiary_banks": len({row.beneficiary_bic for row in scoped_country_rows}),
+        "beneficiary_banks_total": len({row.beneficiary_bic for row in settleable_rows}),
+        "rows": len(scoped_country_rows),
+        "ssi_rows_total": len(settleable_rows),
     }
-    assert body["all_scopes"]["beneficiary_banks"] == 2
-    assert body["all_scopes"]["beneficiary_banks_total"] == 451
-    assert body["all_scopes"]["rows"] == 15
+    assert body["all_scopes"]["beneficiary_banks"] == len({row.beneficiary_bic for row in country_rows})
+    assert body["all_scopes"]["beneficiary_banks_total"] == len({row.beneficiary_bic for row in rows})
+    assert body["all_scopes"]["rows"] == len(country_rows)
 
 
 def test_country_malformed_code_is_rejected(client):
