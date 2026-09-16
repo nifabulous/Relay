@@ -21,12 +21,12 @@ export function atlasLayerDescriptors(
   const measureLabel = view === "spoke"
     ? `Darker = more SSI rows we collected in this scope, not more correspondent banking. Range ${range} of ${denominator.toLocaleString()} ${denominatorNoun} in scope.`
     : `Dark = more ${measure}; range ${range} of ${denominator.toLocaleString()} ${denominatorNoun} in scope.`;
-  return [
+  const layers = [
     { id: "coverage", label: "Neutral = never collected · Dashed = collected, none in this scope · Filled = collected and in scope" },
     { id: "measure", label: measureLabel },
-    { id: "evidence", label: "Five quantile bins · hatch = archived share (25% / 75% bands)" },
-    ...extras,
   ];
+  if (view === "spoke") layers.push({ id: "evidence", label: "Five quantile bins · hatch = archived share (25% / 75% bands)" });
+  return [...layers, ...extras];
 }
 
 type Props = {
@@ -69,12 +69,18 @@ const AtlasMapGeometry = memo(function AtlasMapGeometry({ topology, data, spokes
     () => feature(topology as never, topology.objects.countries as never) as unknown as Countries,
     [topology],
   );
+  const showEvidence = view === "spoke";
   const valuesByIso = useMemo(() => new Map(data.map((item) => [item.iso2, item.value])), [data]);
   const archivedByIso = useMemo(
-    () => new Map(spokes.map((item) => [item.iso2, item.evidence.filter((e) => e.status === "archived").reduce((sum, e) => sum + e.count, 0)])),
-    [spokes],
+    () => showEvidence
+      ? new Map(spokes.map((item) => [item.iso2, item.evidence.filter((e) => e.status === "archived").reduce((sum, e) => sum + e.count, 0)]))
+      : new Map<string, number>(),
+    [showEvidence, spokes],
   );
-  const rowsByIso = useMemo(() => new Map(spokes.map((item) => [item.iso2, item.rows])), [spokes]);
+  const rowsByIso = useMemo(
+    () => showEvidence ? new Map(spokes.map((item) => [item.iso2, item.rows])) : new Map<string, number>(),
+    [showEvidence, spokes],
+  );
   const domain = useMemo(() => data.map((item) => item.value).filter((value) => value > 0), [data]);
   const bins = useMemo(() => scaleQuantile<number, number>().domain(domain.length ? domain : [0]).range([1, 2, 3, 4, 5]), [domain]);
   const projection = useMemo(() => geoNaturalEarth1().fitSize([900, 470], countries as never), [countries]);
@@ -91,11 +97,11 @@ const AtlasMapGeometry = memo(function AtlasMapGeometry({ topology, data, spokes
           {countries.features.map((country, index) => {
             const resolvedIso = iso2ForNumericId(country.id);
             const value = resolvedIso ? valuesByIso.get(resolvedIso) : undefined;
-            const archived = resolvedIso ? archivedByIso.get(resolvedIso) ?? 0 : 0;
-            const total = resolvedIso && view === "spoke" ? rowsByIso.get(resolvedIso) ?? 0 : 0;
+            const archived = showEvidence && resolvedIso ? archivedByIso.get(resolvedIso) ?? 0 : 0;
+            const total = showEvidence && resolvedIso ? rowsByIso.get(resolvedIso) ?? 0 : 0;
             const band = total > 0 && archived / total >= 0.75 ? "heavy" : total > 0 && archived / total >= 0.25 ? "light" : "none";
             const coverage = value == null ? "never-collected" : coverageState(true, value, "settleable");
-            const classes = ["atlas-map__country", loading ? "atlas-map__country--loading" : `atlas-map__country--${coverage}`, !loading && value != null && value > 0 ? `atlas-map__country--bin-${bins(value)}` : "", !loading ? `atlas-map__country--hatch-${band}` : ""].filter(Boolean).join(" ");
+            const classes = ["atlas-map__country", loading ? "atlas-map__country--loading" : `atlas-map__country--${coverage}`, !loading && value != null && value > 0 ? `atlas-map__country--bin-${bins(value)}` : "", !loading && showEvidence ? `atlas-map__country--hatch-${band}` : ""].filter(Boolean).join(" ");
             const label = resolvedIso ? `${resolvedIso}: ${value == null ? "never collected" : value === 0 ? "collected, none in this scope" : `${value.toLocaleString()} ${measure}`}` : "Unidentified geography";
             return <path key={`${country.id == null ? "no-id" : country.id}-${index}`} className={classes} data-iso2={resolvedIso} d={path(country as never) ?? ""} onClick={() => resolvedIso && !loading && onSelectRef.current(resolvedIso)} onMouseEnter={() => resolvedIso && onHoverRef.current?.(resolvedIso)} onMouseLeave={() => onHoverRef.current?.(null)}><title>{label}</title></path>;
           })}

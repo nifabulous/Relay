@@ -21,14 +21,11 @@ export function coverageCounts(
   observedCodes: string[],
   scopedRows: Array<{ iso2: string; value: number }>,
   drawableCodes: Set<string>,
-  knownUnresolvable: Set<string>,
 ): CoverageCounts {
   const scopedByCode = new Map(scopedRows.map((item) => [item.iso2.toUpperCase(), item.value]));
-  const unmapped = observedCodes
-    .map((code) => code.toUpperCase())
-    .filter((code) => !drawableCodes.has(code) && knownUnresolvable.has(code))
-    .sort();
-  const drawableObserved = [...new Set(observedCodes.map((code) => code.toUpperCase()))]
+  const normalizedObserved = [...new Set(observedCodes.map((code) => code.toUpperCase()))];
+  const unmapped = normalizedObserved.filter((code) => !drawableCodes.has(code)).sort();
+  const drawableObserved = normalizedObserved
     .filter((code) => drawableCodes.has(code));
   const outOfScopeCodes = drawableObserved.filter((code) => (scopedByCode.get(code) ?? 0) === 0).sort();
   const inScope = drawableObserved.filter((code) => (scopedByCode.get(code) ?? 0) > 0).length;

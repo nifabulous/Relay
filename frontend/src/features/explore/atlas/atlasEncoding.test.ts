@@ -22,15 +22,14 @@ describe("atlas encodings", () => {
 
   it("separates never-collected, out-of-scope, in-scope, and unmapped codes", () => {
     expect(coverageCounts(
-      ["CA", "FR", "BQ"],
+      ["CA", "FR", "BQ", "ZZ"],
       [{ iso2: "CA", value: 0 }, { iso2: "FR", value: 4 }, { iso2: "BQ", value: 3 }],
       new Set(["CA", "FR"]),
-      new Set(["BQ"]),
     )).toEqual({
       neverCollected: 0,
       outOfScope: 1,
       inScope: 1,
-      unmapped: ["BQ"],
+      unmapped: ["BQ", "ZZ"],
       outOfScopeCodes: ["CA"],
     });
   });

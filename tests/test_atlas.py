@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Iterable, get_type_hints
 
 from sqlalchemy import create_engine, event, select
 from sqlalchemy.orm import sessionmaker
@@ -19,10 +20,11 @@ def _country_code(bic):
     return bic[4:6].upper()
 
 
-def test_atlas_service_defers_type_annotations():
+def test_atlas_service_annotations_resolve_to_ssi_types():
     from app.services import atlas
 
-    assert atlas._snapshot.__annotations__["return"] == "list[SSI]"
+    assert get_type_hints(atlas._snapshot)["return"] == list[SSI]
+    assert get_type_hints(atlas._status_counts)["rows"] == Iterable[SSI]
 
 
 def test_network_returns_complete_scoped_contract(client, db_session_clean):
