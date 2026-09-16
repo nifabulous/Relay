@@ -1,0 +1,21 @@
+{
+  "beneficiary": {"bic":"CHKHMNUBXXX","name":"Chinggis Khaan Bank","country":"MN"},
+  "source_snapshot": {
+    "source":"https://www.ckbank.mn/product/34?lang=en",
+    "as_of":"2026-09-14",
+    "route_count":8,
+    "raw_accounts_committed":false,
+    "masked_account_block":"ACCT-91004491..ACCT-91004498",
+    "terms_inferred":true
+  },
+  "routes": [
+    {"currency":"USD","int_bic":"CZNBKRSE","masked_account":"ACCT-91004491"},
+    {"currency":"EUR","int_bic":"TJSCRUMM","masked_account":"ACCT-91004492"},
+    {"currency":"CNY","int_bic":"BKCHCNBJ880","masked_account":"ACCT-91004493"},
+    {"currency":"JPY","int_bic":"SABRRUMM","masked_account":"ACCT-91004494"},
+    {"currency":"GBP","int_bic":"CZNBKRSE","masked_account":"ACCT-91004495"},
+    {"currency":"CHF","int_bic":"TJSCRUMM","masked_account":"ACCT-91004496"},
+    {"currency":"CAD","int_bic":"TJSCRUMM","masked_account":"ACCT-91004497"},
+    {"currency":"KRW","int_bic":"CZNBKRSE","masked_account":"ACCT-91004498"}
+  ]
+}

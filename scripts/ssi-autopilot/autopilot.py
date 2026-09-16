@@ -1346,6 +1346,232 @@ def _expand_batch6_source_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def _expand_batch7_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-7 ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch7_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    bic_only_note = (
+        "BIC-level list — no account numbers published; not a selectable settlement instruction."
+    )
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {bic_only_note} {real_note}"
+        else:
+            note = f"{source.rstrip()} {real_note}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(
+                intermediary_bic,
+                "batch7 intermediary BIC",
+            )
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
+def _expand_batch9_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-9 EverBank ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch9_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    bic_only_note = (
+        "BIC-level list — no account numbers published; not a selectable settlement instruction."
+    )
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        if bic_only:
+            note = f"Source: {source} (as of {as_of}) {bic_only_note} {real_note}"
+        else:
+            note = f"Source: {source} (as of {as_of}). {real_note}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(
+                intermediary_bic,
+                "batch9 intermediary BIC",
+            )
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
+def _expand_batch8_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-8 ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch8_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    bic_only_note = (
+        "BIC-level list — no account numbers published; not a selectable settlement instruction."
+    )
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {bic_only_note} {real_note}"
+        else:
+            note = f"{source.rstrip()} {real_note}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(intermediary_bic, "batch8 intermediary BIC")
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
+def _expand_batch32_source_rows() -> list[tuple[str, ...]]:
+    """Read the bounded batch-32 ESAF SSI ledger without executing seed.py."""
+    path = REPO_ROOT / "app" / "services" / "seed_ssi_batch32_1.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))
+    rows: list[tuple[str, ...]] = []
+    real_note = _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+    for group in groups:
+        (
+            beneficiary_bic, beneficiary_name, source, as_of, status,
+            charge_code, value_date, verified_by, bic_only, terms_inferred,
+            packed_rows,
+        ) = group
+        note = f"{source.rstrip()} {real_note}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            intermediary_bic = _canonical_bic11(
+                intermediary_bic,
+                "batch32 intermediary BIC",
+            )
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                    intermediary_name, None if bic_only else account,
+                    None if bic_only else account,
+                    None if bic_only else charge_code,
+                    None if bic_only else value_date,
+                    note, as_of, status, verified_by,
+                    bic_only, terms_inferred,
+                )
+            ))
+    return rows
+
+
+def _validate_consolidation_payload(payload: object, path: Path) -> list[list]:
+    """Validate the external ledger before its rows enter verifier comparisons."""
+    allowed_keys = {"source_prs", "superseded_prs", "banks", "ssi_records"}
+    if not isinstance(payload, dict) or set(payload) - allowed_keys:
+        raise ValueError(f"{path}: invalid consolidation ledger object")
+    source_prs = payload.get("source_prs")
+    if (
+        not isinstance(source_prs, list)
+        or any(not isinstance(pr, int) or pr < 1 for pr in source_prs)
+        or len(source_prs) != len(set(source_prs))
+    ):
+        raise ValueError(f"{path}.source_prs: expected a list")
+    banks = payload.get("banks")
+    if not isinstance(banks, list):
+        raise ValueError(f"{path}.banks: expected a list")
+    seen_bics = set()
+    for index, bank in enumerate(banks):
+        if not isinstance(bank, list) or len(bank) != 5 or not all(
+            isinstance(value, str) and value.strip() for value in bank
+        ):
+            raise ValueError(f"{path}.banks[{index}]: expected five strings")
+        if not re.fullmatch(r"[A-Z0-9]{11}", bank[0]) or bank[0] in seen_bics:
+            raise ValueError(f"{path}.banks[{index}]: invalid or duplicate BIC")
+        seen_bics.add(bank[0])
+    records = payload.get("ssi_records")
+    if not isinstance(records, list):
+        raise ValueError(f"{path}.ssi_records: expected a list")
+    seen = set()
+    for index, record in enumerate(records):
+        if not isinstance(record, list) or len(record) != 15:
+            raise ValueError(f"{path}.ssi_records[{index}]: expected 15 fields")
+        if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
+            raise ValueError(f"{path}.ssi_records[{index}]: missing route identity")
+        if not re.fullmatch(r"[A-Z0-9]{11}", record[0]) or not re.fullmatch(
+            r"[A-Z0-9]{11}", record[3]
+        ):
+            raise ValueError(f"{path}.ssi_records[{index}]: expected canonical BIC11 values")
+        if record[11] not in {"unverified", "archived"} or record[12] is not None:
+            raise ValueError(f"{path}.ssi_records[{index}]: must remain non-published")
+        if not isinstance(record[13], bool) or not isinstance(record[14], bool):
+            raise ValueError(f"{path}.ssi_records[{index}]: invalid safety flags")
+        if record[13] and any(record[pos] is not None for pos in range(5, 9)):
+            raise ValueError(f"{path}.ssi_records[{index}]: BIC-only row has settlement fields")
+        key = (record[0], record[2], record[3])
+        if key in seen:
+            raise ValueError(f"{path}.ssi_records[{index}]: duplicate route key")
+        seen.add(key)
+    return records
+
+
+def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
+    """Read and validate consolidated ledgers without executing seed.py."""
+    rows: list[tuple[str, ...]] = []
+    services = REPO_ROOT / "app" / "services"
+    for path in sorted(services.glob("seed_ssi_consolidation_*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        records = _validate_consolidation_payload(payload, path)
+        rows.extend(tuple(repr(value) for value in record) for record in records)
+    return rows
+
+
 def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
@@ -1375,12 +1601,17 @@ def _ssi_rows(source: str) -> list[tuple]:
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records"}
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records"}
             ):
                 rows.extend({
                     "_ssi_batch4_records": _expand_batch4_source_rows,
                     "_ssi_batch5_records": _expand_batch5_source_rows,
                     "_ssi_batch6_records": _expand_batch6_source_rows,
+                    "_ssi_batch7_records": _expand_batch7_source_rows,
+                    "_ssi_batch9_records": _expand_batch9_source_rows,
+                    "_ssi_batch32_records": _expand_batch32_source_rows,
+                    "_ssi_batch8_records": _expand_batch8_source_rows,
+                    "_ssi_consolidation_records": _expand_consolidation_source_rows,
                 }[element.value.func.id]())
                 continue
             if not isinstance(element, ast.Tuple):
@@ -1797,7 +2028,7 @@ def cmd_verify(_args: argparse.Namespace) -> None:
                 and isinstance(e, ast.Starred)
                 and isinstance(e.value, ast.Call)
                 and isinstance(e.value.func, ast.Name)
-                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records"}
+                and e.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records"}
             ):
                 continue
             if not isinstance(e, ast.Tuple) or len(e.elts) not in expected:

@@ -1,0 +1,46 @@
+{
+  "source": "https://www.spuerkeess.lu/fileadmin/mediatheque/Entreprises/Clients_institutionnels/SSI_CASH_20251222VersionCI.pdf",
+  "source_sha256": "3325d298f06ca5a721760e358011887b85bff73e5cd1b8dd74eb560a7c8f4956",
+  "as_of": "2026-01-12",
+  "beneficiary_bic": "BCEELULL",
+  "region_masked_block": 91005600,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source accounts share one token during in-memory normalization; no account-derived fingerprints are committed",
+    "source_account_fingerprints_committed": false,
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "source": "https://www.spuerkeess.lu/fileadmin/mediatheque/Entreprises/Clients_institutionnels/SSI_CASH_20251222VersionCI.pdf",
+    "captured_at": "2026-09-14",
+    "effective_date": "2026-01-12",
+    "extraction": "official Spuerkeess Standard Settlement Instructions for treasury and commercial payments",
+    "retrieval_status": "official PDF retrieved successfully",
+    "route_count": 21,
+    "bic_only_route_count": 0,
+    "account_backed_route_count": 21
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "ANZBAU3M", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
+    {"currency": "CAD", "int_bic": "ROYCCAT2", "nostro_mask": "ACCT-91005602", "with_an_mask": "ACCT-91005602"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "nostro_mask": "ACCT-91005603", "with_an_mask": "ACCT-91005603"},
+    {"currency": "CNY", "int_bic": "BKCHLULL", "nostro_mask": "ACCT-91005604", "with_an_mask": "ACCT-91005604"},
+    {"currency": "CZK", "int_bic": "KOMBCZPP", "nostro_mask": "ACCT-91005605", "with_an_mask": "ACCT-91005605"},
+    {"currency": "DKK", "int_bic": "DABADKKK", "nostro_mask": "ACCT-91005606", "with_an_mask": "ACCT-91005606"},
+    {"currency": "GBP", "int_bic": "BARCGB22", "nostro_mask": "ACCT-91005607", "with_an_mask": "ACCT-91005607"},
+    {"currency": "HKD", "int_bic": "CITIHKHX", "nostro_mask": "ACCT-91005608", "with_an_mask": "ACCT-91005608"},
+    {"currency": "HUF", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005609", "with_an_mask": "ACCT-91005609"},
+    {"currency": "ISK", "int_bic": "NBIIISRE", "nostro_mask": "ACCT-91005610", "with_an_mask": "ACCT-91005610"},
+    {"currency": "JPY", "int_bic": "BOTKJPJT", "nostro_mask": "ACCT-91005611", "with_an_mask": "ACCT-91005611"},
+    {"currency": "MXN", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005612", "with_an_mask": "ACCT-91005612"},
+    {"currency": "NOK", "int_bic": "NDEANOKK", "nostro_mask": "ACCT-91005613", "with_an_mask": "ACCT-91005613"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22058", "nostro_mask": "ACCT-91005601", "with_an_mask": "ACCT-91005601"},
+    {"currency": "PLN", "int_bic": "PKOPPLPW", "nostro_mask": "ACCT-91005614", "with_an_mask": "ACCT-91005614"},
+    {"currency": "RON", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005615", "with_an_mask": "ACCT-91005615"},
+    {"currency": "SEK", "int_bic": "HANDSESS", "nostro_mask": "ACCT-91005616", "with_an_mask": "ACCT-91005616"},
+    {"currency": "SGD", "int_bic": "CITIHKHX", "nostro_mask": "ACCT-91005617", "with_an_mask": "ACCT-91005617"},
+    {"currency": "TRY", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005618", "with_an_mask": "ACCT-91005618"},
+    {"currency": "USD", "int_bic": "CITIUS33", "nostro_mask": "ACCT-91005619", "with_an_mask": "ACCT-91005619"},
+    {"currency": "ZAR", "int_bic": "IRVTUS3N", "nostro_mask": "ACCT-91005620", "with_an_mask": "ACCT-91005620"}
+  ]
+}

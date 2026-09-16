@@ -32,6 +32,14 @@ BANKS = [
     ("NWBKGB2LXXX", "NatWest", "GB", "London", "GBP"),
     ("HSBCGB22XXX", "HSBC UK", "GB", "Birmingham", "GBP"),
     ("SCBLGB22XXX", "Standard Chartered", "GB", "London", "GBP"),
+    ("EVBKUS3MXXX", "EverBank, N.A.", "US", "Jacksonville", "USD"),
+    ("UBSWHKHHXXX", "UBS AG Hong Kong", "HK", "Hong Kong", "HKD"),
+    ("BACXCZPPXXX", "UniCredit Bank Czech Republic", "CZ", "Prague", "CZK"),
+    ("CITIHUHXXXX", "Citibank Hungary", "HU", "Budapest", "HUF"),
+    ("UBSWJPJTXXX", "UBS AG Tokyo", "JP", "Tokyo", "JPY"),
+    ("CITIUS33MER", "Citibank N.A. New York MER", "US", "New York", "USD"),
+    ("PKOPPLPWXXX", "Bank Pekao SA", "PL", "Warsaw", "PLN"),
+    ("UBSWSGSGXXX", "UBS AG Singapore", "SG", "Singapore", "SGD"),
     # ---- Africa (destinations) ----
     ("GTBINGLAXXX", "Guaranty Trust Bank", "NG", "Lagos", "NGN"),
     ("DBLNNGLAXXX", "Diamond Bank", "NG", "Lagos", "NGN"),
@@ -94,6 +102,11 @@ BANKS = [
     ("UWCBTWTPXXX", "Cathay United Bank", "TW", "Taipei", "TWD"),
     ("CITYBDDHXXX", "Citibank Bangladesh", "BD", "Dhaka", "BDT"),
     ("ALFHPKKAXXX", "Bank Alfalah Limited", "PK", "Karachi", "PKR"),
+    ("BPUNPKKAXXX", "The Bank of Punjab", "PK", "Lahore", "PKR"),
+    ("KHYBPKKAXXX", "The Bank of Khyber", "PK", "Peshawar", "PKR"),
+    ("BKIPPKKAXXX", "BankIslami Pakistan Limited", "PK", "Karachi", "PKR"),
+    ("MPBLPKKAXXX", "Habib Metropolitan Bank Limited", "PK", "Karachi", "PKR"),
+    ("JSBLPKKAXXX", "JS Bank Limited", "PK", "Karachi", "PKR"),
     ("HABBPKKAXXX", "Habib Bank", "PK", "Karachi", "PKR"),
     ("UNILPKKAXXX", "UBL", "PK", "Karachi", "PKR"),
     ("MUCBPKKAXXX", "MCB Bank", "PK", "Karachi", "PKR"),
@@ -126,6 +139,7 @@ BANKS = [
     ("ZKBATR2SXXX", "Ziraat Bankasi", "TR", "Ankara", "TRY"),
     # ---- Asia ----
     ("HDFCINBBXXX", "HDFC Bank", "IN", "Mumbai", "INR"),
+    ("KVBLINBBXXX", "Karur Vysya Bank Limited", "IN", "Karur", "INR"),
     ("ICICINBBXXX", "ICICI Bank", "IN", "Mumbai", "INR"),
     ("SBININBBXXX", "State Bank of India", "IN", "Mumbai", "INR"),
     ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
@@ -432,6 +446,7 @@ BANKS = [
     ("ACABAZ22XXX", "AccessBank CJSC", "AZ", "Baku", "AZN"),
     ("ARMCAM22XXX", "Araratbank OJSC", "AM", "Yerevan", "AMD"),
     ("UBAZAZ22XXX", "Unibank CB", "AZ", "Baku", "AZN"),
+    ("HAJCAZ22XXX", "Xalq Bank Open Joint-Stock Company", "AZ", "Baku", "AZN"),
     # ---- SSI expansion batch 4 destination banks ----
     ("BOTKNL2XXXX", "MUFG Bank (Europe) N.V., Amsterdam", "NL", "Amsterdam", "EUR"),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", "DE", "Frankfurt", "EUR"),
@@ -533,6 +548,7 @@ BANKS = [
     ("DHBLBDDHXXX", "Dhaka Bank PLC", "BD", "Dhaka", "BDT"),
     ("CITICZPXXXX", "Citibank Europe plc, organizační složka", "CZ", "Prague", "CZK"),
     ("CNRBINBBXXX", "Canara Bank", "IN", "Bengaluru", "INR"),
+    ("ESFAINBBXXX", "ESAF Small Finance Bank Limited", "IN", "Thrissur", "INR"),
     ("ASCMPKKAXXX", "Askari Bank Limited", "PK", "Karachi", "PKR"),
     ("SONEPKKAXXX", "Soneri Bank Limited", "PK", "Karachi", "PKR"),
     ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", "NL", "Amsterdam", "EUR"),
@@ -1067,6 +1083,135 @@ def _load_ssi_batch6_groups():
 
 _SSI_BATCH6_GROUPS = _load_ssi_batch6_groups()
 
+_SSI_BATCH7_DATA_FILES = ("seed_ssi_batch7_1.json",)
+
+
+def _load_ssi_batch7_groups():
+    groups = []
+    for filename in _SSI_BATCH7_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH7_GROUPS = _load_ssi_batch7_groups()
+
+_SSI_BATCH9_DATA_FILES = ("seed_ssi_batch9_1.json",)
+
+
+def _load_ssi_batch9_groups():
+    groups = []
+    for filename in _SSI_BATCH9_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
+
+_SSI_BATCH8_DATA_FILES = ("seed_ssi_batch8_1.json",)
+
+
+def _load_ssi_batch8_groups():
+    groups = []
+    for filename in _SSI_BATCH8_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH32_DATA_FILES = ("seed_ssi_batch32_1.json",)
+
+
+def _load_ssi_batch32_groups():
+    groups = []
+    for filename in _SSI_BATCH32_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH32_GROUPS = _load_ssi_batch32_groups()
+
+_SSI_CONSOLIDATION_DATA_FILES = (
+    "seed_ssi_consolidation_1_1.json",
+    "seed_ssi_consolidation_1_2.json",
+    "seed_ssi_consolidation_1_3.json",
+    "seed_ssi_consolidation_1_4.json",
+    "seed_ssi_consolidation_2_1.json",
+    "seed_ssi_consolidation_2_2.json",
+    "seed_ssi_consolidation_2_3.json",
+    "seed_ssi_consolidation_2_4.json",
+    "seed_ssi_consolidation_2_5.json",
+    "seed_ssi_consolidation_2_6.json",
+    "seed_ssi_consolidation_3_1.json",
+    "seed_ssi_consolidation_3_2.json",
+    "seed_ssi_consolidation_3_3.json",
+    "seed_ssi_consolidation_3_4.json",
+    "seed_ssi_consolidation_3_5.json",
+    "seed_ssi_consolidation_4_1.json",
+    "seed_ssi_consolidation_4_2.json",
+    "seed_ssi_consolidation_4_3.json",
+    "seed_ssi_consolidation_4_4.json",
+)
+
+
+def _load_ssi_consolidation_data():
+    banks = []
+    records = []
+    seen_bics = set()
+    seen_routes = set()
+    for filename in _SSI_CONSOLIDATION_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+        allowed_keys = {"source_prs", "superseded_prs", "banks", "ssi_records"}
+        if not isinstance(payload, dict) or set(payload) - allowed_keys:
+            raise ValueError(f"{filename}: invalid consolidation ledger object")
+        source_prs = payload.get("source_prs")
+        if (
+            not isinstance(source_prs, list)
+            or any(not isinstance(pr, int) or pr < 1 for pr in source_prs)
+            or len(source_prs) != len(set(source_prs))
+        ):
+            raise ValueError(f"{filename}.source_prs: expected a list")
+        if not isinstance(payload.get("banks"), list):
+            raise ValueError(f"{filename}.banks: expected a list")
+        if not isinstance(payload.get("ssi_records"), list):
+            raise ValueError(f"{filename}.ssi_records: expected a list")
+        for index, bank in enumerate(payload["banks"]):
+            if not isinstance(bank, list) or len(bank) != 5 or not all(
+                isinstance(value, str) and value.strip() for value in bank
+            ):
+                raise ValueError(f"{filename}.banks[{index}]: expected five strings")
+            if len(bank[0]) != 11 or not bank[0].isalnum() or bank[0] in seen_bics:
+                raise ValueError(f"{filename}.banks[{index}]: invalid or duplicate BIC")
+            seen_bics.add(bank[0])
+            banks.append(tuple(bank))
+        for index, record in enumerate(payload["ssi_records"]):
+            if not isinstance(record, list) or len(record) != 15:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected 15 fields")
+            if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
+            if len(record[0]) != 11 or len(record[3]) != 11:
+                raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
+            if record[11] not in {"unverified", "archived"} or record[12] is not None:
+                raise ValueError(f"{filename}.ssi_records[{index}]: must remain non-published")
+            if not isinstance(record[13], bool) or not isinstance(record[14], bool):
+                raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
+            if record[13] and any(record[pos] is not None for pos in range(5, 9)):
+                raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            route_key = (record[0], record[2], record[3])
+            if route_key in seen_routes:
+                raise ValueError(f"{filename}.ssi_records[{index}]: duplicate route key")
+            seen_routes.add(route_key)
+            records.append(tuple(record))
+    return banks, records
+
+
+_SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
+BANKS.extend(_SSI_CONSOLIDATED_BANKS)
+_SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
+
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
     expanded = []
@@ -1152,7 +1297,144 @@ def _ssi_batch6_records():
             ))
     return expanded
 
+
+def _ssi_batch7_records():
+    """Expand the review-sized batch-7 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH7_GROUPS:
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_batch9_records():
+    """Expand EverBank's bank-published foreign-currency instructions."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH9_GROUPS:
+        if bic_only:
+            note = (
+                f"Source: {source} (as of {as_of}) {_SSI_BIC_ONLY_NOTE} "
+                f"{_SSI_REAL_NOTE}"
+            )
+        else:
+            note = f"Source: {source} (as of {as_of}). {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_batch8_records():
+    """Expand the review-sized batch-8 ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH8_GROUPS:
+        if bic_only:
+            citation = source
+            for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+                if marker in citation:
+                    citation = citation.split(marker, 1)[0].rstrip(" .")
+                    break
+            note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        else:
+            note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_batch32_records():
+    """Expand the ESAF Small Finance Bank SSI ledger into canonical seed tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH32_GROUPS:
+        note = f"{source.rstrip()} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account,
+                None if bic_only else charge_code,
+                None if bic_only else value_date,
+                note, as_of, status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_consolidation_records():
+    """Return review-preserving rows consolidated from superseded SSI PRs."""
+    return list(_SSI_CONSOLIDATED_RECORDS)
+
 SSI_RECORDS = [
+    # ---- Consolidated SSI review queue (PRs 103-112) ----
+    *_ssi_consolidation_records(),
+    # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
+    *_ssi_batch32_records(),
+    # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
+    *_ssi_batch9_records(),
+    # ---- SSI expansion batch 8 (Commercial Bank of Kuwait routes) ----
+    *_ssi_batch8_records(),
+    # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
+    *_ssi_batch7_records(),
     # ---- SSI expansion batch 6 (additional bank-published routes; masked) ----
     *_ssi_batch6_records(),
     # ---- SSI expansion batch 5 (bank-published routes; masked) ----
@@ -8757,6 +9039,70 @@ def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     )
 
 
+def _find_existing_ssi_by_route_key(session, beneficiary_bic, currency, intermediary_bic):
+    """Find one catalog row without using table emptiness as an upgrade gate."""
+    return session.query(SSI).filter(
+        SSI.beneficiary_bic == beneficiary_bic,
+        SSI.currency == currency,
+        SSI.intermediary_bic == intermediary_bic,
+    ).one_or_none()
+
+
+def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
+    """Insert every missing consolidated route into an existing SSI catalog.
+
+    This upgrade is intentionally keyed per route and never gated on table
+    emptiness. Existing rows are left for the normal reconciliation pass,
+    which preserves operator-maintained settlement fields.
+    """
+    inserted = 0
+    for row in _SSI_CONSOLIDATED_RECORDS:
+        (
+            ben_bic,
+            ben_name,
+            ccy,
+            int_bic,
+            int_name,
+            int_acct,
+            ben_acct,
+            charge,
+            vdate,
+            notes,
+            as_of,
+            status,
+            verified_by,
+            bic_only,
+            terms_inferred,
+        ) = row
+        if (ben_bic, ccy, int_bic) not in source_keys:
+            continue
+        if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
+            continue
+        seeded = SSI(
+            beneficiary_bic=ben_bic,
+            beneficiary_bank_name=ben_name,
+            currency=ccy,
+            intermediary_bic=int_bic,
+            intermediary_bank_name=int_name,
+            intermediary_account=int_acct,
+            beneficiary_account=ben_acct,
+            charge_code=charge,
+            value_date=vdate,
+            notes=notes,
+            as_of=as_of,
+            status=status,
+            verified_by=verified_by,
+            bic_only=bic_only,
+            terms_inferred=terms_inferred,
+        )
+        seeded.seed_fingerprint = _seed_fingerprint(seeded)
+        session.add(seeded)
+        inserted += 1
+    if inserted:
+        session.flush()
+    return inserted
+
+
 def seed_if_empty(session) -> dict:
     """Idempotently seed and roll forward the directory, rules, SSIs, and accounts."""
     inserted = {
@@ -8807,6 +9153,8 @@ def seed_if_empty(session) -> dict:
             )
             inserted["corridor_rules"] += 1
 
+    inserted["ssi"] += _backfill_missing_consolidated_ssis(session, source_keys)
+
     for row in SSI_RECORDS:
         # 12-field rows carry provenance; a 13th names the verifier, which
         # "published" requires. All three stay optional so a hand-written
@@ -8843,11 +9191,12 @@ def seed_if_empty(session) -> dict:
             terms_inferred = provenance[4]
         else:
             terms_inferred = False
-        existing = session.query(SSI).filter(
-            SSI.beneficiary_bic == ben_bic,
-            SSI.currency == ccy,
-            SSI.intermediary_bic == int_bic,
-        ).one_or_none()
+        existing = _find_existing_ssi_by_route_key(
+            session,
+            ben_bic,
+            ccy,
+            int_bic,
+        )
         if existing is None:
             seeded = SSI(
                 beneficiary_bic=ben_bic,

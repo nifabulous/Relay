@@ -251,6 +251,9 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Wells Fargo's source-published legacy BIC8. The SSI remains unverified
+    # and non-routable until a public CHIPS/ABA mapping is corroborated.
+    "PNBPUS3N",
     # Bank Frick's published USD SSI lists Convera USA and United Texas Bank;
     # neither BIC currently has a verified CHIPS/ABA identifier in the local
     # directory, so keep the sourced routes explicitly exempt for now.
@@ -263,6 +266,13 @@ UNVERIFIED_US_CLEARERS = {
     # Bank of India New York is published as a correspondent in the SVC table,
     # but no public CHIPS/ABA identifier was verified for this legacy BIC.
     "BKIDUS33",
+    # EverBank's direct USD SSI is published with its SWIFT BIC, but no
+    # public CHIPS/ABA identifier is provided in the source instructions.
+    "EVBKUS3M",
+    # Grasshopper's published FX instructions identify Pacific Coast Bankers'
+    # Bank, but do not publish a CHIPS/ABA identifier for this BIC. The row is
+    # informational and remains blocked by the shared routing predicate.
+    "PCBBUS66",
 }
 
 
@@ -1844,30 +1854,32 @@ class TestAndeanSsiCoverage:
 
 # ---- autopilot-generated coverage tests: india ----
 INDIA_SSI_COVERAGE = [
-    ('HDFCINBBXXX', 'HDFC Bank', {'AED', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('ICICINBBXXX', 'ICICI Bank', {'AED', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('SBININBBXXX', 'State Bank of India', {'AED', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('AXISINBBXXX', 'Axis Bank', {'AED', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('KKBKINBBXXX', 'Kotak Mahindra Bank', {'EUR', 'GBP', 'JPY', 'USD'}),
-    ('BARBINBBXXX', 'Bank of Baroda', {'EUR', 'GBP', 'JPY', 'USD'}),
-    ('BCMLINBBXXX', 'Bharat Cooperative Bank (Mumbai) Ltd', {'AED', 'AUD', 'CAD', 'EUR', 'GBP', 'JPY', 'SGD', 'USD'}),
-    ('CSYBIN55XXX', 'CSB Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'SGD', 'USD'}),
-    ('FDRLINBBXXX', 'The Federal Bank Ltd', {'AED', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'NOK', 'NZD', 'SAR', 'SGD', 'USD'}),
-    ('INDBINBBXXX', 'IndusInd Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'JPY', 'NOK', 'NZD', 'QAR', 'SAR', 'SEK', 'SGD', 'THB', 'USD', 'ZAR'}),
-    ('IOBAINBBXXX', 'Indian Overseas Bank', {'AED', 'AUD', 'CHF', 'DKK', 'EUR', 'NZD', 'SEK', 'SGD', 'USD'}),
-    ('MAHBINBBXXX', 'Bank of Maharashtra', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('PSIBINBBXXX', 'Punjab & Sind Bank', {'AED', 'AUD', 'CAD', 'EUR', 'GBP', 'JPY', 'USD'}),
-    ('SRCBINBBXXX', 'Saraswat Co-operative Bank', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('SVCBINBBXXX', 'SVC Cooperative Bank Ltd', {'AED', 'AUD', 'CHF', 'EUR', 'GBP', 'JPY', 'USD'}),
-    ('UCBAINBBXXX', 'UCO Bank', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
-    ('YESBINBBXXX', 'YES Bank Limited', {'AED', 'CAD', 'CHF', 'CNH', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY'}),
-    ('CNRBINBBXXX', 'Canara Bank', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'HKD', 'JPY', 'SEK', 'SGD', 'USD'}),
-    ('JAKAINBBXXX', 'The Jammu and Kashmir Bank Ltd.', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
-    ('NKGSINBBXXX', 'NKGSB Co-operative Bank Ltd.', {'EUR', 'GBP', 'USD'}),
-    ('RATNINBBXXX', 'RBL Bank Limited', {'AED', 'AUD', 'CHF', 'DKK', 'EUR', 'GBP', 'HKD', 'JPY', 'NZD', 'SEK', 'SGD', 'USD'}),
-    ('HDFCINAAXXX', 'HDFC Bank Limited GIFT City', {'AED', 'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'JPY', 'USD'}),
-    ('CBININBBXXX', 'Central Bank of India', {'USD'}),
-    ('IDIBINBBXXX', 'Indian Bank', {'AUD', 'CAD', 'CHF', 'EUR', 'GBP', 'HKD', 'JPY', 'SGD', 'USD'}),
+    ("HDFCINBBXXX", "HDFC Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("ICICINBBXXX", "ICICI Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("SBININBBXXX", "State Bank of India", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("AXISINBBXXX", "Axis Bank", {"AED", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("KKBKINBBXXX", "Kotak Mahindra Bank", {"EUR", "GBP", "JPY", "USD"}),
+    ("BARBINBBXXX", "Bank of Baroda", {"EUR", "GBP", "JPY", "USD"}),
+    ("BCMLINBBXXX", "Bharat Cooperative Bank (Mumbai) Ltd", {"AED", "AUD", "CAD", "EUR", "GBP", "JPY", "SGD", "USD"}),
+    ("CSYBIN55XXX", "CSB Bank Limited", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "SGD", "USD"}),
+    ("FDRLINBBXXX", "The Federal Bank Ltd", {"AED", "CAD", "CHF", "CNY", "EUR", "GBP", "JPY", "NOK", "NZD", "SAR", "SGD", "USD"}),
+    ("INDBINBBXXX", "IndusInd Bank Limited", {"AED", "AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HKD", "JPY", "NOK", "NZD", "QAR", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("IOBAINBBXXX", "Indian Overseas Bank", {"AED", "AUD", "CHF", "DKK", "EUR", "NZD", "SEK", "SGD", "USD"}),
+    ("MAHBINBBXXX", "Bank of Maharashtra", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("PSIBINBBXXX", "Punjab & Sind Bank", {"AED", "AUD", "CAD", "EUR", "GBP", "JPY", "USD"}),
+    ("SRCBINBBXXX", "Saraswat Co-operative Bank", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("SVCBINBBXXX", "SVC Cooperative Bank Ltd", {"AED", "AUD", "CHF", "EUR", "GBP", "JPY", "USD"}),
+    ("UCBAINBBXXX", "UCO Bank", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("YESBINBBXXX", "YES Bank Limited", {"AED", "CAD", "CHF", "CNH", "CNY", "EUR", "GBP", "HKD", "JPY"}),
+    ("CNRBINBBXXX", "Canara Bank", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "SEK", "SGD", "USD"}),
+    ("JAKAINBBXXX", "The Jammu and Kashmir Bank Ltd.", {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "SAR", "USD"}),
+    ("NKGSINBBXXX", "NKGSB Co-operative Bank Ltd.", {"EUR", "GBP", "USD"}),
+    ("RATNINBBXXX", "RBL Bank Limited", {"AED", "AUD", "CHF", "DKK", "EUR", "GBP", "HKD", "JPY", "NZD", "SEK", "SGD", "USD"}),
+    ("HDFCINAAXXX", "HDFC Bank Limited GIFT City", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD"}),
+    ("CBININBBXXX", "Central Bank of India", {"USD"}),
+    ("ESFAINBBXXX", "ESAF Small Finance Bank Limited", {"AED", "EUR", "USD"}),
+    ("IDIBINBBXXX", "Indian Bank", {"AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "SGD", "USD"}),
+    ("KVBLINBBXXX", "Karur Vysya Bank Limited", {"AED", "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "SGD", "USD"}),
 ]
 
 class TestIndiaSsiCoverage:
@@ -1895,8 +1907,6 @@ class TestIndiaSsiCoverage:
     def test_india_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("india", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: india ----
-
-
 # ---- autopilot-generated coverage tests: mexico-central-america ----
 MEXICO_CENTRAL_AMERICA_SSI_COVERAGE = [
     ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
@@ -2239,6 +2249,11 @@ PAKISTAN_SSI_COVERAGE = [
     ('ABPAPKKAXXX', 'Allied Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SEK', 'SGD', 'USD'}),
     ('ASCMPKKAXXX', 'Askari Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'SGD', 'USD'}),
     ('SONEPKKAXXX', 'Soneri Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SGD', 'USD'}),
+    ('BPUNPKKAXXX', 'The Bank of Punjab', {'AED', 'AUD', 'CHF', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('KHYBPKKAXXX', 'The Bank of Khyber', {'AED', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('BKIPPKKAXXX', 'BankIslami Pakistan Limited', {'AED', 'AUD', 'CNY', 'EUR', 'GBP', 'JPY', 'SAR', 'USD'}),
+    ('MPBLPKKAXXX', 'Habib Metropolitan Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'SEK', 'SGD', 'THB', 'USD'}),
+    ('JSBLPKKAXXX', 'JS Bank Limited', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'EUR', 'GBP', 'HKD', 'JPY', 'SAR', 'SGD', 'USD'}),
 ]
 
 class TestPakistanSsiCoverage:
@@ -2806,6 +2821,7 @@ CAUCASUS_WAVE5_SSI_COVERAGE = [
     ("MIDLAM22XXX", "HSBC Bank Armenia cjsc", {"AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "JPY", "RUB", "USD"}),
     ("ANIKAM22XXX", "ID BANK CJSC", {"AED", "BYN", "CNY", "EUR", "GBP", "GEL", "JPY", "RUB", "USD"}),
     ("ARMJAM22XXX", "VTB Bank (Armenia) CJSC", {"AMD", "EUR", "RUB", "USD"}),
+    ("HAJCAZ22XXX", "Xalq Bank Open Joint-Stock Company", {"AED", "AZN", "CHF", "CNY", "EUR", "GBP", "JPY", "RUB", "TRY", "USD"}),
 ]
 
 class TestCaucasusWave5SsiCoverage:
@@ -3204,6 +3220,7 @@ class TestFinlandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
+    ("EVBKUS3MXXX", "EverBank, N.A.", {"AUD", "CAD", "CHF", "CNH", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "USD", "ZAR"}),
 ]
 
 class TestUnitedStatesSsiCoverage:

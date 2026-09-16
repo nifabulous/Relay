@@ -7422,7 +7422,9 @@
         {"bic8":"RATNINBB","manifest_file":"regions_batch5_banks_1_ratninbb.json"},
         {"bic8":"HDFCINAA","manifest_file":"regions_batch6_banks_1_hdfcinaa.json"},
         {"bic8":"CBININBB","manifest_file":"regions_batch6_banks_1_cbininbb.json"},
-        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"}
+        {"bic8":"ESFAINBB","manifest_file":"regions_batch63_banks_esfainbb.json"},
+        {"bic8":"IDIBINBB","manifest_file":"regions_batch6_banks_1_idibinbb.json"},
+        {"bic8":"KVBLINBB","manifest_file":"regions_batch7_banks_kvblinbb.json"}
       ],
       "forbidden_bics": []
     },
@@ -13965,7 +13967,12 @@
         {"bic8":"MEZNPKKA","name":"Meezan Bank Limited","country":"PK","currencies":["AED","AUD","CAD","CHF","CNY","DKK","EUR","GBP","HKD","JPY","MYR","NOK","SAR","SEK","SGD","THB","USD"],"seedable":true,"source_domains":["meezanbank.com"],"admitted_record_digest":"a60f1c1cd81eb6a73c2a41fc63ad63621d50eefc65a9e41465cd619ba0f43c74","compact_records_file":"regions_batch4_records_2.json"},
         {"bic8":"ABPAPKKA","manifest_file":"regions_batch5_banks_1_abpapkka.json"},
         {"bic8":"ASCMPKKA","manifest_file":"regions_batch5_banks_1_ascmpkka.json"},
-        {"bic8":"SONEPKKA","manifest_file":"regions_batch5_banks_1_sonepkka.json"}
+        {"bic8":"SONEPKKA","manifest_file":"regions_batch5_banks_1_sonepkka.json"},
+        {"bic8":"BPUNPKKA","manifest_file":"regions_batch7_banks_bpunpkka.json"},
+        {"bic8":"KHYBPKKA","manifest_file":"regions_batch7_banks_khybpkka.json"},
+        {"bic8":"BKIPPKKA","manifest_file":"regions_batch7_banks_bkippkka.json"},
+        {"bic8":"MPBLPKKA","manifest_file":"regions_batch7_banks_mpblpkka.json"},
+        {"bic8":"JSBLPKKA","manifest_file":"regions_batch7_banks_jsblpkka.json"}
       ]
     },
     {
@@ -33998,7 +34005,8 @@
         },
         {"bic8":"MIDLAM22","manifest_file":"regions_batch6_banks_2_midlam22.json"},
         {"bic8":"ANIKAM22","manifest_file":"regions_batch6_banks_2_anikam22.json"},
-        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"}
+        {"bic8":"ARMJAM22","manifest_file":"regions_batch6_banks_2_armjam22.json"},
+        {"bic8":"HAJCAZ22","manifest_file":"regions_batch7_banks_hajcaz22.json"}
       ]
     },
     {
@@ -36135,6 +36143,67 @@
             }
           ],
           "admitted_record_digest": "c9ffdf4181d6c3e90252eb84ea8cee8bfdd4f59f8b790c4defbad1dc7595618d"
+        },
+        {
+          "bic8": "EVBKUS3M",
+          "name": "EverBank, N.A.",
+          "country": "US",
+          "currencies": [
+            "AUD",
+            "CAD",
+            "CHF",
+            "CNH",
+            "CZK",
+            "DKK",
+            "EUR",
+            "GBP",
+            "HKD",
+            "HUF",
+            "JPY",
+            "MXN",
+            "NOK",
+            "NZD",
+            "PLN",
+            "SEK",
+            "SGD",
+            "USD",
+            "ZAR"
+          ],
+          "seedable": true,
+          "source_domains": ["everbank.com"],
+          "compact_records": [
+            {
+              "source": "https://www.everbank.com/media_library/tiaabank/_shared/pdf/fc-wire-instructions.pdf",
+              "as_of": "2026-09-13",
+              "status": "unverified",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "bic_only": false,
+              "terms_inferred": true,
+              "rows": [
+                "AUD|ANZ Banking Group Limited, Melbourne|ANZBAU3M|91005431|91005431",
+                "CAD|Royal Bank of Canada, Toronto|ROYCCAT2|91005432|91005432",
+                "CHF|UBS AG, Zurich|UBSWCHZH80A|91005433|91005433",
+                "CNH|UBS AG, Hong Kong|UBSWHKHH|91005434|91005434",
+                "CZK|UniCredit Bank, Prague|BACXCZPP|91005435|91005435",
+                "DKK|Nordea Bank Danmark, Copenhagen|NDEADKKK|91005436|91005436",
+                "EUR|Deutsche Bank AG, Frankfurt|DEUTDEFF|91005437|91005437",
+                "GBP|Barclays Bank PLC, London|BARCGB22|91005438|91005438",
+                "HKD|UBS AG, Hong Kong|UBSWHKHH|91005439|91005439",
+                "HUF|Citibank N.A., Budapest|CITIHUHX|91005440|91005440",
+                "JPY|UBS AG, Tokyo|UBSWJPJT|91005441|91005441",
+                "MXN|Citibank N.A., New York|CITIUS33MER|91005442|91005442",
+                "NOK|DNB Bank ASA, Oslo|DNBANOKK|91005443|91005443",
+                "NZD|ANZ Bank New Zealand, Wellington|ANZBNZ22058|91005444|91005444",
+                "PLN|Bank Pekao SA, Warsaw|PKOPPLPW|91005445|91005445",
+                "SEK|Skandinaviska Enskilda Banken, Stockholm|ESSESESS|91005446|91005446",
+                "SGD|UBS AG, Singapore|UBSWSGSG|91005447|91005447",
+                "USD|EverBank World Markets, Jacksonville (Swift/Fedwire)|EVBKUS3M|91005448|91005448",
+                "ZAR|FirstRand Bank, Johannesburg|FIRNZAJJ|91005449|91005449"
+              ]
+            }
+          ],
+          "admitted_record_digest": "c0d6017413debd1ec43cf6953ae9d44d6c8b9694cdd0668d94427443ffa8f6a3"
         }
       ]
     },

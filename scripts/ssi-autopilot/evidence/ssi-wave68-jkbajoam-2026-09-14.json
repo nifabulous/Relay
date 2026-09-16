@@ -1,0 +1,52 @@
+{
+  "source": "https://www.jkb.com/en/international-banking-services",
+  "identity_source": "https://www.jkb.com/en/faq",
+  "as_of": "2026-09-14",
+  "beneficiary": {
+    "bic": "JKBAJOAMXXX",
+    "name": "Jordan Kuwait Bank",
+    "country": "JO"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "route_count": 33,
+    "extraction": "Correspondent Banks - Standard Settlement Instructions table on the bank's Financial Institutions and International Banking Services page.",
+    "bic_only_reason": "The official table publishes correspondent names and SWIFT/BIC codes but no account numbers, charges, or value dates."
+  },
+  "routes": [
+    {"currency": "AED", "int_bic": "BOMLAEADXXX", "correspondent": "Mashreq Bank PSC"},
+    {"currency": "AED", "int_bic": "CBDUAEADXXX", "correspondent": "Commercial Bank of Dubai PSC"},
+    {"currency": "AUD", "int_bic": "IRVTUS3NXXX", "correspondent": "The Bank of New York Mellon"},
+    {"currency": "CAD", "int_bic": "IRVTUS3NXXX", "correspondent": "The Bank of New York Mellon"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZXXX", "correspondent": "Zürcher Kantonalbank"},
+    {"currency": "EGP", "int_bic": "NBEGEGCXXXX", "correspondent": "National Bank of Egypt"},
+    {"currency": "EUR", "int_bic": "HYVEDEMMXXX", "correspondent": "UniCredit Bank GmbH (Hypo Vereinsbank)"},
+    {"currency": "EUR", "int_bic": "SOGEFRPPXXX", "correspondent": "Société Générale SA"},
+    {"currency": "EUR", "int_bic": "BCITITMMXXX", "correspondent": "Intesa Sanpaolo SPA"},
+    {"currency": "EUR", "int_bic": "BBVAESMMXXX", "correspondent": "Banco Bilbao Vizcaya Argentaria SA"},
+    {"currency": "EUR", "int_bic": "UNCRITMMXXX", "correspondent": "UniCredit SPA"},
+    {"currency": "EUR", "int_bic": "IRVTDEFXXXX", "correspondent": "The Bank of New York Mellon"},
+    {"currency": "GBP", "int_bic": "MIDLGB22XXX", "correspondent": "HSBC Bank PLC"},
+    {"currency": "GBP", "int_bic": "IRVTGB2XXXX", "correspondent": "The Bank of New York Mellon"},
+    {"currency": "GBP", "int_bic": "JIBKGB2LXXX", "correspondent": "Jordan International Bank PLC"},
+    {"currency": "JPY", "int_bic": "BOTKJPJTXXX", "correspondent": "MUFG Bank Ltd."},
+    {"currency": "KWD", "int_bic": "BRGNKWKWXXX", "correspondent": "Burgan Bank KPSC"},
+    {"currency": "KWD", "int_bic": "NBOKKWKWXXX", "correspondent": "National Bank of Kuwait SAKP"},
+    {"currency": "OMR", "int_bic": "BMUSOMRXXXX", "correspondent": "Bank Muscat SAOG"},
+    {"currency": "QAR", "int_bic": "CBQAQAQAXXX", "correspondent": "The Commercial Bank (P.S.Q.C)"},
+    {"currency": "SAR", "int_bic": "NCBKSAJEXXX", "correspondent": "The Saudi National Bank"},
+    {"currency": "SAR", "int_bic": "ARNBSARIXXX", "correspondent": "Arab National Bank"},
+    {"currency": "TND", "int_bic": "TUIBTNTTXXX", "correspondent": "Tunis International Bank"},
+    {"currency": "USD", "int_bic": "CHASUS33XXX", "correspondent": "JPMorgan Chase Bank"},
+    {"currency": "USD", "int_bic": "IRVTUS3NXXX", "correspondent": "The Bank of New York Mellon"},
+    {"currency": "USD", "int_bic": "CITIUS33XXX", "correspondent": "Citibank NA"},
+    {"currency": "EUR", "int_bic": "DEUTDEFFXXX", "correspondent": "Deutsche Bank AG, Frankfurt"},
+    {"currency": "USD", "int_bic": "DEUTUS33XXX", "correspondent": "Deutsche Bank AG, New York"},
+    {"currency": "AED", "int_bic": "NBADAEAAXXX", "correspondent": "First Abu Dhabi Bank"},
+    {"currency": "GBP", "int_bic": "SCBLGB2LXXX", "correspondent": "Standard Chartered Bank"},
+    {"currency": "TRY", "int_bic": "TEKFTRISXXX", "correspondent": "Burgan Bank A.S."},
+    {"currency": "CNY", "int_bic": "SCBLHKHHXXX", "correspondent": "Standard Chartered Bank (Hong Kong) LTD"},
+    {"currency": "SAR", "int_bic": "BSFRSARIXXX", "correspondent": "Banque Saudi Fransi"}
+  ],
+  "normalization_note": "The official BICs are normalized to 11 characters with XXX for head-office locations; all routes remain bic_only and non-routable until account instructions are independently published."
+}

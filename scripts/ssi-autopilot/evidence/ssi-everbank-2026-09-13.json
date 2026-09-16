@@ -1,0 +1,36 @@
+{
+  "source_url": "https://www.everbank.com/media_library/tiaabank/_shared/pdf/fc-wire-instructions.pdf",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false,
+    "route_count": 19
+  },
+  "beneficiary": {
+    "bic": "EVBKUS3MXXX",
+    "name": "EverBank, N.A.",
+    "address": "301 W. Bay Street, Jacksonville, FL 32202"
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "ANZBAU3MXXX"},
+    {"currency": "CAD", "int_bic": "ROYCCAT2XXX"},
+    {"currency": "CHF", "int_bic": "UBSWCHZH80A"},
+    {"currency": "CNH", "int_bic": "UBSWHKHHXXX"},
+    {"currency": "CZK", "int_bic": "BACXCZPPXXX"},
+    {"currency": "DKK", "int_bic": "NDEADKKKXXX"},
+    {"currency": "EUR", "int_bic": "DEUTDEFFXXX"},
+    {"currency": "GBP", "int_bic": "BARCGB22XXX"},
+    {"currency": "HKD", "int_bic": "UBSWHKHHXXX"},
+    {"currency": "HUF", "int_bic": "CITIHUHXXXX"},
+    {"currency": "JPY", "int_bic": "UBSWJPJTXXX"},
+    {"currency": "MXN", "int_bic": "CITIUS33MER"},
+    {"currency": "NOK", "int_bic": "DNBANOKKXXX"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22058"},
+    {"currency": "PLN", "int_bic": "PKOPPLPWXXX"},
+    {"currency": "SEK", "int_bic": "ESSESESSXXX"},
+    {"currency": "SGD", "int_bic": "UBSWSGSGXXX"},
+    {"currency": "USD", "int_bic": "EVBKUS3MXXX"},
+    {"currency": "ZAR", "int_bic": "FIRNZAJJXXX"}
+  ],
+  "normalization_note": "The PDF publishes beneficiary and intermediary account values, but this seed masks them into reserved ACCT placeholders. SHA and spot are retained as explicitly inferred terms; the separate USD Swift and Fedwire entries are normalized into one direct self-BIC metadata row."
+}

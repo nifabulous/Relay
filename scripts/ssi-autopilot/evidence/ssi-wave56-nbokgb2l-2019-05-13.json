@@ -1,0 +1,45 @@
+{
+  "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+  "source_sha256": "dc14a5da8c5b669ab812497ebcfea24ca87d5449b3c7f4958aa5a55d5b6d3027",
+  "as_of": "2019-05-13",
+  "beneficiary_bic": "NBOKGB2L",
+  "region_masked_block": 91005100,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "distinct source accounts receive distinct tokens during in-memory normalization; no account-derived fingerprints are committed; the GBP NBOK International row publishes only a BIC and sort code, so it remains BIC-only",
+    "source_account_fingerprints_committed": false,
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "source": "https://www.nbk.com/dam/jcr:abdacf71-697c-4841-b6fb-42606f961497/NBKI-SSIs-2019.pdf",
+    "captured_at": "2026-09-14",
+    "pdf_creation_date": "2019-05-13",
+    "extraction": "official National Bank of Kuwait International London Standard Settlement Instructions PDF",
+    "retrieval_status": "official PDF retrieved successfully",
+    "route_count": 20,
+    "bic_only_route_count": 1,
+    "account_backed_route_count": 19
+  },
+  "routes": [
+    {"currency": "AED", "int_bic": "NBOKAEAD", "nostro_mask": "ACCT-91005121", "with_an_mask": "ACCT-91005121"},
+    {"currency": "AUD", "int_bic": "ANZBAU3M", "nostro_mask": "ACCT-91005122", "with_an_mask": "ACCT-91005122"},
+    {"currency": "BHD", "int_bic": "NBOKBHBMFCB", "nostro_mask": "ACCT-91005123", "with_an_mask": "ACCT-91005123"},
+    {"currency": "CAD", "int_bic": "BOFMCAM2", "nostro_mask": "ACCT-91005124", "with_an_mask": "ACCT-91005124"},
+    {"currency": "CHF", "int_bic": "ZKBKCHZZ80A", "nostro_mask": "ACCT-91005125", "with_an_mask": "ACCT-91005125"},
+    {"currency": "DKK", "int_bic": "DABADKKK", "nostro_mask": "ACCT-91005126", "with_an_mask": "ACCT-91005126"},
+    {"currency": "EUR", "int_bic": "BARCDEFF", "nostro_mask": "ACCT-91005127", "with_an_mask": "ACCT-91005127"},
+    {"currency": "GBP", "int_bic": "MIDLGB22", "nostro_mask": "ACCT-91005128", "with_an_mask": "ACCT-91005128"},
+    {"currency": "GBP", "int_bic": "NBOKGB2L", "bic_only": true, "has_account_data": false},
+    {"currency": "HKD", "int_bic": "SCBLHKHH", "nostro_mask": "ACCT-91005129", "with_an_mask": "ACCT-91005129"},
+    {"currency": "JOD", "int_bic": "NBOKJOAM", "nostro_mask": "ACCT-91005130", "with_an_mask": "ACCT-91005130"},
+    {"currency": "JPY", "int_bic": "MHCBJPJT", "nostro_mask": "ACCT-91005131", "with_an_mask": "ACCT-91005131"},
+    {"currency": "KWD", "int_bic": "NBOKKWKW", "nostro_mask": "ACCT-91005132", "with_an_mask": "ACCT-91005132"},
+    {"currency": "NOK", "int_bic": "DABANO22", "nostro_mask": "ACCT-91005133", "with_an_mask": "ACCT-91005133"},
+    {"currency": "NZD", "int_bic": "ANZBNZ22", "nostro_mask": "ACCT-91005134", "with_an_mask": "ACCT-91005134"},
+    {"currency": "QAR", "int_bic": "IBOQQAQA", "nostro_mask": "ACCT-91005135", "with_an_mask": "ACCT-91005135"},
+    {"currency": "SAR", "int_bic": "NBOKSAJE", "nostro_mask": "ACCT-91005136", "with_an_mask": "ACCT-91005136"},
+    {"currency": "SEK", "int_bic": "ESSESESS", "nostro_mask": "ACCT-91005137", "with_an_mask": "ACCT-91005137"},
+    {"currency": "SGD", "int_bic": "SCBLSG22", "nostro_mask": "ACCT-91005138", "with_an_mask": "ACCT-91005138"},
+    {"currency": "USD", "int_bic": "BKTRUS33", "nostro_mask": "ACCT-91005139", "with_an_mask": "ACCT-91005139"}
+  ]
+}

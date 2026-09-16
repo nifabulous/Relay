@@ -1,0 +1,32 @@
+{
+  "source": "https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/standard-settlement-instructions/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/0/Settlement%20Instructions%20for%20Treasury%20Payments.pdf",
+  "as_of": "2026-04-01",
+  "beneficiary": {
+    "bic": "RZOOAT2LXXX",
+    "name": "Raiffeisenlandesbank Oberoesterreich AG",
+    "country": "AT"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "route_count": 1,
+    "advertised_route_count": 32,
+    "extraction": "Authorized Correspondent Banks and Settlement Instructions effective 1 April 2026.",
+    "new_route_count": 1,
+    "previously_recorded_route_count": 30,
+    "omitted_direct_route_count": 1,
+    "excluded_routes": [
+      "Thirty currency/correspondent pairs, including the CNY, EUR, INR, and USD candidates from this extraction, already exist in the canonical commercial-payments SSI ledger for this beneficiary.",
+      "EUR via Target self-routing RZOOAT2L is a direct TARGET route and is omitted."
+    ]
+  },
+  "routes": [
+    {
+      "currency": "MYR",
+      "int_bic": "HBMBMYKLXXX",
+      "correspondent": "HSBC Bank, Kuala Lumpur via Raiffeisen Bank International AG, Vienna",
+      "nostro_mask": "ACCT-91003439",
+      "with_an_mask": "ACCT-91003440"
+    }
+  ],
+  "normalization_note": "Only the MYR/HBMBMYKL route was absent from the canonical ledger and admitted here. The four duplicate candidates retain their earlier canonical evidence and masks. Published account values are masked into the reserved western-europe block; the multi-hop MYR row retains both account masks, terms_inferred=true, and remains unverified until independently confirmed."
+}

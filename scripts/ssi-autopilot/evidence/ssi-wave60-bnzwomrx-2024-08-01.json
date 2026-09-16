@@ -1,0 +1,34 @@
+{
+  "beneficiary": {
+    "bic": "BNZWOMRXXXX",
+    "name": "Bank Nizwa",
+    "country": "OM"
+  },
+  "source_snapshot": {
+    "source": "https://www.banknizwa.om/media/4423/bank-nizwa-ssi-list-august-2024.pdf",
+    "as_of": "2024-08-01",
+    "route_count": 12,
+    "raw_accounts_committed": false,
+    "masked_account_block": "ACCT-91001630..ACCT-91001652",
+    "terms_inferred": true
+  },
+  "routes": [
+    {"currency":"AED","int_bic":"ADCBAEAA","masked_account":"ACCT-91001630"},
+    {"currency":"CAD","int_bic":"BNDCCAMM","masked_account":"ACCT-91001633"},
+    {"currency":"EUR","int_bic":"SCBLDEFF","masked_account":"ACCT-91001635"},
+    {"currency":"GBP","int_bic":"SCBLGB2L","masked_account":"ACCT-91001636"},
+    {"currency":"INR","int_bic":"HDFCINBB","masked_account":"ACCT-91001638"},
+    {"currency":"JOD","int_bic":"JIBAJOAM","masked_account":"ACCT-91001639"},
+    {"currency":"JPY","int_bic":"SCBLJPJT","masked_account":"ACCT-91001641"},
+    {"currency":"KWD","int_bic":"KFHOKWKW","masked_account":"ACCT-91001642"},
+    {"currency":"QAR","int_bic":"QISBQAQA","masked_account":"ACCT-91001645"},
+    {"currency":"SAR","int_bic":"SABBSARI","masked_account":"ACCT-91001647"},
+    {"currency":"USD","int_bic":"CHASUS33","masked_account":"ACCT-91001649"},
+    {"currency":"USD","int_bic":"MSHQUS33","masked_account":"ACCT-91001650"}
+  ],
+  "normalizations": [
+    {"source":"SCBLDEFX","canonical":"SCBLDEFFXXX","reason":"source PDF printed malformed Frankfurt BIC; canonicalized before admission"},
+    {"source":"SCBL GB 2L","canonical":"SCBLGB2LXXX","reason":"source PDF printed BIC with spaces"},
+    {"source":"SCBL JP JT","canonical":"SCBLJPJTXXX","reason":"source PDF printed BIC with spaces; Tokyo intermediary selected for JPY route"}
+  ]
+}

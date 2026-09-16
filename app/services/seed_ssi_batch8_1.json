@@ -1,0 +1,23 @@
+[
+  [
+    "COMBKWKWXXX",
+    "Commercial Bank of Kuwait K.P.S.C.",
+    "Source: https://www.cbk.com/media/aef81015-a5d5-4100-bd27-b33387ea0c67/GIfFjQ/CBK%20SSI.pdf (as of 2026-09-13).",
+    "2026-09-13",
+    "unverified",
+    "SHA",
+    "spot",
+    null,
+    false,
+    true,
+    [
+      "AED|ABDIAEAD|Abu Dhabi Islamic Bank, Dubai|91001629",
+      "AED|EBILAEAD|Emirates NBD Bank PJSC, Dubai|91001630",
+      "CHF|UBSWCHZH80A|UBS Switzerland AG, Zurich|91001632",
+      "DKK|ESSEDKKK|Skandinaviska Enskilda Banken-Denmark, Copenhagen|91001633",
+      "INR|ICICINBB|ICICI Bank Limited, Mumbai|91001635",
+      "SGD|SCBLSG22|Standard Chartered Bank, Singapore|91001637",
+      "CNY|DBSSSGSG|DBS Bank Ltd, Singapore|91001638"
+    ]
+  ]
+]
