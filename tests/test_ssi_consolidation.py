@@ -334,6 +334,35 @@ def test_every_route_evidence_file_matches_the_seeded_catalog():
     assert len(checked_files) == 104
 
 
+def test_wave69_evidence_count_matches_both_split_seed_ledgers():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave69-tacbtwtpxxx-2022-11-17.json"
+        ).read_text()
+    )
+    evidence_keys = {
+        (route["currency"].upper(), bic11(route["int_bic"]))
+        for route in evidence["routes"]
+    }
+    seeded_keys = {
+        (row[2].upper(), bic11(row[3]))
+        for row in _batch_records(5)
+        if row[0] == evidence["beneficiary"]["bic"]
+    }
+
+    assert evidence["source_snapshot"]["route_count"] == len(evidence["routes"])
+    assert len(evidence_keys) == len(evidence["routes"]) == len(seeded_keys)
+    assert evidence_keys == seeded_keys
+
+
 def test_fifth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(5)
 
