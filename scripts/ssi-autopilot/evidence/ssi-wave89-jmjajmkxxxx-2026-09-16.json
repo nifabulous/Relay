@@ -1,0 +1,39 @@
+{
+  "source": "https://jm.jmmb.com/electronic-transfers",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "JMJAJMKXXXX",
+    "name": "JMMB Bank (Jamaica) Limited",
+    "country": "JM"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 4,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "BNY Mellon"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London"
+    }
+  ],
+  "normalization_note": "Source prints JMJAJMKN; canonical key appends XXX. Source heading GPB is normalized to ISO GBP; no other values inferred."
+}

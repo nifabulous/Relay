@@ -1,0 +1,59 @@
+{
+  "source": "https://gbtibank.com/digital-banking/foreign-trade-services/",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "GUTIGYGEXXX",
+    "name": "Guyana Bank for Trade & Industry Ltd",
+    "country": "GY"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 8,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "CRASGB2LXXX",
+      "correspondent": "Crown Agents Bank"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFMCAM2XXX",
+      "correspondent": "Bank of Montreal"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "RBTTTTPXXXX",
+      "correspondent": "RBTT Bank Ltd"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "FCIBKNSKXXX",
+      "correspondent": "First Caribbean International Bank (St. Kitts)"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAT2XXX",
+      "correspondent": "Bank of Montreal, Toronto"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon"
+    }
+  ],
+  "normalization_note": "GBTI page prints the 8-character beneficiary BIC GUTIGYGE and 8-character correspondent BICs; canonical route keys append XXX. The malformed source value FC1BBBBB is excluded rather than guessed as FCIBBBBB."
+}

@@ -1,0 +1,297 @@
+{
+  "source": "https://www.tcb-bank.com.tw/eng/disclosures/information/ssi",
+  "as_of": "2022-11-17",
+  "beneficiary": {
+    "bic": "TACBTWTPXXX",
+    "name": "Taiwan Cooperative Bank",
+    "country": "TW"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 55,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank, New York Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKTRUS33XXX",
+      "correspondent": "Deutsche Bank Trust Company Americas, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank, N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MRMDUS33XXX",
+      "correspondent": "HSBC Bank USA, N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33XXX",
+      "correspondent": "Wells Fargo Bank N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS6SXXX",
+      "correspondent": "Bank of America N.A., San Francisco"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBKHPPXXX",
+      "correspondent": "Taiwan Cooperative Bank, Phnom Penh Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBAU2SXXX",
+      "correspondent": "Taiwan Cooperative Bank, Sydney Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBKHKHHXXX",
+      "correspondent": "Shanghai Commercial Bank Ltd., Hong Kong"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBHKHHXXX",
+      "correspondent": "Taiwan Cooperative Bank, Hong Kong Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBCNBSXXX",
+      "correspondent": "Taiwan Cooperative Bank, Suzhou Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBCNBS911",
+      "correspondent": "Taiwan Cooperative Bank, Tianjin Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBCNBS912",
+      "correspondent": "Taiwan Cooperative Bank, Fuzhou Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "TACBCNBS918",
+      "correspondent": "Taiwan Cooperative Bank, Changsha Branch"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJTXXX",
+      "correspondent": "MUFG Bank, Ltd., Tokyo"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "ICBCJPJTXXX",
+      "correspondent": "Mega ICBC, Tokyo"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "MHCBJPJTXXX",
+      "correspondent": "Mizuho Bank Ltd., Tokyo"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SMBCJPJTXXX",
+      "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJTXXX",
+      "correspondent": "Standard Chartered Bank, Tokyo Branch"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "MHCBTWTPXXX",
+      "correspondent": "Mizuho Bank Ltd., Taipei Branch"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "HASEHKHHXXX",
+      "correspondent": "Hang Seng Bank Ltd., Hong Kong"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBKHKHHXXX",
+      "correspondent": "Shanghai Commercial Bank Ltd., Hong Kong"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "BOFAHKHXXXX",
+      "correspondent": "Bank of America, N.A., Hong Kong Branch"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "TACBHKHHXXX",
+      "correspondent": "Taiwan Cooperative Bank, Hong Kong Branch"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A., London"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., London"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHCNBJS00",
+      "correspondent": "Bank of China, Shanghai Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "TACBHKHHXXX",
+      "correspondent": "Taiwan Cooperative Bank, Hong Kong Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHTWTP888",
+      "correspondent": "Bank of China, Taipei Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ABOCCNBJ400",
+      "correspondent": "Agricultural Bank of China, Xiamen Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "TACBCNBSXXX",
+      "correspondent": "Taiwan Cooperative Bank, Suzhou Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "TACBCNBS912",
+      "correspondent": "Taiwan Cooperative Bank, Fuzhou Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "TACBCNBS911",
+      "correspondent": "Taiwan Cooperative Bank, Tianjin Branch"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "TACBCNBS918",
+      "correspondent": "Taiwan Cooperative Bank, Changsha Branch"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CTBAAU2SXXX",
+      "correspondent": "Commonwealth Bank of Australia, Sydney"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "TACBAU2SXXX",
+      "correspondent": "Taiwan Cooperative Bank, Sydney Branch"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3MXXX",
+      "correspondent": "Australia and New Zealand Banking Group Ltd., Melbourne"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAT2XXX",
+      "correspondent": "Bank of Montreal, Toronto"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "TDOMCATTTOR",
+      "correspondent": "Toronto-Dominion Bank, Toronto"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "DBSSSGSGXXX",
+      "correspondent": "DBS Bank Ltd., Singapore"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS Switzerland AG, Zurich"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A., London"
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "SBZAZAJJXXX",
+      "correspondent": "Standard Bank of South Africa Ltd., Johannesburg"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A., London (source notes HANDSESS intermediary)"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22058",
+      "correspondent": "ANZ Bank New Zealand Limited, Wellington"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "BKKBTHBKXXX",
+      "correspondent": "Bangkok Bank Public Company Ltd., Bangkok"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFFXXX",
+      "correspondent": "Deutsche Bank AG, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank, N.A., London Branch"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "UTWBBEBBXXX",
+      "correspondent": "United Taiwan Bank S.A., Brussels"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "ICBCTWTP011",
+      "correspondent": "Mega ICBC Taipei, Treasury Department"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CHASDEFXXXX",
+      "correspondent": "JPMorgan Chase Bank N.A., Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SOGEFRPPXXX",
+      "correspondent": "Societe Generale"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; source-listed branch BICs are retained.",
+  "additional_sources": [
+    "https://www.tcb-bank.com.tw/personal-banking/deposit-exchange/foreign-services/inward-remittance"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "source": "https://www.cmbnv.com/personal/support-services/international-swift-transfers",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "CMBAAWAXXXX",
+    "name": "Caribbean Mercantile Bank N.V. Aruba",
+    "country": "AW"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 3,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "BBRUBEBBXXX",
+      "correspondent": "ING Belgium"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3MXXX",
+      "correspondent": "Bank of America N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33PHL",
+      "correspondent": "Wells Fargo"
+    }
+  ],
+  "normalization_note": "CMB page prints beneficiary CMBAAWAX and exact intermediary BICs; canonical beneficiary appends XXX. USD section contains a beneficiary-name typo but the beneficiary BIC is explicitly CMBAAWAX and is retained."
+}

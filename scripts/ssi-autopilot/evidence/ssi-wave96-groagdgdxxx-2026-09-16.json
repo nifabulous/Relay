@@ -1,0 +1,59 @@
+{
+  "source": "https://www.grenadaco-opbank.com/wp-content/uploads/2023/06/Customer-Booklet.pdf",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "GROAGDGDXXX",
+    "name": "Grenada Co-operative Bank Limited",
+    "country": "GD"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 8,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAT2XXX",
+      "correspondent": "Bank of Montreal, Toronto"
+    },
+    {
+      "currency": "XCD",
+      "int_bic": "KNANKNSKXXX",
+      "correspondent": "St. Kitts-Nevis-Anguilla National Bank"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CRASGB2LXXX",
+      "correspondent": "Crown Agents Bank"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CRASGB2LXXX",
+      "correspondent": "Crown Agents Bank"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3MXXX",
+      "correspondent": "Bank of America"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CRASGB2LXXX",
+      "correspondent": "Crown Agents Bank"
+    },
+    {
+      "currency": "TTD",
+      "int_bic": "RBTTTTPXXXX",
+      "correspondent": "Royal Bank of Trinidad and Tobago"
+    },
+    {
+      "currency": "BBD",
+      "int_bic": "BNBABBBBXXX",
+      "correspondent": "Republic Bank (Barbados) Limited"
+    }
+  ],
+  "normalization_note": "Bank PDF prints GROAGDGD and the listed correspondent BICs; canonical route keys append XXX. GBP and EUR share CRASGB2L exactly as the PDF states."
+}

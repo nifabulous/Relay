@@ -1,0 +1,74 @@
+{
+  "source": "https://boauganda.com/personal-banking/correspondent-banks/",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "AFRIUGKAXXX",
+    "name": "BANK OF AFRICA - UGANDA LIMITED",
+    "country": "UG"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 11,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "BKTRUS33XXX",
+      "correspondent": "Deutsche Bank Trust Company Americas"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank, N.A., 399 Park Avenue, New York, NY 10043, U.S.A"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London, Citi Centre, Canada Square, Canary Wharf, London E14 5LB"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London, Citi Centre, Canada Square, Canary Wharf, London E14 5LB"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "AFRIFRPPXXX",
+      "correspondent": "Bank of Africa France. 12 rue de la Paix, Paris 2 - France."
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London, Citi Centre, Canada Square, Canary Wharf, London E14 5LB"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London, Citi Centre, Canada Square, Canary Wharf, London E14 5LB"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "CITIGB2LXXX",
+      "correspondent": "Citibank N.A. London, Citi Centre, Canada Square, Canary Wharf, London E14 5LB"
+    },
+    {
+      "currency": "KES",
+      "int_bic": "AFRIKENXXXX",
+      "correspondent": "Bank of Africa Kenya Ltd. Reinsurance Plaza, Taifa Road, Kenya"
+    },
+    {
+      "currency": "TZS",
+      "int_bic": "EUAFTZTZXXX",
+      "correspondent": "Bank of Africa (Tanzania) Ltd. NDC Development House, Kivukoni/Ohio Street, Dar Es Salaam, Tanzania."
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "SBZAZAJJXXX",
+      "correspondent": "Standard Bank of South Africa. 2nd Floor, 5 Simmonds Street, Johannesburg 2001."
+    }
+  ],
+  "normalization_note": "8-char primary-office BIC padded with XXX; source publishes AFRIUGKA"
+}
