@@ -14,7 +14,7 @@ class TutorMode(str, Enum):
 
 
 class TutorContext(BaseModel):
-    surface: Literal["global", "lesson", "scheme", "tracking", "tool", "case"]
+    surface: Literal["global", "lesson", "scheme", "tracking", "tool", "case", "atlas"]
     module_id: Optional[str] = Field(default=None, max_length=100)
     module_title: Optional[str] = Field(default=None, max_length=200)
     topic: Optional[str] = Field(default=None, max_length=120)

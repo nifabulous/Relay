@@ -194,8 +194,10 @@ describe("frontend Sentry observability", () => {
   it("canonicalizes dynamic and encoded route segments", () => {
     const descriptions = [
       ["GET /app/explore/banks/DEUTDEFFXXX", "GET /app/explore/banks/:bic"],
+      ["GET /app/explore/atlas", "GET /app/explore/atlas"],
       ["GET /app/learn/cases/case%2Fsecret", "GET /app/learn/cases/:caseId"],
       ["GET /api/track/0123456789abcdef0123456789abcdef/complete", "GET /api/track/:uetr/complete"],
+      ["GET /api/atlas/country/US", "GET /api/atlas/country/:iso2"],
       ["GET /api/unknown/7", "GET /api/[REDACTED_PATH]"],
     ] as const;
 

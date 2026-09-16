@@ -199,15 +199,8 @@ class TestSSISeedIntegrity:
 
         from app.services.seed import SSI_RECORDS
 
-        # Some real BICs use non-standard pseudo-country codes (e.g. EDBBEB22
-        # uses "EB" for "European Bank") that schwifty's ISO registry doesn't
-        # recognize but SWIFT accepts. We tolerate those known exceptions.
-        KNOWN_NONSTANDARD_BICS = {"EDBBEB22XXX"}
-
         for row in SSI_RECORDS:
             for bic in (row[0], row[3]):  # beneficiary_bic, intermediary_bic
-                if bic in KNOWN_NONSTANDARD_BICS:
-                    continue  # real BIC, non-standard country code
                 b = BIC(bic)
                 assert b.is_valid, f"Invalid BIC in SSI seed: {bic}"
 

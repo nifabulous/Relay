@@ -2,7 +2,7 @@
 from datetime import date, datetime, timezone
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .services.validator import validate_currency_code
 from .ssi_terms import (
@@ -772,3 +772,103 @@ class InternationalSchemesResponse(BaseModel):
         "SIMULATION — educational data. Always check the operator's current "
         "rules for production routing."
     )
+
+
+# ---------------------------------------------------------------------------
+# Correspondent Atlas
+# ---------------------------------------------------------------------------
+
+AtlasScope = Literal["all", "settleable"]
+
+
+class AtlasStrictModel(BaseModel):
+    """Reject payload drift at the API boundary instead of dropping fields."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class AtlasStatusTier(AtlasStrictModel):
+    status: SSIStatus
+    bic_only: bool
+    count: int = Field(ge=0)
+
+
+class AtlasTotals(AtlasStrictModel):
+    ssi_rows: int = Field(ge=0)
+    beneficiary_banks: int = Field(ge=0)
+    correspondents: int = Field(ge=0)
+    currencies: int = Field(ge=0)
+
+
+class AtlasEvidence(AtlasStrictModel):
+    status: SSIStatus
+    bic_only: bool
+    count: int = Field(ge=0)
+
+
+class AtlasSpoke(AtlasStrictModel):
+    iso2: str
+    beneficiary_banks: int = Field(ge=0)
+    rows: int = Field(ge=0)
+    evidence: List[AtlasEvidence] = Field(default_factory=list)
+
+
+class AtlasHubCountry(AtlasStrictModel):
+    iso2: str
+    banks_served: int = Field(ge=0)
+    currencies: int = Field(ge=0)
+    correspondents: int = Field(ge=0)
+
+
+class AtlasHub(AtlasStrictModel):
+    bic: str
+    name: str
+    iso2: str
+    banks_served: int = Field(ge=0)
+    currencies: int = Field(ge=0)
+
+
+class AtlasNetworkResponse(AtlasStrictModel):
+    scope: AtlasScope
+    totals: AtlasTotals
+    by_status_and_tier: List[AtlasStatusTier]
+    spokes: List[AtlasSpoke]
+    hub_countries: List[AtlasHubCountry]
+    hubs: List[AtlasHub]
+    observed_beneficiary_country_codes: List[str]
+    observed_intermediary_country_codes: List[str]
+    disclaimer: str
+
+
+class AtlasCountryCounts(AtlasStrictModel):
+    beneficiary_banks: int = Field(ge=0)
+    beneficiary_banks_total: int = Field(ge=0)
+    rows: int = Field(ge=0)
+    ssi_rows_total: int = Field(ge=0)
+
+
+class AtlasDisclosure(AtlasStrictModel):
+    beneficiary_bic: str
+    beneficiary_bank_name: str
+    status: SSIStatus
+    bic_only: bool
+    row_count: int = Field(ge=0)
+
+
+class AtlasCountryCorrespondent(AtlasStrictModel):
+    bic: str
+    name: str
+    iso2: str
+    beneficiary_banks: int = Field(ge=0)
+    currencies: List[str]
+    disclosures: List[AtlasDisclosure] = Field(default_factory=list)
+
+
+class AtlasCountryResponse(AtlasStrictModel):
+    scope: AtlasScope
+    iso2: str
+    collected: bool
+    in_scope: AtlasCountryCounts
+    all_scopes: AtlasCountryCounts
+    correspondents: List[AtlasCountryCorrespondent]
+    disclaimer: str

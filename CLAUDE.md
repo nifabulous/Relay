@@ -6,8 +6,8 @@
 
 An **educational payment simulation** for learning how cross-border payments work. Two halves:
 
-1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 27 API endpoints under `/api/*`.
-2. **Relay frontend** (`frontend/`) — React 19 + TypeScript 7 + Vite 8 application with four workspaces: Overview, Learn, Explore, Operate. Served at `/app`.
+1. **FastAPI backend** (`app/`) — validates IBAN/BIC, looks up banks, suggests correspondent intermediaries, simulates VoP / fees / sanctions / tracking / MT103 STP. 29 API endpoints under `/api/*`.
+2. **Relay frontend** (`frontend/`) — React 19 + TypeScript 7 + Vite 8 application with four workspaces: Overview, Learn, Explore (including the Correspondent Atlas), Operate. Served at `/app`.
 3. **Legacy frontend** (`app/static/`) — vanilla HTML/JS/CSS at `/learn` and `/ui`. Being replaced by Relay. Still available until parity is reached.
 
 **It is NOT a production payment system.** No real money moves. Every "payment" is simulated. Account numbers are `ACCT-` placeholders.
@@ -37,7 +37,7 @@ cd frontend && npm install && npm run dev
 ```
 app/
   main.py           FastAPI app, lifespan, static serving (/app, /learn, /ui)
-  routers/          11 domain routers (directory, routing, ssi, vop, tracking, etc.)
+  routers/          12 domain routers (directory, routing, ssi, atlas, vop, tracking, etc.)
   services/         domain logic (validator, routing, vop, prepare, seed, etc.)
   models.py         SQLAlchemy 2.0 models
   schemas.py        Pydantic v2 request/response schemas
@@ -79,7 +79,7 @@ frontend/src/
   lib/persistence/  versioned localStorage, legacy progress migration
   features/
     overview/       adaptive home with selectPrimaryAction decision table
-    explore/        CommandSearch, BankDirectory, Glossary
+    explore/        CommandSearch, BankDirectory, Correspondent Atlas, Glossary
     operate/
       prepare/      PreparePaymentPage with partial-results pattern
       tools/        FeePage, ScreeningPage, ValueDatePage, StpPage

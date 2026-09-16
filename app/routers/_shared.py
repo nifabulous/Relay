@@ -11,6 +11,12 @@ _SSI_DISCLAIMER = (
     "or a licensed feed (Accuity, SWIFTRef) before use."
 )
 
+_ATLAS_DISCLAIMER = (
+    "Educational atlas of collected SSI relationships. Counts describe this corpus, "
+    "not payment volume or global market share; coverage is partial and provenance "
+    "varies by row."
+)
+
 _VOP_ADVICE = {
     "MATCH": "Name matches the account holder. Safe to proceed.",
     "CLOSE_MATCH": (
@@ -54,6 +60,7 @@ _PACS008_DISCLAIMER = (
 __all__ = [
     "SCREENING_DISCLAIMER_TEXT",
     "_SSI_DISCLAIMER",
+    "_ATLAS_DISCLAIMER",
     "_VOP_ADVICE",
     "_TRACKING_DISCLAIMER",
     "_VALUE_DATE_DISCLAIMER",

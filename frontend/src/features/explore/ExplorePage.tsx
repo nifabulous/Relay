@@ -41,6 +41,10 @@ export function ExplorePage() {
 
       {/* Quick categories */}
       <div className="explore__categories">
+        <Link to="/explore/atlas" className="explore__category">
+          <span className="explore__category-label">Correspondent Atlas</span>
+          <span className="explore__category-sub">See who reaches whom across the collected SSI network</span>
+        </Link>
         <Link to="/explore/banks" className="explore__category">
           <span className="explore__category-label">Bank Directory</span>
           <span className="explore__category-sub">Browse and look up banks by BIC</span>

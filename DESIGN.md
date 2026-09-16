@@ -50,9 +50,16 @@ room to spare. The ordinary structural borders remain intentionally lighter: `--
 measures 1.23:1 and `--color-border-strong` 1.51:1 against the canvas. Floating controls are
 different: the tutor FAB and panel use `--color-floating-border`, which clears 3:1 against
 their light and dark surfaces so the always-available control remains distinguishable from
-content. Do not restate this as blanket AA compliance. When dark mode lands, its ordinary
-borders match the light theme's perceptual weight while floating surfaces use their approved
-dark boundary.
+content. Do not restate this as blanket AA compliance.
+
+**Three themes ship, not two.** `tokens.css` defines light, `dark`, and `black` (an OLED
+palette with `--color-canvas: #000000` and `--color-surface: #18181b`). Theme resolution
+lives in `theme.ts`, which answers binary questions about `black` as dark while it paints
+from its own palette. In `dark` and `black`, ordinary borders match the light theme's
+perceptual weight while floating surfaces use their approved dark boundary. Any surface
+that depends on a canvas-to-surface step must be checked in `black`, where that step is
+the narrowest: a design that reads figure-ground from the page background dissolves
+there.
 
 ### Typography
 
@@ -85,7 +92,9 @@ Desktop uses a persistent left rail and top bar. Mobile uses a four-item bottom 
 
 ## Components
 
-Feature code uses shared components for navigation, buttons, form controls, panels, status, tables, mobile record lists, timelines, steppers, route diagrams, alerts, skeletons, and empty states.
+Feature code uses shared components for navigation, buttons, form controls, panels, status, tables, mobile record lists, timelines, steppers, route diagrams, geographic instruments, alerts, skeletons, and empty states.
+
+A **geographic instrument** renders data onto real topology. It is not a chart in the sense the anti-template rule below restricts: it earns its place only when position itself carries a fact a direct value comparison cannot state. It must pair with a synced text equivalent that carries every value the geometry encodes, keep its own marks out of the accessibility tree, and never take a reserved colour for a data scale. Selection is reachable without hitting geometry.
 
 Cards are allowed only when the surface is independently selectable, movable, or meaningfully bounded. Layout grouping alone does not justify a card.
 

@@ -112,6 +112,7 @@ def _format_context(request: TutorRequest) -> str:
         ("currency", context.currency),
         ("rail", context.rail_name),
         ("tool", context.tool_name),
+        ("resource", context.resource_ref),
     ):
         if value:
             lines.append(f"{label}: {redact_sensitive_text(value)}")

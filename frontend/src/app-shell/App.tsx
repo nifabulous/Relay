@@ -11,6 +11,7 @@ import { track } from "../lib/analytics/analytics";
 // Route-level code splitting — Learn, Explore, and Operate are separate chunks
 const OverviewPage = lazy(() => import("../features/overview/OverviewPage").then(m => ({ default: m.OverviewPage })));
 const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.ExplorePage })));
+const AtlasPage = lazy(() => import("../features/explore/AtlasPage").then(m => ({ default: m.AtlasPage })));
 const BankDirectoryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.BankDirectoryPage })));
 const SchemesPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.SchemesPage })));
 const GlossaryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.GlossaryPage })));
@@ -70,6 +71,7 @@ export function App() {
             <Route path="learn/practice" element={<Suspense fallback={<PageLoader destination="Learn" />}><PracticePage /></Suspense>} />
             <Route path="learn/:moduleId" element={<Suspense fallback={<PageLoader destination="Learn" />}><LearnModulePage /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={<PageLoader destination="Explore" />}><ExplorePage /></Suspense>} />
+              <Route path="explore/atlas" element={<Suspense fallback={<PageLoader destination="Correspondent Atlas" />}><AtlasPage /></Suspense>} />
               <Route path="explore/banks" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDirectoryPage /></Suspense>} />
               <Route path="explore/banks/:bic" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDetailRoute /></Suspense>} />
               <Route path="explore/schemes" element={<Suspense fallback={<PageLoader destination="Payment Schemes" />}><SchemesPage /></Suspense>} />

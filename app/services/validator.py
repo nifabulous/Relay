@@ -96,14 +96,10 @@ def validate_bic(bic_str: str) -> Tuple[bool, Optional[str], Optional[str], list
     Validate a BIC. Returns (valid, normalized_bic, country_code, errors).
     Accepts 8- or 11-char forms; pads to 11 with 'XXX' for branch "primary office".
 
-    Some real BICs use non-standard pseudo-country codes (e.g. EDBBEB22 uses
-    'EB' for "European Bank") that schwifty's ISO registry doesn't recognize
-    but SWIFT accepts. For these known codes, we do structural validation
-    (length + alphanumeric) as a fallback.
+    BIC country positions are resolved against the ISO registry. A structurally
+    plausible code with an unknown country is invalid; callers must not turn an
+    unverified pseudo-country into geographic data.
     """
-    # Non-standard country codes used by real BICs but not in ISO 3166.
-    KNOWN_NONSTANDARD_COUNTRIES = {"EB"}
-
     errors: list[str] = []
     country: Optional[str] = None
     normalized: Optional[str] = None
@@ -115,28 +111,17 @@ def validate_bic(bic_str: str) -> Tuple[bool, Optional[str], Optional[str], list
         # Pad to 11 chars so directory lookups match consistently.
         normalized = str(bic).ljust(11, "X") if len(str(bic)) == 8 else str(bic)
     except Exception:
-        # Fallback for known non-standard country codes only (e.g. EB).
         cleaned = bic_str.strip().upper().replace(" ", "")
-        cc = cleaned[4:6] if len(cleaned) >= 6 else ""
-        if (
-            len(cleaned) in (8, 11)
-            and cleaned[:4].isalpha()
-            and cc in KNOWN_NONSTANDARD_COUNTRIES
-        ):
-            valid = True
-            country = cc
-            normalized = cleaned.ljust(11, "X") if len(cleaned) == 8 else cleaned
+        valid = False
+        if len(cleaned) not in (8, 11):
+            errors.append(
+                f"Enter a valid SWIFT BIC — it must be 8 or 11 characters "
+                f"(you entered {len(cleaned)})."
+            )
         else:
-            valid = False
-            if len(cleaned) not in (8, 11):
-                errors.append(
-                    f"Enter a valid SWIFT BIC — it must be 8 or 11 characters "
-                    f"(you entered {len(cleaned)})."
-                )
-            else:
-                errors.append(
-                    "Enter a valid SWIFT BIC (for example CITIUS33 or "
-                    "GTBINGLAXXX)."
-                )
+            errors.append(
+                "Enter a valid SWIFT BIC (for example CITIUS33 or "
+                "GTBINGLAXXX)."
+            )
 
     return valid, normalized, country, errors
