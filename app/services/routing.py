@@ -203,8 +203,21 @@ def _has_usable_ssi_accounts(row: SSI) -> bool:
     )
 
 
+def _has_routable_ssi_provenance(row: SSI) -> bool:
+    """Require independently verified, current provenance for live routing."""
+    return (
+        row.status == "published"
+        and _has_usable_text(row.as_of)
+        and _has_usable_text(row.verified_by)
+        and _has_usable_text(row.notes)
+    )
+
+
 def _is_routable_ssi(row: SSI) -> bool:
     """Return whether an SSI is safe to use as an executable route.
+
+    This is the final production safety gate used by ``suggest_from_ssi``;
+    seed provenance flags and account placeholders cannot bypass it.
 
     ``/api/ssi`` deliberately exposes the full catalog, including historical
     and illustrative records.  Routing is narrower: only a currently
@@ -216,10 +229,7 @@ def _is_routable_ssi(row: SSI) -> bool:
         not row.bic_only
         and not row.terms_inferred
         and not _has_unstructured_multi_hop_label(row.intermediary_bank_name)
-        and row.status == "published"
-        and _has_usable_text(row.as_of)
-        and _has_usable_text(row.verified_by)
-        and _has_usable_text(row.notes)
+        and _has_routable_ssi_provenance(row)
         # Keep the account gate in this shared predicate, not only in the
         # SQL-backed selectors, so direct callers cannot promote placeholders.
         and accounts_are_usable
@@ -244,6 +254,31 @@ def _ssi_routing_filters() -> tuple:
     )
 
 
+def _select_routable_ssi_rows(
+    session: Session,
+    beneficiary_bic_11: str,
+    settlement_currency: str,
+) -> list:
+    """Load SSI candidates through the same gates used by live suggestions."""
+    candidates = [
+        beneficiary_bic_11,
+        beneficiary_bic_11[:8] + "XXX",
+        beneficiary_bic_11[:6] + "XXXXX",
+    ]
+    for candidate in candidates:
+        candidate_rows = session.execute(
+            select(SSI).where(
+                SSI.beneficiary_bic == candidate,
+                SSI.currency == settlement_currency,
+                *_ssi_routing_filters(),
+            )
+        ).scalars().all()
+        routable_rows = [row for row in candidate_rows if _is_routable_ssi(row)]
+        if routable_rows:
+            return routable_rows
+    return []
+
+
 def suggest_from_ssi(
     session: Session,
     beneficiary_bic_11: str,
@@ -258,29 +293,20 @@ def suggest_from_ssi(
     beneficiary bank wants its funds routed through. The corridor table below
     is only a heuristic fallback for banks whose SSIs we don't carry.
 
+    Every returned row must pass both the production SQL prefilter and the
+    final ``_is_routable_ssi`` safety gate below.
+
     Matches the SSI table the same way /api/ssi does: exact 11-char BIC, then
     the 8-char prefix, then the 6-char bank code.
     """
     suggestions: list[IntermediarySuggestion] = []
     seen: set[str] = set()
 
-    candidates = [
+    rows = _select_routable_ssi_rows(
+        session,
         beneficiary_bic_11,
-        beneficiary_bic_11[:8] + "XXX",
-        beneficiary_bic_11[:6] + "XXXXX",
-    ]
-    rows: list = []
-    for cand in candidates:
-        candidate_rows = session.execute(
-            select(SSI).where(
-                SSI.beneficiary_bic == cand,
-                SSI.currency == settlement_currency,
-                *_ssi_routing_filters(),
-            )
-        ).scalars().all()
-        rows = [row for row in candidate_rows if _is_routable_ssi(row)]
-        if rows:
-            break
+        settlement_currency,
+    )
 
     corridor = f"{settlement_currency}->{destination_country or '??'}"
     for r in rows:

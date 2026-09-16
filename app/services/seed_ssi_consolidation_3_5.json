@@ -1,0 +1,16 @@
+{
+  "source_prs": [],
+  "superseded_prs": [],
+  "banks": [
+  ],
+  "ssi_records": [
+    ["KLARCH22XXX", "Bivial AG", "MXN", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via Banco Santander Mexico)", "ACCT-91013430", "ACCT-91013430", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "NOK", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via Nordea Bank Norway)", "ACCT-91013431", "ACCT-91013431", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "PLN", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via mBank)", "ACCT-91013432", "ACCT-91013432", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "SEK", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via Nordea Bank Sweden)", "ACCT-91013433", "ACCT-91013433", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "SGD", "CHASGB2LXXX", "JPMorgan Chase Bank, N.A., London (via Oversea-Chinese Banking Corporation)", "ACCT-91013434", "ACCT-91013434", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "TRY", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via JPMorgan Chase Bank, N.A., Istanbul)", "ACCT-91013435", "ACCT-91013435", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "USD", "CHASGB2LXXX", "JPMorgan Chase Bank, N.A., London (via JPMorgan Chase Bank, N.A., New York)", "ACCT-91013436", "ACCT-91013436", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true],
+    ["KLARCH22XXX", "Bivial AG", "ZAR", "CHASDEFXXXX", "J.P. Morgan SE, Frankfurt (via Standard Bank of South Africa)", "ACCT-91013437", "ACCT-91013437", "SHA", "spot", "Source: https://www.bivial.com/correspondent-banks (as of 2026-09-14). Sourced from bank-published SSI page. Verify current values before use.", "2026-09-14", "unverified", null, false, true]
+  ]
+}

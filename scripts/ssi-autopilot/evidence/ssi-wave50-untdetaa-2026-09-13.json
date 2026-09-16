@@ -1,0 +1,117 @@
+{
+  "source": "https://www.hibretbank.com.et/trade-finance-services/correspondent-banks/",
+  "source_sha256": "4e2d3a10c076823c915913c39379abbdf6efd82262960655df58d2bf077470d8",
+  "as_of": "2026-09-13",
+  "beneficiary_bic": "UNTDETAA",
+  "masking": {
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "source": "https://www.hibretbank.com.et/trade-finance-services/correspondent-banks/",
+    "captured_at": "2026-09-13",
+    "extraction": "HTML correspondent-bank table; no account values published",
+    "raw_accounts_committed": false,
+    "route_count": 14,
+    "bic_only_route_count": 14,
+    "routes": [
+      {
+        "currency": "AED",
+        "int_bic": "BABELBBE",
+        "correspondent": "Bank of Beirut S.A.L., Beirut",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "COBADEFF",
+        "correspondent": "Commerz Bank A.G., Frankfurt",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNCRITMM",
+        "correspondent": "UniCredit SpA, Milan",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BHFBDEFF",
+        "correspondent": "ODDO BHF, Frankfurt",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "SCBLGB2L",
+        "correspondent": "Standard Chartered Bank, London",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "BRBAGB2L",
+        "correspondent": "Bank of Beirut (UK) Ltd., London",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "COBADEFF",
+        "correspondent": "Commerz Bank A.G., Frankfurt",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CITIUS33",
+        "correspondent": "City Bank N.A., New York",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "COBADEFF",
+        "correspondent": "Commerz Bank A.G., Frankfurt",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "SCBLGB2L",
+        "correspondent": "Standard Chartered Bank, London",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BRBAGB2L",
+        "correspondent": "Bank of Beirut (UK) Ltd., London",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "MRINDJDJ",
+        "correspondent": "Bank of Africa-Mer Rouge, Djibouti",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CACDDJDJ",
+        "correspondent": "CAC International Bank, Djibouti",
+        "bic_only": true,
+        "has_account_data": false
+      },
+      {
+        "currency": "USD",
+        "int_bic": "EXTNDJJD",
+        "correspondent": "EXIM Djibouti",
+        "bic_only": true,
+        "has_account_data": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "source": "https://media.sparnord.dk/com/organisation/correspondent_banking/SSI-February-2026.pdf",
+  "source_sha256": "35d1da15b103acdce189a2eb4717575d01d7db0b55fb39ff22f2d27d897753a0",
+  "as_of": "2026-02-02",
+  "beneficiary_bic": "SPNODK22",
+  "region_masked_block": 91005000,
+  "masking": {
+    "algorithm": "sequential token per normalized source account",
+    "equality": "equal source account fingerprints share one token; distinct fingerprints never share a token",
+    "raw_accounts_committed": false
+  },
+  "source_snapshot": {
+    "route_count": 23,
+    "bic_only_route_count": 0,
+    "account_backed_route_count": 23
+  },
+  "routes": [
+    {"currency":"AED","int_bic":"DEUTDEFF","nostro_mask":"ACCT-91005041","with_an_mask":"ACCT-91005041"},
+    {"currency":"AUD","int_bic":"ANZBAU3M","nostro_mask":"ACCT-91005042","with_an_mask":"ACCT-91005042"},
+    {"currency":"CAD","int_bic":"ROYCCAT2","nostro_mask":"ACCT-91005043","with_an_mask":"ACCT-91005043"},
+    {"currency":"CHF","int_bic":"UBSWCHZH80A","nostro_mask":"ACCT-91005044","with_an_mask":"ACCT-91005044"},
+    {"currency":"CNY","int_bic":"DEUTDEFF","nostro_mask":"ACCT-91005045","with_an_mask":"ACCT-91005045"},
+    {"currency":"CZK","int_bic":"DABADKKK","nostro_mask":"ACCT-91005046","with_an_mask":"ACCT-91005046"},
+    {"currency":"DKK","int_bic":"DABADKKK","nostro_mask":"ACCT-91005047","with_an_mask":"ACCT-91005047"},
+    {"currency":"DKK","int_bic":"DKNBDKKK","nostro_mask":"ACCT-91005048","with_an_mask":"ACCT-91005048"},
+    {"currency":"EUR","int_bic":"DEUTDEFF","nostro_mask":"ACCT-91005049","with_an_mask":"ACCT-91005049"},
+    {"currency":"GBP","int_bic":"NWBKGB2L","nostro_mask":"ACCT-91005050","with_an_mask":"ACCT-91005050"},
+    {"currency":"HKD","int_bic":"DEUTDEFF","nostro_mask":"ACCT-91005051","with_an_mask":"ACCT-91005051"},
+    {"currency":"HUF","int_bic":"BACXHUHB","nostro_mask":"ACCT-91005052","with_an_mask":"ACCT-91005052"},
+    {"currency":"JPY","int_bic":"SMBCJPJT","nostro_mask":"ACCT-91005053","with_an_mask":"ACCT-91005053"},
+    {"currency":"NOK","int_bic":"DNBANOKK","nostro_mask":"ACCT-91005054","with_an_mask":"ACCT-91005054"},
+    {"currency":"NZD","int_bic":"ANZBNZ22","nostro_mask":"ACCT-91005055","with_an_mask":"ACCT-91005055"},
+    {"currency":"PLN","int_bic":"BPKOPLPW","nostro_mask":"ACCT-91005056","with_an_mask":"ACCT-91005056"},
+    {"currency":"RON","int_bic":"RZBRROBU","nostro_mask":"ACCT-91005057","with_an_mask":"ACCT-91005057"},
+    {"currency":"SEK","int_bic":"SWEDSESS","nostro_mask":"ACCT-91005058","with_an_mask":"ACCT-91005058"},
+    {"currency":"SGD","int_bic":"DABADKKK","nostro_mask":"ACCT-91005059","with_an_mask":"ACCT-91005059"},
+    {"currency":"THB","int_bic":"BKKBTHBK","nostro_mask":"ACCT-91005060","with_an_mask":"ACCT-91005060"},
+    {"currency":"TRY","int_bic":"ISBKTRIS","nostro_mask":"ACCT-91005061","with_an_mask":"ACCT-91005061"},
+    {"currency":"USD","int_bic":"CHASUS33","nostro_mask":"ACCT-91005062","with_an_mask":"ACCT-91005062"},
+    {"currency":"ZAR","int_bic":"FIRNZAJJ","nostro_mask":"ACCT-91005063","with_an_mask":"ACCT-91005063"}
+  ]
+}

@@ -251,6 +251,9 @@ UNVERIFIED_US_CLEARERS = {
     # for this legacy identifier are not verifiable from a public source.
     # Verify and promote to SETTLEMENT_DIRECTORY before removing.
     "PNBPUS33",
+    # Wells Fargo's source-published legacy BIC8. The SSI remains unverified
+    # and non-routable until a public CHIPS/ABA mapping is corroborated.
+    "PNBPUS3N",
     # Bank Frick's published USD SSI lists Convera USA and United Texas Bank;
     # neither BIC currently has a verified CHIPS/ABA identifier in the local
     # directory, so keep the sourced routes explicitly exempt for now.
@@ -266,6 +269,10 @@ UNVERIFIED_US_CLEARERS = {
     # EverBank's direct USD SSI is published with its SWIFT BIC, but no
     # public CHIPS/ABA identifier is provided in the source instructions.
     "EVBKUS3M",
+    # Grasshopper's published FX instructions identify Pacific Coast Bankers'
+    # Bank, but do not publish a CHIPS/ABA identifier for this BIC. The row is
+    # informational and remains blocked by the shared routing predicate.
+    "PCBBUS66",
 }
 
 

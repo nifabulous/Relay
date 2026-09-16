@@ -1,0 +1,49 @@
+{
+  "beneficiary": {
+    "bic": "MASHAEADXXX",
+    "name": "Mashreq Bank",
+    "country": "AE"
+  },
+  "source_snapshot": {
+    "source": "https://www.mashreq.com/en/international-banking/home/our-sectors/sectors/financial-institution/standard-settlement-instruction/",
+    "as_of": "2026-09-14",
+    "route_count": 29,
+    "bic_only_route_count": 29,
+    "raw_accounts_committed": false
+  },
+  "routes": [
+    {"currency":"AED","int_bic":"CBAUAEAAXXX"},
+    {"currency":"AUD","int_bic":"ANZBAU3MXXX"},
+    {"currency":"CAD","int_bic":"ROYCCAT2XXX"},
+    {"currency":"CHF","int_bic":"CRESCHZZ80A"},
+    {"currency":"CNY","int_bic":"BKCHHKHH838"},
+    {"currency":"DKK","int_bic":"DABADKKKXXX"},
+    {"currency":"EGP","int_bic":"MSHQEGCAXXX"},
+    {"currency":"EUR","int_bic":"BSCHESMMXXX"},
+    {"currency":"EUR","int_bic":"CITIIE2XXXX"},
+    {"currency":"EUR","int_bic":"MSHQGB2LXXX"},
+    {"currency":"INR","int_bic":"MSHQINBBXXX"},
+    {"currency":"JOD","int_bic":"HBHOJOAXXXX"},
+    {"currency":"JPY","int_bic":"MHCBJPJTXXX"},
+    {"currency":"KRW","int_bic":"KOEXKRSEXXX"},
+    {"currency":"KWD","int_bic":"MSHQKWKWXXX"},
+    {"currency":"LKR","int_bic":"BCEYLKLXXXX"},
+    {"currency":"MAD","int_bic":"BCMAMAMCXXX"},
+    {"currency":"NOK","int_bic":"NDEANOKKXXX"},
+    {"currency":"NZD","int_bic":"ANZBNZZZXXX"},
+    {"currency":"PHP","int_bic":"BNORPHMMXXX"},
+    {"currency":"PKR","int_bic":"MUCBPKKAXXX"},
+    {"currency":"QAR","int_bic":"MSHQQAQAXXX"},
+    {"currency":"SEK","int_bic":"ESSESESSXXX"},
+    {"currency":"SGD","int_bic":"UOVBSGSGXXX"},
+    {"currency":"THB","int_bic":"SICOTHBKXXX"},
+    {"currency":"TND","int_bic":"CFCTTNTTXXX"},
+    {"currency":"XAG","int_bic":"CHASGB2LBUL"},
+    {"currency":"XAU","int_bic":"CHASGB2LBUL"},
+    {"currency":"ZAR","int_bic":"SBZAZAJJXXX"}
+  ],
+  "normalizations": [
+    {"source":"BN0RPHMM","canonical":"BNORPHMMXXX","reason":"official page printed zero in place of O"},
+    {"source":"U0VBSGSGXXX","canonical":"UOVBSGSGXXX","reason":"official page printed zero in place of O"}
+  ]
+}
