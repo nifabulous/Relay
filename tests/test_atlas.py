@@ -15,10 +15,6 @@ def _seed_rows(session):
     return list(session.execute(select(SSI)).scalars())
 
 
-def _in_scope(row, scope):
-    return scope == "all" or not row.bic_only
-
-
 def _country_code(bic):
     return bic[4:6].upper()
 

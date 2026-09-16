@@ -149,6 +149,14 @@ describe("AtlasPage", () => {
     expect(screen.getByRole("button", { name: /United States/i })).toBeVisible();
   });
 
+  it("ignores malformed selected URL values", async () => {
+    renderAtlas("/app/explore/atlas?view=spoke&selected=../network");
+
+    expect(await screen.findByRole("heading", { name: /United States network position/i })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: /network position/i })).not.toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("exposes mobile field labels and denominator-bearing values", async () => {
     const rendered = renderAtlas();
     await screen.findByText("4", { selector: ".atlas__metrics strong" });

@@ -28,7 +28,10 @@ export function AtlasPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get("view") === "spoke" ? "spoke" : "hub";
   const scope: AtlasScope = searchParams.get("scope") === "settleable" ? "settleable" : "all";
-  const selected = searchParams.get("selected")?.toUpperCase() || null;
+  const selectedParam = searchParams.get("selected");
+  const selected = selectedParam && /^[A-Za-z]{2}$/.test(selectedParam)
+    ? selectedParam.toUpperCase()
+    : null;
   const search = searchParams.get("q") ?? "";
   const sortParam = searchParams.get("sort");
   const sort: "reach" | "name" | "currencies" = sortParam === "name" || sortParam === "currencies" ? sortParam : "reach";
@@ -74,7 +77,7 @@ export function AtlasPage() {
   const panelIso2 = selected ?? defaultCountry ?? null;
   const country = useQuery({
     queryKey: panelIso2 ? apiKeys.atlasCountry(panelIso2, scope) : ["atlas", "country", "idle"],
-    queryFn: () => apiRequest<AtlasCountry>(`/api/atlas/country/${panelIso2}?scope=${scope}`, undefined, AtlasCountrySchema),
+    queryFn: () => apiRequest<AtlasCountry>(`/api/atlas/country/${encodeURIComponent(panelIso2!)}?scope=${scope}`, undefined, AtlasCountrySchema),
     enabled: Boolean(panelIso2) && view === "spoke",
   });
 
