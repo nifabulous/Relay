@@ -4,6 +4,7 @@ import {
   buildLessonContext,
   buildSchemeContext,
   buildTrackingContext,
+  buildAtlasContext,
   contextIdentity,
 } from "./tutorContext";
 
@@ -126,6 +127,19 @@ describe("buildSchemeContext", () => {
     const context = buildSchemeContext({ currency: "CAD" });
     expect(context.rail_name).toBeUndefined();
     expect(() => TutorContextSchema.parse(context)).not.toThrow();
+  });
+});
+
+describe("buildAtlasContext", () => {
+  it("includes view, scope, and selected country in the resource identity", () => {
+    const network = buildAtlasContext({ view: "hub", scope: "all" });
+    const selected = buildAtlasContext({ view: "hub", scope: "all", selected: "CA" });
+    const settleable = buildAtlasContext({ view: "hub", scope: "settleable" });
+
+    expect(network.resource_ref).toBe("atlas:hub:all:network");
+    expect(selected.resource_ref).toBe("atlas:hub:all:country:CA");
+    expect(contextIdentity(network)).not.toBe(contextIdentity(selected));
+    expect(contextIdentity(network)).not.toBe(contextIdentity(settleable));
   });
 });
 

@@ -220,6 +220,11 @@ export function BankDetailRoute() {
                   {countryName(bank.country_code)}
                 </p>
                 <StatusChip status="under_review" className="bank-detail__verified" />
+                {bank.country_code && (
+                  <Link className="bank-detail__network-link" to={`/explore/atlas?view=spoke&selected=${encodeURIComponent(bank.country_code.toUpperCase())}`}>
+                    View network position
+                  </Link>
+                )}
               </div>
             </section>
 

@@ -329,7 +329,7 @@ BANKS = [
     ("IRVTJPJTXXX", "BNY Mellon Japan", "JP", "Tokyo", "JPY"),
     ("SCBLAU2SXXX", "Standard Chartered Australia", "AU", "Sydney", "AUD"),
     # ---- European Depositary Bank (destination) ----
-    ("EDBBEB22XXX", "European Depositary Bank SA", "LU", "Luxembourg", "EUR"),
+    ("WBWCLULLXXX", "European Depositary Bank SA", "LU", "Luxembourg", "EUR"),
     # ---- Global IME Bank + Mashreqbank NY (from Global IME SSI page) ----
     ("GLBBNPKAXXX", "Global IME Bank Ltd", "NP", "Kathmandu", "NPR"),
     ("BOMLUS33XXX", "Mashreqbank NY", "US", "New York", "USD"),
@@ -3083,31 +3083,31 @@ SSI_RECORDS = [
      "Source: DB Seoul SSI PDF. " + _SSI_REAL_NOTE, None, "unverified"),
 
     # ====================================================================
-    # REAL SSI DATA — European Depositary Bank SA Luxembourg (EDBBEB22)
+    # REAL SSI DATA — European Depositary Bank SA Luxembourg (WBWCLULL)
     # Source: europeandepositarybank.com SSI page
     # ====================================================================
 
-    ("EDBBEB22XXX", "European Depositary Bank SA", "USD",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "USD",
      "IRVTUS3NXXX", "BNY Mellon",
      "ACCT-58552", "ACCT-99813", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EDBBEB22XXX", "European Depositary Bank SA", "EUR",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "EUR",
      "IRVTBE99XXX", "BNY Mellon Brussels",
      "ACCT-49234", "ACCT-30171", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EDBBEB22XXX", "European Depositary Bank SA", "GBP",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "GBP",
      "SBOSGB2LXXX", "State Street Bank London",
      "ACCT-30708", "ACCT-86279", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EDBBEB22XXX", "European Depositary Bank SA", "JPY",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "JPY",
      "IRVTJPJTXXX", "BNY Mellon Japan",
      "ACCT-62880", "ACCT-23558", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EDBBEB22XXX", "European Depositary Bank SA", "AUD",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "AUD",
      "SCBLAU2SXXX", "Standard Chartered Australia",
      "ACCT-76706", "ACCT-71519", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
-    ("EDBBEB22XXX", "European Depositary Bank SA", "CAD",
+    ("WBWCLULLXXX", "European Depositary Bank SA", "CAD",
      "IRVTUS3NXXX", "BNY Mellon cross-ccy",
      "ACCT-58552", "ACCT-21513", "SHA", "spot",
      "Source: EDB SSI page. " + _SSI_REAL_NOTE, None, "unverified"),
@@ -8610,6 +8610,9 @@ SEED_BIC_ALIASES = {
     "DOHAQAQAXXX": "DOHBQAQAXXX",
     "NBOMKWKEXXX": "NBOKKWKWXXX",
     "SCBLDEFXXXX": "SCBLDEFFXXX",
+    # European Depositary Bank's source and SWIFT directory use WBWCLULL;
+    # EDBBEB22XXX was a defective pseudo-country seed key.
+    "EDBBEB22XXX": "WBWCLULLXXX",
     # Kasikornbank's source prints the Wells Fargo branch as PNBPUS3NNYC;
     # the repository's canonical directory entry is PNBPUS33.
     "PNBPUS3NNYC": "PNBPUS33",
@@ -8617,15 +8620,47 @@ SEED_BIC_ALIASES = {
 
 
 def _apply_seed_bic_aliases(session) -> None:
-    """Remove stale corrected rows and rewrite references to canonical BICs."""
+    """Rewrite stale BIC references without discarding operator-owned SSIs.
+
+    Beneficiary aliases are a little more delicate than intermediary aliases:
+    the beneficiary BIC is part of the SSI uniqueness key, and an operator may
+    have corrected the settlement fields since the row was seeded.  A machine
+    snapshot can be retired or replaced; an operator snapshot must move to the
+    canonical key in place.  Two operator-owned rows for the same canonical key
+    are ambiguous and fail before the transaction can commit.
+    """
     for old_bic, new_bic in SEED_BIC_ALIASES.items():
-        # The current seed list contains the canonical beneficiary rows. An
-        # old beneficiary BIC identifies stale rows, so remove them and let
-        # the upsert below insert the current records without uniqueness
-        # collisions.
         stale_ssi = list(session.query(SSI).filter(SSI.beneficiary_bic == old_bic))
         for row in stale_ssi:
-            session.delete(row)
+            old_machine_owned = (
+                row.seed_fingerprint is not None
+                and row.seed_fingerprint == _seed_fingerprint(row)
+            ) or _legacy_seed_row_is_unmodified(row)
+            canonical = session.query(SSI).filter(
+                SSI.beneficiary_bic == new_bic,
+                SSI.currency == row.currency,
+                SSI.intermediary_bic == row.intermediary_bic,
+            ).one_or_none()
+            if canonical is None:
+                row.beneficiary_bic = new_bic
+                if old_machine_owned:
+                    row.seed_fingerprint = _seed_fingerprint(row)
+                continue
+
+            canonical_machine_owned = (
+                canonical.seed_fingerprint is not None
+                and canonical.seed_fingerprint == _seed_fingerprint(canonical)
+            ) or _legacy_seed_row_is_unmodified(canonical)
+            if not old_machine_owned and not canonical_machine_owned:
+                raise ValueError(
+                    "Cannot reconcile two operator-owned SSI rows for BIC alias "
+                    f"{old_bic} -> {new_bic} ({row.currency}/{row.intermediary_bic})"
+                )
+            if old_machine_owned:
+                session.delete(row)
+            else:
+                session.delete(canonical)
+                row.beneficiary_bic = new_bic
 
         # Intermediary corrections can be updated in place unless the current
         # canonical row is already present, in which case the old row is a

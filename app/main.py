@@ -18,6 +18,9 @@ from .routers import (
     analytics as analytics_router,
 )
 from .routers import (
+    atlas as atlas_router,
+)
+from .routers import (
     directory as directory_router,
 )
 from .routers import (
@@ -101,6 +104,7 @@ app.include_router(tracking_router.router)
 app.include_router(schemes_router.router)
 app.include_router(prepare_router.router)
 app.include_router(analytics_router.router)
+app.include_router(atlas_router.router)
 app.include_router(progress_router.router)
 app.include_router(telemetry_router.router)
 # Registered after the existing learner-facing routes: the tutor is an
@@ -183,6 +187,7 @@ def api_manifest():
             "/api/value-date", "/api/message/stp-check",
             "/api/import/fedwire", "/api/import/fedach",
             "/api/import/ssi", "/api/progress",
+            "/api/atlas/network", "/api/atlas/country/{iso2}",
             "/api/tutor/availability", "/api/tutor/chat",
         ],
     }

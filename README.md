@@ -42,7 +42,7 @@ These numbers were run against the current checkout on 2026-08-17:
 | TypeScript + production build | Passed (`tsc --noEmit` + Vite) |
 | Eager shell bundle | **209,492 bytes gzip** (budget: 215,040 bytes) |
 | Learning curriculum | **16 entries** (15 learning modules plus capstone) + daily practice drill (52-question bank) |
-| Backend API endpoints | **27** |
+| Backend API endpoints | **29** |
 
 The frontend suite is currently verified with the standard Vitest command above.
 
@@ -74,14 +74,14 @@ bare total. See [Testing](#testing) for the recommended commands.
 | Eager shell bundle | 209,492 bytes gzip (budget: 215,040 bytes) |
 | Learning curriculum | 16 entries (15 learning modules plus capstone) |
 | Case Desk scenarios | 5 |
-| Backend API endpoints | 27 |
+| Backend API endpoints | 29 |
 
 ### Architecture
 
 ```
 swift-routing/
   app/                        FastAPI backend (Python 3.10+)
-    routers/                  11 domain routers under /api/*
+    routers/                  12 domain routers under /api/*
     services/                 Domain logic (validator, routing, vop, prepare, iso20022, ...)
     models.py                 SQLAlchemy 2.0 models
     schemas.py                Pydantic v2 schemas
@@ -97,7 +97,7 @@ swift-routing/
       lib/persistence/        Versioned localStorage + local learner profile + backup/export import
       features/
         overview/             Adaptive home (selectPrimaryAction decision table)
-        explore/              CommandSearch, BankDirectory, Glossary, SchemesTable
+        explore/              CommandSearch, BankDirectory, Correspondent Atlas, Glossary, SchemesTable
         operate/              PreparePayment, Fees, Screening, ValueDate, STP+Pacs008, Tracking
         learn/                Curriculum, cases, prerequisite gating, progress, capstone
           labs/               Labs 1–9 + UK/Eurozone + Canada + Fees/FX + Capstone
@@ -269,7 +269,7 @@ modules (from a 52-question bank), resurfaces missed questions on a 1/3/7-day re
 |---|---|---|
 | **Overview** | `/app` | Adaptive primary action, local progress, activity log, badges |
 | **Learn** | `/app/learn`, `/app/learn/:id`, `/app/learn/practice`, `/app/learn/cases/:caseId` | Technical curriculum, daily practice drill, applied Case Desk |
-| **Explore** | `/app/explore`, `/app/explore/banks`, `/app/explore/glossary`, `/app/explore/schemes` | Command search, bank directory, glossary, rails table |
+| **Explore** | `/app/explore`, `/app/explore/atlas`, `/app/explore/banks`, `/app/explore/glossary`, `/app/explore/schemes` | Command search, correspondent atlas, bank directory, glossary, rails table |
 | **Operate** | `/app/operate`, `/app/operate/*` | Prepare payment, fees, screening, value date, STP checker, tracking |
 
 ---
@@ -571,7 +571,7 @@ count can never go stale in a third table. This one covers qualitative dimension
 | Security | ACCT- placeholders, fail-closed importer |
 | Accessibility | WCAG AA contrast, focus-visible, reduced-motion, keyboard nav |
 | Mobile | Responsive (390px), bottom nav, 44px touch targets |
-| Architecture | 11 domain routers, typed React frontend, design-system tokens |
+| Architecture | 12 domain routers, typed React frontend, design-system tokens |
 | Frontend | React 19 + TS strict + lazy-loaded labs and Case Desk |
 | Learning | Gated module completion, daily practice loop, spaced review, Case Desk scenarios |
 

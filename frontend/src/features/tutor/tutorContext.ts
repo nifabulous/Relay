@@ -110,6 +110,24 @@ export function buildSchemeContext(input: SchemeContextInput): TutorContext {
   return context;
 }
 
+export interface AtlasContextInput {
+  view: "spoke" | "hub";
+  scope: "all" | "settleable";
+  selected?: string | null;
+  summary?: string;
+}
+
+export function buildAtlasContext(input: AtlasContextInput): TutorContext {
+  const context: TutorContext = {
+    surface: "atlas",
+    resource_ref: `atlas:${input.view}:${input.scope}:${input.selected ? `country:${input.selected.toUpperCase()}` : "network"}`,
+    topic: input.view === "hub" ? "Correspondent hubs" : "Beneficiary coverage",
+  };
+  const summary = bounded(input.summary, MAX_SUMMARY);
+  if (summary) context.result_summary = summary;
+  return context;
+}
+
 /**
  * What makes two contexts "the same conversation".
  *
@@ -134,6 +152,7 @@ export function contextIdentity(context: TutorContext): string {
     context.rail_name ?? "",
     context.tool_name ?? "",
     context.case_id ?? "",
+    context.resource_ref ?? "",
   ].join("|");
   return localContextIdentities.get(context) ?? baseIdentity;
 }

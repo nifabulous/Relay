@@ -112,6 +112,16 @@ export const apiKeys = {
   ),
 
   progress: ["progress"] as const,
+
+  atlasNetwork: Object.assign(
+    (scope: "all" | "settleable") => ["atlas", "network", scope] as const,
+    { all: ["atlas", "network"] as const },
+  ),
+
+  atlasCountry: Object.assign(
+    (iso2: string, scope: "all" | "settleable") => ["atlas", "country", iso2, scope] as const,
+    { all: ["atlas", "country"] as const },
+  ),
 } as const;
 
 /** Tuple type of every top-level key factory (useful for typing helpers). */

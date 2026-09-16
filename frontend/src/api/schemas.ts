@@ -703,6 +703,7 @@ export const TutorSurfaceSchema = z.enum([
   "tracking",
   "tool",
   "case",
+  "atlas",
 ]);
 
 export type TutorSurface = z.infer<typeof TutorSurfaceSchema>;

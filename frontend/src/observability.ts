@@ -31,6 +31,7 @@ const STATIC_RELAY_PATHS = new Set([
   "/app/learn",
   "/app/learn/practice",
   "/app/explore",
+  "/app/explore/atlas",
   "/app/explore/banks",
   "/app/explore/schemes",
   "/app/explore/glossary",
@@ -65,6 +66,8 @@ const STATIC_RELAY_PATHS = new Set([
   "/api/import/fedwire",
   "/api/import/fedach",
   "/api/import/ssi",
+  "/api/atlas/network",
+  "/api/atlas/country/:iso2",
 ]);
 
 function sampleRate(rawValue: string | undefined, fallback: number): number {
@@ -118,6 +121,10 @@ function canonicalizeRelayPath(pathname: string): string {
     return routeSegments.length === 4 && ["skip", "complete"].includes(routeSegments[3])
       ? `/api/track/:uetr/${routeSegments[3]}`
       : "/api/track/:uetr";
+  }
+
+  if (routeSegments.length === 4 && routeSegments[0] === "api" && routeSegments[1] === "atlas" && routeSegments[2] === "country") {
+    return "/api/atlas/country/:iso2";
   }
 
   if (routeSegments[0] === "api") return "/api/[REDACTED_PATH]";
