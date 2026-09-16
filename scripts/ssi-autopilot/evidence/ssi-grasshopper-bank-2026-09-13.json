@@ -1,0 +1,39 @@
+{
+  "source_url": "https://support.grasshopper.bank/hc/en-us/article_attachments/4406541628308",
+  "retrieved_on": "2026-09-13",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false
+  },
+  "beneficiary": {
+    "bic": "GRNOUS33XXX",
+    "name": "Grasshopper Bank, National Association",
+    "address": "261 5th Ave, Suite 610, New York, NY 10016"
+  },
+  "routes": [
+    {"currency":"AED","int_bic":"ADCBAEAAXXX"},
+    {"currency":"AUD","int_bic":"BOFAAUSXXXX"},
+    {"currency":"CAD","int_bic":"BOFMCAT2XXX"},
+    {"currency":"CHF","int_bic":"UBSWCHZH80A"},
+    {"currency":"CNY","int_bic":"BOFAHKHXXXX"},
+    {"currency":"CZK","int_bic":"KOMBCZPPXXX"},
+    {"currency":"DKK","int_bic":"DABADKKKXXX"},
+    {"currency":"EUR","int_bic":"BOFAGB22XXX"},
+    {"currency":"GBP","int_bic":"BOFAGB22XXX"},
+    {"currency":"HKD","int_bic":"BOFAHKHXXXX"},
+    {"currency":"HUF","int_bic":"BACXHUHBXXX"},
+    {"currency":"ILS","int_bic":"LUMIILITXXX"},
+    {"currency":"JPY","int_bic":"BOFAJPJXXXX"},
+    {"currency":"MXN","int_bic":"BCMRMXMMCOR"},
+    {"currency":"NOK","int_bic":"DNBANOKKXXX"},
+    {"currency":"NZD","int_bic":"ANZBNZ22XXX"},
+    {"currency":"PHP","int_bic":"BOFAPH2XXXX"},
+    {"currency":"PLN","int_bic":"BPKOPLPWXXX"},
+    {"currency":"SAR","int_bic":"NCBKSAJEXXX"},
+    {"currency":"SEK","int_bic":"HANDSESSXXX"},
+    {"currency":"SGD","int_bic":"BOFASG2XXXX"},
+    {"currency":"THB","int_bic":"BOFATH2XXXX"},
+    {"currency":"USD","int_bic":"PCBBUS66XXX"},
+    {"currency":"ZAR","int_bic":"NEDSZAJJXXX"}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "beneficiary": {
+    "bic": "MBLBBDDHXXX",
+    "name": "Mercantile Bank PLC",
+    "country": "BD"
+  },
+  "source_snapshot": {
+    "source": "https://www.mblbd.com/home/standard_settlement",
+    "as_of": "2026-09-14",
+    "route_count": 7,
+    "raw_accounts_committed": false,
+    "masked_account_block": "ACCT-91001809..ACCT-91001815",
+    "terms_inferred": true
+  },
+  "routes": [
+    {"currency":"USD","int_bic":"CHASUS33","masked_account":"ACCT-91001809"},
+    {"currency":"GBP","int_bic":"SCBLGB2L","masked_account":"ACCT-91001810"},
+    {"currency":"EUR","int_bic":"COBADEFF","masked_account":"ACCT-91001811"},
+    {"currency":"JPY","int_bic":"SCBLJPJT","masked_account":"ACCT-91001812"},
+    {"currency":"AED","int_bic":"BOMLAEAD","masked_account":"ACCT-91001813"},
+    {"currency":"CNY","int_bic":"BKHZCNBH","masked_account":"ACCT-91001814"},
+    {"currency":"SAR","int_bic":"EBILSARI","masked_account":"ACCT-91001815"}
+  ]
+}

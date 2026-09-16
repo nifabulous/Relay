@@ -1,0 +1,33 @@
+{
+  "source": "https://www.bkt.com.al/assets/uploads/documents/bkt_list_bkt_correspondents_updated.pdf",
+  "as_of": "2018-07-01",
+  "retrieved_on": "2026-09-14",
+  "published_label": "List of BKT correspondents",
+  "beneficiary_bic": "NCBAALTX",
+  "region": "europe-uncovered-wave4",
+  "scope": {
+    "included_route_count": 10,
+    "source_route_count": 10
+  },
+  "masking": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false,
+    "note": "The source publishes correspondent names and BICs but no account numbers; all routes remain BIC-only availability metadata."
+  },
+  "normalization": [
+    "The beneficiary identity and BIC are corroborated by BKT Albania's current incoming-transfers page.",
+    "Rows are intentionally non-selectable because the source provides no account numbers, charge terms, or value dates."
+  ],
+  "routes": [
+    {"currency":"AUD","int_bic":"CTBAAU2S","correspondent":"Commonwealth Bank of Australia Sydney"},
+    {"currency":"CAD","int_bic":"CIBCCATT","correspondent":"Canadian Imperial Bank of Commerce Toronto"},
+    {"currency":"CHF","int_bic":"CRESCHZZ80A","correspondent":"Credit Suisse AG Zurich"},
+    {"currency":"EUR","int_bic":"DEUTDEFF","correspondent":"Deutsche Bank AG Frankfurt am Main"},
+    {"currency":"EUR","int_bic":"COBADEFF","correspondent":"Commerzbank AG Frankfurt am Main"},
+    {"currency":"EUR","int_bic":"BCITITMM","correspondent":"Intesa Sanpaolo S.p.A. Milan"},
+    {"currency":"EUR","int_bic":"PASCITMM","correspondent":"Banca Monte dei Paschi di Siena S.p.A. Siena"},
+    {"currency":"EUR","int_bic":"CRBAGRAA","correspondent":"Alpha Bank AE Athens"},
+    {"currency":"GBP","int_bic":"DEUTDEFF","correspondent":"Deutsche Bank AG Frankfurt am Main"},
+    {"currency":"USD","int_bic":"BKTRUS33","correspondent":"Deutsche Bank Trust Company Americas New York"}
+  ]
+}

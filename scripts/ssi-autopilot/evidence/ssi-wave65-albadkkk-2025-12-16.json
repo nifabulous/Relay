@@ -1,0 +1,40 @@
+{
+  "source": "https://www.al-bank.dk/en/documents/om-banken/corporate-governance/standard-settlement-instructions",
+  "as_of": "2025-12-16",
+  "beneficiary_bic": "ALBADKKKXXX",
+  "beneficiary_name": "AL Sydbank A/S",
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "settlement_terms_published": false,
+    "route_count": 24,
+    "omitted_rows": ["EUR EBA/STEP2 (no BIC)"],
+    "extraction": "Official Standard Settlement Instructions PDF; correspondent BICs published without account numbers."
+  },
+  "routes": [
+    {"currency": "AUD", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "CAD", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "CHF", "int_bic": "DEUTDEFFXXX", "correspondent": "Deutsche Bank, Frankfurt"},
+    {"currency": "CNY", "int_bic": "ABOCCNBJ090", "correspondent": "Agricultural Bank of China Ltd., Shanghai"},
+    {"currency": "CZK", "int_bic": "DEUTDEFFXXX", "correspondent": "Deutsche Bank, Frankfurt"},
+    {"currency": "DKK", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "DKK", "int_bic": "NDEADKKKXXX", "correspondent": "Nordea Bank Denmark, Copenhagen"},
+    {"currency": "DKK", "int_bic": "DKNBDKKKXXX", "correspondent": "Danmarks Nationalbank, Copenhagen"},
+    {"currency": "EUR", "int_bic": "DEUTDEFFXXX", "correspondent": "Deutsche Bank, Frankfurt"},
+    {"currency": "GBP", "int_bic": "NWBKGB2LXXX", "correspondent": "National Westminster Bank, London"},
+    {"currency": "HKD", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "HUF", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "INR", "int_bic": "SCBLINBBXXX", "correspondent": "Standard Chartered Bank, Mumbai"},
+    {"currency": "JPY", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "NOK", "int_bic": "DNBANOKKXXX", "correspondent": "DNB Bank ASA, Oslo"},
+    {"currency": "NZD", "int_bic": "ASBBNZ2AXXX", "correspondent": "ASB Bank, Auckland"},
+    {"currency": "PLN", "int_bic": "BPKOPLPWXXX", "correspondent": "PKO Bank Polski SA, Warszawa"},
+    {"currency": "RON", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "SEK", "int_bic": "SWEDSESSXXX", "correspondent": "Swedbank, Stockholm"},
+    {"currency": "SGD", "int_bic": "DABADKKKXXX", "correspondent": "Danske Bank, Copenhagen"},
+    {"currency": "THB", "int_bic": "BKKBTHBKXXX", "correspondent": "Bangkok Bank, Bangkok"},
+    {"currency": "TRY", "int_bic": "DEUTDEFFXXX", "correspondent": "Deutsche Bank, Frankfurt"},
+    {"currency": "USD", "int_bic": "CHASUS33XXX", "correspondent": "JPMorgan Chase Bank, New York"},
+    {"currency": "ZAR", "int_bic": "FIRNZAJJXXX", "correspondent": "FirstRand Bank Ltd., Johannesburg"}
+  ],
+  "normalization_note": "The source publishes correspondent BICs but no account numbers, so all 24 rows are retained as non-routable BIC-only metadata with terms_inferred=false. The EUR EBA/STEP2 row is omitted because it has no BIC."
+}
