@@ -1,0 +1,24 @@
+{
+  "source": "https://www.meezanbank.com/wp-content/themes/mbl/downloads/NOSTRO.pdf",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "MEZNPKKAXXX",
+    "name": "Meezan Bank Limited",
+    "country": "PK"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 1,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "NOK",
+      "int_bic": "ESSENOKXXXX",
+      "correspondent": "SEB Norway"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; only explicit currency-to-BIC mappings are included."
+}

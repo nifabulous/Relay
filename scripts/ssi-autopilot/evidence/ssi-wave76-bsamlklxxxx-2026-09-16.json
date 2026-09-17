@@ -1,0 +1,189 @@
+{
+  "source": "https://www.sampath.lk/api/uploads/cor_banks_exchange_comp_fa26d31fba_acf657e229_0093c0c585.pdf",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "BSAMLKLXXXX",
+    "name": "Sampath Bank PLC",
+    "country": "LK"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 34,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAT2XXX",
+      "correspondent": "Bank of Montreal"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHLKLXXXX",
+      "correspondent": "Bank of China Limited"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "SCBLCNSXSHA",
+      "correspondent": "Standard Chartered Bank (China) Limited"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "DEUTDEFFXXX",
+      "correspondent": "Deutsche Bank AG"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "HYVEDEMMXXX",
+      "correspondent": "UniCredit Bank AG (HypoVereinsbank)"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBLHKHHXXX",
+      "correspondent": "Standard Chartered Bank (Hong Kong) Ltd"
+    },
+    {
+      "currency": "INR",
+      "int_bic": "SCBLINBBXXX",
+      "correspondent": "Standard Chartered Bank Mumbai"
+    },
+    {
+      "currency": "INR",
+      "int_bic": "SBININBBXXX",
+      "correspondent": "State Bank of India"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "UNCRITMMXXX",
+      "correspondent": "UniCredit SPA"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJTXXX",
+      "correspondent": "MUFG Bank Ltd"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJTXXX",
+      "correspondent": "Standard Chartered Bank"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SMBCJPJTXXX",
+      "correspondent": "Sumitomo Mitsui Banking Corporation"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "KOEXKRESXXX",
+      "correspondent": "KEB Hana"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CZNBKRSEXXX",
+      "correspondent": "Kookmin Bank"
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKKXXX",
+      "correspondent": "DNB Bank ASA"
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "FIRNZAJJXXX",
+      "correspondent": "FirstRand Bank Ltd"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "CHASSGSGXXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., Singapore Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "OCBCSGSGXXX",
+      "correspondent": "Oversea Chinese Banking Corp Ltd"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "OCBCSGSGXXX",
+      "correspondent": "Oversea Chinese Banking Corp Ltd"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "ZKBKCHZZ80A",
+      "correspondent": "Zuercher Kantonalbank"
+    },
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEADXXX",
+      "correspondent": "Mashreq Bank PSC"
+    },
+    {
+      "currency": "AED",
+      "int_bic": "EBILAEADXXX",
+      "correspondent": "Emirates NBD PJSC"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BCEYGB2LXXX",
+      "correspondent": "Bank of Ceylon (UK) Ltd"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2LXXX",
+      "correspondent": "Standard Chartered Ltd"
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., London Branch"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., London Branch"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, N.A., London Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKTRUS33XXX",
+      "correspondent": "Deutsche Bank Trust Company Americas"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JP Morgan Chase Bank N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MSHQUS33XXX",
+      "correspondent": "Mashreq Bank PSC"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33XXX",
+      "correspondent": "Wells Fargo Bank N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank New York"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; only explicit currency-to-BIC mappings are included."
+}

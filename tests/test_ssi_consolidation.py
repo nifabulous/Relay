@@ -13,6 +13,7 @@ from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
     BANKS,
     SSI_RECORDS,
+    _is_canonical_bic11,
     seed_if_empty,
 )
 
@@ -330,7 +331,78 @@ def test_every_route_evidence_file_matches_the_seeded_catalog():
                 )
         checked_files.append(path.name)
 
-    assert len(checked_files) == 77
+    assert len(checked_files) == 104
+
+
+def test_wave69_evidence_count_matches_both_split_seed_ledgers():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave69-tacbtwtpxxx-2022-11-17.json"
+        ).read_text()
+    )
+    evidence_keys = {
+        (route["currency"].upper(), bic11(route["int_bic"]))
+        for route in evidence["routes"]
+    }
+    seeded_keys = {
+        (row[2].upper(), bic11(row[3]))
+        for row in _batch_records(5)
+        if row[0] == evidence["beneficiary"]["bic"]
+    }
+
+    assert evidence["source_snapshot"]["route_count"] == len(evidence["routes"])
+    assert len(evidence_keys) == len(evidence["routes"]) == len(seeded_keys)
+    assert evidence_keys == seeded_keys
+
+
+def test_fifth_consolidation_batch_is_loaded_and_fails_closed():
+    records = _batch_records(5)
+
+    assert len(records) == 209
+    assert not _is_canonical_bic11("FC1BBBBBXXX")
+    assert all(_is_canonical_bic11(row[0]) and _is_canonical_bic11(row[3]) for row in records)
+    assert all(row[5:9] == [None, None, None, None] for row in records)
+    assert all(row[11] == "unverified" for row in records)
+    assert all(row[13] is True and row[14] is False for row in records)
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+
+def test_fifth_consolidation_batch_has_exact_evidence_parity():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    seeded_by_beneficiary = {}
+    for row in _batch_records(5):
+        seeded_by_beneficiary.setdefault(row[0], set()).add((row[2], row[3]))
+
+    evidence_by_beneficiary = {}
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    batch_files = []
+    for path in evidence_dir.glob("ssi-wave*.json"):
+        wave = int(path.name.split("-", 2)[1].removeprefix("wave"))
+        if not 69 <= wave <= 96:
+            continue
+        evidence = json.loads(path.read_text())
+        beneficiary_bic = bic11(evidence["beneficiary"]["bic"])
+        assert beneficiary_bic not in evidence_by_beneficiary, beneficiary_bic
+        evidence_by_beneficiary[beneficiary_bic] = {
+            (route["currency"].upper(), bic11(route["int_bic"]))
+            for route in evidence["routes"]
+        }
+        batch_files.append(path.name)
+
+    assert len(batch_files) == 27
+    assert set(evidence_by_beneficiary) == set(seeded_by_beneficiary)
+    assert evidence_by_beneficiary == seeded_by_beneficiary
 
 
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
