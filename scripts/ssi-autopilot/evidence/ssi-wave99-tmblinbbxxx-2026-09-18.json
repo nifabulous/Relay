@@ -1,0 +1,83 @@
+{
+  "source": "https://tmb.bank.in/business/forex-services/tmb-nostro-remittance-account",
+  "source_urls": [
+    "https://tmb.bank.in/business/forex-services/tmb-nostro-remittance-account",
+    "https://tmb.bank.in/business/forex-services/inward-remittance"
+  ],
+  "as_of": "2026-09-18",
+  "beneficiary": {
+    "bic": "TMBLINBBXXX",
+    "name": "Tamilnad Mercantile Bank Limited",
+    "country": "IN"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 12,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "CBDUAEADXXX",
+      "correspondent": "Commercial Bank of Dubai, Dubai"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "SBINAU2SXXX",
+      "correspondent": "State Bank of India, Sydney"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "SCBLGB2LXXX",
+      "correspondent": "Standard Chartered Bank, London"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFFXXX",
+      "correspondent": "Standard Chartered Bank AG, Frankfurt"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2LXXX",
+      "correspondent": "Standard Chartered Bank, London"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJTXXX",
+      "correspondent": "Standard Chartered Bank, Tokyo"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "SCBLSG22XXX",
+      "correspondent": "Standard Chartered Bank, Singapore"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33XXX",
+      "correspondent": "Wells Fargo Bank N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLLKLXXXX",
+      "correspondent": "Standard Chartered Bank, Colombo"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Wells Fargo PNBPUS3NNYC is normalized to the repository-standard PNBPUS33XXX, and Standard Chartered Frankfurt SCBLDEFX is normalized to SCBLDEFFXXX. Already-valid eleven-character BICs are preserved."
+}

@@ -1,0 +1,137 @@
+{
+  "source": "https://www.canarabank.bank.in/swift",
+  "source_urls": [
+    "https://www.canarabank.bank.in/swift"
+  ],
+  "as_of": "2026-09-18",
+  "beneficiary": {
+    "bic": "CNRBINBBBFD",
+    "name": "Canara Bank Integrated Treasury Wing",
+    "country": "IN"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 23,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3NXXX",
+      "correspondent": "Bank of America, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33XXX",
+      "correspondent": "Wells Fargo Bank N.A."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "MRMDUS33XXX",
+      "correspondent": "HSBC Bank USA N.A."
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFFXXX",
+      "correspondent": "Standard Chartered Bank, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BARCDEFFXXX",
+      "correspondent": "Barclays Bank Ireland PLC, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CCFRFRPPXXX",
+      "correspondent": "HSBC Continental Europe, France"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CNRBGB2LXXX",
+      "correspondent": "Canara Bank, London"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BARCGB22XXX",
+      "correspondent": "Barclays Bank, London"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "MIDLGB22XXX",
+      "correspondent": "HSBC Bank PLC, London"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "ZKBKCHZZ80A",
+      "correspondent": "Zurcher Kantonalbank, Zurich"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BOFMCAM2XXX",
+      "correspondent": "Bank of Montreal, Montreal"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "ESSESESSXXX",
+      "correspondent": "Skandinaviska Enskilda Banken, Stockholm"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3MXXX",
+      "correspondent": "ANZ Banking Group, Melbourne"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "OCBCSGSGXXX",
+      "correspondent": "OCBC, Singapore"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOFAJPJXXXX",
+      "correspondent": "Bank of America, Tokyo"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SMBCJPJTXXX",
+      "correspondent": "Sumitomo Mitsui Banking Corporation, Japan"
+    },
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEADXXX",
+      "correspondent": "Mashreq Bank PSC, Dubai"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBLHKHHXXX",
+      "correspondent": "Standard Chartered Bank, Hong Kong"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Wells Fargo PNBPUS3NNYC is normalized to the repository-standard PNBPUS33XXX, and Standard Chartered Frankfurt SCBLDEFX is normalized to SCBLDEFFXXX. Already-valid eleven-character BICs are preserved."
+}
