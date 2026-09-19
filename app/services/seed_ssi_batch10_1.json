@@ -1,0 +1,66 @@
+[
+  [
+    "CSYBIN55XXX",
+    "CSB Bank Limited",
+    "Source: https://csb.bank.in/list-correspondent-banks (official correspondent-bank/Nostro table, accessed 2026-09-19). BIC-only source rows; published account values are intentionally withheld and these records are non-routable availability metadata.",
+    "2026-09-19",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|SCBLUS33|Standard Chartered Bank, New York|",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "USD|MRMDUS33|HSBC Bank USA, Buffalo|",
+      "EUR|SCBLDEFX|Standard Chartered Bank, Frankfurt|",
+      "EUR|COBADEFF|Commerzbank AG, Frankfurt|",
+      "EUR|CCFRFRPP|HSBC Continental Europe, Paris|",
+      "GBP|SCBLGB2L|Standard Chartered Bank, London|",
+      "CHF|COBADEFF|Commerzbank AG, Frankfurt|",
+      "JPY|SBINJPJT|State Bank of India, Tokyo|",
+      "SGD|SCBLSG22|Standard Chartered Bank, Singapore|",
+      "AUD|SCBLSG22|Standard Chartered Bank, Singapore|",
+      "CAD|BOFMCAT2|Bank of Montreal, Toronto|",
+      "AED|BOMLAEAD|Mashreq Bank PSC, Dubai|"
+    ]
+  ],
+  [
+    "NKGSINBBXXX",
+    "NKGSB Co-operative Bank Ltd.",
+    "Source: https://www.nkgsb.bank.in/nostro-account-details.php (official Nostro Account Details table, accessed 2026-09-19). BIC-only source rows; published account values are intentionally withheld and these records are non-routable availability metadata.",
+    "2026-09-19",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|HANYUS33|Habib American Bank, New York|",
+      "GBP|BARBGB2L|Bank of Baroda, London|",
+      "EUR|ICICDEFF|ICICI Bank Germany, Frankfurt|"
+    ]
+  ],
+  [
+    "DLXBINBBXXX",
+    "Dhanlaxmi Bank Limited",
+    "Source: https://www.dhan.bank.in/money-transfer/ (official foreign-remittance correspondent account table, accessed 2026-09-19). BIC-only source rows; published account values are intentionally withheld and these records are non-routable availability metadata.",
+    "2026-09-19",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CAD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "EUR|IRVTDEFX|The Bank of New York Mellon, Frankfurt|",
+      "GBP|IRVTGB2X|The Bank of New York Mellon, London|",
+      "USD|IRVTUS3N|The Bank of New York Mellon, New York|",
+      "SGD|DBSSSGSG|DBS Bank Limited, Singapore|",
+      "AED|BOMLAEAD|Mashreq Bank, Dubai|"
+    ]
+  ]
+]
