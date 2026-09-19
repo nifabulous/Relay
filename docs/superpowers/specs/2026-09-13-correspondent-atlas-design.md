@@ -378,7 +378,7 @@ Measured on `swift_routing.db`, 7,083 rows:
 |---|---|
 | hub rollup | 23.8 ms |
 | spoke rollup | 2.3 ms |
-| hub list (960 rows) | current benchmark output |
+| hub list (960 rows) | not captured in the design draft |
 | **total** | **32.5 ms** |
 
 `substr(intermediary_bic, 5, 2)` cannot use an index, which is why the hub rollup is
@@ -393,6 +393,30 @@ implementation PR records the current baseline and a synthetic 20,000-row run. T
 review trigger is either a measured total above 150 ms on the reference machine or a
 query-plan change; CI still guards the number of SQL statements so an N+1 regression
 cannot hide behind runner variance.
+
+#### Follow-up benchmark — 2026-09-19
+
+Command:
+
+```text
+./.venv/bin/python scripts/benchmark_atlas.py --synthetic 20000
+```
+
+The service now selects the seven fields Atlas needs into a read-only projection
+and builds the country and institution rollups in one pass. The benchmark still
+observes exactly one SQL `SELECT` per scope.
+
+| corpus | scope | rows | beneficiary banks | correspondents | elapsed | SQL selects |
+|---|---|---:|---:|---:|---:|---:|
+| `swift_routing.db` | all | 7,907 | 490 | 1,031 | 58.52 ms | 1 |
+| `swift_routing.db` | settleable | 5,381 | 352 | 795 | 70.71 ms | 1 |
+| synthetic | all | 20,000 | 20,000 | 222 | 116.51 ms | 1 |
+| synthetic | settleable | 15,000 | 15,000 | 222 | 132.02 ms | 1 |
+
+The synthetic fixture cycles 37 correspondents per country so row-count growth
+does not accidentally turn every row into a new institution. Both the current
+corpus and the 20,000-row run remain below the 150 ms review trigger; the fixed
+SQL-count test remains the CI regression guard.
 
 ---
 
