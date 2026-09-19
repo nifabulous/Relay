@@ -1547,7 +1547,20 @@ def _ssi_consolidation_records():
     """Return review-preserving rows consolidated from superseded SSI PRs."""
     return list(_SSI_CONSOLIDATED_RECORDS)
 
-SSI_RECORDS = [
+def _dedupe_ssi_records(rows):
+    """Keep the first source row for each beneficiary/currency/intermediary route."""
+    seen = set()
+    unique = []
+    for row in rows:
+        key = (row[0], row[2], row[3])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(row)
+    return unique
+
+
+SSI_RECORDS = _dedupe_ssi_records([
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     ('HANDNO22XXX', 'Handelsbanken Norway', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001119', 'ACCT-91001119', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
@@ -9224,7 +9237,7 @@ SSI_RECORDS = [
      None, None, None, None,
      "Source: https://www.fnb.co.za/forex/understanding-forex/ (as of 2026-09-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
      "2026-09-08", "unverified", None, True),
-]
+])
 
 # ---------------------------------------------------------------------------
 # Account registry — synthetic account-holder records for VoP.
