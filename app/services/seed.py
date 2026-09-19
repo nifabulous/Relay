@@ -16,6 +16,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 from ..models import SSI, Account, Bank, CorridorRule
+from .ssi_wave110_asia_east_pacific import SSI_ASIA_EAST_PACIFIC_RECORDS
 
 # (bic, bank_name, country_code, city, country_currency)
 BANKS = [
@@ -1542,6 +1543,8 @@ def _ssi_consolidation_records():
     return list(_SSI_CONSOLIDATED_RECORDS)
 
 SSI_RECORDS = [
+    # ---- SSI wave 110 (East/Southeast Asia and Pacific BIC-only metadata) ----
+    *SSI_ASIA_EAST_PACIFIC_RECORDS,
     # ---- Consolidated SSI review queue (PRs 103-112) ----
     *_ssi_consolidation_records(),
     # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
