@@ -1620,6 +1620,192 @@ def _ssi_consolidation_records():
     """Return review-preserving rows consolidated from superseded SSI PRs."""
     return list(_SSI_CONSOLIDATED_RECORDS)
 
+def _ssi_batch_global_currency_records():
+    """Currency-explicit SSI rows from official correspondent-bank pages.
+
+    The source pages publish the currency/correspondent pair and (in most
+    cases) an account number.  Account values are intentionally masked here;
+    these records remain unverified and non-routable until operations confirms
+    the live SSI.  BIC-8 values from the pages are canonicalized to BIC-11.
+    """
+    def bic11(value):
+        value = value.replace(" ", "").upper()
+        return value if len(value) == 11 else value + "X" * (11 - len(value))
+
+    rows = []
+
+    def add(beneficiary, name, currency, correspondent, correspondent_name, source):
+        rows.append((
+            beneficiary,
+            name,
+            currency,
+            bic11(correspondent),
+            correspondent_name,
+            f"ACCT-GC-{len(rows) + 1:04d}",
+            f"ACCT-GC-{len(rows) + 1:04d}",
+            "SHA",
+            "spot",
+            f"Source: {source} (as of 2026-09-19). Published currency/correspondent pair; account masked for seed. " + _SSI_REAL_NOTE,
+            "2026-09-19",
+            "unverified",
+            None,
+            False,
+            True,
+        ))
+
+    # Bank of Maharashtra official Nostro page (15 currency-explicit rows).
+    s = "https://bankofmaharashtra.bank.in/nostro-accounts"
+    b, n = "MAHBINBBXXX", "Bank of Maharashtra"
+    for c, bic, cn in [
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("CAD", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("CHF", "UBSWCHZH80A", "UBS Switzerland AG"),
+        ("EUR", "SCBLDEFF", "Standard Chartered Bank AG Frankfurt"),
+        ("EUR", "CHASDEFF", "JPMorgan Chase Frankfurt"),
+        ("GBP", "SCBLGB2L", "Standard Chartered Bank London"),
+        ("GBP", "IRVTGB2X", "The Bank of New York Mellon London"),
+        ("HKD", "SCBLHKHH", "Standard Chartered Bank Hong Kong"),
+        ("JPY", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("SGD", "BKIDSGSG", "Bank of India Singapore"),
+        ("USD", "SCBLUS33", "Standard Chartered Bank New York"),
+        ("USD", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("CNY", "SCBLHKHH", "Standard Chartered Bank Hong Kong"),
+        ("AED", "SCBLAEAD", "Standard Chartered Bank Dubai"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # UCO Bank Treasury Branch Mumbai official page (17 rows).
+    s = "https://www.uco.bank.in/en/treasury-branch-mumbai-accounts"
+    b, n = "UCBAINBBXXX", "UCO Bank Treasury Branch Mumbai"
+    for c, bic, cn in [
+        ("JPY", "SBINJPJT", "State Bank of India Tokyo"),
+        ("USD", "SCBLBDD", "Standard Chartered Bank Dhaka"),
+        ("AED", "BOMLAEAD", "Mashreq Bank Dubai"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("CAD", "TDOMCATTTOR", "Toronto-Dominion Bank Toronto"),
+        ("CHF", "UBSWCHZH80A", "UBS AG Zurich"),
+        ("EUR", "POSOIT22", "Banca Popolare di Sondrio"),
+        ("EUR", "CHASDEFX", "JPMorgan Chase Frankfurt"),
+        ("EUR", "SCBLDEFX", "Standard Chartered Frankfurt"),
+        ("EUR", "UNCRITMM", "UniCredit Milan"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("HKD", "UCBAHKHH", "UCO Bank Hong Kong"),
+        ("SGD", "UCBASGSG", "UCO Bank Singapore"),
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "PNBPUS33", "Wells Fargo New York"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # HDFC Bank GIFT City official SSI page (10 rows).
+    s = "https://www.hdfcgiftcity.bank.in/nostro-account"
+    b, n = "HDFCINAAXXX", "HDFC Bank Limited GIFT City"
+    for c, bic, cn in [
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("JPY", "CHASJPJT", "JPMorgan Chase Tokyo"),
+        ("CAD", "TDOMCATTTOR", "Toronto-Dominion Bank Toronto"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("EUR", "CHASDEFX", "JPMorgan Chase Frankfurt"),
+        ("CHF", "UBSWCHZH80A", "UBS Switzerland"),
+        ("EUR", "BOFADEFX", "Bank of America Frankfurt"),
+        ("USD", "BOFAUS3N", "Bank of America New York"),
+        ("AED", "ADCBAEAAXXX", "Abu Dhabi Commercial Bank"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Axis Bank official Nostro PDF (8 rows).
+    s = "https://www.axisbank.com/docs/default-source/default-document-library/nostro-details95005bbabe576bf08df9ff0a000b8c1c.pdf"
+    b, n = "AXISINBB002", "Axis Bank"
+    for c, bic, cn in [
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("EUR", "SOGEFRPP", "Societe Generale Paris"),
+        ("GBP", "CHASGB2L", "JPMorgan Chase London"),
+        ("CHF", "ZKBKCHZZ80A", "Zurcher Kantonalbank Zurich"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("JPY", "MHCBJPJT", "Mizuho Bank Tokyo"),
+        ("CAD", "BOFMCAT2", "Bank of Montreal Canada"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Punjab & Sind Bank official Nostro page (8 rows).
+    s = "https://punjabandsind.bank.in/content/nostro-details"
+    b, n = "PSIBINBBXXX", "Punjab & Sind Bank"
+    for c, bic, cn in [
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("EUR", "CITIDEFF", "Citibank Frankfurt"),
+        ("GBP", "CITIGB2L", "Citibank London"),
+        ("JPY", "MHCBJPJT", "Mizuho Bank Tokyo"),
+        ("CAD", "CIBCCATT", "Canadian Imperial Bank of Commerce Toronto"),
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("AED", "BOMLAEAD", "Mashreq Bank Dubai"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # First Investment Bank Bulgaria official SSI PDF (3 rows explicitly visible).
+    s = "https://www.fibank.bg/web/files/documents/173/files/SSI-UPDATED-2025_En.pdf"
+    b, n = "FINVBGSFXXX", "First Investment Bank Bulgaria"
+    for c, bic, cn in [
+        ("CAD", "BOFMCAT2", "Bank of Montreal Toronto"),
+        ("JPY", "SMBCJPJT", "Sumitomo Mitsui Banking Corporation Tokyo"),
+        ("AUD", "IRVTUS3N", "Bank of New York Mellon New York"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Indian Bank official remittance page (18 currency-explicit rows).
+    s = "https://indianbank.bank.in/en/web/guest/remittance-to-india"
+    b, n = "IDIBINBBXXX", "Indian Bank"
+    for c, bic, cn in [
+        ("USD", "BOFAUS3N", "Bank of America New York"),
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "PNBPUS3NNYC", "Wells Fargo New York"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("EUR", "CITIDEFF", "Citibank Frankfurt"),
+        ("EUR", "SCBLDEFX", "Standard Chartered Frankfurt"),
+        ("EUR", "COBADEFF", "Commerzbank Frankfurt"),
+        ("ACU", "IDIBLKLC", "Indian Bank Colombo"),
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("CAD", "BOFMCAM2", "Bank of Montreal Canada"),
+        ("CHF", "UBSWCHZH", "UBS AG Zurich"),
+        ("JPY", "SBINJPJT", "State Bank of India Tokyo"),
+        ("SGD", "IDIBSGSG", "Indian Bank Singapore"),
+        ("SGD", "DBSSSGSGB", "DBS Bank Singapore"),
+        ("HKD", "SBINHKHH", "State Bank of India Hong Kong"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Central Bank of India official International Banking page (16 rows).
+    s = "https://centralbank.bank.in/en/International_Banking"
+    b, n = "CBININBBXXX", "Central Bank of India"
+    for c, bic, cn in [
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "PNBPUS3NNYC", "Wells Fargo New York"),
+        ("USD", "BKTRUS33", "Deutsche Bank New York"),
+        ("EUR", "SOGEFRPP", "Societe Generale Paris"),
+        ("EUR", "COBADEFF", "Commerzbank Frankfurt"),
+        ("EUR", "BARCDEFF", "Barclays Bank Ireland"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("AUD", "ANZBAU3M", "ANZ Bank"),
+        ("CAD", "COBADEFF", "Commerzbank Frankfurt"),
+        ("CHF", "UBSWCHZH80A", "Union Bank of Switzerland Zurich"),
+        ("JPY", "SCBLJPJT", "Standard Chartered Tokyo"),
+        ("SGD", "SCBLSG22", "Standard Chartered Singapore"),
+        ("SGD", "DBSSSGSG", "DBS Bank Singapore"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    return rows
+
 def _dedupe_ssi_records(rows):
     """Keep the first source row for each beneficiary/currency/intermediary route."""
     seen = set()
@@ -1896,6 +2082,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     *SSI_ASIA_EAST_PACIFIC_RECORDS,
     # ---- Consolidated SSI review queue (PRs 103-112) ----
     *_ssi_consolidation_records(),
+    # ---- SSI expansion batch 110 (global currency-explicit routes) ----
+    *_ssi_batch_global_currency_records(),
     # ---- SSI expansion wave 110 (Phongsavanh Bank Laos) ----
     *_ssi_wave110_phongsavanh_records(),
     # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
