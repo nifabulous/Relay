@@ -1268,7 +1268,12 @@ def _load_ssi_consolidation_data():
 
 
 _SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
-BANKS.extend(_SSI_CONSOLIDATED_BANKS)
+# Consolidation ledgers can repeat a bank already present in the curated
+# directory. Keep the first canonical definition so the database seed remains
+# idempotent under its unique BIC constraint.
+_known_bank_bics = {bank[0] for bank in BANKS}
+BANKS.extend(bank for bank in _SSI_CONSOLIDATED_BANKS if bank[0] not in _known_bank_bics)
+_known_bank_bics.update(bank[0] for bank in _SSI_CONSOLIDATED_BANKS)
 _SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
 
 def _ssi_batch4_records():
