@@ -1098,6 +1098,19 @@ _SSI_BATCH7_GROUPS = _load_ssi_batch7_groups()
 
 _SSI_BATCH9_DATA_FILES = ("seed_ssi_batch9_1.json",)
 
+_SSI_BATCH10_DATA_FILES = ("seed_ssi_batch10_1.json",)
+
+
+def _load_ssi_batch10_groups():
+    groups = []
+    for filename in _SSI_BATCH10_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH10_GROUPS = _load_ssi_batch10_groups()
+
 
 def _load_ssi_batch9_groups():
     groups = []
@@ -1388,6 +1401,27 @@ def _ssi_batch9_records():
     return expanded
 
 
+def _ssi_batch10_records():
+    """Expand the global official correspondent-bank BIC-only ledger."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH10_GROUPS:
+        note = f"{source.rstrip()} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 def _ssi_batch8_records():
     """Expand the review-sized batch-8 ledger into canonical seed tuples."""
     expanded = []
@@ -1457,6 +1491,8 @@ SSI_RECORDS = [
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
     *_ssi_batch9_records(),
+    # ---- SSI expansion batch 10 (global official BIC-only sources) ----
+    *_ssi_batch10_records(),
     # ---- SSI expansion batch 8 (Commercial Bank of Kuwait routes) ----
     *_ssi_batch8_records(),
     # ---- SSI expansion batch 7 (additional bank-published routes; masked) ----
