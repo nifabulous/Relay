@@ -2,6 +2,13 @@
 
 All notable changes to Relay are documented here.
 
+## [0.1.1.0] - 2026-09-19
+
+### Changed
+
+- Atlas network views now load their rollups from one projected snapshot, reducing repeated data work while preserving the existing counts and scope behavior.
+- Atlas tables, map, and details panel now follow the content width and stack cleanly at narrower sizes, preventing overlap.
+
 ## [0.1.0.0] - 2026-08-25
 
 ### Added

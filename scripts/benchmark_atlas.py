@@ -73,7 +73,7 @@ def make_synthetic_database(row_count: int):
                 beneficiary_bic=f"BANK{country}{index:05d}",
                 beneficiary_bank_name=f"Synthetic beneficiary {index:05d}",
                 currency=currency,
-                intermediary_bic=f"HUBS{country}{index:05d}",
+                intermediary_bic=f"HUBS{country}{index % 37:05d}",
                 intermediary_bank_name=f"Synthetic correspondent {index % 37:02d}",
                 intermediary_account=None if bic_only else f"INTERMEDIARY-{index:05d}",
                 beneficiary_account=None if bic_only else f"BENEFICIARY-{index:05d}",

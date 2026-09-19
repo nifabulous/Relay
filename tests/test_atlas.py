@@ -9,7 +9,7 @@ from app.db import Base
 from app.models import SSI
 from app.routers._shared import _SSI_DISCLAIMER
 from app.schemas import SSI_STATUSES
-from app.services.atlas import build_country, build_network
+from app.services.atlas import AtlasSnapshotRow, _snapshot, build_country, build_network
 
 
 def _seed_rows(session):
@@ -23,8 +23,30 @@ def _country_code(bic):
 def test_atlas_service_annotations_resolve_to_ssi_types():
     from app.services import atlas
 
-    assert get_type_hints(atlas._snapshot)["return"] == list[SSI]
-    assert get_type_hints(atlas._status_counts)["rows"] == Iterable[SSI]
+    assert get_type_hints(atlas._snapshot)["return"] == list[AtlasSnapshotRow]
+    assert get_type_hints(atlas._status_counts)["rows"] == Iterable[AtlasSnapshotRow]
+
+
+def test_atlas_snapshot_projects_only_fields_used_by_atlas(db_session_clean):
+    statements = []
+
+    def capture_select(_conn, _cursor, statement, _parameters, _context, _executemany):
+        if statement.lstrip().upper().startswith("SELECT"):
+            statements.append(" ".join(statement.split()))
+
+    event.listen(db_session_clean.bind, "before_cursor_execute", capture_select)
+    try:
+        rows = _snapshot(db_session_clean)
+    finally:
+        event.remove(db_session_clean.bind, "before_cursor_execute", capture_select)
+
+    assert rows
+    assert isinstance(rows[0], AtlasSnapshotRow)
+    assert rows[0].beneficiary_bic
+    assert rows[0].intermediary_bic
+    assert statements == [
+        "SELECT ssi.beneficiary_bic, ssi.beneficiary_bank_name, ssi.currency, ssi.intermediary_bic, ssi.intermediary_bank_name, ssi.status, ssi.bic_only FROM ssi"
+    ]
 
 
 def test_network_returns_complete_scoped_contract(client, db_session_clean):
