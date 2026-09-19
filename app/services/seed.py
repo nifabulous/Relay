@@ -1223,6 +1223,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_7_8.json",
     "seed_ssi_consolidation_8_mena.json",
     "seed_ssi_consolidation_8_1.json",
+    "seed_ssi_consolidation_8_2.json",
     "seed_ssi_consolidation_mena_1.json",
 )
 
@@ -1325,7 +1326,7 @@ def _ssi_wave110_phongsavanh_records():
     return [
         (
             "PSVBLALAXXX", "Phongsavanh Bank Ltd", currency, bic, name,
-            None, None, None, None, note, "2026-09-19", "unverified", None, True, True,
+            None, None, None, None, note, "2026-09-19", "unverified", None, True, False,
         )
         for currency, bic, name in rows
     ]
