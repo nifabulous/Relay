@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 from ..models import SSI, Account, Bank, CorridorRule
 from .ssi_wave110_asia_east_pacific import SSI_ASIA_EAST_PACIFIC_RECORDS
+from .ssi_americas_wave import AMERICAS_WAVE_BANKS, AMERICAS_WAVE_RECORDS
 
 # (bic, bank_name, country_code, city, country_currency)
 BANKS = [
@@ -1294,6 +1295,10 @@ BANKS.extend(bank for bank in _SSI_CONSOLIDATED_BANKS if bank[0] not in _known_b
 _known_bank_bics.update(bank[0] for bank in _SSI_CONSOLIDATED_BANKS)
 if "PSVBLALAXXX" not in _known_bank_bics:
     BANKS.append(("PSVBLALAXXX", "Phongsavanh Bank Ltd", "LA", "Vientiane", "LAK"))
+for _americas_bank in AMERICAS_WAVE_BANKS:
+    if _americas_bank[0] not in _known_bank_bics:
+        BANKS.append(_americas_bank)
+        _known_bank_bics.add(_americas_bank[0])
 _SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
 
 def _ssi_wave110_phongsavanh_records():
@@ -1915,6 +1920,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     # SSI batch 4 rows begin
     *_ssi_batch4_records(),
     # SSI batch 4 rows end
+    # ---- SSI expansion wave (Americas bank-published correspondent metadata) ----
+    *AMERICAS_WAVE_RECORDS,
     # ---- DNB Bank ASA Helsinki Branch (current 2026-02-02 SSI) ----
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "AUD", "ANZBAU3MXXX", "ANZ Banking Group Limited Melbourne", "ACCT-91005316", "ACCT-91005316", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "CAD", "ROYCCAT2XXX", "Royal Bank of Canada Toronto", "ACCT-91005311", "ACCT-91005311", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),

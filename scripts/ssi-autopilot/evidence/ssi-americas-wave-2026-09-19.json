@@ -1,0 +1,35 @@
+{
+  "source": "https://www.baccredomatic.com/es-cr/personas/otros-servicios/transferencias-internacionales",
+  "source_urls": [
+    "https://www.baccredomatic.com/es-cr/personas/otros-servicios/transferencias-internacionales",
+    "https://www.bancobcr.com/wps/portal/bcr/bancobcr/personas/servicios/transferencias-internacionales/",
+    "https://www.bctbank.com/es/servicios-internacionales/",
+    "https://www.bncr.fi.cr/personas/servicios/transferencias-internacionales",
+    "https://www.banguat.gob.gt/page/sistema-de-pagos",
+    "https://www.bam.com.gt/personas/transferencias-internacionales/",
+    "https://www.banhprovi.org/servicios-internacionales/",
+    "https://www.ficohsa.com/hn/banca-personas/transferencias-internacionales/",
+    "https://www.baccredomatic.com/es-pa/personas/otros-servicios/transferencias-internacionales",
+    "https://www.bctbank.com/es/transferencias-internacionales/",
+    "https://www.banistmo.com/personas/servicios/transferencias-internacionales",
+    "https://www.banamex.com/personas/servicios/transferencias-internacionales.html",
+    "https://www.santander.com.mx/personas/transferencias-internacionales.html",
+    "https://www.bbva.mx/personas/productos/transferencias/transferencias-internacionales.html",
+    "https://www.banregio.com/personas/servicios/transferencias-internacionales.html",
+    "https://www.wellsfargo.com/cib/global-payments/incoming-wire-instructions/"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiaries": [
+    "BACACRCRXXX", "BCRICRSJXXX", "BCTOCRSJXXX", "BNCRCRSJXXX",
+    "BAGEGTGCXXX", "BAMAGTGCXXX", "BGAHHNTEXXX", "FICOHNTEXXX",
+    "BACUPAPAXXX", "BCTOPAPAXXX", "BLHCPAPAXXX", "BNMXMXMMXXX",
+    "BMSXMXMMXXX", "BMONMXMMXXX", "BCMRMXMMXXX", "WFBIUS6SXXX"
+  ],
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 352,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned pages.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  }
+}
