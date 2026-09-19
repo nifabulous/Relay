@@ -1,0 +1,32 @@
+{
+  "source": "https://phongsavanhbank.com/psv/modules.php?lg=eng&modules=correspondent_bank",
+  "source_urls": [
+    "https://phongsavanhbank.com/psv/modules.php?lg=eng&modules=correspondent_bank"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "PSVBLALAXXX",
+    "name": "Phongsavanh Bank Ltd",
+    "country": "LA"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 11,
+    "extraction": "Currency-to-correspondent mappings transcribed from the bank-owned correspondent-bank page.",
+    "bic_only_reason": "The page publishes correspondent BICs and currencies but no settlement account, charge, or value-date fields; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {"currency": "USD", "int_bic": "CHASUS33XXX", "correspondent": "J.P. Morgan Chase Bank N.A."},
+    {"currency": "USD", "int_bic": "VBAAVNVXXXX", "correspondent": "Vietnam Bank for Agriculture and Rural Development"},
+    {"currency": "USD", "int_bic": "ICBKCNBJXXX", "correspondent": "Industrial and Commercial Bank of China"},
+    {"currency": "USD", "int_bic": "KASITHBKXXX", "correspondent": "Kasikornbank Public Company Limited"},
+    {"currency": "THB", "int_bic": "KASITHBKXXX", "correspondent": "Kasikornbank Public Company Limited"},
+    {"currency": "EUR", "int_bic": "KASITHBKXXX", "correspondent": "Kasikornbank Public Company Limited"},
+    {"currency": "USD", "int_bic": "BKKBTHBKXXX", "correspondent": "Bangkok Bank Public Company Limited"},
+    {"currency": "THB", "int_bic": "BKKBTHBKXXX", "correspondent": "Bangkok Bank Public Company Limited"},
+    {"currency": "THB", "int_bic": "UBOBTHBKXXX", "correspondent": "CIMB Thai Bank Public Company Limited"},
+    {"currency": "CNY", "int_bic": "ICBKLALAXXX", "correspondent": "Industrial and Commercial Bank of China, Vientiane"},
+    {"currency": "CNY", "int_bic": "ICBKLALACLR", "correspondent": "Industrial and Commercial Bank of China, Laos RMB Clearing Bank"}
+  ]
+}
