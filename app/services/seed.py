@@ -146,6 +146,7 @@ BANKS = [
     ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
     ("CAGRSVSSXXX", "Banco Agricola (El Salvador)", "SV", "San Salvador", "SVC"),
     ("GHCBGHACXXX", "GCB Bank (Ghana)", "GH", "Accra", "GHS"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "NG", "Lagos", "NGN"),
     ("BTRLRO22XXX", "Banca Transilvania", "RO", "Cluj-Napoca", "RON"),
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
@@ -2891,6 +2892,46 @@ SSI_RECORDS = [
      "ANZBAU3MXXX", "ANZ Banking Group",
      "ACCT-17512", "ACCT-29214", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Access Bank Ghana (ABNGGHAC)
+    # Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services
+    # ====================================================================
+
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "USD",
+     "CITIUS33XXX", "Citibank N.A. New York",
+     "ACCT-91011001", "ACCT-91011001", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "GBP",
+     "CITIGB2LXXX", "Citibank N.A. London",
+     "ACCT-91011002", "ACCT-91011002", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "EUR",
+     "COBADEFFXXX", "Commerzbank AG Frankfurt",
+     "ACCT-91011003", "ACCT-91011003", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "GBP",
+     "COBADEFFXXX", "Commerzbank AG Frankfurt",
+     "ACCT-91011004", "ACCT-91011004", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Stanbic IBTC Bank Nigeria (SBICNGLX)
+    # Source: official Stanbic IBTC inward-payment instructions PDF
+    # ====================================================================
+
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas",
+     "ACCT-91011005", "ACCT-91011005", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG Frankfurt",
+     "ACCT-91011006", "ACCT-91011006", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "ZAR",
+     "SBZAZAJJXXX", "Standard Bank of South Africa",
+     "ACCT-91011007", "ACCT-91011007", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
 
     # ====================================================================
     # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
