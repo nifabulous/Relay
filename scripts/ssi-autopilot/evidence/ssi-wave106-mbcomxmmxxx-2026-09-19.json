@@ -1,0 +1,104 @@
+{
+  "source": "https://www.scotiabank.com.mx/personas/servicios/internacionales/swift-ordenes-pago.aspx",
+  "source_urls": [
+    "https://www.scotiabank.com.mx/personas/servicios/internacionales/swift-ordenes-pago.aspx"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "MBCOMXMMXXX",
+    "name": "Scotiabank Mexico",
+    "country": "MX"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 14,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank",
+      "printed_bic": "CHASUS33"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3NXXX",
+      "correspondent": "Bank of America",
+      "printed_bic": "BOFAUS3N"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "PNBPUS33PHL",
+      "correspondent": "Wells Fargo Bank"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank",
+      "printed_bic": "CITIUS33"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank",
+      "printed_bic": "SCBLUS33"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "NOSCCATTXXX",
+      "correspondent": "Bank of Nova Scotia",
+      "printed_bic": "NOSCCATT"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BBVAESMMXXX",
+      "correspondent": "BBVA Madrid",
+      "printed_bic": "BBVAESMM"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BBRUBEBBXXX",
+      "correspondent": "ING Belgium",
+      "printed_bic": "BBRUBEBB"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BOTKJPJTXXX",
+      "correspondent": "MUFG Bank, Tokyo",
+      "printed_bic": "BOTKJPJT"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "NWBKGB2LXXX",
+      "correspondent": "National Westminster Bank, London",
+      "printed_bic": "NWBKGB2L"
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKKXXX",
+      "correspondent": "DNB Bank",
+      "printed_bic": "DNBANOKK"
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "NDEADKKKXXX",
+      "correspondent": "Nordea Denmark",
+      "printed_bic": "NDEADKKK"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "ESSESESSXXX",
+      "correspondent": "Skandinaviska Enskilda Banken",
+      "printed_bic": "ESSESESS"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}

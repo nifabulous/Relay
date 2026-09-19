@@ -1,0 +1,56 @@
+{
+  "source": "https://interbank.pe/bancos-corresponsales",
+  "source_urls": [
+    "https://interbank.pe/bancos-corresponsales"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "BINPPEPLXXX",
+    "name": "Banco Internacional del Peru - Interbank",
+    "country": "PE"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 5,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
+    "bic_aliases": {
+      "PNBPUS3NNYC": "PNBPUS33XXX"
+    }
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon",
+      "printed_bic": "IRVTUS3N"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon",
+      "printed_bic": "IRVTUS3N"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2LXXX",
+      "correspondent": "Standard Chartered Bank, London",
+      "printed_bic": "SCBLGB2L"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "SCBLHKHHXXX",
+      "correspondent": "Standard Chartered Bank, Hong Kong",
+      "printed_bic": "SCBLHKHH",
+      "printed_currency": "RMB / CNY"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon",
+      "printed_bic": "IRVTUS3N"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}

@@ -1,0 +1,130 @@
+{
+  "source": "https://new.kdb.uz/uz.gov.uz/corporates/correspondent-banks",
+  "source_urls": [
+    "https://new.kdb.uz/uz.gov.uz/corporates/correspondent-banks"
+  ],
+  "as_of": "2025-07-11",
+  "beneficiary": {
+    "bic": "KODBUZ22XXX",
+    "name": "JSC KDB Bank Uzbekistan",
+    "country": "UZ"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 18,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank, New York",
+      "printed_bic": "CHASUS33"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, London",
+      "printed_bic": "CHASGB2L"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "CHASGB2LXXX",
+      "correspondent": "JPMorgan Chase Bank, London",
+      "printed_bic": "CHASGB2L"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "CHASHKHHXXX",
+      "correspondent": "JPMorgan Chase Bank, Hong Kong",
+      "printed_bic": "CHASHKHH"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon, New York",
+      "printed_bic": "IRVTUS3N"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt",
+      "printed_bic": "COBADEFF"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank AG, Frankfurt",
+      "printed_bic": "COBADEFF"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna",
+      "printed_bic": "RZBAATWW"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna",
+      "printed_bic": "RZBAATWW"
+    },
+    {
+      "currency": "RUB",
+      "int_bic": "RZBMRUMMXXX",
+      "correspondent": "Raiffeisenbank, Moscow",
+      "printed_bic": "RZBMRUMM"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "KOEXKRSEXXX",
+      "correspondent": "KEB Hana Bank, Seoul",
+      "printed_bic": "KOEXKRSE"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "KOEXKRSEXXX",
+      "correspondent": "KEB Hana Bank, Seoul",
+      "printed_bic": "KOEXKRSE"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "KOEXJPJTXXX",
+      "correspondent": "KEB Hana Bank, Tokyo",
+      "printed_bic": "KOEXJPJT"
+    },
+    {
+      "currency": "KRW",
+      "int_bic": "CZNBKRSEXXX",
+      "correspondent": "Kookmin Bank, Seoul",
+      "printed_bic": "CZNBKRSE"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHHKHHXXX",
+      "correspondent": "Bank of China (Hong Kong) Limited",
+      "printed_bic": "BKCHHKHH"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "PCBCHKHHXXX",
+      "correspondent": "China Construction Bank Hong Kong Branch",
+      "printed_bic": "PCBCHKHH"
+    },
+    {
+      "currency": "AED",
+      "int_bic": "BOMLAEADXXX",
+      "correspondent": "Mashreqbank PSC, Dubai",
+      "printed_bic": "BOMLAEAD"
+    },
+    {
+      "currency": "KZT",
+      "int_bic": "KCJBKZKXXXX",
+      "correspondent": "Bank CenterCredit JSC, Almaty",
+      "printed_bic": "KCJBKZKX"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}

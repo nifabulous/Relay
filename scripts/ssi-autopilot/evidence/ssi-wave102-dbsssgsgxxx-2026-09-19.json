@@ -1,0 +1,128 @@
+{
+  "source": "https://www.dbs.com.sg/sme/day-to-day/collections/incoming-funds/telegraphic-transfer-info.page",
+  "source_urls": [
+    "https://www.dbs.com.sg/sme/day-to-day/collections/incoming-funds/telegraphic-transfer-info.page"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "DBSSSGSGXXX",
+    "name": "DBS Bank Ltd Singapore",
+    "country": "SG"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 18,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "AED",
+      "int_bic": "NBADAEAAXXX",
+      "correspondent": "National Bank of Abu Dhabi, Abu Dhabi",
+      "printed_bic": "NBADAEAA"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "CTBAAU2SXXX",
+      "correspondent": "Commonwealth Bank of Australia, Sydney",
+      "printed_bic": "CTBAAU2S"
+    },
+    {
+      "currency": "BND",
+      "int_bic": "SCBLBNBBXXX",
+      "correspondent": "Standard Chartered Bank, Brunei",
+      "printed_bic": "SCBLBNBB"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "ROYCCAT2XXX",
+      "correspondent": "Royal Bank of Canada, Toronto",
+      "printed_bic": "ROYCCAT2"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG, Zurich"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "DBSSCNSHXXX",
+      "correspondent": "DBS Bank (China) Limited, Shanghai"
+    },
+    {
+      "currency": "DKK",
+      "int_bic": "NDEADKKKXXX",
+      "correspondent": "Nordea Bank Danmark A/S, Copenhagen",
+      "printed_bic": "NDEADKKK"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BARCDEFFXXX",
+      "correspondent": "Barclays Bank Ireland, Frankfurt",
+      "printed_bic": "BARCDEFF"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "RBOSGB2LXXX",
+      "correspondent": "Royal Bank of Scotland, London",
+      "printed_bic": "RBOSGB2L"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "DHBKHKHHXXX",
+      "correspondent": "DBS Bank (Hong Kong) Ltd",
+      "printed_bic": "DHBKHKHH"
+    },
+    {
+      "currency": "IDR",
+      "int_bic": "DBSBIDJAXXX",
+      "correspondent": "PT Bank DBS Indonesia",
+      "printed_bic": "DBSBIDJA"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SMBCJPJTXXX",
+      "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo",
+      "printed_bic": "SMBCJPJT"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ASBBNZ2AXXX",
+      "correspondent": "ASB Bank Ltd., Auckland",
+      "printed_bic": "ASBBNZ2A"
+    },
+    {
+      "currency": "NOK",
+      "int_bic": "DNBANOKKXXX",
+      "correspondent": "DNB Bank, Oslo",
+      "printed_bic": "DNBANOKK"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "NDEASESSXXX",
+      "correspondent": "Nordea Bank Sweden AB, Stockholm",
+      "printed_bic": "NDEASESS"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "TMBKTHBKXXX",
+      "correspondent": "Thai Military Bank PCL, Bangkok",
+      "printed_bic": "TMBKTHBK"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank, N.A.",
+      "printed_bic": "CHASUS33"
+    },
+    {
+      "currency": "ZAR",
+      "int_bic": "SBZAZAJJXXX",
+      "correspondent": "Standard Bank of South Africa Ltd., Johannesburg",
+      "printed_bic": "SBZAZAJJ"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}
