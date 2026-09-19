@@ -406,12 +406,17 @@ The service now selects the seven fields Atlas needs into a read-only projection
 and builds the country and institution rollups in one pass. The benchmark still
 observes exactly one SQL `SELECT` per scope.
 
+The measurements below are one local macOS run on 2026-09-19 using the checked-in
+Python 3.12 environment. They are timing evidence, not a CI threshold; the earlier
+baseline in this document came from a different local run and should not be compared
+as a regression without matching the machine and measurement conditions.
+
 | corpus | scope | rows | beneficiary banks | correspondents | elapsed | SQL selects |
 |---|---|---:|---:|---:|---:|---:|
-| `swift_routing.db` | all | 7,907 | 490 | 1,031 | 58.52 ms | 1 |
-| `swift_routing.db` | settleable | 5,381 | 352 | 795 | 70.71 ms | 1 |
-| synthetic | all | 20,000 | 20,000 | 222 | 116.51 ms | 1 |
-| synthetic | settleable | 15,000 | 15,000 | 222 | 132.02 ms | 1 |
+| `swift_routing.db` | all | 8,186 | 516 | 1,067 | 37.15 ms | 1 |
+| `swift_routing.db` | settleable | 5,381 | 352 | 795 | 43.91 ms | 1 |
+| synthetic | all | 20,000 | 20,000 | 222 | 63.26 ms | 1 |
+| synthetic | settleable | 15,000 | 15,000 | 222 | 58.62 ms | 1 |
 
 The synthetic fixture cycles 37 correspondents per country so row-count growth
 does not accidentally turn every row into a new institution. Both the current
