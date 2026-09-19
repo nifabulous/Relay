@@ -1,0 +1,72 @@
+{
+  "source": "https://www.centralbank.bank.in/en/International_Banking",
+  "source_urls": [
+    "https://www.centralbank.bank.in/en/International_Banking"
+  ],
+  "as_of": "2026-09-18",
+  "beneficiary": {
+    "bic": "CBININBBXXX",
+    "name": "Central Bank of India",
+    "country": "IN"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 10,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "SOGEFRPPXXX",
+      "correspondent": "Société Générale, Paris"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BARCDEFFXXX",
+      "correspondent": "Barclays Bank Ireland PLC"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "SCBLGB2LXXX",
+      "correspondent": "Standard Chartered Bank, London"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BARCGB22XXX",
+      "correspondent": "Barclays Bank, London"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3MXXX",
+      "correspondent": "ANZ Bank"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS, Zurich"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "SCBLJPJTXXX",
+      "correspondent": "Standard Chartered Bank, Tokyo"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "SCBLSG22XXX",
+      "correspondent": "Standard Chartered Bank, Singapore"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied in this manifest."
+}

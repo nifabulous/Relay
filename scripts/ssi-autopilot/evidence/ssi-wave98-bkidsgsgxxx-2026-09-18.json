@@ -1,0 +1,138 @@
+{
+  "source": "https://boi.com.sg/remittance-correspondent-banks",
+  "source_urls": [
+    "https://boi.com.sg/remittance-correspondent-banks",
+    "https://boi.com.sg/contact-us"
+  ],
+  "as_of": "2026-09-18",
+  "beneficiary": {
+    "bic": "BKIDSGSGXXX",
+    "name": "Bank of India, Singapore Branch",
+    "country": "SG"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 23,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "ANZBAU3MXXX",
+      "correspondent": "Australia and New Zealand Banking Group Limited, Melbourne"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG, Zurich"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CHASDEFXXXX",
+      "correspondent": "JPMorgan Chase, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BKIDFRPPXXX",
+      "correspondent": "Bank of India, Paris"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "CEDELULLXXX",
+      "correspondent": "Clearstream Bank"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "MIDLGB22XXX",
+      "correspondent": "HSBC Bank PLC, London"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BKIDGB2LXXX",
+      "correspondent": "Bank of India, London"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "BKIDHKHHXXX",
+      "correspondent": "Bank of India, Hong Kong"
+    },
+    {
+      "currency": "IDR",
+      "int_bic": "BKIDIDJAXXX",
+      "correspondent": "PT Bank of India Indonesia"
+    },
+    {
+      "currency": "INR",
+      "int_bic": "BKIDINBBBOS",
+      "correspondent": "Bank of India, Mumbai Overseas Branch"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BKIDJPJTXXX",
+      "correspondent": "Bank of India, Tokyo"
+    },
+    {
+      "currency": "LKR",
+      "int_bic": "BCEYLKLXXXX",
+      "correspondent": "Bank of Ceylon"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "BKIDNZ2AXXX",
+      "correspondent": "Bank of India New Zealand, Auckland"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "MASSSGSXXXX",
+      "correspondent": "Monetary Authority of Singapore"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "UOVBSGSGXXX",
+      "correspondent": "United Overseas Bank Limited, Singapore"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "BHOBTHBKXXX",
+      "correspondent": "Indian Overseas Bank, Bangkok"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BCEYLKLXXXX",
+      "correspondent": "Bank of Ceylon"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CEDELULLXXX",
+      "correspondent": "Clearstream Bank"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered Bank, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKIDUS33XXX",
+      "correspondent": "Bank of India, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITISGSGXXX",
+      "correspondent": "Citibank, Singapore"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "UOVBSGSGXXX",
+      "correspondent": "United Overseas Bank Limited, Singapore"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied in this manifest."
+}
