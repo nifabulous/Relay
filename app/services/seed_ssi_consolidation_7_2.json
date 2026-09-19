@@ -1,0 +1,82 @@
+{
+  "source_prs": [],
+  "banks": [
+    [
+      "BKCHNZ22XXX",
+      "Bank of China (New Zealand) Limited",
+      "NZ",
+      "Auckland",
+      "NZD"
+    ]
+  ],
+  "ssi_records": [
+    [
+      "BKCHNZ22XXX",
+      "Bank of China (New Zealand) Limited",
+      "AUD",
+      "BKCHAU2SXXX",
+      "Bank of China Sydney Branch",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html (as of 2025-09-30). Source publishes account numbers; repository intentionally withholds them. BIC-only metadata — not a selectable settlement instruction.",
+      "2025-09-30",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "BKCHNZ22XXX",
+      "Bank of China (New Zealand) Limited",
+      "USD",
+      "IRVTUS3NXXX",
+      "The Bank of New York Mellon",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html (as of 2025-09-30). Source publishes account numbers; repository intentionally withholds them. BIC-only metadata — not a selectable settlement instruction.",
+      "2025-09-30",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "BKCHNZ22XXX",
+      "Bank of China (New Zealand) Limited",
+      "CNY",
+      "BKCHHKHH838",
+      "Bank of China (Hong Kong) Limited",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html (as of 2025-09-30). Source publishes account numbers; repository intentionally withholds them. BIC-only metadata — not a selectable settlement instruction.",
+      "2025-09-30",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "BKCHNZ22XXX",
+      "Bank of China (New Zealand) Limited",
+      "HKD",
+      "BKCHHKHHXXX",
+      "Bank of China (Hong Kong) Limited",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html (as of 2025-09-30). Source publishes account numbers; repository intentionally withholds them. BIC-only metadata — not a selectable settlement instruction.",
+      "2025-09-30",
+      "unverified",
+      null,
+      true,
+      false
+    ]
+  ]
+}

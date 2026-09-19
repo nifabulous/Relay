@@ -1,0 +1,89 @@
+{
+  "fixture_version": 1,
+  "wave": 108,
+  "beneficiary_bic": "UBBRPYPXXXX",
+  "source": "https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf",
+  "as_of": "2026-09-19",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "USD",
+        "bic": "CITIUS33",
+        "correspondent": "Citibank"
+      },
+      {
+        "currency": "USD",
+        "bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank"
+      },
+      {
+        "currency": "USD",
+        "bic": "BOFAUS3N",
+        "correspondent": "Bank of America"
+      },
+      {
+        "currency": "EUR",
+        "bic": "COBADEFFXXX",
+        "correspondent": "Commerzbank"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BYLADEMMXXX",
+        "correspondent": "Bayerische Landesbank"
+      },
+      {
+        "currency": "USD",
+        "bic": "PNBPUS3NNYC",
+        "correspondent": "Wells Fargo Bank",
+        "excluded": true
+      }
+    ]
+  },
+  "source_route_digest": "8b33b60679191cb8c1d92ce7f54b21717b88e4d5458dd6c7acd5339b54470715",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "CITIUS33",
+        "canonical_bic": "CITIUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CHASUS33",
+        "canonical_bic": "CHASUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BOFAUS3N",
+        "canonical_bic": "BOFAUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "COBADEFFXXX",
+        "canonical_bic": "COBADEFFXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BYLADEMMXXX",
+        "canonical_bic": "BYLADEMMXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "PNBPUS3NNYC",
+        "canonical_bic": "PNBPUS3NNYC",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

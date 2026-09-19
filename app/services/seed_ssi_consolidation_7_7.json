@@ -1,0 +1,99 @@
+{
+  "source_prs": [],
+  "banks": [
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "PY",
+      "Asuncion",
+      "PYG"
+    ]
+  ],
+  "ssi_records": [
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "USD",
+      "CITIUS33XXX",
+      "Citibank",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "USD",
+      "CHASUS33XXX",
+      "JPMorgan Chase Bank",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "USD",
+      "BOFAUS3NXXX",
+      "Bank of America",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "EUR",
+      "COBADEFFXXX",
+      "Commerzbank",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "UBBRPYPXXXX",
+      "Banco Itau Paraguay S.A.",
+      "EUR",
+      "BYLADEMMXXX",
+      "Bayerische Landesbank",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ]
+  ]
+}

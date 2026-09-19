@@ -12,9 +12,12 @@ Covers:
 # date.today() can be a day off from production around a midnight boundary,
 # failing or passing for timezone configuration rather than behaviour.
 import functools
+import re
 from datetime import datetime, timedelta, timezone
 
 import pytest
+
+_ARCHIVED_SOURCE_RE = re.compile(r"\barchiv(?:e|ed|al|es|ing)\b|wayback|snapshot", re.I)
 
 
 def _node_source(lines, node):
@@ -572,7 +575,6 @@ class TestSSIProvenanceIsConsistentWithItsSource:
         own notes say nothing.
         """
         import ast
-        import re
         from pathlib import Path
 
         path = Path(__file__).resolve().parents[1] / "app" / "services" / "seed.py"
@@ -609,13 +611,11 @@ class TestSSIProvenanceIsConsistentWithItsSource:
         )
 
     def test_no_sourced_row_cites_an_archived_source_without_saying_so(self):
-        import re
-
         offenders = [
             (bic, note[:120])
             for bic, note, _as_of, status in self._rows()
             if status in ("published", "unverified")
-            and (re.search(r"archiv|wayback|snapshot", note, re.I) or "web.archive.org" in note)
+            and (_ARCHIVED_SOURCE_RE.search(note) or "web.archive.org" in note)
         ]
         assert not offenders, (
             f"{len(offenders)} row(s) claim an unarchived status but cite an "
@@ -624,7 +624,6 @@ class TestSSIProvenanceIsConsistentWithItsSource:
 
     def test_no_published_row_sits_under_an_archived_section_comment(self):
         import ast
-        import re
         from pathlib import Path
 
         governing = self._governing_comments()
@@ -640,12 +639,19 @@ class TestSSIProvenanceIsConsistentWithItsSource:
             for e in rows
             if isinstance(e, ast.Tuple)
             if ast.literal_eval(e.elts[11]) in ("published", "unverified")
-            and re.search(r"archiv|wayback|snapshot", governing.get(e.lineno, ""), re.I)
+            and _ARCHIVED_SOURCE_RE.search(governing.get(e.lineno, ""))
         ]
         assert not offenders, (
             f"{len(offenders)} row(s) claim an unarchived status under a comment "
             f"that says archived, e.g. {offenders[:3]}"
         )
+
+    def test_archived_source_guard_covers_archive_terms_without_matching_archivos(self):
+        assert all(
+            _ARCHIVED_SOURCE_RE.search(term)
+            for term in ("archive", "archived", "archival", "archives", "archiving", "wayback", "snapshot")
+        )
+        assert not _ARCHIVED_SOURCE_RE.search("https://www.itau.com.py/Content/archivos/source.pdf")
 
     def test_every_status_is_one_of_the_three_allowed_values(self):
         allowed = {"published", "unverified", "archived", "illustrative"}

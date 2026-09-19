@@ -1,0 +1,189 @@
+{
+  "fixture_version": 1,
+  "wave": 104,
+  "beneficiary_bic": "BKCHMOMXXXX",
+  "source": "https://www.bankofchina.com/mo/en/cbservice/cb4/cb41/202201/t20220106_20586083.html",
+  "as_of": "2026-09-19",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "AUD",
+        "bic": "BKCHAU2SXXX",
+        "correspondent": "Bank of China Sydney Branch"
+      },
+      {
+        "currency": "CAD",
+        "bic": "BKCHCATTXXX",
+        "correspondent": "Bank of China (Canada)"
+      },
+      {
+        "currency": "CNY",
+        "bic": "BKCHCNBJS00",
+        "correspondent": "Bank of China Shanghai"
+      },
+      {
+        "currency": "CNY",
+        "bic": "BKCHHKHH838",
+        "correspondent": "Bank of China (Hong Kong) Limited"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BKCHDEFFXXX",
+        "correspondent": "Bank of China Frankfurt Branch"
+      },
+      {
+        "currency": "GBP",
+        "bic": "BKCHGB2LXXX",
+        "correspondent": "Bank of China London Branch"
+      },
+      {
+        "currency": "HKD",
+        "bic": "BKCHHKHHXXX",
+        "correspondent": "Bank of China (Hong Kong) Limited"
+      },
+      {
+        "currency": "HKD",
+        "bic": "HSBCHKHHHKH",
+        "correspondent": "Hongkong and Shanghai Banking Corporation Limited"
+      },
+      {
+        "currency": "HKD",
+        "bic": "SCBLHKHHXXX",
+        "correspondent": "Standard Chartered Bank Hong Kong"
+      },
+      {
+        "currency": "JPY",
+        "bic": "BKCHJPJTXXX",
+        "correspondent": "Bank of China Tokyo Branch"
+      },
+      {
+        "currency": "CHF",
+        "bic": "UBSWCHZH80A",
+        "correspondent": "UBS AG, Zurich"
+      },
+      {
+        "currency": "NZD",
+        "bic": "ANZBNZ22058",
+        "correspondent": "ANZ National Bank Limited, Wellington"
+      },
+      {
+        "currency": "SGD",
+        "bic": "BKCHSGSGXXX",
+        "correspondent": "Bank of China Singapore Branch"
+      },
+      {
+        "currency": "SEK",
+        "bic": "ESSESESSXXX",
+        "correspondent": "Skandinaviska Enskilda Banken, Stockholm"
+      },
+      {
+        "currency": "THB",
+        "bic": "BKKBTHBKXXX",
+        "correspondent": "Bangkok Bank Public Company Limited"
+      },
+      {
+        "currency": "USD",
+        "bic": "PNBPUS3NNYC",
+        "correspondent": "Wells Fargo Bank, N.A.",
+        "excluded": true
+      }
+    ]
+  },
+  "source_route_digest": "f4f614d1a3d06bfc102ba57b332ba0fd3a16e7eaa1930e6227360766fdbd84d4",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "BKCHAU2SXXX",
+        "canonical_bic": "BKCHAU2SXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHCATTXXX",
+        "canonical_bic": "BKCHCATTXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHCNBJS00",
+        "canonical_bic": "BKCHCNBJS00",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHHKHH838",
+        "canonical_bic": "BKCHHKHH838",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHDEFFXXX",
+        "canonical_bic": "BKCHDEFFXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHGB2LXXX",
+        "canonical_bic": "BKCHGB2LXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHHKHHXXX",
+        "canonical_bic": "BKCHHKHHXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "HSBCHKHHHKH",
+        "canonical_bic": "HSBCHKHHHKH",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "SCBLHKHHXXX",
+        "canonical_bic": "SCBLHKHHXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHJPJTXXX",
+        "canonical_bic": "BKCHJPJTXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "UBSWCHZH80A",
+        "canonical_bic": "UBSWCHZH80A",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "ANZBNZ22058",
+        "canonical_bic": "ANZBNZ22058",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHSGSGXXX",
+        "canonical_bic": "BKCHSGSGXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "ESSESESSXXX",
+        "canonical_bic": "ESSESESSXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKKBTHBKXXX",
+        "canonical_bic": "BKKBTHBKXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "PNBPUS3NNYC",
+        "canonical_bic": "PNBPUS3NNYC",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

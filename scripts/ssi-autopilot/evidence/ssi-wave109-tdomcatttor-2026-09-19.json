@@ -1,0 +1,27 @@
+{
+  "source": "https://td.intelliresponse.com/cbaw/index.jsp?id=8654&question=What%27s%20TD%27s%20Swift%20Code&requestType=NormalRequest",
+  "source_urls": [
+    "https://td.intelliresponse.com/cbaw/index.jsp?id=8654&question=What%27s%20TD%27s%20Swift%20Code&requestType=NormalRequest"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "TDOMCATTTOR",
+    "name": "The Toronto-Dominion Bank",
+    "country": "CA"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 1,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3NXXX",
+      "correspondent": "Bank of America, New York"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}

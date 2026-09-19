@@ -1,0 +1,52 @@
+{
+  "source": "https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html",
+  "source_urls": [
+    "https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html"
+  ],
+  "as_of": "2025-09-30",
+  "beneficiary": {
+    "bic": "BKCHNZ22XXX",
+    "name": "Bank of China (New Zealand) Limited",
+    "country": "NZ"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 4,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
+    "source_extract_fixture": "tests/fixtures/ssi_wave103_source_attestation.json",
+    "source_route_digest": "73a76e78ae1210f233f3af7f98261fa00d73625a848e4e8f5a758cc21de1b4c5",
+    "bic_verification": {
+      "fixture": "tests/fixtures/ssi_wave103_source_attestation.json",
+      "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",
+      "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+      "reference_as_of": "2026-06-01",
+      "status": "source_cross_checked_and_canonicalized; operational_status_unverified_non_routable"
+    }
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "BKCHAU2SXXX",
+      "correspondent": "Bank of China Sydney Branch"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHHKHH838",
+      "correspondent": "Bank of China (Hong Kong) Limited",
+      "printed_currency": "RMB"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "BKCHHKHHXXX",
+      "correspondent": "Bank of China (Hong Kong) Limited"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+}

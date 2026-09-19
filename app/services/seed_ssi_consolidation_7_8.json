@@ -1,0 +1,31 @@
+{
+  "source_prs": [],
+  "banks": [
+    [
+      "TDOMCATTTOR",
+      "The Toronto-Dominion Bank",
+      "CA",
+      "Toronto",
+      "CAD"
+    ]
+  ],
+  "ssi_records": [
+    [
+      "TDOMCATTTOR",
+      "The Toronto-Dominion Bank",
+      "USD",
+      "BOFAUS3NXXX",
+      "Bank of America, New York",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://td.intelliresponse.com/cbaw/index.jsp?id=8654&question=What%27s%20TD%27s%20Swift%20Code&requestType=NormalRequest (as of 2026-09-19). BIC-level list — no account numbers published; not a selectable settlement instruction.",
+      "2026-09-19",
+      "unverified",
+      null,
+      true,
+      false
+    ]
+  ]
+}

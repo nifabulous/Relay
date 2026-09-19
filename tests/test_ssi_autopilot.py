@@ -1783,10 +1783,15 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
         if fields.get("bic_only") is not True:
             continue
         key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
-        assert (
-            "BIC-level list — no account numbers published; "
-            "not a selectable settlement instruction"
-        ) in fields["notes"], key
+        assert any(
+            marker in fields["notes"]
+            for marker in (
+                "BIC-level list — no account numbers published; "
+                "not a selectable settlement instruction",
+                "Source publishes account numbers; repository intentionally withholds them. "
+                "BIC-only metadata — not a selectable settlement instruction",
+            )
+        ), key
         checked += 1
 
     assert checked >= 150, (
