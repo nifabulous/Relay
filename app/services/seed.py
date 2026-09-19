@@ -530,6 +530,7 @@ BANKS = [
     ("BNTBKYKYXXX", "Butterfield Bank (Cayman) Limited", "KY", "George Town", "KYD"),
     ("FCTTTTPSXXX", "First Citizens Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("RBGLGYGGXXX", "Republic Bank (Guyana) Limited", "GY", "Georgetown", "GYD"),
+    ("BARBGYGEXXX", "Bank of Baroda (Guyana) Inc.", "GY", "Georgetown", "GYD"),
     ("RBNKTTPXXXX", "Republic Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("JNCBJMKXXXX", "National Commercial Bank Jamaica Limited", "JM", "Kingston", "JMD"),
     ("FILBJMKNXXX", "First Global Bank Limited", "JM", "Kingston", "JMD"),
@@ -1074,6 +1075,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_115.json",
     "seed_ssi_batch6_116.json",
     "seed_ssi_batch6_117.json",
+    "seed_ssi_batch6_118.json",
 )
 
 
