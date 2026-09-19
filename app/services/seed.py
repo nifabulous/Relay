@@ -16,8 +16,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 from ..models import SSI, Account, Bank, CorridorRule
-from .ssi_wave110_asia_east_pacific import SSI_ASIA_EAST_PACIFIC_RECORDS
 from .ssi_americas_wave import AMERICAS_WAVE_BANKS, AMERICAS_WAVE_RECORDS
+from .ssi_wave110_asia_east_pacific import SSI_ASIA_EAST_PACIFIC_RECORDS
 
 # (bic, bank_name, country_code, city, country_currency)
 BANKS = [

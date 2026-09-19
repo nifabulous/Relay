@@ -2,7 +2,6 @@
 
 from app.services.seed import SSI_RECORDS
 
-
 SOURCE_PREFIX = "Source: https://www.hsbc.com.my/investments/products/international-transfer-payment/faq/"
 
 
