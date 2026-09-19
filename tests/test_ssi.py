@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-
 _ARCHIVED_SOURCE_RE = re.compile(r"\barchiv(?:e|ed|al|es|ing)\b|wayback|snapshot", re.I)
 
 
