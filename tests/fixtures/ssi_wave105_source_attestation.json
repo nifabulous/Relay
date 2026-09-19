@@ -1,0 +1,208 @@
+{
+  "fixture_version": 1,
+  "wave": 105,
+  "beneficiary_bic": "KODBUZ22XXX",
+  "source": "https://new.kdb.uz/uz.gov.uz/corporates/correspondent-banks",
+  "as_of": "2025-07-11",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "USD",
+        "bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank, New York"
+      },
+      {
+        "currency": "GBP",
+        "bic": "CHASGB2L",
+        "correspondent": "JPMorgan Chase Bank, London"
+      },
+      {
+        "currency": "CHF",
+        "bic": "CHASGB2L",
+        "correspondent": "JPMorgan Chase Bank, London"
+      },
+      {
+        "currency": "CNY",
+        "bic": "CHASHKHH",
+        "correspondent": "JPMorgan Chase Bank, Hong Kong"
+      },
+      {
+        "currency": "USD",
+        "bic": "IRVTUS3N",
+        "correspondent": "Bank of New York Mellon, New York"
+      },
+      {
+        "currency": "EUR",
+        "bic": "COBADEFF",
+        "correspondent": "Commerzbank AG, Frankfurt"
+      },
+      {
+        "currency": "GBP",
+        "bic": "COBADEFF",
+        "correspondent": "Commerzbank AG, Frankfurt"
+      },
+      {
+        "currency": "EUR",
+        "bic": "RZBAATWW",
+        "correspondent": "Raiffeisen Bank International AG, Vienna"
+      },
+      {
+        "currency": "USD",
+        "bic": "RZBAATWW",
+        "correspondent": "Raiffeisen Bank International AG, Vienna"
+      },
+      {
+        "currency": "RUB",
+        "bic": "RZBMRUMM",
+        "correspondent": "Raiffeisenbank, Moscow"
+      },
+      {
+        "currency": "USD",
+        "bic": "KOEXKRSE",
+        "correspondent": "KEB Hana Bank, Seoul"
+      },
+      {
+        "currency": "EUR",
+        "bic": "KOEXKRSE",
+        "correspondent": "KEB Hana Bank, Seoul"
+      },
+      {
+        "currency": "JPY",
+        "bic": "KOEXJPJT",
+        "correspondent": "KEB Hana Bank, Tokyo"
+      },
+      {
+        "currency": "KRW",
+        "bic": "CZNBKRSE",
+        "correspondent": "Kookmin Bank, Seoul"
+      },
+      {
+        "currency": "CNY",
+        "bic": "BKCHHKHH",
+        "correspondent": "Bank of China (Hong Kong) Limited"
+      },
+      {
+        "currency": "CNY",
+        "bic": "PCBCHKHH",
+        "correspondent": "China Construction Bank Hong Kong Branch"
+      },
+      {
+        "currency": "AED",
+        "bic": "BOMLAEAD",
+        "correspondent": "Mashreqbank PSC, Dubai"
+      },
+      {
+        "currency": "KZT",
+        "bic": "KCJBKZKX",
+        "correspondent": "Bank CenterCredit JSC, Almaty"
+      }
+    ]
+  },
+  "source_route_digest": "17ec31d57a9666888af2ac5200d7ba51159a3c5efc14d07875667e9d0e129cc9",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "CHASUS33",
+        "canonical_bic": "CHASUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CHASGB2L",
+        "canonical_bic": "CHASGB2LXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CHASGB2L",
+        "canonical_bic": "CHASGB2LXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CHASHKHH",
+        "canonical_bic": "CHASHKHHXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "IRVTUS3N",
+        "canonical_bic": "IRVTUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "COBADEFF",
+        "canonical_bic": "COBADEFFXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "COBADEFF",
+        "canonical_bic": "COBADEFFXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "RZBAATWW",
+        "canonical_bic": "RZBAATWWXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "RZBAATWW",
+        "canonical_bic": "RZBAATWWXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "RZBMRUMM",
+        "canonical_bic": "RZBMRUMMXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "KOEXKRSE",
+        "canonical_bic": "KOEXKRSEXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "KOEXKRSE",
+        "canonical_bic": "KOEXKRSEXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "KOEXJPJT",
+        "canonical_bic": "KOEXJPJTXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CZNBKRSE",
+        "canonical_bic": "CZNBKRSEXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BKCHHKHH",
+        "canonical_bic": "BKCHHKHHXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "PCBCHKHH",
+        "canonical_bic": "PCBCHKHHXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BOMLAEAD",
+        "canonical_bic": "BOMLAEADXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "KCJBKZKX",
+        "canonical_bic": "KCJBKZKXXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "source": "https://www.bankofchina.com/mo/en/cbservice/cb4/cb41/202201/t20220106_20586083.html",
+  "source_urls": [
+    "https://www.bankofchina.com/mo/en/cbservice/cb4/cb41/202201/t20220106_20586083.html"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "BKCHMOMXXXX",
+    "name": "Bank of China Macau Branch",
+    "country": "MO"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 15,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
+    "source_extract_fixture": "tests/fixtures/ssi_wave104_source_attestation.json",
+    "source_route_digest": "f4f614d1a3d06bfc102ba57b332ba0fd3a16e7eaa1930e6227360766fdbd84d4",
+    "bic_verification": {
+      "fixture": "tests/fixtures/ssi_wave104_source_attestation.json",
+      "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",
+      "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+      "reference_as_of": "2026-06-01",
+      "status": "source_cross_checked_and_canonicalized; operational_status_unverified_non_routable"
+    },
+    "excluded_routes": [
+      {
+        "currency": "USD",
+        "printed_bic": "PNBPUS3NNYC",
+        "correspondent": "Wells Fargo Bank, N.A.",
+        "reason": "The source publishes a branch-specific eleven-character BIC; it is excluded because the repository has no independently verified alias to a canonical route."
+      }
+    ]
+  },
+  "routes": [
+    {
+      "currency": "AUD",
+      "int_bic": "BKCHAU2SXXX",
+      "correspondent": "Bank of China Sydney Branch"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BKCHCATTXXX",
+      "correspondent": "Bank of China (Canada)"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHCNBJS00",
+      "correspondent": "Bank of China Shanghai"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "BKCHHKHH838",
+      "correspondent": "Bank of China (Hong Kong) Limited"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BKCHDEFFXXX",
+      "correspondent": "Bank of China Frankfurt Branch"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BKCHGB2LXXX",
+      "correspondent": "Bank of China London Branch"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "BKCHHKHHXXX",
+      "correspondent": "Bank of China (Hong Kong) Limited"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "HSBCHKHHHKH",
+      "correspondent": "Hongkong and Shanghai Banking Corporation Limited"
+    },
+    {
+      "currency": "HKD",
+      "int_bic": "SCBLHKHHXXX",
+      "correspondent": "Standard Chartered Bank Hong Kong"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "BKCHJPJTXXX",
+      "correspondent": "Bank of China Tokyo Branch"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "UBSWCHZH80A",
+      "correspondent": "UBS AG, Zurich"
+    },
+    {
+      "currency": "NZD",
+      "int_bic": "ANZBNZ22058",
+      "correspondent": "ANZ National Bank Limited, Wellington"
+    },
+    {
+      "currency": "SGD",
+      "int_bic": "BKCHSGSGXXX",
+      "correspondent": "Bank of China Singapore Branch"
+    },
+    {
+      "currency": "SEK",
+      "int_bic": "ESSESESSXXX",
+      "correspondent": "Skandinaviska Enskilda Banken, Stockholm"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "BKKBTHBKXXX",
+      "correspondent": "Bangkok Bank Public Company Limited"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved. The source's USD Wells Fargo branch BIC PNBPUS3NNYC is recorded in source_snapshot.excluded_routes and omitted from the seed because no independently verified alias to a canonical route is available."
+}

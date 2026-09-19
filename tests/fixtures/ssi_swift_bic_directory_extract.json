@@ -1,0 +1,355 @@
+{
+  "artifact_version": 1,
+  "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+  "reference_as_of": "2026-06-01",
+  "captured_at": "2026-09-19",
+  "capture_method": "Independent BIC-directory snapshot used only for identifier cross-checks; no account, customer, or routing-activation data is included.",
+  "rows": [
+    {
+      "source_bic": "ANZBAU3MXXX",
+      "canonical_bic": "ANZBAU3MXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "ANZBNZ22058",
+      "canonical_bic": "ANZBNZ22058",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "ASBBNZ2A",
+      "canonical_bic": "ASBBNZ2AXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BARCDEFF",
+      "canonical_bic": "BARCDEFFXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BARCDEFFXXX",
+      "canonical_bic": "BARCDEFFXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BARCGB22XXX",
+      "canonical_bic": "BARCGB22XXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BBRUBEBB",
+      "canonical_bic": "BBRUBEBBXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BBVAESMM",
+      "canonical_bic": "BBVAESMMXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BKCHAU2SXXX",
+      "canonical_bic": "BKCHAU2SXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHCATTXXX",
+      "canonical_bic": "BKCHCATTXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHCNBJS00",
+      "canonical_bic": "BKCHCNBJS00",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHDEFFXXX",
+      "canonical_bic": "BKCHDEFFXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHGB2LXXX",
+      "canonical_bic": "BKCHGB2LXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHHKHH",
+      "canonical_bic": "BKCHHKHHXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BKCHHKHH838",
+      "canonical_bic": "BKCHHKHH838",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHHKHHXXX",
+      "canonical_bic": "BKCHHKHHXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHJPJTXXX",
+      "canonical_bic": "BKCHJPJTXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKCHSGSGXXX",
+      "canonical_bic": "BKCHSGSGXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BKKBTHBKXXX",
+      "canonical_bic": "BKKBTHBKXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BOFAUS3N",
+      "canonical_bic": "BOFAUS3NXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BOFAUS3NXXX",
+      "canonical_bic": "BOFAUS3NXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "BOMLAEAD",
+      "canonical_bic": "BOMLAEADXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BOTKJPJT",
+      "canonical_bic": "BOTKJPJTXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "BYLADEMMXXX",
+      "canonical_bic": "BYLADEMMXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "CHASGB2L",
+      "canonical_bic": "CHASGB2LXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "CHASHKHH",
+      "canonical_bic": "CHASHKHHXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "CHASUS33",
+      "canonical_bic": "CHASUS33XXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "CITIUS33",
+      "canonical_bic": "CITIUS33XXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "COBADEFF",
+      "canonical_bic": "COBADEFFXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "COBADEFFXXX",
+      "canonical_bic": "COBADEFFXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "CTBAAU2S",
+      "canonical_bic": "CTBAAU2SXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "CZNBKRSE",
+      "canonical_bic": "CZNBKRSEXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "DBSBIDJA",
+      "canonical_bic": "DBSBIDJAXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "DBSSCNSHXXX",
+      "canonical_bic": "DBSSCNSHXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "DHBKHKHH",
+      "canonical_bic": "DHBKHKHHXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "DNBANOKK",
+      "canonical_bic": "DNBANOKKXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "ESSESESS",
+      "canonical_bic": "ESSESESSXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "ESSESESSXXX",
+      "canonical_bic": "ESSESESSXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "HSBCHKHHHKH",
+      "canonical_bic": "HSBCHKHHHKH",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "IRVTUS3N",
+      "canonical_bic": "IRVTUS3NXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "IRVTUS3NXXX",
+      "canonical_bic": "IRVTUS3NXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "KCJBKZKX",
+      "canonical_bic": "KCJBKZKXXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "KOEXJPJT",
+      "canonical_bic": "KOEXJPJTXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "KOEXKRSE",
+      "canonical_bic": "KOEXKRSEXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "NBADAEAA",
+      "canonical_bic": "NBADAEAAXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "NDEADKKK",
+      "canonical_bic": "NDEADKKKXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "NDEASESS",
+      "canonical_bic": "NDEASESSXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "NOSCCATT",
+      "canonical_bic": "NOSCCATTXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "NWBKGB2L",
+      "canonical_bic": "NWBKGB2LXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "PCBCHKHH",
+      "canonical_bic": "PCBCHKHHXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "PNBPUS33PHL",
+      "canonical_bic": "PNBPUS33PHL",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "PNBPUS3NNYC",
+      "canonical_bic": "PNBPUS3NNYC",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "RBOSGB2L",
+      "canonical_bic": "RBOSGB2LXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "ROYCCAT2",
+      "canonical_bic": "ROYCCAT2XXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "RZBAATWW",
+      "canonical_bic": "RZBAATWWXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "RZBMRUMM",
+      "canonical_bic": "RZBMRUMMXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SBZAZAJJ",
+      "canonical_bic": "SBZAZAJJXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SCBLBNBB",
+      "canonical_bic": "SCBLBNBBXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SCBLGB2L",
+      "canonical_bic": "SCBLGB2LXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SCBLGB2LXXX",
+      "canonical_bic": "SCBLGB2LXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "SCBLHKHH",
+      "canonical_bic": "SCBLHKHHXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SCBLHKHHXXX",
+      "canonical_bic": "SCBLHKHHXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "SCBLJPJTXXX",
+      "canonical_bic": "SCBLJPJTXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "SCBLSG22XXX",
+      "canonical_bic": "SCBLSG22XXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "SCBLUS33",
+      "canonical_bic": "SCBLUS33XXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SMBCJPJT",
+      "canonical_bic": "SMBCJPJTXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "SOGEFRPPXXX",
+      "canonical_bic": "SOGEFRPPXXX",
+      "verification": "exact_source_bic"
+    },
+    {
+      "source_bic": "TMBKTHBK",
+      "canonical_bic": "TMBKTHBKXXX",
+      "verification": "canonicalized_from_eight_character_bic"
+    },
+    {
+      "source_bic": "UBSWCHZH80A",
+      "canonical_bic": "UBSWCHZH80A",
+      "verification": "exact_source_bic"
+    }
+  ],
+  "artifact_sha256": "7d3819012e0c5261b847a8d6ac5372c7ba7fa6bdbe75e13bd9cf35b9f7deec2b"
+}

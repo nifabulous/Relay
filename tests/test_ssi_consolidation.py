@@ -1,3 +1,4 @@
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -12,6 +13,7 @@ from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
     BANKS,
+    SEED_BIC_ALIASES,
     SSI_RECORDS,
     _is_canonical_bic11,
     seed_if_empty,
@@ -331,7 +333,7 @@ def test_every_route_evidence_file_matches_the_seeded_catalog():
                 )
         checked_files.append(path.name)
 
-    assert len(checked_files) == 109
+    assert len(checked_files) == 117
 
 
 def test_wave69_evidence_count_matches_both_split_seed_ledgers():
@@ -452,6 +454,237 @@ def test_sixth_consolidation_batch_has_exact_evidence_parity():
     assert len(batch_files) == 5
     assert manifest_banks == evidence_banks == set(seeded_by_beneficiary)
     assert evidence_by_beneficiary == seeded_by_beneficiary
+
+
+def test_seventh_consolidation_batch_is_loaded_and_fails_closed():
+    records = _batch_records(7)
+
+    assert len(records) == 80
+    assert all(_is_canonical_bic11(row[0]) and _is_canonical_bic11(row[3]) for row in records)
+    assert all(row[5:9] == [None, None, None, None] for row in records)
+    assert all(row[11] == "unverified" for row in records)
+    assert all(row[12] is None and row[13] is True and row[14] is False for row in records)
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in records)
+
+
+def test_seventh_consolidation_batch_has_exact_evidence_parity():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    approved_aliases = {
+        source: bic11(target) for source, target in SEED_BIC_ALIASES.items()
+    }
+
+    seeded_by_beneficiary = {}
+    for row in _batch_records(7):
+        seeded_by_beneficiary.setdefault(row[0], Counter()).update([(row[2], row[3])])
+
+    evidence_by_beneficiary = {}
+    evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
+    batch_files = []
+    for path in evidence_dir.glob("ssi-wave*.json"):
+        wave = int(path.name.split("-", 2)[1].removeprefix("wave"))
+        if not 102 <= wave <= 109:
+            continue
+        evidence = json.loads(path.read_text())
+        beneficiary_bic = bic11(evidence["beneficiary"]["bic"])
+        assert beneficiary_bic not in evidence_by_beneficiary, beneficiary_bic
+        assert evidence["source_urls"][0] == evidence["source"]
+        assert evidence["as_of"]
+        route_keys = [
+            (route["currency"].upper(), bic11(route["int_bic"]))
+            for route in evidence["routes"]
+        ]
+        assert evidence["source_snapshot"]["route_count"] == len(route_keys)
+        assert len(route_keys) == len(set(route_keys))
+        aliases = evidence["source_snapshot"].get("bic_aliases", {})
+        assert all(approved_aliases.get(source) == target for source, target in aliases.items())
+        for excluded in evidence["source_snapshot"].get("excluded_routes", []):
+            excluded_key = (excluded["currency"].upper(), bic11(excluded["printed_bic"]))
+            assert excluded_key not in route_keys
+            assert "independently verified alias" in excluded["reason"]
+        evidence_by_beneficiary[beneficiary_bic] = Counter(route_keys)
+        batch_files.append(path.name)
+
+        seeded_rows = [row for row in _batch_records(7) if row[0] == beneficiary_bic]
+        citation = f"Source: {evidence['source']} (as of {evidence['as_of']})."
+        assert seeded_rows
+        assert all(row[9].startswith(citation) for row in seeded_rows)
+        for route in evidence["routes"]:
+            printed_bic = route.get("printed_bic")
+            if printed_bic and len(printed_bic.replace(" ", "")) == 11:
+                assert aliases.get(printed_bic) == route["int_bic"]
+                assert approved_aliases.get(printed_bic) == route["int_bic"]
+
+    manifest_banks = {
+        bank[0] for payload in _batch_payloads(7) for bank in payload["banks"]
+    }
+    assert len(batch_files) == 8
+    assert manifest_banks <= evidence_by_beneficiary.keys()
+    assert evidence_by_beneficiary.keys() == seeded_by_beneficiary.keys()
+    assert seeded_by_beneficiary.keys() <= {bic11(bank[0]) for bank in BANKS}
+    assert evidence_by_beneficiary == seeded_by_beneficiary
+
+
+def test_wave102_has_a_reproducible_source_extract_and_bic_cross_check():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave102-dbsssgsgxxx-2026-09-19.json"
+        ).read_text()
+    )
+    fixture_path = ROOT / "tests" / "fixtures" / "ssi_wave102_dbs_agent_bank_extract.json"
+    fixture = json.loads(fixture_path.read_text())
+    assert evidence["source_snapshot"]["source_extract_fixture"] == str(
+        fixture_path.relative_to(ROOT)
+    )
+    assert evidence["source_snapshot"]["bic_verification"]["fixture"] == str(
+        fixture_path.relative_to(ROOT)
+    )
+    assert fixture["source"] == evidence["source"]
+    assert fixture["as_of"] == evidence["as_of"]
+    digest = hashlib.sha256(
+        json.dumps(fixture["rows"], sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    assert fixture["source_route_digest"] == digest
+    assert evidence["source_snapshot"]["source_route_digest"] == digest
+    source_rows = [(currency, bic11(bic)) for currency, bic in fixture["rows"]]
+    evidence_rows = [
+        (
+            route["currency"].upper(),
+            bic11(route.get("printed_bic") or route["int_bic"]),
+        )
+        for route in evidence["routes"]
+    ]
+    assert source_rows == evidence_rows
+    assert all(
+        bic11(printed) == canonical
+        for (currency, printed), (_, canonical) in zip(source_rows, evidence_rows)
+    )
+    assert fixture["bic_verification"]["operational_status"] == "unverified_non_routable"
+
+
+def test_seventh_consolidation_waves_have_source_and_bic_attestations():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence_paths = [
+        next(
+            (ROOT / "scripts" / "ssi-autopilot" / "evidence").glob(
+                f"ssi-wave{wave}-*.json"
+            )
+        )
+        for wave in range(102, 110)
+    ]
+    assert len(evidence_paths) == 8
+
+    for evidence_path in evidence_paths:
+        evidence = json.loads(evidence_path.read_text())
+        snapshot = evidence["source_snapshot"]
+        fixture_path = ROOT / snapshot["source_extract_fixture"]
+        fixture = json.loads(fixture_path.read_text())
+        source_rows = fixture["source_extract"]["rows"]
+
+        assert fixture["wave"] == int(evidence_path.name.split("-", 2)[1].removeprefix("wave"))
+        assert fixture["beneficiary_bic"] == evidence["beneficiary"]["bic"]
+        assert fixture["source"] == evidence["source"]
+        assert fixture["as_of"] == evidence["as_of"]
+        assert fixture["source_extract"]["account_values_removed"] is True
+
+        expected_source_rows = [
+            {
+                "currency": route["currency"].upper(),
+                "bic": route.get("printed_bic") or route["int_bic"],
+                "correspondent": route["correspondent"],
+                **(
+                    {"printed_currency": route["printed_currency"]}
+                    if route.get("printed_currency")
+                    else {}
+                ),
+            }
+            for route in evidence["routes"]
+        ]
+        expected_source_rows.extend(
+            {
+                "currency": excluded["currency"].upper(),
+                "bic": excluded["printed_bic"],
+                "correspondent": excluded["correspondent"],
+                "excluded": True,
+            }
+            for excluded in snapshot.get("excluded_routes", [])
+        )
+        assert source_rows == expected_source_rows
+
+        digest_field = (
+            "source_extract_digest"
+            if "source_extract_digest" in fixture
+            else "source_route_digest"
+        )
+        digest = hashlib.sha256(
+            json.dumps(source_rows, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        assert fixture[digest_field] == digest
+        assert snapshot[digest_field] == digest
+
+        verification = fixture["independent_bic_verification"]
+        assert verification["reference"] == snapshot["bic_verification"]["reference"]
+        assert verification["reference_as_of"] == snapshot["bic_verification"]["reference_as_of"]
+        assert verification["operational_status"] == "unverified_non_routable"
+        assert [
+            (row["source_bic"], row["canonical_bic"])
+            for row in verification["rows"]
+        ] == [(row["bic"], bic11(row["bic"])) for row in source_rows]
+        assert all(
+            row["canonical_bic"] == bic11(row["source_bic"])
+            for row in verification["rows"]
+        )
+
+        directory_path = ROOT / snapshot["bic_verification"]["directory_extract_fixture"]
+        directory = json.loads(directory_path.read_text())
+        directory_rows = directory["rows"]
+        directory_digest = hashlib.sha256(
+            json.dumps(directory_rows, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        assert directory["reference"] == verification["reference"]
+        assert directory["reference_as_of"] == verification["reference_as_of"]
+        assert directory["artifact_sha256"] == directory_digest
+        directory_keys = {
+            (row["source_bic"], row["canonical_bic"]) for row in directory_rows
+        }
+        assert {
+            (row["source_bic"], row["canonical_bic"])
+            for row in verification["rows"]
+        } <= directory_keys
+
+
+def test_wave109_evidence_links_its_attestation_artifacts():
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave109-tdomcatttor-2026-09-19.json"
+        ).read_text()
+    )
+    snapshot = evidence["source_snapshot"]
+    assert snapshot["source_extract_fixture"] == (
+        "tests/fixtures/ssi_wave109_source_attestation.json"
+    )
+    assert snapshot["source_route_digest"] == snapshot["source_extract_digest"]
+    assert snapshot["bic_verification"]["fixture"] == snapshot["source_extract_fixture"]
+    assert snapshot["bic_verification"]["directory_extract_fixture"] == (
+        "tests/fixtures/ssi_swift_bic_directory_extract.json"
+    )
 
 
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():

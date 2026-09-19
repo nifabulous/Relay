@@ -1,0 +1,67 @@
+{
+  "source": "https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf",
+  "source_urls": [
+    "https://www.itau.com.py/Content/archivos/Dinamicos/Varios-8585334991664459721.pdf"
+  ],
+  "as_of": "2026-09-19",
+  "beneficiary": {
+    "bic": "UBBRPYPXXXX",
+    "name": "Banco Itau Paraguay S.A.",
+    "country": "PY"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 5,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
+    "source_extract_fixture": "tests/fixtures/ssi_wave108_source_attestation.json",
+    "source_route_digest": "8b33b60679191cb8c1d92ce7f54b21717b88e4d5458dd6c7acd5339b54470715",
+    "bic_verification": {
+      "fixture": "tests/fixtures/ssi_wave108_source_attestation.json",
+      "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",
+      "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+      "reference_as_of": "2026-06-01",
+      "status": "source_cross_checked_and_canonicalized; operational_status_unverified_non_routable"
+    },
+    "excluded_routes": [
+      {
+        "currency": "USD",
+        "printed_bic": "PNBPUS3NNYC",
+        "correspondent": "Wells Fargo Bank",
+        "reason": "The source publishes a branch-specific eleven-character BIC; it is excluded because the repository has no independently verified alias to a canonical route."
+      }
+    ]
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank",
+      "printed_bic": "CITIUS33"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase Bank",
+      "printed_bic": "CHASUS33"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3NXXX",
+      "correspondent": "Bank of America",
+      "printed_bic": "BOFAUS3N"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "COBADEFFXXX",
+      "correspondent": "Commerzbank"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BYLADEMMXXX",
+      "correspondent": "Bayerische Landesbank"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved. The source's USD Wells Fargo branch BIC PNBPUS3NNYC is recorded in source_snapshot.excluded_routes and omitted from the seed because no independently verified alias to a canonical route is available."
+}
