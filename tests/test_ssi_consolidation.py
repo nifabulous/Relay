@@ -577,9 +577,14 @@ def test_seventh_consolidation_waves_have_source_and_bic_attestations():
         normalized = value.upper()
         return f"{normalized}XXX" if len(normalized) == 8 else normalized
 
-    evidence_paths = sorted(
-        (ROOT / "scripts" / "ssi-autopilot" / "evidence").glob("ssi-wave10[1-8]-*.json")
-    )
+    evidence_paths = [
+        next(
+            (ROOT / "scripts" / "ssi-autopilot" / "evidence").glob(
+                f"ssi-wave{wave}-*.json"
+            )
+        )
+        for wave in range(102, 110)
+    ]
     assert len(evidence_paths) == 8
 
     for evidence_path in evidence_paths:

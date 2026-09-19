@@ -1,0 +1,38 @@
+{
+  "fixture_version": 1,
+  "wave": 109,
+  "beneficiary_bic": "TDOMCATTTOR",
+  "source": "https://td.intelliresponse.com/cbaw/index.jsp?id=8654&question=What%27s%20TD%27s%20Swift%20Code&requestType=NormalRequest",
+  "as_of": "2026-09-19",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "USD",
+        "bic": "BOFAUS3NXXX",
+        "correspondent": "Bank of America, New York"
+      }
+    ]
+  },
+  "source_route_digest": "d800cdda657278291841f9c3527800a557ab6ceed46ee8dc8bed350ba0bdbcce",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "BOFAUS3NXXX",
+        "canonical_bic": "BOFAUS3NXXX",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}
