@@ -12,7 +12,7 @@
   "source_snapshot": {
     "raw_accounts_committed": false,
     "account_numbers_published": true,
-    "route_count": 23,
+    "route_count": 22,
     "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
     "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
   },
@@ -56,11 +56,6 @@
       "currency": "EUR",
       "int_bic": "COBADEFFXXX",
       "correspondent": "Commerzbank, Frankfurt"
-    },
-    {
-      "currency": "EUR",
-      "int_bic": "SCBLDEFFXXX",
-      "correspondent": "Standard Chartered Bank, Frankfurt"
     },
     {
       "currency": "EUR",
@@ -133,5 +128,5 @@
       "correspondent": "Standard Chartered Bank, Hong Kong"
     }
   ],
-  "normalization_note": "Eight-character BICs are padded with XXX. Wells Fargo PNBPUS3NNYC is normalized to the repository-standard PNBPUS33XXX, and Standard Chartered Frankfurt SCBLDEFX is normalized to SCBLDEFFXXX. Already-valid eleven-character BICs are preserved."
+  "normalization_note": "Eight-character BICs are padded with XXX. The source spelling PNBPUS3NNYC uses the repository's explicit Wells Fargo alias PNBPUS33XXX. The SCBLDEFX row is excluded because the current SWIFT-listed Frankfurt BIC cannot safely be rewritten to the repository's legacy SCBLDEFF identity. Already-valid eleven-character BICs are preserved."
 }

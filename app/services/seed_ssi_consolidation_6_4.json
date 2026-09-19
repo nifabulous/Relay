@@ -1,0 +1,82 @@
+{
+  "source_prs": [],
+  "banks": [
+    [
+      "CHNOKHPPXXX",
+      "Chip Mong Commercial Bank Plc.",
+      "KH",
+      "Phnom Penh",
+      "KHR"
+    ]
+  ],
+  "ssi_records": [
+    [
+      "CHNOKHPPXXX",
+      "Chip Mong Commercial Bank Plc.",
+      "USD",
+      "KASITHBKXXX",
+      "Kasikornbank PCL, Bangkok",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.chipmongbank.com/business/overseas-fund-transfer (as of 2026-09-18). BIC-level list — no account numbers published; not a selectable settlement instruction. The cited source may publish operational account data, but none is committed here.",
+      "2026-09-18",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "CHNOKHPPXXX",
+      "Chip Mong Commercial Bank Plc.",
+      "THB",
+      "KASITHBKXXX",
+      "Kasikornbank PCL, Bangkok",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.chipmongbank.com/business/overseas-fund-transfer (as of 2026-09-18). BIC-level list — no account numbers published; not a selectable settlement instruction. The cited source may publish operational account data, but none is committed here.",
+      "2026-09-18",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "CHNOKHPPXXX",
+      "Chip Mong Commercial Bank Plc.",
+      "USD",
+      "BKKBTHBKXXX",
+      "Bangkok Bank PCL, Bangkok",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.chipmongbank.com/business/overseas-fund-transfer (as of 2026-09-18). BIC-level list — no account numbers published; not a selectable settlement instruction. The cited source may publish operational account data, but none is committed here.",
+      "2026-09-18",
+      "unverified",
+      null,
+      true,
+      false
+    ],
+    [
+      "CHNOKHPPXXX",
+      "Chip Mong Commercial Bank Plc.",
+      "THB",
+      "BKKBTHBKXXX",
+      "Bangkok Bank PCL, Bangkok",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://www.chipmongbank.com/business/overseas-fund-transfer (as of 2026-09-18). BIC-level list — no account numbers published; not a selectable settlement instruction. The cited source may publish operational account data, but none is committed here.",
+      "2026-09-18",
+      "unverified",
+      null,
+      true,
+      false
+    ]
+  ]
+}

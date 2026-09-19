@@ -38,5 +38,5 @@
       "correspondent": "Bangkok Bank PCL, Bangkok"
     }
   ],
-  "normalization_note": "Eight-character BICs are padded with XXX. Wells Fargo PNBPUS3NNYC is normalized to the repository-standard PNBPUS33XXX, and Standard Chartered Frankfurt SCBLDEFX is normalized to SCBLDEFFXXX. Already-valid eleven-character BICs are preserved."
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied in this manifest."
 }

@@ -408,7 +408,7 @@ def test_fifth_consolidation_batch_has_exact_evidence_parity():
 def test_sixth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(6)
 
-    assert records
+    assert len(records) == 70
     assert all(_is_canonical_bic11(row[0]) and _is_canonical_bic11(row[3]) for row in records)
     assert all(row[5:9] == [None, None, None, None] for row in records)
     assert all(row[11] in {"unverified", "archived"} for row in records)
@@ -423,9 +423,10 @@ def test_sixth_consolidation_batch_has_exact_evidence_parity():
 
     seeded_by_beneficiary = {}
     for row in _batch_records(6):
-        seeded_by_beneficiary.setdefault(row[0], set()).add((row[2], row[3]))
+        seeded_by_beneficiary.setdefault(row[0], Counter()).update([(row[2], row[3])])
 
     evidence_by_beneficiary = {}
+    evidence_banks = set()
     evidence_dir = ROOT / "scripts" / "ssi-autopilot" / "evidence"
     batch_files = []
     for path in evidence_dir.glob("ssi-wave*.json"):
@@ -435,14 +436,21 @@ def test_sixth_consolidation_batch_has_exact_evidence_parity():
         evidence = json.loads(path.read_text())
         beneficiary_bic = bic11(evidence["beneficiary"]["bic"])
         assert beneficiary_bic not in evidence_by_beneficiary, beneficiary_bic
-        evidence_by_beneficiary[beneficiary_bic] = {
+        route_keys = [
             (route["currency"].upper(), bic11(route["int_bic"]))
             for route in evidence["routes"]
-        }
+        ]
+        assert evidence["source_snapshot"]["route_count"] == len(route_keys)
+        assert len(route_keys) == len(set(route_keys))
+        evidence_by_beneficiary[beneficiary_bic] = Counter(route_keys)
+        evidence_banks.add(beneficiary_bic)
         batch_files.append(path.name)
 
+    manifest_banks = {
+        bank[0] for payload in _batch_payloads(6) for bank in payload["banks"]
+    }
     assert len(batch_files) == 5
-    assert set(evidence_by_beneficiary) == set(seeded_by_beneficiary)
+    assert manifest_banks == evidence_banks == set(seeded_by_beneficiary)
     assert evidence_by_beneficiary == seeded_by_beneficiary
 
 

@@ -683,7 +683,6 @@ BANKS = [
     ("ORFBUZ22XXX", "PJSCB Orient Finance", "UZ", "Tashkent", "UZS"),
     ("SDBLBDDHXXX", "Standard Islami Bank PLC", "BD", "Dhaka", "BDT"),
     ("CIBLBDDHXXX", "City Bank PLC", "BD", "Dhaka", "BDT"),
-    ("CBININBBXXX", "Central Bank of India", "IN", "Mumbai", "INR"),
     ("IDIBINBBXXX", "Indian Bank", "IN", "Chennai", "INR"),
     ("PRVUNPKAXXX", "Prabhu Bank Limited", "NP", "Kathmandu", "NPR"),
     ("CCEYLKLXXXX", "Commercial Bank of Ceylon PLC", "LK", "Colombo", "LKR"),
@@ -1161,6 +1160,10 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_5_5.json",
     "seed_ssi_consolidation_5_6.json",
     "seed_ssi_consolidation_6_1.json",
+    "seed_ssi_consolidation_6_2.json",
+    "seed_ssi_consolidation_6_3.json",
+    "seed_ssi_consolidation_6_4.json",
+    "seed_ssi_consolidation_6_5.json",
 )
 
 
