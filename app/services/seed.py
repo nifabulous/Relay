@@ -54,6 +54,12 @@ BANKS = [
     ("CERBUGKAXXX", "Centenary Bank Uganda", "UG", "Kampala", "UGX"),
     ("SBICUGKXXXX", "Stanbic Bank Uganda", "UG", "Kampala", "UGX"),
     ("MCBLMUMUXXX", "MCB Group", "MU", "Port Louis", "MUR"),
+    ("BARCTZTZXXX", "Absa Bank Tanzania Limited", "TZ", "Dar es Salaam", "TZS"),
+    ("IMBLTZTZXXX", "I&M Bank Tanzania Limited", "TZ", "Dar es Salaam", "TZS"),
+    ("NMIBTZTZXXX", "NMB Bank PLC", "TZ", "Dar es Salaam", "TZS"),
+    ("SBICUGKXXXX", "Stanbic Bank Uganda Limited", "UG", "Kampala", "UGX"),
+    ("SBICTZTXXXX", "Stanbic Bank Tanzania Limited", "TZ", "Dar es Salaam", "TZS"),
+    ("EQBLKENAXXX", "Equity Bank Kenya Limited", "KE", "Nairobi", "KES"),
     ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "NG", "Lagos", "NGN"),
     ("UNAFKENAXXX", "UBA Kenya", "KE", "Nairobi", "KES"),
     ("UNAFSNDAXXX", "UBA Senegal", "SN", "Dakar", "XOF"),
@@ -1110,6 +1116,22 @@ def _load_ssi_batch9_groups():
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
 
+# Batch 110 captures newly published correspondent tables for East and
+# Southern African banks. The ledger is BIC-only metadata (no account
+# numbers), so these routes remain non-routable until independently verified.
+_SSI_BATCH110_DATA_FILES = ("seed_ssi_batch110_africa_east.json",)
+
+
+def _load_ssi_batch110_groups():
+    groups = []
+    for filename in _SSI_BATCH110_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH110_GROUPS = _load_ssi_batch110_groups()
+
 _SSI_BATCH8_DATA_FILES = ("seed_ssi_batch8_1.json",)
 
 
@@ -1389,6 +1411,32 @@ def _ssi_batch9_records():
     return expanded
 
 
+def _ssi_batch110_records():
+    """Expand East/Southern African correspondent tables (BIC-only)."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH110_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 def _ssi_batch8_records():
     """Expand the review-sized batch-8 ledger into canonical seed tuples."""
     expanded = []
@@ -1454,6 +1502,8 @@ def _ssi_consolidation_records():
 SSI_RECORDS = [
     # ---- Consolidated SSI review queue (PRs 103-112) ----
     *_ssi_consolidation_records(),
+    # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
+    *_ssi_batch110_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
