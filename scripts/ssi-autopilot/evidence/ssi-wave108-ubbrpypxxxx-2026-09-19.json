@@ -55,5 +55,5 @@
       "correspondent": "Bayerische Landesbank"
     }
   ],
-  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied."
+  "normalization_note": "Eight-character BICs are padded with XXX. The source spelling PNBPUS3NNYC uses the repository's explicit, reviewed Wells Fargo alias PNBPUS33XXX; this alias is allowlisted in app.services.seed.SEED_BIC_ALIASES and recorded in source_snapshot.bic_aliases. Already-valid eleven-character BICs are preserved unless an explicit allowlisted alias is recorded."
 }

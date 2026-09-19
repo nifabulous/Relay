@@ -12,6 +12,7 @@ from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
     BANKS,
+    SEED_BIC_ALIASES,
     SSI_RECORDS,
     _is_canonical_bic11,
     seed_if_empty,
@@ -470,6 +471,10 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         normalized = value.upper()
         return f"{normalized}XXX" if len(normalized) == 8 else normalized
 
+    approved_aliases = {
+        source: bic11(target) for source, target in SEED_BIC_ALIASES.items()
+    }
+
     seeded_by_beneficiary = {}
     for row in _batch_records(7):
         seeded_by_beneficiary.setdefault(row[0], Counter()).update([(row[2], row[3])])
@@ -492,6 +497,8 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         ]
         assert evidence["source_snapshot"]["route_count"] == len(route_keys)
         assert len(route_keys) == len(set(route_keys))
+        aliases = evidence["source_snapshot"].get("bic_aliases", {})
+        assert all(approved_aliases.get(source) == target for source, target in aliases.items())
         evidence_by_beneficiary[beneficiary_bic] = Counter(route_keys)
         batch_files.append(path.name)
 
@@ -502,9 +509,8 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         for route in evidence["routes"]:
             printed_bic = route.get("printed_bic")
             if printed_bic and len(printed_bic.replace(" ", "")) == 11:
-                assert {
-                    "PNBPUS3NNYC": "PNBPUS33XXX",
-                }.get(printed_bic) == route["int_bic"]
+                assert aliases.get(printed_bic) == route["int_bic"]
+                assert approved_aliases.get(printed_bic) == route["int_bic"]
 
     manifest_banks = {
         bank[0] for payload in _batch_payloads(7) for bank in payload["banks"]
