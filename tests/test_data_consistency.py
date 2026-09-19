@@ -2319,18 +2319,28 @@ class TestJapanSsiCoverage:
 
 # ---- autopilot-generated coverage tests: western-europe ----
 WESTERN_EUROPE_SSI_COVERAGE = [
-    ('AREBESMMXXX', 'ARESBANK, S.A.', {'GBP', 'KWD', 'USD'}),
-    ('BAPPIT22XXX', 'BANCO BPM SPA', {'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'HUF', 'ILS', 'JPY', 'USD'}),
-    ('CCRTIT2TXXX', 'CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.', {'CAD', 'CHF', 'EUR', 'GBP', 'USD'}),
-    ('CRBAGRAAXXX', 'ALPHA BANK S.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'HKD', 'JPY', 'NOK'}),
-    ('BOTKNL2XXXX', 'MUFG Bank (Europe) N.V., Amsterdam', {'AED', 'AUD', 'BHD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MAD', 'MXN', 'MYR', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('DEUTNL2AXXX', 'Deutsche Bank AG, Amsterdam', {'AED', 'AUD', 'BGN', 'CAD', 'GBP', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RUB', 'ZAR'}),
-    ('BPMOIT22XXX', 'BPER Banca S.p.A.', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'ISK', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
-    ('RZBAATWWXXX', 'Raiffeisen Bank International AG', {'AED', 'ALL', 'AUD', 'BAM', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'INR', 'JPY', 'KWD', 'KZT', 'MXN', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'RSD', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('RLNWATWWXXX', 'Raiffeisenlandesbank Niederösterreich-Wien AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SAR', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('OBKLAT2LXXX', 'Oberbank AG', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'SAR', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'}),
-    ('VKBLAT2LXXX', 'Volkskreditbank AG', {'AED', 'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('ICRAITRRXXX', 'ICCREA Banca S.p.A.', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ISK', 'JPY', 'MAD', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
+    ("AREBESMMXXX", "ARESBANK, S.A.", {"GBP", "KWD", "USD"}),
+    ("BAPPIT22XXX", "BANCO BPM SPA", {"CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HUF", "ILS", "JPY", "USD"}),
+    ("CCRTIT2TXXX", "CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.", {"CAD", "CHF", "EUR", "GBP", "USD"}),
+    ("CRBAGRAAXXX", "ALPHA BANK S.A.", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "HKD", "JPY", "NOK"}),
+    ("BOTKNL2XXXX", "MUFG Bank (Europe) N.V., Amsterdam", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "MYR", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("DEUTNL2AXXX", "Deutsche Bank AG, Amsterdam", {"AED", "AUD", "BGN", "CAD", "GBP", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RUB", "ZAR"}),
+    ("BPMOIT22XXX", "BPER Banca S.p.A.", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("RZBAATWWXXX", "Raiffeisen Bank International AG", {"AED", "ALL", "AUD", "BAM", "BHD", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MXN", "NOK", "NZD", "PLN", "QAR", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("RLNWATWWXXX", "Raiffeisenlandesbank Niederösterreich-Wien AG", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("OBKLAT2LXXX", "Oberbank AG", {"AED", "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "RON", "SAR", "SEK", "SGD", "TRY", "USD", "ZAR"}),
+    ("VKBLAT2LXXX", "Volkskreditbank AG", {"AED", "AUD", "BGN", "CAD", "CHF", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("ICRAITRRXXX", "ICCREA Banca S.p.A.", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ISK", "JPY", "MAD", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("BAWAATWWXXX", "BAWAG P.S.K.", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("BCVLCH2LXXX", "Banque Cantonale Vaudoise", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("FVLBNL22XXX", "Van Lanschot Kempen", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("GEBABEBBXXX", "BNP Paribas Fortis", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("KBCBBEBBXXX", "KBC Bank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("RABONL2UXXX", "Rabobank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("RAIFCH22XXX", "Raiffeisen Schweiz", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("SPADATW1XXX", "Schoellerbank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("TRIONL2UXXX", "Triodos Bank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("VDSPBE91XXX", "vdk bank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
 ]
 
 class TestWesternEuropeSsiCoverage:
@@ -2358,8 +2368,6 @@ class TestWesternEuropeSsiCoverage:
     def test_western_europe_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("western-europe", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: western-europe ----
-
-
 # ---- autopilot-generated coverage tests: mauritius ----
 MAURITIUS_SSI_COVERAGE = [
     ("AFBLMUMUXXX", "AfrAsia Bank Limited", {"AED", "BWP", "CAD", "CNY", "EUR", "GBP", "GHS", "HKD", "IDR", "INR", "JPY", "KES", "MUR", "NAD", "NGN", "RWF", "THB", "TZS", "UGX", "USD", "XAF", "XOF", "ZAR", "ZMW"}),
@@ -3119,9 +3127,13 @@ NORDICS_POLAND_SSI_COVERAGE = [
     ("BPKOPLPWXXX", "PKO Bank Polski", {"USD", "GBP", "PLN", "JPY", "CHF", "SEK", "NOK", "ZAR", "AUD", "CAD", "CNY", "CZK", "DKK", "HKD", "HUF", "SGD", "TRY"}),
     ("DNBANOKKXXX", "DNB Bank ASA", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
     ("DNBASESXXXX", "DNB Bank Sweden", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
-    ('DNBANOKXXXX', 'DNB Carnegie', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
-    ('NDEANOKKXXX', 'Nordea Bank Abp, filial i Norge', {'AED', 'AUD', 'BDT', 'BGN', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'KZT', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
-    ('GOSKPLPWXXX', 'Bank Gospodarstwa Krajowego', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'JPY', 'NOK', 'PLN', 'SEK', 'USD'}),
+    ("DNBANOKXXXX", "DNB Carnegie", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("NDEANOKKXXX", "Nordea Bank Abp, filial i Norge", {"AED", "AUD", "BDT", "BGN", "BHD", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EGP", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "KZT", "LKR", "MAD", "MXN", "NOK", "NZD", "PEN", "PHP", "PKR", "PLN", "QAR", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("GOSKPLPWXXX", "Bank Gospodarstwa Krajowego", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "PLN", "SEK", "USD"}),
+    ("HANDNO22XXX", "Handelsbanken Norway", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("SKIASESSXXX", "Skandinaviska Enskilda Banken", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("SNOWNO22XXX", "Sparebanken Norge", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("SPTRNO22XXX", "SpareBank 1 SR-Bank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
 ]
 
 class TestNordicsPolandSsiCoverage:
@@ -3154,7 +3166,10 @@ class TestNordicsPolandSsiCoverage:
 # ---- autopilot-generated coverage tests: united-kingdom ----
 UNITED_KINGDOM_SSI_COVERAGE = [
     ("DNBAGB2LXXX", "DNB Bank ASA London Branch", {"AED", "AUD", "CAD", "CHF", "CZK", "DKK", "EUR", "HKD", "HUF", "ISK", "JPY", "MXN", "NOK", "NZD", "PLN", "SAR", "SEK", "SGD", "THB", "USD", "ZAR"}),
-    ("HBUKGB4BXXX", "HSBC UK Bank plc", {'AED', 'ALL', 'AUD', 'BDT', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CZK', 'DKK', 'DZD', 'EGP', 'EUR', 'FJD', 'GHS', 'HKD', 'HUF', 'ILS', 'INR', 'JOD', 'JPY', 'KES', 'KWD', 'KZT', 'LKR', 'MAD', 'MOP', 'MUR', 'MXN', 'NAD', 'NOK', 'NZD', 'OMR', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'RSD', 'SAR', 'SEK', 'SGD', 'SZL', 'THB', 'TND', 'TRY', 'UGX', 'USD', 'ZAR', 'ZMW'}),
+    ("HBUKGB4BXXX", "HSBC UK Bank plc", {"AED", "ALL", "AUD", "BDT", "BHD", "BWP", "CAD", "CHF", "CNH", "CZK", "DKK", "DZD", "EGP", "EUR", "FJD", "GHS", "HKD", "HUF", "ILS", "INR", "JOD", "JPY", "KES", "KWD", "KZT", "LKR", "MAD", "MOP", "MUR", "MXN", "NAD", "NOK", "NZD", "OMR", "PEN", "PHP", "PKR", "PLN", "QAR", "RON", "RSD", "SAR", "SEK", "SGD", "SZL", "THB", "TND", "TRY", "UGX", "USD", "ZAR", "ZMW"}),
+    ("BUKBGB22XXX", "Bank of Scotland plc", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("HLFXGB21XXX", "Halifax", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("TSBKGB2AXXX", "TSB Bank plc", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
 ]
 
 class TestUnitedKingdomSsiCoverage:
@@ -3182,12 +3197,13 @@ class TestUnitedKingdomSsiCoverage:
     def test_united_kingdom_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("united-kingdom", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: united-kingdom ----
-
-
 # ---- autopilot-generated coverage tests: finland ----
 FINLAND_SSI_COVERAGE = [
-    ('NDEAFIHHXXX', 'Nordea Bank Abp', {'AED', 'AUD', 'BDT', 'BGN', 'BHD', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EGP', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'KZT', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'PEN', 'PHP', 'PKR', 'PLN', 'QAR', 'SGD', 'THB', 'TND', 'TRY', 'USD', 'ZAR'}),
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("NDEAFIHHXXX", "Nordea Bank Abp", {"AED", "AUD", "BDT", "BGN", "BHD", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EGP", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "KZT", "LKR", "MAD", "MXN", "NOK", "NZD", "PEN", "PHP", "PKR", "PLN", "QAR", "SGD", "THB", "TND", "TRY", "USD", "ZAR"}),
+    ("AABAFI22XXX", "Ålandsbanken", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("HELSFIHHXXX", "Bank of Finland", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("OKOYFIHHXXX", "OP Corporate Bank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
 ]
 
 class TestFinlandSsiCoverage:
@@ -3215,8 +3231,6 @@ class TestFinlandSsiCoverage:
     def test_finland_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("finland", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: finland ----
-
-
 # ---- autopilot-generated coverage tests: united-states ----
 UNITED_STATES_SSI_COVERAGE = [
     ("DNBAUS33XXX", "DNB Bank ASA New York Branch", {"AED", "AUD", "CAD", "CHF", "DKK", "EUR", "GBP", "HKD", "HUF", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "USD", "ZAR"}),
@@ -3252,10 +3266,12 @@ class TestUnitedStatesSsiCoverage:
 
 # ---- autopilot-generated coverage tests: germany ----
 GERMANY_SSI_COVERAGE = [
-    ('DNBADEHXXXX', 'DNB Bank ASA, Hamburg Branch', {'AED', 'AUD', 'BHD', 'BWP', 'CAD', 'CHF', 'CNH', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KES', 'KRW', 'KWD', 'LKR', 'MAD', 'MXN', 'NOK', 'NZD', 'OMR', 'PHP', 'PKR', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'SGD', 'THB', 'TND', 'TRY', 'TZS', 'USD', 'ZAR'}),
-    ('HASPDEHHXXX', 'Hamburger Sparkasse AG', {'AUD', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'}),
-    ('AKBKDEFFXXX', 'Akbank AG', {'CHF', 'GBP', 'JPY', 'PLN', 'TRY', 'USD'}),
     ("BOTKDEDXXXX", "MUFG Bank (Europe) N.V., Germany Branch", {"AED", "AUD", "BHD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "ILS", "INR", "JPY", "KWD", "KZT", "MAD", "MXN", "NOK", "NZD", "PLN", "RON", "RSD", "RUB", "SAR", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("DNBADEHXXXX", "DNB Bank ASA, Hamburg Branch", {"AED", "AUD", "BHD", "BWP", "CAD", "CHF", "CNH", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KES", "KRW", "KWD", "LKR", "MAD", "MXN", "NOK", "NZD", "OMR", "PHP", "PKR", "PLN", "QAR", "RON", "SAR", "SEK", "SGD", "THB", "TND", "TRY", "TZS", "USD", "ZAR"}),
+    ("HASPDEHHXXX", "Hamburger Sparkasse AG", {"AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "JPY", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}),
+    ("AKBKDEFFXXX", "Akbank AG", {"CHF", "GBP", "JPY", "PLN", "TRY", "USD"}),
+    ("GENODEF1XXX", "DZ BANK", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("PBNKDEFFXXX", "Postbank", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
 ]
 
 class TestGermanySsiCoverage:
@@ -3314,3 +3330,106 @@ class TestJordanSsiCoverage:
     def test_jordan_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("jordan", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: jordan ----
+
+
+# ---- autopilot-generated coverage tests: france-wave8 ----
+FRANCE_WAVE8_SSI_COVERAGE = [
+    ("CMCIFR2AXXX", "Banque Fédérative du Crédit Mutuel", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("PSSTFRPPXXX", "La Banque Postale", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+]
+
+class TestFranceWave8SsiCoverage:
+
+    def test_france_wave8_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("france-wave8")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in FRANCE_WAVE8_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_france_wave8_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("france-wave8")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"france-wave8 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_france_wave8_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("france-wave8", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: france-wave8 ----
+
+
+# ---- autopilot-generated coverage tests: ireland-wave8 ----
+IRELAND_WAVE8_SSI_COVERAGE = [
+    ("AIBKIE2DXXX", "AIB", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("BOFIIE2DXXX", "Bank of Ireland", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("DABAIE2DXXX", "Danske Bank Ireland", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("IPBSIE2DXXX", "Permanent TSB", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("IRCEIE2DXXX", "Irish Nationwide Building Society", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+]
+
+class TestIrelandWave8SsiCoverage:
+
+    def test_ireland_wave8_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("ireland-wave8")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in IRELAND_WAVE8_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_ireland_wave8_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("ireland-wave8")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"ireland-wave8 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_ireland_wave8_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("ireland-wave8", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: ireland-wave8 ----
+
+
+# ---- autopilot-generated coverage tests: luxembourg-wave8 ----
+LUXEMBOURG_WAVE8_SSI_COVERAGE = [
+    ("BCEELULLXXX", "Banque et Caisse d'Epargne de l'Etat", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("BGLLLULLXXX", "BGL BNP Paribas", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+    ("CCPLLULLXXX", "POST Luxembourg", {"CHF", "DKK", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
+]
+
+class TestLuxembourgWave8SsiCoverage:
+
+    def test_luxembourg_wave8_banks_have_seeded_ssi_records(self):
+        manifest_expected = _manifest_seedable_coverage("luxembourg-wave8")
+        generated_expected = {bic: (bank_name, currencies) for bic, bank_name, currencies in LUXEMBOURG_WAVE8_SSI_COVERAGE}
+        assert generated_expected == manifest_expected
+        seeded = {}
+        for record in SSI_RECORDS:
+            seeded.setdefault(record[0], set()).add(record[2])
+        for bic, (bank_name, currencies) in manifest_expected.items():
+            missing = currencies - seeded.get(bic, set())
+            assert not missing, f"{bank_name} ({bic}) is missing seeded SSI records for: {sorted(missing)}"
+
+    def test_luxembourg_wave8_banks_are_in_the_bank_directory(self):
+        bank_bics = {row[0] for row in BANKS}
+        manifest_expected = _manifest_seedable_coverage("luxembourg-wave8")
+        missing = [bic for bic in manifest_expected if bic not in bank_bics]
+        assert not missing, (
+            f"luxembourg-wave8 SSI beneficiaries must also be seeded in BANKS so "
+            f"Explore can show their settlement instructions: {missing}"
+        )
+
+    def test_luxembourg_wave8_seeded_records_are_semantically_valid(self):
+        _assert_manifest_region_records("luxembourg-wave8", SSI_RECORDS, BANKS)
+# ---- end autopilot-generated coverage tests: luxembourg-wave8 ----
