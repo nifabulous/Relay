@@ -202,6 +202,8 @@ BANKS = [
     ("IVESZAJJXXX", "Investec Bank", "ZA", "Johannesburg", "ZAR"),
     ("GIBAATWGXXX", "Erste Group Bank AG", "AT", "Vienna", "EUR"),
     ("PNBPUS33XXX", "Wells Fargo Bank N.A.", "US", "New York", "USD"),
+    ("UNAFUS33XXX", "United Bank for Africa, New York", "US", "New York", "USD"),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "UY", "Montevideo", "UYU"),
     ("BKIDUS33XXX", "Bank of India New York", "US", "New York", "USD"),
     ("NBPLPLPWXXX", "Narodowy Bank Polski", "PL", "Warsaw", "PLN"),
     ("BOFMCAT2XXX", "Bank of Montreal", "CA", "Toronto", "CAD"),
@@ -1807,11 +1809,24 @@ def _ssi_batch_global_currency_records():
 
     return rows
 
+_SSI_BIC_ALIASES = {
+    "PNBPUS3NNYC": "PNBPUS33XXX",
+    "SCBLDEFXXXX": "SCBLDEFFXXX",
+}
+
+
 def _dedupe_ssi_records(rows):
     """Keep the first source row for each beneficiary/currency/intermediary route."""
     seen = set()
     unique = []
     for row in rows:
+        row = tuple(row)
+        beneficiary_bic = row[0] + "XXX" if len(row[0]) == 8 else row[0]
+        intermediary_bic = row[3] + "XXX" if len(row[3]) == 8 else row[3]
+        beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
+        intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
+        if beneficiary_bic != row[0] or intermediary_bic != row[3]:
+            row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
         key = (row[0], row[2], row[3])
         if key in seen:
             continue
@@ -1821,6 +1836,9 @@ def _dedupe_ssi_records(rows):
 
 
 SSI_RECORDS = _dedupe_ssi_records([
+    # Consolidation ledgers are the canonical source for reviewed routes; let
+    # their rows win when an older inline fixture shares a route key.
+    *_ssi_consolidation_records(),
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     ('HANDNO22XXX', 'Handelsbanken Norway', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001119', 'ACCT-91001119', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
@@ -2081,8 +2099,6 @@ SSI_RECORDS = _dedupe_ssi_records([
     ('CCPLLULLXXX', 'POST Luxembourg', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005716', 'ACCT-91005716', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
     # ---- SSI wave 110 (East/Southeast Asia and Pacific BIC-only metadata) ----
     *SSI_ASIA_EAST_PACIFIC_RECORDS,
-    # ---- Consolidated SSI review queue (PRs 103-112) ----
-    *_ssi_consolidation_records(),
     # ---- SSI expansion batch 110 (global currency-explicit routes) ----
     *_ssi_batch_global_currency_records(),
     # ---- SSI expansion wave 110 (Phongsavanh Bank Laos) ----
@@ -9643,7 +9659,7 @@ SEED_BIC_ALIASES = {
     "EDBBEB22XXX": "WBWCLULLXXX",
     # Kasikornbank's source prints the Wells Fargo branch as PNBPUS3NNYC;
     # the repository's canonical directory entry is PNBPUS33.
-    "PNBPUS3NNYC": "PNBPUS33",
+    "PNBPUS3NNYC": "PNBPUS33XXX",
 }
 
 

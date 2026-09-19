@@ -333,7 +333,7 @@ def test_every_route_evidence_file_matches_the_seeded_catalog():
                 )
         checked_files.append(path.name)
 
-    assert len(checked_files) == 117
+    assert len(checked_files) == 118
 
 
 def test_wave69_evidence_count_matches_both_split_seed_ledgers():
