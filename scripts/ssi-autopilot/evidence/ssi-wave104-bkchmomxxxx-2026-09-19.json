@@ -15,6 +15,15 @@
     "route_count": 15,
     "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
     "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
+    "source_extract_fixture": "tests/fixtures/ssi_wave104_source_attestation.json",
+    "source_route_digest": "f4f614d1a3d06bfc102ba57b332ba0fd3a16e7eaa1930e6227360766fdbd84d4",
+    "bic_verification": {
+      "fixture": "tests/fixtures/ssi_wave104_source_attestation.json",
+      "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",
+      "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+      "reference_as_of": "2026-06-01",
+      "status": "source_cross_checked_and_canonicalized; operational_status_unverified_non_routable"
+    },
     "excluded_routes": [
       {
         "currency": "USD",

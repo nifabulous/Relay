@@ -572,6 +572,95 @@ def test_wave102_has_a_reproducible_source_extract_and_bic_cross_check():
     assert fixture["bic_verification"]["operational_status"] == "unverified_non_routable"
 
 
+def test_seventh_consolidation_waves_have_source_and_bic_attestations():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence_paths = sorted(
+        (ROOT / "scripts" / "ssi-autopilot" / "evidence").glob("ssi-wave10[1-8]-*.json")
+    )
+    assert len(evidence_paths) == 8
+
+    for evidence_path in evidence_paths:
+        evidence = json.loads(evidence_path.read_text())
+        snapshot = evidence["source_snapshot"]
+        fixture_path = ROOT / snapshot["source_extract_fixture"]
+        fixture = json.loads(fixture_path.read_text())
+        source_rows = fixture["source_extract"]["rows"]
+
+        assert fixture["wave"] == int(evidence_path.name.split("-", 2)[1].removeprefix("wave"))
+        assert fixture["beneficiary_bic"] == evidence["beneficiary"]["bic"]
+        assert fixture["source"] == evidence["source"]
+        assert fixture["as_of"] == evidence["as_of"]
+        assert fixture["source_extract"]["account_values_removed"] is True
+
+        expected_source_rows = [
+            {
+                "currency": route["currency"].upper(),
+                "bic": route.get("printed_bic") or route["int_bic"],
+                "correspondent": route["correspondent"],
+                **(
+                    {"printed_currency": route["printed_currency"]}
+                    if route.get("printed_currency")
+                    else {}
+                ),
+            }
+            for route in evidence["routes"]
+        ]
+        expected_source_rows.extend(
+            {
+                "currency": excluded["currency"].upper(),
+                "bic": excluded["printed_bic"],
+                "correspondent": excluded["correspondent"],
+                "excluded": True,
+            }
+            for excluded in snapshot.get("excluded_routes", [])
+        )
+        assert source_rows == expected_source_rows
+
+        digest_field = (
+            "source_extract_digest"
+            if "source_extract_digest" in fixture
+            else "source_route_digest"
+        )
+        digest = hashlib.sha256(
+            json.dumps(source_rows, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        assert fixture[digest_field] == digest
+        assert snapshot[digest_field] == digest
+
+        verification = fixture["independent_bic_verification"]
+        assert verification["reference"] == snapshot["bic_verification"]["reference"]
+        assert verification["reference_as_of"] == snapshot["bic_verification"]["reference_as_of"]
+        assert verification["operational_status"] == "unverified_non_routable"
+        assert [
+            (row["source_bic"], row["canonical_bic"])
+            for row in verification["rows"]
+        ] == [(row["bic"], bic11(row["bic"])) for row in source_rows]
+        assert all(
+            row["canonical_bic"] == bic11(row["source_bic"])
+            for row in verification["rows"]
+        )
+
+        directory_path = ROOT / snapshot["bic_verification"]["directory_extract_fixture"]
+        directory = json.loads(directory_path.read_text())
+        directory_rows = directory["rows"]
+        directory_digest = hashlib.sha256(
+            json.dumps(directory_rows, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        assert directory["reference"] == verification["reference"]
+        assert directory["reference_as_of"] == verification["reference_as_of"]
+        assert directory["artifact_sha256"] == directory_digest
+        directory_keys = {
+            (row["source_bic"], row["canonical_bic"]) for row in directory_rows
+        }
+        assert {
+            (row["source_bic"], row["canonical_bic"])
+            for row in verification["rows"]
+        } <= directory_keys
+
+
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(4)
     assert len(records) == 123

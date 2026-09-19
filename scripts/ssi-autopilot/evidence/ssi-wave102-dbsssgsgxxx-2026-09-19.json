@@ -17,8 +17,12 @@
     "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
     "source_extract_fixture": "tests/fixtures/ssi_wave102_dbs_agent_bank_extract.json",
     "source_route_digest": "eb671134d2978a4f9b648047bd35af98f10bc680468bef20ec6f55675fc5e8cf",
+    "source_extract_digest": "c4cf5ade57779aeb230fc410701c7f3f7ce893461c43ffd0b83894c9b3699081",
     "bic_verification": {
       "fixture": "tests/fixtures/ssi_wave102_dbs_agent_bank_extract.json",
+      "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",
+      "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+      "reference_as_of": "2026-06-01",
       "status": "source_cross_checked_and_canonicalized; operational_status_unverified_non_routable"
     }
   },

@@ -1,0 +1,128 @@
+{
+  "fixture_version": 1,
+  "wave": 101,
+  "beneficiary_bic": "CBININBBXXX",
+  "source": "https://www.centralbank.bank.in/en/International_Banking",
+  "as_of": "2026-09-18",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "EUR",
+        "bic": "SOGEFRPPXXX",
+        "correspondent": "Société Générale, Paris"
+      },
+      {
+        "currency": "EUR",
+        "bic": "COBADEFFXXX",
+        "correspondent": "Commerzbank, Frankfurt"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BARCDEFFXXX",
+        "correspondent": "Barclays Bank Ireland PLC"
+      },
+      {
+        "currency": "GBP",
+        "bic": "SCBLGB2LXXX",
+        "correspondent": "Standard Chartered Bank, London"
+      },
+      {
+        "currency": "GBP",
+        "bic": "BARCGB22XXX",
+        "correspondent": "Barclays Bank, London"
+      },
+      {
+        "currency": "AUD",
+        "bic": "ANZBAU3MXXX",
+        "correspondent": "ANZ Bank"
+      },
+      {
+        "currency": "CAD",
+        "bic": "COBADEFFXXX",
+        "correspondent": "Commerzbank"
+      },
+      {
+        "currency": "CHF",
+        "bic": "UBSWCHZH80A",
+        "correspondent": "UBS, Zurich"
+      },
+      {
+        "currency": "JPY",
+        "bic": "SCBLJPJTXXX",
+        "correspondent": "Standard Chartered Bank, Tokyo"
+      },
+      {
+        "currency": "SGD",
+        "bic": "SCBLSG22XXX",
+        "correspondent": "Standard Chartered Bank, Singapore"
+      }
+    ]
+  },
+  "source_route_digest": "26f3c5bb7d893da4dc4c731b2895855da1554079260ff225b8059e8eeed1558e",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "SOGEFRPPXXX",
+        "canonical_bic": "SOGEFRPPXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "COBADEFFXXX",
+        "canonical_bic": "COBADEFFXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BARCDEFFXXX",
+        "canonical_bic": "BARCDEFFXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "SCBLGB2LXXX",
+        "canonical_bic": "SCBLGB2LXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BARCGB22XXX",
+        "canonical_bic": "BARCGB22XXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "ANZBAU3MXXX",
+        "canonical_bic": "ANZBAU3MXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "COBADEFFXXX",
+        "canonical_bic": "COBADEFFXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "UBSWCHZH80A",
+        "canonical_bic": "UBSWCHZH80A",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "SCBLJPJTXXX",
+        "canonical_bic": "SCBLJPJTXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "SCBLSG22XXX",
+        "canonical_bic": "SCBLSG22XXX",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

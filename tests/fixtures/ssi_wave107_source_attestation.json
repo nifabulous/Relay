@@ -1,0 +1,79 @@
+{
+  "fixture_version": 1,
+  "wave": 107,
+  "beneficiary_bic": "BINPPEPLXXX",
+  "source": "https://interbank.pe/bancos-corresponsales",
+  "as_of": "2026-09-19",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "EUR",
+        "bic": "IRVTUS3N",
+        "correspondent": "Bank of New York Mellon"
+      },
+      {
+        "currency": "CAD",
+        "bic": "IRVTUS3N",
+        "correspondent": "Bank of New York Mellon"
+      },
+      {
+        "currency": "GBP",
+        "bic": "SCBLGB2L",
+        "correspondent": "Standard Chartered Bank, London"
+      },
+      {
+        "currency": "CNY",
+        "bic": "SCBLHKHH",
+        "correspondent": "Standard Chartered Bank, Hong Kong",
+        "printed_currency": "RMB / CNY"
+      },
+      {
+        "currency": "AUD",
+        "bic": "IRVTUS3N",
+        "correspondent": "Bank of New York Mellon"
+      }
+    ]
+  },
+  "source_route_digest": "6b857db337d388f6fb2093947d5371ade2a2556c78a7a013e04650ef4800ef8e",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "IRVTUS3N",
+        "canonical_bic": "IRVTUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "IRVTUS3N",
+        "canonical_bic": "IRVTUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SCBLGB2L",
+        "canonical_bic": "SCBLGB2LXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SCBLHKHH",
+        "canonical_bic": "SCBLHKHHXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "IRVTUS3N",
+        "canonical_bic": "IRVTUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

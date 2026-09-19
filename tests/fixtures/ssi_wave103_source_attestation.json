@@ -1,0 +1,69 @@
+{
+  "fixture_version": 1,
+  "wave": 103,
+  "beneficiary_bic": "BKCHNZ22XXX",
+  "source": "https://www.bankofchina.com/nz/en/pbservice/pb3/202509/t20250930_25521266.html",
+  "as_of": "2025-09-30",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "AUD",
+        "bic": "BKCHAU2SXXX",
+        "correspondent": "Bank of China Sydney Branch"
+      },
+      {
+        "currency": "USD",
+        "bic": "IRVTUS3NXXX",
+        "correspondent": "The Bank of New York Mellon"
+      },
+      {
+        "currency": "CNY",
+        "bic": "BKCHHKHH838",
+        "correspondent": "Bank of China (Hong Kong) Limited",
+        "printed_currency": "RMB"
+      },
+      {
+        "currency": "HKD",
+        "bic": "BKCHHKHHXXX",
+        "correspondent": "Bank of China (Hong Kong) Limited"
+      }
+    ]
+  },
+  "source_route_digest": "73a76e78ae1210f233f3af7f98261fa00d73625a848e4e8f5a758cc21de1b4c5",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "BKCHAU2SXXX",
+        "canonical_bic": "BKCHAU2SXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "IRVTUS3NXXX",
+        "canonical_bic": "IRVTUS3NXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHHKHH838",
+        "canonical_bic": "BKCHHKHH838",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "BKCHHKHHXXX",
+        "canonical_bic": "BKCHHKHHXXX",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}

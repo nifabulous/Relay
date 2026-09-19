@@ -1,34 +1,291 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
+  "wave": 102,
+  "beneficiary_bic": "DBSSSGSGXXX",
   "source": "https://www.dbs.com.sg/sme/day-to-day/collections/incoming-funds/telegraphic-transfer-info.page",
   "as_of": "2026-09-19",
   "title": "DBS List of Agent Banks",
   "raw_accounts_included": false,
   "source_route_digest": "eb671134d2978a4f9b648047bd35af98f10bc680468bef20ec6f55675fc5e8cf",
   "rows": [
-    ["AED", "NBADAEAA"],
-    ["AUD", "CTBAAU2S"],
-    ["BND", "SCBLBNBB"],
-    ["CAD", "ROYCCAT2"],
-    ["CHF", "UBSWCHZH80A"],
-    ["CNY", "DBSSCNSHXXX"],
-    ["DKK", "NDEADKKK"],
-    ["EUR", "BARCDEFF"],
-    ["GBP", "RBOSGB2L"],
-    ["HKD", "DHBKHKHH"],
-    ["IDR", "DBSBIDJA"],
-    ["JPY", "SMBCJPJT"],
-    ["NZD", "ASBBNZ2A"],
-    ["NOK", "DNBANOKK"],
-    ["SEK", "NDEASESS"],
-    ["THB", "TMBKTHBK"],
-    ["USD", "CHASUS33"],
-    ["ZAR", "SBZAZAJJ"]
+    [
+      "AED",
+      "NBADAEAA"
+    ],
+    [
+      "AUD",
+      "CTBAAU2S"
+    ],
+    [
+      "BND",
+      "SCBLBNBB"
+    ],
+    [
+      "CAD",
+      "ROYCCAT2"
+    ],
+    [
+      "CHF",
+      "UBSWCHZH80A"
+    ],
+    [
+      "CNY",
+      "DBSSCNSHXXX"
+    ],
+    [
+      "DKK",
+      "NDEADKKK"
+    ],
+    [
+      "EUR",
+      "BARCDEFF"
+    ],
+    [
+      "GBP",
+      "RBOSGB2L"
+    ],
+    [
+      "HKD",
+      "DHBKHKHH"
+    ],
+    [
+      "IDR",
+      "DBSBIDJA"
+    ],
+    [
+      "JPY",
+      "SMBCJPJT"
+    ],
+    [
+      "NZD",
+      "ASBBNZ2A"
+    ],
+    [
+      "NOK",
+      "DNBANOKK"
+    ],
+    [
+      "SEK",
+      "NDEASESS"
+    ],
+    [
+      "THB",
+      "TMBKTHBK"
+    ],
+    [
+      "USD",
+      "CHASUS33"
+    ],
+    [
+      "ZAR",
+      "SBZAZAJJ"
+    ]
   ],
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "AED",
+        "bic": "NBADAEAA",
+        "correspondent": "National Bank of Abu Dhabi, Abu Dhabi"
+      },
+      {
+        "currency": "AUD",
+        "bic": "CTBAAU2S",
+        "correspondent": "Commonwealth Bank of Australia, Sydney"
+      },
+      {
+        "currency": "BND",
+        "bic": "SCBLBNBB",
+        "correspondent": "Standard Chartered Bank, Brunei"
+      },
+      {
+        "currency": "CAD",
+        "bic": "ROYCCAT2",
+        "correspondent": "Royal Bank of Canada, Toronto"
+      },
+      {
+        "currency": "CHF",
+        "bic": "UBSWCHZH80A",
+        "correspondent": "UBS AG, Zurich"
+      },
+      {
+        "currency": "CNY",
+        "bic": "DBSSCNSHXXX",
+        "correspondent": "DBS Bank (China) Limited, Shanghai"
+      },
+      {
+        "currency": "DKK",
+        "bic": "NDEADKKK",
+        "correspondent": "Nordea Bank Danmark A/S, Copenhagen"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BARCDEFF",
+        "correspondent": "Barclays Bank Ireland, Frankfurt"
+      },
+      {
+        "currency": "GBP",
+        "bic": "RBOSGB2L",
+        "correspondent": "Royal Bank of Scotland, London"
+      },
+      {
+        "currency": "HKD",
+        "bic": "DHBKHKHH",
+        "correspondent": "DBS Bank (Hong Kong) Ltd"
+      },
+      {
+        "currency": "IDR",
+        "bic": "DBSBIDJA",
+        "correspondent": "PT Bank DBS Indonesia"
+      },
+      {
+        "currency": "JPY",
+        "bic": "SMBCJPJT",
+        "correspondent": "Sumitomo Mitsui Banking Corporation, Tokyo"
+      },
+      {
+        "currency": "NZD",
+        "bic": "ASBBNZ2A",
+        "correspondent": "ASB Bank Ltd., Auckland"
+      },
+      {
+        "currency": "NOK",
+        "bic": "DNBANOKK",
+        "correspondent": "DNB Bank, Oslo"
+      },
+      {
+        "currency": "SEK",
+        "bic": "NDEASESS",
+        "correspondent": "Nordea Bank Sweden AB, Stockholm"
+      },
+      {
+        "currency": "THB",
+        "bic": "TMBKTHBK",
+        "correspondent": "Thai Military Bank PCL, Bangkok"
+      },
+      {
+        "currency": "USD",
+        "bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank, N.A."
+      },
+      {
+        "currency": "ZAR",
+        "bic": "SBZAZAJJ",
+        "correspondent": "Standard Bank of South Africa Ltd., Johannesburg"
+      }
+    ]
+  },
+  "source_extract_digest": "c4cf5ade57779aeb230fc410701c7f3f7ce893461c43ffd0b83894c9b3699081",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "NBADAEAA",
+        "canonical_bic": "NBADAEAAXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CTBAAU2S",
+        "canonical_bic": "CTBAAU2SXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SCBLBNBB",
+        "canonical_bic": "SCBLBNBBXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "ROYCCAT2",
+        "canonical_bic": "ROYCCAT2XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "UBSWCHZH80A",
+        "canonical_bic": "UBSWCHZH80A",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "DBSSCNSHXXX",
+        "canonical_bic": "DBSSCNSHXXX",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "NDEADKKK",
+        "canonical_bic": "NDEADKKKXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BARCDEFF",
+        "canonical_bic": "BARCDEFFXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "RBOSGB2L",
+        "canonical_bic": "RBOSGB2LXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "DHBKHKHH",
+        "canonical_bic": "DHBKHKHHXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "DBSBIDJA",
+        "canonical_bic": "DBSBIDJAXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SMBCJPJT",
+        "canonical_bic": "SMBCJPJTXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "ASBBNZ2A",
+        "canonical_bic": "ASBBNZ2AXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "DNBANOKK",
+        "canonical_bic": "DNBANOKKXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "NDEASESS",
+        "canonical_bic": "NDEASESSXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "TMBKTHBK",
+        "canonical_bic": "TMBKTHBKXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "CHASUS33",
+        "canonical_bic": "CHASUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SBZAZAJJ",
+        "canonical_bic": "SBZAZAJJXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  },
   "bic_verification": {
     "reference": "https://www.swift.com/swift-resource/234421/download/1000",
     "reference_as_of": "2026-06-01",
-    "method": "Compare the source-printed BIC with the independent SWIFT directory reference, then apply the repository's deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "method": "Compare the source-printed BIC with the independent SWIFT directory reference, then apply the repository deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
     "operational_status": "unverified_non_routable"
   }
 }

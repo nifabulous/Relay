@@ -1,0 +1,168 @@
+{
+  "fixture_version": 1,
+  "wave": 106,
+  "beneficiary_bic": "MBCOMXMMXXX",
+  "source": "https://www.scotiabank.com.mx/personas/servicios/internacionales/swift-ordenes-pago.aspx",
+  "as_of": "2026-09-19",
+  "source_extract": {
+    "format": "sanitized_source_rows",
+    "account_values_removed": true,
+    "redacted_fields": [
+      "account_number",
+      "aba",
+      "charges",
+      "value_date"
+    ],
+    "rows": [
+      {
+        "currency": "USD",
+        "bic": "CHASUS33",
+        "correspondent": "JPMorgan Chase Bank"
+      },
+      {
+        "currency": "USD",
+        "bic": "BOFAUS3N",
+        "correspondent": "Bank of America"
+      },
+      {
+        "currency": "USD",
+        "bic": "PNBPUS33PHL",
+        "correspondent": "Wells Fargo Bank"
+      },
+      {
+        "currency": "USD",
+        "bic": "CITIUS33",
+        "correspondent": "Citibank"
+      },
+      {
+        "currency": "USD",
+        "bic": "SCBLUS33",
+        "correspondent": "Standard Chartered Bank"
+      },
+      {
+        "currency": "CAD",
+        "bic": "NOSCCATT",
+        "correspondent": "Bank of Nova Scotia"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BBVAESMM",
+        "correspondent": "BBVA Madrid"
+      },
+      {
+        "currency": "EUR",
+        "bic": "BBRUBEBB",
+        "correspondent": "ING Belgium"
+      },
+      {
+        "currency": "JPY",
+        "bic": "BOTKJPJT",
+        "correspondent": "MUFG Bank, Tokyo"
+      },
+      {
+        "currency": "GBP",
+        "bic": "NWBKGB2L",
+        "correspondent": "National Westminster Bank, London"
+      },
+      {
+        "currency": "NOK",
+        "bic": "DNBANOKK",
+        "correspondent": "DNB Bank"
+      },
+      {
+        "currency": "DKK",
+        "bic": "NDEADKKK",
+        "correspondent": "Nordea Denmark"
+      },
+      {
+        "currency": "SEK",
+        "bic": "ESSESESS",
+        "correspondent": "Skandinaviska Enskilda Banken"
+      },
+      {
+        "currency": "CHF",
+        "bic": "UBSWCHZH80A",
+        "correspondent": "UBS AG"
+      }
+    ]
+  },
+  "source_route_digest": "6dfd4bc7e97a4413cda3c3f6f3cbcb888a2eef24a9432193f94801b9b83f22b7",
+  "independent_bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare each source BIC with the independent SWIFT directory reference, then apply deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "rows": [
+      {
+        "source_bic": "CHASUS33",
+        "canonical_bic": "CHASUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BOFAUS3N",
+        "canonical_bic": "BOFAUS3NXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "PNBPUS33PHL",
+        "canonical_bic": "PNBPUS33PHL",
+        "verification": "exact_source_bic"
+      },
+      {
+        "source_bic": "CITIUS33",
+        "canonical_bic": "CITIUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "SCBLUS33",
+        "canonical_bic": "SCBLUS33XXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "NOSCCATT",
+        "canonical_bic": "NOSCCATTXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BBVAESMM",
+        "canonical_bic": "BBVAESMMXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BBRUBEBB",
+        "canonical_bic": "BBRUBEBBXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "BOTKJPJT",
+        "canonical_bic": "BOTKJPJTXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "NWBKGB2L",
+        "canonical_bic": "NWBKGB2LXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "DNBANOKK",
+        "canonical_bic": "DNBANOKKXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "NDEADKKK",
+        "canonical_bic": "NDEADKKKXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "ESSESESS",
+        "canonical_bic": "ESSESESSXXX",
+        "verification": "canonicalized_from_eight_character_bic"
+      },
+      {
+        "source_bic": "UBSWCHZH80A",
+        "canonical_bic": "UBSWCHZH80A",
+        "verification": "exact_source_bic"
+      }
+    ],
+    "operational_status": "unverified_non_routable"
+  }
+}
