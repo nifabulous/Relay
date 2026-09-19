@@ -1144,6 +1144,19 @@ def _load_ssi_batch10_groups():
 
 _SSI_BATCH10_GROUPS = _load_ssi_batch10_groups()
 
+_SSI_ASIA_SUBCONTINENT_DATA_FILES = ("seed_ssi_asia_subcontinent_350.json",)
+
+
+def _load_ssi_asia_subcontinent_groups():
+    groups = []
+    for filename in _SSI_ASIA_SUBCONTINENT_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_ASIA_SUBCONTINENT_GROUPS = _load_ssi_asia_subcontinent_groups()
+
 _SSI_BATCH8_DATA_FILES = ("seed_ssi_batch8_1.json",)
 
 
@@ -1517,6 +1530,29 @@ def _ssi_batch10_records():
     return expanded
 
 
+def _ssi_asia_subcontinent_records():
+    """Expand the Asia subcontinent BIC-only source ledger."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_ASIA_SUBCONTINENT_GROUPS:
+        note = f"{source.rstrip()} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic if len(beneficiary_bic) == 11 else beneficiary_bic + "XXX",
+                beneficiary_name, currency,
+                intermediary_bic if len(intermediary_bic) == 8 else intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of, status,
+                verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 def _ssi_batch8_records():
     """Expand the review-sized batch-8 ledger into canonical seed tuples."""
     expanded = []
@@ -1861,6 +1897,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     *_ssi_batch110_records(),
     # ---- SSI expansion batch 10 (South Asia correspondent metadata) ----
     *_ssi_batch10_records(),
+    # ---- SSI expansion Asia subcontinent source ledger ----
+    *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
