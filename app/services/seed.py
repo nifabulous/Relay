@@ -1236,7 +1236,41 @@ def _load_ssi_consolidation_data():
 
 _SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
 BANKS.extend(_SSI_CONSOLIDATED_BANKS)
+# Phongsavanh's own correspondent page publishes currency-qualified mappings.
+# Keep the beneficiary BIC-only/non-routable until operations independently
+# verifies settlement account and charge details.
+BANKS.append(("PSVBLALAXXX", "Phongsavanh Bank Ltd", "LA", "Vientiane", "LAK"))
 _SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
+
+
+def _ssi_wave110_phongsavanh_records():
+    """Currency-qualified correspondent mappings from Phongsavanh Bank."""
+    source = "https://phongsavanhbank.com/psv/modules.php?lg=eng&modules=correspondent_bank"
+    note = (
+        "Source: " + source +
+        " (as of 2026-09-19). BIC-level list — no account numbers published; "
+        "not a selectable settlement instruction. " + _SSI_REAL_NOTE
+    )
+    rows = [
+        ("USD", "CHASUS33XXX", "J.P. Morgan Chase Bank N.A."),
+        ("USD", "VBAAVNVXXXX", "Vietnam Bank for Agriculture and Rural Development"),
+        ("USD", "ICBKCNBJXXX", "Industrial and Commercial Bank of China"),
+        ("USD", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("THB", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("EUR", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("USD", "BKKBTHBKXXX", "Bangkok Bank Public Company Limited"),
+        ("THB", "BKKBTHBKXXX", "Bangkok Bank Public Company Limited"),
+        ("THB", "UBOBTHBKXXX", "CIMB Thai Bank Public Company Limited"),
+        ("CNY", "ICBKLALAXXX", "Industrial and Commercial Bank of China, Vientiane"),
+        ("CNY", "ICBKLALACLR", "Industrial and Commercial Bank of China, Laos RMB Clearing Bank"),
+    ]
+    return [
+        (
+            "PSVBLALAXXX", "Phongsavanh Bank Ltd", currency, bic, name,
+            None, None, None, None, note, "2026-09-19", "unverified", None, True, True,
+        )
+        for currency, bic, name in rows
+    ]
 
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
@@ -1453,6 +1487,8 @@ def _ssi_consolidation_records():
 SSI_RECORDS = [
     # ---- Consolidated SSI review queue (PRs 103-112) ----
     *_ssi_consolidation_records(),
+    # ---- SSI expansion wave 110 (Phongsavanh Bank Laos) ----
+    *_ssi_wave110_phongsavanh_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
