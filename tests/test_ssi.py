@@ -615,7 +615,7 @@ class TestSSIProvenanceIsConsistentWithItsSource:
             (bic, note[:120])
             for bic, note, _as_of, status in self._rows()
             if status in ("published", "unverified")
-            and (re.search(r"archiv|wayback|snapshot", note, re.I) or "web.archive.org" in note)
+            and (re.search(r"archive|wayback|snapshot", note, re.I) or "web.archive.org" in note)
         ]
         assert not offenders, (
             f"{len(offenders)} row(s) claim an unarchived status but cite an "

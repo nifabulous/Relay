@@ -14,10 +14,7 @@
     "account_numbers_published": false,
     "route_count": 5,
     "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
-    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
-    "bic_aliases": {
-      "PNBPUS3NNYC": "PNBPUS33XXX"
-    }
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
   },
   "routes": [
     {

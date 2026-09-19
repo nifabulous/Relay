@@ -484,6 +484,8 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         evidence = json.loads(path.read_text())
         beneficiary_bic = bic11(evidence["beneficiary"]["bic"])
         assert beneficiary_bic not in evidence_by_beneficiary, beneficiary_bic
+        assert evidence["source_urls"][0] == evidence["source"]
+        assert evidence["as_of"]
         route_keys = [
             (route["currency"].upper(), bic11(route["int_bic"]))
             for route in evidence["routes"]
@@ -492,6 +494,17 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         assert len(route_keys) == len(set(route_keys))
         evidence_by_beneficiary[beneficiary_bic] = Counter(route_keys)
         batch_files.append(path.name)
+
+        seeded_rows = [row for row in _batch_records(7) if row[0] == beneficiary_bic]
+        citation = f"Source: {evidence['source']} (as of {evidence['as_of']})."
+        assert seeded_rows
+        assert all(row[9].startswith(citation) for row in seeded_rows)
+        for route in evidence["routes"]:
+            printed_bic = route.get("printed_bic")
+            if printed_bic and len(printed_bic.replace(" ", "")) == 11:
+                assert {
+                    "PNBPUS3NNYC": "PNBPUS33XXX",
+                }.get(printed_bic) == route["int_bic"]
 
     manifest_banks = {
         bank[0] for payload in _batch_payloads(7) for bank in payload["banks"]
