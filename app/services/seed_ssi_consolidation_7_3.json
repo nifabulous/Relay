@@ -183,23 +183,6 @@
     [
       "BKCHMOMXXXX",
       "Bank of China Macau Branch",
-      "USD",
-      "PNBPUS33XXX",
-      "Wells Fargo Bank, N.A.",
-      null,
-      null,
-      null,
-      null,
-      "Source: https://www.bankofchina.com/mo/en/cbservice/cb4/cb41/202201/t20220106_20586083.html (as of 2026-09-19). Approved repository alias: PNBPUS3NNYC -> PNBPUS33XXX. BIC-level list — no account numbers published; not a selectable settlement instruction.",
-      "2026-09-19",
-      "unverified",
-      null,
-      true,
-      false
-    ],
-    [
-      "BKCHMOMXXXX",
-      "Bank of China Macau Branch",
       "CHF",
       "UBSWCHZH80A",
       "UBS AG, Zurich",

@@ -458,7 +458,7 @@ def test_sixth_consolidation_batch_has_exact_evidence_parity():
 def test_seventh_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(7)
 
-    assert len(records) == 82
+    assert len(records) == 80
     assert all(_is_canonical_bic11(row[0]) and _is_canonical_bic11(row[3]) for row in records)
     assert all(row[5:9] == [None, None, None, None] for row in records)
     assert all(row[11] == "unverified" for row in records)
@@ -499,6 +499,10 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
         assert len(route_keys) == len(set(route_keys))
         aliases = evidence["source_snapshot"].get("bic_aliases", {})
         assert all(approved_aliases.get(source) == target for source, target in aliases.items())
+        for excluded in evidence["source_snapshot"].get("excluded_routes", []):
+            excluded_key = (excluded["currency"].upper(), bic11(excluded["printed_bic"]))
+            assert excluded_key not in route_keys
+            assert "independently verified alias" in excluded["reason"]
         evidence_by_beneficiary[beneficiary_bic] = Counter(route_keys)
         batch_files.append(path.name)
 

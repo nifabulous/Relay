@@ -12,12 +12,17 @@
   "source_snapshot": {
     "raw_accounts_committed": false,
     "account_numbers_published": false,
-    "route_count": 16,
+    "route_count": 15,
     "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
     "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
-    "bic_aliases": {
-      "PNBPUS3NNYC": "PNBPUS33XXX"
-    }
+    "excluded_routes": [
+      {
+        "currency": "USD",
+        "printed_bic": "PNBPUS3NNYC",
+        "correspondent": "Wells Fargo Bank, N.A.",
+        "reason": "The source publishes a branch-specific eleven-character BIC; it is excluded because the repository has no independently verified alias to a canonical route."
+      }
+    ]
   },
   "routes": [
     {
@@ -71,12 +76,6 @@
       "correspondent": "Bank of China Tokyo Branch"
     },
     {
-      "currency": "USD",
-      "int_bic": "PNBPUS33XXX",
-      "correspondent": "Wells Fargo Bank, N.A.",
-      "printed_bic": "PNBPUS3NNYC"
-    },
-    {
       "currency": "CHF",
       "int_bic": "UBSWCHZH80A",
       "correspondent": "UBS AG, Zurich"
@@ -102,5 +101,5 @@
       "correspondent": "Bangkok Bank Public Company Limited"
     }
   ],
-  "normalization_note": "Eight-character BICs are padded with XXX. The source spelling PNBPUS3NNYC uses the repository's explicit, reviewed Wells Fargo alias PNBPUS33XXX; this alias is allowlisted in app.services.seed.SEED_BIC_ALIASES and recorded in source_snapshot.bic_aliases. Already-valid eleven-character BICs are preserved unless an explicit allowlisted alias is recorded."
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved. The source's USD Wells Fargo branch BIC PNBPUS3NNYC is recorded in source_snapshot.excluded_routes and omitted from the seed because no independently verified alias to a canonical route is available."
 }
