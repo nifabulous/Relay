@@ -2401,6 +2401,7 @@ LATAM_WAVE2_SSI_COVERAGE = [
     ("GNDRBO22XXX", "Banco Ganadero S.A.", {"CNY", "EUR", "JPY", "USD"}),
     ("GUAYECEGXXX", "Banco Guayaquil S.A.", {"CHF", "EUR", "GBP", "JPY", "USD"}),
     ("ITAUUYMMXXX", "Banco Itaú Uruguay S.A.", {"EUR", "GBP", "USD"}),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", {"USD", "EUR", "GBP", "CHF", "JPY", "CAD"}),
 ]
 
 class TestLatamWave2SsiCoverage:
@@ -2428,8 +2429,6 @@ class TestLatamWave2SsiCoverage:
     def test_latam_wave2_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("latam-wave2", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: latam-wave2 ----
-
-
 # ---- autopilot-generated coverage tests: africa-wave2 ----
 AFRICA_WAVE2_SSI_COVERAGE = [
     ("AGRZZWHAXXX", "AFC COMMERCIAL BANK LIMITED", {"BWP", "CNY", "EUR", "GBP", "USD", "ZAR"}),

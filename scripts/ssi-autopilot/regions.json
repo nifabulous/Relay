@@ -16194,6 +16194,182 @@
             }
           ],
           "admitted_record_digest": "1b05622968eb4874f53ae3bd3e779dd15c828fadff066e769d5425a2bd17c273"
+        }, 
+        {
+          "bic8": "BSCHUYMM",
+          "name": "Banco Santander S.A. Uruguay",
+          "country": "UY",
+          "currencies": [
+            "USD",
+            "EUR",
+            "GBP",
+            "CHF",
+            "JPY",
+            "CAD"
+          ],
+          "seedable": true,
+          "source_domains": [
+            "santander.com.uy"
+          ],
+          "admitted_records": [
+            {
+              "currency": "USD",
+              "correspondent": "Citibank New York",
+              "int_bic": "CITIUS33XXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Bank of New York",
+              "int_bic": "IRVTUS3NXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JPMorgan Chase Bank",
+              "int_bic": "CHASUS33XXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Standard Chartered Bank",
+              "int_bic": "SCBLUS33XXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Bank of America",
+              "int_bic": "BOFAUS3MXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "Wells Fargo Bank",
+              "int_bic": "PNBPUS3NNYC",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Banco Santander Madrid",
+              "int_bic": "BSCHESMMXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Commerzbank Frankfurt",
+              "int_bic": "COBADEFFXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "Wells Fargo Bank London",
+              "int_bic": "PNBPGB2LXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "UBS Switzerland AG",
+              "int_bic": "UBSWCHZH80A",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Commerzbank AG Frankfurt",
+              "int_bic": "COBADEFFXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "CAD",
+              "correspondent": "Banque Nationale du Canada",
+              "int_bic": "BNDCCAMMXXX",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf",
+              "as_of": "2023-10-01",
+              "status": "unverified",
+              "bic_only": true
+            }
+          ],
+          "admitted_record_digest": "78d5750fb9629f3eaec0e674dde0b08c9f5395655c4e3fb6ebda9bc4700a8645"
         }
       ]
     },

@@ -1,4 +1,12 @@
 {
+  "BSCHUYMM": {
+    "name": "Banco Santander S.A. Uruguay",
+    "country": "UY",
+    "domains": [
+      "santander.com.uy"
+    ],
+    "settlement_terms_published": false
+  },
   "ALFHPKKA": {
     "name": "Bank Alfalah Limited",
     "country": "PK",
