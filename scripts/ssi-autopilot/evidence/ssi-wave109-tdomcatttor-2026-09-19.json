@@ -13,10 +13,11 @@
     "raw_accounts_committed": false,
     "account_numbers_published": false,
     "route_count": 1,
-    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source and captured in the linked sanitized source fixture.",
     "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification.",
     "source_extract_fixture": "tests/fixtures/ssi_wave109_source_attestation.json",
     "source_route_digest": "d800cdda657278291841f9c3527800a557ab6ceed46ee8dc8bed350ba0bdbcce",
+    "source_extract_digest": "d800cdda657278291841f9c3527800a557ab6ceed46ee8dc8bed350ba0bdbcce",
     "bic_verification": {
       "fixture": "tests/fixtures/ssi_wave109_source_attestation.json",
       "directory_extract_fixture": "tests/fixtures/ssi_swift_bic_directory_extract.json",

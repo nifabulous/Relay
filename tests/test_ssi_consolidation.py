@@ -666,6 +666,27 @@ def test_seventh_consolidation_waves_have_source_and_bic_attestations():
         } <= directory_keys
 
 
+def test_wave109_evidence_links_its_attestation_artifacts():
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave109-tdomcatttor-2026-09-19.json"
+        ).read_text()
+    )
+    snapshot = evidence["source_snapshot"]
+    assert snapshot["source_extract_fixture"] == (
+        "tests/fixtures/ssi_wave109_source_attestation.json"
+    )
+    assert snapshot["source_route_digest"] == snapshot["source_extract_digest"]
+    assert snapshot["bic_verification"]["fixture"] == snapshot["source_extract_fixture"]
+    assert snapshot["bic_verification"]["directory_extract_fixture"] == (
+        "tests/fixtures/ssi_swift_bic_directory_extract.json"
+    )
+
+
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():
     records = _batch_records(4)
     assert len(records) == 123
