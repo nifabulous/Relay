@@ -15,6 +15,7 @@
     "min_records_per_bank": 1
   },
   "regions": [
+    {"name":"europe-wave8-clearing","label":"Europe wave 8 clearing SSI","countries":["NL","FR"],"masked_block":91006000,"note":"2026-09-19 official correspondent pages: Nexent Bank N.V. and Banque SBA publish currency-specific correspondent mappings. Rows are BIC-only, unverified, and non-routable because the pages do not expose settlement accounts or terms.","forbidden_bics":[],"banks":[{"bic8":"FBHLNL2A","name":"Nexent Bank N.V.","country":"NL","currencies":[],"seedable":true,"source_domains":["nexentbank.com"],"manifest_file":"regions_wave8_bank_fbhl.json"},{"bic8":"SBAAFRPP","name":"Banque SBA","country":"FR","currencies":[],"seedable":true,"source_domains":["banque-sba.com"],"manifest_file":"regions_wave8_bank_sbaa.json"}]},
     {
       "name": "oceania",
       "label": "Oceania",

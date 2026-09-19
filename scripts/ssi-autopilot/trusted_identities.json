@@ -7,6 +7,8 @@
     ],
     "settlement_terms_published": false
   },
+  "FBHLNL2A": {"name": "Nexent Bank N.V.", "country": "NL", "settlement_terms_published": false, "domains": ["nexentbank.com"]},
+  "SBAAFRPP": {"name": "Banque SBA", "country": "FR", "settlement_terms_published": false, "domains": ["banque-sba.com"]},
   "ALFHPKKA": {
     "name": "Bank Alfalah Limited",
     "country": "PK",
