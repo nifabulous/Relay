@@ -38,6 +38,28 @@ _CORRESPONDENTS = {
 
 _CURRENCIES = tuple(_CORRESPONDENTS)
 
+# Each beneficiary's bank-owned page was captured with this same published
+# correspondent matrix.  Keep the mapping explicit at the bank boundary: a
+# future source refresh can narrow one bank without silently reintroducing a
+# cartesian product over the global currency list.
+_BANK_CURRENCIES = {
+    "BACACRCRXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BCRICRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BCTOCRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BNCRCRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BAGEGTGCXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BAMAGTGCXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BGAHHNTEXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "FICOHNTEXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BACUPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BCTOPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BLHCPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BMSXMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BMONMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BCMRMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "WFBIUS6SXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+}
+
 # Official correspondent/international-wire pages for each beneficiary.
 _BANKS = (
     ("BACACRCRXXX", "BAC Credomatic Costa Rica", "CR", "San José", "CRC", "https://www.baccredomatic.com/es-cr/personas/otros-servicios/transferencias-internacionales"),
@@ -51,7 +73,6 @@ _BANKS = (
     ("BACUPAPAXXX", "BAC International Bank Panama", "PA", "Panama City", "USD", "https://www.baccredomatic.com/es-pa/personas/otros-servicios/transferencias-internacionales"),
     ("BCTOPAPAXXX", "Banco Comercial de Panamá", "PA", "Panama City", "USD", "https://www.bctbank.com/es/transferencias-internacionales/"),
     ("BLHCPAPAXXX", "Banistmo S.A.", "PA", "Panama City", "USD", "https://www.banistmo.com/personas/servicios/transferencias-internacionales"),
-    ("BNMXMXMMXXX", "Banco Nacional de México", "MX", "Mexico City", "MXN", "https://www.banamex.com/personas/servicios/transferencias-internacionales.html"),
     ("BMSXMXMMXXX", "Banco Santander México", "MX", "Mexico City", "MXN", "https://www.santander.com.mx/personas/transferencias-internacionales.html"),
     ("BMONMXMMXXX", "BBVA México", "MX", "Mexico City", "MXN", "https://www.bbva.mx/personas/productos/transferencias/transferencias-internacionales.html"),
     ("BCMRMXMMXXX", "Banregio", "MX", "Monterrey", "MXN", "https://www.banregio.com/personas/servicios/transferencias-internacionales.html"),
@@ -79,6 +100,6 @@ AMERICAS_WAVE_RECORDS = tuple(
         False,
     )
     for bic, name, _country, _city, _bank_currency, source in _BANKS
-    for currency in _CURRENCIES
+    for currency in _BANK_CURRENCIES[bic]
     for int_bic, int_name in (_CORRESPONDENTS[currency],)
 )

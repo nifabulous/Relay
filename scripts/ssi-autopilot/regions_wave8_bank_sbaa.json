@@ -233,32 +233,6 @@
       "bic_only": true
     },
     {
-      "currency": "EUR",
-      "correspondent": "The Bank of New York Mellon Frankfurt",
-      "int_bic": "IRVTUS3N",
-      "source": "https://banque-sba.com/sba-en/our-story/who-we-are/our-correspondents-banks",
-      "as_of": "2025-09-22",
-      "status": "unverified",
-      "nostro": null,
-      "with_an": null,
-      "charge_code": null,
-      "value_date": null,
-      "bic_only": true
-    },
-    {
-      "currency": "CHF",
-      "correspondent": "The Bank of New York Mellon Frankfurt",
-      "int_bic": "IRVTUS3N",
-      "source": "https://banque-sba.com/sba-en/our-story/who-we-are/our-correspondents-banks",
-      "as_of": "2025-09-22",
-      "status": "unverified",
-      "nostro": null,
-      "with_an": null,
-      "charge_code": null,
-      "value_date": null,
-      "bic_only": true
-    },
-    {
       "currency": "USD",
       "correspondent": "JPMorgan Chase Bank New York",
       "int_bic": "CHASUS33",
@@ -337,19 +311,6 @@
       "bic_only": true
     },
     {
-      "currency": "QAR",
-      "correspondent": "International Bank of Qatar Doha",
-      "int_bic": "IBOQJOAM",
-      "source": "https://banque-sba.com/sba-en/our-story/who-we-are/our-correspondents-banks",
-      "as_of": "2025-09-22",
-      "status": "unverified",
-      "nostro": null,
-      "with_an": null,
-      "charge_code": null,
-      "value_date": null,
-      "bic_only": true
-    },
-    {
       "currency": "USD",
       "correspondent": "Bank of New York Mellon New York",
       "int_bic": "IRVTUS3N",
@@ -363,5 +324,5 @@
       "bic_only": true
     }
   ],
-  "admitted_record_digest": "20bf27039e218d3b3d795f6c5c0921575db10f38cc084261b98b171b3d88e8a2"
+  "admitted_record_digest": "a595bb1e32bbeede6738c1f1b8fe5541893f24028406982c36a7d3735d95e9e3"
 }

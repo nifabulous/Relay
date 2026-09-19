@@ -482,6 +482,7 @@ BANKS = [
     # ---- SSI expansion batch 5 beneficiaries ----
     ("HASPDEHHXXX", "Hamburger Sparkasse AG", "DE", "Hamburg", "EUR"),
     ("FNNBROBUXXX", "Nexent Bank N.V. Amsterdam Bucharest Branch", "RO", "Bucharest", "RON"),
+    ("FBHLNL2AXXX", "Nexent Bank N.V.", "NL", "Amsterdam", "EUR"),
     ("RATNINBBXXX", "RBL Bank Limited", "IN", "Mumbai", "INR"),
     ("CCRTIT2TBDB", "Banca di Bologna", "IT", "Bologna", "EUR"),
     ("BFRILI22XXX", "Bank Frick AG", "LI", "Balzers", "CHF"),
@@ -1232,6 +1233,14 @@ _SSI_CONSOLIDATION_DATA_FILES = (
 
 _CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
 
+_SSI_CONSOLIDATION_BANK_NAMES = {
+    "EBILAEADXXX": "Emirates NBD Bank (P.J.S.C.)",
+    "BTRLRO22XXX": "Banca Transilvania",
+    "CABARS22XXX": "Halkbank a.d. Beograd",
+    "LJBASI2XXXX": "NLB d.d., Ljubljana",
+    "OTPVHR2XXXX": "OTP banka d.d.",
+}
+
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
@@ -1281,6 +1290,19 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            if record[0] in _SSI_CONSOLIDATION_BANK_NAMES:
+                record = list(record)
+                record[1] = _SSI_CONSOLIDATION_BANK_NAMES[record[0]]
+            if record[13]:
+                record = list(record)
+                source_match = re.search(r"Source:\s*(\S+)", record[9])
+                source = source_match.group(1) if source_match else "consolidated bank source"
+                record[9] = (
+                    f"Source: {source} (as of {record[10]}) "
+                    "BIC-level list — no account numbers published; "
+                    "not a selectable settlement instruction. Sourced from "
+                    "bank-published SSI page. Verify current values before use."
+                )
             route_key = (record[0], record[2], record[3])
             if route_key in seen_routes:
                 raise ValueError(f"{filename}.ssi_records[{index}]: duplicate route key")
@@ -1485,6 +1507,22 @@ def _ssi_batch9_records():
 
 def _ssi_batch110_records():
     """Expand East/Southern African correspondent tables (BIC-only)."""
+    excluded_beneficiaries = {
+        "NMIBTZTZXXX",
+        "SBICTZTXXXX",
+        "EQBLKENAXXX",
+    }
+    excluded_routes = {
+        ("IMBLTZTZXXX", "TZS", "IMBLTZTZXXX"),
+        ("IMBLTZTZXXX", "EUR", "BHFBDEFFXXX"),
+        ("IMBLTZTZXXX", "JPY", "IMBLKENAXXX"),
+        ("IMBLTZTZXXX", "RWF", "IMBLTZTZXXX"),
+        ("IMBLTZTZXXX", "UGX", "IMBLTZTZXXX"),
+        ("SBICUGKXXXX", "GBP", "BARCGB22XXX"),
+        ("SBICUGKXXXX", "DKK", "SBZAZAJJXXX"),
+        ("SBICUGKXXXX", "INR", "KKBKINBBXXX"),
+        ("SBICUGKXXXX", "RWF", "BKRWRWRWXXX"),
+    }
     expanded = []
     for (
         beneficiary_bic, beneficiary_name, source, as_of, status,
@@ -1501,6 +1539,10 @@ def _ssi_batch110_records():
             currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
             if len(intermediary_bic) == 8:
                 intermediary_bic += "XXX"
+            if beneficiary_bic in excluded_beneficiaries or (
+                beneficiary_bic, currency, intermediary_bic
+            ) in excluded_routes:
+                continue
             expanded.append((
                 beneficiary_bic, beneficiary_name, currency, intermediary_bic,
                 intermediary_name, None, None, None, None, note, as_of,
@@ -1539,26 +1581,13 @@ def _ssi_batch10_records():
 
 
 def _ssi_asia_subcontinent_records():
-    """Expand the Asia subcontinent BIC-only source ledger."""
-    expanded = []
-    for (
-        beneficiary_bic, beneficiary_name, source, as_of, status,
-        charge_code, value_date, verified_by, bic_only, terms_inferred,
-        packed_rows,
-    ) in _SSI_ASIA_SUBCONTINENT_GROUPS:
-        note = f"{source.rstrip()} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
-        for packed in packed_rows:
-            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
-            if len(intermediary_bic) == 8:
-                intermediary_bic += "XXX"
-            expanded.append((
-                beneficiary_bic if len(beneficiary_bic) == 11 else beneficiary_bic + "XXX",
-                beneficiary_name, currency,
-                intermediary_bic if len(intermediary_bic) == 8 else intermediary_bic,
-                intermediary_name, None, None, None, None, note, as_of, status,
-                verified_by, bic_only, terms_inferred,
-            ))
-    return expanded
+    """Hold the unadmitted Asia subcontinent snapshot out of the seed.
+
+    Its source rows remain in the review ledger, but none of those eight
+    beneficiaries has an admitted manifest record yet.  Loading them into the
+    production catalog would bypass the manifest's fail-closed boundary.
+    """
+    return []
 
 
 def _ssi_batch8_records():
@@ -1623,6 +1652,49 @@ def _ssi_consolidation_records():
     """Return review-preserving rows consolidated from superseded SSI PRs."""
     return list(_SSI_CONSOLIDATED_RECORDS)
 
+
+def _ssi_wave8_manifest_records():
+    """Load the two wave-8 bank ledgers into the canonical seed.
+
+    These source pages publish correspondent BICs and currencies but no
+    settlement accounts.  Keep the rows explicitly BIC-only so they remain
+    visible as availability metadata without becoming selectable SSIs.
+    """
+    manifest_dir = Path(__file__).resolve().parents[1] / ".." / "scripts" / "ssi-autopilot"
+    rows = []
+    for filename in ("regions_wave8_bank_fbhl.json", "regions_wave8_bank_sbaa.json"):
+        payload = json.loads((manifest_dir / filename).resolve().read_text(encoding="utf-8"))
+        beneficiary = payload["bic8"]
+        if len(beneficiary) == 8:
+            beneficiary += "XXX"
+        for record in payload["admitted_records"]:
+            intermediary = record["int_bic"].upper()
+            if len(intermediary) == 8:
+                intermediary += "XXX"
+            note = (
+                f"Source: {record['source']} (as of {record['as_of']}) "
+                "BIC-level list — no account numbers published; not a selectable settlement instruction. "
+                + _SSI_REAL_NOTE
+            )
+            rows.append((
+                beneficiary,
+                payload["name"],
+                record["currency"],
+                intermediary,
+                record["correspondent"],
+                None,
+                None,
+                None,
+                None,
+                note,
+                record["as_of"],
+                record["status"],
+                None,
+                True,
+                False,
+            ))
+    return rows
+
 def _ssi_batch_global_currency_records():
     """Currency-explicit SSI rows from official correspondent-bank pages.
 
@@ -1644,8 +1716,8 @@ def _ssi_batch_global_currency_records():
             currency,
             bic11(correspondent),
             correspondent_name,
-            f"ACCT-GC-{len(rows) + 1:04d}",
-            f"ACCT-GC-{len(rows) + 1:04d}",
+            f"ACCT-910080{len(rows) + 1:02d}",
+            f"ACCT-910080{len(rows) + 1:02d}",
             "SHA",
             "spot",
             f"Source: {source} (as of 2026-09-19). Published currency/correspondent pair; account masked for seed. " + _SSI_REAL_NOTE,
@@ -1725,7 +1797,7 @@ def _ssi_batch_global_currency_records():
     for c, bic, cn in [
         ("USD", "CHASUS33", "JPMorgan Chase New York"),
         ("USD", "SCBLUS33", "Standard Chartered New York"),
-        ("EUR", "SOGEFRPP", "Societe Generale Paris"),
+        ("EUR", "SOGEFRPP", "Société Générale, Paris"),
         ("GBP", "CHASGB2L", "JPMorgan Chase London"),
         ("CHF", "ZKBKCHZZ80A", "Zurcher Kantonalbank Zurich"),
         ("AUD", "ANZBAU3M", "ANZ Melbourne"),
@@ -1793,7 +1865,7 @@ def _ssi_batch_global_currency_records():
         ("USD", "CHASUS33", "JPMorgan Chase New York"),
         ("USD", "PNBPUS3NNYC", "Wells Fargo New York"),
         ("USD", "BKTRUS33", "Deutsche Bank New York"),
-        ("EUR", "SOGEFRPP", "Societe Generale Paris"),
+        ("EUR", "SOGEFRPP", "Société Générale, Paris"),
         ("EUR", "COBADEFF", "Commerzbank Frankfurt"),
         ("EUR", "BARCDEFF", "Barclays Bank Ireland"),
         ("GBP", "SCBLGB2L", "Standard Chartered London"),
@@ -1814,11 +1886,31 @@ _SSI_BIC_ALIASES = {
     "SCBLDEFXXXX": "SCBLDEFFXXX",
 }
 
+# The reviewed Santander Uruguay routing-codes table supersedes the older
+# availability-only snapshot for these ten routes.  Keep the older CAD and
+# Wells Fargo alias rows below because the newer table does not publish them.
+_SSI_PREFERRED_NON_BIC_ONLY_KEYS = {
+    ("BSCHUYMMXXX", "USD", "CITIUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "IRVTUS3NXXX"),
+    ("BSCHUYMMXXX", "USD", "CHASUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "SCBLUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "BOFAUS3MXXX"),
+    ("BSCHUYMMXXX", "EUR", "BSCHESMMXXX"),
+    ("BSCHUYMMXXX", "EUR", "COBADEFFXXX"),
+    ("BSCHUYMMXXX", "GBP", "PNBPGB2LXXX"),
+    ("BSCHUYMMXXX", "CHF", "UBSWCHZH80A"),
+    ("BSCHUYMMXXX", "JPY", "COBADEFFXXX"),
+}
+
 
 def _dedupe_ssi_records(rows):
     """Keep the first source row for each beneficiary/currency/intermediary route."""
     seen = set()
     unique = []
+    positions = {}
+    consolidation_keys = {
+        (row[0], row[2], row[3]) for row in _SSI_CONSOLIDATED_RECORDS
+    }
     for row in rows:
         row = tuple(row)
         beneficiary_bic = row[0] + "XXX" if len(row[0]) == 8 else row[0]
@@ -1827,10 +1919,34 @@ def _dedupe_ssi_records(rows):
         intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
         if beneficiary_bic != row[0] or intermediary_bic != row[3]:
             row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
+        canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
+        if canonical_name is not None and row[1] != canonical_name:
+            row = (row[0], canonical_name, *row[2:])
         key = (row[0], row[2], row[3])
         if key in seen:
+            prior_index = positions[key]
+            prior = unique[prior_index]
+            if key in consolidation_keys:
+                # A reviewed manifest row with settlement fields is more
+                # specific than an older BIC-only consolidation duplicate.
+                # Keep the ledger row only when no account-backed source
+                # supplies the same canonical route.
+                if prior[13] and not row[13]:
+                    unique[prior_index] = row
+                continue
+            if key in _SSI_PREFERRED_NON_BIC_ONLY_KEYS:
+                if prior[13] and not row[13]:
+                    unique[prior_index] = row
+                # Once the reviewed account-bearing route is selected, an
+                # older availability-only duplicate must not replace it.
+                continue
+            prior_date = prior[10] if len(prior) > 10 and prior[10] else "9999-99-99"
+            current_date = row[10] if len(row) > 10 and row[10] else "9999-99-99"
+            if current_date < prior_date:
+                unique[prior_index] = row
             continue
         seen.add(key)
+        positions[key] = len(unique)
         unique.append(row)
     return unique
 
@@ -1839,6 +1955,7 @@ SSI_RECORDS = _dedupe_ssi_records([
     # Consolidation ledgers are the canonical source for reviewed routes; let
     # their rows win when an older inline fixture shares a route key.
     *_ssi_consolidation_records(),
+    *_ssi_wave8_manifest_records(),
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     ('HANDNO22XXX', 'Handelsbanken Norway', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001119', 'ACCT-91001119', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
@@ -2105,8 +2222,6 @@ SSI_RECORDS = _dedupe_ssi_records([
     *_ssi_wave110_phongsavanh_records(),
     # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
     *_ssi_batch110_records(),
-    # ---- SSI expansion batch 10 (South Asia correspondent metadata) ----
-    *_ssi_batch10_records(),
     # ---- SSI expansion Asia subcontinent source ledger ----
     *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
@@ -2125,6 +2240,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     # SSI batch 4 rows begin
     *_ssi_batch4_records(),
     # SSI batch 4 rows end
+    # ---- SSI expansion batch 10 (South Asia correspondent metadata) ----
+    *_ssi_batch10_records(),
     # ---- SSI expansion wave (Americas bank-published correspondent metadata) ----
     *AMERICAS_WAVE_RECORDS,
     # ---- DNB Bank ASA Helsinki Branch (current 2026-02-02 SSI) ----
@@ -2481,12 +2598,10 @@ SSI_RECORDS = _dedupe_ssi_records([
     ("OTPVHR2XXXX", "OTP banka d.d.", "CAD", "BOFMCAT2XXX", "Correspondent bank (BOFMCAT2)", "ACCT-91004349", "ACCT-91004350", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "CHF", "OTPVHUHBXXX", "Correspondent bank (OTPVHUHB)", "ACCT-91004351", "ACCT-91004352", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "CHF", "UBSWCHZH80A", "Correspondent bank (UBSWCHZH80A)", "ACCT-91004353", "ACCT-91004354", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
-    ("OTPVHR2XXXX", "OTP banka d.d.", "CZK", "GIBACZPXXXX", "Correspondent bank (GIBACZPX)", "ACCT-91004355", "ACCT-91004356", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "DKK", "DABADKKKXXX", "Correspondent bank (DABADKKK)", "ACCT-91004357", "ACCT-91004358", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "COBADEFFXXX", "Correspondent bank (COBADEFF)", "ACCT-91004359", "ACCT-91004360", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "DEUTDEFFXXX", "Correspondent bank (DEUTDEFF)", "ACCT-91004361", "ACCT-91004362", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "BCITITMMXXX", "Correspondent bank (BCITITMM)", "ACCT-91004363", "ACCT-91004364", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
-    ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "OTPVHUHBXXX", "Correspondent bank (OTPVHUHB)", "ACCT-91004365", "ACCT-91004366", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "SOGEFRPPXXX", "Correspondent bank (SOGEFRPP)", "ACCT-91004367", "ACCT-91004368", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "GBP", "LOYDGB2LXXX", "Correspondent bank (LOYDGB2L)", "ACCT-91004369", "ACCT-91004370", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "HKD", "CEDELULLXXX", "Correspondent bank (CEDELULL)", "ACCT-91004371", "ACCT-91004372", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
@@ -9659,7 +9774,7 @@ SEED_BIC_ALIASES = {
     "EDBBEB22XXX": "WBWCLULLXXX",
     # Kasikornbank's source prints the Wells Fargo branch as PNBPUS3NNYC;
     # the repository's canonical directory entry is PNBPUS33.
-    "PNBPUS3NNYC": "PNBPUS33XXX",
+    "PNBPUS3NNYC": "PNBPUS33",
 }
 
 
@@ -9814,11 +9929,18 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
     """Insert every missing consolidated route into an existing SSI catalog.
 
     This upgrade is intentionally keyed per route and never gated on table
-    emptiness. Existing rows are left for the normal reconciliation pass,
-    which preserves operator-maintained settlement fields.
+    emptiness. When a later admitted manifest supersedes the ledger row for a
+    route, seed the canonical row selected by ``SSI_RECORDS`` directly so the
+    normal reconciliation pass does not manufacture a provenance update.
+    Existing rows are left untouched, preserving operator-maintained fields.
     """
     inserted = 0
+    canonical_by_key = {
+        (row[0], row[2], row[3]): row
+        for row in SSI_RECORDS
+    }
     for row in _SSI_CONSOLIDATED_RECORDS:
+        route_key = (row[0], row[2], row[3])
         (
             ben_bic,
             ben_name,
@@ -9835,8 +9957,8 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
             verified_by,
             bic_only,
             terms_inferred,
-        ) = row
-        if (ben_bic, ccy, int_bic) not in source_keys:
+        ) = canonical_by_key.get(route_key, row)
+        if route_key not in source_keys:
             continue
         if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
             continue

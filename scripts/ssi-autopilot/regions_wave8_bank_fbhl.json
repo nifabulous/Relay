@@ -21,7 +21,6 @@
     "PLN",
     "QAR",
     "RON",
-    "RUB",
     "SAR",
     "SEK",
     "TRY",
@@ -281,19 +280,6 @@
       "bic_only": true
     },
     {
-      "currency": "RUB",
-      "correspondent": "Credit Europe Bank Russia Moscow",
-      "int_bic": "FBHLNL2A",
-      "source": "https://www.nexentbank.com/bank-relations/nostro-accounts/",
-      "as_of": "2026-09-19",
-      "status": "unverified",
-      "nostro": null,
-      "with_an": null,
-      "charge_code": null,
-      "value_date": null,
-      "bic_only": true
-    },
-    {
       "currency": "SAR",
       "correspondent": "UBS Switzerland AG Zurich",
       "int_bic": "UBSWCHZH80A",
@@ -372,5 +358,5 @@
       "bic_only": true
     }
   ],
-  "admitted_record_digest": "78f49f32878da6f290eeac3e9a9b71aae2c4143997dc94d4bcab85539a8b677f"
+  "admitted_record_digest": "5b2b5694cd0bdc97c942e6a2b0a44a2fd871e9b022fe775e5c9b6b585a78bc8c"
 }

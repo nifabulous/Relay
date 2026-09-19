@@ -1,8 +1,8 @@
 [
   [
-    "BSCHUYMM",
-    "Banco Santander Uruguay S.A.",
-    "Source: https://www.santander.com.uy/negocio-internacional/comercio-exterior/routing-codes (official routing-codes page, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; the source's unsupported PNBPUS3NNYC and invalid CAD BIC are omitted.",
+    "BSCHUYMMXXX",
+    "Banco Santander S.A. Uruguay",
+    "Source: https://www.santander.com.uy/negocio-internacional/comercio-exterior/routing-codes (as of 2026-09-12).",
     "2026-09-12",
     "unverified",
     "SHA",
@@ -61,7 +61,7 @@
     ]
   ],
   [
-    "CBBABRSP",
+    "CBBABRSPXXX",
     "Itaú BBA S.A.",
     "Source: https://www.itau.com.br/itaubba-pt/o-que-fazemos/cambio/consultas (official foreign-exchange correspondent table, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; the source's noncanonical SCBLDEFXXXX entries are omitted.",
     "2026-09-12",
@@ -88,7 +88,7 @@
     ]
   ],
   [
-    "BCTOCOBB",
+    "BCTOCOBBXXX",
     "Itaú Colombia S.A.",
     "Source: https://banco.itau.co/documents/d/personas/standard-settlement-instructions-itau-colombia-20250303 (official Standard Settlement Instructions PDF, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
     "2026-09-12",
@@ -109,7 +109,7 @@
     ]
   ],
   [
-    "GABAARBA",
+    "GABAARBAXXX",
     "Banco de Galicia y Buenos Aires S.A.U.",
     "Source: https://www.galicia.ar/content/dam/galicia/comex/empresas/odp/swift_galicia/SWIFT_Galicia_Espanol.pdf (official SWIFT instructions PDF, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values.",
     "2026-09-12",
@@ -128,7 +128,7 @@
     ]
   ],
   [
-    "BSUDARBA",
+    "BSUDARBAXXX",
     "Banco Patagonia S.A.",
     "Source: https://www.bancopatagonia.com.ar/personas/comercio-exterior/ordenes-de-pago.php (official international-payment instructions and linked SSI PDFs, accessed 2026-09-12). Published account numbers are masked with synthetic ACCT values; unsupported BRASUS33 is omitted.",
     "2026-09-12",
@@ -148,7 +148,7 @@
     ]
   ],
   [
-    "BRBSBRDF",
+    "BRBSBRDFXXX",
     "BRB Banco de Brasília S.A.",
     "Source: https://novo.brb.com.br/iban/ (official IBAN and correspondent instruction page, accessed 2026-09-12). Published account numbers are masked with a synthetic ACCT value; unsupported BRASUS33 is omitted.",
     "2026-09-12",

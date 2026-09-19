@@ -121,8 +121,8 @@
   [
     "CSYBIN55XXX",
     "CSB Bank Limited",
-    "Source: https://csb.bank.in/list-correspondent-banks (official correspondent-bank/Nostro table, accessed 2026-09-19). BIC-only source rows; published account values are intentionally withheld and these records are non-routable availability metadata.",
-    "2026-09-19",
+    "Source: https://csb.bank.in/list-correspondent-banks (as of 2026-09-09). BIC-only source rows; published account values are intentionally withheld and these records are non-routable availability metadata.",
+    "2026-09-09",
     "unverified",
     null,
     null,
@@ -142,7 +142,7 @@
       "SGD|SCBLSG22|Standard Chartered Bank, Singapore|",
       "AUD|SCBLSG22|Standard Chartered Bank, Singapore|",
       "CAD|BOFMCAT2|Bank of Montreal, Toronto|",
-      "AED|BOMLAEAD|Mashreq Bank PSC, Dubai|"
+      "AED|BOMLAEAD|Mashreq Bank, Dubai|"
     ]
   ],
   [

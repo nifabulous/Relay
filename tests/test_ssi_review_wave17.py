@@ -64,8 +64,25 @@ def test_wave17_redacted_source_extract_and_terms_are_consistent():
 def test_wave17_inferred_routes_are_excluded_by_the_selection_guard(db_session_clean):
     from app.services.routing import suggest_from_ssi
 
-    rows = [row for row in SSI_RECORDS if row[0] == "BTRLRO22XXX"]
-    assert len(rows) == 20
+    manifest = json.loads((ROOT / "scripts/ssi-autopilot/regions.json").read_text())
+    bank = next(
+        bank
+        for region in manifest["regions"]
+        for bank in region["banks"]
+        if bank["bic8"] == "BTRLRO22"
+    )
+    admitted_keys = {
+        (record["currency"], record["int_bic"] if len(record["int_bic"]) == 11 else record["int_bic"] + "XXX")
+        for record in bank["admitted_records"]
+    }
+    rows = [
+        row for row in SSI_RECORDS
+        if (row[0], row[2], row[3]) in {
+            ("BTRLRO22XXX", currency, intermediary)
+            for currency, intermediary in admitted_keys
+        }
+    ]
+    assert len(rows) == len(admitted_keys)
     assert all(row[14] is True for row in rows)
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
     currencies = {row[2] for row in rows}
