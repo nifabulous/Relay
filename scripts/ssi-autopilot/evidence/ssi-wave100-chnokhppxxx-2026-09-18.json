@@ -1,0 +1,42 @@
+{
+  "source": "https://www.chipmongbank.com/business/overseas-fund-transfer",
+  "source_urls": [
+    "https://www.chipmongbank.com/business/overseas-fund-transfer"
+  ],
+  "as_of": "2026-09-18",
+  "beneficiary": {
+    "bic": "CHNOKHPPXXX",
+    "name": "Chip Mong Commercial Bank Plc.",
+    "country": "KH"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 4,
+    "extraction": "Currency-to-correspondent mappings transcribed from the cited bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "KASITHBKXXX",
+      "correspondent": "Kasikornbank PCL, Bangkok"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "KASITHBKXXX",
+      "correspondent": "Kasikornbank PCL, Bangkok"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "BKKBTHBKXXX",
+      "correspondent": "Bangkok Bank PCL, Bangkok"
+    },
+    {
+      "currency": "THB",
+      "int_bic": "BKKBTHBKXXX",
+      "correspondent": "Bangkok Bank PCL, Bangkok"
+    }
+  ],
+  "normalization_note": "Eight-character BICs are padded with XXX. Already-valid eleven-character BICs are preserved; no BIC aliases are applied in this manifest."
+}

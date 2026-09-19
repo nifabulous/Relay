@@ -1,0 +1,44 @@
+{
+  "source": "https://www.megabank.com.tw/abroad-page/australia/en-us",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "ICBCAU2SXXX",
+    "name": "Mega International Commercial Bank Co., Ltd. Sydney Branch",
+    "country": "AU"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 5,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "Bank of New York Mellon"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "ICBCFRPPXXX",
+      "correspondent": "Mega International Commercial Bank Co., Ltd. Paris Branch"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "ICBCTWTP011",
+      "correspondent": "Mega ICBC, Taipei treasury"
+    },
+    {
+      "currency": "JPY",
+      "int_bic": "ICBCJPJTXXX",
+      "correspondent": "Mega ICBC, Tokyo"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ICBCHKHHXXX",
+      "correspondent": "Mega ICBC, Hong Kong"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; source-listed branch BICs are retained."
+}

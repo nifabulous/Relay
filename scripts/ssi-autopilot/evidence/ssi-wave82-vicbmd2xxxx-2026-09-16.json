@@ -1,0 +1,57 @@
+{
+  "source": "https://www.victoriabank.md/ru/contacte",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "VICBMD2XXXX",
+    "name": "BC Victoriabank S.A.",
+    "country": "MD"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 7,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon, New York"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "GENODEFFXXX",
+      "correspondent": "DZ Bank AG, Frankfurt"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BCITITMMXXX",
+      "correspondent": "Intesa Sanpaolo S.p.A., Milan"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "BTRLRO22XXX",
+      "correspondent": "Banca Transilvania, Cluj"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BTRLRO22XXX",
+      "correspondent": "Banca Transilvania, Cluj"
+    },
+    {
+      "currency": "RON",
+      "int_bic": "BTRLRO22XXX",
+      "correspondent": "Banca Transilvania, Cluj"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; no unstated correspondents are inferred.",
+  "additional_sources": [
+    "https://www.victoriabank.md/storage/app/media/carduri/Datele%20bancare%20pentru%20transferurile%20valutare%20aferente%20persoanelor%20fizice.pdf"
+  ]
+}

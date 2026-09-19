@@ -1,0 +1,24 @@
+{
+  "source": "https://www.cibccaribbean.com/about-us/client-notices/changes-to-gbp-clearing-services",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "FCIBLCLCXXX",
+    "name": "CIBC Caribbean Bank (Barbados) Limited – St. Lucia",
+    "country": "LC"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 1,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "GBP",
+      "int_bic": "LOYDGB2LXXX",
+      "correspondent": "Lloyds Bank PLC, London"
+    }
+  ],
+  "normalization_note": "Current CIBC notice replaces Barclays with Lloyds for GBP; beneficiary and intermediary BICs are canonicalized with XXX."
+}

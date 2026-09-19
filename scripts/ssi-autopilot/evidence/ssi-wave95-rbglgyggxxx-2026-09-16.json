@@ -1,0 +1,24 @@
+{
+  "source": "https://republicguyana.com/personal/international-wire-transfers",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "RBGLGYGGXXX",
+    "name": "Republic Bank (Guyana) Limited",
+    "country": "GY"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "route_count": 1,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "TTD",
+      "int_bic": "RBNKTTPXXXX",
+      "correspondent": "Republic Bank Limited, Trinidad"
+    }
+  ],
+  "normalization_note": "The current page explicitly lists USD and TTD through Republic Bank Trinidad (RBNKTTPX); only the TTD key was absent from the current inventory. Beneficiary RBGLGYGG canonicalized with XXX."
+}

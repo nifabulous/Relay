@@ -1,0 +1,29 @@
+{
+  "source": "https://www.hakrinbank.com/en/companies/international/",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "HAKRSRPAXXX",
+    "name": "Hakrinbank N.V.",
+    "country": "SR"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 2,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "ABNANL2AXXX",
+      "correspondent": "ABN AMRO Bank N.V."
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CRASGB2LXXX",
+      "correspondent": "Crown Agents Bank"
+    }
+  ],
+  "normalization_note": "Bank page explicitly states EUR ABN AMRO (ABNANL2A) and USD Crown Agents (CRASGB2L); beneficiary HAKRSRPA canonicalized with XXX."
+}

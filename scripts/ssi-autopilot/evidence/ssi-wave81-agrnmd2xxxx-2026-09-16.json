@@ -1,0 +1,52 @@
+{
+  "source": "https://www.maib.md/en/banci-corespondente",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "AGRNMD2XXXX",
+    "name": "BC MAIB S.A. (Moldova Agroindbank)",
+    "country": "MD"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 6,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon, New York"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna"
+    },
+    {
+      "currency": "RON",
+      "int_bic": "RZBRROBUXXX",
+      "correspondent": "Raiffeisen Bank S.A., Bucharest"
+    },
+    {
+      "currency": "UAH",
+      "int_bic": "PIVDUA22XXX",
+      "correspondent": "JSCB Pivdennyi, Odesa"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; no unstated correspondents are inferred.",
+  "additional_sources": [
+    "https://www.maib.md/en/persoane-fizice/plati-si-transferuri/transfer-international-swift"
+  ]
+}

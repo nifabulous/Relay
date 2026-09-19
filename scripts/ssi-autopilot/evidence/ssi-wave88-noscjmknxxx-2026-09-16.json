@@ -1,0 +1,39 @@
+{
+  "source": "https://jm.scotiabank.com/personal/rates-and-fees/everyday-banking-rates/wire-transfer-routing.html",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "NOSCJMKNXXX",
+    "name": "The Bank of Nova Scotia Jamaica Ltd.",
+    "country": "JM"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 4,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3MXXX",
+      "correspondent": "Bank of America"
+    },
+    {
+      "currency": "CHF",
+      "int_bic": "MIDLGB22XXX",
+      "correspondent": "HSBC Bank PLC"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "BBRUBEBB010",
+      "correspondent": "ING Bank Belgium"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "MIDLGB22XXX",
+      "correspondent": "HSBC Bank PLC"
+    }
+  ],
+  "normalization_note": "Scotiabank Jamaica page gives field-56 intermediary per currency and beneficiary NOSCJMKN; BBRUBEBB010 is retained as the exact 11-character source BIC."
+}

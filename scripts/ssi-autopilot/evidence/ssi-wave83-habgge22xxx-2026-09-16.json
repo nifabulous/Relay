@@ -1,0 +1,72 @@
+{
+  "source": "https://halykbank.ge/en/bank-details",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "HABGGE22XXX",
+    "name": "JSC Halyk Bank Georgia",
+    "country": "GE"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 10,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "EUR",
+      "int_bic": "RZBAATWWXXX",
+      "correspondent": "Raiffeisen Bank International AG, Vienna"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "HSBKKZKXXXX",
+      "correspondent": "Halyk Savings Bank of Kazakhstan, Almaty"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "HSBKKZKXXXX",
+      "correspondent": "Halyk Savings Bank of Kazakhstan, Almaty"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BAGAGE22XXX",
+      "correspondent": "JSC Bank of Georgia, Tbilisi"
+    },
+    {
+      "currency": "GEL",
+      "int_bic": "BAGAGE22XXX",
+      "correspondent": "JSC Bank of Georgia, Tbilisi"
+    },
+    {
+      "currency": "KZT",
+      "int_bic": "HSBKKZKXXXX",
+      "correspondent": "Halyk Savings Bank of Kazakhstan, Almaty"
+    },
+    {
+      "currency": "RUB",
+      "int_bic": "HSBKKZKXXXX",
+      "correspondent": "Halyk Savings Bank of Kazakhstan, Almaty"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CITIUS33XXX",
+      "correspondent": "Citibank N.A., New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "IRVTUS3NXXX",
+      "correspondent": "The Bank of New York Mellon, New York"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "HSBKKZKXXXX",
+      "correspondent": "Halyk Savings Bank of Kazakhstan, Almaty"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; no unstated correspondents are inferred.",
+  "additional_sources": [
+    "https://halykbank.ge/_cdn/17/32/A9bqgI88hk6GJ_s9jZlNuw/Correspondent%20banks.pdf"
+  ]
+}

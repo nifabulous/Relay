@@ -1,0 +1,39 @@
+{
+  "source": "https://stgeorgesbank.com/quienes-somos/bancos-corresponsales/?=62253&Tarjeta=Signature",
+  "as_of": "2026-09-16",
+  "beneficiary": {
+    "bic": "STGBPAPAXXX",
+    "name": "St. Georges Bank (Panama)",
+    "country": "PA"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 4,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "USD",
+      "int_bic": "BOFAUS3MXXX",
+      "correspondent": "Bank of America"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "SCBLUS33XXX",
+      "correspondent": "Standard Chartered"
+    },
+    {
+      "currency": "USD",
+      "int_bic": "CHASUS33XXX",
+      "correspondent": "JPMorgan Chase"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "SCBLDEFFXXX",
+      "correspondent": "Standard Chartered Bank, Germany"
+    }
+  ],
+  "normalization_note": "Source prints STGBPAPA and SCBLDEFX; canonical beneficiary appends XXX and SCBLDEFX is normalized to SCBLDEFFXXX per repository BIC normalization policy."
+}

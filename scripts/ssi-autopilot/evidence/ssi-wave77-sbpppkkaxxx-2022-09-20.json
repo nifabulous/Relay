@@ -1,0 +1,69 @@
+{
+  "source": "https://www.sbp.org.pk/tod/2022/C1-Annex-H.pdf",
+  "as_of": "2022-09-20",
+  "beneficiary": {
+    "bic": "SBPPPKKAXXX",
+    "name": "State Bank of Pakistan",
+    "country": "PK"
+  },
+  "source_snapshot": {
+    "raw_accounts_committed": false,
+    "account_numbers_published": true,
+    "route_count": 10,
+    "extraction": "Currency-to-correspondent mappings transcribed from the linked bank-owned source.",
+    "bic_only_reason": "Account values, charges, and value dates are intentionally withheld; routes remain non-routable pending independent operational verification."
+  },
+  "routes": [
+    {
+      "currency": "JPY",
+      "int_bic": "BOJPJPJTXXX",
+      "correspondent": "Bank of Japan"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "MARKDEFFXXX",
+      "correspondent": "Deutsche Bundesbank, Frankfurt"
+    },
+    {
+      "currency": "GBP",
+      "int_bic": "BKENGB2LXXX",
+      "correspondent": "Bank of England, London"
+    },
+    {
+      "currency": "AED",
+      "int_bic": "NBADAEAAVOS",
+      "correspondent": "First Abu Dhabi Bank, Abu Dhabi"
+    },
+    {
+      "currency": "AUD",
+      "int_bic": "RSBKAU2SXXX",
+      "correspondent": "Reserve Bank of Australia, Sydney"
+    },
+    {
+      "currency": "CAD",
+      "int_bic": "BCANCAW2XXX",
+      "correspondent": "Bank of Canada, Ottawa"
+    },
+    {
+      "currency": "TRY",
+      "int_bic": "HABBTRISXXX",
+      "correspondent": "Habib Bank Limited, Istanbul"
+    },
+    {
+      "currency": "CNY",
+      "int_bic": "ICBKCNBJBJM",
+      "correspondent": "ICBC Beijing"
+    },
+    {
+      "currency": "CNH",
+      "int_bic": "SCBLHKHHXXX",
+      "correspondent": "Standard Chartered Hong Kong"
+    },
+    {
+      "currency": "SAR",
+      "int_bic": "NCBKSAJEXXX",
+      "correspondent": "Saudi National Bank"
+    }
+  ],
+  "normalization_note": "Published 8-character head-office BICs are padded with XXX; only explicit currency-to-BIC mappings are included."
+}

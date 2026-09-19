@@ -10,6 +10,7 @@ major corridors; treat confidence levels as advisory.
 import hashlib
 import json
 import logging
+import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -682,7 +683,6 @@ BANKS = [
     ("ORFBUZ22XXX", "PJSCB Orient Finance", "UZ", "Tashkent", "UZS"),
     ("SDBLBDDHXXX", "Standard Islami Bank PLC", "BD", "Dhaka", "BDT"),
     ("CIBLBDDHXXX", "City Bank PLC", "BD", "Dhaka", "BDT"),
-    ("CBININBBXXX", "Central Bank of India", "IN", "Mumbai", "INR"),
     ("IDIBINBBXXX", "Indian Bank", "IN", "Chennai", "INR"),
     ("PRVUNPKAXXX", "Prabhu Bank Limited", "NP", "Kathmandu", "NPR"),
     ("CCEYLKLXXXX", "Commercial Bank of Ceylon PLC", "LK", "Colombo", "LKR"),
@@ -1153,7 +1153,25 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_4_2.json",
     "seed_ssi_consolidation_4_3.json",
     "seed_ssi_consolidation_4_4.json",
+    "seed_ssi_consolidation_5_1.json",
+    "seed_ssi_consolidation_5_2.json",
+    "seed_ssi_consolidation_5_3.json",
+    "seed_ssi_consolidation_5_4.json",
+    "seed_ssi_consolidation_5_5.json",
+    "seed_ssi_consolidation_5_6.json",
+    "seed_ssi_consolidation_6_1.json",
+    "seed_ssi_consolidation_6_2.json",
+    "seed_ssi_consolidation_6_3.json",
+    "seed_ssi_consolidation_6_4.json",
+    "seed_ssi_consolidation_6_5.json",
 )
+
+
+_CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
+
+
+def _is_canonical_bic11(value):
+    return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
 
 
 def _load_ssi_consolidation_data():
@@ -1183,7 +1201,7 @@ def _load_ssi_consolidation_data():
                 isinstance(value, str) and value.strip() for value in bank
             ):
                 raise ValueError(f"{filename}.banks[{index}]: expected five strings")
-            if len(bank[0]) != 11 or not bank[0].isalnum() or bank[0] in seen_bics:
+            if not _is_canonical_bic11(bank[0]) or bank[0] in seen_bics:
                 raise ValueError(f"{filename}.banks[{index}]: invalid or duplicate BIC")
             seen_bics.add(bank[0])
             banks.append(tuple(bank))
@@ -1192,7 +1210,7 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: expected 15 fields")
             if any(not isinstance(record[pos], str) or not record[pos].strip() for pos in range(5)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
-            if len(record[0]) != 11 or len(record[3]) != 11:
+            if not _is_canonical_bic11(record[0]) or not _is_canonical_bic11(record[3]):
                 raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
             if record[11] not in {"unverified", "archived"} or record[12] is not None:
                 raise ValueError(f"{filename}.ssi_records[{index}]: must remain non-published")
