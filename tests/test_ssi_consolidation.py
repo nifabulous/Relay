@@ -1,3 +1,4 @@
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -524,6 +525,51 @@ def test_seventh_consolidation_batch_has_exact_evidence_parity():
     assert evidence_by_beneficiary.keys() == seeded_by_beneficiary.keys()
     assert seeded_by_beneficiary.keys() <= {bic11(bank[0]) for bank in BANKS}
     assert evidence_by_beneficiary == seeded_by_beneficiary
+
+
+def test_wave102_has_a_reproducible_source_extract_and_bic_cross_check():
+    def bic11(value):
+        normalized = value.upper()
+        return f"{normalized}XXX" if len(normalized) == 8 else normalized
+
+    evidence = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-wave102-dbsssgsgxxx-2026-09-19.json"
+        ).read_text()
+    )
+    fixture_path = ROOT / "tests" / "fixtures" / "ssi_wave102_dbs_agent_bank_extract.json"
+    fixture = json.loads(fixture_path.read_text())
+    assert evidence["source_snapshot"]["source_extract_fixture"] == str(
+        fixture_path.relative_to(ROOT)
+    )
+    assert evidence["source_snapshot"]["bic_verification"]["fixture"] == str(
+        fixture_path.relative_to(ROOT)
+    )
+    assert fixture["source"] == evidence["source"]
+    assert fixture["as_of"] == evidence["as_of"]
+    digest = hashlib.sha256(
+        json.dumps(fixture["rows"], sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    assert fixture["source_route_digest"] == digest
+    assert evidence["source_snapshot"]["source_route_digest"] == digest
+    source_rows = [(currency, bic11(bic)) for currency, bic in fixture["rows"]]
+    evidence_rows = [
+        (
+            route["currency"].upper(),
+            bic11(route.get("printed_bic") or route["int_bic"]),
+        )
+        for route in evidence["routes"]
+    ]
+    assert source_rows == evidence_rows
+    assert all(
+        bic11(printed) == canonical
+        for (currency, printed), (_, canonical) in zip(source_rows, evidence_rows)
+    )
+    assert fixture["bic_verification"]["operational_status"] == "unverified_non_routable"
 
 
 def test_fourth_consolidation_batch_is_loaded_and_fails_closed():

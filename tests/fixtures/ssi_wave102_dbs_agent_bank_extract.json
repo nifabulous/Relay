@@ -1,0 +1,34 @@
+{
+  "fixture_version": 1,
+  "source": "https://www.dbs.com.sg/sme/day-to-day/collections/incoming-funds/telegraphic-transfer-info.page",
+  "as_of": "2026-09-19",
+  "title": "DBS List of Agent Banks",
+  "raw_accounts_included": false,
+  "source_route_digest": "eb671134d2978a4f9b648047bd35af98f10bc680468bef20ec6f55675fc5e8cf",
+  "rows": [
+    ["AED", "NBADAEAA"],
+    ["AUD", "CTBAAU2S"],
+    ["BND", "SCBLBNBB"],
+    ["CAD", "ROYCCAT2"],
+    ["CHF", "UBSWCHZH80A"],
+    ["CNY", "DBSSCNSHXXX"],
+    ["DKK", "NDEADKKK"],
+    ["EUR", "BARCDEFF"],
+    ["GBP", "RBOSGB2L"],
+    ["HKD", "DHBKHKHH"],
+    ["IDR", "DBSBIDJA"],
+    ["JPY", "SMBCJPJT"],
+    ["NZD", "ASBBNZ2A"],
+    ["NOK", "DNBANOKK"],
+    ["SEK", "NDEASESS"],
+    ["THB", "TMBKTHBK"],
+    ["USD", "CHASUS33"],
+    ["ZAR", "SBZAZAJJ"]
+  ],
+  "bic_verification": {
+    "reference": "https://www.swift.com/swift-resource/234421/download/1000",
+    "reference_as_of": "2026-06-01",
+    "method": "Compare the source-printed BIC with the independent SWIFT directory reference, then apply the repository's deterministic eight-character-to-eleven-character canonicalization. No alias substitution is permitted.",
+    "operational_status": "unverified_non_routable"
+  }
+}
