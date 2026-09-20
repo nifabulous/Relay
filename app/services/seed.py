@@ -1744,13 +1744,45 @@ def _ssi_south_asia_wave2_records():
 
 
 def _ssi_asia_subcontinent_records():
-    """Hold the unadmitted Asia subcontinent snapshot out of the seed.
+    """Expand the reviewed Asia-subcontinent correspondent snapshot.
 
-    Its source rows remain in the review ledger, but none of those eight
-    beneficiaries has an admitted manifest record yet.  Loading them into the
-    production catalog would bypass the manifest's fail-closed boundary.
+    The source file contains bank-published currency/correspondent pairs but
+    no settlement terms.  Keep these rows BIC-only and non-routable while
+    normalizing eight-character BICs and known printed aliases before the
+    global dedupe pass.
     """
-    return []
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_ASIA_SUBCONTINENT_GROUPS:
+        if len(beneficiary_bic) == 8:
+            beneficiary_bic += "XXX"
+        note = f"{source.rstrip()} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
+            expanded.append((
+                beneficiary_bic,
+                beneficiary_name,
+                currency,
+                intermediary_bic,
+                intermediary_name,
+                None,
+                None,
+                None,
+                None,
+                note,
+                as_of,
+                status,
+                verified_by,
+                True,
+                False,
+            ))
+    return expanded
 
 
 def _ssi_batch8_records():
