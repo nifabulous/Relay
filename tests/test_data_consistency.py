@@ -1915,6 +1915,7 @@ MEXICO_CENTRAL_AMERICA_SSI_COVERAGE = [
     ("MENOMXMTXXX", "Banco Mercantil del Norte (Banorte) - Mexico", {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NOK", "SEK", "USD"}),
     ("BAGEPAPAXXX", "Banco General S.A. - Panama", {"AUD", "CAD", "CHF", "CNH", "DKK", "EUR", "GBP", "HKD", "JPY", "MXN", "NOK", "SEK", "USD", "ZAR"}),
     ("CAGRSVSSXXX", "Banco Agricola S.A. - El Salvador", {"CAD", "CHF", "EUR", "GBP", "JPY", "MXN", "USD"}),
+    ("BCMRMXMMXXX", "BBVA Mexico", {"CAD", "CHF", "EUR", "GBP", "JPY", "SEK", "USD"}),
 ]
 
 class TestMexicoCentralAmericaSsiCoverage:

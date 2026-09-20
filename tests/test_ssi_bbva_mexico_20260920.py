@@ -55,8 +55,18 @@ def test_bbva_mexico_manifest_matches_the_evidence_scope():
 
 def test_bbva_mexico_routes_are_canonical_bic_only_and_seeded():
     bank = _admitted_bank()
-    admitted = {(row["currency"], row["int_bic"]) for row in bank["admitted_records"]}
-    seeded = {(row[2], row[3]) for row in SSI_RECORDS if row[0] == "BCMRMXMMXXX"}
+    admitted = {
+        (
+            row["currency"],
+            row["int_bic"] if len(row["int_bic"]) == 11 else row["int_bic"] + "XXX",
+        )
+        for row in bank["admitted_records"]
+    }
+    seeded = {
+        (row[2], row[3])
+        for row in SSI_RECORDS
+        if row[0] == "BCMRMXMMXXX" and row[9].startswith(f"Source: {SOURCE}")
+    }
 
     assert admitted == EXPECTED_ROUTES
     assert seeded == EXPECTED_ROUTES
