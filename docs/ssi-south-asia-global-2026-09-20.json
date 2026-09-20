@@ -1,85 +1,295 @@
 {
   "source_snapshot": {
     "as_of": "2026-09-20",
-    "route_count": 93
+    "route_count": 84,
+    "candidate_route_count": 93,
+    "normalized_route_count": 93
   },
   "sources": [
     {
       "url": "https://www.abl.com/business-banking/accounts/home-remittances/essential-information-swift-and-nostro-codes-and-iban-generation/",
       "beneficiary_bic": "ABPAPKKAXXX",
-      "route_count": 6
+      "route_count": 6,
+      "candidate_route_count": 6,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.meezanbank.com/wp-content/themes/mbl/downloads/NOSTRO.pdf",
       "beneficiary_bic": "MEZNPKKAXXX",
-      "route_count": 2
+      "route_count": 2,
+      "candidate_route_count": 2,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://askari.tdfclient.com/business/cib/financial-institutions-division-fid",
       "beneficiary_bic": "ASCMPKKAXXX",
-      "route_count": 6
+      "route_count": 6,
+      "candidate_route_count": 6,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.bop.com.pk/view.aspx?id=1061",
       "beneficiary_bic": "BPUNPKKAXXX",
-      "route_count": 5
+      "route_count": 5,
+      "candidate_route_count": 5,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.bok.com.pk/treasury-and-institutional-banking/financial-institutions-detail",
       "beneficiary_bic": "KHYBPKKAXXX",
-      "route_count": 3
+      "route_count": 3,
+      "candidate_route_count": 3,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.bankalfalah.com/wp-content/themes/alfalah-theme/pdf/Routing-Instructions-Pakistan-Conventional-07102019.pdf",
       "beneficiary_bic": "ALFHPKKAXXX",
-      "route_count": 7
+      "route_count": 7,
+      "candidate_route_count": 7,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.ababank.com/fileadmin/user_upload/IR/Corporate_Profile_EN_H1-2017.pdf",
       "beneficiary_bic": "ABBLBDDHXXX",
-      "route_count": 15
+      "route_count": 15,
+      "candidate_route_count": 15,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://dhakabank.com.bd/global-trade-services/",
       "beneficiary_bic": "DHBLBDDHXXX",
-      "route_count": 13
+      "route_count": 13,
+      "candidate_route_count": 13,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.eximbankbd.com/remittance/international_operation",
       "beneficiary_bic": "EXBKBDDHXXX",
-      "route_count": 20
+      "route_count": 20,
+      "candidate_route_count": 20,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.ebl.com.bd/treasury/correspondent-banking",
       "beneficiary_bic": "EBLDBDDHXXX",
-      "route_count": 3
+      "route_count": 3,
+      "candidate_route_count": 3,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://www.citybankplc.com/edm/nostro_accounts/",
       "beneficiary_bic": "CIBLBDDHXXX",
-      "route_count": 2
+      "route_count": 1,
+      "candidate_route_count": 2,
+      "excluded_existing_route_count": 1
     },
     {
       "url": "https://www.standardbankbd.com/SblSSI.php",
       "beneficiary_bic": "SDBLBDDHXXX",
-      "route_count": 9
+      "route_count": 1,
+      "candidate_route_count": 9,
+      "excluded_existing_route_count": 8
     },
     {
       "url": "https://www.nabilbank.com/nabilbank/products/correspondent-banking-details",
       "beneficiary_bic": "NARBNPKAXXX",
-      "route_count": 1
+      "route_count": 1,
+      "candidate_route_count": 1,
+      "excluded_existing_route_count": 0
     },
     {
       "url": "https://himalayanbank.com/en/correspondent-network",
       "beneficiary_bic": "HIMANPKAXXX",
-      "route_count": 1
+      "route_count": 1,
+      "candidate_route_count": 1,
+      "excluded_existing_route_count": 0
     }
   ],
   "route_keys": [
     [
-      "ABBLBDDHXXX",
+      "ABPAPKKAXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "ABPAPKKAXXX",
+      "USD",
+      "SCBLINBBXXX"
+    ],
+    [
+      "ABPAPKKAXXX",
+      "USD",
+      "SCBLLKLXXXX"
+    ],
+    [
+      "ABPAPKKAXXX",
+      "USD",
+      "SCBLBDDXXXX"
+    ],
+    [
+      "ABPAPKKAXXX",
+      "CAD",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "ABPAPKKAXXX",
+      "EUR",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "MEZNPKKAXXX",
+      "USD",
+      "SCBLBDDXXXX"
+    ],
+    [
+      "MEZNPKKAXXX",
+      "USD",
+      "SCBLINBBXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "EUR",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "USD",
+      "BCEYLKLXXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "USD",
+      "SCBLBDDXXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "USD",
+      "SCBLINBBXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "ASCMPKKAXXX",
+      "USD",
+      "HDFCINBBXXX"
+    ],
+    [
+      "BPUNPKKAXXX",
+      "EUR",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "BPUNPKKAXXX",
+      "USD",
+      "HABBBDDHXXX"
+    ],
+    [
+      "BPUNPKKAXXX",
+      "USD",
+      "MUCBLKLCXXX"
+    ],
+    [
+      "BPUNPKKAXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "BPUNPKKAXXX",
+      "USD",
+      "SCBLINBBXXX"
+    ],
+    [
+      "KHYBPKKAXXX",
+      "USD",
+      "HABBBDDHXXX"
+    ],
+    [
+      "KHYBPKKAXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "KHYBPKKAXXX",
+      "EUR",
+      "UBAIITRRXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "USD",
+      "ALFHBDDHXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "USD",
+      "HBLILKLXXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "USD",
+      "ICICINBBXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "USD",
+      "UBININBBXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
+      "CAD",
+      "CITIGB2LXXX"
+    ],
+    [
+      "ALFHPKKAXXX",
       "CNY",
-      "PCBCCNBJXXX"
+      "ICBKPKKAXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "SCBLUS33XXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "SCBLSGSGXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "CZNBKRSEXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "KOEXKRSEXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "DBPHPHMMXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "DBSSSGSGXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "BFTVVNVXXXX"
+    ],
+    [
+      "ABBLBDDHXXX",
+      "USD",
+      "BNDCCAMMXXX"
     ],
     [
       "ABBLBDDHXXX",
@@ -98,13 +308,13 @@
     ],
     [
       "ABBLBDDHXXX",
-      "PHP",
-      "DBPHPHMMXXX"
+      "SGD",
+      "DBSSSGSGXXX"
     ],
     [
       "ABBLBDDHXXX",
-      "SGD",
-      "DBSSSGSGXXX"
+      "CNY",
+      "PCBCCNBJXXX"
     ],
     [
       "ABBLBDDHXXX",
@@ -113,233 +323,8 @@
     ],
     [
       "ABBLBDDHXXX",
-      "USD",
-      "BFTVVNVXXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "BNDCCAMMXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "CZNBKRSEXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
+      "PHP",
       "DBPHPHMMXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "DBSSSGSGXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "KOEXKRSEXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "SCBLSGSGXXX"
-    ],
-    [
-      "ABBLBDDHXXX",
-      "USD",
-      "SCBLUS33XXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "ACU",
-      "SCBLBDDXXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "ACU",
-      "SCBLINBBXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "ACU",
-      "SCBLLKLXXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "CAD",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "ACU",
-      "ALFHBDDHXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "ACU",
-      "HBLILKLXXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "ACU",
-      "ICICINBBXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "ACU",
-      "UBININBBXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "CAD",
-      "CITIGB2LXXX"
-    ],
-    [
-      "ALFHPKKAXXX",
-      "CNY",
-      "ICBKPKKAXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "ACU",
-      "BCEYLKLXXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "ACU",
-      "HDFCINBBXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "ACU",
-      "SCBLBDDXXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "ACU",
-      "SCBLINBBXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "ACU",
-      "HABBBDDHXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "ACU",
-      "MUCBLKLCXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "ACU",
-      "SCBLINBBXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "CIBLBDDHXXX",
-      "ACU",
-      "ICICINBBNRI"
-    ],
-    [
-      "CIBLBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "ABBLINBBXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "BHUBBTBTXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "BNBTBTBTXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "BSAMLKLXXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "BSONINCCXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "ICICINBBXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "MPBLPKKAXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "NPBBNPKAXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "SCBLINBBXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "ACU",
-      "UTBIINBBCAL"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
     ],
     [
       "DHBLBDDHXXX",
@@ -347,84 +332,129 @@
       "PNBPUS3NNYC"
     ],
     [
-      "EBLDBDDHXXX",
-      "ACU",
+      "DHBLBDDHXXX",
+      "EUR",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "MSHQINBBXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
       "ICICINBBXXX"
     ],
     [
-      "EBLDBDDHXXX",
-      "ACU",
+      "DHBLBDDHXXX",
+      "USD",
       "SCBLINBBXXX"
     ],
     [
-      "EBLDBDDHXXX",
-      "CNY",
-      "BKCHCNBJ110"
+      "DHBLBDDHXXX",
+      "USD",
+      "ABBLINBBXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "BSONINCCXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "UTBIINBBCAL"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "MPBLPKKAXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "NPBBNPKAXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "BNBTBTBTXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "BHUBBTBTXXX"
+    ],
+    [
+      "DHBLBDDHXXX",
+      "USD",
+      "BSAMLKLXXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "ABBLINBBXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "AXISINBBXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "BHUBBTBTXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
-      "BSONINCCXXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "ACU",
-      "HDFCINBBXXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "ACU",
-      "ICICINBBXXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "ACU",
-      "MEZNPKKAXXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "MPBLPKKAXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
+      "HDFCINBBXXX"
+    ],
+    [
+      "EXBKBDDHXXX",
+      "USD",
+      "ICICINBBXXX"
+    ],
+    [
+      "EXBKBDDHXXX",
+      "USD",
       "MSHQINBBXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "MUCBPKKAXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
+      "MEZNPKKAXXX"
+    ],
+    [
+      "EXBKBDDHXXX",
+      "USD",
       "NPBBNPKAXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
-      "SCBLINBBXXX"
+      "USD",
+      "BSONINCCXXX"
     ],
     [
       "EXBKBDDHXXX",
-      "ACU",
+      "USD",
       "SCBLLKLXXXX"
+    ],
+    [
+      "EXBKBDDHXXX",
+      "USD",
+      "SCBLINBBXXX"
     ],
     [
       "EXBKBDDHXXX",
@@ -439,16 +469,6 @@
     [
       "EXBKBDDHXXX",
       "USD",
-      "CHASUS33XXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "USD",
-      "CITIUS33XXX"
-    ],
-    [
-      "EXBKBDDHXXX",
-      "USD",
       "HANYUS33XXX"
     ],
     [
@@ -459,37 +479,42 @@
     [
       "EXBKBDDHXXX",
       "USD",
+      "CHASUS33XXX"
+    ],
+    [
+      "EXBKBDDHXXX",
+      "USD",
       "PNBPUS3NNYC"
     ],
     [
-      "HIMANPKAXXX",
+      "EXBKBDDHXXX",
+      "USD",
+      "CITIUS33XXX"
+    ],
+    [
+      "EBLDBDDHXXX",
+      "CNY",
+      "BKCHCNBJ110"
+    ],
+    [
+      "EBLDBDDHXXX",
+      "USD",
+      "ICICINBBXXX"
+    ],
+    [
+      "EBLDBDDHXXX",
+      "USD",
+      "SCBLINBBXXX"
+    ],
+    [
+      "CIBLBDDHXXX",
       "EUR",
       "SCBLDEFXXXX"
     ],
     [
-      "KHYBPKKAXXX",
-      "ACU",
-      "HABBBDDHXXX"
-    ],
-    [
-      "KHYBPKKAXXX",
-      "ACU",
-      "MSHQINBBXXX"
-    ],
-    [
-      "KHYBPKKAXXX",
+      "SDBLBDDHXXX",
       "EUR",
-      "UBAIITRRXXX"
-    ],
-    [
-      "MEZNPKKAXXX",
-      "ACU",
-      "SCBLBDDXXXX"
-    ],
-    [
-      "MEZNPKKAXXX",
-      "ACU",
-      "SCBLINBBXXX"
+      "SCBLDEFXXXX"
     ],
     [
       "NARBNPKAXXX",
@@ -497,49 +522,65 @@
       "SCBLDEFXXXX"
     ],
     [
-      "SDBLBDDHXXX",
-      "ACU",
-      "ABBLINBBXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "AXISINBBXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "BNBTBTBTXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "ICICINBBXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "MPBLPKKAXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "NIBPPKKAXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "NPBBNPKAXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "ACU",
-      "SCBLINBBXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
+      "HIMANPKAXXX",
       "EUR",
       "SCBLDEFXXXX"
     ]
-  ]
+  ],
+  "normalization": {
+    "currency_aliases": {
+      "ACU": "USD",
+      "ACUD": "USD"
+    },
+    "acu_candidate_route_count": 57,
+    "excluded_existing_route_count": 9,
+    "excluded_existing_route_keys": [
+      [
+        "CIBLBDDHXXX",
+        "USD",
+        "ICICINBBNRI"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "ABBLINBBXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "AXISINBBXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "BNBTBTBTXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "ICICINBBXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "MPBLPKKAXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "NIBPPKKAXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "NPBBNPKAXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "USD",
+        "SCBLINBBXXX"
+      ]
+    ],
+    "note": "Repository policy treats ACU/ACUD as USD. Rows whose normalized key already existed in origin/main were omitted; the source candidate counts remain in each source entry for auditability."
+  }
 }

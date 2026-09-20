@@ -22,7 +22,13 @@ def test_south_asia_global_ledger_has_exact_source_parity_and_unique_routes():
     rows = payload["ssi_records"]
     assert payload["source_prs"] == []
     assert payload["banks"] == []
-    assert len(rows) == 93
+    assert len(rows) == 84
+    assert evidence["source_snapshot"]["candidate_route_count"] == 93
+    assert evidence["source_snapshot"]["normalized_route_count"] == 93
+    assert evidence["normalization"]["currency_aliases"] == {"ACU": "USD", "ACUD": "USD"}
+    assert evidence["normalization"]["acu_candidate_route_count"] == 57
+    assert evidence["normalization"]["excluded_existing_route_count"] == 9
+    assert all(row[2] not in {"ACU", "ACUD"} for row in rows)
     assert evidence["source_snapshot"]["route_count"] == len(rows)
     assert sum(source["route_count"] for source in evidence["sources"]) == len(rows)
     keys = {(row[0], row[2], row[3]) for row in rows}
