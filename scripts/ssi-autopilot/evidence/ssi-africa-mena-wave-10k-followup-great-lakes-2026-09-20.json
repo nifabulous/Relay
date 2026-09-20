@@ -1,0 +1,27 @@
+{
+  "wave": "ssi-africa-mena-10k-followup-great-lakes-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json",
+  "scope": {
+    "region": "Great Lakes (Rwanda and Uganda)",
+    "route_count": 24,
+    "beneficiary_count": 2,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"]
+  },
+  "sources": [
+    {
+      "url": "https://www.imbankgroup.com/rw/funds-transfer/swift-transfers/",
+      "beneficiary_bic": "IMRWRWRWXXX",
+      "beneficiary_name": "I&M Bank Rwanda Plc",
+      "route_count": 18
+    },
+    {
+      "url": "https://www.stanbicbank.co.ug/static_file/Uganda/Downloadable%20files/BB%20account%20opening%20doc/SWIFT%20CODE.pdf",
+      "beneficiary_bic": "SBICUGKXXXX",
+      "beneficiary_name": "Stanbic Bank Uganda Limited",
+      "route_count": 6
+    }
+  ]
+}
