@@ -23,7 +23,7 @@ def _rows():
 
 def test_india_sri_lanka_batch_has_expected_unique_routes():
     rows = _rows()
-    assert len(rows) == 101
+    assert len(rows) == 94
     keys = [(row[0], row[2], row[3]) for row in rows]
     assert len(keys) == len(set(keys))
     assert {row[0] for row in rows} == {
@@ -43,6 +43,7 @@ def test_india_sri_lanka_rows_are_canonical_bic_only_metadata():
         beneficiary, _, currency, intermediary = row[:4]
         assert len(beneficiary) == 11 and BIC(beneficiary).is_valid
         assert len(intermediary) == 11 and BIC(intermediary).is_valid
+        assert intermediary not in {"SCBLDEFXXXX", "PNBPUS3NNYC"}
         assert currency.isupper() and len(currency) == 3
         assert all(value is None for value in row[5:9])
         assert row[9].startswith("Source: https://")
