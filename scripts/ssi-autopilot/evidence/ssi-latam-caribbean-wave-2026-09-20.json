@@ -1,0 +1,35 @@
+{
+  "wave": "latam-caribbean-20260920",
+  "source_snapshot": {
+    "route_count": 22,
+    "new_route_count": 22,
+    "raw_accounts_committed": false,
+    "bic_only": true
+  },
+  "scope": {
+    "included_route_count": 22,
+    "new_route_count": 22,
+    "regions": ["Latin America", "Caribbean"],
+    "notes": "Bank-owned correspondent and incoming-transfer instructions. Legacy source BIC spellings are normalized to canonical repository BICs, account numbers are deliberately excluded, and all entries remain unverified BIC-only metadata."
+  },
+  "sources": [
+    {
+      "beneficiary_bic": "IBNKPEPLXXX",
+      "beneficiary_name": "Interbank S.A.A.",
+      "country": "PE",
+      "url": "https://interbank.pe/bancos-corresponsales",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 19
+    },
+    {
+      "beneficiary_bic": "COLOPAPSXXX",
+      "beneficiary_name": "Bancolombia S.A. Panama Branch",
+      "country": "PA",
+      "url": "https://www.bancolombia.com/wcm/connect/www.bancolombia.com-26918/ed609370-c6a1-4ba0-9f1d-808b1dd841fc/Instrucciones%2Bde%2BGiro%2BBancolombia%2BSucursal%2BPanam%C3%A1%2B23032018.pdf",
+      "as_of": "2018-02-01",
+      "status": "unverified",
+      "route_count": 3
+    }
+  ]
+}
