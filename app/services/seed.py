@@ -1280,6 +1280,11 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_9_europe_americas_techventures.json",
     "seed_ssi_consolidation_9_europe_americas_bnp_poland.json",
     "seed_ssi_consolidation_9_europe_americas_dsk.json",
+    "seed_ssi_consolidation_10_africa_mena.json",
+    "seed_ssi_consolidation_10_europe_americas.json",
+    "seed_ssi_consolidation_10_south_asia_global.json",
+    "seed_ssi_consolidation_10_asia_pacific.json",
+    "seed_ssi_consolidation_10_india_sri_lanka.json",
 )
 
 
