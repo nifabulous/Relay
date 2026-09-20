@@ -688,8 +688,8 @@
       "COMMHKHHXXX",
       "Bank of Communications Co., Ltd. Hong Kong Branch",
       "USD",
-      "PNBPUS3NNYC",
-      "Correspondent bank identified by BIC PNBPUS3NNYC",
+        "PNBPUS33XXX",
+      "Correspondent bank identified by BIC PNBPUS33XXX",
       null,
       null,
       null,
@@ -705,8 +705,8 @@
       "SUNYTWTPXXX",
       "Sunny Bank",
       "USD",
-      "PNBPUS3NNYC",
-      "Correspondent bank identified by BIC PNBPUS3NNYC",
+        "PNBPUS33XXX",
+      "Correspondent bank identified by BIC PNBPUS33XXX",
       null,
       null,
       null,
@@ -1043,4 +1043,3 @@
     ]
   ]
 }
-
