@@ -16,6 +16,7 @@ from app.services.seed import (
     SEED_BIC_ALIASES,
     SSI_RECORDS,
     _is_canonical_bic11,
+    _load_ssi_consolidation_data,
     seed_if_empty,
 )
 
@@ -26,6 +27,28 @@ NEW_CONSOLIDATION_LEDGERS = {
     "seed_ssi_consolidation_8_2.json",
     "seed_ssi_consolidation_8_mena.json",
     "seed_ssi_consolidation_mena_1.json",
+}
+NEW_CONSOLIDATION_EXPECTATIONS = {
+    "seed_ssi_consolidation_8_1.json": {
+        "banks": 2,
+        "records": 484,
+        "sha256": "0bb4ac394dde1b55c68b35079504ae2252eff5103ce1b61a318b53211852e164",
+    },
+    "seed_ssi_consolidation_8_2.json": {
+        "banks": 29,
+        "records": 462,
+        "sha256": "9d6c69ad04dd35ea77a1b4d92579a381c013fbee93549bcb9a9f438f516c6263",
+    },
+    "seed_ssi_consolidation_8_mena.json": {
+        "banks": 0,
+        "records": 42,
+        "sha256": "0ee93287d51912aa04e2646f5942f17a4dd4a7c2abe11e39a7a900ccb92d5f82",
+    },
+    "seed_ssi_consolidation_mena_1.json": {
+        "banks": 1,
+        "records": 22,
+        "sha256": "c28b38b6191d4bcee94f593496d495c9d35f2c78a594d4fde18c9790e3517810",
+    },
 }
 
 
@@ -174,22 +197,42 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
 
 
 def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
-    """Keep the latest ledger files visible in the bounded review contract."""
+    """Keep the latest ledgers visible and exercise the production loader."""
     on_disk = {path.name for path in LEDGERS}
     configured = set(_SSI_CONSOLIDATION_DATA_FILES)
     assert NEW_CONSOLIDATION_LEDGERS <= on_disk
     assert NEW_CONSOLIDATION_LEDGERS <= configured
+    assert set(NEW_CONSOLIDATION_EXPECTATIONS) == NEW_CONSOLIDATION_LEDGERS
+
+    # This is the same loader used during seed import. Calling it here makes
+    # the per-ledger schema, duplicate-route, and safety validation part of
+    # the bounded review contract rather than relying only on imported globals.
+    loaded_banks, loaded_records = _load_ssi_consolidation_data()
+    loaded_keys = {(row[0], row[2], row[3]) for row in loaded_records}
 
     seeded_by_key = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
     for filename in sorted(NEW_CONSOLIDATION_LEDGERS):
-        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        path = ROOT / "app" / "services" / filename
+        payload = json.loads(path.read_text())
+        expected = NEW_CONSOLIDATION_EXPECTATIONS[filename]
         assert isinstance(payload["banks"], list), filename
         assert payload["ssi_records"], filename
+        assert len(payload["banks"]) == expected["banks"], filename
+        assert len(payload["ssi_records"]) == expected["records"], filename
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"], filename
         assert all(len(row) == 15 for row in payload["ssi_records"]), filename
         assert all(
             (row[0], row[2], row[3]) in seeded_by_key
             for row in payload["ssi_records"]
         ), filename
+        assert all(
+            (row[0], row[2], row[3]) in loaded_keys
+            for row in payload["ssi_records"]
+        ), filename
+
+    assert len(loaded_banks) >= sum(
+        item["banks"] for item in NEW_CONSOLIDATION_EXPECTATIONS.values()
+    )
 
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
