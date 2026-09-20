@@ -1413,6 +1413,9 @@ def _ssi_wave110_phongsavanh_records():
         ("CNY", "ICBKLALACLR", "Industrial and Commercial Bank of China, Laos RMB Clearing Bank"),
     ]
     return [
+        canonical_row = canonical_by_key.get(route_key, row)
+        if len(canonical_row) != 15:
+            canonical_row = row
         (
             "PSVBLALAXXX", "Phongsavanh Bank Ltd", currency, bic, name,
             None, None, None, None, note, "2026-09-19", "unverified", None, True, False,
@@ -10119,7 +10122,7 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
             verified_by,
             bic_only,
             terms_inferred,
-        ) = canonical_by_key.get(route_key, row)
+        ) = canonical_row
         if route_key not in source_keys:
             continue
         if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
