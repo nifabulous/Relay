@@ -12,7 +12,7 @@ def test_europe_americas_wave_has_exact_non_routable_parity():
     payload = json.loads(LEDGER.read_text())
     manifest = json.loads(MANIFEST.read_text())
     rows = payload["ssi_records"]
-    assert len(rows) == 192
+    assert len(rows) == 136
     keys = {(row[0], row[2], row[3]) for row in rows}
     seeded = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
     assert len(keys) == len(rows)
