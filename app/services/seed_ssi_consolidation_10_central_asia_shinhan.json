@@ -1,0 +1,12 @@
+{
+  "source_prs": [],
+  "banks": [
+    ["SHBKKZKAXXX", "Shinhan Bank Kazakhstan JSC", "KZ", "Almaty", "KZT"]
+  ],
+  "ssi_records": [
+    ["SHBKKZKAXXX", "Shinhan Bank Kazakhstan JSC", "USD", "SHBKKRSEXXX", "Shinhan Bank, Seoul", null, null, null, null, "Source: https://www.shinhan.kz/en/about-bank/requisites/ (official Shinhan Bank Kazakhstan correspondent-account table, accessed 2026-09-20). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-09-20", "unverified", null, true, false],
+    ["SHBKKZKAXXX", "Shinhan Bank Kazakhstan JSC", "USD", "IRVTUS3NXXX", "The Bank of New York Mellon, New York", null, null, null, null, "Source: https://www.shinhan.kz/en/about-bank/requisites/ (official Shinhan Bank Kazakhstan correspondent-account table, accessed 2026-09-20). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-09-20", "unverified", null, true, false],
+    ["SHBKKZKAXXX", "Shinhan Bank Kazakhstan JSC", "EUR", "IRVTDEFXXXX", "The Bank of New York Mellon, Frankfurt", null, null, null, null, "Source: https://www.shinhan.kz/en/about-bank/requisites/ (official Shinhan Bank Kazakhstan correspondent-account table, accessed 2026-09-20). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-09-20", "unverified", null, true, false],
+    ["SHBKKZKAXXX", "Shinhan Bank Kazakhstan JSC", "JPY", "SHBKJPJXXXX", "Shinhan Bank Japan, Tokyo", null, null, null, null, "Source: https://www.shinhan.kz/en/about-bank/requisites/ (official Shinhan Bank Kazakhstan correspondent-account table, accessed 2026-09-20). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-09-20", "unverified", null, true, false]
+  ]
+}

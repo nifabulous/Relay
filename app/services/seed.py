@@ -1295,6 +1295,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_15_sunrise_nepal.json",
     "seed_ssi_consolidation_10_latam_caribbean.json",
     "seed_ssi_consolidation_10_central_asia_eurasian.json",
+    "seed_ssi_consolidation_10_central_asia_shinhan.json",
 )
 
 

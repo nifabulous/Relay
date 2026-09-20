@@ -1,0 +1,25 @@
+{
+  "wave": "ssi-central-asia-shinhan-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_central_asia_shinhan.json",
+  "scope": {
+    "region": "Central Asia",
+    "route_count": 4,
+    "beneficiary_count": 1,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"],
+    "excluded_route_count": 1,
+    "exclusion_reason": "The Russian correspondent-bank row was intentionally excluded from the BIC-only expansion ledger."
+  },
+  "sources": [
+    {
+      "url": "https://www.shinhan.kz/en/about-bank/requisites/",
+      "beneficiary_bic": "SHBKKZKAXXX",
+      "beneficiary_name": "Shinhan Bank Kazakhstan JSC",
+      "route_count": 4,
+      "published_scope_count": 5,
+      "excluded_route_count": 1
+    }
+  ]
+}
