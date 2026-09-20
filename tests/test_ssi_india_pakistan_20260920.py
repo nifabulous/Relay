@@ -17,10 +17,14 @@ def test_india_pakistan_ledger_matches_source_attestation():
     rows = payload["ssi_records"]
     assert payload["source_prs"] == []
     assert payload["banks"] == []
-    assert len(rows) == 48
+    assert len(rows) == 25
     assert evidence["source_snapshot"]["candidate_route_count"] == 66
     assert evidence["source_snapshot"]["route_count"] == len(rows)
+    assert evidence["normalization"]["cross_batch_duplicate_route_count"] == 23
     assert sum(source["route_count"] for source in evidence["sources"]) == len(rows)
+    pnb_source = next(source for source in evidence["sources"] if "pnb.bank.in" in source["url"])
+    assert pnb_source["route_count"] == 1
+    assert pnb_source["excluded_cross_batch_route_count"] == 23
     assert {tuple(key) for key in evidence["route_keys"]} == {(row[0], row[2], row[3]) for row in rows}
     for source in evidence["sources"]:
         source_keys = {
@@ -39,6 +43,9 @@ def test_india_pakistan_routes_are_canonical_bic_only_and_safe():
     assert evidence["normalization"]["bic_aliases"]["PNBPUS3NNYC"] == "PNBPUS33XXX"
     assert evidence["normalization"]["bic_aliases"]["NBADAEAAX"] == "NBADAEAAXXX"
     assert len(evidence["normalization"]["invalid_source_rows"]) == 1
+    assert [row for row in payload["ssi_records"] if row[0] == "PUNBINBBISB"] == [
+        row for row in payload["ssi_records"] if row[0] == "PUNBINBBISB" and row[3] == "PNBPUS33XXX"
+    ]
     for row in payload["ssi_records"]:
         assert len(row) == 15
         assert canonical.fullmatch(row[0])

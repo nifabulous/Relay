@@ -1,6 +1,6 @@
 # India/Pakistan SSI expansion — 2026-09-20
 
-This snapshot contributes **48 new unique beneficiary/currency/intermediary
+This snapshot contributes **25 new unique beneficiary/currency/intermediary
 keys** after de-duplication against the current catalog and the prior
 South Asia/global snapshot. Every admitted row is BIC-only, `unverified`, and
 non-routable: no account number, charge code, value date, or verifier is
@@ -14,7 +14,7 @@ Official bank-owned sources and admitted route counts:
 | [Central Bank of India NOSTRO PDF](https://www.centralbankofindia.co.in/sites/default/files/documents/FORMAT_OF_MESSAGE_AND_NOSTRO_ACCOUNT_DETAILS_FOR.pdf) | 13 | 12 | One malformed `ANZBA43M` BIC retained only in evidence and excluded |
 | [Central Bank of India GIFT IFSC page](https://uat.centralbankofindia.co.in/en/node/225415) | 1 | 1 | Official CBININAAXXX SWIFT and USD correspondent |
 | [Bank of India routing PDF](https://bankofindia.co.in/documents/20121/0/wef%2B01.11.2018_ListofSwiftCodesandNostroAcnos.pdf) | 6 | 6 | Treasury-branch BIC `BKIDINBBTRY` |
-| [Punjab National Bank remittance page](https://pnb.bank.in/Remittance-Money-to-India.html) | 25 | 24 | One duplicate after canonicalization |
+| [Punjab National Bank remittance page](https://pnb.bank.in/Remittance-Money-to-India.html) | 25 | 1 | 23 rows duplicate the India/Sri Lanka ledger; one source duplicate is also excluded |
 
 The machine-readable evidence in
 [`ssi-india-pakistan-2026-09-20.json`](ssi-india-pakistan-2026-09-20.json)
