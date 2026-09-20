@@ -1152,6 +1152,22 @@ def _load_ssi_batch111_groups():
 
 _SSI_BATCH111_GROUPS = _load_ssi_batch111_groups()
 
+# Africa/MENA follow-up routes transcribed from bank-owned SSI and
+# correspondent-bank pages. The ledger intentionally omits account numbers
+# so these rows remain non-routable until independently verified.
+_SSI_AFRICA_MENA_DATA_FILES = ("seed_ssi_africa_mena_20260920.json",)
+
+
+def _load_ssi_africa_mena_groups():
+    groups = []
+    for filename in _SSI_AFRICA_MENA_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_AFRICA_MENA_GROUPS = _load_ssi_africa_mena_groups()
+
 _SSI_BATCH10_DATA_FILES = ("seed_ssi_batch10_1.json",)
 
 
@@ -1596,6 +1612,32 @@ def _ssi_batch111_records():
                 citation = citation.split(marker, 1)[0].rstrip(" .")
                 break
         note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_africa_mena_records():
+    """Expand the Africa/MENA correspondent ledger (BIC-only)."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_AFRICA_MENA_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"Source: {citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
         for packed in packed_rows:
             currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
             if len(intermediary_bic) == 8:
@@ -2320,6 +2362,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     *_ssi_batch110_records(),
     # ---- SSI expansion batch 111 (Asia-Pacific outside India; BIC-only) ----
     *_ssi_batch111_records(),
+    # ---- SSI expansion (Africa/MENA bank-owned correspondent pages; BIC-only) ----
+    *_ssi_africa_mena_records(),
     # ---- SSI expansion Asia subcontinent source ledger ----
     *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----

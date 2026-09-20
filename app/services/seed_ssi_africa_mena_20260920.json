@@ -1,0 +1,108 @@
+[
+  [
+    "IMBLKENAXXX",
+    "I&M Bank Ltd",
+    "https://www.imbankgroup.com/ke/funds-transfer/swift-transfers/ (official SWIFT correspondent table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are persisted.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "AED|SCBLAEADXXX|Standard Chartered Bank, Dubai|",
+      "AUD|SCBLGB2LXXX|Standard Chartered Bank, London|",
+      "CAD|CITIGB2LXXX|Citibank London|",
+      "CHF|HBZUCHZZXXX|Habib Bank AG Zurich|",
+      "TZS|IMBLTZTZXXX|I&M Bank Tanzania, Dar es Salaam|",
+      "EUR|SCBLDEFFXXX|Standard Chartered Bank, Frankfurt|",
+      "EUR|COBADEFFXXX|Commerzbank AG, Frankfurt|",
+      "EUR|CHASDEFXXXX|J.P. Morgan Chase, Frankfurt|",
+      "GBP|CITIGB2LXXX|Citibank N.A., London|",
+      "GBP|SCBLGB2LXXX|Standard Chartered Bank, London|",
+      "GBP|CHASGB2LXXX|J.P. Morgan Chase, London|",
+      "INR|ICICINBBXXX|ICICI Bank Limited, Mumbai|",
+      "INR|HDFCINBBXXX|HDFC Bank, Mumbai|",
+      "JPY|SCBLJPJTXXX|Standard Chartered Bank, Tokyo|",
+      "USD|CITIUS33XXX|Citibank N.A., New York|",
+      "USD|SCBLUS33XXX|Standard Chartered Bank, New York|",
+      "USD|CHASUS33XXX|J.P. Morgan Chase, New York|",
+      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa, Johannesburg|",
+      "MUR|BKONMUMUXXX|Bank One, Port Louis|",
+      "KES|CBKEKENXXXX|Central Bank of Kenya, Nairobi|",
+      "CNY|SCBLHKHHXXX|Standard Chartered Bank, Hong Kong|",
+      "UGX|DFCUUGKAXXX|DFCU Bank, Kampala|"
+    ]
+  ],
+  [
+    "AFRIKENXXXX",
+    "Bank of Africa Kenya Limited",
+    "https://boakenya.com/correspondent-banking/our-corresponding-banking-partners/ (official correspondent banking table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are persisted.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CHF|CITIGB2LXXX|Citibank N.A., London|",
+      "EUR|NATXFRPPXXX|Natixis, Paris|",
+      "RWF|AFRWRWRWXXX|Bank of Africa Rwanda, Kigali|",
+      "JPY|CITIGB2LXXX|Citibank N.A., London (Tokyo routing stated)|",
+      "TZS|EUAFTZTZXXX|Bank of Africa Tanzania, Dar es Salaam|",
+      "UGX|AFRIUGKAXXX|Bank of Africa Uganda, Kampala|",
+      "USD|CHASUS33XXX|J.P. Morgan Chase, New York|",
+      "ZAR|SBZAZAJJXXX|Standard Bank of South Africa, Johannesburg|"
+    ]
+  ],
+  [
+    "PRIEKENXXXX",
+    "Prime Bank Limited Kenya",
+    "https://www.primebank.co.ke/corporate/payments/fund-transfer/ (official funds-transfer correspondent table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are persisted.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "USD|SCBLUS33XXX|Standard Chartered Bank, New York|"
+    ]
+  ],
+  [
+    "AJIBJOAXXXX",
+    "Arab Jordan Investment Bank",
+    "https://www.ajib.com/sites/default/files/2025-09/List%20of%20AJIB%E2%80%99s%20SSI.pdf (official AJIB SSI list, accessed 2026-09-20). BIC-level list; no correspondent account numbers are persisted.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CHF|DEUTDEFFXXX|Deutsche Bank AG, Frankfurt|",
+      "GBP|SCBLGB2LXXX|Standard Chartered Bank, London|"
+    ]
+  ],
+  [
+    "SBICNGLXXXX",
+    "Stanbic IBTC Bank PLC",
+    "https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28Corporate%29.pdf (official Stanbic IBTC wire instructions, accessed 2026-09-20). BIC-level list; no correspondent account numbers are persisted.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "GBP|MIDLGB22XXX|HSBC Bank plc, London|",
+      "EUR|CITIGB2LXXX|Citibank N.A., London|",
+      "USD|CITIUS33XXX|Citibank N.A., New York|"
+    ]
+  ]
+]
