@@ -1291,6 +1291,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_india_sri_lanka.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
 )
 
