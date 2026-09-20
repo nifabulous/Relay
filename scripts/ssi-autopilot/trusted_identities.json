@@ -25,6 +25,14 @@
     ],
     "settlement_terms_published": false
   },
+  "BCMRMXMM": {
+    "name": "BBVA Mexico",
+    "country": "MX",
+    "domains": [
+      "bbva.mx"
+    ],
+    "settlement_terms_published": false
+  },
   "FNNBTRIS": {
     "name": "QNB A.Ş.",
     "country": "TR",

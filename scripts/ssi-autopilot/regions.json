@@ -9597,12 +9597,112 @@
           "name": "BBVA Mexico",
           "country": "MX",
           "currencies": [
-            "USD",
+            "CAD",
+            "CHF",
             "EUR",
             "GBP",
-            "MXN"
+            "JPY",
+            "SEK",
+            "USD"
           ],
-          "seedable": false
+          "seedable": true,
+          "source_domains": [
+            "bbva.mx"
+          ],
+          "admitted_records": [
+            {
+              "currency": "CAD",
+              "correspondent": "Royal Bank of Canada, Toronto",
+              "int_bic": "ROYCCAT2",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "CHF",
+              "correspondent": "UBS AG, Zurich",
+              "int_bic": "UBSWCHZH80A",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "EUR",
+              "correspondent": "Banco Bilbao Vizcaya Argentaria, Madrid",
+              "int_bic": "BBVAESMM",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "GBP",
+              "correspondent": "National Westminster Bank PLC, London",
+              "int_bic": "NWBKGB2L",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "JPY",
+              "correspondent": "Bank of Tokyo-Mitsubishi, Tokyo",
+              "int_bic": "BOTKJPJT",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "SEK",
+              "correspondent": "Skandinaviska Enskilda Banken, Stockholm",
+              "int_bic": "ESSESESS",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            },
+            {
+              "currency": "USD",
+              "correspondent": "JPMorgan Chase Bank, New York",
+              "int_bic": "CHASUS33",
+              "nostro": null,
+              "with_an": null,
+              "charge_code": null,
+              "value_date": null,
+              "source": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+              "as_of": "2026-09-20",
+              "status": "unverified",
+              "bic_only": true
+            }
+          ],
+          "admitted_record_digest": "586f6fcea2127e5956e9f2d58bb4bafe63a017c7ee6152d8424170788ec928c0"
         },
         {
           "bic8": "BMSXMXMM",

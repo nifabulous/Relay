@@ -1,0 +1,26 @@
+{
+  "wave": "bbva-mexico-20260920",
+  "source_snapshot": {
+    "route_count": 7,
+    "new_route_count": 7,
+    "raw_accounts_committed": false,
+    "bic_only": true
+  },
+  "scope": {
+    "included_route_count": 7,
+    "new_route_count": 7,
+    "region": "Mexico",
+    "notes": "The bank-published page names one incoming correspondent BIC for each supported currency and does not publish settlement-account details. The seven relationships are stored as unverified BIC-only metadata and cannot be selected for settlement."
+  },
+  "sources": [
+    {
+      "beneficiary_bic": "BCMRMXMMXXX",
+      "beneficiary_name": "BBVA Mexico",
+      "country": "MX",
+      "url": "https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 7
+    }
+  ]
+}
