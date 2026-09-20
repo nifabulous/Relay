@@ -91,6 +91,7 @@ BANKS = [
     ("CTBAAU2SXXX", "Commonwealth Bank of Australia", "AU", "Sydney", "AUD"),
     ("ANZBNZ22XXX", "ANZ Bank New Zealand", "NZ", "Auckland", "NZD"),
     ("ASBBNZ2AXXX", "ASB Bank", "NZ", "Auckland", "NZD"),
+    ("ICBKNZ2AXXX", "Industrial and Commercial Bank of China (New Zealand) Limited", "NZ", "Auckland", "NZD"),
     ("BNINIDJAXXX", "Bank Negara Indonesia", "ID", "Jakarta", "IDR"),
     ("BNIAIDJAXXX", "Bank Central Asia (BCA)", "ID", "Jakarta", "IDR"),
     ("BBUKIDJAXXX", "PT Bank KB Bukopin Tbk", "ID", "Jakarta", "IDR"),
@@ -1135,6 +1136,22 @@ def _load_ssi_batch110_groups():
 
 _SSI_BATCH110_GROUPS = _load_ssi_batch110_groups()
 
+# Batch 111 captures newly published correspondent tables for Asia-Pacific
+# banks outside India.  These are BIC-only metadata (no account numbers), so
+# routes remain non-routable until independently verified.
+_SSI_BATCH111_DATA_FILES = ("seed_ssi_batch111_asia_pacific.json",)
+
+
+def _load_ssi_batch111_groups():
+    groups = []
+    for filename in _SSI_BATCH111_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH111_GROUPS = _load_ssi_batch111_groups()
+
 _SSI_BATCH10_DATA_FILES = ("seed_ssi_batch10_1.json",)
 
 
@@ -1543,6 +1560,32 @@ def _ssi_batch110_records():
                 beneficiary_bic, currency, intermediary_bic
             ) in excluded_routes:
                 continue
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_batch111_records():
+    """Expand Asia-Pacific correspondent tables outside India (BIC-only)."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH111_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
             expanded.append((
                 beneficiary_bic, beneficiary_name, currency, intermediary_bic,
                 intermediary_name, None, None, None, None, note, as_of,
@@ -2222,6 +2265,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     *_ssi_wave110_phongsavanh_records(),
     # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
     *_ssi_batch110_records(),
+    # ---- SSI expansion batch 111 (Asia-Pacific outside India; BIC-only) ----
+    *_ssi_batch111_records(),
     # ---- SSI expansion Asia subcontinent source ledger ----
     *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
