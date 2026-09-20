@@ -1,0 +1,34 @@
+{
+  "wave": "ssi-africa-mena-10k-followup-kenya-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena_followup_kenya.json",
+  "scope": {
+    "region": "East Africa (Kenya)",
+    "route_count": 53,
+    "beneficiary_count": 3,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"]
+  },
+  "sources": [
+    {
+      "url": "https://www.stanbicbank.co.ke/kenya/personal/about-us/standard-settlement-instructions",
+      "beneficiary_bic": "SBICKENXXXX",
+      "beneficiary_name": "Stanbic Bank Kenya Limited",
+      "route_count": 24
+    },
+    {
+      "url": "https://www.co-opbank.co.ke/money-transfer/swift-transfers/",
+      "beneficiary_bic": "KCOOKENAXXX",
+      "beneficiary_name": "The Co-operative Bank of Kenya Limited",
+      "beneficiary_bic_source": "https://www.co-opbank.co.ke/faq/bank-swift-code-and-bank-code/",
+      "route_count": 19
+    },
+    {
+      "url": "https://gtbank-kenya.files.svdcdn.com/production/general/GTBank-Kenya-Corresponding-Banking-Partners.pdf",
+      "beneficiary_bic": "GTBIKENAXXX",
+      "beneficiary_name": "Guaranty Trust Bank (Kenya) Ltd",
+      "route_count": 10
+    }
+  ]
+}
