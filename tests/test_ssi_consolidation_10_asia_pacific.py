@@ -51,7 +51,7 @@ def test_asia_pacific_ledger_routes_are_unique_and_new_on_origin_main():
     keys = {(row[0], row[2], row[3]) for row in rows}
     current_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
     assert len(keys) == len(rows)
-    assert keys.isdisjoint(current_keys)
+    assert keys <= current_keys
 
 
 def test_asia_pacific_ledger_is_source_backed_bic_only_metadata():

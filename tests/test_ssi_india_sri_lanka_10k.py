@@ -10,7 +10,7 @@ LEDGER = (
     Path(__file__).resolve().parents[1]
     / "app"
     / "services"
-    / "seed_ssi_india_sri_lanka_10k.json"
+    / "seed_ssi_consolidation_10_india_sri_lanka.json"
 )
 
 
