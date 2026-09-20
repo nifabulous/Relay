@@ -4,7 +4,7 @@
   "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena.json",
   "scope": {
     "region": "Africa and MENA",
-    "route_count": 64,
+    "route_count": 63,
     "beneficiary_count": 9,
     "bic_only": true,
     "routable": false,
@@ -27,7 +27,7 @@
       "url": "https://www.banknizwa.om/media/3939/ssi-list-bank-nizwa-feb-2023.pdf",
       "beneficiary_bic": "BNZWOMRXXXX",
       "beneficiary_name": "Bank Nizwa SAOG",
-      "route_count": 3
+      "route_count": 2
     },
     {
       "url": "https://www.afrasiabank.com/en/international/correspondent-banks",

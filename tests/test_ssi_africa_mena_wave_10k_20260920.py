@@ -29,8 +29,8 @@ def test_ledger_shape_and_exact_route_count():
     assert set(ledger) == {"source_prs", "banks", "ssi_records"}
     assert ledger["source_prs"] == []
     assert ledger["banks"] == []
-    assert len(ledger["ssi_records"]) == 64
-    assert evidence["scope"]["route_count"] == 64
+    assert len(ledger["ssi_records"]) == 63
+    assert evidence["scope"]["route_count"] == 63
     assert evidence["scope"]["beneficiary_count"] == 9
 
 
@@ -38,7 +38,7 @@ def test_routes_are_unique_canonical_and_bic_only():
     ledger, _ = _load()
     records = ledger["ssi_records"]
     keys = [(row[0], row[2], row[3]) for row in records]
-    assert len(keys) == len(set(keys)) == 64
+    assert len(keys) == len(set(keys)) == 63
 
     for row in records:
         assert len(row) == 15
@@ -67,7 +67,7 @@ def test_every_official_source_matches_ledger_counts():
 
     evidence_sources = evidence["sources"]
     assert len(evidence_sources) == 9
-    assert sum(source["route_count"] for source in evidence_sources) == 64
+    assert sum(source["route_count"] for source in evidence_sources) == 63
     assert {source["url"] for source in evidence_sources} == set(source_counts)
     assert {source["beneficiary_bic"] for source in evidence_sources} == set(
         beneficiary_counts
@@ -75,4 +75,3 @@ def test_every_official_source_matches_ledger_counts():
     for source in evidence_sources:
         assert source_counts[source["url"]] == source["route_count"]
         assert beneficiary_counts[source["beneficiary_bic"]] == source["route_count"]
-
