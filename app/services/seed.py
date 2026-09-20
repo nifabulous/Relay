@@ -91,6 +91,7 @@ BANKS = [
     ("CTBAAU2SXXX", "Commonwealth Bank of Australia", "AU", "Sydney", "AUD"),
     ("ANZBNZ22XXX", "ANZ Bank New Zealand", "NZ", "Auckland", "NZD"),
     ("ASBBNZ2AXXX", "ASB Bank", "NZ", "Auckland", "NZD"),
+    ("ICBKNZ2AXXX", "Industrial and Commercial Bank of China (New Zealand) Limited", "NZ", "Auckland", "NZD"),
     ("BNINIDJAXXX", "Bank Negara Indonesia", "ID", "Jakarta", "IDR"),
     ("BNIAIDJAXXX", "Bank Central Asia (BCA)", "ID", "Jakarta", "IDR"),
     ("BBUKIDJAXXX", "PT Bank KB Bukopin Tbk", "ID", "Jakarta", "IDR"),
@@ -1135,6 +1136,38 @@ def _load_ssi_batch110_groups():
 
 _SSI_BATCH110_GROUPS = _load_ssi_batch110_groups()
 
+# Batch 111 captures newly published correspondent tables for Asia-Pacific
+# banks outside India.  These are BIC-only metadata (no account numbers), so
+# routes remain non-routable until independently verified.
+_SSI_BATCH111_DATA_FILES = ("seed_ssi_batch111_asia_pacific.json",)
+
+
+def _load_ssi_batch111_groups():
+    groups = []
+    for filename in _SSI_BATCH111_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH111_GROUPS = _load_ssi_batch111_groups()
+
+# Africa/MENA follow-up routes transcribed from bank-owned SSI and
+# correspondent-bank pages. The ledger intentionally omits account numbers
+# so these rows remain non-routable until independently verified.
+_SSI_AFRICA_MENA_DATA_FILES = ("seed_ssi_africa_mena_20260920.json",)
+
+
+def _load_ssi_africa_mena_groups():
+    groups = []
+    for filename in _SSI_AFRICA_MENA_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_AFRICA_MENA_GROUPS = _load_ssi_africa_mena_groups()
+
 _SSI_BATCH10_DATA_FILES = ("seed_ssi_batch10_1.json",)
 
 
@@ -1147,6 +1180,19 @@ def _load_ssi_batch10_groups():
 
 
 _SSI_BATCH10_GROUPS = _load_ssi_batch10_groups()
+
+_SSI_SOUTH_ASIA_WAVE2_DATA_FILES = ("seed_ssi_south_asia_wave2.json",)
+
+
+def _load_ssi_south_asia_wave2_groups():
+    groups = []
+    for filename in _SSI_SOUTH_ASIA_WAVE2_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_SOUTH_ASIA_WAVE2_GROUPS = _load_ssi_south_asia_wave2_groups()
 
 _SSI_ASIA_SUBCONTINENT_DATA_FILES = ("seed_ssi_asia_subcontinent_350.json",)
 
@@ -1228,6 +1274,12 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_8_1.json",
     "seed_ssi_consolidation_8_2.json",
     "seed_ssi_consolidation_mena_1.json",
+    "seed_ssi_consolidation_9_europe_americas_swedbank.json",
+    "seed_ssi_consolidation_9_europe_americas_procredit_md.json",
+    "seed_ssi_consolidation_9_europe_americas_ttk.json",
+    "seed_ssi_consolidation_9_europe_americas_techventures.json",
+    "seed_ssi_consolidation_9_europe_americas_bnp_poland.json",
+    "seed_ssi_consolidation_9_europe_americas_dsk.json",
 )
 
 
@@ -1551,6 +1603,58 @@ def _ssi_batch110_records():
     return expanded
 
 
+def _ssi_batch111_records():
+    """Expand Asia-Pacific correspondent tables outside India (BIC-only)."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH111_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_africa_mena_records():
+    """Expand the Africa/MENA correspondent ledger (BIC-only)."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_AFRICA_MENA_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"Source: {citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
 def _ssi_batch10_records():
     """Expand the South Asia correspondent-bank ledger into canonical tuples."""
     expanded = []
@@ -1576,6 +1680,45 @@ def _ssi_batch10_records():
                 None if bic_only else account, None if bic_only else charge_code,
                 None if bic_only else value_date, note, as_of, status,
                 verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_south_asia_wave2_records():
+    """Expand official South Asia correspondent ledgers as BIC-only rows.
+
+    The source pages and PDFs identify currency/correspondent pairs but the
+    seed intentionally withholds account numbers, fees, and value dates.  The
+    resulting availability metadata is therefore never routable until an
+    independently verified SSI is supplied.
+    """
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_SOUTH_ASIA_WAVE2_GROUPS:
+        note = f"{source.rstrip()} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            expanded.append((
+                beneficiary_bic,
+                beneficiary_name,
+                currency,
+                intermediary_bic,
+                intermediary_name,
+                None,
+                None,
+                None,
+                None,
+                note,
+                as_of,
+                status,
+                verified_by,
+                bic_only,
+                terms_inferred,
             ))
     return expanded
 
@@ -2222,6 +2365,10 @@ SSI_RECORDS = _dedupe_ssi_records([
     *_ssi_wave110_phongsavanh_records(),
     # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
     *_ssi_batch110_records(),
+    # ---- SSI expansion batch 111 (Asia-Pacific outside India; BIC-only) ----
+    *_ssi_batch111_records(),
+    # ---- SSI expansion (Africa/MENA bank-owned correspondent pages; BIC-only) ----
+    *_ssi_africa_mena_records(),
     # ---- SSI expansion Asia subcontinent source ledger ----
     *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
@@ -2242,6 +2389,8 @@ SSI_RECORDS = _dedupe_ssi_records([
     # SSI batch 4 rows end
     # ---- SSI expansion batch 10 (South Asia correspondent metadata) ----
     *_ssi_batch10_records(),
+    # ---- SSI expansion South Asia wave 2 (official BIC-only metadata) ----
+    *_ssi_south_asia_wave2_records(),
     # ---- SSI expansion wave (Americas bank-published correspondent metadata) ----
     *AMERICAS_WAVE_RECORDS,
     # ---- DNB Bank ASA Helsinki Branch (current 2026-02-02 SSI) ----

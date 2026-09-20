@@ -82,6 +82,57 @@ def _production_seeded_session():
     return engine, session
 
 
+def test_10k_expansion_catalog_count_matches_integrated_route_keys():
+    """Pin the 10k expansion claim to the exact seeded route-key total."""
+    route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+
+    assert len(SSI_RECORDS) == len(route_keys) == 10_164
+
+
+def test_active_route_consumer_excludes_bic_only_and_archived_rows():
+    """Informational SSI metadata must never become a selectable route."""
+    engine, session = _production_seeded_session()
+    session.add_all(
+        [
+            SSI(
+                beneficiary_bic="TSTCUS33XXX",
+                beneficiary_bank_name="Test BIC-only beneficiary",
+                currency="USD",
+                intermediary_bic="CHASUS33XXX",
+                intermediary_bank_name="JPMorgan Chase Bank N.A.",
+                notes="Source: https://bank.example/bic-only",
+                as_of="2026-09-20",
+                status="unverified",
+                bic_only=True,
+                terms_inferred=False,
+            ),
+            SSI(
+                beneficiary_bic="TSTCUS33XXX",
+                beneficiary_bank_name="Test archived beneficiary",
+                currency="EUR",
+                intermediary_bic="DEUTDEFFXXX",
+                intermediary_bank_name="Deutsche Bank AG",
+                intermediary_account="123456789012",
+                beneficiary_account="123456789012",
+                charge_code="SHA",
+                value_date="spot",
+                notes="Source: https://bank.example/archived-ssi (archived 2024-01-01).",
+                as_of="2024-01-01",
+                status="archived",
+                bic_only=False,
+                terms_inferred=False,
+            ),
+        ]
+    )
+    session.commit()
+
+    assert suggest_from_ssi(session, "TSTCUS33XXX", "USD", "US") == []
+    assert suggest_from_ssi(session, "TSTCUS33XXX", "EUR", "DE") == []
+
+    session.close()
+    engine.dispose()
+
+
 def _row_to_ssi(row):
     provenance = list(row[10:])
     return SSI(

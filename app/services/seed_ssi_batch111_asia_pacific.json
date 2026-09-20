@@ -1,0 +1,69 @@
+[
+  [
+    "UOVBSGSGXXX",
+    "United Overseas Bank (UOB), Singapore",
+    "Source: https://www.uob.com.sg/business/help-support/list-of-nostro-agents.page (official UOB Singapore nostro-agent table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are published.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|BARCDEFF|Barclays Bank Ireland PLC Frankfurt Branch|",
+      "THB|UOBVTHBK|United Overseas Bank (Thai) Public Company Ltd Bangkok|"
+    ]
+  ],
+  [
+    "DBSSSGSGXXX",
+    "DBS Bank, Singapore",
+    "Source: https://www.dbs.com.sg/sme/day-to-day/collections/incoming-funds/telegraphic-transfer-info.page (official DBS Singapore telegraphic-transfer correspondent table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are published.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CNH|DBSSCNSHXXX|DBS Bank (China) Limited Shanghai|"
+    ]
+  ],
+  [
+    "KASITHBKXXX",
+    "Kasikornbank Public Company Limited, Thailand",
+    "Source: https://www.kasikornbank.com/TH/ApplyForServices/ApplyForServiceForm/GlobalInward_091158.pdf (official Kasikornbank Global Inward Remittance correspondent list, accessed 2026-09-20). BIC-level list; no correspondent account numbers are published.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "EUR|SCBLDEFX|Standard Chartered Bank Frankfurt|",
+      "NOK|DABANO22|Danske Bank A/S Trondheim|"
+    ]
+  ],
+  [
+    "ICBKNZ2AXXX",
+    "Industrial and Commercial Bank of China (New Zealand) Limited",
+    "Source: https://nz.icbc.com.cn/en/page/721852469130067989.html (official ICBC New Zealand transaction-banking correspondent table, accessed 2026-09-20). BIC-level list; no correspondent account numbers are published.",
+    "2026-09-20",
+    "unverified",
+    null,
+    null,
+    null,
+    true,
+    false,
+    [
+      "CNY|HSBCHKHHHKH|The Hongkong and Shanghai Banking Corporation Hong Kong|",
+      "USD|BOFAUS3N|Bank of America Merrill Lynch New York|",
+      "EUR|ICBKDEFF|Industrial and Commercial Bank of China Frankfurt Branch|",
+      "AUD|ANZBAU3MXXX|Australia and New Zealand Banking Group Melbourne|",
+      "HKD|UBHKHKHH|Industrial and Commercial Bank of China (Asia) Hong Kong|",
+      "JPY|ICBKJPJT|Industrial and Commercial Bank of China Tokyo Branch|"
+    ]
+  ]
+]
