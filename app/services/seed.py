@@ -1300,6 +1300,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_latam_caribbean.json",
     "seed_ssi_consolidation_10_central_asia_eurasian.json",
     "seed_ssi_consolidation_10_central_asia_shinhan.json",
+    "seed_ssi_deutsche_frankfurt_20260407.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
