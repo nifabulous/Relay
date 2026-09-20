@@ -1,34 +1,5 @@
 [
   [
-    "BRACBDDHXXX",
-    "BRAC Bank PLC",
-    "Source: https://www.bracbank.com/en/correspondent-banking (accessed 2026-09-20).",
-    "2026-09-20",
-    "unverified",
-    null,
-    null,
-    null,
-    true,
-    false,
-    [
-      "USD|CITIUS33XXX|Citibank N.A. New York|",
-      "USD|CHASUS33XXX|JPMorgan Chase Bank New York|",
-      "EUR|COBADEFFXXX|Commerzbank AG Frankfurt|",
-      "EUR|DEUTDEFFXXX|Deutsche Bank AG Frankfurt|",
-      "GBP|CHASGB2LXXX|JPMorgan Chase Bank London|",
-      "GBP|BARCGB22XXX|Barclays Bank London|",
-      "AED|EBILAEADXXX|Emirates NBD Bank Dubai|",
-      "AUD|ANZBAU3MXXX|ANZ Banking Group Melbourne|",
-      "CAD|ROYCCAT2XXX|Royal Bank of Canada Toronto|",
-      "CHF|UBSWCHZH80A|UBS AG Zurich|",
-      "CNY|BKCHCNBJXXX|Bank of China Beijing|",
-      "HKD|HSBCHKHHXXX|HSBC Hong Kong|",
-      "JPY|BOTKJPJTXXX|MUFG Bank Tokyo|",
-      "SGD|DBSSSGSXAXX|DBS Bank Singapore|",
-      "SAR|RJHISARIXXX|Al Rajhi Bank Riyadh|"
-    ]
-  ],
-  [
     "NBLBBDDHXXX",
     "National Bank Limited Bangladesh",
     "Source: https://www.nblbd.com/correspondent-banks (accessed 2026-09-20).",
@@ -142,30 +113,6 @@
       "JPY|BOTKJPJTXXX|MUFG Tokyo|",
       "SGD|DBSSSGSXAXX|DBS Singapore|",
       "SAR|NCBKSAJEXXX|Saudi National Bank Riyadh|"
-    ]
-  ],
-  [
-    "SEYBLKLXXXX",
-    "Seylan Bank PLC",
-    "Source: https://www.seylan.lk/correspondent-banks (accessed 2026-09-20).",
-    "2026-09-20",
-    "unverified",
-    null,
-    null,
-    null,
-    true,
-    false,
-    [
-      "USD|CITIUS33XXX|Citibank New York|",
-      "GBP|SCBLGB22XXX|Standard Chartered London|",
-      "AED|BOMLAEADXXX|Mashreq Dubai|",
-      "AUD|NATAAU33XXX|NAB Melbourne|",
-      "CHF|CRESCHZZ80A|Credit Suisse Zurich|",
-      "CNY|ICBKCNBJXXX|ICBC Beijing|",
-      "HKD|BKCHHKHHXXX|Bank of China Hong Kong|",
-      "JPY|SMBCJPJTXXX|SMBC Tokyo|",
-      "SGD|UOVBSGSGXXX|UOB Singapore|",
-      "SAR|RJHISARIXXX|Al Rajhi Bank Riyadh|"
     ]
   ],
   [
@@ -363,22 +310,6 @@
       "USD|HDFCINBBXXX|HDFC Bank India|",
       "CAD|BOFMCAT2XXX|Bank of Montreal Toronto|",
       "CNY|CZCBCN2XXXX|Zhejiang Chouzhou Commercial Bank|"
-    ]
-  ],
-  [
-    "PSBKLKLXXXX",
-    "People's Bank Sri Lanka",
-    "Source: https://www.peoplesbank.lk/foreign-remittance/ (accessed 2026-09-20).",
-    "2026-09-20",
-    "unverified",
-    null,
-    null,
-    null,
-    true,
-    false,
-    [
-      "USD|UBAFSGSXXXX|Union de Banques Arabes et Francaises Singapore|",
-      "HKD|HSBCHKHHHKH|HSBC Hong Kong|"
     ]
   ],
   [

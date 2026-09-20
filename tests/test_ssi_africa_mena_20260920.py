@@ -34,7 +34,14 @@ def test_africa_mena_manifest_matches_bic_only_seed_rows():
 
 
 def test_africa_mena_routes_are_unique_in_seed():
-    rows = [row for row in SSI_RECORDS if row[10] == "2026-09-20"]
+    evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    source_prefixes = tuple(
+        f"Source: {item['url']}" for item in evidence["source_snapshot"]["sources"]
+    )
+    rows = [
+        row for row in SSI_RECORDS
+        if row[9].startswith(source_prefixes)
+    ]
     keys = [(row[0], row[2], row[3]) for row in rows]
     assert len(rows) == 36
     assert len(keys) == len(set(keys))

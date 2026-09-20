@@ -16,7 +16,7 @@ def test_south_asia_wave2_ledger_is_admitted_as_non_routable_metadata():
         for group in groups
         for item in group[-1]
     ]
-    assert len(packed) == 190
+    assert len(packed) == 163
     assert len(set(packed)) == len(packed)
 
     seeded = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
@@ -26,4 +26,3 @@ def test_south_asia_wave2_ledger_is_admitted_as_non_routable_metadata():
     assert all(row[11] == "unverified" for row in admitted)
     assert all(row[5] is None and row[6] is None for row in admitted)
     assert all("Source: https://" in row[9] for row in admitted)
-
