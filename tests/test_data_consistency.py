@@ -273,6 +273,9 @@ UNVERIFIED_US_CLEARERS = {
     # Bank, but do not publish a CHIPS/ABA identifier for this BIC. The row is
     # informational and remains blocked by the shared routing predicate.
     "PCBBUS66",
+    # UBA New York appears in a bank-published BIC-only correspondent table;
+    # no public CHIPS/ABA identifier was committed for this informational row.
+    "UNAFUS33",
 }
 
 
@@ -953,7 +956,7 @@ class TestSeedRollout:
         )
         (ben_bic, ben_name, ccy, int_bic, int_name, _int_acct, _ben_acct,
          _charge, _vdate, source_notes, source_as_of, source_status,
-         _verified_by, target_bic_only) = target
+         _verified_by, target_bic_only, *_terms_inferred) = target
         assert target_bic_only is True
 
         engine = create_engine(
@@ -1009,7 +1012,7 @@ class TestSeedRollout:
         )
         (ben_bic, _ben_name, ccy, int_bic, _int_name, _int_acct, _ben_acct,
          _charge, _vdate, _notes, source_as_of, source_status,
-         _verified_by, target_bic_only) = target
+         _verified_by, target_bic_only, *_terms_inferred) = target
         assert target_bic_only is True
 
         engine = create_engine(
@@ -2319,6 +2322,7 @@ class TestJapanSsiCoverage:
 
 # ---- autopilot-generated coverage tests: western-europe ----
 WESTERN_EUROPE_SSI_COVERAGE = [
+    ('FBHLNL2AXXX', 'Nexent Bank N.V.', {'AED', 'AUD', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY', 'MUR', 'NOK', 'NZD', 'PLN', 'QAR', 'RON', 'SAR', 'SEK', 'TRY', 'USD', 'ZAR'}),
     ('AREBESMMXXX', 'ARESBANK, S.A.', {'GBP', 'KWD', 'USD'}),
     ('BAPPIT22XXX', 'BANCO BPM SPA', {'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'GBP', 'HUF', 'ILS', 'JPY', 'USD'}),
     ('CCRTIT2TXXX', 'CASSA CENTRALE BANCA - CREDITO COOPERATIVO ITALIANO S.P.A.', {'CAD', 'CHF', 'EUR', 'GBP', 'USD'}),
@@ -2401,6 +2405,7 @@ LATAM_WAVE2_SSI_COVERAGE = [
     ("GNDRBO22XXX", "Banco Ganadero S.A.", {"CNY", "EUR", "JPY", "USD"}),
     ("GUAYECEGXXX", "Banco Guayaquil S.A.", {"CHF", "EUR", "GBP", "JPY", "USD"}),
     ("ITAUUYMMXXX", "Banco Itaú Uruguay S.A.", {"EUR", "GBP", "USD"}),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", {"USD", "EUR", "GBP", "CHF", "JPY", "CAD"}),
 ]
 
 class TestLatamWave2SsiCoverage:
@@ -2428,8 +2433,6 @@ class TestLatamWave2SsiCoverage:
     def test_latam_wave2_seeded_records_are_semantically_valid(self):
         _assert_manifest_region_records("latam-wave2", SSI_RECORDS, BANKS)
 # ---- end autopilot-generated coverage tests: latam-wave2 ----
-
-
 # ---- autopilot-generated coverage tests: africa-wave2 ----
 AFRICA_WAVE2_SSI_COVERAGE = [
     ("AGRZZWHAXXX", "AFC COMMERCIAL BANK LIMITED", {"BWP", "CNY", "EUR", "GBP", "USD", "ZAR"}),

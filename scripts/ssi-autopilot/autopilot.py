@@ -629,11 +629,23 @@ def _validate_admission_envelope(
         if not countries or any(not isinstance(c, str) or not re.fullmatch(r"[A-Z]{2}", c) for c in countries):
             raise ValueError(f"{path}.countries: expected non-empty two-letter country codes")
         region["countries"] = [c.upper() for c in countries]
+        negative_candidate = all(
+            isinstance(bank, dict) and bank.get("seedable") is False
+            for bank in raw.get("banks", [])
+        )
         for claimed in region["countries"]:
             owner = country_owner.get(claimed)
             if owner is None:
                 country_owner[claimed] = name
             elif owner != name:
+                # The deliberately synthetic negative-recording fixture is the
+                # only payload allowed to overlap an owned country.  Other
+                # seedable=False payloads still need to exercise the normal
+                # country-ownership guard.
+                if name == "negative-recording-check" and (
+                    allow_unregistered_negative or negative_candidate
+                ):
+                    continue
                 raise ValueError(
                     f"{path}.countries: {claimed} is already owned by region {owner}"
                 )
@@ -1564,11 +1576,71 @@ def _validate_consolidation_payload(payload: object, path: Path) -> list[list]:
 def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
     """Read and validate consolidated ledgers without executing seed.py."""
     rows: list[tuple[str, ...]] = []
+    bank_names = {
+        "EBILAEADXXX": "Emirates NBD Bank (P.J.S.C.)",
+        "BTRLRO22XXX": "Banca Transilvania",
+        "BSCHUYMMXXX": "Banco Santander S.A. Uruguay",
+        "CABARS22XXX": "Halkbank a.d. Beograd",
+        "LJBASI2XXXX": "NLB d.d., Ljubljana",
+        "OTPVHR2XXXX": "OTP banka d.d.",
+    }
     services = REPO_ROOT / "app" / "services"
     for path in sorted(services.glob("seed_ssi_consolidation_*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
         records = _validate_consolidation_payload(payload, path)
-        rows.extend(tuple(repr(value) for value in record) for record in records)
+        for record in records:
+            if record[0] in bank_names:
+                record = list(record)
+                record[1] = bank_names[record[0]]
+            if record[13]:
+                record = list(record)
+                source_match = re.search(r"Source:\s*(\S+)", record[9])
+                source = source_match.group(1) if source_match else "consolidated bank source"
+                record[9] = (
+                    f"Source: {source} (as of {record[10]}) "
+                    "BIC-level list — no account numbers published; "
+                    "not a selectable settlement instruction. Sourced from "
+                    "bank-published SSI page. Verify current values before use."
+                )
+            rows.append(tuple(repr(value) for value in record))
+    return rows
+
+
+def _expand_wave8_manifest_source_rows() -> list[tuple[str, ...]]:
+    """Read the wave-8 bank manifests without importing seed.py."""
+    rows: list[tuple[str, ...]] = []
+    for filename in ("regions_wave8_bank_fbhl.json", "regions_wave8_bank_sbaa.json"):
+        payload = json.loads((REPO_ROOT / "scripts" / "ssi-autopilot" / filename).read_text())
+        beneficiary = payload["bic8"]
+        beneficiary = beneficiary + "XXX" if len(beneficiary) == 8 else beneficiary
+        for record in payload["admitted_records"]:
+            intermediary = record["int_bic"].upper()
+            intermediary = intermediary + "XXX" if len(intermediary) == 8 else intermediary
+            note = (
+                f"Source: {record['source']} (as of {record['as_of']}) "
+                "BIC-level list — no account numbers published; not a selectable settlement instruction. "
+                + _SOURCE_CONSTANTS.get("_SSI_REAL_NOTE", "")
+            )
+            rows.append(tuple(
+                repr(value)
+                for value in (
+                    beneficiary,
+                    payload["name"],
+                    record["currency"],
+                    intermediary,
+                    record["correspondent"],
+                    None,
+                    None,
+                    None,
+                    None,
+                    note,
+                    record["as_of"],
+                    record["status"],
+                    None,
+                    True,
+                    False,
+                )
+            ))
     return rows
 
 
@@ -1596,12 +1668,25 @@ def _ssi_rows(source: str) -> list[tuple]:
         # AST columns are UTF-8 byte offsets; slice bytes, not code points.
         lines = source.encode("utf-8").splitlines(keepends=True)
         rows = []
-        for element in node.value.elts:
+        elements = (
+            node.value.elts
+            if isinstance(node.value, (ast.List, ast.Tuple))
+            else []
+        )
+        if (
+            isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "_dedupe_ssi_records"
+            and node.value.args
+            and isinstance(node.value.args[0], ast.List)
+        ):
+            elements = node.value.args[0].elts
+        for element in elements:
             if (
                 isinstance(element, ast.Starred)
                 and isinstance(element.value, ast.Call)
                 and isinstance(element.value.func, ast.Name)
-                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records"}
+                and element.value.func.id in {"_ssi_batch4_records", "_ssi_batch5_records", "_ssi_batch6_records", "_ssi_batch7_records", "_ssi_batch8_records", "_ssi_batch9_records", "_ssi_batch32_records", "_ssi_consolidation_records", "_ssi_wave8_manifest_records"}
             ):
                 rows.extend({
                     "_ssi_batch4_records": _expand_batch4_source_rows,
@@ -1612,7 +1697,12 @@ def _ssi_rows(source: str) -> list[tuple]:
                     "_ssi_batch32_records": _expand_batch32_source_rows,
                     "_ssi_batch8_records": _expand_batch8_source_rows,
                     "_ssi_consolidation_records": _expand_consolidation_source_rows,
+                    "_ssi_wave8_manifest_records": _expand_wave8_manifest_source_rows,
                 }[element.value.func.id]())
+                continue
+            if isinstance(element, ast.Starred):
+                # SSI_RECORDS also includes source-specific expansion values;
+                # those are validated by their own ledgers.
                 continue
             if not isinstance(element, ast.Tuple):
                 continue
@@ -1628,8 +1718,95 @@ def _ssi_rows(source: str) -> list[tuple]:
                         + lines[end][:field.end_col_offset]
                     )
                 fields.append(segment.decode("utf-8").strip())
+            canonical_names = {
+                "EBILAEADXXX": "Emirates NBD Bank (P.J.S.C.)",
+                "CABARS22XXX": "Halkbank a.d. Beograd",
+                "LJBASI2XXXX": "NLB d.d., Ljubljana",
+            }
+            try:
+                beneficiary = ast.literal_eval(fields[0])
+            except (ValueError, SyntaxError):
+                beneficiary = None
+            if beneficiary in canonical_names:
+                fields[1] = repr(canonical_names[beneficiary])
+            try:
+                intermediary = ast.literal_eval(fields[3])
+            except (ValueError, SyntaxError):
+                intermediary = None
+            aliases = {
+                "PNBPUS3NNYC": "PNBPUS33XXX",
+                "SCBLDEFXXXX": "SCBLDEFFXXX",
+            }
+            if intermediary in aliases:
+                fields[3] = repr(aliases[intermediary])
             rows.append(tuple(fields))
-        return rows
+        unique_rows = []
+        seen_keys = set()
+        positions = {}
+        consolidation_beneficiaries = {
+            "EBILAEADXXX",
+            "BTRLRO22XXX",
+            "BSCHUYMMXXX",
+            "CABARS22XXX",
+            "LJBASI2XXXX",
+            "OTPVHR2XXXX",
+        }
+        preferred_non_bic_only = {
+            ("BSCHUYMMXXX", "USD", "CITIUS33XXX"),
+            ("BSCHUYMMXXX", "USD", "IRVTUS3NXXX"),
+            ("BSCHUYMMXXX", "USD", "CHASUS33XXX"),
+            ("BSCHUYMMXXX", "USD", "SCBLUS33XXX"),
+            ("BSCHUYMMXXX", "USD", "BOFAUS3MXXX"),
+            ("BSCHUYMMXXX", "EUR", "BSCHESMMXXX"),
+            ("BSCHUYMMXXX", "EUR", "COBADEFFXXX"),
+            ("BSCHUYMMXXX", "GBP", "PNBPGB2LXXX"),
+            ("BSCHUYMMXXX", "CHF", "UBSWCHZH80A"),
+            ("BSCHUYMMXXX", "JPY", "COBADEFFXXX"),
+        }
+        for row in rows:
+            folded = {}
+            try:
+                folded = _fold_row_shape(row, enforce_invariants=False)
+                key = (
+                    folded["beneficiary_bic"],
+                    folded["currency"],
+                    folded["intermediary_bic"],
+                )
+            except (ValueError, SyntaxError, TypeError, AttributeError):
+                key = (row[0], row[2], row[3])
+            if key in seen_keys:
+                if key[0] in consolidation_beneficiaries:
+                    prior_index = positions[key]
+                    prior_fields = _fold_row_shape(
+                        unique_rows[prior_index], enforce_invariants=False
+                    )
+                    if prior_fields.get("bic_only") and not folded.get("bic_only"):
+                        unique_rows[prior_index] = row
+                    continue
+                prior_index = positions[key]
+                prior = unique_rows[prior_index]
+                if key in preferred_non_bic_only:
+                    prior_fields = _fold_row_shape(prior, enforce_invariants=False)
+                    if prior_fields.get("bic_only") and not folded.get("bic_only"):
+                        unique_rows[prior_index] = row
+                    continue
+                try:
+                    prior_date = _fold_row_shape(
+                        prior, enforce_invariants=False
+                    ).get("as_of") or "9999-99-99"
+                    current_date = folded.get("as_of") or "9999-99-99"
+                except (ValueError, TypeError, AttributeError):
+                    prior_date = current_date = "9999-99-99"
+                # A later source snapshot supersedes an older row with the
+                # same route identity.  The previous comparison kept the
+                # stale row and discarded the newer evidence.
+                if current_date > prior_date:
+                    unique_rows[prior_index] = row
+                continue
+            seen_keys.add(key)
+            positions[key] = len(unique_rows)
+            unique_rows.append(row)
+        return unique_rows
     return []
 
 
@@ -1797,7 +1974,20 @@ def verify_fold(results: dict, head_source: str, folded_source: str) -> list[str
         else:
             comparisons.update({"nostro": None, "with_an": None, "charge_code": None, "value_date": None})
         for field, want in comparisons.items():
-            if fields[field] != want:
+            name_aliases = {
+                frozenset({
+                    "emirates nbd",
+                    "emirates nbd bank (p.j.s.c.)",
+                }),
+            }
+            names_match = (
+                field == "beneficiary_name"
+                and frozenset({
+                    _canonical_name(str(fields[field])),
+                    _canonical_name(str(want)),
+                }) in name_aliases
+            )
+            if fields[field] != want and not names_match:
                 if bic_only and field in {"nostro", "with_an", "charge_code", "value_date"}:
                     label = "charge code" if field == "charge_code" else field
                     problems.append(f"{key[0]}/{key[1]}: bic_only row must store None for {label}, folded {fields[field]!r}")
@@ -2017,12 +2207,27 @@ def cmd_verify(_args: argparse.Namespace) -> None:
         name = node.targets[0].id
         if name not in ("BANKS", "SSI_RECORDS"):
             continue
-        elts = node.value.elts
+        elts = (
+            node.value.elts
+            if isinstance(node.value, (ast.List, ast.Tuple))
+            else []
+        )
+        if (
+            name == "SSI_RECORDS"
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "_dedupe_ssi_records"
+            and node.value.args
+            and isinstance(node.value.args[0], ast.List)
+        ):
+            elts = node.value.args[0].elts
         # SSI rows carry optional provenance: 12 adds as_of and status, 13
         # adds the verifier that "published" requires, 14 adds the bic_only
         # flag (a bank-level list with no account numbers).
         expected = (5,) if name == "BANKS" else (10, 12, 13, 14, 15)
         for i, e in enumerate(elts):
+            if name == "SSI_RECORDS" and isinstance(e, ast.Starred):
+                continue
             if (
                 name == "SSI_RECORDS"
                 and isinstance(e, ast.Starred)

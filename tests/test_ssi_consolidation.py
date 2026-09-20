@@ -16,11 +16,40 @@ from app.services.seed import (
     SEED_BIC_ALIASES,
     SSI_RECORDS,
     _is_canonical_bic11,
+    _load_ssi_consolidation_data,
     seed_if_empty,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
+NEW_CONSOLIDATION_LEDGERS = {
+    "seed_ssi_consolidation_8_1.json",
+    "seed_ssi_consolidation_8_2.json",
+    "seed_ssi_consolidation_8_mena.json",
+    "seed_ssi_consolidation_mena_1.json",
+}
+NEW_CONSOLIDATION_EXPECTATIONS = {
+    "seed_ssi_consolidation_8_1.json": {
+        "banks": 2,
+        "records": 484,
+        "sha256": "0bb4ac394dde1b55c68b35079504ae2252eff5103ce1b61a318b53211852e164",
+    },
+    "seed_ssi_consolidation_8_2.json": {
+        "banks": 29,
+        "records": 462,
+        "sha256": "9d6c69ad04dd35ea77a1b4d92579a381c013fbee93549bcb9a9f438f516c6263",
+    },
+    "seed_ssi_consolidation_8_mena.json": {
+        "banks": 0,
+        "records": 42,
+        "sha256": "0ee93287d51912aa04e2646f5942f17a4dd4a7c2abe11e39a7a900ccb92d5f82",
+    },
+    "seed_ssi_consolidation_mena_1.json": {
+        "banks": 1,
+        "records": 22,
+        "sha256": "c28b38b6191d4bcee94f593496d495c9d35f2c78a594d4fde18c9790e3517810",
+    },
+}
 
 
 def _payloads():
@@ -121,11 +150,88 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     assert all(count == 1 for count in Counter(bank_bics).values())
     assert all(count == 1 for count in Counter(route_keys).values())
     assert {path.name for path in LEDGERS} == set(_SSI_CONSOLIDATION_DATA_FILES)
-    seeded_rows = set(SSI_RECORDS)
-    assert all(
-        len(row) == 15 and tuple(row) in seeded_rows
-        for payload in payloads
-        for row in payload["ssi_records"]
+    seeded_by_key = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
+    for payload in payloads:
+        for row in payload["ssi_records"]:
+            assert len(row) == 15
+            seeded = seeded_by_key[(row[0], row[2], row[3])]
+            # The loader canonicalizes BIC-only notes so every persisted row
+            # carries the same non-routable warning; identity, settlement
+            # fields, provenance, and safety flags must remain byte-for-byte.
+            seeded_compare = list(seeded[:9]) + list(seeded[10:])
+            row_compare = list(row[:9]) + list(row[10:])
+            if seeded_compare[1] != row_compare[1]:
+                name_aliases = {
+                    frozenset(
+                        {
+                            "Emirates NBD Bank P.J.S.C.",
+                            "Emirates NBD Bank (P.J.S.C.)",
+                        }
+                    ),
+                    frozenset({"Banca Transilvania", "Banca Transilvania S.A."}),
+                    frozenset({"OTP banka d.d.", "OTP banka d.d., Split"}),
+                    frozenset(
+                        {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
+                    ),
+                }
+                assert frozenset({seeded_compare[1], row_compare[1]}) in name_aliases
+                seeded_compare[1] = row_compare[1]
+            if tuple(seeded_compare) != tuple(row_compare):
+                # A later admitted manifest may supersede a consolidated
+                # BIC-only relationship with a masked, account-bearing row.
+                # Both remain non-routable until independently verified; the
+                # route identity and provenance safety flags are what must be
+                # preserved across that replacement.
+                superseded = (
+                    seeded[11] == row[11] == "unverified"
+                    and seeded[14] is True
+                    and (
+                        (row[13] is True and seeded[13] is False)
+                        or (row[13] is False and seeded[13] is False and row[14] is True)
+                    )
+                )
+                assert superseded, (
+                    f"unexpected consolidated-row replacement for "
+                    f"{row[0]}/{row[2]}/{row[3]}"
+                )
+
+
+def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
+    """Keep the latest ledgers visible and exercise the production loader."""
+    on_disk = {path.name for path in LEDGERS}
+    configured = set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert NEW_CONSOLIDATION_LEDGERS <= on_disk
+    assert NEW_CONSOLIDATION_LEDGERS <= configured
+    assert set(NEW_CONSOLIDATION_EXPECTATIONS) == NEW_CONSOLIDATION_LEDGERS
+
+    # This is the same loader used during seed import. Calling it here makes
+    # the per-ledger schema, duplicate-route, and safety validation part of
+    # the bounded review contract rather than relying only on imported globals.
+    loaded_banks, loaded_records = _load_ssi_consolidation_data()
+    loaded_keys = {(row[0], row[2], row[3]) for row in loaded_records}
+
+    seeded_by_key = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    for filename in sorted(NEW_CONSOLIDATION_LEDGERS):
+        path = ROOT / "app" / "services" / filename
+        payload = json.loads(path.read_text())
+        expected = NEW_CONSOLIDATION_EXPECTATIONS[filename]
+        assert isinstance(payload["banks"], list), filename
+        assert payload["ssi_records"], filename
+        assert len(payload["banks"]) == expected["banks"], filename
+        assert len(payload["ssi_records"]) == expected["records"], filename
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"], filename
+        assert all(len(row) == 15 for row in payload["ssi_records"]), filename
+        assert all(
+            (row[0], row[2], row[3]) in seeded_by_key
+            for row in payload["ssi_records"]
+        ), filename
+        assert all(
+            (row[0], row[2], row[3]) in loaded_keys
+            for row in payload["ssi_records"]
+        ), filename
+
+    assert len(loaded_banks) >= sum(
+        item["banks"] for item in NEW_CONSOLIDATION_EXPECTATIONS.values()
     )
 
 
@@ -333,7 +439,7 @@ def test_every_route_evidence_file_matches_the_seeded_catalog():
                 )
         checked_files.append(path.name)
 
-    assert len(checked_files) == 117
+    assert len(checked_files) == 118
 
 
 def test_wave69_evidence_count_matches_both_split_seed_ledgers():

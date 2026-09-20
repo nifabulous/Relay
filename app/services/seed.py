@@ -16,6 +16,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 from ..models import SSI, Account, Bank, CorridorRule
+from .ssi_americas_wave import AMERICAS_WAVE_BANKS, AMERICAS_WAVE_RECORDS
+from .ssi_wave110_asia_east_pacific import SSI_ASIA_EAST_PACIFIC_RECORDS
 
 # (bic, bank_name, country_code, city, country_currency)
 BANKS = [
@@ -54,6 +56,8 @@ BANKS = [
     ("CERBUGKAXXX", "Centenary Bank Uganda", "UG", "Kampala", "UGX"),
     ("SBICUGKXXXX", "Stanbic Bank Uganda", "UG", "Kampala", "UGX"),
     ("MCBLMUMUXXX", "MCB Group", "MU", "Port Louis", "MUR"),
+    ("NMIBTZTZXXX", "NMB Bank PLC", "TZ", "Dar es Salaam", "TZS"),
+    ("SBICTZTXXXX", "Stanbic Bank Tanzania Limited", "TZ", "Dar es Salaam", "TZS"),
     ("UNAFNGLAXXX", "United Bank for Africa (UBA)", "NG", "Lagos", "NGN"),
     ("UNAFKENAXXX", "UBA Kenya", "KE", "Nairobi", "KES"),
     ("UNAFSNDAXXX", "UBA Senegal", "SN", "Dakar", "XOF"),
@@ -146,6 +150,7 @@ BANKS = [
     ("BAGEPAPAXXX", "Banco General (Panama)", "PA", "Panama City", "PAB"),
     ("CAGRSVSSXXX", "Banco Agricola (El Salvador)", "SV", "San Salvador", "SVC"),
     ("GHCBGHACXXX", "GCB Bank (Ghana)", "GH", "Accra", "GHS"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "NG", "Lagos", "NGN"),
     ("BTRLRO22XXX", "Banca Transilvania", "RO", "Cluj-Napoca", "RON"),
     ("AXISINBBXXX", "Axis Bank", "IN", "Mumbai", "INR"),
     ("KKBKINBBXXX", "Kotak Mahindra Bank", "IN", "Mumbai", "INR"),
@@ -197,6 +202,8 @@ BANKS = [
     ("IVESZAJJXXX", "Investec Bank", "ZA", "Johannesburg", "ZAR"),
     ("GIBAATWGXXX", "Erste Group Bank AG", "AT", "Vienna", "EUR"),
     ("PNBPUS33XXX", "Wells Fargo Bank N.A.", "US", "New York", "USD"),
+    ("UNAFUS33XXX", "United Bank for Africa, New York", "US", "New York", "USD"),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "UY", "Montevideo", "UYU"),
     ("BKIDUS33XXX", "Bank of India New York", "US", "New York", "USD"),
     ("NBPLPLPWXXX", "Narodowy Bank Polski", "PL", "Warsaw", "PLN"),
     ("BOFMCAT2XXX", "Bank of Montreal", "CA", "Toronto", "CAD"),
@@ -475,6 +482,7 @@ BANKS = [
     # ---- SSI expansion batch 5 beneficiaries ----
     ("HASPDEHHXXX", "Hamburger Sparkasse AG", "DE", "Hamburg", "EUR"),
     ("FNNBROBUXXX", "Nexent Bank N.V. Amsterdam Bucharest Branch", "RO", "Bucharest", "RON"),
+    ("FBHLNL2AXXX", "Nexent Bank N.V.", "NL", "Amsterdam", "EUR"),
     ("RATNINBBXXX", "RBL Bank Limited", "IN", "Mumbai", "INR"),
     ("CCRTIT2TBDB", "Banca di Bologna", "IT", "Bologna", "EUR"),
     ("BFRILI22XXX", "Bank Frick AG", "LI", "Balzers", "CHF"),
@@ -526,6 +534,7 @@ BANKS = [
     ("BNTBKYKYXXX", "Butterfield Bank (Cayman) Limited", "KY", "George Town", "KYD"),
     ("FCTTTTPSXXX", "First Citizens Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("RBGLGYGGXXX", "Republic Bank (Guyana) Limited", "GY", "Georgetown", "GYD"),
+    ("BARBGYGEXXX", "Bank of Baroda (Guyana) Inc.", "GY", "Georgetown", "GYD"),
     ("RBNKTTPXXXX", "Republic Bank (Trinidad and Tobago) Limited", "TT", "Port of Spain", "TTD"),
     ("JNCBJMKXXXX", "National Commercial Bank Jamaica Limited", "JM", "Kingston", "JMD"),
     ("FILBJMKNXXX", "First Global Bank Limited", "JM", "Kingston", "JMD"),
@@ -1070,6 +1079,7 @@ _SSI_BATCH6_DATA_FILES = (
     "seed_ssi_batch6_115.json",
     "seed_ssi_batch6_116.json",
     "seed_ssi_batch6_117.json",
+    "seed_ssi_batch6_118.json",
 )
 
 
@@ -1108,6 +1118,48 @@ def _load_ssi_batch9_groups():
 
 
 _SSI_BATCH9_GROUPS = _load_ssi_batch9_groups()
+
+# Batch 110 captures newly published correspondent tables for East and
+# Southern African banks. The ledger is BIC-only metadata (no account
+# numbers), so these routes remain non-routable until independently verified.
+_SSI_BATCH110_DATA_FILES = ("seed_ssi_batch110_africa_east.json",)
+
+
+def _load_ssi_batch110_groups():
+    groups = []
+    for filename in _SSI_BATCH110_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH110_GROUPS = _load_ssi_batch110_groups()
+
+_SSI_BATCH10_DATA_FILES = ("seed_ssi_batch10_1.json",)
+
+
+def _load_ssi_batch10_groups():
+    groups = []
+    for filename in _SSI_BATCH10_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_BATCH10_GROUPS = _load_ssi_batch10_groups()
+
+_SSI_ASIA_SUBCONTINENT_DATA_FILES = ("seed_ssi_asia_subcontinent_350.json",)
+
+
+def _load_ssi_asia_subcontinent_groups():
+    groups = []
+    for filename in _SSI_ASIA_SUBCONTINENT_DATA_FILES:
+        with (Path(__file__).with_name(filename)).open(encoding="utf-8") as handle:
+            groups.extend(json.load(handle))
+    return groups
+
+
+_SSI_ASIA_SUBCONTINENT_GROUPS = _load_ssi_asia_subcontinent_groups()
 
 _SSI_BATCH8_DATA_FILES = ("seed_ssi_batch8_1.json",)
 
@@ -1172,10 +1224,22 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_7_6.json",
     "seed_ssi_consolidation_7_7.json",
     "seed_ssi_consolidation_7_8.json",
+    "seed_ssi_consolidation_8_mena.json",
+    "seed_ssi_consolidation_8_1.json",
+    "seed_ssi_consolidation_8_2.json",
+    "seed_ssi_consolidation_mena_1.json",
 )
 
 
 _CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
+
+_SSI_CONSOLIDATION_BANK_NAMES = {
+    "EBILAEADXXX": "Emirates NBD Bank (P.J.S.C.)",
+    "BTRLRO22XXX": "Banca Transilvania",
+    "CABARS22XXX": "Halkbank a.d. Beograd",
+    "LJBASI2XXXX": "NLB d.d., Ljubljana",
+    "OTPVHR2XXXX": "OTP banka d.d.",
+}
 
 
 def _is_canonical_bic11(value):
@@ -1226,6 +1290,19 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            if record[0] in _SSI_CONSOLIDATION_BANK_NAMES:
+                record = list(record)
+                record[1] = _SSI_CONSOLIDATION_BANK_NAMES[record[0]]
+            if record[13]:
+                record = list(record)
+                source_match = re.search(r"Source:\s*(\S+)", record[9])
+                source = source_match.group(1) if source_match else "consolidated bank source"
+                record[9] = (
+                    f"Source: {source} (as of {record[10]}) "
+                    "BIC-level list — no account numbers published; "
+                    "not a selectable settlement instruction. Sourced from "
+                    "bank-published SSI page. Verify current values before use."
+                )
             route_key = (record[0], record[2], record[3])
             if route_key in seen_routes:
                 raise ValueError(f"{filename}.ssi_records[{index}]: duplicate route key")
@@ -1235,8 +1312,48 @@ def _load_ssi_consolidation_data():
 
 
 _SSI_CONSOLIDATED_BANKS, _SSI_CONSOLIDATED_RECORDS = _load_ssi_consolidation_data()
-BANKS.extend(_SSI_CONSOLIDATED_BANKS)
+# Consolidation ledgers can repeat a bank already present in the curated
+# directory. Keep the first canonical definition so the database seed remains
+# idempotent under its unique BIC constraint.
+_known_bank_bics = {bank[0] for bank in BANKS}
+BANKS.extend(bank for bank in _SSI_CONSOLIDATED_BANKS if bank[0] not in _known_bank_bics)
+_known_bank_bics.update(bank[0] for bank in _SSI_CONSOLIDATED_BANKS)
+if "PSVBLALAXXX" not in _known_bank_bics:
+    BANKS.append(("PSVBLALAXXX", "Phongsavanh Bank Ltd", "LA", "Vientiane", "LAK"))
+for _americas_bank in AMERICAS_WAVE_BANKS:
+    if _americas_bank[0] not in _known_bank_bics:
+        BANKS.append(_americas_bank)
+        _known_bank_bics.add(_americas_bank[0])
 _SSI_BATCH8_GROUPS = _load_ssi_batch8_groups()
+
+def _ssi_wave110_phongsavanh_records():
+    """Currency-qualified correspondent mappings from Phongsavanh Bank."""
+    source = "https://phongsavanhbank.com/psv/modules.php?lg=eng&modules=correspondent_bank"
+    note = (
+        "Source: " + source +
+        " (as of 2026-09-19). BIC-level list — no account numbers published; "
+        "not a selectable settlement instruction. " + _SSI_REAL_NOTE
+    )
+    rows = [
+        ("USD", "CHASUS33XXX", "J.P. Morgan Chase Bank N.A."),
+        ("USD", "VBAAVNVXXXX", "Vietnam Bank for Agriculture and Rural Development"),
+        ("USD", "ICBKCNBJXXX", "Industrial and Commercial Bank of China"),
+        ("USD", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("THB", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("EUR", "KASITHBKXXX", "Kasikornbank Public Company Limited"),
+        ("USD", "BKKBTHBKXXX", "Bangkok Bank Public Company Limited"),
+        ("THB", "BKKBTHBKXXX", "Bangkok Bank Public Company Limited"),
+        ("THB", "UBOBTHBKXXX", "CIMB Thai Bank Public Company Limited"),
+        ("CNY", "ICBKLALAXXX", "Industrial and Commercial Bank of China, Vientiane"),
+        ("CNY", "ICBKLALACLR", "Industrial and Commercial Bank of China, Laos RMB Clearing Bank"),
+    ]
+    return [
+        (
+            "PSVBLALAXXX", "Phongsavanh Bank Ltd", currency, bic, name,
+            None, None, None, None, note, "2026-09-19", "unverified", None, True, False,
+        )
+        for currency, bic, name in rows
+    ]
 
 def _ssi_batch4_records():
     """Expand the review-sized batch-4 ledger into canonical seed tuples."""
@@ -1388,6 +1505,91 @@ def _ssi_batch9_records():
     return expanded
 
 
+def _ssi_batch110_records():
+    """Expand East/Southern African correspondent tables (BIC-only)."""
+    excluded_beneficiaries = {
+        "NMIBTZTZXXX",
+        "SBICTZTXXXX",
+        "EQBLKENAXXX",
+    }
+    excluded_routes = {
+        ("IMBLTZTZXXX", "TZS", "IMBLTZTZXXX"),
+        ("IMBLTZTZXXX", "EUR", "BHFBDEFFXXX"),
+        ("IMBLTZTZXXX", "JPY", "IMBLKENAXXX"),
+        ("IMBLTZTZXXX", "RWF", "IMBLTZTZXXX"),
+        ("IMBLTZTZXXX", "UGX", "IMBLTZTZXXX"),
+        ("SBICUGKXXXX", "GBP", "BARCGB22XXX"),
+        ("SBICUGKXXXX", "DKK", "SBZAZAJJXXX"),
+        ("SBICUGKXXXX", "INR", "KKBKINBBXXX"),
+        ("SBICUGKXXXX", "RWF", "BKRWRWRWXXX"),
+    }
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH110_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            if beneficiary_bic in excluded_beneficiaries or (
+                beneficiary_bic, currency, intermediary_bic
+            ) in excluded_routes:
+                continue
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None, None, None, None, note, as_of,
+                status, verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_batch10_records():
+    """Expand the South Asia correspondent-bank ledger into canonical tuples."""
+    expanded = []
+    for (
+        beneficiary_bic, beneficiary_name, source, as_of, status,
+        charge_code, value_date, verified_by, bic_only, terms_inferred,
+        packed_rows,
+    ) in _SSI_BATCH10_GROUPS:
+        citation = source
+        for marker in (" BIC-level", " BIC-only", " Additional BIC-level"):
+            if marker in citation:
+                citation = citation.split(marker, 1)[0].rstrip(" .")
+                break
+        note = f"{citation} {_SSI_BIC_ONLY_NOTE} {_SSI_REAL_NOTE}"
+        for packed in packed_rows:
+            currency, intermediary_bic, intermediary_name, account_suffix = packed.split("|", 3)
+            if len(intermediary_bic) == 8:
+                intermediary_bic += "XXX"
+            account = f"ACCT-{account_suffix}" if account_suffix else None
+            expanded.append((
+                beneficiary_bic, beneficiary_name, currency, intermediary_bic,
+                intermediary_name, None if bic_only else account,
+                None if bic_only else account, None if bic_only else charge_code,
+                None if bic_only else value_date, note, as_of, status,
+                verified_by, bic_only, terms_inferred,
+            ))
+    return expanded
+
+
+def _ssi_asia_subcontinent_records():
+    """Hold the unadmitted Asia subcontinent snapshot out of the seed.
+
+    Its source rows remain in the review ledger, but none of those eight
+    beneficiaries has an admitted manifest record yet.  Loading them into the
+    production catalog would bypass the manifest's fail-closed boundary.
+    """
+    return []
+
+
 def _ssi_batch8_records():
     """Expand the review-sized batch-8 ledger into canonical seed tuples."""
     expanded = []
@@ -1450,9 +1652,578 @@ def _ssi_consolidation_records():
     """Return review-preserving rows consolidated from superseded SSI PRs."""
     return list(_SSI_CONSOLIDATED_RECORDS)
 
-SSI_RECORDS = [
-    # ---- Consolidated SSI review queue (PRs 103-112) ----
+
+def _ssi_wave8_manifest_records():
+    """Load the two wave-8 bank ledgers into the canonical seed.
+
+    These source pages publish correspondent BICs and currencies but no
+    settlement accounts.  Keep the rows explicitly BIC-only so they remain
+    visible as availability metadata without becoming selectable SSIs.
+    """
+    manifest_dir = Path(__file__).resolve().parents[1] / ".." / "scripts" / "ssi-autopilot"
+    rows = []
+    for filename in ("regions_wave8_bank_fbhl.json", "regions_wave8_bank_sbaa.json"):
+        payload = json.loads((manifest_dir / filename).resolve().read_text(encoding="utf-8"))
+        beneficiary = payload["bic8"]
+        if len(beneficiary) == 8:
+            beneficiary += "XXX"
+        for record in payload["admitted_records"]:
+            intermediary = record["int_bic"].upper()
+            if len(intermediary) == 8:
+                intermediary += "XXX"
+            note = (
+                f"Source: {record['source']} (as of {record['as_of']}) "
+                "BIC-level list — no account numbers published; not a selectable settlement instruction. "
+                + _SSI_REAL_NOTE
+            )
+            rows.append((
+                beneficiary,
+                payload["name"],
+                record["currency"],
+                intermediary,
+                record["correspondent"],
+                None,
+                None,
+                None,
+                None,
+                note,
+                record["as_of"],
+                record["status"],
+                None,
+                True,
+                False,
+            ))
+    return rows
+
+def _ssi_batch_global_currency_records():
+    """Currency-explicit SSI rows from official correspondent-bank pages.
+
+    The source pages publish the currency/correspondent pair and (in most
+    cases) an account number.  Account values are intentionally masked here;
+    these records remain unverified and non-routable until operations confirms
+    the live SSI.  BIC-8 values from the pages are canonicalized to BIC-11.
+    """
+    def bic11(value):
+        value = value.replace(" ", "").upper()
+        return value if len(value) == 11 else value + "X" * (11 - len(value))
+
+    rows = []
+
+    def add(beneficiary, name, currency, correspondent, correspondent_name, source):
+        rows.append((
+            beneficiary,
+            name,
+            currency,
+            bic11(correspondent),
+            correspondent_name,
+            f"ACCT-910080{len(rows) + 1:02d}",
+            f"ACCT-910080{len(rows) + 1:02d}",
+            "SHA",
+            "spot",
+            f"Source: {source} (as of 2026-09-19). Published currency/correspondent pair; account masked for seed. " + _SSI_REAL_NOTE,
+            "2026-09-19",
+            "unverified",
+            None,
+            False,
+            True,
+        ))
+
+    # Bank of Maharashtra official Nostro page (15 currency-explicit rows).
+    s = "https://bankofmaharashtra.bank.in/nostro-accounts"
+    b, n = "MAHBINBBXXX", "Bank of Maharashtra"
+    for c, bic, cn in [
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("CAD", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("CHF", "UBSWCHZH80A", "UBS Switzerland AG"),
+        ("EUR", "SCBLDEFF", "Standard Chartered Bank AG Frankfurt"),
+        ("EUR", "CHASDEFF", "JPMorgan Chase Frankfurt"),
+        ("GBP", "SCBLGB2L", "Standard Chartered Bank London"),
+        ("GBP", "IRVTGB2X", "The Bank of New York Mellon London"),
+        ("HKD", "SCBLHKHH", "Standard Chartered Bank Hong Kong"),
+        ("JPY", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("SGD", "BKIDSGSG", "Bank of India Singapore"),
+        ("USD", "SCBLUS33", "Standard Chartered Bank New York"),
+        ("USD", "IRVTUS3N", "The Bank of New York Mellon New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("CNY", "SCBLHKHH", "Standard Chartered Bank Hong Kong"),
+        ("AED", "SCBLAEAD", "Standard Chartered Bank Dubai"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # UCO Bank Treasury Branch Mumbai official page (17 rows).
+    s = "https://www.uco.bank.in/en/treasury-branch-mumbai-accounts"
+    b, n = "UCBAINBBXXX", "UCO Bank Treasury Branch Mumbai"
+    for c, bic, cn in [
+        ("JPY", "SBINJPJT", "State Bank of India Tokyo"),
+        ("USD", "SCBLBDD", "Standard Chartered Bank Dhaka"),
+        ("AED", "BOMLAEAD", "Mashreq Bank Dubai"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("CAD", "TDOMCATTTOR", "Toronto-Dominion Bank Toronto"),
+        ("CHF", "UBSWCHZH80A", "UBS AG Zurich"),
+        ("EUR", "POSOIT22", "Banca Popolare di Sondrio"),
+        ("EUR", "CHASDEFX", "JPMorgan Chase Frankfurt"),
+        ("EUR", "SCBLDEFX", "Standard Chartered Frankfurt"),
+        ("EUR", "UNCRITMM", "UniCredit Milan"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("HKD", "UCBAHKHH", "UCO Bank Hong Kong"),
+        ("SGD", "UCBASGSG", "UCO Bank Singapore"),
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "PNBPUS33", "Wells Fargo New York"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # HDFC Bank GIFT City official SSI page (10 rows).
+    s = "https://www.hdfcgiftcity.bank.in/nostro-account"
+    b, n = "HDFCINAAXXX", "HDFC Bank Limited GIFT City"
+    for c, bic, cn in [
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("JPY", "CHASJPJT", "JPMorgan Chase Tokyo"),
+        ("CAD", "TDOMCATTTOR", "Toronto-Dominion Bank Toronto"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("EUR", "CHASDEFX", "JPMorgan Chase Frankfurt"),
+        ("CHF", "UBSWCHZH80A", "UBS Switzerland"),
+        ("EUR", "BOFADEFX", "Bank of America Frankfurt"),
+        ("USD", "BOFAUS3N", "Bank of America New York"),
+        ("AED", "ADCBAEAAXXX", "Abu Dhabi Commercial Bank"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Axis Bank official Nostro PDF (8 rows).
+    s = "https://www.axisbank.com/docs/default-source/default-document-library/nostro-details95005bbabe576bf08df9ff0a000b8c1c.pdf"
+    b, n = "AXISINBB002", "Axis Bank"
+    for c, bic, cn in [
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("EUR", "SOGEFRPP", "Société Générale, Paris"),
+        ("GBP", "CHASGB2L", "JPMorgan Chase London"),
+        ("CHF", "ZKBKCHZZ80A", "Zurcher Kantonalbank Zurich"),
+        ("AUD", "ANZBAU3M", "ANZ Melbourne"),
+        ("JPY", "MHCBJPJT", "Mizuho Bank Tokyo"),
+        ("CAD", "BOFMCAT2", "Bank of Montreal Canada"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Punjab & Sind Bank official Nostro page (8 rows).
+    s = "https://punjabandsind.bank.in/content/nostro-details"
+    b, n = "PSIBINBBXXX", "Punjab & Sind Bank"
+    for c, bic, cn in [
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("EUR", "CITIDEFF", "Citibank Frankfurt"),
+        ("GBP", "CITIGB2L", "Citibank London"),
+        ("JPY", "MHCBJPJT", "Mizuho Bank Tokyo"),
+        ("CAD", "CIBCCATT", "Canadian Imperial Bank of Commerce Toronto"),
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("AED", "BOMLAEAD", "Mashreq Bank Dubai"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # First Investment Bank Bulgaria official SSI PDF (3 rows explicitly visible).
+    s = "https://www.fibank.bg/web/files/documents/173/files/SSI-UPDATED-2025_En.pdf"
+    b, n = "FINVBGSFXXX", "First Investment Bank Bulgaria"
+    for c, bic, cn in [
+        ("CAD", "BOFMCAT2", "Bank of Montreal Toronto"),
+        ("JPY", "SMBCJPJT", "Sumitomo Mitsui Banking Corporation Tokyo"),
+        ("AUD", "IRVTUS3N", "Bank of New York Mellon New York"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Indian Bank official remittance page (18 currency-explicit rows).
+    s = "https://indianbank.bank.in/en/web/guest/remittance-to-india"
+    b, n = "IDIBINBBXXX", "Indian Bank"
+    for c, bic, cn in [
+        ("USD", "BOFAUS3N", "Bank of America New York"),
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "PNBPUS3NNYC", "Wells Fargo New York"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("EUR", "CITIDEFF", "Citibank Frankfurt"),
+        ("EUR", "SCBLDEFX", "Standard Chartered Frankfurt"),
+        ("EUR", "COBADEFF", "Commerzbank Frankfurt"),
+        ("ACU", "IDIBLKLC", "Indian Bank Colombo"),
+        ("AUD", "SBINAU2S", "State Bank of India Sydney"),
+        ("CAD", "BOFMCAM2", "Bank of Montreal Canada"),
+        ("CHF", "UBSWCHZH", "UBS AG Zurich"),
+        ("JPY", "SBINJPJT", "State Bank of India Tokyo"),
+        ("SGD", "IDIBSGSG", "Indian Bank Singapore"),
+        ("SGD", "DBSSSGSGB", "DBS Bank Singapore"),
+        ("HKD", "SBINHKHH", "State Bank of India Hong Kong"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    # Central Bank of India official International Banking page (16 rows).
+    s = "https://centralbank.bank.in/en/International_Banking"
+    b, n = "CBININBBXXX", "Central Bank of India"
+    for c, bic, cn in [
+        ("USD", "CITIUS33", "Citibank New York"),
+        ("USD", "SCBLUS33", "Standard Chartered New York"),
+        ("USD", "CHASUS33", "JPMorgan Chase New York"),
+        ("USD", "PNBPUS3NNYC", "Wells Fargo New York"),
+        ("USD", "BKTRUS33", "Deutsche Bank New York"),
+        ("EUR", "SOGEFRPP", "Société Générale, Paris"),
+        ("EUR", "COBADEFF", "Commerzbank Frankfurt"),
+        ("EUR", "BARCDEFF", "Barclays Bank Ireland"),
+        ("GBP", "SCBLGB2L", "Standard Chartered London"),
+        ("GBP", "BARCGB22", "Barclays London"),
+        ("AUD", "ANZBAU3M", "ANZ Bank"),
+        ("CAD", "COBADEFF", "Commerzbank Frankfurt"),
+        ("CHF", "UBSWCHZH80A", "Union Bank of Switzerland Zurich"),
+        ("JPY", "SCBLJPJT", "Standard Chartered Tokyo"),
+        ("SGD", "SCBLSG22", "Standard Chartered Singapore"),
+        ("SGD", "DBSSSGSG", "DBS Bank Singapore"),
+    ]:
+        add(b, n, c, bic, cn, s)
+
+    return rows
+
+_SSI_BIC_ALIASES = {
+    "PNBPUS3NNYC": "PNBPUS33XXX",
+    "SCBLDEFXXXX": "SCBLDEFFXXX",
+}
+
+# The reviewed Santander Uruguay routing-codes table supersedes the older
+# availability-only snapshot for these ten routes.  Keep the older CAD and
+# Wells Fargo alias rows below because the newer table does not publish them.
+_SSI_PREFERRED_NON_BIC_ONLY_KEYS = {
+    ("BSCHUYMMXXX", "USD", "CITIUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "IRVTUS3NXXX"),
+    ("BSCHUYMMXXX", "USD", "CHASUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "SCBLUS33XXX"),
+    ("BSCHUYMMXXX", "USD", "BOFAUS3MXXX"),
+    ("BSCHUYMMXXX", "EUR", "BSCHESMMXXX"),
+    ("BSCHUYMMXXX", "EUR", "COBADEFFXXX"),
+    ("BSCHUYMMXXX", "GBP", "PNBPGB2LXXX"),
+    ("BSCHUYMMXXX", "CHF", "UBSWCHZH80A"),
+    ("BSCHUYMMXXX", "JPY", "COBADEFFXXX"),
+}
+
+
+def _dedupe_ssi_records(rows):
+    """Keep the first source row for each beneficiary/currency/intermediary route."""
+    seen = set()
+    unique = []
+    positions = {}
+    consolidation_keys = {
+        (row[0], row[2], row[3]) for row in _SSI_CONSOLIDATED_RECORDS
+    }
+    for row in rows:
+        row = tuple(row)
+        beneficiary_bic = row[0] + "XXX" if len(row[0]) == 8 else row[0]
+        intermediary_bic = row[3] + "XXX" if len(row[3]) == 8 else row[3]
+        beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
+        intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
+        if beneficiary_bic != row[0] or intermediary_bic != row[3]:
+            row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
+        canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
+        if canonical_name is not None and row[1] != canonical_name:
+            row = (row[0], canonical_name, *row[2:])
+        key = (row[0], row[2], row[3])
+        if key in seen:
+            prior_index = positions[key]
+            prior = unique[prior_index]
+            if key in consolidation_keys:
+                # A reviewed manifest row with settlement fields is more
+                # specific than an older BIC-only consolidation duplicate.
+                # Keep the ledger row only when no account-backed source
+                # supplies the same canonical route.
+                if prior[13] and not row[13]:
+                    unique[prior_index] = row
+                continue
+            if key in _SSI_PREFERRED_NON_BIC_ONLY_KEYS:
+                if prior[13] and not row[13]:
+                    unique[prior_index] = row
+                # Once the reviewed account-bearing route is selected, an
+                # older availability-only duplicate must not replace it.
+                continue
+            prior_date = prior[10] if len(prior) > 10 and prior[10] else "9999-99-99"
+            current_date = row[10] if len(row) > 10 and row[10] else "9999-99-99"
+            if current_date < prior_date:
+                unique[prior_index] = row
+            continue
+        seen.add(key)
+        positions[key] = len(unique)
+        unique.append(row)
+    return unique
+
+
+SSI_RECORDS = _dedupe_ssi_records([
+    # Consolidation ledgers are the canonical source for reviewed routes; let
+    # their rows win when an older inline fixture shares a route key.
     *_ssi_consolidation_records(),
+    *_ssi_wave8_manifest_records(),
+    # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
+    # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001119', 'ACCT-91001119', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91001122', 'ACCT-91001122', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91001117', 'ACCT-91001117', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91001118', 'ACCT-91001118', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91001123', 'ACCT-91001123', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91001120', 'ACCT-91001120', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91001121', 'ACCT-91001121', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HANDNO22XXX', 'Handelsbanken Norway', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91001116', 'ACCT-91001116', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001103', 'ACCT-91001103', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91001106', 'ACCT-91001106', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91001101', 'ACCT-91001101', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91001102', 'ACCT-91001102', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91001107', 'ACCT-91001107', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91001104', 'ACCT-91001104', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91001105', 'ACCT-91001105', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SKIASESSXXX', 'Skandinaviska Enskilda Banken', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91001100', 'ACCT-91001100', 'SHA', 'spot', 'Source: https://seb.se/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001111', 'ACCT-91001111', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91001114', 'ACCT-91001114', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91001109', 'ACCT-91001109', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91001110', 'ACCT-91001110', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91001115', 'ACCT-91001115', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91001112', 'ACCT-91001112', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91001113', 'ACCT-91001113', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SNOWNO22XXX', 'Sparebanken Norge', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91001108', 'ACCT-91001108', 'SHA', 'spot', 'Source: https://spv.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001103', 'ACCT-91001103', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91001106', 'ACCT-91001106', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91001101', 'ACCT-91001101', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91001102', 'ACCT-91001102', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91001107', 'ACCT-91001107', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91001104', 'ACCT-91001104', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91001105', 'ACCT-91001105', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPTRNO22XXX', 'SpareBank 1 SR-Bank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91001100', 'ACCT-91001100', 'SHA', 'spot', 'Source: https://sr-bank.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003403', 'ACCT-91003403', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003406', 'ACCT-91003406', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003401', 'ACCT-91003401', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003402', 'ACCT-91003402', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003407', 'ACCT-91003407', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003404', 'ACCT-91003404', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003405', 'ACCT-91003405', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BAWAATWWXXX', 'BAWAG P.S.K.', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003400', 'ACCT-91003400', 'SHA', 'spot', 'Source: https://bawag.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003403', 'ACCT-91003403', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003406', 'ACCT-91003406', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003401', 'ACCT-91003401', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003402', 'ACCT-91003402', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003407', 'ACCT-91003407', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003404', 'ACCT-91003404', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003405', 'ACCT-91003405', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCVLCH2LXXX', 'Banque Cantonale Vaudoise', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003400', 'ACCT-91003400', 'SHA', 'spot', 'Source: https://bcv.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003419', 'ACCT-91003419', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003422', 'ACCT-91003422', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003417', 'ACCT-91003417', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003418', 'ACCT-91003418', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003423', 'ACCT-91003423', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003420', 'ACCT-91003420', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003421', 'ACCT-91003421', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('FVLBNL22XXX', 'Van Lanschot Kempen', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003416', 'ACCT-91003416', 'SHA', 'spot', 'Source: https://vanlanschotkempen.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003403', 'ACCT-91003403', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003406', 'ACCT-91003406', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003401', 'ACCT-91003401', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003402', 'ACCT-91003402', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003407', 'ACCT-91003407', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003404', 'ACCT-91003404', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003405', 'ACCT-91003405', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GEBABEBBXXX', 'BNP Paribas Fortis', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003400', 'ACCT-91003400', 'SHA', 'spot', 'Source: https://bnpparibasfortis.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003419', 'ACCT-91003419', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003422', 'ACCT-91003422', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003417', 'ACCT-91003417', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003418', 'ACCT-91003418', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003423', 'ACCT-91003423', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003420', 'ACCT-91003420', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003421', 'ACCT-91003421', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('KBCBBEBBXXX', 'KBC Bank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003416', 'ACCT-91003416', 'SHA', 'spot', 'Source: https://kbc.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003403', 'ACCT-91003403', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003406', 'ACCT-91003406', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003401', 'ACCT-91003401', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003402', 'ACCT-91003402', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003407', 'ACCT-91003407', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003404', 'ACCT-91003404', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003405', 'ACCT-91003405', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RABONL2UXXX', 'Rabobank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003400', 'ACCT-91003400', 'SHA', 'spot', 'Source: https://rabobank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003411', 'ACCT-91003411', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003414', 'ACCT-91003414', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003409', 'ACCT-91003409', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003410', 'ACCT-91003410', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003415', 'ACCT-91003415', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003412', 'ACCT-91003412', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003413', 'ACCT-91003413', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('RAIFCH22XXX', 'Raiffeisen Schweiz', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003408', 'ACCT-91003408', 'SHA', 'spot', 'Source: https://raiffeisen.ch/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003411', 'ACCT-91003411', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003414', 'ACCT-91003414', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003409', 'ACCT-91003409', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003410', 'ACCT-91003410', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003415', 'ACCT-91003415', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003412', 'ACCT-91003412', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003413', 'ACCT-91003413', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('SPADATW1XXX', 'Schoellerbank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003408', 'ACCT-91003408', 'SHA', 'spot', 'Source: https://schoellerbank.at/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003411', 'ACCT-91003411', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003414', 'ACCT-91003414', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003409', 'ACCT-91003409', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003410', 'ACCT-91003410', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003415', 'ACCT-91003415', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003412', 'ACCT-91003412', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003413', 'ACCT-91003413', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TRIONL2UXXX', 'Triodos Bank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003408', 'ACCT-91003408', 'SHA', 'spot', 'Source: https://triodos.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91003411', 'ACCT-91003411', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91003414', 'ACCT-91003414', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91003409', 'ACCT-91003409', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91003410', 'ACCT-91003410', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91003415', 'ACCT-91003415', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91003412', 'ACCT-91003412', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91003413', 'ACCT-91003413', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('VDSPBE91XXX', 'vdk bank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91003408', 'ACCT-91003408', 'SHA', 'spot', 'Source: https://vdk.be/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005103', 'ACCT-91005103', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005106', 'ACCT-91005106', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005101', 'ACCT-91005101', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005102', 'ACCT-91005102', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005107', 'ACCT-91005107', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005104', 'ACCT-91005104', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005105', 'ACCT-91005105', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BUKBGB22XXX', 'Bank of Scotland plc', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005100', 'ACCT-91005100', 'SHA', 'spot', 'Source: https://bankofscotland.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005111', 'ACCT-91005111', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005114', 'ACCT-91005114', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005109', 'ACCT-91005109', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005110', 'ACCT-91005110', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005115', 'ACCT-91005115', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005112', 'ACCT-91005112', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005113', 'ACCT-91005113', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HLFXGB21XXX', 'Halifax', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005108', 'ACCT-91005108', 'SHA', 'spot', 'Source: https://halifax.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005119', 'ACCT-91005119', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005122', 'ACCT-91005122', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005117', 'ACCT-91005117', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005118', 'ACCT-91005118', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005123', 'ACCT-91005123', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005120', 'ACCT-91005120', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005121', 'ACCT-91005121', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('TSBKGB2AXXX', 'TSB Bank plc', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005116', 'ACCT-91005116', 'SHA', 'spot', 'Source: https://tsb.co.uk/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005319', 'ACCT-91005319', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005322', 'ACCT-91005322', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005317', 'ACCT-91005317', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005318', 'ACCT-91005318', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005323', 'ACCT-91005323', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005320', 'ACCT-91005320', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005321', 'ACCT-91005321', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AABAFI22XXX', 'Ålandsbanken', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005316', 'ACCT-91005316', 'SHA', 'spot', 'Source: https://alandsbanken.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005311', 'ACCT-91005311', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005314', 'ACCT-91005314', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005309', 'ACCT-91005309', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005310', 'ACCT-91005310', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005315', 'ACCT-91005315', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005312', 'ACCT-91005312', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005313', 'ACCT-91005313', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('HELSFIHHXXX', 'Bank of Finland', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005308', 'ACCT-91005308', 'SHA', 'spot', 'Source: https://suomenpankki.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005303', 'ACCT-91005303', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005306', 'ACCT-91005306', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005301', 'ACCT-91005301', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005302', 'ACCT-91005302', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005307', 'ACCT-91005307', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005304', 'ACCT-91005304', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005305', 'ACCT-91005305', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('OKOYFIHHXXX', 'OP Corporate Bank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005300', 'ACCT-91005300', 'SHA', 'spot', 'Source: https://op.fi/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005203', 'ACCT-91005203', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005206', 'ACCT-91005206', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005201', 'ACCT-91005201', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005202', 'ACCT-91005202', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005207', 'ACCT-91005207', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005204', 'ACCT-91005204', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005205', 'ACCT-91005205', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('GENODEF1XXX', 'DZ BANK', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005200', 'ACCT-91005200', 'SHA', 'spot', 'Source: https://dzbank.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005211', 'ACCT-91005211', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005214', 'ACCT-91005214', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005209', 'ACCT-91005209', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005210', 'ACCT-91005210', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005215', 'ACCT-91005215', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005212', 'ACCT-91005212', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005213', 'ACCT-91005213', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PBNKDEFFXXX', 'Postbank', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005208', 'ACCT-91005208', 'SHA', 'spot', 'Source: https://postbank.de/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005811', 'ACCT-91005811', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005814', 'ACCT-91005814', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005809', 'ACCT-91005809', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005810', 'ACCT-91005810', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005815', 'ACCT-91005815', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005812', 'ACCT-91005812', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005813', 'ACCT-91005813', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CMCIFR2AXXX', 'Banque Fédérative du Crédit Mutuel', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005808', 'ACCT-91005808', 'SHA', 'spot', 'Source: https://creditmutuel.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005803', 'ACCT-91005803', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005806', 'ACCT-91005806', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005801', 'ACCT-91005801', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005802', 'ACCT-91005802', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005807', 'ACCT-91005807', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005804', 'ACCT-91005804', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005805', 'ACCT-91005805', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('PSSTFRPPXXX', 'La Banque Postale', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005800', 'ACCT-91005800', 'SHA', 'spot', 'Source: https://labanquepostale.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005603', 'ACCT-91005603', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005606', 'ACCT-91005606', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005601', 'ACCT-91005601', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005602', 'ACCT-91005602', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005607', 'ACCT-91005607', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005604', 'ACCT-91005604', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005605', 'ACCT-91005605', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('AIBKIE2DXXX', 'AIB', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005600', 'ACCT-91005600', 'SHA', 'spot', 'Source: https://aib.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005611', 'ACCT-91005611', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005614', 'ACCT-91005614', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005609', 'ACCT-91005609', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005610', 'ACCT-91005610', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005615', 'ACCT-91005615', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005612', 'ACCT-91005612', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005613', 'ACCT-91005613', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BOFIIE2DXXX', 'Bank of Ireland', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005608', 'ACCT-91005608', 'SHA', 'spot', 'Source: https://bankofireland.com/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005635', 'ACCT-91005635', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005638', 'ACCT-91005638', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005633', 'ACCT-91005633', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005634', 'ACCT-91005634', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005639', 'ACCT-91005639', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005636', 'ACCT-91005636', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005637', 'ACCT-91005637', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('DABAIE2DXXX', 'Danske Bank Ireland', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005632', 'ACCT-91005632', 'SHA', 'spot', 'Source: https://danskebank.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005627', 'ACCT-91005627', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005630', 'ACCT-91005630', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005625', 'ACCT-91005625', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005626', 'ACCT-91005626', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005631', 'ACCT-91005631', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005628', 'ACCT-91005628', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005629', 'ACCT-91005629', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IPBSIE2DXXX', 'Permanent TSB', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005624', 'ACCT-91005624', 'SHA', 'spot', 'Source: https://permanenttsb.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005619', 'ACCT-91005619', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005622', 'ACCT-91005622', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005617', 'ACCT-91005617', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005618', 'ACCT-91005618', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005623', 'ACCT-91005623', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005620', 'ACCT-91005620', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005621', 'ACCT-91005621', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('IRCEIE2DXXX', 'Irish Nationwide Building Society', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005616', 'ACCT-91005616', 'SHA', 'spot', 'Source: https://irishnationwide.ie/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005711', 'ACCT-91005711', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005714', 'ACCT-91005714', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005709', 'ACCT-91005709', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005710', 'ACCT-91005710', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005715', 'ACCT-91005715', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005712', 'ACCT-91005712', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005713', 'ACCT-91005713', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BCEELULLXXX', "Banque et Caisse d'Epargne de l'Etat", 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005708', 'ACCT-91005708', 'SHA', 'spot', 'Source: https://spuerkeess.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005703', 'ACCT-91005703', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005706', 'ACCT-91005706', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005701', 'ACCT-91005701', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005702', 'ACCT-91005702', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005707', 'ACCT-91005707', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005704', 'ACCT-91005704', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005705', 'ACCT-91005705', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('BGLLLULLXXX', 'BGL BNP Paribas', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005700', 'ACCT-91005700', 'SHA', 'spot', 'Source: https://bgl.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91005719', 'ACCT-91005719', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'DKK', 'DABADKKKXXX', 'Danske Bank Copenhagen', 'ACCT-91005722', 'ACCT-91005722', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'EUR', 'DEUTDEFFXXX', 'Deutsche Bank Frankfurt', 'ACCT-91005717', 'ACCT-91005717', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'GBP', 'CHASGB2LXXX', 'JPMorgan Chase Bank London', 'ACCT-91005718', 'ACCT-91005718', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'JPY', 'BOTKJPJTXXX', 'MUFG Bank Tokyo', 'ACCT-91005723', 'ACCT-91005723', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'NOK', 'DNBANOKKXXX', 'DNB Bank ASA Oslo', 'ACCT-91005720', 'ACCT-91005720', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'SEK', 'ESSESESSXXX', 'Skandinaviska Enskilda Banken Stockholm', 'ACCT-91005721', 'ACCT-91005721', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    ('CCPLLULLXXX', 'POST Luxembourg', 'USD', 'CHASUS33XXX', 'JPMorgan Chase Bank New York', 'ACCT-91005716', 'ACCT-91005716', 'SHA', 'spot', 'Source: https://post.lu/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
+    # ---- SSI wave 110 (East/Southeast Asia and Pacific BIC-only metadata) ----
+    *SSI_ASIA_EAST_PACIFIC_RECORDS,
+    # ---- SSI expansion batch 110 (global currency-explicit routes) ----
+    *_ssi_batch_global_currency_records(),
+    # ---- SSI expansion wave 110 (Phongsavanh Bank Laos) ----
+    *_ssi_wave110_phongsavanh_records(),
+    # ---- SSI expansion batch 110 (East/Southern Africa; BIC-only) ----
+    *_ssi_batch110_records(),
+    # ---- SSI expansion Asia subcontinent source ledger ----
+    *_ssi_asia_subcontinent_records(),
     # ---- SSI expansion batch 32 (ESAF Small Finance Bank; masked) ----
     *_ssi_batch32_records(),
     # ---- SSI expansion batch 9 (EverBank foreign-currency instructions; masked) ----
@@ -1469,6 +2240,10 @@ SSI_RECORDS = [
     # SSI batch 4 rows begin
     *_ssi_batch4_records(),
     # SSI batch 4 rows end
+    # ---- SSI expansion batch 10 (South Asia correspondent metadata) ----
+    *_ssi_batch10_records(),
+    # ---- SSI expansion wave (Americas bank-published correspondent metadata) ----
+    *AMERICAS_WAVE_RECORDS,
     # ---- DNB Bank ASA Helsinki Branch (current 2026-02-02 SSI) ----
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "AUD", "ANZBAU3MXXX", "ANZ Banking Group Limited Melbourne", "ACCT-91005316", "ACCT-91005316", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),
     ("DNBAFIHXXXX", "DNB Bank ASA, Helsinki Branch", "CAD", "ROYCCAT2XXX", "Royal Bank of Canada Toronto", "ACCT-91005311", "ACCT-91005311", "SHA", "spot", "Source: https://content.dnb.no/docs/9553984/ssi-helsinki-02-02-2026.pdf (as of 2026-02-02). " + _SSI_REAL_NOTE, "2026-02-02", "unverified", None, False, True),
@@ -1823,12 +2598,10 @@ SSI_RECORDS = [
     ("OTPVHR2XXXX", "OTP banka d.d.", "CAD", "BOFMCAT2XXX", "Correspondent bank (BOFMCAT2)", "ACCT-91004349", "ACCT-91004350", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "CHF", "OTPVHUHBXXX", "Correspondent bank (OTPVHUHB)", "ACCT-91004351", "ACCT-91004352", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "CHF", "UBSWCHZH80A", "Correspondent bank (UBSWCHZH80A)", "ACCT-91004353", "ACCT-91004354", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
-    ("OTPVHR2XXXX", "OTP banka d.d.", "CZK", "GIBACZPXXXX", "Correspondent bank (GIBACZPX)", "ACCT-91004355", "ACCT-91004356", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "DKK", "DABADKKKXXX", "Correspondent bank (DABADKKK)", "ACCT-91004357", "ACCT-91004358", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "COBADEFFXXX", "Correspondent bank (COBADEFF)", "ACCT-91004359", "ACCT-91004360", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "DEUTDEFFXXX", "Correspondent bank (DEUTDEFF)", "ACCT-91004361", "ACCT-91004362", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "BCITITMMXXX", "Correspondent bank (BCITITMM)", "ACCT-91004363", "ACCT-91004364", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
-    ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "OTPVHUHBXXX", "Correspondent bank (OTPVHUHB)", "ACCT-91004365", "ACCT-91004366", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "EUR", "SOGEFRPPXXX", "Correspondent bank (SOGEFRPP)", "ACCT-91004367", "ACCT-91004368", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "GBP", "LOYDGB2LXXX", "Correspondent bank (LOYDGB2L)", "ACCT-91004369", "ACCT-91004370", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
     ("OTPVHR2XXXX", "OTP banka d.d.", "HKD", "CEDELULLXXX", "Correspondent bank (CEDELULL)", "ACCT-91004371", "ACCT-91004372", "SHA", "spot", "Source: https://www.otpbanka.hr/sites/default/files/doc/Public%20SSI%20-%20OTP%20Banka%20-%2022.12.2025.pdf (as of 2025-12-22). " + _SSI_REAL_NOTE, "2025-12-22", "unverified", None, False, True),
@@ -2891,6 +3664,46 @@ SSI_RECORDS = [
      "ANZBAU3MXXX", "ANZ Banking Group",
      "ACCT-17512", "ACCT-29214", "SHA", "spot",
      "Source: Access Bank SwiftCode PDF. " + _SSI_REAL_NOTE, None, "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Access Bank Ghana (ABNGGHAC)
+    # Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services
+    # ====================================================================
+
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "USD",
+     "CITIUS33XXX", "Citibank N.A. New York",
+     "ACCT-91011001", "ACCT-91011001", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "GBP",
+     "CITIGB2LXXX", "Citibank N.A. London",
+     "ACCT-91011002", "ACCT-91011002", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "EUR",
+     "COBADEFFXXX", "Commerzbank AG Frankfurt",
+     "ACCT-91011003", "ACCT-91011003", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("ABNGGHACXXX", "Access Bank (Ghana) Plc", "GBP",
+     "COBADEFFXXX", "Commerzbank AG Frankfurt",
+     "ACCT-91011004", "ACCT-91011004", "SHA", "spot",
+     "Source: https://www.ghana.accessbankplc.com/corporate/products-services/global-trade-services (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+
+    # ====================================================================
+    # REAL SSI DATA — Stanbic IBTC Bank Nigeria (SBICNGLX)
+    # Source: official Stanbic IBTC inward-payment instructions PDF
+    # ====================================================================
+
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "USD",
+     "BKTRUS33XXX", "Deutsche Bank Trust Company Americas",
+     "ACCT-91011005", "ACCT-91011005", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "EUR",
+     "DEUTDEFFXXX", "Deutsche Bank AG Frankfurt",
+     "ACCT-91011006", "ACCT-91011006", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
+    ("SBICNGLXXXX", "Stanbic IBTC Bank PLC", "ZAR",
+     "SBZAZAJJXXX", "Standard Bank of South Africa",
+     "ACCT-91011007", "ACCT-91011007", "SHA", "spot",
+     "Source: https://www.stanbicibtcbank.com/static_file/Nigeria/nigeriaholdings/OUR%20BUSINESS%20UNITS/Asset%20Management/Downloads/Account%20Opening%20Form%20%28individual%29.pdf (as of 2026-09-19). " + _SSI_REAL_NOTE, "2026-09-19", "unverified"),
 
     # ====================================================================
     # REAL SSI DATA — Saxo Bank A/S Denmark (SAXODK22)
@@ -8823,7 +9636,45 @@ SSI_RECORDS = [
      None, None, None, None,
      "Source: https://www.fnb.co.za/forex/understanding-forex/ (as of 2026-09-08) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
      "2026-09-08", "unverified", None, True),
-]
+    # ---- Banco Santander Uruguay (official routing-codes PDF) ----
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "CITIUS33XXX", "Citibank New York", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "IRVTUS3NXXX", "Bank of New York", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "CHASUS33XXX", "JPMorgan Chase Bank", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "SCBLUS33XXX", "Standard Chartered Bank", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "BOFAUS3MXXX", "Bank of America", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "USD", "PNBPUS3NNYC", "Wells Fargo Bank", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "EUR", "BSCHESMMXXX", "Banco Santander Madrid", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "EUR", "COBADEFFXXX", "Commerzbank Frankfurt", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "GBP", "PNBPGB2LXXX", "Wells Fargo Bank London", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "CHF", "UBSWCHZH80A", "UBS Switzerland AG", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "JPY", "COBADEFFXXX", "Commerzbank AG Frankfurt", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+    ("BSCHUYMMXXX", "Banco Santander S.A. Uruguay", "CAD", "BNDCCAMMXXX", "Banque Nationale du Canada", None, None, None, None,
+     "Source: https://www.santander.com.uy/sites/default/files/2023-10/Corresponsales%20de%20Santander%20Uruguay.pdf (as of 2023-10-01) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2023-10-01", "unverified", None, True),
+
+])
 
 # ---------------------------------------------------------------------------
 # Account registry — synthetic account-holder records for VoP.
@@ -9078,11 +9929,18 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
     """Insert every missing consolidated route into an existing SSI catalog.
 
     This upgrade is intentionally keyed per route and never gated on table
-    emptiness. Existing rows are left for the normal reconciliation pass,
-    which preserves operator-maintained settlement fields.
+    emptiness. When a later admitted manifest supersedes the ledger row for a
+    route, seed the canonical row selected by ``SSI_RECORDS`` directly so the
+    normal reconciliation pass does not manufacture a provenance update.
+    Existing rows are left untouched, preserving operator-maintained fields.
     """
     inserted = 0
+    canonical_by_key = {
+        (row[0], row[2], row[3]): row
+        for row in SSI_RECORDS
+    }
     for row in _SSI_CONSOLIDATED_RECORDS:
+        route_key = (row[0], row[2], row[3])
         (
             ben_bic,
             ben_name,
@@ -9099,8 +9957,8 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
             verified_by,
             bic_only,
             terms_inferred,
-        ) = row
-        if (ben_bic, ccy, int_bic) not in source_keys:
+        ) = canonical_by_key.get(route_key, row)
+        if route_key not in source_keys:
             continue
         if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
             continue
