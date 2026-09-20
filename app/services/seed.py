@@ -1283,10 +1283,10 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_9_europe_americas_dsk.json",
     "seed_ssi_consolidation_10_europe_americas_wave3.json",
     "seed_ssi_consolidation_10_europe_americas_wave4.json",
-    "seed_ssi_consolidation_10_europe_americas.json",
+    "seed_ssi_consolidation_10_europe_americas_safe.json",
     "seed_ssi_consolidation_10_africa_mena_mashreq.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
-    "seed_ssi_consolidation_10_africa_mena.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_safe.json",
     "seed_ssi_consolidation_10_asia_pacific.json",
     "seed_ssi_consolidation_10_india_sri_lanka.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
@@ -1300,7 +1300,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_latam_caribbean.json",
     "seed_ssi_consolidation_10_central_asia_eurasian.json",
     "seed_ssi_consolidation_10_central_asia_shinhan.json",
-    "seed_ssi_consolidation_10_south_asia_global.json",
+    "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
 
