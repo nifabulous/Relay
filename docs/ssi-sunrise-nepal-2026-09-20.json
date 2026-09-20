@@ -1,0 +1,124 @@
+{
+  "batch": "ssi-10k-south-global-15-sunrise-nepal",
+  "as_of": "2026-09-20",
+  "sources": [
+    {
+      "url": "https://www.sunrisebank.com.np/wp-content/uploads/2023/08/sb-2077-78-english.pdf",
+      "institution": "Sunrise Bank Limited, Kathmandu",
+      "candidate_route_count": 19,
+      "route_count": 19,
+      "excluded_existing_route_count": 0,
+      "excluded_existing_routes": [],
+      "notes": "Official Sunrise Bank annual-report SSI table. BIC-only, non-routable rows omit published account numbers to avoid treating time-sensitive account details as application routing data."
+    }
+  ],
+  "source_snapshot": {
+    "candidate_route_count": 19,
+    "route_count": 19,
+    "excluded_existing_route_count": 0
+  },
+  "normalization": {
+    "beneficiary_bic": "SRBLNPKAXXX",
+    "eight_character_bics": "Appended XXX to 8-character source BICs; preserved source branch BICs when 11 characters were supplied.",
+    "currency_aliases": {},
+    "invalid_source_rows": [],
+    "cross_batch_dedupe": "Compared route keys against origin/main catalog and ledgers 10\u201314 before emission."
+  },
+  "route_keys": [
+    [
+      "SRBLNPKAXXX",
+      "AUD",
+      "SBINAU2SXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "CNY",
+      "BKCHCNBJS00"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "CNY",
+      "SCBLCNSXXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "EUR",
+      "SCBLDEFXXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "EUR",
+      "BHFBDEFFXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "GBP",
+      "SCBLGB2LXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "AXISINBB004"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "HDFCINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "MSHQINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "SCBLINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "KKBKINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "IBKLINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "INR",
+      "IDFBINBBXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "JPY",
+      "SCBLJPJTXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "USD",
+      "CZNBKRSEXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "USD",
+      "HANYUS33XXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "USD",
+      "IBKOKRSEXXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "USD",
+      "MSHQUS33XXX"
+    ],
+    [
+      "SRBLNPKAXXX",
+      "USD",
+      "SCBLUS33XXX"
+    ]
+  ]
+}
