@@ -1285,7 +1285,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
     "seed_ssi_consolidation_10_europe_americas.json",
     "seed_ssi_consolidation_10_europe_americas_wave3.json",
-    "seed_ssi_europe_americas_wave4_20260920.json",
+    "seed_ssi_consolidation_10_europe_americas_wave4.json",
     "seed_ssi_consolidation_10_south_asia_global.json",
     "seed_ssi_consolidation_10_asia_pacific.json",
     "seed_ssi_consolidation_10_india_sri_lanka.json",

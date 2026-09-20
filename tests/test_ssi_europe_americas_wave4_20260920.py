@@ -5,7 +5,7 @@ from pathlib import Path
 from schwifty import BIC
 
 ROOT = Path(__file__).resolve().parents[1]
-LEDGER = ROOT / "app" / "services" / "seed_ssi_europe_americas_wave4_20260920.json"
+LEDGER = ROOT / "app" / "services" / "seed_ssi_consolidation_10_europe_americas_wave4.json"
 MANIFEST = ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-europe-americas-wave4-2026-09-20.json"
 
 ISO_CURRENCIES = {"AUD", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "HUF", "JPY", "NOK", "NZD", "PLN", "RON", "SEK", "TRY", "USD"}
@@ -41,4 +41,3 @@ def test_wave4_exact_source_parity_alias_dedupe_and_bic_only_contract():
         assert all(row[index] is None for index in (5, 6, 7, 8, 12))
         assert row[11] == "unverified"
         assert row[13] is True and row[14] is False
-
