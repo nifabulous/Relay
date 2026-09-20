@@ -1,0 +1,916 @@
+{
+  "wave": "europe-americas-2026-09-20",
+  "source_snapshot": {
+    "route_count": 192,
+    "new_route_count": 192,
+    "raw_accounts_committed": false,
+    "bic_only": true
+  },
+  "scope": {
+    "included_route_count": 192,
+    "new_route_count": 192,
+    "regions": [
+      "Europe",
+      "Americas"
+    ],
+    "notes": "Bank-owned correspondent/SSI tables only; BIC-only routes remain non-routable pending independent verification."
+  },
+  "sources": [
+    {
+      "beneficiary_bic": "SWEDSESSXXX",
+      "url": "https://www.swedbank.com/corporate/cash-management-transaction-services/bank-coverage/ssi.html",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 18
+    },
+    {
+      "beneficiary_bic": "TATRSKBXXXX",
+      "url": "https://www.tatrabanka.sk/files/archiv/en/about/important-documents/Main_Correspondent_Banks_for_Commercial_Transactions.pdf",
+      "as_of": "2023-05-01",
+      "status": "archived",
+      "route_count": 8
+    },
+    {
+      "beneficiary_bic": "PRCBMD22XXX",
+      "url": "https://procreditbank.md/en/swift",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 6
+    },
+    {
+      "beneficiary_bic": "NLPRXKPRXXX",
+      "url": "https://hr.nlb-kos.com/en/klientet-e-biznesit/produktet/transferet",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 21
+    },
+    {
+      "beneficiary_bic": "MBKOXKPRXXX",
+      "url": "https://www.procreditbank-kos.com/Uploads/Data/Files/5/Receiving_Money_from_Abroad_ENG_docx_KjqpJKV84W.pdf",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 4
+    },
+    {
+      "beneficiary_bic": "RBKOXKPRXXX",
+      "url": "https://www.raiffeisen-kosovo.com/content/dam/rbi/retail/eu/xk/transfere/Instructions%20for%20international%20payments%20to%20accounts%20at%20Raiffeisen%20Bank%20Kosovo.pdf.coredownload.pdf",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 11
+    },
+    {
+      "beneficiary_bic": "BPBXXKPRXXX",
+      "url": "https://www.bpbbank.com/wp-content/uploads/2023/02/Payment-instruction-ENG.pdf",
+      "as_of": "2023-02-01",
+      "status": "archived",
+      "route_count": 10
+    },
+    {
+      "beneficiary_bic": "NCBAXKPRXXX",
+      "url": "https://bkt-ks.com/content/2023/05/SSI-list-for-BKT-Kosova.pdf",
+      "as_of": "2023-05-01",
+      "status": "archived",
+      "route_count": 10
+    },
+    {
+      "beneficiary_bic": "TTKBMK2XXXX",
+      "url": "https://www.ttk.com.mk/Web/%D0%9F%D0%A0%D0%90%D0%92%D0%9D%D0%98_%D0%9B%D0%98%D0%A6%D0%90/%D0%A1%D0%BC%D0%B5%D1%82%D0%BA%D0%B8/%D0%9A%D0%BE%D1%80%D0%B5%D1%81%D0%BF%D0%BE%D0%B4%D0%B5%D0%BD%D1%82%D1%81%D0%BA%D0%B8_%D0%B1%D0%B0%D0%BD%D0%BA%D0%B8.aspx",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 16
+    },
+    {
+      "beneficiary_bic": "BFERROBUXXX",
+      "url": "https://techventures.bank/storage/files/lista-bancilor-corespondente-11032026.pdf",
+      "as_of": "2026-03-11",
+      "status": "unverified",
+      "route_count": 11
+    },
+    {
+      "beneficiary_bic": "POBNSKBAXXX",
+      "url": "https://365.bank/media/y43iymxv/list-of-ssi-of-365-bank-a-s-bic-pobnskba-march31-2022.pdf",
+      "as_of": "2022-03-31",
+      "status": "archived",
+      "route_count": 17
+    },
+    {
+      "beneficiary_bic": "PPABPLPKXXX",
+      "url": "https://www.bnpparibas.pl/en/english-info/correspondent-banks",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 19
+    },
+    {
+      "beneficiary_bic": "CTASCZ22XXX",
+      "url": "https://www.maxbanka.eu/files/ssi-set-details-banka-creditas-20-05-2024.pdf",
+      "as_of": "2024-05-20",
+      "status": "archived",
+      "route_count": 17
+    },
+    {
+      "beneficiary_bic": "STSABGSFXXX",
+      "url": "https://dskbank.bg/en/business-clients/small-and-medium-business/accounts-and-payments/correspondent-banks",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 24
+    }
+  ],
+  "routes_by_beneficiary": {
+    "SWEDSESSXXX": [
+      {
+        "currency": "AED",
+        "int_bic": "NBADAEAAXXX"
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "ANZBAU3MXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "ROYCCAT2XXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A"
+      },
+      {
+        "currency": "CNY",
+        "int_bic": "ICBKCNBJXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "CEKOCZPPXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "JYBADKKKXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HABAEE2XXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "NWBKGB2LXXX"
+      },
+      {
+        "currency": "HKD",
+        "int_bic": "HSBCHKHHHKH"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "SMBCJPJTXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "SWEDNOKKXXX"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "PKOPPLPWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "BRDEROBUXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "SWEDSESSXXX"
+      },
+      {
+        "currency": "SGD",
+        "int_bic": "DBSSSGSGXXX"
+      },
+      {
+        "currency": "TRY",
+        "int_bic": "TGBATRIS093"
+      },
+      {
+        "currency": "ZAR",
+        "int_bic": "ABSAZAJJXXX"
+      }
+    ],
+    "TATRSKBXXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "COBADEFFXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "KOMBCZPPXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BOFAUS3NXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3NXXX"
+      }
+    ],
+    "PRCBMD22XXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "PRCBDEFFXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3NXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "MIROROBUXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "PRCBDEFFXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "PRCBDEFFXXX"
+      },
+      {
+        "currency": "CNY",
+        "int_bic": "PRCBDEFFXXX"
+      }
+    ],
+    "NLPRXKPRXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "HRK",
+        "int_bic": "LJBASI2XXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BKAUATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "COBADEFFXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "COBADEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HYVEDEMMXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "CRESCHZZXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "TUTNMK22XXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "TUTNMK22XXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNALALTRXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "MNBAMEPGXXX"
+      }
+    ],
+    "MBKOXKPRXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "PRCBDEFFXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3NXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "POFICHBEXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "IRVTGB2LXXX"
+      }
+    ],
+    "RBKOXKPRXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "POFICHBEXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "CITIUS33XXX"
+      }
+    ],
+    "BPBXXKPRXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BKAUATWWXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "BKAUATWWXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "POFICHBEXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNALALTRXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "UNALALTRXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UNALALTRXXX"
+      }
+    ],
+    "NCBAXKPRXXX": [
+      {
+        "currency": "CHF",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "POFICHBEXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BCITITMMXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "KTAGDEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "TRY",
+        "int_bic": "CAYTTRISXXX"
+      }
+    ],
+    "TTKBMK2XXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "GENODEFFXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "GENODEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNCRITMMXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HAABHR22XXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "HAABHR22XXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "PBZGHR2XXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "PBZGHR2XXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "PBZGHR2XXXX"
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "PBZGHR2XXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "PBZGHR2XXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "KOBSMK2XXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "KOBSMK2XXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "KOBSMK2XXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "KOBSMK2XXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "KOBSMK2XXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "STOBMK2XXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "INSBMK22XXX"
+      }
+    ],
+    "BFERROBUXXX": [
+      {
+        "currency": "RON",
+        "int_bic": "NBORROBUXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "GIBAATWGXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "UNCRITMMXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "GIBAATWGXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "UNCRITMMXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OTPVHUHBXXX"
+      }
+    ],
+    "POBNSKBAXXX": [
+      {
+        "currency": "CAD",
+        "int_bic": "BNDCCAMMXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "POFICHBEXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "JTBPCZPPXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "SYBKDK22XXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "NBSBSKBXXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "HRK",
+        "int_bic": "VBVZHR22XXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "DNBANOKKXXX"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "INGBPLPWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "INGBROBUXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BKTRUS33XXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      }
+    ],
+    "PPABPLPKXXX": [
+      {
+        "currency": "AUD",
+        "int_bic": "ANZBAU3MXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "BNPACAMMXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A"
+      },
+      {
+        "currency": "CNY",
+        "int_bic": "BNPAHKHHXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "CEKOCZPPXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "DABADKKKXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BNPAFRPPXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "BNPAGB22XXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OKHBHUHBXXX"
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "SMBCJPJTXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "DNBANOKKXXX"
+      },
+      {
+        "currency": "NZD",
+        "int_bic": "ANZBNZ22XXX"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "NBPLPLPWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "RZBRROBUXXX"
+      },
+      {
+        "currency": "RSD",
+        "int_bic": "BACXRSBGXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "ESSESESSXXX"
+      },
+      {
+        "currency": "TRY",
+        "int_bic": "TEBUTRISXXX"
+      },
+      {
+        "currency": "ZAR",
+        "int_bic": "FIRNZAJJXXX"
+      }
+    ],
+    "CTASCZ22XXX": [
+      {
+        "currency": "AUD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "BGN",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "CNBACZPPXXX"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3NXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      }
+    ],
+    "STSABGSFXXX": [
+      {
+        "currency": "AUD",
+        "int_bic": "ANZBAU3MXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "BOFMCAM2XXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "ZKBKCHZZ80A"
+      },
+      {
+        "currency": "CZK",
+        "int_bic": "GIBACZPXXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "DABADKKKXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "COBADEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "DEUTDEFFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "STSABGSFXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "BBRUBEBB010"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "LOYDGB2LXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "RBOSGB2LXXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "MHCBJPJTXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "DABANO22XXX"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "BPKOPLPWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "OTPVHUHBXXX"
+      },
+      {
+        "currency": "RSD",
+        "int_bic": "OTPVRS22XXX"
+      },
+      {
+        "currency": "RUB",
+        "int_bic": "OTPVRUMMXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "DABASESXXXX"
+      },
+      {
+        "currency": "TRY",
+        "int_bic": "YAPITRISXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "IRVTUS3NXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BKTRUS33XXX"
+      }
+    ]
+  }
+}
