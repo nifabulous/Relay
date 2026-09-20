@@ -1,11 +1,14 @@
 # South Asia/global SSI expansion — 2026-09-20
 
-This snapshot contributes **84 new unique beneficiary/currency/intermediary
+This snapshot contributes **73 new unique beneficiary/currency/intermediary
 keys** after de-duplication against the 10,164-route catalog on `origin/main`.
 The source pages yielded 93 candidate keys. Repository policy normalizes the
 ACU/ACUD pseudo-currencies to USD; nine normalized keys already existed in the
-catalog and are omitted from the ledger. The machine-readable evidence retains
-the candidate counts and excluded keys for auditability.
+catalog and are omitted from the ledger. The policy also normalizes the
+PNBPUS3NNYC and SCBLDEFXXXX intermediary aliases to PNBPUS33XXX and
+SCBLDEFFXXX respectively; eleven more normalized collisions were omitted. The
+machine-readable evidence retains the candidate counts and excluded keys for
+auditability.
 Every row is intentionally BIC-only, `unverified`, and non-routable: no
 account number, charge code, value date, or verifier is asserted.
 

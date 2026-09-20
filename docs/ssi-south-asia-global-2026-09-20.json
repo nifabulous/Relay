@@ -1,7 +1,7 @@
 {
   "source_snapshot": {
     "as_of": "2026-09-20",
-    "route_count": 84,
+    "route_count": 73,
     "candidate_route_count": 93,
     "normalized_route_count": 93
   },
@@ -9,9 +9,9 @@
     {
       "url": "https://www.abl.com/business-banking/accounts/home-remittances/essential-information-swift-and-nostro-codes-and-iban-generation/",
       "beneficiary_bic": "ABPAPKKAXXX",
-      "route_count": 6,
+      "route_count": 4,
       "candidate_route_count": 6,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 2
     },
     {
       "url": "https://www.meezanbank.com/wp-content/themes/mbl/downloads/NOSTRO.pdf",
@@ -23,16 +23,16 @@
     {
       "url": "https://askari.tdfclient.com/business/cib/financial-institutions-division-fid",
       "beneficiary_bic": "ASCMPKKAXXX",
-      "route_count": 6,
+      "route_count": 5,
       "candidate_route_count": 6,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 1
     },
     {
       "url": "https://www.bop.com.pk/view.aspx?id=1061",
       "beneficiary_bic": "BPUNPKKAXXX",
-      "route_count": 5,
+      "route_count": 4,
       "candidate_route_count": 5,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 1
     },
     {
       "url": "https://www.bok.com.pk/treasury-and-institutional-banking/financial-institutions-detail",
@@ -58,16 +58,16 @@
     {
       "url": "https://dhakabank.com.bd/global-trade-services/",
       "beneficiary_bic": "DHBLBDDHXXX",
-      "route_count": 13,
+      "route_count": 11,
       "candidate_route_count": 13,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 2
     },
     {
       "url": "https://www.eximbankbd.com/remittance/international_operation",
       "beneficiary_bic": "EXBKBDDHXXX",
-      "route_count": 20,
+      "route_count": 19,
       "candidate_route_count": 20,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 1
     },
     {
       "url": "https://www.ebl.com.bd/treasury/correspondent-banking",
@@ -79,30 +79,30 @@
     {
       "url": "https://www.citybankplc.com/edm/nostro_accounts/",
       "beneficiary_bic": "CIBLBDDHXXX",
-      "route_count": 1,
+      "route_count": 0,
       "candidate_route_count": 2,
-      "excluded_existing_route_count": 1
+      "excluded_existing_route_count": 2
     },
     {
       "url": "https://www.standardbankbd.com/SblSSI.php",
       "beneficiary_bic": "SDBLBDDHXXX",
-      "route_count": 1,
+      "route_count": 0,
       "candidate_route_count": 9,
-      "excluded_existing_route_count": 8
+      "excluded_existing_route_count": 9
     },
     {
       "url": "https://www.nabilbank.com/nabilbank/products/correspondent-banking-details",
       "beneficiary_bic": "NARBNPKAXXX",
-      "route_count": 1,
+      "route_count": 0,
       "candidate_route_count": 1,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 1
     },
     {
       "url": "https://himalayanbank.com/en/correspondent-network",
       "beneficiary_bic": "HIMANPKAXXX",
-      "route_count": 1,
+      "route_count": 0,
       "candidate_route_count": 1,
-      "excluded_existing_route_count": 0
+      "excluded_existing_route_count": 1
     }
   ],
   "route_keys": [
@@ -127,16 +127,6 @@
       "SCBLBDDXXXX"
     ],
     [
-      "ABPAPKKAXXX",
-      "CAD",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "ABPAPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
       "MEZNPKKAXXX",
       "USD",
       "SCBLBDDXXXX"
@@ -145,11 +135,6 @@
       "MEZNPKKAXXX",
       "USD",
       "SCBLINBBXXX"
-    ],
-    [
-      "ASCMPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
     ],
     [
       "ASCMPKKAXXX",
@@ -175,11 +160,6 @@
       "ASCMPKKAXXX",
       "USD",
       "HDFCINBBXXX"
-    ],
-    [
-      "BPUNPKKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
     ],
     [
       "BPUNPKKAXXX",
@@ -329,16 +309,6 @@
     [
       "DHBLBDDHXXX",
       "USD",
-      "PNBPUS3NNYC"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "DHBLBDDHXXX",
-      "USD",
       "MSHQINBBXXX"
     ],
     [
@@ -463,11 +433,6 @@
     ],
     [
       "EXBKBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "EXBKBDDHXXX",
       "USD",
       "HANYUS33XXX"
     ],
@@ -484,7 +449,7 @@
     [
       "EXBKBDDHXXX",
       "USD",
-      "PNBPUS3NNYC"
+      "PNBPUS33XXX"
     ],
     [
       "EXBKBDDHXXX",
@@ -505,26 +470,6 @@
       "EBLDBDDHXXX",
       "USD",
       "SCBLINBBXXX"
-    ],
-    [
-      "CIBLBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "SDBLBDDHXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "NARBNPKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
-    ],
-    [
-      "HIMANPKAXXX",
-      "EUR",
-      "SCBLDEFXXXX"
     ]
   ],
   "normalization": {
@@ -533,12 +478,67 @@
       "ACUD": "USD"
     },
     "acu_candidate_route_count": 57,
-    "excluded_existing_route_count": 9,
+    "excluded_existing_route_count": 20,
     "excluded_existing_route_keys": [
+      [
+        "ABPAPKKAXXX",
+        "CAD",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "ABPAPKKAXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "ASCMPKKAXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "BPUNPKKAXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "CIBLBDDHXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
       [
         "CIBLBDDHXXX",
         "USD",
         "ICICINBBNRI"
+      ],
+      [
+        "DHBLBDDHXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "DHBLBDDHXXX",
+        "USD",
+        "PNBPUS33XXX"
+      ],
+      [
+        "EXBKBDDHXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "HIMANPKAXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "NARBNPKAXXX",
+        "EUR",
+        "SCBLDEFFXXX"
+      ],
+      [
+        "SDBLBDDHXXX",
+        "EUR",
+        "SCBLDEFFXXX"
       ],
       [
         "SDBLBDDHXXX",
@@ -581,6 +581,11 @@
         "SCBLINBBXXX"
       ]
     ],
-    "note": "Repository policy treats ACU/ACUD as USD. Rows whose normalized key already existed in origin/main were omitted; the source candidate counts remain in each source entry for auditability."
+    "note": "Repository policy treats ACU/ACUD as USD and normalizes the PNBPUS3NNYC alias to PNBPUS33XXX and SCBLDEFXXXX to SCBLDEFFXXX. Rows whose normalized key already existed in origin/main were omitted; source candidate counts remain in each source entry for auditability.",
+    "intermediary_aliases": {
+      "PNBPUS3NNYC": "PNBPUS33XXX",
+      "SCBLDEFXXXX": "SCBLDEFFXXX"
+    },
+    "intermediary_alias_route_count": 12
   }
 }
