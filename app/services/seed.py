@@ -1313,6 +1313,11 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_amsterdam_cash_management_20260102.json",
     "seed_ssi_deutsche_taipei_20200720.json",
     "seed_ssi_deutsche_ho_chi_minh_20250408.json",
+    "seed_ssi_deutsche_tokyo_derivatives_20200817.json",
+    "seed_ssi_deutsche_bangkok_20210322.json",
+    "seed_ssi_deutsche_sydney_20250526.json",
+    "seed_ssi_deutsche_mumbai_20201116.json",
+    "seed_ssi_deutsche_jakarta_20200720.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 

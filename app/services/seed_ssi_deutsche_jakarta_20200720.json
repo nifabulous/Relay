@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["DEUTIDJAXXX", "Deutsche Bank AG, Jakarta", "USD", "DEUTUS33XXX", "Deutsche Bank AG, New York", null, null, null, null, "Source: https://corporates.db.com/files/documents/legal-resources/Change_of_USD_Standard_Settlement_Instruction_for_FX_Money_Market.pdf (effective 2020-07-20; official Deutsche Bank Jakarta SSI amendment PDF). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2020-07-20", "unverified", null, true, false]
+  ]
+}
