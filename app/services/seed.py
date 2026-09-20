@@ -1308,6 +1308,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_frankfurt_cash_equities_20251101.json",
     "seed_ssi_deutsche_frankfurt_money_markets_20260116.json",
     "seed_ssi_deutsche_new_york_money_markets_20250203.json",
+    "seed_ssi_deutsche_hong_kong_money_markets_20250203.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
