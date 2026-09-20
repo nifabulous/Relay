@@ -221,9 +221,10 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                     ),
                     frozenset({"Banca Transilvania", "Banca Transilvania S.A."}),
                     frozenset({"OTP banka d.d.", "OTP banka d.d., Split"}),
-                    frozenset(
-                        {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
-                    ),
+                        frozenset(
+                            {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
+                        ),
+                        frozenset({"I&M Bank Rwanda Plc", "I AND M BANK (RWANDA) PLC"}),
                 }
                 assert frozenset({seeded_compare[1], row_compare[1]}) in name_aliases
                 seeded_compare[1] = row_compare[1]
