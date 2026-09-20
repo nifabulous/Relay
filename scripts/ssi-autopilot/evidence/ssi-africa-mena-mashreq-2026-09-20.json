@@ -1,0 +1,21 @@
+{
+  "wave": "ssi-africa-mena-mashreq-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena_mashreq.json",
+  "scope": {
+    "region": "MENA (United Arab Emirates)",
+    "route_count": 40,
+    "beneficiary_count": 1,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"]
+  },
+  "sources": [
+    {
+      "url": "https://www.mashreq.com/en/international-banking/home/our-sectors/sectors/financial-institution/standard-settlement-instruction/",
+      "beneficiary_bic": "BOMLAEADXXX",
+      "beneficiary_name": "Mashreqbank PSC",
+      "route_count": 40
+    }
+  ]
+}
