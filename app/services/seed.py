@@ -1305,6 +1305,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_portugal_20251001.json",
     "seed_ssi_deutsche_singapore_international_asia_20211213.json",
     "seed_ssi_deutsche_london_cash_equities_20251101.json",
+    "seed_ssi_deutsche_frankfurt_cash_equities_20251101.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
