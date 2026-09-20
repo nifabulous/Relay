@@ -16,6 +16,7 @@ EXPECTED_COUNTS = {
     "SUNYTWTPXXX": 20,
     "UOVBHKHHXXX": 14,
     "BKCHHKHHXXX": 14,
+    "SOININ55XXX": 16,
 }
 EXPECTED_SOURCES = {
     "https://www.bsp.com.pg/help/rates-and-fees/swift-codes/",
@@ -25,6 +26,7 @@ EXPECTED_SOURCES = {
     "https://www.sunnybank.com.tw/public/pdf/1040708-%E9%99%BD%E4%BF%A1%E5%95%86%E6%A5%AD%E9%8A%80%E8%A1%8C%E5%8C%AF%E5%85%A5%E6%AC%BE%E5%85%A5%E5%B8%B3%E6%8C%87%E7%A4%BA%28%E6%89%80%E6%9C%89%E5%B9%A3%E5%88%A5%29.pdf",
     "https://www.uob.com.sg/web-resources/hk/pdf/hk/application-forms/payments-factsheet-inward-to-uob.pdf",
     "https://www.bochk.com/dam/more/forms/Inward_TT_Quick_Guide_EN.pdf?gc_id=1570305088.1772620853&gs_id=1772620852",
+    "https://www.southindianbank.bank.in/nri-services/money-transfers/international-transfers/correspondent-banks",
 }
 
 
@@ -36,8 +38,8 @@ def test_asia_pacific_ledger_has_expected_shape_and_counts():
     payload = _payload()
     assert set(payload) == {"source_prs", "banks", "ssi_records"}
     assert payload["source_prs"] == []
-    assert len(payload["banks"]) == len(EXPECTED_COUNTS) == 7
-    assert len(payload["ssi_records"]) == 87
+    assert len(payload["banks"]) == len(EXPECTED_COUNTS) == 8
+    assert len(payload["ssi_records"]) == 103
     assert {bank[0] for bank in payload["banks"]} == set(EXPECTED_COUNTS)
     assert {row[0] for row in payload["ssi_records"]} == set(EXPECTED_COUNTS)
 
