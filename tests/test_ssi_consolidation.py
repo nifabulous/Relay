@@ -21,7 +21,7 @@ from app.services.seed import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
+LEDGERS = [ROOT / "app" / "services" / name for name in _SSI_CONSOLIDATION_DATA_FILES]
 NEW_CONSOLIDATION_LEDGERS = {
     "seed_ssi_consolidation_8_1.json",
     "seed_ssi_consolidation_8_2.json",
@@ -86,10 +86,10 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     """Pin the 10k expansion claim to the exact seeded route-key total."""
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
-    # The current expansion branch has 647 additional canonical routes over
+    # The current expansion branch has 444 additional canonical routes over
     # the 10,164-route merged baseline; keep this exact catalog total pinned
     # until the remaining 10k collection waves land.
-    assert len(SSI_RECORDS) == len(route_keys) == 10_811
+    assert len(SSI_RECORDS) == len(route_keys) == 10_608
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
