@@ -2087,11 +2087,11 @@ def _dedupe_ssi_records(rows):
                 # specific than an older BIC-only consolidation duplicate.
                 # Keep the ledger row only when no account-backed source
                 # supplies the same canonical route.
-                if prior[13] and not row[13]:
+                if len(prior) > 13 and prior[13] and not (len(row) > 13 and row[13]):
                     unique[prior_index] = row
                 continue
             if key in _SSI_PREFERRED_NON_BIC_ONLY_KEYS:
-                if prior[13] and not row[13]:
+                if len(prior) > 13 and prior[13] and not (len(row) > 13 and row[13]):
                     unique[prior_index] = row
                 # Once the reviewed account-bearing route is selected, an
                 # older availability-only duplicate must not replace it.
