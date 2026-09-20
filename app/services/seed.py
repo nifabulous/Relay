@@ -1318,6 +1318,8 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_sydney_20250526.json",
     "seed_ssi_deutsche_mumbai_20201116.json",
     "seed_ssi_deutsche_jakarta_20200720.json",
+    "seed_ssi_deutsche_seoul_local_20251014.json",
+    "seed_ssi_deutsche_new_york_rates_20250404.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
