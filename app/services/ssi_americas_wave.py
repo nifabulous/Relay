@@ -38,26 +38,29 @@ _CORRESPONDENTS = {
 
 _CURRENCIES = tuple(_CORRESPONDENTS)
 
-# Each beneficiary's bank-owned page was captured with this same published
-# correspondent matrix.  Keep the mapping explicit at the bank boundary: a
-# future source refresh can narrow one bank without silently reintroducing a
-# cartesian product over the global currency list.
+# Currency coverage is kept at the beneficiary boundary.  These are the
+# currency/correspondent pairs transcribed from each cited bank page; keeping
+# the sets explicit prevents a future refresh from silently expanding every
+# beneficiary over a global currency matrix.
 _BANK_CURRENCIES = {
-    "BACACRCRXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BCRICRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BCTOCRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BNCRCRSJXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BAGEGTGCXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BAMAGTGCXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BGAHHNTEXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "FICOHNTEXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BACUPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BCTOPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BLHCPAPAXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BMSXMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BMONMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "BCMRMXMMXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
-    "WFBIUS6SXXX": ("AUD", "BRL", "CAD", "CHF", "CNY", "COP", "DKK", "EUR", "GBP", "HKD", "INR", "JPY", "MXN", "NOK", "NZD", "PLN", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"),
+    "BACACRCRXXX": ("CAD", "EUR", "GBP", "USD"),
+    "BCRICRSJXXX": ("CAD", "EUR", "GBP", "USD"),
+    "BCTOCRSJXXX": ("CAD", "EUR", "GBP", "USD"),
+    "BNCRCRSJXXX": ("CAD", "EUR", "GBP", "USD"),
+    "BAGEGTGCXXX": ("EUR", "GBP", "USD"),
+    "BAMAGTGCXXX": ("EUR", "GBP", "USD"),
+    "BGAHHNTEXXX": ("EUR", "GBP", "USD"),
+    "FICOHNTEXXX": ("EUR", "GBP", "USD"),
+    "BACUPAPAXXX": ("EUR", "GBP", "USD"),
+    "BCTOPAPAXXX": ("EUR", "GBP", "USD"),
+    "BLHCPAPAXXX": ("EUR", "GBP", "USD"),
+    "BMSXMXMMXXX": ("EUR", "GBP", "MXN", "USD"),
+    "BMONMXMMXXX": ("EUR", "GBP", "MXN", "USD"),
+    "BCMRMXMMXXX": ("EUR", "GBP", "MXN", "USD"),
+    "WFBIUS6SXXX": (
+        "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "INR",
+        "JPY", "MXN", "SGD", "USD",
+    ),
 }
 
 # Official correspondent/international-wire pages for each beneficiary.

@@ -1799,6 +1799,23 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
     )
 
 
+def test_dedupe_keeps_the_newest_source_snapshot_for_a_route():
+    source = '''
+def _dedupe_ssi_records(rows):
+    return rows
+
+SSI_RECORDS = _dedupe_ssi_records([
+    ("TESTPHMMXXX", "Test Bank", "USD", "CITIUS33XXX", "Citibank", None, None,
+     None, None, "Source: https://testphilippinebank.com/ssi", "2024-01-01", "unverified", None, True, False),
+    ("TESTPHMMXXX", "Test Bank", "USD", "CITIUS33XXX", "Citibank", None, None,
+     None, None, "Source: https://testphilippinebank.com/ssi", "2025-01-01", "unverified", None, True, False),
+])
+'''
+    rows = autopilot._ssi_rows(source)
+    assert len(rows) == 1
+    assert autopilot._fold_row_shape(rows[0], enforce_invariants=False)["as_of"] == "2025-01-01"
+
+
 def test_consolidation_ledger_validator_rejects_noncanonical_row_shape(tmp_path):
     production = (
         Path(__file__).resolve().parents[1]

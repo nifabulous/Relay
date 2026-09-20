@@ -1797,7 +1797,10 @@ def _ssi_rows(source: str) -> list[tuple]:
                     current_date = folded.get("as_of") or "9999-99-99"
                 except (ValueError, TypeError, AttributeError):
                     prior_date = current_date = "9999-99-99"
-                if current_date < prior_date:
+                # A later source snapshot supersedes an older row with the
+                # same route identity.  The previous comparison kept the
+                # stale row and discarded the newer evidence.
+                if current_date > prior_date:
                     unique_rows[prior_index] = row
                 continue
             seen_keys.add(key)

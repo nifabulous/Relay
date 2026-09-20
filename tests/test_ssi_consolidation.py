@@ -21,6 +21,12 @@ from app.services.seed import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
+NEW_CONSOLIDATION_LEDGERS = {
+    "seed_ssi_consolidation_8_1.json",
+    "seed_ssi_consolidation_8_2.json",
+    "seed_ssi_consolidation_8_mena.json",
+    "seed_ssi_consolidation_mena_1.json",
+}
 
 
 def _payloads():
@@ -165,6 +171,25 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                     f"unexpected consolidated-row replacement for "
                     f"{row[0]}/{row[2]}/{row[3]}"
                 )
+
+
+def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
+    """Keep the latest ledger files visible in the bounded review contract."""
+    on_disk = {path.name for path in LEDGERS}
+    configured = set(_SSI_CONSOLIDATION_DATA_FILES)
+    assert NEW_CONSOLIDATION_LEDGERS <= on_disk
+    assert NEW_CONSOLIDATION_LEDGERS <= configured
+
+    seeded_by_key = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    for filename in sorted(NEW_CONSOLIDATION_LEDGERS):
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        assert isinstance(payload["banks"], list), filename
+        assert payload["ssi_records"], filename
+        assert all(len(row) == 15 for row in payload["ssi_records"]), filename
+        assert all(
+            (row[0], row[2], row[3]) in seeded_by_key
+            for row in payload["ssi_records"]
+        ), filename
 
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():

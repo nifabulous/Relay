@@ -15,6 +15,7 @@ from pathlib import Path
 from app.models import SSI
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import BANKS, SSI_RECORDS
+from app.services.ssi_americas_wave import AMERICAS_WAVE_RECORDS
 from app.services.ssi_importer import canonicalize_bic11
 
 _MANIFEST_PATH = (
@@ -30,6 +31,13 @@ _BATCH5_LEDGER_PATH = (
     / "seed_ssi_batch5_1.json"
 )
 _BATCH5_MANIFEST_FILE = "regions_batch5_records_1.json"
+_AMERICAS_EVIDENCE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "scripts"
+    / "ssi-autopilot"
+    / "evidence"
+    / "ssi-americas-wave-2026-09-19.json"
+)
 
 
 def _load_autopilot():
@@ -166,6 +174,33 @@ def test_compact_generated_sources_match_independent_evidence():
                     assert record["charge_code"] is None
                     assert record["value_date"] is None
             assert set(actual) == set(expected)
+
+
+def test_americas_wave_code_matches_beneficiary_currency_evidence():
+    """The Americas expansion must not drift from its per-bank source map."""
+    evidence = json.loads(_AMERICAS_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    expected_beneficiaries = set(evidence["beneficiaries"])
+    expected_pairs = {
+        (bic, currency)
+        for bic, currencies in evidence["beneficiary_currencies"].items()
+        for currency in currencies
+    }
+    actual_pairs = {(row[0], row[2]) for row in AMERICAS_WAVE_RECORDS}
+    expected_routes = {
+        (route["beneficiary_bic"], route["currency"], route["int_bic"])
+        for route in evidence["routes"]
+    }
+    actual_routes = {
+        (row[0], row[2], row[3])
+        for row in AMERICAS_WAVE_RECORDS
+    }
+
+    assert expected_beneficiaries == set(evidence["beneficiary_currencies"])
+    assert {bic for bic, _currency in actual_pairs} == expected_beneficiaries
+    assert actual_pairs == expected_pairs
+    assert actual_routes == expected_routes
+    assert evidence["source_snapshot"]["route_count"] == len(AMERICAS_WAVE_RECORDS)
+    assert len(AMERICAS_WAVE_RECORDS) == len(actual_pairs)
 
 
 def test_batch5_beneficiaries_are_in_bank_directory_and_ledger_is_complete():

@@ -634,10 +634,22 @@ class TestSSIProvenanceIsConsistentWithItsSource:
         tree = ast.parse(src)
         for node in tree.body:
             if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SSI_RECORDS":
-                # SSI_RECORDS is assembled from validated ledgers at import
-                # time, so there is no literal row list to correlate with
-                # section comments in this source file.
                 if not isinstance(node.value, ast.List):
+                    # SSI_RECORDS is assembled from validated ledgers at
+                    # import time, so source comments cannot be correlated to
+                    # individual AST rows.  Still validate the expanded
+                    # runtime values instead of silently skipping the guard.
+                    dynamic_offenders = [
+                        (bic, note[:120])
+                        for bic, note, _as_of, status in self._rows()
+                        if status in ("published", "unverified")
+                        and _ARCHIVED_SOURCE_RE.search(note)
+                    ]
+                    assert not dynamic_offenders, (
+                        f"{len(dynamic_offenders)} expanded row(s) claim an "
+                        "unarchived status with archived provenance, e.g. "
+                        f"{dynamic_offenders[:3]}"
+                    )
                     return
                 rows = node.value.elts
                 break
