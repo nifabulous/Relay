@@ -1,14 +1,14 @@
 {
   "wave": "europe-americas-2026-09-20",
   "source_snapshot": {
-    "route_count": 136,
-    "new_route_count": 136,
+    "route_count": 95,
+    "new_route_count": 95,
     "raw_accounts_committed": false,
     "bic_only": true
   },
   "scope": {
-    "included_route_count": 136,
-    "new_route_count": 136,
+    "included_route_count": 95,
+    "new_route_count": 95,
     "regions": [
       "Europe",
       "Americas"
@@ -21,14 +21,7 @@
       "url": "https://www.swedbank.com/corporate/cash-management-transaction-services/bank-coverage/ssi.html",
       "as_of": "2026-09-20",
       "status": "unverified",
-      "route_count": 18
-    },
-    {
-      "beneficiary_bic": "TATRSKBXXXX",
-      "url": "https://www.tatrabanka.sk/files/archiv/en/about/important-documents/Main_Correspondent_Banks_for_Commercial_Transactions.pdf",
-      "as_of": "2023-05-01",
-      "status": "archived",
-      "route_count": 8
+      "route_count": 19
     },
     {
       "beneficiary_bic": "PRCBMD22XXX",
@@ -42,7 +35,7 @@
       "url": "https://www.ttk.com.mk/Web/%D0%9F%D0%A0%D0%90%D0%92%D0%9D%D0%98_%D0%9B%D0%98%D0%A6%D0%90/%D0%A1%D0%BC%D0%B5%D1%82%D0%BA%D0%B8/%D0%9A%D0%BE%D1%80%D0%B5%D1%81%D0%BF%D0%BE%D0%B4%D0%B5%D0%BD%D1%82%D1%81%D0%BA%D0%B8_%D0%B1%D0%B0%D0%BD%D0%BA%D0%B8.aspx",
       "as_of": "2026-09-20",
       "status": "unverified",
-      "route_count": 16
+      "route_count": 17
     },
     {
       "beneficiary_bic": "BFERROBUXXX",
@@ -52,25 +45,11 @@
       "route_count": 11
     },
     {
-      "beneficiary_bic": "POBNSKBAXXX",
-      "url": "https://365.bank/media/y43iymxv/list-of-ssi-of-365-bank-a-s-bic-pobnskba-march31-2022.pdf",
-      "as_of": "2022-03-31",
-      "status": "archived",
-      "route_count": 17
-    },
-    {
       "beneficiary_bic": "PPABPLPKXXX",
       "url": "https://www.bnpparibas.pl/en/english-info/correspondent-banks",
       "as_of": "2026-09-20",
       "status": "unverified",
-      "route_count": 19
-    },
-    {
-      "beneficiary_bic": "CTASCZ22XXX",
-      "url": "https://www.maxbanka.eu/files/ssi-set-details-banka-creditas-20-05-2024.pdf",
-      "as_of": "2024-05-20",
-      "status": "archived",
-      "route_count": 17
+      "route_count": 18
     },
     {
       "beneficiary_bic": "STSABGSFXXX",
@@ -157,40 +136,6 @@
       {
         "currency": "ZAR",
         "int_bic": "ABSAZAJJXXX"
-      }
-    ],
-    "TATRSKBXXXX": [
-      {
-        "currency": "EUR",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "EUR",
-        "int_bic": "DEUTDEFFXXX"
-      },
-      {
-        "currency": "EUR",
-        "int_bic": "COBADEFFXXX"
-      },
-      {
-        "currency": "GBP",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "CZK",
-        "int_bic": "KOMBCZPPXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "BOFAUS3NXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "IRVTUS3NXXX"
       }
     ],
     "PRCBMD22XXX": [
@@ -335,72 +280,6 @@
         "int_bic": "OTPVHUHBXXX"
       }
     ],
-    "POBNSKBAXXX": [
-      {
-        "currency": "CAD",
-        "int_bic": "BNDCCAMMXXX"
-      },
-      {
-        "currency": "CHF",
-        "int_bic": "POFICHBEXXX"
-      },
-      {
-        "currency": "CZK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "CZK",
-        "int_bic": "JTBPCZPPXXX"
-      },
-      {
-        "currency": "DKK",
-        "int_bic": "SYBKDK22XXX"
-      },
-      {
-        "currency": "EUR",
-        "int_bic": "NBSBSKBXXXX"
-      },
-      {
-        "currency": "EUR",
-        "int_bic": "DEUTDEFFXXX"
-      },
-      {
-        "currency": "GBP",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "HRK",
-        "int_bic": "VBVZHR22XXX"
-      },
-      {
-        "currency": "HUF",
-        "int_bic": "OTPVHUHBXXX"
-      },
-      {
-        "currency": "NOK",
-        "int_bic": "DNBANOKKXXX"
-      },
-      {
-        "currency": "PLN",
-        "int_bic": "INGBPLPWXXX"
-      },
-      {
-        "currency": "RON",
-        "int_bic": "INGBROBUXXX"
-      },
-      {
-        "currency": "SEK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "BKTRUS33XXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "RZBAATWWXXX"
-      }
-    ],
     "PPABPLPKXXX": [
       {
         "currency": "AUD",
@@ -473,76 +352,6 @@
       {
         "currency": "ZAR",
         "int_bic": "FIRNZAJJXXX"
-      }
-    ],
-    "CTASCZ22XXX": [
-      {
-        "currency": "AUD",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "BGN",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "CAD",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "CHF",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "CZK",
-        "int_bic": "CNBACZPPXXX"
-      },
-      {
-        "currency": "CZK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "DKK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "EUR",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "GBP",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "HUF",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "JPY",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "NOK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "PLN",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "RON",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "SEK",
-        "int_bic": "RZBAATWWXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "IRVTUS3NXXX"
-      },
-      {
-        "currency": "USD",
-        "int_bic": "RZBAATWWXXX"
       }
     ],
     "STSABGSFXXX": [
