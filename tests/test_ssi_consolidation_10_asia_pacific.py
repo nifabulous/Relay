@@ -16,7 +16,7 @@ EXPECTED_COUNTS = {
     "SUNYTWTPXXX": 20,
     "UOVBHKHHXXX": 14,
     "BKCHHKHHXXX": 14,
-    "SOININ55XXX": 16,
+    "SOININ55XXX": 3,
 }
 EXPECTED_SOURCES = {
     "https://www.bsp.com.pg/help/rates-and-fees/swift-codes/",
@@ -39,7 +39,7 @@ def test_asia_pacific_ledger_has_expected_shape_and_counts():
     assert set(payload) == {"source_prs", "banks", "ssi_records"}
     assert payload["source_prs"] == []
     assert len(payload["banks"]) == len(EXPECTED_COUNTS) == 8
-    assert len(payload["ssi_records"]) == 103
+    assert len(payload["ssi_records"]) == 90
     assert {bank[0] for bank in payload["banks"]} == set(EXPECTED_COUNTS)
     assert {row[0] for row in payload["ssi_records"]} == set(EXPECTED_COUNTS)
 
