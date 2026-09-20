@@ -4,7 +4,7 @@
   "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena.json",
   "scope": {
     "region": "Africa and MENA",
-    "route_count": 63,
+    "route_count": 56,
     "beneficiary_count": 9,
     "bic_only": true,
     "routable": false,
@@ -33,7 +33,7 @@
       "url": "https://www.afrasiabank.com/en/international/correspondent-banks",
       "beneficiary_bic": "AFBLMUMUXXX",
       "beneficiary_name": "AfrAsia Bank Limited",
-      "route_count": 8
+      "route_count": 2
     },
     {
       "url": "https://imbank.co.tz/funds-transfer/swift-transfers/",
@@ -51,7 +51,7 @@
       "url": "https://www.bankofbaroda.sc/services/remittance-facility/cross-border-transfer-swift",
       "beneficiary_bic": "BARBSCSCXXX",
       "beneficiary_name": "Bank of Baroda (Seychelles) Limited",
-      "route_count": 3
+      "route_count": 2
     },
     {
       "url": "https://www.rmb.co.bw/page/nostro-services-for-foreign-banks",
