@@ -1283,6 +1283,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_9_europe_americas_dsk.json",
     "seed_ssi_consolidation_10_europe_americas_wave3.json",
     "seed_ssi_consolidation_10_europe_americas_wave4.json",
+    "seed_ssi_consolidation_10_europe_americas.json",
     "seed_ssi_consolidation_10_africa_mena_mashreq.json",
     "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
     "seed_ssi_consolidation_10_africa_mena.json",
