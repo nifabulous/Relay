@@ -1,0 +1,9 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["FDRLINBBIBD", "Federal Bank Ltd", "CAD", "BOFACATTXXX", "Bank of America, Toronto, Canada", "ACCT-91032514", "ACCT-91032514", "SHA", "spot", "Source: https://www.federal.bank.in/correspondent-branches (official Federal Bank correspondent-bank page; accessed 2026-09-21). Published account numbers are masked with synthetic ACCT values; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["FDRLINBBIBD", "Federal Bank Ltd", "CHF", "BOFACH2XXXX", "Bank of America NA, Switzerland", "ACCT-91032515", "ACCT-91032515", "SHA", "spot", "Source: https://www.federal.bank.in/correspondent-branches (official Federal Bank correspondent-bank page; accessed 2026-09-21). Published account numbers are masked with synthetic ACCT values; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["FDRLINBBIBD", "Federal Bank Ltd", "AED", "BOMLAEADXXX", "Mashreqbank, UAE", "ACCT-91032516", "ACCT-91032516", "SHA", "spot", "Source: https://www.federal.bank.in/correspondent-branches (official Federal Bank correspondent-bank page; accessed 2026-09-21). Published account numbers are masked with synthetic ACCT values; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true]
+  ]
+}
