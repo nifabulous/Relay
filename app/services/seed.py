@@ -1305,6 +1305,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_equitas_indusind_grd_20250921.json",
     "seed_ssi_rbsi_emirates_20260921.json",
     "seed_ssi_hdfc_khyber_deltas_20260921.json",
+    "seed_ssi_garanti_international_20260127.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
