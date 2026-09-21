@@ -1392,6 +1392,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_octobank_current_20250921.json",
     "seed_ssi_bhutan_national_bank_current_20260921.json",
     "seed_ssi_commercial_bank_maldives_current_20260921.json",
+    "seed_ssi_bhutan_development_bank_current_20260921.json",
     "seed_ssi_uco_treasury_branch_20260409.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )

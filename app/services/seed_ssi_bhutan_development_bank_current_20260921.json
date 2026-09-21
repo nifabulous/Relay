@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["BHDEBTBTXXX", "Bhutan Development Bank Limited", "INR", "AXISINBBXXX", "Axis Bank Limited, Siliguri", null, null, null, null, "Source: https://bdb.bt/correspondent-banks/ (official Bhutan Development Bank correspondent-bank page; accessed 2026-09-21). The page explicitly lists Axis Bank Siliguri with BIC AXISINBB; normalized to the canonical 11-character BIC. BIC-only metadata; no account number is published, so this remains informational and non-routable until independently verified.", "2026-09-21", "unverified", null, true, false]
+  ]
+}
