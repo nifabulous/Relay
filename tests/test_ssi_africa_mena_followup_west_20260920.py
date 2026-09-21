@@ -40,4 +40,3 @@ def test_evidence_source_counts_match_rows():
     assert {s["url"] for s in evidence["sources"]} == set(counts)
     for source in evidence["sources"]:
         assert counts[source["url"]] == source["route_count"]
-

@@ -64,4 +64,3 @@ def test_every_official_source_matches_ledger_counts():
     for source in sources:
         assert source_counts[source["url"]] == source["route_count"]
         assert beneficiary_counts[source["beneficiary_bic"]] == source["route_count"]
-
