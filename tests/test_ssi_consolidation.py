@@ -346,6 +346,28 @@ def test_synthetic_account_ledgers_are_loaded_as_bic_only_evidence():
             assert seeded[13:15] == (True, False)
 
 
+def test_rbsi_emirates_ledger_is_complete_bic_only_evidence():
+    path = ROOT / "app" / "services" / "seed_ssi_rbsi_emirates_20260921.json"
+    payload = json.loads(path.read_text())
+    rows = payload["ssi_records"]
+    keys = {(row[0], row[2], row[3]) for row in rows}
+    seeded_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    assert len(rows) == len(keys) == 157
+    assert all(
+        len(row) == 15
+        and _is_canonical_bic11(row[0])
+        and _is_canonical_bic11(row[3])
+        and row[5:9] == [None, None, None, None]
+        and row[11] == "unverified"
+        and row[12] is None
+        and row[13] is True
+        and row[14] is False
+        and row[9].startswith("Source: https://")
+        and (row[0], row[2], row[3]) in seeded_keys
+        for row in rows
+    )
+
+
 def test_standalone_ledgers_are_registered_and_seeded():
     expected = {
         "seed_ssi_emirates_nbd_current_20260920.json": 10,
