@@ -1357,6 +1357,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_central_bank_armenia_20260921.json",
     "seed_ssi_bcge_geneva_20240101.json",
     "seed_ssi_central_bank_san_marino_20260921.json",
+    "seed_ssi_nbg_cyprus_20260921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
