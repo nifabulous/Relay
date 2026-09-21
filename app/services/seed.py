@@ -1312,6 +1312,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_credit_agricole_poland_20260921.json",
     "seed_ssi_dfcc_aug2026_deltas.json",
     "seed_ssi_bank_frick_20260527_deltas.json",
+    "seed_ssi_cibc_caribbean_trust_20260921.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
