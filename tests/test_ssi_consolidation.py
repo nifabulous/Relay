@@ -11,6 +11,7 @@ from app.db import Base
 from app.models import SSI, Bank
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
+    _SSI_BATCH32_DATA_FILES,
     _SSI_CONSOLIDATION_DATA_FILES,
     _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES,
     _SSI_EXCLUDED_BICS,
@@ -89,7 +90,7 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     # Keep the exact catalog total pinned as each verified ledger is admitted.
-    assert len(SSI_RECORDS) == len(route_keys) == 12_559
+    assert len(SSI_RECORDS) == len(route_keys) == 12_551
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
@@ -324,11 +325,19 @@ def test_unreconciled_consolidation_ledgers_are_evidence_only():
     configured_consolidation = {
         name for name in configured if name.startswith("seed_ssi_consolidation_")
     }
-    assert on_disk == configured_consolidation | set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
+    evidence_consolidation = {
+        name
+        for name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES
+        if name.startswith("seed_ssi_consolidation_")
+    }
+    assert on_disk == configured_consolidation | evidence_consolidation
+    loaded_files = configured | set(_SSI_BATCH32_DATA_FILES)
     for evidence_name, safe_name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES.items():
         assert (evidence_dir / evidence_name).exists()
         if safe_name is not None:
-            assert safe_name in configured
+            assert safe_name in loaded_files
+            if safe_name in _SSI_BATCH32_DATA_FILES:
+                continue
             evidence = json.loads((evidence_dir / evidence_name).read_text())
             safe = json.loads((evidence_dir / safe_name).read_text())
             evidence_keys = {
@@ -378,7 +387,6 @@ def test_rbsi_emirates_ledger_is_complete_bic_only_evidence():
 def test_standalone_ledgers_are_registered_and_seeded():
     expected = {
         "seed_ssi_emirates_nbd_current_20260920.json": 10,
-        "seed_ssi_esaf_correspondents_20250701.json": 8,
         "seed_ssi_ing_belgium_20260101.json": 31,
     }
     configured = set(_SSI_CONSOLIDATION_DATA_FILES)
@@ -393,6 +401,25 @@ def test_standalone_ledgers_are_registered_and_seeded():
             or (row[0], row[2], row[3]) in seeded_keys
             for row in payload["ssi_records"]
         )
+
+
+def test_esaf_broad_snapshot_is_evidence_only_against_safe_batch32():
+    assert (
+        _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES[
+            "seed_ssi_esaf_correspondents_20250701.json"
+        ]
+        == "seed_ssi_batch32_1.json"
+    )
+    assert "seed_ssi_batch32_1.json" in _SSI_BATCH32_DATA_FILES
+    rows = json.loads(
+        (
+            ROOT
+            / "app"
+            / "services"
+            / "seed_ssi_esaf_correspondents_20250701.json"
+        ).read_text()
+    )["ssi_records"]
+    assert len(rows) == 8
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}

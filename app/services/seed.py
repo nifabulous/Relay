@@ -1319,7 +1319,6 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_central_asia_eurasian.json",
     "seed_ssi_consolidation_10_central_asia_shinhan.json",
     "seed_ssi_emirates_nbd_current_20260920.json",
-    "seed_ssi_esaf_correspondents_20250701.json",
     "seed_ssi_ing_belgium_20260101.json",
     "seed_ssi_deutsche_frankfurt_20260407.json",
     "seed_ssi_deutsche_pakistan_20260920.json",
@@ -1413,6 +1412,7 @@ _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES = {
     "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": None,
     "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": None,
     "seed_ssi_consolidation_10_india_sri_lanka_batch5.json": None,
+    "seed_ssi_esaf_correspondents_20250701.json": "seed_ssi_batch32_1.json",
 }
 
 
