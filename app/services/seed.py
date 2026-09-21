@@ -1329,6 +1329,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_bengal_commercial_bank_20241231.json",
     "seed_ssi_canara_bank_followup_20260921.json",
     "seed_ssi_csb_bank_followup_20260921.json",
+    "seed_ssi_modhumoti_bank_20260621.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
