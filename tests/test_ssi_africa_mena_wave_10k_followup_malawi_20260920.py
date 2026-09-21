@@ -57,4 +57,3 @@ def test_official_source_matches_ledger_count():
     assert {source["url"] for source in sources} == set(source_counts)
     source = sources[0]
     assert source_counts[source["url"]] == source["route_count"]
-
