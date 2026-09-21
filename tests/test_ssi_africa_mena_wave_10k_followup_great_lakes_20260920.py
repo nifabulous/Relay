@@ -5,7 +5,6 @@ import re
 from collections import Counter
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / (
     "app/services/seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json"
