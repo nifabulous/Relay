@@ -86,10 +86,10 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     """Pin the 10k expansion claim to the exact seeded route-key total."""
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
-    # The current expansion branch has 2290 additional canonical routes over
+    # The current expansion branch has 2319 additional canonical routes over
     # the 10,164-route merged baseline; keep this exact catalog total pinned
     # until the remaining 10k collection waves land.
-    assert len(SSI_RECORDS) == len(route_keys) == 12_454
+    assert len(SSI_RECORDS) == len(route_keys) == 12_483
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
