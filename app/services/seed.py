@@ -1294,6 +1294,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
     "seed_ssi_union_bank_nostro_20250515.json",
+    "seed_ssi_axis_partner_banks_20260921.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
