@@ -1285,17 +1285,13 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_europe_americas_wave4.json",
     "seed_ssi_consolidation_10_europe_americas_safe.json",
     "seed_ssi_consolidation_10_africa_mena_mashreq.json",
-    "seed_ssi_consolidation_10_africa_mena.json",
-    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_safe.json",
     "seed_ssi_consolidation_10_asia_pacific.json",
     "seed_ssi_consolidation_10_india_sri_lanka.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
-    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
@@ -1325,6 +1321,20 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
+# These full ledgers remain citable evidence, but their reviewed ``*_safe``
+# subsets are the intentionally admitted production inputs until the broader
+# rows receive an independent reconciliation pass.
+_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES = {
+    "seed_ssi_consolidation_10_africa_mena.json":
+        "seed_ssi_consolidation_10_africa_mena_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json":
+        "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": None,
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json": None,
+}
+
 
 _CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
 
@@ -1335,12 +1345,6 @@ _SSI_CONSOLIDATION_BANK_NAMES = {
     "LJBASI2XXXX": "NLB d.d., Ljubljana",
     "OTPVHR2XXXX": "OTP banka d.d.",
 }
-
-_SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES = {
-    "seed_ssi_arion_bank_20260301.json",
-    "seed_ssi_bank_cler_20260325.json",
-}
-
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
@@ -1390,20 +1394,6 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
-            if filename in _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES and any(
-                isinstance(record[pos], str) and record[pos].startswith("ACCT-")
-                for pos in (5, 6)
-            ):
-                # Masked account placeholders are evidence only.  Never let
-                # their source flags make them selectable settlement routes.
-                record = list(record)
-                record[5:9] = [None, None, None, None]
-                record[13] = True
-                record[14] = False
-                record[9] = (
-                    f"{record[9].rstrip()} Masked account placeholders are "
-                    "retained as BIC-only evidence and are not selectable."
-                )
             if record[0] in _SSI_CONSOLIDATION_BANK_NAMES:
                 record = list(record)
                 record[1] = _SSI_CONSOLIDATION_BANK_NAMES[record[0]]
