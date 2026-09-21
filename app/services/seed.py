@@ -1284,13 +1284,17 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_europe_americas_wave4.json",
     "seed_ssi_consolidation_10_europe_americas_safe.json",
     "seed_ssi_consolidation_10_africa_mena_mashreq.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
-    "seed_ssi_consolidation_10_africa_mena_safe.json",
+    "seed_ssi_consolidation_10_africa_mena.json",
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
     "seed_ssi_consolidation_10_asia_pacific.json",
     "seed_ssi_consolidation_10_india_sri_lanka.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
     "seed_ssi_union_bank_nostro_20250515.json",
     "seed_ssi_axis_partner_banks_20260921.json",
@@ -1405,6 +1409,11 @@ _SSI_CONSOLIDATION_BANK_NAMES = {
     "OTPVHR2XXXX": "OTP banka d.d.",
 }
 
+_SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES = {
+    "seed_ssi_arion_bank_20260301.json",
+    "seed_ssi_bank_cler_20260325.json",
+}
+
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
@@ -1454,6 +1463,20 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
+            if filename in _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES and any(
+                isinstance(record[pos], str) and record[pos].startswith("ACCT-")
+                for pos in (5, 6)
+            ):
+                # Masked account placeholders are evidence only.  Never let
+                # their source flags make them selectable settlement routes.
+                record = list(record)
+                record[5:9] = [None, None, None, None]
+                record[13] = True
+                record[14] = False
+                record[9] = (
+                    f"{record[9].rstrip()} Masked account placeholders are "
+                    "retained as BIC-only evidence and are not selectable."
+                )
             if record[0] in _SSI_CONSOLIDATION_BANK_NAMES:
                 record = list(record)
                 record[1] = _SSI_CONSOLIDATION_BANK_NAMES[record[0]]
@@ -2145,7 +2168,13 @@ _SSI_BIC_ALIASES = {
 # ``BSHROMRU`` spelling.  The bank's canonical BIC is not independently
 # verified here, so retain the source rows for audit but keep the malformed
 # identity out of the production directory and SSI catalog.
-_SSI_EXCLUDED_BICS = {"BSHROMRUXXX"}
+_SSI_EXCLUDED_BICS = {
+    "BSHROMRUXXX",
+    # Source tables mislabel these correspondents; keep the evidence on disk
+    # but exclude the unverified identities from the production catalog.
+    "CCBPFRPPXXX",
+    "UBAIITRRXXX",
+}
 
 # The reviewed Santander Uruguay routing-codes table supersedes the older
 # availability-only snapshot for these ten routes.  Keep the older CAD and

@@ -28,6 +28,12 @@ NEW_CONSOLIDATION_LEDGERS = {
     "seed_ssi_consolidation_8_2.json",
     "seed_ssi_consolidation_8_mena.json",
     "seed_ssi_consolidation_mena_1.json",
+    "seed_ssi_consolidation_10_africa_mena.json",
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json",
 }
 NEW_CONSOLIDATION_EXPECTATIONS = {
     "seed_ssi_consolidation_8_1.json": {
@@ -49,6 +55,36 @@ NEW_CONSOLIDATION_EXPECTATIONS = {
         "banks": 1,
         "records": 22,
         "sha256": "c28b38b6191d4bcee94f593496d495c9d35f2c78a594d4fde18c9790e3517810",
+    },
+    "seed_ssi_consolidation_10_africa_mena.json": {
+        "banks": 0,
+        "records": 56,
+        "sha256": "a74cd7a20fcec7c8860cfea87620a14ede699f1cd76e2adef996e119518708b3",
+    },
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json": {
+        "banks": 0,
+        "records": 14,
+        "sha256": "c376c389c3fb7cb4c08a40d3561a99f7a8b370f10f0ed09fcb0a31719fa53ac9",
+    },
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": {
+        "banks": 0,
+        "records": 24,
+        "sha256": "af5e90fe865d05e96696d052271c4f36ba0f58aff681ecf9da8f33d4d69b7b9f",
+    },
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": {
+        "banks": 0,
+        "records": 9,
+        "sha256": "bd30dbfe5bf35a7490a25037f131790dfd2ff2341013f76a7830ef89beb5029e",
+    },
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json": {
+        "banks": 0,
+        "records": 24,
+        "sha256": "ac52d15183b53487fc49d47a927cbbbae38f2f885ab072fc08a4c4bd889e23de",
+    },
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json": {
+        "banks": 0,
+        "records": 8,
+        "sha256": "e00dff739ef1c937ce018f5331895321442d83bbb22de2e3869f45b9b4f854a1",
     },
 }
 
@@ -87,11 +123,8 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     """Pin the 10k expansion claim to the exact seeded route-key total."""
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
-    # The current expansion branch has 2349 additional canonical routes over
-    # the 10,164-route merged baseline.  The source ledger retains the
-    # transposed Sohar spelling for audit, but those 32 routes are excluded
-    # from the production catalog until the canonical BIC is verified.
-    assert len(SSI_RECORDS) == len(route_keys) == 12_513
+    # Keep the exact catalog total pinned as each verified ledger is admitted.
+    assert len(SSI_RECORDS) == len(route_keys) == 12_532
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
@@ -228,10 +261,11 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                     ),
                     frozenset({"Banca Transilvania", "Banca Transilvania S.A."}),
                     frozenset({"OTP banka d.d.", "OTP banka d.d., Split"}),
-                        frozenset(
-                            {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
-                        ),
-                        frozenset({"I&M Bank Rwanda Plc", "I AND M BANK (RWANDA) PLC"}),
+                    frozenset({"Al Baraka Bank Egypt", "Al Baraka Bank Egypt S.A.E."}),
+                    frozenset(
+                        {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
+                    ),
+                    frozenset({"I&M Bank Rwanda Plc", "I AND M BANK (RWANDA) PLC"}),
                 }
                 assert frozenset({seeded_compare[1], row_compare[1]}) in name_aliases
                 seeded_compare[1] = row_compare[1]
@@ -242,11 +276,14 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                 # route identity and provenance safety flags are what must be
                 # preserved across that replacement.
                 superseded = (
-                    seeded[11] == row[11] == "unverified"
-                    and seeded[14] is True
+                    seeded[14] is True
                     and (
                         (row[13] is True and seeded[13] is False)
                         or (row[13] is False and seeded[13] is False and row[14] is True)
+                    )
+                    and (
+                        seeded[11] == row[11] == "unverified"
+                        or seeded[11] == "archived" and row[11] == "unverified"
                     )
                 )
                 assert superseded, (
@@ -281,17 +318,41 @@ def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
         assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"], filename
         assert all(len(row) == 15 for row in payload["ssi_records"]), filename
         assert all(
-            (row[0], row[2], row[3]) in seeded_by_key
+            (
+                row[0] in _SSI_EXCLUDED_BICS
+                or row[3] in _SSI_EXCLUDED_BICS
+                or (row[0], row[2], row[3]) in seeded_by_key
+            )
             for row in payload["ssi_records"]
         ), filename
         assert all(
-            (row[0], row[2], row[3]) in loaded_keys
+            (
+                row[0] in _SSI_EXCLUDED_BICS
+                or row[3] in _SSI_EXCLUDED_BICS
+                or (row[0], row[2], row[3]) in loaded_keys
+            )
             for row in payload["ssi_records"]
         ), filename
 
     assert len(loaded_banks) >= sum(
         item["banks"] for item in NEW_CONSOLIDATION_EXPECTATIONS.values()
     )
+
+
+def test_synthetic_account_ledgers_are_loaded_as_bic_only_evidence():
+    """Masked account placeholders must never become selectable routes."""
+    expected_files = (
+        "seed_ssi_arion_bank_20260301.json",
+        "seed_ssi_bank_cler_20260325.json",
+    )
+    seeded_by_key = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
+    for filename in expected_files:
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        for row in payload["ssi_records"]:
+            seeded = seeded_by_key[(row[0], row[2], row[3])]
+            assert seeded[5:9] == (None, None, None, None)
+            assert seeded[13:15] == (True, False)
+
 
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():

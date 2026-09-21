@@ -686,17 +686,11 @@ class TestFrancophoneAfricaSsiCoverage:
             "CCBPFRPP", "CCBPFRPPPAR", "UBAIITRR", "CSSSCIAB",
             "UNTBTBTGTG", "BILTTGT1", "CMCIFRPA", "ORBABFBF",
         }
-        legacy_source_markers = (
-            "Coris Bank correspondants page",
-            "BOA Cote d'Ivoire Correspondants page",
-            "Afriland correspondants page",
-            "Orabank",
-        )
         used = set()
         for record in SSI_RECORDS:
-            if any(marker in record[9] for marker in legacy_source_markers):
-                used.add(record[0][:8])
-                used.add(record[3][:8])
+            used.add(record[0][:8])
+            used.add(record[3][:8])
+        used |= {row[0][:8] for row in BANKS}
         offenders = sorted(forbidden & used)
         assert not offenders, (
             f"Mislabeled BICs from the source pages must not be seeded: {offenders}"
