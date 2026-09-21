@@ -7,11 +7,31 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import SSI
-from ..schemas import SSIRecord, SSIResponse
+from ..schemas import SSIQualityResponse, SSIRecord, SSIResponse
 from ..services.routing import _normalize_bic_input, _settlement_for
+from ..services.ssi_quality import build_quality_snapshot
 from ._shared import _SSI_DISCLAIMER
 
 router = APIRouter(prefix="/api", tags=["swift"])
+
+
+@router.get("/ssi/quality", response_model=SSIQualityResponse)
+def get_ssi_quality(
+    stale_after_days: int = Query(
+        180,
+        ge=1,
+        le=3650,
+        description="Age in days after which a dated SSI source is flagged stale",
+    ),
+    limit: int = Query(50, ge=1, le=200, description="Maximum remediation rows to return"),
+    db: Session = Depends(get_db),
+):
+    """Return the read-only SSI quality snapshot used by the operator view."""
+    return build_quality_snapshot(
+        db,
+        stale_after_days=stale_after_days,
+        queue_limit=limit,
+    )
 
 
 @router.get("/ssi", response_model=SSIResponse)
