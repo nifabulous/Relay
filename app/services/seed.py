@@ -1347,6 +1347,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_union_bank_india_20250515.json",
     "seed_ssi_nrw_bank_20260729.json",
     "seed_ssi_sense_bank_20250610.json",
+    "seed_ssi_uttara_bank_20260921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 

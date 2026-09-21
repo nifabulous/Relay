@@ -1,0 +1,23 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    [
+      "UTBLBDDHXXX",
+      "Uttara Bank PLC",
+      "EUR",
+      "CCBPFRPPXXX",
+      "Natixis, Paris",
+      null,
+      null,
+      null,
+      null,
+      "Source: https://new.uttarabank-bd.com/service/standard-settlement-instruction (official Uttara Bank PLC foreign correspondent banking table, accessed 2026-09-21). BIC-only metadata; the official page lists Natixis (Paris) and SWIFT CCBPFRPP but no account number, so this route is non-routable until independently verified.",
+      "2026-09-21",
+      "unverified",
+      null,
+      true,
+      false
+    ]
+  ]
+}
