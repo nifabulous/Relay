@@ -1297,6 +1297,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_axis_partner_banks_20260921.json",
     "seed_ssi_rbl_correspondents_20260921.json",
     "seed_ssi_idfc_first_mumbai_20260921.json",
+    "seed_ssi_idfc_first_gift_20260921.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
