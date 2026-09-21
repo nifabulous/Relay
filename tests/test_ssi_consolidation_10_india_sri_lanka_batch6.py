@@ -5,7 +5,6 @@ from pathlib import Path
 
 from schwifty import BIC
 
-
 LEDGER = (
     Path(__file__).resolve().parents[1]
     / "app"
