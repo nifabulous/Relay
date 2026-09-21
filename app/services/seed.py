@@ -1329,6 +1329,10 @@ _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES = {
         "seed_ssi_consolidation_10_africa_mena_safe.json",
     "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json":
         "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_europe_americas.json":
+        "seed_ssi_consolidation_10_europe_americas_safe.json",
+    "seed_ssi_consolidation_10_south_asia_global.json":
+        "seed_ssi_consolidation_10_south_asia_global_safe.json",
     "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json": None,
     "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": None,
     "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": None,
