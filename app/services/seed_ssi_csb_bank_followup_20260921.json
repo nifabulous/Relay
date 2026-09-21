@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["CSBKINBBXXX", "CSB Bank Limited, India", "CHF", "HBZUCHZZXXX", "Habib Bank AG, Zurich", "ACCT-91032518", "ACCT-91032518", "SHA", "spot", "Source: https://csb.bank.in/forex/correspondent-banks (official CSB Bank correspondent-bank page; accessed 2026-09-21). Published account number is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true]
+  ]
+}

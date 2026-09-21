@@ -1,0 +1,9 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["IDFIINAAXXX", "IDFC FIRST Bank Limited, GIFT IFSC Banking Unit", "USD", "CHASUS33XXX", "JPMorgan Chase Bank N.A., New York", null, null, null, null, "Source: https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/pdf/gift-city/GIFT-City-NOSTRO-Details-new-updated.pdf (official IDFC FIRST Bank GIFT City Nostro instructions; accessed 2026-09-21). BIC-only metadata; published account numbers are intentionally omitted, so this row is informational and not selectable.", "2026-09-21", "unverified", null, true, false],
+    ["IDFIINAAXXX", "IDFC FIRST Bank Limited, GIFT IFSC Banking Unit", "EUR", "COBADEFFXXX", "Commerzbank, Germany", null, null, null, null, "Source: https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/pdf/gift-city/GIFT-City-NOSTRO-Details-new-updated.pdf (official IDFC FIRST Bank GIFT City Nostro instructions; accessed 2026-09-21). BIC-only metadata; published account numbers are intentionally omitted, so this row is informational and not selectable.", "2026-09-21", "unverified", null, true, false],
+    ["IDFIINAAXXX", "IDFC FIRST Bank Limited, GIFT IFSC Banking Unit", "GBP", "BARCGB22XXX", "Barclays Bank PLC, London", null, null, null, null, "Source: https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/pdf/gift-city/GIFT-City-NOSTRO-Details-new-updated.pdf (official IDFC FIRST Bank GIFT City Nostro instructions; accessed 2026-09-21). BIC-only metadata; published account numbers are intentionally omitted, so this row is informational and not selectable.", "2026-09-21", "unverified", null, true, false]
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["CNRBINBBBFD", "Canara Bank Integrated Treasury Wing", "EUR", "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt", "ACCT-91032517", "ACCT-91032517", "SHA", "spot", "Source: https://www.canarabank.bank.in/swift (official Canara Bank SWIFT/correspondent page; accessed 2026-09-21). The page prints SCBLDEFX, normalized to canonical SCBLDEFFXXX; published account number is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true]
+  ]
+}

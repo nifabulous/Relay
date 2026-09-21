@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["CNRBINBBBFD", "Canara Bank Integrated Treasury Wing Mumbai", "AED", "ADCBAEAAXXX", "Abu Dhabi Commercial Bank PJSC, Abu Dhabi", null, null, null, null, "Source: https://www.canarabank.bank.in/swift (official Canara Bank current SWIFT correspondent list; accessed 2026-09-21). BIC-only metadata; published account numbers are intentionally omitted, so this row is informational and not selectable.", "2026-09-21", "unverified", null, true, false]
+  ]
+}

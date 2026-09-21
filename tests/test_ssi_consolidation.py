@@ -11,13 +11,19 @@ from app.db import Base
 from app.models import SSI, Bank
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
+    _SSI_BATCH32_DATA_FILES,
     _SSI_CONSOLIDATION_DATA_FILES,
     _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES,
+    _SSI_EXCLUDED_BICS,
+    _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES,
+    _SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS,
     BANKS,
     SEED_BIC_ALIASES,
     SSI_RECORDS,
+    _has_synthetic_account_placeholder,
     _is_canonical_bic11,
     _load_ssi_consolidation_data,
+    _mask_synthetic_account_record,
     seed_if_empty,
 )
 
@@ -51,6 +57,12 @@ NEW_CONSOLIDATION_EXPECTATIONS = {
         "sha256": "c28b38b6191d4bcee94f593496d495c9d35f2c78a594d4fde18c9790e3517810",
     },
 }
+
+RBSI_LEDGER_FILES = tuple(
+    name
+    for name in _SSI_CONSOLIDATION_DATA_FILES
+    if name.startswith("seed_ssi_rbsi_emirates_20260921_part")
+)
 
 
 def _payloads():
@@ -88,7 +100,7 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     # Keep the exact catalog total pinned as each verified ledger is admitted.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_205
+    assert len(SSI_RECORDS) == len(route_keys) == 12_551
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
@@ -206,13 +218,23 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     seeded_by_key = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
     for payload in payloads:
         for row in payload["ssi_records"]:
+            if row[0] in _SSI_EXCLUDED_BICS or row[3] in _SSI_EXCLUDED_BICS:
+                continue
             assert len(row) == 15
             seeded = seeded_by_key[(row[0], row[2], row[3])]
             # The loader canonicalizes BIC-only notes so every persisted row
             # carries the same non-routable warning; identity, settlement
             # fields, provenance, and safety flags must remain byte-for-byte.
             seeded_compare = list(seeded[:9]) + list(seeded[10:])
-            row_compare = list(row[:9]) + list(row[10:])
+            source_row = (
+                _mask_synthetic_account_record(row)
+                if (
+                    _has_synthetic_account_placeholder(row)
+                    and (row[0], row[2], row[3]) in _SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS
+                )
+                else tuple(row)
+            )
+            row_compare = list(source_row[:9]) + list(source_row[10:])
             if seeded_compare[1] != row_compare[1]:
                 name_aliases = {
                     frozenset(
@@ -237,11 +259,24 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                 # route identity and provenance safety flags are what must be
                 # preserved across that replacement.
                 superseded = (
-                    seeded[11] == row[11] == "unverified"
-                    and seeded[14] is True
-                    and (
-                        (row[13] is True and seeded[13] is False)
-                        or (row[13] is False and seeded[13] is False and row[14] is True)
+                    (
+                        seeded[11] == source_row[11] == "unverified"
+                        and seeded[14] is True
+                        and (
+                            (source_row[13] is True and seeded[13] is False)
+                            or (
+                                source_row[13] is False
+                                and seeded[13] is False
+                                and source_row[14] is True
+                            )
+                        )
+                    )
+                    or (
+                        seeded[11] == source_row[11] == "unverified"
+                        and seeded[13] is True
+                        and seeded[14] is False
+                        and source_row[13] is False
+                        and source_row[14] is True
                     )
                 )
                 assert superseded, (
@@ -276,13 +311,25 @@ def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
         assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"], filename
         assert all(len(row) == 15 for row in payload["ssi_records"]), filename
         assert all(
-            (row[0], row[2], row[3]) in seeded_by_key
+            (
+                row[0] in _SSI_EXCLUDED_BICS
+                or row[3] in _SSI_EXCLUDED_BICS
+                or (row[0], row[2], row[3]) in seeded_by_key
+            )
             for row in payload["ssi_records"]
         ), filename
         assert all(
-            (row[0], row[2], row[3]) in loaded_keys
+            (
+                row[0] in _SSI_EXCLUDED_BICS
+                or row[3] in _SSI_EXCLUDED_BICS
+                or (row[0], row[2], row[3]) in loaded_keys
+            )
             for row in payload["ssi_records"]
         ), filename
+
+    assert len(loaded_banks) >= sum(
+        item["banks"] for item in NEW_CONSOLIDATION_EXPECTATIONS.values()
+    )
 
 
 def test_unreconciled_consolidation_ledgers_are_evidence_only():
@@ -296,11 +343,19 @@ def test_unreconciled_consolidation_ledgers_are_evidence_only():
     configured_consolidation = {
         name for name in configured if name.startswith("seed_ssi_consolidation_")
     }
-    assert on_disk == configured_consolidation | set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
+    evidence_consolidation = {
+        name
+        for name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES
+        if name.startswith("seed_ssi_consolidation_")
+    }
+    assert on_disk == configured_consolidation | evidence_consolidation
+    loaded_files = configured | set(_SSI_BATCH32_DATA_FILES)
     for evidence_name, safe_name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES.items():
         assert (evidence_dir / evidence_name).exists()
         if safe_name is not None:
-            assert safe_name in configured
+            assert safe_name in loaded_files
+            if safe_name in _SSI_BATCH32_DATA_FILES:
+                continue
             evidence = json.loads((evidence_dir / evidence_name).read_text())
             safe = json.loads((evidence_dir / safe_name).read_text())
             evidence_keys = {
@@ -308,6 +363,93 @@ def test_unreconciled_consolidation_ledgers_are_evidence_only():
             }
             safe_keys = {(row[0], row[2], row[3]) for row in safe["ssi_records"]}
             assert safe_keys <= evidence_keys
+
+
+def test_synthetic_account_ledgers_are_loaded_as_bic_only_evidence():
+    """Masked account placeholders in every loaded ledger are non-routable."""
+    seeded_by_key = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
+    source_rows = []
+    for filename in _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES:
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        for row in payload["ssi_records"]:
+            if not any(
+                isinstance(row[pos], str) and row[pos].startswith("ACCT-")
+                for pos in (5, 6)
+            ):
+                continue
+            if row[0] in _SSI_EXCLUDED_BICS or row[3] in _SSI_EXCLUDED_BICS:
+                continue
+            source_rows.append(row)
+            seeded = seeded_by_key[(row[0], row[2], row[3])]
+            assert seeded[5:9] == (None, None, None, None)
+            assert seeded[13:15] == (True, False)
+            assert not _is_routable_ssi(_row_to_ssi(seeded))
+    assert len(source_rows) == 453
+
+
+def test_rbsi_emirates_ledger_is_complete_bic_only_evidence():
+    paths = [ROOT / "app" / "services" / name for name in RBSI_LEDGER_FILES]
+    assert len(paths) == 4
+    assert max(path.stat().st_size for path in paths) < 50_000
+    rows = [
+        row
+        for path in paths
+        for row in json.loads(path.read_text())["ssi_records"]
+    ]
+    keys = {(row[0], row[2], row[3]) for row in rows}
+    seeded_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    assert len(rows) == len(keys) == 157
+    assert all(
+        len(row) == 15
+        and _is_canonical_bic11(row[0])
+        and _is_canonical_bic11(row[3])
+        and row[5:9] == [None, None, None, None]
+        and row[11] == "unverified"
+        and row[12] is None
+        and row[13] is True
+        and row[14] is False
+        and row[9].startswith("Source: https://")
+        and (row[0], row[2], row[3]) in seeded_keys
+        for row in rows
+    )
+
+
+def test_standalone_ledgers_are_registered_and_seeded():
+    expected = {
+        "seed_ssi_emirates_nbd_current_20260920.json": 10,
+        "seed_ssi_ing_belgium_20260101.json": 31,
+    }
+    configured = set(_SSI_CONSOLIDATION_DATA_FILES)
+    seeded_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
+    for filename, count in expected.items():
+        assert filename in configured
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        assert len(payload["ssi_records"]) == count
+        assert all(
+            row[0] in _SSI_EXCLUDED_BICS
+            or row[3] in _SSI_EXCLUDED_BICS
+            or (row[0], row[2], row[3]) in seeded_keys
+            for row in payload["ssi_records"]
+        )
+
+
+def test_esaf_broad_snapshot_is_evidence_only_against_safe_batch32():
+    assert (
+        _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES[
+            "seed_ssi_esaf_correspondents_20250701.json"
+        ]
+        == "seed_ssi_batch32_1.json"
+    )
+    assert "seed_ssi_batch32_1.json" in _SSI_BATCH32_DATA_FILES
+    rows = json.loads(
+        (
+            ROOT
+            / "app"
+            / "services"
+            / "seed_ssi_esaf_correspondents_20250701.json"
+        ).read_text()
+    )["ssi_records"]
+    assert len(rows) == 8
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}
@@ -324,7 +466,17 @@ def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     assert sum(len(payload["ssi_records"]) for payload in batch_payloads) == 236
     assert all(tuple(bank) in BANKS for payload in batch_payloads for bank in payload["banks"])
     assert all(
-        tuple(row) in SSI_RECORDS for payload in batch_payloads for row in payload["ssi_records"]
+        (
+            _mask_synthetic_account_record(row)
+            if (
+                _has_synthetic_account_placeholder(row)
+                and (row[0], row[2], row[3]) in _SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS
+            )
+            else tuple(row)
+        )
+        in SSI_RECORDS
+        for payload in batch_payloads
+        for row in payload["ssi_records"]
     )
 
 
@@ -388,6 +540,8 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector():
     new_bics_by_pair = {}
     for payload in _payloads():
         for row in payload["ssi_records"]:
+            if row[0] in _SSI_EXCLUDED_BICS or row[3] in _SSI_EXCLUDED_BICS:
+                continue
             new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
 
     for (beneficiary_bic, currency), new_bics in new_bics_by_pair.items():

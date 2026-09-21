@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["BCTLTLDIXXX", "Banco Central de Timor-Leste", "USD", "FRNYUS33XXX", "Federal Reserve Bank of New York, New York", null, null, null, null, "Source: https://bancocentral.tl/stats/iban/ (official Banco Central de Timor-Leste SSI page, retrieved 2026-09-21). BIC-only metadata; published account and ABA details are intentionally omitted; non-routable until independently verified.", null, "unverified", null, true, false]
+  ]
+}

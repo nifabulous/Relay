@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["IDIBINAAXXX", "Indian Bank IFSC Banking Unit GIFT City", "USD", "CITIUS33XXX", "Citibank, New York", null, null, null, null, "Source: https://indianbank.bank.in/en/indian-bank-ifsc-banking-unit-gift-city (official Indian Bank IBU GIFT City Nostro page; last modified 2026-09-07). BIC-only metadata; the published account number is intentionally omitted, so this row is informational and not selectable.", "2026-09-07", "unverified", null, true, false]
+  ]
+}
