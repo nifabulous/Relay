@@ -318,6 +318,13 @@ def test_unreconciled_consolidation_ledgers_are_evidence_only():
     configured = set(_SSI_CONSOLIDATION_DATA_FILES)
     evidence_dir = ROOT / "app" / "services"
     assert not configured & set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
+    on_disk = {
+        path.name for path in evidence_dir.glob("seed_ssi_consolidation_*.json")
+    }
+    configured_consolidation = {
+        name for name in configured if name.startswith("seed_ssi_consolidation_")
+    }
+    assert on_disk == configured_consolidation | set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
     for evidence_name, safe_name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES.items():
         assert (evidence_dir / evidence_name).exists()
         if safe_name is not None:
