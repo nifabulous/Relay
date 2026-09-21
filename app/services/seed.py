@@ -1284,17 +1284,13 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_europe_americas_wave4.json",
     "seed_ssi_consolidation_10_europe_americas_safe.json",
     "seed_ssi_consolidation_10_africa_mena_mashreq.json",
-    "seed_ssi_consolidation_10_africa_mena.json",
-    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
-    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_safe.json",
     "seed_ssi_consolidation_10_asia_pacific.json",
     "seed_ssi_consolidation_10_india_sri_lanka.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
-    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
     "seed_ssi_union_bank_nostro_20250515.json",
     "seed_ssi_axis_partner_banks_20260921.json",
@@ -1322,6 +1318,9 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_latam_caribbean.json",
     "seed_ssi_consolidation_10_central_asia_eurasian.json",
     "seed_ssi_consolidation_10_central_asia_shinhan.json",
+    "seed_ssi_emirates_nbd_current_20260920.json",
+    "seed_ssi_esaf_correspondents_20250701.json",
+    "seed_ssi_ing_belgium_20260101.json",
     "seed_ssi_deutsche_frankfurt_20260407.json",
     "seed_ssi_deutsche_pakistan_20260920.json",
     "seed_ssi_deutsche_portugal_20251001.json",
@@ -1398,6 +1397,20 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
+# These full ledgers remain citable evidence, but their reviewed ``*_safe``
+# subsets are the intentionally admitted production inputs until the broader
+# rows receive an independent reconciliation pass.
+_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES = {
+    "seed_ssi_consolidation_10_africa_mena.json":
+        "seed_ssi_consolidation_10_africa_mena_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json":
+        "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": None,
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json": None,
+}
+
 
 _CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
 
@@ -1413,7 +1426,6 @@ _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES = {
     "seed_ssi_arion_bank_20260301.json",
     "seed_ssi_bank_cler_20260325.json",
 }
-
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
