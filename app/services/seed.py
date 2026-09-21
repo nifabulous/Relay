@@ -1362,6 +1362,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_mbh_bank_20241024.json",
     "seed_ssi_dfcc_acu_20241128.json",
     "seed_ssi_crystalbank_20260801.json",
+    "seed_ssi_postfinance_20250501.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
