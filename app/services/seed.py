@@ -1340,6 +1340,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_basler_kantonalbank_20250801.json",
     "seed_ssi_bank_cler_20260325.json",
     "seed_ssi_raiffeisenverband_salzburg_20250501.json",
+    "seed_ssi_bankhaus_spaengler_20250301.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
