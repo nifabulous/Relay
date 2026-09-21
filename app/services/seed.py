@@ -1336,6 +1336,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_dnb_hamburg_20260202.json",
     "seed_ssi_arion_bank_20260301.json",
     "seed_ssi_bank_of_punjab_acu_20241114.json",
+    "seed_ssi_banca_popolare_sondrio_20250818.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
