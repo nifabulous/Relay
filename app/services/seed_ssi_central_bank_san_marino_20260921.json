@@ -1,0 +1,8 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["ICSMSMSMXXX", "Central Bank of the Republic of San Marino", "USD", "FRNYUS33XXX", "Federal Reserve Bank of New York, New York", null, null, null, null, "Source: https://www.bcsm.sm/funzioni/funzioni-statutarie/sistema-dei-pagamenti/ssi (official Banca Centrale della Repubblica di San Marino SSI page, retrieved 2026-09-21). Financial-payment BIC-only metadata; published account/routing details are intentionally omitted; non-routable until independently verified.", null, "unverified", null, true, false],
+    ["ICSMSMSMXXX", "Central Bank of the Republic of San Marino", "EUR", "BITAITRRCLO", "T2 agent, Banca d'Italia", null, null, null, null, "Source: https://www.bcsm.sm/funzioni/funzioni-statutarie/sistema-dei-pagamenti/ssi (official Banca Centrale della Repubblica di San Marino SSI page, retrieved 2026-09-21). Financial-payment BIC-only metadata; published account/routing details are intentionally omitted; non-routable until independently verified.", null, "unverified", null, true, false]
+  ]
+}
