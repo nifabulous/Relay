@@ -1301,7 +1301,10 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_dcb_sib_karnataka_20260921.json",
     "seed_ssi_au_csb_20260921.json",
     "seed_ssi_equitas_indusind_grd_20250921.json",
-    "seed_ssi_rbsi_emirates_20260921.json",
+    "seed_ssi_rbsi_emirates_20260921_part1.json",
+    "seed_ssi_rbsi_emirates_20260921_part2.json",
+    "seed_ssi_rbsi_emirates_20260921_part3.json",
+    "seed_ssi_rbsi_emirates_20260921_part4.json",
     "seed_ssi_hdfc_khyber_deltas_20260921.json",
     "seed_ssi_garanti_international_20260127.json",
     "seed_ssi_otp_hungary_20260101.json",
@@ -1428,11 +1431,65 @@ _SSI_CONSOLIDATION_BANK_NAMES = {
 
 _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES = {
     "seed_ssi_arion_bank_20260301.json",
+    "seed_ssi_armeconombank_20250501.json",
+    "seed_ssi_banca_popolare_sondrio_20250818.json",
     "seed_ssi_bank_cler_20260325.json",
+    "seed_ssi_bankhaus_spaengler_20250301.json",
+    "seed_ssi_basler_kantonalbank_20250801.json",
+    "seed_ssi_canara_bank_followup_20260921.json",
+    "seed_ssi_central_bank_kenya_20220701.json",
+    "seed_ssi_csb_bank_followup_20260921.json",
+    "seed_ssi_federal_bank_followup_20260921.json",
+    "seed_ssi_indusind_ibu_20250610.json",
+    "seed_ssi_ing_belgium_20260101.json",
+    "seed_ssi_meghna_bank_20260921.json",
+    "seed_ssi_modhumoti_bank_20260621.json",
+    "seed_ssi_nrw_bank_20260729.json",
+    "seed_ssi_op_corporate_20250318.json",
+    "seed_ssi_prime_bank_20250422.json",
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json",
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json",
+    "seed_ssi_seb_latvia_20260921.json",
+    "seed_ssi_sense_bank_20250610.json",
+    "seed_ssi_smbc_euroclear_20260921.json",
+    "seed_ssi_trinity_bank_20260921.json",
+    "seed_ssi_unicredit_germany_20260106.json",
+    "seed_ssi_union_bank_india_20250515.json",
 }
+_SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS = set()
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
+
+
+def _has_synthetic_account_placeholder(record):
+    """Return whether a source row carries a masked account token."""
+    return len(record) > 6 and any(
+        isinstance(record[pos], str) and record[pos].startswith("ACCT-")
+        for pos in (5, 6)
+    )
+
+
+def _mask_synthetic_account_record(record):
+    """Convert a masked-account source row into non-routable BIC-only data."""
+    normalized = list(record)
+    if len(normalized) == 12:
+        # Legacy rows put charge/value/status immediately after the account
+        # fields; rebuild them into the canonical 15-field layout first.
+        normalized = normalized[:5] + [None, None, None, None] + normalized[9:]
+    normalized.extend([None] * (15 - len(normalized)))
+    normalized[5:9] = [None, None, None, None]
+    normalized[13] = True
+    normalized[14] = False
+    source_match = re.search(r"Source:\s*(\S+)", str(normalized[9] or ""))
+    source = source_match.group(1) if source_match else "consolidated bank source"
+    normalized[9] = (
+        f"Source: {source} (as of {normalized[10]}) "
+        "BIC-level list — no account numbers published; "
+        "not a selectable settlement instruction. Sourced from "
+        "bank-published SSI page. Verify current values before use."
+    )
+    return tuple(normalized)
 
 
 def _load_ssi_consolidation_data():
@@ -1473,26 +1530,20 @@ def _load_ssi_consolidation_data():
                 raise ValueError(f"{filename}.ssi_records[{index}]: missing route identity")
             if not _is_canonical_bic11(record[0]) or not _is_canonical_bic11(record[3]):
                 raise ValueError(f"{filename}.ssi_records[{index}]: expected canonical BIC11 values")
+            if (
+                filename in _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES
+                and _has_synthetic_account_placeholder(record)
+            ):
+                record = _mask_synthetic_account_record(record)
+                _SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS.add(
+                    (record[0], record[2], record[3])
+                )
             if record[11] not in {"unverified", "archived"} or record[12] is not None:
                 raise ValueError(f"{filename}.ssi_records[{index}]: must remain non-published")
             if not isinstance(record[13], bool) or not isinstance(record[14], bool):
                 raise ValueError(f"{filename}.ssi_records[{index}]: invalid safety flags")
             if record[13] and any(record[pos] is not None for pos in range(5, 9)):
                 raise ValueError(f"{filename}.ssi_records[{index}]: BIC-only row has settlement fields")
-            if filename in _SSI_SYNTHETIC_ACCOUNT_LEDGER_FILES and any(
-                isinstance(record[pos], str) and record[pos].startswith("ACCT-")
-                for pos in (5, 6)
-            ):
-                # Masked account placeholders are evidence only.  Never let
-                # their source flags make them selectable settlement routes.
-                record = list(record)
-                record[5:9] = [None, None, None, None]
-                record[13] = True
-                record[14] = False
-                record[9] = (
-                    f"{record[9].rstrip()} Masked account placeholders are "
-                    "retained as BIC-only evidence and are not selectable."
-                )
             if record[0] in _SSI_CONSOLIDATION_BANK_NAMES:
                 record = list(record)
                 record[1] = _SSI_CONSOLIDATION_BANK_NAMES[record[0]]
@@ -2231,6 +2282,11 @@ def _dedupe_ssi_records(rows):
         if canonical_name is not None and row[1] != canonical_name:
             row = (row[0], canonical_name, *row[2:])
         key = (row[0], row[2], row[3])
+        if (
+            key in _SSI_SYNTHETIC_ACCOUNT_ROUTE_KEYS
+            and _has_synthetic_account_placeholder(row)
+        ):
+            row = _mask_synthetic_account_record(row)
         if key in seen:
             prior_index = positions[key]
             prior = unique[prior_index]

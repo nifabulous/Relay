@@ -32,7 +32,12 @@ from app.data.settlement_directory import SETTLEMENT_DIRECTORY, get_settlement_i
 from app.db import Base
 from app.models import SSI, Bank, CorridorRule
 from app.services.routing import _is_routable_ssi
-from app.services.seed import BANKS, CORRIDOR_RULES, SSI_RECORDS
+from app.services.seed import (
+    _SSI_EXCLUDED_BICS,
+    BANKS,
+    CORRIDOR_RULES,
+    SSI_RECORDS,
+)
 
 _SSI_MANIFEST_PATH = (
     Path(__file__).resolve().parents[1]
@@ -188,7 +193,14 @@ def _assert_manifest_region_records(region_name, ssi_records, banks):
             assert row[2] == currency, key
             assert _canonical_ssi_bic(row[3]) == intermediary, key
             assert row[4] == record["correspondent"], key
-            assert row[9] == _canonical_ssi_note(record), key
+            masked_source = any(
+                isinstance(record.get(field), str)
+                and record[field].startswith("ACCT-")
+                for field in ("nostro", "with_an")
+            ) and len(row) > 13 and row[13] is True
+            bic_only = record.get("bic_only") is True or masked_source
+            expected_note = _canonical_ssi_note({**record, "bic_only": bic_only})
+            assert row[9] == expected_note, key
             assert row[10] == record["as_of"], key
             expected_status = record["status"].strip().lower()
             # Newly folded source rows may be unverified or explicitly
@@ -198,10 +210,9 @@ def _assert_manifest_region_records(region_name, ssi_records, banks):
             expected_verifier = record.get("verified_by")
             actual_verifier = row[12] if len(row) > 12 else None
             assert actual_verifier == expected_verifier, key
-            bic_only = record.get("bic_only") is True
             actual_bic_only = row[13] if len(row) > 13 else False
             assert isinstance(actual_bic_only, bool) and actual_bic_only is bic_only, key
-            inferred = record.get("terms_inferred", False)
+            inferred = False if masked_source else record.get("terms_inferred", False)
             actual_inferred = row[14] if len(row) > 14 else False
             assert isinstance(actual_inferred, bool) and actual_inferred is inferred, key
             assert row[0][:8] not in forbidden, key
@@ -328,6 +339,38 @@ class TestUsdSSIRecordsMatchSettlementDirectory:
         assert not missing, (
             f"US correspondents in USD SSI records without settlement "
             f"identifiers: {sorted(missing)}"
+        )
+
+
+class TestLoadedBicGuard:
+    """Keep malformed and source-mislabeled BICs out of every loaded table."""
+
+    def test_all_loaded_bics_are_canonical_and_not_forbidden(self):
+        forbidden = {
+            bic[:8] for bic in _SSI_EXCLUDED_BICS
+        } | {
+            "CSSSCIAB",
+            "UNTBTBTG",
+            "BILTTGT1",
+            "CMCIFRPA",
+            "ORBABFBF",
+        }
+        offenders = []
+        for table, rows, positions in (
+            ("SSI_RECORDS", SSI_RECORDS, (0, 3)),
+            ("BANKS", BANKS, (0,)),
+        ):
+            for index, row in enumerate(rows):
+                for position in positions:
+                    value = row[position]
+                    bic = value if len(value) == 11 else f"{value}XXX"
+                    if not re.fullmatch(r"[A-Z]{6}[A-Z0-9]{5}", bic):
+                        offenders.append((table, index, position, value, "shape"))
+                    elif bic[:8] in forbidden:
+                        offenders.append((table, index, position, value, "forbidden"))
+        assert offenders == [], (
+            "Every loaded beneficiary/intermediary BIC must be canonical and "
+            f"source-allowed: {offenders[:20]}"
         )
 
 
