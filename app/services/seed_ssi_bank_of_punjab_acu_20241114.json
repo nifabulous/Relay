@@ -1,0 +1,10 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["BPUNPKKAXXX", "The Bank of Punjab", "ACU", "HABBBDDHXXX", "Habib Bank Limited, Dhaka", null, null, null, null, "Source: https://www.bop.com.pk/Correspondent%20Banks (official Bank of Punjab correspondent-bank list; last updated 2024-11-14; accessed 2026-09-21). BIC-only ACU route; the source publishes no account number, so this row is informational and not selectable.", "2024-11-14", "unverified", null, true, false],
+    ["BPUNPKKAXXX", "The Bank of Punjab", "ACU", "MUCBLKLCXXX", "MCB Bank Limited, Colombo", null, null, null, null, "Source: https://www.bop.com.pk/Correspondent%20Banks (official Bank of Punjab correspondent-bank list; last updated 2024-11-14; accessed 2026-09-21). BIC-only ACU route; the source publishes no account number, so this row is informational and not selectable.", "2024-11-14", "unverified", null, true, false],
+    ["BPUNPKKAXXX", "The Bank of Punjab", "ACU", "MSHQINBBXXX", "Mashreq Bank PSC, Mumbai", null, null, null, null, "Source: https://www.bop.com.pk/Correspondent%20Banks (official Bank of Punjab correspondent-bank list; last updated 2024-11-14; accessed 2026-09-21). BIC-only ACU route; the source publishes no account number, so this row is informational and not selectable.", "2024-11-14", "unverified", null, true, false],
+    ["BPUNPKKAXXX", "The Bank of Punjab", "ACU", "SCBLINBBXXX", "Standard Chartered Bank, Mumbai", null, null, null, null, "Source: https://www.bop.com.pk/Correspondent%20Banks (official Bank of Punjab correspondent-bank list; last updated 2024-11-14; accessed 2026-09-21). BIC-only ACU route; the source publishes no account number, so this row is informational and not selectable.", "2024-11-14", "unverified", null, true, false]
+  ]
+}

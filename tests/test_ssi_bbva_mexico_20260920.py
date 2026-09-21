@@ -5,7 +5,6 @@ from pathlib import Path
 
 from app.services.seed import SSI_RECORDS
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "scripts" / "ssi-autopilot" / "regions.json"
 EVIDENCE = ROOT / "scripts" / "ssi-autopilot" / "evidence" / "ssi-bbva-mexico-2026-09-20.json"

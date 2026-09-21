@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["INDBINAAXXX", "IndusInd Bank Ltd., IFSC Banking Unit (IBU)", "EUR", "SCBLDEFFXXX", "Standard Chartered Bank, Frankfurt, Germany", "ACCT-91012101", "ACCT-91012101", "SHA", "spot", "Source: https://bank.indusind.bank.in/content/dam/indusind-corporate/Other/financial-institutions/ssi-ibu-unit-IBU-effective31-May-2025.pdf (official IndusInd Bank IBU Gift City SSI, dated 2025-06-10). Published account number is masked with a synthetic ACCT value; charge code and value date are inferred.", "2025-06-10", "unverified", null, false, true]
+  ]
+}

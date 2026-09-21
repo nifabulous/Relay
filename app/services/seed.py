@@ -220,7 +220,6 @@ BANKS = [
     ("BCMAMAMCXXX", "Attijariwafa Bank", "MA", "Casablanca", "MAD"),
     ("BBKUBHBMXXX", "BBK Bahrain", "BH", "Manama", "BHD"),
     ("BMUSOMRXXXX", "BankMuscat", "OM", "Seeb", "OMR"),
-    ("BSHROMRUXXX", "Sohar International Bank", "OM", "Muscat", "OMR"),
     ("FIRNZAJJXXX", "FirstRand Bank", "ZA", "Johannesburg", "ZAR"),
     # Destination banks with published SSIs
     ("BDINIDJAXXX", "Bank Danamon", "ID", "Jakarta", "IDR"),
@@ -1293,6 +1292,25 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
     "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
+    "seed_ssi_union_bank_nostro_20250515.json",
+    "seed_ssi_axis_partner_banks_20260921.json",
+    "seed_ssi_rbl_correspondents_20260921.json",
+    "seed_ssi_idfc_first_mumbai_20260921.json",
+    "seed_ssi_idfc_first_gift_20260921.json",
+    "seed_ssi_canara_current_deltas_20260921.json",
+    "seed_ssi_dcb_sib_karnataka_20260921.json",
+    "seed_ssi_au_csb_20260921.json",
+    "seed_ssi_equitas_indusind_grd_20250921.json",
+    "seed_ssi_rbsi_emirates_20260921.json",
+    "seed_ssi_hdfc_khyber_deltas_20260921.json",
+    "seed_ssi_garanti_international_20260127.json",
+    "seed_ssi_otp_hungary_20260101.json",
+    "seed_ssi_nordea_current_20250730.json",
+    "seed_ssi_berliner_sparkasse_20260424.json",
+    "seed_ssi_credit_agricole_poland_20260921.json",
+    "seed_ssi_dfcc_aug2026_deltas.json",
+    "seed_ssi_bank_frick_20260527_deltas.json",
+    "seed_ssi_cibc_caribbean_trust_20260921.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
@@ -1318,6 +1336,61 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_sydney_20250526.json",
     "seed_ssi_deutsche_mumbai_20201116.json",
     "seed_ssi_deutsche_jakarta_20200720.json",
+    "seed_ssi_deutsche_seoul_local_20251014.json",
+    "seed_ssi_deutsche_new_york_rates_20250404.json",
+    "seed_ssi_butterfield_guernsey_20230706.json",
+    "seed_ssi_guangdong_nanyue_20260921.json",
+    "seed_ssi_central_bank_kenya_20220701.json",
+    "seed_ssi_federal_bank_followup_20260921.json",
+    "seed_ssi_bengal_commercial_bank_20241231.json",
+    "seed_ssi_canara_bank_followup_20260921.json",
+    "seed_ssi_csb_bank_followup_20260921.json",
+    "seed_ssi_modhumoti_bank_20260621.json",
+    "seed_ssi_armeconombank_20250501.json",
+    "seed_ssi_prime_bank_20250422.json",
+    "seed_ssi_meghna_bank_20260921.json",
+    "seed_ssi_dnb_hamburg_20260202.json",
+    "seed_ssi_arion_bank_20260301.json",
+    "seed_ssi_bank_of_punjab_acu_20241114.json",
+    "seed_ssi_banca_popolare_sondrio_20250818.json",
+    "seed_ssi_basler_kantonalbank_20250801.json",
+    "seed_ssi_bank_cler_20260325.json",
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json",
+    "seed_ssi_bankhaus_spaengler_20250301.json",
+    "seed_ssi_bks_bank_20260101.json",
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json",
+    "seed_ssi_unicredit_germany_20260106.json",
+    "seed_ssi_union_bank_india_20250515.json",
+    "seed_ssi_nrw_bank_20260729.json",
+    "seed_ssi_sense_bank_20250610.json",
+    "seed_ssi_uttara_bank_20260921.json",
+    "seed_ssi_seb_latvia_20260921.json",
+    "seed_ssi_indusind_ibu_20250610.json",
+    "seed_ssi_op_corporate_20250318.json",
+    "seed_ssi_smbc_euroclear_20260921.json",
+    "seed_ssi_trinity_bank_20260921.json",
+    "seed_ssi_alior_bank_20260921.json",
+    "seed_ssi_central_bank_armenia_20260921.json",
+    "seed_ssi_bcge_geneva_20240101.json",
+    "seed_ssi_central_bank_san_marino_20260921.json",
+    "seed_ssi_nbg_cyprus_20260921.json",
+    "seed_ssi_central_bank_timor_leste_20260921.json",
+    "seed_ssi_mbh_bank_20241024.json",
+    "seed_ssi_dfcc_acu_20241128.json",
+    "seed_ssi_crystalbank_20260801.json",
+    "seed_ssi_postfinance_20250501.json",
+    "seed_ssi_usbank_fx_fex_20250601.json",
+    "seed_ssi_iob_current_deltas_20260120.json",
+    "seed_ssi_basic_bank_current_20260720.json",
+    "seed_ssi_bank_of_baroda_treasury_20260921.json",
+    "seed_ssi_indian_bank_ibu_current_20260907.json",
+    "seed_ssi_kdb_kapitalbank_current_20260921.json",
+    "seed_ssi_octobank_current_20250921.json",
+    "seed_ssi_bhutan_national_bank_current_20260921.json",
+    "seed_ssi_commercial_bank_maldives_current_20260921.json",
+    "seed_ssi_bhutan_development_bank_current_20260921.json",
+    "seed_ssi_uco_treasury_branch_20260409.json",
+    "seed_ssi_india_wire_current_20260921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
@@ -2068,6 +2141,12 @@ _SSI_BIC_ALIASES = {
     "SCBLDEFXXXX": "SCBLDEFFXXX",
 }
 
+# Sohar International's current correspondent table carries the transposed
+# ``BSHROMRU`` spelling.  The bank's canonical BIC is not independently
+# verified here, so retain the source rows for audit but keep the malformed
+# identity out of the production directory and SSI catalog.
+_SSI_EXCLUDED_BICS = {"BSHROMRUXXX"}
+
 # The reviewed Santander Uruguay routing-codes table supersedes the older
 # availability-only snapshot for these ten routes.  Keep the older CAD and
 # Wells Fargo alias rows below because the newer table does not publish them.
@@ -2101,6 +2180,8 @@ def _dedupe_ssi_records(rows):
         intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
         if beneficiary_bic != row[0] or intermediary_bic != row[3]:
             row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
+        if beneficiary_bic in _SSI_EXCLUDED_BICS or intermediary_bic in _SSI_EXCLUDED_BICS:
+            continue
         canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
         if canonical_name is not None and row[1] != canonical_name:
             row = (row[0], canonical_name, *row[2:])

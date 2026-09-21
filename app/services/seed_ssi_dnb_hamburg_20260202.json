@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["DNBADEHXXXX", "DNB Bank ASA, Hamburg Branch", "EUR", "DNBADEHXXXX", "DNB Bank ASA, Hamburg (direct via TARGET2)", null, null, null, null, "Source: https://content.dnb.no/docs/9553983/ssi-hamburg-02-02-2026.pdf (official DNB Bank ASA Hamburg SSI; as of 2026-02-02; accessed 2026-09-21). BIC-only direct TARGET2 route; the source publishes no account number, so this row is informational and not selectable.", "2026-02-02", "unverified", null, true, false]
+  ]
+}

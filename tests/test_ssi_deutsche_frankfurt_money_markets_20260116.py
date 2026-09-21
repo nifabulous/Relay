@@ -4,7 +4,6 @@ import json
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "app/services/seed_ssi_deutsche_frankfurt_money_markets_20260116.json"
 BIC = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")

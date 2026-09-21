@@ -5,7 +5,6 @@ import re
 from collections import Counter
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / "app/services/seed_ssi_consolidation_10_africa_mena_followup_malawi.json"
 EVIDENCE_PATH = ROOT / (
@@ -57,4 +56,3 @@ def test_official_source_matches_ledger_count():
     assert {source["url"] for source in sources} == set(source_counts)
     source = sources[0]
     assert source_counts[source["url"]] == source["route_count"]
-

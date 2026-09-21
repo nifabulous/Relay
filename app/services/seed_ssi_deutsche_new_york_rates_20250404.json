@@ -1,0 +1,9 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["DEUTUS33XXX", "Deutsche Bank AG, New York", "CHF", "UBSWCHZH80A", "UBS Switzerland AG, Zurich", null, null, null, null, "Source: https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-NY-1st-Apr-2025.pdf (effective 2025-04-04; official Deutsche Bank New York rates and credit derivatives SSI PDF). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2025-04-04", "unverified", null, true, false],
+    ["DEUTUS33XXX", "Deutsche Bank AG, New York", "MXN", "CITIMXMMCVT", "CBM Banco S.A. Institución de Banca Múltiple, Mexico", null, null, null, null, "Source: https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-NY-1st-Apr-2025.pdf (effective 2025-04-04; official Deutsche Bank New York rates and credit derivatives SSI PDF). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2025-04-04", "unverified", null, true, false],
+    ["DEUTUS33XXX", "Deutsche Bank AG, New York", "USD", "BKTRUS33XXX", "Deutsche Bank Trust Company Americas, New York", null, null, null, null, "Source: https://corporates.db.com/files/documents/legal-resources/ssi/2025/SSI-NY-1st-Apr-2025.pdf (effective 2025-04-04; official Deutsche Bank New York rates and credit derivatives SSI PDF). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2025-04-04", "unverified", null, true, false]
+  ]
+}

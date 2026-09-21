@@ -1,0 +1,8 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["BNBTBTBTXXX", "Bhutan National Bank Limited", "USD", "SCBLSG22XXX", "Standard Chartered Bank, Singapore", null, null, null, null, "Source: https://bnb.bt/correspondent-banks/ (official Bhutan National Bank correspondent-bank page; page dated 2025-11-24; accessed 2026-09-21). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2025-11-24", "unverified", null, true, false],
+    ["BNBTBTBTXXX", "Bhutan National Bank Limited", "USD", "SCBLNPKAXXX", "Standard Chartered Bank Nepal Ltd, Kathmandu", null, null, null, null, "Source: https://bnb.bt/correspondent-banks/ (official Bhutan National Bank correspondent-bank page; page dated 2025-11-24; accessed 2026-09-21). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2025-11-24", "unverified", null, true, false]
+  ]
+}

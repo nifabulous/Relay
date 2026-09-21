@@ -12,6 +12,7 @@ from app.models import SSI, Bank
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
+    _SSI_EXCLUDED_BICS,
     BANKS,
     SEED_BIC_ALIASES,
     SSI_RECORDS,
@@ -86,10 +87,11 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     """Pin the 10k expansion claim to the exact seeded route-key total."""
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
-    # The current expansion branch has 1041 additional canonical routes over
-    # the 10,164-route merged baseline; keep this exact catalog total pinned
-    # until the remaining 10k collection waves land.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_205
+    # The current expansion branch has 2349 additional canonical routes over
+    # the 10,164-route merged baseline.  The source ledger retains the
+    # transposed Sohar spelling for audit, but those 32 routes are excluded
+    # from the production catalog until the canonical BIC is verified.
+    assert len(SSI_RECORDS) == len(route_keys) == 12_513
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
@@ -207,6 +209,8 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
     seeded_by_key = {(row[0], row[2], row[3]): row for row in SSI_RECORDS}
     for payload in payloads:
         for row in payload["ssi_records"]:
+            if row[0] in _SSI_EXCLUDED_BICS or row[3] in _SSI_EXCLUDED_BICS:
+                continue
             assert len(row) == 15
             seeded = seeded_by_key[(row[0], row[2], row[3])]
             # The loader canonicalizes BIC-only notes so every persisted row
@@ -369,6 +373,8 @@ def test_consolidated_rows_cannot_leak_through_the_production_selector():
     new_bics_by_pair = {}
     for payload in _payloads():
         for row in payload["ssi_records"]:
+            if row[0] in _SSI_EXCLUDED_BICS or row[3] in _SSI_EXCLUDED_BICS:
+                continue
             new_bics_by_pair.setdefault((row[0], row[2]), set()).add(row[3])
 
     for (beneficiary_bic, currency), new_bics in new_bics_by_pair.items():
