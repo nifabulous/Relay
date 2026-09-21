@@ -1351,6 +1351,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_seb_latvia_20260921.json",
     "seed_ssi_indusind_ibu_20250610.json",
     "seed_ssi_op_corporate_20250318.json",
+    "seed_ssi_smbc_euroclear_20260921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
