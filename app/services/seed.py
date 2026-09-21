@@ -1310,6 +1310,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_nordea_current_20250730.json",
     "seed_ssi_berliner_sparkasse_20260424.json",
     "seed_ssi_credit_agricole_poland_20260921.json",
+    "seed_ssi_dfcc_aug2026_deltas.json",
     "seed_ssi_consolidation_11_india_pakistan.json",
     "seed_ssi_consolidation_13_usbank_fx.json",
     "seed_ssi_consolidation_14_usbank_fx_current.json",
