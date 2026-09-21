@@ -75,6 +75,8 @@ describe("SsiQualityPage", () => {
     expect(screen.getByRole("heading", { name: "Review queue" })).toBeVisible();
     expect(screen.getByRole("link", { name: "BANKGB22XXX" })).toBeVisible();
     expect(screen.getAllByText("Source older than threshold")[0]).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Filter review queue" })).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Sort review queue" })).toBeVisible();
   });
 
   it("keeps the corpus warning visible so quality is not mistaken for live availability", async () => {

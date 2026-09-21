@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { apiKeys } from "../../api/queryKeys";
 import { SSIQualityResponseSchema, type SSIQualityQueueItem, type SSIQualityResponse } from "../../api/schemas";
@@ -10,6 +11,34 @@ import { format } from "./atlas/formatters";
 import "./SsiQualityPage.css";
 
 const STALE_OPTIONS = [90, 180, 365];
+const QUEUE_FILTER_OPTIONS = [
+  { value: "all", label: "All review items" },
+  { value: "evidence", label: "Missing evidence" },
+  { value: "classification", label: "Needs classification" },
+] as const;
+const QUEUE_SORT_OPTIONS = [
+  { value: "priority", label: "Priority" },
+  { value: "source-age", label: "Oldest source" },
+  { value: "beneficiary", label: "Beneficiary BIC" },
+  { value: "currency", label: "Currency" },
+] as const;
+
+type QueueFilter = (typeof QUEUE_FILTER_OPTIONS)[number]["value"];
+type QueueSort = (typeof QUEUE_SORT_OPTIONS)[number]["value"];
+
+const EVIDENCE_ISSUES = new Set([
+  "missing-citation",
+  "future-source-date",
+  "stale-source",
+  "missing-source-date",
+]);
+const CLASSIFICATION_ISSUES = new Set([
+  "published-without-verifier",
+  "unverified-status",
+  "terms-inferred",
+  "bic-only",
+  "illustrative",
+]);
 
 const ISSUE_LABELS: Record<string, string> = {
   "missing-citation": "Missing source citation",
@@ -33,6 +62,26 @@ function percent(count: number, total: number): number {
 
 function queueSummary(item: SSIQualityQueueItem): string {
   return item.issues.map(issueLabel).join(" · ");
+}
+
+function matchesQueueFilter(item: SSIQualityQueueItem, filter: QueueFilter): boolean {
+  if (filter === "all") return true;
+  const issueSet = new Set(item.issues);
+  const expected = filter === "evidence" ? EVIDENCE_ISSUES : CLASSIFICATION_ISSUES;
+  return [...expected].some((issue) => issueSet.has(issue));
+}
+
+function sortQueue(items: SSIQualityQueueItem[], sort: QueueSort): SSIQualityQueueItem[] {
+  if (sort === "priority") return items;
+  return [...items].sort((left, right) => {
+    if (sort === "source-age") {
+      const leftAge = left.age_days ?? Number.POSITIVE_INFINITY;
+      const rightAge = right.age_days ?? Number.POSITIVE_INFINITY;
+      return rightAge - leftAge;
+    }
+    if (sort === "currency") return left.currency.localeCompare(right.currency);
+    return left.beneficiary_bic.localeCompare(right.beneficiary_bic);
+  });
 }
 
 function QualityMetrics({ data }: { data: SSIQualityResponse }) {
@@ -121,6 +170,13 @@ function CompositionPanel({ data }: { data: SSIQualityResponse }) {
 }
 
 function ReviewQueue({ data }: { data: SSIQualityResponse }) {
+  const [filter, setFilter] = useState<QueueFilter>("all");
+  const [sort, setSort] = useState<QueueSort>("priority");
+  const visibleQueue = useMemo(
+    () => sortQueue(data.queue.filter((item) => matchesQueueFilter(item, filter)), sort),
+    [data.queue, filter, sort],
+  );
+
   return (
     <section className="ssi-quality__queue" aria-labelledby="ssi-quality-queue-title">
       <div className="ssi-quality__panel-heading">
@@ -128,12 +184,36 @@ function ReviewQueue({ data }: { data: SSIQualityResponse }) {
           <p className="ssi-quality__eyebrow">Next actions</p>
           <h2 id="ssi-quality-queue-title">Review queue</h2>
         </div>
-        <span className="mono ssi-quality__panel-total">{format(data.queue.length)} shown</span>
+        <span className="mono ssi-quality__panel-total">{format(visibleQueue.length)} of {format(data.queue.length)} shown</span>
       </div>
       <p className="ssi-quality__queue-intro">
         The highest-priority records needing source review or explicit classification. The list is bounded so it stays useful during expansion.
       </p>
-      {data.queue.length === 0 ? (
+      <div className="ssi-quality__queue-toolbar" aria-label="Review queue controls">
+        <div className="ssi-quality__queue-control">
+          <span className="ssi-quality__control-label">Filter</span>
+          <RelaySelect
+            ariaLabel="Filter review queue"
+            value={filter}
+            onValueChange={(value) => {
+              if (QUEUE_FILTER_OPTIONS.some((option) => option.value === value)) setFilter(value as QueueFilter);
+            }}
+            options={QUEUE_FILTER_OPTIONS.map((option) => ({ ...option }))}
+          />
+        </div>
+        <div className="ssi-quality__queue-control">
+          <span className="ssi-quality__control-label">Sort</span>
+          <RelaySelect
+            ariaLabel="Sort review queue"
+            value={sort}
+            onValueChange={(value) => {
+              if (QUEUE_SORT_OPTIONS.some((option) => option.value === value)) setSort(value as QueueSort);
+            }}
+            options={QUEUE_SORT_OPTIONS.map((option) => ({ ...option }))}
+          />
+        </div>
+      </div>
+      {visibleQueue.length === 0 ? (
         <p className="ssi-quality__empty" role="status">No quality actions are currently queued.</p>
       ) : (
         <div className="ssi-quality__table-wrap" role="region" aria-label="SSI review queue" tabIndex={0}>
@@ -142,7 +222,7 @@ function ReviewQueue({ data }: { data: SSIQualityResponse }) {
               <tr><th scope="col">Beneficiary</th><th scope="col">Currency</th><th scope="col">Correspondent</th><th scope="col">Source age</th><th scope="col">Action</th></tr>
             </thead>
             <tbody>
-              {data.queue.map((item) => (
+              {visibleQueue.map((item) => (
                 <tr key={`${item.beneficiary_bic}-${item.currency}-${item.intermediary_bic}`}>
                   <th scope="row"><Link to={`/explore/banks/${encodeURIComponent(item.beneficiary_bic)}`} className="mono">{item.beneficiary_bic}</Link><span>{item.beneficiary_bank_name ?? "Unknown bank"}</span></th>
                   <td className="mono">{item.currency}</td>

@@ -35,7 +35,10 @@ export function RelaySelect({
         if (typeof nextValue === "string") onValueChange(nextValue);
       }}
     >
-      <Select.Trigger className={triggerClassName} aria-label={ariaLabel}>
+      <Select.Trigger
+        className={["relay-select__trigger", triggerClassName].filter(Boolean).join(" ")}
+        aria-label={ariaLabel}
+      >
         <span className="relay-select__value">{selected?.label}</span>
         <Select.Icon className="relay-select__icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
