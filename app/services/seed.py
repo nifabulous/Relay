@@ -220,7 +220,6 @@ BANKS = [
     ("BCMAMAMCXXX", "Attijariwafa Bank", "MA", "Casablanca", "MAD"),
     ("BBKUBHBMXXX", "BBK Bahrain", "BH", "Manama", "BHD"),
     ("BMUSOMRXXXX", "BankMuscat", "OM", "Seeb", "OMR"),
-    ("BSHROMRUXXX", "Sohar International Bank", "OM", "Muscat", "OMR"),
     ("FIRNZAJJXXX", "FirstRand Bank", "ZA", "Johannesburg", "ZAR"),
     # Destination banks with published SSIs
     ("BDINIDJAXXX", "Bank Danamon", "ID", "Jakarta", "IDR"),
@@ -1299,7 +1298,6 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_idfc_first_mumbai_20260921.json",
     "seed_ssi_idfc_first_gift_20260921.json",
     "seed_ssi_canara_current_deltas_20260921.json",
-    "seed_ssi_esaf_correspondents_20250701.json",
     "seed_ssi_dcb_sib_karnataka_20260921.json",
     "seed_ssi_au_csb_20260921.json",
     "seed_ssi_equitas_indusind_grd_20250921.json",
@@ -1342,8 +1340,6 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_new_york_rates_20250404.json",
     "seed_ssi_butterfield_guernsey_20230706.json",
     "seed_ssi_guangdong_nanyue_20260921.json",
-    "seed_ssi_emirates_nbd_current_20260920.json",
-    "seed_ssi_ing_belgium_20260101.json",
     "seed_ssi_central_bank_kenya_20220701.json",
     "seed_ssi_federal_bank_followup_20260921.json",
     "seed_ssi_bengal_commercial_bank_20241231.json",
@@ -2145,6 +2141,12 @@ _SSI_BIC_ALIASES = {
     "SCBLDEFXXXX": "SCBLDEFFXXX",
 }
 
+# Sohar International's current correspondent table carries the transposed
+# ``BSHROMRU`` spelling.  The bank's canonical BIC is not independently
+# verified here, so retain the source rows for audit but keep the malformed
+# identity out of the production directory and SSI catalog.
+_SSI_EXCLUDED_BICS = {"BSHROMRUXXX"}
+
 # The reviewed Santander Uruguay routing-codes table supersedes the older
 # availability-only snapshot for these ten routes.  Keep the older CAD and
 # Wells Fargo alias rows below because the newer table does not publish them.
@@ -2178,6 +2180,8 @@ def _dedupe_ssi_records(rows):
         intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
         if beneficiary_bic != row[0] or intermediary_bic != row[3]:
             row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
+        if beneficiary_bic in _SSI_EXCLUDED_BICS or intermediary_bic in _SSI_EXCLUDED_BICS:
+            continue
         canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
         if canonical_name is not None and row[1] != canonical_name:
             row = (row[0], canonical_name, *row[2:])

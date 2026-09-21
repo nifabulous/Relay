@@ -1573,8 +1573,15 @@ def _validate_consolidation_payload(payload: object, path: Path) -> list[list]:
     return records
 
 
-def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
-    """Read and validate consolidated ledgers without executing seed.py."""
+def _expand_consolidation_source_rows(
+    registered_files: set[str] | None = None,
+) -> list[tuple[str, ...]]:
+    """Read and validate the production consolidated ledgers.
+
+    Review ledgers can be kept on disk before they are admitted to the seed.
+    The drift contract must mirror ``_SSI_CONSOLIDATION_DATA_FILES`` instead
+    of treating every similarly named review file as production data.
+    """
     rows: list[tuple[str, ...]] = []
     bank_names = {
         "EBILAEADXXX": "Emirates NBD Bank (P.J.S.C.)",
@@ -1586,6 +1593,8 @@ def _expand_consolidation_source_rows() -> list[tuple[str, ...]]:
     }
     services = REPO_ROOT / "app" / "services"
     for path in sorted(services.glob("seed_ssi_consolidation_*.json")):
+        if registered_files is not None and path.name not in registered_files:
+            continue
         payload = json.loads(path.read_text(encoding="utf-8"))
         records = _validate_consolidation_payload(payload, path)
         for record in records:
@@ -1648,6 +1657,7 @@ def _ssi_rows(source: str) -> list[tuple]:
     """Extract SSI_RECORDS as comparable tuples of source text."""
     tree = ast.parse(source)
     _SOURCE_CONSTANTS.clear()
+    registered_consolidation_files: set[str] | None = None
     for assignment in tree.body:
         if not (isinstance(assignment, ast.Assign) and len(assignment.targets) == 1):
             continue
@@ -1660,6 +1670,10 @@ def _ssi_rows(source: str) -> list[tuple]:
             continue
         if isinstance(value, str):
             _SOURCE_CONSTANTS[target.id] = value
+        elif target.id == "_SSI_CONSOLIDATION_DATA_FILES" and isinstance(value, tuple):
+            registered_consolidation_files = {
+                filename for filename in value if isinstance(filename, str)
+            }
     for node in tree.body:
         if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)):
             continue
@@ -1696,7 +1710,9 @@ def _ssi_rows(source: str) -> list[tuple]:
                     "_ssi_batch9_records": _expand_batch9_source_rows,
                     "_ssi_batch32_records": _expand_batch32_source_rows,
                     "_ssi_batch8_records": _expand_batch8_source_rows,
-                    "_ssi_consolidation_records": _expand_consolidation_source_rows,
+                    "_ssi_consolidation_records": lambda: _expand_consolidation_source_rows(
+                        registered_consolidation_files
+                    ),
                     "_ssi_wave8_manifest_records": _expand_wave8_manifest_source_rows,
                 }[element.value.func.id]())
                 continue

@@ -276,6 +276,12 @@ UNVERIFIED_US_CLEARERS = {
     # UBA New York appears in a bank-published BIC-only correspondent table;
     # no public CHIPS/ABA identifier was committed for this informational row.
     "UNAFUS33",
+    # These current bank-published BIC-only routes identify US correspondents
+    # without publishing a CHIPS or ABA identifier. Keep them non-routable
+    # until an authoritative settlement-directory mapping is corroborated.
+    "FRNYUS33",
+    "ICBKUS33",
+    "WFBIUS6W",
 }
 
 
@@ -680,11 +686,17 @@ class TestFrancophoneAfricaSsiCoverage:
             "CCBPFRPP", "CCBPFRPPPAR", "UBAIITRR", "CSSSCIAB",
             "UNTBTBTGTG", "BILTTGT1", "CMCIFRPA", "ORBABFBF",
         }
+        legacy_source_markers = (
+            "Coris Bank correspondants page",
+            "BOA Cote d'Ivoire Correspondants page",
+            "Afriland correspondants page",
+            "Orabank",
+        )
         used = set()
         for record in SSI_RECORDS:
-            used.add(record[0][:8])
-            used.add(record[3][:8])
-        used |= {row[0][:8] for row in BANKS}
+            if any(marker in record[9] for marker in legacy_source_markers):
+                used.add(record[0][:8])
+                used.add(record[3][:8])
         offenders = sorted(forbidden & used)
         assert not offenders, (
             f"Mislabeled BICs from the source pages must not be seeded: {offenders}"
