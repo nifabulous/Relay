@@ -1,0 +1,9 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["IOBAINBBXXX", "Indian Overseas Bank", "CAD", "BOFMCAM2XXX", "Bank of Montreal, Canada", null, null, null, null, "Source: https://www.iob.bank.in/hi/nostro (official Indian Overseas Bank Nostro Accounts page; last updated 2026-01-20). BIC-only metadata; the source publishes account details, but they are intentionally omitted, so this row is informational and not selectable.", "2026-01-20", "unverified", null, true, false],
+    ["IOBAINBBXXX", "Indian Overseas Bank", "CHF", "ZKBKCHZZ80A", "Zürcher Kantonalbank, Zurich", null, null, null, null, "Source: https://www.iob.bank.in/hi/nostro (official Indian Overseas Bank Nostro Accounts page; last updated 2026-01-20). BIC-only metadata; the source publishes account details, but they are intentionally omitted, so this row is informational and not selectable.", "2026-01-20", "unverified", null, true, false],
+    ["IOBAINBBXXX", "Indian Overseas Bank", "SEK", "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm", null, null, null, null, "Source: https://www.iob.bank.in/hi/nostro (official Indian Overseas Bank Nostro Accounts page; last updated 2026-01-20). BIC-only metadata; the source publishes account details, but they are intentionally omitted, so this row is informational and not selectable.", "2026-01-20", "unverified", null, true, false]
+  ]
+}
