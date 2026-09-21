@@ -1344,6 +1344,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_bks_bank_20260101.json",
     "seed_ssi_raiffeisenlandesbank_tirol_20260101.json",
     "seed_ssi_unicredit_germany_20260106.json",
+    "seed_ssi_union_bank_india_20250515.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
