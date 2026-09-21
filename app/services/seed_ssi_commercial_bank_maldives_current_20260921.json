@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["CBMVMVMVXXX", "Commercial Bank of Maldives Private Limited", "ACU", "AXISINBBFIC", "Axis Bank Limited, Mumbai", null, null, null, null, "Source: https://www.cbmmv.com/correspond-banks.html (official Commercial Bank of Maldives correspondent-bank page; accessed 2026-09-21). The page explicitly lists the ACU route through Axis Bank; no account number is committed, so this remains informational and non-routable until independently verified.", "2026-09-21", "unverified", null, true, false]
+  ]
+}
