@@ -1333,6 +1333,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_armeconombank_20250501.json",
     "seed_ssi_prime_bank_20250422.json",
     "seed_ssi_meghna_bank_20260921.json",
+    "seed_ssi_dnb_hamburg_20260202.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
