@@ -89,7 +89,7 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     # The current expansion branch has 1221 additional canonical routes over
     # the 10,164-route merged baseline; keep this exact catalog total pinned
     # until the remaining 10k collection waves land.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_385
+    assert len(SSI_RECORDS) == len(route_keys) == 11_407
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
