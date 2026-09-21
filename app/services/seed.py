@@ -1367,6 +1367,7 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_iob_current_deltas_20260120.json",
     "seed_ssi_basic_bank_current_20260720.json",
     "seed_ssi_bank_of_baroda_treasury_20260921.json",
+    "seed_ssi_indian_bank_ibu_current_20260907.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
