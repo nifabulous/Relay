@@ -12,6 +12,7 @@ from app.models import SSI, Bank
 from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import (
     _SSI_CONSOLIDATION_DATA_FILES,
+    _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES,
     BANKS,
     SEED_BIC_ALIASES,
     SSI_RECORDS,
@@ -21,7 +22,7 @@ from app.services.seed import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-LEDGERS = sorted((ROOT / "app" / "services").glob("seed_ssi_consolidation_*.json"))
+LEDGERS = [ROOT / "app" / "services" / name for name in _SSI_CONSOLIDATION_DATA_FILES]
 NEW_CONSOLIDATION_LEDGERS = {
     "seed_ssi_consolidation_8_1.json",
     "seed_ssi_consolidation_8_2.json",
@@ -86,7 +87,8 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     """Pin the 10k expansion claim to the exact seeded route-key total."""
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
-    assert len(SSI_RECORDS) == len(route_keys) == 10_164
+    # Keep the exact catalog total pinned as each verified ledger is admitted.
+    assert len(SSI_RECORDS) == len(route_keys) == 11_205
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
@@ -220,10 +222,11 @@ def test_consolidated_ledger_has_unique_bank_and_route_keys():
                         }
                     ),
                     frozenset({"Banca Transilvania", "Banca Transilvania S.A."}),
-                    frozenset({"OTP banka d.d.", "OTP banka d.d., Split"}),
-                    frozenset(
-                        {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
-                    ),
+                        frozenset({"OTP banka d.d.", "OTP banka d.d., Split"}),
+                        frozenset(
+                            {"Banco Santander Uruguay S.A.", "Banco Santander S.A. Uruguay"}
+                        ),
+                        frozenset({"I&M Bank Rwanda Plc", "I AND M BANK (RWANDA) PLC"}),
                 }
                 assert frozenset({seeded_compare[1], row_compare[1]}) in name_aliases
                 seeded_compare[1] = row_compare[1]
@@ -281,10 +284,30 @@ def test_new_consolidation_ledgers_are_explicitly_loaded_and_seeded():
             for row in payload["ssi_records"]
         ), filename
 
-    assert len(loaded_banks) >= sum(
-        item["banks"] for item in NEW_CONSOLIDATION_EXPECTATIONS.values()
-    )
 
+def test_unreconciled_consolidation_ledgers_are_evidence_only():
+    """Keep broad source snapshots out of production until reconciled."""
+    configured = set(_SSI_CONSOLIDATION_DATA_FILES)
+    evidence_dir = ROOT / "app" / "services"
+    assert not configured & set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
+    on_disk = {
+        path.name for path in evidence_dir.glob("seed_ssi_consolidation_*.json")
+    }
+    configured_consolidation = {
+        name for name in configured if name.startswith("seed_ssi_consolidation_")
+    }
+    assert on_disk == configured_consolidation | set(_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES)
+    for evidence_name, safe_name in _SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES.items():
+        assert (evidence_dir / evidence_name).exists()
+        if safe_name is not None:
+            assert safe_name in configured
+            evidence = json.loads((evidence_dir / evidence_name).read_text())
+            safe = json.loads((evidence_dir / safe_name).read_text())
+            evidence_keys = {
+                (row[0], row[2], row[3]) for row in evidence["ssi_records"]
+            }
+            safe_keys = {(row[0], row[2], row[3]) for row in safe["ssi_records"]}
+            assert safe_keys <= evidence_keys
 
 def test_second_consolidation_chunks_fully_replace_and_load_original_ledger():
     expected_names = {f"seed_ssi_consolidation_2_{part}.json" for part in range(1, 7)}

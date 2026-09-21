@@ -1,0 +1,25 @@
+{
+  "wave": "ssi-central-asia-eurasian-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_central_asia_eurasian.json",
+  "scope": {
+    "region": "Central Asia",
+    "route_count": 24,
+    "beneficiary_count": 1,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"],
+    "excluded_route_count": 3,
+    "exclusion_reason": "Russian correspondent-bank rows were intentionally excluded from the BIC-only expansion ledger."
+  },
+  "sources": [
+    {
+      "url": "https://eubank.kz/en/correspondent-accounts",
+      "beneficiary_bic": "EURIKZKAXXX",
+      "beneficiary_name": "Eurasian Bank JSC",
+      "route_count": 24,
+      "published_scope_count": 27,
+      "excluded_route_count": 3
+    }
+  ]
+}

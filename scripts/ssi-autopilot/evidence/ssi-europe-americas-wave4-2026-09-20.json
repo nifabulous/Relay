@@ -1,0 +1,106 @@
+{
+  "wave": "europe-americas-wave4-20260920",
+  "source_snapshot": {
+    "route_count": 19,
+    "new_route_count": 19,
+    "raw_accounts_committed": false,
+    "bic_only": true
+  },
+  "scope": {
+    "included_route_count": 19,
+    "new_route_count": 19,
+    "regions": [
+      "Europe"
+    ],
+    "notes": "Official current Raiffeisenbank Czech correspondent-bank page; BIC-only non-routable rows."
+  },
+  "sources": [
+    {
+      "beneficiary_bic": "RZBCCZPPXXX",
+      "url": "https://www.rb.cz/o-nas/kontakty/korespondencni-banky",
+      "as_of": "2026-09-20",
+      "status": "unverified",
+      "route_count": 19
+    }
+  ],
+  "routes_by_beneficiary": {
+    "RZBCCZPPXXX": [
+      {
+        "currency": "EUR",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "SCBLDEFFXXX"
+      },
+      {
+        "currency": "AUD",
+        "int_bic": "CTBAAU2SXXX"
+      },
+      {
+        "currency": "CAD",
+        "int_bic": "CIBCCATTXXX"
+      },
+      {
+        "currency": "CHF",
+        "int_bic": "UBSWCHZH80A"
+      },
+      {
+        "currency": "CNY",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "DKK",
+        "int_bic": "DABADKKKXXX"
+      },
+      {
+        "currency": "GBP",
+        "int_bic": "BARCGB22XXX"
+      },
+      {
+        "currency": "HUF",
+        "int_bic": "UBRTHUHBXXX"
+      },
+      {
+        "currency": "JPY",
+        "int_bic": "MHCBJPJTXXX"
+      },
+      {
+        "currency": "NOK",
+        "int_bic": "DNBANOKKXXX"
+      },
+      {
+        "currency": "NZD",
+        "int_bic": "ANZBNZ22058"
+      },
+      {
+        "currency": "PLN",
+        "int_bic": "BPKOPLPWXXX"
+      },
+      {
+        "currency": "RON",
+        "int_bic": "RZBRROBUXXX"
+      },
+      {
+        "currency": "SEK",
+        "int_bic": "ESSESESSXXX"
+      },
+      {
+        "currency": "TRY",
+        "int_bic": "RZBAATWWXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "SCBLUS33XXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "BOFAUS3NXXX"
+      },
+      {
+        "currency": "USD",
+        "int_bic": "RZBAATWWXXX"
+      }
+    ]
+  }
+}

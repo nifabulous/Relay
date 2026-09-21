@@ -1,0 +1,22 @@
+{
+  "wave": "ssi-africa-mena-10k-followup-malawi-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena_followup_malawi.json",
+  "scope": {
+    "region": "Southern Africa (Malawi)",
+    "route_count": 9,
+    "beneficiary_count": 1,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"]
+  },
+  "sources": [
+    {
+      "url": "https://www.natbank.co.mw/about-us/correspondent-banks",
+      "beneficiary_bic": "NBMAMWMWXXX",
+      "beneficiary_name": "National Bank of Malawi Plc",
+      "beneficiary_bic_source": "https://www.natbank.co.mw/publications/annual-reports/309-annual-report-2022/file",
+      "route_count": 9
+    }
+  ]
+}

@@ -238,6 +238,7 @@ BANKS = [
     ("SMBCINDDXXX", "SMBC New Delhi", "IN", "New Delhi", "INR"),
     ("ADCBAEAAXXX", "Abu Dhabi Commercial Bank", "AE", "Abu Dhabi", "AED"),
     ("BCMRMXMMCOR", "BBVA Bancomer SA Mexico", "MX", "Mexico City", "MXN"),
+    ("BCMRMXMMXXX", "BBVA Mexico", "MX", "Mexico City", "MXN"),
     ("BKNZNZ22XXX", "Bank of New Zealand", "NZ", "Wellington", "NZD"),
     ("BPKOPLPWXXX", "PKO Bank Polski SA", "PL", "Warsaw", "PLN"),
     ("CEKOCZPPXXX", "Ceskoslovenska Obchodni Banka", "CZ", "Prague", "CZK"),
@@ -1280,7 +1281,63 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_consolidation_9_europe_americas_techventures.json",
     "seed_ssi_consolidation_9_europe_americas_bnp_poland.json",
     "seed_ssi_consolidation_9_europe_americas_dsk.json",
+    "seed_ssi_consolidation_10_europe_americas_wave3.json",
+    "seed_ssi_consolidation_10_europe_americas_wave4.json",
+    "seed_ssi_consolidation_10_europe_americas_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_mashreq.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_safe.json",
+    "seed_ssi_consolidation_10_asia_pacific.json",
+    "seed_ssi_consolidation_10_india_sri_lanka.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch2.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch3.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch4.json",
+    "seed_ssi_consolidation_10_india_sri_lanka_batch6.json",
+    "seed_ssi_consolidation_11_india_pakistan.json",
+    "seed_ssi_consolidation_13_usbank_fx.json",
+    "seed_ssi_consolidation_14_usbank_fx_current.json",
+    "seed_ssi_consolidation_15_sunrise_nepal.json",
+    "seed_ssi_consolidation_10_latam_caribbean.json",
+    "seed_ssi_consolidation_10_central_asia_eurasian.json",
+    "seed_ssi_consolidation_10_central_asia_shinhan.json",
+    "seed_ssi_deutsche_frankfurt_20260407.json",
+    "seed_ssi_deutsche_pakistan_20260920.json",
+    "seed_ssi_deutsche_portugal_20251001.json",
+    "seed_ssi_deutsche_singapore_international_asia_20211213.json",
+    "seed_ssi_deutsche_london_cash_equities_20251101.json",
+    "seed_ssi_deutsche_frankfurt_cash_equities_20251101.json",
+    "seed_ssi_deutsche_frankfurt_money_markets_20260116.json",
+    "seed_ssi_deutsche_new_york_money_markets_20250203.json",
+    "seed_ssi_deutsche_hong_kong_money_markets_20250203.json",
+    "seed_ssi_deutsche_singapore_money_markets_20250203.json",
+    "seed_ssi_deutsche_amsterdam_cash_management_20260102.json",
+    "seed_ssi_deutsche_taipei_20200720.json",
+    "seed_ssi_deutsche_ho_chi_minh_20250408.json",
+    "seed_ssi_deutsche_tokyo_derivatives_20200817.json",
+    "seed_ssi_deutsche_bangkok_20210322.json",
+    "seed_ssi_deutsche_sydney_20250526.json",
+    "seed_ssi_deutsche_mumbai_20201116.json",
+    "seed_ssi_deutsche_jakarta_20200720.json",
+    "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
+
+# These full ledgers remain citable evidence, but their reviewed ``*_safe``
+# subsets are the intentionally admitted production inputs until the broader
+# rows receive an independent reconciliation pass.
+_SSI_CONSOLIDATION_EVIDENCE_ONLY_FILES = {
+    "seed_ssi_consolidation_10_africa_mena.json":
+        "seed_ssi_consolidation_10_africa_mena_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_followup_west_20260920.json":
+        "seed_ssi_consolidation_10_africa_mena_followup_west_safe.json",
+    "seed_ssi_consolidation_10_europe_americas.json":
+        "seed_ssi_consolidation_10_europe_americas_safe.json",
+    "seed_ssi_consolidation_10_south_asia_global.json":
+        "seed_ssi_consolidation_10_south_asia_global_safe.json",
+    "seed_ssi_consolidation_10_africa_mena_albaraka_egypt.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_great_lakes.json": None,
+    "seed_ssi_consolidation_10_africa_mena_followup_malawi.json": None,
+    "seed_ssi_consolidation_10_india_sri_lanka_batch5.json": None,
+}
 
 
 _CANONICAL_BIC11_RE = re.compile(r"^[A-Z]{6}[A-Z0-9]{5}$")
@@ -1292,7 +1349,6 @@ _SSI_CONSOLIDATION_BANK_NAMES = {
     "LJBASI2XXXX": "NLB d.d., Ljubljana",
     "OTPVHR2XXXX": "OTP banka d.d.",
 }
-
 
 def _is_canonical_bic11(value):
     return isinstance(value, str) and _CANONICAL_BIC11_RE.fullmatch(value) is not None
@@ -2074,11 +2130,11 @@ def _dedupe_ssi_records(rows):
                 # specific than an older BIC-only consolidation duplicate.
                 # Keep the ledger row only when no account-backed source
                 # supplies the same canonical route.
-                if prior[13] and not row[13]:
+                if len(prior) > 13 and prior[13] and len(row) > 13 and not row[13]:
                     unique[prior_index] = row
                 continue
             if key in _SSI_PREFERRED_NON_BIC_ONLY_KEYS:
-                if prior[13] and not row[13]:
+                if len(prior) > 13 and prior[13] and len(row) > 13 and not row[13]:
                     unique[prior_index] = row
                 # Once the reviewed account-bearing route is selected, an
                 # older availability-only duplicate must not replace it.
@@ -2099,6 +2155,35 @@ SSI_RECORDS = _dedupe_ssi_records([
     # their rows win when an older inline fixture shares a route key.
     *_ssi_consolidation_records(),
     *_ssi_wave8_manifest_records(),
+    # ---- BBVA Mexico correspondent-bank list (official; BIC-only) ----
+    ("BCMRMXMMXXX", "BBVA Mexico", "CAD", "ROYCCAT2XXX", "Royal Bank of Canada, Toronto",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "CHF", "UBSWCHZH80A", "UBS AG, Zurich",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "EUR", "BBVAESMMXXX", "Banco Bilbao Vizcaya Argentaria, Madrid",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "GBP", "NWBKGB2LXXX", "National Westminster Bank PLC, London",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "JPY", "BOTKJPJTXXX", "Bank of Tokyo-Mitsubishi, Tokyo",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "SEK", "ESSESESSXXX", "Skandinaviska Enskilda Banken, Stockholm",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
+    ("BCMRMXMMXXX", "BBVA Mexico", "USD", "CHASUS33XXX", "JPMorgan Chase Bank, New York",
+     None, None, None, None,
+     "Source: https://www.bbva.mx/empresas/productos/comercio-internacional/servicios-al-comercio-exterior/transferencias-internacionales.html (as of 2026-09-20) BIC-level list — no account numbers published; not a selectable settlement instruction. " + _SSI_REAL_NOTE,
+     "2026-09-20", "unverified", None, True, False),
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     # ---- Europe/NW wave 8 (official bank SSI pages; unverified) ----
     ('HANDNO22XXX', 'Handelsbanken Norway', 'CHF', 'UBSWCHZHXXX', 'UBS Switzerland AG Zurich', 'ACCT-91001119', 'ACCT-91001119', 'SHA', 'spot', 'Source: https://handelsbanken.no/business/standard-settlement-instructions (as of 2026-09-19). ' + _SSI_REAL_NOTE, '2026-09-19', 'unverified', None, False, True),
@@ -10090,6 +10175,9 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
     }
     for row in _SSI_CONSOLIDATED_RECORDS:
         route_key = (row[0], row[2], row[3])
+        canonical_row = canonical_by_key.get(route_key, row)
+        if len(canonical_row) != 15:
+            canonical_row = row
         (
             ben_bic,
             ben_name,
@@ -10106,7 +10194,7 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
             verified_by,
             bic_only,
             terms_inferred,
-        ) = canonical_by_key.get(route_key, row)
+        ) = canonical_row
         if route_key not in source_keys:
             continue
         if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:

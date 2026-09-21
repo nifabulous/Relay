@@ -1,0 +1,7 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["DEUTINBBXXX", "Deutsche Bank AG, Mumbai", "USD", "DEUTUS33XXX", "Deutsche Bank AG, New York", null, null, null, null, "Source: https://corporates.db.com/files/documents/legal-resources/Deutsche%20Bank%20Mumbai%20New%20SSI%20List.pdf (effective 2020-11-16; official Deutsche Bank Mumbai SSI PDF). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2020-11-16", "unverified", null, true, false]
+  ]
+}

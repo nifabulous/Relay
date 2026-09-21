@@ -1,0 +1,69 @@
+{
+  "wave": "ssi-africa-mena-10k-2026-09-20",
+  "as_of": "2026-09-20",
+  "ledger_path": "app/services/seed_ssi_consolidation_10_africa_mena.json",
+  "scope": {
+    "region": "Africa and MENA",
+    "route_count": 56,
+    "beneficiary_count": 9,
+    "bic_only": true,
+    "routable": false,
+    "key": ["beneficiary_bic", "currency", "intermediary_bic"]
+  },
+  "sources": [
+    {
+      "url": "https://soharinternational.com/personal-banking/global-transfers-overview/our-financial-institution-partners/",
+      "beneficiary_bic": "BSHROMRUXXX",
+      "beneficiary_name": "Sohar International Bank S.A.O.G.",
+      "route_count": 31
+    },
+    {
+      "url": "https://www.nmbbank.co.tz/investor-relations-nmb/financial-and-regulatory-reports/presentations/category/1-downloads?download=23%3Aswift-application-form",
+      "beneficiary_bic": "NMIBTZTZXXX",
+      "beneficiary_name": "National Microfinance Bank PLC (Tanzania)",
+      "route_count": 10
+    },
+    {
+      "url": "https://www.banknizwa.om/media/3939/ssi-list-bank-nizwa-feb-2023.pdf",
+      "beneficiary_bic": "BNZWOMRXXXX",
+      "beneficiary_name": "Bank Nizwa SAOG",
+      "route_count": 2
+    },
+    {
+      "url": "https://www.afrasiabank.com/en/international/correspondent-banks",
+      "beneficiary_bic": "AFBLMUMUXXX",
+      "beneficiary_name": "AfrAsia Bank Limited",
+      "route_count": 2
+    },
+    {
+      "url": "https://imbank.co.tz/funds-transfer/swift-transfers/",
+      "beneficiary_bic": "IMBLTZTZXXX",
+      "beneficiary_name": "I&M Bank Tanzania Limited",
+      "route_count": 3
+    },
+    {
+      "url": "https://crdbbank.co.bi/en/for-you/ways-to-bank/international-transfer",
+      "beneficiary_bic": "CORUBIBUXXX",
+      "beneficiary_name": "CRDB Bank Burundi S.A.",
+      "route_count": 3
+    },
+    {
+      "url": "https://www.bankofbaroda.sc/services/remittance-facility/cross-border-transfer-swift",
+      "beneficiary_bic": "BARBSCSCXXX",
+      "beneficiary_name": "Bank of Baroda (Seychelles) Limited",
+      "route_count": 2
+    },
+    {
+      "url": "https://www.rmb.co.bw/page/nostro-services-for-foreign-banks",
+      "beneficiary_bic": "FIRNBWGXXXX",
+      "beneficiary_name": "First National Bank of Botswana Limited",
+      "route_count": 2
+    },
+    {
+      "url": "https://zambia.accessbankplc.com/access/media/Media-PDF-Attachment/Bank-Identifier-Code.pdf",
+      "beneficiary_bic": "AZAMZMLUXXX",
+      "beneficiary_name": "Access Bank Zambia Limited",
+      "route_count": 1
+    }
+  ]
+}

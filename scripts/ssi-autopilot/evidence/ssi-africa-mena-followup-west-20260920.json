@@ -1,0 +1,7 @@
+{
+  "scope": {"route_count": 24, "beneficiary_count": 2, "region": "West/Central Africa"},
+  "sources": [
+    {"url": "https://www.accessbankplc.com/AccessBankGroup/media/Documents/Credit-Inflows.pdf", "beneficiary_bic": "ABNGNGLAXXX", "route_count": 6, "official": true},
+    {"url": "https://www.afrilandfirstbank.com/correspondents/", "beneficiary_bic": "CCEICMCXXXX", "route_count": 18, "official": true}
+  ]
+}

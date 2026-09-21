@@ -1,0 +1,343 @@
+{
+  "source_snapshot": {
+    "as_of": "2026-09-20",
+    "candidate_route_count": 66,
+    "route_count": 25
+  },
+  "normalization": {
+    "bic_aliases": {
+      "PNBPUS3NNYC": "PNBPUS33XXX",
+      "NBADAEAAX": "NBADAEAAXXX"
+    },
+    "bic_padding_suffix": "XXX for official 8-character BICs",
+    "bic_normalizations": {
+      "CHASDEFX": "CHASDEFXXXX",
+      "CHASAU2X": "CHASAU2XXXX",
+      "HBZUCHZZ": "HBZUCHZZXXX",
+      "PNBPUS3NNYC": "PNBPUS33XXX",
+      "ANZBA43M": "ANZBA43MXXX",
+      "PNBPGB2L": "PNBPGB2LXXX",
+      "CHASUS33": "CHASUS33XXX",
+      "BKIDGB2L": "BKIDGB2LXXX",
+      "BKIDFRPP": "BKIDFRPPXXX",
+      "BKIDJPJT": "BKIDJPJTXXX",
+      "ANZBAU3M": "ANZBAU3MXXX",
+      "NBADAEAAX": "NBADAEAAXXX",
+      "CIBCCATT": "CIBCCATTXXX",
+      "COBADEFF": "COBADEFFXXX",
+      "DEUTDEFF": "DEUTDEFFXXX",
+      "HSBCHKHH": "HSBCHKHHXXX",
+      "MHCBJPJT": "MHCBJPJTXXX",
+      "ANZBNZ22": "ANZBNZ22XXX",
+      "MIDLGB22": "MIDLGB22XXX",
+      "PUNBGB22": "PUNBGB22XXX",
+      "BARCGB22": "BARCGB22XXX",
+      "HSBCSGSG": "HSBCSGSGXXX",
+      "ESSESESS": "ESSESESSXXX",
+      "BOFAUS3N": "BOFAUS3NXXX",
+      "IRVTUS3N": "IRVTUS3NXXX",
+      "CITIUS33": "CITIUS33XXX",
+      "BKTRUS33": "BKTRUS33XXX",
+      "SCBLUS33": "SCBLUS33XXX",
+      "MRMDUS33": "MRMDUS33XXX"
+    },
+    "invalid_source_rows": [
+      {
+        "source": "https://www.centralbankofindia.co.in/sites/default/files/documents/FORMAT_OF_MESSAGE_AND_NOSTRO_ACCOUNT_DETAILS_FOR.pdf",
+        "beneficiary_bic": "CBININBBOSB",
+        "currency": "AUD",
+        "raw_bic": "ANZBA43M",
+        "normalized_bic": "ANZBA43MXXX"
+      }
+    ],
+    "note": "Rows are BIC-only and non-routable. Existing origin/main keys, duplicate source keys, and 23 PNB rows duplicated by the India/Sri Lanka ledger are excluded; the remaining PNB route uses the canonical PNBPUS33XXX intermediary.",
+    "cross_batch_duplicate_route_count": 23,
+    "cross_batch_duplicate_route_keys": [
+      [
+        "PUNBINBBISB",
+        "AED",
+        "NBADAEAAXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "AUD",
+        "ANZBAU3MXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "CAD",
+        "CIBCCATTXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "EUR",
+        "COBADEFFXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "EUR",
+        "DEUTDEFFXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "EUR",
+        "CHASDEFXXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "HKD",
+        "HSBCHKHHXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "JPY",
+        "MHCBJPJTXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "NZD",
+        "ANZBNZ22XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "GBP",
+        "MIDLGB22XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "GBP",
+        "PUNBGB22XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "GBP",
+        "BARCGB22XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "SGD",
+        "HSBCSGSGXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "SEK",
+        "ESSESESSXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "CHF",
+        "ZKBKCHZZ80A"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "BOFAUS3NXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "IRVTUS3NXXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "CITIUS33XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "BKTRUS33XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "SCBLUS33XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "MRMDUS33XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "CHASUS33XXX"
+      ],
+      [
+        "PUNBINBBISB",
+        "USD",
+        "DBSSSGSGXXX"
+      ]
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://bankofindia.co.in/documents/20121/0/wef%2B01.11.2018_ListofSwiftCodesandNostroAcnos.pdf",
+      "candidate_route_count": 6,
+      "route_count": 6,
+      "excluded_existing_route_count": 0,
+      "excluded_duplicate_route_count": 0,
+      "excluded_invalid_route_count": 0
+    },
+    {
+      "url": "https://pnb.bank.in/Remittance-Money-to-India.html",
+      "candidate_route_count": 25,
+      "route_count": 1,
+      "excluded_existing_route_count": 0,
+      "excluded_duplicate_route_count": 1,
+      "excluded_invalid_route_count": 0,
+      "excluded_cross_batch_route_count": 23
+    },
+    {
+      "url": "https://uat.centralbankofindia.co.in/en/node/225415",
+      "candidate_route_count": 1,
+      "route_count": 1,
+      "excluded_existing_route_count": 0,
+      "excluded_duplicate_route_count": 0,
+      "excluded_invalid_route_count": 0
+    },
+    {
+      "url": "https://www.centralbankofindia.co.in/sites/default/files/documents/FORMAT_OF_MESSAGE_AND_NOSTRO_ACCOUNT_DETAILS_FOR.pdf",
+      "candidate_route_count": 13,
+      "route_count": 12,
+      "excluded_existing_route_count": 0,
+      "excluded_duplicate_route_count": 0,
+      "excluded_invalid_route_count": 1
+    },
+    {
+      "url": "https://www.jsbl.com/wp-content/uploads/2026/03/Routing-details-of-different-currencies-JS-BANK-updated.pdf",
+      "candidate_route_count": 21,
+      "route_count": 5,
+      "excluded_existing_route_count": 16,
+      "excluded_duplicate_route_count": 0,
+      "excluded_invalid_route_count": 0
+    }
+  ],
+  "route_keys": [
+    [
+      "JSBLPKKAXXX",
+      "CAD",
+      "BOFMCAM2XXX"
+    ],
+    [
+      "JSBLBHBMXXX",
+      "USD",
+      "CHASUS33XXX"
+    ],
+    [
+      "JSBLBHBMXXX",
+      "GBP",
+      "CHASGB2LXXX"
+    ],
+    [
+      "JSBLBHBMXXX",
+      "EUR",
+      "CHASDEFXXXX"
+    ],
+    [
+      "JSBLBHBMXXX",
+      "AED",
+      "BOMLAEADXXX"
+    ],
+    [
+      "CBININBBOSB",
+      "USD",
+      "CITIUS33XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "USD",
+      "SCBLUS33XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "USD",
+      "PNBPUS33XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "USD",
+      "BKTRUS33XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "EUR",
+      "SOGEFRPPXXX"
+    ],
+    [
+      "CBININBBOSB",
+      "EUR",
+      "BARCGB22XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "GBP",
+      "SCBLGB2LXXX"
+    ],
+    [
+      "CBININBBOSB",
+      "GBP",
+      "BARCGB22XXX"
+    ],
+    [
+      "CBININBBOSB",
+      "CAD",
+      "PNBPGB2LXXX"
+    ],
+    [
+      "CBININBBOSB",
+      "CHF",
+      "UBSWCHZH80A"
+    ],
+    [
+      "CBININBBOSB",
+      "JPY",
+      "SCBLJPJTXXX"
+    ],
+    [
+      "CBININBBOSB",
+      "SGD",
+      "SCBLSGSGXXX"
+    ],
+    [
+      "CBININAAXXX",
+      "USD",
+      "SCBLUS33XXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "USD",
+      "CHASUS33XXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "GBP",
+      "BKIDGB2LXXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "EUR",
+      "BKIDFRPPXXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "JPY",
+      "BKIDJPJTXXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "AUD",
+      "ANZBAU3MXXX"
+    ],
+    [
+      "BKIDINBBTRY",
+      "CAD",
+      "TDOMCATTTOR"
+    ],
+    [
+      "PUNBINBBISB",
+      "USD",
+      "PNBPUS33XXX"
+    ]
+  ]
+}
