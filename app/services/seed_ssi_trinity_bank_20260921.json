@@ -1,0 +1,11 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["MPUBCZPPXXX", "TRINITY BANK a.s.", "EUR", "INGBCZPPXXX", "ING Bank N.V., Prague", "ACCT-91012159", "ACCT-91012159", "SHA", "spot", "Source: https://www.trinitybank.cz/download/1947 (official TRINITY BANK a.s. incoming-payment SSI, accessed 2026-09-21). Published IBAN is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["MPUBCZPPXXX", "TRINITY BANK a.s.", "USD", "INGBCZPPXXX", "ING Bank N.V., Prague", "ACCT-91012160", "ACCT-91012160", "SHA", "spot", "Source: https://www.trinitybank.cz/download/1947 (official TRINITY BANK a.s. incoming-payment SSI, accessed 2026-09-21). Published IBAN is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["MPUBCZPPXXX", "TRINITY BANK a.s.", "GBP", "INGBCZPPXXX", "ING Bank N.V., Prague", "ACCT-91012161", "ACCT-91012161", "SHA", "spot", "Source: https://www.trinitybank.cz/download/1947 (official TRINITY BANK a.s. incoming-payment SSI, accessed 2026-09-21). Published IBAN is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["MPUBCZPPXXX", "TRINITY BANK a.s.", "CHF", "INGBCZPPXXX", "ING Bank N.V., Prague", "ACCT-91012162", "ACCT-91012162", "SHA", "spot", "Source: https://www.trinitybank.cz/download/1947 (official TRINITY BANK a.s. incoming-payment SSI, accessed 2026-09-21). Published IBAN is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true],
+    ["MPUBCZPPXXX", "TRINITY BANK a.s.", "CZK", "INGBCZPPXXX", "ING Bank N.V., Prague", "ACCT-91012163", "ACCT-91012163", "SHA", "spot", "Source: https://www.trinitybank.cz/download/1947 (official TRINITY BANK a.s. incoming-payment SSI, accessed 2026-09-21). Published IBAN is masked with a synthetic ACCT value; charge code and value date are inferred.", "2026-09-21", "unverified", null, false, true]
+  ]
+}
