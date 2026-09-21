@@ -1,4 +1,13 @@
 .ssi-quality {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: var(--content-max);
+}
+
+.ssi-quality__content {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-5);
 }
 

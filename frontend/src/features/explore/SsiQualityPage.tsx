@@ -273,6 +273,7 @@ export function SsiQualityPage() {
       </header>
 
       <AsyncRegion
+        className="ssi-quality__content"
         status={quality.isPending ? "loading" : quality.isError ? "error" : "success"}
         loadingLabel="Loading SSI quality snapshot"
         error={quality.error as ApiProblem | null}
