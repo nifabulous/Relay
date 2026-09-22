@@ -160,6 +160,98 @@ textarea:disabled {
   color: var(--color-ink-muted);
 }
 
+/* RelaySelect — shared styling for every Base UI select, including selects
+   rendered through a route-level portal. Feature surfaces may add a class for
+   width or layout, but the control and popup remain legible everywhere. */
+.relay-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.relay-select__trigger:hover,
+.relay-select__trigger[aria-expanded="true"],
+.relay-select__trigger:focus-visible {
+  border-color: var(--color-action);
+}
+
+.relay-select__value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relay-select__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--color-ink-muted);
+}
+
+.relay-select__positioner {
+  z-index: 260;
+  min-width: min(240px, calc(100vw - 2 * var(--space-4)));
+}
+
+.relay-select__popup {
+  max-height: min(280px, calc(100vh - 2 * var(--space-4)));
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+}
+
+.relay-select__popup [role="listbox"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.relay-select__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-strong);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.relay-select__item[data-highlighted] {
+  background: var(--color-action-surface);
+  color: var(--color-action);
+}
+
+.relay-select__item[data-selected] {
+  color: var(--color-action);
+  font-weight: 600;
+}
+
+.relay-select__indicator {
+  flex: 0 0 auto;
+  visibility: hidden;
+}
+
+.relay-select__item[data-selected] .relay-select__indicator {
+  visibility: visible;
+}
+
 /* DESIGN.md typography rule: controls stay ≥16px on mobile so iOS Safari
    does not zoom on focus. */
 @media (max-width: 767px) {

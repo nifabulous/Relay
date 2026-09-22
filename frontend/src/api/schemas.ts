@@ -224,6 +224,79 @@ export const SSIResponseSchema = z
 
 export type SSIResponse = z.infer<typeof SSIResponseSchema>;
 
+const SSIQualityBucketSchema = z
+  .object({
+    label: z.string().catch(""),
+    count: z.coerce.number().int().nonnegative().catch(0),
+  })
+  .passthrough();
+
+const SSIQualityTotalsSchema = z
+  .object({
+    total_rows: z.coerce.number().int().nonnegative().catch(0),
+    instruction_rows: z.coerce.number().int().nonnegative().catch(0),
+    bic_only_rows: z.coerce.number().int().nonnegative().catch(0),
+    terms_inferred_rows: z.coerce.number().int().nonnegative().catch(0),
+    routing_ready_rows: z.coerce.number().int().nonnegative().catch(0),
+    published_rows: z.coerce.number().int().nonnegative().catch(0),
+    unverified_rows: z.coerce.number().int().nonnegative().catch(0),
+    archived_rows: z.coerce.number().int().nonnegative().catch(0),
+    illustrative_rows: z.coerce.number().int().nonnegative().catch(0),
+    stale_rows: z.coerce.number().int().nonnegative().catch(0),
+    missing_source_date_rows: z.coerce.number().int().nonnegative().catch(0),
+    missing_citation_rows: z.coerce.number().int().nonnegative().catch(0),
+    unique_beneficiaries: z.coerce.number().int().nonnegative().catch(0),
+    unique_intermediaries: z.coerce.number().int().nonnegative().catch(0),
+    currencies: z.coerce.number().int().nonnegative().catch(0),
+  })
+  .passthrough();
+
+const SSIQualityQueueItemSchema = z
+  .object({
+    beneficiary_bic: z.string().catch(""),
+    beneficiary_bank_name: safeOptionalString,
+    currency: z.string().catch(""),
+    intermediary_bic: z.string().catch(""),
+    intermediary_bank_name: safeOptionalString,
+    status: z.string().catch("unverified"),
+    bic_only: z.coerce.boolean().catch(false),
+    terms_inferred: z.coerce.boolean().catch(false),
+    as_of: safeOptionalString,
+    age_days: safeOptionalNumber,
+    issues: z.array(z.string()).catch([]),
+  })
+  .passthrough();
+
+export const SSIQualityResponseSchema = z
+  .object({
+    generated_at: z.string().catch(""),
+    stale_after_days: z.coerce.number().int().positive().catch(180),
+    totals: SSIQualityTotalsSchema.catch({
+      total_rows: 0,
+      instruction_rows: 0,
+      bic_only_rows: 0,
+      terms_inferred_rows: 0,
+      routing_ready_rows: 0,
+      published_rows: 0,
+      unverified_rows: 0,
+      archived_rows: 0,
+      illustrative_rows: 0,
+      stale_rows: 0,
+      missing_source_date_rows: 0,
+      missing_citation_rows: 0,
+      unique_beneficiaries: 0,
+      unique_intermediaries: 0,
+      currencies: 0,
+    }),
+    freshness: z.array(SSIQualityBucketSchema).catch([]),
+    queue: z.array(SSIQualityQueueItemSchema).catch([]),
+    disclaimer: z.string().catch(""),
+  })
+  .passthrough();
+
+export type SSIQualityResponse = z.infer<typeof SSIQualityResponseSchema>;
+export type SSIQualityQueueItem = z.infer<typeof SSIQualityQueueItemSchema>;
+
 /* ------------------------------------------------------------------ *
  * Verification of Payee (VoP)
  * ------------------------------------------------------------------ */

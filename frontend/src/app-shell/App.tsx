@@ -12,6 +12,7 @@ import { track } from "../lib/analytics/analytics";
 const OverviewPage = lazy(() => import("../features/overview/OverviewPage").then(m => ({ default: m.OverviewPage })));
 const ExplorePage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.ExplorePage })));
 const AtlasPage = lazy(() => import("../features/explore/AtlasPage").then(m => ({ default: m.AtlasPage })));
+const SsiQualityPage = lazy(() => import("../features/explore/SsiQualityPage").then(m => ({ default: m.SsiQualityPage })));
 const BankDirectoryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.BankDirectoryPage })));
 const SchemesPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.SchemesPage })));
 const GlossaryPage = lazy(() => import("../features/explore/ExplorePage").then(m => ({ default: m.GlossaryPage })));
@@ -72,6 +73,7 @@ export function App() {
             <Route path="learn/:moduleId" element={<Suspense fallback={<PageLoader destination="Learn" />}><LearnModulePage /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={<PageLoader destination="Explore" />}><ExplorePage /></Suspense>} />
               <Route path="explore/atlas" element={<Suspense fallback={<PageLoader destination="Correspondent Atlas" />}><AtlasPage /></Suspense>} />
+              <Route path="explore/ssi-quality" element={<Suspense fallback={<PageLoader destination="SSI data quality" />}><SsiQualityPage /></Suspense>} />
               <Route path="explore/banks" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDirectoryPage /></Suspense>} />
               <Route path="explore/banks/:bic" element={<Suspense fallback={<PageLoader destination="Bank Directory" />}><BankDetailRoute /></Suspense>} />
               <Route path="explore/schemes" element={<Suspense fallback={<PageLoader destination="Payment Schemes" />}><SchemesPage /></Suspense>} />
