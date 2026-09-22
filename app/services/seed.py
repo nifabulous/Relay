@@ -1318,6 +1318,15 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_sydney_20250526.json",
     "seed_ssi_deutsche_mumbai_20201116.json",
     "seed_ssi_deutsche_jakarta_20200720.json",
+    "seed_ssi_basler_kantonalbank_20250801.json",
+    "seed_ssi_bank_cler_20260325.json",
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json",
+    "seed_ssi_bankhaus_spaengler_20250301.json",
+    "seed_ssi_bks_bank_20260101.json",
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json",
+    "seed_ssi_unicredit_germany_20260106.json",
+    "seed_ssi_nrw_bank_20260729.json",
+    "seed_ssi_rbsi_emirates_20260921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 

@@ -88,7 +88,31 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     # Keep the exact catalog total pinned as each verified ledger is admitted.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_205
+    assert len(SSI_RECORDS) == len(route_keys) == 11_565
+
+
+def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
+    """Keep the newly admitted European and RBSI ledgers bounded and citable."""
+    batch_files = {
+        "seed_ssi_basler_kantonalbank_20250801.json": 32,
+        "seed_ssi_bank_cler_20260325.json": 22,
+        "seed_ssi_raiffeisenverband_salzburg_20250501.json": 28,
+        "seed_ssi_bankhaus_spaengler_20250301.json": 15,
+        "seed_ssi_bks_bank_20260101.json": 20,
+        "seed_ssi_raiffeisenlandesbank_tirol_20260101.json": 25,
+        "seed_ssi_unicredit_germany_20260106.json": 47,
+        "seed_ssi_nrw_bank_20260729.json": 14,
+        "seed_ssi_rbsi_emirates_20260921.json": 157,
+    }
+    rows = []
+    for filename, expected_count in batch_files.items():
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        assert len(payload["ssi_records"]) == expected_count
+        rows.extend(payload["ssi_records"])
+
+    assert len(rows) == 360
+    assert len({(row[0], row[2], row[3]) for row in rows}) == 360
+    assert all(row[9].startswith("Source: https://") for row in rows)
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
