@@ -188,6 +188,58 @@ def test_continuous_20260922_rows_cannot_enter_route_selection():
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
 
 
+def test_rbsi_emirates_review_companion_covers_large_ledger():
+    """Keep a compact, inspectable companion aligned with the large ledger."""
+    ledger = json.loads(
+        (ROOT / "app" / "services" / "seed_ssi_rbsi_emirates_20260921.json").read_text()
+    )
+    companion = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-rbsi-emirates-20260921-review.json"
+        ).read_text()
+    )
+    rows = ledger["ssi_records"]
+
+    assert companion["ledger"] == "app/services/seed_ssi_rbsi_emirates_20260921.json"
+    assert companion["record_count"] == len(rows) == len(companion["routes"])
+    assert companion["sources"] == [
+        {
+            "url": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+            "as_of": "2023-12-07",
+        },
+        {
+            "url": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+            "as_of": "2026-09-21",
+        },
+    ]
+    assert len({tuple(route) for route in companion["routes"]}) == len(rows)
+
+    beneficiaries = companion["beneficiaries"]
+    intermediaries = companion["intermediaries"]
+    sources = companion["sources"]
+    note_profiles = companion["note_profiles"]
+    flags = companion["flags"]
+    for row, route in zip(rows, companion["routes"]):
+        beneficiary_index, currency, intermediary_index, source_index, note_index = route
+        assert beneficiaries[beneficiary_index] == {"bic": row[0], "name": row[1]}
+        assert currency == row[2]
+        assert intermediaries[intermediary_index] == {"bic": row[3], "name": row[4]}
+        assert row[9].startswith(f"Source: {sources[source_index]['url']} ")
+        assert row[10] == sources[source_index]["as_of"]
+        assert row[9].endswith(note_profiles[note_index])
+        assert {
+            "status": row[11],
+            "verified_by": row[12],
+            "bic_only": row[13],
+            "terms_inferred": row[14],
+            "settlement_fields_null": all(value is None for value in row[5:9]),
+        } == flags
+
+
 def test_raiffeisenverband_salzburg_correspondent_names_match_bics():
     """Keep the two South African correspondent identities aligned with BICs."""
     expected_names = {
