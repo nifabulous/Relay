@@ -52,6 +52,53 @@ NEW_CONSOLIDATION_EXPECTATIONS = {
     },
 }
 
+CONTINUOUS_20260922_EXPECTATIONS = {
+    "seed_ssi_basler_kantonalbank_20250801.json": {
+        "source": "https://www.bkb.ch/de/-/media/bkb/website/pdf/internationale-abkommen/standard-settlement-instructions.pdf?hash=1791F7FB8B8F5B240CC258A6681FB289&sc_lang=de",
+        "as_of": "2025-08-01",
+    },
+    "seed_ssi_bank_cler_20260325.json": {
+        "source": "https://www.cler.ch/-/media/files/bc/geschaeftskunden/regulatory-and-compliance/ssi-bank-cler-inkl,-d-,-cutoff.pdf",
+        "as_of": "2026-03-25",
+    },
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json": {
+        "source": "https://www.raiffeisen.at/resources/rvs/rvs/meine-bank/investor-relations/english-documents/25-05ssi_neu.pdf",
+        "as_of": "2025-05-01",
+    },
+    "seed_ssi_bankhaus_spaengler_20250301.json": {
+        "source": "https://www.spaengler.at/fileadmin/user_upload/pdfs/spaengler-Standard-Settlement-Instructions.pdf",
+        "as_of": "2025-03-01",
+    },
+    "seed_ssi_bks_bank_20260101.json": {
+        "source": "https://www.bks.at/mbxs8qn54zwj/ys3sAPx3q95opyRpSnTZB/5139f3550dad66c789c4bf0ae8debd58/Currency_BIC_Financial_Institution.pdf_01.2026.pdf",
+        "as_of": "2026-01-01",
+    },
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json": {
+        "source": "https://www.raiffeisen.at/tirol/rlb/de/meine-bank/investor-relations/compliance/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/27/Standard%20Settlement%20Instructions.pdf",
+        "as_of": "2026-01-01",
+    },
+    "seed_ssi_unicredit_germany_20260106.json": {
+        "source": "https://www.hypovereinsbank.de/content/dam/hypovereinsbank/unternehmen/pdf/Downloadcenter/SSI-non-Banks-HYVEDEMM-for-FX-MM-Derivatives.pdf",
+        "as_of": "2026-01-06",
+    },
+    "seed_ssi_nrw_bank_20260729.json": {
+        "source": "https://www.nrwbank.de/.galleries/downloads/Rechtliche-Grundlagen/NRW.BANK-SSI_MM_FX_Derivatives-DealsI.pdf",
+        "as_of": "2026-07-29",
+    },
+    "seed_ssi_rbsi_emirates_20260921.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+}
+
 
 def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
@@ -108,11 +155,53 @@ def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
     for filename, expected_count in batch_files.items():
         payload = json.loads((ROOT / "app" / "services" / filename).read_text())
         assert len(payload["ssi_records"]) == expected_count
+        expected = CONTINUOUS_20260922_EXPECTATIONS[filename]
+        expected_sources = expected.get("sources", [expected])
         rows.extend(payload["ssi_records"])
+        assert all(
+            any(
+                row[9].startswith(f"Source: {source['source']} ")
+                and row[10] == source["as_of"]
+                for source in expected_sources
+            )
+            for row in payload["ssi_records"]
+        )
 
     assert len(rows) == 360
     assert len({(row[0], row[2], row[3]) for row in rows}) == 360
-    assert all(row[9].startswith("Source: https://") for row in rows)
+    assert all(row[11] == "unverified" and row[12] is None for row in rows)
+    assert all(row[13] and not row[14] for row in rows)
+    assert all(
+        all(row[position] is None for position in range(5, 9))
+        for row in rows
+    )
+
+
+def test_continuous_20260922_rows_cannot_enter_route_selection():
+    """Redacted accounts and inferred terms must remain informational only."""
+    rows = [
+        row
+        for filename in CONTINUOUS_20260922_EXPECTATIONS
+        for row in json.loads((ROOT / "app" / "services" / filename).read_text())["ssi_records"]
+    ]
+
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
+
+
+def test_raiffeisenverband_salzburg_correspondent_names_match_bics():
+    """Keep the two South African correspondent identities aligned with BICs."""
+    expected_names = {
+        "FIRNZAJJXXX": "FirstRand Bank Limited",
+        "ABSAZAJJXXX": "Absa Bank Limited",
+    }
+    payload = json.loads(
+        (ROOT / "app" / "services" / "seed_ssi_raiffeisenverband_salzburg_20250501.json").read_text()
+    )
+    rows = [row for row in payload["ssi_records"] if row[3] in expected_names]
+
+    assert {row[3] for row in rows} == set(expected_names)
+    for row in rows:
+        assert row[4].startswith(expected_names[row[3]])
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():
