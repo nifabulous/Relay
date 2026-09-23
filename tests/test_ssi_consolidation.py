@@ -223,7 +223,27 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
     sources = companion["sources"]
     note_profiles = companion["note_profiles"]
     flags = companion["flags"]
-    for row, route in zip(rows, companion["routes"]):
+    assert companion["canonical_row_fields"] == [
+        "beneficiary_bic",
+        "beneficiary_name",
+        "currency",
+        "intermediary_bic",
+        "intermediary_name",
+        "beneficiary_account",
+        "intermediary_account",
+        "charge_code",
+        "value_date",
+        "notes",
+        "as_of",
+        "status",
+        "verified_by",
+        "bic_only",
+        "terms_inferred",
+    ]
+    assert len(companion["row_digests"]) == len(rows)
+    for row, route, row_digest in zip(
+        rows, companion["routes"], companion["row_digests"]
+    ):
         beneficiary_index, currency, intermediary_index, source_index, note_index = route
         assert beneficiaries[beneficiary_index] == {"bic": row[0], "name": row[1]}
         assert currency == row[2]
@@ -238,6 +258,11 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
             "terms_inferred": row[14],
             "settlement_fields_null": all(value is None for value in row[5:9]),
         } == flags
+        digest_route, digest = row_digest
+        assert digest_route == [row[0], row[2], row[3]]
+        assert digest == hashlib.sha256(
+            json.dumps(row, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
 
 
 def test_raiffeisenverband_salzburg_correspondent_names_match_bics():
