@@ -202,9 +202,22 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
             / "ssi-rbsi-emirates-20260921-review.json"
         ).read_text()
     )
+    digest = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-rbsi-emirates-20260921-digests.json"
+        ).read_text()
+    )
     rows = ledger["ssi_records"]
 
     assert companion["ledger"] == "app/services/seed_ssi_rbsi_emirates_20260921.json"
+    assert companion["digest_file"] == (
+        "scripts/ssi-autopilot/evidence/ssi-rbsi-emirates-20260921-digests.json"
+    )
+    assert digest["ledger"] == companion["ledger"]
     assert companion["record_count"] == len(rows) == len(companion["routes"])
     assert companion["sources"] == [
         {
@@ -223,7 +236,7 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
     sources = companion["sources"]
     note_profiles = companion["note_profiles"]
     flags = companion["flags"]
-    assert companion["canonical_row_fields"] == [
+    assert digest["canonical_row_fields"] == [
         "beneficiary_bic",
         "beneficiary_name",
         "currency",
@@ -240,9 +253,9 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
         "bic_only",
         "terms_inferred",
     ]
-    assert len(companion["row_digests"]) == len(rows)
+    assert len(digest["row_digests"]) == len(rows)
     for row, route, row_digest in zip(
-        rows, companion["routes"], companion["row_digests"]
+        rows, companion["routes"], digest["row_digests"]
     ):
         beneficiary_index, currency, intermediary_index, source_index, note_index = route
         assert beneficiaries[beneficiary_index] == {"bic": row[0], "name": row[1]}
