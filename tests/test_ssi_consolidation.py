@@ -97,6 +97,42 @@ CONTINUOUS_20260922_EXPECTATIONS = {
             },
         ],
     },
+    "seed_ssi_rbsi_emirates_20260921_2.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+    "seed_ssi_rbsi_emirates_20260921_3.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+    "seed_ssi_rbsi_emirates_20260921_4.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
 }
 
 
@@ -149,7 +185,10 @@ def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
         "seed_ssi_raiffeisenlandesbank_tirol_20260101.json": 25,
         "seed_ssi_unicredit_germany_20260106.json": 47,
         "seed_ssi_nrw_bank_20260729.json": 14,
-        "seed_ssi_rbsi_emirates_20260921.json": 157,
+        "seed_ssi_rbsi_emirates_20260921.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_2.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_3.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_4.json": 37,
     }
     rows = []
     for filename, expected_count in batch_files.items():
@@ -190,8 +229,11 @@ def test_continuous_20260922_rows_cannot_enter_route_selection():
 
 def test_rbsi_emirates_review_companion_covers_large_ledger():
     """Keep a compact, inspectable companion aligned with the large ledger."""
-    ledger = json.loads(
-        (ROOT / "app" / "services" / "seed_ssi_rbsi_emirates_20260921.json").read_text()
+    ledger_files = (
+        "seed_ssi_rbsi_emirates_20260921.json",
+        "seed_ssi_rbsi_emirates_20260921_2.json",
+        "seed_ssi_rbsi_emirates_20260921_3.json",
+        "seed_ssi_rbsi_emirates_20260921_4.json",
     )
     companion = json.loads(
         (
@@ -211,13 +253,22 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
             / "ssi-rbsi-emirates-20260921-digests.json"
         ).read_text()
     )
-    rows = ledger["ssi_records"]
+    rows = [
+        row
+        for filename in ledger_files
+        for row in json.loads(
+            (ROOT / "app" / "services" / filename).read_text()
+        )["ssi_records"]
+    ]
+    expected_ledger_files = [f"app/services/{filename}" for filename in ledger_files]
 
     assert companion["ledger"] == "app/services/seed_ssi_rbsi_emirates_20260921.json"
+    assert companion["ledger_files"] == expected_ledger_files
     assert companion["digest_file"] == (
         "scripts/ssi-autopilot/evidence/ssi-rbsi-emirates-20260921-digests.json"
     )
     assert digest["ledger"] == companion["ledger"]
+    assert digest["ledger_files"] == expected_ledger_files
     assert companion["record_count"] == len(rows) == len(companion["routes"])
     assert companion["sources"] == [
         {

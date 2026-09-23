@@ -1,5 +1,11 @@
 {
   "ledger": "app/services/seed_ssi_rbsi_emirates_20260921.json",
+  "ledger_files": [
+    "app/services/seed_ssi_rbsi_emirates_20260921.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_2.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_3.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_4.json"
+  ],
   "purpose": "Compact review companion for the large SSI ledger; account fields are intentionally omitted.",
   "record_count": 157,
   "sources": [

@@ -1327,6 +1327,9 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_unicredit_germany_20260106.json",
     "seed_ssi_nrw_bank_20260729.json",
     "seed_ssi_rbsi_emirates_20260921.json",
+    "seed_ssi_rbsi_emirates_20260921_2.json",
+    "seed_ssi_rbsi_emirates_20260921_3.json",
+    "seed_ssi_rbsi_emirates_20260921_4.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 

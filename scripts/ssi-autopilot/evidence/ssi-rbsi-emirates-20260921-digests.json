@@ -1,5 +1,11 @@
 {
   "ledger": "app/services/seed_ssi_rbsi_emirates_20260921.json",
+  "ledger_files": [
+    "app/services/seed_ssi_rbsi_emirates_20260921.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_2.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_3.json",
+    "app/services/seed_ssi_rbsi_emirates_20260921_4.json"
+  ],
   "purpose": "Per-route SHA-256 attestation over every canonical 15-field ledger row; no account values are exposed.",
   "canonical_row_fields": [
     "beneficiary_bic",
