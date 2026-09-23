@@ -329,6 +329,29 @@ def test_rbsi_emirates_review_companion_covers_large_ledger():
         ).hexdigest()
 
 
+def test_rbsi_and_unicredit_preserve_source_wells_fargo_bic():
+    """Keep the source's Wells Fargo BIC verbatim instead of guessing a mapping."""
+    rbsi_files = (
+        "seed_ssi_rbsi_emirates_20260921.json",
+        "seed_ssi_rbsi_emirates_20260921_2.json",
+        "seed_ssi_rbsi_emirates_20260921_3.json",
+        "seed_ssi_rbsi_emirates_20260921_4.json",
+    )
+    for filename in rbsi_files:
+        rows = json.loads((ROOT / "app" / "services" / filename).read_text())["ssi_records"]
+        usd_rows = [row for row in rows if row[2] == "USD"]
+        assert usd_rows
+        assert all(row[3] == "PNBPUS3NNYC" for row in usd_rows)
+        assert all("source BIC is preserved verbatim" in row[9] for row in usd_rows)
+
+    unicredit_rows = json.loads(
+        (ROOT / "app" / "services" / "seed_ssi_unicredit_germany_20260106.json").read_text()
+    )["ssi_records"]
+    usd_row = next(row for row in unicredit_rows if row[2] == "USD")
+    assert usd_row[3] == "PNBPUS3NNYC"
+    assert "source BIC is preserved verbatim" in usd_row[9]
+
+
 def test_raiffeisenverband_salzburg_correspondent_names_match_bics():
     """Keep the two South African correspondent identities aligned with BICs."""
     expected_names = {

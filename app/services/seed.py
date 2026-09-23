@@ -2126,8 +2126,17 @@ def _dedupe_ssi_records(rows):
         row = tuple(row)
         beneficiary_bic = row[0] + "XXX" if len(row[0]) == 8 else row[0]
         intermediary_bic = row[3] + "XXX" if len(row[3]) == 8 else row[3]
-        beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
-        intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
+        # Preserve source-printed BICs in the current RBSI and UniCredit SSI
+        # documents; their authoritative PDFs provide a complete 11-character
+        # PNBPUS3NNYC identifier, so applying the legacy alias would silently
+        # change the source route key.
+        preserve_source_bic = (
+            "rbsinternational.com" in row[9]
+            or "hypovereinsbank.de" in row[9]
+        )
+        if not preserve_source_bic:
+            beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
+            intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
         if beneficiary_bic != row[0] or intermediary_bic != row[3]:
             row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
         canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
@@ -10072,6 +10081,14 @@ def _apply_seed_bic_aliases(session) -> None:
         # duplicate of the canonical record and should be removed.
         for row in list(session.query(SSI).filter(SSI.intermediary_bic == old_bic)):
             if row in stale_ssi:
+                continue
+            if (
+                "rbsinternational.com" in (row.notes or "")
+                or "hypovereinsbank.de" in (row.notes or "")
+            ):
+                # These current SSI documents print PNBPUS3NNYC as a complete
+                # BIC; do not rewrite their source route key via the legacy
+                # alias used by older ledgers.
                 continue
             canonical = session.query(SSI).filter(
                 SSI.beneficiary_bic == row.beneficiary_bic,

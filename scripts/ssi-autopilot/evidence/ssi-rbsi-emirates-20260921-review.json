@@ -98,7 +98,7 @@
       "name": "Bangkok Bank, Bangkok"
     },
     {
-      "bic": "PNBPUS33XXX",
+      "bic": "PNBPUS3NNYC",
       "name": "Wells Fargo Bank N.A., New York"
     },
     {
@@ -180,7 +180,7 @@
   ],
   "note_profiles": [
     "The document lists this institution as a direct MT103 cover institution for the currency; account numbers are intentionally omitted and this is informational BIC-only metadata. Verify the current SSI before use.",
-    "The document lists this institution as a direct MT103 cover institution for the currency; account numbers are intentionally omitted and this is informational BIC-only metadata. Verify the current SSI before use. The PDF prints the cover BIC as PNBPUS3NNYC; the canonical 11-character form PNBPUS33XXX is used here.",
+    "The document lists this institution as a direct MT103 cover institution for the currency; account numbers are intentionally omitted and this is informational BIC-only metadata. Verify the current SSI before use. The PDF prints the cover BIC as PNBPUS3NNYC; the source BIC is preserved verbatim.",
     "Current page lists this AUD intermediary BIC; account numbers are intentionally omitted and this is informational BIC-only metadata.",
     "Current page lists this JOD intermediary BIC; account numbers are intentionally omitted and this is informational BIC-only metadata."
   ],
