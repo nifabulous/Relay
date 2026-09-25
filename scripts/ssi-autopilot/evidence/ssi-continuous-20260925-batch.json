@@ -35,7 +35,8 @@
     "hash_algorithm": "sha256",
     "source_hash_scope": "raw bank response bytes fetched on 2026-09-25; response bodies are not committed",
     "route_digest_algorithm": "sha256(json.dumps([(beneficiary_bic, currency, intermediary_bic, intermediary_name), ...], ensure_ascii=False, separators=(',', ':')))",
-    "mapping_check": "tests/test_ssi_continuous_20260925.py recomputes every source-group route digest, requires exact ledger/source URL parity, and matches mixed-source groups to the committed sanitized extraction fixture",
+    "mapping_check": "tests/test_ssi_continuous_20260925.py recomputes every source-group route digest, requires exact ledger/source URL parity, matches mixed-source groups to the committed sanitized extraction fixture, and validates the independent retrieval/extraction attestation record",
+    "attestation_record": "scripts/ssi-autopilot/evidence/ssi-continuous-20260925-source-attestation.json",
     "accounts_committed": false
   },
   "safety": {

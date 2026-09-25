@@ -115,6 +115,14 @@ def test_wave21_source_matches_independent_attestation_fixture():
     assert len(expected_route_keys) == 32
 
 
+def test_wave21_regions_snapshot_hash_matches_source_attestation():
+    bank, evidence = _load()
+    snapshot = bank["source_snapshot"]
+    assert snapshot["source"] == evidence["source"]
+    assert snapshot["source_sha256"] == evidence["source_sha256"]
+    assert snapshot["captured_at"] == evidence["source_snapshot"]["captured_at"] == "2026-09-25"
+
+
 def test_wave21_source_attestation_strips_dynamic_state_and_extracts_routes():
     attestation = _load_source_attestation_module()
     html = (

@@ -47,6 +47,11 @@ def _fixture_route_digest(routes):
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def _canonical_digest(value):
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 def test_continuous_20260925_batch_is_loaded_and_source_backed():
     rows = []
     for name in LEDGER_NAMES:
@@ -104,6 +109,23 @@ def test_continuous_20260925_manifest_matches_batch():
     assert set(fixture_sources) == {
         key for key in rows_by_source if key[0] in mixed_ledger_names
     }
+    attestation_path = (
+        ROOT
+        / "scripts"
+        / "ssi-autopilot"
+        / "evidence"
+        / "ssi-continuous-20260925-source-attestation.json"
+    )
+    attestation = json.loads(attestation_path.read_text())
+    assert manifest["source_integrity"]["attestation_record"] == str(
+        attestation_path.relative_to(ROOT)
+    )
+    assert attestation["batch"] == manifest["batch"]
+    attestation_sources = {
+        (source["ledger_file"], source["url"]): source
+        for source in attestation["sources"]
+    }
+    assert set(attestation_sources) == set(manifest_sources)
     for source in manifest["sources"]:
         key = (source["ledger_file"], source["url"])
         rows = rows_by_source[key]
@@ -111,6 +133,14 @@ def test_continuous_20260925_manifest_matches_batch():
         assert source["route_digest"] == _route_digest(rows)
         assert len(source["source_sha256"]) == 64
         assert source["url"] in {_source_url(row) for row in rows}
+        attested = attestation_sources[key]
+        assert attested["as_of"] == source["as_of"]
+        assert attested["source_sha256"] == source["source_sha256"]
+        assert attested["route_count"] == source["route_count"]
+        assert attested["route_digest"] == source["route_digest"]
+        assert attested["retrieval_command"].endswith(
+            f"'{source['url']}' | sha256sum"
+        )
         if key in fixture_sources:
             assert source["source_extract_fixture"] == str(
                 fixture_path.relative_to(ROOT)
@@ -119,6 +149,12 @@ def test_continuous_20260925_manifest_matches_batch():
             assert extracted["as_of"] == source["as_of"]
             assert extracted["source_sha256"] == source["source_sha256"]
             assert extracted["account_values_removed"] is True
+            assert attested["extraction_fixture"] == str(
+                fixture_path.relative_to(ROOT)
+            )
+            assert attested["extraction_fixture_sha256"] == _canonical_digest(
+                extracted
+            )
             assert len(extracted["routes"]) == source["route_count"]
             assert _fixture_route_digest(extracted["routes"]) == source["route_digest"]
             assert [
@@ -140,3 +176,6 @@ def test_continuous_20260925_manifest_matches_batch():
                 )
                 for route in extracted["routes"]
             ]
+        else:
+            assert attested["extraction_fixture"] is None
+            assert attested["extraction_fixture_sha256"] is None
