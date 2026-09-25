@@ -1,0 +1,765 @@
+{
+  "fixture_version": 1,
+  "batch": "continuous-20260925",
+  "purpose": "Sanitized source extraction mapping for mixed-source ledgers; account values and operational fields are omitted.",
+  "sources": [
+    {
+      "ledger_file": "seed_ssi_india_wire_current_20260921.json",
+      "url": "https://www.tjsb.bank.in/forex-services",
+      "as_of": "2026-09-21",
+      "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "CHF",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "EUR",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "GBP",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "JPY",
+          "intermediary_bic": "BKIDJPJTXXX",
+          "intermediary_name": "Bank of India, Tokyo"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "AUD",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "USD",
+          "intermediary_bic": "BKIDUS33XXX",
+          "intermediary_name": "Bank of India, New York"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "USD",
+          "intermediary_bic": "SBINUS33XXX",
+          "intermediary_name": "State Bank of India, New York"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "AUD",
+          "intermediary_bic": "SBINAU2SXXX",
+          "intermediary_name": "State Bank of India, Sydney"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "SGD",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "CAD",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "TJSBINBBXXX",
+          "beneficiary_name": "TJSB Sahakari Bank Ltd",
+          "currency": "EUR",
+          "intermediary_bic": "SBINDEFFXXX",
+          "intermediary_name": "State Bank of India, Frankfurt"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_india_wire_current_20260921.json",
+      "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
+      "as_of": "2026-09-21",
+      "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "J.P. Morgan Chase Bank, New York"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "USD",
+          "intermediary_bic": "PNBPUS33XXX",
+          "intermediary_name": "Wells Fargo Bank, New York"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "USD",
+          "intermediary_bic": "BOFAUS3NXXX",
+          "intermediary_name": "Bank of America, New York"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "AED",
+          "intermediary_bic": "EBILAEADXXX",
+          "intermediary_name": "Emirates NBD PJSC, Dubai"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "CHF",
+          "intermediary_bic": "ZKBKCHZZ80A",
+          "intermediary_name": "Zürcher Kantonalbank, Zurich"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "CAD",
+          "intermediary_bic": "BOFMCAM2XXX",
+          "intermediary_name": "Bank of Montreal, Toronto"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "SGD",
+          "intermediary_bic": "DBSSSGSGXXX",
+          "intermediary_name": "DBS Bank, Singapore"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "SGD",
+          "intermediary_bic": "OCBCSGSGXXX",
+          "intermediary_name": "Oversea-Chinese Banking Corporation, Singapore"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "AUD",
+          "intermediary_bic": "ANZBAU3MXXX",
+          "intermediary_name": "ANZ Bank, Australia"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "HKD",
+          "intermediary_bic": "HSBCHKHHHKH",
+          "intermediary_name": "HSBC Bank, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "SEK",
+          "intermediary_bic": "ESSESESSXXX",
+          "intermediary_name": "Skandinaviska Enskilda Banken, Stockholm"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "ZAR",
+          "intermediary_bic": "NEDSZAJJXXX",
+          "intermediary_name": "Nedbank, Johannesburg"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "SAR",
+          "intermediary_bic": "NCBKSAJEXXX",
+          "intermediary_name": "The National Commercial Bank, Jeddah"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "NZD",
+          "intermediary_bic": "ANZBNZ22XXX",
+          "intermediary_name": "ANZ Bank New Zealand"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "CNY",
+          "intermediary_bic": "HSBCCNSHXXX",
+          "intermediary_name": "HSBC Bank (China)"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "CNH",
+          "intermediary_bic": "HSBCHKHHHKH",
+          "intermediary_name": "HSBC Bank, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "KKBKINBBXXX",
+          "beneficiary_name": "Kotak Mahindra Bank",
+          "currency": "ACU",
+          "intermediary_bic": "SCBLBDDXXXX",
+          "intermediary_name": "Standard Chartered Bank, Dhaka"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_india_wire_current_20260921.json",
+      "url": "https://punjabandsind.bank.in/content/webnri",
+      "as_of": "2026-09-21",
+      "source_sha256": "2bcbc26b2d29068bd28e30fceb91e651c60a82dc19a30233c0cffa4dd2d32318",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "USD",
+          "intermediary_bic": "CITIUS33XXX",
+          "intermediary_name": "Citibank, New York"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "USD",
+          "intermediary_bic": "SCBLUS33XXX",
+          "intermediary_name": "Standard Chartered Bank, New York"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "EUR",
+          "intermediary_bic": "CITIDEFFXXX",
+          "intermediary_name": "Citibank, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "GBP",
+          "intermediary_bic": "CITIGB2LXXX",
+          "intermediary_name": "Citibank, London"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "JPY",
+          "intermediary_bic": "MHCBJPJTXXX",
+          "intermediary_name": "Mizuho Bank, Tokyo"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "CAD",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "Canadian Imperial Bank of Commerce, Toronto"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "AUD",
+          "intermediary_bic": "SBINAU2SXXX",
+          "intermediary_name": "State Bank of India, Sydney"
+        },
+        {
+          "beneficiary_bic": "PSIBINBB005",
+          "beneficiary_name": "Punjab & Sind Bank",
+          "currency": "AED",
+          "intermediary_bic": "BOMLAEADXXX",
+          "intermediary_name": "Mashreq Bank, Dubai"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
+      "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
+      "as_of": "2026-09-21",
+      "source_sha256": "c7e78414cf1747b24f580c69540c8ac11ac5a806a0ef36c3178f025549a67611",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "CIBCBSNBXXX",
+          "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "CIBCBSNBXXX",
+          "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+          "currency": "CAD",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "CIBC, Toronto"
+        },
+        {
+          "beneficiary_bic": "CIBCBSNBXXX",
+          "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+          "currency": "GBP",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "CIBC, Toronto"
+        },
+        {
+          "beneficiary_bic": "CIBCBSNBXXX",
+          "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+          "currency": "EUR",
+          "intermediary_bic": "CHASDEFXXXX",
+          "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
+      "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
+      "as_of": "2026-09-21",
+      "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "USD",
+          "intermediary_bic": "PNBPUS33XXX",
+          "intermediary_name": "Wells Fargo Bank, New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "CAD",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "CIBC, Toronto"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "GBP",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "EUR",
+          "intermediary_bic": "CHASDEFXXXX",
+          "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "AUD",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "CHF",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "DKK",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "HKD",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "INR",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "JPY",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "NOK",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "NZD",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "SEK",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "SGD",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "ZAR",
+          "intermediary_bic": "CHASUS33FXS",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "BBD",
+          "intermediary_bic": "FCIBBBBBXXX",
+          "intermediary_name": "CIBC Caribbean Bank (Barbados) Limited"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "JMD",
+          "intermediary_bic": "FCIBJMKNXXX",
+          "intermediary_name": "CIBC Caribbean Bank (Jamaica) Limited"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "KYD",
+          "intermediary_bic": "FCIBKYKYXXX",
+          "intermediary_name": "CIBC Caribbean Bank (Cayman) Limited"
+        },
+        {
+          "beneficiary_bic": "FCIBBBB2XXX",
+          "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+          "currency": "XCD",
+          "intermediary_bic": "FCIBAGAGXXX",
+          "intermediary_name": "CIBC Caribbean Bank (Barbados) Limited, Antigua"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
+      "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
+      "as_of": "2026-09-21",
+      "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "CAD",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "CIBC, Toronto"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "GBP",
+          "intermediary_bic": "CIBCCATTXXX",
+          "intermediary_name": "CIBC, Toronto"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "EUR",
+          "intermediary_bic": "CHASDEFXXXX",
+          "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "AUD",
+          "intermediary_bic": "ANZBAU3MXXX",
+          "intermediary_name": "Australia and New Zealand Banking Group Limited, Melbourne (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "CHF",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "JPY",
+          "intermediary_bic": "CHASJPJTXXX",
+          "intermediary_name": "J.P. Morgan Chase N.A., Tokyo (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "NOK",
+          "intermediary_bic": "NDEANOKKXXX",
+          "intermediary_name": "Nordea Bank Norge ASA (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "NZD",
+          "intermediary_bic": "WPACNZ2WXXX",
+          "intermediary_name": "Westpac Banking Corp, Wellington (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "SEK",
+          "intermediary_bic": "HANDSESSXXX",
+          "intermediary_name": "Svenska Handelsbanken, Stockholm (via CHASDEFX)"
+        },
+        {
+          "beneficiary_bic": "CIBCKYKCXXX",
+          "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+          "currency": "HKD",
+          "intermediary_bic": "CHASHKHHXXX",
+          "intermediary_name": "J.P. Morgan Chase Bank N.A., Hong Kong (via CHASDEFX)"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
+      "url": "https://www.kdb.uz/rulp/corporates/correspondent-banks",
+      "as_of": "2026-08-25",
+      "source_sha256": "3de1876f29807bb29372937ccf3db93819a6f071bcc027cf74be71904c8bc5b7",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "KODBUZ22XXX",
+          "beneficiary_name": "JSC KDB Bank Uzbekistan",
+          "currency": "EUR",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "KODBUZ22XXX",
+          "beneficiary_name": "JSC KDB Bank Uzbekistan",
+          "currency": "JPY",
+          "intermediary_bic": "MHCBJPJTXXX",
+          "intermediary_name": "Mizuho Bank Ltd., Tokyo"
+        },
+        {
+          "beneficiary_bic": "KODBUZ22XXX",
+          "beneficiary_name": "JSC KDB Bank Uzbekistan",
+          "currency": "INR",
+          "intermediary_bic": "AXISINBBFIC",
+          "intermediary_name": "Axis Bank Ltd., Mumbai"
+        },
+        {
+          "beneficiary_bic": "KODBUZ22XXX",
+          "beneficiary_name": "JSC KDB Bank Uzbekistan",
+          "currency": "EUR",
+          "intermediary_bic": "SOGEFRPPXXX",
+          "intermediary_name": "Societe Generale S.A., Paris"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
+      "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
+      "as_of": "2026-04-08",
+      "source_sha256": "69cc1dce34efac1bdb7590f712051122b84995c3946ae20807dd4c76852c097d",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "EUR",
+          "intermediary_bic": "AZRTAZ22XXX",
+          "intermediary_name": "AZER-TURK BANK OJSC, Baku"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "RUB",
+          "intermediary_bic": "AZRTAZ22XXX",
+          "intermediary_name": "AZER-TURK BANK OJSC, Baku"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "AZRTAZ22XXX",
+          "intermediary_name": "AZER-TURK BANK OJSC, Baku"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "AZN",
+          "intermediary_bic": "AZRTAZ22XXX",
+          "intermediary_name": "AZER-TURK BANK OJSC, Baku"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "CNY",
+          "intermediary_bic": "PCBCCNBJIXJ",
+          "intermediary_name": "China Construction Bank Corporation, Xinjiang"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "EUR",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "GBP",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "CHF",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "HSBKKZKXXXX",
+          "intermediary_name": "Halyk Savings Bank of Kazakhstan, Almaty"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "KZT",
+          "intermediary_bic": "HSBKKZKXXXX",
+          "intermediary_name": "Halyk Savings Bank of Kazakhstan, Almaty"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "CZNBKRSEXXX",
+          "intermediary_name": "Kookmin Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "KRW",
+          "intermediary_bic": "CZNBKRSEXXX",
+          "intermediary_name": "Kookmin Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "EUR",
+          "intermediary_bic": "SOLADESTXXX",
+          "intermediary_name": "Landesbank Baden-Wuerttemberg, Stuttgart"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "EUR",
+          "intermediary_bic": "RZBAATWWXXX",
+          "intermediary_name": "Raiffeisen Bank International AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "RZBAATWWXXX",
+          "intermediary_name": "Raiffeisen Bank International AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "SHBKKRSEXXX",
+          "intermediary_name": "Shinhan Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "KRW",
+          "intermediary_bic": "SHBKKRSEXXX",
+          "intermediary_name": "Shinhan Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "CZCBCN2XXXX",
+          "intermediary_name": "Zhejiang Chouzhou Commercial Bank, Hangzhou"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "CNY",
+          "intermediary_bic": "CZCBCN2XXXX",
+          "intermediary_name": "Zhejiang Chouzhou Commercial Bank, Hangzhou"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "EUR",
+          "intermediary_bic": "ASIJRUMMXXX",
+          "intermediary_name": "Asia-Invest Bank, Moscow"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "RUB",
+          "intermediary_bic": "ASIJRUMMXXX",
+          "intermediary_name": "Asia-Invest Bank, Moscow"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "USD",
+          "intermediary_bic": "ASIJRUMMXXX",
+          "intermediary_name": "Asia-Invest Bank, Moscow"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "CNY",
+          "intermediary_bic": "ASIJRUMMXXX",
+          "intermediary_name": "Asia-Invest Bank, Moscow"
+        },
+        {
+          "beneficiary_bic": "KACHUZ22XXX",
+          "beneficiary_name": "KAPITALBANK, JSCB",
+          "currency": "RUB",
+          "intermediary_bic": "IBAZRUMMXXX",
+          "intermediary_name": "Bank MBA-MOSCOW LLC, Moscow"
+        }
+      ]
+    }
+  ]
+}

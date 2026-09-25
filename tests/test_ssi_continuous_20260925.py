@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from app.services.seed import _SSI_CONSOLIDATION_DATA_FILES, SSI_RECORDS
@@ -22,6 +23,26 @@ LEDGER_NAMES = (
 
 def _route_digest(rows):
     canonical = [(row[0], row[2], row[3], row[4]) for row in rows]
+    payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _source_url(row):
+    match = re.match(r"Source: (https?://[^ ]+)", row[9])
+    assert match, row[9]
+    return match.group(1)
+
+
+def _fixture_route_digest(routes):
+    canonical = [
+        (
+            route["beneficiary_bic"],
+            route["currency"],
+            route["intermediary_bic"],
+            route["intermediary_name"],
+        )
+        for route in routes
+    ]
     payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
 
@@ -55,15 +76,67 @@ def test_continuous_20260925_manifest_matches_batch():
     )
     assert manifest["record_count"] == 350
     assert tuple(manifest["ledger_files"]) == LEDGER_NAMES
-    assert len(manifest["sources"]) == len(LEDGER_NAMES)
+    assert len(manifest["sources"]) == 15
     assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
     assert manifest["source_integrity"]["accounts_committed"] is False
+    rows_by_source = {}
+    for name in LEDGER_NAMES:
+        payload = json.loads((ROOT / "app" / "services" / name).read_text())
+        for row in payload["ssi_records"]:
+            rows_by_source.setdefault((name, _source_url(row)), []).append(row)
+
+    manifest_sources = {
+        (source["ledger_file"], source["url"]): source
+        for source in manifest["sources"]
+    }
+    assert set(manifest_sources) == set(rows_by_source)
+    fixture_path = ROOT / "tests" / "fixtures" / "ssi_continuous_20260925_source_attestation.json"
+    fixture = json.loads(fixture_path.read_text())
+    fixture_sources = {
+        (source["ledger_file"], source["url"]): source
+        for source in fixture["sources"]
+    }
+    mixed_ledger_names = {
+        "seed_ssi_india_wire_current_20260921.json",
+        "seed_ssi_cibc_caribbean_trust_20260921.json",
+        "seed_ssi_kdb_kapitalbank_current_20260921.json",
+    }
+    assert set(fixture_sources) == {
+        key for key in rows_by_source if key[0] in mixed_ledger_names
+    }
     for source in manifest["sources"]:
-        payload = json.loads(
-            (ROOT / "app" / "services" / source["ledger_file"]).read_text()
-        )
-        rows = payload["ssi_records"]
+        key = (source["ledger_file"], source["url"])
+        rows = rows_by_source[key]
         assert source["route_count"] == len(rows)
         assert source["route_digest"] == _route_digest(rows)
         assert len(source["source_sha256"]) == 64
-        assert source["url"] in {row[9].split(" ", 1)[1].split(" ", 1)[0] for row in rows}
+        assert source["url"] in {_source_url(row) for row in rows}
+        if key in fixture_sources:
+            assert source["source_extract_fixture"] == str(
+                fixture_path.relative_to(ROOT)
+            )
+            extracted = fixture_sources[key]
+            assert extracted["as_of"] == source["as_of"]
+            assert extracted["source_sha256"] == source["source_sha256"]
+            assert extracted["account_values_removed"] is True
+            assert len(extracted["routes"]) == source["route_count"]
+            assert _fixture_route_digest(extracted["routes"]) == source["route_digest"]
+            assert [
+                (
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                )
+                for row in rows
+            ] == [
+                (
+                    route["beneficiary_bic"],
+                    route["beneficiary_name"],
+                    route["currency"],
+                    route["intermediary_bic"],
+                    route["intermediary_name"],
+                )
+                for route in extracted["routes"]
+            ]
