@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
   "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
   "as_of": "2026-09-21",
-  "source_sha256": "aef29ea3999d6dac3629214b85545006a30708c990b2c9b0c6be3ee4375ef579",
+  "source_sha256": "c7e78414cf1747b24f580c69540c8ac11ac5a806a0ef36c3178f025549a67611",
   "route_count": 4,
   "route_digest": "a0bdf5fed80c9dc5f7bbb6ee784a0fe6ba4feed819bf4f71cff647463580442d",
   "account_values_removed": true,

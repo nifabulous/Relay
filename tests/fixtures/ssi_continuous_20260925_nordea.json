@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_nordea_current_20250730.json",
   "url": "https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf",
   "as_of": "2025-07-30",
-  "source_sha256": "a3ac5cf1cf84ae0487fb9d34de37fac5cf2c331411c2eee38a3022c79030e232",
+  "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",
   "route_count": 56,
   "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
   "account_values_removed": true,

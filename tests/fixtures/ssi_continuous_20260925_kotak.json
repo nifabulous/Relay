@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_india_wire_current_20260921.json",
   "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
   "as_of": "2026-09-21",
-  "source_sha256": "a2cb49c701dc36369a1ddf85a262bebba3ccff092e31cb92344e2d0628238259",
+  "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
   "route_count": 17,
   "route_digest": "f78cf36b2509da0cc8ba0166821fa3a1f171cb65997d31a81e945a9103fb244a",
   "account_values_removed": true,

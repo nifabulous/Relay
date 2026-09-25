@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_alior_bank_20260921.json",
   "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
   "as_of": "2026-09-21",
-  "source_sha256": "d25f42666947caee3f952fa2633d2e149dcfae9716167e09eaaff93b744f9995",
+  "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
   "route_count": 33,
   "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
   "account_values_removed": true,

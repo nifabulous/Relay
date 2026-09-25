@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
   "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
   "as_of": "2026-09-21",
-  "source_sha256": "e53c35079efe48f99db5741063561dfd5ded6cac1eaeb98d15d6db4390e33499",
+  "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
   "route_count": 19,
   "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
   "account_values_removed": true,

@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
   "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
   "as_of": "2026-09-21",
-  "source_sha256": "caaff4696010343089e548996f5efa14c6a1fed7584325064e47c7a19522d12c",
+  "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
   "route_count": 11,
   "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
   "account_values_removed": true,

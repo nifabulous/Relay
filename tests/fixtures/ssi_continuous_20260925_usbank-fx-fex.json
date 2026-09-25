@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_usbank_fx_fex_20250601.json",
   "url": "https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf",
   "as_of": "2025-06-01",
-  "source_sha256": "317761e5ecaafe05ed4e5acb60e12f7d539e531595987aee9d7ab575de2c2008",
+  "source_sha256": "217a9b0107565133b0e6f5bdba5bd9f4d88fe822efbb9214709c16da2d804d03",
   "route_count": 40,
   "route_digest": "90ff929f3fc004b7c0a66f192d4eaa7a2eb59603e62a6f6d67a9d8234700568f",
   "account_values_removed": true,

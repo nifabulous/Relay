@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_india_wire_current_20260921.json",
   "url": "https://www.tjsb.bank.in/forex-services",
   "as_of": "2026-09-21",
-  "source_sha256": "781edeec3881caa6b96de583890190308120b68d5c1b4137595ac9dbb539a0d8",
+  "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
   "route_count": 11,
   "route_digest": "4752306104253f7176ed2c34d470df6d7c8d5f1c7c20c26e55b9dfbcf84e5b40",
   "account_values_removed": true,

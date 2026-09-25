@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_india_wire_current_20260921.json",
   "url": "https://punjabandsind.bank.in/content/webnri",
   "as_of": "2026-09-21",
-  "source_sha256": "0dffd6d4f00fab0bbed41c58afd6fae30e0f49581b4f78e3b99a0a640d952f34",
+  "source_sha256": "2bcbc26b2d29068bd28e30fceb91e651c60a82dc19a30233c0cffa4dd2d32318",
   "route_count": 8,
   "route_digest": "870a7bfd255df64d3dba2cf880456d6458e0b0e80fc89a4e38b1ebb204264be3",
   "account_values_removed": true,

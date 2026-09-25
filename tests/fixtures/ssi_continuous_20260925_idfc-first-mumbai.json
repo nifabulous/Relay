@@ -4,7 +4,7 @@
   "ledger_file": "seed_ssi_idfc_first_mumbai_20260921.json",
   "url": "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details",
   "as_of": "2026-09-21",
-  "source_sha256": "b8e87632f84c43ba60947e242395defbefc393edd1f3013b8819f4819ae4ba8f",
+  "source_sha256": "f7cb13442c0ea15ae6aa9da3d5e79e0457c1c97b51bd72de94853d3ba45e3ddc",
   "route_count": 41,
   "route_digest": "5cf7d2dcd53cb0c1990a81571258fb8f97daeb1b8a7e921b336f59bbbaa76851",
   "account_values_removed": true,
