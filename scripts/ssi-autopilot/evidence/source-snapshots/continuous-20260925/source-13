@@ -38,7 +38,7 @@
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "CNY",
-      "intermediary_bic": "CCBQHKAXXXX",
+      "intermediary_bic": "CCBQHKAXWHS",
       "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
     },
     {
@@ -94,7 +94,7 @@
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "HKD",
-      "intermediary_bic": "CCBQHKAXXXX",
+      "intermediary_bic": "CCBQHKAXWHS",
       "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
     },
     {

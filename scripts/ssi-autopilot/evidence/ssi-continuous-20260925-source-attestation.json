@@ -4,14 +4,14 @@
   "purpose": "Independently reviewable raw-source retrieval, sanitized snapshot, and route-mapping attestation for the continuous SSI batch.",
   "method": {
     "raw_source_sha256": "sha256 of raw response bytes fetched with set -o pipefail; curl --fail-with-body -L --max-time 60 -sS URL | sha256sum",
-    "source_sha256_scope": "raw bank response bytes fetched on 2026-09-25; response bodies are not committed",
+    "source_sha256_scope": "raw bank response bytes fetched on 2026-09-25 for the committed capture only; response bodies are not committed; the live CI retrieval record intentionally does not claim byte-for-byte parity with this historical capture",
     "tls_certificate_verification": "curl default certificate verification is enabled; no --insecure flag is used.",
     "http_error_policy": "--fail-with-body rejects non-2xx/3xx responses before the response can be accepted as a source snapshot.",
     "route_mapping": "Each ledger row is grouped by the exact Source URL in its citation; route_digest is SHA-256 over the ordered canonical route tuples.",
     "fixture_digest": "For every source group, extraction_fixture_sha256 is SHA-256 over the canonical per-source fixture object (sorted JSON keys).",
     "accounts_committed": false,
     "snapshot_policy": "Every source also has a committed sanitized extraction snapshot whose SHA-256 is recorded separately; regression tests hash each snapshot and match its route tuples to the exact source group.",
-    "trusted_source_fidelity": "The required CI job ssi-continuous-source-fidelity fetches every cited URL independently, parses PDF or HTML text, and checks every recorded currency/BIC route key against the live bank response without retaining source bodies or account values."
+    "trusted_source_fidelity": "The required CI job ssi-continuous-source-fidelity fetches every cited URL independently, checks exact source-local currency/full-BIC rows and beneficiary names, and uploads a workflow-owned route-digest/count retrieval record without retaining source bodies or account values."
   },
   "sources": [
     {
@@ -139,30 +139,13 @@
       "as_of": "2026-09-21",
       "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf' | sha256sum",
       "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
-      "route_count": 19,
-      "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
+      "route_count": 4,
+      "route_digest": "e987fdf8097b7abec01a8a7c3c95759b3a51eee9535a320f296534dd01c8e59f",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_cibc-barbados.json",
-      "extraction_fixture_sha256": "2cab41f9c1e0708100cf22d70cf908177cd5bd60e0206d12c4b71eb4c8898981",
+      "extraction_fixture_sha256": "b894f0ff0b8a6132b1f315f81eda6f9fbbab95492f96352d9d2b53b0a8d94f03",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-7",
-        "sha256": "e53c35079efe48f99db5741063561dfd5ded6cac1eaeb98d15d6db4390e33499",
-        "captured_at": "2026-09-25",
-        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
-      }
-    },
-    {
-      "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
-      "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
-      "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf' | sha256sum",
-      "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
-      "route_count": 11,
-      "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
-      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_cibc-cayman.json",
-      "extraction_fixture_sha256": "03d0535a464ebfe286ba2651d24b836d19dc1f095f4bd57b4fb5794d16f0cd93",
-      "source_snapshot": {
-        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-8",
-        "sha256": "caaff4696010343089e548996f5efa14c6a1fed7584325064e47c7a19522d12c",
+        "sha256": "4aa2e78628544ae4472f2d846a85106ee3cb4e5f9a9ec01848b714a58742939a",
         "captured_at": "2026-09-25",
         "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
       }
@@ -176,7 +159,7 @@
       "route_count": 32,
       "route_digest": "fe3c7b72794b7d3254c6a78d6e3f0442b30a2d91183e337964aa1554a47599f8",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_alior.json",
-      "extraction_fixture_sha256": "d17264c7a9a33f333a3108f3d4df2c953a4e22c5ed8afc735accf8cfec738bd9",
+      "extraction_fixture_sha256": "82537dd72dc138275e175c0450d04c299ca1508f340cad89cd1e396311e4b183",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-9",
         "sha256": "4cfd7321d65e83d180f6b693c462626e41dec3714a25ccdd72a7ca0ce716bd3a",
@@ -190,13 +173,13 @@
       "as_of": "2026-05-27",
       "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf' | sha256sum",
       "source_sha256": "38bf3f3e20c0fad231c02bfa1f485dab22960fe71384916803b38c0c470e3ebd",
-      "route_count": 29,
-      "route_digest": "6792469c95a945c2e61d4264a92b1060f51cb6c17f7e3df0dd91bcb9e05174f1",
+      "route_count": 19,
+      "route_digest": "9a7ce9409a82a1aaa0b4c0f8b2c6d5c1421324df089eb5004c6ce9780db2c2dc",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_bank-frick.json",
-      "extraction_fixture_sha256": "1a29cc3dc6ae8f3364246bfedd202a78d8ad069d9506457e5421f9f8abe21d84",
+      "extraction_fixture_sha256": "0baca1286f0265eb69893981dd14cc162d59fd3bd0ebc265db163f9e7a30afcd",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-10",
-        "sha256": "b328b88e0c8217bca3a80a2715866e9a76cbacd931095758b1799be479cf302d",
+        "sha256": "98ec55bd5ff94f1ff753a4dc14d9088a8cf5fadf3be9c4493a2b70c4a638d2e7",
         "captured_at": "2026-09-25",
         "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
       }
@@ -225,12 +208,12 @@
       "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0' | sha256sum",
       "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
       "route_count": 25,
-      "route_digest": "f1fd9570b48bf6804fde885a1166e1d3fbafd30f50d295565a5f62f47d1bde99",
+      "route_digest": "66ce5467e4ff23cff5c2f375cbf8f94bff9cab5b000004b766ea7c0b6e5a00b0",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_bcge.json",
-      "extraction_fixture_sha256": "751e92539c38da7a9b4a7900b432bfacd53d284667bc875f610bd0fd242c2cc1",
+      "extraction_fixture_sha256": "897809f692c40949318a651f7d21cfcf2ba03bcc09a9a8b13d204e03d9e03b9d",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-13",
-        "sha256": "f2a08ad1aad9900b16bde912b8df49e419dc46fa783d214fbaa68424972ab2b1",
+        "sha256": "b02b1b9905b02f5d68c37da9230657e7b1dcee3d3ef015d866bd1b7e0b25cb1b",
         "captured_at": "2026-09-25",
         "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
       }

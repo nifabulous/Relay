@@ -62,7 +62,7 @@ def test_continuous_20260925_batch_is_loaded_and_source_backed():
         payload = json.loads((ROOT / "app" / "services" / name).read_text())
         rows.extend(payload["ssi_records"])
 
-    assert len(rows) == 297
+    assert len(rows) == 261
     assert len({(row[0], row[2], row[3]) for row in rows}) == len(rows)
     assert all(row[11] == "unverified" and row[12] is None for row in rows)
     assert all(row[13] and not row[14] for row in rows)
@@ -82,9 +82,9 @@ def test_continuous_20260925_manifest_matches_batch():
             / "ssi-continuous-20260925-batch.json"
         ).read_text()
     )
-    assert manifest["record_count"] == 297
+    assert manifest["record_count"] == 261
     assert tuple(manifest["ledger_files"]) == LEDGER_NAMES
-    assert len(manifest["sources"]) == 13
+    assert len(manifest["sources"]) == 12
     assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
     assert manifest["source_integrity"]["accounts_committed"] is False
     assert "immutable sanitized extraction snapshot" in manifest["source_integrity"]["snapshot_policy"]
@@ -158,6 +158,7 @@ def test_continuous_20260925_manifest_matches_batch():
         extracted = fixture_sources[key]
         assert extracted["as_of"] == source["as_of"]
         assert extracted["source_sha256"] == source["source_sha256"]
+        assert extracted["route_digest"] == source["route_digest"]
         assert extracted["account_values_removed"] is True
         assert attested["extraction_fixture"] == str(fixture_path.relative_to(ROOT))
         assert attested["extraction_fixture_sha256"] == _canonical_digest(extracted)

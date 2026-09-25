@@ -6,7 +6,7 @@
   "as_of": "2024-01-01",
   "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
   "route_count": 25,
-  "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
+  "route_digest": "66ce5467e4ff23cff5c2f375cbf8f94bff9cab5b000004b766ea7c0b6e5a00b0",
   "account_values_removed": true,
   "routes": [
     {
@@ -41,7 +41,7 @@
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "CNY",
-      "intermediary_bic": "CCBQHKAXXXX",
+      "intermediary_bic": "CCBQHKAXWHS",
       "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
     },
     {
@@ -97,7 +97,7 @@
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "HKD",
-      "intermediary_bic": "CCBQHKAXXXX",
+      "intermediary_bic": "CCBQHKAXWHS",
       "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
     },
     {

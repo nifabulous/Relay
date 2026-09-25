@@ -5,8 +5,8 @@
   "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
   "as_of": "2026-09-21",
   "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
-  "route_count": 19,
-  "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
+  "route_count": 4,
+  "route_digest": "e987fdf8097b7abec01a8a7c3c95759b3a51eee9535a320f296534dd01c8e59f",
   "account_values_removed": true,
   "routes": [
     {
@@ -36,111 +36,6 @@
       "currency": "EUR",
       "intermediary_bic": "CHASDEFXXXX",
       "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "AUD",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "CHF",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "DKK",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "HKD",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "INR",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "JPY",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "NOK",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "NZD",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "SEK",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "SGD",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "ZAR",
-      "intermediary_bic": "CHASUS33FXS",
-      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "BBD",
-      "intermediary_bic": "FCIBBBBBXXX",
-      "intermediary_name": "CIBC Caribbean Bank (Barbados) Limited"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "JMD",
-      "intermediary_bic": "FCIBJMKNXXX",
-      "intermediary_name": "CIBC Caribbean Bank (Jamaica) Limited"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "KYD",
-      "intermediary_bic": "FCIBKYKYXXX",
-      "intermediary_name": "CIBC Caribbean Bank (Cayman) Limited"
-    },
-    {
-      "beneficiary_bic": "FCIBBBB2XXX",
-      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
-      "currency": "XCD",
-      "intermediary_bic": "FCIBAGAGXXX",
-      "intermediary_name": "CIBC Caribbean Bank (Barbados) Limited, Antigua"
     }
   ]
 }
