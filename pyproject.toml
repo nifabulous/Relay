@@ -21,7 +21,6 @@ dev = [
     "pytest-cov>=4.0",
     "ruff>=0.4",
     "alembic>=1.13",
-    "pypdf>=5.0,<7",
     # tomllib landed in 3.11; the backport keeps the packaging tests running on
     # the 3.10 floor instead of skipping there and still reporting green.
     "tomli>=2.0; python_version < '3.11'",

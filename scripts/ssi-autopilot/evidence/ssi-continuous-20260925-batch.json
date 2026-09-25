@@ -240,7 +240,7 @@
     "attestation_record": "scripts/ssi-autopilot/evidence/ssi-continuous-20260925-source-attestation.json",
     "accounts_committed": false,
     "snapshot_policy": "Every source entry points to an immutable sanitized extraction snapshot whose SHA-256 is recorded separately; the capture hash describes that dated retrieval and account values remain excluded.",
-    "trusted_source_fidelity": "The required CI job ssi-continuous-source-fidelity fetches every cited URL at verification time with normal TLS validation, joins only source-local PDF/HTML rows, checks every exact published currency/full-BIC route and intermediary name, verifies beneficiary BICs where published (or explicitly records name-only source coverage), compares a live route-key digest, and uploads a workflow-owned retrieval record."
+    "trusted_source_fidelity": "No live source-fidelity claim is made for this batch. CI verifies only the committed sanitized snapshots, route digests, and source citations; every row remains explicitly unverified and non-routable until a maintainer-controlled live attestation is added."
   },
   "safety": {
     "status": "unverified",

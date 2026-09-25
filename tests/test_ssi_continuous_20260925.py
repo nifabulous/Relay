@@ -102,7 +102,7 @@ def test_continuous_20260925_manifest_matches_batch():
     assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
     assert manifest["source_integrity"]["accounts_committed"] is False
     assert "immutable sanitized extraction snapshot" in manifest["source_integrity"]["snapshot_policy"]
-    assert "ssi-continuous-source-fidelity" in manifest["source_integrity"]["trusted_source_fidelity"]
+    assert "No live source-fidelity claim" in manifest["source_integrity"]["trusted_source_fidelity"]
     rows_by_source = {}
     for name in LEDGER_NAMES:
         payload = json.loads((ROOT / "app" / "services" / name).read_text())
@@ -134,7 +134,7 @@ def test_continuous_20260925_manifest_matches_batch():
     )
     assert attestation["batch"] == manifest["batch"]
     assert "certificate verification is enabled" in attestation["method"]["tls_certificate_verification"]
-    assert "ssi-continuous-source-fidelity" in attestation["method"]["trusted_source_fidelity"]
+    assert "No live source-fidelity claim" in attestation["method"]["trusted_source_fidelity"]
     assert "-k" not in attestation["method"]["raw_source_sha256"]
     attestation_sources = {
         (source["ledger_file"], source["url"]): source

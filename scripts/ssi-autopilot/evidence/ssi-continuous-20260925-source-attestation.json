@@ -11,7 +11,7 @@
     "fixture_digest": "For every source group, extraction_fixture_sha256 is SHA-256 over the canonical per-source fixture object (sorted JSON keys).",
     "accounts_committed": false,
     "snapshot_policy": "Every source also has a committed sanitized extraction snapshot whose SHA-256 is recorded separately; regression tests hash each snapshot and match its route tuples to the exact source group.",
-    "trusted_source_fidelity": "The required CI job ssi-continuous-source-fidelity fetches every cited URL independently, checks source-local currency/full-BIC rows, intermediary names, beneficiary identity, and a live route-key digest, and uploads a workflow-owned retrieval record without retaining source bodies or account values. Exact-hash sources also require the live response to match the captured bytes; route-only sources are explicitly marked because their HTML changes while route keys remain stable."
+    "trusted_source_fidelity": "No live source-fidelity claim is made for this batch. The attestation records the dated retrieval and sanitized snapshot only; every row remains explicitly unverified and non-routable until a maintainer-controlled live attestation is added."
   },
   "sources": [
     {
