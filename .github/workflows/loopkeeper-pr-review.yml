@@ -267,19 +267,42 @@ jobs:
           name: loopkeeper-review-${{ github.run_id }}
           path: ${{ github.workspace }}/loopkeeper-review-artifact
 
+      - name: Resolve and verify PR-bound review artifact
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-review-artifact
+        run: |
+          set -euo pipefail
+          head_sha="$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')"
+          [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]]
+          [[ -s "$ARTIFACT_DIR/review-metadata.json" && -s "$ARTIFACT_DIR/comment.md" ]]
+          jq -e --argjson pr "$PR_NUMBER" --arg sha "$head_sha" \
+            '(.schema == 1) and (.pr_number == $pr) and (.head_sha == $sha)' \
+            "$ARTIFACT_DIR/review-metadata.json" >/dev/null
+          grep -Fq "<!-- loopkeeper-pr-review:${PR_NUMBER}:${head_sha} -->" \
+            "$ARTIFACT_DIR/comment.md"
+          echo "head_sha=$head_sha" >>"$GITHUB_OUTPUT"
+
       - name: Re-verify fork eligibility before publication
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
           PYTHONPATH: ${{ github.workspace }}/loopkeeper/src
           LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}
         run: |
           set -euo pipefail
-          decision="$(loopkeeper/adapters/github/resolve_pr_eligibility.sh "${{ matrix.pr_number }}" 2>/dev/null || true)"
-          case "$decision" in
-            *"eligible=true"*) ;;
-            *) echo "eligibility was withdrawn before comment publication; refusing to write." >&2; exit 4 ;;
-          esac
+          if ! decision="$(loopkeeper/adapters/github/resolve_pr_eligibility.sh "$PR_NUMBER" 2>/dev/null)"; then
+            echo "eligibility could not be verified before comment publication; refusing to write." >&2
+            exit 4
+          fi
+          if [[ "$decision" != "eligible=true reason="* || "$decision" == *$'\n'* ]]; then
+            echo "eligibility resolver returned an unexpected result; refusing to write." >&2
+            exit 4
+          fi
 
       - name: Publish Loopkeeper review
         working-directory: consumer
@@ -305,7 +328,7 @@ jobs:
           LOOPKEEPER_JOB_TIMEOUT_SECONDS: 1200
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
-          LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           LOOPKEEPER_CI_WORKFLOW_NAME: CI
           LOOPKEEPER_CI_WORKFLOW_FILE: ci.yml
           LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
