@@ -46,6 +46,15 @@ def _fixture_route_digest(routes):
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def _route_key_digest(routes):
+    canonical = sorted(
+        (route["currency"].upper(), re.sub(r"[^A-Z0-9]", "", route["intermediary_bic"].upper()))
+        for route in routes
+    )
+    payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 def _canonical_digest(value):
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
@@ -132,6 +141,13 @@ def test_continuous_20260925_manifest_matches_batch():
         rows = rows_by_source[key]
         assert source["route_count"] == len(rows)
         assert source["route_digest"] == _route_digest(rows)
+        assert source["route_key_digest"] == _route_key_digest(fixture_sources[key]["routes"])
+        assert source["source_hash_policy"] in {"exact", "route-only"}
+        assert source["beneficiary_bic_verification"] in {"published", "name_only_source"}
+        assert source.get("intermediary_name_verification", "published") in {
+            "published",
+            "bic_only_source",
+        }
         assert {row[10] for row in rows} == {source["as_of"]}
         assert len(source["source_sha256"]) == 64
         assert source["url"] in {_source_url(row) for row in rows}
@@ -145,6 +161,12 @@ def test_continuous_20260925_manifest_matches_batch():
         assert attested["source_sha256"] == source["source_sha256"]
         assert attested["route_count"] == source["route_count"]
         assert attested["route_digest"] == source["route_digest"]
+        assert attested["route_key_digest"] == source["route_key_digest"]
+        assert attested["source_hash_policy"] == source["source_hash_policy"]
+        assert attested["beneficiary_bic_verification"] == source["beneficiary_bic_verification"]
+        assert attested.get("intermediary_name_verification", "published") == source.get(
+            "intermediary_name_verification", "published"
+        )
         assert "-k" not in attested["retrieval_command"]
         assert source["url"] in attested["retrieval_command"]
         if "direct official URL response" in snapshot["capture_method"]:

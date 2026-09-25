@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import io
 import json
 import re
@@ -230,9 +231,57 @@ def _beneficiary_name_present(text: str, name: str) -> bool:
     published title/body still names the bank, which is the strongest
     beneficiary identity the source exposes without inferring a BIC.
     """
-    words = [word for word in re.findall(r"[A-Z0-9]+", name.upper()) if len(word) > 2]
-    haystack = _compact(text)
-    return bool(words) and all(_compact(word) in haystack for word in words[:3])
+    return _name_present(text, name)
+
+
+def _name_tokens(name: str) -> list[str]:
+    """Return stable bank-name tokens that survive source abbreviations."""
+    ignored = {
+        "AG",
+        "AS",
+        "LTD",
+        "LIMITED",
+        "SA",
+        "NV",
+        "PJSC",
+        "PLC",
+        "FRANKFURT",
+        "MAIN",
+        "MUMBAI",
+        "ZURICH",
+        "LONDON",
+        "MANILA",
+        "BRUSSELS",
+        "BRUSSEL",
+        "KARACHI",
+        "TORONTO",
+        "TOKYO",
+        "KRAKOW",
+        "NEW",
+        "YORK",
+        "GERMANY",
+        "UAE",
+    }
+    aliases = {"DANMARK": "DENMARK", "DEUTSCH": "GERMAN"}
+    return [
+        aliases.get(token, token)
+        for token in re.findall(r"[A-Z0-9]+", name.upper())
+        if len(token) > 2 and token not in ignored
+    ][:2]
+
+
+def _name_present(value: str, name: str) -> bool:
+    haystack = _compact(value)
+    tokens = _name_tokens(name)
+    if tokens and all(_compact(token) in haystack for token in tokens):
+        return True
+    # Official correspondent tables sometimes use a bank's published
+    # abbreviation instead of its legal name. Keep those substitutions
+    # explicit and bounded; do not fall back to a loose substring match.
+    aliases = {
+        ("OVERSEA", "CHINESE"): ("OCBC",),
+    }
+    return bool(tokens) and any(_compact(alias) in haystack for alias in aliases.get(tuple(tokens), ()))
 
 
 def _route_digest(routes: list[dict]) -> str:
@@ -246,8 +295,16 @@ def _route_digest(routes: list[dict]) -> str:
         for route in routes
     ]
     payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
-    import hashlib
+    return hashlib.sha256(payload.encode()).hexdigest()
 
+
+def _route_key_digest(routes: list[dict]) -> str:
+    """Digest the currency/intermediary keys extracted from live source rows."""
+    canonical = sorted(
+        (route["currency"].upper(), _compact(route["intermediary_bic"]))
+        for route in routes
+    )
+    payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
@@ -263,25 +320,76 @@ def verify(manifest_path: Path) -> dict:
         payload = fetcher._fetch(
             source["url"], user_agent="Mozilla/5.0 (Relay SSI source attestation/2)"
         )
+        live_source_sha256 = hashlib.sha256(payload).hexdigest()
+        if source.get("source_hash_policy") == "exact" and live_source_sha256 != source[
+            "source_sha256"
+        ]:
+            raise RuntimeError(f"{source['url']} changed since its exact source capture")
         text = _source_text(payload)
         contexts = _route_contexts(payload, text, fetcher)
-        missing = [
-            (route["currency"], route["intermediary_bic"])
-            for route in fixture["routes"]
-            if not _route_present(contexts, route["currency"], route["intermediary_bic"])
-        ]
+        matched_routes = []
+        missing = []
+        weak_names = []
+        beneficiary_bics = {_compact(route["beneficiary_bic"]) for route in fixture["routes"]}
+        for route in fixture["routes"]:
+            matches = [
+                context
+                for context in contexts
+                if _route_present([context], route["currency"], route["intermediary_bic"])
+            ]
+            if not matches:
+                missing.append((route["currency"], route["intermediary_bic"]))
+                continue
+            self_route = _compact(route["intermediary_bic"]) in beneficiary_bics
+            if not self_route and not any(
+                _name_present(context, route["intermediary_name"]) for context in matches
+            ):
+                weak_names.append((route["currency"], route["intermediary_bic"]))
+            matched_routes.append(
+                {
+                    "currency": route["currency"],
+                    "intermediary_bic": route["intermediary_bic"],
+                }
+            )
         if missing:
             raise RuntimeError(
                 f"{source['url']} is missing {len(missing)} recorded route keys"
             )
+        if weak_names and source.get("intermediary_name_verification", "published") == "published":
+            raise RuntimeError(
+                f"{source['url']} does not identify {len(weak_names)} recorded intermediary names"
+            )
         beneficiary_names = {route["beneficiary_name"] for route in fixture["routes"]}
         if not all(_beneficiary_name_present(text, name) for name in beneficiary_names):
             raise RuntimeError(f"{source['url']} does not identify every beneficiary bank")
+        beneficiary_bic_mode = source.get("beneficiary_bic_verification", "published")
+        if beneficiary_bic_mode == "published":
+            missing_beneficiary_bics = {
+                route["beneficiary_bic"]
+                for route in fixture["routes"]
+                if not _bic_matches(text, route["beneficiary_bic"])
+            }
+            if missing_beneficiary_bics:
+                raise RuntimeError(
+                    f"{source['url']} does not publish {len(missing_beneficiary_bics)} beneficiary BICs"
+                )
+        elif beneficiary_bic_mode != "name_only_source":
+            raise RuntimeError(f"{source['url']} has unsupported beneficiary BIC verification mode")
+        live_route_key_digest = _route_key_digest(matched_routes)
+        if live_route_key_digest != source["route_key_digest"]:
+            raise RuntimeError(f"{source['url']} live route keys differ from the recorded key digest")
         return {
             "url": source["url"],
             "route_count": len(fixture["routes"]),
             "route_keys_checked": len(fixture["routes"]),
             "route_digest": fixture_digest,
+            "route_key_digest": live_route_key_digest,
+            "live_source_sha256": live_source_sha256,
+            "source_hash_policy": source.get("source_hash_policy", "route-only"),
+            "beneficiary_bic_verification": beneficiary_bic_mode,
+            "intermediary_name_verification": source.get(
+                "intermediary_name_verification", "published"
+            ),
             "beneficiary_names_checked": len(beneficiary_names),
         }
     # The cited sources are independent hosts. Fetching them concurrently keeps
