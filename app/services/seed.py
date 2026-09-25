@@ -1330,6 +1330,17 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_rbsi_emirates_20260921_2.json",
     "seed_ssi_rbsi_emirates_20260921_3.json",
     "seed_ssi_rbsi_emirates_20260921_4.json",
+    # Continuous 2026-09-25 BIC-only source ledgers.
+    "seed_ssi_nordea_current_20250730.json",
+    "seed_ssi_idfc_first_mumbai_20260921.json",
+    "seed_ssi_usbank_fx_fex_20250601.json",
+    "seed_ssi_india_wire_current_20260921.json",
+    "seed_ssi_cibc_caribbean_trust_20260921.json",
+    "seed_ssi_alior_bank_20260921.json",
+    "seed_ssi_bank_frick_20260527_deltas.json",
+    "seed_ssi_kdb_kapitalbank_current_20260921.json",
+    "seed_ssi_bcge_geneva_20240101.json",
+    "seed_ssi_mbh_bank_20241024.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
