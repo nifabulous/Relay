@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -17,6 +18,12 @@ LEDGER_NAMES = (
     "seed_ssi_bcge_geneva_20240101.json",
     "seed_ssi_mbh_bank_20241024.json",
 )
+
+
+def _route_digest(rows):
+    canonical = [(row[0], row[2], row[3], row[4]) for row in rows]
+    payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
 
 
 def test_continuous_20260925_batch_is_loaded_and_source_backed():
@@ -49,3 +56,14 @@ def test_continuous_20260925_manifest_matches_batch():
     assert manifest["record_count"] == 350
     assert tuple(manifest["ledger_files"]) == LEDGER_NAMES
     assert len(manifest["sources"]) == len(LEDGER_NAMES)
+    assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
+    assert manifest["source_integrity"]["accounts_committed"] is False
+    for source in manifest["sources"]:
+        payload = json.loads(
+            (ROOT / "app" / "services" / source["ledger_file"]).read_text()
+        )
+        rows = payload["ssi_records"]
+        assert source["route_count"] == len(rows)
+        assert source["route_digest"] == _route_digest(rows)
+        assert len(source["source_sha256"]) == 64
+        assert source["url"] in {row[9].split(" ", 1)[1].split(" ", 1)[0] for row in rows}
