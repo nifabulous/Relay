@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 from app.models import SSI
-from app.services.routing import _is_routable_ssi
+from app.services.routing import _is_routable_ssi, suggest_from_ssi
 from app.services.seed import SSI_RECORDS
 from app.services.ssi_importer import canonicalize_bic11, ssi_composite_key
 
@@ -220,6 +220,25 @@ def test_wave21_inferred_routes_are_excluded_by_the_selection_guard():
     assert len(rows) == 32
     assert all(row[14] is True for row in rows)
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
+
+
+def test_wave21_qnb_account_backed_exception_stays_out_of_every_selector(
+    db_session_clean,
+):
+    rows = [row for row in SSI_RECORDS if row[0] == "FNNBTRISXXX"]
+    refreshed = next(
+        row for row in rows if row[2] == "EUR" and row[3] == "HYVEDEMMXXX"
+    )
+    assert refreshed[13] is False
+    assert refreshed[5:9] == (
+        "ACCT-91001032",
+        "ACCT-91001032",
+        "SHA",
+        "spot",
+    )
+    assert refreshed[14] is True
+    assert not _is_routable_ssi(_row_to_ssi(refreshed))
+    assert suggest_from_ssi(db_session_clean, "FNNBTRISXXX", "EUR", "DE") == []
 
 
 def test_wave21_manifest_coverage_is_non_vacuous():

@@ -121,6 +121,8 @@ def test_continuous_20260925_manifest_matches_batch():
         attestation_path.relative_to(ROOT)
     )
     assert attestation["batch"] == manifest["batch"]
+    assert "certificate verification is enabled" in attestation["method"]["tls_certificate_verification"]
+    assert "-k" not in attestation["method"]["raw_source_sha256"]
     attestation_sources = {
         (source["ledger_file"], source["url"]): source
         for source in attestation["sources"]
@@ -138,6 +140,7 @@ def test_continuous_20260925_manifest_matches_batch():
         assert attested["source_sha256"] == source["source_sha256"]
         assert attested["route_count"] == source["route_count"]
         assert attested["route_digest"] == source["route_digest"]
+        assert "-k" not in attested["retrieval_command"]
         assert attested["retrieval_command"].endswith(
             f"'{source['url']}' | sha256sum"
         )
