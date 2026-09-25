@@ -186,8 +186,133 @@ jobs:
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
-      post_comments: true
+      # The reusable writer uses a fixed 200k comment-page cap that is too
+      # small for this repository's long-lived PR histories. Keep its review
+      # artifact generation, and publish through the bounded writer below with
+      # the repository's larger operator-configured cap.
+      post_comments: false
     secrets:
       # Loopkeeper is provider-neutral; this repository already holds an
       # OpenAI key for the retired reviewer, so no new secret is needed.
       model_api_key: ${{ secrets.OPENAI_API_KEY }}
+
+  writer:
+    # Publish only after the trusted reusable review has produced its
+    # immutable artifact. The writer has no model secret and re-checks fork
+    # eligibility immediately before the comment mutation.
+    needs: [targets, review]
+    if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
+    steps:
+      - name: Resolve trusted default branch
+        id: roots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          default_branch="$(gh api "repos/${GH_REPO}" --jq '.default_branch')"
+          consumer_sha="$(gh api "repos/${GH_REPO}/git/ref/heads/${default_branch}" --jq '.object.sha')"
+          [[ "$default_branch" =~ ^[A-Za-z0-9._/-]+$ && "$default_branch" != /* && "$default_branch" != *..* ]]
+          [[ "$consumer_sha" =~ ^[0-9a-f]{40}$ ]]
+          {
+            echo "consumer_default_branch=$default_branch"
+            echo "consumer_trusted_sha=$consumer_sha"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Check out consumer at trusted default-branch SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.roots.outputs.consumer_trusted_sha }}
+          path: consumer
+          fetch-depth: 1
+
+      - name: Check out Loopkeeper at immutable release SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: nifabulous/loopkeeper
+          ref: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+          path: loopkeeper
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify trusted checkouts
+        env:
+          CONSUMER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
+          LOOPKEEPER_SHA: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+        run: |
+          set -euo pipefail
+          [[ "$(git -C consumer rev-parse HEAD)" == "$CONSUMER_TRUSTED_SHA" ]]
+          [[ "$(git -C loopkeeper rev-parse HEAD)" == "$LOOPKEEPER_SHA" ]]
+
+      - name: Download immutable review artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: loopkeeper-review-${{ github.run_id }}
+          path: ${{ github.workspace }}/loopkeeper-review-artifact
+
+      - name: Re-verify fork eligibility before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PYTHONPATH: ${{ github.workspace }}/loopkeeper/src
+          LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}
+        run: |
+          set -euo pipefail
+          decision="$(loopkeeper/adapters/github/resolve_pr_eligibility.sh "${{ matrix.pr_number }}" 2>/dev/null || true)"
+          case "$decision" in
+            *"eligible=true"*) ;;
+            *) echo "eligibility was withdrawn before comment publication; refusing to write." >&2; exit 4 ;;
+          esac
+
+      - name: Publish Loopkeeper review
+        working-directory: consumer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LOOPKEEPER_ROOT: ${{ github.workspace }}/loopkeeper
+          PYTHONPATH: ${{ github.workspace }}/loopkeeper/src
+          LOOPKEEPER_REVIEW_ARTIFACT: ${{ github.workspace }}/loopkeeper-review-artifact/comment.md
+          LOOPKEEPER_REVIEW_ENABLED: "true"
+          LOOPKEEPER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
+          LOOPKEEPER_DEFAULT_BRANCH: ${{ steps.roots.outputs.consumer_default_branch }}
+          LOOPKEEPER_MODEL: ${{ vars.LOOPKEEPER_MODEL || 'gpt-5.6-luna' }}
+          LOOPKEEPER_API_STYLE: ${{ vars.LOOPKEEPER_API_STYLE || 'responses' }}
+          LOOPKEEPER_API_BASE_URL: ${{ vars.LOOPKEEPER_API_BASE_URL || '' }}
+          LOOPKEEPER_REASONING_EFFORT: ${{ vars.LOOPKEEPER_REASONING_EFFORT || 'medium' }}
+          LOOPKEEPER_MAX_INPUT_BYTES: ${{ vars.LOOPKEEPER_MAX_INPUT_BYTES || '600000' }}
+          LOOPKEEPER_PR_FILE_MAX_PATCH_BYTES: ${{ vars.LOOPKEEPER_PR_FILE_MAX_PATCH_BYTES || '' }}
+          LOOPKEEPER_PR_FILE_BUDGET_PERCENT: ${{ vars.LOOPKEEPER_PR_FILE_BUDGET_PERCENT || '50' }}
+          LOOPKEEPER_MAX_OUTPUT_TOKENS: ${{ vars.LOOPKEEPER_MAX_OUTPUT_TOKENS || '32000' }}
+          LOOPKEEPER_MAX_OUTPUT_BYTES: ${{ vars.LOOPKEEPER_MAX_OUTPUT_BYTES || '50000' }}
+          LOOPKEEPER_REQUEST_TIMEOUT: ${{ vars.LOOPKEEPER_REQUEST_TIMEOUT || '900' }}
+          LOOPKEEPER_JOB_TIMEOUT_SECONDS: 1200
+          LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
+          LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
+          LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          LOOPKEEPER_CI_WORKFLOW_NAME: CI
+          LOOPKEEPER_CI_WORKFLOW_FILE: ci.yml
+          LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
+          LOOPKEEPER_CONTEXT_PATH: .github/codex/context-files.txt
+          LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}
+          LOOPKEEPER_OPERATOR: "1"
+          LOOPKEEPER_ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-writer-artifacts
+        run: |
+          set -euo pipefail
+          "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"
