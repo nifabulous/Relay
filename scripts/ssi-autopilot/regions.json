@@ -625,7 +625,7 @@
         "IL"
       ],
       "masked_block": 91001000,
-      "note": "2026-09-08 research: Destek Yatırım Bankası A.Ş. (DEYATRIS) publishes a seven-route SSI list in its November 2025 corporate presentation covering USD/EUR/GBP/SAR/CNY/AED; published account identifiers are masked into the reserved Turkey block and charge/value terms are marked inferred. QNB A.Ş. (FNNBTRIS) publishes a current Nostro Account table with 31 account-backed routes across USD/EUR/GBP/AUD/CHF/JPY/CAD/SAR/SEK/DKK/NOK/ZAR/PLN/RUB/QAR/CNH/AED; published account numbers are masked into the reserved Turkey block and charge/value terms are marked inferred. Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
+      "note": "2026-09-25 research: Destek Yatırım Bankası A.Ş. (DEYATRIS) publishes a seven-route SSI list in its November 2025 corporate presentation covering USD/EUR/GBP/SAR/CNY/AED; published account identifiers are masked into the reserved Turkey block and charge/value terms are marked inferred. QNB A.Ş. (FNNBTRIS) publishes a current Nostro Account table with 32 account-backed routes across USD/EUR/GBP/AUD/CHF/JPY/CAD/SAR/SEK/DKK/NOK/ZAR/PLN/RUB/QAR/CNH/AED; published account numbers are masked into the reserved Turkey block and charge/value terms are marked inferred. Akbank (AKBKTRIS) and Yapi Kredi (YAPITRIS) published SSI tables (archived official pages, 2014 and 2008; names + nostro accounts, no BICs — BICs corroborated against the seed registry). Is Bankasi (ISBKTRIS, CHIPS UID 003546 only), Bank Leumi, Bank Hapoalim (POALUS33 verified as NY branch BIC but no published account), and Israel Discount publish no beneficiary SSI lists — NOT SEEDABLE. Defunct/uncorroborated correspondents (Fuji, Dai-Ichi Kangyo, BG Bank, Fortis, Sampo, Bank of Nova Scotia, TD, HVB, Bank Austria, CBK) excluded.",
       "banks": [
         {
           "bic8": "AKBKTRIS",
@@ -991,6 +991,20 @@
             },
             {
               "currency": "EUR",
+              "correspondent": "Unicredit GBMH",
+              "int_bic": "HYVEDEMMXXX",
+              "nostro": "ACCT-91001032",
+              "with_an": "ACCT-91001032",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-25",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
+              "currency": "EUR",
               "correspondent": "Standard Chartered Bank (Germany) GmbH",
               "int_bic": "SCBLDEFFXXX",
               "nostro": "ACCT-91001009",
@@ -1242,7 +1256,7 @@
               "terms_inferred": true
             }
           ],
-          "admitted_record_digest": "8d3d8b1063f25dd7ff9e69aa053a296ac3ca86af75863532d8294d6b2c744e68",
+          "admitted_record_digest": "52b737467aa85d1557d1fc678747157315d441876b87bb96c43a58c5efa8ff46",
           "source_snapshot": {
             "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
             "source_sha256": "b0fed6d2abd084153b7f35028566608691382f1526344892a109729bac08b7fc",

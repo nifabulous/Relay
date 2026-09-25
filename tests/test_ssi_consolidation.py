@@ -171,7 +171,7 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     # Keep the exact catalog total pinned as each verified ledger is admitted.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_915
+    assert len(SSI_RECORDS) == len(route_keys) == 11_916
 
 
 def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
