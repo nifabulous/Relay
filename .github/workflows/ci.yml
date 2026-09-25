@@ -112,6 +112,33 @@ jobs:
           tests/test_ssi_consolidation.py::test_every_route_evidence_file_matches_the_seeded_catalog
           -q
 
+  # Keep the external-source proof reviewable at the exact commit under test:
+  # every source snapshot is hashed and matched to its manifest, attestation,
+  # and sanitized route fixture before this gate can pass.
+  ssi-source-snapshot-verification:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Verify immutable SSI source snapshots and route mappings
+        run: >-
+          python -m pytest
+          tests/test_ssi_continuous_20260925.py::test_continuous_20260925_manifest_matches_batch
+          -q
+
   # The Codex automation scripts are shell, so pytest cannot reach them. This
   # job is what makes the marker-suppression regression test a real gate.
   codex-automation:

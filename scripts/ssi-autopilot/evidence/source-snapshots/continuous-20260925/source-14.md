@@ -1,13 +1,10 @@
 {
-  "fixture_version": 3,
-  "batch": "continuous-20260925",
-  "ledger_file": "seed_ssi_mbh_bank_20241024.json",
-  "url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
-  "as_of": "2024-10-24",
-  "source_sha256": "a57dd1b5b389265448b2bde2d3c1dc33ed0464a0c836d267f115d72b66865c6e",
-  "route_count": 25,
-  "route_digest": "102feafacc4d0d320d12656d46610f4a65bf19bc462dfc5a1fb65197ce85e5ae",
+  "source_url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
+  "captured_at": "2026-09-25",
+  "effective_date": "2024-10-24",
+  "format": "sanitized official-source route extraction",
   "account_values_removed": true,
+  "route_count": 25,
   "routes": [
     {
       "beneficiary_bic": "MKKBHUHBXXX",

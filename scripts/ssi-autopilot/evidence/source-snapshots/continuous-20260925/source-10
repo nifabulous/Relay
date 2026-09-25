@@ -1,13 +1,10 @@
 {
-  "fixture_version": 3,
-  "batch": "continuous-20260925",
-  "ledger_file": "seed_ssi_bank_frick_20260527_deltas.json",
-  "url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
-  "as_of": "2026-05-27",
-  "source_sha256": "b328b88e0c8217bca3a80a2715866e9a76cbacd931095758b1799be479cf302d",
-  "route_count": 29,
-  "route_digest": "6792469c95a945c2e61d4264a92b1060f51cb6c17f7e3df0dd91bcb9e05174f1",
+  "source_url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-05-27",
+  "format": "sanitized official-source route extraction",
   "account_values_removed": true,
+  "route_count": 29,
   "routes": [
     {
       "beneficiary_bic": "BFRILI22XXX",

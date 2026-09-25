@@ -1,13 +1,10 @@
 {
-  "fixture_version": 3,
-  "batch": "continuous-20260925",
-  "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
-  "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
-  "as_of": "2026-04-08",
-  "source_sha256": "d73b86020f4d9e5687e29203ba91c6fe903be05f506e0292d4e949cba7e4f68f",
-  "route_count": 24,
-  "route_digest": "97e2fd496b5f45a7baa3cabdf96d8203ebbd5b3014b167f2579f53e0400ef08b",
+  "source_url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-04-08",
+  "format": "sanitized official-source route extraction",
   "account_values_removed": true,
+  "route_count": 24,
   "routes": [
     {
       "beneficiary_bic": "KACHUZ22XXX",

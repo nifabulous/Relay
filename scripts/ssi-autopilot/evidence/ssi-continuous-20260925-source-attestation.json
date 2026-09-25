@@ -1,181 +1,272 @@
 {
   "batch": "continuous-20260925",
   "generated_at": "2026-09-25",
-  "purpose": "Independently reviewable retrieval and extraction attestation for the continuous SSI batch.",
+  "purpose": "Independently reviewable source-extraction, snapshot, and route-mapping attestation for the continuous SSI batch.",
   "method": {
-    "raw_source_sha256": "sha256 of raw response bytes fetched with set -o pipefail; curl --fail-with-body -L --max-time 60 -sS URL | sha256sum",
-    "source_sha256_scope": "raw bank response bytes fetched on 2026-09-25; response bodies are not committed",
+    "raw_source_sha256": "SHA-256 of each committed sanitized source-extraction snapshot; raw account values are never committed",
+    "source_sha256_scope": "committed sanitized source-extraction bytes captured on 2026-09-25",
     "tls_certificate_verification": "curl default certificate verification is enabled; no --insecure flag is used.",
     "http_error_policy": "--fail-with-body rejects non-2xx/3xx responses before the response can be accepted as a source snapshot.",
     "route_mapping": "Each ledger row is grouped by the exact Source URL in its citation; route_digest is SHA-256 over the ordered canonical route tuples.",
     "fixture_digest": "For every source group, extraction_fixture_sha256 is SHA-256 over the canonical per-source fixture object (sorted JSON keys).",
-    "accounts_committed": false
+    "accounts_committed": false,
+    "snapshot_policy": "The verifier and regression tests hash every committed sanitized snapshot and require exact parity with both the manifest and this attestation; route fixtures are compared to the same source groups."
   },
   "sources": [
     {
       "ledger_file": "seed_ssi_nordea_current_20250730.json",
       "url": "https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf",
       "as_of": "2025-07-30",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf' | sha256sum",
-      "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-0",
+      "source_sha256": "a3ac5cf1cf84ae0487fb9d34de37fac5cf2c331411c2eee38a3022c79030e232",
       "route_count": 56,
       "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_nordea.json",
-      "extraction_fixture_sha256": "c137c431e9594a2ce05f7adebcaff51eff7dddbb65af68b2f2e355ac76e2aba3"
+      "extraction_fixture_sha256": "a9018dada09df5479188943cd3c56ff51219298569ed6755d0ed1d9ea3da3059",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-0",
+        "sha256": "a3ac5cf1cf84ae0487fb9d34de37fac5cf2c331411c2eee38a3022c79030e232",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_idfc_first_mumbai_20260921.json",
       "url": "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details' | sha256sum",
-      "source_sha256": "f7cb13442c0ea15ae6aa9da3d5e79e0457c1c97b51bd72de94853d3ba45e3ddc",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-1",
+      "source_sha256": "b8e87632f84c43ba60947e242395defbefc393edd1f3013b8819f4819ae4ba8f",
       "route_count": 41,
       "route_digest": "5cf7d2dcd53cb0c1990a81571258fb8f97daeb1b8a7e921b336f59bbbaa76851",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_idfc-first-mumbai.json",
-      "extraction_fixture_sha256": "5696186a411c40ccdd31cb3752e1bbcd922dfcaec34c2d5c75fea2b4ce36b023"
+      "extraction_fixture_sha256": "08a1156c6620504e3b1382319b2f8e189997f2424eafd08f723e6bda260cc5cc",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-1",
+        "sha256": "b8e87632f84c43ba60947e242395defbefc393edd1f3013b8819f4819ae4ba8f",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_usbank_fx_fex_20250601.json",
       "url": "https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf",
       "as_of": "2025-06-01",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf' | sha256sum",
-      "source_sha256": "217a9b0107565133b0e6f5bdba5bd9f4d88fe822efbb9214709c16da2d804d03",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-2",
+      "source_sha256": "317761e5ecaafe05ed4e5acb60e12f7d539e531595987aee9d7ab575de2c2008",
       "route_count": 40,
       "route_digest": "90ff929f3fc004b7c0a66f192d4eaa7a2eb59603e62a6f6d67a9d8234700568f",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_usbank-fx-fex.json",
-      "extraction_fixture_sha256": "1afe2b452a2935c43b9a9f6f53b3409cdea880216bb4b2ca16cfb97a09e15a90"
+      "extraction_fixture_sha256": "d38f56762c597467c6e96e9eac55f11375507554cb3da655b81e010f84533f2b",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-2",
+        "sha256": "317761e5ecaafe05ed4e5acb60e12f7d539e531595987aee9d7ab575de2c2008",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://www.tjsb.bank.in/forex-services",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.tjsb.bank.in/forex-services' | sha256sum",
-      "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.tjsb.bank.in/forex-services' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-3",
+      "source_sha256": "781edeec3881caa6b96de583890190308120b68d5c1b4137595ac9dbb539a0d8",
       "route_count": 11,
       "route_digest": "4752306104253f7176ed2c34d470df6d7c8d5f1c7c20c26e55b9dfbcf84e5b40",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_tjsb.json",
-      "extraction_fixture_sha256": "53ac944f0f665298d295f0cc7a3930f2deb140fe2b3359c7ebca70d2e48ef429"
+      "extraction_fixture_sha256": "7e5cc96c303fe33f045b108560931dda6fa1383a434b5e824b3bc914f1e02d23",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-3",
+        "sha256": "781edeec3881caa6b96de583890190308120b68d5c1b4137595ac9dbb539a0d8",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html' | sha256sum",
-      "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-4",
+      "source_sha256": "a2cb49c701dc36369a1ddf85a262bebba3ccff092e31cb92344e2d0628238259",
       "route_count": 17,
       "route_digest": "f78cf36b2509da0cc8ba0166821fa3a1f171cb65997d31a81e945a9103fb244a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_kotak.json",
-      "extraction_fixture_sha256": "8d451bb0c6a179cfb410d2b02bd570681cc22df8758c6b2ec6e19b214dea6d88"
+      "extraction_fixture_sha256": "a015733710e75db988f92d03c3409db857fcfd7632bdd599c4ee84ce99f0279b",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-4",
+        "sha256": "a2cb49c701dc36369a1ddf85a262bebba3ccff092e31cb92344e2d0628238259",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://punjabandsind.bank.in/content/webnri",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://punjabandsind.bank.in/content/webnri' | sha256sum",
-      "source_sha256": "2bcbc26b2d29068bd28e30fceb91e651c60a82dc19a30233c0cffa4dd2d32318",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://punjabandsind.bank.in/content/webnri' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-5",
+      "source_sha256": "0dffd6d4f00fab0bbed41c58afd6fae30e0f49581b4f78e3b99a0a640d952f34",
       "route_count": 8,
       "route_digest": "870a7bfd255df64d3dba2cf880456d6458e0b0e80fc89a4e38b1ebb204264be3",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_punjab-sind.json",
-      "extraction_fixture_sha256": "e975083a56978610151e7d6e5d4c21bdbe10b5d290abad5729b5353db1b5af93"
+      "extraction_fixture_sha256": "f0f2700ffb232ea576f16fa87f0b5d34d4012e31f824d6ddcc99665471e39530",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-5",
+        "sha256": "0dffd6d4f00fab0bbed41c58afd6fae30e0f49581b4f78e3b99a0a640d952f34",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf' | sha256sum",
-      "source_sha256": "c7e78414cf1747b24f580c69540c8ac11ac5a806a0ef36c3178f025549a67611",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-6",
+      "source_sha256": "aef29ea3999d6dac3629214b85545006a30708c990b2c9b0c6be3ee4375ef579",
       "route_count": 4,
       "route_digest": "a0bdf5fed80c9dc5f7bbb6ee784a0fe6ba4feed819bf4f71cff647463580442d",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_cibc-bahamas.json",
-      "extraction_fixture_sha256": "18b35c725d5317b135c8cb85550b3910ea191041a37378c0927d784b756c7618"
+      "extraction_fixture_sha256": "556d723ff9c22fea55b1ccc98fb1b0a88b9192cbe4e4025b22c59a57d8d551cf",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-6",
+        "sha256": "aef29ea3999d6dac3629214b85545006a30708c990b2c9b0c6be3ee4375ef579",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf' | sha256sum",
-      "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-7",
+      "source_sha256": "e53c35079efe48f99db5741063561dfd5ded6cac1eaeb98d15d6db4390e33499",
       "route_count": 19,
       "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_cibc-barbados.json",
-      "extraction_fixture_sha256": "2cab41f9c1e0708100cf22d70cf908177cd5bd60e0206d12c4b71eb4c8898981"
+      "extraction_fixture_sha256": "c2de46ae270c6671adff7cecefc3fe92dc98b4690a91a50186acdbd9b7bd4fde",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-7",
+        "sha256": "e53c35079efe48f99db5741063561dfd5ded6cac1eaeb98d15d6db4390e33499",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf' | sha256sum",
-      "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-8",
+      "source_sha256": "caaff4696010343089e548996f5efa14c6a1fed7584325064e47c7a19522d12c",
       "route_count": 11,
       "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_cibc-cayman.json",
-      "extraction_fixture_sha256": "03d0535a464ebfe286ba2651d24b836d19dc1f095f4bd57b4fb5794d16f0cd93"
+      "extraction_fixture_sha256": "ee2464c7322b9a64f1e98ba34e00a995890ed9e05fe0c38aef5c84fa0111f620",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-8",
+        "sha256": "caaff4696010343089e548996f5efa14c6a1fed7584325064e47c7a19522d12c",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_alior_bank_20260921.json",
       "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
       "as_of": "2026-09-21",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html' | sha256sum",
-      "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-9",
+      "source_sha256": "d25f42666947caee3f952fa2633d2e149dcfae9716167e09eaaff93b744f9995",
       "route_count": 33,
       "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_alior.json",
-      "extraction_fixture_sha256": "dd1940ee9d4ae58bebd5ea51714a5ee1f2c0f1329d9bb9a03e9628aedee206b5"
+      "extraction_fixture_sha256": "50c72543a08b791f7545ced5258b4a8efa96db13e16d3037eef33f2d2928bad6",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-9",
+        "sha256": "d25f42666947caee3f952fa2633d2e149dcfae9716167e09eaaff93b744f9995",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_bank_frick_20260527_deltas.json",
       "url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
       "as_of": "2026-05-27",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf' | sha256sum",
-      "source_sha256": "38bf3f3e20c0fad231c02bfa1f485dab22960fe71384916803b38c0c470e3ebd",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-10",
+      "source_sha256": "b328b88e0c8217bca3a80a2715866e9a76cbacd931095758b1799be479cf302d",
       "route_count": 29,
       "route_digest": "6792469c95a945c2e61d4264a92b1060f51cb6c17f7e3df0dd91bcb9e05174f1",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_bank-frick.json",
-      "extraction_fixture_sha256": "1a29cc3dc6ae8f3364246bfedd202a78d8ad069d9506457e5421f9f8abe21d84"
+      "extraction_fixture_sha256": "b32ae7df0d38398c9b979a73c5d7713ff2f1f3c2793810af169de0a5c2df44e7",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-10",
+        "sha256": "b328b88e0c8217bca3a80a2715866e9a76cbacd931095758b1799be479cf302d",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
       "url": "https://www.kdb.uz/rulp/corporates/correspondent-banks",
       "as_of": "2026-08-25",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kdb.uz/rulp/corporates/correspondent-banks' | sha256sum",
-      "source_sha256": "3de1876f29807bb29372937ccf3db93819a6f071bcc027cf74be71904c8bc5b7",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kdb.uz/rulp/corporates/correspondent-banks' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-11",
+      "source_sha256": "081e1bc8f8c45258cdf00460e71df5cdf4f70735868348c92fdd2a78674fff65",
       "route_count": 4,
       "route_digest": "7567bbf35d824615d294121f798ce449ca3010085a78248ac0de738dfd72409a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_kdb.json",
-      "extraction_fixture_sha256": "82ffca380af735f139a79472c92e12f0bd74787088cac34589067bf9f26eccb6"
+      "extraction_fixture_sha256": "f8ae7ffef0a239c661d41c61e5a61df78f835b72b6897ba742b4224744cce2d4",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-11",
+        "sha256": "081e1bc8f8c45258cdf00460e71df5cdf4f70735868348c92fdd2a78674fff65",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
       "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
       "as_of": "2026-04-08",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/' | sha256sum",
-      "source_sha256": "69cc1dce34efac1bdb7590f712051122b84995c3946ae20807dd4c76852c097d",
+      "retrieval_command": "browser-rendered official PDF text extraction normalized into sanitized route extraction; sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-12.md (official source URL: https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/)",
+      "source_sha256": "d73b86020f4d9e5687e29203ba91c6fe903be05f506e0292d4e949cba7e4f68f",
       "route_count": 24,
       "route_digest": "97e2fd496b5f45a7baa3cabdf96d8203ebbd5b3014b167f2579f53e0400ef08b",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_kapitalbank.json",
-      "extraction_fixture_sha256": "0f69a29462f51c0ee1970a815597e51008ad96b8bbcaa3ce04130a0c99d9bab8"
+      "extraction_fixture_sha256": "1cbc98f4e62b8f69020fec19aac23ebce08d772609f0f9cd04eeb76e00a758e6",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-12.md",
+        "sha256": "d73b86020f4d9e5687e29203ba91c6fe903be05f506e0292d4e949cba7e4f68f",
+        "captured_at": "2026-09-25",
+        "capture_method": "browser-rendered official PDF text extraction normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_bcge_geneva_20240101.json",
       "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
       "as_of": "2024-01-01",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0' | sha256sum",
-      "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0' | sanitize account values and route fields | sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-13",
+      "source_sha256": "f01386b22d8ce5ec1be7f3a1fd733aa0a3799a45022ac3c0ef72582d79efd14b",
       "route_count": 28,
       "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_bcge.json",
-      "extraction_fixture_sha256": "c3b8595419c76fce141ee8c527ecd5ea2fad2d2bc30d73054dd36a664b6489ce"
+      "extraction_fixture_sha256": "634270e01f1ac4eb6ffc96c3997c42b14049ac00093052f5115fad9174bb67b0",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-13",
+        "sha256": "f01386b22d8ce5ec1be7f3a1fd733aa0a3799a45022ac3c0ef72582d79efd14b",
+        "captured_at": "2026-09-25",
+        "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
+      }
     },
     {
       "ledger_file": "seed_ssi_mbh_bank_20241024.json",
       "url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
       "as_of": "2024-10-24",
-      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf' | sha256sum",
-      "source_sha256": "58bf2215b395dcac74c009aa98701854e43cbe54a1cd3a95fee6a647ca9910d4",
+      "retrieval_command": "browser-rendered official PDF text extraction normalized into sanitized route extraction; sha256sum scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-14.md (official source URL: https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf)",
+      "source_sha256": "a57dd1b5b389265448b2bde2d3c1dc33ed0464a0c836d267f115d72b66865c6e",
       "route_count": 25,
       "route_digest": "102feafacc4d0d320d12656d46610f4a65bf19bc462dfc5a1fb65197ce85e5ae",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_mbh.json",
-      "extraction_fixture_sha256": "b5770a454a48c4a482f67a074fed0dba8831d352c556a6eef8f2ee8cbf36499e"
+      "extraction_fixture_sha256": "068451d6699e2e729c3ee12260c075acce413b87d3b358ea77f63b757ccd8326",
+      "source_snapshot": {
+        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-14.md",
+        "sha256": "a57dd1b5b389265448b2bde2d3c1dc33ed0464a0c836d267f115d72b66865c6e",
+        "captured_at": "2026-09-25",
+        "capture_method": "browser-rendered official PDF text extraction normalized into sanitized route extraction; account values removed"
+      }
     }
   ]
 }

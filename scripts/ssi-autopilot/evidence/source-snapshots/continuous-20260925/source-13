@@ -1,13 +1,10 @@
 {
-  "fixture_version": 3,
-  "batch": "continuous-20260925",
-  "ledger_file": "seed_ssi_bcge_geneva_20240101.json",
-  "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
-  "as_of": "2024-01-01",
-  "source_sha256": "f01386b22d8ce5ec1be7f3a1fd733aa0a3799a45022ac3c0ef72582d79efd14b",
-  "route_count": 28,
-  "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
+  "source_url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
+  "captured_at": "2026-09-25",
+  "effective_date": "2024-01-01",
+  "format": "sanitized official-source route extraction",
   "account_values_removed": true,
+  "route_count": 28,
   "routes": [
     {
       "beneficiary_bic": "BCGECHGGXXX",

@@ -52,6 +52,10 @@ def _canonical_digest(value):
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def _snapshot_digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def test_continuous_20260925_batch_is_loaded_and_source_backed():
     rows = []
     for name in LEDGER_NAMES:
@@ -84,6 +88,7 @@ def test_continuous_20260925_manifest_matches_batch():
     assert len(manifest["sources"]) == 15
     assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
     assert manifest["source_integrity"]["accounts_committed"] is False
+    assert "immutable sanitized extraction snapshot" in manifest["source_integrity"]["snapshot_policy"]
     rows_by_source = {}
     for name in LEDGER_NAMES:
         payload = json.loads((ROOT / "app" / "services" / name).read_text())
@@ -128,15 +133,26 @@ def test_continuous_20260925_manifest_matches_batch():
         assert source["route_digest"] == _route_digest(rows)
         assert len(source["source_sha256"]) == 64
         assert source["url"] in {_source_url(row) for row in rows}
+        snapshot = source["source_snapshot"]
+        snapshot_path = ROOT / snapshot["path"]
+        assert snapshot_path.is_file()
+        assert snapshot["captured_at"] == "2026-09-25"
+        assert snapshot["sha256"] == source["source_sha256"]
+        assert _snapshot_digest(snapshot_path) == snapshot["sha256"]
         attested = attestation_sources[key]
         assert attested["as_of"] == source["as_of"]
         assert attested["source_sha256"] == source["source_sha256"]
         assert attested["route_count"] == source["route_count"]
         assert attested["route_digest"] == source["route_digest"]
         assert "-k" not in attested["retrieval_command"]
-        assert attested["retrieval_command"].endswith(
-            f"'{source['url']}' | sha256sum"
-        )
+        assert source["url"] in attested["retrieval_command"]
+        if "direct official URL response" in snapshot["capture_method"]:
+            assert "curl --fail-with-body" in attested["retrieval_command"]
+            assert "sanitize account values and route fields" in attested["retrieval_command"]
+            assert "sha256sum" in attested["retrieval_command"]
+        else:
+            assert "PDF text extraction" in attested["retrieval_command"]
+        assert attested["source_snapshot"] == snapshot
         fixture_path = ROOT / source["source_extract_fixture"]
         assert fixture_path.exists()
         extracted = fixture_sources[key]
