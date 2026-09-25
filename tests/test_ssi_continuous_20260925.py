@@ -17,7 +17,6 @@ LEDGER_NAMES = (
     "seed_ssi_bank_frick_20260527_deltas.json",
     "seed_ssi_kdb_kapitalbank_current_20260921.json",
     "seed_ssi_bcge_geneva_20240101.json",
-    "seed_ssi_mbh_bank_20241024.json",
 )
 
 
@@ -63,7 +62,7 @@ def test_continuous_20260925_batch_is_loaded_and_source_backed():
         payload = json.loads((ROOT / "app" / "services" / name).read_text())
         rows.extend(payload["ssi_records"])
 
-    assert len(rows) == 350
+    assert len(rows) == 297
     assert len({(row[0], row[2], row[3]) for row in rows}) == len(rows)
     assert all(row[11] == "unverified" and row[12] is None for row in rows)
     assert all(row[13] and not row[14] for row in rows)
@@ -83,12 +82,13 @@ def test_continuous_20260925_manifest_matches_batch():
             / "ssi-continuous-20260925-batch.json"
         ).read_text()
     )
-    assert manifest["record_count"] == 350
+    assert manifest["record_count"] == 297
     assert tuple(manifest["ledger_files"]) == LEDGER_NAMES
-    assert len(manifest["sources"]) == 15
+    assert len(manifest["sources"]) == 13
     assert manifest["source_integrity"]["hash_algorithm"] == "sha256"
     assert manifest["source_integrity"]["accounts_committed"] is False
     assert "immutable sanitized extraction snapshot" in manifest["source_integrity"]["snapshot_policy"]
+    assert "ssi-continuous-source-fidelity" in manifest["source_integrity"]["trusted_source_fidelity"]
     rows_by_source = {}
     for name in LEDGER_NAMES:
         payload = json.loads((ROOT / "app" / "services" / name).read_text())
@@ -120,6 +120,7 @@ def test_continuous_20260925_manifest_matches_batch():
     )
     assert attestation["batch"] == manifest["batch"]
     assert "certificate verification is enabled" in attestation["method"]["tls_certificate_verification"]
+    assert "ssi-continuous-source-fidelity" in attestation["method"]["trusted_source_fidelity"]
     assert "-k" not in attestation["method"]["raw_source_sha256"]
     attestation_sources = {
         (source["ledger_file"], source["url"]): source

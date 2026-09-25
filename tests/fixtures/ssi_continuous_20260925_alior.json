@@ -5,7 +5,7 @@
   "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
   "as_of": "2026-09-21",
   "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
-  "route_count": 33,
+  "route_count": 32,
   "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
   "account_values_removed": true,
   "routes": [
@@ -13,13 +13,6 @@
       "beneficiary_bic": "ALBPPLPWXXX",
       "beneficiary_name": "Alior Bank S.A.",
       "currency": "AUD",
-      "intermediary_bic": "KREDBEBBXXX",
-      "intermediary_name": "KBC Bank NV, Brussels"
-    },
-    {
-      "beneficiary_bic": "ALBPPLPWXXX",
-      "beneficiary_name": "Alior Bank S.A.",
-      "currency": "BGN",
       "intermediary_bic": "KREDBEBBXXX",
       "intermediary_name": "KBC Bank NV, Brussels"
     },

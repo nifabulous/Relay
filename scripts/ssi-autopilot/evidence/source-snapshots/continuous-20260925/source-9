@@ -4,19 +4,12 @@
   "effective_date": "2026-09-21",
   "format": "sanitized official-source route extraction",
   "account_values_removed": true,
-  "route_count": 33,
+  "route_count": 32,
   "routes": [
     {
       "beneficiary_bic": "ALBPPLPWXXX",
       "beneficiary_name": "Alior Bank S.A.",
       "currency": "AUD",
-      "intermediary_bic": "KREDBEBBXXX",
-      "intermediary_name": "KBC Bank NV, Brussels"
-    },
-    {
-      "beneficiary_bic": "ALBPPLPWXXX",
-      "beneficiary_name": "Alior Bank S.A.",
-      "currency": "BGN",
       "intermediary_bic": "KREDBEBBXXX",
       "intermediary_name": "KBC Bank NV, Brussels"
     },

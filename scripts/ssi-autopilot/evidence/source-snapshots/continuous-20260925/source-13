@@ -4,7 +4,7 @@
   "effective_date": "2024-01-01",
   "format": "sanitized official-source route extraction",
   "account_values_removed": true,
-  "route_count": 28,
+  "route_count": 25,
   "routes": [
     {
       "beneficiary_bic": "BCGECHGGXXX",
@@ -121,20 +121,6 @@
     {
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "MXN",
-      "intermediary_bic": "CRESCHZZ80A",
-      "intermediary_name": "Credit Suisse (Schweiz) AG, Zurich"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "NOK",
-      "intermediary_bic": "DNBANOKKXXX",
-      "intermediary_name": "DNB Bank ASA, Oslo"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "NZD",
       "intermediary_bic": "ASBBNZ2AXXX",
       "intermediary_name": "ASB Bank Limited, Auckland"
@@ -152,13 +138,6 @@
       "currency": "RON",
       "intermediary_bic": "DEUTDEFFXXX",
       "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "SEK",
-      "intermediary_bic": "ESSESESSXXX",
-      "intermediary_name": "Skandinaviska Enskilda Banken AB, Stockholm"
     },
     {
       "beneficiary_bic": "BCGECHGGXXX",

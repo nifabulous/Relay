@@ -1,7 +1,7 @@
 {
   "batch": "continuous-20260925",
   "purpose": "BIC-only SSI availability metadata from bank-published correspondent and settlement-instruction sources, with raw-source hashes, immutable sanitized source extractions, and reproducible route-key digests.",
-  "record_count": 350,
+  "record_count": 297,
   "ledger_files": [
     "seed_ssi_nordea_current_20250730.json",
     "seed_ssi_idfc_first_mumbai_20260921.json",
@@ -11,8 +11,7 @@
     "seed_ssi_alior_bank_20260921.json",
     "seed_ssi_bank_frick_20260527_deltas.json",
     "seed_ssi_kdb_kapitalbank_current_20260921.json",
-    "seed_ssi_bcge_geneva_20240101.json",
-    "seed_ssi_mbh_bank_20241024.json"
+    "seed_ssi_bcge_geneva_20240101.json"
   ],
   "sources": [
     {
@@ -154,13 +153,13 @@
       "ledger_file": "seed_ssi_alior_bank_20260921.json",
       "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
       "as_of": "2026-09-21",
-      "route_count": 33,
-      "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
+      "route_count": 32,
+      "route_digest": "fe3c7b72794b7d3254c6a78d6e3f0442b30a2d91183e337964aa1554a47599f8",
       "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
       "source_extract_fixture": "tests/fixtures/ssi_continuous_20260925_alior.json",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-9",
-        "sha256": "d25f42666947caee3f952fa2633d2e149dcfae9716167e09eaaff93b744f9995",
+        "sha256": "4cfd7321d65e83d180f6b693c462626e41dec3714a25ccdd72a7ca0ce716bd3a",
         "captured_at": "2026-09-25",
         "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
       }
@@ -196,48 +195,18 @@
       }
     },
     {
-      "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
-      "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
-      "as_of": "2026-04-08",
-      "route_count": 24,
-      "route_digest": "97e2fd496b5f45a7baa3cabdf96d8203ebbd5b3014b167f2579f53e0400ef08b",
-      "source_sha256": "69cc1dce34efac1bdb7590f712051122b84995c3946ae20807dd4c76852c097d",
-      "source_extract_fixture": "tests/fixtures/ssi_continuous_20260925_kapitalbank.json",
-      "source_snapshot": {
-        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-12.md",
-        "sha256": "d73b86020f4d9e5687e29203ba91c6fe903be05f506e0292d4e949cba7e4f68f",
-        "captured_at": "2026-09-25",
-        "capture_method": "browser-rendered official PDF text extraction normalized into sanitized route extraction; account values removed"
-      }
-    },
-    {
       "ledger_file": "seed_ssi_bcge_geneva_20240101.json",
       "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
       "as_of": "2024-01-01",
-      "route_count": 28,
-      "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
+      "route_count": 25,
+      "route_digest": "f1fd9570b48bf6804fde885a1166e1d3fbafd30f50d295565a5f62f47d1bde99",
       "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
       "source_extract_fixture": "tests/fixtures/ssi_continuous_20260925_bcge.json",
       "source_snapshot": {
         "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-13",
-        "sha256": "f01386b22d8ce5ec1be7f3a1fd733aa0a3799a45022ac3c0ef72582d79efd14b",
+        "sha256": "f2a08ad1aad9900b16bde912b8df49e419dc46fa783d214fbaa68424972ab2b1",
         "captured_at": "2026-09-25",
         "capture_method": "direct official URL response normalized into sanitized route extraction; account values removed"
-      }
-    },
-    {
-      "ledger_file": "seed_ssi_mbh_bank_20241024.json",
-      "url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
-      "as_of": "2024-10-24",
-      "route_count": 25,
-      "route_digest": "102feafacc4d0d320d12656d46610f4a65bf19bc462dfc5a1fb65197ce85e5ae",
-      "source_sha256": "58bf2215b395dcac74c009aa98701854e43cbe54a1cd3a95fee6a647ca9910d4",
-      "source_extract_fixture": "tests/fixtures/ssi_continuous_20260925_mbh.json",
-      "source_snapshot": {
-        "path": "scripts/ssi-autopilot/evidence/source-snapshots/continuous-20260925/source-14.md",
-        "sha256": "a57dd1b5b389265448b2bde2d3c1dc33ed0464a0c836d267f115d72b66865c6e",
-        "captured_at": "2026-09-25",
-        "capture_method": "browser-rendered official PDF text extraction normalized into sanitized route extraction; account values removed"
       }
     }
   ],
@@ -248,7 +217,8 @@
     "mapping_check": "tests/test_ssi_continuous_20260925.py recomputes every source-group route digest, requires exact ledger/source URL parity, matches every source group to the committed sanitized extraction fixture, and validates the independent retrieval/extraction attestation record",
     "attestation_record": "scripts/ssi-autopilot/evidence/ssi-continuous-20260925-source-attestation.json",
     "accounts_committed": false,
-    "snapshot_policy": "Every source entry points to an immutable sanitized extraction snapshot whose SHA-256 is recorded separately; raw source_sha256 remains the retrieval trust anchor and account values remain excluded."
+    "snapshot_policy": "Every source entry points to an immutable sanitized extraction snapshot whose SHA-256 is recorded separately; raw source_sha256 remains the retrieval trust anchor and account values remain excluded.",
+    "trusted_source_fidelity": "The required CI job ssi-continuous-source-fidelity fetches every cited URL at verification time with normal TLS validation, extracts PDF or HTML text without retaining response bodies, and checks every recorded currency/BIC route key against the live bank response."
   },
   "safety": {
     "status": "unverified",

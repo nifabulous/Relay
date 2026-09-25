@@ -5,7 +5,7 @@
   "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
   "as_of": "2024-01-01",
   "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
-  "route_count": 28,
+  "route_count": 25,
   "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
   "account_values_removed": true,
   "routes": [
@@ -124,20 +124,6 @@
     {
       "beneficiary_bic": "BCGECHGGXXX",
       "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "MXN",
-      "intermediary_bic": "CRESCHZZ80A",
-      "intermediary_name": "Credit Suisse (Schweiz) AG, Zurich"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "NOK",
-      "intermediary_bic": "DNBANOKKXXX",
-      "intermediary_name": "DNB Bank ASA, Oslo"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
       "currency": "NZD",
       "intermediary_bic": "ASBBNZ2AXXX",
       "intermediary_name": "ASB Bank Limited, Auckland"
@@ -155,13 +141,6 @@
       "currency": "RON",
       "intermediary_bic": "DEUTDEFFXXX",
       "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
-    },
-    {
-      "beneficiary_bic": "BCGECHGGXXX",
-      "beneficiary_name": "Banque Cantonale de Genève",
-      "currency": "SEK",
-      "intermediary_bic": "ESSESESSXXX",
-      "intermediary_name": "Skandinaviska Enskilda Banken AB, Stockholm"
     },
     {
       "beneficiary_bic": "BCGECHGGXXX",
