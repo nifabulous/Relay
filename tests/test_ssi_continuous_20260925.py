@@ -48,8 +48,13 @@ def _fixture_route_digest(routes):
 
 def _route_key_digest(routes):
     canonical = sorted(
-        (route["currency"].upper(), re.sub(r"[^A-Z0-9]", "", route["intermediary_bic"].upper()))
-        for route in routes
+        {
+            (
+                route["currency"].upper(),
+                re.sub(r"[^A-Z0-9]", "", route["intermediary_bic"].upper()),
+            )
+            for route in routes
+        }
     )
     payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()

@@ -301,11 +301,41 @@ def _route_digest(routes: list[dict]) -> str:
 def _route_key_digest(routes: list[dict]) -> str:
     """Digest the currency/intermediary keys extracted from live source rows."""
     canonical = sorted(
-        (route["currency"].upper(), _compact(route["intermediary_bic"]))
-        for route in routes
+        set(
+            (route["currency"].upper(), _compact(route["intermediary_bic"]))
+            for route in routes
+        )
     )
     payload = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _live_route_keys(contexts: list[str], routes: list[dict]) -> list[dict]:
+    """Extract the route-key set from source-local contexts.
+
+    The fixture supplies only the vocabulary of complete BICs to look for;
+    membership is derived from the live contexts.  This prevents a fixture
+    digest from passing when a cited page drops a row or adds a duplicate.
+    """
+    candidate_bics = sorted({_compact(route["intermediary_bic"]) for route in routes})
+    expected_keys = {
+        (route["currency"].upper(), _compact(route["intermediary_bic"]))
+        for route in routes
+    }
+    keys = set()
+    for context in contexts:
+        currencies = _currency_tokens(context)
+        for bic in candidate_bics:
+            if _bic_matches(context, bic):
+                keys.update(
+                    (currency, bic)
+                    for currency in currencies
+                    if (currency, bic) in expected_keys
+                )
+    return [
+        {"currency": currency, "intermediary_bic": bic}
+        for currency, bic in sorted(keys)
+    ]
 
 
 def verify(manifest_path: Path) -> dict:
@@ -327,7 +357,6 @@ def verify(manifest_path: Path) -> dict:
             raise RuntimeError(f"{source['url']} changed since its exact source capture")
         text = _source_text(payload)
         contexts = _route_contexts(payload, text, fetcher)
-        matched_routes = []
         missing = []
         weak_names = []
         beneficiary_bics = {_compact(route["beneficiary_bic"]) for route in fixture["routes"]}
@@ -345,12 +374,6 @@ def verify(manifest_path: Path) -> dict:
                 _name_present(context, route["intermediary_name"]) for context in matches
             ):
                 weak_names.append((route["currency"], route["intermediary_bic"]))
-            matched_routes.append(
-                {
-                    "currency": route["currency"],
-                    "intermediary_bic": route["intermediary_bic"],
-                }
-            )
         if missing:
             raise RuntimeError(
                 f"{source['url']} is missing {len(missing)} recorded route keys"
@@ -375,12 +398,28 @@ def verify(manifest_path: Path) -> dict:
                 )
         elif beneficiary_bic_mode != "name_only_source":
             raise RuntimeError(f"{source['url']} has unsupported beneficiary BIC verification mode")
-        live_route_key_digest = _route_key_digest(matched_routes)
+        live_routes = _live_route_keys(contexts, fixture["routes"])
+        expected_route_keys = {
+            (route["currency"].upper(), _compact(route["intermediary_bic"]))
+            for route in fixture["routes"]
+        }
+        live_route_keys = {
+            (route["currency"], _compact(route["intermediary_bic"])) for route in live_routes
+        }
+        if live_route_keys != expected_route_keys:
+            raise RuntimeError(
+                f"{source['url']} live route inventory differs: "
+                f"{len(live_route_keys)} live keys vs {len(expected_route_keys)} recorded"
+            )
+        if len(live_routes) != len(expected_route_keys):
+            raise RuntimeError(f"{source['url']} live route-key count differs from the recorded count")
+        live_route_key_digest = _route_key_digest(live_routes)
         if live_route_key_digest != source["route_key_digest"]:
             raise RuntimeError(f"{source['url']} live route keys differ from the recorded key digest")
         return {
             "url": source["url"],
             "route_count": len(fixture["routes"]),
+            "live_route_count": len(live_routes),
             "route_keys_checked": len(fixture["routes"]),
             "route_digest": fixture_digest,
             "route_key_digest": live_route_key_digest,

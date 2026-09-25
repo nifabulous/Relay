@@ -20,7 +20,7 @@
       "as_of": "2025-07-30",
       "route_count": 56,
       "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
-      "route_key_digest": "0ca7f4d97ef990aab4f7fa4a53e75c081e06b664c7f8714a80c47beaac434451",
+      "route_key_digest": "caf5006541922914703e2c2d54c97ab37e09c3741ab9c84dc68547f938130d47",
       "source_hash_policy": "exact",
       "beneficiary_bic_verification": "published",
       "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",

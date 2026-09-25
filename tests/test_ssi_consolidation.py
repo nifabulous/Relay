@@ -174,8 +174,8 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     assert len(SSI_RECORDS) == len(route_keys) == 11_827
 
 
-def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
-    """Keep the newly admitted European and RBSI ledgers bounded and citable."""
+def test_continuous_20260922_batch_is_source_cited_and_static_scope():
+    """Keep the European/RBSI ledgers bounded without claiming live attestation."""
     batch_files = {
         "seed_ssi_basler_kantonalbank_20250801.json": 32,
         "seed_ssi_bank_cler_20260325.json": 22,
@@ -214,6 +214,22 @@ def test_continuous_20260922_batch_is_source_backed_and_deduplicated():
         all(row[position] is None for position in range(5, 9))
         for row in rows
     )
+
+
+def test_continuous_20260922_static_scope_is_explicitly_outside_live_fidelity():
+    """The live gate must not imply coverage for this static-only batch."""
+    live_manifest = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-continuous-20260925-batch.json"
+        ).read_text()
+    )
+    live_ledgers = {source["ledger_file"] for source in live_manifest["sources"]}
+    static_ledgers = set(CONTINUOUS_20260922_EXPECTATIONS)
+    assert static_ledgers.isdisjoint(live_ledgers)
 
 
 def test_continuous_20260922_rows_cannot_enter_route_selection():
