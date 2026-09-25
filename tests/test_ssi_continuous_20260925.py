@@ -131,6 +131,7 @@ def test_continuous_20260925_manifest_matches_batch():
         rows = rows_by_source[key]
         assert source["route_count"] == len(rows)
         assert source["route_digest"] == _route_digest(rows)
+        assert {row[10] for row in rows} == {source["as_of"]}
         assert len(source["source_sha256"]) == 64
         assert source["url"] in {_source_url(row) for row in rows}
         snapshot = source["source_snapshot"]

@@ -1,7 +1,7 @@
 {
   "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
   "source_sha256": "7205ce2cf275483be386b972b852b216e8dc94fbcba23a202b5bf2b0a5d74d57",
-  "as_of": "2026-09-08",
+  "as_of": "2026-09-25",
   "beneficiary_bic": "FNNBTRIS",
   "region_masked_block": 91001000,
   "masking": {

@@ -123,6 +123,11 @@ def test_wave21_regions_snapshot_hash_matches_source_attestation():
     assert snapshot["captured_at"] == evidence["source_snapshot"]["captured_at"] == "2026-09-25"
 
 
+def test_wave21_evidence_as_of_matches_refreshed_source_capture():
+    _, evidence = _load()
+    assert evidence["as_of"] == evidence["source_snapshot"]["captured_at"] == "2026-09-25"
+
+
 def test_wave21_source_attestation_strips_dynamic_state_and_extracts_routes():
     attestation = _load_source_attestation_module()
     html = (
