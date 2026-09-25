@@ -1,0 +1,132 @@
+{
+  "fixture_version": 3,
+  "batch": "continuous-20260925",
+  "ledger_file": "seed_ssi_india_wire_current_20260921.json",
+  "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
+  "as_of": "2026-09-21",
+  "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
+  "route_count": 17,
+  "route_digest": "f78cf36b2509da0cc8ba0166821fa3a1f171cb65997d31a81e945a9103fb244a",
+  "account_values_removed": true,
+  "routes": [
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "J.P. Morgan Chase Bank, New York"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "USD",
+      "intermediary_bic": "PNBPUS33XXX",
+      "intermediary_name": "Wells Fargo Bank, New York"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "USD",
+      "intermediary_bic": "BOFAUS3NXXX",
+      "intermediary_name": "Bank of America, New York"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "AED",
+      "intermediary_bic": "EBILAEADXXX",
+      "intermediary_name": "Emirates NBD PJSC, Dubai"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "CHF",
+      "intermediary_bic": "ZKBKCHZZ80A",
+      "intermediary_name": "Zürcher Kantonalbank, Zurich"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "CAD",
+      "intermediary_bic": "BOFMCAM2XXX",
+      "intermediary_name": "Bank of Montreal, Toronto"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "SGD",
+      "intermediary_bic": "DBSSSGSGXXX",
+      "intermediary_name": "DBS Bank, Singapore"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "SGD",
+      "intermediary_bic": "OCBCSGSGXXX",
+      "intermediary_name": "Oversea-Chinese Banking Corporation, Singapore"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "AUD",
+      "intermediary_bic": "ANZBAU3MXXX",
+      "intermediary_name": "ANZ Bank, Australia"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "HKD",
+      "intermediary_bic": "HSBCHKHHHKH",
+      "intermediary_name": "HSBC Bank, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "SEK",
+      "intermediary_bic": "ESSESESSXXX",
+      "intermediary_name": "Skandinaviska Enskilda Banken, Stockholm"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "ZAR",
+      "intermediary_bic": "NEDSZAJJXXX",
+      "intermediary_name": "Nedbank, Johannesburg"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "SAR",
+      "intermediary_bic": "NCBKSAJEXXX",
+      "intermediary_name": "The National Commercial Bank, Jeddah"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "NZD",
+      "intermediary_bic": "ANZBNZ22XXX",
+      "intermediary_name": "ANZ Bank New Zealand"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "CNY",
+      "intermediary_bic": "HSBCCNSHXXX",
+      "intermediary_name": "HSBC Bank (China)"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "CNH",
+      "intermediary_bic": "HSBCHKHHHKH",
+      "intermediary_name": "HSBC Bank, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "KKBKINBBXXX",
+      "beneficiary_name": "Kotak Mahindra Bank",
+      "currency": "ACU",
+      "intermediary_bic": "SCBLBDDXXXX",
+      "intermediary_name": "Standard Chartered Bank, Dhaka"
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "fixture_version": 3,
+  "batch": "continuous-20260925",
+  "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
+  "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
+  "as_of": "2026-09-21",
+  "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
+  "route_count": 11,
+  "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
+  "account_values_removed": true,
+  "routes": [
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "CAD",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "CIBC, Toronto"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "GBP",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "CIBC, Toronto"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "EUR",
+      "intermediary_bic": "CHASDEFXXXX",
+      "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "AUD",
+      "intermediary_bic": "ANZBAU3MXXX",
+      "intermediary_name": "Australia and New Zealand Banking Group Limited, Melbourne (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "CHF",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "JPY",
+      "intermediary_bic": "CHASJPJTXXX",
+      "intermediary_name": "J.P. Morgan Chase N.A., Tokyo (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "NOK",
+      "intermediary_bic": "NDEANOKKXXX",
+      "intermediary_name": "Nordea Bank Norge ASA (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "NZD",
+      "intermediary_bic": "WPACNZ2WXXX",
+      "intermediary_name": "Westpac Banking Corp, Wellington (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "SEK",
+      "intermediary_bic": "HANDSESSXXX",
+      "intermediary_name": "Svenska Handelsbanken, Stockholm (via CHASDEFX)"
+    },
+    {
+      "beneficiary_bic": "CIBCKYKCXXX",
+      "beneficiary_name": "CIBC Caribbean Bank and Trust Company (Cayman) Limited",
+      "currency": "HKD",
+      "intermediary_bic": "CHASHKHHXXX",
+      "intermediary_name": "J.P. Morgan Chase Bank N.A., Hong Kong (via CHASDEFX)"
+    }
+  ]
+}

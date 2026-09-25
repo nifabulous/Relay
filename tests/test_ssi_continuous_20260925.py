@@ -95,12 +95,12 @@ def test_continuous_20260925_manifest_matches_batch():
         for source in manifest["sources"]
     }
     assert set(manifest_sources) == set(rows_by_source)
-    fixture_path = ROOT / "tests" / "fixtures" / "ssi_continuous_20260925_source_attestation.json"
-    fixture = json.loads(fixture_path.read_text())
-    fixture_sources = {
-        (source["ledger_file"], source["url"]): source
-        for source in fixture["sources"]
-    }
+    fixture_sources = {}
+    for source in manifest["sources"]:
+        fixture_path = ROOT / source["source_extract_fixture"]
+        fixture_sources[(source["ledger_file"], source["url"])] = json.loads(
+            fixture_path.read_text()
+        )
     assert set(fixture_sources) == set(rows_by_source)
     attestation_path = (
         ROOT
@@ -137,7 +137,8 @@ def test_continuous_20260925_manifest_matches_batch():
         assert attested["retrieval_command"].endswith(
             f"'{source['url']}' | sha256sum"
         )
-        assert source["source_extract_fixture"] == str(fixture_path.relative_to(ROOT))
+        fixture_path = ROOT / source["source_extract_fixture"]
+        assert fixture_path.exists()
         extracted = fixture_sources[key]
         assert extracted["as_of"] == source["as_of"]
         assert extracted["source_sha256"] == source["source_sha256"]
