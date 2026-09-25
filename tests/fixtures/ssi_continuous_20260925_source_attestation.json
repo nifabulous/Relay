@@ -1,13 +1,1007 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
   "batch": "continuous-20260925",
-  "purpose": "Sanitized source extraction mapping for mixed-source ledgers; account values and operational fields are omitted.",
+  "purpose": "Immutable sanitized source extraction mappings for every source group; account values and operational fields are omitted.",
   "sources": [
+    {
+      "ledger_file": "seed_ssi_nordea_current_20250730.json",
+      "url": "https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf",
+      "as_of": "2025-07-30",
+      "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",
+      "route_count": 56,
+      "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "NDEAFIHHXXX",
+          "beneficiary_name": "Nordea Bank Abp",
+          "currency": "PKR",
+          "intermediary_bic": "HABBPKKA007",
+          "intermediary_name": "Habib Bank Limited, Karachi"
+        },
+        {
+          "beneficiary_bic": "NDEAFIHHXXX",
+          "beneficiary_name": "Nordea Bank Abp",
+          "currency": "RON",
+          "intermediary_bic": "BRDEROBUXXX",
+          "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+        },
+        {
+          "beneficiary_bic": "NDEAFIHHXXX",
+          "beneficiary_name": "Nordea Bank Abp",
+          "currency": "RSD",
+          "intermediary_bic": "BACXRSBGXXX",
+          "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+        },
+        {
+          "beneficiary_bic": "NDEAFIHHXXX",
+          "beneficiary_name": "Nordea Bank Abp",
+          "currency": "SAR",
+          "intermediary_bic": "SABBSARIXXX",
+          "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+        },
+        {
+          "beneficiary_bic": "NDEAFIHHXXX",
+          "beneficiary_name": "Nordea Bank Abp",
+          "currency": "SEK",
+          "intermediary_bic": "NDEASESSXXX",
+          "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+        },
+        {
+          "beneficiary_bic": "NDEANOKKXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+          "currency": "PKR",
+          "intermediary_bic": "HABBPKKA007",
+          "intermediary_name": "Habib Bank Limited, Karachi"
+        },
+        {
+          "beneficiary_bic": "NDEANOKKXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+          "currency": "RON",
+          "intermediary_bic": "BRDEROBUXXX",
+          "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+        },
+        {
+          "beneficiary_bic": "NDEANOKKXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+          "currency": "RSD",
+          "intermediary_bic": "BACXRSBGXXX",
+          "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+        },
+        {
+          "beneficiary_bic": "NDEANOKKXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+          "currency": "SAR",
+          "intermediary_bic": "SABBSARIXXX",
+          "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+        },
+        {
+          "beneficiary_bic": "NDEANOKKXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+          "currency": "SEK",
+          "intermediary_bic": "NDEASESSXXX",
+          "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+        },
+        {
+          "beneficiary_bic": "NDEADKKKXXX",
+          "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+          "currency": "PKR",
+          "intermediary_bic": "HABBPKKA007",
+          "intermediary_name": "Habib Bank Limited, Karachi"
+        },
+        {
+          "beneficiary_bic": "NDEADKKKXXX",
+          "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+          "currency": "RON",
+          "intermediary_bic": "BRDEROBUXXX",
+          "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+        },
+        {
+          "beneficiary_bic": "NDEADKKKXXX",
+          "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+          "currency": "RSD",
+          "intermediary_bic": "BACXRSBGXXX",
+          "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+        },
+        {
+          "beneficiary_bic": "NDEADKKKXXX",
+          "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+          "currency": "SAR",
+          "intermediary_bic": "SABBSARIXXX",
+          "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+        },
+        {
+          "beneficiary_bic": "NDEADKKKXXX",
+          "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+          "currency": "SEK",
+          "intermediary_bic": "NDEASESSXXX",
+          "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "AED",
+          "intermediary_bic": "SCBLAEADXXX",
+          "intermediary_name": "Standard Chartered Bank, Dubai"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "AUD",
+          "intermediary_bic": "CTBAAU2SXXX",
+          "intermediary_name": "Commonwealth Bank of Australia, Sydney"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "BDT",
+          "intermediary_bic": "SCBLBDDXXXX",
+          "intermediary_name": "Standard Chartered Bank, Dhaka"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "BGN",
+          "intermediary_bic": "UNCRBGSFXXX",
+          "intermediary_name": "UniCredit Bulbank AD, Sofia"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "BHD",
+          "intermediary_bic": "SCBLBHBMXXX",
+          "intermediary_name": "Standard Chartered Bank, Manama"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "CAD",
+          "intermediary_bic": "ROYCCAT2XXX",
+          "intermediary_name": "Royal Bank of Canada, Toronto"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "CNH",
+          "intermediary_bic": "SCBLHKHHXXX",
+          "intermediary_name": "Standard Chartered Bank (Hong Kong), Hong Kong"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "CNY",
+          "intermediary_bic": "BKCHCNBJS00",
+          "intermediary_name": "Bank of China, Shanghai"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "CZK",
+          "intermediary_bic": "CEKOCZPPXXX",
+          "intermediary_name": "Československá obchodní banka, a.s., Prague"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "DKK",
+          "intermediary_bic": "NDEADKKKXXX",
+          "intermediary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "EGP",
+          "intermediary_bic": "CIBEEGCXXXX",
+          "intermediary_name": "Commercial International Bank (Egypt) SAE, Cairo"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "EUR",
+          "intermediary_bic": "NDEASESSXXX",
+          "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "HKD",
+          "intermediary_bic": "SCBLHKHHXXX",
+          "intermediary_name": "Standard Chartered Bank (Hong Kong), Hong Kong"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "HUF",
+          "intermediary_bic": "BACXHUHBXXX",
+          "intermediary_name": "UniCredit Bank Hungary Zrt., Budapest"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "IDR",
+          "intermediary_bic": "SCBLIDJXXXX",
+          "intermediary_name": "Standard Chartered Bank, Jakarta"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "ILS",
+          "intermediary_bic": "LUMIILITXXX",
+          "intermediary_name": "Bank Leumi Le-Israel B.M., Tel Aviv"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "INR",
+          "intermediary_bic": "SCBLINBBXXX",
+          "intermediary_name": "Standard Chartered Bank, Mumbai"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "ISK",
+          "intermediary_bic": "GLITISREXXX",
+          "intermediary_name": "Islandsbanki hf, Reykjavik"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "JPY",
+          "intermediary_bic": "MHCBJPJTXXX",
+          "intermediary_name": "Mizuho Corporate Bank Ltd, Tokyo"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "KES",
+          "intermediary_bic": "BARCKENXXXX",
+          "intermediary_name": "ABSA Bank Kenya PLC, Nairobi"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "KRW",
+          "intermediary_bic": "KOEXKRSEXXX",
+          "intermediary_name": "KEB Hana Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "KZT",
+          "intermediary_bic": "HSBKKZKXXXX",
+          "intermediary_name": "Halyk Bank, Almaty"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "KWD",
+          "intermediary_bic": "NBOKKWKWXXX",
+          "intermediary_name": "National Bank of Kuwait SAKP, Kuwait"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "LKR",
+          "intermediary_bic": "HSBCLKLXXXX",
+          "intermediary_name": "The Hongkong and Shanghai Banking Corporation Limited, Colombo"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "MAD",
+          "intermediary_bic": "SGMBMAMCXXX",
+          "intermediary_name": "Saham Bank, Casablanca"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "MXN",
+          "intermediary_bic": "BMSXMXMMXXX",
+          "intermediary_name": "Banco Santander Mexico S.A., Mexico City"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "NOK",
+          "intermediary_bic": "NDEANOKKXXX",
+          "intermediary_name": "Nordea Bank Abp, filial i Norge, Oslo"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "NZD",
+          "intermediary_bic": "ASBBNZ2AXXX",
+          "intermediary_name": "ASB Bank Limited, Auckland"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "PEN",
+          "intermediary_bic": "BCONPEPLXXX",
+          "intermediary_name": "Banco BBVA Peru, Lima"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "PHP",
+          "intermediary_bic": "SCBLPHMMXXX",
+          "intermediary_name": "Standard Chartered Bank, Manila"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "PKR",
+          "intermediary_bic": "HABBPKKA007",
+          "intermediary_name": "Habib Bank Limited, Karachi"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "PLN",
+          "intermediary_bic": "PKOPPLPWXXX",
+          "intermediary_name": "Bank Pekao S.A., Warsaw"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "QAR",
+          "intermediary_bic": "QNBAQAQAXXX",
+          "intermediary_name": "Qatar National Bank (Q.P.S.C.), Doha"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "RON",
+          "intermediary_bic": "BRDEROBUXXX",
+          "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "RSD",
+          "intermediary_bic": "BACXRSBGXXX",
+          "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "SAR",
+          "intermediary_bic": "SABBSARIXXX",
+          "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "SGD",
+          "intermediary_bic": "DBSSSGSGXXX",
+          "intermediary_name": "DBS Bank Ltd, Singapore"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "THB",
+          "intermediary_bic": "SCBLTHBXXXX",
+          "intermediary_name": "Standard Chartered Bank (Thai), Bangkok"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "TND",
+          "intermediary_bic": "STBKTNTTXXX",
+          "intermediary_name": "Société Tunisienne de Banque SA, Tunis"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "TRY",
+          "intermediary_bic": "ISBKTRISXXX",
+          "intermediary_name": "Türkiye İş Bankası AŞ, Istanbul"
+        },
+        {
+          "beneficiary_bic": "NDEASESSXXX",
+          "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+          "currency": "ZAR",
+          "intermediary_bic": "SBZAZAJJXXX",
+          "intermediary_name": "The Standard Bank of South Africa Limited, Johannesburg"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_idfc_first_mumbai_20260921.json",
+      "url": "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details",
+      "as_of": "2026-09-21",
+      "source_sha256": "f7cb13442c0ea15ae6aa9da3d5e79e0457c1c97b51bd72de94853d3ba45e3ddc",
+      "route_count": 41,
+      "route_digest": "5cf7d2dcd53cb0c1990a81571258fb8f97daeb1b8a7e921b336f59bbbaa76851",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "AED",
+          "intermediary_bic": "EBILAEADXXX",
+          "intermediary_name": "Emirates NBD, UAE"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "AUD",
+          "intermediary_bic": "ANZBAU3MXXX",
+          "intermediary_name": "ANZ Banking Corporation Limited, Melbourne"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CAD",
+          "intermediary_bic": "BOFMCAM2XXX",
+          "intermediary_name": "Bank of Montreal, Canada"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CHF",
+          "intermediary_bic": "ZKBKCHZZXXX",
+          "intermediary_name": "Zürcher Kantonalbank, Zurich"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CNH",
+          "intermediary_bic": "ICBKSGSGCLR",
+          "intermediary_name": "Industrial and Commercial Bank of China, Singapore"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "EUR",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "GBP",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "HKD",
+          "intermediary_bic": "DHBKHKHHXXX",
+          "intermediary_name": "DBS Bank (Hong Kong) Limited, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "JPY",
+          "intermediary_bic": "BOTKJPJTXXX",
+          "intermediary_name": "Bank of Tokyo Mitsubishi UFJ, Tokyo"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "NOK",
+          "intermediary_bic": "DNBANOKKXXX",
+          "intermediary_name": "DNB Bank, Norway"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "NZD",
+          "intermediary_bic": "ANZBNZ22XXX",
+          "intermediary_name": "ANZ Bank New Zealand Limited, Auckland"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "SEK",
+          "intermediary_bic": "DNBASESXXXX",
+          "intermediary_name": "DNB Bank ASA, Sweden"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "SGD",
+          "intermediary_bic": "DBSSSGSGXXX",
+          "intermediary_name": "DBS Bank Limited, Singapore"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "USD",
+          "intermediary_bic": "CITIUS33XXX",
+          "intermediary_name": "Citibank, United States"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "JPMorgan Chase Bank, United States"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "ZAR",
+          "intermediary_bic": "FIRNZAJJXXX",
+          "intermediary_name": "FirstRand Bank Limited, South Africa"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "SAR",
+          "intermediary_bic": "CHASSARIXXX",
+          "intermediary_name": "JPMorgan Chase Bank N.A., Saudi Arabia"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "QAR",
+          "intermediary_bic": "QNBAQAQAXXX",
+          "intermediary_name": "Qatar National Bank SAQ"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "BHD",
+          "intermediary_bic": "NBOBBHBMXXX",
+          "intermediary_name": "National Bank of Bahrain BSC"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "KWD",
+          "intermediary_bic": "NBOKKWKWXXX",
+          "intermediary_name": "National Bank of Kuwait SAKP"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "ILS",
+          "intermediary_bic": "POALILITXXX",
+          "intermediary_name": "Bank Hapoalim BM"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "THB",
+          "intermediary_bic": "SCBLTHBXXXX",
+          "intermediary_name": "Standard Chartered Bank (Thai) Public Company Ltd"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "DKK",
+          "intermediary_bic": "NDEADKKKXXX",
+          "intermediary_name": "Nordea Bank Denmark AS"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "PLN",
+          "intermediary_bic": "BREXPLPWXXX",
+          "intermediary_name": "mBank SA"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "RON",
+          "intermediary_bic": "INGBROBUXXX",
+          "intermediary_name": "ING Bank NV, Romania"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CZK",
+          "intermediary_bic": "CEKOCZPPXXX",
+          "intermediary_name": "Ceskoslovenska Obchodni Banka AS"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "HUF",
+          "intermediary_bic": "BACXHUHBXXX",
+          "intermediary_name": "UniCredit Bank Hungary"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "RSD",
+          "intermediary_bic": "BACXRSBGXXX",
+          "intermediary_name": "UniCredit Bank Serbia and Beograd"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "ISK",
+          "intermediary_bic": "GLITISREXXX",
+          "intermediary_name": "Íslandsbanki hf"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "BGN",
+          "intermediary_bic": "INGBBGSFXXX",
+          "intermediary_name": "ING Bank NV, Bulgaria"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "TRY",
+          "intermediary_bic": "CHASTRISXXX",
+          "intermediary_name": "JPMorgan Chase Bank N.A., Turkey"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "BWP",
+          "intermediary_bic": "SCHBBWGXXXX",
+          "intermediary_name": "Standard Chartered Bank Botswana Ltd"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "UGX",
+          "intermediary_bic": "SCBLUGKAXXX",
+          "intermediary_name": "Standard Chartered Bank Uganda Limited"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "ZMW",
+          "intermediary_bic": "SCBLZMLXXXX",
+          "intermediary_name": "Standard Chartered Bank Zambia PLC"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "BBD",
+          "intermediary_bic": "NOSCBBBBXXX",
+          "intermediary_name": "Bank of Nova Scotia, Barbados"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "BSD",
+          "intermediary_bic": "NOSCBSNSXXX",
+          "intermediary_name": "Scotiabank (Bahamas) Limited"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "JMD",
+          "intermediary_bic": "NOSCJMKNXXX",
+          "intermediary_name": "The Bank of Nova Scotia Jamaica Ltd"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CLP",
+          "intermediary_bic": "CHASCLRMXXX",
+          "intermediary_name": "JPMorgan Chase Bank N.A., Chile"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "CRC",
+          "intermediary_bic": "BSNJCRSJXXX",
+          "intermediary_name": "Banco BAC San Jose SA"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "PEN",
+          "intermediary_bic": "BCPLPEPLXXX",
+          "intermediary_name": "Banco de Credito del Peru"
+        },
+        {
+          "beneficiary_bic": "IDFBINBBMUM",
+          "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+          "currency": "MXN",
+          "intermediary_bic": "BMSXMXMMXXX",
+          "intermediary_name": "Banco Santander Mexico SA"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_usbank_fx_fex_20250601.json",
+      "url": "https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf",
+      "as_of": "2025-06-01",
+      "source_sha256": "217a9b0107565133b0e6f5bdba5bd9f4d88fe822efbb9214709c16da2d804d03",
+      "route_count": 40,
+      "route_digest": "90ff929f3fc004b7c0a66f192d4eaa7a2eb59603e62a6f6d67a9d8234700568f",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "AED",
+          "intermediary_bic": "NBADAEAAXXX",
+          "intermediary_name": "First Abu Dhabi Bank PJSC, Abu Dhabi"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "AUD",
+          "intermediary_bic": "NATAAU33033",
+          "intermediary_name": "National Australia Bank Limited, Melbourne"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "BGN",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "BHD",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "CAD",
+          "intermediary_bic": "TDOMCATTTOR",
+          "intermediary_name": "Toronto Dominion Bank, Toronto"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "CHF",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS AG, Zurich"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "CNH",
+          "intermediary_bic": "HSBCHKHHHKH",
+          "intermediary_name": "HSBC China Bank, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "CNY",
+          "intermediary_bic": "HSBCCNSHXXX",
+          "intermediary_name": "HSBC China Bank, Shanghai"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "CZK",
+          "intermediary_bic": "KOMBCZPPXXX",
+          "intermediary_name": "Komercni Banka A.S., Prague"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "DKK",
+          "intermediary_bic": "DABADKKKXXX",
+          "intermediary_name": "Danske Bank, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "EUR",
+          "intermediary_bic": "CCFRFRPPXXX",
+          "intermediary_name": "HSBC Continental Europe, Paris"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "FJD",
+          "intermediary_bic": "ANZBFJFXXXX",
+          "intermediary_name": "Australia and New Zealand Banking Group Limited, Suva"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "GBP",
+          "intermediary_bic": "NWBKGB2LXXX",
+          "intermediary_name": "National Westminster Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "HKD",
+          "intermediary_bic": "SCBLHKHHXXX",
+          "intermediary_name": "Standard Chartered Bank Hong Kong Limited, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "HUF",
+          "intermediary_bic": "BACXHUHBXXX",
+          "intermediary_name": "UniCredit Bank, Budapest"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "IDR",
+          "intermediary_bic": "SCBLIDJXXXX",
+          "intermediary_name": "Standard Chartered Bank, Jakarta"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "ILS",
+          "intermediary_bic": "POALILITXXX",
+          "intermediary_name": "Bank Hapoalim B.M., Tel Aviv"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "INR",
+          "intermediary_bic": "SCBLINBBXXX",
+          "intermediary_name": "Standard Chartered Bank, Mumbai"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "JOD",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "JPY",
+          "intermediary_bic": "BOTKJPJTXXX",
+          "intermediary_name": "MUFG Bank Ltd., Tokyo"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "KES",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "KRW",
+          "intermediary_bic": "SCBLKRSEXXX",
+          "intermediary_name": "Standard Chartered Bank, Seoul"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "KWD",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "KZT",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "MAD",
+          "intermediary_bic": "SGMBMAMCXXX",
+          "intermediary_name": "Societe Generale Marocaine de Banques, Casablanca"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "MXN",
+          "intermediary_bic": "BCMRMXMMCOR",
+          "intermediary_name": "Bancomer BBVA, Mexico City"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "NOK",
+          "intermediary_bic": "DNBANOKKXXX",
+          "intermediary_name": "DNB Bank ASA, Oslo"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "NZD",
+          "intermediary_bic": "BKNZNZ22985",
+          "intermediary_name": "Bank of New Zealand, Wellington"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "OMR",
+          "intermediary_bic": "MIDLGB22XXX",
+          "intermediary_name": "HSBC Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "PHP",
+          "intermediary_bic": "SCBLPHMMXXX",
+          "intermediary_name": "Standard Chartered Bank, Manila"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "PLN",
+          "intermediary_bic": "PKOPPLPWXXX",
+          "intermediary_name": "Bank Pekao SA, Warsaw"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "QAR",
+          "intermediary_bic": "QNBAQAQAXXX",
+          "intermediary_name": "Qatar National Bank SAQ, Doha"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "RON",
+          "intermediary_bic": "BRDEROBUXXX",
+          "intermediary_name": "BRD - Groupe Societe Generale, Bucharest"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "SAR",
+          "intermediary_bic": "SABBSARIXXX",
+          "intermediary_name": "Saudi Awwal Bank, Riyadh"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "SEK",
+          "intermediary_bic": "ESSESESSXXX",
+          "intermediary_name": "Skandinaviska Enskilda Banken, Stockholm"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "SGD",
+          "intermediary_bic": "UOVBSGSGXXX",
+          "intermediary_name": "United Overseas Bank, Singapore"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "THB",
+          "intermediary_bic": "SCBLTHBXXXX",
+          "intermediary_name": "Standard Chartered Bank, Bangkok"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "TRY",
+          "intermediary_bic": "TGBATRIS093",
+          "intermediary_name": "Garanti Bank, Istanbul"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "USD",
+          "intermediary_bic": "SCBLUS33XXX",
+          "intermediary_name": "Standard Chartered Bank, New York"
+        },
+        {
+          "beneficiary_bic": "USBKUS44FEX",
+          "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+          "currency": "ZAR",
+          "intermediary_bic": "SBZAZAJJXXX",
+          "intermediary_name": "Standard Bank of South Africa, Johannesburg"
+        }
+      ]
+    },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://www.tjsb.bank.in/forex-services",
       "as_of": "2026-09-21",
       "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
+      "route_count": 11,
+      "route_digest": "4752306104253f7176ed2c34d470df6d7c8d5f1c7c20c26e55b9dfbcf84e5b40",
       "account_values_removed": true,
       "routes": [
         {
@@ -94,6 +1088,8 @@
       "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
       "as_of": "2026-09-21",
       "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
+      "route_count": 17,
+      "route_digest": "f78cf36b2509da0cc8ba0166821fa3a1f171cb65997d31a81e945a9103fb244a",
       "account_values_removed": true,
       "routes": [
         {
@@ -222,6 +1218,8 @@
       "url": "https://punjabandsind.bank.in/content/webnri",
       "as_of": "2026-09-21",
       "source_sha256": "2bcbc26b2d29068bd28e30fceb91e651c60a82dc19a30233c0cffa4dd2d32318",
+      "route_count": 8,
+      "route_digest": "870a7bfd255df64d3dba2cf880456d6458e0b0e80fc89a4e38b1ebb204264be3",
       "account_values_removed": true,
       "routes": [
         {
@@ -287,6 +1285,8 @@
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
       "source_sha256": "c7e78414cf1747b24f580c69540c8ac11ac5a806a0ef36c3178f025549a67611",
+      "route_count": 4,
+      "route_digest": "a0bdf5fed80c9dc5f7bbb6ee784a0fe6ba4feed819bf4f71cff647463580442d",
       "account_values_removed": true,
       "routes": [
         {
@@ -324,6 +1324,8 @@
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
       "as_of": "2026-09-21",
       "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
+      "route_count": 19,
+      "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
       "account_values_removed": true,
       "routes": [
         {
@@ -466,6 +1468,8 @@
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
       "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
+      "route_count": 11,
+      "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
       "account_values_removed": true,
       "routes": [
         {
@@ -548,10 +1552,468 @@
       ]
     },
     {
+      "ledger_file": "seed_ssi_alior_bank_20260921.json",
+      "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
+      "as_of": "2026-09-21",
+      "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
+      "route_count": 33,
+      "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "AUD",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "BGN",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CAD",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CHF",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CNY",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CNY",
+          "intermediary_bic": "CHASHKHHXXX",
+          "intermediary_name": "JPMorgan Chase Bank, N.A., Hong Kong Branch"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CZK",
+          "intermediary_bic": "CEKOCZPPXXX",
+          "intermediary_name": "Ceskoslovenska Obchodni Banka a.s., Prague"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "CZK",
+          "intermediary_bic": "GIBACZPXXXX",
+          "intermediary_name": "Ceska sporitelna a.s., Prague"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "DKK",
+          "intermediary_bic": "NDEADKKKXXX",
+          "intermediary_name": "Nordea Bank AB, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "DKK",
+          "intermediary_bic": "DABADKKKXXX",
+          "intermediary_name": "Danske Bank A/S, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "EUR",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "EUR",
+          "intermediary_bic": "BARCDEFFXXX",
+          "intermediary_name": "Barclays Bank Ireland Plc Frankfurt Branch, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "EUR",
+          "intermediary_bic": "COBADEFFXXX",
+          "intermediary_name": "Commerzbank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "GBP",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank Plc, London"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "GBP",
+          "intermediary_bic": "LOYDGB2LXXX",
+          "intermediary_name": "Lloyds Bank Plc, London"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "HKD",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "HUF",
+          "intermediary_bic": "OKHBHUHBXXX",
+          "intermediary_name": "K & H Bank Zrt, Budapest"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "HUF",
+          "intermediary_bic": "OTPVHUHBXXX",
+          "intermediary_name": "OTP Bank Nyrt, Budapest"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "ILS",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "JPY",
+          "intermediary_bic": "SMBCJPJTXXX",
+          "intermediary_name": "Sumitomo Mitsui Banking Corporation, Tokyo"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "MXN",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "NOK",
+          "intermediary_bic": "NDEANOKKXXX",
+          "intermediary_name": "Nordea Bank AB, Oslo"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "NOK",
+          "intermediary_bic": "DNBANOKKXXX",
+          "intermediary_name": "DNB Bank ASA, Oslo"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "NZD",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "RON",
+          "intermediary_bic": "INGBROBUXXX",
+          "intermediary_name": "ING Bank NV, Bucharest"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "SEK",
+          "intermediary_bic": "NDEASESSXXX",
+          "intermediary_name": "Nordea Bank AB, Stockholm"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "SEK",
+          "intermediary_bic": "ESSESESSXXX",
+          "intermediary_name": "Skandinaviska Enskilda Banken AB, Stockholm"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "THB",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "TRY",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank Plc, London"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "USD",
+          "intermediary_bic": "IRVTUS3NXXX",
+          "intermediary_name": "The Bank of New York Mellon, New York"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "USD",
+          "intermediary_bic": "PNBPUS33XXX",
+          "intermediary_name": "Wells Fargo Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "JPMorgan Chase Bank, N.A., New York"
+        },
+        {
+          "beneficiary_bic": "ALBPPLPWXXX",
+          "beneficiary_name": "Alior Bank S.A.",
+          "currency": "ZAR",
+          "intermediary_bic": "KREDBEBBXXX",
+          "intermediary_name": "KBC Bank NV, Brussels"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_bank_frick_20260527_deltas.json",
+      "url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
+      "as_of": "2026-05-27",
+      "source_sha256": "38bf3f3e20c0fad231c02bfa1f485dab22960fe71384916803b38c0c470e3ebd",
+      "route_count": 29,
+      "route_digest": "6792469c95a945c2e61d4264a92b1060f51cb6c17f7e3df0dd91bcb9e05174f1",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "AED",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "AED",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "AUD",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "CAD",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "CAD",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "CZK",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "DKK",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "EUR",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank, Frankfurt am Main, Germany"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "EUR",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "EUR",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "GBP",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "HKD",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "HKD",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "HUF",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "JPY",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "JPY",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "ILS",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "MXN",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "NOK",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "NZD",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "PLN",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "SEK",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "SGD",
+          "intermediary_bic": "SCBLGB2LXXX",
+          "intermediary_name": "Standard Chartered Bank, London, UK"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "SGD",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "ZAR",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "TRY",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank, Frankfurt am Main, Germany"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "TRY",
+          "intermediary_bic": "UBSWCHZH80A",
+          "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "USD",
+          "intermediary_bic": "DEUTUS33XXX",
+          "intermediary_name": "Deutsche Bank, New York, USA"
+        },
+        {
+          "beneficiary_bic": "BFRILI22XXX",
+          "beneficiary_name": "Bank Frick AG",
+          "currency": "USD",
+          "intermediary_bic": "SCBLUS33XXX",
+          "intermediary_name": "Standard Chartered Bank, New York, USA"
+        }
+      ]
+    },
+    {
       "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
       "url": "https://www.kdb.uz/rulp/corporates/correspondent-banks",
       "as_of": "2026-08-25",
       "source_sha256": "3de1876f29807bb29372937ccf3db93819a6f071bcc027cf74be71904c8bc5b7",
+      "route_count": 4,
+      "route_digest": "7567bbf35d824615d294121f798ce449ca3010085a78248ac0de738dfd72409a",
       "account_values_removed": true,
       "routes": [
         {
@@ -589,6 +2051,8 @@
       "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
       "as_of": "2026-04-08",
       "source_sha256": "69cc1dce34efac1bdb7590f712051122b84995c3946ae20807dd4c76852c097d",
+      "route_count": 24,
+      "route_digest": "97e2fd496b5f45a7baa3cabdf96d8203ebbd5b3014b167f2579f53e0400ef08b",
       "account_values_removed": true,
       "routes": [
         {
@@ -758,6 +2222,399 @@
           "currency": "RUB",
           "intermediary_bic": "IBAZRUMMXXX",
           "intermediary_name": "Bank MBA-MOSCOW LLC, Moscow"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_bcge_geneva_20240101.json",
+      "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
+      "as_of": "2024-01-01",
+      "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
+      "route_count": 28,
+      "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "AED",
+          "intermediary_bic": "ADCBAEAAXXX",
+          "intermediary_name": "Abu Dhabi Commercial Bank PJSC, Abu Dhabi"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "AUD",
+          "intermediary_bic": "CTBAAU2SXXX",
+          "intermediary_name": "Commonwealth Bank of Australia, Sydney"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "CAD",
+          "intermediary_bic": "ROYCCAT2XXX",
+          "intermediary_name": "Royal Bank of Canada, Toronto"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "CHF",
+          "intermediary_bic": "BCGECHGGXXX",
+          "intermediary_name": "Banque Cantonale de Genève, Geneva"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "CNY",
+          "intermediary_bic": "CCBQHKAXXXX",
+          "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "CZK",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "DKK",
+          "intermediary_bic": "DABADKKKXXX",
+          "intermediary_name": "Danske Bank A/S, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "EUR",
+          "intermediary_bic": "BYLADEMMXXX",
+          "intermediary_name": "Bayerische Landesbank, Munich"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "EUR",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "EUR",
+          "intermediary_bic": "BBRUBEBB010",
+          "intermediary_name": "ING Belgium SA/NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "EUR",
+          "intermediary_bic": "HELADEFFXXX",
+          "intermediary_name": "Landesbank Hessen-Thüringen Girozentrale, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "GBP",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank PLC, London"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "HKD",
+          "intermediary_bic": "CCBQHKAXXXX",
+          "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "HUF",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "ILS",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "JPY",
+          "intermediary_bic": "BOTKJPJTXXX",
+          "intermediary_name": "MUFG Bank Ltd, Tokyo"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "MXN",
+          "intermediary_bic": "CRESCHZZ80A",
+          "intermediary_name": "Credit Suisse (Schweiz) AG, Zurich"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "NOK",
+          "intermediary_bic": "DNBANOKKXXX",
+          "intermediary_name": "DNB Bank ASA, Oslo"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "NZD",
+          "intermediary_bic": "ASBBNZ2AXXX",
+          "intermediary_name": "ASB Bank Limited, Auckland"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "PLN",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "RON",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "SEK",
+          "intermediary_bic": "ESSESESSXXX",
+          "intermediary_name": "Skandinaviska Enskilda Banken AB, Stockholm"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "SGD",
+          "intermediary_bic": "UOVBSGSGXXX",
+          "intermediary_name": "United Overseas Bank Limited, Singapore"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "THB",
+          "intermediary_bic": "UOVBTHBKXXX",
+          "intermediary_name": "United Overseas Bank (Thai) Public Company Limited, Bangkok"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "TRY",
+          "intermediary_bic": "DEUTDEFFXXX",
+          "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "USD",
+          "intermediary_bic": "CITIUS33XXX",
+          "intermediary_name": "Citibank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "JPMorgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "BCGECHGGXXX",
+          "beneficiary_name": "Banque Cantonale de Genève",
+          "currency": "ZAR",
+          "intermediary_bic": "ABSAZAJJXXX",
+          "intermediary_name": "Absa Bank Ltd, Johannesburg"
+        }
+      ]
+    },
+    {
+      "ledger_file": "seed_ssi_mbh_bank_20241024.json",
+      "url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
+      "as_of": "2024-10-24",
+      "source_sha256": "58bf2215b395dcac74c009aa98701854e43cbe54a1cd3a95fee6a647ca9910d4",
+      "route_count": 25,
+      "route_digest": "102feafacc4d0d320d12656d46610f4a65bf19bc462dfc5a1fb65197ce85e5ae",
+      "account_values_removed": true,
+      "routes": [
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "AUD",
+          "intermediary_bic": "BBRUBEBBXXX",
+          "intermediary_name": "ING Belgium SA/NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "BGN",
+          "intermediary_bic": "STSABGSFXXX",
+          "intermediary_name": "DSK Bank PLC, Sofia"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "CAD",
+          "intermediary_bic": "BKAUATWWXXX",
+          "intermediary_name": "UniCredit Bank Austria AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "CHF",
+          "intermediary_bic": "RZBAATWWXXX",
+          "intermediary_name": "Raiffeisen Bank International AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "CNY",
+          "intermediary_bic": "BKCHHUHHXXX",
+          "intermediary_name": "Bank of China Limited, Budapest"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "CZK",
+          "intermediary_bic": "GIBACZPXXXX",
+          "intermediary_name": "Ceska Sporitelna, a.s., Prague"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "DKK",
+          "intermediary_bic": "DABADKKKXXX",
+          "intermediary_name": "Danske Bank AS, Copenhagen"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "EUR",
+          "intermediary_bic": "BBRUBEBBXXX",
+          "intermediary_name": "ING Belgium SA/NV, Brussels"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "EUR",
+          "intermediary_bic": "BCITITMMXXX",
+          "intermediary_name": "Intesa Sanpaolo SpA, Milan"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "EUR",
+          "intermediary_bic": "RZBAATWWXXX",
+          "intermediary_name": "Raiffeisen Bank International AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "EUR",
+          "intermediary_bic": "BKAUATWWXXX",
+          "intermediary_name": "UniCredit Bank Austria AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "EUR",
+          "intermediary_bic": "IRVTDEFXXXX",
+          "intermediary_name": "The Bank of New York Mellon, Frankfurt"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "GBP",
+          "intermediary_bic": "CITIGB2LXXX",
+          "intermediary_name": "Citibank N.A., London"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "GBP",
+          "intermediary_bic": "BARCGB22XXX",
+          "intermediary_name": "Barclays Bank PLC"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "JPY",
+          "intermediary_bic": "BOTKJPJTXXX",
+          "intermediary_name": "MUFG Bank Ltd., Tokyo"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "NOK",
+          "intermediary_bic": "DNBANOKKXXX",
+          "intermediary_name": "DNB Bank ASA, Oslo"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "PLN",
+          "intermediary_bic": "PKOPPLPWXXX",
+          "intermediary_name": "Bank Polska Kasa Opieki S.A."
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "PLN",
+          "intermediary_bic": "RZBAATWWXXX",
+          "intermediary_name": "Raiffeisen Bank International AG, Vienna"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "RON",
+          "intermediary_bic": "RZBRROBUXXX",
+          "intermediary_name": "Raiffeisen Bank S.A., Bucharest"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "RUB",
+          "intermediary_bic": "IMBKRUMMXXX",
+          "intermediary_name": "AO Unicredit Bank, Moscow"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "SEK",
+          "intermediary_bic": "DABASESXXXX",
+          "intermediary_name": "Danske Bank AS, Stockholm"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "TRY",
+          "intermediary_bic": "AKBKTRISXXX",
+          "intermediary_name": "Akbank TAS, Istanbul"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "USD",
+          "intermediary_bic": "CITIUS33XXX",
+          "intermediary_name": "Citibank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "USD",
+          "intermediary_bic": "CHASUS33XXX",
+          "intermediary_name": "JPMorgan Chase Bank N.A., New York"
+        },
+        {
+          "beneficiary_bic": "MKKBHUHBXXX",
+          "beneficiary_name": "MBH Bank Plc.",
+          "currency": "USD",
+          "intermediary_bic": "IRVTUS3NXXX",
+          "intermediary_name": "The Bank of New York Mellon, New York"
         }
       ]
     }

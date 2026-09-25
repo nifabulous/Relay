@@ -101,14 +101,7 @@ def test_continuous_20260925_manifest_matches_batch():
         (source["ledger_file"], source["url"]): source
         for source in fixture["sources"]
     }
-    mixed_ledger_names = {
-        "seed_ssi_india_wire_current_20260921.json",
-        "seed_ssi_cibc_caribbean_trust_20260921.json",
-        "seed_ssi_kdb_kapitalbank_current_20260921.json",
-    }
-    assert set(fixture_sources) == {
-        key for key in rows_by_source if key[0] in mixed_ledger_names
-    }
+    assert set(fixture_sources) == set(rows_by_source)
     attestation_path = (
         ROOT
         / "scripts"
@@ -144,41 +137,24 @@ def test_continuous_20260925_manifest_matches_batch():
         assert attested["retrieval_command"].endswith(
             f"'{source['url']}' | sha256sum"
         )
-        if key in fixture_sources:
-            assert source["source_extract_fixture"] == str(
-                fixture_path.relative_to(ROOT)
+        assert source["source_extract_fixture"] == str(fixture_path.relative_to(ROOT))
+        extracted = fixture_sources[key]
+        assert extracted["as_of"] == source["as_of"]
+        assert extracted["source_sha256"] == source["source_sha256"]
+        assert extracted["account_values_removed"] is True
+        assert attested["extraction_fixture"] == str(fixture_path.relative_to(ROOT))
+        assert attested["extraction_fixture_sha256"] == _canonical_digest(extracted)
+        assert len(extracted["routes"]) == source["route_count"]
+        assert _fixture_route_digest(extracted["routes"]) == source["route_digest"]
+        assert [
+            (row[0], row[1], row[2], row[3], row[4]) for row in rows
+        ] == [
+            (
+                route["beneficiary_bic"],
+                route["beneficiary_name"],
+                route["currency"],
+                route["intermediary_bic"],
+                route["intermediary_name"],
             )
-            extracted = fixture_sources[key]
-            assert extracted["as_of"] == source["as_of"]
-            assert extracted["source_sha256"] == source["source_sha256"]
-            assert extracted["account_values_removed"] is True
-            assert attested["extraction_fixture"] == str(
-                fixture_path.relative_to(ROOT)
-            )
-            assert attested["extraction_fixture_sha256"] == _canonical_digest(
-                extracted
-            )
-            assert len(extracted["routes"]) == source["route_count"]
-            assert _fixture_route_digest(extracted["routes"]) == source["route_digest"]
-            assert [
-                (
-                    row[0],
-                    row[1],
-                    row[2],
-                    row[3],
-                    row[4],
-                )
-                for row in rows
-            ] == [
-                (
-                    route["beneficiary_bic"],
-                    route["beneficiary_name"],
-                    route["currency"],
-                    route["intermediary_bic"],
-                    route["intermediary_name"],
-                )
-                for route in extracted["routes"]
-            ]
-        else:
-            assert attested["extraction_fixture"] is None
-            assert attested["extraction_fixture_sha256"] is None
+            for route in extracted["routes"]
+        ]

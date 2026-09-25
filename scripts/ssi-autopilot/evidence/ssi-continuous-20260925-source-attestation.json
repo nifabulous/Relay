@@ -3,11 +3,12 @@
   "generated_at": "2026-09-25",
   "purpose": "Independently reviewable retrieval and extraction attestation for the continuous SSI batch.",
   "method": {
-    "raw_source_sha256": "sha256 of raw response bytes fetched with curl -L --max-time 60 -sS URL | sha256sum (curl certificate verification remains enabled)",
+    "raw_source_sha256": "sha256 of raw response bytes fetched with set -o pipefail; curl --fail-with-body -L --max-time 60 -sS URL | sha256sum",
     "source_sha256_scope": "raw bank response bytes fetched on 2026-09-25; response bodies are not committed",
     "tls_certificate_verification": "curl default certificate verification is enabled; no --insecure flag is used.",
-  "route_mapping": "Each ledger row is grouped by the exact Source URL in its citation; route_digest is SHA-256 over the ordered canonical route tuples.",
-    "fixture_digest": "For source groups with a committed extraction fixture, extraction_fixture_sha256 is SHA-256 over the canonical fixture source object (sorted JSON keys).",
+    "http_error_policy": "--fail-with-body rejects non-2xx/3xx responses before the response can be accepted as a source snapshot.",
+    "route_mapping": "Each ledger row is grouped by the exact Source URL in its citation; route_digest is SHA-256 over the ordered canonical route tuples.",
+    "fixture_digest": "For every source group, extraction_fixture_sha256 is SHA-256 over the canonical fixture source object (sorted JSON keys).",
     "accounts_committed": false
   },
   "sources": [
@@ -15,166 +16,166 @@
       "ledger_file": "seed_ssi_nordea_current_20250730.json",
       "url": "https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf",
       "as_of": "2025-07-30",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf' | sha256sum",
       "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",
       "route_count": 56,
       "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "7ac344a24f854cb653995faa8d3697e6d8a76ee058c6640c39c0e9f0410e28cd"
     },
     {
       "ledger_file": "seed_ssi_idfc_first_mumbai_20260921.json",
       "url": "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details' | sha256sum",
       "source_sha256": "f7cb13442c0ea15ae6aa9da3d5e79e0457c1c97b51bd72de94853d3ba45e3ddc",
       "route_count": 41,
       "route_digest": "5cf7d2dcd53cb0c1990a81571258fb8f97daeb1b8a7e921b336f59bbbaa76851",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "5147f87cbf6e05c4bf276b012ada777d4b8f1dc4534989d631c2dd5111b6abbd"
     },
     {
       "ledger_file": "seed_ssi_usbank_fx_fex_20250601.json",
       "url": "https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf",
       "as_of": "2025-06-01",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf' | sha256sum",
       "source_sha256": "217a9b0107565133b0e6f5bdba5bd9f4d88fe822efbb9214709c16da2d804d03",
       "route_count": 40,
       "route_digest": "90ff929f3fc004b7c0a66f192d4eaa7a2eb59603e62a6f6d67a9d8234700568f",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "d6e11bb92081ceec6e51043e0d60897346305baa0c4c588117d176b54b2c8e39"
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://www.tjsb.bank.in/forex-services",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.tjsb.bank.in/forex-services' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.tjsb.bank.in/forex-services' | sha256sum",
       "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
       "route_count": 11,
       "route_digest": "4752306104253f7176ed2c34d470df6d7c8d5f1c7c20c26e55b9dfbcf84e5b40",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "5a6f25fdbc88471490660356423b85459716957ba70d2af643d895f70a7e0583"
+      "extraction_fixture_sha256": "023e614cffb26576d3dffcaa2eac0073c64920649855a20a4600e99c776829dc"
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kotak.bank.in/en/personal-banking/nri/transfer-money/wire-transfer/list-of-swift-codes.html' | sha256sum",
       "source_sha256": "bd112b5c4311d7fcacd621618c58bba06f3ac152e7e909362e6ecc9c5db309c2",
       "route_count": 17,
       "route_digest": "f78cf36b2509da0cc8ba0166821fa3a1f171cb65997d31a81e945a9103fb244a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "4bf36e887e3278e2ebf67c118c78f849d27f27cc1b1c599ba7621489205fae9d"
+      "extraction_fixture_sha256": "e864dd812e84c9001b4ab106cd30115b03fc13a8b3a80a8e3fe4d629bbf3fa33"
     },
     {
       "ledger_file": "seed_ssi_india_wire_current_20260921.json",
       "url": "https://punjabandsind.bank.in/content/webnri",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://punjabandsind.bank.in/content/webnri' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://punjabandsind.bank.in/content/webnri' | sha256sum",
       "source_sha256": "2bcbc26b2d29068bd28e30fceb91e651c60a82dc19a30233c0cffa4dd2d32318",
       "route_count": 8,
       "route_digest": "870a7bfd255df64d3dba2cf880456d6458e0b0e80fc89a4e38b1ebb204264be3",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "942d28b6ecfead7253ea5ded2b27a41ed7e6e17072b84461ba0b149b80cf3a65"
+      "extraction_fixture_sha256": "eb1140199173f5569a055e29d11c2523de98f908e6d6557a35a36b7449e2d1d8"
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf' | sha256sum",
       "source_sha256": "c7e78414cf1747b24f580c69540c8ac11ac5a806a0ef36c3178f025549a67611",
       "route_count": 4,
       "route_digest": "a0bdf5fed80c9dc5f7bbb6ee784a0fe6ba4feed819bf4f71cff647463580442d",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "c8d075cdda30abac28eb3ccd78a84540f31a35c0f92140d80fa099b2b733e29c"
+      "extraction_fixture_sha256": "8f8931794621a670eea8599cf2d25053f1ca960596f2305eb5f5aa5da44b2f8e"
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf' | sha256sum",
       "source_sha256": "2fcbe05dbaf42b03de6009e48ee278b480ee5b1f8340cc55e5dd0e57527bafba",
       "route_count": 19,
       "route_digest": "7fa9d8608958c4f18b72cb9f806b3eca26f4873ddcf51c5fb6feb0d27662301f",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "c3013b0dd83e7821ef72fbaad210630a874bfe1622d8448cea1ef365244c9a26"
+      "extraction_fixture_sha256": "b20157baef55fd04359311cf7b0222008ddf4a12b772e335fcaaa668d9e824a7"
     },
     {
       "ledger_file": "seed_ssi_cibc_caribbean_trust_20260921.json",
       "url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/cayman-trust-wire-xfr.pdf' | sha256sum",
       "source_sha256": "a4471fcf325ae8291fa751e73e3a7539484b07ef5863edfe4dc767bcfaa17f9d",
       "route_count": 11,
       "route_digest": "3aad5eb8759b3c543236c9bfa4d52e3a9a179a8fb4eb807ad1626dcd16ca576a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "a3d9c5854e2cf429d4fa8208b103855da6203d1b6a92a9790112fd7aaa276495"
+      "extraction_fixture_sha256": "35f8a04ee1b39f7a4b2bf3fd13e86b7f1d731a28bdfafcb9a11f2726621f0629"
     },
     {
       "ledger_file": "seed_ssi_alior_bank_20260921.json",
       "url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
       "as_of": "2026-09-21",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html' | sha256sum",
       "source_sha256": "1db250ca7429d0d45699c7fe0f70bb99f5a8f331e78fde22e4c8f414acf7f572",
       "route_count": 33,
       "route_digest": "9392616794f826409e65628e6e033fefbcd894b71d956807fc5bde83ffc5d62a",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "adabb84a358d92ed506fc81bbaed64de1a447de0d7443499e9449c2b14b22a54"
     },
     {
       "ledger_file": "seed_ssi_bank_frick_20260527_deltas.json",
       "url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
       "as_of": "2026-05-27",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf' | sha256sum",
       "source_sha256": "38bf3f3e20c0fad231c02bfa1f485dab22960fe71384916803b38c0c470e3ebd",
       "route_count": 29,
       "route_digest": "6792469c95a945c2e61d4264a92b1060f51cb6c17f7e3df0dd91bcb9e05174f1",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "79bc0c57f79673db99771998a7b07664c4e3d2ecdd25ebe71c00bedf11a77ca7"
     },
     {
       "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
       "url": "https://www.kdb.uz/rulp/corporates/correspondent-banks",
       "as_of": "2026-08-25",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.kdb.uz/rulp/corporates/correspondent-banks' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kdb.uz/rulp/corporates/correspondent-banks' | sha256sum",
       "source_sha256": "3de1876f29807bb29372937ccf3db93819a6f071bcc027cf74be71904c8bc5b7",
       "route_count": 4,
       "route_digest": "7567bbf35d824615d294121f798ce449ca3010085a78248ac0de738dfd72409a",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "21ac8725ad8c44fcc6e318a314b2284cf86bcd0c6518a1ba391de45210fc9145"
+      "extraction_fixture_sha256": "e03417c7e81e3c0fbd5f7d95a0cf9966721ddd2b13e31aa9f4ac4f4474a61071"
     },
     {
       "ledger_file": "seed_ssi_kdb_kapitalbank_current_20260921.json",
       "url": "https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/",
       "as_of": "2026-04-08",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.kapitalbank.uz/ru/financial-organizations/correspondence-relations/' | sha256sum",
       "source_sha256": "69cc1dce34efac1bdb7590f712051122b84995c3946ae20807dd4c76852c097d",
       "route_count": 24,
       "route_digest": "97e2fd496b5f45a7baa3cabdf96d8203ebbd5b3014b167f2579f53e0400ef08b",
       "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
-      "extraction_fixture_sha256": "c6cc9a73a32cc35b2176bf9f1c3632d0c707e5010caff253820995d3d10a636d"
+      "extraction_fixture_sha256": "e35f04413b97d5ca2e85e05ca0942fa3b49927251062ed743d7f5d80c55d68c4"
     },
     {
       "ledger_file": "seed_ssi_bcge_geneva_20240101.json",
       "url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
       "as_of": "2024-01-01",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0' | sha256sum",
       "source_sha256": "f5473bfd3dc9b65833e549fc16a77018016b692c940b88345f07281372210de1",
       "route_count": 28,
       "route_digest": "ee14a5940e26e90b074021f0a3b147db80f38a99c698745f550deeea40df7810",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "cc684c4dbc41b4497ee038231889d46b6d3e93104e703a750ee6ce518645c93f"
     },
     {
       "ledger_file": "seed_ssi_mbh_bank_20241024.json",
       "url": "https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf",
       "as_of": "2024-10-24",
-      "retrieval_command": "curl -L --max-time 60 -sS 'https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf' | sha256sum",
+      "retrieval_command": "set -o pipefail; curl --fail-with-body -L --max-time 60 -sS 'https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf' | sha256sum",
       "source_sha256": "58bf2215b395dcac74c009aa98701854e43cbe54a1cd3a95fee6a647ca9910d4",
       "route_count": 25,
       "route_digest": "102feafacc4d0d320d12656d46610f4a65bf19bc462dfc5a1fb65197ce85e5ae",
-      "extraction_fixture": null,
-      "extraction_fixture_sha256": null
+      "extraction_fixture": "tests/fixtures/ssi_continuous_20260925_source_attestation.json",
+      "extraction_fixture_sha256": "c9184ee2acd6ef25f9e3202d428687566c3ae05484524068490339e755d87c67"
     }
   ]
 }
