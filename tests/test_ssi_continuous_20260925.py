@@ -161,6 +161,13 @@ def test_continuous_20260925_manifest_matches_batch():
         assert snapshot_path.is_file()
         assert snapshot["captured_at"] == "2026-09-25"
         assert _snapshot_digest(snapshot_path) == snapshot["sha256"]
+        snapshot_payload = json.loads(snapshot_path.read_text())
+        assert snapshot_payload["source_url"] == source["url"]
+        assert snapshot_payload["captured_at"] == snapshot["captured_at"]
+        assert snapshot_payload["effective_date"] == source["as_of"]
+        assert snapshot_payload["account_values_removed"] is True
+        assert snapshot_payload["route_count"] == source["route_count"]
+        assert snapshot_payload["routes"] == fixture_sources[key]["routes"]
         attested = attestation_sources[key]
         assert attested["as_of"] == source["as_of"]
         assert attested["source_sha256"] == source["source_sha256"]

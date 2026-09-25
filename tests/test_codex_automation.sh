@@ -425,6 +425,7 @@ workflow = YAML.load_file(".github/workflows/loopkeeper-pr-review.yml")
 jobs = workflow.fetch("jobs")
 targets = jobs.fetch("targets")
 review = jobs.fetch("review")
+writer = jobs.fetch("writer")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
 raise unless review.fetch("needs") == "targets"
@@ -432,6 +433,23 @@ raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
   "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
 raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
+raise unless writer.fetch("needs") == ["targets", "review"]
+raise unless writer.fetch("if").include?("needs.review.result == 'success'")
+artifact_step = writer.fetch("steps").find { |step| step["name"] == "Resolve and verify PR-bound review artifact" }
+raise unless artifact_step
+raise unless artifact_step.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
+raise unless artifact_step.fetch("run").include?("loopkeeper-pr-review:${PR_NUMBER}:${head_sha}")
+eligibility_step = writer.fetch("steps").find { |step| step["name"] == "Re-verify fork eligibility before publication" }
+raise unless eligibility_step
+raise unless eligibility_step.fetch("run").include?("if ! decision=")
+raise unless !eligibility_step.fetch("run").include?("|| true")
+publication_step = writer.fetch("steps").find { |step| step["name"] == "Publish Loopkeeper review" }
+raise unless publication_step
+publication_env = publication_step.fetch("env")
+raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
+raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comment.md")
+raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
+raise unless !publication_env.key?("LOOPKEEPER_API_KEY")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
