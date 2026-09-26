@@ -196,12 +196,67 @@ jobs:
       # OpenAI key for the retired reviewer, so no new secret is needed.
       model_api_key: ${{ secrets.OPENAI_API_KEY }}
 
+  rebind:
+    # Re-publish each immutable review artifact under a PR-specific name before
+    # the privileged writer consumes it. The reusable workflow's artifact is
+    # run-scoped; metadata/head validation here prevents a matrix entry from
+    # rebinding another PR's review.
+    needs: [targets, review]
+    if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
+    steps:
+      - name: Download run-scoped review artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: loopkeeper-review-${{ github.run_id }}
+          path: ${{ github.workspace }}/loopkeeper-review-source
+
+      - name: Verify and rebind PR artifact
+        id: artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-review-source
+        run: |
+          set -euo pipefail
+          head_sha="$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')"
+          [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]]
+          [[ -s "$ARTIFACT_DIR/review-metadata.json" && -s "$ARTIFACT_DIR/comment.md" ]]
+          jq -e --argjson pr "$PR_NUMBER" --arg sha "$head_sha" \
+            '(.schema == 1) and (.pr_number == $pr) and (.head_sha == $sha)' \
+            "$ARTIFACT_DIR/review-metadata.json" >/dev/null
+          grep -Fq "<!-- loopkeeper-pr-review:${PR_NUMBER}:${head_sha} -->" \
+            "$ARTIFACT_DIR/comment.md"
+          artifact_sha256="$(sha256sum "$ARTIFACT_DIR/comment.md" | awk '{print $1}')"
+          [[ "$artifact_sha256" =~ ^[0-9a-f]{64}$ ]]
+          {
+            echo "head_sha=$head_sha"
+            echo "artifact_sha256=$artifact_sha256"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Upload PR-bound review artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
+          path: ${{ github.workspace }}/loopkeeper-review-source
+          if-no-files-found: error
+
   writer:
     # Publish only after the trusted reusable review has produced its
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
-    needs: [targets, review]
-    if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    needs: [targets, rebind]
+    if: ${{ needs.rebind.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -264,8 +319,8 @@ jobs:
       - name: Download immutable review artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: loopkeeper-review-${{ github.run_id }}
-          path: ${{ github.workspace }}/loopkeeper-review-artifact
+          name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
+          path: ${{ github.workspace }}/loopkeeper-review-artifact/pr-${{ matrix.pr_number }}
 
       - name: Resolve and verify PR-bound review artifact
         id: pr
@@ -273,7 +328,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ matrix.pr_number }}
-          ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-review-artifact
+          ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-review-artifact/pr-${{ matrix.pr_number }}
         run: |
           set -euo pipefail
           head_sha="$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')"
@@ -316,7 +371,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           LOOPKEEPER_ROOT: ${{ github.workspace }}/loopkeeper
           PYTHONPATH: ${{ github.workspace }}/loopkeeper/src
-          LOOPKEEPER_REVIEW_ARTIFACT: ${{ github.workspace }}/loopkeeper-review-artifact/comment.md
+          LOOPKEEPER_REVIEW_ARTIFACT: ${{ github.workspace }}/loopkeeper-review-artifact/pr-${{ matrix.pr_number }}/comment.md
           LOOPKEEPER_REVIEW_ARTIFACT_SHA256: ${{ steps.pr.outputs.artifact_sha256 }}
           LOOPKEEPER_REVIEW_ENABLED: "true"
           LOOPKEEPER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
@@ -347,6 +402,6 @@ jobs:
           # The privileged writer receives only the already-verified artifact.
           # Fail closed if a model credential ever reaches this job, and strip
           # inherited credential names before invoking the external adapter.
-          [[ -z "${OPENAI_API_KEY:-}" && -z "${LOOPKEEPER_MODEL_API_KEY:-}" ]]
+          [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]
           env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY \
             "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"

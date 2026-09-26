@@ -433,8 +433,14 @@ raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
   "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
 raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
-raise unless writer.fetch("needs") == ["targets", "review"]
-raise unless writer.fetch("if").include?("needs.review.result == 'success'")
+raise unless writer.fetch("needs") == ["targets", "rebind"]
+raise unless writer.fetch("if").include?("needs.rebind.result == 'success'")
+rebind = jobs.fetch("rebind")
+raise unless rebind.fetch("needs") == ["targets", "review"]
+rebind_upload = rebind.fetch("steps").find { |step| step["name"] == "Upload PR-bound review artifact" }
+raise unless rebind_upload
+raise unless rebind_upload.fetch("with").fetch("name").include?("-pr-${{ matrix.pr_number }}")
+raise unless rebind.fetch("steps").find { |step| step["name"] == "Verify and rebind PR artifact" }.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
 artifact_step = writer.fetch("steps").find { |step| step["name"] == "Resolve and verify PR-bound review artifact" }
 raise unless artifact_step
 raise unless artifact_step.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
@@ -457,6 +463,24 @@ RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
 fi
+
+# Exercise the privileged writer guard with both credential variables absent.
+# This catches nounset regressions before a workflow run can silently skip
+# publication. The fake publisher accepts only the verified artifact path and
+# has no model/API behavior to call.
+FAKE_WRITER="$STAGING/fake-loopkeeper-writer.sh"
+cat >"$FAKE_WRITER" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ -z "${OPENAI_API_KEY+x}" && -z "${LOOPKEEPER_MODEL_API_KEY+x}" ]]
+[[ -s "${LOOPKEEPER_REVIEW_ARTIFACT:?}" ]]
+[[ "${1:-}" == "159" ]]
+EOF
+chmod +x "$FAKE_WRITER"
+printf '<!-- loopkeeper-pr-review:159:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->\n' >"$STAGING/comment.md"
+env -i PATH="$PATH" LOOPKEEPER_REVIEW_ARTIFACT="$STAGING/comment.md" \
+  bash -c 'set -euo pipefail; [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]; env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY "$1" 159' _ "$FAKE_WRITER" || \
+  fail 'artifact-only writer guard failed when credential variables were absent.'
 
 # Execute the embedded selector with a deterministic gh stub so the edge cases
 # are behavioral regressions, not only text contracts.
