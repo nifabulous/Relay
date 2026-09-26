@@ -1,9 +1,11 @@
 """Admin authentication dependency.
 
 Gate the admin endpoints (/import/*) behind an API key. With ADMIN_API_KEY
-unset, local development (SQLite, not on Vercel) stays open for zero-setup use;
-a deployed environment answers 503 instead, so losing the key closes the admin
-API rather than exposing it.
+unset the admin API answers 503, so a deploy that loses the key is closed
+rather than exposed. Local development opens it explicitly with
+ADMIN_API_ALLOW_OPEN=1; the environment is never inferred, because platform
+signals (the VERCEL variable is opt-in per project) and SQLite paths also
+occur on real deploys.
 
 Usage on an endpoint:
     from .auth import admin_required
@@ -24,12 +26,9 @@ from . import config
 _admin_api_key: Optional[str] = os.getenv("ADMIN_API_KEY")
 
 
-def _is_local_development() -> bool:
-    """Only a local SQLite process off Vercel may run the admin API open."""
-    return (
-        config.DATABASE_URL.startswith("sqlite")
-        and not config.is_multi_instance_deployment()
-    )
+def _open_admin_api_allowed() -> bool:
+    """Only an explicit, affirmative opt-in runs the admin API without a key."""
+    return config._env_flag("ADMIN_API_ALLOW_OPEN")
 
 
 def admin_required(x_admin_key: Optional[str] = Header(default=None)) -> None:
@@ -37,12 +36,13 @@ def admin_required(x_admin_key: Optional[str] = Header(default=None)) -> None:
     FastAPI dependency: require X-Admin-Key header matching ADMIN_API_KEY.
 
     - Key configured: request must carry X-Admin-Key matching it, else 401.
-    - Key not configured, local development: allow all requests.
-    - Key not configured anywhere else: 503, the admin API is disabled.
+      ADMIN_API_ALLOW_OPEN never overrides a configured key.
+    - Key not configured and ADMIN_API_ALLOW_OPEN=1: allow all requests.
+    - Key not configured otherwise: 503, the admin API is disabled.
     """
     if not _admin_api_key:
-        if _is_local_development():
-            # Dev mode — no auth enforced. Documented in README.
+        if _open_admin_api_allowed():
+            # Local dev opt-in — no auth enforced. Documented in README.
             return
         raise HTTPException(
             status_code=503,

@@ -146,7 +146,7 @@ app/
 ### Key patterns
 
 - **Router → Service → Model** layering. Routers are thin (validation, error mapping). Services are pure functions that take a `Session` arg. Models are anemic SQLAlchemy 2.0 entities.
-- **Auth**: `admin_required` dependency gates the importers (`/import/*`): with `ADMIN_API_KEY` unset they are open only in local dev (SQLite, not on Vercel) and answer 503 elsewhere; with it set, the `X-Admin-Key` header is required. `/track/create` is not gated: the labs call it.
+- **Auth**: `admin_required` dependency gates the importers (`/import/*`): with `ADMIN_API_KEY` unset they answer 503 unless local dev opts in with `ADMIN_API_ALLOW_OPEN=1` (the test suite sets it in `conftest.py`); with it set, the `X-Admin-Key` header is required. `/track/create` is not gated: the labs call it.
 - **Migrations**: `create_all` in dev (SQLite). Alembic in prod (`alembic upgrade head`). The baseline migration exists; new models need `alembic revision --autogenerate`.
 - **Frontend**: Relay is the React/TypeScript application under `frontend/`; the legacy vanilla
   surface remains under `app/static/`. In the legacy surface, `window.LearnUtils` holds shared

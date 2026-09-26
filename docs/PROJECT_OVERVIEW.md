@@ -21,7 +21,8 @@ _Last updated: 2026-09-06._
 - **Architecture:** Router → Service → Model. Routers are thin (validation + error mapping);
   services are pure, mostly DB-free functions; models are anemic entities.
 - **Auth:** `admin_required` (X-Admin-Key header) gates the importers (`/import/*`). Without
-  `ADMIN_API_KEY` they are open only in local dev (SQLite, not on Vercel) and answer 503 elsewhere.
+  `ADMIN_API_KEY` they answer 503 unless local dev opts in with
+  `ADMIN_API_ALLOW_OPEN=1`.
 
 ### Frontend (Relay app, served at `/app`)
 - **React 19 + TypeScript 7 (strict)** on **Vite 8**.

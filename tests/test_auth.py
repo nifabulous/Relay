@@ -52,8 +52,9 @@ def client_with_auth():
 
 @pytest.fixture
 def client_dev_mode():
-    """A client where no ADMIN_API_KEY is set (dev mode — open access)."""
+    """A client with no ADMIN_API_KEY and the local-dev opt-in (open access)."""
     env_without_key = {k: v for k, v in os.environ.items() if k != "ADMIN_API_KEY"}
+    env_without_key["ADMIN_API_ALLOW_OPEN"] = "1"
     with mock.patch.dict(os.environ, env_without_key, clear=True):
         with mock.patch("app.auth._admin_api_key", None):
             from app.db import get_db
@@ -138,27 +139,32 @@ class TestDevModeOpenAccess:
         assert r.status_code != 401, (
             f"In dev mode (no key set), /import/fedwire must not be 401, got {r.status_code}"
         )
-        assert r.status_code != 503, "local SQLite dev mode must stay open"
+        assert r.status_code != 503, "the ADMIN_API_ALLOW_OPEN opt-in must open it"
 
 
-class TestDeployedEnvironmentsFailClosed:
-    """Without ADMIN_API_KEY, only local development may run the admin API open.
+class TestOpenAdminRequiresAnExplicitOptIn:
+    """Without ADMIN_API_KEY the admin API answers 503 unless ADMIN_API_ALLOW_OPEN is set.
 
-    A deploy that loses the key must not silently expose the importers, so on
-    Vercel or against a non-SQLite database the admin API answers 503 instead.
+    There is no platform detection: the VERCEL system variable is opt-in per
+    project and a deploy can run on SQLite, so inferring "local" left keyless
+    deploys open. Local development opts in explicitly instead.
     """
 
-    def test_admin_api_is_unavailable_on_vercel_without_a_key(self, client_dev_mode, monkeypatch):
-        monkeypatch.setenv("VERCEL", "1")
+    def test_without_the_flag_a_keyless_sqlite_app_is_closed(self, client_dev_mode, monkeypatch):
+        monkeypatch.delenv("ADMIN_API_ALLOW_OPEN", raising=False)
+        monkeypatch.delenv("VERCEL", raising=False)
         r = client_dev_mode.post("/api/import/fedwire")
         assert r.status_code == 503, r.text
 
-    def test_admin_api_is_unavailable_on_a_non_sqlite_database_without_a_key(
-        self, client_dev_mode, monkeypatch
-    ):
-        monkeypatch.setattr("app.config.DATABASE_URL", "postgresql://db.example/relay")
+    def test_only_an_affirmative_flag_value_opens_it(self, client_dev_mode, monkeypatch):
+        monkeypatch.setenv("ADMIN_API_ALLOW_OPEN", "0")
         r = client_dev_mode.post("/api/import/fedwire")
         assert r.status_code == 503, r.text
+
+    def test_the_flag_never_overrides_a_configured_key(self, client_with_auth, monkeypatch):
+        monkeypatch.setenv("ADMIN_API_ALLOW_OPEN", "1")
+        r = client_with_auth.post("/api/import/fedwire")
+        assert r.status_code == 401, r.text
 
 
 class TestKeyComparison:
