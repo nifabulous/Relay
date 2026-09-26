@@ -12,7 +12,11 @@ import pytest
 from sqlalchemy import select
 
 from app.models import IdempotencyKey
-from app.services.idempotency import IdempotencyKeyConflict, resolve_uetr
+from app.services.idempotency import (
+    IdempotencyKeyConflict,
+    IdempotencyKeyInFlight,
+    resolve_uetr,
+)
 
 _TRACK = (
     "/api/track/create",
@@ -58,8 +62,14 @@ def test_a_key_reused_on_another_endpoint_is_a_409(client):
     assert second.status_code == 409, second.text
 
 
-def test_a_concurrent_first_use_returns_the_winners_uetr(db_session_clean, monkeypatch):
-    """Another request inserts the key between our lookup and our insert."""
+def test_a_concurrent_first_use_is_refused_as_in_progress(db_session_clean, monkeypatch):
+    """Another request inserts the key between our lookup and our insert.
+
+    The winner has committed its key but, most likely, not its timeline yet.
+    Replaying its UETR would let this request see no events and write a second
+    timeline for the same UETR, so it is refused as in progress (a 409) and
+    writes nothing.
+    """
     winner = "11111111-1111-4111-8111-111111111111"
     db_session_clean.add(IdempotencyKey(key="raced-key", uetr=winner, endpoint="track/create"))
     db_session_clean.commit()
@@ -74,10 +84,14 @@ def test_a_concurrent_first_use_returns_the_winners_uetr(db_session_clean, monke
         return real_execute(statement, *args, **kwargs)
 
     monkeypatch.setattr(db_session_clean, "execute", first_lookup_misses)
-    uetr = resolve_uetr(
-        db_session_clean, "raced-key", "track/create", lambda: "22222222-2222-4222-8222-222222222222"
-    )
-    assert uetr == winner
+    with pytest.raises(IdempotencyKeyInFlight):
+        resolve_uetr(
+            db_session_clean, "raced-key", "track/create", lambda: "22222222-2222-4222-8222-222222222222"
+        )
+    monkeypatch.undo()
+    stored = db_session_clean.execute(select(IdempotencyKey)).scalars().all()
+    assert [(row.key, row.uetr) for row in stored] == [("raced-key", winner)]
+    assert issubclass(IdempotencyKeyInFlight, IdempotencyKeyConflict)
 
 
 def test_the_service_refuses_a_key_owned_by_another_endpoint(db_session_clean):

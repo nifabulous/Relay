@@ -21,6 +21,10 @@ class IdempotencyKeyConflict(ValueError):
     """The key is already bound to a different endpoint."""
 
 
+class IdempotencyKeyInFlight(IdempotencyKeyConflict):
+    """A concurrent request stored the key first and may still be running."""
+
+
 def _stored(db: Session, key: str) -> Optional[IdempotencyKey]:
     return db.execute(
         select(IdempotencyKey).where(IdempotencyKey.key == key)
@@ -45,6 +49,8 @@ def resolve_uetr(
     Raises:
         IdempotencyKeyConflict: the key was first used on another endpoint, so
             replaying its UETR here would mix two different flows.
+        IdempotencyKeyInFlight: a concurrent request stored the key first
+            (a subclass of IdempotencyKeyConflict, so also a 409).
     """
     if not key:
         return generate_uetr()
@@ -59,11 +65,14 @@ def resolve_uetr(
             return uetr
         except IntegrityError:
             # A concurrent first use stored the key between the lookup and
-            # this insert; replay the winner's UETR instead of failing.
+            # this insert. Its timeline is probably not written yet, so
+            # replaying its UETR would write a second timeline; refuse instead.
             db.rollback()
-            existing = _stored(db, key)
-            if existing is None:
+            if _stored(db, key) is None:
                 raise
+            raise IdempotencyKeyInFlight(
+                "A request with this Idempotency-Key is still in progress; retry shortly."
+            )
 
     if existing.endpoint != endpoint:
         raise IdempotencyKeyConflict(
