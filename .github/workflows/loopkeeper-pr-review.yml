@@ -66,7 +66,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          MAX_WORKFLOW_RUN_TARGETS=256
+          # Keep one exact-head PR per workflow run. The pinned reusable
+          # reviewer emits a run-scoped artifact, so accepting a multi-PR
+          # matrix would let entries contend for the same source artifact.
+          # Additional PRs are reviewed by separate workflow-dispatch runs.
+          MAX_WORKFLOW_RUN_ASSOCIATIONS=256
+          MAX_WORKFLOW_RUN_TARGETS=1
           [[ "$GH_REPO" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]] || {
             echo "repository must be owner/name" >&2
             exit 2
@@ -125,8 +130,8 @@ jobs:
           }
           candidate_numbers="$(jq -c '[.[]? | .number? | select(type == "number")] | unique' <<<"$RUN_PULL_REQUESTS")"
           candidate_count="$(jq 'length' <<<"$candidate_numbers")"
-          if (( candidate_count > MAX_WORKFLOW_RUN_TARGETS )); then
-            echo "$candidate_count unique PR targets exceed GitHub's $MAX_WORKFLOW_RUN_TARGETS-job matrix limit" >&2
+          if (( candidate_count > MAX_WORKFLOW_RUN_ASSOCIATIONS )); then
+            echo "$candidate_count associated PRs exceed the bounded selection limit" >&2
             exit 1
           fi
           selection_unavailable=0
@@ -148,6 +153,11 @@ jobs:
 
           if (( selection_unavailable )); then
             echo "one or more associated PRs were unverifiable; failing target selection." >&2
+            exit 1
+          fi
+          selected_count="$(wc -l <"$targets_file" | tr -d ' ')"
+          if (( selected_count > MAX_WORKFLOW_RUN_TARGETS )); then
+            echo "$selected_count exact-head PR targets require separate workflow runs to keep review artifacts PR-bound" >&2
             exit 1
           fi
           if [[ -s "$targets_file" ]]; then
@@ -252,6 +262,7 @@ jobs:
           if-no-files-found: error
 
   writer:
+    name: review (${{ matrix.pr_number }}) / writer
     # Publish only after the trusted reusable review has produced its
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.

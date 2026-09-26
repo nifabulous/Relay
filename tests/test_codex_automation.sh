@@ -394,10 +394,10 @@ refuse_text '.github/workflows/codex-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'targets:'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
-refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_ASSOCIATIONS='
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_TARGETS=256'
+  'MAX_WORKFLOW_RUN_ASSOCIATIONS=256'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_TARGETS=1'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -435,6 +435,7 @@ raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
 raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
 raise unless writer.fetch("needs") == ["targets", "rebind"]
 raise unless writer.fetch("if").include?("needs.rebind.result == 'success'")
+raise unless writer.fetch("name").include?("review (")
 rebind = jobs.fetch("rebind")
 raise unless rebind.fetch("needs") == ["targets", "review"]
 rebind_upload = rebind.fetch("steps").find { |step| step["name"] == "Upload PR-bound review artifact" }
@@ -517,14 +518,14 @@ run_loopkeeper_selector() {
 SELECTOR_OUTPUT="$STAGING/loopkeeper-output"
 SELECTOR_SUMMARY="$STAGING/loopkeeper-summary"
 nine_associations="$(jq -nc '[range(1; 10) | {number: .}]')"
-run_loopkeeper_selector "$nine_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector rejected nine bounded exact-head PRs.'
+if run_loopkeeper_selector "$nine_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted multiple targets that could collide in the run-scoped artifact.'
+fi
 require_text_from_file() {
   local file="$1"
   local text="$2"
   grep -Fq -- "$text" "$file" || fail "missing $text in $file"
 }
-require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1,2,3,4,5,6,7,8,9]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -534,9 +535,9 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector rejected multiple verified fallback targets.'
-require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7,8]'
+if FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted multiple fallback targets that could collide in the run-scoped artifact.'
+fi
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -548,10 +549,9 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
 twenty_one_associations="$(jq -nc '[range(1; 22) | {number: .}]')"
-run_loopkeeper_selector "$twenty_one_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector dropped associations above a caller-owned cap.'
-require_text_from_file "$SELECTOR_OUTPUT" \
-  'pr_numbers=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]'
+if run_loopkeeper_selector "$twenty_one_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted more than one target.'
+fi
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -562,7 +562,7 @@ fi
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
 if run_loopkeeper_selector "$(jq -nc '[range(1; 258) | {number: .}]')" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
-  fail 'Loopkeeper selector accepted more targets than one GitHub matrix supports.'
+  fail 'Loopkeeper selector accepted more than one target.'
 fi
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \
