@@ -241,8 +241,8 @@ def parse_json(file_or_path: Union[str, Path, IO]) -> List[dict]:
         data = json.load(file_or_path)
 
     if isinstance(data, dict) and "records" in data:
-        return data["records"]
-    if isinstance(data, list):
+        data = data["records"]
+    if isinstance(data, list) and all(isinstance(row, dict) for row in data):
         return data
     raise ValueError("JSON must be an array of objects or {\"records\": [...]}")
 

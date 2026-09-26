@@ -1,4 +1,6 @@
 """Admin-only data import endpoints (Fedwire, FedACH, SSI)."""
+import csv
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
@@ -85,7 +87,10 @@ async def trigger_ssi_import(
             status_code=400,
             detail="File is not valid UTF-8. Save as UTF-8 (Excel: 'CSV UTF-8').",
         )
-    except Exception as e:
+    except (ValueError, csv.Error) as e:
+        # The file's own problem, so the uploader sees what failed to parse.
+        # Anything else (a database fault) is a 500 without its SQL text.
+        db.rollback()
         raise HTTPException(status_code=400, detail=f"Parse error: {e}")
 
     return {
