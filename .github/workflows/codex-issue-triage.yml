@@ -2,7 +2,7 @@ name: Codex Issue Triage
 
 on:
   issues:
-    types: [opened, edited, labeled, reopened]
+    types: [opened, labeled, reopened]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -22,7 +22,13 @@ concurrency:
 
 jobs:
   triage:
-    if: vars.CODEX_REVIEW_ENABLED == 'true'
+    # The repository is public and every triage is a paid model call. An issue
+    # opened or reopened by someone outside the repository waits until a
+    # maintainer adds the codex-triage label (a labeled event, or the schedule).
+    if: >-
+      vars.CODEX_REVIEW_ENABLED == 'true' &&
+      (github.event_name != 'issues' || github.event.action == 'labeled' ||
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
     runs-on: ubuntu-latest
     # Must exceed CODEX_REQUEST_TIMEOUT with room to sanitize and post the
     # comment afterwards. At parity the job is killed at the instant the

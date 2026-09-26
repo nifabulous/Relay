@@ -538,7 +538,12 @@ refuse_text 'scripts/codex_review_pr.sh' 'pytest'
 refuse_text 'scripts/codex_review_pr.sh' 'npm test'
 refuse_text 'scripts/codex_review_pr.sh' 'swift test'
 
-require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, edited, labeled, reopened]'
+# The repository is public and each triage is a paid model call. Edits by the
+# author re-fingerprint the issue and would re-trigger it, and an issue opened
+# by anyone outside the repository runs only once a maintainer labels it.
+require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, labeled, reopened]'
+refuse_text '.github/workflows/codex-issue-triage.yml' 'edited'
+require_text '.github/workflows/codex-issue-triage.yml' "contains(fromJSON('[\"OWNER\",\"MEMBER\",\"COLLABORATOR\"]'), github.event.issue.author_association)"
 
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
 # action read the checkout and tamper with build output. Pinned for the same
