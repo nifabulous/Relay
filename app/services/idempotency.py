@@ -68,11 +68,13 @@ def resolve_uetr(
             # this insert. Its timeline is probably not written yet, so
             # replaying its UETR would write a second timeline; refuse instead.
             db.rollback()
-            if _stored(db, key) is None:
+            existing = _stored(db, key)
+            if existing is None:
                 raise
-            raise IdempotencyKeyInFlight(
-                "A request with this Idempotency-Key is still in progress; retry shortly."
-            )
+            if existing.endpoint == endpoint:
+                raise IdempotencyKeyInFlight(
+                    "A request with this Idempotency-Key is still in progress; retry shortly."
+                )
 
     if existing.endpoint != endpoint:
         raise IdempotencyKeyConflict(

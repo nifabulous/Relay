@@ -99,3 +99,25 @@ def test_the_service_refuses_a_key_owned_by_another_endpoint(db_session_clean):
     db_session_clean.commit()
     with pytest.raises(IdempotencyKeyConflict):
         resolve_uetr(db_session_clean, "owned", "track/create", lambda: "x")
+
+
+def test_a_race_with_the_other_endpoint_reports_the_endpoint_conflict(db_session_clean, monkeypatch):
+    """A retry cannot fix a key owned by another endpoint, so do not say "in progress"."""
+    db_session_clean.add(
+        IdempotencyKey(key="raced-other", uetr="u", endpoint="prepare-payment")
+    )
+    db_session_clean.commit()
+
+    real_execute = db_session_clean.execute
+    calls = {"n": 0}
+
+    def first_lookup_misses(statement, *args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return real_execute(select(IdempotencyKey).where(IdempotencyKey.key == "absent"))
+        return real_execute(statement, *args, **kwargs)
+
+    monkeypatch.setattr(db_session_clean, "execute", first_lookup_misses)
+    with pytest.raises(IdempotencyKeyConflict) as raised:
+        resolve_uetr(db_session_clean, "raced-other", "track/create", lambda: "x")
+    assert type(raised.value) is IdempotencyKeyConflict
