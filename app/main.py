@@ -54,6 +54,7 @@ from .routers import (
 from .routers import (
     vop as vop_router,
 )
+from .security_headers import SecurityHeadersMiddleware
 from .services.schema_compat import ensure_sqlite_schema
 from .services.seed import seed_if_empty
 
@@ -96,6 +97,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(BodySizeLimitMiddleware)
+# Added last so it is outermost and also covers the body limit's 413.
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(directory_router.router)
 app.include_router(routing_router.router)
