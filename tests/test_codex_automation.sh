@@ -428,6 +428,8 @@ review = jobs.fetch("review")
 writer = jobs.fetch("writer")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
+raise unless review.fetch("uses").include?("/.github/workflows/pr-review.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231")
+raise unless !review.fetch("uses").include?("pr-review-posting.yml")
 raise unless review.fetch("needs") == "targets"
 raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==

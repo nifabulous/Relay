@@ -181,7 +181,7 @@ jobs:
       fail-fast: false
       matrix:
         pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
-    uses: nifabulous/loopkeeper/.github/workflows/pr-review-posting.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+    uses: nifabulous/loopkeeper/.github/workflows/pr-review.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
     with:
       consumer_repo: ${{ github.repository }}
       loopkeeper_repo: nifabulous/loopkeeper
@@ -196,10 +196,9 @@ jobs:
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
-      # The reusable writer uses a fixed 200k comment-page cap that is too
-      # small for this repository's long-lived PR histories. Keep its review
-      # artifact generation, and publish through the bounded writer below with
-      # the repository's larger operator-configured cap.
+      # Keep the pinned reusable workflow read-only: it generates the
+      # run-scoped artifact but has no publication job. The bounded writer
+      # below is the only privileged publication path for this repository.
       post_comments: false
     secrets:
       # Loopkeeper is provider-neutral; this repository already holds an
