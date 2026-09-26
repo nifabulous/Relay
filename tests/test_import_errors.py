@@ -4,6 +4,8 @@ A malformed file is the uploader's to fix, so it answers 400 with the parse
 error. A database failure is not: answering it as a 400 "Parse error" handed
 raw SQLAlchemy text (statements, parameters) to the caller and blamed the file.
 """
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
@@ -38,3 +40,32 @@ def test_a_database_failure_is_a_500_without_the_sql(client, monkeypatch):
     response = _upload(server_errors_as_responses, "ssi.csv", b"beneficiary_bic,currency\n")
     assert response.status_code == 500, response.text
     assert "INSERT" not in response.text and "SECRET-ROW" not in response.text
+
+
+@pytest.mark.parametrize("suffix", [".csv", ".json"])
+def test_an_upload_naming_a_server_file_is_not_read_as_that_file(client, tmp_path, suffix):
+    """The upload body is file content, never a path on the server.
+
+    The parsers accept a str as either a path or raw content and open it when
+    os.path.isfile says it exists, so a body naming a server file imported
+    that file.
+    """
+    server_file = tmp_path / f"server-side{suffix}"
+    row = {
+        "beneficiary_bic": "DEUTDEFFXXX",
+        "currency": "NOK",
+        "intermediary_bic": "CITIUS33XXX",
+        "intermediary_account": "ACCT-1",
+        "beneficiary_account": "ACCT-2",
+    }
+    if suffix == ".csv":
+        server_file.write_text(",".join(row) + "\n" + ",".join(row.values()) + "\n")
+    else:
+        server_file.write_text(json.dumps([row]))
+
+    response = _upload(client, f"ssi{suffix}", str(server_file).encode())
+    if response.status_code == 200:
+        body = response.json()
+        assert body["inserted"] == 0 and body["updated"] == 0, body
+    else:
+        assert response.status_code == 400, response.text
