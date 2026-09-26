@@ -458,6 +458,9 @@ raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comme
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT_SHA256").include?("steps.pr.outputs.artifact_sha256")
 raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
 raise unless !publication_env.key?("LOOPKEEPER_API_KEY")
+raise unless publication_step.fetch("run").include?("sha256sum \"$LOOPKEEPER_REVIEW_ARTIFACT\"")
+raise unless publication_step.fetch("run").include?("artifact_sha256=\"")
+raise unless publication_step.fetch("run").include?("== \"$LOOPKEEPER_REVIEW_ARTIFACT_SHA256\"")
 raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY")
 raise unless publication_step.fetch("run").include?("Fail closed if a model credential")
 RUBY
@@ -482,6 +485,16 @@ printf '<!-- loopkeeper-pr-review:159:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -
 env -i PATH="$PATH" LOOPKEEPER_REVIEW_ARTIFACT="$STAGING/comment.md" \
   bash -c 'set -euo pipefail; [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]; env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY "$1" 159' _ "$FAKE_WRITER" || \
   fail 'artifact-only writer guard failed when credential variables were absent.'
+
+# Exercise the real pinned Loopkeeper writer when explicitly enabled by CI.
+# The fake gh publisher and python shim make this deterministic: the writer
+# must consume the supplied artifact and must never invoke loopkeeper.transport.
+if [[ "${LOOPKEEPER_CONTRACT_NETWORK:-0}" == "1" ]]; then
+  CONTRACT_TEST="$ROOT/tests/test_loopkeeper_writer_contract.sh"
+  if ! bash "$CONTRACT_TEST"; then
+    fail 'the pinned Loopkeeper writer artifact-only contract failed.'
+  fi
+fi
 
 # Execute the embedded selector with a deterministic gh stub so the edge cases
 # are behavioral regressions, not only text contracts.

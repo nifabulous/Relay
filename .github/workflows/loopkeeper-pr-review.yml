@@ -413,6 +413,12 @@ jobs:
           # The privileged writer receives only the already-verified artifact.
           # Fail closed if a model credential ever reaches this job, and strip
           # inherited credential names before invoking the external adapter.
+          # Validate the digest again at the publication boundary so the
+          # writer cannot be redirected to a different artifact between the
+          # resolver and this step.
+          [[ -n "${LOOPKEEPER_REVIEW_ARTIFACT_SHA256-}" ]]
+          artifact_sha256="$(sha256sum "$LOOPKEEPER_REVIEW_ARTIFACT" | awk '{print $1}')"
+          [[ "$artifact_sha256" == "$LOOPKEEPER_REVIEW_ARTIFACT_SHA256" ]]
           [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]
           env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY \
             "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"

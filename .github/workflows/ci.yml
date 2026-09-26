@@ -159,6 +159,7 @@ jobs:
           bash -n scripts/codex_review_pr.sh
           bash -n scripts/codex_triage_issue.sh
           bash -n scripts/verify_before_push.sh
+          bash -n tests/test_loopkeeper_writer_contract.sh
 
       - name: Codex automation assertions
         # CODEX_VERIFY_ACTION_PINS resolves every pinned SHA against the release
@@ -168,6 +169,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEX_VERIFY_ACTION_PINS: "1"
+          LOOPKEEPER_CONTRACT_NETWORK: "1"
         run: bash tests/test_codex_automation.sh
 
   frontend:
