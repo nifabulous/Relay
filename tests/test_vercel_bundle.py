@@ -7,6 +7,7 @@ FUNCTION_INVOCATION_FAILED. This test rebuilds the bundle's file set from the
 tracked files minus ``excludeFiles`` and boots the app from that copy alone.
 """
 import fnmatch
+import glob
 import json
 import os
 import shutil
@@ -110,6 +111,33 @@ def test_exclude_globs_strip_the_directories_the_app_must_not_depend_on():
     for excluded in ("scripts/", "tests/", "docs/", "frontend/"):
         if any(path.startswith(excluded) for path in bundled):
             pytest.fail(f"the bundle still contains {excluded}")
+
+
+def test_the_wheel_declares_every_runtime_data_file_under_app():
+    """vercel.json installs the project with `pip install '.[ai]'`, a wheel.
+
+    If the runtime ever imports that installed copy instead of the source
+    tree, any file the wheel omits is missing at import. setuptools ships only
+    .py files unless package-data declares the rest, so every tracked non-.py
+    file under app/ must match a package-data glob.
+    """
+    tomllib = pytest.importorskip("tomllib")
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    package_data = config["tool"]["setuptools"].get("package-data", {})
+    declared = set()
+    for package, patterns in package_data.items():
+        package_dir = ROOT / package.replace(".", "/")
+        for pattern in patterns:
+            for match in glob.glob(pattern, root_dir=package_dir, recursive=True):
+                declared.add((package_dir / match).relative_to(ROOT).as_posix())
+    runtime_data = {
+        path
+        for path in _tracked_files()
+        if path.startswith("app/") and not path.endswith(".py")
+    }
+    missing = sorted(runtime_data - declared)
+    if missing:
+        pytest.fail(f"{len(missing)} app/ data files are not package-data, e.g. {missing[:5]}")
 
 
 def _copy_bundle(tmp_path) -> Path:
