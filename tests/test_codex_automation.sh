@@ -459,7 +459,7 @@ publication_step = publisher.fetch("steps").find { |step| step["name"] == "Publi
 raise unless publication_step
 publication_env = publication_step.fetch("env")
 raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
-raise unless !publication_env.key?("LOOPKEEPER_MODEL")
+raise unless publication_env.fetch("LOOPKEEPER_MODEL") == "artifact-only-no-transport"
 raise unless !publication_env.key?("LOOPKEEPER_API_STYLE")
 raise unless !publication_env.key?("LOOPKEEPER_API_BASE_URL")
 raise unless !publication_env.key?("LOOPKEEPER_REASONING_EFFORT")

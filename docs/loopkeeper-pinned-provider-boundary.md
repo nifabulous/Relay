@@ -15,9 +15,11 @@ publisher adapter with a supplied review artifact. Its Python shim fails if
 model request. The fake GitHub publisher also proves that the adapter reaches
 only the expected PR-comment operation.
 
-The privileged publication job deliberately omits model selection, API style,
-API base URL, reasoning, input-budget, and request-timeout settings. It also
-fails closed if any of `OPENAI_API_KEY`, `LOOPKEEPER_MODEL_API_KEY`, or
+The pinned adapter requires a model-shaped identifier before it reaches the
+artifact branch, so the privileged publication job supplies the deliberately
+non-routable sentinel `artifact-only-no-transport`. It omits API style, API
+base URL, reasoning, input-budget, and request-timeout settings. It also fails
+closed if any of `OPENAI_API_KEY`, `LOOPKEEPER_MODEL_API_KEY`, or
 `LOOPKEEPER_API_KEY` is present, then removes all three names from the adapter
 environment. Only the verified artifact path and its revalidated digest cross
 the publication boundary.

@@ -392,6 +392,10 @@ jobs:
           LOOPKEEPER_REVIEW_ENABLED: "true"
           LOOPKEEPER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
           LOOPKEEPER_DEFAULT_BRANCH: ${{ steps.roots.outputs.consumer_default_branch }}
+          # The pinned adapter validates this identifier before branching to
+          # artifact-only publication. It is deliberately not a usable model
+          # selection and no API credential or endpoint enters this job.
+          LOOPKEEPER_MODEL: artifact-only-no-transport
           LOOPKEEPER_MAX_OUTPUT_BYTES: ${{ vars.LOOPKEEPER_MAX_OUTPUT_BYTES || '50000' }}
           LOOPKEEPER_JOB_TIMEOUT_SECONDS: 1200
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
