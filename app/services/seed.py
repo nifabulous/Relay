@@ -1858,11 +1858,14 @@ def _ssi_wave8_manifest_records():
     These source pages publish correspondent BICs and currencies but no
     settlement accounts.  Keep the rows explicitly BIC-only so they remain
     visible as availability metadata without becoming selectable SSIs.
+
+    The ledgers live beside this module, not under scripts/: vercel.json
+    strips scripts/** from the function bundle, and this runs at import.
     """
-    manifest_dir = Path(__file__).resolve().parents[1] / ".." / "scripts" / "ssi-autopilot"
+    ledger_dir = Path(__file__).resolve().parent
     rows = []
     for filename in ("regions_wave8_bank_fbhl.json", "regions_wave8_bank_sbaa.json"):
-        payload = json.loads((manifest_dir / filename).resolve().read_text(encoding="utf-8"))
+        payload = json.loads((ledger_dir / filename).read_text(encoding="utf-8"))
         beneficiary = payload["bic8"]
         if len(beneficiary) == 8:
             beneficiary += "XXX"

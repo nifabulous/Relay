@@ -1619,7 +1619,7 @@ def _expand_wave8_manifest_source_rows() -> list[tuple[str, ...]]:
     """Read the wave-8 bank manifests without importing seed.py."""
     rows: list[tuple[str, ...]] = []
     for filename in ("regions_wave8_bank_fbhl.json", "regions_wave8_bank_sbaa.json"):
-        payload = json.loads((REPO_ROOT / "scripts" / "ssi-autopilot" / filename).read_text())
+        payload = json.loads((SEED_FILE.parent / filename).read_text(encoding="utf-8"))
         beneficiary = payload["bic8"]
         beneficiary = beneficiary + "XXX" if len(beneficiary) == 8 else beneficiary
         for record in payload["admitted_records"]:
