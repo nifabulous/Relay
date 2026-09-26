@@ -6,6 +6,12 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..schemas import PreparePaymentRequest, PreparePaymentResponse
+from ..services.idempotency import (
+    IDEMPOTENCY_KEY_MAX_LENGTH,
+    IDEMPOTENCY_KEY_PATTERN,
+    IdempotencyKeyConflict,
+    resolve_uetr,
+)
 from ..services.prepare import prepare_payment
 
 router = APIRouter(prefix="/api", tags=["swift"])
@@ -15,7 +21,12 @@ router = APIRouter(prefix="/api", tags=["swift"])
 def prepare_payment_endpoint(
     request: PreparePaymentRequest,
     db: Session = Depends(get_db),
-    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+    idempotency_key: Optional[str] = Header(
+        default=None,
+        alias="Idempotency-Key",
+        max_length=IDEMPOTENCY_KEY_MAX_LENGTH,
+        pattern=IDEMPOTENCY_KEY_PATTERN,
+    ),
 ):
     """
     Run all pre-send checks in one call and return a single recommendation.
@@ -41,10 +52,12 @@ def prepare_payment_endpoint(
             detail="strictness must be 'lenient', 'standard', or 'strict'",
         )
 
-    from ..services.idempotency import resolve_uetr
     from ..services.tracking import generate_uetr
 
-    resolved_uetr = resolve_uetr(db, idempotency_key, "prepare-payment", generate_uetr)
+    try:
+        resolved_uetr = resolve_uetr(db, idempotency_key, "prepare-payment", generate_uetr)
+    except IdempotencyKeyConflict as conflict:
+        raise HTTPException(status_code=409, detail=str(conflict))
 
     result = prepare_payment(
         session=db,

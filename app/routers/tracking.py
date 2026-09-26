@@ -8,7 +8,12 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import PaymentEvent
 from ..schemas import PaymentEventInfo, TrackPaymentRequest, TrackPaymentResponse
-from ..services.idempotency import resolve_uetr
+from ..services.idempotency import (
+    IDEMPOTENCY_KEY_MAX_LENGTH,
+    IDEMPOTENCY_KEY_PATTERN,
+    IdempotencyKeyConflict,
+    resolve_uetr,
+)
 from ..services.tracking import (
     advance_payment,
     complete_payment,
@@ -26,7 +31,12 @@ router = APIRouter(prefix="/api", tags=["swift"])
 def create_tracked_payment(
     request: TrackPaymentRequest,
     db: Session = Depends(get_db),
-    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+    idempotency_key: Optional[str] = Header(
+        default=None,
+        alias="Idempotency-Key",
+        max_length=IDEMPOTENCY_KEY_MAX_LENGTH,
+        pattern=IDEMPOTENCY_KEY_PATTERN,
+    ),
 ):
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
@@ -57,7 +67,10 @@ def create_tracked_payment(
             detail="intermediary_bics and intermediary_names must have equal length",
         )
 
-    uetr = resolve_uetr(db, idempotency_key, "track/create", generate_uetr)
+    try:
+        uetr = resolve_uetr(db, idempotency_key, "track/create", generate_uetr)
+    except IdempotencyKeyConflict as conflict:
+        raise HTTPException(status_code=409, detail=str(conflict))
 
     # If this UETR already has a timeline (replay of same idempotency key),
     # return the existing timeline instead of duplicating it.
