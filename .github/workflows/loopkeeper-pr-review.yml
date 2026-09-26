@@ -207,9 +207,9 @@ jobs:
       # below is the only privileged publication path for this repository.
       post_comments: false
     secrets:
-      # Loopkeeper is provider-neutral; this repository already holds an
-      # OpenAI key for the retired reviewer, so no new secret is needed.
-      model_api_key: ${{ secrets.OPENAI_API_KEY }}
+      # Provider-neutral key for the model endpoint selected by repository
+      # variables. Only this read-only producer receives the secret.
+      model_api_key: ${{ secrets.LOOPKEEPER_API_KEY }}
 
   rebind:
     # Re-publish each immutable review artifact under a PR-specific name before

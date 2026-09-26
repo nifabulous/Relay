@@ -411,6 +411,10 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'matrix:'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'pr_number: ${{ matrix.pr_number }}'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'model_api_key: ${{ secrets.LOOPKEEPER_API_KEY }}'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'model_api_key: ${{ secrets.OPENAI_API_KEY }}'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   'workflow_run.pull_requests[0].number'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' '  schedule:'
