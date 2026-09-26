@@ -1,6 +1,6 @@
 """Pydantic v2 request/response schemas."""
 from datetime import date, datetime, timezone
-from typing import List, Literal, Optional
+from typing import Annotated, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -11,6 +11,13 @@ from .ssi_terms import (
     normalize_charge_code,
     normalize_value_date,
 )
+
+# A correspondent chain in a request body. Real chains have a handful of hops;
+# the caps bound per-request work (screening fuzzy-matches every name against
+# the whole watchlist) without limiting any chain a learner can build.
+MAX_CHAIN_HOPS = 10
+ChainBic = Annotated[str, Field(max_length=11)]
+ChainName = Annotated[str, Field(max_length=200)]
 
 # ---------- responses ----------
 
@@ -321,8 +328,12 @@ class TrackPaymentRequest(BaseModel):
     currency: str = Field(..., description="3-letter currency code, e.g. USD")
     amount: float = Field(..., gt=0, description="Payment amount")
     charge_code: str = Field("SHA", description="OUR / SHA / BEN")
-    intermediary_bics: List[str] = Field(default_factory=list, description="Intermediary BICs")
-    intermediary_names: List[str] = Field(default_factory=list, description="Intermediary bank names")
+    intermediary_bics: List[ChainBic] = Field(
+        default_factory=list, max_length=MAX_CHAIN_HOPS, description="Intermediary BICs"
+    )
+    intermediary_names: List[ChainName] = Field(
+        default_factory=list, max_length=MAX_CHAIN_HOPS, description="Intermediary bank names"
+    )
     outcome: str = Field("credited", description="Simulated outcome: credited | rejected")
 
     @field_validator("currency")
@@ -440,8 +451,8 @@ class FeeSimulateRequest(BaseModel):
     amount: float = Field(..., gt=0, description="Send amount (must be positive)")
     currency: str = Field(..., description="3-letter currency code")
     charge_code: str = Field("SHA", description="OUR / SHA / BEN")
-    intermediary_bics: List[str] = Field(default_factory=list)
-    intermediary_names: List[str] = Field(default_factory=list)
+    intermediary_bics: List[ChainBic] = Field(default_factory=list, max_length=MAX_CHAIN_HOPS)
+    intermediary_names: List[ChainName] = Field(default_factory=list, max_length=MAX_CHAIN_HOPS)
 
     @field_validator("currency")
     @classmethod
@@ -485,8 +496,8 @@ class FeeSimulateResponse(BaseModel):
 class ScreenRequest(BaseModel):
     sender_name: str = Field(..., min_length=1, max_length=200, description="Sender name to screen")
     beneficiary_name: str = Field(..., min_length=1, max_length=200, description="Beneficiary name to screen")
-    intermediary_bics: List[str] = Field(default_factory=list)
-    intermediary_names: List[str] = Field(default_factory=list)
+    intermediary_bics: List[ChainBic] = Field(default_factory=list, max_length=MAX_CHAIN_HOPS)
+    intermediary_names: List[ChainName] = Field(default_factory=list, max_length=MAX_CHAIN_HOPS)
 
 
 class PartyScreenInfo(BaseModel):
