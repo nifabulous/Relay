@@ -26,9 +26,13 @@ def _upload(client, name, body):
         ("ssi.json", b"{broken"),
         ("ssi.json", b'[{"beneficiary_bic": "DEUTDEFFXXX", "currency": 840}]'),
         ("ssi.json", b'[{"beneficiary_bic": "DEUTDEFFXXX", "notes": []}]'),
+        ("ssi.json", b'[{"beneficiary_bic": "DEUTDEFFXXX", "currency": true}]'),
         ("ssi.json", b"[" * 50_000),
     ],
-    ids=["object", "scalars", "broken", "number-value", "list-value", "deep-nesting"],
+    ids=[
+        "object", "scalars", "broken", "number-value", "list-value",
+        "bool-in-text-column", "deep-nesting",
+    ],
 )
 def test_a_malformed_file_is_a_400_parse_error(client, name, body):
     response = _upload(client, name, body)
@@ -93,3 +97,11 @@ def test_the_sample_csv_parses_with_any_line_ending(isolated_client, newline):
     assert response.status_code == 200, response.text
     result = response.json()
     assert result["inserted"] + result["updated"] + result["rejected"] == len(rows) - 1, result
+
+
+def test_columns_the_importer_does_not_read_are_ignored(client):
+    """Extra keys of any type were always ignored; only read columns are type-checked."""
+    body = b'[{"beneficiary_bic": "NOT-A-BIC", "priority": 1, "source": {"page": 2}}]'
+    response = _upload(client, "ssi.json", body)
+    assert response.status_code == 200, response.text
+    assert response.json()["rejected"] == 1, response.text
