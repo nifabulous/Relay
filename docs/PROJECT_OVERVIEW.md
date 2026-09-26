@@ -20,8 +20,8 @@ _Last updated: 2026-09-06._
   **Postgres + Alembic** in prod.
 - **Architecture:** Router → Service → Model. Routers are thin (validation + error mapping);
   services are pure, mostly DB-free functions; models are anemic entities.
-- **Auth:** `admin_required` (X-Admin-Key header) gates mutating/import endpoints. Dev mode
-  (no `ADMIN_API_KEY`) is open.
+- **Auth:** `admin_required` (X-Admin-Key header) gates mutating/import endpoints. Without
+  `ADMIN_API_KEY` they are open only in local dev (SQLite, not on Vercel) and answer 503 elsewhere.
 
 ### Frontend (Relay app, served at `/app`)
 - **React 19 + TypeScript 7 (strict)** on **Vite 8**.

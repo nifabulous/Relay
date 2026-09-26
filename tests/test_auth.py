@@ -135,6 +135,41 @@ class TestDevModeOpenAccess:
         assert r.status_code != 401, (
             f"In dev mode (no key set), /import/fedwire must not be 401, got {r.status_code}"
         )
+        assert r.status_code != 503, "local SQLite dev mode must stay open"
+
+
+class TestDeployedEnvironmentsFailClosed:
+    """Without ADMIN_API_KEY, only local development may run the admin API open.
+
+    A deploy that loses the key must not silently expose the importers, so on
+    Vercel or against a non-SQLite database the admin API answers 503 instead.
+    """
+
+    def test_admin_api_is_unavailable_on_vercel_without_a_key(self, client_dev_mode, monkeypatch):
+        monkeypatch.setenv("VERCEL", "1")
+        r = client_dev_mode.post("/api/import/fedwire")
+        assert r.status_code == 503, r.text
+
+    def test_admin_api_is_unavailable_on_a_non_sqlite_database_without_a_key(
+        self, client_dev_mode, monkeypatch
+    ):
+        monkeypatch.setattr("app.config.DATABASE_URL", "postgresql://db.example/relay")
+        r = client_dev_mode.post("/api/import/fedwire")
+        assert r.status_code == 503, r.text
+
+
+class TestKeyComparison:
+    def test_a_key_differing_only_in_its_last_character_is_rejected(self, client_with_auth):
+        r = client_with_auth.post(
+            "/api/import/fedwire", headers={"X-Admin-Key": "test-secret-key-124"}
+        )
+        assert r.status_code == 401, r.text
+
+    def test_a_non_ascii_key_is_rejected_rather_than_crashing(self, client_with_auth):
+        r = client_with_auth.post(
+            "/api/import/fedwire", headers={"X-Admin-Key": "clé".encode("latin-1")}
+        )
+        assert r.status_code == 401, r.text
 
 
 class TestReadEndpointsUnaffected:

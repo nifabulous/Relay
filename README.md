@@ -165,7 +165,7 @@ step and trims the function bundle.
 
 | Variable | Value | Why |
 | --- | --- | --- |
-| `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `app/auth.py` treats the deployment as dev mode and leaves `/api/import/*` and `/api/track/create` open to anyone. |
+| `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `/api/import/*` and `/api/track/create` stay open only in local development (SQLite, not on Vercel); anywhere else they answer 503 until it is set. |
 | `DATABASE_URL` | `sqlite:////tmp/swift_routing.db` | The project filesystem is read-only; `/tmp` is the only writable path. `app/config.py` falls back to this automatically when `VERCEL` is set, but that system variable is opt-in per project — setting `DATABASE_URL` explicitly is the reliable route. |
 | `SENTRY_DSN` | Sentry backend project DSN | Optional. Sentry error monitoring is disabled when this is unset. Store it in Vercel/GitHub environment configuration, not source control. |
 | `SENTRY_ENVIRONMENT` | `production` | Optional environment label shown in Sentry. |
