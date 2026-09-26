@@ -54,3 +54,39 @@ def test_an_intermediary_bic_longer_than_11_characters_is_rejected(client, path,
 def test_a_chain_at_the_cap_is_accepted(client, path, body):
     response = client.post(path, json={**body, **_chain(MAX_CHAIN_HOPS, name="B" * 200)})
     assert response.status_code == 200, response.text
+
+
+_PREPARE = {
+    "beneficiary_iban": "GB29NWBK60161331926819",
+    "beneficiary_name": "Jane Doe",
+    "currency": "GBP",
+}
+MAX_PAYMENT_AMOUNT = 1_000_000_000_000
+
+
+@pytest.mark.parametrize("path, body", [("/api/track/create", _TRACK), ("/api/prepare-payment", _PREPARE)])
+def test_an_amount_above_the_cap_is_rejected(client, path, body):
+    """Timelines store the amount as text in a 20-character column."""
+    response = client.post(path, json={**body, "amount": MAX_PAYMENT_AMOUNT * 10})
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.parametrize("path, body", [("/api/track/create", _TRACK), ("/api/prepare-payment", _PREPARE)])
+def test_an_amount_at_the_cap_is_accepted(client, path, body):
+    response = client.post(path, json={**body, "amount": MAX_PAYMENT_AMOUNT})
+    assert response.status_code == 200, response.text
+
+
+def test_track_create_rejects_an_unknown_charge_code(client):
+    response = client.post("/api/track/create", json={**_TRACK, "charge_code": "XXXX"})
+    assert response.status_code == 422, response.text
+
+
+def test_track_create_normalizes_the_charge_code(client):
+    """With OUR the sender pays every fee, so the beneficiary receives the full amount."""
+    response = client.post(
+        "/api/track/create", json={**_TRACK, **_chain(1), "charge_code": " our "}
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["final_amount"] == body["sent_amount"], body

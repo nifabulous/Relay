@@ -107,7 +107,7 @@ def get_tracked_payment(uetr: str, db: Session = Depends(get_db)):
 
     The UETR is the 36-character UUID assigned at initiation, embedded in
     MT103 field 121 / pacs.008. This returns the status summary of the
-    events *visible now*: instant admin/demo payments are fully visible,
+    events *visible now*: instant demo payments are fully visible,
     while scheduled prepared payments reveal events as their planned
     timestamps arrive (or as they are advanced via
     POST /api/track/{uetr}/skip|complete). Hidden plan rows are never
@@ -126,7 +126,7 @@ def skip_tracked_payment(uetr: str, db: Session = Depends(get_db)):
 
     Reveals the next hidden event of a prepared payment's planned chain, in
     hop order, and returns the updated tracking snapshot. Unlike the instant
-    admin/demo creation endpoint, prepared payments start with only
+    demo creation endpoint, prepared payments start with only
     INITIATED visible; this control lets a learner step through the journey.
     Safe to repeat: each call reveals one more event until the plan is
     terminal, then becomes a no-op. No-op for instant timelines (already

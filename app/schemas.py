@@ -18,6 +18,9 @@ from .ssi_terms import (
 MAX_CHAIN_HOPS = 10
 ChainBic = Annotated[str, Field(max_length=11)]
 ChainName = Annotated[str, Field(max_length=200)]
+# Timelines store each hop's amount as f"{amount:.2f}" in a 20-character
+# column; one trillion leaves room and also rejects Infinity.
+MAX_PAYMENT_AMOUNT = 1_000_000_000_000
 
 # ---------- responses ----------
 
@@ -326,7 +329,7 @@ class TrackPaymentRequest(BaseModel):
     beneficiary_bic: str = Field(..., max_length=11, description="The receiving bank's BIC")
     beneficiary_name: str = Field(..., max_length=200, description="The receiving bank's name")
     currency: str = Field(..., description="3-letter currency code, e.g. USD")
-    amount: float = Field(..., gt=0, description="Payment amount")
+    amount: float = Field(..., gt=0, le=MAX_PAYMENT_AMOUNT, description="Payment amount")
     charge_code: str = Field("SHA", description="OUR / SHA / BEN")
     intermediary_bics: List[ChainBic] = Field(
         default_factory=list, max_length=MAX_CHAIN_HOPS, description="Intermediary BICs"
@@ -340,6 +343,14 @@ class TrackPaymentRequest(BaseModel):
     @classmethod
     def validate_ccy(cls, v):
         return validate_currency_code(v)
+
+    @field_validator("charge_code")
+    @classmethod
+    def normalize_charge_code(cls, v):
+        v = v.strip().upper()
+        if v not in ("OUR", "SHA", "BEN"):
+            raise ValueError("charge_code must be OUR, SHA, or BEN")
+        return v
 
 
 class PaymentEventInfo(BaseModel):
@@ -388,7 +399,7 @@ class PreparePaymentRequest(BaseModel):
         None, max_length=11, description="Beneficiary bank BIC (auto-derived from IBAN if omitted)"
     )
     currency: str = Field(..., description="Payment currency, e.g. USD, NGN")
-    amount: float = Field(..., gt=0, description="Payment amount")
+    amount: float = Field(..., gt=0, le=MAX_PAYMENT_AMOUNT, description="Payment amount")
     strictness: str = Field(
         "standard",
         description="How to treat CLOSE_MATCH/NOT_CHECKED: lenient | standard | strict",

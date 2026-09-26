@@ -350,7 +350,7 @@ lesson scripts:
 | `GET` | `/api/ssi` | Standard Settlement Instructions |
 | `POST` | `/api/verify-payee` | Verification of Payee |
 | `POST` | `/api/prepare-payment` | One-call orchestration: validate + VoP + route + SSI → recommendation |
-| `POST` | `/api/track/create` | **Instant** admin/demo path — create a simulated payment with its full gpi timeline immediately |
+| `POST` | `/api/track/create` | **Instant** demo path used by the labs — create a simulated payment with its full gpi timeline immediately |
 | `GET` | `/api/track/{uetr}` | Retrieve the events of a payment's timeline that are *visible now* |
 | `POST` | `/api/track/{uetr}/skip` | Advance a prepared (scheduled) payment by exactly one event |
 | `POST` | `/api/track/{uetr}/complete` | Reveal a prepared payment's entire remaining timeline |
@@ -433,7 +433,7 @@ All responses below are **simulated educational data** — not a production
 payment system. See the interactive OpenAPI docs at
 <http://127.0.0.1:8000/docs> for the full schemas.
 
-#### 1. Instant admin/demo timeline — `POST /api/track/create`
+#### 1. Instant demo timeline — `POST /api/track/create`
 
 ```bash
 curl -s http://127.0.0.1:8000/api/track/create \
@@ -453,7 +453,7 @@ curl -s http://127.0.0.1:8000/api/track/create \
   }'
 ```
 
-This is the **instant admin/demo path**: the full chain — INITIATED → ACCEPTED →
+This is the **instant demo path** the labs use: the full chain — INITIATED → ACCEPTED →
 IN_PROGRESS → FORWARDED → … → CREDITED (`outcome: "rejected"` terminates at the
 first intermediary instead) — is visible immediately and the response is
 terminal. Replaying the request with the same `Idempotency-Key` header returns
