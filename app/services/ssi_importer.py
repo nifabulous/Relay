@@ -231,20 +231,31 @@ def parse_csv(file_or_path: Union[str, Path, IO]) -> List[dict]:
 
 def parse_json(file_or_path: Union[str, Path, IO]) -> List[dict]:
     """Parse a JSON file (array of objects, or {\"records\": [...]})."""
-    if isinstance(file_or_path, (str, Path)):
-        if os.path.isfile(file_or_path):
-            with open(file_or_path, encoding="utf-8") as f:
-                data = json.load(f)
+    try:
+        if isinstance(file_or_path, (str, Path)):
+            if os.path.isfile(file_or_path):
+                with open(file_or_path, encoding="utf-8") as f:
+                    data = json.load(f)
+            else:
+                data = json.loads(str(file_or_path))
         else:
-            data = json.loads(str(file_or_path))
-    else:
-        data = json.load(file_or_path)
+            data = json.load(file_or_path)
+    except RecursionError:
+        raise ValueError("JSON is nested too deeply") from None
 
     if isinstance(data, dict) and "records" in data:
         data = data["records"]
-    if isinstance(data, list) and all(isinstance(row, dict) for row in data):
-        return data
-    raise ValueError("JSON must be an array of objects or {\"records\": [...]}")
+    if not (isinstance(data, list) and all(isinstance(row, dict) for row in data)):
+        raise ValueError("JSON must be an array of objects or {\"records\": [...]}")
+    # validate_ssi_row strips text fields and requires a real boolean for
+    # terms_inferred, so any other value type is the file's error, not ours.
+    for number, row in enumerate(data, start=1):
+        for column, value in row.items():
+            if not isinstance(value, (str, bool, type(None))):
+                raise ValueError(
+                    f"record {number}: {column!r} must be a string, boolean or null"
+                )
+    return data
 
 
 def detect_and_parse(file_or_path: Union[str, Path, IO], format_hint: Optional[str] = None) -> List[dict]:

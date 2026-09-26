@@ -24,7 +24,11 @@ def _upload(client, name, body):
         ("ssi.json", b'{"not": "a list"}'),
         ("ssi.json", b"[1, 2]"),
         ("ssi.json", b"{broken"),
+        ("ssi.json", b'[{"beneficiary_bic": "DEUTDEFFXXX", "currency": 840}]'),
+        ("ssi.json", b'[{"beneficiary_bic": "DEUTDEFFXXX", "notes": []}]'),
+        ("ssi.json", b"[" * 50_000),
     ],
+    ids=["object", "scalars", "broken", "number-value", "list-value", "deep-nesting"],
 )
 def test_a_malformed_file_is_a_400_parse_error(client, name, body):
     response = _upload(client, name, body)
