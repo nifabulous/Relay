@@ -1,4 +1,7 @@
-"""Every response carries the baseline browser security headers.
+"""Every response the app returns carries the baseline security headers.
+
+(An unhandled exception's plain-text 500 is sent by Starlette's
+ServerErrorMiddleware, outside user middleware, and is not covered.)
 
 Production sent only content-type and content-length (Vercel adds HSTS on its
 own domains). Nothing embeds Relay in a frame and no page uses camera,

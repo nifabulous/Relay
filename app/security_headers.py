@@ -1,4 +1,9 @@
-"""Baseline browser security headers on every response.
+"""Baseline browser security headers on every response the app returns.
+
+Not covered: the plain-text 500 for an unhandled exception. Starlette's
+ServerErrorMiddleware always wraps user middleware and sends that response
+itself; making it carry these headers would need a catch-all exception
+handler, which changes how errors reach Sentry.
 
 Nothing embeds Relay in a frame and no page uses camera, microphone,
 geolocation or payment APIs, so the strict values break nothing. HSTS is left
