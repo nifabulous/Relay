@@ -107,10 +107,15 @@ class TestImportEndpointAuth:
         )
 
 
-class TestTrackCreateAuth:
-    """/track/create must also require the key when configured."""
+class TestTrackCreateIsALearnerEndpoint:
+    """/track/create backs Lab 6, the capstone and Exceptions & Returns.
 
-    def test_track_create_rejected_without_key(self, client_with_auth):
+    The labs call it without an admin key, so gating it answered them 401 in
+    production. It writes only simulated timelines, like the open
+    /prepare-payment, and stays open when a key is configured.
+    """
+
+    def test_track_create_accepts_a_request_without_a_key(self, client_with_auth):
         r = client_with_auth.post("/api/track/create", json={
             "originator_bic": "CITIUS33XXX",
             "originator_name": "Citibank",
@@ -119,9 +124,7 @@ class TestTrackCreateAuth:
             "currency": "USD",
             "amount": 100,
         })
-        assert r.status_code == 401, (
-            f"Unauthenticated /track/create must be 401, got {r.status_code}"
-        )
+        assert r.status_code == 200, r.text
 
 
 class TestDevModeOpenAccess:

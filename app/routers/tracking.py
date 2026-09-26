@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..auth import admin_required
 from ..db import get_db
 from ..models import PaymentEvent
 from ..schemas import PaymentEventInfo, TrackPaymentRequest, TrackPaymentResponse
@@ -23,7 +22,7 @@ from ._shared import _TRACKING_DISCLAIMER
 router = APIRouter(prefix="/api", tags=["swift"])
 
 
-@router.post("/track/create", response_model=TrackPaymentResponse, dependencies=[Depends(admin_required)])
+@router.post("/track/create", response_model=TrackPaymentResponse)
 def create_tracked_payment(
     request: TrackPaymentRequest,
     db: Session = Depends(get_db),
@@ -32,7 +31,9 @@ def create_tracked_payment(
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
 
-    This is the admin/demo path: the timeline is created "instant" — every
+    This is the instant demo path the labs use (Lab 6, the capstone, and
+    Exceptions & Returns), so it is not admin-gated: the timeline is created
+    "instant" — every
     event of the chain is visible immediately and the response is terminal
     (CREDITED or REJECTED). Prepared payments (POST /api/prepare-payment)
     are the only scheduled flow; they reveal their timeline gradually and

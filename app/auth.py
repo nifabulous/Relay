@@ -1,6 +1,6 @@
 """Admin authentication dependency.
 
-Gate the admin endpoints (/import/*, /track/create) behind an API key. With ADMIN_API_KEY
+Gate the admin endpoints (/import/*) behind an API key. With ADMIN_API_KEY
 unset, local development (SQLite, not on Vercel) stays open for zero-setup use;
 a deployed environment answers 503 instead, so losing the key closes the admin
 API rather than exposing it.
