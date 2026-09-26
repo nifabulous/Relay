@@ -766,8 +766,9 @@ class TestLatinAmericaSsiCoverage:
 # except CTBC VN's SSI circular, whose accounts are masked).
 #
 # Corrections pinned: Cathay United is UWCBTWTP, NOT the guessed CUBKTWTP;
-# the Wells Fargo New York BIC printed as PNBPUS3NNYC is normalized to the
-# canonical PNBPUS33XXX used elsewhere. Bangkok Bank's USD routing is via
+# older ledgers normalize the Wells Fargo legacy alias PNBPUS3NNYC to
+# PNBPUS33XXX, while the current RBSI and UniCredit source documents retain
+# their authoritative New York BIC verbatim. Bangkok Bank's USD routing is via
 # its OWN New York branch (ABA 026008691) — the same self-loop pattern as
 # MUFG's existing record.
 ASIA_DEEP_SSI_COVERAGE = [
@@ -808,13 +809,16 @@ class TestAsiaDeepSsiCoverage:
         assert "UWCBTWTPXXX" in bank_bics
         assert "CUBKTWTPXXX" not in bank_bics, "Guessed Cathay United BIC used"
 
-    def test_wells_fargo_uses_the_canonical_bic(self):
-        """The printed PNBPUS3NNYC is normalized to PNBPUS33XXX (Wells Fargo
-        New York, legacy BIC family) across all records."""
+    def test_wells_fargo_bic_is_normalized_or_source_preserved(self):
+        """Use the legacy alias except where a current source needs its exact BIC."""
         for record in SSI_RECORDS:
-            assert record[3] != "PNBPUS3NNYC", (
-                "Normalize the printed Wells Fargo BIC to PNBPUS33XXX"
-            )
+            if record[3] == "PNBPUS3NNYC":
+                assert (
+                    "rbsinternational.com" in record[9]
+                    or "hypovereinsbank.de" in record[9]
+                )
+            else:
+                assert record[3] != "PNBPUS3NNYC"
 
 
 # ---------------------------------------------------------------------------

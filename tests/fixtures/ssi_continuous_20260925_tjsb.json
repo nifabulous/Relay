@@ -1,0 +1,90 @@
+{
+  "fixture_version": 3,
+  "batch": "continuous-20260925",
+  "ledger_file": "seed_ssi_india_wire_current_20260921.json",
+  "url": "https://www.tjsb.bank.in/forex-services",
+  "as_of": "2026-09-21",
+  "source_sha256": "3da2d469d6d4081c87024d08d697ff872318e5eab4b239f4859868e1f872fd41",
+  "route_count": 11,
+  "route_digest": "4752306104253f7176ed2c34d470df6d7c8d5f1c7c20c26e55b9dfbcf84e5b40",
+  "account_values_removed": true,
+  "routes": [
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "CHF",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "EUR",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "GBP",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "JPY",
+      "intermediary_bic": "BKIDJPJTXXX",
+      "intermediary_name": "Bank of India, Tokyo"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "AUD",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "USD",
+      "intermediary_bic": "BKIDUS33XXX",
+      "intermediary_name": "Bank of India, New York"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "USD",
+      "intermediary_bic": "SBINUS33XXX",
+      "intermediary_name": "State Bank of India, New York"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "AUD",
+      "intermediary_bic": "SBINAU2SXXX",
+      "intermediary_name": "State Bank of India, Sydney"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "SGD",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "CAD",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "TJSBINBBXXX",
+      "beneficiary_name": "TJSB Sahakari Bank Ltd",
+      "currency": "EUR",
+      "intermediary_bic": "SBINDEFFXXX",
+      "intermediary_name": "State Bank of India, Frankfurt"
+    }
+  ]
+}

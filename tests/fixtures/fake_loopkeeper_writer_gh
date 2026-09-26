@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log_file="${FAKE_GH_LOG:?}"
+printf 'gh' >>"$log_file"
+printf ' %q' "$@" >>"$log_file"
+printf '\n' >>"$log_file"
+
+if [[ "${1:-}" == "api" ]]; then
+  shift
+  method="GET"
+  if [[ "${1:-}" == "--method" ]]; then
+    method="${2:?}"
+    shift 2
+  fi
+  endpoint="${1:?}"
+  shift
+  jq_expression=""
+  for ((index = 1; index <= $#; index++)); do
+    if [[ "${!index}" == "--jq" ]]; then
+      next=$((index + 1))
+      jq_expression="${!next}"
+      break
+    fi
+  done
+  case "$endpoint" in
+    repos/nifabulous/Relay)
+      if [[ "$jq_expression" == *default_branch* ]]; then
+        printf 'main\n'
+      else
+        printf '{"default_branch":"main"}\n'
+      fi
+      ;;
+    repos/nifabulous/Relay/git/ref/heads/main)
+      if [[ "$jq_expression" == *object.sha* ]]; then
+        printf '%s\n' "${FAKE_TRUSTED_SHA:?}"
+      else
+        printf '{"object":{"sha":"%s"}}\n' "${FAKE_TRUSTED_SHA:?}"
+      fi
+      ;;
+    repos/nifabulous/Relay/pulls/159)
+      printf '{"state":"open","head_sha":"%s"}\n' "${FAKE_TRUSTED_SHA:?}"
+      ;;
+    repos/nifabulous/Relay/issues/159/comments\?*)
+      printf '[]\n'
+      ;;
+    repos/nifabulous/Relay/pulls/159/files\?*)
+      printf '[]\n'
+      ;;
+    repos/nifabulous/Relay/commits/*/check-runs\?*)
+      printf '{"total_count":0,"check_runs":[]}\n'
+      ;;
+    repos/nifabulous/Relay/issues/comments/*)
+      [[ "$method" == "PATCH" ]] || exit 2
+      printf '{}\n'
+      ;;
+    *)
+      printf 'unexpected gh api endpoint: %s\n' "$endpoint" >&2
+      exit 2
+      ;;
+  esac
+  exit 0
+fi
+
+if [[ "${1:-}" == "pr" && "${2:-}" == "view" ]]; then
+  jq_requested=0
+  jq_expression=""
+  for ((index = 1; index <= $#; index++)); do
+    if [[ "${!index}" == "--jq" ]]; then
+      next=$((index + 1))
+      jq_requested=1
+      jq_expression="${!next}"
+      break
+    fi
+  done
+  if (( jq_requested == 1 )); then
+    case "$jq_expression" in
+      *headRefOid*) printf '%s\n' "${FAKE_TRUSTED_SHA:?}" ;;
+      *) printf '\n' ;;
+    esac
+  else
+    printf '{"number":159,"title":"contract","body":"contract","url":"https://github.com/nifabulous/Relay/pull/159","state":"OPEN","baseRefName":"main","headRefName":"contract/head","headRefOid":"%s","changedFiles":0}\n' "${FAKE_TRUSTED_SHA:?}"
+  fi
+  exit 0
+fi
+
+if [[ "${1:-}" == "pr" && "${2:-}" == "comment" ]]; then
+  exit 0
+fi
+
+printf 'unexpected gh command\n' >&2
+exit 2

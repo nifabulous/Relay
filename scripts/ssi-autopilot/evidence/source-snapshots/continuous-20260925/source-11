@@ -1,0 +1,38 @@
+{
+  "source_url": "https://www.kdb.uz/rulp/corporates/correspondent-banks",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-08-25",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 4,
+  "routes": [
+    {
+      "beneficiary_bic": "KODBUZ22XXX",
+      "beneficiary_name": "JSC KDB Bank Uzbekistan",
+      "currency": "EUR",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "KODBUZ22XXX",
+      "beneficiary_name": "JSC KDB Bank Uzbekistan",
+      "currency": "JPY",
+      "intermediary_bic": "MHCBJPJTXXX",
+      "intermediary_name": "Mizuho Bank Ltd., Tokyo"
+    },
+    {
+      "beneficiary_bic": "KODBUZ22XXX",
+      "beneficiary_name": "JSC KDB Bank Uzbekistan",
+      "currency": "INR",
+      "intermediary_bic": "AXISINBBFIC",
+      "intermediary_name": "Axis Bank Ltd., Mumbai"
+    },
+    {
+      "beneficiary_bic": "KODBUZ22XXX",
+      "beneficiary_name": "JSC KDB Bank Uzbekistan",
+      "currency": "EUR",
+      "intermediary_bic": "SOGEFRPPXXX",
+      "intermediary_name": "Societe Generale S.A., Paris"
+    }
+  ]
+}

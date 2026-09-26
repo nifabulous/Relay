@@ -1318,6 +1318,28 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_deutsche_sydney_20250526.json",
     "seed_ssi_deutsche_mumbai_20201116.json",
     "seed_ssi_deutsche_jakarta_20200720.json",
+    "seed_ssi_basler_kantonalbank_20250801.json",
+    "seed_ssi_bank_cler_20260325.json",
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json",
+    "seed_ssi_bankhaus_spaengler_20250301.json",
+    "seed_ssi_bks_bank_20260101.json",
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json",
+    "seed_ssi_unicredit_germany_20260106.json",
+    "seed_ssi_nrw_bank_20260729.json",
+    "seed_ssi_rbsi_emirates_20260921.json",
+    "seed_ssi_rbsi_emirates_20260921_2.json",
+    "seed_ssi_rbsi_emirates_20260921_3.json",
+    "seed_ssi_rbsi_emirates_20260921_4.json",
+    # Continuous 2026-09-25 BIC-only source ledgers.
+    "seed_ssi_nordea_current_20250730.json",
+    "seed_ssi_idfc_first_mumbai_20260921.json",
+    "seed_ssi_usbank_fx_fex_20250601.json",
+    "seed_ssi_india_wire_current_20260921.json",
+    "seed_ssi_cibc_caribbean_trust_20260921.json",
+    "seed_ssi_alior_bank_20260921.json",
+    "seed_ssi_bank_frick_20260527_deltas.json",
+    "seed_ssi_kdb_kapitalbank_current_20260921.json",
+    "seed_ssi_bcge_geneva_20240101.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
 )
 
@@ -2114,8 +2136,17 @@ def _dedupe_ssi_records(rows):
         row = tuple(row)
         beneficiary_bic = row[0] + "XXX" if len(row[0]) == 8 else row[0]
         intermediary_bic = row[3] + "XXX" if len(row[3]) == 8 else row[3]
-        beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
-        intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
+        # Preserve source-printed BICs in the current RBSI and UniCredit SSI
+        # documents; their authoritative PDFs provide a complete 11-character
+        # PNBPUS3NNYC identifier, so applying the legacy alias would silently
+        # change the source route key.
+        preserve_source_bic = (
+            "rbsinternational.com" in row[9]
+            or "hypovereinsbank.de" in row[9]
+        )
+        if not preserve_source_bic:
+            beneficiary_bic = _SSI_BIC_ALIASES.get(beneficiary_bic, beneficiary_bic)
+            intermediary_bic = _SSI_BIC_ALIASES.get(intermediary_bic, intermediary_bic)
         if beneficiary_bic != row[0] or intermediary_bic != row[3]:
             row = (beneficiary_bic, row[1], row[2], intermediary_bic, *row[4:])
         canonical_name = _SSI_CONSOLIDATION_BANK_NAMES.get(row[0])
@@ -6169,6 +6200,7 @@ SSI_RECORDS = _dedupe_ssi_records([
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "CHASDEFXXXX", "J.P. Morgan AG, Frankfurt", "ACCT-91001022", "ACCT-91001022", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "SCBLDEFFXXX", "Standard Chartered Bank (Germany) GmbH", "ACCT-91001009", "ACCT-91001009", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "IRVTDEFX", "Bank of New York, Frankfurt", "ACCT-91001016", "ACCT-91001016", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
+    ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "HYVEDEMMXXX", "Unicredit GBMH", "ACCT-91001032", "ACCT-91001032", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-25). " + _SSI_REAL_NOTE, "2026-09-25", "unverified", None, False, True),
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "COBADEFFXXX", "Commerzbank AG", "ACCT-91001017", "ACCT-91001017", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "SOGEFRPPXXX", "Société Générale, Paris", "ACCT-91001001", "ACCT-91001001", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
     ("FNNBTRISXXX", "QNB A.Ş.", "EUR", "BBRUBEBBXXX", "ING Belgium SA/NV", "ACCT-91001011", "ACCT-91001011", "SHA", "spot", "Source: https://www.qnb.com.tr/en/popup-en/nostro-account (as of 2026-09-08). " + _SSI_REAL_NOTE, "2026-09-08", "unverified", None, False, True),
@@ -10060,6 +10092,14 @@ def _apply_seed_bic_aliases(session) -> None:
         # duplicate of the canonical record and should be removed.
         for row in list(session.query(SSI).filter(SSI.intermediary_bic == old_bic)):
             if row in stale_ssi:
+                continue
+            if (
+                "rbsinternational.com" in (row.notes or "")
+                or "hypovereinsbank.de" in (row.notes or "")
+            ):
+                # These current SSI documents print PNBPUS3NNYC as a complete
+                # BIC; do not rewrite their source route key via the legacy
+                # alias used by older ledgers.
                 continue
             canonical = session.query(SSI).filter(
                 SSI.beneficiary_bic == row.beneficiary_bic,

@@ -1,7 +1,7 @@
 {
   "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
-  "source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
-  "as_of": "2026-09-08",
+  "source_sha256": "7205ce2cf275483be386b972b852b216e8dc94fbcba23a202b5bf2b0a5d74d57",
+  "as_of": "2026-09-25",
   "beneficiary_bic": "FNNBTRIS",
   "region_masked_block": 91001000,
   "masking": {
@@ -130,6 +130,15 @@
       "with_an_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb",
       "nostro_mask": "ACCT-91001016",
       "with_an_mask": "ACCT-91001016"
+    },
+    {
+      "currency": "EUR",
+      "int_bic": "HYVEDEMMXXX",
+      "correspondent": "Unicredit GBMH",
+      "nostro_fingerprint": "c0e417770feaf38da78b860fce3be200023cb8793aefd4a2c344ba675f8a166e",
+      "with_an_fingerprint": "c0e417770feaf38da78b860fce3be200023cb8793aefd4a2c344ba675f8a166e",
+      "nostro_mask": "ACCT-91001032",
+      "with_an_mask": "ACCT-91001032"
     },
     {
       "currency": "EUR",
@@ -296,8 +305,8 @@
   ],
   "source_snapshot": {
     "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
-    "source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
-    "captured_at": "2026-09-13",
+    "source_sha256": "7205ce2cf275483be386b972b852b216e8dc94fbcba23a202b5bf2b0a5d74d57",
+    "captured_at": "2026-09-25",
     "extraction": "HTML table extraction; account values omitted after hashing",
     "hash_normalization": "SHA-256 after removing the per-request ASP.NET __VIEWSTATE field",
     "raw_accounts_committed": false,
@@ -396,6 +405,13 @@
         "correspondent": "Bank of New York, Frankfurt",
         "nostro_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb",
         "with_an_fingerprint": "80dd6e5a26d6f707c9e4ad3d81df8f547d9d80068ca6d278bf85be07ad0782eb"
+      },
+      {
+        "currency": "EUR",
+        "int_bic": "HYVEDEMMXXX",
+        "correspondent": "Unicredit GBMH",
+        "nostro_fingerprint": "c0e417770feaf38da78b860fce3be200023cb8793aefd4a2c344ba675f8a166e",
+        "with_an_fingerprint": "c0e417770feaf38da78b860fce3be200023cb8793aefd4a2c344ba675f8a166e"
       },
       {
         "currency": "EUR",

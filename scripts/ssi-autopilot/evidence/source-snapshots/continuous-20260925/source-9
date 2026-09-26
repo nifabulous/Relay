@@ -1,0 +1,234 @@
+{
+  "source_url": "https://www.aliorbank.pl/dodatkowe-informacje/informacje/banki_korespondenci.html",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-09-21",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 32,
+  "routes": [
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "AUD",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CAD",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CHF",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CNY",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CNY",
+      "intermediary_bic": "CHASHKHHXXX",
+      "intermediary_name": "JPMorgan Chase Bank, N.A., Hong Kong Branch"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CZK",
+      "intermediary_bic": "CEKOCZPPXXX",
+      "intermediary_name": "Ceskoslovenska Obchodni Banka a.s., Prague"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "CZK",
+      "intermediary_bic": "GIBACZPXXXX",
+      "intermediary_name": "Ceska sporitelna a.s., Prague"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "DKK",
+      "intermediary_bic": "NDEADKKKXXX",
+      "intermediary_name": "Nordea Bank AB, Copenhagen"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "DKK",
+      "intermediary_bic": "DABADKKKXXX",
+      "intermediary_name": "Danske Bank A/S, Copenhagen"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "EUR",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "EUR",
+      "intermediary_bic": "BARCDEFFXXX",
+      "intermediary_name": "Barclays Bank Ireland Plc Frankfurt Branch, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "EUR",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "GBP",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank Plc, London"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "GBP",
+      "intermediary_bic": "LOYDGB2LXXX",
+      "intermediary_name": "Lloyds Bank Plc, London"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "HKD",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "HUF",
+      "intermediary_bic": "OKHBHUHBXXX",
+      "intermediary_name": "K & H Bank Zrt, Budapest"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "HUF",
+      "intermediary_bic": "OTPVHUHBXXX",
+      "intermediary_name": "OTP Bank Nyrt, Budapest"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "ILS",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "JPY",
+      "intermediary_bic": "SMBCJPJTXXX",
+      "intermediary_name": "Sumitomo Mitsui Banking Corporation, Tokyo"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "MXN",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "NOK",
+      "intermediary_bic": "NDEANOKKXXX",
+      "intermediary_name": "Nordea Bank AB, Oslo"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "NOK",
+      "intermediary_bic": "DNBANOKKXXX",
+      "intermediary_name": "DNB Bank ASA, Oslo"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "NZD",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "RON",
+      "intermediary_bic": "INGBROBUXXX",
+      "intermediary_name": "ING Bank NV, Bucharest"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "SEK",
+      "intermediary_bic": "NDEASESSXXX",
+      "intermediary_name": "Nordea Bank AB, Stockholm"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "SEK",
+      "intermediary_bic": "ESSESESSXXX",
+      "intermediary_name": "Skandinaviska Enskilda Banken AB, Stockholm"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "THB",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "TRY",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank Plc, London"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "USD",
+      "intermediary_bic": "IRVTUS3NXXX",
+      "intermediary_name": "The Bank of New York Mellon, New York"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "USD",
+      "intermediary_bic": "PNBPUS33XXX",
+      "intermediary_name": "Wells Fargo Bank N.A., New York"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "JPMorgan Chase Bank, N.A., New York"
+    },
+    {
+      "beneficiary_bic": "ALBPPLPWXXX",
+      "beneficiary_name": "Alior Bank S.A.",
+      "currency": "ZAR",
+      "intermediary_bic": "KREDBEBBXXX",
+      "intermediary_name": "KBC Bank NV, Brussels"
+    }
+  ]
+}

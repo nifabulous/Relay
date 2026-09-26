@@ -1,0 +1,38 @@
+{
+  "source_url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/barbados-offshore-wire-xfr.pdf",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-09-21",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 4,
+  "routes": [
+    {
+      "beneficiary_bic": "FCIBBBB2XXX",
+      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+      "currency": "USD",
+      "intermediary_bic": "PNBPUS33XXX",
+      "intermediary_name": "Wells Fargo Bank, New York"
+    },
+    {
+      "beneficiary_bic": "FCIBBBB2XXX",
+      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+      "currency": "CAD",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "CIBC, Toronto"
+    },
+    {
+      "beneficiary_bic": "FCIBBBB2XXX",
+      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+      "currency": "GBP",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "FCIBBBB2XXX",
+      "beneficiary_name": "CIBC Caribbean Wealth Management Bank (Barbados) Limited",
+      "currency": "EUR",
+      "intermediary_bic": "CHASDEFXXXX",
+      "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+    }
+  ]
+}

@@ -394,10 +394,10 @@ refuse_text '.github/workflows/codex-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'targets:'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}'
-refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_ASSOCIATIONS='
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  'MAX_WORKFLOW_RUN_TARGETS=256'
+  'MAX_WORKFLOW_RUN_ASSOCIATIONS=256'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  'MAX_WORKFLOW_RUN_TARGETS=1'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -425,6 +425,7 @@ workflow = YAML.load_file(".github/workflows/loopkeeper-pr-review.yml")
 jobs = workflow.fetch("jobs")
 targets = jobs.fetch("targets")
 review = jobs.fetch("review")
+writer = jobs.fetch("writer")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
 raise unless review.fetch("needs") == "targets"
@@ -432,9 +433,67 @@ raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
   "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
 raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
+raise unless writer.fetch("needs") == ["targets", "rebind"]
+raise unless writer.fetch("if").include?("needs.rebind.result == 'success'")
+raise unless writer.fetch("name").include?("review (")
+rebind = jobs.fetch("rebind")
+raise unless rebind.fetch("needs") == ["targets", "review"]
+rebind_upload = rebind.fetch("steps").find { |step| step["name"] == "Upload PR-bound review artifact" }
+raise unless rebind_upload
+raise unless rebind_upload.fetch("with").fetch("name").include?("-pr-${{ matrix.pr_number }}")
+raise unless rebind.fetch("steps").find { |step| step["name"] == "Verify and rebind PR artifact" }.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
+artifact_step = writer.fetch("steps").find { |step| step["name"] == "Resolve and verify PR-bound review artifact" }
+raise unless artifact_step
+raise unless artifact_step.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
+raise unless artifact_step.fetch("run").include?("loopkeeper-pr-review:${PR_NUMBER}:${head_sha}")
+eligibility_step = writer.fetch("steps").find { |step| step["name"] == "Re-verify fork eligibility before publication" }
+raise unless eligibility_step
+raise unless eligibility_step.fetch("run").include?("if ! decision=")
+raise unless !eligibility_step.fetch("run").include?("|| true")
+publication_step = writer.fetch("steps").find { |step| step["name"] == "Publish Loopkeeper review" }
+raise unless publication_step
+publication_env = publication_step.fetch("env")
+raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
+raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comment.md")
+raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT_SHA256").include?("steps.pr.outputs.artifact_sha256")
+raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
+raise unless !publication_env.key?("LOOPKEEPER_API_KEY")
+raise unless publication_step.fetch("run").include?("sha256sum \"$LOOPKEEPER_REVIEW_ARTIFACT\"")
+raise unless publication_step.fetch("run").include?("artifact_sha256=\"")
+raise unless publication_step.fetch("run").include?("== \"$LOOPKEEPER_REVIEW_ARTIFACT_SHA256\"")
+raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY")
+raise unless publication_step.fetch("run").include?("Fail closed if a model credential")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
+fi
+
+# Exercise the privileged writer guard with both credential variables absent.
+# This catches nounset regressions before a workflow run can silently skip
+# publication. The fake publisher accepts only the verified artifact path and
+# has no model/API behavior to call.
+FAKE_WRITER="$STAGING/fake-loopkeeper-writer.sh"
+cat >"$FAKE_WRITER" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ -z "${OPENAI_API_KEY+x}" && -z "${LOOPKEEPER_MODEL_API_KEY+x}" ]]
+[[ -s "${LOOPKEEPER_REVIEW_ARTIFACT:?}" ]]
+[[ "${1:-}" == "159" ]]
+EOF
+chmod +x "$FAKE_WRITER"
+printf '<!-- loopkeeper-pr-review:159:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->\n' >"$STAGING/comment.md"
+env -i PATH="$PATH" LOOPKEEPER_REVIEW_ARTIFACT="$STAGING/comment.md" \
+  bash -c 'set -euo pipefail; [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]; env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY "$1" 159' _ "$FAKE_WRITER" || \
+  fail 'artifact-only writer guard failed when credential variables were absent.'
+
+# Exercise the real pinned Loopkeeper writer when explicitly enabled by CI.
+# The fake gh publisher and python shim make this deterministic: the writer
+# must consume the supplied artifact and must never invoke loopkeeper.transport.
+if [[ "${LOOPKEEPER_CONTRACT_NETWORK:-0}" == "1" ]]; then
+  CONTRACT_TEST="$ROOT/tests/test_loopkeeper_writer_contract.sh"
+  if ! bash "$CONTRACT_TEST"; then
+    fail 'the pinned Loopkeeper writer artifact-only contract failed.'
+  fi
 fi
 
 # Execute the embedded selector with a deterministic gh stub so the edge cases
@@ -472,14 +531,14 @@ run_loopkeeper_selector() {
 SELECTOR_OUTPUT="$STAGING/loopkeeper-output"
 SELECTOR_SUMMARY="$STAGING/loopkeeper-summary"
 nine_associations="$(jq -nc '[range(1; 10) | {number: .}]')"
-run_loopkeeper_selector "$nine_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector rejected nine bounded exact-head PRs.'
+if run_loopkeeper_selector "$nine_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted multiple targets that could collide in the run-scoped artifact.'
+fi
 require_text_from_file() {
   local file="$1"
   local text="$2"
   grep -Fq -- "$text" "$file" || fail "missing $text in $file"
 }
-require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1,2,3,4,5,6,7,8,9]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -489,9 +548,9 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector rejected multiple verified fallback targets.'
-require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7,8]'
+if FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted multiple fallback targets that could collide in the run-scoped artifact.'
+fi
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -503,10 +562,9 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
 twenty_one_associations="$(jq -nc '[range(1; 22) | {number: .}]')"
-run_loopkeeper_selector "$twenty_one_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
-  fail 'Loopkeeper selector dropped associations above a caller-owned cap.'
-require_text_from_file "$SELECTOR_OUTPUT" \
-  'pr_numbers=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]'
+if run_loopkeeper_selector "$twenty_one_associations" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector accepted more than one target.'
+fi
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
@@ -517,7 +575,7 @@ fi
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
 if run_loopkeeper_selector "$(jq -nc '[range(1; 258) | {number: .}]')" "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
-  fail 'Loopkeeper selector accepted more targets than one GitHub matrix supports.'
+  fail 'Loopkeeper selector accepted more than one target.'
 fi
 require_text 'scripts/codex_review_pr.sh' 'deferring to the CI-completion review'
 require_text 'scripts/codex_review_pr.sh' \

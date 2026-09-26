@@ -1,0 +1,185 @@
+{
+  "source_url": "https://www.bcge.ch/documents/395713/396737/BCGE_standard_settlement_instructions_en.pdf/b941348d-5e6f-8366-71c9-4449319d3bc0",
+  "captured_at": "2026-09-25",
+  "effective_date": "2024-01-01",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 25,
+  "routes": [
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "AED",
+      "intermediary_bic": "ADCBAEAAXXX",
+      "intermediary_name": "Abu Dhabi Commercial Bank PJSC, Abu Dhabi"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "AUD",
+      "intermediary_bic": "CTBAAU2SXXX",
+      "intermediary_name": "Commonwealth Bank of Australia, Sydney"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "CAD",
+      "intermediary_bic": "ROYCCAT2XXX",
+      "intermediary_name": "Royal Bank of Canada, Toronto"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "CHF",
+      "intermediary_bic": "BCGECHGGXXX",
+      "intermediary_name": "Banque Cantonale de Genève, Geneva"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "CNY",
+      "intermediary_bic": "CCBQHKAXWHS",
+      "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "CZK",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "DKK",
+      "intermediary_bic": "DABADKKKXXX",
+      "intermediary_name": "Danske Bank A/S, Copenhagen"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "EUR",
+      "intermediary_bic": "BYLADEMMXXX",
+      "intermediary_name": "Bayerische Landesbank, Munich"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "EUR",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "EUR",
+      "intermediary_bic": "BBRUBEBB010",
+      "intermediary_name": "ING Belgium SA/NV, Brussels"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "EUR",
+      "intermediary_bic": "HELADEFFXXX",
+      "intermediary_name": "Landesbank Hessen-Thüringen Girozentrale, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "GBP",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "HKD",
+      "intermediary_bic": "CCBQHKAXWHS",
+      "intermediary_name": "China Construction Bank (Asia) Corporation Limited, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "HUF",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "ILS",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "JPY",
+      "intermediary_bic": "BOTKJPJTXXX",
+      "intermediary_name": "MUFG Bank Ltd, Tokyo"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "NZD",
+      "intermediary_bic": "ASBBNZ2AXXX",
+      "intermediary_name": "ASB Bank Limited, Auckland"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "PLN",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "RON",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "SGD",
+      "intermediary_bic": "UOVBSGSGXXX",
+      "intermediary_name": "United Overseas Bank Limited, Singapore"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "THB",
+      "intermediary_bic": "UOVBTHBKXXX",
+      "intermediary_name": "United Overseas Bank (Thai) Public Company Limited, Bangkok"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "TRY",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank AG, Frankfurt am Main"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "USD",
+      "intermediary_bic": "CITIUS33XXX",
+      "intermediary_name": "Citibank N.A., New York"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "JPMorgan Chase Bank N.A., New York"
+    },
+    {
+      "beneficiary_bic": "BCGECHGGXXX",
+      "beneficiary_name": "Banque Cantonale de Genève",
+      "currency": "ZAR",
+      "intermediary_bic": "ABSAZAJJXXX",
+      "intermediary_name": "Absa Bank Ltd, Johannesburg"
+    }
+  ]
+}

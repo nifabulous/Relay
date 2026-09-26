@@ -1,0 +1,10 @@
+{
+  "source_prs": [],
+  "banks": [],
+  "ssi_records": [
+    ["KODBUZ22XXX", "JSC KDB Bank Uzbekistan", "EUR", "DEUTDEFFXXX", "Deutsche Bank AG, Frankfurt", null, null, null, null, "Source: https://www.kdb.uz/rulp/corporates/correspondent-banks (official KDB correspondent-bank list; last updated 2026-08-25; accessed 2026-09-21). The 2026-07-06 official announcement confirms this new EUR correspondent account. BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-08-25", "unverified", null, true, false],
+    ["KODBUZ22XXX", "JSC KDB Bank Uzbekistan", "JPY", "MHCBJPJTXXX", "Mizuho Bank Ltd., Tokyo", null, null, null, null, "Source: https://www.kdb.uz/rulp/corporates/correspondent-banks (official KDB correspondent-bank list; last updated 2026-08-25; accessed 2026-09-21). The 2026-07-06 official announcement confirms this new JPY correspondent account. BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-08-25", "unverified", null, true, false],
+    ["KODBUZ22XXX", "JSC KDB Bank Uzbekistan", "INR", "AXISINBBFIC", "Axis Bank Ltd., Mumbai", null, null, null, null, "Source: https://www.kdb.uz/rulp/corporates/correspondent-banks (official KDB correspondent-bank list; last updated 2026-08-25; accessed 2026-09-21). The 2026-07-06 official announcement confirms this new INR correspondent account. BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-08-25", "unverified", null, true, false],
+    ["KODBUZ22XXX", "JSC KDB Bank Uzbekistan", "EUR", "SOGEFRPPXXX", "Societe Generale S.A., Paris", null, null, null, null, "Source: https://www.kdb.uz/rulp/corporates/correspondent-banks (official KDB correspondent-bank list; last updated 2026-08-25; accessed 2026-09-21). BIC-only metadata; no account numbers committed; non-routable until independently verified.", "2026-08-25", "unverified", null, true, false]
+  ]
+}
