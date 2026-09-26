@@ -423,13 +423,16 @@ ruby_status=0
 ruby -ryaml <<'RUBY' || ruby_status=1
 workflow = YAML.load_file(".github/workflows/loopkeeper-pr-review.yml")
 jobs = workflow.fetch("jobs")
+raise unless workflow.fetch("permissions").fetch("pull-requests") == "read"
 targets = jobs.fetch("targets")
 review = jobs.fetch("review")
 writer = jobs.fetch("writer")
+publication_gate = jobs.fetch("publication-gate")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
 raise unless review.fetch("uses").include?("/.github/workflows/pr-review.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231")
 raise unless !review.fetch("uses").include?("pr-review-posting.yml")
+raise unless review.fetch("permissions").fetch("pull-requests") == "read"
 raise unless review.fetch("needs") == "targets"
 raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
@@ -465,6 +468,13 @@ raise unless publication_step.fetch("run").include?("artifact_sha256=\"")
 raise unless publication_step.fetch("run").include?("== \"$LOOPKEEPER_REVIEW_ARTIFACT_SHA256\"")
 raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY")
 raise unless publication_step.fetch("run").include?("Fail closed if a model credential")
+raise unless publication_gate.fetch("needs") == ["targets", "review", "rebind", "writer"]
+raise unless publication_gate.fetch("if") == "${{ always() }}"
+gate_step = publication_gate.fetch("steps").find { |step| step["name"] == "Require a completed artifact-backed publication" }
+raise unless gate_step
+raise unless gate_step.fetch("run").include?("REBIND_RESULT")
+raise unless gate_step.fetch("run").include?("WRITER_RESULT")
+raise unless gate_step.fetch("run").include?("did not complete")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'

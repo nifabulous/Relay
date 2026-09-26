@@ -17,6 +17,18 @@ git clone --filter=blob:none --no-checkout https://github.com/nifabulous/loopkee
 git -C "$LOOPKEEPER_ROOT" fetch --depth=1 origin "$PINNED_SHA" >/dev/null 2>&1
 git -C "$LOOPKEEPER_ROOT" checkout --detach "$PINNED_SHA" >/dev/null 2>&1
 
+# Verify the exact producer contract used by the caller. This keeps the
+# external workflow pinned while checking the artifact name, payload path,
+# and read-only split that the local rebind/writer jobs consume.
+PRODUCER_WORKFLOW="$LOOPKEEPER_ROOT/.github/workflows/pr-review.yml"
+grep -Fq 'name: loopkeeper-review-${{ github.run_id }}' "$PRODUCER_WORKFLOW"
+grep -Fq 'path: ${{ github.workspace }}/loopkeeper-artifacts' "$PRODUCER_WORKFLOW"
+grep -Fq 'review-metadata.json' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+if grep -Eq '^  writer:' "$PRODUCER_WORKFLOW"; then
+  echo 'read-only producer unexpectedly contains a writer job' >&2
+  exit 1
+fi
+
 ARTIFACT="$STAGING/review.md"
 cat >"$ARTIFACT" <<'EOF'
 Artifact-only writer contract.

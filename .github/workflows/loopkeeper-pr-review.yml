@@ -34,7 +34,7 @@ permissions:
   actions: read
   checks: read
   issues: read
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   targets:
@@ -177,6 +177,12 @@ jobs:
   review:
     needs: targets
     if: ${{ needs.targets.outputs.pr_numbers != '[]' }}
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      issues: read
+      pull-requests: read
     strategy:
       fail-fast: false
       matrix:
@@ -421,3 +427,41 @@ jobs:
           [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]
           env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY \
             "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"
+
+  publication-gate:
+    name: review publication gate
+    if: ${{ always() }}
+    needs: [targets, review, rebind, writer]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Require a completed artifact-backed publication
+        env:
+          SELECTED: ${{ needs.targets.outputs.pr_numbers }}
+          TARGETS_RESULT: ${{ needs.targets.result }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          REBIND_RESULT: ${{ needs.rebind.result }}
+          WRITER_RESULT: ${{ needs.writer.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$TARGETS_RESULT" == "skipped" || -z "${SELECTED:-}" || "$SELECTED" == "[]" ]]; then
+            echo "No eligible exact-head PR target was selected."
+            exit 0
+          fi
+          [[ "$REVIEW_RESULT" == "success" ]] || {
+            echo "selected review did not complete successfully (result=$REVIEW_RESULT)" >&2
+            exit 1
+          }
+          [[ "$REBIND_RESULT" == "success" ]] || {
+            echo "selected review artifact was not rebound (result=$REBIND_RESULT)" >&2
+            exit 1
+          }
+          [[ "$WRITER_RESULT" == "success" ]] || {
+            echo "artifact-backed writer did not complete (result=$WRITER_RESULT)" >&2
+            exit 1
+          }
