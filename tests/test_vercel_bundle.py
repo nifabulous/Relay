@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # Checks raise SystemExit rather than assert: the child inherits the caller's
@@ -78,29 +80,36 @@ if DATABASE_URL != "sqlite:////tmp/swift_routing.db":
 def _exclude_globs() -> list[str]:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
     pattern = config["functions"]["app/main.py"]["excludeFiles"]
-    assert pattern.startswith("{") and pattern.endswith("}"), pattern
+    if not (pattern.startswith("{") and pattern.endswith("}")):
+        pytest.fail(f"excludeFiles is not a brace list: {pattern}")
     return pattern[1:-1].split(",")
 
 
-def _bundled_files() -> list[str]:
+def _tracked_files() -> list[str]:
     listing = subprocess.run(
         ["git", "ls-files", "-z"], cwd=ROOT, check=True, capture_output=True
     ).stdout.decode("utf-8")
+    return [path for path in listing.split("\0") if path and (ROOT / path).is_file()]
+
+
+def _bundled_files() -> list[str]:
     globs = _exclude_globs()
     return [
         path
-        for path in listing.split("\0")
-        if path
-        and (ROOT / path).is_file()
-        and not any(fnmatch.fnmatch(path, glob) for glob in globs)
+        for path in _tracked_files()
+        if not any(fnmatch.fnmatch(path, pattern) for pattern in globs)
     ]
 
 
+# Gates below use pytest.fail rather than assert, so they hold even under
+# `python -O --assert=plain`, where plain asserts are stripped.
 def test_exclude_globs_strip_the_directories_the_app_must_not_depend_on():
     bundled = _bundled_files()
-    assert any(path.startswith("app/") for path in bundled)
+    if not any(path.startswith("app/") for path in bundled):
+        pytest.fail("the bundle contains no app/ files")
     for excluded in ("scripts/", "tests/", "docs/", "frontend/"):
-        assert not any(path.startswith(excluded) for path in bundled), excluded
+        if any(path.startswith(excluded) for path in bundled):
+            pytest.fail(f"the bundle still contains {excluded}")
 
 
 def _copy_bundle(tmp_path) -> Path:
@@ -134,9 +143,11 @@ def test_the_app_starts_from_the_vercel_function_bundle(tmp_path):
     result = _run_in_bundle(
         bundle, _STARTUP_PROBE, DATABASE_URL=f"sqlite:///{tmp_path / 'bundle.db'}"
     )
-    assert result.returncode == 0, result.stderr[-4000:]
+    if result.returncode != 0:
+        pytest.fail(result.stderr[-4000:] or f"probe exited {result.returncode}")
 
 
 def test_vercel_selects_the_writable_tmp_database_by_default():
     result = _run_in_bundle(ROOT, _DATABASE_DEFAULT_PROBE)
-    assert result.returncode == 0, result.stderr[-4000:]
+    if result.returncode != 0:
+        pytest.fail(result.stderr[-4000:] or f"probe exited {result.returncode}")
