@@ -13,6 +13,8 @@ import logging
 import re
 from pathlib import Path
 
+from sqlalchemy.exc import MultipleResultsFound
+
 logger = logging.getLogger(__name__)
 
 from ..models import SSI, Account, Bank, CorridorRule
@@ -10153,16 +10155,36 @@ def _legacy_seed_row_is_unmodified(existing: SSI) -> bool:
     )
 
 
-def _find_existing_ssi_by_route_key(session, beneficiary_bic, currency, intermediary_bic):
-    """Find one catalog row without using table emptiness as an upgrade gate."""
-    return session.query(SSI).filter(
-        SSI.beneficiary_bic == beneficiary_bic,
-        SSI.currency == currency,
-        SSI.intermediary_bic == intermediary_bic,
-    ).one_or_none()
+def _ssis_by_route_key(session, source_keys) -> dict[tuple[str, str, str], SSI]:
+    """Index the persisted catalog by route key in one read.
+
+    Replaces a SELECT per seed row, which cost most of the cold-start budget.
+    Callers add the rows they flush; rows they only add stay out of the index,
+    which is exactly what the per-row lookups saw under the app's
+    autoflush-off SessionLocal. With autoflush on, the two differ only for a
+    route key repeated in the seed source, which the source does not contain.
+
+    uq_ssi_composite allows at most one row per key. A table without it can
+    hold duplicates; the per-row ``one_or_none()`` raised for any duplicated
+    key the seed looked up, which is every key in ``source_keys``, so this
+    does the same instead of silently keeping one of the rows.
+    """
+    index = {}
+    duplicated = set()
+    for row in session.query(SSI).all():
+        key = (row.beneficiary_bic, row.currency, row.intermediary_bic)
+        if key in index:
+            duplicated.add(key)
+        index[key] = row
+    looked_up_duplicates = duplicated & source_keys
+    if looked_up_duplicates:
+        raise MultipleResultsFound(
+            f"Multiple SSI rows share a seeded route key: {sorted(looked_up_duplicates)}"
+        )
+    return index
 
 
-def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
+def _backfill_missing_consolidated_ssis(session, source_keys, existing_by_key) -> int:
     """Insert every missing consolidated route into an existing SSI catalog.
 
     This upgrade is intentionally keyed per route and never gated on table
@@ -10170,8 +10192,9 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
     route, seed the canonical row selected by ``SSI_RECORDS`` directly so the
     normal reconciliation pass does not manufacture a provenance update.
     Existing rows are left untouched, preserving operator-maintained fields.
+    Inserted rows are flushed and added to ``existing_by_key``.
     """
-    inserted = 0
+    seeded_by_key = {}
     canonical_by_key = {
         (row[0], row[2], row[3]): row
         for row in SSI_RECORDS
@@ -10200,7 +10223,7 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
         ) = canonical_row
         if route_key not in source_keys:
             continue
-        if _find_existing_ssi_by_route_key(session, ben_bic, ccy, int_bic) is not None:
+        if route_key in existing_by_key:
             continue
         seeded = SSI(
             beneficiary_bic=ben_bic,
@@ -10221,10 +10244,11 @@ def _backfill_missing_consolidated_ssis(session, source_keys) -> int:
         )
         seeded.seed_fingerprint = _seed_fingerprint(seeded)
         session.add(seeded)
-        inserted += 1
-    if inserted:
+        seeded_by_key[route_key] = seeded
+    if seeded_by_key:
         session.flush()
-    return inserted
+        existing_by_key.update(seeded_by_key)
+    return len(seeded_by_key)
 
 
 def seed_if_empty(session) -> dict:
@@ -10241,9 +10265,11 @@ def seed_if_empty(session) -> dict:
     source_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
     inserted["ssi_retired"] = _retire_stale_seed_ssis(session, source_keys)
 
+    # One read per table instead of a SELECT per seed row. Rows added below
+    # stay out of these sets, as they stayed invisible to the per-row queries.
+    existing_bank_bics = {bic for (bic,) in session.query(Bank.bic)}
     for bic, name, cc, city, cur in BANKS:
-        existing = session.query(Bank).filter(Bank.bic == bic).one_or_none()
-        if existing is None:
+        if bic not in existing_bank_bics:
             session.add(
                 Bank(
                     bic=bic,
@@ -10255,15 +10281,17 @@ def seed_if_empty(session) -> dict:
             )
             inserted["banks"] += 1
 
+    existing_corridor_keys = set(
+        session.query(
+            CorridorRule.destination_currency,
+            CorridorRule.destination_country,
+            CorridorRule.intermediary_bic,
+            CorridorRule.corridor,
+            CorridorRule.rank,
+        ).tuples()
+    )
     for ccy, ctry, bic, name, corr, conf, rank in CORRIDOR_RULES:
-        existing = session.query(CorridorRule).filter(
-            CorridorRule.destination_currency == ccy,
-            CorridorRule.destination_country == ctry,
-            CorridorRule.intermediary_bic == bic,
-            CorridorRule.corridor == corr,
-            CorridorRule.rank == rank,
-        ).first()
-        if existing is None:
+        if (ccy, ctry, bic, corr, rank) not in existing_corridor_keys:
             session.add(
                 CorridorRule(
                     destination_currency=ccy,
@@ -10277,7 +10305,10 @@ def seed_if_empty(session) -> dict:
             )
             inserted["corridor_rules"] += 1
 
-    inserted["ssi"] += _backfill_missing_consolidated_ssis(session, source_keys)
+    existing_ssis = _ssis_by_route_key(session, source_keys)
+    inserted["ssi"] += _backfill_missing_consolidated_ssis(
+        session, source_keys, existing_ssis
+    )
 
     for row in SSI_RECORDS:
         # 12-field rows carry provenance; a 13th names the verifier, which
@@ -10315,12 +10346,7 @@ def seed_if_empty(session) -> dict:
             terms_inferred = provenance[4]
         else:
             terms_inferred = False
-        existing = _find_existing_ssi_by_route_key(
-            session,
-            ben_bic,
-            ccy,
-            int_bic,
-        )
+        existing = existing_ssis.get((ben_bic, ccy, int_bic))
         if existing is None:
             seeded = SSI(
                 beneficiary_bic=ben_bic,
