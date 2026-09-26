@@ -544,6 +544,21 @@ refuse_text 'scripts/codex_review_pr.sh' 'swift test'
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, labeled, reopened]'
 refuse_text '.github/workflows/codex-issue-triage.yml' 'edited'
 require_text '.github/workflows/codex-issue-triage.yml' "contains(fromJSON('[\"OWNER\",\"MEMBER\",\"COLLABORATOR\"]'), github.event.issue.author_association)"
+# Workflow-level concurrency would let a skipped run (an outside author
+# reopening their own issue) cancel an in-flight, maintainer-labeled triage.
+# On the job, only a run whose job actually starts joins the group.
+ruby_status=0
+ruby -ryaml <<'RUBY' || ruby_status=1
+workflow = YAML.load_file(".github/workflows/codex-issue-triage.yml")
+raise if workflow.key?("concurrency")
+triage = workflow.fetch("jobs").fetch("triage")
+raise unless triage.fetch("concurrency").fetch("group") ==
+  "codex-issue-triage-${{ github.event.issue.number || inputs.issue_number || github.run_id }}"
+raise unless triage.fetch("concurrency").fetch("cancel-in-progress") == true
+RUBY
+if (( ruby_status != 0 )); then
+  fail 'Issue triage concurrency must be declared on the triage job, not the workflow.'
+fi
 
 # ci.yml is unprivileged, but a mutable tag there still lets a compromised
 # action read the checkout and tamper with build output. Pinned for the same

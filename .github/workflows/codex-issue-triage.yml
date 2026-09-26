@@ -16,10 +16,6 @@ permissions:
   contents: read
   issues: write
 
-concurrency:
-  group: codex-issue-triage-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   triage:
     # The repository is public and every triage is a paid model call. An issue
@@ -29,6 +25,11 @@ jobs:
       vars.CODEX_REVIEW_ENABLED == 'true' &&
       (github.event_name != 'issues' || github.event.action == 'labeled' ||
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+    # On the job, not the workflow: a run whose job the gate above skips must
+    # not cancel an in-flight triage of the same issue.
+    concurrency:
+      group: codex-issue-triage-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     # Must exceed CODEX_REQUEST_TIMEOUT with room to sanitize and post the
     # comment afterwards. At parity the job is killed at the instant the
