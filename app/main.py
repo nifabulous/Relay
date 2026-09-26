@@ -14,6 +14,7 @@ init_sentry()
 logger = logging.getLogger(__name__)
 
 from .db import Base, SessionLocal, engine
+from .request_limits import BodySizeLimitMiddleware
 from .routers import (
     analytics as analytics_router,
 )
@@ -94,6 +95,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+app.add_middleware(BodySizeLimitMiddleware)
 
 app.include_router(directory_router.router)
 app.include_router(routing_router.router)
