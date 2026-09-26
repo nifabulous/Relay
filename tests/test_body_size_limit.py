@@ -78,4 +78,59 @@ def test_the_ssi_upload_has_a_one_mebibyte_limit(client, size, rejected):
     response = client.post(
         "/api/import/ssi", files={"file": ("ssi.csv", csv, "text/csv")}
     )
-    assert (response.status_code == 413) is rejected, response.text
+    if rejected:
+        assert response.status_code == 413, response.text
+    else:
+        # The body reached the importer, which answers for the file itself
+        # (the csv module rejects a 1 MB field); not a limit, auth or server error.
+        assert response.status_code in (200, 400), response.text
+        if response.status_code == 400:
+            assert response.json()["detail"].startswith("Parse error:"), response.text
+
+
+def _drive(chunks, path="/api/screen"):
+    """Send a streamed body through the middleware straight into a reading app.
+
+    The test client flattens a streamed body into one message, so the byte count
+    across several http.request messages is only exercised here.
+    """
+    import asyncio
+
+    from app.request_limits import BodySizeLimitMiddleware
+
+    messages = [
+        {"type": "http.request", "body": chunk, "more_body": index < len(chunks) - 1}
+        for index, chunk in enumerate(chunks)
+    ]
+    sent = []
+
+    async def reading_app(scope, receive, send):
+        while (await receive()).get("more_body"):
+            pass
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    async def receive():
+        return messages.pop(0)
+
+    async def send(message):
+        sent.append(message)
+
+    scope = {"type": "http", "path": path, "headers": []}
+    asyncio.run(BodySizeLimitMiddleware(reading_app)(scope, receive, send))
+    return sent
+
+
+def test_streamed_chunks_are_counted_together_against_the_limit():
+    from starlette.exceptions import HTTPException
+
+    chunk = b"x" * (50 * 1024)  # each chunk alone is far under the 128 KiB default
+    with pytest.raises(HTTPException) as raised:
+        _drive([chunk, chunk, chunk])
+    assert raised.value.status_code == 413
+
+
+def test_streamed_chunks_under_the_limit_pass_through():
+    chunk = b"x" * (40 * 1024)
+    sent = _drive([chunk, chunk, chunk])
+    assert sent[0]["status"] == 200
