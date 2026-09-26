@@ -83,8 +83,10 @@ async def trigger_ssi_import(
         # handle BOM from Excel exports; catch decode errors as 400, not 500.
         # The parsers treat a bare str as a path when one exists on disk, so
         # uploaded content must reach them as a stream, never as a str.
+        # newline="" leaves line endings to the csv module, which accepts
+        # \n, \r\n and bare \r, as the old str.splitlines() path did.
         text = content.decode("utf-8-sig")
-        result = import_ssi_file(db, io.StringIO(text), format_hint=format_hint)
+        result = import_ssi_file(db, io.StringIO(text, newline=""), format_hint=format_hint)
     except UnicodeDecodeError:
         raise HTTPException(
             status_code=400,

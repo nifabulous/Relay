@@ -5,10 +5,13 @@ error. A database failure is not: answering it as a 400 "Parse error" handed
 raw SQLAlchemy text (statements, parameters) to the caller and blamed the file.
 """
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _upload(client, name, body):
@@ -69,3 +72,14 @@ def test_an_upload_naming_a_server_file_is_not_read_as_that_file(client, tmp_pat
         assert body["inserted"] == 0 and body["updated"] == 0, body
     else:
         assert response.status_code == 400, response.text
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"], ids=["lf", "crlf", "cr"])
+def test_the_sample_csv_parses_with_any_line_ending(client, newline):
+    """The upload reaches the parser as a stream; every line ending must still split rows."""
+    rows = (ROOT / "samples" / "ssi_sample.csv").read_text(encoding="utf-8").splitlines()
+    body = newline.join(rows).encode()
+    response = _upload(client, "ssi.csv", body)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["inserted"] + result["updated"] + result["rejected"] == len(rows) - 1, result
