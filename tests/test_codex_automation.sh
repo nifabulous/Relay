@@ -426,7 +426,7 @@ jobs = workflow.fetch("jobs")
 raise unless workflow.fetch("permissions").fetch("pull-requests") == "read"
 targets = jobs.fetch("targets")
 review = jobs.fetch("review")
-writer = jobs.fetch("writer")
+publisher = jobs.fetch("publish")
 publication_gate = jobs.fetch("publication-gate")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
@@ -438,27 +438,31 @@ raise unless review.fetch("strategy").fetch("fail-fast") == false
 raise unless review.fetch("strategy").fetch("matrix").fetch("pr_number") ==
   "${{ fromJSON(needs.targets.outputs.pr_numbers) }}"
 raise unless review.fetch("with").fetch("pr_number") == "${{ matrix.pr_number }}"
-raise unless writer.fetch("needs") == ["targets", "rebind"]
-raise unless writer.fetch("if").include?("needs.rebind.result == 'success'")
-raise unless writer.fetch("name").include?("review (")
+raise unless publisher.fetch("needs") == ["targets", "rebind"]
+raise unless publisher.fetch("if").include?("needs.rebind.result == 'success'")
+raise unless publisher.fetch("name").include?("publish verified artifact")
 rebind = jobs.fetch("rebind")
 raise unless rebind.fetch("needs") == ["targets", "review"]
 rebind_upload = rebind.fetch("steps").find { |step| step["name"] == "Upload PR-bound review artifact" }
 raise unless rebind_upload
 raise unless rebind_upload.fetch("with").fetch("name").include?("-pr-${{ matrix.pr_number }}")
 raise unless rebind.fetch("steps").find { |step| step["name"] == "Verify and rebind PR artifact" }.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
-artifact_step = writer.fetch("steps").find { |step| step["name"] == "Resolve and verify PR-bound review artifact" }
+artifact_step = publisher.fetch("steps").find { |step| step["name"] == "Resolve and verify PR-bound review artifact" }
 raise unless artifact_step
 raise unless artifact_step.fetch("run").include?("(.pr_number == $pr) and (.head_sha == $sha)")
 raise unless artifact_step.fetch("run").include?("loopkeeper-pr-review:${PR_NUMBER}:${head_sha}")
-eligibility_step = writer.fetch("steps").find { |step| step["name"] == "Re-verify fork eligibility before publication" }
+eligibility_step = publisher.fetch("steps").find { |step| step["name"] == "Re-verify fork eligibility before publication" }
 raise unless eligibility_step
 raise unless eligibility_step.fetch("run").include?("if ! decision=")
 raise unless !eligibility_step.fetch("run").include?("|| true")
-publication_step = writer.fetch("steps").find { |step| step["name"] == "Publish Loopkeeper review" }
+publication_step = publisher.fetch("steps").find { |step| step["name"] == "Publish Loopkeeper review" }
 raise unless publication_step
 publication_env = publication_step.fetch("env")
 raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
+raise unless !publication_env.key?("LOOPKEEPER_MODEL")
+raise unless !publication_env.key?("LOOPKEEPER_API_STYLE")
+raise unless !publication_env.key?("LOOPKEEPER_API_BASE_URL")
+raise unless !publication_env.key?("LOOPKEEPER_REASONING_EFFORT")
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comment.md")
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT_SHA256").include?("steps.pr.outputs.artifact_sha256")
 raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
@@ -466,14 +470,15 @@ raise unless !publication_env.key?("LOOPKEEPER_API_KEY")
 raise unless publication_step.fetch("run").include?("sha256sum \"$LOOPKEEPER_REVIEW_ARTIFACT\"")
 raise unless publication_step.fetch("run").include?("artifact_sha256=\"")
 raise unless publication_step.fetch("run").include?("== \"$LOOPKEEPER_REVIEW_ARTIFACT_SHA256\"")
-raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY")
+raise unless publication_step.fetch("run").include?("${LOOPKEEPER_API_KEY-}")
+raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY -u LOOPKEEPER_API_KEY")
 raise unless publication_step.fetch("run").include?("Fail closed if a model credential")
-raise unless publication_gate.fetch("needs") == ["targets", "review", "rebind", "writer"]
+raise unless publication_gate.fetch("needs") == ["targets", "review", "rebind", "publish"]
 raise unless publication_gate.fetch("if") == "${{ always() }}"
 gate_step = publication_gate.fetch("steps").find { |step| step["name"] == "Require a completed artifact-backed publication" }
 raise unless gate_step
 raise unless gate_step.fetch("run").include?("REBIND_RESULT")
-raise unless gate_step.fetch("run").include?("WRITER_RESULT")
+raise unless gate_step.fetch("run").include?("PUBLISH_RESULT")
 raise unless gate_step.fetch("run").include?("did not complete")
 RUBY
 if (( ruby_status != 0 )); then
@@ -495,7 +500,7 @@ EOF
 chmod +x "$FAKE_WRITER"
 printf '<!-- loopkeeper-pr-review:159:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->\n' >"$STAGING/comment.md"
 env -i PATH="$PATH" LOOPKEEPER_REVIEW_ARTIFACT="$STAGING/comment.md" \
-  bash -c 'set -euo pipefail; [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]; env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY "$1" 159' _ "$FAKE_WRITER" || \
+  bash -c 'set -euo pipefail; [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" && -z "${LOOPKEEPER_API_KEY-}" ]]; env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY -u LOOPKEEPER_API_KEY "$1" 159' _ "$FAKE_WRITER" || \
   fail 'artifact-only writer guard failed when credential variables were absent.'
 
 # Exercise the real pinned Loopkeeper writer when explicitly enabled by CI.

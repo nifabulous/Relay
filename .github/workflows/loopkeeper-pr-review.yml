@@ -266,8 +266,8 @@ jobs:
           path: ${{ github.workspace }}/loopkeeper-review-source
           if-no-files-found: error
 
-  writer:
-    name: review (${{ matrix.pr_number }}) / writer
+  publish:
+    name: review (${{ matrix.pr_number }}) / publish verified artifact
     # Publish only after the trusted reusable review has produced its
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
@@ -392,16 +392,7 @@ jobs:
           LOOPKEEPER_REVIEW_ENABLED: "true"
           LOOPKEEPER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
           LOOPKEEPER_DEFAULT_BRANCH: ${{ steps.roots.outputs.consumer_default_branch }}
-          LOOPKEEPER_MODEL: ${{ vars.LOOPKEEPER_MODEL || 'gpt-5.6-luna' }}
-          LOOPKEEPER_API_STYLE: ${{ vars.LOOPKEEPER_API_STYLE || 'responses' }}
-          LOOPKEEPER_API_BASE_URL: ${{ vars.LOOPKEEPER_API_BASE_URL || '' }}
-          LOOPKEEPER_REASONING_EFFORT: ${{ vars.LOOPKEEPER_REASONING_EFFORT || 'medium' }}
-          LOOPKEEPER_MAX_INPUT_BYTES: ${{ vars.LOOPKEEPER_MAX_INPUT_BYTES || '600000' }}
-          LOOPKEEPER_PR_FILE_MAX_PATCH_BYTES: ${{ vars.LOOPKEEPER_PR_FILE_MAX_PATCH_BYTES || '' }}
-          LOOPKEEPER_PR_FILE_BUDGET_PERCENT: ${{ vars.LOOPKEEPER_PR_FILE_BUDGET_PERCENT || '50' }}
-          LOOPKEEPER_MAX_OUTPUT_TOKENS: ${{ vars.LOOPKEEPER_MAX_OUTPUT_TOKENS || '32000' }}
           LOOPKEEPER_MAX_OUTPUT_BYTES: ${{ vars.LOOPKEEPER_MAX_OUTPUT_BYTES || '50000' }}
-          LOOPKEEPER_REQUEST_TIMEOUT: ${{ vars.LOOPKEEPER_REQUEST_TIMEOUT || '900' }}
           LOOPKEEPER_JOB_TIMEOUT_SECONDS: 1200
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
@@ -424,14 +415,14 @@ jobs:
           [[ -n "${LOOPKEEPER_REVIEW_ARTIFACT_SHA256-}" ]]
           artifact_sha256="$(sha256sum "$LOOPKEEPER_REVIEW_ARTIFACT" | awk '{print $1}')"
           [[ "$artifact_sha256" == "$LOOPKEEPER_REVIEW_ARTIFACT_SHA256" ]]
-          [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" ]]
-          env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY \
+          [[ -z "${OPENAI_API_KEY-}" && -z "${LOOPKEEPER_MODEL_API_KEY-}" && -z "${LOOPKEEPER_API_KEY-}" ]]
+          env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY -u LOOPKEEPER_API_KEY \
             "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"
 
   publication-gate:
     name: review publication gate
     if: ${{ always() }}
-    needs: [targets, review, rebind, writer]
+    needs: [targets, review, rebind, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -446,7 +437,7 @@ jobs:
           TARGETS_RESULT: ${{ needs.targets.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           REBIND_RESULT: ${{ needs.rebind.result }}
-          WRITER_RESULT: ${{ needs.writer.result }}
+          PUBLISH_RESULT: ${{ needs.publish.result }}
         run: |
           set -euo pipefail
           if [[ "$TARGETS_RESULT" == "skipped" || -z "${SELECTED:-}" || "$SELECTED" == "[]" ]]; then
@@ -461,7 +452,7 @@ jobs:
             echo "selected review artifact was not rebound (result=$REBIND_RESULT)" >&2
             exit 1
           }
-          [[ "$WRITER_RESULT" == "success" ]] || {
-            echo "artifact-backed writer did not complete (result=$WRITER_RESULT)" >&2
+          [[ "$PUBLISH_RESULT" == "success" ]] || {
+            echo "verified artifact publication did not complete (result=$PUBLISH_RESULT)" >&2
             exit 1
           }

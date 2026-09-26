@@ -21,6 +21,12 @@ git -C "$LOOPKEEPER_ROOT" checkout --detach "$PINNED_SHA" >/dev/null 2>&1
 # external workflow pinned while checking the artifact name, payload path,
 # and read-only split that the local rebind/writer jobs consume.
 PRODUCER_WORKFLOW="$LOOPKEEPER_ROOT/.github/workflows/pr-review.yml"
+EXPECTED_PRODUCER_SHA256="a4d8d1cc4496e75bee5b28362e9c2b5321c8744c9f6ccf9f2b2c0a207d382ca1"
+EXPECTED_ADAPTER_SHA256="78361fd302f530fae2daa1574ff8b2a953661fa91434b2d938ce999275c32636"
+ACTUAL_PRODUCER_SHA256="$(sha256sum "$PRODUCER_WORKFLOW" | awk '{print $1}')"
+ACTUAL_ADAPTER_SHA256="$(sha256sum "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" | awk '{print $1}')"
+[[ "$ACTUAL_PRODUCER_SHA256" == "$EXPECTED_PRODUCER_SHA256" ]]
+[[ "$ACTUAL_ADAPTER_SHA256" == "$EXPECTED_ADAPTER_SHA256" ]]
 grep -Fq 'name: loopkeeper-review-${{ github.run_id }}' "$PRODUCER_WORKFLOW"
 grep -Fq 'path: ${{ github.workspace }}/loopkeeper-artifacts' "$PRODUCER_WORKFLOW"
 grep -Fq 'review-metadata.json' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
