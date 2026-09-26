@@ -50,7 +50,7 @@ def test_a_database_failure_is_a_500_without_the_sql(client, monkeypatch):
 
 
 @pytest.mark.parametrize("suffix", [".csv", ".json"])
-def test_an_upload_naming_a_server_file_is_not_read_as_that_file(client, tmp_path, suffix):
+def test_an_upload_naming_a_server_file_is_not_read_as_that_file(isolated_client, tmp_path, suffix):
     """The upload body is file content, never a path on the server.
 
     The parsers accept a str as either a path or raw content and open it when
@@ -70,6 +70,7 @@ def test_an_upload_naming_a_server_file_is_not_read_as_that_file(client, tmp_pat
     else:
         server_file.write_text(json.dumps([row]))
 
+    client, _ = isolated_client
     response = _upload(client, f"ssi{suffix}", str(server_file).encode())
     if response.status_code == 200:
         body = response.json()
@@ -79,8 +80,13 @@ def test_an_upload_naming_a_server_file_is_not_read_as_that_file(client, tmp_pat
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"], ids=["lf", "crlf", "cr"])
-def test_the_sample_csv_parses_with_any_line_ending(client, newline):
-    """The upload reaches the parser as a stream; every line ending must still split rows."""
+def test_the_sample_csv_parses_with_any_line_ending(isolated_client, newline):
+    """The upload reaches the parser as a stream; every line ending must still split rows.
+
+    The sample carries real-format accounts, so it imports into a private
+    database rather than the session-wide one other tests read seed data from.
+    """
+    client, _ = isolated_client
     rows = (ROOT / "samples" / "ssi_sample.csv").read_text(encoding="utf-8").splitlines()
     body = newline.join(rows).encode()
     response = _upload(client, "ssi.csv", body)
