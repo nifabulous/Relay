@@ -176,6 +176,12 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
 
 def test_continuous_20260922_batch_is_source_cited_and_static_scope():
     """Keep the European/RBSI ledgers bounded without claiming live attestation."""
+    static_scope_notice = (
+        ROOT / "docs" / "ssi-continuous-20260922-static-scope.md"
+    ).read_text()
+    assert "no independent retrieval" in static_scope_notice
+    assert "not proof" in static_scope_notice
+    assert "non-routable" in static_scope_notice
     batch_files = {
         "seed_ssi_basler_kantonalbank_20250801.json": 32,
         "seed_ssi_bank_cler_20260325.json": 22,

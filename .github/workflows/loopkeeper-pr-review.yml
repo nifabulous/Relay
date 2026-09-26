@@ -284,7 +284,12 @@ jobs:
             "$ARTIFACT_DIR/review-metadata.json" >/dev/null
           grep -Fq "<!-- loopkeeper-pr-review:${PR_NUMBER}:${head_sha} -->" \
             "$ARTIFACT_DIR/comment.md"
-          echo "head_sha=$head_sha" >>"$GITHUB_OUTPUT"
+          artifact_sha256="$(sha256sum "$ARTIFACT_DIR/comment.md" | awk '{print $1}')"
+          [[ "$artifact_sha256" =~ ^[0-9a-f]{64}$ ]]
+          {
+            echo "head_sha=$head_sha"
+            echo "artifact_sha256=$artifact_sha256"
+          } >>"$GITHUB_OUTPUT"
 
       - name: Re-verify fork eligibility before publication
         env:
@@ -312,6 +317,7 @@ jobs:
           LOOPKEEPER_ROOT: ${{ github.workspace }}/loopkeeper
           PYTHONPATH: ${{ github.workspace }}/loopkeeper/src
           LOOPKEEPER_REVIEW_ARTIFACT: ${{ github.workspace }}/loopkeeper-review-artifact/comment.md
+          LOOPKEEPER_REVIEW_ARTIFACT_SHA256: ${{ steps.pr.outputs.artifact_sha256 }}
           LOOPKEEPER_REVIEW_ENABLED: "true"
           LOOPKEEPER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
           LOOPKEEPER_DEFAULT_BRANCH: ${{ steps.roots.outputs.consumer_default_branch }}
@@ -338,4 +344,9 @@ jobs:
           LOOPKEEPER_ARTIFACT_DIR: ${{ github.workspace }}/loopkeeper-writer-artifacts
         run: |
           set -euo pipefail
-          "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"
+          # The privileged writer receives only the already-verified artifact.
+          # Fail closed if a model credential ever reaches this job, and strip
+          # inherited credential names before invoking the external adapter.
+          [[ -z "${OPENAI_API_KEY:-}" && -z "${LOOPKEEPER_MODEL_API_KEY:-}" ]]
+          env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY \
+            "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" "${{ matrix.pr_number }}"

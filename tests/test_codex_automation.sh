@@ -448,8 +448,11 @@ raise unless publication_step
 publication_env = publication_step.fetch("env")
 raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comment.md")
+raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT_SHA256").include?("steps.pr.outputs.artifact_sha256")
 raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
 raise unless !publication_env.key?("LOOPKEEPER_API_KEY")
+raise unless publication_step.fetch("run").include?("env -u OPENAI_API_KEY -u LOOPKEEPER_MODEL_API_KEY")
+raise unless publication_step.fetch("run").include?("Fail closed if a model credential")
 RUBY
 if (( ruby_status != 0 )); then
   fail 'Loopkeeper workflow_run targets are not structurally connected to the review matrix.'
