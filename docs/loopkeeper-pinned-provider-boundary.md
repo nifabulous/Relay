@@ -17,9 +17,11 @@ only the expected PR-comment operation.
 
 The pinned adapter requires a model-shaped identifier before it reaches the
 artifact branch, so the privileged publication job supplies the deliberately
-non-routable sentinel `artifact-only-no-transport`. It omits API style, API
-base URL, reasoning, input-budget, and request-timeout settings. It also fails
-closed if any of `OPENAI_API_KEY`, `LOOPKEEPER_MODEL_API_KEY`, or
-`LOOPKEEPER_API_KEY` is present, then removes all three names from the adapter
-environment. Only the verified artifact path and its revalidated digest cross
-the publication boundary.
+non-routable sentinel `artifact-only-no-transport`. The adapter also validates
+reasoning, input-budget, and output-token fields before branching, so Relay
+uses fixed compatibility values (`none`, `600000`, and `1`) rather than
+operator-configurable model settings. It omits API style, API base URL, and
+request-timeout settings. It also fails closed if any of `OPENAI_API_KEY`,
+`LOOPKEEPER_MODEL_API_KEY`, or `LOOPKEEPER_API_KEY` is present, then removes
+all three names from the adapter environment. Only the verified artifact path
+and its revalidated digest cross the publication boundary.

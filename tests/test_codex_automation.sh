@@ -462,7 +462,9 @@ raise unless publication_env.fetch("LOOPKEEPER_OPERATOR") == "1"
 raise unless publication_env.fetch("LOOPKEEPER_MODEL") == "artifact-only-no-transport"
 raise unless !publication_env.key?("LOOPKEEPER_API_STYLE")
 raise unless !publication_env.key?("LOOPKEEPER_API_BASE_URL")
-raise unless !publication_env.key?("LOOPKEEPER_REASONING_EFFORT")
+raise unless publication_env.fetch("LOOPKEEPER_REASONING_EFFORT") == "none"
+raise unless publication_env.fetch("LOOPKEEPER_MAX_INPUT_BYTES") == "600000"
+raise unless publication_env.fetch("LOOPKEEPER_MAX_OUTPUT_TOKENS") == "1"
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT").include?("comment.md")
 raise unless publication_env.fetch("LOOPKEEPER_REVIEW_ARTIFACT_SHA256").include?("steps.pr.outputs.artifact_sha256")
 raise unless publication_env.fetch("LOOPKEEPER_CHECK_MAX_RAW_BYTES").include?("LOOPKEEPER_CHECK_MAX_RAW_BYTES")
