@@ -224,6 +224,63 @@ export const SSIResponseSchema = z
 
 export type SSIResponse = z.infer<typeof SSIResponseSchema>;
 
+const SSIQualityBucketSchema = z
+  .object({
+    label: z.string(),
+    count: z.number().int().nonnegative(),
+  })
+  .passthrough();
+
+const SSIQualityTotalsSchema = z
+  .object({
+    total_rows: z.number().int().nonnegative(),
+    instruction_rows: z.number().int().nonnegative(),
+    bic_only_rows: z.number().int().nonnegative(),
+    terms_inferred_rows: z.number().int().nonnegative(),
+    routing_ready_rows: z.number().int().nonnegative(),
+    published_rows: z.number().int().nonnegative(),
+    unverified_rows: z.number().int().nonnegative(),
+    archived_rows: z.number().int().nonnegative(),
+    illustrative_rows: z.number().int().nonnegative(),
+    stale_rows: z.number().int().nonnegative(),
+    missing_source_date_rows: z.number().int().nonnegative(),
+    missing_citation_rows: z.number().int().nonnegative(),
+    unique_beneficiaries: z.number().int().nonnegative(),
+    unique_intermediaries: z.number().int().nonnegative(),
+    currencies: z.number().int().nonnegative(),
+  })
+  .passthrough();
+
+const SSIQualityQueueItemSchema = z
+  .object({
+    beneficiary_bic: z.string(),
+    beneficiary_bank_name: safeOptionalString,
+    currency: z.string(),
+    intermediary_bic: z.string(),
+    intermediary_bank_name: safeOptionalString,
+    status: z.string(),
+    bic_only: z.boolean(),
+    terms_inferred: z.boolean(),
+    as_of: safeOptionalString,
+    age_days: safeOptionalNumber,
+    issues: z.array(z.string()),
+  })
+  .passthrough();
+
+export const SSIQualityResponseSchema = z
+  .object({
+    generated_at: z.string(),
+    stale_after_days: z.number().int().positive(),
+    totals: SSIQualityTotalsSchema,
+    freshness: z.array(SSIQualityBucketSchema),
+    queue: z.array(SSIQualityQueueItemSchema),
+    disclaimer: z.string(),
+  })
+  .passthrough();
+
+export type SSIQualityResponse = z.infer<typeof SSIQualityResponseSchema>;
+export type SSIQualityQueueItem = z.infer<typeof SSIQualityQueueItemSchema>;
+
 /* ------------------------------------------------------------------ *
  * Verification of Payee (VoP)
  * ------------------------------------------------------------------ */

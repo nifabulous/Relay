@@ -63,6 +63,13 @@ export const apiKeys = {
     },
   ),
 
+  ssiQuality: Object.assign(
+    (staleAfterDays: number, limit: number) => ["ssi", "quality", staleAfterDays, limit] as const,
+    {
+      all: ["ssi", "quality"] as const,
+    },
+  ),
+
   schemes: Object.assign(
     (currency: string) => ["schemes", currency] as const,
     {

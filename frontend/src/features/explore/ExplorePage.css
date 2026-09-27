@@ -161,67 +161,11 @@
     background-color var(--duration-fast) var(--ease);
 }
 
-.relay-select__value {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.relay-select__icon {
-  display: inline-flex;
-  margin-left: var(--space-2);
-  color: var(--color-ink-muted);
-}
-
 .bank-directory__select[data-open],
 .bank-directory__select:focus-visible {
   border-color: var(--color-action);
   outline: 2px solid var(--color-action);
   outline-offset: 2px;
-}
-
-.relay-select__positioner {
-  z-index: 260;
-  min-width: min(240px, calc(100vw - 2 * var(--space-4)));
-}
-
-.relay-select__popup {
-  padding: var(--space-1);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-2);
-}
-
-.relay-select__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 40px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--color-ink-strong);
-  font-size: var(--text-sm);
-  cursor: pointer;
-}
-
-.relay-select__item[data-highlighted] {
-  background: var(--color-action-surface);
-  color: var(--color-action);
-}
-
-.relay-select__item[data-selected] {
-  color: var(--color-action);
-  font-weight: 600;
-}
-
-.relay-select__indicator {
-  flex: 0 0 auto;
-  visibility: hidden;
-}
-
-.relay-select__item[data-selected] .relay-select__indicator {
-  visibility: visible;
 }
 
 .bank-directory__filter-toggle {
@@ -973,10 +917,6 @@
   .bank-directory__filter-toggle {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .relay-select__value {
-    flex: 1;
   }
 
   .bank-directory__table-scroll {

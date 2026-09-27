@@ -45,6 +45,10 @@ export function ExplorePage() {
           <span className="explore__category-label">Correspondent Atlas</span>
           <span className="explore__category-sub">See who reaches whom across the collected SSI network</span>
         </Link>
+        <Link to="/explore/ssi-quality" className="explore__category">
+          <span className="explore__category-label">SSI data quality</span>
+          <span className="explore__category-sub">Monitor source freshness and settlement readiness</span>
+        </Link>
         <Link to="/explore/banks" className="explore__category">
           <span className="explore__category-label">Bank Directory</span>
           <span className="explore__category-sub">Browse and look up banks by BIC</span>

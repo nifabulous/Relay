@@ -35,6 +35,7 @@ describe("RelaySelect", () => {
     );
 
     await user.click(screen.getByRole("combobox", { name: "Market" }));
+    expect(screen.getByRole("combobox", { name: "Market" })).toHaveClass("relay-select__trigger");
     await user.click(await screen.findByRole("option", { name: "United Kingdom" }));
 
     expect(onValueChange).toHaveBeenCalledWith("gb");

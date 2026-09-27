@@ -298,6 +298,52 @@ class SSIResponse(BaseModel):
     disclaimer: str
 
 
+class SSIQualityBucket(BaseModel):
+    label: str
+    count: int = Field(ge=0)
+
+
+class SSIQualityTotals(BaseModel):
+    total_rows: int = Field(ge=0)
+    instruction_rows: int = Field(ge=0)
+    bic_only_rows: int = Field(ge=0)
+    terms_inferred_rows: int = Field(ge=0)
+    routing_ready_rows: int = Field(ge=0)
+    published_rows: int = Field(ge=0)
+    unverified_rows: int = Field(ge=0)
+    archived_rows: int = Field(ge=0)
+    illustrative_rows: int = Field(ge=0)
+    stale_rows: int = Field(ge=0)
+    missing_source_date_rows: int = Field(ge=0)
+    missing_citation_rows: int = Field(ge=0)
+    unique_beneficiaries: int = Field(ge=0)
+    unique_intermediaries: int = Field(ge=0)
+    currencies: int = Field(ge=0)
+
+
+class SSIQualityQueueItem(BaseModel):
+    beneficiary_bic: str
+    beneficiary_bank_name: Optional[str] = None
+    currency: str
+    intermediary_bic: str
+    intermediary_bank_name: Optional[str] = None
+    status: SSIStatus
+    bic_only: bool
+    terms_inferred: bool
+    as_of: Optional[str] = None
+    age_days: Optional[int] = Field(default=None, ge=0)
+    issues: List[str] = Field(default_factory=list)
+
+
+class SSIQualityResponse(BaseModel):
+    generated_at: str
+    stale_after_days: int = Field(ge=1, le=3650)
+    totals: SSIQualityTotals
+    freshness: List[SSIQualityBucket]
+    queue: List[SSIQualityQueueItem] = Field(default_factory=list)
+    disclaimer: str
+
+
 class VoPRequest(BaseModel):
     iban: str = Field(..., max_length=34, description="Beneficiary account IBAN")
     name: str = Field(..., max_length=200, description="Account holder name as entered by the payer")
