@@ -61,6 +61,7 @@ These are the items that the most panels flagged independently. They block safe 
 - **Severity:** Critical (data-poisoning + DoS vector)
 - **Effort:** M (CC: ~1 day)
 - **Why:** `POST /api/import/fedwire`, `/fedach`, `/ssi` wipe DB tables and trigger network downloads with zero auth. `POST /track/create` is unbounded unauthenticated writes. The scariest case: an attacker POSTs an SSI file with a non-`ACCT-` account number → `/prepare-payment` returns `has_real_accounts=True` → recommendation `PROCEED`. That is a payments-fraud vector.
+- **Update:** 2026-09-27: `/track/create` is no longer admin-gated (the labs call it without a key); the body-size limit and chain, amount and charge-code validation bound each request. Without `ADMIN_API_KEY` the importers answer 503 unless `ADMIN_API_ALLOW_OPEN=1`.
 - **Files:**
   - `app/routers/lookup.py:257-332` (import block)
   - `app/routers/lookup.py:460-501` (`/track/create`)

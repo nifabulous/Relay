@@ -20,8 +20,9 @@ _Last updated: 2026-09-06._
   **Postgres + Alembic** in prod.
 - **Architecture:** Router → Service → Model. Routers are thin (validation + error mapping);
   services are pure, mostly DB-free functions; models are anemic entities.
-- **Auth:** `admin_required` (X-Admin-Key header) gates mutating/import endpoints. Dev mode
-  (no `ADMIN_API_KEY`) is open.
+- **Auth:** `admin_required` (X-Admin-Key header) gates the importers (`/import/*`). Without
+  `ADMIN_API_KEY` they answer 503 unless local dev opts in with
+  `ADMIN_API_ALLOW_OPEN=1`.
 
 ### Frontend (Relay app, served at `/app`)
 - **React 19 + TypeScript 7 (strict)** on **Vite 8**.
@@ -83,7 +84,7 @@ _Last updated: 2026-09-06._
 **Orchestration, tracking, progress, ops**
 - `POST /api/prepare-payment` — end-to-end orchestration: validate → VoP → route → SSI →
   recommendation (PROCEED / REVIEW / STOP), with a partial-results pattern.
-- `POST /api/track/create` (admin) — **instant** admin/demo path: creates a simulated SWIFT
+- `POST /api/track/create` — **instant** demo path used by the labs: creates a simulated SWIFT
   gpi timeline with the full chain visible immediately (idempotency-key replay preserved).
 - `GET /api/track/{uetr}` — UETR tracking. Prepared payments (created through
   `/api/prepare-payment`) are *scheduled*: only INITIATED is visible at first, further events

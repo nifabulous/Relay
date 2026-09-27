@@ -1,4 +1,7 @@
 """Admin-only data import endpoints (Fedwire, FedACH, SSI)."""
+import csv
+import io
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
@@ -78,14 +81,21 @@ async def trigger_ssi_import(
     try:
         # Decode + wrap as a file-like object for the parser.
         # handle BOM from Excel exports; catch decode errors as 400, not 500.
+        # The parsers treat a bare str as a path when one exists on disk, so
+        # uploaded content must reach them as a stream, never as a str.
+        # newline="" leaves line endings to the csv module, which accepts
+        # \n, \r\n and bare \r, as the old str.splitlines() path did.
         text = content.decode("utf-8-sig")
-        result = import_ssi_file(db, text, format_hint=format_hint)
+        result = import_ssi_file(db, io.StringIO(text, newline=""), format_hint=format_hint)
     except UnicodeDecodeError:
         raise HTTPException(
             status_code=400,
             detail="File is not valid UTF-8. Save as UTF-8 (Excel: 'CSV UTF-8').",
         )
-    except Exception as e:
+    except (ValueError, csv.Error) as e:
+        # The file's own problem, so the uploader sees what failed to parse.
+        # Anything else (a database fault) is a 500 without its SQL text.
+        db.rollback()
         raise HTTPException(status_code=400, detail=f"Parse error: {e}")
 
     return {

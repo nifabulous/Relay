@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -14,6 +15,7 @@ init_sentry()
 logger = logging.getLogger(__name__)
 
 from .db import Base, SessionLocal, engine
+from .request_limits import BodySizeLimitMiddleware
 from .routers import (
     analytics as analytics_router,
 )
@@ -53,8 +55,10 @@ from .routers import (
 from .routers import (
     vop as vop_router,
 )
+from .security_headers import SecurityHeadersMiddleware
 from .services.schema_compat import ensure_sqlite_schema
 from .services.seed import seed_if_empty
+from .validation_errors import validation_error_handler
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -94,6 +98,10 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+app.add_exception_handler(RequestValidationError, validation_error_handler)
+app.add_middleware(BodySizeLimitMiddleware)
+# Added last so it is outermost and also covers the body limit's 413.
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(directory_router.router)
 app.include_router(routing_router.router)

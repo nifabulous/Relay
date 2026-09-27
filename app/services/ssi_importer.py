@@ -229,22 +229,41 @@ def parse_csv(file_or_path: Union[str, Path, IO]) -> List[dict]:
     return list(csv.DictReader(file_or_path))
 
 
+# The columns validate_ssi_row reads as text.
+_TEXT_COLUMNS = frozenset({
+    "beneficiary_bic", "beneficiary_bank_name", "currency",
+    "intermediary_bic", "intermediary_bank_name",
+    "intermediary_account", "beneficiary_account",
+    "notes", "as_of", "status", "charge_code", "value_date",
+})
+
+
 def parse_json(file_or_path: Union[str, Path, IO]) -> List[dict]:
     """Parse a JSON file (array of objects, or {\"records\": [...]})."""
-    if isinstance(file_or_path, (str, Path)):
-        if os.path.isfile(file_or_path):
-            with open(file_or_path, encoding="utf-8") as f:
-                data = json.load(f)
+    try:
+        if isinstance(file_or_path, (str, Path)):
+            if os.path.isfile(file_or_path):
+                with open(file_or_path, encoding="utf-8") as f:
+                    data = json.load(f)
+            else:
+                data = json.loads(str(file_or_path))
         else:
-            data = json.loads(str(file_or_path))
-    else:
-        data = json.load(file_or_path)
+            data = json.load(file_or_path)
+    except RecursionError:
+        raise ValueError("JSON is nested too deeply") from None
 
     if isinstance(data, dict) and "records" in data:
-        return data["records"]
-    if isinstance(data, list):
-        return data
-    raise ValueError("JSON must be an array of objects or {\"records\": [...]}")
+        data = data["records"]
+    if not (isinstance(data, list) and all(isinstance(row, dict) for row in data)):
+        raise ValueError("JSON must be an array of objects or {\"records\": [...]}")
+    # validate_ssi_row strips these columns as text, so any other value type
+    # is the file's error, not a server fault. Columns it does not read are
+    # ignored as before, and terms_inferred is checked per row.
+    for number, row in enumerate(data, start=1):
+        for column in _TEXT_COLUMNS.intersection(row):
+            if not isinstance(row[column], (str, type(None))):
+                raise ValueError(f"record {number}: {column!r} must be a string or null")
+    return data
 
 
 def detect_and_parse(file_or_path: Union[str, Path, IO], format_hint: Optional[str] = None) -> List[dict]:

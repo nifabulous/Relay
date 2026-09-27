@@ -52,8 +52,9 @@ def client_with_auth():
 
 @pytest.fixture
 def client_dev_mode():
-    """A client where no ADMIN_API_KEY is set (dev mode — open access)."""
+    """A client with no ADMIN_API_KEY and the local-dev opt-in (open access)."""
     env_without_key = {k: v for k, v in os.environ.items() if k != "ADMIN_API_KEY"}
+    env_without_key["ADMIN_API_ALLOW_OPEN"] = "1"
     with mock.patch.dict(os.environ, env_without_key, clear=True):
         with mock.patch("app.auth._admin_api_key", None):
             from app.db import get_db
@@ -107,10 +108,15 @@ class TestImportEndpointAuth:
         )
 
 
-class TestTrackCreateAuth:
-    """/track/create must also require the key when configured."""
+class TestTrackCreateIsALearnerEndpoint:
+    """/track/create backs Lab 6, the capstone and Exceptions & Returns.
 
-    def test_track_create_rejected_without_key(self, client_with_auth):
+    The labs call it without an admin key, so gating it answered them 401 in
+    production. It writes only simulated timelines, like the open
+    /prepare-payment, and stays open when a key is configured.
+    """
+
+    def test_track_create_accepts_a_request_without_a_key(self, client_with_auth):
         r = client_with_auth.post("/api/track/create", json={
             "originator_bic": "CITIUS33XXX",
             "originator_name": "Citibank",
@@ -119,9 +125,7 @@ class TestTrackCreateAuth:
             "currency": "USD",
             "amount": 100,
         })
-        assert r.status_code == 401, (
-            f"Unauthenticated /track/create must be 401, got {r.status_code}"
-        )
+        assert r.status_code == 200, r.text
 
 
 class TestDevModeOpenAccess:
@@ -135,6 +139,46 @@ class TestDevModeOpenAccess:
         assert r.status_code != 401, (
             f"In dev mode (no key set), /import/fedwire must not be 401, got {r.status_code}"
         )
+        assert r.status_code != 503, "the ADMIN_API_ALLOW_OPEN opt-in must open it"
+
+
+class TestOpenAdminRequiresAnExplicitOptIn:
+    """Without ADMIN_API_KEY the admin API answers 503 unless ADMIN_API_ALLOW_OPEN is set.
+
+    There is no platform detection: the VERCEL system variable is opt-in per
+    project and a deploy can run on SQLite, so inferring "local" left keyless
+    deploys open. Local development opts in explicitly instead.
+    """
+
+    def test_without_the_flag_a_keyless_sqlite_app_is_closed(self, client_dev_mode, monkeypatch):
+        monkeypatch.delenv("ADMIN_API_ALLOW_OPEN", raising=False)
+        monkeypatch.delenv("VERCEL", raising=False)
+        r = client_dev_mode.post("/api/import/fedwire")
+        assert r.status_code == 503, r.text
+
+    def test_only_an_affirmative_flag_value_opens_it(self, client_dev_mode, monkeypatch):
+        monkeypatch.setenv("ADMIN_API_ALLOW_OPEN", "0")
+        r = client_dev_mode.post("/api/import/fedwire")
+        assert r.status_code == 503, r.text
+
+    def test_the_flag_never_overrides_a_configured_key(self, client_with_auth, monkeypatch):
+        monkeypatch.setenv("ADMIN_API_ALLOW_OPEN", "1")
+        r = client_with_auth.post("/api/import/fedwire")
+        assert r.status_code == 401, r.text
+
+
+class TestKeyComparison:
+    def test_a_key_differing_only_in_its_last_character_is_rejected(self, client_with_auth):
+        r = client_with_auth.post(
+            "/api/import/fedwire", headers={"X-Admin-Key": "test-secret-key-124"}
+        )
+        assert r.status_code == 401, r.text
+
+    def test_a_non_ascii_key_is_rejected_rather_than_crashing(self, client_with_auth):
+        r = client_with_auth.post(
+            "/api/import/fedwire", headers={"X-Admin-Key": "clé".encode("latin-1")}
+        )
+        assert r.status_code == 401, r.text
 
 
 class TestReadEndpointsUnaffected:

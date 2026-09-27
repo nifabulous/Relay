@@ -15,7 +15,7 @@ These were the highest-convergence findings, flagged by 4-5 panels independently
 | 0.1 | git init | `eb49a36` | `.gitignore` + baseline commit (522 tests) |
 | 0.2 | SSI account masking | `f86367f` | 470 account values → `ACCT-NNNNN`, 36 IBANs in notes masked, ROADMAP reconciled |
 | 1.3 | Input validation | `2694bde` | `gt=0` on amounts, `max_length` on free-text, decode-in-try (no more 500 on binary upload) |
-| 0.3 | Auth gate | `e5d281c` | `admin_required` dependency on `/import/*` + `/track/create`; dev-open, prod-401 |
+| 0.3 | Auth gate | `e5d281c` | `admin_required` dependency on `/import/*` + `/track/create`; dev-open, prod-401. 2026-09-27: `/track/create` is no longer admin-gated (the labs call it without a key); the body-size limit and chain, amount and charge-code validation bound each request. Without `ADMIN_API_KEY` the importers answer 503 unless `ADMIN_API_ALLOW_OPEN=1`. |
 | 0.3.5 | fed_importer pin | `b104473` | No GitHub default URL; fail-closed `ValueError` with clear message |
 | 0.4 | SIMULATION disclaimers | `1057256` | API title/description, response `disclaimer` fields, UI banners on `/ui` + `/learn` |
 

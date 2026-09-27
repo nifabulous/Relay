@@ -6,9 +6,29 @@ request returns the same result instead of duplicating the payment.
 from typing import Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..models import IdempotencyKey
+
+# Header contract, enforced by the routers' Header() declarations. The length
+# matches IdempotencyKey.key (String(200)); visible ASCII only, no spaces.
+IDEMPOTENCY_KEY_MAX_LENGTH = 200
+IDEMPOTENCY_KEY_PATTERN = r"^[\x21-\x7e]*$"
+
+
+class IdempotencyKeyConflict(ValueError):
+    """The key is already bound to a different endpoint."""
+
+
+class IdempotencyKeyInFlight(IdempotencyKeyConflict):
+    """A concurrent request stored the key first and may still be running."""
+
+
+def _stored(db: Session, key: str) -> Optional[IdempotencyKey]:
+    return db.execute(
+        select(IdempotencyKey).where(IdempotencyKey.key == key)
+    ).scalar_one_or_none()
 
 
 def resolve_uetr(
@@ -25,19 +45,39 @@ def resolve_uetr(
 
     Returns:
         The UETR to use for this request.
+
+    Raises:
+        IdempotencyKeyConflict: the key was first used on another endpoint, so
+            replaying its UETR here would mix two different flows.
+        IdempotencyKeyInFlight: a concurrent request stored the key first
+            (a subclass of IdempotencyKeyConflict, so also a 409).
     """
     if not key:
         return generate_uetr()
 
-    existing = db.execute(
-        select(IdempotencyKey).where(IdempotencyKey.key == key)
-    ).scalar_one_or_none()
+    existing = _stored(db, key)
+    if existing is None:
+        # Generate a new UETR and store the mapping
+        uetr = generate_uetr()
+        db.add(IdempotencyKey(key=key, uetr=uetr, endpoint=endpoint))
+        try:
+            db.commit()
+            return uetr
+        except IntegrityError:
+            # A concurrent first use stored the key between the lookup and
+            # this insert. Its timeline is probably not written yet, so
+            # replaying its UETR would write a second timeline; refuse instead.
+            db.rollback()
+            existing = _stored(db, key)
+            if existing is None:
+                raise
+            if existing.endpoint == endpoint:
+                raise IdempotencyKeyInFlight(
+                    "A request with this Idempotency-Key is still in progress; retry shortly."
+                )
 
-    if existing:
-        return existing.uetr
-
-    # Generate a new UETR and store the mapping
-    uetr = generate_uetr()
-    db.add(IdempotencyKey(key=key, uetr=uetr, endpoint=endpoint))
-    db.commit()
-    return uetr
+    if existing.endpoint != endpoint:
+        raise IdempotencyKeyConflict(
+            "Idempotency-Key was already used for a different endpoint."
+        )
+    return existing.uetr

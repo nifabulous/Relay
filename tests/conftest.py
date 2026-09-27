@@ -5,6 +5,8 @@ mutate real data. The db_session and client fixtures use SEPARATE in-memory
 DBs to prevent cross-test pollution: db_session tests that write data
 (importer tests) won't affect HTTP-level tests that assert against seed data.
 """
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -13,6 +15,10 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base
 from app.services.seed import seed_if_empty
+
+# The suite runs like local development: with no ADMIN_API_KEY, the admin API
+# is open only because of this explicit opt-in (see app/auth.py).
+os.environ.setdefault("ADMIN_API_ALLOW_OPEN", "1")
 
 
 def _create_test_db():

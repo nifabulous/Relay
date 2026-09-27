@@ -165,7 +165,8 @@ step and trims the function bundle.
 
 | Variable | Value | Why |
 | --- | --- | --- |
-| `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `app/auth.py` treats the deployment as dev mode and leaves `/api/import/*` and `/api/track/create` open to anyone. |
+| `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `/api/import/*` answers 503. |
+| `ADMIN_API_ALLOW_OPEN` | `1` in local development only | Opens `/api/import/*` without a key when `ADMIN_API_KEY` is unset, for zero-setup local imports. Never set it on a deploy; it has no effect once `ADMIN_API_KEY` is set. |
 | `DATABASE_URL` | `sqlite:////tmp/swift_routing.db` | The project filesystem is read-only; `/tmp` is the only writable path. `app/config.py` falls back to this automatically when `VERCEL` is set, but that system variable is opt-in per project — setting `DATABASE_URL` explicitly is the reliable route. |
 | `SENTRY_DSN` | Sentry backend project DSN | Optional. Sentry error monitoring is disabled when this is unset. Store it in Vercel/GitHub environment configuration, not source control. |
 | `SENTRY_ENVIRONMENT` | `production` | Optional environment label shown in Sentry. |
@@ -350,7 +351,7 @@ lesson scripts:
 | `GET` | `/api/ssi/quality` | SSI data-quality snapshot for freshness, provenance, and routing readiness |
 | `POST` | `/api/verify-payee` | Verification of Payee |
 | `POST` | `/api/prepare-payment` | One-call orchestration: validate + VoP + route + SSI → recommendation |
-| `POST` | `/api/track/create` | **Instant** admin/demo path — create a simulated payment with its full gpi timeline immediately |
+| `POST` | `/api/track/create` | **Instant** demo path used by the labs — create a simulated payment with its full gpi timeline immediately |
 | `GET` | `/api/track/{uetr}` | Retrieve the events of a payment's timeline that are *visible now* |
 | `POST` | `/api/track/{uetr}/skip` | Advance a prepared (scheduled) payment by exactly one event |
 | `POST` | `/api/track/{uetr}/complete` | Reveal a prepared payment's entire remaining timeline |
@@ -433,7 +434,7 @@ All responses below are **simulated educational data** — not a production
 payment system. See the interactive OpenAPI docs at
 <http://127.0.0.1:8000/docs> for the full schemas.
 
-#### 1. Instant admin/demo timeline — `POST /api/track/create`
+#### 1. Instant demo timeline — `POST /api/track/create`
 
 ```bash
 curl -s http://127.0.0.1:8000/api/track/create \
@@ -453,7 +454,7 @@ curl -s http://127.0.0.1:8000/api/track/create \
   }'
 ```
 
-This is the **instant admin/demo path**: the full chain — INITIATED → ACCEPTED →
+This is the **instant demo path** the labs use: the full chain — INITIATED → ACCEPTED →
 IN_PROGRESS → FORWARDED → … → CREDITED (`outcome: "rejected"` terminates at the
 first intermediary instead) — is visible immediately and the response is
 terminal. Replaying the request with the same `Idempotency-Key` header returns

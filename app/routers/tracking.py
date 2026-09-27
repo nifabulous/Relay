@@ -5,11 +5,15 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..auth import admin_required
 from ..db import get_db
 from ..models import PaymentEvent
 from ..schemas import PaymentEventInfo, TrackPaymentRequest, TrackPaymentResponse
-from ..services.idempotency import resolve_uetr
+from ..services.idempotency import (
+    IDEMPOTENCY_KEY_MAX_LENGTH,
+    IDEMPOTENCY_KEY_PATTERN,
+    IdempotencyKeyConflict,
+    resolve_uetr,
+)
 from ..services.tracking import (
     advance_payment,
     complete_payment,
@@ -23,16 +27,23 @@ from ._shared import _TRACKING_DISCLAIMER
 router = APIRouter(prefix="/api", tags=["swift"])
 
 
-@router.post("/track/create", response_model=TrackPaymentResponse, dependencies=[Depends(admin_required)])
+@router.post("/track/create", response_model=TrackPaymentResponse)
 def create_tracked_payment(
     request: TrackPaymentRequest,
     db: Session = Depends(get_db),
-    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+    idempotency_key: Optional[str] = Header(
+        default=None,
+        alias="Idempotency-Key",
+        max_length=IDEMPOTENCY_KEY_MAX_LENGTH,
+        pattern=IDEMPOTENCY_KEY_PATTERN,
+    ),
 ):
     """
     Create a payment with UETR tracking and generate a simulated gpi timeline.
 
-    This is the admin/demo path: the timeline is created "instant" — every
+    This is the instant demo path the labs use (Lab 6, the capstone, and
+    Exceptions & Returns), so it is not admin-gated: the timeline is created
+    "instant" — every
     event of the chain is visible immediately and the response is terminal
     (CREDITED or REJECTED). Prepared payments (POST /api/prepare-payment)
     are the only scheduled flow; they reveal their timeline gradually and
@@ -56,7 +67,10 @@ def create_tracked_payment(
             detail="intermediary_bics and intermediary_names must have equal length",
         )
 
-    uetr = resolve_uetr(db, idempotency_key, "track/create", generate_uetr)
+    try:
+        uetr = resolve_uetr(db, idempotency_key, "track/create", generate_uetr)
+    except IdempotencyKeyConflict as conflict:
+        raise HTTPException(status_code=409, detail=str(conflict))
 
     # If this UETR already has a timeline (replay of same idempotency key),
     # return the existing timeline instead of duplicating it.
@@ -93,7 +107,7 @@ def get_tracked_payment(uetr: str, db: Session = Depends(get_db)):
 
     The UETR is the 36-character UUID assigned at initiation, embedded in
     MT103 field 121 / pacs.008. This returns the status summary of the
-    events *visible now*: instant admin/demo payments are fully visible,
+    events *visible now*: instant demo payments are fully visible,
     while scheduled prepared payments reveal events as their planned
     timestamps arrive (or as they are advanced via
     POST /api/track/{uetr}/skip|complete). Hidden plan rows are never
@@ -112,7 +126,7 @@ def skip_tracked_payment(uetr: str, db: Session = Depends(get_db)):
 
     Reveals the next hidden event of a prepared payment's planned chain, in
     hop order, and returns the updated tracking snapshot. Unlike the instant
-    admin/demo creation endpoint, prepared payments start with only
+    demo creation endpoint, prepared payments start with only
     INITIATED visible; this control lets a learner step through the journey.
     Safe to repeat: each call reveals one more event until the plan is
     terminal, then becomes a no-op. No-op for instant timelines (already
