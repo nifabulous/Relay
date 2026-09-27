@@ -1,0 +1,297 @@
+{
+  "source_url": "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance/wire-details",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-09-21",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 41,
+  "routes": [
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "AED",
+      "intermediary_bic": "EBILAEADXXX",
+      "intermediary_name": "Emirates NBD, UAE"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "AUD",
+      "intermediary_bic": "ANZBAU3MXXX",
+      "intermediary_name": "ANZ Banking Corporation Limited, Melbourne"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CAD",
+      "intermediary_bic": "BOFMCAM2XXX",
+      "intermediary_name": "Bank of Montreal, Canada"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CHF",
+      "intermediary_bic": "ZKBKCHZZXXX",
+      "intermediary_name": "Zürcher Kantonalbank, Zurich"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CNH",
+      "intermediary_bic": "ICBKSGSGCLR",
+      "intermediary_name": "Industrial and Commercial Bank of China, Singapore"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "EUR",
+      "intermediary_bic": "COBADEFFXXX",
+      "intermediary_name": "Commerzbank, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "GBP",
+      "intermediary_bic": "BARCGB22XXX",
+      "intermediary_name": "Barclays Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "HKD",
+      "intermediary_bic": "DHBKHKHHXXX",
+      "intermediary_name": "DBS Bank (Hong Kong) Limited, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "JPY",
+      "intermediary_bic": "BOTKJPJTXXX",
+      "intermediary_name": "Bank of Tokyo Mitsubishi UFJ, Tokyo"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "NOK",
+      "intermediary_bic": "DNBANOKKXXX",
+      "intermediary_name": "DNB Bank, Norway"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "NZD",
+      "intermediary_bic": "ANZBNZ22XXX",
+      "intermediary_name": "ANZ Bank New Zealand Limited, Auckland"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "SEK",
+      "intermediary_bic": "DNBASESXXXX",
+      "intermediary_name": "DNB Bank ASA, Sweden"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "SGD",
+      "intermediary_bic": "DBSSSGSGXXX",
+      "intermediary_name": "DBS Bank Limited, Singapore"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "USD",
+      "intermediary_bic": "CITIUS33XXX",
+      "intermediary_name": "Citibank, United States"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "JPMorgan Chase Bank, United States"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "ZAR",
+      "intermediary_bic": "FIRNZAJJXXX",
+      "intermediary_name": "FirstRand Bank Limited, South Africa"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "SAR",
+      "intermediary_bic": "CHASSARIXXX",
+      "intermediary_name": "JPMorgan Chase Bank N.A., Saudi Arabia"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "QAR",
+      "intermediary_bic": "QNBAQAQAXXX",
+      "intermediary_name": "Qatar National Bank SAQ"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "BHD",
+      "intermediary_bic": "NBOBBHBMXXX",
+      "intermediary_name": "National Bank of Bahrain BSC"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "KWD",
+      "intermediary_bic": "NBOKKWKWXXX",
+      "intermediary_name": "National Bank of Kuwait SAKP"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "ILS",
+      "intermediary_bic": "POALILITXXX",
+      "intermediary_name": "Bank Hapoalim BM"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "THB",
+      "intermediary_bic": "SCBLTHBXXXX",
+      "intermediary_name": "Standard Chartered Bank (Thai) Public Company Ltd"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "DKK",
+      "intermediary_bic": "NDEADKKKXXX",
+      "intermediary_name": "Nordea Bank Denmark AS"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "PLN",
+      "intermediary_bic": "BREXPLPWXXX",
+      "intermediary_name": "mBank SA"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "RON",
+      "intermediary_bic": "INGBROBUXXX",
+      "intermediary_name": "ING Bank NV, Romania"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CZK",
+      "intermediary_bic": "CEKOCZPPXXX",
+      "intermediary_name": "Ceskoslovenska Obchodni Banka AS"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "HUF",
+      "intermediary_bic": "BACXHUHBXXX",
+      "intermediary_name": "UniCredit Bank Hungary"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "RSD",
+      "intermediary_bic": "BACXRSBGXXX",
+      "intermediary_name": "UniCredit Bank Serbia and Beograd"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "ISK",
+      "intermediary_bic": "GLITISREXXX",
+      "intermediary_name": "Íslandsbanki hf"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "BGN",
+      "intermediary_bic": "INGBBGSFXXX",
+      "intermediary_name": "ING Bank NV, Bulgaria"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "TRY",
+      "intermediary_bic": "CHASTRISXXX",
+      "intermediary_name": "JPMorgan Chase Bank N.A., Turkey"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "BWP",
+      "intermediary_bic": "SCHBBWGXXXX",
+      "intermediary_name": "Standard Chartered Bank Botswana Ltd"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "UGX",
+      "intermediary_bic": "SCBLUGKAXXX",
+      "intermediary_name": "Standard Chartered Bank Uganda Limited"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "ZMW",
+      "intermediary_bic": "SCBLZMLXXXX",
+      "intermediary_name": "Standard Chartered Bank Zambia PLC"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "BBD",
+      "intermediary_bic": "NOSCBBBBXXX",
+      "intermediary_name": "Bank of Nova Scotia, Barbados"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "BSD",
+      "intermediary_bic": "NOSCBSNSXXX",
+      "intermediary_name": "Scotiabank (Bahamas) Limited"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "JMD",
+      "intermediary_bic": "NOSCJMKNXXX",
+      "intermediary_name": "The Bank of Nova Scotia Jamaica Ltd"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CLP",
+      "intermediary_bic": "CHASCLRMXXX",
+      "intermediary_name": "JPMorgan Chase Bank N.A., Chile"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "CRC",
+      "intermediary_bic": "BSNJCRSJXXX",
+      "intermediary_name": "Banco BAC San Jose SA"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "PEN",
+      "intermediary_bic": "BCPLPEPLXXX",
+      "intermediary_name": "Banco de Credito del Peru"
+    },
+    {
+      "beneficiary_bic": "IDFBINBBMUM",
+      "beneficiary_name": "IDFC FIRST Bank Limited, Mumbai",
+      "currency": "MXN",
+      "intermediary_bic": "BMSXMXMMXXX",
+      "intermediary_name": "Banco Santander Mexico SA"
+    }
+  ]
+}

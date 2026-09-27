@@ -1,0 +1,38 @@
+{
+  "source_url": "https://www.cibccaribbean.com/binaries/content/assets/wire-xfers/bahamas-trust-wire-xfr.pdf",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-09-21",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 4,
+  "routes": [
+    {
+      "beneficiary_bic": "CIBCBSNBXXX",
+      "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+      "currency": "USD",
+      "intermediary_bic": "CHASUS33XXX",
+      "intermediary_name": "J.P. Morgan Chase Bank N.A., New York"
+    },
+    {
+      "beneficiary_bic": "CIBCBSNBXXX",
+      "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+      "currency": "CAD",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "CIBC, Toronto"
+    },
+    {
+      "beneficiary_bic": "CIBCBSNBXXX",
+      "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+      "currency": "GBP",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "CIBC, Toronto"
+    },
+    {
+      "beneficiary_bic": "CIBCBSNBXXX",
+      "beneficiary_name": "CIBC Caribbean Trust Company (Bahamas) Limited",
+      "currency": "EUR",
+      "intermediary_bic": "CHASDEFXXXX",
+      "intermediary_name": "J.P. Morgan Chase AG, Frankfurt"
+    }
+  ]
+}

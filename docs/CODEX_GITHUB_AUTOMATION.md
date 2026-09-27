@@ -72,7 +72,7 @@ read from the permission endpoint's `role_name`, never the legacy `permission`
 field, which collapses Maintain to `write`. Removing the label revokes
 eligibility before the next model call.
 
-Configuration: the model key is `secrets.OPENAI_API_KEY`, passed as the reusable
+Configuration: the model key is `secrets.LOOPKEEPER_API_KEY`, passed as the reusable
 workflow's `model_api_key` secret. Every `LOOPKEEPER_*` repository variable is
 optional and defaults inside the reusable workflow; `LOOPKEEPER_MODEL` defaults
 to the same model this repository already selected for Codex. Set the

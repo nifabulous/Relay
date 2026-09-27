@@ -27,7 +27,7 @@ wire format are themselves bound, not hardcoded:
 `chat` speaks the OpenAI-compatible chat completions shape most third-party
 providers and gateways expose, so a cross-vendor swap is: set
 `CODEX_MODEL` to the provider's model id, `CODEX_API_BASE_URL` to its
-endpoint, and put its key in the `OPENAI_API_KEY` secret (used as a bearer
+endpoint, and put its key in the `LOOPKEEPER_API_KEY` secret (used as a bearer
 token). The base URL must be https outside loopback — the key travels as a
 header — and may not carry a query or fragment.
 

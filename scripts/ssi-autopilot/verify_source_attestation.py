@@ -686,7 +686,9 @@ def _open_pinned(parsed, address: str):
     return _PinnedHTTPConnection(parsed.hostname, address, port=port, timeout=30)
 
 
-def _fetch(source: str) -> bytes:
+def _fetch(
+    source: str, *, user_agent: str = "Relay SSI source attestation/1"
+) -> bytes:
     """Fetch the cited page, validating and pinning every hop.
 
     Redirects are followed here rather than by an opener, because every hop
@@ -708,7 +710,7 @@ def _fetch(source: str) -> bytes:
                 target,
                 headers={
                     "Host": parsed.netloc,
-                    "User-Agent": "Relay SSI source attestation/1",
+                    "User-Agent": user_agent,
                     "Accept": "*/*",
                 },
             )
