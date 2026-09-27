@@ -60,11 +60,11 @@ number and the reusable workflow refuses to infer one.
 
 Direct PR events publish the review immediately through Loopkeeper's documented
 no-CI fallback instead of waiting for the asynchronous `CI` run. If the direct
-run has already finished when that exact-head CI run completes, the
-`workflow_run` path reviews with CI evidence and replaces the same fallback
-comment in place. If the direct run is still active, the callback skips rather
-than cancelling it, so the PR keeps one current review instead of a delayed or
-duplicated post.
+run succeeds, the later exact-head CI callback waits for it and then skips, so
+the PR keeps one current review. If the direct run fails, the callback re-enters
+through the real `CI` identity and publishes a CI-backed review; if the bounded
+wait cannot inspect or outlast the direct run, the workflow summary points to
+manual workflow dispatch as the re-entry path.
 
 The reusable workflow separates trust across jobs. `eligibility` holds no model
 secret and re-reads the pull request rather than trusting the event payload,

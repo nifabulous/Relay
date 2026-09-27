@@ -4,8 +4,32 @@ set -euo pipefail
 [[ "${1:-}" == "api" ]] || exit 2
 endpoint="${2:-}"
 case "$endpoint" in
-  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?head_sha=*)
-    printf '{"workflow_runs":[]}'
+  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target\&per_page=100)
+    case "${FAKE_DIRECT_RUN_MODE:-none}" in
+      active)
+        printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}"
+        ;;
+      active_once)
+        if [[ ! -e "${FAKE_DIRECT_RUN_STATE:?}" ]]; then
+          : >"$FAKE_DIRECT_RUN_STATE"
+          printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}"
+        else
+          printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","status":"completed","conclusion":"success","updated_at":"2026-09-27T13:01:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}"
+        fi
+        ;;
+      failed)
+        printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","status":"completed","conclusion":"failure","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}"
+        ;;
+      malformed)
+        printf 'not-json'
+        ;;
+      error)
+        exit 1
+        ;;
+      *)
+        printf '{"workflow_runs":[]}'
+        ;;
+    esac
     ;;
   repos/*/commits/*/pulls?per_page=100\&page=1)
     case "${FAKE_FALLBACK_MODE:-single}" in

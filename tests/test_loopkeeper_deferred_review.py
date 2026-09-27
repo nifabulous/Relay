@@ -2,10 +2,10 @@
 
 The caller forces direct PR events through Loopkeeper's documented no-CI
 fallback so the review artifact is available to the writer immediately. A
-later ``workflow_run`` still carries the real CI identity and can replace the
-same-head fallback comment in place. The caller must require an artifact for
-every selected event; a missing artifact is a failed publication, not a
-successful deferral.
+later ``workflow_run`` waits for that direct run: successful direct runs are
+left alone, while failed direct runs re-enter through the real CI identity.
+The caller must require an artifact for every selected event; a missing
+artifact is a failed publication, not a successful deferral.
 """
 
 import os
@@ -85,6 +85,10 @@ def test_rebind_requires_the_artifact_before_anything_else():
         assert "if" not in step, step["name"]
 
 
+def test_targets_can_read_direct_review_run_status():
+    assert JOBS["targets"]["permissions"]["actions"] == "read"
+
+
 @pytest.mark.parametrize("event_name", ["pull_request_target", "workflow_run", "workflow_dispatch"])
 def test_a_missing_artifact_fails_instead_of_defer(tmp_path, event_name):
     result, outputs, calls = _presence(tmp_path, event_name, "0")
@@ -115,13 +119,6 @@ def test_direct_and_ci_events_use_different_workflow_identities():
     assert review_inputs["ci_workflow_file"] == expected_file
     assert writer_env["LOOPKEEPER_CI_WORKFLOW_NAME"] == expected_name
     assert writer_env["LOOPKEEPER_CI_WORKFLOW_FILE"] == expected_file
-
-
-def test_ci_callback_does_not_cancel_an_active_immediate_review():
-    selector = _step("targets", "select")["run"]
-    assert "actions/workflows/loopkeeper-pr-review.yml/runs?head_sha=${RUN_HEAD_SHA}&event=pull_request_target" in selector
-    assert "active_direct_runs" in selector
-    assert "skipping the CI callback" in selector
 
 
 def test_publish_requires_a_successful_rebind():

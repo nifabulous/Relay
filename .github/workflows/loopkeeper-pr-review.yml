@@ -46,9 +46,10 @@ jobs:
       (github.event_name != 'workflow_run' ||
        github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     permissions:
       contents: read
+      actions: read
       pull-requests: read
     outputs:
       pr_numbers: ${{ steps.select.outputs.pr_numbers }}
@@ -96,30 +97,88 @@ jobs:
           # A direct pull_request_target run owns immediate publication for
           # this head. Do not let the later CI callback cancel that run through
           # Loopkeeper's PR-scoped concurrency group while its artifact/writer
-          # is still active. If the direct run already finished, the callback
-          # may proceed and reconcile the same-head comment in place.
+          # is still active. If it fails, the callback re-enters review after
+          # the failed run completes; if it succeeds, the immediate comment is
+          # already authoritative for this head.
           direct_runs_file="$(mktemp)"
-          if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?head_sha=${RUN_HEAD_SHA}&event=pull_request_target&per_page=100" \
+          targets_file=""
+          response_file=""
+          trap 'rm -f "$direct_runs_file" "${targets_file:-}" "${response_file:-}"' EXIT
+          if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100" \
             >"$direct_runs_file" 2>/dev/null; then
-            echo "could not determine whether the immediate PR review is still running; skipping CI callback" >&2
+            {
+              echo "## Loopkeeper CI callback"
+              echo ""
+              echo "The immediate PR review could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+            } >>"$GITHUB_STEP_SUMMARY"
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           fi
           jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$direct_runs_file" >/dev/null || {
-            echo "direct PR review run listing was malformed; skipping CI callback" >&2
+            {
+              echo "## Loopkeeper CI callback"
+              echo ""
+              echo "The immediate PR review listing was malformed, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+            } >>"$GITHUB_STEP_SUMMARY"
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           }
-          active_direct_runs="$(jq '[.workflow_runs[]? | select((.status // "") != "completed")] | length' "$direct_runs_file")"
-          if [[ "$active_direct_runs" =~ ^[1-9][0-9]*$ ]]; then
-            echo "an immediate PR review is still active for ${RUN_HEAD_SHA}; skipping the CI callback"
+          classify_direct_run() {
+            jq -r --arg sha "$RUN_HEAD_SHA" '
+              [ .workflow_runs[]?
+                | select((.event // "") == "pull_request_target")
+                | select(([.pull_requests[]?.head.sha?] | index($sha)) != null)
+              ]
+              | sort_by(.updated_at // .created_at // "")
+              | .[-1] // {}
+              | if . == {} then "none|"
+                elif (.status // "") != "completed" then "active|\(.id // 0)"
+                elif (.conclusion // "") == "success" then "success|\(.id // 0)"
+                else "failed|\(.id // 0)"
+                end
+            ' "$direct_runs_file"
+          }
+          direct_state="$(classify_direct_run)"
+          direct_status="${direct_state%%|*}"
+          direct_run_id="${direct_state#*|}"
+          immediate_deadline=$(( $(date +%s) + 1080 ))
+          while [[ "$direct_status" == "active" ]]; do
+            if (( $(date +%s) >= immediate_deadline )); then
+              {
+                echo "## Loopkeeper CI callback"
+                echo ""
+                echo "Immediate PR review run #${direct_run_id} stayed active through the bounded wait, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if that run later fails."
+              } >>"$GITHUB_STEP_SUMMARY"
+              echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+            if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100" \
+              >"$direct_runs_file" 2>/dev/null || ! jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$direct_runs_file" >/dev/null; then
+              {
+                echo "## Loopkeeper CI callback"
+                echo ""
+                echo "The immediate PR review could not be rechecked, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+              } >>"$GITHUB_STEP_SUMMARY"
+              echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
+            direct_state="$(classify_direct_run)"
+            direct_status="${direct_state%%|*}"
+            direct_run_id="${direct_state#*|}"
+          done
+          if [[ "$direct_status" == "success" ]]; then
+            {
+              echo "## Loopkeeper CI callback"
+              echo ""
+              echo "Immediate PR review run #${direct_run_id} completed successfully; the CI callback was skipped because the current-head comment is already published."
+            } >>"$GITHUB_STEP_SUMMARY"
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           fi
 
           targets_file="$(mktemp)"
           response_file="$(mktemp)"
-          trap 'rm -f "$direct_runs_file" "$targets_file" "$response_file"' EXIT
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
             fallback_candidates='[]'
@@ -224,8 +283,8 @@ jobs:
       # Direct PR runs intentionally use a reserved, non-existent workflow
       # identity so the pinned adapter takes its documented no-CI fallback
       # immediately instead of waiting for the asynchronous CI run. The
-      # workflow_run path supplies the real CI identity below, allowing that
-      # later evidence to replace the fallback review in place.
+      # workflow_run path supplies the real CI identity below only when the
+      # immediate run failed and needs a CI-backed re-entry.
       ci_workflow_name: ${{ github.event_name == 'workflow_run' && 'CI' || 'LoopkeeperImmediate' }}
       ci_workflow_file: ${{ github.event_name == 'workflow_run' && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
       pr_number: ${{ matrix.pr_number }}

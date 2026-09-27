@@ -540,6 +540,8 @@ run_loopkeeper_selector() {
     PATH="$STAGING/loopkeeper-bin:$PATH" \
     FAKE_HEAD_SHA="$SELECTOR_HEAD_SHA" \
     FAKE_FALLBACK_MODE="${FAKE_FALLBACK_MODE:-single}" \
+    FAKE_DIRECT_RUN_MODE="${FAKE_DIRECT_RUN_MODE:-none}" \
+    FAKE_DIRECT_RUN_STATE="${FAKE_DIRECT_RUN_STATE:-$STAGING/direct-run-state}" \
     GH_REPO="nifabulous/Relay" \
     EVENT_NAME="workflow_run" \
     DIRECT_PR_NUMBER="0" \
@@ -562,6 +564,34 @@ require_text_from_file() {
   local text="$2"
   grep -Fq -- "$text" "$file" || fail "missing $text in $file"
 }
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+rm -f "$STAGING/direct-run-state"
+FAKE_DIRECT_RUN_MODE=active_once run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not skip a successfully completed immediate review.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+require_text_from_file "$SELECTOR_SUMMARY" 'completed successfully'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_DIRECT_RUN_MODE=failed run_loopkeeper_selector '[{"number":1}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not re-enter after a failed immediate review.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_DIRECT_RUN_MODE=malformed run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not fail closed on malformed direct-run evidence.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+require_text_from_file "$SELECTOR_SUMMARY" 'listing was malformed'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_DIRECT_RUN_MODE=error run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not fail closed when direct-run evidence was unavailable.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+require_text_from_file "$SELECTOR_SUMMARY" 'could not be inspected'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
