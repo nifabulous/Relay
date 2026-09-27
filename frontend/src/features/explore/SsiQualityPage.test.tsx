@@ -86,6 +86,16 @@ describe("SsiQualityPage", () => {
     expect(screen.getAllByText("Source older than threshold")).toHaveLength(1);
   });
 
+  it("keeps explicit table semantics and labels on the responsive queue", async () => {
+    renderPage();
+
+    const table = await screen.findByRole("table", { name: "SSI review queue" });
+    expect(table).toHaveAttribute("role", "table");
+    expect(screen.getByRole("rowheader", { name: /BANKGB22XXX/ })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Currency: GBP" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: /Action: Source older than threshold/ })).toBeVisible();
+  });
+
   it("keeps the corpus warning visible so quality is not mistaken for live availability", async () => {
     renderPage();
 

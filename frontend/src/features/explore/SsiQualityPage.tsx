@@ -213,18 +213,18 @@ function ReviewQueue({ data }: { data: SSIQualityResponse }) {
         <p className="ssi-quality__empty" role="status">No quality actions are currently queued.</p>
       ) : (
         <div className="ssi-quality__table-wrap" role="region" aria-label="SSI review queue" tabIndex={0}>
-          <table className="ssi-quality__table">
-            <thead>
-              <tr><th scope="col">Beneficiary</th><th scope="col">Currency</th><th scope="col">Correspondent</th><th scope="col">Source age</th><th scope="col">Action</th></tr>
+          <table className="ssi-quality__table" role="table" aria-label="SSI review queue">
+            <thead role="rowgroup">
+              <tr role="row"><th role="columnheader" scope="col">Beneficiary</th><th role="columnheader" scope="col">Currency</th><th role="columnheader" scope="col">Correspondent</th><th role="columnheader" scope="col">Source age</th><th role="columnheader" scope="col">Action</th></tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {visibleQueue.map((item) => (
-                <tr key={`${item.beneficiary_bic}-${item.currency}-${item.intermediary_bic}`}>
-                  <th scope="row"><Link to={`/explore/banks/${encodeURIComponent(item.beneficiary_bic)}`} className="mono">{item.beneficiary_bic}</Link><span>{item.beneficiary_bank_name ?? "Unknown bank"}</span></th>
-                  <td className="mono">{item.currency}</td>
-                  <td><span className="mono">{item.intermediary_bic}</span><span>{item.intermediary_bank_name ?? "Unknown correspondent"}</span></td>
-                  <td>{item.age_days == null ? "No date" : `${format(item.age_days)} days`}</td>
-                  <td><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul></td>
+                <tr key={`${item.beneficiary_bic}-${item.currency}-${item.intermediary_bic}`} role="row">
+                  <th role="rowheader" scope="row"><Link to={`/explore/banks/${encodeURIComponent(item.beneficiary_bic)}`} className="mono">{item.beneficiary_bic}</Link><span>{item.beneficiary_bank_name ?? "Unknown bank"}</span></th>
+                  <td role="cell" className="mono" aria-label={`Currency: ${item.currency}`}>{item.currency}</td>
+                  <td role="cell" aria-label={`Correspondent: ${item.intermediary_bic}; ${item.intermediary_bank_name ?? "Unknown correspondent"}`}><span className="mono">{item.intermediary_bic}</span><span>{item.intermediary_bank_name ?? "Unknown correspondent"}</span></td>
+                  <td role="cell" aria-label={`Source age: ${item.age_days == null ? "No date" : `${format(item.age_days)} days`}`}>{item.age_days == null ? "No date" : `${format(item.age_days)} days`}</td>
+                  <td role="cell" aria-label={`Action: ${item.issues.map(issueLabel).join(", ")}`}><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul></td>
                 </tr>
               ))}
             </tbody>
