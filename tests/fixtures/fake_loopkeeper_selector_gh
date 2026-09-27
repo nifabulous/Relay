@@ -4,6 +4,9 @@ set -euo pipefail
 [[ "${1:-}" == "api" ]] || exit 2
 endpoint="${2:-}"
 case "$endpoint" in
+  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?head_sha=*)
+    printf '{"workflow_runs":[]}'
+    ;;
   repos/*/commits/*/pulls?per_page=100\&page=1)
     case "${FAKE_FALLBACK_MODE:-single}" in
       paginated)
