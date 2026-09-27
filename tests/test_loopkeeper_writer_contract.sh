@@ -69,7 +69,9 @@ GH_LOG="$STAGING/gh.log"
 touch "$GH_LOG"
 LOOPKEEPER_ARTIFACT_DIR="$STAGING/writer-artifacts"
 
-(
+run_writer_contract_case() {
+  local action="$1" artifact_dir="$2"
+  (
   cd "$ROOT"
   env \
     PATH="$FAKE_BIN:$PATH" \
@@ -97,11 +99,15 @@ LOOPKEEPER_ARTIFACT_DIR="$STAGING/writer-artifacts"
     LOOPKEEPER_CHECK_MAX_RAW_BYTES=1000000 \
     LOOPKEEPER_OPERATOR=1 \
     LOOPKEEPER_EVENT_NAME=pull_request_target \
-    LOOPKEEPER_PR_ACTION=opened \
+    LOOPKEEPER_PR_ACTION="$action" \
     LOOPKEEPER_EXPECTED_HEAD_SHA="$ROOT_HEAD_SHA" \
-    LOOPKEEPER_ARTIFACT_DIR="$LOOPKEEPER_ARTIFACT_DIR" \
+    LOOPKEEPER_ARTIFACT_DIR="$artifact_dir" \
     "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" 159
-)
+  )
+}
+
+run_writer_contract_case opened "$LOOPKEEPER_ARTIFACT_DIR"
+run_writer_contract_case labeled "$STAGING/writer-artifacts-labeled"
 
 grep -Fq 'gh pr comment 159' "$GH_LOG"
 if grep -Fq 'loopkeeper.transport' "$GH_LOG"; then
@@ -110,4 +116,6 @@ if grep -Fq 'loopkeeper.transport' "$GH_LOG"; then
 fi
 [[ -s "$LOOPKEEPER_ARTIFACT_DIR/comment.md" ]]
 jq -e '.evidence_state == "fallback"' "$LOOPKEEPER_ARTIFACT_DIR/review-metadata.json" >/dev/null
+[[ -s "$STAGING/writer-artifacts-labeled/comment.md" ]]
+jq -e '.evidence_state == "fallback"' "$STAGING/writer-artifacts-labeled/review-metadata.json" >/dev/null
 echo 'Pinned Loopkeeper writer artifact-only contract passed.'

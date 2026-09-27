@@ -420,10 +420,10 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'review (${PR_NUMBER}) / eligibility'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  "EVENT_ACTION: \${{ github.event.action || '' }}"
-require_text '.github/workflows/loopkeeper-pr-review.yml' \
   "actions/runs/\${RUN_ID}\" --jq '.conclusion // \"\"'"
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'ineligible=true'
+refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
+  '"$REVIEW_RESULT" == "skipped" ||'
 require_text '.github/workflows/ci.yml' 'loopkeeper-writer-contract:'
 require_text '.github/workflows/ci.yml' 'LOOPKEEPER_CONTRACT_NETWORK: "1"'
 require_text '.github/workflows/ci.yml' \

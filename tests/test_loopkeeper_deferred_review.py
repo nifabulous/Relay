@@ -83,7 +83,6 @@ def _presence(tmp_path, event_name, artifact_count):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": event_name,
-        "EVENT_ACTION": "opened",
         "PR_NUMBER": "159",
     }
     return _run(step["run"], env, tmp_path, artifact_count)
@@ -126,7 +125,6 @@ def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": "pull_request_target",
-        "EVENT_ACTION": "opened",
         "PR_NUMBER": "159",
         "FAKE_JOBS_JSON": jobs,
         "FAKE_RUN_JSON": '{"conclusion":"success"}',
@@ -137,7 +135,8 @@ def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
     assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
 
 
-def test_ineligible_skip_is_not_accepted_for_deferred_direct_events(tmp_path):
+@pytest.mark.parametrize("event_action", ["reopened", "ready_for_review", "labeled", "unlabeled"])
+def test_ineligible_skip_is_green_for_all_direct_events(tmp_path, event_action):
     step = _step("rebind", "presence")
     jobs = '{"jobs":[{"name":"review (159) / eligibility","conclusion":"success"},{"name":"review (159) / review","conclusion":"skipped"}]}'
     env = {
@@ -145,15 +144,15 @@ def test_ineligible_skip_is_not_accepted_for_deferred_direct_events(tmp_path):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": "pull_request_target",
-        "EVENT_ACTION": "reopened",
+        "EVENT_ACTION": event_action,
         "PR_NUMBER": "159",
         "FAKE_JOBS_JSON": jobs,
         "FAKE_RUN_JSON": '{"conclusion":"success"}',
     }
     result, outputs, calls = _run(step["run"], env, tmp_path, "0")
-    assert result.returncode != 0
-    assert outputs["ineligible"] == "false"
-    assert "immediate publication cannot be skipped" in result.stderr
+    assert result.returncode == 0, result.stderr
+    assert outputs["ineligible"] == "true"
+    assert "no publication is required" in (tmp_path / "github_summary").read_text()
     assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
 
 
@@ -177,6 +176,12 @@ def test_publish_requires_a_successful_rebind():
     assert "needs.rebind.result == 'success'" in condition
     assert "needs.rebind.outputs.ineligible != 'true'" in condition
     assert "needs.rebind.outputs.deferred" not in condition
+
+
+def test_publication_gate_does_not_pass_on_a_skipped_review_alone():
+    gate = JOBS["publication-gate"]["steps"][0]["run"]
+    assert '"$REVIEW_RESULT" == "skipped"' not in gate
+    assert '"$INELIGIBLE" == "true"' in gate
 
 
 def _gate(tmp_path, **env):
