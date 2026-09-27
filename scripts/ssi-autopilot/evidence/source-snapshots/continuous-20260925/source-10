@@ -1,0 +1,143 @@
+{
+  "source_url": "https://www.bankfrick.li/sites/default/files/documents/bank-frick-standard-settlement-instructions-en-27-05-2026.pdf",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-05-27",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 19,
+  "routes": [
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "AED",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "AED",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "AUD",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "CAD",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "CAD",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "EUR",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank, Frankfurt am Main, Germany"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "EUR",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "EUR",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "GBP",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "HKD",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "HKD",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "JPY",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "JPY",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "SGD",
+      "intermediary_bic": "SCBLGB2LXXX",
+      "intermediary_name": "Standard Chartered Bank, London, UK"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "SGD",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "TRY",
+      "intermediary_bic": "DEUTDEFFXXX",
+      "intermediary_name": "Deutsche Bank, Frankfurt am Main, Germany"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "TRY",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS Switzerland AG, Zurich, Switzerland"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "USD",
+      "intermediary_bic": "DEUTUS33XXX",
+      "intermediary_name": "Deutsche Bank, New York, USA"
+    },
+    {
+      "beneficiary_bic": "BFRILI22XXX",
+      "beneficiary_name": "Bank Frick AG",
+      "currency": "USD",
+      "intermediary_bic": "SCBLUS33XXX",
+      "intermediary_name": "Standard Chartered Bank, New York, USA"
+    }
+  ]
+}

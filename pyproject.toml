@@ -63,6 +63,13 @@ build-backend = "setuptools.build_meta"
 where = ["."]
 include = ["app*"]
 
+# Files the app reads at import or per request. vercel.json installs the
+# project as a wheel (`pip install '.[ai]'`), and a wheel ships only .py files
+# unless these are declared, so declare them whichever copy the runtime imports.
+[tool.setuptools.package-data]
+"app.services" = ["*.json"]
+app = ["static/**/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

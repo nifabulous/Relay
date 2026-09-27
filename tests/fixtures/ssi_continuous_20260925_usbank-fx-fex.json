@@ -1,0 +1,293 @@
+{
+  "fixture_version": 3,
+  "batch": "continuous-20260925",
+  "ledger_file": "seed_ssi_usbank_fx_fex_20250601.json",
+  "url": "https://www.usbank.com/dam/documents/pdf/commercial-banking/FX-USBank-standard-settlement-instructions-list.pdf",
+  "as_of": "2025-06-01",
+  "source_sha256": "217a9b0107565133b0e6f5bdba5bd9f4d88fe822efbb9214709c16da2d804d03",
+  "route_count": 40,
+  "route_digest": "90ff929f3fc004b7c0a66f192d4eaa7a2eb59603e62a6f6d67a9d8234700568f",
+  "account_values_removed": true,
+  "routes": [
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "AED",
+      "intermediary_bic": "NBADAEAAXXX",
+      "intermediary_name": "First Abu Dhabi Bank PJSC, Abu Dhabi"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "AUD",
+      "intermediary_bic": "NATAAU33033",
+      "intermediary_name": "National Australia Bank Limited, Melbourne"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "BGN",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "BHD",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "CAD",
+      "intermediary_bic": "TDOMCATTTOR",
+      "intermediary_name": "Toronto Dominion Bank, Toronto"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "CHF",
+      "intermediary_bic": "UBSWCHZH80A",
+      "intermediary_name": "UBS AG, Zurich"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "CNH",
+      "intermediary_bic": "HSBCHKHHHKH",
+      "intermediary_name": "HSBC China Bank, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "CNY",
+      "intermediary_bic": "HSBCCNSHXXX",
+      "intermediary_name": "HSBC China Bank, Shanghai"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "CZK",
+      "intermediary_bic": "KOMBCZPPXXX",
+      "intermediary_name": "Komercni Banka A.S., Prague"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "DKK",
+      "intermediary_bic": "DABADKKKXXX",
+      "intermediary_name": "Danske Bank, Copenhagen"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "EUR",
+      "intermediary_bic": "CCFRFRPPXXX",
+      "intermediary_name": "HSBC Continental Europe, Paris"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "FJD",
+      "intermediary_bic": "ANZBFJFXXXX",
+      "intermediary_name": "Australia and New Zealand Banking Group Limited, Suva"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "GBP",
+      "intermediary_bic": "NWBKGB2LXXX",
+      "intermediary_name": "National Westminster Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "HKD",
+      "intermediary_bic": "SCBLHKHHXXX",
+      "intermediary_name": "Standard Chartered Bank Hong Kong Limited, Hong Kong"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "HUF",
+      "intermediary_bic": "BACXHUHBXXX",
+      "intermediary_name": "UniCredit Bank, Budapest"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "IDR",
+      "intermediary_bic": "SCBLIDJXXXX",
+      "intermediary_name": "Standard Chartered Bank, Jakarta"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "ILS",
+      "intermediary_bic": "POALILITXXX",
+      "intermediary_name": "Bank Hapoalim B.M., Tel Aviv"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "INR",
+      "intermediary_bic": "SCBLINBBXXX",
+      "intermediary_name": "Standard Chartered Bank, Mumbai"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "JOD",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "JPY",
+      "intermediary_bic": "BOTKJPJTXXX",
+      "intermediary_name": "MUFG Bank Ltd., Tokyo"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "KES",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "KRW",
+      "intermediary_bic": "SCBLKRSEXXX",
+      "intermediary_name": "Standard Chartered Bank, Seoul"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "KWD",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "KZT",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "MAD",
+      "intermediary_bic": "SGMBMAMCXXX",
+      "intermediary_name": "Societe Generale Marocaine de Banques, Casablanca"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "MXN",
+      "intermediary_bic": "BCMRMXMMCOR",
+      "intermediary_name": "Bancomer BBVA, Mexico City"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "NOK",
+      "intermediary_bic": "DNBANOKKXXX",
+      "intermediary_name": "DNB Bank ASA, Oslo"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "NZD",
+      "intermediary_bic": "BKNZNZ22985",
+      "intermediary_name": "Bank of New Zealand, Wellington"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "OMR",
+      "intermediary_bic": "MIDLGB22XXX",
+      "intermediary_name": "HSBC Bank PLC, London"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "PHP",
+      "intermediary_bic": "SCBLPHMMXXX",
+      "intermediary_name": "Standard Chartered Bank, Manila"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "PLN",
+      "intermediary_bic": "PKOPPLPWXXX",
+      "intermediary_name": "Bank Pekao SA, Warsaw"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "QAR",
+      "intermediary_bic": "QNBAQAQAXXX",
+      "intermediary_name": "Qatar National Bank SAQ, Doha"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "RON",
+      "intermediary_bic": "BRDEROBUXXX",
+      "intermediary_name": "BRD - Groupe Societe Generale, Bucharest"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "SAR",
+      "intermediary_bic": "SABBSARIXXX",
+      "intermediary_name": "Saudi Awwal Bank, Riyadh"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "SEK",
+      "intermediary_bic": "ESSESESSXXX",
+      "intermediary_name": "Skandinaviska Enskilda Banken, Stockholm"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "SGD",
+      "intermediary_bic": "UOVBSGSGXXX",
+      "intermediary_name": "United Overseas Bank, Singapore"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "THB",
+      "intermediary_bic": "SCBLTHBXXXX",
+      "intermediary_name": "Standard Chartered Bank, Bangkok"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "TRY",
+      "intermediary_bic": "TGBATRIS093",
+      "intermediary_name": "Garanti Bank, Istanbul"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "USD",
+      "intermediary_bic": "SCBLUS33XXX",
+      "intermediary_name": "Standard Chartered Bank, New York"
+    },
+    {
+      "beneficiary_bic": "USBKUS44FEX",
+      "beneficiary_name": "U.S. Bank National Association, Foreign Exchange Settlements",
+      "currency": "ZAR",
+      "intermediary_bic": "SBZAZAJJXXX",
+      "intermediary_name": "Standard Bank of South Africa, Johannesburg"
+    }
+  ]
+}

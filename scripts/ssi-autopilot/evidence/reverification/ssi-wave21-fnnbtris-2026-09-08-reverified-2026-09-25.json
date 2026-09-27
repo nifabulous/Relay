@@ -1,0 +1,22 @@
+{
+  "accepted_account_changes": [],
+  "digest_changed": true,
+  "evidence": "scripts/ssi-autopilot/evidence/ssi-wave21-fnnbtris-2026-09-08.json",
+  "fingerprints": {
+    "changed": [],
+    "checked": 32,
+    "matched": 32
+  },
+  "previous_source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
+  "raw_accounts_committed": false,
+  "route_keys": {
+    "actual": 32,
+    "expected": 32,
+    "match": true
+  },
+  "schema": 1,
+  "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+  "source_sha256": "7205ce2cf275483be386b972b852b216e8dc94fbcba23a202b5bf2b0a5d74d57",
+  "tool": "scripts/ssi-autopilot/verify_source_attestation.py",
+  "verified_at": "2026-09-25"
+}
