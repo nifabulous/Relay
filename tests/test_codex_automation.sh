@@ -400,6 +400,8 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'MAX_WORKFLOW_RUN_TARGETS=1'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}'
+require_text '.github/workflows/loopkeeper-pr-review.yml' 'unresolved:'
+require_text '.github/workflows/loopkeeper-pr-review.yml' 'empty-PR run'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'workflow_run has no associated PRs; recovering targets from the run head'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -413,6 +415,8 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'pr_number: ${{ matrix.pr_number }}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'model_api_key: ${{ secrets.LOOPKEEPER_API_KEY }}'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  "github.event_name == 'workflow_dispatch') && 'CI'"
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   'model_api_key: ${{ secrets.OPENAI_API_KEY }}'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
@@ -608,6 +612,12 @@ FAKE_DIRECT_RUN_MODE=unknown run_loopkeeper_selector '[{"number":1}]' "$SELECTOR
   fail 'Loopkeeper selector did not fail closed when a plausible immediate run lacked verifiable PR association.'
 require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
 require_text_from_file "$SELECTOR_SUMMARY" 'association could not be verified'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_DIRECT_RUN_MODE=associated run_loopkeeper_selector '[{"number":1}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not recover through the existing exact-head path for a non-exact associated run.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"

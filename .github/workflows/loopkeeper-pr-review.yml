@@ -216,10 +216,10 @@ jobs:
                 return 0
               fi
             done
-            # The query is branch-scoped and the independent head lookup has
-            # already established the candidate PR numbers. Keep the bounded
-            # evidence we have rather than turning an unrelated repo-wide run
-            # count into a permanent callback skip.
+            # The bounded repo-wide listing is only evidence for the
+            # classifier. If it contains an empty-PR run that cannot be tied to
+            # the current head, the classifier marks it as unresolved and
+            # skips the callback rather than re-entering review blindly.
             printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
             return 0
           }
@@ -243,17 +243,30 @@ jobs:
                     exact: ((.head_sha // "") == $sha or ([.pull_requests[]?.head.sha?] | index($sha)) != null),
                     associated: (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
                       | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)
-                      or ($branch != "" and (.head_branch // "") == $branch))
+                      or ($branch != "" and (.head_branch // "") == $branch)),
+                    unresolved: ((((.pull_requests? | type) == "array" and (.pull_requests | length) == 0)
+                      or (.pull_requests? == null))
+                      and ((.head_sha // "") != $sha))
                   }
               ] as $candidates
               | ($candidates | map(select(.exact)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $exact
               | ($candidates | map(select(.associated)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated
+              | ($candidates | map(select(.unresolved)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
               | if $exact != null then
                   ($exact.run | if (.status // "") != "completed" then "active"
                     elif (.conclusion // "") == "success" then "success"
                     else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
                 elif $associated != null then
-                  "unknown|" + ((($associated // $candidates[-1]).run.id // 0) | tostring)
+                  # A branch/PR-number association without an exact head is
+                  # not enough to cancel the callback, but it is enough to
+                  # let the existing exact-head recovery path re-read the PR.
+                  "associated|" + (($associated.run.id // 0) | tostring)
+                elif (($target_prs | length) > 0 and $unresolved != null) then
+                  # pull_request_target can expose the base-side head and an
+                  # empty pull_requests array. This is plausible evidence,
+                  # not proof of a different run; fail closed so the callback
+                  # cannot cancel an in-flight immediate review.
+                  "unknown|" + (($unresolved.run.id // 0) | tostring)
                 else "none|"
                 end
             ' "$direct_runs_file"
@@ -405,10 +418,11 @@ jobs:
       # Direct PR runs intentionally use a reserved, non-existent workflow
       # identity so the pinned adapter takes its documented no-CI fallback
       # immediately instead of waiting for the asynchronous CI run. The
-      # workflow_run path supplies the real CI identity below only when the
-      # immediate run failed and needs a CI-backed re-entry.
-      ci_workflow_name: ${{ github.event_name == 'workflow_run' && 'CI' || 'LoopkeeperImmediate' }}
-      ci_workflow_file: ${{ github.event_name == 'workflow_run' && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
+      # workflow_run and workflow_dispatch paths supply the real CI identity
+      # when a CI-backed re-entry is requested; direct PR events keep the
+      # reserved identity for immediate no-CI fallback publication.
+      ci_workflow_name: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'CI' || 'LoopkeeperImmediate' }}
+      ci_workflow_file: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
@@ -636,8 +650,8 @@ jobs:
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
           LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ github.event_name == 'workflow_run' && 'CI' || 'LoopkeeperImmediate' }}
-          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ github.event_name == 'workflow_run' && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
+          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'CI' || 'LoopkeeperImmediate' }}
+          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
           LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
           LOOPKEEPER_CONTEXT_PATH: .github/codex/context-files.txt
           LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}

@@ -64,7 +64,9 @@ run succeeds, the later exact-head CI callback waits for it and then skips, so
 the PR keeps one current review. If the direct run fails, the callback re-enters
 through the real `CI` identity and publishes a CI-backed review; if the bounded
 wait cannot inspect or outlast the direct run, the workflow summary points to
-manual workflow dispatch as the re-entry path.
+manual workflow dispatch as the re-entry path. Manual dispatch uses that same
+real `CI` identity, so it is an explicit CI-backed re-entry rather than another
+no-CI fallback publication.
 
 The reusable workflow separates trust across jobs. `eligibility` holds no model
 secret and re-reads the pull request rather than trusting the event payload,
