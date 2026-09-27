@@ -77,6 +77,7 @@ def test_quality_snapshot_keeps_instruction_and_bic_only_denominators_distinct(d
         "91-180 days",
         ">180 days",
         "No source date",
+        "Future source date",
     }
     assert next(item for item in snapshot.freshness if item.label == ">180 days").count == 1
     queue_bics = {item.beneficiary_bic for item in snapshot.queue}
@@ -102,7 +103,8 @@ def test_quality_snapshot_does_not_count_future_source_date_as_missing(db_sessio
     )
 
     assert snapshot.totals.missing_source_date_rows == 0
-    assert next(item for item in snapshot.freshness if item.label == "No source date").count == 1
+    assert next(item for item in snapshot.freshness if item.label == "No source date").count == 0
+    assert next(item for item in snapshot.freshness if item.label == "Future source date").count == 1
     assert snapshot.queue[0].age_days is None
     assert "future-source-date" in snapshot.queue[0].issues
 
@@ -147,5 +149,6 @@ def test_quality_endpoint_exposes_a_stable_snapshot_contract(client):
         "91-180 days",
         ">180 days",
         "No source date",
+        "Future source date",
     }
-    assert body["disclaimer"]
+    assert "not live bank availability" in body["disclaimer"]

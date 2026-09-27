@@ -32,6 +32,7 @@ const snapshot = {
     { label: "91-180 days", count: 0 },
     { label: ">180 days", count: 6 },
     { label: "No source date", count: 181 },
+    { label: "Future source date", count: 0 },
   ],
   queue: [{
     beneficiary_bic: "BANKGB22XXX",
@@ -94,6 +95,11 @@ describe("SsiQualityPage", () => {
     expect(screen.getByRole("rowheader", { name: /BANKGB22XXX/ })).toBeVisible();
     expect(screen.getByRole("cell", { name: "Currency: GBP" })).toBeVisible();
     expect(screen.getByRole("cell", { name: /Action: Source older than threshold/ })).toBeVisible();
+    expect(screen.getByRole("rowheader", { name: /BANKGB22XXX/ })).toHaveAttribute("data-label", "Beneficiary");
+    expect(screen.getByRole("cell", { name: "Currency: GBP" })).toHaveAttribute("data-label", "Currency");
+    expect(screen.getByRole("cell", { name: /Correspondent: CITIUS33XXX/ })).toHaveAttribute("data-label", "Correspondent");
+    expect(screen.getByRole("cell", { name: "Source age: 628 days" })).toHaveAttribute("data-label", "Source age");
+    expect(screen.getByRole("cell", { name: /Action: Source older than threshold/ })).toHaveAttribute("data-label", "Action");
   });
 
   it("keeps the corpus warning visible so quality is not mistaken for live availability", async () => {

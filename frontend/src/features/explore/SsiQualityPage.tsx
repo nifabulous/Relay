@@ -127,7 +127,7 @@ function FreshnessPanel({ data }: { data: SSIQualityResponse }) {
         ))}
       </div>
       <p className="ssi-quality__panel-note">
-        A source is stale after {data.stale_after_days} days. Rows without a precise source date stay visible in the review queue.
+        A source is stale after {data.stale_after_days} days. Rows without a precise source date or with future-dated evidence stay visible in the review queue.
       </p>
     </section>
   );
@@ -220,11 +220,11 @@ function ReviewQueue({ data }: { data: SSIQualityResponse }) {
             <tbody role="rowgroup">
               {visibleQueue.map((item) => (
                 <tr key={`${item.beneficiary_bic}-${item.currency}-${item.intermediary_bic}`} role="row">
-                  <th role="rowheader" scope="row"><Link to={`/explore/banks/${encodeURIComponent(item.beneficiary_bic)}`} className="mono">{item.beneficiary_bic}</Link><span>{item.beneficiary_bank_name ?? "Unknown bank"}</span></th>
-                  <td role="cell" className="mono" aria-label={`Currency: ${item.currency}`}>{item.currency}</td>
-                  <td role="cell" aria-label={`Correspondent: ${item.intermediary_bic}; ${item.intermediary_bank_name ?? "Unknown correspondent"}`}><span className="mono">{item.intermediary_bic}</span><span>{item.intermediary_bank_name ?? "Unknown correspondent"}</span></td>
-                  <td role="cell" aria-label={`Source age: ${item.age_days == null ? "No date" : `${format(item.age_days)} days`}`}>{item.age_days == null ? "No date" : `${format(item.age_days)} days`}</td>
-                  <td role="cell" aria-label={`Action: ${item.issues.map(issueLabel).join(", ")}`}><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul></td>
+                  <th role="rowheader" scope="row" data-label="Beneficiary"><Link to={`/explore/banks/${encodeURIComponent(item.beneficiary_bic)}`} className="mono">{item.beneficiary_bic}</Link><span>{item.beneficiary_bank_name ?? "Unknown bank"}</span></th>
+                  <td role="cell" className="mono" data-label="Currency" aria-label={`Currency: ${item.currency}`}>{item.currency}</td>
+                  <td role="cell" data-label="Correspondent" aria-label={`Correspondent: ${item.intermediary_bic}; ${item.intermediary_bank_name ?? "Unknown correspondent"}`}><span className="mono">{item.intermediary_bic}</span><span>{item.intermediary_bank_name ?? "Unknown correspondent"}</span></td>
+                  <td role="cell" data-label="Source age" aria-label={`Source age: ${item.age_days == null ? "No date" : `${format(item.age_days)} days`}`}>{item.age_days == null ? "No date" : `${format(item.age_days)} days`}</td>
+                  <td role="cell" data-label="Action" aria-label={`Action: ${item.issues.map(issueLabel).join(", ")}`}><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul></td>
                 </tr>
               ))}
             </tbody>

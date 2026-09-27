@@ -17,7 +17,14 @@ from ..schemas import (
 )
 from .routing import _is_routable_ssi
 
-_FRESHNESS_LABELS = ("0-30 days", "31-90 days", "91-180 days", ">180 days", "No source date")
+_FRESHNESS_LABELS = (
+    "0-30 days",
+    "31-90 days",
+    "91-180 days",
+    ">180 days",
+    "No source date",
+    "Future source date",
+)
 _ISSUE_PRIORITY = {
     "missing-citation": 0,
     "future-source-date": 0,
@@ -104,8 +111,10 @@ def build_quality_snapshot(
     for row in rows:
         age_days = _age_days(row.as_of, review_date)
         if age_days is None:
-            freshness_counts["No source date"] += 1
-            if not _is_future_source_date(row.as_of, review_date):
+            if _is_future_source_date(row.as_of, review_date):
+                freshness_counts["Future source date"] += 1
+            else:
+                freshness_counts["No source date"] += 1
                 missing_source_date_rows += 1
         elif age_days <= 30:
             freshness_counts["0-30 days"] += 1
