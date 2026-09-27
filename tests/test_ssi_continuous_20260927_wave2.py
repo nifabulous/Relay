@@ -92,3 +92,18 @@ def test_bcel_thai_location_code_matches_the_official_spot_check():
         "THB | STANDARD CHARTERED BANK (THAI) PCL | THAILAND | SCBLTHBXXXX"
     )
     assert spot_check["source_excerpt"].endswith(f"| {row[3]}")
+
+    registry_check = next(
+        item
+        for item in evidence["source_snapshot"]["spot_checks"]
+        if item["id"] == "scblthb-bank-of-thailand-registry"
+    )
+    assert registry_check["registry_name"] == "Bank of Thailand BAHTNET participant registry"
+    assert registry_check["source_url"] == (
+        "https://www.bot.or.th/en/our-roles/payment-systems/Payment-systems.html"
+    )
+    assert registry_check["source_excerpt"] == (
+        "STANDARD CHARTERED BANK (THAI) PUBLIC COMPANY LIMITED | SCBLTHBX"
+    )
+    assert row[3].startswith(registry_check["bic8"])
+    assert row[3].endswith("XXX")

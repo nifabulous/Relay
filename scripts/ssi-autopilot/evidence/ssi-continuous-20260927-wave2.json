@@ -22,6 +22,15 @@
         "source_section": "Correspondent Bank table, THB row 6",
         "source_excerpt": "THB | STANDARD CHARTERED BANK (THAI) PCL | THAILAND | SCBLTHBXXXX",
         "assertion": "BCEL's official correspondent table prints Standard Chartered Bank (Thai) PCL as SCBLTHBXXXX."
+      },
+      {
+        "id": "scblthb-bank-of-thailand-registry",
+        "registry_name": "Bank of Thailand BAHTNET participant registry",
+        "source_url": "https://www.bot.or.th/en/our-roles/payment-systems/Payment-systems.html",
+        "source_section": "Commercial Bank participant table",
+        "source_excerpt": "STANDARD CHARTERED BANK (THAI) PUBLIC COMPANY LIMITED | SCBLTHBX",
+        "bic8": "SCBLTHBX",
+        "assertion": "The Bank of Thailand registry independently lists the Thai Standard Chartered BIC8 prefix SCBLTHBX; BCEL's cited correspondent table supplies the head-office branch suffix XXX."
       }
     ]
   },
