@@ -446,6 +446,8 @@ jobs:
     # artifact: immediate direct reviews must never silently defer.
     needs: [targets, review]
     if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    outputs:
+      ineligible: ${{ steps.presence.outputs.ineligible || 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -466,18 +468,30 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
           EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ matrix.pr_number }}
         run: |
           set -euo pipefail
           name="loopkeeper-review-${RUN_ID}"
           count="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/artifacts?name=${name}" --jq '.total_count')"
           [[ "$count" =~ ^[0-9]+$ ]]
+          echo "ineligible=false" >>"$GITHUB_OUTPUT"
           if (( count == 0 )); then
+            jobs_payload="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+            jq -e 'type == "object" and (.jobs | type) == "array"' <<<"$jobs_payload" >/dev/null
+            eligibility_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / eligibility" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
+            review_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / review" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
+            if [[ "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
+              echo "The pinned reviewer was correctly skipped after eligibility rejected PR #${PR_NUMBER}; no publication is required." >>"$GITHUB_STEP_SUMMARY"
+              echo "ineligible=true" >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "No review artifact ${name} for a ${EVENT_NAME} run; immediate publication cannot be skipped." >&2
             exit 1
           fi
           echo "Found ${name}."
 
       - name: Download run-scoped review artifact
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: loopkeeper-review-${{ github.run_id }}
@@ -485,6 +499,7 @@ jobs:
 
       - name: Verify and rebind PR artifact
         id: artifact
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -508,6 +523,7 @@ jobs:
           } >>"$GITHUB_OUTPUT"
 
       - name: Upload PR-bound review artifact
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
@@ -520,7 +536,7 @@ jobs:
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
     needs: [targets, rebind]
-    if: ${{ needs.rebind.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    if: ${{ needs.rebind.result == 'success' && needs.rebind.outputs.ineligible != 'true' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -693,11 +709,16 @@ jobs:
           TARGETS_RESULT: ${{ needs.targets.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           REBIND_RESULT: ${{ needs.rebind.result }}
+          INELIGIBLE: ${{ needs.rebind.outputs.ineligible }}
           PUBLISH_RESULT: ${{ needs.publish.result }}
         run: |
           set -euo pipefail
           if [[ "$TARGETS_RESULT" == "skipped" || -z "${SELECTED:-}" || "$SELECTED" == "[]" ]]; then
             echo "No eligible exact-head PR target was selected."
+            exit 0
+          fi
+          if [[ "$REVIEW_RESULT" == "skipped" || "$INELIGIBLE" == "true" ]]; then
+            echo "The selected PR was correctly excluded by Loopkeeper eligibility; no publication is required."
             exit 0
           fi
           [[ "$REVIEW_RESULT" == "success" ]] || {

@@ -40,17 +40,24 @@ def _run(script, env, tmp_path, artifact_count="0"):
     fake_gh.write_text(
         "#!/usr/bin/env bash\n"
         'printf "%s\\n" "$*" >>"$FAKE_GH_LOG"\n'
-        'printf "%s\\n" "$FAKE_ARTIFACT_COUNT"\n'
+        'if [[ "${2:-}" == *"/jobs?per_page=100" ]]; then\n'
+        '  if [[ -n "${FAKE_JOBS_JSON+x}" ]]; then printf "%s\\n" "$FAKE_JOBS_JSON"; else printf "{\\"jobs\\":[]}\\n"; fi\n'
+        'else\n'
+        '  printf "%s\\n" "$FAKE_ARTIFACT_COUNT"\n'
+        'fi\n'
     )
     fake_gh.chmod(fake_gh.stat().st_mode | stat.S_IEXEC)
     output = tmp_path / "github_output"
     output.write_text("")
+    summary = tmp_path / "github_summary"
+    summary.write_text("")
     log = tmp_path / "gh.log"
     result = subprocess.run(
         ["bash", "-c", script],
         env={
             "PATH": f"{bin_dir}:{os.environ['PATH']}",
             "GITHUB_OUTPUT": str(output),
+            "GITHUB_STEP_SUMMARY": str(summary),
             "FAKE_GH_LOG": str(log),
             "FAKE_ARTIFACT_COUNT": artifact_count,
             **env,
@@ -73,6 +80,7 @@ def _presence(tmp_path, event_name, artifact_count):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": event_name,
+        "PR_NUMBER": "159",
     }
     return _run(step["run"], env, tmp_path, artifact_count)
 
@@ -80,9 +88,9 @@ def _presence(tmp_path, event_name, artifact_count):
 def test_rebind_requires_the_artifact_before_anything_else():
     steps = JOBS["rebind"]["steps"]
     assert steps[0].get("id") == "presence"
+    assert JOBS["rebind"]["outputs"]["ineligible"].startswith("${{ steps.presence.outputs.ineligible")
     assert "deferred" not in JOBS["rebind"]
-    for step in steps[1:]:
-        assert "if" not in step, step["name"]
+    assert all(step.get("if") == "${{ steps.presence.outputs.ineligible != 'true' }}" for step in steps[1:])
 
 
 def test_targets_can_read_direct_review_run_status():
@@ -102,8 +110,25 @@ def test_a_missing_artifact_fails_instead_of_defer(tmp_path, event_name):
 def test_an_existing_artifact_is_required_for_every_event(tmp_path, event_name):
     result, outputs, calls = _presence(tmp_path, event_name, "1")
     assert result.returncode == 0, result.stderr
-    assert outputs == {}
+    assert outputs == {"ineligible": "false"}
     assert calls and f"actions/runs/{RUN_ID}/artifacts?name=loopkeeper-review-{RUN_ID}" in calls[0]
+
+
+def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
+    step = _step("rebind", "presence")
+    jobs = '{"jobs":[{"name":"review (159) / eligibility","conclusion":"success"},{"name":"review (159) / review","conclusion":"skipped"}]}'
+    env = {
+        "GH_TOKEN": "t",
+        "GH_REPO": "nifabulous/Relay",
+        "RUN_ID": RUN_ID,
+        "EVENT_NAME": "pull_request_target",
+        "PR_NUMBER": "159",
+        "FAKE_JOBS_JSON": jobs,
+    }
+    result, outputs, calls = _run(step["run"], env, tmp_path, "0")
+    assert result.returncode == 0, result.stderr
+    assert outputs["ineligible"] == "true"
+    assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
 
 
 def test_direct_and_ci_events_use_different_workflow_identities():
@@ -124,6 +149,7 @@ def test_direct_and_ci_events_use_different_workflow_identities():
 def test_publish_requires_a_successful_rebind():
     condition = JOBS["publish"]["if"]
     assert "needs.rebind.result == 'success'" in condition
+    assert "needs.rebind.outputs.ineligible != 'true'" in condition
     assert "needs.rebind.outputs.deferred" not in condition
 
 
@@ -134,6 +160,7 @@ def _gate(tmp_path, **env):
         "TARGETS_RESULT": "success",
         "REVIEW_RESULT": "success",
         "REBIND_RESULT": "success",
+        "INELIGIBLE": "false",
         "PUBLISH_RESULT": "success",
     }
     result, _, _ = _run(step["run"], {**base, **env}, tmp_path)
@@ -157,3 +184,12 @@ def test_the_gate_fails_without_a_publication(tmp_path, overrides):
 
 def test_the_gate_passes_a_published_review(tmp_path):
     assert _gate(tmp_path).returncode == 0
+
+
+def test_the_gate_passes_a_verified_ineligible_skip(tmp_path):
+    result = _gate(
+        tmp_path,
+        INELIGIBLE="true",
+        PUBLISH_RESULT="skipped",
+    )
+    assert result.returncode == 0, result.stderr
