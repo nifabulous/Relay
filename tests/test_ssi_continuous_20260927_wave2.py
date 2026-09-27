@@ -16,7 +16,7 @@ EVIDENCE_PATH = (
     / "evidence"
     / "ssi-continuous-20260927-wave2.json"
 )
-BIC11 = re.compile(r"^[A-Z0-9]{11}$")
+BIC11 = re.compile(r"^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}[A-Z0-9]{3}$")
 
 
 def _load():
@@ -56,7 +56,12 @@ def test_wave2_rows_are_canonical_unique_bic_only_and_non_routable():
         assert row[11:] == ["unverified", None, True, False]
         assert any(url in row[9] for url in source_urls)
         assert "BIC-only route" in row[9]
-        assert not any(char.isdigit() for char in row[9].split("Source:", 1)[-1].split("(", 1)[0])
+        citation_without_access_date = re.sub(
+            r" \(official bank correspondent instructions; accessed \d{4}-\d{2}-\d{2}\)\.",
+            "",
+            row[9],
+        )
+        assert not any(char.isdigit() for char in citation_without_access_date)
 
 
 def test_wave2_routes_are_loaded_into_the_consolidated_corpus():
@@ -65,3 +70,20 @@ def test_wave2_routes_are_loaded_into_the_consolidated_corpus():
     actual = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     assert expected <= actual
+
+
+def test_bcel_thai_location_code_matches_the_official_spot_check():
+    ledger, evidence = _load()
+    row = next(
+        row
+        for row in ledger["ssi_records"]
+        if row[0] == "COEBLALAXXX" and row[2] == "THB" and row[4] == "Standard Chartered Bank (Thai) PCL"
+    )
+    spot_check = next(
+        item
+        for item in evidence["source_snapshot"]["spot_checks"]
+        if item["id"] == "scblthb-location-code"
+    )
+
+    assert row[3] == spot_check["intermediary_bic"] == "SCBLTHBXXXX"
+    assert spot_check["source_url"] == "https://www.bcel.com.la/bcel/inter-partner.html?lang=en"

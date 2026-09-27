@@ -2,7 +2,7 @@
   "wave": "continuous-20260927-wave2",
   "as_of": "2026-09-27",
   "scope": {
-    "region": "Laos, Kyrgyzstan, Mongolia, India",
+    "region": "Laos, Kyrgyzstan, India",
     "included_route_count": 63,
     "beneficiary_count": 4
   },
@@ -11,7 +11,22 @@
     "bic_only_route_count": 63,
     "raw_accounts_committed": false,
     "account_numbers_published": false,
-    "extraction": "Official correspondent-bank tables were transcribed as currency/intermediary BIC pairs; no account values were copied or inferred."
+    "extraction": "Official correspondent-bank tables were transcribed as currency/intermediary BIC pairs; no account values were copied or inferred.",
+    "spot_checks": [
+      {
+        "id": "scblthb-location-code",
+        "beneficiary_bic": "COEBLALAXXX",
+        "currency": "THB",
+        "intermediary_bic": "SCBLTHBXXXX",
+        "source_url": "https://www.bcel.com.la/bcel/inter-partner.html?lang=en",
+        "assertion": "BCEL's official correspondent table prints Standard Chartered Bank (Thai) PCL as SCBLTHBXXXX."
+      },
+      {
+        "id": "scblthb-bank-registry-prefix",
+        "source_url": "https://www.sc.com/in/nri/remittance/instant-remittance/scblinbb/",
+        "assertion": "Standard Chartered's official remittance page uses the Thai BIC prefix SCBLTHBX."
+      }
+    ]
   },
   "sources": [
     {
