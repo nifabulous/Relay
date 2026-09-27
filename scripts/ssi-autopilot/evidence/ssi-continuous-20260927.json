@@ -1,0 +1,30 @@
+{
+  "batch": "continuous-20260927",
+  "as_of": "2026-09-27",
+  "route_count": 306,
+  "status": "unverified",
+  "bic_only": true,
+  "account_numbers_committed": false,
+  "source_ledgers": [
+    {"file": "seed_ssi_au_csb_20260921.json", "routes": 14, "source_urls": ["https://csb.co.in/forex/correspondent-banks"]},
+    {"file": "seed_ssi_bhutan_national_bank_current_20260921.json", "routes": 2, "source_urls": ["https://bnb.bt/correspondent-banks/"]},
+    {"file": "seed_ssi_mbh_bank_20241024.json", "routes": 25, "source_urls": ["https://www.mbhbank.hu/sw/static/file/SSI_MKKBHUHB_24_October_2024.pdf"]},
+    {"file": "seed_ssi_central_bank_armenia_20260921.json", "routes": 10, "source_urls": ["https://minfin.am/website/images/files/SWIFT%20MINFIN.pdf"]},
+    {"file": "seed_ssi_bank_of_baroda_treasury_20260921.json", "routes": 23, "source_urls": ["https://bankofbaroda.bank.in/business-banking/trade-fx-and-remittances/nostro-details"]},
+    {"file": "seed_ssi_axis_partner_banks_20260921.json", "routes": 23, "source_urls": ["https://www.axis.bank.in/forex/send-money-abroad/partner-banks"]},
+    {"file": "seed_ssi_postfinance_20250501.json", "routes": 20, "source_urls": ["https://www.postfinance.ch/content/dam/pfch/doc/a_d/bank_ssi_en.pdf"]},
+    {"file": "seed_ssi_deutsche_seoul_local_20251014.json", "routes": 20, "source_urls": ["https://corporates.db.com/files/documents/legal-resources/ssi/2025/DB-SL-SSI-Local-Nostro-14OCT2025.pdf"]},
+    {"file": "seed_ssi_nbg_cyprus_20260921.json", "routes": 19, "source_urls": ["https://www.nbg.com.cy/wp-content/uploads/SSIs.pdf"]},
+    {"file": "seed_ssi_garanti_international_20260127.json", "routes": 18, "source_urls": ["https://garantibank.eu/assets/uploads/assets/pdfs/B2B/SSI_GarantiBank-International-NV_27JAN2026.pdf"]},
+    {"file": "seed_ssi_uco_treasury_branch_20260409.json", "routes": 17, "source_urls": ["https://www.uco.bank.in/treasury-branch-mumbai-accounts"]},
+    {"file": "seed_ssi_otp_hungary_20260101.json", "routes": 17, "source_urls": ["https://www.otpbank.hu/static/portal/sw/file/OTPBank_Standard_SI_20260101.pdf"]},
+    {"file": "seed_ssi_dcb_sib_karnataka_20260921.json", "routes": 17, "source_urls": ["https://www.dcb.bank.in/business/accounts/trade-finance/international-trade-finance-service", "https://www.southindianbank.bank.in/nri-services/money-transfers/international-transfers/swift-centres"]},
+    {"file": "seed_ssi_berliner_sparkasse_20260424.json", "routes": 17, "source_urls": ["https://www.berliner-sparkasse.de/content/dam/myif/berliner-sk/work/dokumente/pdf/fkp/BSK1818AG/List_of_Principal_Correspondents_for_Commercial_Payments_as_per_24_April_2026.pdf?n=true"]},
+    {"file": "seed_ssi_equitas_indusind_grd_20250921.json", "routes": 16, "source_urls": ["https://www.equitasbank.com/strapi-dev/uploads/List_of_Correspondent_Banks_85e1ac5163.pdf"]},
+    {"file": "seed_ssi_butterfield_guernsey_20230706.json", "routes": 15, "source_urls": ["https://www.butterfieldgroup.com/sites/butterfield-corp/files/butterfield/banking/intermediary-banking/bbgl-standard-settlement-instructions-v1.pdf"]},
+    {"file": "seed_ssi_basic_bank_current_20260720.json", "routes": 7, "source_urls": ["https://www.basicbanklimited.com/en/page-details/correspondent-banks"]},
+    {"file": "seed_ssi_bengal_commercial_bank_20241231.json", "routes": 8, "source_urls": ["https://www.bgcb.com.bd/public/assets/annual-report/BGCB-PLC-Annual-Report-2024.pdf"]},
+    {"file": "seed_ssi_crystalbank_20260801.json", "routes": 9, "source_urls": ["https://crystalbank.com.ua/ua/correspondent/"]},
+    {"file": "seed_ssi_octobank_current_20250921.json", "routes": 9, "source_urls": ["https://octobank.uz/en/for-financial-organizations"]}
+  ]
+}
