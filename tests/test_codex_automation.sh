@@ -420,7 +420,7 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'review (${PR_NUMBER}) / eligibility'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  "actions/runs/\${RUN_ID}\" --jq '.conclusion // \"\"'"
+  'actions/runs/${RUN_ID}/jobs?per_page=100'
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'ineligible=true'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   '"$REVIEW_RESULT" == "skipped" ||'

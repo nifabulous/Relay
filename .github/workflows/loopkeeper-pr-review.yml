@@ -478,16 +478,14 @@ jobs:
           [[ "$count" =~ ^[0-9]+$ ]]
           echo "ineligible=false" >>"$GITHUB_OUTPUT"
           if (( count == 0 )); then
-            run_conclusion="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}" --jq '.conclusion // ""')"
-            [[ "$run_conclusion" =~ ^(success|failure|cancelled|skipped|neutral|timed_out|action_required|stale|startup_failure)$|^$ ]] || {
-              echo "workflow run returned an invalid conclusion: ${run_conclusion}" >&2
-              exit 1
-            }
             jobs_payload="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/jobs?per_page=100")"
             jq -e 'type == "object" and (.jobs | type) == "array"' <<<"$jobs_payload" >/dev/null
             eligibility_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / eligibility" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
             review_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / review" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
-            if [[ "$EVENT_NAME" == "pull_request_target" && "$run_conclusion" == "success" && "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
+            # The rebind job runs before this workflow has a terminal conclusion,
+            # so the completed job conclusions are the authoritative ineligible
+            # signature available from inside the live run.
+            if [[ "$EVENT_NAME" == "pull_request_target" && "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
               echo "The pinned reviewer was correctly skipped after eligibility rejected PR #${PR_NUMBER}; no publication is required." >>"$GITHUB_STEP_SUMMARY"
               echo "ineligible=true" >>"$GITHUB_OUTPUT"
               exit 0

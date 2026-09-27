@@ -127,7 +127,8 @@ def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
         "EVENT_NAME": "pull_request_target",
         "PR_NUMBER": "159",
         "FAKE_JOBS_JSON": jobs,
-        "FAKE_RUN_JSON": '{"conclusion":"success"}',
+        # The live workflow has no terminal conclusion while rebind runs.
+        "FAKE_RUN_JSON": '{"conclusion":null}',
     }
     result, outputs, calls = _run(step["run"], env, tmp_path, "0")
     assert result.returncode == 0, result.stderr
@@ -147,7 +148,7 @@ def test_ineligible_skip_is_green_for_all_direct_events(tmp_path, event_action):
         "EVENT_ACTION": event_action,
         "PR_NUMBER": "159",
         "FAKE_JOBS_JSON": jobs,
-        "FAKE_RUN_JSON": '{"conclusion":"success"}',
+        "FAKE_RUN_JSON": '{"conclusion":null}',
     }
     result, outputs, calls = _run(step["run"], env, tmp_path, "0")
     assert result.returncode == 0, result.stderr

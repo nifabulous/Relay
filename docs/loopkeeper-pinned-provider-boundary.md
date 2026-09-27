@@ -66,9 +66,10 @@ review:
 These pinned producer facts are also asserted after cloning the exact commit by
 `tests/test_loopkeeper_writer_contract.sh`: an ineligible decision skips the
 model job, while an eligible job is the only path that can create the
-run-scoped artifact. The caller therefore treats a successful direct run with
-that exact skipped-review signature as an ineligible no-op, and treats every
-other artifact absence as a publication failure.
+run-scoped artifact. The caller therefore treats a direct run with that exact
+skipped-review signature as an ineligible no-op; it does not require the
+workflow's own terminal conclusion because rebind runs before that conclusion
+exists. Every other artifact absence remains a publication failure.
 
 The excerpts are covered by the same SHA-256 checks and source assertions in
 `tests/test_loopkeeper_writer_contract.sh`; they are documentation of the

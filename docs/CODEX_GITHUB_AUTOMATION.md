@@ -73,12 +73,13 @@ identity, so it is an explicit CI-backed re-entry rather than another no-CI
 fallback publication.
 
 An ineligible fork is a deliberate no-op for a direct `pull_request_target`
-run: the artifact rebind checks the same run's conclusion together with the
-pinned eligibility and review job conclusions, marks the matrix leg
-`ineligible=true` when eligibility succeeded but the model job was skipped, and
-lets the publication gate finish green. Workflow-run and manual paths do not
-use that deferral exception; a missing artifact fails closed so an ordinary CI
-deferral cannot be silently relabeled as an eligibility rejection.
+run: the artifact rebind checks the pinned eligibility and review job
+conclusions, marks the matrix leg `ineligible=true` when eligibility succeeded
+but the model job was skipped, and lets the publication gate finish green. The
+workflow run is still in progress while rebind executes, so its own terminal
+conclusion is intentionally not consulted. Workflow-run and manual paths do
+not use that deferral exception; a missing artifact fails closed so an ordinary
+CI deferral cannot be silently relabeled as an eligibility rejection.
 
 The reusable workflow separates trust across jobs. `eligibility` holds no model
 secret and re-reads the pull request rather than trusting the event payload,
