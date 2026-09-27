@@ -48,6 +48,28 @@ if [[ "${LOOPKEEPER_EVENT_NAME:-}" == "pull_request_target" && "${LOOPKEEPER_PR_
 fi
 ```
 
+```yaml
+# .github/workflows/pr-review.yml (lines 166-170, 276-317)
+review:
+  needs: [resolve, eligibility]
+  if: ${{ needs.eligibility.outputs.eligible == 'true' }}
+
+- name: Record whether review artifacts exist
+  if: always()
+
+- name: Upload immutable review artifacts
+  with:
+    name: loopkeeper-review-${{ github.run_id }}
+    if-no-files-found: ignore
+```
+
+These pinned producer facts are also asserted after cloning the exact commit by
+`tests/test_loopkeeper_writer_contract.sh`: an ineligible decision skips the
+model job, while an eligible job is the only path that can create the
+run-scoped artifact. The caller therefore treats a successful direct run with
+that exact skipped-review signature as an ineligible no-op, and treats every
+other artifact absence as a publication failure.
+
 The excerpts are covered by the same SHA-256 checks and source assertions in
 `tests/test_loopkeeper_writer_contract.sh`; they are documentation of the
 immutable provider boundary, not a second implementation of the provider.

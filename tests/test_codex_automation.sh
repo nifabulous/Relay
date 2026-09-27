@@ -416,7 +416,7 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'model_api_key: ${{ secrets.LOOPKEEPER_API_KEY }}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
-  "github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize')"
+  "github.event_name == 'pull_request_target' && 'LoopkeeperImmediate' || 'CI'"
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'review (${PR_NUMBER}) / eligibility'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \

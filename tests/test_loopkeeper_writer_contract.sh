@@ -29,6 +29,10 @@ ACTUAL_ADAPTER_SHA256="$(sha256sum "$LOOPKEEPER_ROOT/adapters/github/review_pr.s
 [[ "$ACTUAL_ADAPTER_SHA256" == "$EXPECTED_ADAPTER_SHA256" ]]
 grep -Fq 'name: loopkeeper-review-${{ github.run_id }}' "$PRODUCER_WORKFLOW"
 grep -Fq 'path: ${{ github.workspace }}/loopkeeper-artifacts' "$PRODUCER_WORKFLOW"
+grep -Fq 'needs: [resolve, eligibility]' "$PRODUCER_WORKFLOW"
+grep -Fq "if: \${{ needs.eligibility.outputs.eligible == 'true' }}" "$PRODUCER_WORKFLOW"
+grep -Fq 'name: Record whether review artifacts exist' "$PRODUCER_WORKFLOW"
+grep -Fq 'if-no-files-found: ignore' "$PRODUCER_WORKFLOW"
 grep -Fq 'review-metadata.json' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
 grep -Fq 'using the no-CI fallback review' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
 grep -Fq 'CI_PRODUCED_NO_RUN=1' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"

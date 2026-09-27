@@ -58,25 +58,25 @@ reusable `pr-review-posting.yml`, pinned to the immutable release SHA
 dispatch. There is no scheduled sweep: a schedule carries no pull-request
 number and the reusable workflow refuses to infer one.
 
-`opened` and `synchronize` publish the review immediately through Loopkeeper's
-documented no-CI fallback instead of waiting for the asynchronous `CI` run. If
-the direct run succeeds, the later exact-head CI callback waits for it and then
-skips, so the PR keeps one current review. If the direct run fails, the callback
-re-enters through the real `CI` identity and publishes a CI-backed review. The
-other direct actions (`reopened`, `ready_for_review`, `labeled`, and
-`unlabeled`) use the real CI identity as well, avoiding the no-CI fallback
-outside the adapter's supported discovery window. If the bounded wait cannot
-inspect or outlast the direct run, the workflow summary points to manual
-workflow dispatch as the re-entry path. Manual dispatch uses that same real
-`CI` identity, so it is an explicit CI-backed re-entry rather than another
-no-CI fallback publication.
+Every direct `pull_request_target` action uses the reserved
+`LoopkeeperImmediate` / `__loopkeeper_immediate__.yml` identity. `opened` and
+`synchronize` publish through Loopkeeper's documented no-CI fallback instead of
+waiting for the asynchronous `CI` run; the other lifecycle and label actions
+are also direct artifact-producing runs and therefore cannot be silently
+deferred under the real `CI` identity. If the direct run succeeds, the later
+exact-head CI callback waits for it and then skips, so the PR keeps one current
+review. If a direct run fails, the callback re-enters through the real `CI`
+identity and publishes a CI-backed review. If the bounded wait cannot inspect
+or outlast the direct run, the workflow summary points to manual workflow
+dispatch as the re-entry path. Manual dispatch uses that same real `CI`
+identity, so it is an explicit CI-backed re-entry rather than another no-CI
+fallback publication.
 
-An ineligible fork is a deliberate no-op only for the immediate
-`pull_request_target` `opened`/`synchronize` path: the artifact rebind checks
-the same run's conclusion together with the pinned eligibility and review job
-conclusions, marks the matrix leg `ineligible=true` when eligibility succeeded
-but the model job was skipped, and lets the publication gate finish green.
-Reopened, ready-for-review, label-change, workflow-run, and manual paths do not
+An ineligible fork is a deliberate no-op for a direct `pull_request_target`
+run: the artifact rebind checks the same run's conclusion together with the
+pinned eligibility and review job conclusions, marks the matrix leg
+`ineligible=true` when eligibility succeeded but the model job was skipped, and
+lets the publication gate finish green. Workflow-run and manual paths do not
 use that deferral exception; a missing artifact fails closed so an ordinary CI
 deferral cannot be silently relabeled as an eligibility rejection.
 
