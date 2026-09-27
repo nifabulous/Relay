@@ -5,6 +5,8 @@ so an unbounded list or name let one unauthenticated request hold a function
 for its full 30s budget. The same chain shape feeds the fee and tracking
 endpoints. A real chain has a handful of hops, so the caps reject only abuse.
 """
+import json
+
 import pytest
 
 MAX_CHAIN_HOPS = 10
@@ -90,3 +92,26 @@ def test_track_create_normalizes_the_charge_code(client):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["final_amount"] == body["sent_amount"], body
+
+
+_AMOUNT_ENDPOINTS = [
+    ("/api/track/create", _TRACK),
+    ("/api/prepare-payment", _PREPARE),
+    ("/api/fees/simulate", _FEES),
+]
+
+
+@pytest.mark.parametrize("path, body", _AMOUNT_ENDPOINTS)
+@pytest.mark.parametrize("literal", ["Infinity", "1e13"])
+def test_a_non_finite_or_oversized_amount_is_rejected(client, path, body, literal):
+    """json.loads accepts the Infinity literal, and gt=0 alone lets it through."""
+    payload = json.dumps({key: value for key, value in body.items() if key != "amount"})
+    raw = payload[:-1] + f', "amount": {literal}' + "}"
+    response = client.post(path, content=raw, headers={"content-type": "application/json"})
+    assert response.status_code == 422, response.text
+
+
+def test_fee_simulation_already_normalizes_the_charge_code(client):
+    response = client.post("/api/fees/simulate", json={**_FEES, "charge_code": " our "})
+    assert response.status_code == 200, response.text
+    assert response.json()["charge_code"] == "OUR"

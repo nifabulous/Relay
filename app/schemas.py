@@ -459,7 +459,7 @@ class PreparePaymentResponse(BaseModel):
 
 
 class FeeSimulateRequest(BaseModel):
-    amount: float = Field(..., gt=0, description="Send amount (must be positive)")
+    amount: float = Field(..., gt=0, le=MAX_PAYMENT_AMOUNT, description="Send amount (must be positive)")
     currency: str = Field(..., description="3-letter currency code")
     charge_code: str = Field("SHA", description="OUR / SHA / BEN")
     intermediary_bics: List[ChainBic] = Field(default_factory=list, max_length=MAX_CHAIN_HOPS)
