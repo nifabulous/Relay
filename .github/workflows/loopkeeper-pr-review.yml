@@ -63,6 +63,7 @@ jobs:
           DIRECT_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number || 0 }}
           RUN_SOURCE_EVENT: ${{ github.event.workflow_run.event || '' }}
           RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
           RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
         shell: bash
         run: |
@@ -104,43 +105,90 @@ jobs:
           targets_file=""
           response_file=""
           trap 'rm -f "$direct_runs_file" "${targets_file:-}" "${response_file:-}"' EXIT
-          if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100" \
-            >"$direct_runs_file" 2>/dev/null; then
-            {
-              echo "## Loopkeeper CI callback"
-              echo ""
-              echo "The immediate PR review could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
-            } >>"$GITHUB_STEP_SUMMARY"
-            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
-            exit 0
+          target_pr_numbers='[]'
+          if jq -e 'type == "array"' <<<"${RUN_PULL_REQUESTS:-[]}" >/dev/null 2>&1; then
+            target_pr_numbers="$(jq -c '[.[]?.number? | select(type == "number")] | unique' <<<"${RUN_PULL_REQUESTS:-[]}")"
           fi
-          jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$direct_runs_file" >/dev/null || {
+          skip_ci_callback() {
+            local message="$1"
             {
               echo "## Loopkeeper CI callback"
               echo ""
-              echo "The immediate PR review listing was malformed, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+              echo "$message"
             } >>"$GITHUB_STEP_SUMMARY"
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           }
+          load_direct_runs() {
+            local aggregate_json='[]'
+            local page page_file page_returned page_bytes
+            for page in 1 2 3; do
+              page_file="$(mktemp)"
+              if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100&page=${page}" \
+                >"$page_file" 2>/dev/null; then
+                rm -f "$page_file"
+                return 1
+              fi
+              page_bytes="$(wc -c <"$page_file" | tr -d ' ')"
+              if (( page_bytes > 500000 )) || ! jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$page_file" >/dev/null; then
+                rm -f "$page_file"
+                return 2
+              fi
+              if ! aggregate_json="$(jq -cn --argjson accumulated "$aggregate_json" --slurpfile page "$page_file" '$accumulated + $page[0].workflow_runs')"; then
+                rm -f "$page_file"
+                return 2
+              fi
+              page_returned="$(jq -r '.workflow_runs | length' "$page_file")"
+              rm -f "$page_file"
+              if (( page_returned < 100 )); then
+                printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
+                return 0
+              fi
+            done
+            return 3
+          }
+          load_direct_runs_or_skip() {
+            local load_status=0
+            load_direct_runs || load_status=$?
+            case "$load_status" in
+              0) ;;
+              1) skip_ci_callback "The immediate PR review could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+              2) skip_ci_callback "The immediate PR review listing was malformed or unexpectedly large, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+              3) skip_ci_callback "The immediate PR review listing exceeded the bounded pagination window, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+              *) skip_ci_callback "The immediate PR review listing could not be verified, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+            esac
+          }
+          load_direct_runs_or_skip
           classify_direct_run() {
-            jq -r --arg sha "$RUN_HEAD_SHA" '
+            jq -r --arg sha "$RUN_HEAD_SHA" --arg branch "$RUN_HEAD_BRANCH" --argjson target_prs "$target_pr_numbers" '
               [ .workflow_runs[]?
                 | select((.event // "") == "pull_request_target")
-                | select(([.pull_requests[]?.head.sha?] | index($sha)) != null)
-              ]
-              | sort_by(.updated_at // .created_at // "")
-              | .[-1] // {}
-              | if . == {} then "none|"
-                elif (.status // "") != "completed" then "active|\(.id // 0)"
-                elif (.conclusion // "") == "success" then "success|\(.id // 0)"
-                else "failed|\(.id // 0)"
+                | {
+                    run: .,
+                    exact: ((.head_sha // "") == $sha or ([.pull_requests[]?.head.sha?] | index($sha)) != null),
+                    associated: (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                      | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)
+                      or ($branch != "" and (.head_branch // "") == $branch))
+                  }
+              ] as $candidates
+              | ($candidates | map(select(.exact)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $exact
+              | ($candidates | map(select(.associated)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated
+              | if $exact != null then
+                  ($exact.run | if (.status // "") != "completed" then "active"
+                    elif (.conclusion // "") == "success" then "success"
+                    else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
+                elif $associated != null or (($target_prs | length) == 0 and ($candidates | length) > 0) then
+                  "unknown|" + ((($associated // $candidates[-1]).run.id // 0) | tostring)
+                else "none|"
                 end
             ' "$direct_runs_file"
           }
           direct_state="$(classify_direct_run)"
           direct_status="${direct_state%%|*}"
           direct_run_id="${direct_state#*|}"
+          if [[ "$direct_status" == "unknown" ]]; then
+            skip_ci_callback "The immediate PR review run association could not be verified for head ${RUN_HEAD_SHA}; the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+          fi
           immediate_wait_seconds="${LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS:-1080}"
           [[ "$immediate_wait_seconds" =~ ^[0-9]+$ ]] || {
             echo "LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS must be a non-negative integer" >&2
@@ -158,19 +206,13 @@ jobs:
               exit 0
             fi
             sleep 10
-            if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100" \
-              >"$direct_runs_file" 2>/dev/null || ! jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$direct_runs_file" >/dev/null; then
-              {
-                echo "## Loopkeeper CI callback"
-                echo ""
-                echo "The immediate PR review could not be rechecked, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
-              } >>"$GITHUB_STEP_SUMMARY"
-              echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
-              exit 0
-            fi
+            load_direct_runs_or_skip
             direct_state="$(classify_direct_run)"
             direct_status="${direct_state%%|*}"
             direct_run_id="${direct_state#*|}"
+            if [[ "$direct_status" == "unknown" ]]; then
+              skip_ci_callback "The immediate PR review run association could not be re-verified for head ${RUN_HEAD_SHA}; the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+            fi
           done
           if [[ "$direct_status" == "success" ]]; then
             {

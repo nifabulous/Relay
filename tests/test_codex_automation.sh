@@ -548,6 +548,7 @@ run_loopkeeper_selector() {
     DIRECT_PR_NUMBER="0" \
     RUN_SOURCE_EVENT="pull_request" \
     RUN_HEAD_SHA="$SELECTOR_HEAD_SHA" \
+    RUN_HEAD_BRANCH="feature" \
     RUN_PULL_REQUESTS="$associations" \
     GITHUB_OUTPUT="$output_file" \
     GITHUB_STEP_SUMMARY="$summary_file" \
@@ -600,6 +601,13 @@ FAKE_DIRECT_RUN_MODE=error run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SEL
   fail 'Loopkeeper selector did not fail closed when direct-run evidence was unavailable.'
 require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
 require_text_from_file "$SELECTOR_SUMMARY" 'could not be inspected'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_DIRECT_RUN_MODE=unknown run_loopkeeper_selector '[{"number":1}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not fail closed when a plausible immediate run lacked verifiable PR association.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+require_text_from_file "$SELECTOR_SUMMARY" 'association could not be verified'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
