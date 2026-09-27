@@ -58,6 +58,14 @@ reusable `pr-review-posting.yml`, pinned to the immutable release SHA
 dispatch. There is no scheduled sweep: a schedule carries no pull-request
 number and the reusable workflow refuses to infer one.
 
+Direct PR events publish the review immediately through Loopkeeper's documented
+no-CI fallback instead of waiting for the asynchronous `CI` run. If the direct
+run has already finished when that exact-head CI run completes, the
+`workflow_run` path reviews with CI evidence and replaces the same fallback
+comment in place. If the direct run is still active, the callback skips rather
+than cancelling it, so the PR keeps one current review instead of a delayed or
+duplicated post.
+
 The reusable workflow separates trust across jobs. `eligibility` holds no model
 secret and re-reads the pull request rather than trusting the event payload,
 because an event is a snapshot and label state can change after it fires.

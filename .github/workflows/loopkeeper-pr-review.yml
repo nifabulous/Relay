@@ -93,9 +93,33 @@ jobs:
             exit 0
           fi
 
+          # A direct pull_request_target run owns immediate publication for
+          # this head. Do not let the later CI callback cancel that run through
+          # Loopkeeper's PR-scoped concurrency group while its artifact/writer
+          # is still active. If the direct run already finished, the callback
+          # may proceed and reconcile the same-head comment in place.
+          direct_runs_file="$(mktemp)"
+          if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?head_sha=${RUN_HEAD_SHA}&event=pull_request_target&per_page=100" \
+            >"$direct_runs_file" 2>/dev/null; then
+            echo "could not determine whether the immediate PR review is still running; skipping CI callback" >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$direct_runs_file" >/dev/null || {
+            echo "direct PR review run listing was malformed; skipping CI callback" >&2
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          }
+          active_direct_runs="$(jq '[.workflow_runs[]? | select((.status // "") != "completed")] | length' "$direct_runs_file")"
+          if [[ "$active_direct_runs" =~ ^[1-9][0-9]*$ ]]; then
+            echo "an immediate PR review is still active for ${RUN_HEAD_SHA}; skipping the CI callback"
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           targets_file="$(mktemp)"
           response_file="$(mktemp)"
-          trap 'rm -f "$targets_file" "$response_file"' EXIT
+          trap 'rm -f "$direct_runs_file" "$targets_file" "$response_file"' EXIT
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
             fallback_candidates='[]'
@@ -197,8 +221,13 @@ jobs:
       # Must stay identical to the `uses:` pin above — the release contract
       # requires the checkout SHA and the workflow pin to agree.
       loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
-      ci_workflow_name: CI
-      ci_workflow_file: ci.yml
+      # Direct PR runs intentionally use a reserved, non-existent workflow
+      # identity so the pinned adapter takes its documented no-CI fallback
+      # immediately instead of waiting for the asynchronous CI run. The
+      # workflow_run path supplies the real CI identity below, allowing that
+      # later evidence to replace the fallback review in place.
+      ci_workflow_name: ${{ github.event_name == 'workflow_run' && 'CI' || 'LoopkeeperImmediate' }}
+      ci_workflow_file: ${{ github.event_name == 'workflow_run' && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
@@ -215,7 +244,8 @@ jobs:
     # Re-publish each immutable review artifact under a PR-specific name before
     # the privileged writer consumes it. The reusable workflow's artifact is
     # run-scoped; metadata/head validation here prevents a matrix entry from
-    # rebinding another PR's review.
+    # rebinding another PR's review. Every selected event must produce an
+    # artifact: immediate direct reviews must never silently defer.
     needs: [targets, review]
     if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
@@ -228,12 +258,10 @@ jobs:
       fail-fast: false
       matrix:
         pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
-    # The artifact is run-scoped, so every matrix leg reaches the same answer
-    # and the (last-writer-wins) matrix output is well defined.
-    outputs:
-      deferred: ${{ steps.presence.outputs.deferred }}
+    # The artifact is run-scoped; each matrix leg validates and rebinds its
+    # own PR-bound copy before publication.
     steps:
-      - name: Detect a review deferred to the CI-completion run
+      - name: Require a review artifact
         id: presence
         env:
           GH_TOKEN: ${{ github.token }}
@@ -245,21 +273,13 @@ jobs:
           name="loopkeeper-review-${RUN_ID}"
           count="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/artifacts?name=${name}" --jq '.total_count')"
           [[ "$count" =~ ^[0-9]+$ ]]
-          if (( count > 0 )); then
-            echo "deferred=false" >>"$GITHUB_OUTPUT"
-          elif [[ "$EVENT_NAME" == "pull_request_target" ]]; then
-            # The reusable review defers a pull_request_target run to the
-            # CI-completion (workflow_run) review whenever CI already runs for
-            # the head, and uploads nothing; that run publishes the review.
-            echo "No ${name}: this ${EVENT_NAME} run deferred to the CI-completion review."
-            echo "deferred=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "No review artifact ${name} for a ${EVENT_NAME} run." >&2
+          if (( count == 0 )); then
+            echo "No review artifact ${name} for a ${EVENT_NAME} run; immediate publication cannot be skipped." >&2
             exit 1
           fi
+          echo "Found ${name}."
 
       - name: Download run-scoped review artifact
-        if: steps.presence.outputs.deferred != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: loopkeeper-review-${{ github.run_id }}
@@ -267,7 +287,6 @@ jobs:
 
       - name: Verify and rebind PR artifact
         id: artifact
-        if: steps.presence.outputs.deferred != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -291,7 +310,6 @@ jobs:
           } >>"$GITHUB_OUTPUT"
 
       - name: Upload PR-bound review artifact
-        if: steps.presence.outputs.deferred != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
@@ -304,7 +322,7 @@ jobs:
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
     needs: [targets, rebind]
-    if: ${{ needs.rebind.result == 'success' && needs.rebind.outputs.deferred != 'true' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    if: ${{ needs.rebind.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -437,8 +455,8 @@ jobs:
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
           LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          LOOPKEEPER_CI_WORKFLOW_NAME: CI
-          LOOPKEEPER_CI_WORKFLOW_FILE: ci.yml
+          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ github.event_name == 'workflow_run' && 'CI' || 'LoopkeeperImmediate' }}
+          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ github.event_name == 'workflow_run' && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
           LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
           LOOPKEEPER_CONTEXT_PATH: .github/codex/context-files.txt
           LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}
@@ -477,7 +495,6 @@ jobs:
           TARGETS_RESULT: ${{ needs.targets.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           REBIND_RESULT: ${{ needs.rebind.result }}
-          REBIND_DEFERRED: ${{ needs.rebind.outputs.deferred }}
           PUBLISH_RESULT: ${{ needs.publish.result }}
         run: |
           set -euo pipefail
@@ -493,10 +510,6 @@ jobs:
             echo "selected review artifact was not rebound (result=$REBIND_RESULT)" >&2
             exit 1
           }
-          if [[ "${REBIND_DEFERRED:-}" == "true" ]]; then
-            echo "Review deferred to the CI-completion run; nothing to publish from this run."
-            exit 0
-          fi
           [[ "$PUBLISH_RESULT" == "success" ]] || {
             echo "verified artifact publication did not complete (result=$PUBLISH_RESULT)" >&2
             exit 1
