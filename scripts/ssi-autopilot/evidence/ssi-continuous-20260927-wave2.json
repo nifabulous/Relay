@@ -1,0 +1,38 @@
+{
+  "wave": "continuous-20260927-wave2",
+  "as_of": "2026-09-27",
+  "scope": {
+    "region": "Laos, Kyrgyzstan, Mongolia, India",
+    "included_route_count": 63,
+    "beneficiary_count": 4
+  },
+  "source_snapshot": {
+    "route_count": 63,
+    "bic_only_route_count": 63,
+    "raw_accounts_committed": false,
+    "account_numbers_published": false,
+    "extraction": "Official correspondent-bank tables were transcribed as currency/intermediary BIC pairs; no account values were copied or inferred."
+  },
+  "sources": [
+    {
+      "url": "https://www.bcel.com.la/bcel/inter-partner.html?lang=en",
+      "beneficiary_bic": "COEBLALAXXX",
+      "route_count": 26
+    },
+    {
+      "url": "https://eldik.kg/ru/info?for_who=individual&type=correspond_net_page",
+      "beneficiary_bic": "SESVKG22XXX",
+      "route_count": 29
+    },
+    {
+      "url": "https://www.kompanion.kg/en/requisites/",
+      "beneficiary_bic": "KOMPKG22XXX",
+      "route_count": 6
+    },
+    {
+      "url": "https://federal.bank.in/correspondent-branches",
+      "beneficiary_bic": "FDRLINBBIBD",
+      "route_count": 2
+    }
+  ]
+}
