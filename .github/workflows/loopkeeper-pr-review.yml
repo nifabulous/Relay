@@ -141,7 +141,12 @@ jobs:
           direct_state="$(classify_direct_run)"
           direct_status="${direct_state%%|*}"
           direct_run_id="${direct_state#*|}"
-          immediate_deadline=$(( $(date +%s) + 1080 ))
+          immediate_wait_seconds="${LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS:-1080}"
+          [[ "$immediate_wait_seconds" =~ ^[0-9]+$ ]] || {
+            echo "LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS must be a non-negative integer" >&2
+            exit 2
+          }
+          immediate_deadline=$(( $(date +%s) + immediate_wait_seconds ))
           while [[ "$direct_status" == "active" ]]; do
             if (( $(date +%s) >= immediate_deadline )); then
               {

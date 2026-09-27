@@ -542,6 +542,7 @@ run_loopkeeper_selector() {
     FAKE_FALLBACK_MODE="${FAKE_FALLBACK_MODE:-single}" \
     FAKE_DIRECT_RUN_MODE="${FAKE_DIRECT_RUN_MODE:-none}" \
     FAKE_DIRECT_RUN_STATE="${FAKE_DIRECT_RUN_STATE:-$STAGING/direct-run-state}" \
+    LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS="${LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS:-1080}" \
     GH_REPO="nifabulous/Relay" \
     EVENT_NAME="workflow_run" \
     DIRECT_PR_NUMBER="0" \
@@ -572,6 +573,13 @@ FAKE_DIRECT_RUN_MODE=active_once run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT"
   fail 'Loopkeeper selector did not skip a successfully completed immediate review.'
 require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
 require_text_from_file "$SELECTOR_SUMMARY" 'completed successfully'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS=0 FAKE_DIRECT_RUN_MODE=active run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector did not stop after the bounded immediate-review wait.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[]'
+require_text_from_file "$SELECTOR_SUMMARY" 'stayed active through the bounded wait'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
