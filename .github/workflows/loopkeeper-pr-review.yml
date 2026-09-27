@@ -251,21 +251,27 @@ jobs:
               ] as $candidates
               | ($candidates | map(select(.exact)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $exact
               | ($candidates | map(select(.associated)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated
-              | ($candidates | map(select(.unresolved)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
+              | ($candidates | map(select(.associated and (.run.status // "") != "completed")) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated_active
+              | ($candidates | map(select((.exact | not) and (.associated | not))) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
               | if $exact != null then
                   ($exact.run | if (.status // "") != "completed" then "active"
                     elif (.conclusion // "") == "success" then "success"
                     else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
+                elif $associated_active != null then
+                  # An associated-but-not-exact run is still unsafe to
+                  # cancel while active; wait for an exact-head re-entry
+                  # instead of joining the immediate run concurrency group.
+                  "unknown|" + (($associated_active.run.id // 0) | tostring)
                 elif $associated != null then
                   # A branch/PR-number association without an exact head is
-                  # not enough to cancel the callback, but it is enough to
-                  # let the existing exact-head recovery path re-read the PR.
-                  "associated|" + (($associated.run.id // 0) | tostring)
+                  # not enough to cancel the callback. A failed completed
+                  # run does need the existing exact-head recovery path; a
+                  # successful but non-exact run remains unverifiable.
+                  ($associated.run | if (.conclusion // "") == "failure" then "failed" else "unknown" end) + "|" + (($associated.run.id // 0) | tostring)
                 elif (($target_prs | length) > 0 and $unresolved != null) then
-                  # pull_request_target can expose the base-side head and an
-                  # empty pull_requests array. This is plausible evidence,
-                  # not proof of a different run; fail closed so the callback
-                  # cannot cancel an in-flight immediate review.
+                  # pull_request_target can expose base-side identity with no
+                  # PR association. This is plausible evidence, not proof of
+                  # a different run; fail closed instead of re-entering.
                   "unknown|" + (($unresolved.run.id // 0) | tostring)
                 else "none|"
                 end
@@ -415,14 +421,11 @@ jobs:
       # Must stay identical to the `uses:` pin above — the release contract
       # requires the checkout SHA and the workflow pin to agree.
       loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
-      # Direct PR runs intentionally use a reserved, non-existent workflow
-      # identity so the pinned adapter takes its documented no-CI fallback
-      # immediately instead of waiting for the asynchronous CI run. The
-      # workflow_run and workflow_dispatch paths supply the real CI identity
-      # when a CI-backed re-entry is requested; direct PR events keep the
-      # reserved identity for immediate no-CI fallback publication.
-      ci_workflow_name: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'CI' || 'LoopkeeperImmediate' }}
-      ci_workflow_file: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
+      # Only opened/synchronize direct PR events use the pinned adapter's
+      # documented no-CI fallback. Reopened/label changes and explicit
+      # workflow_run/workflow_dispatch re-entry use the real CI identity.
+      ci_workflow_name: ${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && 'LoopkeeperImmediate' || 'CI' }}
+      ci_workflow_file: ${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && '__loopkeeper_immediate__.yml' || 'ci.yml' }}
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
@@ -650,8 +653,8 @@ jobs:
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
           LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'CI' || 'LoopkeeperImmediate' }}
-          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'ci.yml' || '__loopkeeper_immediate__.yml' }}
+          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && 'LoopkeeperImmediate' || 'CI' }}
+          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && '__loopkeeper_immediate__.yml' || 'ci.yml' }}
           LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
           LOOPKEEPER_CONTEXT_PATH: .github/codex/context-files.txt
           LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}

@@ -58,14 +58,17 @@ reusable `pr-review-posting.yml`, pinned to the immutable release SHA
 dispatch. There is no scheduled sweep: a schedule carries no pull-request
 number and the reusable workflow refuses to infer one.
 
-Direct PR events publish the review immediately through Loopkeeper's documented
-no-CI fallback instead of waiting for the asynchronous `CI` run. If the direct
-run succeeds, the later exact-head CI callback waits for it and then skips, so
-the PR keeps one current review. If the direct run fails, the callback re-enters
-through the real `CI` identity and publishes a CI-backed review; if the bounded
-wait cannot inspect or outlast the direct run, the workflow summary points to
-manual workflow dispatch as the re-entry path. Manual dispatch uses that same
-real `CI` identity, so it is an explicit CI-backed re-entry rather than another
+`opened` and `synchronize` publish the review immediately through Loopkeeper's
+documented no-CI fallback instead of waiting for the asynchronous `CI` run. If
+the direct run succeeds, the later exact-head CI callback waits for it and then
+skips, so the PR keeps one current review. If the direct run fails, the callback
+re-enters through the real `CI` identity and publishes a CI-backed review. The
+other direct actions (`reopened`, `ready_for_review`, `labeled`, and
+`unlabeled`) use the real CI identity as well, avoiding the no-CI fallback
+outside the adapter's supported discovery window. If the bounded wait cannot
+inspect or outlast the direct run, the workflow summary points to manual
+workflow dispatch as the re-entry path. Manual dispatch uses that same real
+`CI` identity, so it is an explicit CI-backed re-entry rather than another
 no-CI fallback publication.
 
 The reusable workflow separates trust across jobs. `eligibility` holds no model

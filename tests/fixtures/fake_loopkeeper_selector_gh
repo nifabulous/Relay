@@ -24,7 +24,7 @@ case "$endpoint" in
         printf '{"workflow_runs":[{"id":9002,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"main","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[]}]}'
         ;;
       associated)
-        printf '{"workflow_runs":[{"id":9003,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"main","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"number":7}]}]}'
+        printf '{"workflow_runs":[{"id":9003,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"main","status":"completed","conclusion":"failure","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"number":7}]}]}'
         ;;
       malformed)
         printf 'not-json'

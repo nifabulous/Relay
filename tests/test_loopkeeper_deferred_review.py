@@ -113,8 +113,8 @@ def test_direct_and_ci_events_use_different_workflow_identities():
         for step in JOBS["publish"]["steps"]
         if step["name"] == "Publish Loopkeeper review"
     )
-    expected_name = "${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'CI' || 'LoopkeeperImmediate' }}"
-    expected_file = "${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && 'ci.yml' || '__loopkeeper_immediate__.yml' }}"
+    expected_name = "${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && 'LoopkeeperImmediate' || 'CI' }}"
+    expected_file = "${{ github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize') && '__loopkeeper_immediate__.yml' || 'ci.yml' }}"
     assert review_inputs["ci_workflow_name"] == expected_name
     assert review_inputs["ci_workflow_file"] == expected_file
     assert writer_env["LOOPKEEPER_CI_WORKFLOW_NAME"] == expected_name
