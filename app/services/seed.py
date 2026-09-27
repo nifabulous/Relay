@@ -1364,6 +1364,8 @@ _SSI_CONSOLIDATION_DATA_FILES = (
     "seed_ssi_crystalbank_20260801.json",
     "seed_ssi_octobank_current_20250921.json",
     "seed_ssi_consolidation_10_south_asia_global_safe.json",
+    # Continuous 2026-09-27 official bank SSI wave (63 BIC-only routes).
+    "seed_ssi_continuous_20260927_wave2.json",
 )
 
 # These full ledgers remain citable evidence, but their reviewed ``*_safe``
