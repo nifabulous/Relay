@@ -109,10 +109,6 @@ jobs:
           if jq -e 'type == "array"' <<<"${RUN_PULL_REQUESTS:-[]}" >/dev/null 2>&1; then
             target_pr_numbers="$(jq -c '[.[]?.number? | select(type == "number")] | unique' <<<"${RUN_PULL_REQUESTS:-[]}")"
           fi
-          branch_query=""
-          if [[ -n "$RUN_HEAD_BRANCH" ]]; then
-            branch_query="$(jq -rn --arg branch "$RUN_HEAD_BRANCH" '$branch | @uri')"
-          fi
           skip_ci_callback() {
             local message="$1"
             {
@@ -165,11 +161,31 @@ jobs:
           target_pr_numbers="$(jq -cn --argjson event "$target_pr_numbers" --argjson head "$head_pr_numbers" '$event + $head | unique')"
           load_direct_runs() {
             local aggregate_json='[]'
+            local head_file head_matches
+            head_file="$(mktemp)"
+            if gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&head_sha=${RUN_HEAD_SHA}&per_page=100" \
+              >"$head_file" 2>/dev/null &&
+              jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$head_file" >/dev/null; then
+              head_matches="$(jq -r --arg sha "$RUN_HEAD_SHA" --argjson target_prs "$target_pr_numbers" '
+                [.workflow_runs[]?
+                 | select((.event // "") == "pull_request_target")
+                 | select((.head_sha // "") == $sha or
+                   ([.pull_requests[]?.head.sha?] | index($sha)) != null or
+                   (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null))]
+                | length
+              ' "$head_file")"
+              if [[ "$head_matches" =~ ^[1-9][0-9]*$ ]]; then
+                cp "$head_file" "$direct_runs_file"
+                rm -f "$head_file"
+                return 0
+              fi
+            fi
+            rm -f "$head_file"
             local page page_file page_returned page_bytes page_plausible runs_endpoint
             for page in 1 2 3; do
               page_file="$(mktemp)"
               runs_endpoint="repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100"
-              [[ -n "$branch_query" ]] && runs_endpoint+="&branch=${branch_query}"
               runs_endpoint+="&page=${page}"
               if ! gh api "$runs_endpoint" \
                 >"$page_file" 2>/dev/null; then
@@ -181,14 +197,13 @@ jobs:
                 rm -f "$page_file"
                 return 2
               fi
-              page_plausible="$(jq -r --arg sha "$RUN_HEAD_SHA" --arg branch "$RUN_HEAD_BRANCH" --argjson target_prs "$target_pr_numbers" '
+              page_plausible="$(jq -r --arg sha "$RUN_HEAD_SHA" --argjson target_prs "$target_pr_numbers" '
                 any(.workflow_runs[]?;
                   (.event // "") == "pull_request_target" and
                   ((.head_sha // "") == $sha or
                    ([.pull_requests[]?.head.sha?] | index($sha)) != null or
                    (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
-                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)) or
-                   ($branch == "" or (.head_branch // "") == $branch)))
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null))))
               ' "$page_file")"
               if ! aggregate_json="$(jq -cn --argjson accumulated "$aggregate_json" --slurpfile page "$page_file" '$accumulated + $page[0].workflow_runs')"; then
                 rm -f "$page_file"
@@ -237,7 +252,7 @@ jobs:
                   ($exact.run | if (.status // "") != "completed" then "active"
                     elif (.conclusion // "") == "success" then "success"
                     else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
-                elif $associated != null or ($candidates | length) > 0 then
+                elif $associated != null then
                   "unknown|" + ((($associated // $candidates[-1]).run.id // 0) | tostring)
                 else "none|"
                 end
