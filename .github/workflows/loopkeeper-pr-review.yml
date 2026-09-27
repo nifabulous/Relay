@@ -172,7 +172,7 @@ jobs:
                  | select((.head_sha // "") == $sha or
                    ([.pull_requests[]?.head.sha?] | index($sha)) != null or
                    (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
-                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null))]
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)))]
                 | length
               ' "$head_file")"
               if [[ "$head_matches" =~ ^[1-9][0-9]*$ ]]; then
@@ -252,7 +252,7 @@ jobs:
               | ($candidates | map(select(.exact)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $exact
               | ($candidates | map(select(.associated)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated
               | ($candidates | map(select(.associated and (.run.status // "") != "completed")) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated_active
-              | ($candidates | map(select((.exact | not) and (.associated | not))) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
+              | ($candidates | map(select(.unresolved)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
               | if $exact != null then
                   ($exact.run | if (.status // "") != "completed" then "active"
                     elif (.conclusion // "") == "success" then "success"
@@ -468,6 +468,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action || '' }}
           PR_NUMBER: ${{ matrix.pr_number }}
         run: |
           set -euo pipefail
@@ -476,11 +477,16 @@ jobs:
           [[ "$count" =~ ^[0-9]+$ ]]
           echo "ineligible=false" >>"$GITHUB_OUTPUT"
           if (( count == 0 )); then
+            run_conclusion="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}" --jq '.conclusion // ""')"
+            [[ "$run_conclusion" =~ ^(success|failure|cancelled|skipped|neutral|timed_out|action_required|stale|startup_failure)$|^$ ]] || {
+              echo "workflow run returned an invalid conclusion: ${run_conclusion}" >&2
+              exit 1
+            }
             jobs_payload="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/jobs?per_page=100")"
             jq -e 'type == "object" and (.jobs | type) == "array"' <<<"$jobs_payload" >/dev/null
             eligibility_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / eligibility" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
             review_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / review" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
-            if [[ "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
+            if [[ "$EVENT_NAME" == "pull_request_target" && ( "$EVENT_ACTION" == "opened" || "$EVENT_ACTION" == "synchronize" ) && "$run_conclusion" == "success" && "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
               echo "The pinned reviewer was correctly skipped after eligibility rejected PR #${PR_NUMBER}; no publication is required." >>"$GITHUB_STEP_SUMMARY"
               echo "ineligible=true" >>"$GITHUB_OUTPUT"
               exit 0

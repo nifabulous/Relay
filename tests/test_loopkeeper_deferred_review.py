@@ -40,8 +40,11 @@ def _run(script, env, tmp_path, artifact_count="0"):
     fake_gh.write_text(
         "#!/usr/bin/env bash\n"
         'printf "%s\\n" "$*" >>"$FAKE_GH_LOG"\n'
-        'if [[ "${2:-}" == *"/jobs?per_page=100" ]]; then\n'
+        'if [[ "${2:-}" == *"/actions/runs/"*"/jobs?per_page=100" ]]; then\n'
         '  if [[ -n "${FAKE_JOBS_JSON+x}" ]]; then printf "%s\\n" "$FAKE_JOBS_JSON"; else printf "{\\"jobs\\":[]}\\n"; fi\n'
+        'elif [[ "${2:-}" == *"/actions/runs/"* && "${2:-}" != *"/artifacts?name="* ]]; then\n'
+        '  if [[ -n "${FAKE_RUN_JSON+x}" ]]; then run_json="$FAKE_RUN_JSON"; else run_json='"'"'{"conclusion":"success"}'"'"'; fi\n'
+        "  if [[ \"${3:-}\" == \"--jq\" ]]; then jq -r '.conclusion // \"\"' <<<\"$run_json\"; else printf \"%s\\n\" \"$run_json\"; fi\n"
         'else\n'
         '  printf "%s\\n" "$FAKE_ARTIFACT_COUNT"\n'
         'fi\n'
@@ -80,6 +83,7 @@ def _presence(tmp_path, event_name, artifact_count):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": event_name,
+        "EVENT_ACTION": "opened",
         "PR_NUMBER": "159",
     }
     return _run(step["run"], env, tmp_path, artifact_count)
@@ -122,12 +126,34 @@ def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": "pull_request_target",
+        "EVENT_ACTION": "opened",
         "PR_NUMBER": "159",
         "FAKE_JOBS_JSON": jobs,
+        "FAKE_RUN_JSON": '{"conclusion":"success"}',
     }
     result, outputs, calls = _run(step["run"], env, tmp_path, "0")
     assert result.returncode == 0, result.stderr
     assert outputs["ineligible"] == "true"
+    assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
+
+
+def test_ineligible_skip_is_not_accepted_for_deferred_direct_events(tmp_path):
+    step = _step("rebind", "presence")
+    jobs = '{"jobs":[{"name":"review (159) / eligibility","conclusion":"success"},{"name":"review (159) / review","conclusion":"skipped"}]}'
+    env = {
+        "GH_TOKEN": "t",
+        "GH_REPO": "nifabulous/Relay",
+        "RUN_ID": RUN_ID,
+        "EVENT_NAME": "pull_request_target",
+        "EVENT_ACTION": "reopened",
+        "PR_NUMBER": "159",
+        "FAKE_JOBS_JSON": jobs,
+        "FAKE_RUN_JSON": '{"conclusion":"success"}',
+    }
+    result, outputs, calls = _run(step["run"], env, tmp_path, "0")
+    assert result.returncode != 0
+    assert outputs["ineligible"] == "false"
+    assert "immediate publication cannot be skipped" in result.stderr
     assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
 
 

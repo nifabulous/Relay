@@ -419,6 +419,10 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   "github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'synchronize')"
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'review (${PR_NUMBER}) / eligibility'
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  "EVENT_ACTION: \${{ github.event.action || '' }}"
+require_text '.github/workflows/loopkeeper-pr-review.yml' \
+  "actions/runs/\${RUN_ID}\" --jq '.conclusion // \"\"'"
 require_text '.github/workflows/loopkeeper-pr-review.yml' 'ineligible=true'
 require_text '.github/workflows/ci.yml' 'loopkeeper-writer-contract:'
 require_text '.github/workflows/ci.yml' 'LOOPKEEPER_CONTRACT_NETWORK: "1"'
@@ -551,6 +555,7 @@ run_loopkeeper_selector() {
     PATH="$STAGING/loopkeeper-bin:$PATH" \
     FAKE_HEAD_SHA="$SELECTOR_HEAD_SHA" \
     FAKE_FALLBACK_MODE="${FAKE_FALLBACK_MODE:-single}" \
+    FAKE_HEAD_SCOPED_MODE="${FAKE_HEAD_SCOPED_MODE:-mirror}" \
     FAKE_DIRECT_RUN_MODE="${FAKE_DIRECT_RUN_MODE:-none}" \
     FAKE_DIRECT_RUN_STATE="${FAKE_DIRECT_RUN_STATE:-$STAGING/direct-run-state}" \
     LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS="${LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS:-1080}" \
@@ -628,13 +633,27 @@ require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-FAKE_FALLBACK_MODE=paginated run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+if ! FAKE_HEAD_SCOPED_MODE=mirror FAKE_DIRECT_RUN_MODE=failed FAKE_FALLBACK_MODE=multiple \
+  run_loopkeeper_selector '[{"number":1}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+  fail 'Loopkeeper selector did not short-circuit on a positive head-scoped direct-run response.'
+fi
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_HEAD_SCOPED_MODE=mirror FAKE_DIRECT_RUN_MODE=unrelated run_loopkeeper_selector '[{"number":1}]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
+  fail 'Loopkeeper selector treated an unrelated direct run as an unresolved current-head run.'
+require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[1]'
+
+: >"$SELECTOR_OUTPUT"
+: >"$SELECTOR_SUMMARY"
+FAKE_HEAD_SCOPED_MODE=empty FAKE_FALLBACK_MODE=paginated run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY" || \
   fail 'Loopkeeper selector did not recover an empty association payload.'
 require_text_from_file "$SELECTOR_OUTPUT" 'pr_numbers=[7]'
 
 : >"$SELECTOR_OUTPUT"
 : >"$SELECTOR_SUMMARY"
-if FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
+if FAKE_HEAD_SCOPED_MODE=empty FAKE_FALLBACK_MODE=multiple run_loopkeeper_selector '[]' "$SELECTOR_OUTPUT" "$SELECTOR_SUMMARY"; then
   fail 'Loopkeeper selector accepted multiple fallback targets that could collide in the run-scoped artifact.'
 fi
 

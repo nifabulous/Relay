@@ -71,12 +71,14 @@ workflow dispatch as the re-entry path. Manual dispatch uses that same real
 `CI` identity, so it is an explicit CI-backed re-entry rather than another
 no-CI fallback publication.
 
-An ineligible fork is a deliberate no-op, not a failed publication: the
-artifact rebind checks the same run's pinned eligibility and review job
+An ineligible fork is a deliberate no-op only for the immediate
+`pull_request_target` `opened`/`synchronize` path: the artifact rebind checks
+the same run's conclusion together with the pinned eligibility and review job
 conclusions, marks the matrix leg `ineligible=true` when eligibility succeeded
-but the model job was skipped, and lets the publication gate finish green. A
-missing artifact for an eligible or otherwise unverifiable review still fails
-closed.
+but the model job was skipped, and lets the publication gate finish green.
+Reopened, ready-for-review, label-change, workflow-run, and manual paths do not
+use that deferral exception; a missing artifact fails closed so an ordinary CI
+deferral cannot be silently relabeled as an eligibility rejection.
 
 The reusable workflow separates trust across jobs. `eligibility` holds no model
 secret and re-reads the pull request rather than trusting the event payload,
