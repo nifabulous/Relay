@@ -625,6 +625,9 @@ refuse_text 'scripts/codex_review_pr.sh' 'swift test'
 require_text '.github/workflows/codex-issue-triage.yml' 'types: [opened, labeled, reopened]'
 refuse_text '.github/workflows/codex-issue-triage.yml' 'edited'
 require_text '.github/workflows/codex-issue-triage.yml' "contains(fromJSON('[\"OWNER\",\"MEMBER\",\"COLLABORATOR\"]'), github.event.issue.author_association)"
+# Only the codex-triage label opts an issue in. Any other label must not start
+# the job: it would join the concurrency group and cancel an in-flight triage.
+require_text '.github/workflows/codex-issue-triage.yml' "(github.event.action == 'labeled' && github.event.label.name == 'codex-triage')"
 # Workflow-level concurrency would let a skipped run (an outside author
 # reopening their own issue) cancel an in-flight, maintainer-labeled triage.
 # On the job, only a run whose job actually starts joins the group.

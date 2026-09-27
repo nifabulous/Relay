@@ -20,11 +20,15 @@ jobs:
   triage:
     # The repository is public and every triage is a paid model call. An issue
     # opened or reopened by someone outside the repository waits until a
-    # maintainer adds the codex-triage label (a labeled event, or the schedule).
+    # maintainer adds the codex-triage label (that labeled event, or the
+    # scheduled sweep of codex-triage issues). Any other label does not start
+    # the job, so it cannot join the concurrency group and cancel a triage.
     if: >-
       vars.CODEX_REVIEW_ENABLED == 'true' &&
-      (github.event_name != 'issues' || github.event.action == 'labeled' ||
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+      (github.event_name != 'issues' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'codex-triage') ||
+      (github.event.action != 'labeled' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)))
     # On the job, not the workflow: a run whose job the gate above skips must
     # not cancel an in-flight triage of the same issue.
     concurrency:
