@@ -87,3 +87,8 @@ def test_bcel_thai_location_code_matches_the_official_spot_check():
 
     assert row[3] == spot_check["intermediary_bic"] == "SCBLTHBXXXX"
     assert spot_check["source_url"] == "https://www.bcel.com.la/bcel/inter-partner.html?lang=en"
+    assert spot_check["source_section"] == "Correspondent Bank table, THB row 6"
+    assert spot_check["source_excerpt"] == (
+        "THB | STANDARD CHARTERED BANK (THAI) PCL | THAILAND | SCBLTHBXXXX"
+    )
+    assert spot_check["source_excerpt"].endswith(f"| {row[3]}")

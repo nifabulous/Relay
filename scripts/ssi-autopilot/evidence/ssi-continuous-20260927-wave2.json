@@ -19,12 +19,9 @@
         "currency": "THB",
         "intermediary_bic": "SCBLTHBXXXX",
         "source_url": "https://www.bcel.com.la/bcel/inter-partner.html?lang=en",
+        "source_section": "Correspondent Bank table, THB row 6",
+        "source_excerpt": "THB | STANDARD CHARTERED BANK (THAI) PCL | THAILAND | SCBLTHBXXXX",
         "assertion": "BCEL's official correspondent table prints Standard Chartered Bank (Thai) PCL as SCBLTHBXXXX."
-      },
-      {
-        "id": "scblthb-bank-registry-prefix",
-        "source_url": "https://www.sc.com/in/nri/remittance/instant-remittance/scblinbb/",
-        "assertion": "Standard Chartered's official remittance page uses the Thai BIC prefix SCBLTHBX."
       }
     ]
   },
