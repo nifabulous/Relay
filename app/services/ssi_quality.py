@@ -42,6 +42,15 @@ def _age_days(as_of: str | None, today: date) -> int | None:
     return age if age >= 0 else None
 
 
+def _is_future_source_date(as_of: str | None, today: date) -> bool:
+    if not as_of:
+        return False
+    try:
+        return date.fromisoformat(as_of) > today
+    except ValueError:
+        return False
+
+
 def _issues(
     row: SSI,
     age_days: int | None,
@@ -96,7 +105,8 @@ def build_quality_snapshot(
         age_days = _age_days(row.as_of, review_date)
         if age_days is None:
             freshness_counts["No source date"] += 1
-            missing_source_date_rows += 1
+            if not _is_future_source_date(row.as_of, review_date):
+                missing_source_date_rows += 1
         elif age_days <= 30:
             freshness_counts["0-30 days"] += 1
         elif age_days <= 90:

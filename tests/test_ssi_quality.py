@@ -86,6 +86,27 @@ def test_quality_snapshot_keeps_instruction_and_bic_only_denominators_distinct(d
     assert "stale-source" in archived.issues
 
 
+def test_quality_snapshot_does_not_count_future_source_date_as_missing(db_session_clean):
+    class _Result:
+        def scalars(self):
+            return iter([_row(as_of="2026-10-01")])
+
+    class _Session:
+        def execute(self, _statement):
+            return _Result()
+
+    snapshot = build_quality_snapshot(
+        _Session(),
+        today=date(2026, 9, 21),
+        queue_limit=10,
+    )
+
+    assert snapshot.totals.missing_source_date_rows == 0
+    assert next(item for item in snapshot.freshness if item.label == "No source date").count == 1
+    assert snapshot.queue[0].age_days is None
+    assert "future-source-date" in snapshot.queue[0].issues
+
+
 def test_quality_snapshot_queue_is_bounded_and_ordered_by_actionability(db_session_clean):
     db_session_clean.query(SSI).delete()
     db_session_clean.add_all([
