@@ -348,6 +348,7 @@ lesson scripts:
 | `GET` | `/api/lookup` | Bank directory lookup by BIC |
 | `GET` | `/api/route` | Published SSI correspondents (SSI-first) with corridor-heuristic fallback |
 | `GET` | `/api/ssi` | Standard Settlement Instructions |
+| `GET` | `/api/ssi/quality` | SSI data-quality snapshot for freshness, provenance, and routing readiness |
 | `POST` | `/api/verify-payee` | Verification of Payee |
 | `POST` | `/api/prepare-payment` | One-call orchestration: validate + VoP + route + SSI → recommendation |
 | `POST` | `/api/track/create` | **Instant** demo path used by the labs — create a simulated payment with its full gpi timeline immediately |

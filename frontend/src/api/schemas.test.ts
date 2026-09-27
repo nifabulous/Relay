@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SSIRecordSchema, SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema } from "./schemas";
+import { SSIRecordSchema, SuggestedIntermediarySchema, RouteResponseSchema, PreparePaymentResponseSchema, SchemesResponseSchema, SchemeInfoSchema, InternationalSchemesResponseSchema, SSIQualityResponseSchema } from "./schemas";
 import {
   TranslateResponseSchema,
   Pacs008CheckResponseSchema,
@@ -53,6 +53,21 @@ describe("SSIRecord bic_only schema", () => {
       charge_code: "   ",
       value_date: "\t",
     })).toThrow();
+  });
+});
+
+describe("SSI quality response schema", () => {
+  it("rejects a response with missing required totals instead of defaulting to zero", () => {
+    const result = SSIQualityResponseSchema.safeParse({
+      generated_at: "2026-09-21",
+      stale_after_days: 180,
+      totals: {},
+      freshness: [],
+      queue: [],
+      disclaimer: "Quality signals are illustrative.",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

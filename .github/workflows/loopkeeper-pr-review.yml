@@ -228,8 +228,38 @@ jobs:
       fail-fast: false
       matrix:
         pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
+    # The artifact is run-scoped, so every matrix leg reaches the same answer
+    # and the (last-writer-wins) matrix output is well defined.
+    outputs:
+      deferred: ${{ steps.presence.outputs.deferred }}
     steps:
+      - name: Detect a review deferred to the CI-completion run
+        id: presence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          name="loopkeeper-review-${RUN_ID}"
+          count="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/artifacts?name=${name}" --jq '.total_count')"
+          [[ "$count" =~ ^[0-9]+$ ]]
+          if (( count > 0 )); then
+            echo "deferred=false" >>"$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "pull_request_target" ]]; then
+            # The reusable review defers a pull_request_target run to the
+            # CI-completion (workflow_run) review whenever CI already runs for
+            # the head, and uploads nothing; that run publishes the review.
+            echo "No ${name}: this ${EVENT_NAME} run deferred to the CI-completion review."
+            echo "deferred=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "No review artifact ${name} for a ${EVENT_NAME} run." >&2
+            exit 1
+          fi
+
       - name: Download run-scoped review artifact
+        if: steps.presence.outputs.deferred != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: loopkeeper-review-${{ github.run_id }}
@@ -237,6 +267,7 @@ jobs:
 
       - name: Verify and rebind PR artifact
         id: artifact
+        if: steps.presence.outputs.deferred != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -260,6 +291,7 @@ jobs:
           } >>"$GITHUB_OUTPUT"
 
       - name: Upload PR-bound review artifact
+        if: steps.presence.outputs.deferred != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
@@ -272,7 +304,7 @@ jobs:
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
     needs: [targets, rebind]
-    if: ${{ needs.rebind.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    if: ${{ needs.rebind.result == 'success' && needs.rebind.outputs.deferred != 'true' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -445,6 +477,7 @@ jobs:
           TARGETS_RESULT: ${{ needs.targets.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           REBIND_RESULT: ${{ needs.rebind.result }}
+          REBIND_DEFERRED: ${{ needs.rebind.outputs.deferred }}
           PUBLISH_RESULT: ${{ needs.publish.result }}
         run: |
           set -euo pipefail
@@ -460,6 +493,10 @@ jobs:
             echo "selected review artifact was not rebound (result=$REBIND_RESULT)" >&2
             exit 1
           }
+          if [[ "${REBIND_DEFERRED:-}" == "true" ]]; then
+            echo "Review deferred to the CI-completion run; nothing to publish from this run."
+            exit 0
+          fi
           [[ "$PUBLISH_RESULT" == "success" ]] || {
             echo "verified artifact publication did not complete (result=$PUBLISH_RESULT)" >&2
             exit 1
