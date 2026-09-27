@@ -4,7 +4,7 @@ set -euo pipefail
 [[ "${1:-}" == "api" ]] || exit 2
 endpoint="${2:-}"
 case "$endpoint" in
-  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target\&per_page=100\&page=*)
+  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target\&per_page=100\&*)
     case "${FAKE_DIRECT_RUN_MODE:-none}" in
       active)
         printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","head_sha":"%s","head_branch":"feature","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}" "${FAKE_HEAD_SHA:?}"
@@ -35,6 +35,10 @@ case "$endpoint" in
     esac
     ;;
   repos/*/commits/*/pulls?per_page=100\&page=1)
+    if [[ "${3:-}" == "--jq" && "${4:-}" != *returned* ]]; then
+      printf '[{"state":"open","number":7},{"state":"open","number":102}]\n'
+      exit 0
+    fi
     case "${FAKE_FALLBACK_MODE:-single}" in
       paginated)
         printf '{"returned":100,"candidates":[{"number":102}]}\n'
@@ -48,6 +52,10 @@ case "$endpoint" in
     esac
     ;;
   repos/*/commits/*/pulls?per_page=100\&page=2)
+    if [[ "${3:-}" == "--jq" && "${4:-}" != *returned* ]]; then
+      printf '[]\n'
+      exit 0
+    fi
     printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
     ;;
   repos/*/pulls/*)

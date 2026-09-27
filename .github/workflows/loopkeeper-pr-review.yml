@@ -109,6 +109,10 @@ jobs:
           if jq -e 'type == "array"' <<<"${RUN_PULL_REQUESTS:-[]}" >/dev/null 2>&1; then
             target_pr_numbers="$(jq -c '[.[]?.number? | select(type == "number")] | unique' <<<"${RUN_PULL_REQUESTS:-[]}")"
           fi
+          branch_query=""
+          if [[ -n "$RUN_HEAD_BRANCH" ]]; then
+            branch_query="$(jq -rn --arg branch "$RUN_HEAD_BRANCH" '$branch | @uri')"
+          fi
           skip_ci_callback() {
             local message="$1"
             {
@@ -119,12 +123,55 @@ jobs:
             echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
             exit 0
           }
-          load_direct_runs() {
-            local aggregate_json='[]'
+          resolve_head_pr_numbers() {
+            local resolved='[]'
             local page page_file page_returned page_bytes
             for page in 1 2 3; do
               page_file="$(mktemp)"
-              if ! gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100&page=${page}" \
+              if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}" \
+                --jq '[.[]? | select(.state == "open") | .number]' \
+                >"$page_file" 2>/dev/null; then
+                rm -f "$page_file"
+                return 1
+              fi
+              page_bytes="$(wc -c <"$page_file" | tr -d ' ')"
+              if (( page_bytes > 200000 )) || ! jq -e 'type == "array"' "$page_file" >/dev/null; then
+                rm -f "$page_file"
+                return 2
+              fi
+              if ! resolved="$(jq -cn --argjson accumulated "$resolved" --slurpfile page "$page_file" \
+                '$accumulated + $page[0] | unique')"; then
+                rm -f "$page_file"
+                return 2
+              fi
+              page_returned="$(jq 'length' "$page_file")"
+              rm -f "$page_file"
+              if (( page_returned < 100 )); then
+                printf '%s\n' "$resolved"
+                return 0
+              fi
+            done
+            printf '%s\n' "$resolved"
+            return 0
+          }
+          head_pr_numbers='[]'
+          head_lookup_status=0
+          head_pr_numbers="$(resolve_head_pr_numbers)" || head_lookup_status=$?
+          case "$head_lookup_status" in
+            0) ;;
+            1) skip_ci_callback "The immediate PR review head-to-PR association could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+            *) skip_ci_callback "The immediate PR review head-to-PR association was malformed or exceeded its bounded window, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+          esac
+          target_pr_numbers="$(jq -cn --argjson event "$target_pr_numbers" --argjson head "$head_pr_numbers" '$event + $head | unique')"
+          load_direct_runs() {
+            local aggregate_json='[]'
+            local page page_file page_returned page_bytes page_plausible runs_endpoint
+            for page in 1 2 3; do
+              page_file="$(mktemp)"
+              runs_endpoint="repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100"
+              [[ -n "$branch_query" ]] && runs_endpoint+="&branch=${branch_query}"
+              runs_endpoint+="&page=${page}"
+              if ! gh api "$runs_endpoint" \
                 >"$page_file" 2>/dev/null; then
                 rm -f "$page_file"
                 return 1
@@ -134,18 +181,32 @@ jobs:
                 rm -f "$page_file"
                 return 2
               fi
+              page_plausible="$(jq -r --arg sha "$RUN_HEAD_SHA" --arg branch "$RUN_HEAD_BRANCH" --argjson target_prs "$target_pr_numbers" '
+                any(.workflow_runs[]?;
+                  (.event // "") == "pull_request_target" and
+                  ((.head_sha // "") == $sha or
+                   ([.pull_requests[]?.head.sha?] | index($sha)) != null or
+                   (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)) or
+                   ($branch == "" or (.head_branch // "") == $branch)))
+              ' "$page_file")"
               if ! aggregate_json="$(jq -cn --argjson accumulated "$aggregate_json" --slurpfile page "$page_file" '$accumulated + $page[0].workflow_runs')"; then
                 rm -f "$page_file"
                 return 2
               fi
               page_returned="$(jq -r '.workflow_runs | length' "$page_file")"
               rm -f "$page_file"
-              if (( page_returned < 100 )); then
+              if [[ "$page_plausible" == "true" ]] || (( page_returned < 100 )); then
                 printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
                 return 0
               fi
             done
-            return 3
+            # The query is branch-scoped and the independent head lookup has
+            # already established the candidate PR numbers. Keep the bounded
+            # evidence we have rather than turning an unrelated repo-wide run
+            # count into a permanent callback skip.
+            printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
+            return 0
           }
           load_direct_runs_or_skip() {
             local load_status=0
@@ -154,7 +215,6 @@ jobs:
               0) ;;
               1) skip_ci_callback "The immediate PR review could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
               2) skip_ci_callback "The immediate PR review listing was malformed or unexpectedly large, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
-              3) skip_ci_callback "The immediate PR review listing exceeded the bounded pagination window, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
               *) skip_ci_callback "The immediate PR review listing could not be verified, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
             esac
           }
@@ -177,7 +237,7 @@ jobs:
                   ($exact.run | if (.status // "") != "completed" then "active"
                     elif (.conclusion // "") == "success" then "success"
                     else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
-                elif $associated != null or (($target_prs | length) == 0 and ($candidates | length) > 0) then
+                elif $associated != null or ($candidates | length) > 0 then
                   "unknown|" + ((($associated // $candidates[-1]).run.id // 0) | tostring)
                 else "none|"
                 end

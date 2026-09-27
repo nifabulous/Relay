@@ -15,6 +15,15 @@ publisher adapter with a supplied review artifact. Its Python shim fails if
 model request. The fake GitHub publisher also proves that the adapter reaches
 only the expected PR-comment operation.
 
+The same pinned adapter explicitly implements the immediate fallback used by
+the caller: when the reserved `LoopkeeperImmediate` identity cannot resolve to
+an active workflow, it logs `using the no-CI fallback review`, sets
+`CI_PRODUCED_NO_RUN=1`, and records `EVIDENCE_STATE="fallback"`. The pinned
+producer always uploads `loopkeeper-review-${{ github.run_id }}` from
+`loopkeeper-artifacts`, so the caller's artifact-required rebind is the
+verification boundary for that fallback. The network contract test asserts
+these exact source strings in addition to the immutable file digests.
+
 The pinned adapter requires a model-shaped identifier before it reaches the
 artifact branch, so the privileged publication job supplies the deliberately
 non-routable sentinel `artifact-only-no-transport`. The adapter also validates

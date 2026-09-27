@@ -30,6 +30,9 @@ ACTUAL_ADAPTER_SHA256="$(sha256sum "$LOOPKEEPER_ROOT/adapters/github/review_pr.s
 grep -Fq 'name: loopkeeper-review-${{ github.run_id }}' "$PRODUCER_WORKFLOW"
 grep -Fq 'path: ${{ github.workspace }}/loopkeeper-artifacts' "$PRODUCER_WORKFLOW"
 grep -Fq 'review-metadata.json' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'using the no-CI fallback review' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'CI_PRODUCED_NO_RUN=1' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'EVIDENCE_STATE="fallback"' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
 if grep -Eq '^  writer:' "$PRODUCER_WORKFLOW"; then
   echo 'read-only producer unexpectedly contains a writer job' >&2
   exit 1
