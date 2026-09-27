@@ -1,0 +1,405 @@
+{
+  "fixture_version": 3,
+  "batch": "continuous-20260925",
+  "ledger_file": "seed_ssi_nordea_current_20250730.json",
+  "url": "https://www.nordea.com/sites/default/files/2025-07/standard-settlement-instructions-nordea-bank-abp-effective-july-30-2025.pdf",
+  "as_of": "2025-07-30",
+  "source_sha256": "07fde02bf86d619bc67ffdd6f1e72e966ef82cb53e83b2133ac60e70535237c0",
+  "route_count": 56,
+  "route_digest": "9d9e9ddc053c4c825bb7673dca8de0c259ff0e44a8680681206b8497a4c0550a",
+  "account_values_removed": true,
+  "routes": [
+    {
+      "beneficiary_bic": "NDEAFIHHXXX",
+      "beneficiary_name": "Nordea Bank Abp",
+      "currency": "PKR",
+      "intermediary_bic": "HABBPKKA007",
+      "intermediary_name": "Habib Bank Limited, Karachi"
+    },
+    {
+      "beneficiary_bic": "NDEAFIHHXXX",
+      "beneficiary_name": "Nordea Bank Abp",
+      "currency": "RON",
+      "intermediary_bic": "BRDEROBUXXX",
+      "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+    },
+    {
+      "beneficiary_bic": "NDEAFIHHXXX",
+      "beneficiary_name": "Nordea Bank Abp",
+      "currency": "RSD",
+      "intermediary_bic": "BACXRSBGXXX",
+      "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+    },
+    {
+      "beneficiary_bic": "NDEAFIHHXXX",
+      "beneficiary_name": "Nordea Bank Abp",
+      "currency": "SAR",
+      "intermediary_bic": "SABBSARIXXX",
+      "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+    },
+    {
+      "beneficiary_bic": "NDEAFIHHXXX",
+      "beneficiary_name": "Nordea Bank Abp",
+      "currency": "SEK",
+      "intermediary_bic": "NDEASESSXXX",
+      "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+    },
+    {
+      "beneficiary_bic": "NDEANOKKXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+      "currency": "PKR",
+      "intermediary_bic": "HABBPKKA007",
+      "intermediary_name": "Habib Bank Limited, Karachi"
+    },
+    {
+      "beneficiary_bic": "NDEANOKKXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+      "currency": "RON",
+      "intermediary_bic": "BRDEROBUXXX",
+      "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+    },
+    {
+      "beneficiary_bic": "NDEANOKKXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+      "currency": "RSD",
+      "intermediary_bic": "BACXRSBGXXX",
+      "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+    },
+    {
+      "beneficiary_bic": "NDEANOKKXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+      "currency": "SAR",
+      "intermediary_bic": "SABBSARIXXX",
+      "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+    },
+    {
+      "beneficiary_bic": "NDEANOKKXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Norge",
+      "currency": "SEK",
+      "intermediary_bic": "NDEASESSXXX",
+      "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+    },
+    {
+      "beneficiary_bic": "NDEADKKKXXX",
+      "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+      "currency": "PKR",
+      "intermediary_bic": "HABBPKKA007",
+      "intermediary_name": "Habib Bank Limited, Karachi"
+    },
+    {
+      "beneficiary_bic": "NDEADKKKXXX",
+      "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+      "currency": "RON",
+      "intermediary_bic": "BRDEROBUXXX",
+      "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+    },
+    {
+      "beneficiary_bic": "NDEADKKKXXX",
+      "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+      "currency": "RSD",
+      "intermediary_bic": "BACXRSBGXXX",
+      "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+    },
+    {
+      "beneficiary_bic": "NDEADKKKXXX",
+      "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+      "currency": "SAR",
+      "intermediary_bic": "SABBSARIXXX",
+      "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+    },
+    {
+      "beneficiary_bic": "NDEADKKKXXX",
+      "beneficiary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland",
+      "currency": "SEK",
+      "intermediary_bic": "NDEASESSXXX",
+      "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "AED",
+      "intermediary_bic": "SCBLAEADXXX",
+      "intermediary_name": "Standard Chartered Bank, Dubai"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "AUD",
+      "intermediary_bic": "CTBAAU2SXXX",
+      "intermediary_name": "Commonwealth Bank of Australia, Sydney"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "BDT",
+      "intermediary_bic": "SCBLBDDXXXX",
+      "intermediary_name": "Standard Chartered Bank, Dhaka"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "BGN",
+      "intermediary_bic": "UNCRBGSFXXX",
+      "intermediary_name": "UniCredit Bulbank AD, Sofia"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "BHD",
+      "intermediary_bic": "SCBLBHBMXXX",
+      "intermediary_name": "Standard Chartered Bank, Manama"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "CAD",
+      "intermediary_bic": "ROYCCAT2XXX",
+      "intermediary_name": "Royal Bank of Canada, Toronto"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "CNH",
+      "intermediary_bic": "SCBLHKHHXXX",
+      "intermediary_name": "Standard Chartered Bank (Hong Kong), Hong Kong"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "CNY",
+      "intermediary_bic": "BKCHCNBJS00",
+      "intermediary_name": "Bank of China, Shanghai"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "CZK",
+      "intermediary_bic": "CEKOCZPPXXX",
+      "intermediary_name": "Československá obchodní banka, a.s., Prague"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "DKK",
+      "intermediary_bic": "NDEADKKKXXX",
+      "intermediary_name": "Nordea Danmark, filial af Nordea Bank Abp, Finland, Copenhagen"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "EGP",
+      "intermediary_bic": "CIBEEGCXXXX",
+      "intermediary_name": "Commercial International Bank (Egypt) SAE, Cairo"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "EUR",
+      "intermediary_bic": "NDEASESSXXX",
+      "intermediary_name": "Nordea Bank Abp, filial i Sverige, Stockholm"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "HKD",
+      "intermediary_bic": "SCBLHKHHXXX",
+      "intermediary_name": "Standard Chartered Bank (Hong Kong), Hong Kong"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "HUF",
+      "intermediary_bic": "BACXHUHBXXX",
+      "intermediary_name": "UniCredit Bank Hungary Zrt., Budapest"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "IDR",
+      "intermediary_bic": "SCBLIDJXXXX",
+      "intermediary_name": "Standard Chartered Bank, Jakarta"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "ILS",
+      "intermediary_bic": "LUMIILITXXX",
+      "intermediary_name": "Bank Leumi Le-Israel B.M., Tel Aviv"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "INR",
+      "intermediary_bic": "SCBLINBBXXX",
+      "intermediary_name": "Standard Chartered Bank, Mumbai"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "ISK",
+      "intermediary_bic": "GLITISREXXX",
+      "intermediary_name": "Islandsbanki hf, Reykjavik"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "JPY",
+      "intermediary_bic": "MHCBJPJTXXX",
+      "intermediary_name": "Mizuho Corporate Bank Ltd, Tokyo"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "KES",
+      "intermediary_bic": "BARCKENXXXX",
+      "intermediary_name": "ABSA Bank Kenya PLC, Nairobi"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "KRW",
+      "intermediary_bic": "KOEXKRSEXXX",
+      "intermediary_name": "KEB Hana Bank, Seoul"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "KZT",
+      "intermediary_bic": "HSBKKZKXXXX",
+      "intermediary_name": "Halyk Bank, Almaty"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "KWD",
+      "intermediary_bic": "NBOKKWKWXXX",
+      "intermediary_name": "National Bank of Kuwait SAKP, Kuwait"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "LKR",
+      "intermediary_bic": "HSBCLKLXXXX",
+      "intermediary_name": "The Hongkong and Shanghai Banking Corporation Limited, Colombo"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "MAD",
+      "intermediary_bic": "SGMBMAMCXXX",
+      "intermediary_name": "Saham Bank, Casablanca"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "MXN",
+      "intermediary_bic": "BMSXMXMMXXX",
+      "intermediary_name": "Banco Santander Mexico S.A., Mexico City"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "NOK",
+      "intermediary_bic": "NDEANOKKXXX",
+      "intermediary_name": "Nordea Bank Abp, filial i Norge, Oslo"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "NZD",
+      "intermediary_bic": "ASBBNZ2AXXX",
+      "intermediary_name": "ASB Bank Limited, Auckland"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "PEN",
+      "intermediary_bic": "BCONPEPLXXX",
+      "intermediary_name": "Banco BBVA Peru, Lima"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "PHP",
+      "intermediary_bic": "SCBLPHMMXXX",
+      "intermediary_name": "Standard Chartered Bank, Manila"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "PKR",
+      "intermediary_bic": "HABBPKKA007",
+      "intermediary_name": "Habib Bank Limited, Karachi"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "PLN",
+      "intermediary_bic": "PKOPPLPWXXX",
+      "intermediary_name": "Bank Pekao S.A., Warsaw"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "QAR",
+      "intermediary_bic": "QNBAQAQAXXX",
+      "intermediary_name": "Qatar National Bank (Q.P.S.C.), Doha"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "RON",
+      "intermediary_bic": "BRDEROBUXXX",
+      "intermediary_name": "BRD-Groupe Société Générale S.A., Bucharest"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "RSD",
+      "intermediary_bic": "BACXRSBGXXX",
+      "intermediary_name": "UniCredit Bank Serbia a.d. Beograd"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "SAR",
+      "intermediary_bic": "SABBSARIXXX",
+      "intermediary_name": "The Saudi Awwal Bank, Riyadh"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "SGD",
+      "intermediary_bic": "DBSSSGSGXXX",
+      "intermediary_name": "DBS Bank Ltd, Singapore"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "THB",
+      "intermediary_bic": "SCBLTHBXXXX",
+      "intermediary_name": "Standard Chartered Bank (Thai), Bangkok"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "TND",
+      "intermediary_bic": "STBKTNTTXXX",
+      "intermediary_name": "Société Tunisienne de Banque SA, Tunis"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "TRY",
+      "intermediary_bic": "ISBKTRISXXX",
+      "intermediary_name": "Türkiye İş Bankası AŞ, Istanbul"
+    },
+    {
+      "beneficiary_bic": "NDEASESSXXX",
+      "beneficiary_name": "Nordea Bank Abp, filial i Sverige",
+      "currency": "ZAR",
+      "intermediary_bic": "SBZAZAJJXXX",
+      "intermediary_name": "The Standard Bank of South Africa Limited, Johannesburg"
+    }
+  ]
+}

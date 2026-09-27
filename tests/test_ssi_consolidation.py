@@ -52,6 +52,89 @@ NEW_CONSOLIDATION_EXPECTATIONS = {
     },
 }
 
+CONTINUOUS_20260922_EXPECTATIONS = {
+    "seed_ssi_basler_kantonalbank_20250801.json": {
+        "source": "https://www.bkb.ch/de/-/media/bkb/website/pdf/internationale-abkommen/standard-settlement-instructions.pdf?hash=1791F7FB8B8F5B240CC258A6681FB289&sc_lang=de",
+        "as_of": "2025-08-01",
+    },
+    "seed_ssi_bank_cler_20260325.json": {
+        "source": "https://www.cler.ch/-/media/files/bc/geschaeftskunden/regulatory-and-compliance/ssi-bank-cler-inkl,-d-,-cutoff.pdf",
+        "as_of": "2026-03-25",
+    },
+    "seed_ssi_raiffeisenverband_salzburg_20250501.json": {
+        "source": "https://www.raiffeisen.at/resources/rvs/rvs/meine-bank/investor-relations/english-documents/25-05ssi_neu.pdf",
+        "as_of": "2025-05-01",
+    },
+    "seed_ssi_bankhaus_spaengler_20250301.json": {
+        "source": "https://www.spaengler.at/fileadmin/user_upload/pdfs/spaengler-Standard-Settlement-Instructions.pdf",
+        "as_of": "2025-03-01",
+    },
+    "seed_ssi_bks_bank_20260101.json": {
+        "source": "https://www.bks.at/mbxs8qn54zwj/ys3sAPx3q95opyRpSnTZB/5139f3550dad66c789c4bf0ae8debd58/Currency_BIC_Financial_Institution.pdf_01.2026.pdf",
+        "as_of": "2026-01-01",
+    },
+    "seed_ssi_raiffeisenlandesbank_tirol_20260101.json": {
+        "source": "https://www.raiffeisen.at/tirol/rlb/de/meine-bank/investor-relations/compliance/_jcr_content/root/responsivegrid/contentcontainer/contentbox/downloadlist.download.html/27/Standard%20Settlement%20Instructions.pdf",
+        "as_of": "2026-01-01",
+    },
+    "seed_ssi_unicredit_germany_20260106.json": {
+        "source": "https://www.hypovereinsbank.de/content/dam/hypovereinsbank/unternehmen/pdf/Downloadcenter/SSI-non-Banks-HYVEDEMM-for-FX-MM-Derivatives.pdf",
+        "as_of": "2026-01-06",
+    },
+    "seed_ssi_nrw_bank_20260729.json": {
+        "source": "https://www.nrwbank.de/.galleries/downloads/Rechtliche-Grundlagen/NRW.BANK-SSI_MM_FX_Derivatives-DealsI.pdf",
+        "as_of": "2026-07-29",
+    },
+    "seed_ssi_rbsi_emirates_20260921.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+    "seed_ssi_rbsi_emirates_20260921_2.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+    "seed_ssi_rbsi_emirates_20260921_3.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+    "seed_ssi_rbsi_emirates_20260921_4.json": {
+        "sources": [
+            {
+                "source": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+                "as_of": "2023-12-07",
+            },
+            {
+                "source": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+                "as_of": "2026-09-21",
+            },
+        ],
+    },
+}
+
 
 def _payloads():
     return [json.loads(path.read_text()) for path in LEDGERS]
@@ -88,7 +171,223 @@ def test_10k_expansion_catalog_count_matches_integrated_route_keys():
     route_keys = {(row[0], row[2], row[3]) for row in SSI_RECORDS}
 
     # Keep the exact catalog total pinned as each verified ledger is admitted.
-    assert len(SSI_RECORDS) == len(route_keys) == 11_205
+    assert len(SSI_RECORDS) == len(route_keys) == 11_827
+
+
+def test_continuous_20260922_batch_is_source_cited_and_static_scope():
+    """Keep the European/RBSI ledgers bounded without claiming live attestation."""
+    static_scope_notice = (
+        ROOT / "docs" / "ssi-continuous-20260922-static-scope.md"
+    ).read_text()
+    assert "no independent retrieval" in static_scope_notice
+    assert "not proof" in static_scope_notice
+    assert "non-routable" in static_scope_notice
+    batch_files = {
+        "seed_ssi_basler_kantonalbank_20250801.json": 32,
+        "seed_ssi_bank_cler_20260325.json": 22,
+        "seed_ssi_raiffeisenverband_salzburg_20250501.json": 28,
+        "seed_ssi_bankhaus_spaengler_20250301.json": 15,
+        "seed_ssi_bks_bank_20260101.json": 20,
+        "seed_ssi_raiffeisenlandesbank_tirol_20260101.json": 25,
+        "seed_ssi_unicredit_germany_20260106.json": 47,
+        "seed_ssi_nrw_bank_20260729.json": 14,
+        "seed_ssi_rbsi_emirates_20260921.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_2.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_3.json": 40,
+        "seed_ssi_rbsi_emirates_20260921_4.json": 37,
+    }
+    rows = []
+    for filename, expected_count in batch_files.items():
+        payload = json.loads((ROOT / "app" / "services" / filename).read_text())
+        assert len(payload["ssi_records"]) == expected_count
+        expected = CONTINUOUS_20260922_EXPECTATIONS[filename]
+        expected_sources = expected.get("sources", [expected])
+        rows.extend(payload["ssi_records"])
+        assert all(
+            any(
+                row[9].startswith(f"Source: {source['source']} ")
+                and row[10] == source["as_of"]
+                for source in expected_sources
+            )
+            for row in payload["ssi_records"]
+        )
+
+    assert len(rows) == 360
+    assert len({(row[0], row[2], row[3]) for row in rows}) == 360
+    assert all(row[11] == "unverified" and row[12] is None for row in rows)
+    assert all(row[13] and not row[14] for row in rows)
+    assert all(
+        all(row[position] is None for position in range(5, 9))
+        for row in rows
+    )
+
+
+def test_continuous_20260922_static_scope_is_explicitly_outside_live_fidelity():
+    """The live gate must not imply coverage for this static-only batch."""
+    live_manifest = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-continuous-20260925-batch.json"
+        ).read_text()
+    )
+    live_ledgers = {source["ledger_file"] for source in live_manifest["sources"]}
+    static_ledgers = set(CONTINUOUS_20260922_EXPECTATIONS)
+    assert static_ledgers.isdisjoint(live_ledgers)
+
+
+def test_continuous_20260922_rows_cannot_enter_route_selection():
+    """Redacted accounts and inferred terms must remain informational only."""
+    rows = [
+        row
+        for filename in CONTINUOUS_20260922_EXPECTATIONS
+        for row in json.loads((ROOT / "app" / "services" / filename).read_text())["ssi_records"]
+    ]
+
+    assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
+
+
+def test_rbsi_emirates_review_companion_covers_large_ledger():
+    """Keep a compact, inspectable companion aligned with the large ledger."""
+    ledger_files = (
+        "seed_ssi_rbsi_emirates_20260921.json",
+        "seed_ssi_rbsi_emirates_20260921_2.json",
+        "seed_ssi_rbsi_emirates_20260921_3.json",
+        "seed_ssi_rbsi_emirates_20260921_4.json",
+    )
+    companion = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-rbsi-emirates-20260921-review.json"
+        ).read_text()
+    )
+    digest = json.loads(
+        (
+            ROOT
+            / "scripts"
+            / "ssi-autopilot"
+            / "evidence"
+            / "ssi-rbsi-emirates-20260921-digests.json"
+        ).read_text()
+    )
+    rows = [
+        row
+        for filename in ledger_files
+        for row in json.loads(
+            (ROOT / "app" / "services" / filename).read_text()
+        )["ssi_records"]
+    ]
+    expected_ledger_files = [f"app/services/{filename}" for filename in ledger_files]
+
+    assert companion["ledger"] == "app/services/seed_ssi_rbsi_emirates_20260921.json"
+    assert companion["ledger_files"] == expected_ledger_files
+    assert companion["digest_file"] == (
+        "scripts/ssi-autopilot/evidence/ssi-rbsi-emirates-20260921-digests.json"
+    )
+    assert digest["ledger"] == companion["ledger"]
+    assert digest["ledger_files"] == expected_ledger_files
+    assert companion["record_count"] == len(rows) == len(companion["routes"])
+    assert companion["sources"] == [
+        {
+            "url": "https://www.rbsinternational.com/content/dam/rbsinternational_com/assets/documents/correspondent-banks-rbsi927.pdf",
+            "as_of": "2023-12-07",
+        },
+        {
+            "url": "https://www.emiratesnbd.com/en/corporate-and-institutional-banking/standard-settlement-instructions",
+            "as_of": "2026-09-21",
+        },
+    ]
+    assert len({tuple(route) for route in companion["routes"]}) == len(rows)
+
+    beneficiaries = companion["beneficiaries"]
+    intermediaries = companion["intermediaries"]
+    sources = companion["sources"]
+    note_profiles = companion["note_profiles"]
+    flags = companion["flags"]
+    assert digest["canonical_row_fields"] == [
+        "beneficiary_bic",
+        "beneficiary_name",
+        "currency",
+        "intermediary_bic",
+        "intermediary_name",
+        "beneficiary_account",
+        "intermediary_account",
+        "charge_code",
+        "value_date",
+        "notes",
+        "as_of",
+        "status",
+        "verified_by",
+        "bic_only",
+        "terms_inferred",
+    ]
+    assert len(digest["row_digests"]) == len(rows)
+    for row, route, row_digest in zip(
+        rows, companion["routes"], digest["row_digests"]
+    ):
+        beneficiary_index, currency, intermediary_index, source_index, note_index = route
+        assert beneficiaries[beneficiary_index] == {"bic": row[0], "name": row[1]}
+        assert currency == row[2]
+        assert intermediaries[intermediary_index] == {"bic": row[3], "name": row[4]}
+        assert row[9].startswith(f"Source: {sources[source_index]['url']} ")
+        assert row[10] == sources[source_index]["as_of"]
+        assert row[9].endswith(note_profiles[note_index])
+        assert {
+            "status": row[11],
+            "verified_by": row[12],
+            "bic_only": row[13],
+            "terms_inferred": row[14],
+            "settlement_fields_null": all(value is None for value in row[5:9]),
+        } == flags
+        digest_route, digest = row_digest
+        assert digest_route == [row[0], row[2], row[3]]
+        assert digest == hashlib.sha256(
+            json.dumps(row, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+
+
+def test_rbsi_and_unicredit_preserve_source_wells_fargo_bic():
+    """Keep the source's Wells Fargo BIC verbatim instead of guessing a mapping."""
+    rbsi_files = (
+        "seed_ssi_rbsi_emirates_20260921.json",
+        "seed_ssi_rbsi_emirates_20260921_2.json",
+        "seed_ssi_rbsi_emirates_20260921_3.json",
+        "seed_ssi_rbsi_emirates_20260921_4.json",
+    )
+    for filename in rbsi_files:
+        rows = json.loads((ROOT / "app" / "services" / filename).read_text())["ssi_records"]
+        usd_rows = [row for row in rows if row[2] == "USD"]
+        assert usd_rows
+        assert all(row[3] == "PNBPUS3NNYC" for row in usd_rows)
+        assert all("source BIC is preserved verbatim" in row[9] for row in usd_rows)
+
+    unicredit_rows = json.loads(
+        (ROOT / "app" / "services" / "seed_ssi_unicredit_germany_20260106.json").read_text()
+    )["ssi_records"]
+    usd_row = next(row for row in unicredit_rows if row[2] == "USD")
+    assert usd_row[3] == "PNBPUS3NNYC"
+    assert "source BIC is preserved verbatim" in usd_row[9]
+
+
+def test_raiffeisenverband_salzburg_correspondent_names_match_bics():
+    """Keep the two South African correspondent identities aligned with BICs."""
+    expected_names = {
+        "FIRNZAJJXXX": "FirstRand Bank Limited",
+        "ABSAZAJJXXX": "Absa Bank Limited",
+    }
+    payload = json.loads(
+        (ROOT / "app" / "services" / "seed_ssi_raiffeisenverband_salzburg_20250501.json").read_text()
+    )
+    rows = [row for row in payload["ssi_records"] if row[3] in expected_names]
+
+    assert {row[3] for row in rows} == set(expected_names)
+    for row in rows:
+        assert row[4].startswith(expected_names[row[3]])
 
 
 def test_active_route_consumer_excludes_bic_only_and_archived_rows():

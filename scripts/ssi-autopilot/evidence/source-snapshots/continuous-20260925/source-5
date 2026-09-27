@@ -1,0 +1,66 @@
+{
+  "source_url": "https://punjabandsind.bank.in/content/webnri",
+  "captured_at": "2026-09-25",
+  "effective_date": "2026-09-21",
+  "format": "sanitized official-source route extraction",
+  "account_values_removed": true,
+  "route_count": 8,
+  "routes": [
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "USD",
+      "intermediary_bic": "CITIUS33XXX",
+      "intermediary_name": "Citibank, New York"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "USD",
+      "intermediary_bic": "SCBLUS33XXX",
+      "intermediary_name": "Standard Chartered Bank, New York"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "EUR",
+      "intermediary_bic": "CITIDEFFXXX",
+      "intermediary_name": "Citibank, Frankfurt"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "GBP",
+      "intermediary_bic": "CITIGB2LXXX",
+      "intermediary_name": "Citibank, London"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "JPY",
+      "intermediary_bic": "MHCBJPJTXXX",
+      "intermediary_name": "Mizuho Bank, Tokyo"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "CAD",
+      "intermediary_bic": "CIBCCATTXXX",
+      "intermediary_name": "Canadian Imperial Bank of Commerce, Toronto"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "AUD",
+      "intermediary_bic": "SBINAU2SXXX",
+      "intermediary_name": "State Bank of India, Sydney"
+    },
+    {
+      "beneficiary_bic": "PSIBINBB005",
+      "beneficiary_name": "Punjab & Sind Bank",
+      "currency": "AED",
+      "intermediary_bic": "BOMLAEADXXX",
+      "intermediary_name": "Mashreq Bank, Dubai"
+    }
+  ]
+}
