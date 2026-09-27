@@ -60,10 +60,6 @@ function percent(count: number, total: number): number {
   return total > 0 ? Math.round((count / total) * 100) : 0;
 }
 
-function queueSummary(item: SSIQualityQueueItem): string {
-  return item.issues.map(issueLabel).join(" · ");
-}
-
 function matchesQueueFilter(item: SSIQualityQueueItem, filter: QueueFilter): boolean {
   if (filter === "all") return true;
   const issueSet = new Set(item.issues);
@@ -228,7 +224,7 @@ function ReviewQueue({ data }: { data: SSIQualityResponse }) {
                   <td className="mono">{item.currency}</td>
                   <td><span className="mono">{item.intermediary_bic}</span><span>{item.intermediary_bank_name ?? "Unknown correspondent"}</span></td>
                   <td>{item.age_days == null ? "No date" : `${format(item.age_days)} days`}</td>
-                  <td><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul><span className="sr-only">{queueSummary(item)}</span></td>
+                  <td><ul className="ssi-quality__issue-list">{item.issues.map((issue) => <li key={issue}>{issueLabel(issue)}</li>)}</ul></td>
                 </tr>
               ))}
             </tbody>

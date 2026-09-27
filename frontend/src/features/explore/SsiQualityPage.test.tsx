@@ -79,6 +79,13 @@ describe("SsiQualityPage", () => {
     expect(screen.getByRole("combobox", { name: "Sort review queue" })).toBeVisible();
   });
 
+  it("announces each review issue once", async () => {
+    renderPage();
+
+    await screen.findByRole("heading", { name: "Review queue" });
+    expect(screen.getAllByText("Source older than threshold")).toHaveLength(1);
+  });
+
   it("keeps the corpus warning visible so quality is not mistaken for live availability", async () => {
     renderPage();
 
