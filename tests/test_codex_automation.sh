@@ -417,6 +417,10 @@ require_text '.github/workflows/loopkeeper-pr-review.yml' \
   'model_api_key: ${{ secrets.LOOPKEEPER_API_KEY }}'
 require_text '.github/workflows/loopkeeper-pr-review.yml' \
   "github.event_name == 'workflow_dispatch') && 'CI'"
+require_text '.github/workflows/ci.yml' 'loopkeeper-writer-contract:'
+require_text '.github/workflows/ci.yml' 'LOOPKEEPER_CONTRACT_NETWORK: "1"'
+require_text '.github/workflows/ci.yml' \
+  'run: bash tests/test_loopkeeper_writer_contract.sh'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
   'model_api_key: ${{ secrets.OPENAI_API_KEY }}'
 refuse_text '.github/workflows/loopkeeper-pr-review.yml' \
