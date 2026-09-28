@@ -1,5 +1,6 @@
 """Unit tests for the SSI autopilot orchestrator."""
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -1799,27 +1800,54 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
     )
 
 
+_CONSOLIDATION_ROW_FIELDS = (
+    # Keep this positional contract aligned with seed.py and autopilot._fold_row_shape.
+    "beneficiary_bic",
+    "beneficiary_name",
+    "currency",
+    "intermediary_bic",
+    "correspondent",
+    "nostro",
+    "with_an",
+    "charge_code",
+    "value_date",
+    "notes",
+    "as_of",
+    "status",
+    "verified_by",
+    "bic_only",
+    "terms_inferred",
+)
+
+
 def test_wave29_ledgers_are_explicitly_non_routable_and_cited():
     """The southern-Africa batch must remain metadata until independently verified."""
     services = Path(__file__).resolve().parents[1] / "app" / "services"
     paths = sorted(services.glob("seed_ssi_consolidation_8_*.json"))
+    seed_source = (services / "seed.py").read_text(encoding="utf-8")
+    registered = set(re.findall(r'"(seed_ssi_consolidation_8_\d+\.json)"', seed_source))
+    assert {path.name for path in paths} == registered
     rows = [
         row
         for path in paths
         for row in json.loads(path.read_text(encoding="utf-8"))["ssi_records"]
     ]
     assert len(paths) == 19
-    assert len(rows) == 560
+    assert len(rows) == 520
     keys = set()
     for row in rows:
-        key = (row[0], row[2], row[3])
+        assert len(row) == len(_CONSOLIDATION_ROW_FIELDS)
+        fields = dict(zip(_CONSOLIDATION_ROW_FIELDS, row))
+        key = (fields["beneficiary_bic"], fields["currency"], fields["intermediary_bic"])
         assert key not in keys, key
         keys.add(key)
-        assert row[9].startswith("Source: https://")
-        assert "not a selectable settlement instruction" in row[9]
-        assert row[11] in {"unverified", "archived"}
-        assert row[13] is True
-        assert all(value is None for value in row[5:9])
+        assert fields["currency"] != "ZWL"
+        assert fields["notes"].startswith("Source: https://")
+        assert "currency mapping remains unverified" in fields["notes"]
+        assert "not a selectable settlement instruction" in fields["notes"]
+        assert fields["status"] in {"unverified", "archived"}
+        assert fields["bic_only"] is True
+        assert all(fields[name] is None for name in _CONSOLIDATION_ROW_FIELDS[5:9])
 
 
 def test_consolidation_ledger_validator_rejects_noncanonical_row_shape(tmp_path):
