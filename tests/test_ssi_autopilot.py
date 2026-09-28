@@ -1790,6 +1790,8 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
                 "not a selectable settlement instruction",
                 "Source publishes account numbers; repository intentionally withholds them. "
                 "BIC-only metadata — not a selectable settlement instruction",
+                "BIC-level list only — no account numbers published; "
+                "non-routable until independently verified",
             )
         ), key
         checked += 1
