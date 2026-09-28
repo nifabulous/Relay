@@ -1790,8 +1790,6 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
                 "not a selectable settlement instruction",
                 "Source publishes account numbers; repository intentionally withholds them. "
                 "BIC-only metadata — not a selectable settlement instruction",
-                "BIC-level list only — no account numbers published; "
-                "non-routable until independently verified",
             )
         ), key
         checked += 1
@@ -1799,6 +1797,29 @@ def test_every_bic_only_seed_row_states_its_availability_only_limitation():
     assert checked >= 150, (
         f"only {checked} BIC-only rows checked; expected the full directory"
     )
+
+
+def test_wave29_ledgers_are_explicitly_non_routable_and_cited():
+    """The southern-Africa batch must remain metadata until independently verified."""
+    services = Path(__file__).resolve().parents[1] / "app" / "services"
+    paths = sorted(services.glob("seed_ssi_consolidation_8_*.json"))
+    rows = [
+        row
+        for path in paths
+        for row in json.loads(path.read_text(encoding="utf-8"))["ssi_records"]
+    ]
+    assert len(paths) == 19
+    assert len(rows) == 560
+    keys = set()
+    for row in rows:
+        key = (row[0], row[2], row[3])
+        assert key not in keys, key
+        keys.add(key)
+        assert row[9].startswith("Source: https://")
+        assert "not a selectable settlement instruction" in row[9]
+        assert row[11] in {"unverified", "archived"}
+        assert row[13] is True
+        assert all(value is None for value in row[5:9])
 
 
 def test_consolidation_ledger_validator_rejects_noncanonical_row_shape(tmp_path):
