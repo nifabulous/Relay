@@ -1,14 +1,13 @@
-"""A Loopkeeper review deferred to the CI-completion run must not fail the PR.
+"""Immediate Loopkeeper publication must not silently defer a PR review.
 
-On pull_request_target, the reusable review defers to the workflow_run
-(CI-completion) review whenever CI already runs for the head, and uploads no
-artifact. The caller's `rebind` job still demanded that artifact, so every PR
-push showed red `rebind` and `review publication gate` checks while the real
-review arrived later from the CI-completion run.
-
-These tests run the workflow's own step scripts, extracted from the YAML,
-against a fake `gh` that records its arguments.
+The caller forces direct PR events through Loopkeeper's documented no-CI
+fallback so the review artifact is available to the writer immediately. A
+later ``workflow_run`` waits for that direct run: successful direct runs are
+left alone, while failed direct runs re-enter through the real CI identity.
+The caller must require an artifact for every selected event; a missing
+artifact is a failed publication, not a successful deferral.
 """
+
 import os
 import stat
 import subprocess
@@ -19,7 +18,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = yaml.safe_load(
-    (ROOT / ".github" / "workflows" / "loopkeeper-pr-review.yml").read_text(encoding="utf-8")
+    (ROOT / ".github" / "workflows" / "loopkeeper-pr-review.yml").read_text(
+        encoding="utf-8"
+    )
 )
 JOBS = WORKFLOW["jobs"]
 RUN_ID = "36282798361"
@@ -39,17 +40,27 @@ def _run(script, env, tmp_path, artifact_count="0"):
     fake_gh.write_text(
         "#!/usr/bin/env bash\n"
         'printf "%s\\n" "$*" >>"$FAKE_GH_LOG"\n'
-        'printf "%s\\n" "$FAKE_ARTIFACT_COUNT"\n'
+        'if [[ "${2:-}" == *"/actions/runs/"*"/jobs?per_page=100" ]]; then\n'
+        '  if [[ -n "${FAKE_JOBS_JSON+x}" ]]; then printf "%s\\n" "$FAKE_JOBS_JSON"; else printf "{\\"jobs\\":[]}\\n"; fi\n'
+        'elif [[ "${2:-}" == *"/actions/runs/"* && "${2:-}" != *"/artifacts?name="* ]]; then\n'
+        '  if [[ -n "${FAKE_RUN_JSON+x}" ]]; then run_json="$FAKE_RUN_JSON"; else run_json='"'"'{"conclusion":"success"}'"'"'; fi\n'
+        "  if [[ \"${3:-}\" == \"--jq\" ]]; then jq -r '.conclusion // \"\"' <<<\"$run_json\"; else printf \"%s\\n\" \"$run_json\"; fi\n"
+        'else\n'
+        '  printf "%s\\n" "$FAKE_ARTIFACT_COUNT"\n'
+        'fi\n'
     )
     fake_gh.chmod(fake_gh.stat().st_mode | stat.S_IEXEC)
     output = tmp_path / "github_output"
     output.write_text("")
+    summary = tmp_path / "github_summary"
+    summary.write_text("")
     log = tmp_path / "gh.log"
     result = subprocess.run(
         ["bash", "-c", script],
         env={
             "PATH": f"{bin_dir}:{os.environ['PATH']}",
             "GITHUB_OUTPUT": str(output),
+            "GITHUB_STEP_SUMMARY": str(summary),
             "FAKE_GH_LOG": str(log),
             "FAKE_ARTIFACT_COUNT": artifact_count,
             **env,
@@ -72,43 +83,106 @@ def _presence(tmp_path, event_name, artifact_count):
         "GH_REPO": "nifabulous/Relay",
         "RUN_ID": RUN_ID,
         "EVENT_NAME": event_name,
+        "PR_NUMBER": "159",
     }
     return _run(step["run"], env, tmp_path, artifact_count)
 
 
-def test_rebind_checks_for_the_artifact_before_anything_else():
+def test_rebind_requires_the_artifact_before_anything_else():
     steps = JOBS["rebind"]["steps"]
     assert steps[0].get("id") == "presence"
-    for step in steps[1:]:
-        assert step.get("if") == "steps.presence.outputs.deferred != 'true'", step["name"]
-    assert JOBS["rebind"]["outputs"]["deferred"] == "${{ steps.presence.outputs.deferred }}"
+    assert JOBS["rebind"]["outputs"]["ineligible"].startswith("${{ steps.presence.outputs.ineligible")
+    assert "deferred" not in JOBS["rebind"]
+    assert all(step.get("if") == "${{ steps.presence.outputs.ineligible != 'true' }}" for step in steps[1:])
 
 
-def test_a_pull_request_target_run_without_an_artifact_is_deferred(tmp_path):
-    result, outputs, calls = _presence(tmp_path, "pull_request_target", "0")
+def test_targets_can_read_direct_review_run_status():
+    assert JOBS["targets"]["permissions"]["actions"] == "read"
+
+
+@pytest.mark.parametrize("event_name", ["pull_request_target", "workflow_run", "workflow_dispatch"])
+def test_a_missing_artifact_fails_instead_of_defer(tmp_path, event_name):
+    result, outputs, calls = _presence(tmp_path, event_name, "0")
+    assert result.returncode != 0
+    assert "deferred" not in outputs
+    assert calls and f"actions/runs/{RUN_ID}/artifacts?name=loopkeeper-review-{RUN_ID}" in calls[0]
+    assert "immediate publication cannot be skipped" in result.stderr
+
+
+@pytest.mark.parametrize("event_name", ["pull_request_target", "workflow_run", "workflow_dispatch"])
+def test_an_existing_artifact_is_required_for_every_event(tmp_path, event_name):
+    result, outputs, calls = _presence(tmp_path, event_name, "1")
     assert result.returncode == 0, result.stderr
-    assert outputs["deferred"] == "true"
+    assert outputs == {"ineligible": "false"}
     assert calls and f"actions/runs/{RUN_ID}/artifacts?name=loopkeeper-review-{RUN_ID}" in calls[0]
 
 
-@pytest.mark.parametrize("event_name", ["workflow_run", "workflow_dispatch"])
-def test_a_missing_artifact_on_any_other_event_still_fails(tmp_path, event_name):
-    result, outputs, _ = _presence(tmp_path, event_name, "0")
-    assert result.returncode != 0
-    assert "deferred" not in outputs
-
-
-@pytest.mark.parametrize("event_name", ["pull_request_target", "workflow_run"])
-def test_an_existing_artifact_is_rebound_normally(tmp_path, event_name):
-    result, outputs, _ = _presence(tmp_path, event_name, "1")
+def test_ineligible_review_skip_is_green_without_an_artifact(tmp_path):
+    step = _step("rebind", "presence")
+    jobs = '{"jobs":[{"name":"review (159) / eligibility","conclusion":"success"},{"name":"review (159) / review","conclusion":"skipped"}]}'
+    env = {
+        "GH_TOKEN": "t",
+        "GH_REPO": "nifabulous/Relay",
+        "RUN_ID": RUN_ID,
+        "EVENT_NAME": "pull_request_target",
+        "PR_NUMBER": "159",
+        "FAKE_JOBS_JSON": jobs,
+        # The live workflow has no terminal conclusion while rebind runs.
+        "FAKE_RUN_JSON": '{"conclusion":null}',
+    }
+    result, outputs, calls = _run(step["run"], env, tmp_path, "0")
     assert result.returncode == 0, result.stderr
-    assert outputs["deferred"] == "false"
+    assert outputs["ineligible"] == "true"
+    assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
 
 
-def test_publish_skips_a_deferred_review():
+@pytest.mark.parametrize("event_action", ["reopened", "ready_for_review", "labeled", "unlabeled"])
+def test_ineligible_skip_is_green_for_all_direct_events(tmp_path, event_action):
+    step = _step("rebind", "presence")
+    jobs = '{"jobs":[{"name":"review (159) / eligibility","conclusion":"success"},{"name":"review (159) / review","conclusion":"skipped"}]}'
+    env = {
+        "GH_TOKEN": "t",
+        "GH_REPO": "nifabulous/Relay",
+        "RUN_ID": RUN_ID,
+        "EVENT_NAME": "pull_request_target",
+        "EVENT_ACTION": event_action,
+        "PR_NUMBER": "159",
+        "FAKE_JOBS_JSON": jobs,
+        "FAKE_RUN_JSON": '{"conclusion":null}',
+    }
+    result, outputs, calls = _run(step["run"], env, tmp_path, "0")
+    assert result.returncode == 0, result.stderr
+    assert outputs["ineligible"] == "true"
+    assert "no publication is required" in (tmp_path / "github_summary").read_text()
+    assert any(f"actions/runs/{RUN_ID}/jobs?per_page=100" in call for call in calls)
+
+
+def test_direct_and_ci_events_use_different_workflow_identities():
+    review_inputs = JOBS["review"]["with"]
+    writer_env = next(
+        step["env"]
+        for step in JOBS["publish"]["steps"]
+        if step["name"] == "Publish Loopkeeper review"
+    )
+    expected_name = "${{ github.event_name == 'pull_request_target' && 'LoopkeeperImmediate' || 'CI' }}"
+    expected_file = "${{ github.event_name == 'pull_request_target' && '__loopkeeper_immediate__.yml' || 'ci.yml' }}"
+    assert review_inputs["ci_workflow_name"] == expected_name
+    assert review_inputs["ci_workflow_file"] == expected_file
+    assert writer_env["LOOPKEEPER_CI_WORKFLOW_NAME"] == expected_name
+    assert writer_env["LOOPKEEPER_CI_WORKFLOW_FILE"] == expected_file
+
+
+def test_publish_requires_a_successful_rebind():
     condition = JOBS["publish"]["if"]
     assert "needs.rebind.result == 'success'" in condition
-    assert "needs.rebind.outputs.deferred != 'true'" in condition
+    assert "needs.rebind.outputs.ineligible != 'true'" in condition
+    assert "needs.rebind.outputs.deferred" not in condition
+
+
+def test_publication_gate_does_not_pass_on_a_skipped_review_alone():
+    gate = JOBS["publication-gate"]["steps"][0]["run"]
+    assert '"$REVIEW_RESULT" == "skipped"' not in gate
+    assert '"$INELIGIBLE" == "true"' in gate
 
 
 def _gate(tmp_path, **env):
@@ -118,35 +192,36 @@ def _gate(tmp_path, **env):
         "TARGETS_RESULT": "success",
         "REVIEW_RESULT": "success",
         "REBIND_RESULT": "success",
-        "REBIND_DEFERRED": "false",
+        "INELIGIBLE": "false",
         "PUBLISH_RESULT": "success",
     }
     result, _, _ = _run(step["run"], {**base, **env}, tmp_path)
     return result
 
 
-def test_the_gate_passes_a_deferred_review(tmp_path):
-    assert JOBS["publication-gate"]["steps"][0]["env"]["REBIND_DEFERRED"] == (
-        "${{ needs.rebind.outputs.deferred }}"
-    )
-    result = _gate(tmp_path, REBIND_DEFERRED="true", PUBLISH_RESULT="skipped")
-    assert result.returncode == 0, result.stderr
-
-
 @pytest.mark.parametrize(
     "overrides",
     [
         {"PUBLISH_RESULT": "skipped"},
-        {"REBIND_RESULT": "failure", "REBIND_DEFERRED": "", "PUBLISH_RESULT": "skipped"},
-        {"REBIND_RESULT": "skipped", "REBIND_DEFERRED": "true", "PUBLISH_RESULT": "skipped"},
+        {"REBIND_RESULT": "failure", "PUBLISH_RESULT": "skipped"},
+        {"REBIND_RESULT": "skipped", "PUBLISH_RESULT": "skipped"},
         {"REVIEW_RESULT": "failure"},
     ],
-    ids=["published-nothing", "rebind-failed", "deferral-without-rebind", "review-failed"],
+    ids=["published-nothing", "rebind-failed", "rebind-skipped", "review-failed"],
 )
-def test_the_gate_still_fails_without_a_publication_or_deferral(tmp_path, overrides):
+def test_the_gate_fails_without_a_publication(tmp_path, overrides):
     result = _gate(tmp_path, **overrides)
     assert result.returncode != 0
 
 
 def test_the_gate_passes_a_published_review(tmp_path):
     assert _gate(tmp_path).returncode == 0
+
+
+def test_the_gate_passes_a_verified_ineligible_skip(tmp_path):
+    result = _gate(
+        tmp_path,
+        INELIGIBLE="true",
+        PUBLISH_RESULT="skipped",
+    )
+    assert result.returncode == 0, result.stderr

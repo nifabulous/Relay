@@ -3,8 +3,67 @@ set -euo pipefail
 
 [[ "${1:-}" == "api" ]] || exit 2
 endpoint="${2:-}"
+emit_direct_runs() {
+  case "${FAKE_DIRECT_RUN_MODE:-none}" in
+    active)
+      printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","head_sha":"%s","head_branch":"feature","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}" "${FAKE_HEAD_SHA:?}"
+      ;;
+    active_once)
+      if [[ ! -e "${FAKE_DIRECT_RUN_STATE:?}" ]]; then
+        : >"$FAKE_DIRECT_RUN_STATE"
+        printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","head_sha":"%s","head_branch":"feature","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}" "${FAKE_HEAD_SHA:?}"
+      else
+        printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","head_sha":"%s","head_branch":"feature","status":"completed","conclusion":"success","updated_at":"2026-09-27T13:01:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}" "${FAKE_HEAD_SHA:?}"
+      fi
+      ;;
+    failed)
+      printf '{"workflow_runs":[{"id":9001,"event":"pull_request_target","head_sha":"%s","head_branch":"feature","status":"completed","conclusion":"failure","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"head":{"sha":"%s"}}]}]}' "${FAKE_HEAD_SHA:?}" "${FAKE_HEAD_SHA:?}"
+      ;;
+    unknown)
+      printf '{"workflow_runs":[{"id":9002,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"main","status":"in_progress","updated_at":"2026-09-27T13:00:00Z","pull_requests":[]}]}'
+      ;;
+    associated)
+      printf '{"workflow_runs":[{"id":9003,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"main","status":"completed","conclusion":"failure","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"number":7}]}]}'
+      ;;
+    unrelated)
+      printf '{"workflow_runs":[{"id":9004,"event":"pull_request_target","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","head_branch":"other","status":"completed","conclusion":"failure","updated_at":"2026-09-27T13:00:00Z","pull_requests":[{"number":99}]}]}'
+      ;;
+    malformed)
+      printf 'not-json'
+      ;;
+    error)
+      exit 1
+      ;;
+    *)
+      printf '{"workflow_runs":[]}'
+      ;;
+  esac
+}
 case "$endpoint" in
+  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target\&head_sha=*\&per_page=100)
+    case "${FAKE_HEAD_SCOPED_MODE:-mirror}" in
+      empty)
+        printf '{"workflow_runs":[]}'
+        ;;
+      error)
+        exit 1
+        ;;
+      malformed)
+        printf 'not-json'
+        ;;
+      *)
+        emit_direct_runs
+        ;;
+    esac
+    ;;
+  repos/*/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target\&per_page=100\&*)
+    emit_direct_runs
+    ;;
   repos/*/commits/*/pulls?per_page=100\&page=1)
+    if [[ "${3:-}" == "--jq" && "${4:-}" != *returned* ]]; then
+      printf '[7,102]\n'
+      exit 0
+    fi
     case "${FAKE_FALLBACK_MODE:-single}" in
       paginated)
         printf '{"returned":100,"candidates":[{"number":102}]}\n'
@@ -18,6 +77,10 @@ case "$endpoint" in
     esac
     ;;
   repos/*/commits/*/pulls?per_page=100\&page=2)
+    if [[ "${3:-}" == "--jq" && "${4:-}" != *returned* ]]; then
+      printf '[]\n'
+      exit 0
+    fi
     printf '{"returned":2,"candidates":[{"number":7},{"number":102}]}\n'
     ;;
   repos/*/pulls/*)

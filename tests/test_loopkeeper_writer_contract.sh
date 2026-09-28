@@ -29,7 +29,14 @@ ACTUAL_ADAPTER_SHA256="$(sha256sum "$LOOPKEEPER_ROOT/adapters/github/review_pr.s
 [[ "$ACTUAL_ADAPTER_SHA256" == "$EXPECTED_ADAPTER_SHA256" ]]
 grep -Fq 'name: loopkeeper-review-${{ github.run_id }}' "$PRODUCER_WORKFLOW"
 grep -Fq 'path: ${{ github.workspace }}/loopkeeper-artifacts' "$PRODUCER_WORKFLOW"
+grep -Fq 'needs: [resolve, eligibility]' "$PRODUCER_WORKFLOW"
+grep -Fq "if: \${{ needs.eligibility.outputs.eligible == 'true' }}" "$PRODUCER_WORKFLOW"
+grep -Fq 'name: Record whether review artifacts exist' "$PRODUCER_WORKFLOW"
+grep -Fq 'if-no-files-found: ignore' "$PRODUCER_WORKFLOW"
 grep -Fq 'review-metadata.json' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'using the no-CI fallback review' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'CI_PRODUCED_NO_RUN=1' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
+grep -Fq 'EVIDENCE_STATE="fallback"' "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh"
 if grep -Eq '^  writer:' "$PRODUCER_WORKFLOW"; then
   echo 'read-only producer unexpectedly contains a writer job' >&2
   exit 1
@@ -62,7 +69,9 @@ GH_LOG="$STAGING/gh.log"
 touch "$GH_LOG"
 LOOPKEEPER_ARTIFACT_DIR="$STAGING/writer-artifacts"
 
-(
+run_writer_contract_case() {
+  local action="$1" artifact_dir="$2"
+  (
   cd "$ROOT"
   env \
     PATH="$FAKE_BIN:$PATH" \
@@ -83,18 +92,22 @@ LOOPKEEPER_ARTIFACT_DIR="$STAGING/writer-artifacts"
     LOOPKEEPER_MAX_OUTPUT_BYTES=50000 \
     LOOPKEEPER_REQUEST_TIMEOUT=1 \
     LOOPKEEPER_JOB_TIMEOUT_SECONDS=30 \
-    LOOPKEEPER_CI_WORKFLOW_NAME=CI \
-    LOOPKEEPER_CI_WORKFLOW_FILE=ci.yml \
+    LOOPKEEPER_CI_WORKFLOW_NAME=LoopkeeperImmediate \
+    LOOPKEEPER_CI_WORKFLOW_FILE=__loopkeeper_immediate__.yml \
     LOOPKEEPER_POLICY_PATH=.github/codex/review-policy.md \
     LOOPKEEPER_CONTEXT_PATH=.github/codex/context-files.txt \
     LOOPKEEPER_CHECK_MAX_RAW_BYTES=1000000 \
     LOOPKEEPER_OPERATOR=1 \
     LOOPKEEPER_EVENT_NAME=pull_request_target \
-    LOOPKEEPER_PR_ACTION=closed \
+    LOOPKEEPER_PR_ACTION="$action" \
     LOOPKEEPER_EXPECTED_HEAD_SHA="$ROOT_HEAD_SHA" \
-    LOOPKEEPER_ARTIFACT_DIR="$LOOPKEEPER_ARTIFACT_DIR" \
+    LOOPKEEPER_ARTIFACT_DIR="$artifact_dir" \
     "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" 159
-)
+  )
+}
+
+run_writer_contract_case opened "$LOOPKEEPER_ARTIFACT_DIR"
+run_writer_contract_case labeled "$STAGING/writer-artifacts-labeled"
 
 grep -Fq 'gh pr comment 159' "$GH_LOG"
 if grep -Fq 'loopkeeper.transport' "$GH_LOG"; then
@@ -102,4 +115,7 @@ if grep -Fq 'loopkeeper.transport' "$GH_LOG"; then
   exit 1
 fi
 [[ -s "$LOOPKEEPER_ARTIFACT_DIR/comment.md" ]]
+jq -e '.evidence_state == "fallback"' "$LOOPKEEPER_ARTIFACT_DIR/review-metadata.json" >/dev/null
+[[ -s "$STAGING/writer-artifacts-labeled/comment.md" ]]
+jq -e '.evidence_state == "fallback"' "$STAGING/writer-artifacts-labeled/review-metadata.json" >/dev/null
 echo 'Pinned Loopkeeper writer artifact-only contract passed.'

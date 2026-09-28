@@ -172,6 +172,20 @@ jobs:
           LOOPKEEPER_CONTRACT_NETWORK: "1"
         run: bash tests/test_codex_automation.sh
 
+  # Keep the external provider boundary visible as its own exact-head check.
+  # The test fetches the immutable Loopkeeper release, verifies both source
+  # digests, and executes the pinned artifact-only writer contract.
+  loopkeeper-writer-contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Pinned Loopkeeper writer contract
+        env:
+          LOOPKEEPER_CONTRACT_NETWORK: "1"
+        run: bash tests/test_loopkeeper_writer_contract.sh
+
   frontend:
     runs-on: ubuntu-latest
 

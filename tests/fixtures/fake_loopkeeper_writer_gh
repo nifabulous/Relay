@@ -38,6 +38,9 @@ if [[ "${1:-}" == "api" ]]; then
         printf '{"object":{"sha":"%s"}}\n' "${FAKE_TRUSTED_SHA:?}"
       fi
       ;;
+    repos/nifabulous/Relay/actions/workflows?per_page=100\&page=1)
+      printf '{"workflows":[]}\n'
+      ;;
     repos/nifabulous/Relay/pulls/159)
       printf '{"state":"open","head_sha":"%s"}\n' "${FAKE_TRUSTED_SHA:?}"
       ;;

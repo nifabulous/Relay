@@ -46,9 +46,10 @@ jobs:
       (github.event_name != 'workflow_run' ||
        github.event.workflow_run.event == 'pull_request')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     permissions:
       contents: read
+      actions: read
       pull-requests: read
     outputs:
       pr_numbers: ${{ steps.select.outputs.pr_numbers }}
@@ -62,6 +63,7 @@ jobs:
           DIRECT_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number || 0 }}
           RUN_SOURCE_EVENT: ${{ github.event.workflow_run.event || '' }}
           RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+          RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
           RUN_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
         shell: bash
         run: |
@@ -93,9 +95,231 @@ jobs:
             exit 0
           fi
 
+          # A direct pull_request_target run owns immediate publication for
+          # this head. Do not let the later CI callback cancel that run through
+          # Loopkeeper's PR-scoped concurrency group while its artifact/writer
+          # is still active. If it fails, the callback re-enters review after
+          # the failed run completes; if it succeeds, the immediate comment is
+          # already authoritative for this head.
+          direct_runs_file="$(mktemp)"
+          targets_file=""
+          response_file=""
+          trap 'rm -f "$direct_runs_file" "${targets_file:-}" "${response_file:-}"' EXIT
+          target_pr_numbers='[]'
+          if jq -e 'type == "array"' <<<"${RUN_PULL_REQUESTS:-[]}" >/dev/null 2>&1; then
+            target_pr_numbers="$(jq -c '[.[]?.number? | select(type == "number")] | unique' <<<"${RUN_PULL_REQUESTS:-[]}")"
+          fi
+          skip_ci_callback() {
+            local message="$1"
+            {
+              echo "## Loopkeeper CI callback"
+              echo ""
+              echo "$message"
+            } >>"$GITHUB_STEP_SUMMARY"
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          }
+          resolve_head_pr_numbers() {
+            local resolved='[]'
+            local page page_file page_returned page_bytes
+            for page in 1 2 3; do
+              page_file="$(mktemp)"
+              if ! gh api "repos/${GH_REPO}/commits/${RUN_HEAD_SHA}/pulls?per_page=100&page=${page}" \
+                --jq '[.[]? | select(.state == "open") | .number]' \
+                >"$page_file" 2>/dev/null; then
+                rm -f "$page_file"
+                return 1
+              fi
+              page_bytes="$(wc -c <"$page_file" | tr -d ' ')"
+              if (( page_bytes > 200000 )) || ! jq -e 'type == "array"' "$page_file" >/dev/null; then
+                rm -f "$page_file"
+                return 2
+              fi
+              if ! resolved="$(jq -cn --argjson accumulated "$resolved" --slurpfile page "$page_file" \
+                '$accumulated + $page[0] | unique')"; then
+                rm -f "$page_file"
+                return 2
+              fi
+              page_returned="$(jq 'length' "$page_file")"
+              rm -f "$page_file"
+              if (( page_returned < 100 )); then
+                printf '%s\n' "$resolved"
+                return 0
+              fi
+            done
+            printf '%s\n' "$resolved"
+            return 0
+          }
+          head_pr_numbers='[]'
+          head_lookup_status=0
+          head_pr_numbers="$(resolve_head_pr_numbers)" || head_lookup_status=$?
+          case "$head_lookup_status" in
+            0) ;;
+            1) skip_ci_callback "The immediate PR review head-to-PR association could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+            *) skip_ci_callback "The immediate PR review head-to-PR association was malformed or exceeded its bounded window, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+          esac
+          target_pr_numbers="$(jq -cn --argjson event "$target_pr_numbers" --argjson head "$head_pr_numbers" '$event + $head | unique')"
+          load_direct_runs() {
+            local aggregate_json='[]'
+            local head_file head_matches
+            head_file="$(mktemp)"
+            if gh api "repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&head_sha=${RUN_HEAD_SHA}&per_page=100" \
+              >"$head_file" 2>/dev/null &&
+              jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$head_file" >/dev/null; then
+              head_matches="$(jq -r --arg sha "$RUN_HEAD_SHA" --argjson target_prs "$target_pr_numbers" '
+                [.workflow_runs[]?
+                 | select((.event // "") == "pull_request_target")
+                 | select((.head_sha // "") == $sha or
+                   ([.pull_requests[]?.head.sha?] | index($sha)) != null or
+                   (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)))]
+                | length
+              ' "$head_file")"
+              if [[ "$head_matches" =~ ^[1-9][0-9]*$ ]]; then
+                cp "$head_file" "$direct_runs_file"
+                rm -f "$head_file"
+                return 0
+              fi
+            fi
+            rm -f "$head_file"
+            local page page_file page_returned page_bytes page_plausible runs_endpoint
+            for page in 1 2 3; do
+              page_file="$(mktemp)"
+              runs_endpoint="repos/${GH_REPO}/actions/workflows/loopkeeper-pr-review.yml/runs?event=pull_request_target&per_page=100"
+              runs_endpoint+="&page=${page}"
+              if ! gh api "$runs_endpoint" \
+                >"$page_file" 2>/dev/null; then
+                rm -f "$page_file"
+                return 1
+              fi
+              page_bytes="$(wc -c <"$page_file" | tr -d ' ')"
+              if (( page_bytes > 500000 )) || ! jq -e 'type == "object" and (.workflow_runs | type) == "array"' "$page_file" >/dev/null; then
+                rm -f "$page_file"
+                return 2
+              fi
+              page_plausible="$(jq -r --arg sha "$RUN_HEAD_SHA" --argjson target_prs "$target_pr_numbers" '
+                any(.workflow_runs[]?;
+                  (.event // "") == "pull_request_target" and
+                  ((.head_sha // "") == $sha or
+                   ([.pull_requests[]?.head.sha?] | index($sha)) != null or
+                   (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                     | any($numbers[]?; . as $number | ($target_prs | index($number)) != null))))
+              ' "$page_file")"
+              if ! aggregate_json="$(jq -cn --argjson accumulated "$aggregate_json" --slurpfile page "$page_file" '$accumulated + $page[0].workflow_runs')"; then
+                rm -f "$page_file"
+                return 2
+              fi
+              page_returned="$(jq -r '.workflow_runs | length' "$page_file")"
+              rm -f "$page_file"
+              if [[ "$page_plausible" == "true" ]] || (( page_returned < 100 )); then
+                printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
+                return 0
+              fi
+            done
+            # The bounded repo-wide listing is only evidence for the
+            # classifier. If it contains an empty-PR run that cannot be tied to
+            # the current head, the classifier marks it as unresolved and
+            # skips the callback rather than re-entering review blindly.
+            printf '{"workflow_runs":%s}\n' "$aggregate_json" >"$direct_runs_file"
+            return 0
+          }
+          load_direct_runs_or_skip() {
+            local load_status=0
+            load_direct_runs || load_status=$?
+            case "$load_status" in
+              0) ;;
+              1) skip_ci_callback "The immediate PR review could not be inspected, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+              2) skip_ci_callback "The immediate PR review listing was malformed or unexpectedly large, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+              *) skip_ci_callback "The immediate PR review listing could not be verified, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed." ;;
+            esac
+          }
+          load_direct_runs_or_skip
+          classify_direct_run() {
+            jq -r --arg sha "$RUN_HEAD_SHA" --arg branch "$RUN_HEAD_BRANCH" --argjson target_prs "$target_pr_numbers" '
+              [ .workflow_runs[]?
+                | select((.event // "") == "pull_request_target")
+                | {
+                    run: .,
+                    exact: ((.head_sha // "") == $sha or ([.pull_requests[]?.head.sha?] | index($sha)) != null),
+                    associated: (([.pull_requests[]?.number?] | map(select(type == "number"))) as $numbers
+                      | any($numbers[]?; . as $number | ($target_prs | index($number)) != null)
+                      or ($branch != "" and (.head_branch // "") == $branch)),
+                    unresolved: ((((.pull_requests? | type) == "array" and (.pull_requests | length) == 0)
+                      or (.pull_requests? == null))
+                      and ((.head_sha // "") != $sha))
+                  }
+              ] as $candidates
+              | ($candidates | map(select(.exact)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $exact
+              | ($candidates | map(select(.associated)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated
+              | ($candidates | map(select(.associated and (.run.status // "") != "completed")) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $associated_active
+              | ($candidates | map(select(.unresolved)) | sort_by(.run.updated_at // .run.created_at // "") | .[-1] // null) as $unresolved
+              | if $exact != null then
+                  ($exact.run | if (.status // "") != "completed" then "active"
+                    elif (.conclusion // "") == "success" then "success"
+                    else "failed" end) + "|" + (($exact.run.id // 0) | tostring)
+                elif $associated_active != null then
+                  # An associated-but-not-exact run is still unsafe to
+                  # cancel while active; wait for an exact-head re-entry
+                  # instead of joining the immediate run concurrency group.
+                  "unknown|" + (($associated_active.run.id // 0) | tostring)
+                elif $associated != null then
+                  # A branch/PR-number association without an exact head is
+                  # not enough to cancel the callback. A failed completed
+                  # run does need the existing exact-head recovery path; a
+                  # successful but non-exact run remains unverifiable.
+                  ($associated.run | if (.conclusion // "") == "failure" then "failed" else "unknown" end) + "|" + (($associated.run.id // 0) | tostring)
+                elif (($target_prs | length) > 0 and $unresolved != null) then
+                  # pull_request_target can expose base-side identity with no
+                  # PR association. This is plausible evidence, not proof of
+                  # a different run; fail closed instead of re-entering.
+                  "unknown|" + (($unresolved.run.id // 0) | tostring)
+                else "none|"
+                end
+            ' "$direct_runs_file"
+          }
+          direct_state="$(classify_direct_run)"
+          direct_status="${direct_state%%|*}"
+          direct_run_id="${direct_state#*|}"
+          if [[ "$direct_status" == "unknown" ]]; then
+            skip_ci_callback "The immediate PR review run association could not be verified for head ${RUN_HEAD_SHA}; the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+          fi
+          immediate_wait_seconds="${LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS:-1080}"
+          [[ "$immediate_wait_seconds" =~ ^[0-9]+$ ]] || {
+            echo "LOOPKEEPER_IMMEDIATE_REVIEW_WAIT_SECONDS must be a non-negative integer" >&2
+            exit 2
+          }
+          immediate_deadline=$(( $(date +%s) + immediate_wait_seconds ))
+          while [[ "$direct_status" == "active" ]]; do
+            if (( $(date +%s) >= immediate_deadline )); then
+              {
+                echo "## Loopkeeper CI callback"
+                echo ""
+                echo "Immediate PR review run #${direct_run_id} stayed active through the bounded wait, so the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if that run later fails."
+              } >>"$GITHUB_STEP_SUMMARY"
+              echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+            load_direct_runs_or_skip
+            direct_state="$(classify_direct_run)"
+            direct_status="${direct_state%%|*}"
+            direct_run_id="${direct_state#*|}"
+            if [[ "$direct_status" == "unknown" ]]; then
+              skip_ci_callback "The immediate PR review run association could not be re-verified for head ${RUN_HEAD_SHA}; the CI callback was skipped to avoid cancelling it. Re-enter with workflow dispatch if needed."
+            fi
+          done
+          if [[ "$direct_status" == "success" ]]; then
+            {
+              echo "## Loopkeeper CI callback"
+              echo ""
+              echo "Immediate PR review run #${direct_run_id} completed successfully; the CI callback was skipped because the current-head comment is already published."
+            } >>"$GITHUB_STEP_SUMMARY"
+            echo 'pr_numbers=[]' >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           targets_file="$(mktemp)"
           response_file="$(mktemp)"
-          trap 'rm -f "$targets_file" "$response_file"' EXIT
           if [[ -z "$RUN_PULL_REQUESTS" || "$RUN_PULL_REQUESTS" == "null" || "$RUN_PULL_REQUESTS" == "[]" ]]; then
             echo "workflow_run has no associated PRs; recovering targets from the run head" >&2
             fallback_candidates='[]'
@@ -197,8 +421,13 @@ jobs:
       # Must stay identical to the `uses:` pin above — the release contract
       # requires the checkout SHA and the workflow pin to agree.
       loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
-      ci_workflow_name: CI
-      ci_workflow_file: ci.yml
+      # Every direct pull_request_target action is an immediate publication
+      # path. The pinned adapter only defers opened/synchronize when it is
+      # explicitly allowed to discover a real CI run; lifecycle and label
+      # events never use the real CI identity, so they cannot silently defer.
+      # workflow_run/workflow_dispatch remain explicit CI-backed re-entry.
+      ci_workflow_name: ${{ github.event_name == 'pull_request_target' && 'LoopkeeperImmediate' || 'CI' }}
+      ci_workflow_file: ${{ github.event_name == 'pull_request_target' && '__loopkeeper_immediate__.yml' || 'ci.yml' }}
       pr_number: ${{ matrix.pr_number }}
       expected_head_sha: ${{ github.event.workflow_run.head_sha || '' }}
       job_timeout_seconds: 1200
@@ -215,9 +444,12 @@ jobs:
     # Re-publish each immutable review artifact under a PR-specific name before
     # the privileged writer consumes it. The reusable workflow's artifact is
     # run-scoped; metadata/head validation here prevents a matrix entry from
-    # rebinding another PR's review.
+    # rebinding another PR's review. Every selected event must produce an
+    # artifact: immediate direct reviews must never silently defer.
     needs: [targets, review]
     if: ${{ needs.review.result == 'success' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    outputs:
+      ineligible: ${{ steps.presence.outputs.ineligible || 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -228,38 +460,43 @@ jobs:
       fail-fast: false
       matrix:
         pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
-    # The artifact is run-scoped, so every matrix leg reaches the same answer
-    # and the (last-writer-wins) matrix output is well defined.
-    outputs:
-      deferred: ${{ steps.presence.outputs.deferred }}
+    # The artifact is run-scoped; each matrix leg validates and rebinds its
+    # own PR-bound copy before publication.
     steps:
-      - name: Detect a review deferred to the CI-completion run
+      - name: Require a review artifact
         id: presence
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
           EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ matrix.pr_number }}
         run: |
           set -euo pipefail
           name="loopkeeper-review-${RUN_ID}"
           count="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/artifacts?name=${name}" --jq '.total_count')"
           [[ "$count" =~ ^[0-9]+$ ]]
-          if (( count > 0 )); then
-            echo "deferred=false" >>"$GITHUB_OUTPUT"
-          elif [[ "$EVENT_NAME" == "pull_request_target" ]]; then
-            # The reusable review defers a pull_request_target run to the
-            # CI-completion (workflow_run) review whenever CI already runs for
-            # the head, and uploads nothing; that run publishes the review.
-            echo "No ${name}: this ${EVENT_NAME} run deferred to the CI-completion review."
-            echo "deferred=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "No review artifact ${name} for a ${EVENT_NAME} run." >&2
+          echo "ineligible=false" >>"$GITHUB_OUTPUT"
+          if (( count == 0 )); then
+            jobs_payload="$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+            jq -e 'type == "object" and (.jobs | type) == "array"' <<<"$jobs_payload" >/dev/null
+            eligibility_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / eligibility" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
+            review_conclusion="$(jq -r --arg name "review (${PR_NUMBER}) / review" '[.jobs[]? | select(.name == $name) | .conclusion] | last // ""' <<<"$jobs_payload")"
+            # The rebind job runs before this workflow has a terminal conclusion,
+            # so the completed job conclusions are the authoritative ineligible
+            # signature available from inside the live run.
+            if [[ "$EVENT_NAME" == "pull_request_target" && "$eligibility_conclusion" == "success" && "$review_conclusion" == "skipped" ]]; then
+              echo "The pinned reviewer was correctly skipped after eligibility rejected PR #${PR_NUMBER}; no publication is required." >>"$GITHUB_STEP_SUMMARY"
+              echo "ineligible=true" >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "No review artifact ${name} for a ${EVENT_NAME} run; immediate publication cannot be skipped." >&2
             exit 1
           fi
+          echo "Found ${name}."
 
       - name: Download run-scoped review artifact
-        if: steps.presence.outputs.deferred != 'true'
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: loopkeeper-review-${{ github.run_id }}
@@ -267,7 +504,7 @@ jobs:
 
       - name: Verify and rebind PR artifact
         id: artifact
-        if: steps.presence.outputs.deferred != 'true'
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -291,7 +528,7 @@ jobs:
           } >>"$GITHUB_OUTPUT"
 
       - name: Upload PR-bound review artifact
-        if: steps.presence.outputs.deferred != 'true'
+        if: ${{ steps.presence.outputs.ineligible != 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: loopkeeper-review-${{ github.run_id }}-pr-${{ matrix.pr_number }}
@@ -304,7 +541,7 @@ jobs:
     # immutable artifact. The writer has no model secret and re-checks fork
     # eligibility immediately before the comment mutation.
     needs: [targets, rebind]
-    if: ${{ needs.rebind.result == 'success' && needs.rebind.outputs.deferred != 'true' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
+    if: ${{ needs.rebind.result == 'success' && needs.rebind.outputs.ineligible != 'true' && vars.LOOPKEEPER_REVIEW_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -437,8 +674,8 @@ jobs:
           LOOPKEEPER_EVENT_NAME: ${{ github.event_name }}
           LOOPKEEPER_PR_ACTION: ${{ github.event.action || '' }}
           LOOPKEEPER_EXPECTED_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          LOOPKEEPER_CI_WORKFLOW_NAME: CI
-          LOOPKEEPER_CI_WORKFLOW_FILE: ci.yml
+          LOOPKEEPER_CI_WORKFLOW_NAME: ${{ github.event_name == 'pull_request_target' && 'LoopkeeperImmediate' || 'CI' }}
+          LOOPKEEPER_CI_WORKFLOW_FILE: ${{ github.event_name == 'pull_request_target' && '__loopkeeper_immediate__.yml' || 'ci.yml' }}
           LOOPKEEPER_POLICY_PATH: .github/codex/review-policy.md
           LOOPKEEPER_CONTEXT_PATH: .github/codex/context-files.txt
           LOOPKEEPER_CHECK_MAX_RAW_BYTES: ${{ vars.LOOPKEEPER_CHECK_MAX_RAW_BYTES || '1000000' }}
@@ -477,12 +714,16 @@ jobs:
           TARGETS_RESULT: ${{ needs.targets.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           REBIND_RESULT: ${{ needs.rebind.result }}
-          REBIND_DEFERRED: ${{ needs.rebind.outputs.deferred }}
+          INELIGIBLE: ${{ needs.rebind.outputs.ineligible }}
           PUBLISH_RESULT: ${{ needs.publish.result }}
         run: |
           set -euo pipefail
           if [[ "$TARGETS_RESULT" == "skipped" || -z "${SELECTED:-}" || "$SELECTED" == "[]" ]]; then
             echo "No eligible exact-head PR target was selected."
+            exit 0
+          fi
+          if [[ "$INELIGIBLE" == "true" ]]; then
+            echo "The selected PR was correctly excluded by Loopkeeper eligibility; no publication is required."
             exit 0
           fi
           [[ "$REVIEW_RESULT" == "success" ]] || {
@@ -493,10 +734,6 @@ jobs:
             echo "selected review artifact was not rebound (result=$REBIND_RESULT)" >&2
             exit 1
           }
-          if [[ "${REBIND_DEFERRED:-}" == "true" ]]; then
-            echo "Review deferred to the CI-completion run; nothing to publish from this run."
-            exit 0
-          fi
           [[ "$PUBLISH_RESULT" == "success" ]] || {
             echo "verified artifact publication did not complete (result=$PUBLISH_RESULT)" >&2
             exit 1
