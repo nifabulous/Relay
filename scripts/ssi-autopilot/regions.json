@@ -1017,6 +1017,20 @@
               "terms_inferred": true
             },
             {
+              "currency": "EUR",
+              "correspondent": "Unicredit GBMH",
+              "int_bic": "HYVEDEMMXXX",
+              "nostro": "ACCT-91001032",
+              "with_an": "ACCT-91001032",
+              "charge_code": "SHA",
+              "value_date": "spot",
+              "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
+              "as_of": "2026-09-28",
+              "status": "unverified",
+              "bic_only": false,
+              "terms_inferred": true
+            },
+            {
               "currency": "GBP",
               "correspondent": "Standard Chartered Bank, London",
               "int_bic": "SCBLGB2L",
@@ -1241,7 +1255,7 @@
               "terms_inferred": true
             }
           ],
-          "admitted_record_digest": "8d3d8b1063f25dd7ff9e69aa053a296ac3ca86af75863532d8294d6b2c744e68",
+          "admitted_record_digest": "731abf642f94e6b89ee4a0d33beee98714326af9532f0f5e02e9c921beb6338c",
           "source_snapshot": {
             "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
             "source_sha256": "b0fed6d2abd084153b7f35028566608691382f1526344892a109729bac08b7fc",

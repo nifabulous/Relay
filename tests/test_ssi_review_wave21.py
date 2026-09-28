@@ -74,7 +74,7 @@ def test_wave21_source_and_mask_equivalence_are_auditable():
         for route in evidence["routes"]
     }
     assert actual == expected
-    assert len(actual) == 31
+    assert len(actual) == 32
     assert all(
         re.fullmatch(r"ACCT-\d{8}", value)
         for pair in actual.values()
@@ -112,7 +112,7 @@ def test_wave21_source_matches_independent_attestation_fixture():
         (record["currency"], record["int_bic"]) for record in bank["admitted_records"]
     }
     assert evidence_route_keys == manifest_route_keys == expected_route_keys
-    assert len(expected_route_keys) == 31
+    assert len(expected_route_keys) == 32
 
 
 def test_wave21_source_attestation_strips_dynamic_state_and_extracts_routes():
@@ -209,7 +209,7 @@ def test_turkey_mask_namespace_is_beneficiary_scoped():
 
 def test_wave21_inferred_routes_are_excluded_by_the_selection_guard():
     rows = [row for row in SSI_RECORDS if row[0] == "FNNBTRISXXX"]
-    assert len(rows) == 31
+    assert len(rows) == 32
     assert all(row[14] is True for row in rows)
     assert all(not _is_routable_ssi(_row_to_ssi(row)) for row in rows)
 
@@ -222,4 +222,4 @@ def test_wave21_manifest_coverage_is_non_vacuous():
     assert {record["currency"] for record in bank["admitted_records"]} == {
         row[2] for row in seeded
     }
-    assert len(seeded) == len(bank["admitted_records"]) == 31
+    assert len(seeded) == len(bank["admitted_records"]) == 32

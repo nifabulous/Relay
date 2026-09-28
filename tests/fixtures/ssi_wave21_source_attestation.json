@@ -2,7 +2,7 @@
   "attestation_version": 1,
   "beneficiary_bic": "FNNBTRIS",
   "source": "https://www.qnb.com.tr/en/popup-en/nostro-account",
-  "source_sha256": "29d93febfa0103ab3cd003e76d1273a344cc89da3a0d6e8f718989fa83f3740d",
+  "source_sha256": "7205ce2cf275483be386b972b852b216e8dc94fbcba23a202b5bf2b0a5d74d57",
   "hash_normalization": "SHA-256 after removing the per-request ASP.NET __VIEWSTATE field",
   "review_basis": "independent route-key and normalized source-digest fixture; raw account values intentionally excluded",
   "bic_aliases": {
@@ -22,6 +22,7 @@
     ["EUR", "CHASDEFX"],
     ["EUR", "COBADEFF"],
     ["EUR", "DEUTDEFFXXX"],
+    ["EUR", "HYVEDEMMXXX"],
     ["EUR", "IRVTDEFX"],
     ["EUR", "SCBLDEFFXXX"],
     ["EUR", "SOGEFRPP"],
