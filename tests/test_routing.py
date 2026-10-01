@@ -202,6 +202,18 @@ class TestNormalizeBicInput:
         else:
             assert any("not derivable" in e for e in errors)
 
+    def test_iban_with_unknown_bank_code_reports_bic_not_derivable(self):
+        # GB82 WEST... is checksum-valid but its bank code is fictional, so
+        # schwifty derives no BIC. The caller must get the IBAN-specific
+        # explanation, not a BIC-length error about the 4-character "None".
+        normalized, valid, errors, country = _normalize_bic_input(
+            "GB82 WEST 1234 5698 7654 32"
+        )
+        assert valid is False
+        assert normalized == ""
+        assert country == "GB"
+        assert errors == ["IBAN valid but BIC not derivable for this country"]
+
 
 # ===========================================================================
 # lookup_bank — prefix-matching fallback

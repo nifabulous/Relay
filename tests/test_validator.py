@@ -109,6 +109,16 @@ class TestValidateIBAN:
         # accept either a valid BIC or None, but never an error.
         assert result.bic is None or len(result.bic) >= 8
 
+    def test_valid_iban_with_unknown_bank_code_has_null_bic(self):
+        # The widely documented example IBAN: checksum-valid, but the bank
+        # code WEST is fictional, so schwifty derives no BIC (iban.bic is None).
+        # The result must carry None, not the string "None".
+        result = validate_iban("GB82 WEST 1234 5698 7654 32")
+        assert result.valid is True
+        assert result.country_code == "GB"
+        assert result.errors == []
+        assert result.bic is None
+
     def test_accepts_spaces(self):
         result = validate_iban("GB29 NWBK 6016 1331 9268 19")
         assert result.valid is True
