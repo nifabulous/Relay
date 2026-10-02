@@ -71,10 +71,14 @@ npm run build && npm run check:bundle
 
 ## Design System
 
-The canonical design contract is [`../DESIGN.md`](../DESIGN.md). All components consume tokens from `design-system/tokens.css`. Feature-local substitutes for shared tokens or components are prohibited.
+The canonical design contract is [`../DESIGN.md`](../DESIGN.md). All app components consume tokens from `design-system/tokens.css`. Feature-local substitutes for shared tokens or components are prohibited. The one exception is the landing page (`src/landing/`, built separately by `vite.landing.config.ts`), which carries the new system's token set until Phase 3 migrates `tokens.css`.
+
+`DESIGN.md` was rewritten on 2026-10-01 (Geist, primary `#533AFD`) and is adopted surface by surface.
+These workspaces keep the current `tokens.css` values (Instrument Sans, IBM Plex Mono, `#3157D5`) until
+Phase 3 migrates them; see the **Adoption status** table in `DESIGN.md`.
 
 Key principles:
-- Blue (#3157D5) reserved for actions, selection, progress
+- Primary colour reserved for actions, selection, progress and the route
 - Thin structural borders, no decorative shadows
 - No colored card edges, no emoji as icons
 - Status expressed with text + icon + color (never color alone)

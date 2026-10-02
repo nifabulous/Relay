@@ -89,13 +89,20 @@ frontend/src/
 ```
 
 ### Design system
-The canonical design contract is `DESIGN.md`. All components consume tokens from `design-system/tokens.css`. Key principles:
-- Blue (#3157D5) reserved for actions, selection, progress only
-- Thin structural borders, no decorative shadows or colored card edges
+The canonical design contract is `DESIGN.md`, rewritten 2026-10-01: Geist and Geist Mono, primary
+`#533AFD`, cool navy ink, and firecrawl-style hairline rails and rules. It is adopted surface by surface;
+read its **Adoption status** table first. Until Phase 3 migrates them, the `/app` workspaces keep the
+values in `design-system/tokens.css` (Instrument Sans, IBM Plex Mono, `#3157D5`). Do not "fix" either
+surface towards the other's values. Rules marked "(new system)" in DESIGN.md apply only to migrated
+surfaces; unmigrated workspaces follow DESIGN.md Appendix A. Key principles that hold everywhere:
+- Primary colour is reserved for actions, selection, progress, focus and the route
+- No decorative shadows or coloured card edges; nothing overflows its box
 - Status with text + icon + color (never color alone)
-- WCAG 2.2 AA contrast (≥4.5:1) on all semantic tokens
+- WCAG 2.2 AA contrast (≥4.5:1) on all text tokens
+- Data colours: fixed order, never cycled, never on navigation or tabs
+- New system only: lines are real borders of real boxes, and facts about Relay come from repository data
 - Route-level code splitting (React.lazy per feature)
-- Eager shell ≤200KB gzip
+- Eager shell ≤210KiB gzip (`frontend/scripts/check-bundle.mjs`)
 
 ## Architecture
 

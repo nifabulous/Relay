@@ -529,11 +529,13 @@ travel — explicitly roadmap, not current behaviour.
 
 ## Design system
 
-The canonical design contract is [`DESIGN.md`](DESIGN.md).
+The canonical design contract is [`DESIGN.md`](DESIGN.md), rewritten on 2026-10-01 and adopted surface
+by surface (see its **Adoption status** table). The `/app` workspaces keep their current tokens until
+Phase 3.
 
-- **Color:** Blue `#3157D5` reserved for actions/selection/progress only
-- **Typography:** Instrument Sans (UI) + IBM Plex Mono (identifiers/amounts)
-- **Borders:** Thin (1px), low-opacity — no decorative shadows
+- **Color:** Primary `#533AFD` (the app uses `#3157D5` until Phase 3), reserved for actions, selection, progress and the route; cool navy ink
+- **Typography:** Geist (UI) + Geist Mono (identifiers, labels, amounts); the app uses Instrument Sans + IBM Plex Mono until Phase 3
+- **Lines:** 1px hairline rails, rules and cell borders that are the real edges of boxes; nothing overflows its box; no decorative shadows
 - **Anti-template:** No card mosaics, no colored edges, no emoji icons, no uniform radius
 - **Status:** Text + icon + color (never color alone)
 - **WCAG 2.2 AA:** All semantic tokens contrast-verified
