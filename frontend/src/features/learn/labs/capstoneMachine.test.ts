@@ -37,6 +37,60 @@ describe("capstoneReducer", () => {
     expect(next.step).toBe(1);
   });
 
+  // A checksum-valid IBAN whose bank code is not in the registry validates with
+  // bic: null. Every later step needs a beneficiary bank, so stop and ask for it
+  // rather than carrying on with no bank or substituting one.
+  it("stops for a BIC when a valid IBAN derives none", () => {
+    const validating: CapstoneState = { ...initialState, status: "validating" };
+    const next = capstoneReducer(validating, {
+      type: "STEP_SUCCESS",
+      step: 0,
+      result: { valid: true, bic: null, bank: null, errors: [] },
+    });
+    expect(next.status).toBe("needs_bic");
+    expect(next.step).toBe(0);
+    expect(next.results.validation).toEqual({ valid: true, bic: null, bank: null, errors: [] });
+  });
+
+  it("continues to verifying once the learner supplies a checked BIC", () => {
+    const needsBic: CapstoneState = {
+      ...initialState,
+      status: "needs_bic",
+      results: { validation: { valid: true, bic: null, bank: null, errors: [] } },
+    };
+    const lookup = { valid: true, input_type: "bic", bic: "BARCGB22XXX", bank: { bank_name: "Barclays" }, errors: [] };
+    const next = capstoneReducer(needsBic, { type: "PROVIDE_BIC", lookup });
+    expect(next.status).toBe("verifying");
+    expect(next.step).toBe(1);
+    expect(next.results.enteredBic).toEqual(lookup);
+    expect(next.results.validation).toEqual(needsBic.results.validation);
+  });
+
+  // The BIC check is async and the IBAN stays editable meanwhile. A check that
+  // resolves after the learner changed the IBAN must not skip validating it.
+  it("ignores a BIC that arrives after the learner left the needs_bic state", () => {
+    const edited = capstoneReducer(
+      { ...initialState, status: "needs_bic", results: { validation: { valid: true, bic: null, errors: [] } } },
+      { type: "EDIT_INPUT", input: { ...initialState.paymentInput, beneficiary_iban: "GB29NWBK60161331926819" } },
+    );
+    const next = capstoneReducer(edited, {
+      type: "PROVIDE_BIC",
+      lookup: { valid: true, input_type: "bic", bic: "BARCGB22XXX", errors: [] },
+    });
+    expect(next).toBe(edited);
+  });
+
+  it("does not ask for a BIC when the IBAN itself is invalid", () => {
+    const validating: CapstoneState = { ...initialState, status: "validating" };
+    const next = capstoneReducer(validating, {
+      type: "STEP_SUCCESS",
+      step: 0,
+      result: { valid: false, bic: null, bank: null, errors: ["IBAN invalid: Invalid checksum digits"] },
+    });
+    expect(next.status).toBe("verifying");
+    expect(next.step).toBe(1);
+  });
+
   it("goes to error state on validation failure", () => {
     const validating: CapstoneState = { ...initialState, status: "validating" };
     const next = capstoneReducer(validating, {
