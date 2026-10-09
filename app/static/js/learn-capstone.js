@@ -90,6 +90,7 @@ LearnLabs["capstone"] = function (main, helpers) {
       try {
         const res = await fetch(`/api/validate?value=${encodeURIComponent(paymentData.iban)}`).then(r => r.json());
         paymentData.bic = res.bic;
+        paymentData.bankName = res.bank ? res.bank.bank_name : null;
         paymentData.bicEntered = false;
         if (res.valid && !res.bic) {
           // The IBAN is valid but its bank code is not in the directory. Every
@@ -143,6 +144,7 @@ LearnLabs["capstone"] = function (main, helpers) {
         out.innerHTML = `<p class="muted">${esc((res.errors || []).join("; ") || "That BIC is not valid.")}</p>`;
       } else {
         paymentData.bic = res.bic;
+        paymentData.bankName = res.bank ? res.bank.bank_name : null;
         paymentData.bicEntered = true;
         out.innerHTML = `
           <p><strong>✓ BIC accepted:</strong> <span class="mono">${esc(res.bic)}</span>${res.bank ? " — " + esc(res.bank.bank_name) : ""}</p>
@@ -399,7 +401,10 @@ LearnLabs["capstone"] = function (main, helpers) {
             originator_bic: "BOFAUS3NXXX",
             originator_name: "Bank of America",
             beneficiary_bic: paymentData.bic,
-            beneficiary_name: paymentData.name,
+            // The receiving BANK's name: generate_timeline puts it on the final
+            // hops. Not the payee. Fall back to the BIC, which identifies the
+            // bank on its own.
+            beneficiary_name: paymentData.bankName || paymentData.bic,
             currency: paymentData.currency,
             amount: paymentData.amount,
             intermediary_bics: intermediaries.slice(0, 1).map(i => i.bic),

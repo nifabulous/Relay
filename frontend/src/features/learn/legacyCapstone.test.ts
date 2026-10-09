@@ -84,6 +84,10 @@ function mockApi(): Captured {
           bank: { bic: "BARCGB22XXX", bank_name: "Barclays", country_code: "GB" }, errors: [],
         });
       }
+      if (value.toUpperCase() === "ABCDGB2L") {
+        // Well-formed, but not a bank the directory knows.
+        return HttpResponse.json({ input: value, input_type: "bic", valid: true, bic: "ABCDGB2LXXX", bank: null, errors: [] });
+      }
       return HttpResponse.json({
         input: value, input_type: "bic", valid: false, bic: null, bank: null,
         errors: [`Enter a valid SWIFT BIC — it must be 8 or 11 characters (you entered ${value.length}).`],
@@ -269,6 +273,68 @@ describe("legacy capstone (app/static/js/learn-capstone.js)", () => {
     expect(await screen.findByText(/that bic is not valid/i)).toBeVisible();
     expect(screen.queryByText(/not an iban/i)).toBeNull();
     expect(document.getElementById("cs-next")).toBeNull();
+  });
+
+  // TrackPaymentRequest.beneficiary_name is the receiving BANK's name
+  // (app/schemas.py); generate_timeline puts it on the final hops. Sending the
+  // payee's name made the timeline read "Received by John Smith".
+  describe("names the receiving bank on track/create, not the payee", () => {
+    async function enterBic(bic: string) {
+      await validateIban(NO_BIC_IBAN);
+      await screen.findByText(/no bic derivable/i);
+      byId<HTMLInputElement>("cs-bic").value = bic;
+      byId("cs-bic-btn").click();
+      await clickWhenPresent("cs-next");
+    }
+
+    it("uses the bank behind a derived BIC", async () => {
+      const captured = mockApi();
+      mountLegacyCapstone();
+
+      await validateIban("GB29NWBK60161331926819");
+      await clickWhenPresent("cs-next");
+      await runRemainingSteps();
+
+      expect(captured.trackBodies[0].beneficiary_name).toBe("NatWest");
+    });
+
+    it("uses the bank behind a BIC the learner entered", async () => {
+      const captured = mockApi();
+      mountLegacyCapstone();
+
+      await enterBic("BARCGB22");
+      await runRemainingSteps();
+
+      expect(captured.trackBodies[0].beneficiary_name).toBe("Barclays");
+    });
+
+    it("falls back to the BIC when the directory does not know the bank", async () => {
+      const captured = mockApi();
+      mountLegacyCapstone();
+
+      await enterBic("ABCDGB2L");
+      await runRemainingSteps();
+
+      expect(captured.trackBodies[0].beneficiary_name).toBe("ABCDGB2LXXX");
+    });
+
+    it("forgets an entered bank once the learner re-validates", async () => {
+      const captured = mockApi();
+      mountLegacyCapstone();
+
+      await validateIban(NO_BIC_IBAN);
+      await screen.findByText(/no bic derivable/i);
+      byId<HTMLInputElement>("cs-bic").value = "BARCGB22";
+      byId("cs-bic-btn").click();
+      await screen.findByText(/bic accepted/i);
+      await validateIban("GB29NWBK60161331926819");
+      await screen.findByText(/BIC derived/i);
+      await clickWhenPresent("cs-next");
+      await runRemainingSteps();
+
+      expect(captured.trackBodies[0].beneficiary_bic).toBe("NWBKGB2LXXX");
+      expect(captured.trackBodies[0].beneficiary_name).toBe("NatWest");
+    });
   });
 
   it("tracks to the derived BIC and sends no BIC override when the IBAN derives one", async () => {
