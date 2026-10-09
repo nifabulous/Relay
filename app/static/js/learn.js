@@ -48,6 +48,9 @@
   }
 
   // ── Helpers ────────────────────────────────────────────
+  // HTML escape helper — learn-utils.js loads before this file (learn.html).
+  var esc = LearnUtils.esc;
+
   function el(tag, className, html) {
     const e = document.createElement(tag);
     if (className) e.className = className;
