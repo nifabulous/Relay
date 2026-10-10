@@ -414,6 +414,12 @@ describe("landing scope", () => {
     expect(scopeCss).not.toMatch(/^\s*(\.relay-btn|\.status-chip|h[1-3]\b)/m);
   });
 
+  it("follows the app theme set on the document root", () => {
+    expect(scopeCss).toMatch(/:root\[data-theme="dark"\]\s+\.surface-landing\b/);
+    expect(scopeCss).toMatch(/:root\[data-theme="black"\]\s+\.surface-landing\b/);
+    expect(scopeCss).toMatch(/:root:not\(\[data-theme="light"\]\)\s+\.surface-landing\b/);
+  });
+
   // Resolve the scope's tokens the way the cascade does: the bare block, then the theme's redefinitions.
   function scopeTokens(opener: RegExp | null): Tokens {
     const base = declarations(blockBody(scopeCss, /^\.surface-landing\s*\{/m));

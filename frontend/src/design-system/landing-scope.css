@@ -39,6 +39,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .surface-landing,
   .surface-landing:not([data-theme="light"]) {
     color-scheme: dark;
     --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
@@ -57,6 +58,7 @@
   }
 }
 
+:root[data-theme="dark"] .surface-landing,
 .surface-landing[data-theme="dark"] {
   color-scheme: dark;
   --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
@@ -75,6 +77,7 @@
 }
 
 /* Self-contained: repeats every dark token, so it renders correctly under an OS light setting. */
+:root[data-theme="black"] .surface-landing,
 .surface-landing[data-theme="black"] {
   color-scheme: dark;
   --bg: #000000; --surface: #0B0B0F; --tint: #121217; --ink: #F5F5F7; --ink2: #B5B7C0; --muted: #8E909B;
