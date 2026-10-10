@@ -78,6 +78,7 @@ describe("trackingRouteStops", () => {
     const stops = trackingRouteStops(payment(events, true));
     expect(stops).toHaveLength(2);
     expect(stops[1].status).toBe("failed");
+    expect(stops[1].role).toBe("correspondent");
     expect(stops[0].status).toBe("not_checked");
   });
 

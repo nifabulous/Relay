@@ -16,8 +16,8 @@ interface Bank {
  * FORWARDED), so events are grouped by BIC in order of first appearance.
  *
  * Only revealed banks are drawn: the payload has no total hop count. The last
- * bank is the beneficiary only once the payment is terminal; before that it is
- * just the furthest bank reached. A bank shows as passed only when a credit
+ * bank is the beneficiary only when the payment is credited; a rejection or a
+ * return ends at an intermediary, so that bank stays a correspondent. A bank shows as passed only when a credit
  * confirms it; otherwise it is not checked. Fewer than two banks is no route.
  */
 export function trackingRouteStops(payment: TrackPaymentResponse): RouteStop[] {
@@ -38,7 +38,7 @@ export function trackingRouteStops(payment: TrackPaymentResponse): RouteStop[] {
   const creditedEnd = payment.is_terminal && payment.current_status === CREDITED;
   return banks.map((bank, index) => {
     const last = index === banks.length - 1;
-    const role = index === 0 ? "origin" : last && payment.is_terminal ? "beneficiary" : "correspondent";
+    const role = index === 0 ? "origin" : last && creditedEnd ? "beneficiary" : "correspondent";
     let status: RouteStopStatus = "not_checked";
     if (bank.statuses.some((s) => FAILED.has(s))) status = "failed";
     else if (creditedEnd || bank.statuses[bank.statuses.length - 1] === CREDITED) status = "passed";
