@@ -14,7 +14,7 @@ import {
   type AtlasScope,
 } from "./atlas/atlasSchemas";
 import { AtlasMap } from "./atlas/AtlasMap";
-import { atlasRouteStops } from "./atlas/atlasRoute";
+import { atlasRouteStops, routeCountryFor, topCorrespondent } from "./atlas/atlasRoute";
 import { AtlasTable } from "./atlas/AtlasTable";
 import { AtlasPanel } from "./atlas/AtlasPanel";
 import { format } from "./atlas/formatters";
@@ -104,10 +104,9 @@ export function AtlasPage() {
   // The hub country comes from the data: the top-ranked entry of hub_countries,
   // the same one the hub view selects by default. Nothing is hard-coded.
   const hubIso2 = data?.hub_countries[0]?.iso2;
-  const selectedCountry = country.data;
-  const routeCorrespondent = selectedCountry
-    ? [...selectedCountry.correspondents].sort((a, b) => b.beneficiary_banks - a.beneficiary_banks)[0]
-    : undefined;
+  const selectedCountry = routeCountryFor(selected, country.data);
+  const routeStops = hubIso2 && selectedCountry ? atlasRouteStops(hubIso2, selectedCountry) : [];
+  const routeCorrespondent = selectedCountry && routeStops.length > 0 ? topCorrespondent(selectedCountry) : undefined;
   const activeRows = useMemo(() => {
     if (!data) return [];
     return view === "hub" ? data.hub_countries.map((item) => ({ iso2: item.iso2, value: item.banks_served })) : data.spokes.map((item) => ({ iso2: item.iso2, value: item.rows }));
@@ -226,7 +225,7 @@ export function AtlasPage() {
                 {selected && hubIso2 && selectedCountry && routeCorrespondent && (
                   <div className="surface-landing atlas-page__route">
                     <LinesRoute
-                      stops={atlasRouteStops(hubIso2, selectedCountry)}
+                      stops={routeStops}
                       summary={`Route from ${hubIso2} through ${routeCorrespondent.name} to ${selectedCountry.iso2}.`}
                       ariaLabel="Route to the selected country"
                     />
