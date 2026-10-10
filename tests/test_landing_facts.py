@@ -111,8 +111,10 @@ def test_export_never_opens_database_url(tmp_path):
     out = tmp_path / "facts.json"
     env = os.environ.copy()
     env.pop("VERCEL", None)
-    # Unreachable on purpose: the export must never connect to it.
-    env["DATABASE_URL"] = "postgresql://relay:relay@127.0.0.1:1/unreachable"
+    # Unreachable on purpose: the export must never connect to it. SQLite needs no
+    # driver, so this runs the same in CI, where only the base dependencies exist;
+    # a Postgres URL would fail at import for want of psycopg, before any isolation.
+    env["DATABASE_URL"] = "sqlite:////nonexistent-relay-dir/unreachable.db"
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--out", str(out)],
         cwd=REPO_ROOT,

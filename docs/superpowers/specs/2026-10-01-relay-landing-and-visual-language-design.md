@@ -117,8 +117,8 @@ Every acceptance criterion below is checked against these, not in isolation.
 - The in-app route showpiece (Phase 2).
 - Migrating the app's own dark and black themes to the new values (Phase 3).
 - Analytics, Sentry or any third-party script on the landing page.
-- A CI E2E job. The repository has none today; landing E2E runs in the local verification gate, like the
-  rest of the E2E suite.
+- A CI E2E job for the rest of the suite. The repository has none today; the existing E2E projects still
+  run only in the local verification gate. The landing project is the exception: see the addendum below.
 - Linking the legacy `/learn` and `/ui` surfaces.
 
 ## Architecture
@@ -623,3 +623,11 @@ implementation work. 19–25 came out of verifying the prototype's claims agains
 1. **Copy review.** Run the hero, section heads and CTA labels past the DESIGN.md content rules before
    the build. Copy fixes found so far are deltas 23 and 25.
 2. **Indexing.** Resolved 2026-10-02: `index,follow` while the flag is on. The flag is the launch control.
+
+## Addendum (2026-10-10): landing CI
+
+The `landing-page` job in `.github/workflows/ci.yml` runs on every pull request. It builds `/app` and the
+landing page, runs `tests/test_landing_*.py` against the built page, installs Playwright Chromium, and runs
+the `landing` project with `E2E_SKIP_BUILD=1` against its own flag-on server (port 8001, a separate SQLite
+file). The same job is the only CI path that exercises the landing build and its E2E audits. The other E2E
+projects are still not in CI.
