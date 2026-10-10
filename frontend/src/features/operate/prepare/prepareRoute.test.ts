@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PreparePaymentResponse } from "../../../api/schemas";
-import { prepareRouteStops } from "./prepareRoute";
+import { prepareRouteStops, prepareRouteSummary } from "./prepareRoute";
 
 const routing = {
   suggested_intermediaries: [
@@ -71,5 +71,47 @@ describe("prepareRouteStops", () => {
 
   it("never marks the sender passed: no check covers it", () => {
     expect(prepareRouteStops(result(), names)[0].status).toBe("not_checked");
+  });
+});
+
+// The candidates are alternatives, not a sequence: only the top one is drawn.
+const alternatives = {
+  ...routing,
+  suggested_intermediaries: [
+    routing.suggested_intermediaries[0],
+    { bic: "CHASUS33XXX", bank: "JPMorgan Chase", corridor: "USD->GB", confidence: "medium", basis: "published-ssi" },
+    { bic: "BOFAUS3NXXX", bank: "Bank of America", corridor: "USD->GB", confidence: "low", basis: "published-ssi" },
+  ],
+};
+
+describe("prepareRouteSummary", () => {
+  it("names the one correspondent when it is the only candidate", () => {
+    expect(prepareRouteSummary(result(), "John Smith")).toBe("Route from the sender through Citibank N.A. to John Smith.");
+  });
+
+  it("says the route shows the top candidate and counts the others", () => {
+    expect(prepareRouteSummary(result({ routing: alternatives }), "John Smith")).toBe(
+      "Route from the sender through Citibank N.A. to John Smith. The route shows the top suggested correspondent; 2 other candidates are listed.",
+    );
+  });
+
+  it("uses the singular for one other candidate", () => {
+    const two = { ...alternatives, suggested_intermediaries: alternatives.suggested_intermediaries.slice(0, 2) };
+    expect(prepareRouteSummary(result({ routing: two }), "John Smith")).toBe(
+      "Route from the sender through Citibank N.A. to John Smith. The route shows the top suggested correspondent; 1 other candidate is listed.",
+    );
+  });
+
+  it("falls back to the BIC and to 'the beneficiary' when names are empty", () => {
+    const unnamed = { ...routing, suggested_intermediaries: [{ ...routing.suggested_intermediaries[0], bank: "" }] };
+    expect(prepareRouteSummary(result({ routing: unnamed }), "")).toBe("Route from the sender through CITIUS33XXX to the beneficiary.");
+  });
+
+  it("still draws exactly one correspondent when several candidates exist", () => {
+    const stops = prepareRouteStops(result({ routing: alternatives }), names);
+    expect(stops.filter((stop) => stop.role === "correspondent")).toEqual([
+      expect.objectContaining({ name: "Citibank N.A.", detail: "CITIUS33XXX" }),
+    ]);
+    expect(stops).toHaveLength(3);
   });
 });

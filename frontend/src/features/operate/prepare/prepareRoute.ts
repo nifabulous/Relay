@@ -37,3 +37,17 @@ export function prepareRouteStops(
     { role: "beneficiary", name: names.beneficiary, status: VOP_STATUS[result.vop?.outcome ?? ""] ?? "not_checked" },
   ];
 }
+
+/**
+ * The route's summary sentence. The candidates are alternatives, not a
+ * sequence, so only the top one is drawn; when there are others, the summary
+ * says so rather than let the route understate the routing.
+ */
+export function prepareRouteSummary(result: PreparePaymentResponse, beneficiaryName: string): string {
+  const [top, ...others] = result.routing.suggested_intermediaries;
+  const through = top ? ` through ${top.bank || top.bic}` : "";
+  const sentence = `Route from the sender${through} to ${beneficiaryName || "the beneficiary"}.`;
+  if (others.length === 0) return sentence;
+  const listed = others.length === 1 ? "1 other candidate is listed" : `${others.length} other candidates are listed`;
+  return `${sentence} The route shows the top suggested correspondent; ${listed}.`;
+}

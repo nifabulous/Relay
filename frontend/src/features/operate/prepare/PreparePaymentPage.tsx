@@ -19,7 +19,7 @@ import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
 import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
-import { prepareRouteStops } from "./prepareRoute";
+import { prepareRouteStops, prepareRouteSummary } from "./prepareRoute";
 import { groupByCurrency } from "../../explore/ssiGrouping";
 import "../../../design-system/landing-scope.css";
 import "./PreparePaymentPage.css";
@@ -779,7 +779,7 @@ export function PreparePaymentPage() {
             <div className="prepare-payment__lines-route">
               <LinesRoute
                 stops={routeStops}
-                summary={`Route from the sender through ${result.routing.suggested_intermediaries[0].bank || result.routing.suggested_intermediaries[0].bic} to ${formValues.beneficiary_name || "the beneficiary"}.`}
+                summary={prepareRouteSummary(result, formValues.beneficiary_name)}
                 ariaLabel="Payment route"
               />
             </div>
