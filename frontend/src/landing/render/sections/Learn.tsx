@@ -16,15 +16,6 @@ export function Learn({ learn }: { learn: LearnSummary }) {
           }
           lede={`${formatCount(learn.coreCount)} core modules, from BICs to nostro reconciliation, then a capstone that runs a full payment. Between ${formatHours(learn.minutes.min)} and ${formatHours(learn.minutes.max)} hours in all.`}
         />
-        <div className="mods">
-          {learn.modules.map((module) => (
-            <a key={module.href} href={module.href} className={module.kind === "capstone" ? "cap" : undefined}>
-              <span className="n">{module.number}</span>
-              <b>{module.title}</b>
-              <small>{module.kind}</small>
-            </a>
-          ))}
-        </div>
         <div className="grid g3 cards">
           <a href="/app/learn">
             <span className="lbl">
