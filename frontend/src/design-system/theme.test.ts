@@ -221,14 +221,26 @@ const INDEX_HTML = readFileSync(
   "utf8",
 );
 
+// The landing page (landing.html, built by vite.landing.config.ts) carries a
+// copy of the same script, so a theme chosen in either surface paints the same.
+const LANDING_HTML = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../../landing.html"),
+  "utf8",
+);
+
+function prePaintSource(html: string): string {
+  const match = /<script>([\s\S]*?)<\/script>/.exec(html);
+  if (!match) throw new Error("no inline pre-paint <script> found");
+  return match[1];
+}
+
 interface PrePaintResult {
   dataTheme: string | null;
   colorScheme: string;
 }
 
-function runPrePaintScript(rawStored: string | null, osDark: boolean): PrePaintResult {
-  const match = /<script>([\s\S]*?)<\/script>/.exec(INDEX_HTML);
-  if (!match) throw new Error("index.html: no inline pre-paint <script> found");
+function runPrePaintScript(rawStored: string | null, osDark: boolean, html: string = INDEX_HTML): PrePaintResult {
+  const source = prePaintSource(html);
 
   const root = document.createElement("div");
   const fakeDocument = { documentElement: root };
@@ -238,7 +250,7 @@ function runPrePaintScript(rawStored: string | null, osDark: boolean): PrePaintR
   const fakeMatchMedia = (query: string) => ({ matches: osDark && query.includes("dark") });
 
   // eslint-disable-next-line no-new-func
-  new Function("document", "localStorage", "matchMedia", match[1])(
+  new Function("document", "localStorage", "matchMedia", source)(
     fakeDocument,
     fakeLocalStorage,
     fakeMatchMedia,
@@ -254,7 +266,14 @@ function reference(theme: RelayTheme, osDark: boolean): PrePaintResult {
   return { dataTheme: root.getAttribute("data-theme"), colorScheme: root.style.colorScheme };
 }
 
-describe("pre-paint theme script", () => {
+it("landing.html carries a byte-for-byte copy of index.html's pre-paint script", () => {
+  expect(prePaintSource(LANDING_HTML)).toBe(prePaintSource(INDEX_HTML));
+});
+
+describe.each([
+  ["index.html", INDEX_HTML],
+  ["landing.html", LANDING_HTML],
+])("pre-paint theme script in %s", (_file, html) => {
   const matrix: Array<[RelayTheme, boolean]> = [
     ["system", true],
     ["system", false],
@@ -274,7 +293,7 @@ describe("pre-paint theme script", () => {
       firstRunGuidanceSeen: [],
       theme,
     });
-    expect(runPrePaintScript(stored, osDark)).toEqual(reference(theme, osDark));
+    expect(runPrePaintScript(stored, osDark, html)).toEqual(reference(theme, osDark));
   });
 
   it("treats a pre-theme preferences object as system", () => {
@@ -284,24 +303,24 @@ describe("pre-paint theme script", () => {
       navigationDensity: "compact",
       firstRunGuidanceSeen: ["overview"],
     });
-    expect(runPrePaintScript(legacy, true)).toEqual(reference("system", true));
+    expect(runPrePaintScript(legacy, true, html)).toEqual(reference("system", true));
   });
 
   it("treats absent, corrupt and unknown values as system", () => {
-    expect(runPrePaintScript(null, true)).toEqual(reference("system", true));
-    expect(runPrePaintScript("not-json{", true)).toEqual(reference("system", true));
+    expect(runPrePaintScript(null, true, html)).toEqual(reference("system", true));
+    expect(runPrePaintScript("not-json{", true, html)).toEqual(reference("system", true));
     expect(
-      runPrePaintScript(JSON.stringify({ schemaVersion: 1, theme: "midnight-neon" }), true),
+      runPrePaintScript(JSON.stringify({ schemaVersion: 1, theme: "midnight-neon" }), true, html),
     ).toEqual(reference("system", true));
     // Wrong schemaVersion is rejected wholesale by loadVersioned, so the
     // pre-paint script must fall back to the default rather than trust it.
-    expect(runPrePaintScript(JSON.stringify({ schemaVersion: 99, theme: "dark" }), false)).toEqual(
+    expect(runPrePaintScript(JSON.stringify({ schemaVersion: 99, theme: "dark" }), false, html)).toEqual(
       reference("system", false),
     );
   });
 
   it("does not throw when storage is denied", () => {
-    const match = /<script>([\s\S]*?)<\/script>/.exec(INDEX_HTML);
+    const source = prePaintSource(html);
     const root = document.createElement("div");
     const denied = {
       getItem: () => {
@@ -309,7 +328,7 @@ describe("pre-paint theme script", () => {
       },
     };
     expect(() =>
-      new Function("document", "localStorage", "matchMedia", match![1])(
+      new Function("document", "localStorage", "matchMedia", source)(
         { documentElement: root },
         denied,
         () => ({ matches: false }),
