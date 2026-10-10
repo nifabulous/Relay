@@ -53,12 +53,14 @@ function renderPage(initialEntry: string) {
 }
 
 describe("TrackingPage arrival", () => {
+  // The echoed payment reveals one bank, so no route is drawn and the event
+  // list (which shows the UETR) starts open: the UETR is on screen by default.
   it("fires the lookup automatically when a uetr is in the URL", async () => {
     server.use(echoUetrHandler());
     renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeInTheDocument();
+      expect(screen.getByText("UETR-A")).toBeVisible();
     });
   });
 
@@ -81,13 +83,13 @@ describe("TrackingPage arrival", () => {
     const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeInTheDocument();
+      expect(screen.getByText("UETR-A")).toBeVisible();
     });
 
     await user.click(screen.getByRole("link", { name: "Track B" }));
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-B")).toBeInTheDocument();
+      expect(screen.getByText("UETR-B")).toBeVisible();
     });
     expect(screen.queryByText("UETR-A")).toBeNull();
     // The input follows the URL too, so the form does not contradict the page.
@@ -99,7 +101,7 @@ describe("TrackingPage arrival", () => {
     const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeInTheDocument();
+      expect(screen.getByText("UETR-A")).toBeVisible();
     });
 
     const input = screen.getByLabelText("UETR");
@@ -275,7 +277,7 @@ describe("Scheduled pacing controls", () => {
     // The refreshed timeline now shows the revealed intermediary hop.
     const figure = await screen.findByRole("figure", { name: "Payment route" });
     expect(figure).toBeVisible();
-    expect(within(screen.getByRole("figure", { name: "Payment route" })).getByText("Citibank N.A.")).toBeInTheDocument();
+    expect(within(screen.getByRole("figure", { name: "Payment route" })).getByText("Citibank N.A.")).toBeVisible();
     expect(skippedUetr).toBe("UETR-A");
   });
 
@@ -310,6 +312,8 @@ describe("Scheduled pacing controls", () => {
 
     expect(await screen.findByText("Payment initiated by Your bank")).toBeVisible();
     expect(screen.queryByRole("figure", { name: "Payment route" })).not.toBeInTheDocument();
+    // With no route, the event list is the whole view, so it starts open.
+    expect(screen.getByText("Event list").closest("details")).toHaveAttribute("open");
   });
 
   it("draws one stop per bank, not per event, and counts banks in the summary", async () => {
@@ -337,6 +341,9 @@ describe("Scheduled pacing controls", () => {
     const summary = await screen.findByText("Event list");
     const details = summary.closest("details");
     expect(details).not.toBeNull();
+    // With a route on screen, the event list starts closed.
+    expect(screen.getByRole("figure", { name: "Payment route" })).toBeVisible();
+    expect(details).not.toHaveAttribute("open");
     const text = within(details as HTMLElement).getByText(
       "Credited to beneficiary account by Guaranty Trust Bank",
     );
