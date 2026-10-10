@@ -80,7 +80,7 @@ export function AtlasPage() {
   const country = useQuery({
     queryKey: panelIso2 ? apiKeys.atlasCountry(panelIso2, scope) : ["atlas", "country", "idle"],
     queryFn: () => apiRequest<AtlasCountry>(`/api/atlas/country/${encodeURIComponent(panelIso2!)}?scope=${scope}`, undefined, AtlasCountrySchema),
-    enabled: Boolean(panelIso2) && view === "spoke",
+    enabled: Boolean(panelIso2),
   });
 
   const topology = useQuery({
