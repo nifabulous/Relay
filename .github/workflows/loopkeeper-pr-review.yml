@@ -411,7 +411,7 @@ jobs:
       fail-fast: false
       matrix:
         pr_number: ${{ fromJSON(needs.targets.outputs.pr_numbers) }}
-    uses: nifabulous/loopkeeper/.github/workflows/pr-review.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+    uses: nifabulous/loopkeeper/.github/workflows/pr-review.yml@c1502046fb65ea100648e4dd1ea5039aac83da87
     with:
       consumer_repo: ${{ github.repository }}
       loopkeeper_repo: nifabulous/loopkeeper
@@ -420,7 +420,7 @@ jobs:
       consumer_trusted_sha: ""
       # Must stay identical to the `uses:` pin above — the release contract
       # requires the checkout SHA and the workflow pin to agree.
-      loopkeeper_sha: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+      loopkeeper_sha: c1502046fb65ea100648e4dd1ea5039aac83da87
       # Every direct pull_request_target action is an immediate publication
       # path. The pinned adapter only defers opened/synchronize when it is
       # explicitly allowed to discover a real CI run; lifecycle and label
@@ -583,7 +583,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: nifabulous/loopkeeper
-          ref: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+          ref: c1502046fb65ea100648e4dd1ea5039aac83da87
           path: loopkeeper
           fetch-depth: 1
 
@@ -595,7 +595,7 @@ jobs:
       - name: Verify trusted checkouts
         env:
           CONSUMER_TRUSTED_SHA: ${{ steps.roots.outputs.consumer_trusted_sha }}
-          LOOPKEEPER_SHA: ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231
+          LOOPKEEPER_SHA: c1502046fb65ea100648e4dd1ea5039aac83da87
         run: |
           set -euo pipefail
           [[ "$(git -C consumer rev-parse HEAD)" == "$CONSUMER_TRUSTED_SHA" ]]
