@@ -14,7 +14,7 @@ surface migrates, its current values stay authoritative.
 
 | Surface | System in force | Source of values |
 |---|---|---|
-| Landing page `/` (Phase 1) | This document | Landing tokens, defined below |
+| Landing page `/` (Phase 1) | This document | `frontend/src/landing/client/styles/tokens.css` (values defined below) |
 | Route showpiece in Prepare, Tracking, Atlas (Phase 2) | This document once shipped | Landing tokens shared through `design-system/` |
 | App workspaces `/app` (Phase 3) | Previous system until migrated | `frontend/src/design-system/tokens.css` (Instrument Sans, IBM Plex Mono, `#3157D5`) |
 

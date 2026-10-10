@@ -11,6 +11,8 @@ frontend/src/
                       payment route visualization
   api/                typed transport, Zod schemas, query keys
   lib/persistence/    versioned local storage + legacy migration
+  landing/            landing page (separate build: vite.landing.config.ts):
+                      render/ at build time, client/ in the browser, generated/ (ignored)
   features/
     overview/         adaptive home page
     explore/          command search, bank directory, glossary
@@ -54,6 +56,12 @@ cd frontend && npm run build
 
 Outputs to `app/static/relay/`. Served by FastAPI at `http://127.0.0.1:8000/app`.
 
+The landing page builds separately and never touches `app/static/relay/`:
+
+```bash
+cd frontend && npm run build:landing   # writes app/landing_dist/
+```
+
 ## Testing
 
 ```bash
@@ -65,8 +73,12 @@ npm test -- --no-file-parallelism
 # E2E tests (requires running FastAPI)
 npm run test:e2e
 
-# Bundle budget check (≤200KB gzip eager shell)
+# Bundle budget check (≤210KiB gzip eager shell)
 npm run build && npm run check:bundle
+
+# Landing import boundary and the landing E2E project
+npm run check:landing-boundary
+npm run test:e2e -- --project=landing
 ```
 
 ## Design System

@@ -151,6 +151,12 @@ For production build (served by FastAPI at `/app`):
 cd frontend && npm run build
 ```
 
+The landing page at `/` is a separate build, and only serves when `RELAY_LANDING_ENABLED` is on:
+```bash
+cd frontend && npm run build:landing
+RELAY_LANDING_ENABLED=1 uvicorn app.main:app --reload
+```
+
 ---
 
 ## Deploying to Vercel
