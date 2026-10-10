@@ -15,6 +15,7 @@ init_sentry()
 logger = logging.getLogger(__name__)
 
 from .db import Base, SessionLocal, engine
+from .landing import landing_response, mount_landing
 from .request_limits import BodySizeLimitMiddleware
 from .routers import (
     analytics as analytics_router,
@@ -130,6 +131,9 @@ if RELAY_DIR.is_dir():
     app.mount("/app/assets", StaticFiles(directory=str(RELAY_DIR / "assets")), name="relay-assets")
     _relay_mounted = True
 
+# Public landing page (RELAY_LANDING_ENABLED). None keeps the redirect below.
+LANDING_HTML = mount_landing(app)
+
 
 @app.get("/app")
 @app.get("/app/{rest:path}")
@@ -173,7 +177,12 @@ def root():
     When the Relay build is absent — a fresh clone that has not run
     `cd frontend && npm run build` yet — fall back to /learn so the root
     serves a working page instead of the 503 that /app would raise.
+
+    With RELAY_LANDING_ENABLED on and a landing build present, / serves the
+    landing page instead.
     """
+    if LANDING_HTML is not None and LANDING_HTML.is_file():
+        return landing_response(LANDING_HTML)
     target = "/app" if _relay_mounted and RELAY_INDEX.exists() else "/learn"
     return RedirectResponse(url=target, status_code=302)
 
