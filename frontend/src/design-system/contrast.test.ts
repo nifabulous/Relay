@@ -3,8 +3,8 @@
 // ambient. This test reads the shipped stylesheet from disk, so it pulls the
 // node types in explicitly — the same mechanism src/vite-env.d.ts uses for
 // vite/client. (Node-only APIs; this file never ships to the browser.)
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
@@ -449,6 +449,92 @@ describe("landing scope", () => {
 
   describe.each(THEMES)("%s theme text pairs", (_name, tokens) => {
     it.each(TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
+      expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  });
+
+  // ── App-token remap: shared components read the app's names; the scope re-points them. ──
+  const REMAP_OPEN = "/* app-token remap: start */";
+  const REMAP_CLOSE = "/* app-token remap: end */";
+  const remapBlock = (): string => {
+    const a = scopeCss.indexOf(REMAP_OPEN);
+    const b = scopeCss.indexOf(REMAP_CLOSE);
+    if (a < 0 || b < a) throw new Error("landing-scope.css: app-token remap markers missing");
+    return scopeCss.slice(a + REMAP_OPEN.length, b);
+  };
+
+  // Every var(--x) the screens' CSS and TSX read, intersected with the names tokens.css and
+  // coss-theme.css define. Non-colour, non-font tokens have no landing equivalent and stay on :root;
+  // --font-sans, --font-mono and --muted are defined natively by the scope already.
+  const srcRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(join(dir, e.name)) : /\.(css|tsx)$/.test(e.name) ? [join(dir, e.name)] : [],
+    );
+  const NOT_REMAPPED =
+    /^--(space|text|leading|tracking|radius|coss-radius|duration|ease|nav|mobile|floating|sim|reading|content|font-sans|font-mono|muted$)/;
+  const used = new Set<string>();
+  for (const dir of ["design-system", "features/operate", "features/explore"]) {
+    for (const file of walk(join(srcRoot, dir))) {
+      for (const m of readFileSync(file, "utf8").matchAll(/var\((--[\w-]+)/g)) used.add(m[1]);
+    }
+  }
+  // tokens.css :root also carries the shadcn names (--card, --border, ...); coss-theme.css only
+  // maps them into Tailwind's @theme and defines no custom properties of its own.
+  const defined = new Set(Object.keys(declarations(blockBody(CSS, /^:root\s*\{/m))));
+  const MUST_REMAP = [...used].filter((n) => defined.has(n) && !NOT_REMAPPED.test(n)).sort();
+
+  it("finds the app tokens the screens read (guards the intersection itself)", () => {
+    expect(MUST_REMAP).toEqual(expect.arrayContaining(["--color-surface", "--card", "--font-ui", "--color-action"]));
+  });
+
+  it.each(MUST_REMAP)("remaps %s to a landing token inside .surface-landing", (name) => {
+    const body = declarations(remapBlock());
+    expect(body[name], `${name} has no remap line`).toMatch(/^var\(--[\w-]+\)$/);
+  });
+
+  it("keeps the remap block inside the base .surface-landing block", () => {
+    const base = blockBody(scopeCss, /^\.surface-landing\s*\{/m);
+    expect(base).toContain(REMAP_OPEN);
+    expect(base).toContain(REMAP_CLOSE);
+  });
+
+  it("contains no hex in the remap block", () => {
+    expect(remapBlock()).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  // Text pairs that read through a remap, resolved per theme (remap -> landing token -> theme value).
+  const REMAP_TEXT_PAIRS: Array<[string, string, number]> = [
+    ["--color-ink-strong", "--color-canvas", 4.5],
+    ["--color-ink-strong", "--color-surface", 4.5],
+    ["--color-ink", "--color-surface", 4.5],
+    ["--color-ink", "--color-surface-2", 4.5],
+    ["--color-ink-muted", "--color-surface", 4.5],
+    ["--color-ink-muted", "--color-surface-2", 4.5],
+    ["--color-action", "--color-surface", 4.5], // links and action text
+    ["--color-action", "--color-canvas", 4.5],
+    ["--color-action-hover", "--color-surface", 4.5],
+    ["--color-on-action", "--color-action", 4.5], // fills
+    ["--color-on-danger", "--color-danger", 4.5],
+    ["--color-success", "--color-success-bg", 4.5],
+    ["--color-warning", "--color-warning-bg", 4.5],
+    ["--color-danger", "--color-surface", 4.5],
+    ["--foreground", "--background", 4.5],
+    ["--card-foreground", "--card", 4.5],
+    ["--popover-foreground", "--popover", 4.5],
+    ["--secondary-foreground", "--secondary", 4.5],
+    ["--muted-foreground", "--card", 4.5],
+    ["--accent-foreground", "--card", 4.5],
+    ["--primary-foreground", "--primary", 4.5],
+    ["--destructive-foreground", "--destructive", 4.5],
+    ["--success-foreground", "--success", 4.5],
+    ["--warning-foreground", "--warning", 4.5],
+    ["--info-foreground", "--info", 4.5],
+    ["--destructive", "--card", 4.5],
+  ];
+
+  describe.each(THEMES)("%s theme remapped text pairs", (_name, tokens) => {
+    it.each(REMAP_TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
       expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
     });
   });

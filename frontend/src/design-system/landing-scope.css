@@ -36,6 +36,40 @@
   --gDot: 102, 118, 139; --gDotMin: .14; --gDotMax: .74; --gGrat: rgba(2, 23, 50, .05); --gLimb: var(--n200);
   --gPlate: rgba(255, 255, 255, .94); --gPlateLine: rgba(2, 23, 50, .12); --gInk: var(--n950); --gPacket: var(--n950); --gNode: #FFFFFF;
   --cube1: var(--p500); --cube2: var(--p600); --cube3: var(--p950);
+
+  /* app-token remap: start */
+  /*
+   * The app's own names, re-pointed at landing tokens so shared components read landing values
+   * with no per-component variants. Each value is a var() of a landing token, so the dark and
+   * black blocks below, which redefine those landing tokens on the same element, flow through.
+   * Spacing, type scale, radius, motion and layout tokens have no landing equivalent and stay on :root.
+   * The action colour maps to --acc rather than --accFill. It is read as link text as often as a
+   * fill, and --acc is the one accent that clears AA as text in every theme. Text on a fill maps to
+   * --surface, which is white on the light accent and the dark canvas on the lighter dark accent.
+   */
+  --color-action: var(--acc); --color-action-hover: var(--accInk); --color-action-pressed: var(--accInk);
+  --color-action-surface: var(--accBg); --color-action-border: var(--accLine);
+  --color-on-action: var(--surface); --color-on-danger: var(--surface); --color-danger-hover: var(--bad);
+  --color-ink-strong: var(--ink); --color-ink: var(--ink2); --color-ink-muted: var(--muted);
+  --color-canvas: var(--bg); --color-surface: var(--surface); --color-surface-2: var(--tint); --color-surface-3: var(--cell);
+  --color-border: var(--line); --color-border-strong: var(--line2);
+  --color-success: var(--ok); --color-success-bg: var(--tint); --color-success-border: var(--line2);
+  --color-warning: var(--warn); --color-warning-bg: var(--tint); --color-warning-border: var(--line2);
+  --color-danger: var(--bad); --color-danger-bg: var(--badBg); --color-danger-border: var(--badLine);
+  --font-ui: var(--font-sans); --coss-font-sans: var(--font-sans); --coss-font-heading: var(--font-sans);
+  --coss-font-mono: var(--font-mono);
+  /* shadcn names resolve to values at :root, so they must be re-pointed here, not inherited */
+  --background: var(--bg); --foreground: var(--ink); --card: var(--surface); --card-foreground: var(--ink);
+  --popover: var(--surface); --popover-foreground: var(--ink);
+  --primary: var(--acc); --primary-foreground: var(--surface);
+  --secondary: var(--tint); --secondary-foreground: var(--ink);
+  --accent: var(--accBg); --accent-foreground: var(--accInk); --muted-foreground: var(--muted);
+  --destructive: var(--bad); --destructive-foreground: var(--surface);
+  --border: var(--line); --input: var(--line2); --ring: var(--acc);
+  --success: var(--ok); --success-foreground: var(--surface);
+  --warning: var(--warn); --warning-foreground: var(--surface);
+  --info: var(--acc); --info-foreground: var(--surface);
+  /* app-token remap: end */
 }
 
 @media (prefers-color-scheme: dark) {

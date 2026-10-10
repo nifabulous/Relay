@@ -68,3 +68,73 @@ Components that read a redefined token directly:
 Components changed only by the scope's explicit overrides (they read --color-* tokens, none of the four): Button (.relay-btn--primary/secondary restyled), StatusChip (.status-chip colours restyled), and headings h1-h3. AsyncRegion and CorrespondentOptions read only --color-* / --space-* tokens and are not changed by the scope.
 
 Non-shared but affected on these screens: global `.mono` class (global.css:76 reads --font-mono) now resolves to Geist Mono inside all three roots; PreparePaymentPage.css and OperateTools.css (imported by Tracking) read the four tokens too.
+
+## Fix: follow the app theme (commit 1f84564)
+
+RED (before CSS change):
+```
+    416|
+    417|   it("follows the app theme set on the document root", () => {
+    418|     expect(scopeCss).toMatch(/:root\[data-theme="dark"\]\s+\.surface-l…
+       |                      ^
+    419|     expect(scopeCss).toMatch(/:root\[data-theme="black"\]\s+\.surface-…
+    420|     expect(scopeCss).toMatch(/:root:not\(\[data-theme="light"\]\)\s+\.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 95 passed (96)
+   Start at  20:14:52
+   Duration  1.26s (transform 69ms, setup 304ms, import 24ms, tests 16ms, environment 788ms)
+
+```
+
+GREEN:
+```
+
+ Test Files  1 passed (1)
+      Tests  96 passed (96)
+   Start at  20:15:02
+   Duration  1.12s (transform 67ms, setup 275ms, import 24ms, tests 13ms, environment 684ms)
+
+```
+`npx tsc --noEmit`: exit 0.
+Note: the OS-dark block uses `:root:not([data-theme="light"]) .surface-landing` (specificity 0,3,0), equal to the root dark/black forms, which come later and win under an OS-dark setting.
+
+
+---
+
+# Phase 2 Task 6: remap app tokens inside the landing scope
+
+## Step 1: tokens the screens read
+Grep of `var(--x)` over design-system, features/operate, features/explore (css + tsx), intersected with the names defined in tokens.css `:root` (coss-theme.css defines no custom properties; it only maps shadcn names into `@theme inline`).
+Remapped (52): --color-action, -action-hover, -action-pressed, -action-surface, -action-border, --color-on-action, --color-on-danger, --color-danger-hover, --color-ink-strong, --color-ink, --color-ink-muted, --color-canvas, --color-surface, -surface-2, -surface-3, --color-border, --color-border-strong, --color-success(+bg,+border), --color-warning(+bg,+border), --color-danger(+bg,+border), --font-ui, --coss-font-sans, --coss-font-heading, --coss-font-mono, --background, --foreground, --card, --card-foreground, --popover, --popover-foreground, --primary, --primary-foreground, --secondary, --secondary-foreground, --accent, --accent-foreground, --muted-foreground, --destructive, --destructive-foreground, --border, --input, --ring, --success, --success-foreground, --warning, --warning-foreground, --info, --info-foreground.
+Deliberately not remapped (no landing equivalent, stay on :root): --space-*, --text-*, --leading-*, --tracking-*, --radius-*, --coss-radius-*, --duration-*, --ease, --nav-*, --mobile-*, --floating-*, --sim-banner-height, --reading-measure, --content-max.
+Already landing-native (clash names, scope defines them): --font-sans, --font-mono, --muted. Note --muted is a surface in the app and a text colour in the scope; no screen CSS reads it as a surface, so the landing meaning stays.
+
+## Mappings and reasons
+- action -> --acc (not --accFill as suggested): --color-action is read as link text in ~20 rules as well as a fill. --accFill (#533AFD) on dark surfaces fails AA as text; --acc (p600 light, p400 dark) passes as text and as fill. hover/pressed -> --accInk (darker in light, lighter in dark, like the app). action-surface -> --accBg, action-border -> --accLine.
+- on-action, on-danger -> --surface (not --onAcc): with a fill of --acc, the text must flip in dark (p400 fill needs dark text); --surface is white in light and the dark canvas in dark/black.
+- ink-strong -> --ink, ink -> --ink2, ink-muted -> --muted (same roles). canvas -> --bg, surface -> --surface, surface-2 -> --tint, surface-3 -> --cell, border -> --line, border-strong -> --line2.
+- success/warning/danger -> --ok/--warn/--bad; their -bg -> --tint (no tinted landing bg exists; hex in every theme so pairs are measurable), danger-bg -> --badBg, danger-border -> --badLine; success/warning-border -> --line2; danger-hover -> --bad (no darker landing token).
+- fonts: --font-ui and the coss fonts -> --font-sans / --font-mono.
+- shadcn names resolve at :root, so inheriting would keep the old values; each is re-pointed directly at landing tokens (primary -> --acc, secondary -> --tint, accent -> --accBg, destructive -> --bad, border -> --line, input -> --line2, ring -> --acc, info -> --acc, *-foreground -> --ink or --surface as above).
+
+## Cascade check (read, not assumed)
+The remap sits in the base `.surface-landing` block between `app-token remap: start/end` markers, every value a `var()` of a landing token. Custom properties substitute at computed-value time on the element that declares them, so the dark/black blocks (`:root[data-theme=...] .surface-landing`, the OS media block, and `.surface-landing[data-theme=...]`), which redefine --surface/--ink/--acc/... on that same element, flow through. The remap is not repeated in them. contrast.test's scopeTokens() resolves base, then theme, then var chains, which is the same order; it passes in all three themes.
+
+## RED (before the block)
+`npx vitest run src/design-system/contrast.test.ts`: Test Files 1 failed; Tests 134 failed | 97 passed (231). Failures: "app-token remap markers missing" for every remap test, and "not a hex token: --color-ink-strong=undefined" etc. for every remapped pair.
+## GREEN
+First attempt after adding the block: 11 failed, because my comment text contained "--accFill:" and the declaration regex read it. Reworded the comment. Then:
+`npx vitest run src/design-system/contrast.test.ts`: Test Files 1 passed; Tests 231 passed (231).
+
+## Tests added (contrast.test.ts, "landing scope")
+- dynamic MUST_REMAP list (greps the three source trees, intersects tokens.css :root, minus the allowlist above) with one `it` per token, a base-block placement check, a no-hex check on the remap block, and 26 remapped text pairs x 3 themes, all >= 4.5:1.
+
+## Commands
+- `npm run build`: built OK.
+- `npx vitest run src/design-system`: Test Files 13 passed, Tests 347 passed (347).
+- `npx tsc --noEmit`: exit 0.
+No shared component file and no :root changed. Files: landing-scope.css, contrast.test.ts.
