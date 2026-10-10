@@ -1,4 +1,4 @@
-import { useReducer, useRef, useCallback, useEffect } from "react";
+import { useReducer, useRef, useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import type { LabContentProps } from "../labTypes";
 import { capstoneReducer, STEP_LABELS, type CapstoneState, type CapstonePaymentInput } from "./capstoneMachine";
@@ -26,6 +26,89 @@ const initialState: CapstoneState = {
   results: {},
 };
 
+/**
+ * Shown when the IBAN is valid but no BIC could be derived from it. Every later
+ * step needs the beneficiary bank, so ask the learner for its BIC and check it
+ * with /api/validate before continuing. Only a valid BIC unblocks the capstone.
+ */
+function MissingBicPrompt({ onAccept }: { onAccept: (lookup: ValidateResponse) => void }) {
+  const [bic, setBic] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // The IBAN stays editable while the check runs. If the learner edits it, this
+  // prompt unmounts; a late answer was for that old IBAN and must not answer a
+  // prompt shown for the new one.
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const value = bic.trim();
+    if (!value) {
+      setError("Enter the beneficiary bank's BIC.");
+      return;
+    }
+    setChecking(true);
+    setError(null);
+    let lookup: ValidateResponse;
+    try {
+      lookup = await apiRequest<ValidateResponse>(
+        `/api/validate?value=${encodeURIComponent(value)}`,
+        undefined, ValidateResponseSchema,
+      );
+    } catch (err) {
+      if (!mounted.current) return;
+      setError(err instanceof Error ? err.message : "The BIC could not be checked.");
+      setChecking(false);
+      return;
+    }
+    if (!mounted.current) return;
+    if (lookup.input_type !== "bic") {
+      // /api/validate accepts IBANs too; an IBAN here is not a bank identifier.
+      setError("Enter a BIC (8 or 11 characters), not an IBAN.");
+    } else if (!lookup.valid || !lookup.bic) {
+      setError(lookup.errors.join("; ") || "That BIC is not valid.");
+    } else {
+      onAccept(lookup);
+      return;
+    }
+    setChecking(false);
+  };
+
+  return (
+    <>
+      <div className="lab-capstone-bic" role="alert">
+        <p><strong>No BIC derivable.</strong> The IBAN checksum is valid, but its bank code is not in the directory, so the beneficiary bank is unknown.</p>
+        <p>Enter the beneficiary BIC to continue, or change the IBAN above.</p>
+        <form className="lab-capstone-form" onSubmit={handleSubmit} noValidate>
+          <label>
+            <span>Beneficiary BIC</span>
+            <input
+              type="text"
+              className="mono"
+              aria-label="Beneficiary BIC"
+              value={bic}
+              onChange={(e) => setBic(e.target.value.toUpperCase())}
+              disabled={checking}
+            />
+          </label>
+          <div>
+            <Button type="submit" variant="secondary" disabled={checking}>
+              {checking ? "Checking BIC…" : "Continue with this BIC"}
+            </Button>
+          </div>
+        </form>
+      </div>
+      {error && <div className="lab-error" role="alert">{error}</div>}
+    </>
+  );
+}
+
 export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
   const [state, dispatch] = useReducer(capstoneReducer, initialState);
   const firedCheckpoints = useRef(new Set<string>());
@@ -39,6 +122,10 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
 
   // Run the current step's API call
   const runStep = useCallback(async (step: number, input: CapstonePaymentInput) => {
+    // The bank every step after Validate addresses: the BIC derived from the
+    // IBAN, or — when none could be derived — the one the learner entered.
+    const enteredBic: ValidateResponse | undefined = state.results.enteredBic;
+    const beneficiaryBic: string | undefined = enteredBic?.bic ?? state.results.validation?.bic;
     try {
       let result: unknown;
 
@@ -61,8 +148,10 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           break;
         }
         case 2: {
+          // A valid IBAN never gets here without a BIC (it stops at needs_bic).
+          // An invalid one does, and /api/route then reports the IBAN's errors.
           result = await apiRequest<RouteResponse>(
-            `/api/route?bic=${encodeURIComponent(state.results.validation?.bic ?? input.beneficiary_iban)}&currency=${encodeURIComponent(input.currency)}`,
+            `/api/route?bic=${encodeURIComponent(beneficiaryBic ?? input.beneficiary_iban)}&currency=${encodeURIComponent(input.currency)}`,
             undefined, RouteResponseSchema,
           );
           fireCheckpoint("route");
@@ -70,7 +159,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
         }
         case 3: {
           result = await apiRequest<SSIResponse>(
-            `/api/ssi?bic=${encodeURIComponent(state.results.validation?.bic ?? input.beneficiary_iban)}&currency=${encodeURIComponent(input.currency)}`,
+            `/api/ssi?bic=${encodeURIComponent(beneficiaryBic ?? input.beneficiary_iban)}&currency=${encodeURIComponent(input.currency)}`,
             undefined, SSIResponseSchema,
           );
           fireCheckpoint("settle");
@@ -84,6 +173,9 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
               beneficiary_name: input.beneficiary_name,
               currency: input.currency,
               amount: input.amount,
+              // The IBAN derives no BIC here, so pass the learner's, as
+              // Operate → Prepare Payment does with its BIC field.
+              ...(enteredBic?.bic ? { beneficiary_bic: enteredBic.bic } : {}),
             },
             PreparePaymentResponseSchema,
           );
@@ -97,10 +189,13 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           // input.beneficiary_name here put a person's name in the last row of
           // the timeline, in a lab about which institution holds which leg.
           // Fall back to the BIC, which identifies the bank on its own, rather
-          // than to the payee.
-          const beneficiaryBic = state.results.validation?.bic ?? "NWBKGB2L";
+          // than to the payee. Never substitute a bank the learner did not
+          // choose: with no BIC there is no timeline to draw.
+          if (!beneficiaryBic) {
+            throw new Error("No beneficiary BIC, so there is no receiving bank to track the payment to.");
+          }
           const beneficiaryBankName =
-            state.results.validation?.bank?.bank_name ?? beneficiaryBic;
+            (enteredBic ?? state.results.validation)?.bank?.bank_name ?? beneficiaryBic;
           result = await apiPost<TrackPaymentResponse>(
             "/api/track/create",
             {
@@ -138,11 +233,15 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
   // Each STEP_SUCCESS changes status, triggering the next step.
   // No double-fire: only one execution path.
   useEffect(() => {
-    if (state.status === "details" || state.status === "complete" || state.status === "error" || state.status === "blocked") {
+    if (state.status === "details" || state.status === "complete" || state.status === "error" || state.status === "blocked" || state.status === "needs_bic") {
       return;
     }
     runStep(state.step, state.paymentInput);
   }, [state.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Editable while waiting for a BIC too, so the learner can change the IBAN
+  // instead of supplying one.
+  const inputsEditable = state.status === "details" || state.status === "complete" || state.status === "needs_bic";
 
   const completedSteps = new Set<number>();
   for (let i = 0; i < state.step; i++) completedSteps.add(i);
@@ -171,7 +270,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
               aria-label="IBAN"
               value={state.paymentInput.beneficiary_iban}
               onChange={(e) => dispatch({ type: "EDIT_INPUT", input: { ...state.paymentInput, beneficiary_iban: e.target.value.toUpperCase() } })}
-              disabled={state.status !== "details" && state.status !== "complete"}
+              disabled={!inputsEditable}
             />
           </label>
           <label>
@@ -181,7 +280,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
               aria-label="Beneficiary name"
               value={state.paymentInput.beneficiary_name}
               onChange={(e) => dispatch({ type: "EDIT_INPUT", input: { ...state.paymentInput, beneficiary_name: e.target.value } })}
-              disabled={state.status !== "details" && state.status !== "complete"}
+              disabled={!inputsEditable}
             />
           </label>
           <label>
@@ -193,7 +292,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
               maxLength={3}
               value={state.paymentInput.currency}
               onChange={(e) => dispatch({ type: "EDIT_INPUT", input: { ...state.paymentInput, currency: e.target.value.toUpperCase() } })}
-              disabled={state.status !== "details" && state.status !== "complete"}
+              disabled={!inputsEditable}
             />
           </label>
           <label>
@@ -204,7 +303,7 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
               aria-label="Amount"
               value={state.paymentInput.amount}
               onChange={(e) => dispatch({ type: "EDIT_INPUT", input: { ...state.paymentInput, amount: Number(e.target.value) } })}
-              disabled={state.status !== "details" && state.status !== "complete"}
+              disabled={!inputsEditable}
             />
           </label>
         </div>
@@ -233,6 +332,10 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           </div>
         )}
 
+        {state.status === "needs_bic" && (
+          <MissingBicPrompt onAccept={(lookup) => dispatch({ type: "PROVIDE_BIC", lookup })} />
+        )}
+
         {state.status === "blocked" && (
           <div className="lab-vop-danger" role="alert">
             <p><strong>Stop.</strong> The name does not match the account holder.</p>
@@ -251,6 +354,12 @@ export function CapstoneContent({ moduleId, onCheckpoint }: LabContentProps) {
           <h3>Step 1: Validate</h3>
           <StatusChip status={state.results.validation.valid ? "passed" : "failed"} />
           {state.results.validation.bic && <p>Derived BIC: <span className="mono">{state.results.validation.bic}</span></p>}
+          {state.results.enteredBic?.bic && (
+            <p>
+              Beneficiary BIC (entered): <span className="mono">{state.results.enteredBic.bic}</span>
+              {state.results.enteredBic.bank?.bank_name && <> — {state.results.enteredBic.bank.bank_name}</>}
+            </p>
+          )}
         </section>
       )}
 

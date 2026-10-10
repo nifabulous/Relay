@@ -4,6 +4,10 @@
  * Steps: details → validating → verifying → routing → settling → deciding → tracking → complete
  * Each step calls one API, stores the result, and advances to the next.
  * Editing payment input resets to step 0 and clears all results.
+ *
+ * A valid IBAN whose bank code is not in the registry validates with no BIC.
+ * The machine then waits in "needs_bic" until the learner supplies a BIC that
+ * /api/validate accepts; it never substitutes a bank of its own.
  */
 
 export interface CapstonePaymentInput {
@@ -18,6 +22,10 @@ export interface CapstonePaymentInput {
 export interface CapstoneResults {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validation?: any;
+  // The /api/validate response for a BIC the learner entered because the IBAN
+  // derived none. Takes the place of validation.bic for every later step.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  enteredBic?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vop?: any;
   routing?: { beneficiary_country?: string; inferred_currency?: string; suggested_intermediaries: Array<{ bic: string; bank: string; corridor?: string; confidence: string }> };
@@ -31,6 +39,7 @@ export interface CapstoneResults {
 export type CapstoneStepStatus =
   | "details"
   | "validating"
+  | "needs_bic"
   | "verifying"
   | "routing"
   | "settling"
@@ -54,6 +63,8 @@ export type CapstoneAction =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { type: "STEP_SUCCESS"; step: number; result: any }
   | { type: "STEP_ERROR"; error: string }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { type: "PROVIDE_BIC"; lookup: any }
   | { type: "RETRY" }
   | { type: "RESTART" }
   | { type: "PROCEED_ANYWAY" };
@@ -85,6 +96,18 @@ export function capstoneReducer(state: CapstoneState, action: CapstoneAction): C
       const nextStep = action.step + 1;
       const isLastStep = action.step === 5;
 
+      // A valid IBAN that derived no BIC leaves every later step without a
+      // beneficiary bank. Stop and ask for one.
+      if (action.step === 0 && action.result && typeof action.result === "object" && action.result.valid && !action.result.bic) {
+        return {
+          ...state,
+          results: { ...state.results, [resultKey]: action.result },
+          step: 0,
+          status: "needs_bic",
+          error: undefined,
+        };
+      }
+
       // Branch on VoP NO_MATCH — pause and force the learner to acknowledge
       if (action.step === 1 && action.result && typeof action.result === "object" && "outcome" in action.result && action.result.outcome === "NO_MATCH") {
         return {
@@ -107,6 +130,19 @@ export function capstoneReducer(state: CapstoneState, action: CapstoneAction): C
 
     case "STEP_ERROR":
       return { ...state, status: "error", error: action.error };
+
+    case "PROVIDE_BIC":
+      // The BIC check is async and the IBAN stays editable meanwhile. A BIC
+      // that arrives after the learner left this state belongs to an IBAN that
+      // is no longer the input; applying it would skip validating the new one.
+      if (state.status !== "needs_bic") return state;
+      return {
+        ...state,
+        results: { ...state.results, enteredBic: action.lookup },
+        step: 1,
+        status: STEP_STATUS_MAP[1],
+        error: undefined,
+      };
 
     case "RETRY":
       return { ...state, status: STEP_STATUS_MAP[state.step], error: undefined };

@@ -90,7 +90,22 @@ LearnLabs["capstone"] = function (main, helpers) {
       try {
         const res = await fetch(`/api/validate?value=${encodeURIComponent(paymentData.iban)}`).then(r => r.json());
         paymentData.bic = res.bic;
-        if (res.valid) {
+        paymentData.bankName = res.bank ? res.bank.bank_name : null;
+        paymentData.bicEntered = false;
+        if (res.valid && !res.bic) {
+          // The IBAN is valid but its bank code is not in the directory. Every
+          // later step needs the beneficiary bank, so ask for its BIC rather
+          // than carrying on without one or substituting a bank.
+          r.className = "lab-result show lab-result-warn";
+          r.innerHTML = `
+            <p><strong>No BIC derivable.</strong> The IBAN checksum is valid, but its bank code is not in the directory, so the beneficiary bank is unknown.</p>
+            <p class="muted">Enter the beneficiary BIC to continue, or change the IBAN above.</p>
+            <label for="cs-bic" style="font-size:0.8125rem;color:var(--ink-2);display:block;margin:0.75rem 0 4px">Beneficiary BIC</label>
+            <input class="lab-input" id="cs-bic" placeholder="8 or 11 characters">
+            <button class="lab-btn" id="cs-bic-btn">Check BIC →</button>
+            <div id="cs-bic-result"></div>`;
+          document.getElementById("cs-bic-btn").onclick = checkEnteredBic;
+        } else if (res.valid) {
           r.className = "lab-result show lab-result-success";
           r.innerHTML = `
             <p><strong>✓ Valid!</strong> The IBAN format checks out.</p>
@@ -105,6 +120,45 @@ LearnLabs["capstone"] = function (main, helpers) {
         r.innerHTML = `<p class="muted">Error: ${esc(e.message)}</p>`;
       }
     };
+  }
+
+  // Check the BIC the learner typed because the IBAN derived none. Only a valid
+  // BIC unlocks the next step.
+  async function checkEnteredBic() {
+    const out = document.getElementById("cs-bic-result");
+    const value = document.getElementById("cs-bic").value.trim().toUpperCase();
+    if (!value) {
+      out.innerHTML = `<p class="muted">Enter the beneficiary bank's BIC.</p>`;
+      return;
+    }
+    out.innerHTML = '<span class="muted">Checking BIC...</span>';
+    try {
+      const response = await fetch(`/api/validate?value=${encodeURIComponent(value)}`);
+      const res = response.ok ? await response.json() : null;
+      // Re-validating replaces this prompt. A late answer belongs to the old
+      // IBAN and must not overwrite the BIC the new one derived.
+      if (!out.isConnected) return;
+      if (!res) {
+        // A failed check says nothing about the BIC the learner typed.
+        out.innerHTML = `<p class="muted">The BIC could not be checked.</p>`;
+      } else if (res.input_type === "iban") {
+        // /api/validate accepts IBANs too; an IBAN here is not a bank identifier.
+        out.innerHTML = `<p class="muted">Enter a BIC (8 or 11 characters), not an IBAN.</p>`;
+      } else if (!res.valid || !res.bic) {
+        out.innerHTML = `<p class="muted">${esc((res.errors || []).join("; ") || "That BIC is not valid.")}</p>`;
+      } else {
+        paymentData.bic = res.bic;
+        paymentData.bankName = res.bank ? res.bank.bank_name : null;
+        paymentData.bicEntered = true;
+        out.innerHTML = `
+          <p><strong>✓ BIC accepted:</strong> <span class="mono">${esc(res.bic)}</span>${res.bank ? " — " + esc(res.bank.bank_name) : ""}</p>
+          <button class="lab-btn" id="cs-next">Continue to verification →</button>`;
+        document.getElementById("cs-next").onclick = () => { step = 1; render(); };
+      }
+    } catch (e) {
+      if (!out.isConnected) return;
+      out.innerHTML = `<p class="muted">Error: ${esc(e.message)}</p>`;
+    }
   }
 
   // ── Step 1: Verify (VoP) ──────────────────────────────
@@ -282,6 +336,8 @@ LearnLabs["capstone"] = function (main, helpers) {
             beneficiary_name: paymentData.name,
             currency: paymentData.currency,
             amount: paymentData.amount,
+            // The IBAN derived no BIC, so pass the learner's (omitted otherwise).
+            beneficiary_bic: paymentData.bicEntered ? paymentData.bic : undefined,
           }),
         }).then(r => r.json());
         paymentData.prepare = res;
@@ -333,6 +389,12 @@ LearnLabs["capstone"] = function (main, helpers) {
     document.getElementById("cs-track-btn").onclick = async () => {
       const r = document.getElementById("cs-track-result");
       r.classList.add("show");
+      // Never substitute a bank the learner did not choose: with no BIC there
+      // is no receiving bank to draw a timeline to.
+      if (!paymentData.bic) {
+        r.innerHTML = `<p class="muted">No beneficiary BIC, so there is no receiving bank to track the payment to.</p>`;
+        return;
+      }
       r.innerHTML = '<span class="muted">Creating payment...</span>';
       try {
         // Use the intermediaries from the routing step if available
@@ -343,8 +405,11 @@ LearnLabs["capstone"] = function (main, helpers) {
           body: JSON.stringify({
             originator_bic: "BOFAUS3NXXX",
             originator_name: "Bank of America",
-            beneficiary_bic: paymentData.bic || "GTBINGLAXXX",
-            beneficiary_name: paymentData.name,
+            beneficiary_bic: paymentData.bic,
+            // The receiving BANK's name: generate_timeline puts it on the final
+            // hops. Not the payee. Fall back to the BIC, which identifies the
+            // bank on its own.
+            beneficiary_name: paymentData.bankName || paymentData.bic,
             currency: paymentData.currency,
             amount: paymentData.amount,
             intermediary_bics: intermediaries.slice(0, 1).map(i => i.bic),

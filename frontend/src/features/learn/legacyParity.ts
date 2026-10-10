@@ -257,6 +257,7 @@ export const CORE_LAB_PARITY: Record<string, LabParityEntry> = {
       "6-step wizard: Validate → Verify → Route → Settle → Decide → Track",
       "Step indicator with progress",
       "Per-step results with branching (MATCH proceeds, CLOSE_MATCH reviews, NO_MATCH stops)",
+      "Valid IBAN with no derivable BIC stops at Validate and asks for the beneficiary BIC",
       "Recommendation display with reason and UETR",
       "Tracking timeline on final step",
     ],

@@ -15,6 +15,26 @@
 }
 
 /* ── Capstone form ──────────────────────────────────────── */
+/* Waiting for a BIC the IBAN could not supply: needs input, not a failure. */
+.lab-capstone-bic {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  color: var(--color-warning);
+}
+
+.lab-capstone-bic .lab-capstone-form {
+  align-items: end;
+  margin: var(--space-2) 0 0;
+}
+
+.lab-capstone-bic + .lab-error {
+  margin-top: var(--space-2);
+}
+
 .lab-capstone-form {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

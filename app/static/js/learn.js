@@ -152,6 +152,9 @@
     // ── Prerequisite gating (Education panel #1) ──
     // Core labs require the previous core lab to be completed.
     if (labId && CORE_SEQUENCE.indexOf(labId) > 0) {
+      // Resolved here, not at load: learn-utils.js loads before this file
+      // (learn.html), and only the lock screen needs it.
+      var esc = LearnUtils.esc;
       var prevId = CORE_SEQUENCE[CORE_SEQUENCE.indexOf(labId) - 1];
       var progress = getProgress();
       if (progress.indexOf(prevId) === -1) {
