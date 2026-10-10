@@ -33,7 +33,7 @@ export function Tools({ facts, demo }: { facts: LandingFacts; demo: Demo }) {
               Run the checks a <em>payments team</em> runs.
             </>
           }
-          lede="Prepare a payment, split fees OUR, SHA or BEN, screen every hop, find the value date, check an MT103 and track it by UETR."
+          lede="Prepare a payment, split the fees OUR, SHA or BEN, and track it by UETR."
         />
         <div className="grid g3">
           <Tool
@@ -81,8 +81,6 @@ export function Tools({ facts, demo }: { facts: LandingFacts; demo: Demo }) {
           >
             OUR, SHA or BEN: see the lift fee at each hop and what the beneficiary actually receives.
           </Tool>
-        </div>
-        <div className="grid g3">
           <Tool
             name="tracking"
             title="Track it by UETR"
