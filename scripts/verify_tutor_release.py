@@ -62,7 +62,9 @@ def main() -> int:
 
     if vercel.get("installCommand") != "cd frontend && npm ci && cd .. && pip install '.[ai]'":
         _fail("vercel installCommand no longer matches the production AI build")
-    if vercel.get("buildCommand") != "cd frontend && npm run build":
+    if vercel.get("buildCommand") != (
+        "cd frontend && npm run build && node scripts/build-landing-if-enabled.mjs"
+    ):
         _fail("vercel buildCommand no longer matches the production frontend build")
 
     function = vercel.get("functions", {}).get("app/main.py", {})

@@ -268,7 +268,9 @@ def test_the_vercel_build_and_function_budget_match_the_tutor_contract():
         vercel = json.load(handle)
 
     assert vercel["installCommand"] == "cd frontend && npm ci && cd .. && pip install '.[ai]'"
-    assert vercel["buildCommand"] == "cd frontend && npm run build"
+    assert vercel["buildCommand"] == (
+        "cd frontend && npm run build && node scripts/build-landing-if-enabled.mjs"
+    )
     max_duration = vercel["functions"]["app/main.py"]["maxDuration"]
     assert isinstance(max_duration, int)
     assert max_duration == 30

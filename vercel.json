@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd frontend && npm ci && cd .. && pip install '.[ai]'",
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm run build && node scripts/build-landing-if-enabled.mjs",
   "functions": {
     "app/main.py": {
       "maxDuration": 30,
