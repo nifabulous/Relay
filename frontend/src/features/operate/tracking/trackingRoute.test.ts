@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TrackPaymentResponse } from "../../../api/schemas";
 import { trackingRouteStops } from "./trackingRoute";
 
 const payment = {
@@ -8,7 +9,7 @@ const payment = {
     { status: "FORWARDED", bank_bic: "CITIUS33XXX", bank_name: "Citibank N.A.", hop: 1, timestamp: "t1" },
     { status: "CREDITED", bank_bic: "BBBBGB2LXXX", bank_name: "Northstar Bank", hop: 2, timestamp: "t2" },
   ],
-} as never;
+} as unknown as TrackPaymentResponse;
 
 describe("trackingRouteStops", () => {
   it("maps each revealed hop to a stop with its bank", () => {
@@ -18,11 +19,23 @@ describe("trackingRouteStops", () => {
   });
 
   it("marks a rejected or returned hop as failed", () => {
-    const rejected = { ...(payment as any), timeline: [{ ...(payment as any).timeline[0], status: "REJECTED" }] } as never;
+    const rejected = { ...payment, timeline: [{ ...payment.timeline[0], status: "REJECTED" }] } as TrackPaymentResponse;
     expect(trackingRouteStops(rejected)[0].status).toBe("failed");
   });
 
   it("treats a revealed credited hop as passed", () => {
     expect(trackingRouteStops(payment)[2].status).toBe("passed");
+  });
+
+  it("returns no stops for an empty timeline", () => {
+    expect(trackingRouteStops({ ...payment, timeline: [] })).toEqual([]);
+  });
+
+  it("falls back to the BIC when a hop has an empty bank name", () => {
+    const unnamed = {
+      ...payment,
+      timeline: [{ ...payment.timeline[0], bank_name: "" }],
+    } as TrackPaymentResponse;
+    expect(trackingRouteStops(unnamed)[0].name).toBe("AAAAGB2LXXX");
   });
 });

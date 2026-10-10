@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -273,8 +273,9 @@ describe("Scheduled pacing controls", () => {
     await user.click(screen.getByRole("button", { name: "Advance one event" }));
 
     // The refreshed timeline now shows the revealed intermediary hop.
-    expect(await screen.findByRole("figure", { name: "Payment route" })).toBeVisible();
-    expect((await screen.findAllByText("Citibank N.A.")).length).toBeGreaterThan(0);
+    const figure = await screen.findByRole("figure", { name: "Payment route" });
+    expect(figure).toBeVisible();
+    expect(within(screen.getByRole("figure", { name: "Payment route" })).getByText("Citibank N.A.")).toBeInTheDocument();
     expect(skippedUetr).toBe("UETR-A");
   });
 
@@ -295,9 +296,30 @@ describe("Scheduled pacing controls", () => {
     await user.click(screen.getByRole("button", { name: "Complete simulation" }));
 
     // Terminal state: credited bank visible, amounts revealed, controls gone.
+    await user.click(await screen.findByText("Event list"));
     expect(
       await screen.findByText("Credited to beneficiary account by Guaranty Trust Bank"),
-    ).toBeInTheDocument();
+    ).toBeVisible();
+  });
+
+  it("keeps the event text in a collapsible event list that opens on click", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, PACING_PLAN.length)),
+      ),
+    );
+    const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    const summary = await screen.findByText("Event list");
+    const details = summary.closest("details");
+    expect(details).not.toBeNull();
+    const text = within(details as HTMLElement).getByText(
+      "Credited to beneficiary account by Guaranty Trust Bank",
+    );
+    expect(text).not.toBeVisible();
+
+    await user.click(summary);
+    expect(text).toBeVisible();
   });
 
   it("hides the controls once the response is terminal", async () => {
