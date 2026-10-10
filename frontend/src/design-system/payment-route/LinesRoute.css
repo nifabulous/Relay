@@ -1,7 +1,6 @@
 /* Colours come from the scoped landing tokens; this file holds no hex. */
 .lines-route { margin: 0; position: relative; }
 .lines-route__svg { display: block; width: 100%; height: 240px; }
-.lines-route__track { fill: none; stroke: var(--line2); stroke-width: 2; }
 .lines-route__drawn { fill: none; stroke: var(--acc); stroke-width: 2.5; }
 .lines-route__node { fill: var(--surface); stroke: var(--acc); stroke-width: 2; }
 .lines-route__node--failed { stroke: var(--bad); }
@@ -16,7 +15,6 @@
 .lines-route__step--passed .lines-route__status { color: var(--ok); }
 .lines-route__step--failed .lines-route__status { color: var(--bad); }
 .lines-route__step--needs_attention .lines-route__status { color: var(--warn); }
-.lines-route__pause { margin-top: 12px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line2); background: var(--ghost); color: var(--ink); font: 500 14px/1 var(--font-sans); }
 @media (max-width: 767px) {
   .lines-route__svg { display: none; }
 }

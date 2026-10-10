@@ -3,11 +3,7 @@ import "./LinesRoute.css";
 
 export interface LinesRouteProps {
   stops: RouteStop[];
-  /** 0 to 1. Omitted means the whole route is drawn. */
-  progress?: number;
   summary: string;
-  paused?: boolean;
-  onTogglePause?: () => void;
   ariaLabel: string;
 }
 
@@ -49,9 +45,12 @@ function StatusIcon({ status }: { status: RouteStopStatus }) {
   );
 }
 
-export function LinesRoute({ stops, progress, summary, paused = false, onTogglePause, ariaLabel }: LinesRouteProps) {
+/**
+ * The route is drawn whole and static. Animating it later needs the html.motion
+ * gate and a pause control, as the landing route has.
+ */
+export function LinesRoute({ stops, summary, ariaLabel }: LinesRouteProps) {
   const count = stops.length;
-  const drawn = progress === undefined ? 1 : Math.min(1, Math.max(0, progress));
   const pathD = stops.map((_, index) => `${index === 0 ? "M" : "L"} ${stopX(index, count)} ${PATH_Y}`).join(" ");
 
   return (
@@ -62,14 +61,7 @@ export function LinesRoute({ stops, progress, summary, paused = false, onToggleP
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path className="lines-route__track" d={pathD} />
-        <path
-          className="lines-route__drawn"
-          d={pathD}
-          pathLength={1}
-          strokeDasharray="1"
-          strokeDashoffset={1 - drawn}
-        />
+        <path className="lines-route__drawn" d={pathD} />
         {stops.map((stop, index) => (
           <rect
             key={`${stop.role}-${index}`}
@@ -99,12 +91,6 @@ export function LinesRoute({ stops, progress, summary, paused = false, onToggleP
       </ol>
 
       <figcaption className="sr">{summary}</figcaption>
-
-      {onTogglePause && (
-        <button type="button" className="lines-route__pause" aria-pressed={paused} onClick={onTogglePause}>
-          {paused ? "Play route" : "Pause route"}
-        </button>
-      )}
     </figure>
   );
 }

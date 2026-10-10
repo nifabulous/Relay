@@ -32,9 +32,22 @@ async function expectRoute(page: Page, summary: RegExp) {
   const text = (await caption.textContent())?.trim() ?? "";
   expect(text.length).toBeGreaterThan(0);
   expect(text).toMatch(summary);
-  // Final state with motion off: the whole route is drawn, not mid-reveal.
-  const dashOffset = await figure.locator(".lines-route__drawn").getAttribute("stroke-dashoffset");
-  expect(Number(dashOffset)).toBe(0);
+  // The route ships static: it renders as its final state, with no reveal and
+  // no pause control. Animation, if added later, brings its own checks.
+  const line = figure.locator(".lines-route__drawn");
+  await expect(line).toHaveCount(1);
+  const drawn = await line.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      dasharray: element.getAttribute("stroke-dasharray"),
+      dashoffset: element.getAttribute("stroke-dashoffset"),
+      computedDasharray: style.strokeDasharray,
+      animation: style.animationName,
+      transition: style.transitionDuration,
+    };
+  });
+  expect(drawn).toEqual({ dasharray: null, dashoffset: null, computedDasharray: "none", animation: "none", transition: "0s" });
+  await expect(figure.getByRole("button")).toHaveCount(0);
 }
 
 /**

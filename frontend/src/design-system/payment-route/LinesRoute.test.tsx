@@ -62,6 +62,17 @@ describe("LinesRoute", () => {
   });
 });
 
+describe("LinesRoute renders static", () => {
+  it("draws the whole route with no reveal state and no pause control", () => {
+    const { container } = render(<LinesRoute stops={stops} summary="s" ariaLabel="Payment route" />);
+    const paths = container.querySelectorAll(".lines-route__svg path");
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).not.toHaveAttribute("stroke-dasharray");
+    expect(paths[0]).not.toHaveAttribute("stroke-dashoffset");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+});
+
 describe("LinesRoute summary visually hidden", () => {
   it("defines a .lines-route .sr rule that hides the summary visually", () => {
     const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "LinesRoute.css"), "utf8");
