@@ -254,7 +254,9 @@ describe("legacy capstone (app/static/js/learn-capstone.js)", () => {
     expect(captured.trackBodies[0].beneficiary_bic).toBe("NWBKGB2LXXX");
   });
 
-  it("explains an error response from the BIC check as an invalid BIC, not an IBAN", async () => {
+  // A failed check says nothing about the BIC the learner typed, so it must not
+  // be reported as an invalid BIC (Relay says the same thing for a non-2xx).
+  it("reports a failed BIC check as a failed check, not as an invalid BIC", async () => {
     mockApi();
     server.use(
       http.get("/api/validate", ({ request }) => {
@@ -270,7 +272,8 @@ describe("legacy capstone (app/static/js/learn-capstone.js)", () => {
     byId<HTMLInputElement>("cs-bic").value = "BARCGB22";
     byId("cs-bic-btn").click();
 
-    expect(await screen.findByText(/that bic is not valid/i)).toBeVisible();
+    expect(await screen.findByText(/the bic could not be checked/i)).toBeVisible();
+    expect(screen.queryByText(/not valid/i)).toBeNull();
     expect(screen.queryByText(/not an iban/i)).toBeNull();
     expect(document.getElementById("cs-next")).toBeNull();
   });

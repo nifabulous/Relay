@@ -133,11 +133,15 @@ LearnLabs["capstone"] = function (main, helpers) {
     }
     out.innerHTML = '<span class="muted">Checking BIC...</span>';
     try {
-      const res = await fetch(`/api/validate?value=${encodeURIComponent(value)}`).then(r => r.json());
+      const response = await fetch(`/api/validate?value=${encodeURIComponent(value)}`);
+      const res = response.ok ? await response.json() : null;
       // Re-validating replaces this prompt. A late answer belongs to the old
       // IBAN and must not overwrite the BIC the new one derived.
       if (!out.isConnected) return;
-      if (res.input_type === "iban") {
+      if (!res) {
+        // A failed check says nothing about the BIC the learner typed.
+        out.innerHTML = `<p class="muted">The BIC could not be checked.</p>`;
+      } else if (res.input_type === "iban") {
         // /api/validate accepts IBANs too; an IBAN here is not a bank identifier.
         out.innerHTML = `<p class="muted">Enter a BIC (8 or 11 characters), not an IBAN.</p>`;
       } else if (!res.valid || !res.bic) {
@@ -152,6 +156,7 @@ LearnLabs["capstone"] = function (main, helpers) {
         document.getElementById("cs-next").onclick = () => { step = 1; render(); };
       }
     } catch (e) {
+      if (!out.isConnected) return;
       out.innerHTML = `<p class="muted">Error: ${esc(e.message)}</p>`;
     }
   }
