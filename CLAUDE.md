@@ -131,7 +131,7 @@ app/
 │   ├── vop.py           # Verification of Payee (name matching)
 │   ├── routing.py       # Correspondent bank routing (curated corridor table)
 │   ├── fee_calculator.py# OUR/SHA/BEN fee simulation
-│   ├── stp_checker.py   # MT103 STP checker (12-rule primer)
+│   ├── stp_checker.py   # MT103 STP checker (14-rule primer)
 │   ├── value_date.py    # Settlement date calculation
 │   ├── screening.py     # Sanctions screening (fictional watchlist)
 │   ├── tracking.py      # UETR + simulated gpi timeline

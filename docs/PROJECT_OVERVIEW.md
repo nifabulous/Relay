@@ -75,7 +75,7 @@ _Last updated: 2026-09-06._
 **Analytics & message standards**
 - `POST /api/fees/simulate` — OUR/SHA/BEN fee deduction across the correspondent chain.
 - `POST /api/value-date` — settlement value-date calculator (cut-offs, T+n, weekends/holidays).
-- `POST /api/message/stp-check` — MT103 straight-through-processing check (12-rule primer;
+- `POST /api/message/stp-check` — MT103 straight-through-processing check (14-rule primer;
   incl. field-23B validation and 32A-vs-33B amount-divergence).
 - `POST /api/message/translate` — **MT103 → ISO 20022 `pacs.008`** field crosswalk + illustrative XML.
 - `POST /api/message/pacs008-check` — structured pacs.008 field validation (incl. the Nov-2026

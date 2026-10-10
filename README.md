@@ -360,7 +360,7 @@ lesson scripts:
 | `POST` | `/api/fees/simulate` | Fee simulation (OUR/SHA/BEN) |
 | `POST` | `/api/screen` | Sanctions screening |
 | `POST` | `/api/value-date` | Settlement value date calculator |
-| `POST` | `/api/message/stp-check` | MT103 STP compliance checker (12 rules) |
+| `POST` | `/api/message/stp-check` | MT103 STP compliance checker (14 rules) |
 | `POST` | `/api/message/translate` | MT103 → pacs.008 XML translation |
 | `POST` | `/api/message/pacs008-check` | pacs.008 structured-field validator |
 | `GET` | `/api/progress` | Learning progress + badges |
