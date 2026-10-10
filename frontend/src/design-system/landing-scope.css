@@ -5,7 +5,8 @@
  * no hex. The /app workspaces keep design-system/tokens.css until Phase 3.
  *
  * Selectors match the app's theme contract: an explicit data-theme wins, and
- * "system" (no attribute) follows the OS.
+ * "system" (no attribute) follows the OS. theme.ts sets data-theme on the
+ * document root only, so every theme selector reads it from :root.
  */
 .surface-landing {
   /* ramps (constant across themes) */
@@ -73,8 +74,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .surface-landing,
-  .surface-landing:not([data-theme="light"]) {
+  :root:not([data-theme="light"]) .surface-landing {
     color-scheme: dark;
     --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
     --line: #172234; --line2: #25334B; --cell: #0B1526;
@@ -92,8 +92,7 @@
   }
 }
 
-:root[data-theme="dark"] .surface-landing,
-.surface-landing[data-theme="dark"] {
+:root[data-theme="dark"] .surface-landing {
   color-scheme: dark;
   --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
   --line: #172234; --line2: #25334B; --cell: #0B1526;
@@ -111,8 +110,7 @@
 }
 
 /* Self-contained: repeats every dark token, so it renders correctly under an OS light setting. */
-:root[data-theme="black"] .surface-landing,
-.surface-landing[data-theme="black"] {
+:root[data-theme="black"] .surface-landing {
   color-scheme: dark;
   --bg: #000000; --surface: #0B0B0F; --tint: #121217; --ink: #F5F5F7; --ink2: #B5B7C0; --muted: #8E909B;
   --line: #1C1C22; --line2: #2A2A31; --cell: #0A0A0E;

@@ -414,6 +414,22 @@ describe("landing scope", () => {
     expect(scopeCss).not.toMatch(/^\s*(\.relay-btn|\.status-chip|h[1-3]\b)/m);
   });
 
+  // theme.ts sets data-theme on documentElement only. A selector that reads data-theme on the
+  // scope element itself never sees the explicit choice, so explicit light under a dark OS rendered dark.
+  it("never reads data-theme on the scope element itself", () => {
+    expect(scopeCss).not.toMatch(/\.surface-landing:not\(/);
+    expect(scopeCss).not.toMatch(/\.surface-landing\[data-theme/);
+  });
+
+  it("orders the theme blocks so black wins over the OS-dark block", () => {
+    const media = scopeCss.indexOf("@media (prefers-color-scheme: dark)");
+    const dark = scopeCss.search(/^:root\[data-theme="dark"\]\s+\.surface-landing\s*\{/m);
+    const black = scopeCss.search(/^:root\[data-theme="black"\]\s+\.surface-landing\s*\{/m);
+    expect(media).toBeGreaterThanOrEqual(0);
+    expect(dark).toBeGreaterThan(media);
+    expect(black).toBeGreaterThan(dark);
+  });
+
   it("follows the app theme set on the document root", () => {
     expect(scopeCss).toMatch(/:root\[data-theme="dark"\]\s+\.surface-landing\b/);
     expect(scopeCss).toMatch(/:root\[data-theme="black"\]\s+\.surface-landing\b/);
@@ -433,8 +449,8 @@ describe("landing scope", () => {
   }
   const THEMES: Array<[string, Tokens]> = [
     ["light", scopeTokens(null)],
-    ["dark", scopeTokens(/^\.surface-landing\[data-theme="dark"\]\s*\{/m)],
-    ["black", scopeTokens(/^\.surface-landing\[data-theme="black"\]\s*\{/m)],
+    ["dark", scopeTokens(/^:root\[data-theme="dark"\]\s+\.surface-landing\s*\{/m)],
+    ["black", scopeTokens(/^:root\[data-theme="black"\]\s+\.surface-landing\s*\{/m)],
   ];
   const TEXT_PAIRS: Array<[string, string, number]> = [
     ["--onAcc", "--accFill", 4.5], // primary button
