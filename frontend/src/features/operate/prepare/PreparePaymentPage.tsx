@@ -18,6 +18,8 @@ import { Button } from "../../../design-system/Button";
 import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
+import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
+import { prepareRouteStops } from "./prepareRoute";
 import { groupByCurrency } from "../../explore/ssiGrouping";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
@@ -763,6 +765,20 @@ export function PreparePaymentPage() {
               <p>No settlement instructions on file for this bank/currency.</p>
             )}
           </CheckResult>
+
+          {result.routing.suggested_intermediaries.length > 0 && (
+            <div className="surface-landing prepare-payment__lines-route">
+              <LinesRoute
+                stops={prepareRouteStops(result.routing, {
+                  // The form has no originator field; the sender is the user's own bank.
+                  originator: "Sender",
+                  beneficiary: formValues.beneficiary_name || "Beneficiary",
+                })}
+                summary={`Route from the sender through ${result.routing.suggested_intermediaries[0].bank || result.routing.suggested_intermediaries[0].bic} to ${formValues.beneficiary_name || "the beneficiary"}.`}
+                ariaLabel="Payment route"
+              />
+            </div>
+          )}
 
           {/* Routing summary: preserve whether the backend returned published SSI data or a heuristic. */}
           {result.routing.suggested_intermediaries.length > 0 && (
