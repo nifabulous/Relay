@@ -231,6 +231,66 @@ jobs:
   # review. This deliberately runs in a clean environment so DB isolation,
   # artifact scanning, Sentry credential clearing, and final HEAD validation
   # are behaviorally tested rather than covered only by shell syntax checks.
+  # The landing page is flag-gated, so the default PR checks never build it.
+  # This job is the flag-on path: the landing build and its artifact checks, the
+  # Python tests that read the built page, and the landing E2E project against
+  # its own flag-on server. Without it none of that runs on a pull request.
+  landing-page:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      # tests/test_frontdoor.py and the landing build's /app hash guard both
+      # need the /app build first.
+      - name: Build the /app frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Build the landing page
+        run: npm run build:landing
+        working-directory: frontend
+
+      # With app/landing_dist present, tests/test_landing_content.py also scans
+      # the built HTML for real seed bank names instead of skipping.
+      - name: Landing Python tests
+        run: python -m pytest tests/test_landing_*.py -q
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      # global-setup.ts skips its own builds on CI, so the builds above are the
+      # ones this run serves.
+      - name: Landing E2E project
+        run: npx playwright test --project=landing
+        working-directory: frontend
+        env:
+          E2E_SKIP_BUILD: "1"
+
   quality-gate:
     runs-on: ubuntu-latest
 
@@ -356,9 +416,13 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      # Runs the same steps as vercel.json's buildCommand, with the flag on so
+      # the landing hook builds the page too.
       - name: Build the Vercel frontend artifact
-        run: npm run build
+        run: npm run build && node scripts/build-landing-if-enabled.mjs
         working-directory: frontend
+        env:
+          RELAY_LANDING_ENABLED: "1"
 
       - name: Verify the final tutor release contract
         run: python scripts/verify_tutor_release.py
