@@ -13,7 +13,8 @@ if [[ -n "$common_git_dir" ]]; then
   common_root="$(cd -- "$(dirname -- "$common_git_dir")" && pwd)"
 fi
 
-server_args=(app.main:app --host 127.0.0.1 --port 8000)
+# RELAY_E2E_PORT lets the landing project run a second, flag-on server.
+server_args=(app.main:app --host 127.0.0.1 --port "${RELAY_E2E_PORT:-8000}")
 
 for uvicorn_path in "$repo_root/.venv/bin/uvicorn" "$common_root/.venv/bin/uvicorn"; do
   if [[ -x "$uvicorn_path" ]]; then

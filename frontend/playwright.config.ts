@@ -1,4 +1,10 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+
+// The landing page runs only in its own project, against its own flag-on server.
+const LANDING_SPEC = /landing\.spec\.ts$/;
+const LANDING_PORT = 8001;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -17,6 +23,7 @@ export default defineConfig({
   // navigation timeout, never an assertion — so the budget is the problem, not
   // any one test. The three full-pipeline tests keep their own 120s overrides.
   timeout: 60_000,
+  testIgnore: LANDING_SPEC,
   use: {
     baseURL: "http://127.0.0.1:8000",
     trace: "on-first-retry",
@@ -80,16 +87,47 @@ export default defineConfig({
         reducedMotion: "reduce",
       },
     },
+    // ─── Landing page ─────────────────────────────────────────────────────────
+    // landing.spec.ts sets its own viewports, themes and motion settings, so a
+    // single Chromium project covers the matrix. Its server has
+    // RELAY_LANDING_ENABLED on; every other project ignores the spec.
+    {
+      name: "landing",
+      testMatch: LANDING_SPEC,
+      testIgnore: [],
+      use: {
+        browserName: "chromium",
+        baseURL: `http://127.0.0.1:${LANDING_PORT}`,
+        viewport: { width: 1440, height: 900 },
+      },
+    },
   ],
-  webServer: {
-    // Start from the repository root so the shared launcher can resolve the
-    // current worktree's environment, a linked worktree's common .venv, or uv's
-    // project environment. reuseExistingServer still lets a developer-run
-    // uvicorn (or a prior run) short-circuit the spawn.
-    cwd: "..",
-    command: "./scripts/run_e2e_server.sh",
-    url: "http://127.0.0.1:8000/api/health",
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+  webServer: [
+    {
+      // Start from the repository root so the shared launcher can resolve the
+      // current worktree's environment, a linked worktree's common .venv, or uv's
+      // project environment. reuseExistingServer still lets a developer-run
+      // uvicorn (or a prior run) short-circuit the spawn.
+      cwd: "..",
+      command: "./scripts/run_e2e_server.sh",
+      url: "http://127.0.0.1:8000/api/health",
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+    {
+      // Never reused: a developer's flag-off server on this port would make
+      // every landing test assert against the redirect instead of the page.
+      cwd: "..",
+      command: "./scripts/run_e2e_server.sh",
+      url: `http://127.0.0.1:${LANDING_PORT}/api/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      env: {
+        RELAY_LANDING_ENABLED: "1",
+        RELAY_E2E_PORT: String(LANDING_PORT),
+        // Its own database, so two servers never seed the same SQLite file.
+        DATABASE_URL: `sqlite:///${join(tmpdir(), "relay-landing-e2e.db")}`,
+      },
+    },
+  ],
 });
