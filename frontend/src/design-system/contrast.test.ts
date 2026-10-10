@@ -390,4 +390,60 @@ describe("landing scope", () => {
       expect(scopeCss).toContain(`${name}:`);
     }
   });
+
+  // Scoped component overrides: every selector must sit under .surface-landing.
+  const SCOPED_SELECTORS = [
+    ".relay-btn--primary",
+    ".relay-btn--primary:hover",
+    ".relay-btn--secondary",
+    ".status-chip",
+    ".status-chip--success",
+    ".status-chip--warning",
+    ".status-chip--danger",
+    ".status-chip--muted",
+    ".status-chip--action",
+    ".status-chip .status-chip__icon",
+  ];
+
+  it.each(SCOPED_SELECTORS)("scopes %s under .surface-landing", (selector) => {
+    const escaped = selector.replace(/[.:]/g, "\\$&");
+    expect(scopeCss).toMatch(new RegExp(`\\.surface-landing\\s+${escaped}\\s*[,{]`));
+  });
+
+  it("never styles a shared component outside .surface-landing", () => {
+    expect(scopeCss).not.toMatch(/^\s*(\.relay-btn|\.status-chip|h[1-3]\b)/m);
+  });
+
+  // Resolve the scope's tokens the way the cascade does: the bare block, then the theme's redefinitions.
+  function scopeTokens(opener: RegExp | null): Tokens {
+    const base = declarations(blockBody(scopeCss, /^\.surface-landing\s*\{/m));
+    const theme = opener ? declarations(blockBody(scopeCss, opener)) : {};
+    const merged: Tokens = { ...base, ...theme };
+    const resolve = (value: string): string => {
+      const m = /^var\((--[\w-]+)\)$/.exec(value);
+      return m ? resolve(merged[m[1]] ?? value) : value;
+    };
+    return Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, resolve(v)]));
+  }
+  const THEMES: Array<[string, Tokens]> = [
+    ["light", scopeTokens(null)],
+    ["dark", scopeTokens(/^\.surface-landing\[data-theme="dark"\]\s*\{/m)],
+    ["black", scopeTokens(/^\.surface-landing\[data-theme="black"\]\s*\{/m)],
+  ];
+  const TEXT_PAIRS: Array<[string, string, number]> = [
+    ["--onAcc", "--accFill", 4.5], // primary button
+    ["--onAcc", "--accFillHover", 4.5], // primary button hover
+    ["--ink", "--surface", 4.5], // secondary button and headings
+    ["--ok", "--surface", 4.5], // success chip
+    ["--warn", "--surface", 4.5], // warning chip
+    ["--bad", "--surface", 4.5], // danger chip
+    ["--muted", "--surface", 4.5], // muted chip
+    ["--accInk", "--surface", 4.5], // action chip
+  ];
+
+  describe.each(THEMES)("%s theme text pairs", (_name, tokens) => {
+    it.each(TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
+      expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  });
 });

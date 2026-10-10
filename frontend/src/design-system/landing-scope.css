@@ -91,3 +91,52 @@
   --gPlate: rgba(11, 11, 15, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #000000;
   --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
 }
+
+/* Landing variants of shared components, inside .surface-landing only. */
+.surface-landing .relay-btn--primary {
+  background: var(--accFill);
+  border-color: var(--accFill);
+  color: var(--onAcc);
+  box-shadow: var(--priShade);
+  border-radius: 10px;
+}
+.surface-landing .relay-btn--primary:hover {
+  background: var(--accFillHover);
+  border-color: var(--accFillHover);
+}
+.surface-landing .relay-btn--secondary {
+  background: var(--ghost);
+  color: var(--ink);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+}
+.surface-landing .relay-btn--secondary:hover {
+  background: var(--ghostHover);
+  border-color: var(--line2);
+}
+
+.surface-landing h1,
+.surface-landing h2,
+.surface-landing h3 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* StatusChip: text plus icon on the surface, colour carried by the text token only. */
+.surface-landing .status-chip {
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  font-family: var(--font-sans);
+}
+.surface-landing .status-chip--success { color: var(--ok); }
+.surface-landing .status-chip--warning { color: var(--warn); }
+.surface-landing .status-chip--danger { color: var(--bad); }
+.surface-landing .status-chip--muted { color: var(--muted); }
+.surface-landing .status-chip--action { color: var(--accInk); }
+.surface-landing .status-chip .status-chip__icon {
+  background: currentColor;
+}
+.surface-landing .status-chip .status-chip__icon > svg {
+  color: var(--surface);
+}
