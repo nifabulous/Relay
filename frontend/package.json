@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:base-ui-boundary": "node scripts/check-base-ui-boundary.mjs",
-    "check:bundle": "node scripts/check-bundle.mjs"
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "check:landing-boundary": "node scripts/check-landing-boundary.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
