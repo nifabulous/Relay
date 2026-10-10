@@ -412,7 +412,7 @@ export function PreparePaymentPage() {
   };
 
   return (
-    <div className="prepare-payment">
+    <div className="surface-landing prepare-payment">
       <div className="prepare-payment__header">
         <h1>Prepare a payment</h1>
         <p className="measure">

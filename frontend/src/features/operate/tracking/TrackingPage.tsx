@@ -157,7 +157,7 @@ export function TrackingPage() {
   );
 
   return (
-    <div className="tracking-page">
+    <div className="surface-landing tracking-page">
       <h1>Payment Tracking</h1>
       <p className="measure">Follow a payment across its lifecycle by UETR (Unique End-to-End Transaction Reference).</p>
 

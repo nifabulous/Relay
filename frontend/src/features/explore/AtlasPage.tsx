@@ -153,7 +153,7 @@ export function AtlasPage() {
   }));
 
   return (
-    <div className="explore atlas" data-view={view} data-scope={scope}>
+    <div className="surface-landing explore atlas" data-view={view} data-scope={scope}>
       <header className="atlas__title-block">
         <p className="atlas__eyebrow">Explore / Network position</p>
         <h1>Correspondent atlas</h1>
