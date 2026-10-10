@@ -115,6 +115,17 @@ const BLACK: Tokens = { ...LIGHT, ...BLACK_EXPLICIT };
  */
 const DARK: Tokens = { ...LIGHT, ...DARK_MEDIA };
 
+/** Paint a hex or rgba() colour over an opaque hex backdrop, returning #rrggbb. */
+function composite(colour: string, backdrop: string): string {
+  if (/^#[0-9a-f]{6}$/i.test(colour)) return colour;
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(colour);
+  if (!m || !/^#[0-9a-f]{6}$/i.test(backdrop)) throw new Error(`cannot composite ${colour} over ${backdrop}`);
+  const alpha = m[4] === undefined ? 1 : Number(m[4]);
+  const under = [1, 3, 5].map((i) => parseInt(backdrop.slice(i, i + 2), 16));
+  const mixed = [1, 2, 3].map((i, k) => Math.round(Number(m[i]) * alpha + under[k] * (1 - alpha)));
+  return `#${mixed.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
+
 function ratio(scope: Tokens, fg: string, bg: string): number {
   const fgHex = scope[fg];
   const bgHex = scope[bg];
@@ -443,7 +454,8 @@ describe("landing scope", () => {
     const merged: Tokens = { ...base, ...theme };
     const resolve = (value: string): string => {
       const m = /^var\((--[\w-]+)\)$/.exec(value);
-      return m ? resolve(merged[m[1]] ?? value) : value;
+      // An undefined target stays as the unresolved var(), so the test that checks it can fail by name.
+      return m && merged[m[1]] !== undefined ? resolve(merged[m[1]]) : value;
     };
     return Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, resolve(v)]));
   }
@@ -461,6 +473,12 @@ describe("landing scope", () => {
     ["--bad", "--surface", 4.5], // danger chip
     ["--muted", "--surface", 4.5], // muted chip
     ["--accInk", "--surface", 4.5], // action chip
+    // The route itself sits on the page canvas: stop roles, details, names and status text.
+    ["--muted", "--bg", 4.5],
+    ["--ink2", "--bg", 4.5],
+    ["--ok", "--bg", 4.5],
+    ["--warn", "--bg", 4.5],
+    ["--bad", "--bg", 4.5],
   ];
 
   describe.each(THEMES)("%s theme text pairs", (_name, tokens) => {
@@ -509,6 +527,22 @@ describe("landing scope", () => {
     expect(body[name], `${name} has no remap line`).toMatch(/^var\(--[\w-]+\)$/);
   });
 
+  // The var() shape alone passes for a typo. Each target must be a landing token the scope
+  // defines, and must resolve, in every theme, to a real value: a colour, or a font stack.
+  it.each(MUST_REMAP)("remap target of %s is defined in the scope and resolves in every theme", (name) => {
+    const target = /^var\((--[\w-]+)\)$/.exec(declarations(remapBlock())[name] ?? "")?.[1];
+    expect(target, `${name} has no var() target`).toBeTruthy();
+    const base = declarations(blockBody(scopeCss, /^\.surface-landing\s*\{/m));
+    const remapNames = new Set(Object.keys(declarations(remapBlock())));
+    expect(base[target!], `${target} is not defined in the scope`).toBeDefined();
+    expect(remapNames.has(target!), `${target} points at another remap line, not a landing token`).toBe(false);
+    for (const [theme, tokens] of THEMES) {
+      const value = tokens[name];
+      if (/font/.test(name)) expect(value, `${name} in ${theme}`).toMatch(/Geist/);
+      else expect(value, `${name} in ${theme}`).toMatch(/^(#[0-9a-f]{3,8}|rgba?\([^)]*\))$/i);
+    }
+  });
+
   it("keeps the remap block inside the base .surface-landing block", () => {
     const base = blockBody(scopeCss, /^\.surface-landing\s*\{/m);
     expect(base).toContain(REMAP_OPEN);
@@ -547,11 +581,27 @@ describe("landing scope", () => {
     ["--warning-foreground", "--warning", 4.5],
     ["--info-foreground", "--info", 4.5],
     ["--destructive", "--card", 4.5],
+    ["--color-on-action", "--color-action-hover", 4.5], // fill hover
+    ["--color-on-action", "--color-action-pressed", 4.5], // fill pressed
+    ["--color-success", "--color-surface", 4.5],
   ];
 
   describe.each(THEMES)("%s theme remapped text pairs", (_name, tokens) => {
     it.each(REMAP_TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
       expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  });
+
+  // Translucent backgrounds (dark --badBg is rgba) paint over the canvas, so measure the composite.
+  const PAIRS_OVER_CANVAS: Array<[string, string, number]> = [
+    ["--color-danger", "--color-danger-bg", 4.5], // danger notices and alerts
+  ];
+
+  describe.each(THEMES)("%s theme remapped pairs over the canvas", (_name, tokens) => {
+    it.each(PAIRS_OVER_CANVAS)("%s on %s (composited over --bg) is at least %f:1", (fg, bg, min) => {
+      const fgHex = tokens[fg];
+      expect(fgHex).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(contrastRatio(fgHex, composite(tokens[bg], tokens["--bg"]))).toBeGreaterThanOrEqual(min);
     });
   });
 });
