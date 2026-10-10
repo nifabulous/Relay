@@ -1,0 +1,448 @@
+{
+  "atlas": {
+    "beneficiaryCountries": 156
+  },
+  "corridorRules": {
+    "corridors": 29,
+    "rows": 72
+  },
+  "corridors": [
+    {
+      "currency": "GBP",
+      "destination": {
+        "city": "London",
+        "country": "GB",
+        "lat": 51.51,
+        "lon": -0.13
+      },
+      "origin": {
+        "city": "Lagos",
+        "country": "NG",
+        "lat": 6.45,
+        "lon": 3.39
+      },
+      "source": "case"
+    },
+    {
+      "currency": "USD",
+      "destination": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "origin": {
+        "city": "Toronto",
+        "country": "CA",
+        "lat": 43.65,
+        "lon": -79.38
+      },
+      "source": "case"
+    },
+    {
+      "currency": "EUR",
+      "destination": {
+        "city": "Frankfurt",
+        "country": "DE",
+        "lat": 50.11,
+        "lon": 8.68
+      },
+      "origin": {
+        "city": "London",
+        "country": "GB",
+        "lat": 51.51,
+        "lon": -0.13
+      },
+      "source": "case"
+    },
+    {
+      "currency": "MXN",
+      "destination": {
+        "city": "Mexico City",
+        "country": "MX",
+        "lat": 19.43,
+        "lon": -99.13
+      },
+      "origin": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "source": "case"
+    },
+    {
+      "currency": "KES",
+      "destination": {
+        "city": "Nairobi",
+        "country": "KE",
+        "lat": -1.29,
+        "lon": 36.82
+      },
+      "origin": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "source": "rule"
+    },
+    {
+      "currency": "INR",
+      "destination": {
+        "city": "Mumbai",
+        "country": "IN",
+        "lat": 19.08,
+        "lon": 72.88
+      },
+      "origin": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "source": "rule"
+    },
+    {
+      "currency": "JPY",
+      "destination": {
+        "city": "Tokyo",
+        "country": "JP",
+        "lat": 35.68,
+        "lon": 139.69
+      },
+      "origin": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "source": "rule"
+    },
+    {
+      "currency": "AUD",
+      "destination": {
+        "city": "Sydney",
+        "country": "AU",
+        "lat": -33.87,
+        "lon": 151.21
+      },
+      "origin": {
+        "city": "New York",
+        "country": "US",
+        "lat": 40.71,
+        "lon": -74.01
+      },
+      "source": "rule"
+    }
+  ],
+  "directory": {
+    "banks": 761,
+    "countries": 152
+  },
+  "rails": {
+    "currencies": [
+      {
+        "code": "AED",
+        "country": "UAE",
+        "schemes": [
+          {
+            "cost": "Bank-set",
+            "limit": "Bank-set",
+            "name": "UAEFTS",
+            "speed": "Same-day (real-time)"
+          },
+          {
+            "cost": "Free",
+            "limit": "AED 50,000",
+            "name": "Aani",
+            "speed": "Instant (<10s)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "AUD",
+        "country": "Australia",
+        "schemes": [
+          {
+            "cost": "Free",
+            "limit": "Bank-set (100,000+)",
+            "name": "NPP / PayID",
+            "speed": "Instant (<15s)"
+          },
+          {
+            "cost": "AUD 0.10-0.50",
+            "limit": "Up to $100M",
+            "name": "Direct Entry (BECS)",
+            "speed": "1-2 business days"
+          },
+          {
+            "cost": "Wholesale rates",
+            "limit": "No limit",
+            "name": "RITS",
+            "speed": "Real-time (RTGS)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "CAD",
+        "country": "Canada",
+        "schemes": [
+          {
+            "cost": "Free",
+            "limit": "FI-set",
+            "name": "Interac e-Transfer",
+            "speed": "Instant (<30s)"
+          },
+          {
+            "cost": "$0.50-2",
+            "limit": "No limit",
+            "name": "EFT",
+            "speed": "1-2 business days"
+          },
+          {
+            "cost": "$5-25",
+            "limit": "No limit",
+            "name": "Lynx",
+            "speed": "Real-time (RTGS)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "EUR",
+        "country": "Eurozone (20 countries)",
+        "schemes": [
+          {
+            "cost": "Free (parity with SCT mandated)",
+            "limit": "Bank-set (scheme cap removed)",
+            "name": "SEPA Instant (SCT Inst)",
+            "speed": "Instant (<10s)"
+          },
+          {
+            "cost": "Free-€1 (domestic-price rule)",
+            "limit": "No limit",
+            "name": "SEPA Credit Transfer",
+            "speed": "1 business day"
+          },
+          {
+            "cost": "€0.80-2.50",
+            "limit": "No limit",
+            "name": "TARGET2",
+            "speed": "Real-time (RTGS)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "GBP",
+        "country": "United Kingdom",
+        "schemes": [
+          {
+            "cost": "Free",
+            "limit": "£1,000,000 scheme max",
+            "name": "Faster Payments (FPS)",
+            "speed": "Instant (<2s)"
+          },
+          {
+            "cost": "£20-35",
+            "limit": "No limit",
+            "name": "CHAPS",
+            "speed": "Same-day (RTGS)"
+          },
+          {
+            "cost": "~£0.50",
+            "limit": "No limit",
+            "name": "Bacs Direct Credit",
+            "speed": "3 business days"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "INR",
+        "country": "India",
+        "schemes": [
+          {
+            "cost": "Free",
+            "limit": "₹1-5L (bank-set)",
+            "name": "UPI",
+            "speed": "Instant (seconds)"
+          },
+          {
+            "cost": "₹5-15",
+            "limit": "₹5,00,000 (bank-set)",
+            "name": "IMPS",
+            "speed": "Instant (seconds)"
+          },
+          {
+            "cost": "Free",
+            "limit": "₹2L minimum, no max",
+            "name": "RTGS",
+            "speed": "Real-time (RTGS)"
+          },
+          {
+            "cost": "Free",
+            "limit": "No limit",
+            "name": "NEFT",
+            "speed": "Half-hourly batches"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "JPY",
+        "country": "Japan",
+        "schemes": [
+          {
+            "cost": "Variable",
+            "limit": "¥100M (clearing cap)",
+            "name": "Zengin",
+            "speed": "Same-day (batch)"
+          },
+          {
+            "cost": "Free",
+            "limit": "JPY 100K-1M (bank-set)",
+            "name": "More Time",
+            "speed": "Instant 24/7"
+          },
+          {
+            "cost": "JPY 100-500",
+            "limit": "No limit",
+            "name": "BOJ-NET",
+            "speed": "Real-time (RTGS)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "KES",
+        "country": "Kenya",
+        "schemes": [
+          {
+            "cost": "Bank-set",
+            "limit": "No limit",
+            "name": "KEPSS",
+            "speed": "Real-time (RTGS)"
+          },
+          {
+            "cost": "KES 0-150",
+            "limit": "KES 999,999/txn",
+            "name": "PesaLink",
+            "speed": "Instant (seconds)"
+          },
+          {
+            "cost": "Tiered tariff",
+            "limit": "KES 250,000/txn, 500,000/day",
+            "name": "M-Pesa",
+            "speed": "Instant (seconds)"
+          },
+          {
+            "cost": "Minimal",
+            "limit": "No limit",
+            "name": "EFT",
+            "speed": "1-2 business days"
+          },
+          {
+            "cost": "Bank-set",
+            "limit": "Bank-set",
+            "name": "Bank Transfer (Direct Credit)",
+            "speed": "Same-day to next business day"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "NGN",
+        "country": "Nigeria",
+        "schemes": [
+          {
+            "cost": "Free",
+            "limit": "Bank-set (CBN-guided)",
+            "name": "NIBSS Instant Pay",
+            "speed": "Instant (seconds)"
+          },
+          {
+            "cost": "Minimal",
+            "limit": "No limit",
+            "name": "NEFT",
+            "speed": "1-2 hours (batch)"
+          },
+          {
+            "cost": "Bank-set",
+            "limit": "Bank-set",
+            "name": "CBN RTGS",
+            "speed": "Real-time (RTGS)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      },
+      {
+        "code": "USD",
+        "country": "United States",
+        "schemes": [
+          {
+            "cost": "$10-35",
+            "limit": "No limit",
+            "name": "Fedwire",
+            "speed": "Real-time (RTGS)"
+          },
+          {
+            "cost": "$0.10-0.50",
+            "limit": "Same-Day ACH: $1M",
+            "name": "FedACH",
+            "speed": "1-2 business days"
+          },
+          {
+            "cost": "$5-20",
+            "limit": "No limit",
+            "name": "CHIPS",
+            "speed": "Same-day (net settle)"
+          },
+          {
+            "cost": "Free",
+            "limit": "$10,000,000",
+            "name": "RTP",
+            "speed": "Instant (<10s)"
+          },
+          {
+            "cost": "Free",
+            "limit": "$10,000,000 network",
+            "name": "FedNow",
+            "speed": "Instant (seconds)"
+          }
+        ],
+        "verifiedAsOf": "2026-08"
+      }
+    ],
+    "currencyCount": 10,
+    "domesticSchemeCount": 34,
+    "international": {
+      "cost": "Bank/correspondent-set",
+      "limit": "Bank/correspondent-set",
+      "name": "SWIFT gpi",
+      "speed": "Same-day to 1-3 business days (corridor- and cut-off-dependent)",
+      "verifiedAsOf": "2026-08"
+    },
+    "totalRailCount": 35
+  },
+  "schemaVersion": 1,
+  "ssi": {
+    "beneficiaryBanks": 763,
+    "correspondents": 1167,
+    "rows": 12196,
+    "settleableRows": 5636
+  },
+  "tools": {
+    "holidayCalendars": 10,
+    "settlementLagDays": {
+      "max": 2,
+      "min": 0
+    },
+    "stpRules": 14,
+    "verdicts": 7,
+    "watchlistEntries": 15
+  }
+}
