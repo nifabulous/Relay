@@ -1,2 +1,3 @@
 # Trusted reference material supplied to the PR reviewer.
 .github/workflows/codex-pr-review.yml
+.github/workflows/loopkeeper-pr-review.yml
