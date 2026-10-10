@@ -38,6 +38,39 @@ def test_validate_valid_iban(client):
     assert body["bic"] is not None
 
 
+def test_validate_iban_without_derivable_bic_returns_null_bic(client):
+    # GB82 WEST 1234 5698 7654 32 is the widely documented example IBAN. Its
+    # bank code WEST is fictional, so no BIC can be derived: the field must be
+    # JSON null, not the string "None".
+    r = client.get("/api/validate", params={"value": "GB82 WEST 1234 5698 7654 32"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["valid"] is True
+    assert body["bic"] is None
+    assert body["bank"] is None
+
+
+def test_prepare_payment_iban_without_derivable_bic_has_null_bic(client):
+    # The prepare pipeline copies the validator's BIC. A "None" string is
+    # truthy, so it was routed, probed for SSIs, and persisted as the
+    # beneficiary of a tracking timeline. With no BIC there is no destination
+    # bank to track.
+    r = client.post(
+        "/api/prepare-payment",
+        json={
+            "beneficiary_iban": "GB82 WEST 1234 5698 7654 32",
+            "beneficiary_name": "Test User",
+            "currency": "GBP",
+            "amount": 100,
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["validation"]["valid"] is True
+    assert body["validation"]["bic"] is None
+    assert client.get(f"/api/track/{body['uetr']}").status_code == 404
+
+
 def test_validate_invalid_iban(client):
     r = client.get("/api/validate", params={"value": "GB29NWBK00000000000000"})
     assert r.status_code == 200

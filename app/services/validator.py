@@ -70,9 +70,12 @@ def validate_iban(iban_str: str) -> ValidationResult:
         iban = IBAN(iban_str, validate_bban=True)
         valid = True
         country = iban.country_code
-        # schwifty can derive BIC for many countries from the registry.
+        # schwifty can derive BIC for many countries from the registry. When
+        # the bank code is not in it, iban.bic is None; str() would turn that
+        # into the truthy string "None".
         try:
-            bic = str(iban.bic)
+            derived = iban.bic
+            bic = str(derived) if derived is not None else None
         except Exception:
             # BIC can't be derived for this national scheme — IBAN still valid.
             bic = None
