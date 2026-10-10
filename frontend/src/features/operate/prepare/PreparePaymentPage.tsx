@@ -345,6 +345,14 @@ export function PreparePaymentPage() {
 
   // Watch form values to detect staleness
   const formValues = watch();
+  // Empty unless the checks cleared the payment: a blocking result draws no route.
+  const routeStops = result
+    ? prepareRouteStops(result, {
+        // The form has no originator field; the sender is the user's own bank.
+        originator: "Sender",
+        beneficiary: formValues.beneficiary_name || "Beneficiary",
+      })
+    : [];
   function handleInputChange() {
     if (result) setIsStale(true);
   }
@@ -767,14 +775,10 @@ export function PreparePaymentPage() {
             )}
           </CheckResult>
 
-          {result.routing.suggested_intermediaries.length > 0 && (
+          {routeStops.length > 0 && (
             <div className="surface-landing prepare-payment__lines-route">
               <LinesRoute
-                stops={prepareRouteStops(result.routing, {
-                  // The form has no originator field; the sender is the user's own bank.
-                  originator: "Sender",
-                  beneficiary: formValues.beneficiary_name || "Beneficiary",
-                })}
+                stops={routeStops}
                 summary={`Route from the sender through ${result.routing.suggested_intermediaries[0].bank || result.routing.suggested_intermediaries[0].bic} to ${formValues.beneficiary_name || "the beneficiary"}.`}
                 ariaLabel="Payment route"
               />
