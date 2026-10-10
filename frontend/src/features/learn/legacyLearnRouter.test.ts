@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const UTILS_SOURCE = readFileSync(resolve(REPO_ROOT, "app/static/js/learn-utils.js"), "utf8");
 const LEARN_SOURCE = readFileSync(resolve(REPO_ROOT, "app/static/js/learn.js"), "utf8");
+const LEARN_HTML = readFileSync(resolve(REPO_ROOT, "app/static/learn.html"), "utf8");
 
 type LegacyLab = (main: HTMLElement, helpers: Record<string, unknown>) => void;
 
@@ -60,6 +61,26 @@ describe("legacy /learn router (app/static/js/learn.js)", () => {
 
     expect(main.textContent).toContain("Complete Lab 7: Payment Schemes first to unlock this lab.");
     expect(main.querySelector('a[href="#lab-7"]')).not.toBeNull();
+  });
+
+  // The harness above injects LearnUtils, so it cannot see the real page's
+  // script order. Check that order where it is defined.
+  it("is loaded by learn.html after learn-utils.js, as plain blocking scripts", () => {
+    const scripts = [...LEARN_HTML.matchAll(/<script\b([^>]*)>/g)].map((m) => m[1]);
+    const utils = scripts.findIndex((attrs) => attrs.includes('src="/static/js/learn-utils.js"'));
+    const router = scripts.findIndex((attrs) => attrs.includes('src="/static/js/learn.js"'));
+    expect(utils).toBeGreaterThanOrEqual(0);
+    expect(router).toBeGreaterThan(utils);
+    for (const attrs of [scripts[utils], scripts[router]]) {
+      expect(attrs).not.toMatch(/\b(defer|async)\b|type="module"/);
+    }
+  });
+
+  // Only the lock screen needs LearnUtils. Reading it at load time would turn a
+  // missing or late utils script into a failure on every /learn page.
+  it("does not need LearnUtils just to load", () => {
+    const legacyWindow = { LearnLabs: {}, addEventListener: () => {}, scrollTo: () => {} };
+    expect(() => new Function("window", "LearnUtils", "LearnLabs", LEARN_SOURCE)(legacyWindow, undefined, {})).not.toThrow();
   });
 
   it("opens a core lab once its prerequisite is complete", () => {

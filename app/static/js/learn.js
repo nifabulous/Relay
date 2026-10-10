@@ -48,9 +48,6 @@
   }
 
   // ── Helpers ────────────────────────────────────────────
-  // HTML escape helper — learn-utils.js loads before this file (learn.html).
-  var esc = LearnUtils.esc;
-
   function el(tag, className, html) {
     const e = document.createElement(tag);
     if (className) e.className = className;
@@ -155,6 +152,9 @@
     // ── Prerequisite gating (Education panel #1) ──
     // Core labs require the previous core lab to be completed.
     if (labId && CORE_SEQUENCE.indexOf(labId) > 0) {
+      // Resolved here, not at load: learn-utils.js loads before this file
+      // (learn.html), and only the lock screen needs it.
+      var esc = LearnUtils.esc;
       var prevId = CORE_SEQUENCE[CORE_SEQUENCE.indexOf(labId) - 1];
       var progress = getProgress();
       if (progress.indexOf(prevId) === -1) {
