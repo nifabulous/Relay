@@ -15,11 +15,19 @@ const stops: RouteStop[] = [
 describe("LinesRoute", () => {
   it("renders the stops in order as the stepper", () => {
     render(<LinesRoute stops={stops} summary="GBP route" ariaLabel="Payment route" />);
-    const steps = within(screen.getByRole("list", { name: "Payment route" })).getAllByRole("listitem");
+    const steps = within(screen.getByRole("figure", { name: "Payment route" })).getAllByRole("listitem");
     expect(steps.map((step) => step.textContent)).toEqual(
       expect.arrayContaining([expect.stringContaining("Harborline Bank"), expect.stringContaining("Northstar Bank")]),
     );
     expect(steps).toHaveLength(3);
+  });
+
+  it("names the route once: on the figure, not again on its list", () => {
+    const { container } = render(<LinesRoute stops={stops} summary="s" ariaLabel="Payment route" />);
+    expect(container.querySelectorAll('[aria-label="Payment route"]')).toHaveLength(1);
+    expect(screen.getByRole("figure", { name: "Payment route" })).toBeInTheDocument();
+    // role="list" stays: Safari drops list semantics when list-style is none.
+    expect(within(screen.getByRole("figure")).getByRole("list")).toHaveAttribute("role", "list");
   });
 
   it("states each status as text, not colour alone", () => {

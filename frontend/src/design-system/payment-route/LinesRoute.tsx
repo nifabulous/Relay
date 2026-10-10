@@ -82,7 +82,7 @@ export function LinesRoute({ stops, progress, summary, paused = false, onToggleP
         ))}
       </svg>
 
-      <ol className="lines-route__steps" aria-label={ariaLabel} role="list">
+      <ol className="lines-route__steps" role="list">
         {stops.map((stop, index) => (
           <li key={`${stop.role}-${index}`} className={`lines-route__step lines-route__step--${stop.status}`}>
             <span className="lines-route__role">
