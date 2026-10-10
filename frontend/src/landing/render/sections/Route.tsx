@@ -11,7 +11,7 @@ const ROUTE_PATH = "M-200 120 H120 V240 H600 V360 H1080";
 const HOPS = [
   { at: "0.211", node: { x: 113, y: 113 }, tag: "t1", role: "origin" },
   { at: "0.605", node: { x: 593, y: 233 }, tag: "t2", role: "correspondent" },
-  { at: "1", node: { x: 1066, y: 353 }, tag: "t3", role: "beneficiary" },
+  { at: "1", node: { x: 1073, y: 353 }, tag: "t3", role: "beneficiary" },
 ] as const;
 /** The vertical stepper fills from its own progress, so its thresholds differ. */
 const STEP_AT = ["0.2", "0.55", "0.9"] as const;

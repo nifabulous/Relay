@@ -15,7 +15,7 @@ import pytest
 from sqlalchemy import distinct, func, select
 
 from app.data.landing_corridors import LANDING_CORRIDORS
-from app.data.payment_schemes import list_currencies_with_schemes
+from app.data.payment_schemes import get_international_schemes, list_currencies_with_schemes
 from app.models import SSI, Bank, CorridorRule
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -83,7 +83,8 @@ def test_rails_follow_the_scheme_reference_data(exported):
     assert [c["code"] for c in rails["currencies"]] == list_currencies_with_schemes()
     assert rails["currencyCount"] == len(rails["currencies"])
     assert rails["domesticSchemeCount"] == sum(len(c["schemes"]) for c in rails["currencies"])
-    assert rails["totalRailCount"] == rails["domesticSchemeCount"] + 1
+    international_rails = 1 if get_international_schemes().get("name") else 0
+    assert rails["totalRailCount"] == rails["domesticSchemeCount"] + international_rails
     assert rails["international"]["name"] == "SWIFT gpi"
 
 

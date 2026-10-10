@@ -5,6 +5,9 @@ import { Head, Pluses, SectionLabel } from "./shared";
 /** Isometric plate geometry, in SVG user units (viewBox 0 0 520 700). */
 export const PLATE = { cx: 200, a: 160, b: 80, t: 10, y0: 130, gap: 112 } as const;
 
+/** Words for the decision count in the section 02 headline, indexed by count. */
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
 export function Anatomy({ demo }: { demo: Demo }) {
   const { cx, a, b, t, y0, gap } = PLATE;
   const plates: Array<[string, string, string]> = [
@@ -26,7 +29,7 @@ export function Anatomy({ demo }: { demo: Demo }) {
               label={<SectionLabel index="02" title="anatomy of a payment" simulation />}
               title={
                 <>
-                  Every payment is five <em>decisions</em>.
+                  Every payment is {NUMBER_WORDS[plates.length]} <em>decisions</em>.
                 </>
               }
               lede="Take the instruction apart. Each layer is a check a real bank runs, and the curriculum has a lab for each."

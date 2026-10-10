@@ -9,7 +9,7 @@
  *   files, react, react-dom/server, zod, and the pure data modules listed in
  *   RENDER_DATA_MODULES, which may themselves import only each other (type
  *   imports aside).
- * - Neither side may use dynamic import().
+ * - Neither side may use dynamic import(), import.meta.glob or require().
  *
  * Usage: node scripts/check-landing-boundary.mjs [frontendRoot]
  */
@@ -29,7 +29,12 @@ const CLIENT_GENERATED = "src/landing/generated/globe-points.json?url";
 const CLIENT_PACKAGE = /^@fontsource\/geist(-mono)?\/latin-\d00\.css$/;
 
 const IMPORT = /^\s*(?:import|export)\s+(type\s+)?(?:[^"';]*?\sfrom\s+)?["']([^"']+)["']/gm;
-const DYNAMIC = /\bimport\s*\(/;
+// Forms that load code outside a static import, each reported under its own label.
+const DYNAMIC_FORMS = [
+  [/\bimport\s*\(/, "dynamic import()"],
+  [/\bimport\.meta\.glob\b/, "import.meta.glob"],
+  [/\brequire\s*\(/, "require()"],
+];
 
 function walk(dir) {
   if (!existsSync(dir)) return [];
@@ -50,7 +55,7 @@ function resolveRelative(root, file, specifier) {
 
 function imports(file) {
   const source = readFileSync(file, "utf8");
-  return { dynamic: DYNAMIC.test(source), list: [...source.matchAll(IMPORT)].map((m) => ({ typeOnly: Boolean(m[1]), specifier: m[2] })) };
+  return { dynamic: DYNAMIC_FORMS.filter(([pattern]) => pattern.test(source)).map(([, label]) => label), list: [...source.matchAll(IMPORT)].map((m) => ({ typeOnly: Boolean(m[1]), specifier: m[2] })) };
 }
 
 export function checkBoundary(root) {
@@ -59,7 +64,7 @@ export function checkBoundary(root) {
 
   for (const file of walk(join(root, "src/landing/client"))) {
     const { dynamic, list } = imports(file);
-    if (dynamic) violations.push(`${relFile(file)}: dynamic import()`);
+    for (const form of dynamic) violations.push(`${relFile(file)}: ${form}`);
     for (const { specifier } of list) {
       if (CLIENT_PACKAGE.test(specifier)) continue;
       if (!specifier.startsWith(".")) {
@@ -74,7 +79,7 @@ export function checkBoundary(root) {
 
   for (const file of walk(join(root, "src/landing/render"))) {
     const { dynamic, list } = imports(file);
-    if (dynamic) violations.push(`${relFile(file)}: dynamic import()`);
+    for (const form of dynamic) violations.push(`${relFile(file)}: ${form}`);
     for (const { specifier } of list) {
       if (!specifier.startsWith(".")) {
         if (!RENDER_PACKAGES.has(specifier)) violations.push(`${relFile(file)}: imports package "${specifier}"`);
@@ -93,7 +98,7 @@ export function checkBoundary(root) {
       continue;
     }
     const { dynamic, list } = imports(file);
-    if (dynamic) violations.push(`${module}: dynamic import()`);
+    for (const form of dynamic) violations.push(`${module}: ${form}`);
     for (const { typeOnly, specifier } of list) {
       if (typeOnly) continue;
       const target = specifier.startsWith(".") ? resolveRelative(root, file, specifier) : specifier;

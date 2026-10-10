@@ -70,7 +70,7 @@ describe("rendered landing page", () => {
     add(DEMO.iban.sortCode.match(/.{2}/g));
     // Layout numbers: section indices, plate figure numbers, hop numbers,
     // calendar days of the demonstration week, and the MT103 field tags.
-    const layout = ["01", "02", "03", "04", "05", "06", "0", "1", "2", "3", "4", "5", "0.1", "0.2", "0.3", "0.4", "0.5",
+    const layout = ["01", "02", "03", "04", "05", "06", "0.1", "0.2", "0.3", "0.4", "0.5",
       "29", "30", "20", "23", "32", "50", "59", "71", "121", "261001", "25000,00", "0.42", "0.64", "0.45", "008", "002", "103", "20022"];
     layout.forEach((n) => allowed.add(n));
     const runs = (text.match(/\d[\d,.]*/g) ?? []).map((run) => run.replace(/[.,]$/, ""));

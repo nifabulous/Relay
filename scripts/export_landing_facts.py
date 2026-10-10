@@ -89,10 +89,12 @@ def _rails() -> dict:
         )
     international = get_international_schemes()
     domestic = sum(len(c["schemes"]) for c in currencies)
+    # The international catalogue is one entry; it counts as a rail only when present.
+    international_rails = 1 if international.get("name") else 0
     return {
         "currencyCount": len(currencies),
         "domesticSchemeCount": domestic,
-        "totalRailCount": domestic + 1,
+        "totalRailCount": domestic + international_rails,
         "currencies": currencies,
         "international": {**_scheme(international), "verifiedAsOf": international["verifiedAsof"]},
     }

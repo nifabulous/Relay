@@ -26,7 +26,7 @@ def _case_labels() -> dict:
     return labels
 
 
-def test_at_most_one_corridor_per_categorical_colour_slot():
+def test_corridor_count_fits_the_eight_categorical_colour_slots():
     assert 1 <= len(LANDING_CORRIDORS) <= 8
 
 
@@ -71,3 +71,22 @@ def test_rule_sources_exist_in_the_seeded_corridor_rules():
             corridor["origin"]["country"],
             corridor["origin"]["city"],
         ), corridor
+
+
+# The country names a Case Desk corridor label uses, mapped to their ISO codes.
+CASE_COUNTRY_CODES = {
+    "Canada": "CA",
+    "Germany": "DE",
+    "Mexico": "MX",
+    "Nigeria": "NG",
+    "United Kingdom": "GB",
+    "United States": "US",
+}
+
+
+def test_case_corridor_endpoints_match_the_countries_their_label_names():
+    case_entries = [c for c in LANDING_CORRIDORS if c["source"]["kind"] == "case"]
+    for corridor in case_entries:
+        origin_name, destination_name = corridor["source"]["corridor_label"].split(" → ")
+        assert corridor["origin"]["country"] == CASE_COUNTRY_CODES[origin_name], corridor
+        assert corridor["destination"]["country"] == CASE_COUNTRY_CODES[destination_name], corridor

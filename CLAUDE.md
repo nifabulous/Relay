@@ -91,6 +91,9 @@ Rules that are easy to break by accident:
   rejects hand-typed numbers and a pytest rejects real bank names.
 - **Import boundary.** `npm run check:landing-boundary`: browser code imports only `src/landing/client/`;
   build-time code imports only the listed pure data modules.
+- **No script CSP yet.** `landing.html` has two inline pre-paint scripts, and the app-wide headers in
+  `app/security_headers.py` set only `frame-ancestors`. A `script-src` needs hashes for both inline
+  blocks first.
 
 ### Frontend (`frontend/`)
 ```

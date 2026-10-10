@@ -30,6 +30,16 @@ describe("check-landing-boundary", () => {
     expect(checkBoundary(root)).toEqual(["src/landing/client/main.ts: imports src/lib/persistence/storage.ts"]);
   });
 
+  it("rejects a client glob import and a CommonJS require", () => {
+    const root = tree({
+      "src/landing/client/a.ts": 'const modules = import.meta.glob("../render/*.ts");\nconst fs = require("node:fs");\n',
+    });
+    expect(checkBoundary(root)).toEqual([
+      "src/landing/client/a.ts: import.meta.glob",
+      "src/landing/client/a.ts: require()",
+    ]);
+  });
+
   it("rejects a client package import and a dynamic import", () => {
     const root = tree({ "src/landing/client/a.ts": 'import * as Sentry from "@sentry/react";\nvoid import("./b");\n' });
     expect(checkBoundary(root)).toEqual([

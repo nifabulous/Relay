@@ -191,7 +191,9 @@ export function Tools({ facts, demo }: { facts: LandingFacts; demo: Demo }) {
                   ))}
                 </pre>
                 <p className="lbl note">
-                  <i>{stp.verdict}</i> · {formatCount(tools.stpRules)} / {formatCount(tools.stpRules)} rules pass
+                  <i>{stp.verdict}</i> · {stp.verdict === "CLEAN"
+                    ? `${formatCount(tools.stpRules)} / ${formatCount(tools.stpRules)} rules pass`
+                    : `${formatCount(tools.stpRules)} rules checked`}
                 </p>
               </>
             }

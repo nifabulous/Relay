@@ -4,6 +4,7 @@ Flag off must mean today's behaviour exactly: / redirects as it always has, and
 nothing under app/landing_dist is mounted, read or served. These tests pin both
 directions of the flag and the cache headers the landing build relies on.
 """
+import json
 import os
 import subprocess
 import sys
@@ -153,3 +154,34 @@ def test_landing_dist_is_outside_the_public_static_mount():
     assert landing.LANDING_DIST == REPO_ROOT / "app" / "landing_dist"
     static_dir = REPO_ROOT / "app" / "static"
     assert static_dir not in landing.LANDING_DIST.parents
+
+
+FLAG_ON_PROBE = """
+import json
+from fastapi.testclient import TestClient
+from app import main
+response = TestClient(main.app).get("/", follow_redirects=False)
+print(json.dumps({
+    "status": response.status_code,
+    "cache": response.headers.get("cache-control"),
+    "landing": main.LANDING_HTML is not None,
+}))
+"""
+
+
+def test_importing_the_app_with_flag_on_serves_the_landing_page():
+    if not (landing.LANDING_DIST / "landing.html").is_file():
+        pytest.skip("landing build absent: run npm run build:landing")
+    env = os.environ.copy()
+    env[landing.LANDING_FLAG] = "1"
+    result = subprocess.run(
+        [sys.executable, "-c", FLAG_ON_PROBE],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    probe = json.loads(result.stdout.strip().splitlines()[-1])
+    assert probe == {"status": 200, "cache": "no-cache", "landing": True}

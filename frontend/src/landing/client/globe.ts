@@ -257,9 +257,10 @@ export function initGlobe(pointsUrl: string, doc: Document = document, win: Wind
 
     arcs.forEach((a, j) => {
       const age = motion ? (active - j + arcs.length) % arcs.length : 0;
-      const done = !motion || cycle >= arcs.length || j < active || (j === active && phase >= TOUR.move + TOUR.draw);
+      // A paused tour holds the active arc fully drawn: pausing mid-draw must not leave it partial.
+      const done = !motion || paused || cycle >= arcs.length || j < active || (j === active && phase >= TOUR.move + TOUR.draw);
       let upto = a.points.length - 1;
-      if (motion && j === active) {
+      if (motion && j === active && !paused) {
         upto = phase < TOUR.move ? -1 : Math.floor(Math.min(1, (phase - TOUR.move) / TOUR.draw) * (a.points.length - 1));
       } else if (!done) return;
       const alpha = j === active ? 1 : trailAlpha(age);
