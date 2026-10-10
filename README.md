@@ -151,6 +151,12 @@ For production build (served by FastAPI at `/app`):
 cd frontend && npm run build
 ```
 
+The landing page at `/` is a separate build, and only serves when `RELAY_LANDING_ENABLED` is on:
+```bash
+cd frontend && npm run build:landing
+RELAY_LANDING_ENABLED=1 uvicorn app.main:app --reload
+```
+
 ---
 
 ## Deploying to Vercel
@@ -167,6 +173,7 @@ step and trims the function bundle.
 | --- | --- | --- |
 | `ADMIN_API_KEY` | any strong random string | **Required on a public deploy.** With it unset, `/api/import/*` answers 503. |
 | `ADMIN_API_ALLOW_OPEN` | `1` in local development only | Opens `/api/import/*` without a key when `ADMIN_API_KEY` is unset, for zero-setup local imports. Never set it on a deploy; it has no effect once `ADMIN_API_KEY` is set. |
+| `RELAY_LANDING_ENABLED` | `true` to launch the landing page | Optional, off by default. On (`1`, `true`, `yes`, `on`), the build also builds the landing page and `/` serves it instead of redirecting to `/app`. Read at process start and in the build command, so a change needs a redeploy. |
 | `DATABASE_URL` | `sqlite:////tmp/swift_routing.db` | The project filesystem is read-only; `/tmp` is the only writable path. `app/config.py` falls back to this automatically when `VERCEL` is set, but that system variable is opt-in per project — setting `DATABASE_URL` explicitly is the reliable route. |
 | `SENTRY_DSN` | Sentry backend project DSN | Optional. Sentry error monitoring is disabled when this is unset. Store it in Vercel/GitHub environment configuration, not source control. |
 | `SENTRY_ENVIRONMENT` | `production` | Optional environment label shown in Sentry. |
@@ -360,7 +367,7 @@ lesson scripts:
 | `POST` | `/api/fees/simulate` | Fee simulation (OUR/SHA/BEN) |
 | `POST` | `/api/screen` | Sanctions screening |
 | `POST` | `/api/value-date` | Settlement value date calculator |
-| `POST` | `/api/message/stp-check` | MT103 STP compliance checker (12 rules) |
+| `POST` | `/api/message/stp-check` | MT103 STP compliance checker (14 rules) |
 | `POST` | `/api/message/translate` | MT103 → pacs.008 XML translation |
 | `POST` | `/api/message/pacs008-check` | pacs.008 structured-field validator |
 | `GET` | `/api/progress` | Learning progress + badges |
@@ -529,11 +536,13 @@ travel — explicitly roadmap, not current behaviour.
 
 ## Design system
 
-The canonical design contract is [`DESIGN.md`](DESIGN.md).
+The canonical design contract is [`DESIGN.md`](DESIGN.md), rewritten on 2026-10-01 and adopted surface
+by surface (see its **Adoption status** table). The `/app` workspaces keep their current tokens until
+Phase 3.
 
-- **Color:** Blue `#3157D5` reserved for actions/selection/progress only
-- **Typography:** Instrument Sans (UI) + IBM Plex Mono (identifiers/amounts)
-- **Borders:** Thin (1px), low-opacity — no decorative shadows
+- **Color:** Primary `#533AFD` (the app uses `#3157D5` until Phase 3), reserved for actions, selection, progress and the route; cool navy ink
+- **Typography:** Geist (UI) + Geist Mono (identifiers, labels, amounts); the app uses Instrument Sans + IBM Plex Mono until Phase 3
+- **Lines:** 1px hairline rails, rules and cell borders that are the real edges of boxes; nothing overflows its box; no decorative shadows
 - **Anti-template:** No card mosaics, no colored edges, no emoji icons, no uniform radius
 - **Status:** Text + icon + color (never color alone)
 - **WCAG 2.2 AA:** All semantic tokens contrast-verified

@@ -1,0 +1,92 @@
+/*
+ * Landing page tokens: the new system in DESIGN.md (Colour, Dark and black
+ * themes). Every colour on the landing page is defined here; landing.css holds
+ * no hex. The /app workspaces keep design-system/tokens.css until Phase 3.
+ *
+ * Selectors match the app's theme contract: an explicit data-theme wins, and
+ * "system" (no attribute) follows the OS.
+ */
+:root {
+  /* ramps (constant across themes) */
+  --p50: #F5F6FE; --p100: #EAEDFF; --p200: #D8DEFF; --p300: #BBC4FF; --p400: #95A0FF; --p500: #7277FF;
+  --p600: #533AFD; --p700: #472CDD; --p800: #351DAE; --p900: #23107D; --p950: #16065A;
+  --n0: #F9FAFC; --n25: #F4F7FA; --n50: #EFF3F8; --n100: #E5EAF1; --n200: #D1D8E1; --n300: #B2BCC8;
+  --n400: #8693A5; --n500: #5F6F85; --n600: #4D5F76; --n700: #354962; --n800: #1F344F; --n900: #0B223E; --n950: #021732;
+
+  --cw: 1080px; --ow: 1360px; --g: 16px;
+  --font-sans: "Geist", "Geist Fallback", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  color-scheme: light;
+
+  /* light theme */
+  --bg: var(--n0); --surface: #FFFFFF; --tint: var(--n25); --ink: var(--n950); --ink2: var(--n600);
+  --muted: var(--n500); --line: var(--n100); --line2: var(--n200); --cell: #EEF1F6;
+  --acc: var(--p600); --accFill: var(--p600); --accFillHover: var(--p700); --onAcc: #FFFFFF;
+  --accBg: var(--p50); --accLine: var(--p200); --accInk: var(--p700);
+  --priShade: inset 0 -6px 12px rgba(22, 6, 90, .28), 0 1px 2px rgba(22, 6, 90, .25);
+  --ok: #0A7D52; --warn: #A35200; --bad: #CE0045; --badBg: #FFF5F8; --badLine: #E8B8C8;
+  --navBg: rgba(249, 250, 252, .82); --ghost: rgba(2, 23, 50, .05); --ghostHover: rgba(2, 23, 50, .09);
+  --band: var(--n950); --bandInk: #FFFFFF; --bandInk2: #AEB9C9; --bandBody: #C9D2E0; --bandMuted: #8794A8;
+  --bandLine: rgba(255, 255, 255, .10); --bandCell: rgba(255, 255, 255, .04); --bandAcc: var(--p400);
+  --bandAcc2: var(--p300); --bandOk: #5FD3A2; --bandWarn: #F5C451; --bandWarnBg: rgba(227, 162, 0, .14);
+  --bandChip: rgba(255, 255, 255, .12); --bandChipOn: rgba(114, 119, 255, .14);
+  --plateTop: #FFFFFF; --plateSide: var(--n50); --plateSide2: var(--n100); --plateLine: var(--n200); --plateOn: var(--p50);
+  --c1: #533AFD; --c2: #EF5F2F; --c3: #BF3784; --c4: #E3A200; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0FB3A2;
+  --gDot: 102, 118, 139; --gDotMin: .14; --gDotMax: .74; --gGrat: rgba(2, 23, 50, .05); --gLimb: var(--n200);
+  --gPlate: rgba(255, 255, 255, .94); --gPlateLine: rgba(2, 23, 50, .12); --gInk: var(--n950); --gPacket: var(--n950); --gNode: #FFFFFF;
+  --cube1: var(--p500); --cube2: var(--p600); --cube3: var(--p950);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
+    --line: #172234; --line2: #25334B; --cell: #0B1526;
+    --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+    --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+    --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+    --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+    --navBg: rgba(4, 10, 21, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+    --band: #0E0C32; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+    --plateTop: #0A1322; --plateSide: #0F1A2C; --plateSide2: #14203A; --plateLine: #25334B; --plateOn: rgba(83, 58, 253, .20);
+    --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+    --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #25334B;
+    --gPlate: rgba(10, 19, 34, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #040A15;
+    --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
+  --line: #172234; --line2: #25334B; --cell: #0B1526;
+  --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+  --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+  --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+  --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+  --navBg: rgba(4, 10, 21, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+  --band: #0E0C32; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+  --plateTop: #0A1322; --plateSide: #0F1A2C; --plateSide2: #14203A; --plateLine: #25334B; --plateOn: rgba(83, 58, 253, .20);
+  --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+  --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #25334B;
+  --gPlate: rgba(10, 19, 34, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #040A15;
+  --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+}
+
+/* Self-contained: repeats every dark token, so it renders correctly under an OS light setting. */
+:root[data-theme="black"] {
+  color-scheme: dark;
+  --bg: #000000; --surface: #0B0B0F; --tint: #121217; --ink: #F5F5F7; --ink2: #B5B7C0; --muted: #8E909B;
+  --line: #1C1C22; --line2: #2A2A31; --cell: #0A0A0E;
+  --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+  --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+  --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+  --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+  --navBg: rgba(0, 0, 0, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+  --band: #0B0920; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+  --plateTop: #0B0B0F; --plateSide: #121217; --plateSide2: #18181F; --plateLine: #2A2A31; --plateOn: rgba(83, 58, 253, .20);
+  --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+  --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #2A2A31;
+  --gPlate: rgba(11, 11, 15, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #000000;
+  --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+}

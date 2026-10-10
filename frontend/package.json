@@ -5,15 +5,19 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
+    "build:landing": "node scripts/build-landing.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:base-ui-boundary": "node scripts/check-base-ui-boundary.mjs",
-    "check:bundle": "node scripts/check-bundle.mjs"
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "check:landing-boundary": "node scripts/check-landing-boundary.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
+    "@fontsource/geist": "5.3.0",
+    "@fontsource/geist-mono": "5.3.0",
     "@hookform/resolvers": "5.7.1",
     "@sentry/react": "10.70.0",
     "@tanstack/react-query": "5.101.4",

@@ -1,7 +1,7 @@
 """
 STP (Straight-Through Processing) checker for MT103 messages.
 
-A pure function `check_stp(message: dict) -> STPResult` running a 12-rule STP
+A pure function `check_stp(message: dict) -> STPResult` running a 14-rule STP
 PRIMER (production engines apply 40–80+ rules). It decides whether an MT103
 could flow through the chain without manual repair.
 
@@ -49,6 +49,35 @@ _TX_REF_MAX_LEN = 16
 # currency, used by the currency-consistency rule. Any of these, when present,
 # is compared against the field 32A settlement currency.
 _33B_CURRENCY_KEYS = ("instructed_currency", "currency_33b", "original_currency")
+
+
+@dataclass(frozen=True)
+class RuleSpec:
+    """One rule check_stp runs, and the finding code it emits."""
+    number: int
+    title: str
+    code: str
+
+
+# The rules check_stp runs, in the order it runs them. The landing page states
+# their count, and tests/test_stp_rule_registry.py checks this tuple against
+# the rule blocks below, so a new rule must be registered here too.
+RULES = (
+    RuleSpec(1, "Mandatory fields 20, 32A, 50, 59 and 71A are present", "STP-MISSING-FIELD"),
+    RuleSpec(2, "Value date is a valid calendar date", "STP-VALUE-DATE-FORMAT"),
+    RuleSpec(3, "Settlement and instructed currencies agree", "STP-CURRENCY-MISMATCH"),
+    RuleSpec(4, "Ordering and beneficiary BICs are valid", "STP-BIC-INVALID"),
+    RuleSpec(5, "Ordering customer name is present", "STP-ORDERING-NAME-MISSING"),
+    RuleSpec(6, "Beneficiary name and account are present", "STP-BENEFICIARY-MISSING"),
+    RuleSpec(7, "Amount is greater than zero", "STP-AMOUNT-INVALID"),
+    RuleSpec(8, "Charge code is OUR, SHA or BEN", "STP-CHARGE-CODE-INVALID"),
+    RuleSpec(9, "UETR is present", "STP-UETR-MISSING"),
+    RuleSpec(10, "Transaction reference fits 16 characters", "STP-REF-TOO-LONG"),
+    RuleSpec(11, "Value date is not in the past", "STP-VALUE-DATE-STALE"),
+    RuleSpec(12, "No BIC repeats in the chain", "STP-DUPLICATE-BIC"),
+    RuleSpec(13, "Bank operation code is valid", "STP-BANK-OP-CODE-INVALID"),
+    RuleSpec(14, "Instructed and settled amounts agree", "STP-AMOUNT-DIVERGENCE"),
+)
 
 
 @dataclass
@@ -128,7 +157,7 @@ def _parse_value_date(raw) -> Optional[date]:
 
 def check_stp(message: dict) -> STPResult:
     """
-    Run the 12-rule STP primer against an MT103-shaped message dict.
+    Run the 14-rule STP primer against an MT103-shaped message dict.
 
     The dict mirrors STPCheckRequest: transaction_reference, bank_op_code,
     value_date, currency, interbank_amount, charge_code, ordering {account,

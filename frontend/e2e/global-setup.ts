@@ -19,4 +19,6 @@ export default function globalSetup(config: FullConfig): void {
     return;
   }
   execFileSync("npm", ["run", "build"], { stdio: "inherit", cwd: config.rootDir });
+  // The landing project serves app/landing_dist; rebuild it for the same reason.
+  execFileSync("npm", ["run", "build:landing"], { stdio: "inherit", cwd: config.rootDir });
 }

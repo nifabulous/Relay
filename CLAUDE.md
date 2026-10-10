@@ -37,6 +37,7 @@ cd frontend && npm install && npm run dev
 ```
 app/
   main.py           FastAPI app, lifespan, static serving (/app, /learn, /ui)
+  landing.py        landing page at / behind RELAY_LANDING_ENABLED (off by default)
   routers/          12 domain routers (directory, routing, ssi, atlas, vop, tracking, etc.)
   services/         domain logic (validator, routing, vop, prepare, seed, etc.)
   models.py         SQLAlchemy 2.0 models
@@ -70,6 +71,30 @@ Rules that are easy to break by accident:
   retrieval benchmark, the golden set, and the live evaluator. Refusal items are
   excluded from retrieval grading — they never reach retrieval.
 
+### Landing page (`/`)
+
+Off by default; `/` redirects to `/app` until `RELAY_LANDING_ENABLED` is on and `app/landing_dist/`
+is built. Spec: `docs/superpowers/specs/2026-10-01-relay-landing-and-visual-language-design.md`.
+
+Rules that are easy to break by accident:
+
+- **Flag off is today, exactly.** `mount_landing()` returns before touching the filesystem, and the
+  Vercel hook (`frontend/scripts/build-landing-if-enabled.mjs`) only reads the flag. Do not move landing
+  work ahead of either check.
+- **Never import `frontend/src/landing/generated/`** from tracked TypeScript except as a `?url` asset.
+  It is gitignored, and `tsc` checks all of `src/`, so a static import breaks the `/app` build on every
+  clean checkout. The renderer reads `facts.json` with `fs` in `vite.landing.config.ts`.
+- **The /app build must not change.** The landing page has its own Vite config; `build-landing.mjs`
+  fails if `app/static/relay` changes. Do not add a second entry to `vite.config.ts`.
+- **Every fact comes from data.** Counts come from `scripts/export_landing_facts.py`; examples from
+  `src/landing/render/demo.json`, each checked by `tests/test_landing_demo_claims.py`. A digit-run test
+  rejects hand-typed numbers and a pytest rejects real bank names.
+- **Import boundary.** `npm run check:landing-boundary`: browser code imports only `src/landing/client/`;
+  build-time code imports only the listed pure data modules.
+- **No script CSP yet.** `landing.html` has two inline pre-paint scripts, and the app-wide headers in
+  `app/security_headers.py` set only `frame-ancestors`. A `script-src` needs hashes for both inline
+  blocks first.
+
 ### Frontend (`frontend/`)
 ```
 frontend/src/
@@ -77,6 +102,8 @@ frontend/src/
   design-system/    tokens.css, Button, StatusChip, AsyncRegion, PaymentRoute
   api/              typed client (apiRequest/apiPost), Zod schemas, query keys
   lib/persistence/  versioned localStorage, legacy progress migration
+  landing/          landing page, built separately (vite.landing.config.ts):
+                    render/ runs at build time, client/ ships to the browser
   features/
     overview/       adaptive home with selectPrimaryAction decision table
     explore/        CommandSearch, BankDirectory, Correspondent Atlas, Glossary
@@ -89,13 +116,20 @@ frontend/src/
 ```
 
 ### Design system
-The canonical design contract is `DESIGN.md`. All components consume tokens from `design-system/tokens.css`. Key principles:
-- Blue (#3157D5) reserved for actions, selection, progress only
-- Thin structural borders, no decorative shadows or colored card edges
+The canonical design contract is `DESIGN.md`, rewritten 2026-10-01: Geist and Geist Mono, primary
+`#533AFD`, cool navy ink, and firecrawl-style hairline rails and rules. It is adopted surface by surface;
+read its **Adoption status** table first. Until Phase 3 migrates them, the `/app` workspaces keep the
+values in `design-system/tokens.css` (Instrument Sans, IBM Plex Mono, `#3157D5`). Do not "fix" either
+surface towards the other's values. Rules marked "(new system)" in DESIGN.md apply only to migrated
+surfaces; unmigrated workspaces follow DESIGN.md Appendix A. Key principles that hold everywhere:
+- Primary colour is reserved for actions, selection, progress, focus and the route
+- No decorative shadows or coloured card edges; nothing overflows its box
 - Status with text + icon + color (never color alone)
-- WCAG 2.2 AA contrast (≥4.5:1) on all semantic tokens
+- WCAG 2.2 AA contrast (≥4.5:1) on all text tokens
+- Data colours: fixed order, never cycled, never on navigation or tabs
+- New system only: lines are real borders of real boxes, and facts about Relay come from repository data
 - Route-level code splitting (React.lazy per feature)
-- Eager shell ≤200KB gzip
+- Eager shell ≤210KiB gzip (`frontend/scripts/check-bundle.mjs`)
 
 ## Architecture
 
@@ -124,7 +158,7 @@ app/
 │   ├── vop.py           # Verification of Payee (name matching)
 │   ├── routing.py       # Correspondent bank routing (curated corridor table)
 │   ├── fee_calculator.py# OUR/SHA/BEN fee simulation
-│   ├── stp_checker.py   # MT103 STP checker (12-rule primer)
+│   ├── stp_checker.py   # MT103 STP checker (14-rule primer)
 │   ├── value_date.py    # Settlement date calculation
 │   ├── screening.py     # Sanctions screening (fictional watchlist)
 │   ├── tracking.py      # UETR + simulated gpi timeline
@@ -165,6 +199,10 @@ cd frontend && npm test -- --run --no-file-parallelism  # full frontend suite
 
 # End-to-end tests
 cd frontend && npm run test:e2e                    # chromium projects green; WebKit 'mobile' project needs WebKit installed
+
+# Landing page (needs the /app build first for the e2e servers)
+cd frontend && npm run build:landing                          # facts, points, landing build, checks
+cd frontend && npm run test:e2e -- --project=landing          # landing project, its own flag-on server
 ```
 
 Tests use in-memory SQLite with `StaticPool`. Three fixture tiers in `conftest.py`:
@@ -278,6 +316,7 @@ working-tree changes and never stage secrets.
 - Every E2E skip is intentional and the total scales with the project count, so quote the rule
   rather than a number. The learner-state round trip runs in `desktop` and skips in the five case
   viewport projects because coverage is not viewport-dependent. The reduced-motion case journey
-  skips in every project except `case-reduced-motion`. The six-project Chromium matrix therefore
-  has 10 intentional skips; the generic `mobile` project requires the WebKit browser binary.
+  skips in every project except `case-reduced-motion`. The `landing` project runs only
+  `landing.spec.ts` and every other project ignores it (config-level `testIgnore`), so it adds no
+  skips. The generic `mobile` project requires the WebKit browser binary.
 - `fed_importer.py` has no remote default URL — you must set `FEDWIRE_URL`/`FEDACH_URL` env vars to import Fedwire/FedACH data.

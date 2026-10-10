@@ -51,6 +51,11 @@ frontend/playwright/.cache/
 app/static/relay/assets/
 app/static/relay/index.html
 
+# Generated landing page build (npm run build:landing; only built when
+# RELAY_LANDING_ENABLED is on) and the data it is built from.
+app/landing_dist/
+frontend/src/landing/generated/
+
 # Playwright/test output artifacts
 frontend/output/
 output/
