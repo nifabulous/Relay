@@ -36,4 +36,17 @@ describe("LinesRoute", () => {
     const beneficiary = screen.getByText("Northstar Bank").closest("li")!;
     expect(beneficiary.textContent).not.toContain("passed");
   });
+
+  it("gives each status an aria-hidden icon before the status text", () => {
+    render(<LinesRoute stops={stops} summary="s" ariaLabel="Payment route" />);
+    const rows = document.querySelectorAll(".lines-route__status");
+    expect(rows).toHaveLength(3);
+    rows.forEach((row) => {
+      const icon = row.querySelector(".lines-route__icon");
+      expect(icon).not.toBeNull();
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+      expect(row.firstElementChild).toBe(icon);
+      expect(row.textContent?.trim().length).toBeGreaterThan(0);
+    });
+  });
 });
