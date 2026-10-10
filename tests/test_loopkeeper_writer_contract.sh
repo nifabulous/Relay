@@ -7,7 +7,7 @@ if [[ "${LOOPKEEPER_CONTRACT_NETWORK:-0}" != "1" ]]; then
 fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PINNED_SHA="ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231"
+PINNED_SHA="06db3c7d1cd744cf41b049807b4e98a02dbbb9af"
 ROOT_HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
@@ -22,7 +22,7 @@ git -C "$LOOPKEEPER_ROOT" checkout --detach "$PINNED_SHA" >/dev/null 2>&1
 # and read-only split that the local rebind/writer jobs consume.
 PRODUCER_WORKFLOW="$LOOPKEEPER_ROOT/.github/workflows/pr-review.yml"
 EXPECTED_PRODUCER_SHA256="a4d8d1cc4496e75bee5b28362e9c2b5321c8744c9f6ccf9f2b2c0a207d382ca1"
-EXPECTED_ADAPTER_SHA256="78361fd302f530fae2daa1574ff8b2a953661fa91434b2d938ce999275c32636"
+EXPECTED_ADAPTER_SHA256="57c9030236a0f578db98396a384a3444d1181550f94f8e5436f3574c4852f10a"
 ACTUAL_PRODUCER_SHA256="$(sha256sum "$PRODUCER_WORKFLOW" | awk '{print $1}')"
 ACTUAL_ADAPTER_SHA256="$(sha256sum "$LOOPKEEPER_ROOT/adapters/github/review_pr.sh" | awk '{print $1}')"
 [[ "$ACTUAL_PRODUCER_SHA256" == "$EXPECTED_PRODUCER_SHA256" ]]

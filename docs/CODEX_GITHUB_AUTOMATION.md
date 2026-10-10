@@ -52,8 +52,8 @@ The workflows are disabled at the job level until the variable is enabled. The A
 ### Pull requests
 
 `.github/workflows/loopkeeper-pr-review.yml` is a thin caller for Loopkeeper's
-reusable `pr-review-posting.yml`, pinned to the immutable release SHA
-`ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231` (tag `v0.1.1`). It triggers on
+reusable read-only `pr-review.yml` producer, pinned to the immutable release SHA
+`06db3c7d1cd744cf41b049807b4e98a02dbbb9af` (`ff1dbeb`, tag `v0.1.1`, plus the trusted-context budget default raised to 100000 bytes). It triggers on
 `pull_request_target`, on `workflow_run` completion for `CI`, and on manual
 dispatch. There is no scheduled sweep: a schedule carries no pull-request
 number and the reusable workflow refuses to infer one.

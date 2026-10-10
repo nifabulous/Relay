@@ -449,7 +449,7 @@ publisher = jobs.fetch("publish")
 publication_gate = jobs.fetch("publication-gate")
 raise unless targets.fetch("outputs").fetch("pr_numbers") ==
   "${{ steps.select.outputs.pr_numbers }}"
-raise unless review.fetch("uses").include?("/.github/workflows/pr-review.yml@ff1dbeb4f3eee1a45dc34ad1e02c062b93d26231")
+raise unless review.fetch("uses").include?("/.github/workflows/pr-review.yml@06db3c7d1cd744cf41b049807b4e98a02dbbb9af")
 raise unless !review.fetch("uses").include?("pr-review-posting.yml")
 raise unless review.fetch("permissions").fetch("pull-requests") == "read"
 raise unless review.fetch("needs") == "targets"
