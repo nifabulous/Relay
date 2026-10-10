@@ -776,7 +776,7 @@ export function PreparePaymentPage() {
           </CheckResult>
 
           {routeStops.length > 0 && (
-            <div className="surface-landing prepare-payment__lines-route">
+            <div className="prepare-payment__lines-route">
               <LinesRoute
                 stops={routeStops}
                 summary={`Route from the sender through ${result.routing.suggested_intermediaries[0].bank || result.routing.suggested_intermediaries[0].bic} to ${formValues.beneficiary_name || "the beneficiary"}.`}

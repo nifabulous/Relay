@@ -188,7 +188,7 @@ export function TrackingPage() {
           {data && (
             <>
               {routeStops.length > 0 && (
-                <div className="surface-landing tracking-page__route">
+                <div className="tracking-page__route">
                   <LinesRoute
                     stops={routeStops}
                     summary={`Payment ${data.uetr} has revealed ${routeStops.length} banks.`}

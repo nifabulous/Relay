@@ -37,8 +37,31 @@ async function expectRoute(page: Page, summary: RegExp) {
   expect(Number(dashOffset)).toBe(0);
 }
 
-async function expectSurfaceRoot(page: Page) {
-  await expect(page.locator(".surface-landing").first()).toBeVisible();
+/**
+ * The screen root carries the landing scope, once, and the scope stylesheet is
+ * actually loaded: its tokens resolve on the root and the route sits inside it.
+ */
+async function expectSurfaceRoot(page: Page, rootClass: string) {
+  const root = page.locator(`.surface-landing.${rootClass}`);
+  await expect(root).toHaveCount(1);
+  await expect(root).toBeVisible();
+  await expect(page.locator(".surface-landing .surface-landing")).toHaveCount(0);
+  const resolved = await root.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      surface: style.getPropertyValue("--surface").trim(),
+      remap: style.getPropertyValue("--color-surface").trim(),
+      mono: style.getPropertyValue("--font-mono").trim(),
+    };
+  });
+  // The production build minifies hex, so #FFFFFF arrives as #fff.
+  expect(resolved.surface).toMatch(/^#[0-9a-f]{3,8}$/i);
+  expect(resolved.remap.length).toBeGreaterThan(0);
+  expect(resolved.mono).toContain("Geist Mono");
+}
+
+async function expectRouteInsideRoot(page: Page, rootClass: string) {
+  await expect(page.locator(`.surface-landing.${rootClass} figure.lines-route`)).toHaveCount(1);
 }
 
 async function seedTracking(request: APIRequestContext): Promise<string> {
@@ -101,7 +124,7 @@ for (const width of WIDTHS) {
     test("prepare shows the route with a summary after checks pass", async ({ page }) => {
       await page.route("**/api/prepare-payment", (route) => route.fulfill({ json: prepareResponse }));
       await page.goto("/app/operate/prepare");
-      await expectSurfaceRoot(page);
+      await expectSurfaceRoot(page, "prepare-payment");
       await page.locator("#beneficiary_iban").fill("GB29NWBK60161331926819");
       await page.locator("#beneficiary_name").fill("John Smith");
       await page.locator("#amount").fill("500");
@@ -109,24 +132,29 @@ for (const width of WIDTHS) {
       await expect(page.locator('[data-request-state="success"]')).toBeVisible();
 
       await expectRoute(page, /Route from the sender through Citibank to John Smith\./);
+      await expectRouteInsideRoot(page, "prepare-payment");
       await expectNoHorizontalOverflow(page);
     });
 
     test("tracking shows the route with a summary for a real payment", async ({ page, request }) => {
       const uetr = await seedTracking(request);
       await page.goto(`/app/operate/tracking?uetr=${encodeURIComponent(uetr)}`);
-      await expectSurfaceRoot(page);
+      await expectSurfaceRoot(page, "tracking-page");
 
-      await expectRoute(page, new RegExp(`Payment ${uetr} has revealed \\d+ hops\\.`));
+      // Three events (INITIATED at CITIUS33, ACCEPTED and CREDITED at GTBINGLA) are two banks.
+      await expectRoute(page, new RegExp(`Payment ${uetr} has revealed 2 banks\\.`));
+      await expect(page.locator("figure.lines-route li")).toHaveCount(2);
+      await expectRouteInsideRoot(page, "tracking-page");
       await expectNoHorizontalOverflow(page);
     });
 
     test("atlas shows the route for a selected country", async ({ page, request }) => {
       const iso2 = await seedAtlasCountry(request);
       await page.goto(`/app/explore/atlas?selected=${iso2}`, { waitUntil: "networkidle" });
-      await expectSurfaceRoot(page);
+      await expectSurfaceRoot(page, "atlas");
 
       await expectRoute(page, new RegExp(`^Route from [A-Z]{2} through .+ to ${iso2}\\.$`));
+      await expectRouteInsideRoot(page, "atlas");
       await expectNoHorizontalOverflow(page);
     });
   });

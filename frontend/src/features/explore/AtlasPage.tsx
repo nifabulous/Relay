@@ -226,7 +226,7 @@ export function AtlasPage() {
                 <div className="atlas__section-heading"><h2 id="atlas-map-title">{view === "hub" ? "Who does the reaching" : "Who gets reached"}</h2><span className="atlas__map-range">{view === "hub" ? "Beneficiary banks reached" : "Rows collected"}</span></div>
                 {topology.data ? <AtlasMap topology={topology.data} data={activeRows} spokes={view === "spoke" ? spokes : []} view={view} selected={selected} hovered={hovered} denominator={view === "hub" ? data.totals.beneficiary_banks : data.totals.ssi_rows} onSelect={selectCountry} onHover={setHovered} loading={network.isFetching || topology.isFetching} /> : topology.isError ? <button type="button" className="relay-btn relay-btn--secondary" onClick={() => topology.refetch()}>Retry map</button> : <div className="atlas__map-loading" role="status">Loading geography…</div>}
                 {selected && hubIso2 && selectedCountry && routeCorrespondent && (
-                  <div className="surface-landing atlas-page__route">
+                  <div className="atlas-page__route">
                     <LinesRoute
                       stops={routeStops}
                       summary={`Route from ${hubIso2} through ${routeCorrespondent.name} to ${selectedCountry.iso2}.`}

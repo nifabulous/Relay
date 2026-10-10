@@ -20,6 +20,11 @@ describe("landing scope on screen roots", () => {
   it.each(ROOTS)("%s root carries surface-landing", (_name, file, pattern) => {
     expect(read(file)).toMatch(pattern);
   });
+
+  // The root already scopes the screen; a second scope inside it re-declares every token for nothing.
+  it.each(ROOTS)("%s carries surface-landing on the root only, never nested", (_name, file) => {
+    expect(read(file).match(/\bsurface-landing\b/g)).toHaveLength(1);
+  });
 });
 
 // The scope stylesheet only applies if the screen module pulls it in. Each page is a
