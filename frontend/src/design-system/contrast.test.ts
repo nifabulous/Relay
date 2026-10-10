@@ -376,3 +376,18 @@ describe("floating surface elevation", () => {
     expect(mobileCss).toMatch(/max-height:\s*calc\([\s\S]*var\(--sim-banner-height\)/);
   });
 });
+
+describe("landing scope", () => {
+  const scopeCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "landing-scope.css"), "utf8");
+
+  it("defines the landing tokens only under .surface-landing, never on :root", () => {
+    expect(scopeCss).not.toMatch(/^:root\s*\{/m);
+    expect(scopeCss).toMatch(/\.surface-landing\s*\{/);
+  });
+
+  it("keeps the clashing names inside the scope", () => {
+    for (const name of ["--font-mono", "--muted"]) {
+      expect(scopeCss).toContain(`${name}:`);
+    }
+  });
+});
