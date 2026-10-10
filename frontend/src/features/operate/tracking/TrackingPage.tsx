@@ -14,6 +14,7 @@ import { PaymentTimeline } from "./PaymentTimeline";
 import { trackingRouteStops } from "./trackingRoute";
 import { buildTrackingContext } from "../../tutor/tutorContext";
 import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
+import "../../../design-system/landing-scope.css";
 import "./TrackingPage.css";
 import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";

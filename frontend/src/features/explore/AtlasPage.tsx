@@ -23,6 +23,7 @@ import { coverageCounts } from "./atlas/atlasEncoding";
 import { parseAtlasTopology } from "./atlas/atlasTopology";
 import { buildAtlasContext } from "../tutor/tutorContext";
 import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
+import "../../design-system/landing-scope.css";
 import "./atlas/AtlasPage.css";
 import topologyUrl from "./atlas/assets/countries-50m.json?url";
 

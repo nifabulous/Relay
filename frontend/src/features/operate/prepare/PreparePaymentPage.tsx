@@ -21,6 +21,7 @@ import { CorrespondentOptions } from "../../../design-system/correspondent-optio
 import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
 import { prepareRouteStops } from "./prepareRoute";
 import { groupByCurrency } from "../../explore/ssiGrouping";
+import "../../../design-system/landing-scope.css";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
