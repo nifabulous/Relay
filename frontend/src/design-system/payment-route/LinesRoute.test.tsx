@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LinesRoute } from "./LinesRoute";
@@ -48,5 +51,24 @@ describe("LinesRoute", () => {
       expect(row.firstElementChild).toBe(icon);
       expect(row.textContent?.trim().length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe("LinesRoute summary visually hidden", () => {
+  it("defines a .lines-route .sr rule that hides the summary visually", () => {
+    const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "LinesRoute.css"), "utf8");
+    const match = css.match(/\.lines-route \.sr\s*\{([^}]*)\}/);
+    expect(match).not.toBeNull();
+    const body = match![1];
+    for (const decl of [
+      "position: absolute",
+      "width: 1px",
+      "height: 1px",
+      "overflow: hidden",
+      "clip: rect(0 0 0 0)",
+      "white-space: nowrap",
+    ]) {
+      expect(body).toContain(decl);
+    }
   });
 });
