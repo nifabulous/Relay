@@ -81,7 +81,9 @@ export function AtlasPage() {
   const country = useQuery({
     queryKey: panelIso2 ? apiKeys.atlasCountry(panelIso2, scope) : ["atlas", "country", "idle"],
     queryFn: () => apiRequest<AtlasCountry>(`/api/atlas/country/${encodeURIComponent(panelIso2!)}?scope=${scope}`, undefined, AtlasCountrySchema),
-    enabled: Boolean(panelIso2),
+    // Hub view with nothing selected shows network data only; the country detail is read
+    // only by the spoke panel and by the route, which needs an explicit selection.
+    enabled: Boolean(panelIso2) && (view === "spoke" || Boolean(selected)),
   });
 
   const topology = useQuery({

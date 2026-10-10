@@ -138,6 +138,27 @@ describe("AtlasPage", () => {
     expect(screen.getByText("Citibank Canada")).toBeVisible();
   });
 
+  it("issues no country request in hub view with nothing selected", async () => {
+    const requested: string[] = [];
+    renderAtlas("/app/explore/atlas", (iso2) => {
+      requested.push(iso2);
+      return country;
+    });
+    await screen.findByText("4", { selector: ".atlas__metrics strong" });
+    // The hub panel reads network data only; give any stray query a chance to fire.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(requested).toEqual([]);
+  });
+
+  it("still requests the selected country in hub view", async () => {
+    const requested: string[] = [];
+    renderAtlas("/app/explore/atlas?selected=CA", (iso2) => {
+      requested.push(iso2);
+      return { ...country, iso2 };
+    });
+    await waitFor(() => expect(requested).toEqual(["CA"]));
+  });
+
   it("shows the route for a selected country in hub view", async () => {
     renderAtlas("/app/explore/atlas?view=hub&selected=CA", (iso2) => ({ ...country, iso2 }));
 
