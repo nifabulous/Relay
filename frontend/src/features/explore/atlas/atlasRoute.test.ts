@@ -16,6 +16,10 @@ describe("atlasRouteStops", () => {
     expect(stops[1]).toMatchObject({ name: "Citibank N.A.", detail: "CITIUS33XXX" });
   });
 
+  it("marks every stop not checked: the atlas reports published data, it runs no check", () => {
+    expect(atlasRouteStops("GB", selected).map((stop) => stop.status)).toEqual(["not_checked", "not_checked", "not_checked"]);
+  });
+
   it("returns no route when the selected country has no correspondent", () => {
     expect(atlasRouteStops("GB", { iso2: "KE", correspondents: [] } as never)).toEqual([]);
   });

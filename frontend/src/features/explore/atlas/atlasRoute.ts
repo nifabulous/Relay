@@ -20,7 +20,8 @@ export function routeCountryFor(selected: string | null | undefined, data: Atlas
 /**
  * Hub country to the selected country, through the selected country's top
  * correspondent. Returns no stops when the data has no correspondent or the
- * hub is the selected country, so nothing is invented.
+ * hub is the selected country, so nothing is invented. No stop is marked
+ * passed: the atlas shows published relationships, not the result of a check.
  */
 export function atlasRouteStops(hubIso2: string, selected: AtlasCountry): RouteStop[] {
   if (hubIso2 === selected.iso2) return [];
@@ -28,7 +29,7 @@ export function atlasRouteStops(hubIso2: string, selected: AtlasCountry): RouteS
   if (!top) return [];
   return [
     { role: "origin", name: hubIso2, status: "not_checked" },
-    { role: "correspondent", name: top.name, detail: top.bic, status: "passed" },
+    { role: "correspondent", name: top.name, detail: top.bic, status: "not_checked" },
     { role: "beneficiary", name: selected.iso2, status: "not_checked" },
   ];
 }
