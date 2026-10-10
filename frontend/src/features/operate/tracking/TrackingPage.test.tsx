@@ -58,7 +58,7 @@ describe("TrackingPage arrival", () => {
     renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeVisible();
+      expect(screen.getByText("UETR-A")).toBeInTheDocument();
     });
   });
 
@@ -81,13 +81,13 @@ describe("TrackingPage arrival", () => {
     const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeVisible();
+      expect(screen.getByText("UETR-A")).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("link", { name: "Track B" }));
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-B")).toBeVisible();
+      expect(screen.getByText("UETR-B")).toBeInTheDocument();
     });
     expect(screen.queryByText("UETR-A")).toBeNull();
     // The input follows the URL too, so the form does not contradict the page.
@@ -99,7 +99,7 @@ describe("TrackingPage arrival", () => {
     const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
 
     await waitFor(() => {
-      expect(screen.getByText("UETR-A")).toBeVisible();
+      expect(screen.getByText("UETR-A")).toBeInTheDocument();
     });
 
     const input = screen.getByLabelText("UETR");
@@ -273,7 +273,8 @@ describe("Scheduled pacing controls", () => {
     await user.click(screen.getByRole("button", { name: "Advance one event" }));
 
     // The refreshed timeline now shows the revealed intermediary hop.
-    expect(await screen.findByText("Citibank N.A.")).toBeVisible();
+    expect(await screen.findByRole("figure", { name: "Payment route" })).toBeVisible();
+    expect((await screen.findAllByText("Citibank N.A.")).length).toBeGreaterThan(0);
     expect(skippedUetr).toBe("UETR-A");
   });
 
@@ -296,7 +297,7 @@ describe("Scheduled pacing controls", () => {
     // Terminal state: credited bank visible, amounts revealed, controls gone.
     expect(
       await screen.findByText("Credited to beneficiary account by Guaranty Trust Bank"),
-    ).toBeVisible();
+    ).toBeInTheDocument();
   });
 
   it("hides the controls once the response is terminal", async () => {

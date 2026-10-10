@@ -9,7 +9,9 @@ import type { ApiProblem } from "../../../api/problem";
 import type { AsyncStatus } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
+import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
 import { PaymentTimeline } from "./PaymentTimeline";
+import { trackingRouteStops } from "./trackingRoute";
 import { buildTrackingContext } from "../../tutor/tutorContext";
 import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
 import "./TrackingPage.css";
@@ -183,7 +185,17 @@ export function TrackingPage() {
         >
           {data && (
             <>
-              <PaymentTimeline payment={data} />
+              <div className="surface-landing tracking-page__route">
+                <LinesRoute
+                  stops={trackingRouteStops(data)}
+                  summary={`Payment ${data.uetr} has revealed ${data.timeline.length} hops.`}
+                  ariaLabel="Payment route"
+                />
+              </div>
+              <details className="tracking-page__events">
+                <summary>Event list</summary>
+                <PaymentTimeline payment={data} />
+              </details>
               {!data.is_terminal && (
                 <div className="tracking-page__controls" role="group" aria-label="Simulation pacing controls">
                   <Button
