@@ -35,13 +35,14 @@ function routeExists(href: string): boolean {
 }
 
 describe("rendered landing page", () => {
-  it("states every count from the facts", () => {
+  it("states the counts the page shows, from the facts", () => {
+    // The stats strip and the removed tools no longer state directory countries,
+    // holiday calendars, watchlist entries or STP rules, so those are not required here.
     const counts = [
-      facts.directory.banks, facts.directory.countries, facts.ssi.rows, facts.ssi.settleableRows,
+      facts.directory.banks, facts.ssi.rows, facts.ssi.settleableRows,
       facts.ssi.beneficiaryBanks, facts.ssi.correspondents, facts.atlas.beneficiaryCountries,
       facts.corridorRules.corridors, facts.rails.currencyCount, facts.rails.domesticSchemeCount,
-      facts.rails.totalRailCount, facts.tools.verdicts, facts.tools.watchlistEntries,
-      facts.tools.holidayCalendars, facts.tools.stpRules,
+      facts.rails.totalRailCount, facts.tools.verdicts,
     ];
     for (const count of counts) expect(text).toContain(formatCount(count));
     for (const currency of facts.rails.currencies) {

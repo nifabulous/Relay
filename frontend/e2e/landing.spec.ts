@@ -101,7 +101,7 @@ test.describe("landing page behaviour", () => {
 
   test("counters keep the final value readable while they count", async ({ page }) => {
     await page.goto("/");
-    const first = page.locator(".stats [data-count]").first();
+    const first = page.locator("#data [data-count]").first();
     const text = (await first.textContent()) ?? "";
     await first.scrollIntoViewIfNeeded();
     await expect(first.locator(".sr")).toHaveText(text);

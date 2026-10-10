@@ -9,7 +9,6 @@ import { Learn } from "./sections/Learn";
 import { Nav } from "./sections/Nav";
 import { Rails } from "./sections/Rails";
 import { Route } from "./sections/Route";
-import { Stats } from "./sections/Stats";
 import { Tools } from "./sections/Tools";
 
 export function LandingPage({ facts, demo }: { facts: LandingFacts; demo: Demo }) {
@@ -28,7 +27,6 @@ export function LandingPage({ facts, demo }: { facts: LandingFacts; demo: Demo }
       <Nav />
       <main id="main">
         <Hero facts={facts} />
-        <Stats facts={facts} demo={demo} />
         <Route demo={demo} />
         <Anatomy demo={demo} />
         <Rails facts={facts} />
