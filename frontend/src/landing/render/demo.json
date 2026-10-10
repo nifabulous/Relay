@@ -1,0 +1,93 @@
+{
+  "asOf": "2026-10-01",
+  "realMoneyMoved": "0.00",
+  "payment": {
+    "currency": "GBP",
+    "amount": 25000,
+    "origin": { "name": "Harborline Bank", "place": "Lagos" },
+    "correspondent": { "name": "Meridian Clearing", "place": "London" },
+    "beneficiary": { "name": "Northstar Bank", "place": "UK" }
+  },
+  "ledger": [
+    { "time": "08:42:10", "event": "pacs.008 received, GBP 25,000.00", "result": "in" },
+    { "time": "08:42:11", "event": "IBAN checked, mod-97 valid", "result": "pass" },
+    { "time": "08:42:12", "event": "Payee close match, confirmed by the sender", "result": "confirmed" },
+    { "time": "08:42:15", "event": "Routed via Meridian Clearing", "result": "hop 2" },
+    { "time": "08:47:03", "event": "Credited at Northstar, UETR tracked", "result": "done" }
+  ],
+  "iban": {
+    "value": "GB82WEST12345698765432",
+    "groups": ["GB82", "WEST", "1234", "5698", "7654", "32"],
+    "countryCode": "GB",
+    "length": 22,
+    "checkDigits": "82",
+    "bankCode": "WEST",
+    "sortCode": "123456"
+  },
+  "ssiSample": [
+    ["currency", "GBP"],
+    ["beneficiary", "Northstar Bank UK"],
+    ["correspondent", "Meridian Clearing London"],
+    ["nostro", "ACCT-910016"],
+    ["credit to", "ACCT-910021"],
+    ["charges", "SHA"],
+    ["status", "unverified"]
+  ],
+  "payee": {
+    "entered": "Jon Okafor Ltd",
+    "onFile": "Jonathan Okafor Limited",
+    "outcome": "CLOSE_MATCH"
+  },
+  "prepare": {
+    "validationValid": true,
+    "payeeOutcome": "CLOSE_MATCH",
+    "verdicts": { "lenient": "PROCEED_WITH_CAUTION", "standard": "REVIEW", "strict": "STOP" }
+  },
+  "fees": {
+    "intermediaryBic": "MERIGB2LXXX",
+    "byChargeCode": {
+      "OUR": { "received": 25000.0, "totalFees": 10.0, "senderPaysExtra": 10.0 },
+      "SHA": { "received": 24990.0, "totalFees": 10.0, "senderPaysExtra": 0.0 },
+      "BEN": { "received": 24965.0, "totalFees": 35.0, "senderPaysExtra": 0.0 }
+    }
+  },
+  "screening": {
+    "intermediaryBic": "MERIGB2LXXX",
+    "hops": [
+      { "name": "Harborline Bank", "score": 0.42, "decision": "CLEAR" },
+      { "name": "Meridian Clearing", "score": 0.64, "decision": "CLEAR" },
+      { "name": "Northstar Bank", "score": 0.45, "decision": "CLEAR" }
+    ],
+    "overall": "CLEAR"
+  },
+  "valueDate": {
+    "currency": "CAD",
+    "scheme": "eft",
+    "sentAt": "2026-06-29T18:00:00",
+    "cutOff": "17:00",
+    "tradeDate": "2026-06-30",
+    "valueDate": "2026-07-02",
+    "skippedHolidays": ["2026-07-01"],
+    "businessDays": 1
+  },
+  "stp": {
+    "message": {
+      "transaction_reference": "REL-25000-GBP",
+      "bank_op_code": "CRED",
+      "value_date": "2026-10-01",
+      "currency": "GBP",
+      "interbank_amount": 25000.0,
+      "charge_code": "SHA",
+      "ordering": { "account": "ACCT-910016", "name": "Harborline Bank" },
+      "beneficiary": { "account": "ACCT-910021", "name": "Northstar Bank" },
+      "uetr": "3f2b8c1e-6d4a-4f7e-9b21-5c8d0e7a1b64"
+    },
+    "verdict": "CLEAN"
+  },
+  "tracking": [
+    { "status": "INITIATED", "code": "PDNG" },
+    { "status": "ACCEPTED", "code": "ACSP" },
+    { "status": "FORWARDED", "code": "ACSP" },
+    { "status": "CREDITED", "code": "ACSC" }
+  ]
+}
