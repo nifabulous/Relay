@@ -302,6 +302,30 @@ describe("Scheduled pacing controls", () => {
     ).toBeVisible();
   });
 
+  it("draws no route while only one bank is revealed, and keeps the event text visible", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) => HttpResponse.json(pacingPayload(params.uetr, 1))),
+    );
+    renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    expect(await screen.findByText("Payment initiated by Your bank")).toBeVisible();
+    expect(screen.queryByRole("figure", { name: "Payment route" })).not.toBeInTheDocument();
+  });
+
+  it("draws one stop per bank, not per event, and counts banks in the summary", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, PACING_PLAN.length)),
+      ),
+    );
+    renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    const figure = await screen.findByRole("figure", { name: "Payment route" });
+    // Four events across three banks: Citibank carries ACCEPTED and IN_PROGRESS.
+    expect(within(figure).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(figure).getByText("Payment UETR-A has revealed 3 banks.")).toBeInTheDocument();
+  });
+
   it("keeps the event text in a collapsible event list that opens on click", async () => {
     server.use(
       http.get("/api/track/:uetr", ({ params }) =>

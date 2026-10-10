@@ -136,6 +136,7 @@ export function TrackingPage() {
 
   const error = query.error as ApiProblem | null;
   const data = query.data;
+  const routeStops = data ? trackingRouteStops(data) : [];
 
   /*
    * Publish only what is on screen. Deliberately not the UETR: it identifies
@@ -186,14 +187,17 @@ export function TrackingPage() {
         >
           {data && (
             <>
-              <div className="surface-landing tracking-page__route">
-                <LinesRoute
-                  stops={trackingRouteStops(data)}
-                  summary={`Payment ${data.uetr} has revealed ${data.timeline.length} hops.`}
-                  ariaLabel="Payment route"
-                />
-              </div>
-              <details className="tracking-page__events">
+              {routeStops.length > 0 && (
+                <div className="surface-landing tracking-page__route">
+                  <LinesRoute
+                    stops={routeStops}
+                    summary={`Payment ${data.uetr} has revealed ${routeStops.length} banks.`}
+                    ariaLabel="Payment route"
+                  />
+                </div>
+              )}
+              {/* With no route to draw, the event list is the whole view, so it starts open. */}
+              <details className="tracking-page__events" open={routeStops.length === 0 || undefined}>
                 <summary>Event list</summary>
                 <PaymentTimeline payment={data} />
               </details>

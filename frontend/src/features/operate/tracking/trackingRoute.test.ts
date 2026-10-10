@@ -2,40 +2,98 @@ import { describe, expect, it } from "vitest";
 import type { TrackPaymentResponse } from "../../../api/schemas";
 import { trackingRouteStops } from "./trackingRoute";
 
-const payment = {
-  is_terminal: false,
-  timeline: [
-    { status: "INITIATED", bank_bic: "AAAAGB2LXXX", bank_name: "Harborline Bank", hop: 0, timestamp: "t0" },
-    { status: "FORWARDED", bank_bic: "CITIUS33XXX", bank_name: "Citibank N.A.", hop: 1, timestamp: "t1" },
-    { status: "CREDITED", bank_bic: "BBBBGB2LXXX", bank_name: "Northstar Bank", hop: 2, timestamp: "t2" },
-  ],
-} as unknown as TrackPaymentResponse;
+/*
+ * Fixtures follow app/services/tracking.py: the originator emits INITIATED; each
+ * intermediary emits ACCEPTED, IN_PROGRESS and FORWARDED (or ACCEPTED then
+ * REJECTED when it refuses); the beneficiary emits ACCEPTED then CREDITED or
+ * REJECTED. So one bank carries several events.
+ */
+type Event = { status: string; bank_bic: string; bank_name: string };
+
+const ORIGIN: Event[] = [{ status: "INITIATED", bank_bic: "CITIUS33XXX", bank_name: "Citibank N.A." }];
+const INTERMEDIARY = (bic: string, name: string): Event[] => [
+  { status: "ACCEPTED", bank_bic: bic, bank_name: name },
+  { status: "IN_PROGRESS", bank_bic: bic, bank_name: name },
+  { status: "FORWARDED", bank_bic: bic, bank_name: name },
+];
+const BENEFICIARY_CREDITED: Event[] = [
+  { status: "ACCEPTED", bank_bic: "GTBINGLAXXX", bank_name: "Guaranty Trust Bank" },
+  { status: "CREDITED", bank_bic: "GTBINGLAXXX", bank_name: "Guaranty Trust Bank" },
+];
+
+function payment(events: Event[], isTerminal: boolean): TrackPaymentResponse {
+  const last = events[events.length - 1];
+  return {
+    uetr: "uetr-1",
+    current_status: last?.status ?? "",
+    is_terminal: isTerminal,
+    event_count: events.length,
+    last_updated: "",
+    disclaimer: "",
+    timeline: events.map((event, hop) => ({ ...event, hop, timestamp: `t${hop}` })),
+  } as TrackPaymentResponse;
+}
 
 describe("trackingRouteStops", () => {
-  it("maps each revealed hop to a stop with its bank", () => {
-    const stops = trackingRouteStops(payment);
-    expect(stops.map((stop) => stop.name)).toEqual(["Harborline Bank", "Citibank N.A.", "Northstar Bank"]);
-    expect(stops.map((stop) => stop.role)).toEqual(["origin", "correspondent", "beneficiary"]);
+  it("groups the three events of a direct credited payment into two banks", () => {
+    // The e2e payment: INITIATED at CITIUS33, ACCEPTED and CREDITED at GTBINGLA.
+    const stops = trackingRouteStops(payment([...ORIGIN, ...BENEFICIARY_CREDITED], true));
+    expect(stops.map((stop) => stop.detail)).toEqual(["CITIUS33XXX", "GTBINGLAXXX"]);
+    expect(stops.map((stop) => stop.role)).toEqual(["origin", "beneficiary"]);
+    expect(stops.map((stop) => stop.status)).toEqual(["passed", "passed"]);
   });
 
-  it("marks a rejected or returned hop as failed", () => {
-    const rejected = { ...payment, timeline: [{ ...payment.timeline[0], status: "REJECTED" }] } as TrackPaymentResponse;
-    expect(trackingRouteStops(rejected)[0].status).toBe("failed");
+  it("groups nine events across two intermediaries into four banks, in order of first appearance", () => {
+    const events = [
+      ...ORIGIN,
+      ...INTERMEDIARY("CHASUS33XXX", "JPMorgan Chase"),
+      ...INTERMEDIARY("BARCGB22XXX", "Barclays"),
+      ...BENEFICIARY_CREDITED,
+    ];
+    expect(events).toHaveLength(9);
+    const stops = trackingRouteStops(payment(events, true));
+    expect(stops.map((stop) => stop.name)).toEqual(["Citibank N.A.", "JPMorgan Chase", "Barclays", "Guaranty Trust Bank"]);
+    expect(stops.map((stop) => stop.role)).toEqual(["origin", "correspondent", "correspondent", "beneficiary"]);
+    expect(stops.every((stop) => stop.status === "passed")).toBe(true);
   });
 
-  it("treats a revealed credited hop as passed", () => {
-    expect(trackingRouteStops(payment)[2].status).toBe("passed");
+  it("does not call the last revealed bank the beneficiary while the payment is in flight", () => {
+    const events = [...ORIGIN, ...INTERMEDIARY("CHASUS33XXX", "JPMorgan Chase").slice(0, 2)];
+    const stops = trackingRouteStops(payment(events, false));
+    expect(stops.map((stop) => stop.role)).toEqual(["origin", "correspondent"]);
   });
 
-  it("returns no stops for an empty timeline", () => {
-    expect(trackingRouteStops({ ...payment, timeline: [] })).toEqual([]);
+  it("shows unconfirmed banks as not checked, never passed, while the payment is in flight", () => {
+    const events = [...ORIGIN, ...INTERMEDIARY("CHASUS33XXX", "JPMorgan Chase")];
+    const stops = trackingRouteStops(payment(events, false));
+    expect(stops.map((stop) => stop.status)).toEqual(["not_checked", "not_checked"]);
   });
 
-  it("falls back to the BIC when a hop has an empty bank name", () => {
-    const unnamed = {
-      ...payment,
-      timeline: [{ ...payment.timeline[0], bank_name: "" }],
-    } as TrackPaymentResponse;
-    expect(trackingRouteStops(unnamed)[0].name).toBe("AAAAGB2LXXX");
+  it("marks the bank that rejected as failed", () => {
+    const events = [
+      ...ORIGIN,
+      { status: "ACCEPTED", bank_bic: "CHASUS33XXX", bank_name: "JPMorgan Chase" },
+      { status: "REJECTED", bank_bic: "CHASUS33XXX", bank_name: "JPMorgan Chase" },
+    ];
+    const stops = trackingRouteStops(payment(events, true));
+    expect(stops).toHaveLength(2);
+    expect(stops[1].status).toBe("failed");
+    expect(stops[0].status).toBe("not_checked");
+  });
+
+  it("marks a returned bank as failed", () => {
+    const events = [...ORIGIN, { status: "RETURNED", bank_bic: "GTBINGLAXXX", bank_name: "Guaranty Trust Bank" }];
+    expect(trackingRouteStops(payment(events, true))[1].status).toBe("failed");
+  });
+
+  it("returns no stops when fewer than two banks are revealed", () => {
+    expect(trackingRouteStops(payment([], false))).toEqual([]);
+    expect(trackingRouteStops(payment(ORIGIN, false))).toEqual([]);
+    expect(trackingRouteStops(payment(INTERMEDIARY("CHASUS33XXX", "JPMorgan Chase"), false))).toEqual([]);
+  });
+
+  it("falls back to the BIC when a bank has an empty name", () => {
+    const events = [{ ...ORIGIN[0], bank_name: "" }, ...BENEFICIARY_CREDITED];
+    expect(trackingRouteStops(payment(events, true))[0].name).toBe("CITIUS33XXX");
   });
 });
