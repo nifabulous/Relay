@@ -24,6 +24,25 @@ function renderShell(path = "") {
 }
 
 describe("AppShell", () => {
+  it("scopes the chrome to the landing tokens but never the content outlet", () => {
+    const { container } = renderShell();
+    for (const selector of [
+      ".sim-banner",
+      ".app-shell__topbar",
+      ".app-shell__rail",
+      ".app-shell__mobile-nav",
+    ]) {
+      expect(container.querySelector(selector), selector).toHaveClass("surface-landing");
+    }
+
+    const main = container.querySelector(".app-shell__main");
+    expect(main).not.toBeNull();
+    // Scoping main, or any ancestor of it, would migrate every workspace at once.
+    for (let node: Element | null = main; node && node !== container; node = node.parentElement) {
+      expect(node, node.className).not.toHaveClass("surface-landing");
+    }
+  });
+
   it("renders the Relay brand in the topbar", () => {
     renderShell();
     const topbar = screen.getByRole("banner");

@@ -202,6 +202,13 @@ describe("PreferencesMenu keyboard and dismissal", () => {
     );
   });
 
+  it("scopes the portalled popup to the landing tokens", async () => {
+    await openMenu();
+
+    // The popup renders outside the shell tree, so it needs its own scope root.
+    expect(screen.getByRole("menu", { name: /preferences/i })).toHaveClass("surface-landing");
+  });
+
   // The trigger sits at the top bar's right edge, so the popup must grow
   // downward and leftward — any other placement clips it off-screen or drags
   // it over the brand. Base UI reports the resolved placement as data

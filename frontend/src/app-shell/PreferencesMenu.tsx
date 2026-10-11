@@ -108,7 +108,7 @@ export function PreferencesMenu() {
         popupId="app-shell-preferences-menu"
         titleId={triggerId}
         popupRole="menu"
-        className="app-shell__prefs-menu"
+        className="app-shell__prefs-menu surface-landing"
         positionerClassName="app-shell__prefs-positioner"
         side="bottom"
         align="end"
