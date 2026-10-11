@@ -33,6 +33,26 @@ describe("FloatingTutorLauncher", () => {
     expect(screen.getByRole("button", { name: /tutor/i })).toBeVisible();
   });
 
+  it("scopes its own root and its portaled panel to the landing tokens", async () => {
+    // The panel renders through a Base UI portal on document.body, outside the
+    // shell tree, so it cannot inherit the shell's scope and needs its own class.
+    const { container } = render(<FloatingTutorLauncher />);
+    const pill = await readyPill();
+    const cluster = container.querySelector(".tutor-fab-cluster");
+    expect(cluster).toHaveClass("surface-landing");
+    expect(cluster).toContainElement(pill);
+
+    await userEvent.setup().click(pill);
+    await screen.findByRole("log");
+    const popup = document.getElementById("tutor-floating-panel");
+    expect(popup).not.toBeNull();
+    expect(popup).toHaveClass("surface-landing");
+    expect(container).not.toContainElement(popup);
+    // The scope never leaks onto a shared ancestor.
+    expect(container).not.toHaveClass("surface-landing");
+    expect(document.body).not.toHaveClass("surface-landing");
+  });
+
   it("renders only the pill until it is opened", () => {
     // The panel is lazy-loaded, so mounting this in the shell costs every route
     // one button rather than the tutor UI.
