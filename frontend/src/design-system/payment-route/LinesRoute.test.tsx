@@ -91,3 +91,12 @@ describe("LinesRoute summary visually hidden", () => {
     }
   });
 });
+
+describe("LinesRoute stepper on narrow screens", () => {
+  it("stacks the stops in one column below 768px", () => {
+    const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "LinesRoute.css"), "utf8");
+    const media = css.match(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/);
+    expect(media).not.toBeNull();
+    expect(media![1]).toMatch(/\.lines-route__steps\s*\{[^}]*grid-template-columns:\s*1fr/);
+  });
+});
