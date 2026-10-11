@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { apiKeys } from "../../api/queryKeys";
 import { AsyncRegion } from "../../design-system/AsyncRegion";
+import { LinesRoute } from "../../design-system/payment-route/LinesRoute";
 import type { ApiProblem } from "../../api/problem";
 import {
   AtlasCountrySchema,
@@ -13,6 +14,7 @@ import {
   type AtlasScope,
 } from "./atlas/atlasSchemas";
 import { AtlasMap } from "./atlas/AtlasMap";
+import { atlasRouteStops, routeCountryFor, topCorrespondent } from "./atlas/atlasRoute";
 import { AtlasTable } from "./atlas/AtlasTable";
 import { AtlasPanel } from "./atlas/AtlasPanel";
 import { format } from "./atlas/formatters";
@@ -21,6 +23,7 @@ import { coverageCounts } from "./atlas/atlasEncoding";
 import { parseAtlasTopology } from "./atlas/atlasTopology";
 import { buildAtlasContext } from "../tutor/tutorContext";
 import { usePublishTutorContext } from "../tutor/tutorSurfaceStore";
+import "../../design-system/landing-scope.css";
 import "./atlas/AtlasPage.css";
 import topologyUrl from "./atlas/assets/countries-50m.json?url";
 
@@ -78,7 +81,9 @@ export function AtlasPage() {
   const country = useQuery({
     queryKey: panelIso2 ? apiKeys.atlasCountry(panelIso2, scope) : ["atlas", "country", "idle"],
     queryFn: () => apiRequest<AtlasCountry>(`/api/atlas/country/${encodeURIComponent(panelIso2!)}?scope=${scope}`, undefined, AtlasCountrySchema),
-    enabled: Boolean(panelIso2) && view === "spoke",
+    // Hub view with nothing selected shows network data only; the country detail is read
+    // only by the spoke panel and by the route, which needs an explicit selection.
+    enabled: Boolean(panelIso2) && (view === "spoke" || Boolean(selected)),
   });
 
   const topology = useQuery({
@@ -99,6 +104,12 @@ export function AtlasPage() {
   const selectedHubCountry = data?.hub_countries.find((item) => item.iso2 === panelIso2);
   const selectedHubs = data?.hubs.filter((item) => item.iso2 === panelIso2) ?? [];
   const spokes = data?.spokes ?? [];
+  // The hub country comes from the data: the top-ranked entry of hub_countries,
+  // the same one the hub view selects by default. Nothing is hard-coded.
+  const hubIso2 = data?.hub_countries[0]?.iso2;
+  const selectedCountry = routeCountryFor(selected, country.data);
+  const routeStops = hubIso2 && selectedCountry ? atlasRouteStops(hubIso2, selectedCountry) : [];
+  const routeCorrespondent = selectedCountry && routeStops.length > 0 ? topCorrespondent(selectedCountry) : undefined;
   const activeRows = useMemo(() => {
     if (!data) return [];
     return view === "hub" ? data.hub_countries.map((item) => ({ iso2: item.iso2, value: item.banks_served })) : data.spokes.map((item) => ({ iso2: item.iso2, value: item.rows }));
@@ -145,7 +156,7 @@ export function AtlasPage() {
   }));
 
   return (
-    <div className="explore atlas" data-view={view} data-scope={scope}>
+    <div className="surface-landing explore atlas" data-view={view} data-scope={scope}>
       <header className="atlas__title-block">
         <p className="atlas__eyebrow">Explore / Network position</p>
         <h1>Correspondent atlas</h1>
@@ -214,6 +225,15 @@ export function AtlasPage() {
               <section className="atlas__map-column" aria-labelledby="atlas-map-title">
                 <div className="atlas__section-heading"><h2 id="atlas-map-title">{view === "hub" ? "Who does the reaching" : "Who gets reached"}</h2><span className="atlas__map-range">{view === "hub" ? "Beneficiary banks reached" : "Rows collected"}</span></div>
                 {topology.data ? <AtlasMap topology={topology.data} data={activeRows} spokes={view === "spoke" ? spokes : []} view={view} selected={selected} hovered={hovered} denominator={view === "hub" ? data.totals.beneficiary_banks : data.totals.ssi_rows} onSelect={selectCountry} onHover={setHovered} loading={network.isFetching || topology.isFetching} /> : topology.isError ? <button type="button" className="relay-btn relay-btn--secondary" onClick={() => topology.refetch()}>Retry map</button> : <div className="atlas__map-loading" role="status">Loading geography…</div>}
+                {selected && hubIso2 && selectedCountry && routeCorrespondent && (
+                  <div className="atlas-page__route">
+                    <LinesRoute
+                      stops={routeStops}
+                      summary={`Route from ${hubIso2} through ${routeCorrespondent.name} to ${selectedCountry.iso2}.`}
+                      ariaLabel="Route to the selected country"
+                    />
+                  </div>
+                )}
                 <section className="atlas__coverage atlas__coverage--map" aria-labelledby="atlas-coverage-title">
                   <h2 id="atlas-coverage-title">Coverage frame</h2>
                   {network.isFetching ? <p role="status">Loading current scope…</p> : coverage ? <>

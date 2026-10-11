@@ -53,14 +53,14 @@ function LocationProbe() {
   return <output data-testid="atlas-location">{location.pathname}{location.search}</output>;
 }
 
-function renderAtlas(initialEntry = "/app/explore/atlas") {
+function renderAtlas(initialEntry = "/app/explore/atlas", countryFor: (iso2: string) => typeof country = () => country) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   server.use(
     http.get("/api/atlas/network", ({ request }) => {
       const scope = new URL(request.url).searchParams.get("scope") ?? "all";
       return HttpResponse.json({ ...network, scope });
     }),
-    http.get("/api/atlas/country/:iso2", () => HttpResponse.json(country)),
+    http.get("/api/atlas/country/:iso2", ({ params }) => HttpResponse.json(countryFor(String(params.iso2)))),
     http.get(/countries-50m\.json/, () => HttpResponse.json({ type: "Topology", objects: { countries: { type: "GeometryCollection", geometries: [] } }, arcs: [] })),
   );
   return render(
@@ -136,6 +136,42 @@ describe("AtlasPage", () => {
 
     expect(await screen.findByRole("heading", { name: /Canada correspondent position/i })).toBeVisible();
     expect(screen.getByText("Citibank Canada")).toBeVisible();
+  });
+
+  it("issues no country request in hub view with nothing selected", async () => {
+    const requested: string[] = [];
+    renderAtlas("/app/explore/atlas", (iso2) => {
+      requested.push(iso2);
+      return country;
+    });
+    await screen.findByText("4", { selector: ".atlas__metrics strong" });
+    // The hub panel reads network data only; give any stray query a chance to fire.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(requested).toEqual([]);
+  });
+
+  it("still requests the selected country in hub view", async () => {
+    const requested: string[] = [];
+    renderAtlas("/app/explore/atlas?selected=CA", (iso2) => {
+      requested.push(iso2);
+      return { ...country, iso2 };
+    });
+    await waitFor(() => expect(requested).toEqual(["CA"]));
+  });
+
+  it("shows the route for a selected country in hub view", async () => {
+    renderAtlas("/app/explore/atlas?view=hub&selected=CA", (iso2) => ({ ...country, iso2 }));
+
+    expect(await screen.findByText("Route from US through Citibank N.A. to CA.")).toBeInTheDocument();
+  });
+
+  it("skips the route in hub view when the selected country is the hub itself", async () => {
+    renderAtlas("/app/explore/atlas?view=hub&selected=US");
+
+    expect(await screen.findByRole("heading", { name: /United States correspondent position/i })).toBeVisible();
+    await waitFor(() => expect(screen.getByTestId("atlas-location")).toHaveTextContent("selected=US"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.queryByText(/Route from/i)).toBeNull();
   });
 
   it("resolves correspondent search in the spoke view", async () => {

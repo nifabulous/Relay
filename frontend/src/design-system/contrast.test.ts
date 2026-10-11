@@ -3,8 +3,8 @@
 // ambient. This test reads the shipped stylesheet from disk, so it pulls the
 // node types in explicitly — the same mechanism src/vite-env.d.ts uses for
 // vite/client. (Node-only APIs; this file never ships to the browser.)
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
@@ -114,6 +114,17 @@ const BLACK: Tokens = { ...LIGHT, ...BLACK_EXPLICIT };
  * the same way means a pairing is checked against the value that really paints.
  */
 const DARK: Tokens = { ...LIGHT, ...DARK_MEDIA };
+
+/** Paint a hex or rgba() colour over an opaque hex backdrop, returning #rrggbb. */
+function composite(colour: string, backdrop: string): string {
+  if (/^#[0-9a-f]{6}$/i.test(colour)) return colour;
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(colour);
+  if (!m || !/^#[0-9a-f]{6}$/i.test(backdrop)) throw new Error(`cannot composite ${colour} over ${backdrop}`);
+  const alpha = m[4] === undefined ? 1 : Number(m[4]);
+  const under = [1, 3, 5].map((i) => parseInt(backdrop.slice(i, i + 2), 16));
+  const mixed = [1, 2, 3].map((i, k) => Math.round(Number(m[i]) * alpha + under[k] * (1 - alpha)));
+  return `#${mixed.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
 
 function ratio(scope: Tokens, fg: string, bg: string): number {
   const fgHex = scope[fg];
@@ -374,5 +385,223 @@ describe("floating surface elevation", () => {
     expect(mobileCss).toMatch(/top:\s*auto;/);
     expect(mobileCss).toMatch(/height:\s*min\([\s\S]*70dvh[\s\S]*var\(--sim-banner-height\)/);
     expect(mobileCss).toMatch(/max-height:\s*calc\([\s\S]*var\(--sim-banner-height\)/);
+  });
+});
+
+describe("landing scope", () => {
+  const scopeCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "landing-scope.css"), "utf8");
+
+  it("defines the landing tokens only under .surface-landing, never on :root", () => {
+    expect(scopeCss).not.toMatch(/^:root\s*\{/m);
+    expect(scopeCss).toMatch(/\.surface-landing\s*\{/);
+  });
+
+  it("keeps the clashing names inside the scope", () => {
+    for (const name of ["--font-mono", "--muted"]) {
+      expect(scopeCss).toContain(`${name}:`);
+    }
+  });
+
+  // Scoped component overrides: every selector must sit under .surface-landing.
+  const SCOPED_SELECTORS = [
+    ".relay-btn--primary",
+    ".relay-btn--primary:hover",
+    ".relay-btn--secondary",
+    ".status-chip",
+    ".status-chip--success",
+    ".status-chip--warning",
+    ".status-chip--danger",
+    ".status-chip--muted",
+    ".status-chip--action",
+    ".status-chip .status-chip__icon",
+  ];
+
+  it.each(SCOPED_SELECTORS)("scopes %s under .surface-landing", (selector) => {
+    const escaped = selector.replace(/[.:]/g, "\\$&");
+    expect(scopeCss).toMatch(new RegExp(`\\.surface-landing\\s+${escaped}\\s*[,{]`));
+  });
+
+  it("never styles a shared component outside .surface-landing", () => {
+    expect(scopeCss).not.toMatch(/^\s*(\.relay-btn|\.status-chip|h[1-3]\b)/m);
+  });
+
+  // theme.ts sets data-theme on documentElement only. A selector that reads data-theme on the
+  // scope element itself never sees the explicit choice, so explicit light under a dark OS rendered dark.
+  it("never reads data-theme on the scope element itself", () => {
+    expect(scopeCss).not.toMatch(/\.surface-landing:not\(/);
+    expect(scopeCss).not.toMatch(/\.surface-landing\[data-theme/);
+  });
+
+  it("orders the theme blocks so black wins over the OS-dark block", () => {
+    const media = scopeCss.indexOf("@media (prefers-color-scheme: dark)");
+    const dark = scopeCss.search(/^:root\[data-theme="dark"\]\s+\.surface-landing\s*\{/m);
+    const black = scopeCss.search(/^:root\[data-theme="black"\]\s+\.surface-landing\s*\{/m);
+    expect(media).toBeGreaterThanOrEqual(0);
+    expect(dark).toBeGreaterThan(media);
+    expect(black).toBeGreaterThan(dark);
+  });
+
+  it("follows the app theme set on the document root", () => {
+    expect(scopeCss).toMatch(/:root\[data-theme="dark"\]\s+\.surface-landing\b/);
+    expect(scopeCss).toMatch(/:root\[data-theme="black"\]\s+\.surface-landing\b/);
+    expect(scopeCss).toMatch(/:root:not\(\[data-theme="light"\]\)\s+\.surface-landing\b/);
+  });
+
+  // Resolve the scope's tokens the way the cascade does: the bare block, then the theme's redefinitions.
+  function scopeTokens(opener: RegExp | null): Tokens {
+    const base = declarations(blockBody(scopeCss, /^\.surface-landing\s*\{/m));
+    const theme = opener ? declarations(blockBody(scopeCss, opener)) : {};
+    const merged: Tokens = { ...base, ...theme };
+    const resolve = (value: string): string => {
+      const m = /^var\((--[\w-]+)\)$/.exec(value);
+      // An undefined target stays as the unresolved var(), so the test that checks it can fail by name.
+      return m && merged[m[1]] !== undefined ? resolve(merged[m[1]]) : value;
+    };
+    return Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, resolve(v)]));
+  }
+  const THEMES: Array<[string, Tokens]> = [
+    ["light", scopeTokens(null)],
+    ["dark", scopeTokens(/^:root\[data-theme="dark"\]\s+\.surface-landing\s*\{/m)],
+    ["black", scopeTokens(/^:root\[data-theme="black"\]\s+\.surface-landing\s*\{/m)],
+  ];
+  const TEXT_PAIRS: Array<[string, string, number]> = [
+    ["--onAcc", "--accFill", 4.5], // primary button
+    ["--onAcc", "--accFillHover", 4.5], // primary button hover
+    ["--ink", "--surface", 4.5], // secondary button and headings
+    ["--ok", "--surface", 4.5], // success chip
+    ["--warn", "--surface", 4.5], // warning chip
+    ["--bad", "--surface", 4.5], // danger chip
+    ["--muted", "--surface", 4.5], // muted chip
+    ["--accInk", "--surface", 4.5], // action chip
+    // The route itself sits on the page canvas: stop roles, details, names and status text.
+    ["--muted", "--bg", 4.5],
+    ["--ink2", "--bg", 4.5],
+    ["--ok", "--bg", 4.5],
+    ["--warn", "--bg", 4.5],
+    ["--bad", "--bg", 4.5],
+  ];
+
+  describe.each(THEMES)("%s theme text pairs", (_name, tokens) => {
+    it.each(TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
+      expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  });
+
+  // ── App-token remap: shared components read the app's names; the scope re-points them. ──
+  const REMAP_OPEN = "/* app-token remap: start */";
+  const REMAP_CLOSE = "/* app-token remap: end */";
+  const remapBlock = (): string => {
+    const a = scopeCss.indexOf(REMAP_OPEN);
+    const b = scopeCss.indexOf(REMAP_CLOSE);
+    if (a < 0 || b < a) throw new Error("landing-scope.css: app-token remap markers missing");
+    return scopeCss.slice(a + REMAP_OPEN.length, b);
+  };
+
+  // Every var(--x) the screens' CSS and TSX read, intersected with the names tokens.css and
+  // coss-theme.css define. Non-colour, non-font tokens have no landing equivalent and stay on :root;
+  // --font-sans, --font-mono and --muted are defined natively by the scope already.
+  const srcRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(join(dir, e.name)) : /\.(css|tsx)$/.test(e.name) ? [join(dir, e.name)] : [],
+    );
+  const NOT_REMAPPED =
+    /^--(space|text|leading|tracking|radius|coss-radius|duration|ease|nav|mobile|floating|sim|reading|content|font-sans|font-mono|muted$)/;
+  const used = new Set<string>();
+  for (const dir of ["design-system", "features/operate", "features/explore"]) {
+    for (const file of walk(join(srcRoot, dir))) {
+      for (const m of readFileSync(file, "utf8").matchAll(/var\((--[\w-]+)/g)) used.add(m[1]);
+    }
+  }
+  // tokens.css :root also carries the shadcn names (--card, --border, ...); coss-theme.css only
+  // maps them into Tailwind's @theme and defines no custom properties of its own.
+  const defined = new Set(Object.keys(declarations(blockBody(CSS, /^:root\s*\{/m))));
+  const MUST_REMAP = [...used].filter((n) => defined.has(n) && !NOT_REMAPPED.test(n)).sort();
+
+  it("finds the app tokens the screens read (guards the intersection itself)", () => {
+    expect(MUST_REMAP).toEqual(expect.arrayContaining(["--color-surface", "--card", "--font-ui", "--color-action"]));
+  });
+
+  it.each(MUST_REMAP)("remaps %s to a landing token inside .surface-landing", (name) => {
+    const body = declarations(remapBlock());
+    expect(body[name], `${name} has no remap line`).toMatch(/^var\(--[\w-]+\)$/);
+  });
+
+  // The var() shape alone passes for a typo. Each target must be a landing token the scope
+  // defines, and must resolve, in every theme, to a real value: a colour, or a font stack.
+  it.each(MUST_REMAP)("remap target of %s is defined in the scope and resolves in every theme", (name) => {
+    const target = /^var\((--[\w-]+)\)$/.exec(declarations(remapBlock())[name] ?? "")?.[1];
+    expect(target, `${name} has no var() target`).toBeTruthy();
+    const base = declarations(blockBody(scopeCss, /^\.surface-landing\s*\{/m));
+    const remapNames = new Set(Object.keys(declarations(remapBlock())));
+    expect(base[target!], `${target} is not defined in the scope`).toBeDefined();
+    expect(remapNames.has(target!), `${target} points at another remap line, not a landing token`).toBe(false);
+    for (const [theme, tokens] of THEMES) {
+      const value = tokens[name];
+      if (/font/.test(name)) expect(value, `${name} in ${theme}`).toMatch(/Geist/);
+      else expect(value, `${name} in ${theme}`).toMatch(/^(#[0-9a-f]{3,8}|rgba?\([^)]*\))$/i);
+    }
+  });
+
+  it("keeps the remap block inside the base .surface-landing block", () => {
+    const base = blockBody(scopeCss, /^\.surface-landing\s*\{/m);
+    expect(base).toContain(REMAP_OPEN);
+    expect(base).toContain(REMAP_CLOSE);
+  });
+
+  it("contains no hex in the remap block", () => {
+    expect(remapBlock()).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  // Text pairs that read through a remap, resolved per theme (remap -> landing token -> theme value).
+  const REMAP_TEXT_PAIRS: Array<[string, string, number]> = [
+    ["--color-ink-strong", "--color-canvas", 4.5],
+    ["--color-ink-strong", "--color-surface", 4.5],
+    ["--color-ink", "--color-surface", 4.5],
+    ["--color-ink", "--color-surface-2", 4.5],
+    ["--color-ink-muted", "--color-surface", 4.5],
+    ["--color-ink-muted", "--color-surface-2", 4.5],
+    ["--color-action", "--color-surface", 4.5], // links and action text
+    ["--color-action", "--color-canvas", 4.5],
+    ["--color-action-hover", "--color-surface", 4.5],
+    ["--color-on-action", "--color-action", 4.5], // fills
+    ["--color-on-danger", "--color-danger", 4.5],
+    ["--color-success", "--color-success-bg", 4.5],
+    ["--color-warning", "--color-warning-bg", 4.5],
+    ["--color-danger", "--color-surface", 4.5],
+    ["--foreground", "--background", 4.5],
+    ["--card-foreground", "--card", 4.5],
+    ["--popover-foreground", "--popover", 4.5],
+    ["--secondary-foreground", "--secondary", 4.5],
+    ["--muted-foreground", "--card", 4.5],
+    ["--accent-foreground", "--card", 4.5],
+    ["--primary-foreground", "--primary", 4.5],
+    ["--destructive-foreground", "--destructive", 4.5],
+    ["--success-foreground", "--success", 4.5],
+    ["--warning-foreground", "--warning", 4.5],
+    ["--info-foreground", "--info", 4.5],
+    ["--destructive", "--card", 4.5],
+    ["--color-on-action", "--color-action-hover", 4.5], // fill hover
+    ["--color-on-action", "--color-action-pressed", 4.5], // fill pressed
+    ["--color-success", "--color-surface", 4.5],
+  ];
+
+  describe.each(THEMES)("%s theme remapped text pairs", (_name, tokens) => {
+    it.each(REMAP_TEXT_PAIRS)("%s on %s is at least %f:1", (fg, bg, min) => {
+      expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  });
+
+  // Translucent backgrounds (dark --badBg is rgba) paint over the canvas, so measure the composite.
+  const PAIRS_OVER_CANVAS: Array<[string, string, number]> = [
+    ["--color-danger", "--color-danger-bg", 4.5], // danger notices and alerts
+  ];
+
+  describe.each(THEMES)("%s theme remapped pairs over the canvas", (_name, tokens) => {
+    it.each(PAIRS_OVER_CANVAS)("%s on %s (composited over --bg) is at least %f:1", (fg, bg, min) => {
+      const fgHex = tokens[fg];
+      expect(fgHex).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(contrastRatio(fgHex, composite(tokens[bg], tokens["--bg"]))).toBeGreaterThanOrEqual(min);
+    });
   });
 });

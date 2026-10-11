@@ -408,6 +408,71 @@ describe("PreparePaymentPage result cross-links", () => {
     expect(screen.queryByRole("link", { name: /view simulated tracking/i })).toBeNull();
   });
 
+  it("shows no route for a STOP result even when routing carries candidates", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "STOP",
+        reason: "Do not proceed",
+        is_blocking: true,
+        uetr: "blocked-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "NO_MATCH", score: 0, advice: "Do not proceed" },
+        routing: {
+          beneficiary_country: "GB",
+          inferred_currency: "GBP",
+          suggested_intermediaries: [{ bic: "CITIUS33XXX", bank: "Citibank N.A.", corridor: "GBP", confidence: "high", basis: "published-ssi" }],
+          routing_basis: "published-ssi",
+        },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: [],
+        blocks: ["Name does not match"],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Wrong Name");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    await screen.findByText("Stop");
+    expect(screen.queryByRole("figure", { name: "Payment route" })).toBeNull();
+  });
+
+  it("shows the route for a PROCEED result, with the beneficiary status from VoP", async () => {
+    server.use(
+      http.post("/api/prepare-payment", () => HttpResponse.json({
+        recommendation: "PROCEED",
+        reason: "All checks passed",
+        is_blocking: false,
+        uetr: "proceed-uetr",
+        validation: { valid: true, bic: "NWBKGB2LXXX", errors: [] },
+        vop: { outcome: "MATCH", score: 1, advice: "Matches" },
+        routing: {
+          beneficiary_country: "GB",
+          inferred_currency: "GBP",
+          suggested_intermediaries: [{ bic: "CITIUS33XXX", bank: "Citibank N.A.", corridor: "GBP", confidence: "high", basis: "published-ssi" }],
+          routing_basis: "published-ssi",
+        },
+        ssi: { instructions: [], has_real_accounts: false, has_placeholders_only: false },
+        warnings: [],
+        blocks: [],
+      })),
+    );
+
+    const { user } = renderPage();
+    await user.type(screen.getByLabelText(/beneficiary iban/i), "GB29NWBK60161331926819");
+    await user.type(screen.getByLabelText(/beneficiary name/i), "Jane Smith");
+    await user.type(screen.getByLabelText(/amount/i), "500");
+    await user.click(screen.getByRole("button", { name: /run payment checks/i }));
+
+    const figure = await screen.findByRole("figure", { name: "Payment route" });
+    const steps = within(figure).getAllByRole("listitem");
+    expect(steps).toHaveLength(3);
+    expect(within(steps[2]).getByText("Jane Smith")).toBeInTheDocument();
+    expect(within(steps[2]).getByText("passed")).toBeInTheDocument();
+  });
+
   it("does not link a review recommendation before confirmation", async () => {
     server.use(
       http.post("/api/prepare-payment", () => HttpResponse.json({

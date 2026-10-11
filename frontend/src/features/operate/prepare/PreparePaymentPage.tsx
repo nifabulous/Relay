@@ -18,7 +18,10 @@ import { Button } from "../../../design-system/Button";
 import { CheckResult } from "./CheckResult";
 import { Recommendation } from "./Recommendation";
 import { CorrespondentOptions } from "../../../design-system/correspondent-options/CorrespondentOptions";
+import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
+import { prepareRouteStops, prepareRouteSummary } from "./prepareRoute";
 import { groupByCurrency } from "../../explore/ssiGrouping";
+import "../../../design-system/landing-scope.css";
 import "./PreparePaymentPage.css";
 import { recordActivity } from "../../../lib/persistence/storage";
 import { SsiProvenance } from "../../explore/SsiProvenance";
@@ -342,6 +345,14 @@ export function PreparePaymentPage() {
 
   // Watch form values to detect staleness
   const formValues = watch();
+  // Empty unless the checks cleared the payment: a blocking result draws no route.
+  const routeStops = result
+    ? prepareRouteStops(result, {
+        // The form has no originator field; the sender is the user's own bank.
+        originator: "Sender",
+        beneficiary: formValues.beneficiary_name || "Beneficiary",
+      })
+    : [];
   function handleInputChange() {
     if (result) setIsStale(true);
   }
@@ -410,7 +421,7 @@ export function PreparePaymentPage() {
   };
 
   return (
-    <div className="prepare-payment">
+    <div className="surface-landing prepare-payment">
       <div className="prepare-payment__header">
         <h1>Prepare a payment</h1>
         <p className="measure">
@@ -763,6 +774,16 @@ export function PreparePaymentPage() {
               <p>No settlement instructions on file for this bank/currency.</p>
             )}
           </CheckResult>
+
+          {routeStops.length > 0 && (
+            <div className="prepare-payment__lines-route">
+              <LinesRoute
+                stops={routeStops}
+                summary={prepareRouteSummary(result, formValues.beneficiary_name)}
+                ariaLabel="Payment route"
+              />
+            </div>
+          )}
 
           {/* Routing summary: preserve whether the backend returned published SSI data or a heuristic. */}
           {result.routing.suggested_intermediaries.length > 0 && (

@@ -1,0 +1,177 @@
+/* Landing tokens, scoped to .surface-landing for the Phase 2 route screens. */
+/*
+ * Landing page tokens: the new system in DESIGN.md (Colour, Dark and black
+ * themes). Every colour on the landing page is defined here; landing.css holds
+ * no hex. The /app workspaces keep design-system/tokens.css until Phase 3.
+ *
+ * Selectors match the app's theme contract: an explicit data-theme wins, and
+ * "system" (no attribute) follows the OS. theme.ts sets data-theme on the
+ * document root only, so every theme selector reads it from :root.
+ */
+.surface-landing {
+  /* ramps (constant across themes) */
+  --p50: #F5F6FE; --p100: #EAEDFF; --p200: #D8DEFF; --p300: #BBC4FF; --p400: #95A0FF; --p500: #7277FF;
+  --p600: #533AFD; --p700: #472CDD; --p800: #351DAE; --p900: #23107D; --p950: #16065A;
+  --n0: #F9FAFC; --n25: #F4F7FA; --n50: #EFF3F8; --n100: #E5EAF1; --n200: #D1D8E1; --n300: #B2BCC8;
+  --n400: #8693A5; --n500: #5F6F85; --n600: #4D5F76; --n700: #354962; --n800: #1F344F; --n900: #0B223E; --n950: #021732;
+
+  --cw: 1080px; --ow: 1360px; --g: 16px;
+  --font-sans: "Geist", "Geist Fallback", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  color-scheme: light;
+
+  /* light theme */
+  --bg: var(--n0); --surface: #FFFFFF; --tint: var(--n25); --ink: var(--n950); --ink2: var(--n600);
+  --muted: var(--n500); --line: var(--n100); --line2: var(--n200); --cell: #EEF1F6;
+  --acc: var(--p600); --accFill: var(--p600); --accFillHover: var(--p700); --onAcc: #FFFFFF;
+  --accBg: var(--p50); --accLine: var(--p200); --accInk: var(--p700);
+  --priShade: inset 0 -6px 12px rgba(22, 6, 90, .28), 0 1px 2px rgba(22, 6, 90, .25);
+  --ok: #0A7D52; --warn: #A35200; --bad: #CE0045; --badBg: #FFF5F8; --badLine: #E8B8C8;
+  --navBg: rgba(249, 250, 252, .82); --ghost: rgba(2, 23, 50, .05); --ghostHover: rgba(2, 23, 50, .09);
+  --band: var(--n950); --bandInk: #FFFFFF; --bandInk2: #AEB9C9; --bandBody: #C9D2E0; --bandMuted: #8794A8;
+  --bandLine: rgba(255, 255, 255, .10); --bandCell: rgba(255, 255, 255, .04); --bandAcc: var(--p400);
+  --bandAcc2: var(--p300); --bandOk: #5FD3A2; --bandWarn: #F5C451; --bandWarnBg: rgba(227, 162, 0, .14);
+  --bandChip: rgba(255, 255, 255, .12); --bandChipOn: rgba(114, 119, 255, .14);
+  --plateTop: #FFFFFF; --plateSide: var(--n50); --plateSide2: var(--n100); --plateLine: var(--n200); --plateOn: var(--p50);
+  --c1: #533AFD; --c2: #EF5F2F; --c3: #BF3784; --c4: #E3A200; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0FB3A2;
+  --gDot: 102, 118, 139; --gDotMin: .14; --gDotMax: .74; --gGrat: rgba(2, 23, 50, .05); --gLimb: var(--n200);
+  --gPlate: rgba(255, 255, 255, .94); --gPlateLine: rgba(2, 23, 50, .12); --gInk: var(--n950); --gPacket: var(--n950); --gNode: #FFFFFF;
+  --cube1: var(--p500); --cube2: var(--p600); --cube3: var(--p950);
+
+  /* app-token remap: start */
+  /*
+   * The app's own names, re-pointed at landing tokens so shared components read landing values
+   * with no per-component variants. Each value is a var() of a landing token, so the dark and
+   * black blocks below, which redefine those landing tokens on the same element, flow through.
+   * Spacing, type scale, radius, motion and layout tokens have no landing equivalent and stay on :root.
+   * The action colour maps to --acc rather than --accFill. It is read as link text as often as a
+   * fill, and --acc is the one accent that clears AA as text in every theme. Text on a fill maps to
+   * --surface, which is white on the light accent and the dark canvas on the lighter dark accent.
+   */
+  --color-action: var(--acc); --color-action-hover: var(--accInk); --color-action-pressed: var(--accInk);
+  --color-action-surface: var(--accBg); --color-action-border: var(--accLine);
+  --color-on-action: var(--surface); --color-on-danger: var(--surface); --color-danger-hover: var(--bad);
+  --color-ink-strong: var(--ink); --color-ink: var(--ink2); --color-ink-muted: var(--muted);
+  --color-canvas: var(--bg); --color-surface: var(--surface); --color-surface-2: var(--tint); --color-surface-3: var(--cell);
+  --color-border: var(--line); --color-border-strong: var(--line2);
+  --color-success: var(--ok); --color-success-bg: var(--tint); --color-success-border: var(--line2);
+  --color-warning: var(--warn); --color-warning-bg: var(--tint); --color-warning-border: var(--line2);
+  --color-danger: var(--bad); --color-danger-bg: var(--badBg); --color-danger-border: var(--badLine);
+  --font-ui: var(--font-sans); --coss-font-sans: var(--font-sans); --coss-font-heading: var(--font-sans);
+  --coss-font-mono: var(--font-mono);
+  /* shadcn names resolve to values at :root, so they must be re-pointed here, not inherited */
+  --background: var(--bg); --foreground: var(--ink); --card: var(--surface); --card-foreground: var(--ink);
+  --popover: var(--surface); --popover-foreground: var(--ink);
+  --primary: var(--acc); --primary-foreground: var(--surface);
+  --secondary: var(--tint); --secondary-foreground: var(--ink);
+  --accent: var(--accBg); --accent-foreground: var(--accInk); --muted-foreground: var(--muted);
+  --destructive: var(--bad); --destructive-foreground: var(--surface);
+  --border: var(--line); --input: var(--line2); --ring: var(--acc);
+  --success: var(--ok); --success-foreground: var(--surface);
+  --warning: var(--warn); --warning-foreground: var(--surface);
+  --info: var(--acc); --info-foreground: var(--surface);
+  /* app-token remap: end */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .surface-landing {
+    color-scheme: dark;
+    --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
+    --line: #172234; --line2: #25334B; --cell: #0B1526;
+    --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+    --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+    --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+    --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+    --navBg: rgba(4, 10, 21, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+    --band: #0E0C32; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+    --plateTop: #0A1322; --plateSide: #0F1A2C; --plateSide2: #14203A; --plateLine: #25334B; --plateOn: rgba(83, 58, 253, .20);
+    --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+    --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #25334B;
+    --gPlate: rgba(10, 19, 34, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #040A15;
+    --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+  }
+}
+
+:root[data-theme="dark"] .surface-landing {
+  color-scheme: dark;
+  --bg: #040A15; --surface: #0A1322; --tint: #0F1A2C; --ink: #F3F6FA; --ink2: #B4BFCE; --muted: #8A97AB;
+  --line: #172234; --line2: #25334B; --cell: #0B1526;
+  --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+  --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+  --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+  --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+  --navBg: rgba(4, 10, 21, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+  --band: #0E0C32; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+  --plateTop: #0A1322; --plateSide: #0F1A2C; --plateSide2: #14203A; --plateLine: #25334B; --plateOn: rgba(83, 58, 253, .20);
+  --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+  --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #25334B;
+  --gPlate: rgba(10, 19, 34, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #040A15;
+  --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+}
+
+/* Self-contained: repeats every dark token, so it renders correctly under an OS light setting. */
+:root[data-theme="black"] .surface-landing {
+  color-scheme: dark;
+  --bg: #000000; --surface: #0B0B0F; --tint: #121217; --ink: #F5F5F7; --ink2: #B5B7C0; --muted: #8E909B;
+  --line: #1C1C22; --line2: #2A2A31; --cell: #0A0A0E;
+  --acc: var(--p400); --accFill: var(--p600); --accFillHover: #6B52FF; --accBg: rgba(83, 58, 253, .16);
+  --accLine: rgba(149, 160, 255, .32); --accInk: var(--p300);
+  --priShade: inset 0 -6px 12px rgba(0, 0, 0, .28), 0 0 0 1px rgba(149, 160, 255, .22);
+  --ok: #43C98F; --warn: #F0B44C; --bad: #FF6B8B; --badBg: rgba(255, 107, 139, .10); --badLine: rgba(255, 107, 139, .36);
+  --navBg: rgba(0, 0, 0, .78); --ghost: rgba(255, 255, 255, .06); --ghostHover: rgba(255, 255, 255, .10);
+  --band: #0B0920; --bandInk2: #B4BFCE; --bandMuted: #8A97AB; --bandLine: rgba(149, 160, 255, .14);
+  --plateTop: #0B0B0F; --plateSide: #121217; --plateSide2: #18181F; --plateLine: #2A2A31; --plateOn: rgba(83, 58, 253, .20);
+  --c1: #6B52FF; --c2: #EF5F2F; --c3: #BF3784; --c4: #C08A00; --c5: #3394F2; --c6: #178F4F; --c7: #A05DF2; --c8: #0E9E8F;
+  --gDot: 168, 180, 198; --gDotMin: .10; --gDotMax: .58; --gGrat: rgba(255, 255, 255, .05); --gLimb: #2A2A31;
+  --gPlate: rgba(11, 11, 15, .94); --gPlateLine: rgba(255, 255, 255, .14); --gInk: #F3F6FA; --gPacket: #F3F6FA; --gNode: #000000;
+  --cube1: var(--p400); --cube2: #6B52FF; --cube3: var(--p900);
+}
+
+/* Landing variants of shared components, inside .surface-landing only. */
+.surface-landing .relay-btn--primary {
+  background: var(--accFill);
+  border-color: var(--accFill);
+  color: var(--onAcc);
+  box-shadow: var(--priShade);
+  border-radius: 10px;
+}
+.surface-landing .relay-btn--primary:hover {
+  background: var(--accFillHover);
+  border-color: var(--accFillHover);
+}
+.surface-landing .relay-btn--secondary {
+  background: var(--ghost);
+  color: var(--ink);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+}
+.surface-landing .relay-btn--secondary:hover {
+  background: var(--ghostHover);
+  border-color: var(--line2);
+}
+
+.surface-landing h1,
+.surface-landing h2,
+.surface-landing h3 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* StatusChip: text plus icon on the surface, colour carried by the text token only. */
+.surface-landing .status-chip {
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  font-family: var(--font-sans);
+}
+.surface-landing .status-chip--success { color: var(--ok); }
+.surface-landing .status-chip--warning { color: var(--warn); }
+.surface-landing .status-chip--danger { color: var(--bad); }
+.surface-landing .status-chip--muted { color: var(--muted); }
+.surface-landing .status-chip--action { color: var(--accInk); }
+.surface-landing .status-chip .status-chip__icon {
+  background: currentColor;
+}
+.surface-landing .status-chip .status-chip__icon > svg {
+  color: var(--surface);
+}

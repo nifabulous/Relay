@@ -9,9 +9,12 @@ import type { ApiProblem } from "../../../api/problem";
 import type { AsyncStatus } from "../../../design-system/types";
 import { Button } from "../../../design-system/Button";
 import { AsyncRegion } from "../../../design-system/AsyncRegion";
+import { LinesRoute } from "../../../design-system/payment-route/LinesRoute";
 import { PaymentTimeline } from "./PaymentTimeline";
+import { trackingRouteStops } from "./trackingRoute";
 import { buildTrackingContext } from "../../tutor/tutorContext";
 import { usePublishTutorContext } from "../../tutor/tutorSurfaceStore";
+import "../../../design-system/landing-scope.css";
 import "./TrackingPage.css";
 import "../tools/OperateTools.css";
 import { recordActivity } from "../../../lib/persistence/storage";
@@ -133,6 +136,7 @@ export function TrackingPage() {
 
   const error = query.error as ApiProblem | null;
   const data = query.data;
+  const routeStops = data ? trackingRouteStops(data) : [];
 
   /*
    * Publish only what is on screen. Deliberately not the UETR: it identifies
@@ -155,7 +159,7 @@ export function TrackingPage() {
   );
 
   return (
-    <div className="tracking-page">
+    <div className="surface-landing tracking-page">
       <h1>Payment Tracking</h1>
       <p className="measure">Follow a payment across its lifecycle by UETR (Unique End-to-End Transaction Reference).</p>
 
@@ -183,7 +187,20 @@ export function TrackingPage() {
         >
           {data && (
             <>
-              <PaymentTimeline payment={data} />
+              {routeStops.length > 0 && (
+                <div className="tracking-page__route">
+                  <LinesRoute
+                    stops={routeStops}
+                    summary={`Payment ${data.uetr} has revealed ${routeStops.length} banks.`}
+                    ariaLabel="Payment route"
+                  />
+                </div>
+              )}
+              {/* With no route to draw, the event list is the whole view, so it starts open. */}
+              <details className="tracking-page__events" open={routeStops.length === 0 || undefined}>
+                <summary>Event list</summary>
+                <PaymentTimeline payment={data} />
+              </details>
               {!data.is_terminal && (
                 <div className="tracking-page__controls" role="group" aria-label="Simulation pacing controls">
                   <Button

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -53,6 +53,8 @@ function renderPage(initialEntry: string) {
 }
 
 describe("TrackingPage arrival", () => {
+  // The echoed payment reveals one bank, so no route is drawn and the event
+  // list (which shows the UETR) starts open: the UETR is on screen by default.
   it("fires the lookup automatically when a uetr is in the URL", async () => {
     server.use(echoUetrHandler());
     renderPage("/app/operate/tracking?uetr=UETR-A");
@@ -273,7 +275,9 @@ describe("Scheduled pacing controls", () => {
     await user.click(screen.getByRole("button", { name: "Advance one event" }));
 
     // The refreshed timeline now shows the revealed intermediary hop.
-    expect(await screen.findByText("Citibank N.A.")).toBeVisible();
+    const figure = await screen.findByRole("figure", { name: "Payment route" });
+    expect(figure).toBeVisible();
+    expect(within(screen.getByRole("figure", { name: "Payment route" })).getByText("Citibank N.A.")).toBeVisible();
     expect(skippedUetr).toBe("UETR-A");
   });
 
@@ -294,9 +298,59 @@ describe("Scheduled pacing controls", () => {
     await user.click(screen.getByRole("button", { name: "Complete simulation" }));
 
     // Terminal state: credited bank visible, amounts revealed, controls gone.
+    await user.click(await screen.findByText("Event list"));
     expect(
       await screen.findByText("Credited to beneficiary account by Guaranty Trust Bank"),
     ).toBeVisible();
+  });
+
+  it("draws no route while only one bank is revealed, and keeps the event text visible", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) => HttpResponse.json(pacingPayload(params.uetr, 1))),
+    );
+    renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    expect(await screen.findByText("Payment initiated by Your bank")).toBeVisible();
+    expect(screen.queryByRole("figure", { name: "Payment route" })).not.toBeInTheDocument();
+    // With no route, the event list is the whole view, so it starts open.
+    expect(screen.getByText("Event list").closest("details")).toHaveAttribute("open");
+  });
+
+  it("draws one stop per bank, not per event, and counts banks in the summary", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, PACING_PLAN.length)),
+      ),
+    );
+    renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    const figure = await screen.findByRole("figure", { name: "Payment route" });
+    // Four events across three banks: Citibank carries ACCEPTED and IN_PROGRESS.
+    expect(within(figure).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(figure).getByText("Payment UETR-A has revealed 3 banks.")).toBeInTheDocument();
+  });
+
+  it("keeps the event text in a collapsible event list that opens on click", async () => {
+    server.use(
+      http.get("/api/track/:uetr", ({ params }) =>
+        HttpResponse.json(pacingPayload(params.uetr, PACING_PLAN.length)),
+      ),
+    );
+    const { user } = renderPage("/app/operate/tracking?uetr=UETR-A");
+
+    const summary = await screen.findByText("Event list");
+    const details = summary.closest("details");
+    expect(details).not.toBeNull();
+    // With a route on screen, the event list starts closed.
+    expect(screen.getByRole("figure", { name: "Payment route" })).toBeVisible();
+    expect(details).not.toHaveAttribute("open");
+    const text = within(details as HTMLElement).getByText(
+      "Credited to beneficiary account by Guaranty Trust Bank",
+    );
+    expect(text).not.toBeVisible();
+
+    await user.click(summary);
+    expect(text).toBeVisible();
   });
 
   it("hides the controls once the response is terminal", async () => {
