@@ -78,8 +78,19 @@ describe("trackingRouteStops", () => {
     const stops = trackingRouteStops(payment(events, true));
     expect(stops).toHaveLength(2);
     expect(stops[1].status).toBe("failed");
-    expect(stops[1].role).toBe("correspondent");
+    expect(stops[1].role).toBe("stopped");
     expect(stops[0].status).toBe("not_checked");
+  });
+
+  it("labels the bank where a direct payment stopped as stopped, not beneficiary", () => {
+    const events = [
+      ...ORIGIN,
+      { status: "ACCEPTED", bank_bic: "GTBINGLAXXX", bank_name: "Guaranty Trust Bank" },
+      { status: "REJECTED", bank_bic: "GTBINGLAXXX", bank_name: "Guaranty Trust Bank" },
+    ];
+    const stops = trackingRouteStops(payment(events, true));
+    expect(stops.map((stop) => stop.role)).toEqual(["origin", "stopped"]);
+    expect(stops[1].status).toBe("failed");
   });
 
   it("marks a returned bank as failed", () => {

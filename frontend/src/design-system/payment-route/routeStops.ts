@@ -1,4 +1,4 @@
-export type RouteStopRole = "origin" | "correspondent" | "beneficiary";
+export type RouteStopRole = "origin" | "correspondent" | "beneficiary" | "stopped";
 
 export type RouteStopStatus = "passed" | "needs_attention" | "failed" | "unavailable" | "not_checked";
 
@@ -21,4 +21,5 @@ export const ROLE_LABEL: Record<RouteStopRole, string> = {
   origin: "Sender",
   correspondent: "Correspondent",
   beneficiary: "Beneficiary",
+  stopped: "Stopped at",
 };
