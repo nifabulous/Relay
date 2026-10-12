@@ -32,6 +32,16 @@ describe("AppErrorBoundary", () => {
     expect(screen.getByText("Safe content")).toBeVisible();
   });
 
+  it("carries the landing scope on the fallback root", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderWithRouter(
+      <AppErrorBoundary>
+        <ThrowingComponent error={new Error("Test crash")} />
+      </AppErrorBoundary>,
+    );
+    expect(screen.getByRole("alert")).toHaveClass("error-boundary", "surface-landing");
+  });
+
   it("shows error UI with Reload and Return to Overview actions on render error", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     renderWithRouter(

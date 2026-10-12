@@ -36,6 +36,13 @@ describe("NotFoundPage", () => {
     expect(screen.queryByText("/app/operate/tracking")).toBeNull();
   });
 
+  it("carries the landing scope on its root element", () => {
+    renderAt("/app/nope");
+    const root = screen.getByRole("heading", { name: "Page not found" }).parentElement;
+    expect(root).toHaveClass("app-shell__not-found");
+    expect(root).toHaveClass("surface-landing");
+  });
+
   it("offers a way back to Overview", () => {
     renderAt("/app/nope");
     expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute("href", "/app");

@@ -15,4 +15,10 @@ describe("PageLoader", () => {
 
     expect(screen.getByRole("status", { name: "Loading Explore" })).toBeVisible();
   });
+
+  it("carries the landing scope on its root element", () => {
+    render(<PageLoader destination="Explore" />);
+
+    expect(screen.getByRole("status", { name: "Loading Explore" })).toHaveClass("surface-landing");
+  });
 });
