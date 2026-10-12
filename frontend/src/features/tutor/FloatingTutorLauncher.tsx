@@ -141,7 +141,7 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
 
   return (
     <>
-      <div className="tutor-fab-cluster">
+      <div className="tutor-fab-cluster surface-landing">
         <RelayDialog
           open={open}
           onOpenChange={handleOpenChange}
@@ -150,7 +150,7 @@ export function FloatingTutorLauncher({ onOpenChange }: FloatingTutorLauncherPro
           titleId={HEADING_ID}
           ariaLabel="Tutor"
           popupId="tutor-floating-panel"
-          className="tutor-floating-panel"
+          className="tutor-floating-panel surface-landing"
           finalFocus={launcherRef}
         >
           <Suspense

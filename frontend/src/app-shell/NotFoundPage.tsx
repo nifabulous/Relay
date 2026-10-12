@@ -26,7 +26,7 @@ export function NotFoundPage() {
   const displayPath = useHref(pathname) + search;
 
   return (
-    <div className="app-shell__not-found">
+    <div className="app-shell__not-found surface-landing">
       <p className="app-shell__not-found-eyebrow">Route error</p>
       <h1 className="app-shell__not-found-heading">Page not found</h1>
       <p className="app-shell__not-found-path">

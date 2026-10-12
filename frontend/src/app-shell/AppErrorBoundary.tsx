@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../design-system/Button";
+import "../design-system/landing-scope.css";
 import "./AppErrorBoundary.css";
 
 interface Props {
@@ -32,7 +33,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary" role="alert">
+        <div className="error-boundary surface-landing" role="alert">
           <h1 className="error-boundary__title">Something went wrong</h1>
           <p className="error-boundary__message">
             {this.state.error?.message ?? "An unexpected error interrupted the page."}

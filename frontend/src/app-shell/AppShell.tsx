@@ -13,6 +13,7 @@ import type { RelayPreferences } from "../design-system/types";
 import { loadPreferences, savePreferences } from "../lib/persistence/storage";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { FloatingTutorLauncher } from "../features/tutor/FloatingTutorLauncher";
+import "../design-system/landing-scope.css";
 import "./AppShell.css";
 
 /*
@@ -162,7 +163,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
         .join(" ")}
     >
       {/* Simulation banner — persistent, unmissable but not garish */}
-      <div className="sim-banner" role="alert">
+      <div className="sim-banner surface-landing" role="alert">
         <Icon name="alertTriangle" size={13} className="sim-banner__icon" />
         <p className="sim-banner__text">
           <strong>Educational payment simulation</strong>
@@ -178,7 +179,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
       <FloatingTutorLauncher onOpenChange={setTutorOpen} />
 
       {/* Top bar */}
-      <header className="app-shell__topbar">
+      <header className="app-shell__topbar surface-landing">
         <div className="app-shell__brand">
           <BrandMark />
           <span className="app-shell__brand-name">Relay</span>
@@ -193,7 +194,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
 
       <div className="app-shell__body">
         {/* Desktop navigation rail */}
-        <nav className="app-shell__rail" aria-label="Primary navigation">
+        <nav className="app-shell__rail surface-landing" aria-label="Primary navigation">
           <p className="app-shell__rail-eyebrow" aria-hidden="true">
             Workspaces
           </p>
@@ -228,7 +229,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="app-shell__mobile-nav" aria-label="Mobile navigation">
+      <nav className="app-shell__mobile-nav surface-landing" aria-label="Mobile navigation">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}

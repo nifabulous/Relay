@@ -592,6 +592,55 @@ describe("landing scope", () => {
     });
   });
 
+  // Shell chrome (app-shell/AppShell.css, global.css .sim-banner) and the Tutor launcher cluster and panel
+  // (FloatingTutorLauncher.css, TutorPanel.css), all under .surface-landing. Pairs already listed above
+  // (for example ink-muted on surface for the brand sub-line, rail eyebrow, nav links and mobile links) are
+  // not repeated; the ones named here are those the surfaces use that nothing else measured.
+  const SHELL_TUTOR_TEXT_PAIRS: Array<[string, string, number, string]> = [
+    ["--color-warning", "--color-warning-bg", 4.5, "sim banner text"],
+    ["--color-ink-strong", "--color-surface", 4.5, "brand name on the top bar"],
+    ["--color-ink", "--secondary", 4.5, "Preferences trigger"],
+    ["--color-ink-strong", "--color-surface-2", 4.5, "rail link hover; Tutor button on the dark raised surface"],
+    ["--color-ink", "--color-surface-2", 4.5, "Tutor close button hover on the dark raised surface"],
+    ["--color-ink-muted", "--color-surface-2", 4.5, "Tutor close button on the dark raised surface"],
+    ["--color-ink", "--color-canvas", 4.5, "Tutor question input"],
+    ["--color-ink-muted", "--color-canvas", 4.5, "Tutor labels beside the input"],
+    ["--color-ink", "--color-warning-bg", 4.5, "Tutor failure notice body"],
+    ["--color-warning", "--color-warning-bg", 4.5, "Tutor clarification notice"],
+  ];
+
+  describe.each(THEMES)("%s theme shell chrome and Tutor text pairs", (_name, tokens) => {
+    it.each(SHELL_TUTOR_TEXT_PAIRS)("%s on %s is at least %f:1 (%s)", (fg, bg, min) => {
+      expect(ratio(tokens, fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+
+    // --color-action-surface is translucent in dark and black, so it paints over whatever sits under it:
+    // the top bar, rail, menu and mobile nav (--surface), or the raised Tutor surface (--surface-2).
+    // Measure the composite over both backdrops.
+    const OVER_ACTION_SURFACE: Array<[string, string]> = [
+      ["--color-ink", "Preferences trigger and menu item, hover or expanded"],
+      ["--color-ink-muted", "Preferences item hint over the hover tint"],
+      ["--color-action", "active rail link, active mobile link, checked Preferences item"],
+      ["--color-ink-strong", "Tutor button while expanded"],
+    ];
+    describe.each(["--color-surface", "--color-surface-2"])("over %s", (backdrop) => {
+      it.each(OVER_ACTION_SURFACE)("%s on --color-action-surface is at least 4.5:1 (%s)", (fg) => {
+        expect(tokens[fg]).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(
+          contrastRatio(tokens[fg], composite(tokens["--color-action-surface"], tokens[backdrop])),
+        ).toBeGreaterThanOrEqual(4.5);
+      });
+    });
+
+    // The Tutor safety notice paints a translucent danger-bg over the panel surface.
+    it("danger on danger-bg (composited over --surface, Tutor safety notice) is at least 4.5:1", () => {
+      expect(tokens["--color-danger"]).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(
+        contrastRatio(tokens["--color-danger"], composite(tokens["--color-danger-bg"], tokens["--surface"])),
+      ).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   // Translucent backgrounds (dark --badBg is rgba) paint over the canvas, so measure the composite.
   const PAIRS_OVER_CANVAS: Array<[string, string, number]> = [
     ["--color-danger", "--color-danger-bg", 4.5], // danger notices and alerts

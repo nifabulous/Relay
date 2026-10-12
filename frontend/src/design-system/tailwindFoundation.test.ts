@@ -71,6 +71,11 @@ describe("Tailwind foundation", () => {
     expect(globalCss).not.toContain("https://fonts.googleapis.com/css2");
   });
 
+  it("loads Geist and Geist Mono for the scoped landing tokens", () => {
+    expect(indexHtml).toContain("family=Geist:wght@400;500;600;700");
+    expect(indexHtml).toContain("family=Geist+Mono:wght@400;500;600");
+  });
+
   it("runs the pre-paint theme bootstrap before the third-party font request", () => {
     const fontLink = indexHtml.indexOf("https://fonts.googleapis.com/css2");
     const themeBootstrap = indexHtml.indexOf('var theme = "system";');
