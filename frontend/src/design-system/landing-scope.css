@@ -18,6 +18,7 @@
   --cw: 1080px; --ow: 1360px; --g: 16px;
   --font-sans: "Geist", "Geist Fallback", system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  font-family: var(--font-sans);
   color-scheme: light;
 
   /* light theme */
