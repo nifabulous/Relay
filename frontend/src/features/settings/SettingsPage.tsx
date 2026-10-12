@@ -9,6 +9,7 @@ import { Icon } from "../../design-system/coss/icon";
 import { Card } from "../../design-system/coss/card";
 import { FieldDescription } from "../../design-system/coss/field";
 import { Switch } from "../../design-system/coss/switch";
+import "../../design-system/landing-scope.css";
 import "./SettingsPage.css";
 
 /**
@@ -64,7 +65,7 @@ export function SettingsPage() {
   const learningState = loadLearningState();
 
   return (
-    <div className="settings">
+    <div className="surface-landing settings">
       {/* Settings is not a nav destination, so the page carries its own way back. */}
       <nav className="settings__breadcrumb" aria-label="Breadcrumb">
         <Link to="/" className="settings__breadcrumb-link">

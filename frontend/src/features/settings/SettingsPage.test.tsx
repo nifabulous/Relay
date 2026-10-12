@@ -1,3 +1,7 @@
+/// <reference types="node" />
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -156,5 +160,21 @@ describe("SettingsPage navigation", () => {
     renderSettings();
     const back = screen.getByRole("link", { name: /overview/i });
     expect(back).toHaveAttribute("href", "/");
+  });
+});
+
+describe("SettingsPage landing scope (app token migration, phase 3)", () => {
+  it("carries surface-landing on its page root", () => {
+    const { container } = renderSettings();
+    expect(container.firstElementChild).toHaveClass("surface-landing", "settings");
+  });
+
+  it("imports the landing scope stylesheet from its lazy module", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(here, "SettingsPage.tsx"), "utf8");
+    const specs = [...source.matchAll(/^import\s+["']([^"']+\.css)["'];?$/gm)].map((m) => m[1]);
+    expect(specs.map((spec) => resolve(here, spec))).toContain(
+      resolve(here, "../../design-system/landing-scope.css"),
+    );
   });
 });
