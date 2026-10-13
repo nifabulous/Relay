@@ -1,3 +1,7 @@
+/// <reference types="node" />
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -323,5 +327,25 @@ describe("OverviewPage workspace launchpad", () => {
     expect(text).not.toMatch(/no active incidents/i);
     // No clock-time plan rows: the plan is a derived list, not a calendar.
     expect(text).not.toMatch(/\d{1,2}:\d{2}\s*(AM|PM)/i);
+  });
+});
+
+describe("OverviewPage landing scope (app token migration, phase 3)", () => {
+  it("carries surface-landing on its page root", () => {
+    const { container } = renderOverviewPage();
+    expect(container.firstElementChild).toHaveClass("surface-landing", "overview");
+  });
+
+  // Same order as SettingsPage.tsx: the scope stylesheet first, then the page's own CSS.
+  it("imports the landing scope stylesheet from its lazy module, before the page CSS", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(here, "OverviewPage.tsx"), "utf8");
+    const specs = [...source.matchAll(/^import\s+["']([^"']+\.css)["'];?$/gm)].map((m) => m[1]);
+    const scope = specs.findIndex(
+      (spec) => resolve(here, spec) === resolve(here, "../../design-system/landing-scope.css"),
+    );
+    const page = specs.findIndex((spec) => resolve(here, spec) === resolve(here, "OverviewPage.css"));
+    expect(scope).toBeGreaterThanOrEqual(0);
+    expect(page).toBeGreaterThan(scope);
   });
 });
