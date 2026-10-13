@@ -51,7 +51,7 @@ describe("landing scope stylesheet reaches each route screen", () => {
     expect(css).toMatch(/--color-surface:\s*var\(--surface\)/);
   });
 
-  it("sets Geist as the font for all text inside the scope, not only headings", () => {
+  it("declares Geist as the scope font-family, which text inherits", () => {
     const css = readFileSync(SCOPE_CSS, "utf8");
     const block = css.match(/^\.surface-landing\s*\{([^}]*)\}/m);
     expect(block).not.toBeNull();
