@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../../test/server";
@@ -262,5 +265,128 @@ describe("FloatingTutorLauncher — unavailable deployment", () => {
     await waitFor(() => expect(pill).toBeDisabled());
     expect(screen.getByRole("status")).toHaveTextContent(/could not be confirmed/i);
     expect(screen.getByRole("status")).not.toHaveTextContent(/not available in this deployment/i);
+  });
+});
+
+// ── The unavailable notice on narrow screens ────────────────────────────────
+
+/*
+ * jsdom does no layout, so whether text is clipped cannot be asked of a
+ * rendered node. The notice was clipped by three declarations in the
+ * stylesheet, which is what these tests read. The real geometry (wrapped
+ * height, clearance above the mobile nav) was measured in a browser at 280,
+ * 320, 360 and 390px; the arithmetic below pins the numbers that measurement
+ * depends on.
+ */
+const HERE = dirname(fileURLToPath(import.meta.url));
+const LAUNCHER_CSS = readFileSync(resolve(HERE, "FloatingTutorLauncher.css"), "utf8");
+const TOKENS_CSS = readFileSync(resolve(HERE, "../../design-system/tokens.css"), "utf8");
+const APP_SHELL_CSS = readFileSync(resolve(HERE, "../../app-shell/AppShell.css"), "utf8");
+
+const PROBE_FAILED_MESSAGE = "Tutor availability could not be confirmed. Refresh to try again.";
+
+/** The declarations of the rule whose selector is exactly `selector`. */
+function ruleBody(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = css.match(new RegExp(`(?:^|[}/;])\\s*${escaped}\\s*\\{([^}]*)\\}`, "m"));
+  if (!match) throw new Error(`FloatingTutorLauncher.css: no rule for ${selector}`);
+  return match[1];
+}
+
+/** Resolve `Npx`, a bare number, or `var(--token)` against tokens.css. */
+function resolveNumber(expression: string): number {
+  const trimmed = expression.trim();
+  const variable = trimmed.match(/^var\((--[\w-]+)\)$/);
+  if (variable) {
+    const declaration = TOKENS_CSS.match(new RegExp(`${variable[1]}:\\s*([^;]+);`));
+    if (!declaration) throw new Error(`tokens.css: ${variable[1]} is not declared`);
+    return resolveNumber(declaration[1]);
+  }
+  const value = Number.parseFloat(trimmed);
+  if (Number.isNaN(value)) throw new Error(`cannot resolve "${expression}" to a number`);
+  return value;
+}
+
+function declared(rule: string, property: string): string {
+  const match = rule.match(new RegExp(`(?:^|[;\\s])${property}:\\s*([^;]+);`));
+  if (!match) throw new Error(`no ${property} declaration in: ${rule}`);
+  return match[1].trim();
+}
+
+describe("FloatingTutorLauncher — the notice shows its full text", () => {
+  it("lets the visible notice wrap instead of clipping it to an ellipsis", () => {
+    const rule = ruleBody(LAUNCHER_CSS, ".tutor-fab__reason");
+    expect(rule).not.toMatch(/white-space:\s*nowrap/);
+    expect(rule).not.toMatch(/text-overflow:\s*ellipsis/);
+    // overflow:hidden existed only to make the ellipsis work; left on, it would
+    // silently clip any line that cannot break.
+    expect(rule).not.toMatch(/overflow:\s*hidden/);
+  });
+
+  it("keeps the 320px cap and the viewport cap that make it wrap rather than grow", () => {
+    const rule = ruleBody(LAUNCHER_CSS, ".tutor-fab__reason");
+    expect(declared(rule, "max-width")).toBe("min(320px, calc(100vw - (2 * var(--space-4))))");
+  });
+
+  it("keeps the screen-reader copy visually hidden, so wrapping the notice cannot show it twice", () => {
+    const rule = ruleBody(LAUNCHER_CSS, ".tutor-fab__reason-description");
+    expect(rule).toMatch(/clip:\s*rect\(0 0 0 0\)/);
+    expect(rule).toMatch(/white-space:\s*nowrap/);
+  });
+
+  it("carries the full failed-probe message in the accessible description exactly once", async () => {
+    // The visible notice IS the description here, so assistive technology is
+    // not read the same sentence twice by a hidden duplicate.
+    server.use(http.get("/api/tutor/availability", () => HttpResponse.error()));
+    const { container } = render(<FloatingTutorLauncher />);
+    const pill = await screen.findByRole("button", { name: /tutor/i });
+
+    await waitFor(() => expect(pill).toHaveAccessibleDescription(PROBE_FAILED_MESSAGE));
+    expect(pill).toHaveAccessibleName("Tutor");
+    expect(screen.getByRole("status")).toHaveTextContent(PROBE_FAILED_MESSAGE);
+    expect(screen.getAllByText(PROBE_FAILED_MESSAGE)).toHaveLength(1);
+    expect(container.querySelector(".tutor-fab__reason-description")).toBeNull();
+  });
+});
+
+describe("FloatingTutorLauncher — room under the notice on narrow screens", () => {
+  it("reserves the shared fixed-layer space under page content below 1024px", () => {
+    const start = APP_SHELL_CSS.indexOf("@media (max-width: 1023px)");
+    expect(start).toBeGreaterThan(-1);
+    const mobile = APP_SHELL_CSS.slice(start);
+    expect(ruleBody(mobile, ".app-shell__main")).toMatch(
+      /padding-bottom:\s*var\(--mobile-fixed-reserve\)/,
+    );
+    // The reserve is the mobile nav, the cluster floor, and the gap the
+    // cluster sits above the nav — the same offset the cluster is placed at.
+    const reserve = TOKENS_CSS.match(/--mobile-fixed-reserve:\s*calc\(([\s\S]*?)\);/)?.[1] ?? "";
+    expect(reserve).toContain("var(--mobile-fixed-footer-height)");
+    expect(reserve).toContain("var(--floating-cluster-min-height)");
+    expect(reserve).toContain("var(--space-3)");
+  });
+
+  it("sizes the cluster floor to the pill plus a notice wrapped onto two lines", () => {
+    /*
+     * Wrapping grows the cluster. Measured in a browser: the one-line clipped
+     * notice made it 88px tall; the wrapped notice makes it 106px, and it stays
+     * two lines at every width from 280px to the 320px cap. The floor in
+     * tokens.css must cover that, or the last page content scrolls to sit
+     * under the notice — the exact overlap this change must not introduce.
+     */
+    const cluster = ruleBody(LAUNCHER_CSS, ".tutor-fab-cluster");
+    const pill = ruleBody(LAUNCHER_CSS, ".tutor-fab");
+    const reason = ruleBody(LAUNCHER_CSS, ".tutor-fab__reason");
+
+    const borders = 2 * 1; // 1px border, top and bottom
+    const lineHeight =
+      resolveNumber(declared(reason, "font-size")) * resolveNumber(declared(reason, "line-height"));
+    // `padding: <vertical> <horizontal>` — the first value is top and bottom.
+    const verticalPadding = 2 * resolveNumber(declared(reason, "padding").match(/^var\([^)]+\)|^\S+/)![0]);
+    const twoLineNotice = 2 * lineHeight + verticalPadding + borders;
+    const clusterHeight =
+      resolveNumber(declared(pill, "min-height")) + resolveNumber(declared(cluster, "gap")) + twoLineNotice;
+
+    expect(clusterHeight).toBe(106);
+    expect(resolveNumber("var(--floating-cluster-min-height)")).toBeGreaterThanOrEqual(clusterHeight);
   });
 });
