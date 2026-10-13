@@ -209,6 +209,11 @@
   cursor: not-allowed;
 }
 
+/* The notice wraps rather than clipping: the failed-probe message is a full
+   sentence, and an ellipsis cut it to "Refresh to…" on a phone. The width cap
+   is what makes it wrap instead of growing. Wrapped, the cluster is the pill
+   plus two lines (106px, measured 280–390px wide); --floating-cluster-min-height
+   in tokens.css is the room page content keeps clear for it. */
 .tutor-fab__reason {
   max-width: min(320px, calc(100vw - (2 * var(--space-4))));
   padding: var(--space-2) var(--space-3);
@@ -219,9 +224,6 @@
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   line-height: var(--leading-normal);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Keep the complete reason in the accessibility tree without letting the
