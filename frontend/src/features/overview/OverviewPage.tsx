@@ -13,6 +13,7 @@ import { OverviewLaunchpad } from "./OverviewLaunchpad";
 import { OverviewLearningPulse } from "./OverviewLearningPulse";
 import { OverviewSystemStatus } from "./OverviewSystemStatus";
 import { buildPlan } from "./overviewContent";
+import "../../design-system/landing-scope.css";
 import "./OverviewPage.css";
 import "./OverviewLaunchpad.css";
 import "./OverviewLearningPulse.css";
@@ -71,7 +72,7 @@ export function OverviewPage() {
   });
 
   return (
-    <div className="overview">
+    <div className="surface-landing overview">
       <header className="overview__header">
         <h1 className="overview__heading">Overview</h1>
         <p className="overview__tagline">Your payment routing learning hub.</p>

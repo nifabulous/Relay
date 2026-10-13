@@ -655,6 +655,29 @@ describe("landing scope", () => {
     });
   });
 
+  // Overview workspace (OverviewPage.css, OverviewLaunchpad.css, OverviewLearningPulse.css, OverviewActivity.css,
+  // OverviewSystemStatus.css). Every card, panel, chip, button and status line paints --color-surface,
+  // --color-surface-2 or --color-success-bg / --color-warning-bg (opaque in every theme), and each text pair on
+  // them is already listed above: ink-strong, ink, ink-muted, action, success and warning on surface; ink-muted
+  // on surface-2 (plan chip, stage pill, icon discs); success and warning on their -bg; on-action on action
+  // (workspace icon tile); action on --color-action-surface composited over surface (stage pill, active plan chip,
+  // module glyph, reviews icon); the primary and secondary buttons. The one backdrop nothing measured is the page
+  // itself. The outlet is not scoped, so body and <main> still paint tokens.css's --color-canvas, and
+  // .surface-landing sets no background: the h1 (.overview__heading) and the tagline (.overview__tagline) are
+  // the only text outside a card, and they read the landing ink over that old canvas. Measure that mix.
+  const OLD_PALETTES: Record<string, Tokens> = { light: LIGHT, dark: DARK, black: BLACK };
+  describe.each(THEMES)("%s theme overview workspace text pairs", (name, tokens) => {
+    const oldCanvas = OLD_PALETTES[name]["--color-canvas"];
+    it.each([
+      ["--color-ink-strong", "h1"],
+      ["--color-ink-muted", "tagline"],
+    ])("%s on the unscoped tokens.css --color-canvas (%s) is at least 4.5:1", (fg) => {
+      expect(tokens[fg]).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(oldCanvas).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(contrastRatio(tokens[fg], oldCanvas)).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   // Translucent backgrounds (dark --badBg is rgba) paint over the canvas, so measure the composite.
   const PAIRS_OVER_CANVAS: Array<[string, string, number]> = [
     ["--color-danger", "--color-danger-bg", 4.5], // danger notices and alerts
