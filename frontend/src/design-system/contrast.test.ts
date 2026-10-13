@@ -641,6 +641,20 @@ describe("landing scope", () => {
     });
   });
 
+  // Settings workspace (SettingsPage.css, LearnerDataPanel inside it). Every text pair it reads through the
+  // remap is already listed above (ink-strong, ink, ink-muted and action on canvas, surface and surface-2;
+  // success, warning and danger on their backgrounds; muted-foreground on card for FieldDescription). The one
+  // pair nothing else measured is the secondary button on the panel surface: --ghost and --ghostHover are
+  // translucent, so measure the ink text over the composite. The panel is LearnerDataPanel's
+  // .overview__learner-data, whose background is --color-surface, remapped to --surface in the scope
+  // (SettingsPage.css). The button is .relay-btn--secondary, whose font is --font-ui, remapped to Geist.
+  describe.each(THEMES)("%s theme settings workspace text pairs", (_name, tokens) => {
+    it.each(["--ghost", "--ghostHover"])("--ink on %s (composited over --surface, secondary button) is at least 4.5:1", (bg) => {
+      expect(tokens["--ink"]).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(contrastRatio(tokens["--ink"], composite(tokens[bg], tokens["--surface"]))).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   // Translucent backgrounds (dark --badBg is rgba) paint over the canvas, so measure the composite.
   const PAIRS_OVER_CANVAS: Array<[string, string, number]> = [
     ["--color-danger", "--color-danger-bg", 4.5], // danger notices and alerts
